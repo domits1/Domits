@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useContext } from "react";
-import { Link } from "react-router-dom";
 import logo from "../../images/logo.svg";
 import nineDots from "../../images/dots-grid.svg";
 import profile from "../../images/profile-icon.svg";
@@ -10,6 +9,7 @@ import FlowContext from "../../services/FlowContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Auth } from "aws-amplify";
+
 
 function Header({ setSearchResults, setLoading }) {
   const navigate = useNavigate();

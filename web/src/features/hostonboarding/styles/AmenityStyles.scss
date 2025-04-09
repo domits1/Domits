@@ -1,9 +1,18 @@
+$domits-guest-green: #0D9813;
+$domits-host-blue: #003366;
+
+$border-radius: 8px;
+$light-gray: #ccc;
+$input-time-gray: #2a2c2d;
+$white: #fff;
+$off-white: #f0f0f0;
+
 .centered-amenities {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: #f9f9f9;
+    background: $white;
     padding: 60px 20px;
 }
 
@@ -12,9 +21,9 @@
     max-width: 900px;
     text-align: center;
     padding: 40px;
-    border: 2px solid #bfc6d0;
-    border-radius: 15px;
-    background: #f9f9f9;
+    border: 2px solid $off-white;
+    border-radius: $border-radius;
+    background: $white;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -24,10 +33,6 @@
     gap: 30px;
     margin-top: 30px;
     justify-content: center;
-}
-
-.amenity-category {
-    
 }
 
 .amenity-items {
@@ -44,15 +49,14 @@
     align-items: center;
     justify-content: flex-start;
     padding: 10px;
-    border-radius: 10px;
-    background: #f9f9f9;
+    border-radius: $border-radius;
+    background: $white;
     transition: all 0.3s ease;
     width: fit-content;
-}
-
-.amenity-item:hover {
-    background: #f5f7fa;
-    border-color: #4a90e2;
+    .amenity-item:hover {
+        background: $white;
+        border-color: $domits-host-blue;
+    }
 }
 
 .amenity-item label {
@@ -80,26 +84,26 @@
     width: 100%;
     margin-left: auto;
     margin-right: auto;
+    .onboarding-button {
+        width: 45%;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: $border-radius;
+        border: none;
+        background: $domits-host-blue;
+        color: $white;
+        cursor: pointer;
+        transition: background 0.3s;
+        .onboarding-button:hover {
+            background: #27466c;
+        }
+    }
+
+    .button-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
 }
 
-button {
-    width: 45%;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 8px;
-    border: none;
-    background: #1d3b5e;
-    color: #fff;
-    cursor: pointer;
-    transition: background 0.3s;
-}
 
-button:hover {
-    background: #27466c;
-}
-
-.button-disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}

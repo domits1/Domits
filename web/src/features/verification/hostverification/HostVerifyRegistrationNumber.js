@@ -4,7 +4,7 @@ import { useState } from "react";
 import Loading from "./components/Loading";
 import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired";
 import useFormStore from "../../hostonboarding/stores/formStore";
-import Button from "../../hostonboarding/components/button";
+import OnboardingButton from "../../hostonboarding/components/OnboardingButton";
 
 const RegistrationNumber = () => {
   const accommodationType = useFormStore((state) => state.accommodationDetails.type);
@@ -80,11 +80,11 @@ const RegistrationNumber = () => {
       </div>
       <hr></hr>
       <div className={styles["bottom-container"]}>
-        <Button
+        <OnboardingButton
           routePath={`/hostonboarding/${accommodationType}/availability`}
           btnText="Go back"
         />
-        <Button routePath={`/hostonboarding/summary`}  btnText="Proceed" />
+        <OnboardingButton routePath={`/hostonboarding/summary`} btnText="Proceed" />
       </div>
     </main>
   );
