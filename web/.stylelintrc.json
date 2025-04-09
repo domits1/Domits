@@ -1,0 +1,13 @@
+{
+    "extends": ["stylelint-config-standard"],
+    "rules": {
+      "selector-max-type": [
+        0,
+        {
+          "message": "Do not use global styling",
+          "severity": "error"
+        }
+      ]
+    }
+  }
+  
