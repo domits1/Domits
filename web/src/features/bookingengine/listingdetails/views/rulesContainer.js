@@ -24,7 +24,7 @@ const RulesContainer = ({ rules, checkIn }) => {
     <div className="rules-container">
       <p className="rules-title">House rules:</p>
       <p className="rules">
-        {rules.map((rule, index) => formatRule(rule)).join(" - ")}
+        {rules.map((rule) => formatRule(rule)).join(" - ")}
       </p>
       <div className="rules-check-in-check-out-container">
         <p>Check-in from: {formatHour(checkIn.checkIn.from)} till: {formatHour(checkIn.checkIn.till)}</p>
