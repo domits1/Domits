@@ -99,11 +99,11 @@ $off-white: #f0f0f0;
             background: #27466c;
         }
     }
+
+    .button-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
 }
 
 
-
-.button-disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
