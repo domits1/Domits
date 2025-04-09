@@ -4,10 +4,29 @@
       "selector-max-type": [
         0,
         {
-          "message": "Do not use global styling",
+          "message": "Gebruik geen globale type-selectors, maak gebruik van classes of BEM.",
           "severity": "error"
         }
-      ]
+      ],
+  
+      "selector-max-universal": [
+        0,
+        {
+          "message": "Gebruik geen universele selectors. Houd je styling specifiek.",
+          "severity": "error"
+        }
+      ],
+  
+      "max-nesting-depth": [
+        4,
+        {
+          "message": "Te diepe nesting. Houd je CSS overzichtelijk.",
+          "severity": "warning"
+        }
+      ],
+  
+      "comment-no-empty": true,
+      "no-invalid-double-slash-comments": true
     }
   }
   
