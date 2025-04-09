@@ -28,6 +28,7 @@ function AvailabilityView() {
         passedProp={availability}
         isNew={true}
         updateDates={updateSelectedDates}
+        calenderType="host"
       />
 
       <nav className="onboarding-button-box">
