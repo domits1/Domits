@@ -91,6 +91,7 @@ const OccupancyDashboard = () => {
                     <select
                         id="timeFilter"
                         value={timeFilter}
+                        className="timeFilter"
                         onChange={(e) => setTimeFilter(e.target.value)}
                     >
                         <option value="weekly">Weekly</option>

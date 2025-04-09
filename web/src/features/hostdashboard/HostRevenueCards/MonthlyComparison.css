@@ -2,7 +2,7 @@
     display: flex;
     justify-content: space-between;
     gap: 20px;
-    width: 100%;
+    width: 80%;
     padding: 20px;
 }
 
@@ -13,10 +13,10 @@
     border-radius: 10px;
     background-color: #ffffff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 0 auto; 
+    margin: 0 auto;
 }
 .mc-comparison-card canvas { 
-    max-width: 100%; 
+    max-width: 80%; 
     height: auto;
 }
 
