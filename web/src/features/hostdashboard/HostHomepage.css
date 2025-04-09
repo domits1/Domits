@@ -88,9 +88,16 @@
   border-radius: 2vh;
   display: flex;
   align-items: center;
-  color: black !important; 
+  color: black !important;
   justify-content: space-around;
   margin-right: 1rem;
+}
+
+.Mui:hover {
+  background: var(--primary-color);
+  color: white;
+  transition: .4s;
+  cursor: pointer;
 }
 
 .Mui-add {
@@ -103,7 +110,7 @@
   border-radius: 2vh;
   display: flex;
   align-items: center;
-  color: black !important; 
+  color: black !important;
   justify-content: space-around;
   margin-right: 1rem;
 }
@@ -363,7 +370,9 @@
 }
 
 @media (max-width: 1024px) {
-  .dashboard-1, .dashboard-2 {
+
+  .dashboard-1,
+  .dashboard-2 {
     width: 100%;
     margin-bottom: 20px;
   }
@@ -520,6 +529,7 @@
     opacity: 0;
     transform: translateY(30px) scale(0.5);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0px) scale(1);
@@ -624,6 +634,7 @@
 .review-content {
   text-align: start;
 }
+
 .select-option {
   display: flex;
   text-align: center;
