@@ -357,7 +357,7 @@
 }
 
 .pricing-navigation-buttons button.active {
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
 }
 
