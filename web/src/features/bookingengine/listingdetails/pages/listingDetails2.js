@@ -29,6 +29,7 @@ const ListingDetails2 = () => {
   if (loading) {
     return <Loading />;
   } else {
+    console.log(property);
     return (
       <div className="listing-details">
         <div className="container">
