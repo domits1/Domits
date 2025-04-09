@@ -17,10 +17,17 @@
         }
       ],
   
+      "min-nesting-depth": [
+        1, 
+        {
+        "message": "Houd je CSS overzichtelijk.",
+        "severity": "warning"
+      }],
+
       "max-nesting-depth": [
         4,
         {
-          "message": "Te diepe nesting. Houd je CSS overzichtelijk.",
+          "message": "Houd je CSS overzichtelijk.",
           "severity": "warning"
         }
       ],
