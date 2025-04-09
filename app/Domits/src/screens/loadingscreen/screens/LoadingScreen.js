@@ -1,6 +1,7 @@
 import {ActivityIndicator, StyleSheet, Text, View} from "react-native";
 import React from "react";
 import TranslatedText from "../../../features/translation/components/TranslatedText";
+import {COLORS} from '../../../styles/COLORS';
 
 /**
  * Loading screen with indicator
@@ -11,7 +12,7 @@ import TranslatedText from "../../../features/translation/components/TranslatedT
 const LoadingScreen = ({loadingName}) => {
      return (
         <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="green"/>
+            <ActivityIndicator size="large" color={COLORS.domitsGuestGreen}/>
             <Text style={styles.loadingText}><TranslatedText textToTranslate={"loading"}/> {loadingName}</Text>
         </View>
     )
