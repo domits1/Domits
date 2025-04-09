@@ -17,23 +17,25 @@ export default function AccommodationTypeView() {
   const { handleProceed } = useHandleAccommodationTypeProceed();
 
   return (
-    <main className="page-body">
-      <h2 className="onboardingSectionTitle">
-        What best describes your accommodation?
-      </h2>
-      <AccommodationTypeSelector
-        options={accommodationData.accommodation.types}
-        icons={accommodationData.accommodation.icons}
-        selectedType={selectedAccommodationType}
-        onSelectType={setAccommodationType}
-      />
-      <nav className="onboarding-button-box">
-        <OnboardingButton
-          routePath="/hostdashboard"
-          btnText="Go to dashboard"
+    <div className="onboarding-host-div">
+      <main className="page-body">
+        <h2 className="onboardingSectionTitle">
+          What best describes your accommodation?
+        </h2>
+        <AccommodationTypeSelector
+          options={accommodationData.accommodation.types}
+          icons={accommodationData.accommodation.icons}
+          selectedType={selectedAccommodationType}
+          onSelectType={setAccommodationType}
         />
-        <OnboardingButton onClick={handleProceed} btnText="Proceed" />
-      </nav>
-    </main>
+        <nav className="onboarding-button-box">
+          <OnboardingButton
+            routePath="/hostdashboard"
+            btnText="Go to dashboard"
+          />
+          <OnboardingButton onClick={handleProceed} btnText="Proceed" />
+        </nav>
+      </main>
+    </div>
   );
 }

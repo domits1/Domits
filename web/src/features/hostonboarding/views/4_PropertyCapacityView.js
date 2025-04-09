@@ -10,45 +10,55 @@ function PropertyCapacityView() {
   const { type: accommodationType } = useParams();
 
   const accommodationCapacity = useFormStore(
-    (state) => state.accommodationDetails.accommodationCapacity
+    (state) => state.accommodationDetails.accommodationCapacity,
   );
   const setAccommodationCapacity = useFormStore(
-    (state) => state.setAccommodationCapacity
+    (state) => state.setAccommodationCapacity,
   );
 
-  const fields = accommodationFields[accommodationType]
+  const fields = accommodationFields[accommodationType];
 
   const incrementAmount = (key, max) => {
     if (accommodationCapacity[key] < max) {
-        setAccommodationCapacity(key, accommodationCapacity[key] + 1);
+      setAccommodationCapacity(key, accommodationCapacity[key] + 1);
     }
   };
 
   const decrementAmount = (key) => {
     if (accommodationCapacity[key] > 0) {
-        setAccommodationCapacity(key, accommodationCapacity[key] - 1);
+      setAccommodationCapacity(key, accommodationCapacity[key] - 1);
     }
   };
   return (
-    <main className="container">
-      <h2 className="onboardingSectionTitle">How many people can stay here?</h2>
-      <section className="guest-amount">
-        {fields.map(({ key, label, max }) => (
-          <GuestAmountItem
-            key={key}
-            label={label}
-            value={accommodationCapacity[key]}
-            increment={() => incrementAmount(key, max)}
-            decrement={() => decrementAmount(key)}
-            max={max}
+    <div className="onboarding-host-div">
+      <main className="container">
+        <h2 className="onboardingSectionTitle">
+          How many people can stay here?
+        </h2>
+        <section className="guest-amount">
+          {fields.map(({ key, label, max }) => (
+            <GuestAmountItem
+              key={key}
+              label={label}
+              value={accommodationCapacity[key]}
+              increment={() => incrementAmount(key, max)}
+              decrement={() => decrementAmount(key)}
+              max={max}
+            />
+          ))}
+        </section>
+        <nav className="onboarding-button-box">
+          <OnboardingButton
+            routePath={`/hostonboarding/${accommodationType}/address`}
+            btnText="Go back"
           />
-        ))}
-      </section>
-      <nav className="onboarding-button-box">
-      <OnboardingButton routePath={`/hostonboarding/${accommodationType}/address`} btnText="Go back" />
-      <OnboardingButton routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" />
-      </nav>
-    </main>
+          <OnboardingButton
+            routePath={`/hostonboarding/${accommodationType}/amenities`}
+            btnText="Proceed"
+          />
+        </nav>
+      </main>
+    </div>
   );
 }
 

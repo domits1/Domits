@@ -20,26 +20,28 @@ function SummaryViewAndSubmit() {
   };
 
   return (
-    <div className="summary">
-      <FetchUserId />
-      <h2>Please check if everything is correct</h2>
-      <SummaryTable data={data} type={type} />
-      <SpecificationsTable data={data} type={type} />
-      {/* <FeatureTable features={data.Features} /> */}
-      <DeclarationSection
-        drafted={data.Drafted}
-        toggleDrafted={toggleDrafted}
-      />
-      <div className="onboarding-button-box">
-        <button
-          className="onboarding-button"
-          onClick={() => console.log("Go back")}
-        >
-          Go back to change
-        </button>
-        <button className="onboarding-button" onClick={handleSubmit}>
-          Confirm and proceed
-        </button>
+    <div className="onboarding-host-div">
+      <div className="summary">
+        <FetchUserId />
+        <h2>Please check if everything is correct</h2>
+        <SummaryTable data={data} type={type} />
+        <SpecificationsTable data={data} type={type} />
+        {/* <FeatureTable features={data.Features} /> */}
+        <DeclarationSection
+          drafted={data.Drafted}
+          toggleDrafted={toggleDrafted}
+        />
+        <div className="onboarding-button-box">
+          <button
+            className="onboarding-button"
+            onClick={() => console.log("Go back")}
+          >
+            Go back to change
+          </button>
+          <button className="onboarding-button" onClick={handleSubmit}>
+            Confirm and proceed
+          </button>
+        </div>
       </div>
     </div>
   );
