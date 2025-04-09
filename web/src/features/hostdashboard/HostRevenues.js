@@ -45,12 +45,10 @@ const HostRevenues = () => {
 
     const { loading: revenueLoading, data } = useQuery(GET_REVENUE);
 
-    // Update specific loading state
     const updateLoadingState = (key, value) => {
         setLoadingStates((prev) => ({ ...prev, [key]: value }));
     };
 
-    // Fetch user and Stripe status
     useEffect(() => {
         const fetchUserInfo = async () => {
             updateLoadingState('user', true);
@@ -84,7 +82,6 @@ const HostRevenues = () => {
     }, []);
 
 
-    // Fetch Booked Nights
     const fetchBookedNights = async () => {
         if (!cognitoUserId) return console.error("Cognito User ID is missing.");
 
@@ -103,7 +100,6 @@ const HostRevenues = () => {
         }
     };
 
-    // Fetch Monthly Revenue Data
     const fetchMonthlyRevenueData = async () => {
         if (!cognitoUserId) return console.error("Cognito User ID is missing.");
 
@@ -122,7 +118,6 @@ const HostRevenues = () => {
         }
     };
 
-    // Trigger data fetching when cognitoUserId is available
     useEffect(() => {
         if (cognitoUserId) {
             fetchBookedNights();
@@ -181,8 +176,8 @@ const HostRevenues = () => {
                                         <ADRCard hostId={cognitoUserId} />
                                         <RevPARCard />
                                         <BookedNights/>
-                                        {/* <NightsAvailable/>
-                                        <ALOSCard /> */}
+                                        <NightsAvailable/>
+                                        {/* <ALOSCard /> */}
                                         {/*<BookingTrends />*/}
                                     </div>
                                 </>

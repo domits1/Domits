@@ -8,7 +8,6 @@ const NightsAvailable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Helper: Genereer dynamisch een datumbereik (vandaag tot +10 dagen)
   const getDateRange = () => {
     const today = new Date();
     const endDate = new Date(today);
@@ -35,9 +34,8 @@ const NightsAvailable = () => {
         const session = await Auth.currentSession();
         const idToken = session.getIdToken().getJwtToken();
 
-        // STEP 1 - Fetch Accommodations
         const accommodationsResponse = await fetch(
-          '', // <-- Vul hier jouw Accommodations API URL in
+          'https://zjnqjsomdijuqdjbaumindl4a40htsug.lambda-url.eu-north-1.on.aws/',
           {
             method: 'POST',
             headers: {
@@ -70,7 +68,6 @@ const NightsAvailable = () => {
         const activeProperties = accommodations.filter((acc) => !acc.Drafted?.BOOL);
         setTotalProperties(activeProperties.length);
 
-        // STEP 2 - Fetch Available Nights
         const { startDate, endDate } = getDateRange();
 
         const nightsResponse = await fetch(
