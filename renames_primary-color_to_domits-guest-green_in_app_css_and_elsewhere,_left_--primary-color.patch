@@ -1,0 +1,2102 @@
+Subject: [PATCH] renames primary-color to domits-guest-green in app.css and elsewhere, left --primary-color in to counter breakage
+---
+Index: web/src/App.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/App.css b/web/src/App.css
+--- a/web/src/App.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/App.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -1,313 +1,317 @@
+ :root {
++    --domits-guest-green: #0D9813;
++    --domits-host-blue: #003366;
++    /* left --primary-color in to counter breakage*/
+     --primary-color: #0D9813;
+     --secondary-color: #003366;
+ }
+ 
++
+ .page-body {
+-  width: 93%;
+-  margin: 0 auto;
++    width: 93%;
++    margin: 0 auto;
+ }
+ 
+ .accommodation-row {
+-  display: flex;
+-  align-items: center;
+-  margin: 0.5em 0;
++    display: flex;
++    align-items: center;
++    margin: 0.5em 0;
+ }
+ 
+ .image-container {
+-  margin-right: 12em;
++    margin-right: 12em;
+ }
+ 
+ .resizable-image {
+-  width: 25em;
+-  height: auto;
+-  display: block;
++    width: 25em;
++    height: auto;
++    display: block;
+ }
+ 
+ .white-block-container {
+-  display: flex;
+-  flex-direction: row;
+-  justify-content: space-between;
++    display: flex;
++    flex-direction: row;
++    justify-content: space-between;
+ }
+ 
+ .white-block {
+-  flex: 1;
+-  width: 18em;
+-  height: 18em;
+-  background-color: white;
+-  border: 1px solid #ccc;
+-  margin: 5px;
++    flex: 1;
++    width: 18em;
++    height: 18em;
++    background-color: white;
++    border: 1px solid #ccc;
++    margin: 5px;
+ }
+ 
+ .descriptions-container {
+-  flex-grow: 1;
++    flex-grow: 1;
+ }
+ 
+ .manage-link {
+-  margin-left: 1em;
+-  margin-right: 3em;
++    margin-left: 1em;
++    margin-right: 3em;
+ }
+ 
+ .sidebar {
+-  width: 200px;
+-  height: 100%;
+-  font-family: Inter;
+-  font-size: 16px;
+-  font-style: normal;
+-  font-weight: 600;
+-  line-height: 24px;
+-  display: flex;
+-  flex-direction: column;
+-  align-items: center;
+-  padding-top: 20px;
++    width: 200px;
++    height: 100%;
++    font-family: Inter;
++    font-size: 16px;
++    font-style: normal;
++    font-weight: 600;
++    line-height: 24px;
++    display: flex;
++    flex-direction: column;
++    align-items: center;
++    padding-top: 20px;
+ }
+ 
+ .sidebar-label {
+-  margin-top: 10px;
+-  color: var(--colors-font-tertiary, #5C6670);
++    margin-top: 10px;
++    color: var(--colors-font-tertiary, #5C6670);
+ }
+ 
+ ul {
+-  list-style-type: none;
+-  padding: 0;
+-  margin: 0;
++    list-style-type: none;
++    padding: 0;
++    margin: 0;
+ }
+ 
+ p {
+-  margin: 0;
++    margin: 0;
+ }
+ 
+ li a {
+-  color: var(--colors-font-interactive, #0A760F);
+-  text-decoration: none;
++    color: var(--colors-font-interactive, #0A760F);
++    text-decoration: none;
+ }
+ 
+ .sidebar-link {
+-  text-decoration: none;
+-  color: inherit;
+-  display: block;
+-  padding: 10px;
++    text-decoration: none;
++    color: inherit;
++    display: block;
++    padding: 10px;
+ }
+ 
+ .array {
+-  margin: 20px;
+-  display: flex;
+-  flex-wrap: wrap;
+-  align-items: center;
+-  justify-content: center;
+-  gap: 50px;
++    margin: 20px;
++    display: flex;
++    flex-wrap: wrap;
++    align-items: center;
++    justify-content: center;
++    gap: 50px;
+ }
+ 
+ .item-preview {
+-  width: 360px;
++    width: 360px;
+ }
+ 
+ .imgacco {
+-  height: 160px;
+-  width: 100%;
++    height: 160px;
++    width: 100%;
+ }
+ 
+ .imgacco img {
+-  border-radius: 5px;
+-  height: 100%;
+-  width: 100%;
++    border-radius: 5px;
++    height: 100%;
++    width: 100%;
+ }
+ 
+ .toptext {
+-  display: flex;
+-  text-indent: 16px;
++    display: flex;
++    text-indent: 16px;
+ }
+ 
+ .toptext h3 {
+-  padding-top: 20px;
++    padding-top: 20px;
+ }
+ 
+ .selects {
+-  width: 100%;
+-  display: flex;
++    width: 100%;
++    display: flex;
+ }
+ 
+ .selects p {
+-  border-radius: 15px;
+-  border: 1px solid #D9D9D9;
+-  background: #D9D9D9;
+-  padding: 8px 12px;
+-  margin-left: 7px;
+-  transition: border-color 0.3s ease-in-out;
++    border-radius: 15px;
++    border: 1px solid #D9D9D9;
++    background: #D9D9D9;
++    padding: 8px 12px;
++    margin-left: 7px;
++    transition: border-color 0.3s ease-in-out;
+ }
+ 
+ .selects p:hover {
+-  border-color: #0D9813;
+-  cursor: pointer;
++    border-color: #0D9813;
++    cursor: pointer;
+ }
+ 
+ /* Evreything for searchbar en filter */
+ 
+ .assortment {
+-  display: flex;
+-  flex-direction: column;
+-  align-items: center;
++    display: flex;
++    flex-direction: column;
++    align-items: center;
+ }
+ 
+ #search-container,
+ #filter-container {
+-  width: 95%;
+-  display: flex;
+-  flex-wrap: wrap;
+-  align-items: center;
+-  justify-content: center;
+-  margin: 0 auto;
++    width: 95%;
++    display: flex;
++    flex-wrap: wrap;
++    align-items: center;
++    justify-content: center;
++    margin: 0 auto;
+ }
+ 
+ #search-container input,
+ #filter-container input {
+-  margin-top: 1em;
+-  background-color: transparent;
+-  width: 40%;
+-  border: none;
+-  border-bottom: 2px solid #0A760F;
+-  padding: 1em 0.3em;
+-  outline: none; 
++    margin-top: 1em;
++    background-color: transparent;
++    width: 40%;
++    border: none;
++    border-bottom: 2px solid #0A760F;
++    padding: 1em 0.3em;
++    outline: none;
+ }
+ 
+ .midtext {
+-  width: 100%;
+-  display: flex;
++    width: 100%;
++    display: flex;
+ }
+ 
+ .bookoverview,
+ .pricedetails,
+ .hostinfo {
+-  position: relative;
+-  width: 420px;
+-  height: 300px;
+-  border-radius: 15px;
+-  border: 0.5px solid #0D9813;
+-  padding-left: 20px;
+-  padding-right: 20px;
+-  margin: 10px;
+-  display: flex;
+-  flex-direction: column;
++    position: relative;
++    width: 420px;
++    height: 300px;
++    border-radius: 15px;
++    border: 0.5px solid #0D9813;
++    padding-left: 20px;
++    padding-right: 20px;
++    margin: 10px;
++    display: flex;
++    flex-direction: column;
+ }
+ 
+ .bookoverviewbold,
+ .pricedetailsbold {
+-  display: flex;
+-  font-weight: bold;
+-  gap: 100px;
++    display: flex;
++    font-weight: bold;
++    gap: 100px;
+ }
+ 
+ .moreinfo,
+ .hostinfo h4:hover,
+ .bottomtext h3:hover {
+-  color: #0A760F;
+-  cursor: pointer;
+-  text-decoration: underline;
++    color: #0A760F;
++    cursor: pointer;
++    text-decoration: underline;
+ }
+ 
+ .moreinfo p:hover,
+ .hostinfo h4:hover,
+ .bottomtext h3:hover {
+-  cursor: pointer;
+-  text-decoration: underline;
++    cursor: pointer;
++    text-decoration: underline;
+ }
+ 
+ .line {
+-  width: 100%;
+-  border-bottom: 1px solid black;
+-  margin-top: 5px;
++    width: 100%;
++    border-bottom: 1px solid black;
++    margin-top: 5px;
+ }
+ 
+ #accoimg {
+-  width: 470px;
+-  height: 250px;
+-  border-radius: 15px;
+-  box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.25);
+-  position: relative;
+-  margin-top: -22px;
++    width: 470px;
++    height: 250px;
++    border-radius: 15px;
++    box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.25);
++    position: relative;
++    margin-top: -22px;
+ }
+ 
+ .bottomtext {
+-  color: #0A760F;
+-  width: 1200px;
+-  display: flex;
+-  gap: 80px;
+-  margin-bottom: 100px;
++    color: #0A760F;
++    width: 1200px;
++    display: flex;
++    gap: 80px;
++    margin-bottom: 100px;
+ }
+ 
+ .bottomtext h3:hover {
+-  text-decoration: underline;
+-  cursor: pointer;
++    text-decoration: underline;
++    cursor: pointer;
+ }
+ 
+ /* Evreything for the detailpage */
+ 
+ .detailpage {
+-  padding-left: 60px;
++    padding-left: 60px;
+ }
+ 
+ .topdetails {
+-  display: flex;
+-  padding-top: 20px;
+-  padding-left: 20px;
+-  align-items: center;
+-  gap: 100px;
++    display: flex;
++    padding-top: 20px;
++    padding-left: 20px;
++    align-items: center;
++    gap: 100px;
+ }
+ 
+ .topdetails button {
+-  width: 40px;
+-  height: 40px;
+-  border-radius: 100px;
+-  background-color: #129518;
+-  border: none;
++    width: 40px;
++    height: 40px;
++    border-radius: 100px;
++    background-color: #129518;
++    border: none;
+ }
+ 
+ .topdetails button:hover {
+-  cursor: pointer;
++    cursor: pointer;
+ }
+ 
+ .topdetails ul {
+-  display: flex;
+-  gap: 15px;
+-  display: inline-flex;
+-  padding: 5px 15px;
+-  justify-content: center;
+-  align-items: center;
++    display: flex;
++    gap: 15px;
++    display: inline-flex;
++    padding: 5px 15px;
++    justify-content: center;
++    align-items: center;
+ }
+ 
+ .topdetails li {
+-  border-radius: 20px;
+-  border: 0.5px solid #0D9813;
+-  background: #FFF;
+-  padding: 5px;
++    border-radius: 20px;
++    border: 0.5px solid #0D9813;
++    background: #FFF;
++    padding: 5px;
+ }
+ 
+ #boxheader {
+-  display: flex;
++    display: flex;
+ }
+ 
+ .imagesacco {
+-  display: flex;
+-  padding-left: 25px;
+-  padding-right: 20px;
++    display: flex;
++    padding-left: 25px;
++    padding-right: 20px;
+ }
+ 
+ .imagesacco img {
+-  border-radius: 15px;
++    border-radius: 15px;
+ }
+ 
+ .bigimg img {
+-  width: 651px;
+-  height: 345px;
+-  flex-shrink: 0;
+-  margin: 20px;
++    width: 651px;
++    height: 345px;
++    flex-shrink: 0;
++    margin: 20px;
+ }
+ 
+ .sideimgtop img,
+ .sideimgbot img {
+-  width: 200px;
+-  height: 165px;
+-  flex-shrink: 0;
++    width: 200px;
++    height: 165px;
++    flex-shrink: 0;
+ }
+ 
+ .accodetails,
+@@ -316,54 +320,54 @@
+ .events,
+ .reviews,
+ .reviewbox1 {
+-  width: 60%;
+-  align-items: center;
+-  border-radius: 15px;
+-  border: 1px solid #0D9813;
+-  padding-left: 20px;
+-  padding-right: 20px;
+-  margin: 10px;
++    width: 60%;
++    align-items: center;
++    border-radius: 15px;
++    border: 1px solid #0D9813;
++    padding-left: 20px;
++    padding-right: 20px;
++    margin: 10px;
+ }
+ 
+ .events img,
+ .accodetails img {
+-  width: 190px;
+-  height: 200px;
+-  border-radius: 15px;
++    width: 190px;
++    height: 200px;
++    border-radius: 15px;
+ }
+ 
+ .accodetails h2,
+ #ondertitel,
+ .events h2,
+ .reviews h2 {
+-  padding-left: 20px;
++    padding-left: 20px;
+ }
+ 
+ .accodetails h4,
+ .events h4,
+ .reviews h4 {
+-  font-size: 16px;
+-  font-style: normal;
+-  font-weight: bold;
+-  color: #0A760F;
++    font-size: 16px;
++    font-style: normal;
++    font-weight: bold;
++    color: #0A760F;
+ }
+ 
+ .accodetails h4:hover,
+ .events h4:hover,
+ .reviews h4:hover {
+-  text-decoration: underline;
+-  cursor: pointer;
++    text-decoration: underline;
++    cursor: pointer;
+ }
+ 
+ #reviewscore1,
+ #reviewscore2 {
+-  border-radius: 15px;
+-  border-width: 40%;
+-  display: flex;
+-  gap: 70%;
+-  margin-bottom: 10px;
++    border-radius: 15px;
++    border-width: 40%;
++    display: flex;
++    gap: 70%;
++    margin-bottom: 10px;
+ }
+ 
+ * {
+-  font-family: Kanit, sans-serif;
++    font-family: Kanit, sans-serif;
+ }
+\ No newline at end of file
+Index: web/src/components/base/SearchBar.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/components/base/SearchBar.css b/web/src/components/base/SearchBar.css
+--- a/web/src/components/base/SearchBar.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/components/base/SearchBar.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -13,6 +13,13 @@
+   text-align: center;
+ }
+ 
++.Search-bar .Search-searchInputContainer {
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  margin-top: 0.3125rem;
++}
++
+ .Search-suggestions-container {
+   position: relative;
+   z-index: 1;
+@@ -27,7 +34,7 @@
+ }
+ 
+ .searchTitle {
+-  color: var(--primary-color);
++  color: var(--domits-guest-green);
+   font-size: 1rem;
+   font-family: 'Kanit', sans-serif;
+   font-weight: 500;
+@@ -46,10 +53,9 @@
+ }
+ 
+ .search-places-input {
+-  background-color: none;
+   display: flex;
+   justify-content: center;
+-  align-items: center;
++  align-items: center ;
+   margin: 0 auto;
+   margin-top: 0.6rem;
+   padding: 10px 5px;
+@@ -60,14 +66,13 @@
+ .search-places-input::placeholder {
+   font-family: Kanit, sans-serif;
+   text-align: center;
+-  color: var(--primary-color);
++  color: var(--domits-guest-green);
+   font-size: 1rem;
+   font-weight: 500;
+ }
+-
+ .search-places-input:focus {
+-  outline: none;
+-
++  outline: none; 
++  
+ }
+ 
+ .input-calendar {
+@@ -125,10 +130,10 @@
+   padding: 3px;
+   font-size: 0.6rem;
+   line-height: 1.875rem;
+-  border: 1px solid var(--primary-color);
++  border: 1px solid var(--domits-guest-green);
+   border-radius: 50%;
+   color: #ffffff;
+-  background-color: var(--primary-color);
++  background-color: var(--domits-guest-green);
+   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+   height: 2.5rem;
+   width: 2.5rem;
+@@ -175,7 +180,7 @@
+ }
+ 
+ .searchBar_inputfield::placeholder {
+-  color: var(--primary-color);
++  color: var(--domits-guest-green);
+   font-family: 'Kanit', sans-serif;
+   font-weight: 500;
+   font-size: 1rem;
+@@ -258,7 +263,7 @@
+   align-items: center;
+   justify-content: space-between;
+   margin-top: 0.40rem;
+-  border-bottom: 1px solid var(--primary-color);
++  border-bottom: 1px solid var(--domits-guest-green);
+ }
+ 
+ .Search-guestCounter:last-child {
+@@ -267,7 +272,7 @@
+ 
+ .Search-guestLabel {
+   font-size: 1rem;
+-  color: var(--primary-color);
++  color: var(--domits-guest-green);
+   text-align: left;
+ }
+ 
+@@ -308,7 +313,7 @@
+ }
+ 
+ .Search-guestCounter .Search-controls button:hover {
+-  border-color: var(--primary-color);
++  border-color: var(--domits-guest-green);
+ }
+ 
+ /* test */
+@@ -323,10 +328,10 @@
+ 
+ .searchTitleGuest {
+   position: absolute;
+-  color: var(--primary-color);
++  color: var(--domits-guest-green);
+   font-size: 1rem;
+   font-weight: 500;
+-  margin-top: 0.1rem;
++  padding-top: 0.3rem;
+ }
+ 
+ .Search-guestP {
+@@ -351,13 +356,6 @@
+ }
+ 
+ @media (max-width: 768px) {
+-  .Calendar-placeholder {
+-    display: flex;
+-    justify-content: center;
+-    align-items: center;
+-    text-align: center;
+-  }
+-
+   .Search-guest-dropdown {
+     width: calc(120% - 1.875rem);
+     left: 50%;
+@@ -384,9 +382,15 @@
+   }
+ }
+ 
++@media (max-width: 1200px) {
++  .responsive-calendar {
++    font-size: 0.6rem !important;
++  }
++}
++
+ @media (max-width: 768px) {
+   .responsive-calendar {
+-    font-size: 0.7rem !important;
++    font-size: 0.5rem !important;
+   }
+ }
+ 
+@@ -494,7 +498,7 @@
+ 
+ @media (max-width: 768px) {
+   .Search-bar {
+-    border: 2px solid var(--primary-color);
++    border: 2px solid var(--domits-guest-green);
+     width: 110%;
+     max-width: 400px;
+     transform: translateX(-0.9rem);
+@@ -644,7 +648,7 @@
+   }
+ 
+   .search-icon {
+-    margin-right: 10px;
++    margin-right: 12px;
+     transform: translateY(15%);
+   }
+ }
+@@ -730,118 +734,4 @@
+   .DatePicker__input {
+     padding-left: 0%;
+   }
+-}
+-
+-
+-/* dit is de css van de react packages:  */
+-.searchInputContainer .custom-select__control {
+-  width: 8.8rem;
+-  height: 2.7rem;
+-  border: none;
+-  outline: none;
+-  box-shadow: none;
+-  background: none;
+-  padding: 0;
+-  cursor: pointer;
+-  margin: auto;
+-  transform: translateY(7px);
+-}
+-
+-
+-@media (max-width: 768px) {
+-  .custom-select__control {
+-    width: 100%;
+-    transform: translateX(0);
+-  }
+-}
+-
+-.searchInputContainer .custom-select__menu {
+-  background-color: rgb(255, 255, 255);
+-  border-radius: 10px;
+-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+-  margin-top: 1rem;
+-  width: 15rem;
+-  overflow-x: hidden;
+-  overflow-y: auto;
+-  position: absolute;
+-  left: 50%;
+-  transform: translateX(-50%);
+-  z-index: 9999;
+-}
+-
+-.searchInputContainer .custom-select__option {
+-  background-color: white;
+-  color: #666;
+-  font-weight: normal;
+-  font-size: 14px;
+-  padding: 13.8px 16px;
+-  display: flex;
+-  align-items: center;
+-  justify-content: flex-start;
+-  border-radius: 10px;
+-  gap: 15px;
+-  cursor: pointer;
+-  transition: transform 0.2s;
+-  white-space: nowrap;
+-  overflow: hidden;
+-}
+-
+-.searchInputContainer .custom-select__option:hover {
+-  color: black;
+-  background-color: #e6e6e6;
+-}
+-
+-.searchInputContainer .custom-select__option--is-selected {
+-  background-color: #f0f0f0;
+-  color: black;
+-  font-weight: 800;
+-}
+-
+-.searchInputContainer .custom-select__single-value {
+-  text-align: center;
+-  font-weight: 500;
+-  color: #000;
+-  font-size: 1rem;
+-}
+-
+-.searchInputContainer .custom-select__clear-indicator {
+-  color: black;
+-  font-size: 2rem;
+-}
+-
+-.search-clear-guests {
+-  position: absolute;
+-  right: 0.5rem;
+-  top: 50%;
+-  transform: translateY(-35%);
+-  border: none;
+-  background: transparent;
+-  cursor: pointer;
+-}
+-
+-.Calendar-placeholder {
+-  display: flex;
+-  align-items: center;
+-  justify-content: center;
+-  position: absolute;
+-  top: 50%;
+-  left: 50%;
+-  transform: translate(-50%, -50%);
+-  color: var(--primary-color);
+-  font-weight: 500;
+-  font-size: 1rem;
+-  white-space: nowrap;
+-  text-overflow: ellipsis;
+-  text-align: center;
+-}
+-
+-.Search-close-guest-dropdown{
+-  position: absolute;
+-  padding: 0.3rem;
+-  right: 10px;
+-  top: 10px;
+-  background: transparent;
+-  border: none;
+-  cursor: pointer;
+-  font-size: 1.1rem;
+ }
+\ No newline at end of file
+Index: web/src/features/auth/Login.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/auth/Login.css b/web/src/features/auth/Login.css
+--- a/web/src/features/auth/Login.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/auth/Login.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -6,7 +6,7 @@
+ .loginButton {
+     width: 100%;
+     padding: 8px 15px;
+-    background: var(--primary-color);
++    background: var(--domits-guest-green);
+     border-radius: 5px;
+     border: none;
+     box-shadow: none;
+@@ -23,7 +23,7 @@
+ .registerButtonLogin {
+     width: 100%;
+     padding: 8px 15px;
+-    background: var(--secondary-color);
++    background: var(--domits-host-blue);
+     box-shadow: none;
+     border-radius: 5px;
+     border: none;
+@@ -79,7 +79,7 @@
+     margin-bottom: 10px;
+     background: white;
+     border-radius: 5px;
+-    border: 1px solid var(--primary-color);
++    border: 1px solid var(--domits-guest-green);
+     justify-content: flex-start;
+     align-items: center;
+     display: inline-flex;
+Index: web/src/features/auth/Register.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/auth/Register.css b/web/src/features/auth/Register.css
+--- a/web/src/features/auth/Register.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/auth/Register.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -4,7 +4,7 @@
+     width: 100%;
+     padding: 8px 15px;
+     margin-top: 15px;
+-    background: var(--secondary-color);
++    background: var(--domits-host-blue);
+     box-shadow: none;
+     border-radius: 5px;
+     border: none;
+Index: web/src/features/auth/RegisterModule.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/auth/RegisterModule.css b/web/src/features/auth/RegisterModule.css
+--- a/web/src/features/auth/RegisterModule.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/auth/RegisterModule.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -2,7 +2,7 @@
+     width: 100%;
+     padding: 8px 15px;
+     margin-top: 15px;
+-    background: var(--secondary-color);
++    background: var(--domits-host-blue);
+     box-shadow: none;
+     border-radius: 5px;
+     border: none;
+Index: web/src/features/bookingengine/styles/listing.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/bookingengine/styles/listing.css b/web/src/features/bookingengine/styles/listing.css
+--- a/web/src/features/bookingengine/styles/listing.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/bookingengine/styles/listing.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -256,7 +256,7 @@
+             height: 10%;
+             border: none;
+             border-radius: 2rem;
+-            background: var(--primary-color);
++            background: var(--domits-guest-green);
+             color: white;
+             cursor: pointer;
+         }
+@@ -278,7 +278,7 @@
+ }
+ 
+ .reserve-button {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white; 
+     padding: 12px 20px; 
+     border: none;
+@@ -326,7 +326,7 @@
+ }
+ 
+ .price {
+-    color: var(--primary-color);
++    color: var(--domits-guest-green);
+ }
+ 
+ .placeName {
+@@ -488,7 +488,7 @@
+ }
+ 
+ .backButton:hover {
+-    color: var(--primary-color);
++    color: var(--domits-guest-green);
+ }
+ 
+ .disclaimer {
+Index: web/src/features/guestdashboard/chat/ChatPage.module.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/guestdashboard/chat/ChatPage.module.css b/web/src/features/guestdashboard/chat/ChatPage.module.css
+--- a/web/src/features/guestdashboard/chat/ChatPage.module.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/guestdashboard/chat/ChatPage.module.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -33,7 +33,7 @@
+     flex-direction: row;
+     justify-content: space-between;
+     padding: 0.5rem;
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     border-radius: 1rem;
+     color: white;
+ }
+@@ -54,15 +54,15 @@
+ }
+ .chat__body .contactList .displayBody .displayItem:hover {
+     background-color: white;
+-    color: var(--primary-color);
+-    border: 1px solid var(--primary-color);
++    color: var(--domits-guest-green);
++    border: 1px solid var(--domits-guest-green);
+     cursor: pointer;
+ }
+ .chat__body .contactList .displayBody .displayItem:hover div {
+-    color: var(--primary-color);
++    color: var(--domits-guest-green);
+ }
+ .chat__body .contactList .displayBody .pendingContactItem:hover {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+     border: none;
+     cursor: default;
+@@ -71,22 +71,22 @@
+     color: white;
+ }
+ .chat__body .contactList .displayBody .selectedUser {
+-    color: var(--primary-color);
++    color: var(--domits-guest-green);
+     background-color: white;
+-    border: 1px solid var(--primary-color);
++    border: 1px solid var(--domits-guest-green);
+ }
+ .chat__body .contactList .displayBody .selectedUser div {
+-    color: var(--primary-color) !important;
++    color: var(--domits-guest-green) !important;
+ }
+ 
+ .chat__body .selected {
+     border: none;
+     color: white;
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+ }
+ .chat__body .disabled {
+-    border: 1px solid var(--primary-color);
+-    color: var(--primary-color);
++    border: 1px solid var(--domits-guest-green);
++    color: var(--domits-guest-green);
+     background-color: white;
+ }
+ .chat__body button {
+@@ -136,14 +136,14 @@
+ .chat__body .mainButton {
+     border-radius: 0.5rem;
+     color: white;
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     border: none;
+     padding: 0.5rem;
+ }
+ .chat__body .mainButton:hover {
+-    color: var(--primary-color);
++    color: var(--domits-guest-green);
+     background-color: white;
+-    border: 1px solid var(--primary-color);
++    border: 1px solid var(--domits-guest-green);
+ }
+ .hostButton {
+     border-radius: 0.5rem;
+Index: web/src/features/guestdashboard/guestdashboard.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/guestdashboard/guestdashboard.css b/web/src/features/guestdashboard/guestdashboard.css
+--- a/web/src/features/guestdashboard/guestdashboard.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/guestdashboard/guestdashboard.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -49,13 +49,13 @@
+ }
+ 
+ .wijzers:hover {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     transition: .3s;
+     color: white;
+ }
+ 
+ .wijzers.active {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+ }
+ 
+Index: web/src/features/guestdashboard/guestmessages/styles/guestChatScreen.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/guestdashboard/guestmessages/styles/guestChatScreen.css b/web/src/features/guestdashboard/guestmessages/styles/guestChatScreen.css
+--- a/web/src/features/guestdashboard/guestmessages/styles/guestChatScreen.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/guestdashboard/guestmessages/styles/guestChatScreen.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -118,7 +118,7 @@
+ .guest-chat-message.sent .guest-message-content {
+     display: inline-block;
+ 
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+     border-radius: 0.5rem;
+     padding: 0.3rem 1rem;
+@@ -136,7 +136,7 @@
+ }
+ 
+ .guest-chat-message.received .guest-message-content {
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     color: white;
+     display: inline-block;
+     border-radius: 0.5rem;
+@@ -172,7 +172,7 @@
+     width: 15%;
+     align-self: center;
+     border-radius: 1rem;
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+     border: none;
+     cursor: pointer;
+Index: web/src/features/guestdashboard/guestmessages/styles/guestContactList.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/guestdashboard/guestmessages/styles/guestContactList.css b/web/src/features/guestdashboard/guestmessages/styles/guestContactList.css
+--- a/web/src/features/guestdashboard/guestmessages/styles/guestContactList.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/guestdashboard/guestmessages/styles/guestContactList.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -122,8 +122,8 @@
+ 
+ .guest-contact-list-toggle button {
+     background-color: white;
+-    color: var(--primary-color);
+-    border: 1px solid var(--primary-color);
++    color: var(--domits-guest-green);
++    border: 1px solid var(--domits-guest-green);
+     padding: 10px 20px;
+     border-radius: 5%;
+     cursor: pointer;
+@@ -133,6 +133,6 @@
+ }
+ 
+ .guest-contact-list-toggle button.active {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+ }
+\ No newline at end of file
+Index: web/src/features/hostdashboard/HostDashboard.module.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/HostDashboard.module.css b/web/src/features/hostdashboard/HostDashboard.module.css
+--- a/web/src/features/hostdashboard/HostDashboard.module.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/HostDashboard.module.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -103,14 +103,14 @@
+     font-size: 0.75rem;
+ }
+ .isDrafted {
+-    color: var(--secondary-color);
++    color: var(--domits-host-blue);
+ }
+ .isLive {
+-    color: var(--secondary-color);
++    color: var(--domits-host-blue);
+ }
+ .greenBtn {
+     color: white;
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     border: none;
+     padding: 10px 25px;
+     border-radius: 10px;
+Index: web/src/features/hostdashboard/HostHomepage.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/HostHomepage.css b/web/src/features/hostdashboard/HostHomepage.css
+--- a/web/src/features/hostdashboard/HostHomepage.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/HostHomepage.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -109,13 +109,13 @@
+ }
+ 
+ .wijzer:hover {
+-  background-color: var(--secondary-color);
++  background-color: var(--domits-host-blue);
+   color: white;
+   transition: .3s;
+ }
+ 
+ .wijzer.active {
+-  background-color: var(--secondary-color);
++  background-color: var(--domits-host-blue);
+   color: white;
+ }
+ 
+Index: web/src/features/hostdashboard/HostPricing.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/HostPricing.css b/web/src/features/hostdashboard/HostPricing.css
+--- a/web/src/features/hostdashboard/HostPricing.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/HostPricing.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -357,7 +357,7 @@
+ }
+ 
+ .pricing-navigation-buttons button.active {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+ }
+ 
+Index: web/src/features/hostdashboard/HostReservations.module.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/HostReservations.module.css b/web/src/features/hostdashboard/HostReservations.module.css
+--- a/web/src/features/hostdashboard/HostReservations.module.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/HostReservations.module.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -49,7 +49,7 @@
+ .reservationContent .selected, .reservationContent .option:hover {
+     cursor: pointer;
+     color: white;
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     box-shadow: none;
+ }
+ 
+@@ -88,14 +88,14 @@
+ 
+ .reservationContent .refreshBtn {
+     color: white;
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     border: none;
+ }
+ 
+ .reservationContent .refreshBtn:hover {
+-    color: var(--secondary-color);
++    color: var(--domits-host-blue);
+     background-color: white;
+-    border: 1px solid var(--secondary-color);
++    border: 1px solid var(--domits-host-blue);
+ }
+ 
+ .reservationContent .btnBox {
+@@ -104,7 +104,7 @@
+     gap: 1em;
+     padding: 0.75em;
+     border-radius: 2em;
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     color: white;
+     align-items: center;
+ }
+@@ -135,7 +135,7 @@
+ }
+ 
+ .reservationContent .btnApprove:hover {
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+ }
+ 
+ .reservationContent .btnGroup {
+Index: web/src/features/hostdashboard/StripeModal.module.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/StripeModal.module.css b/web/src/features/hostdashboard/StripeModal.module.css
+--- a/web/src/features/hostdashboard/StripeModal.module.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/StripeModal.module.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -5,7 +5,7 @@
+     height: 2vw;
+     margin-left: auto;
+     margin-right: auto;
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     padding: 0.5vw;
+     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+     text-align: center;
+@@ -34,7 +34,7 @@
+   }
+   
+   .StripeModal button {
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     border: none;
+     border-radius: 40px;
+     font-size: 1.5em;
+Index: web/src/features/hostdashboard/contactModal.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/contactModal.css b/web/src/features/hostdashboard/contactModal.css
+--- a/web/src/features/hostdashboard/contactModal.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/contactModal.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -39,6 +39,6 @@
+     color: white;
+ }
+ #cancelButton:hover{
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+ }
+\ No newline at end of file
+Index: web/src/features/hostdashboard/hostdistribution/styles/HostDistribution.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/hostdistribution/styles/HostDistribution.css b/web/src/features/hostdashboard/hostdistribution/styles/HostDistribution.css
+--- a/web/src/features/hostdashboard/hostdistribution/styles/HostDistribution.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/hostdistribution/styles/HostDistribution.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -583,7 +583,7 @@
+ }
+ 
+ .channelNavigation button.active {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+ }
+ 
+Index: web/src/features/hostdashboard/hostmessages/styles/hostChatScreen.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/hostmessages/styles/hostChatScreen.css b/web/src/features/hostdashboard/hostmessages/styles/hostChatScreen.css
+--- a/web/src/features/hostdashboard/hostmessages/styles/hostChatScreen.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/hostmessages/styles/hostChatScreen.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -120,7 +120,7 @@
+ .chat-message.sent .message-content {
+     display: inline-block;
+ 
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     color: white;
+     border-radius: 0.5rem;
+     padding: 0.3rem 1rem;
+@@ -138,7 +138,7 @@
+ }
+ 
+ .chat-message.received .message-content {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+     display: inline-block;
+     border-radius: 0.5rem;
+@@ -175,7 +175,7 @@
+     width: 15%;
+     align-self: center;
+     border-radius: 1rem;
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     color: white;
+     border: none;
+     cursor: pointer;
+@@ -217,7 +217,7 @@
+     height: 2.5em;
+     align-self: center;
+     border-radius: 0.5rem;
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+     border: none;
+     cursor: pointer;
+@@ -226,7 +226,7 @@
+ .review-link-button {
+     height: 2.5em;
+     border-radius: 0.5rem;
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     color: white;
+     border: none;
+     cursor: pointer;
+Index: web/src/features/hostdashboard/hostmessages/styles/hostContactList.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/hostmessages/styles/hostContactList.css b/web/src/features/hostdashboard/hostmessages/styles/hostContactList.css
+--- a/web/src/features/hostdashboard/hostmessages/styles/hostContactList.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/hostmessages/styles/hostContactList.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -160,8 +160,8 @@
+ 
+ .contact-list-toggle button {
+     background-color: white;
+-    color: var(--secondary-color);
+-    border: 1px solid var(--secondary-color);
++    color: var(--domits-host-blue);
++    border: 1px solid var(--domits-host-blue);
+     padding: 10px 20px;
+     border-radius: 5%;
+     cursor: pointer;
+@@ -171,6 +171,6 @@
+ }
+ 
+ .contact-list-toggle button.active {
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     color: white;
+ }
+\ No newline at end of file
+Index: web/src/features/hostdashboard/settingshostdashboard.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostdashboard/settingshostdashboard.css b/web/src/features/hostdashboard/settingshostdashboard.css
+--- a/web/src/features/hostdashboard/settingshostdashboard.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostdashboard/settingshostdashboard.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -99,7 +99,7 @@
+ }
+ 
+ .host-icon-background {
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     border-radius: 15px;
+     padding: 0.4rem;
+     margin-left: 5%;
+Index: web/src/features/hostonboarding/styles/onboardingHost.scss
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/hostonboarding/styles/onboardingHost.scss b/web/src/features/hostonboarding/styles/onboardingHost.scss
+--- a/web/src/features/hostonboarding/styles/onboardingHost.scss	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/hostonboarding/styles/onboardingHost.scss	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -143,7 +143,7 @@
+ .radioInput {
+   padding: 11px 15px;
+   border-radius: 5px;
+-  border: 1px solid var(--secondary-color);
++  border: 1px solid var(--domits-host-blue);
+ }
+ 
+ .file-input {
+Index: web/src/features/verification/hostverification/hostverification.module.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/features/verification/hostverification/hostverification.module.css b/web/src/features/verification/hostverification/hostverification.module.css
+--- a/web/src/features/verification/hostverification/hostverification.module.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/features/verification/hostverification/hostverification.module.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -133,7 +133,7 @@
+ }
+ 
+ .publish-btn {
+-  background-color: var(--secondary-color);
++  background-color: var(--domits-host-blue);
+   color: white;
+   border: 0px;
+   padding: 7px 40px;
+Index: web/src/pages/about/about.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/about/about.css b/web/src/pages/about/about.css
+--- a/web/src/pages/about/about.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/about/about.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -63,7 +63,7 @@
+     flex-direction: column;
+     justify-content: space-between;
+     width: 49%;
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     border-radius: 20px;
+     padding: 20px;
+     margin-top: 20px;
+@@ -157,7 +157,7 @@
+ }
+ 
+ .about__member>p:nth-of-type(1) {
+-    color: var(--primary-color);
++    color: var(--domits-guest-green);
+ }
+ 
+ .about__avatar {
+Index: web/src/pages/careers/careers.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/careers/careers.css b/web/src/pages/careers/careers.css
+--- a/web/src/pages/careers/careers.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/careers/careers.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -21,7 +21,7 @@
+ }
+ 
+ .filter-container button.active, .filter-container button:hover {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+ }
+ 
+@@ -74,7 +74,7 @@
+     transition: max-height 0.4s ease-in-out;
+ }
+ .apply-button {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+     margin: 10px auto;
+     border: none;
+Index: web/src/pages/careers/jobDetails.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/careers/jobDetails.css b/web/src/pages/careers/jobDetails.css
+--- a/web/src/pages/careers/jobDetails.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/careers/jobDetails.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -27,7 +27,7 @@
+ }
+ 
+ .company-name {
+-    color: var(--primary-color);
++    color: var(--domits-guest-green);
+     font-size: 45px;
+     font-weight: bold;
+     display: block;
+@@ -50,7 +50,7 @@
+     padding: 10px 20px;
+     font-size: 1em;
+     color: white;
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     border-radius: 5px;
+ }
+ 
+@@ -100,7 +100,7 @@
+ 
+ .resp-heading {
+     font-size: 48px;
+-    color: var(--primary-color);
++    color: var(--domits-guest-green);
+     margin-bottom: 20px;
+     font-weight: 600;
+ }
+@@ -112,7 +112,7 @@
+ }
+ 
+ .technologies {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+@@ -139,7 +139,7 @@
+ }
+ 
+ .exp-heading {
+-    color: var(--primary-color);
++    color: var(--domits-guest-green);
+     font-size: 48px;
+     font-weight: 600;
+ }
+Index: web/src/pages/contact/contact.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/contact/contact.css b/web/src/pages/contact/contact.css
+--- a/web/src/pages/contact/contact.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/contact/contact.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -75,11 +75,11 @@
+ }
+ 
+ #attachmentsbutton {
+-  background: var(--secondary-color);
++  background: var(--domits-host-blue);
+ }
+ 
+ #sendbutton {
+-  background: var(--primary-color);
++  background: var(--domits-guest-green);
+   margin-left: auto;
+ }
+ 
+@@ -94,7 +94,7 @@
+ }
+ 
+ .Contact-button {
+-  background-color: var(--primary-color);
++  background-color: var(--domits-guest-green);
+   color: white;
+   border-radius: 1vh;
+   border: none;
+Index: web/src/pages/helpdesk/helpdesk.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/helpdesk/helpdesk.css b/web/src/pages/helpdesk/helpdesk.css
+--- a/web/src/pages/helpdesk/helpdesk.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/helpdesk/helpdesk.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -12,7 +12,7 @@
+ .helpSearchInput {
+   width: 100%;
+   padding: 15px 10px;
+-  border: 2px solid var(--primary-color);
++  border: 2px solid var(--domits-guest-green);
+   border-radius: 5px;
+ }
+ 
+@@ -20,7 +20,7 @@
+   position: absolute;
+   border-radius: 5px;
+   border: none;
+-  background-color: var(--primary-color);
++  background-color: var(--domits-guest-green);
+   color: white;
+   font-weight: 500;
+   right: 1px;
+Index: web/src/pages/home/Accommodations.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/home/Accommodations.css b/web/src/pages/home/Accommodations.css
+--- a/web/src/pages/home/Accommodations.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/home/Accommodations.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -91,7 +91,7 @@
+ 
+ .accocard-price {
+   font-size: 18px;
+-  color: var(--primary-color);
++  color: var(--domits-guest-green);
+   margin-bottom: 8px;
+   font-weight: 500;
+ }
+@@ -128,7 +128,7 @@
+ }
+ 
+ .why-domits-link {
+-  background-color: var(--primary-color);
++  background-color: var(--domits-guest-green);
+   color: white;
+   padding: 10px 10px;
+   text-decoration: none;
+Index: web/src/pages/home/components/bases.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/home/components/bases.css b/web/src/pages/home/components/bases.css
+--- a/web/src/pages/home/components/bases.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/home/components/bases.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -89,7 +89,7 @@
+     align-items: center;
+     gap: 10px;
+     padding: 12px;
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     border: none;
+     border-radius: 10px;
+     cursor: pointer;
+@@ -157,7 +157,7 @@
+ .header-dropdown-login-button {
+     margin-top: 0;
+     margin-bottom: 10px;
+-    background: var(--primary-color);
++    background: var(--domits-guest-green);
+     border: none;
+     box-shadow: none;
+ }
+@@ -165,7 +165,7 @@
+ .header-dropdown-register-button,
+ .header-dropdown-logout-button {
+     margin-top: 10px;
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     border: none;
+     box-shadow: none;
+ }
+Index: web/src/pages/howitworks/howitworks.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/howitworks/howitworks.css b/web/src/pages/howitworks/howitworks.css
+--- a/web/src/pages/howitworks/howitworks.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/howitworks/howitworks.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -14,13 +14,13 @@
+ }
+ 
+ .hiwCardImg, .hiwCardImgHost {
+-  background-color: var(--primary-color);
++  background-color: var(--domits-guest-green);
+   width: 100%;
+   height: 150px;
+ }
+ 
+ .hiwCardImgHost {
+-  background-color: var(--secondary-color);
++  background-color: var(--domits-host-blue);
+ }
+ 
+ .hiwCardHeading {
+@@ -35,7 +35,7 @@
+ 
+ .hiwBtn, .hiwBtnHost {
+   color: white;
+-  background-color: var(--primary-color);
++  background-color: var(--domits-guest-green);
+   text-decoration: none;
+   width: 100%;
+   text-align: center;
+@@ -47,7 +47,7 @@
+ }
+ 
+ .hiwBtnHost {
+-  background-color: var(--secondary-color);
++  background-color: var(--domits-host-blue);
+ }
+ 
+ @media (max-width: 1000px) {
+Index: web/src/pages/howitworks/howitworksrework.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/howitworks/howitworksrework.css b/web/src/pages/howitworks/howitworksrework.css
+--- a/web/src/pages/howitworks/howitworksrework.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/howitworks/howitworksrework.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -88,7 +88,7 @@
+ }
+ 
+ .howitworks__info-block--guests {
+-  background: var(--primary-color);
++  background: var(--domits-guest-green);
+ }
+ 
+ .howitworks__info-block--hosts {
+@@ -233,7 +233,7 @@
+   }
+ 
+   .howitworks__info-block.howitworks__info-block--guests>.howitworks__info-item {
+-    background: var(--primary-color);
++    background: var(--domits-guest-green);
+     border-radius: 1rem;
+     margin-top: 1rem;
+     margin-bottom: 1rem;
+Index: web/src/pages/landingpage/Faq.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/landingpage/Faq.css b/web/src/pages/landingpage/Faq.css
+--- a/web/src/pages/landingpage/Faq.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/landingpage/Faq.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -27,8 +27,8 @@
+   flex-direction: row ;
+   color: white;
+   border-radius: 8px;
+-  background-color: var(--primary-color);
+-  border: 2px solid var(--primary-color);
++  background-color: var(--domits-guest-green);
++  border: 2px solid var(--domits-guest-green);
+   padding: 10px 20px;
+   margin: 10px 0 0 0;
+   cursor: pointer;
+@@ -62,8 +62,8 @@
+ .category{
+   color: white;
+   border-radius: 8px;
+-  background-color: var(--primary-color);
+-  border: 2px solid var(--primary-color);
++  background-color: var(--domits-guest-green);
++  border: 2px solid var(--domits-guest-green);
+   padding: 10px 20px;
+   margin: 30px 20px;
+   cursor: pointer;
+@@ -71,7 +71,7 @@
+ 
+ .faq-box {
+   width: 50%;
+-  border: 2px solid var(--primary-color);
++  border: 2px solid var(--domits-guest-green);
+   border-radius: 10px;
+   margin: 10px 0;
+   padding: 15px;
+Index: web/src/pages/productupdates/release.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/productupdates/release.css b/web/src/pages/productupdates/release.css
+--- a/web/src/pages/productupdates/release.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/productupdates/release.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -28,7 +28,7 @@
+ }
+ 
+ .release__button {
+-  background-color: var(--primary-color);
++  background-color: var(--domits-guest-green);
+   color: white;
+   border: none;
+   padding: 10px 20px;
+@@ -39,7 +39,7 @@
+ }
+ 
+ .release__button:hover {
+-  background-color: var(--primary-color);
++  background-color: var(--domits-guest-green);
+ }
+ 
+ .release__image-header {
+Index: web/src/pages/whydomits/whydomits.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/pages/whydomits/whydomits.css b/web/src/pages/whydomits/whydomits.css
+--- a/web/src/pages/whydomits/whydomits.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/pages/whydomits/whydomits.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -47,7 +47,7 @@
+ 
+ .why-domits__card {
+     width: 39.2%;
+-    background: var(--primary-color);
++    background: var(--domits-guest-green);
+     min-height: 9.3rem;
+     border-radius: 10px;
+     display: flex;
+@@ -65,7 +65,7 @@
+ }
+ 
+ .why-domits-bar {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: white;
+     align-items: center;
+     height: 5vh;
+Index: web/src/styles/sass/auth/login.scss
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/styles/sass/auth/login.scss b/web/src/styles/sass/auth/login.scss
+--- a/web/src/styles/sass/auth/login.scss	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/styles/sass/auth/login.scss	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -1,3 +1,13 @@
++$primary-color: var(--domits-guest-green);
++$secondary-color: var(--domits-host-blue);
++$hover-primary: #6fb873;
++$hover-secondary: #4a86c3;
++$font-family: 'Kanit', sans-serif;
++$font-size-large: 30px;
++$font-size-medium: 18px;
++$font-size-small: 14px;
++$border-radius: 5px;
++
+ .loginLogo {
+   width: 15%;
+   margin-top: 25px;
+@@ -6,44 +16,44 @@
+ .loginButton {
+   width: 100%;
+   padding: 8px 15px;
+-  background: var(--primary-color);
+-  border-radius: 5px;
++  background: $primary-color;
++  border-radius: $border-radius;
+   border: none;
+   box-shadow: none;
+   color: white;
+-  font-size: 18px;
+-  cursor: pointer; 
++  font-size: $font-size-medium;
++  cursor: pointer;
+   margin-top: 15px;
+-}
+ 
+-.loginButton:hover {
+-  background: #6fb873;
++  &:hover {
++    background: $hover-primary;
++  }
+ }
+ 
+ .registerButtonLogin {
+   width: 100%;
+   padding: 8px 15px;
+-  background: var(--secondary-color);
++  background: $secondary-color;
+   box-shadow: none;
+-  border-radius: 5px;
++  border-radius: $border-radius;
+   border: none;
+   color: white;
+-  font-size: 18px;
++  font-size: $font-size-medium;
+   display: block;
+   text-align: center;
+-  text-decoration: none; 
++  text-decoration: none;
+   cursor: pointer;
+   margin-top: 15px;
+-}
+ 
+-.registerButtonLogin:hover {
+-  background: #4a86c3;
++  &:hover {
++    background: $hover-secondary;
++  }
+ }
+ 
+ .loginTitle {
+   color: black;
+-  font-size: 30px;
+-  font-family: 'Kanit', sans-serif;
++  font-size: $font-size-large;
++  font-family: $font-family;
+   font-weight: 400;
+   line-height: 54px;
+   word-wrap: break-word;
+@@ -55,20 +65,19 @@
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+-  
+ }
+ 
+ .loginForm {
+   min-width: 373px;
+   width: 100%;
+   padding: 15px 30px;
+-  border-radius: 5px;
++  border-radius: $border-radius;
+   margin-bottom: 50px;
+   box-sizing: border-box;
+ }
+ 
+ label {
+-  font-size: 18px;
++  font-size: $font-size-medium;
+ }
+ 
+ .loginInput {
+@@ -78,25 +87,44 @@
+   margin-top: 10px;
+   margin-bottom: 10px;
+   background: white;
+-  border-radius: 5px;
+-  border: 1px solid var(--primary-color);
++  border-radius: $border-radius;
++  border: 1px solid $primary-color;
+   justify-content: flex-start;
+   align-items: center;
+   display: inline-flex;
++
++  &.passwordContainer {
++    position: relative;
++
++    .togglePasswordButton {
++      position: absolute;
++      right: 10px;
++      top: 50%;
++      transform: translateY(-50%);
++      background: none;
++      border: none;
++      cursor: pointer;
++    }
++  }
+ }
++
+ .emailSection {
+   padding: 6rem;
+   margin-bottom: 15%;
+ }
+-.forgotPasswordText:hover {
+-  color: royalblue;
+-  cursor: pointer;
++
++.forgotPasswordText {
++  &:hover {
++    color: royalblue;
++    cursor: pointer;
++  }
+ }
++
+ .noAccountText {
+   color: black;
+   margin-top: 20px;
+-  font-size: 14px;
+-  font-family: 'Kanit', sans-serif;
++  font-size: $font-size-small;
++  font-family: $font-family;
+   font-weight: 400;
+   line-height: 18px;
+   word-wrap: break-word;
+@@ -112,24 +140,5 @@
+   background: red;
+   opacity: 0.7;
+   color: white;
+-  border-radius: 5px;
+-}
+-.passwordContainer {
+-  position: relative;
+-}
+-
+-.loginInput {
+-  width: 100%;
+-  padding: 10px;
+-  box-sizing: border-box;
+-}
+-
+-.togglePasswordButton {
+-  position: absolute;
+-  right: 10px;
+-  top: 50%;
+-  transform: translateY(-50%);
+-  background: none;
+-  border: none;
+-  cursor: pointer;
+-}
++  border-radius: $border-radius;
++}
+\ No newline at end of file
+Index: web/src/styles/sass/auth/register.scss
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/styles/sass/auth/register.scss b/web/src/styles/sass/auth/register.scss
+--- a/web/src/styles/sass/auth/register.scss	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/styles/sass/auth/register.scss	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -1,6 +1,6 @@
+ // Variables
+ $primary-color: #003366;
+-$secondary-color: var(--secondary-color);
++$secondary-color: var(--domits-host-blue);
+ $hover-secondary: #4a86c3;
+ $error-color: red;
+ $error-border-color: red;
+Index: web/src/styles/sass/base/MenuBar.scss
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/styles/sass/base/MenuBar.scss b/web/src/styles/sass/base/MenuBar.scss
+--- a/web/src/styles/sass/base/MenuBar.scss	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/styles/sass/base/MenuBar.scss	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -1,5 +1,5 @@
+-$primary-color: var(--primary-color);
+-$secondary-color: var(--secondary-color);
++$primary-color: var(--domits-guest-green);
++$secondary-color: var(--domits-host-blue);
+ $box-shadow: 0 0 5px hsl(0 0% 78%);
+ $dropdown-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+ $border-radius: 10px;
+Index: web/src/styles/sass/booking-engine/listing.scss
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/styles/sass/booking-engine/listing.scss b/web/src/styles/sass/booking-engine/listing.scss
+--- a/web/src/styles/sass/booking-engine/listing.scss	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/styles/sass/booking-engine/listing.scss	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -2,7 +2,7 @@
+ $box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+ $border-radius: 8px;
+ $border-color: #ddd;
+-$primary-color: var(--primary-color);
++$primary-color: var(--domits-guest-green);
+ $border-color: #ccc;
+ $background-light: #f9f9f9;
+ $shadow-light: 0 4px 8px rgba(0, 0, 0, 0.1);
+Index: web/src/utils/PageSwitcher.module.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/web/src/utils/PageSwitcher.module.css b/web/src/utils/PageSwitcher.module.css
+--- a/web/src/utils/PageSwitcher.module.css	(revision e16cfdc07286a471aa3f6d4823517af29560a4c8)
++++ b/web/src/utils/PageSwitcher.module.css	(revision 4d147985b3d4b65c0c938764d6dbee75b35f1e2f)
+@@ -57,7 +57,7 @@
+ }
+ 
+ .pagination .active {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     color: #fff;
+ }
+ 
+@@ -92,7 +92,7 @@
+ }
+ 
+ .listingEdit {
+-    background-color: var(--primary-color);
++    background-color: var(--domits-guest-green);
+     cursor: pointer;
+ }
+ 
+@@ -102,7 +102,7 @@
+ }
+ 
+ .listingDraft {
+-    background-color: var(--secondary-color);
++    background-color: var(--domits-host-blue);
+     cursor: pointer;
+ }
+ 

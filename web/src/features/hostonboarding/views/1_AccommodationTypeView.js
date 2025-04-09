@@ -10,11 +10,11 @@ export default function AccommodationTypeView() {
   // Currently selected
   const selectedAccommodationType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.type,
-  );
+  )
   // Set the type
   const setAccommodationType = useFormStoreHostOnboarding(
     (state) => state.setAccommodationType,
-  );
+  )
 
   const { handleProceed } = useHandleAccommodationTypeProceed()
 
@@ -38,6 +38,4 @@ export default function AccommodationTypeView() {
       </nav>
     </main>
   )
-    </main>
-  );
 }

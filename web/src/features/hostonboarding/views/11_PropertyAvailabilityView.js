@@ -10,7 +10,6 @@ function PropertyAvailabilityView() {
   const { type: accommodationType } = useParams();
   const { availability, updateSelectedDates } = useAvailability();
 
-  const { handleProceedToLegal } = useHandleLegalProceed()
   const { handleProceedToLegal } = useHandleLegalProceed();
 
   return (
