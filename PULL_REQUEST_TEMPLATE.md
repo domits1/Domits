@@ -8,11 +8,15 @@ Closes #[issue number] (only if it should close it)
 ## Proposed Changes
 Description: [Please add detailed description of the changes here]
 
+
 ## Branch management
 - [ ] Merging into acceptance (not main)
 
 ## Change size
-- [ ] Too large (1000+, only  if its refactored code, please see below)
+_Please indicate the size of this change._  
+
+- [ ] Too large (1000+ lines, mostly refactored/moved code — explain in description to avoid reviewing old logic)
+  _Please clarify in the description which parts are moved/unchanged code, so the reviewer doesn’t review old logic._
 - [ ] Big change (+-max 1000)
 - [ ] Small change (less than 300)
 
@@ -24,8 +28,8 @@ Description: [Please add detailed description of the changes here]
 
 ## Refactoring
 - [ ] Refactors following files (but didn't change the code)
-  - src/features/example.xx
-  - app/src/data/example.xx
+  _- src/features/example.xx_
+  _- app/src/data/example.xx_
 
 ## Npm packages 
 - [ ] NPM Packages installed
@@ -34,45 +38,47 @@ Description: [Please add detailed description of the changes here]
 - [ ] Did you check for vulnerabilities using "npm audit"?
 
 ## PR workflow
-0. “Pull” the changes to your local machine (get the most recent base)
-1. Create a “branch” (version)
-2. Commit the changes
-   3.a Push your changes
-   3.b Open a “pull request” (propose changes)
-4. Discuss and review your code
-5. Rebase and tests
-6. “Merge” your branch to the master branch
+_0. Pull the latest version of *Acceptance* `$git pull origin/acceptance`_
+_1. Create a “branch” (version)_
+_2. Commit and push your changes_
+_3. Test your code locally_
+_4. Open a “Pull Request” (PR = propose changes)_
+_5. Discuss and request review of your code_
+_6. “Merge” your branch to the master branch_
 
-## Checklist
-- [ ] Check if you didn't use global styling -- for more explanation view https://github.com/domits1/Domits/issues/1691
-- [ ] Console.logs are deleted
-- [ ] Commented code is deleted
+## Checklist  
+- [ ] No global styling (see [#1691](https://github.com/domits1/Domits/issues/1691) for why)  
+- [ ] No `console.log` left in code  
+- [ ] No commented-out code remains  
 - [ ] Jest tests are included
-- [ ] Jest tests have succeeded
-- [ ] Pull request is assigned to a reviewer
-- [ ] Pull request title is descriptive and includes the issue number
-- [ ] Code has been tested in a local environment
-- [ ] No sensitive data (e.g., passwords, keys) are hardcoded
+- [ ] Jest tests are passing  
+- [ ] Pull request has an assigned reviewer  
+- [ ] PR title is descriptive and includes issue number  
+- [ ] Code tested locally  
+- [ ] No hardcoded sensitive data (e.g., API-keys/passwords)  
 
-All boxes must be checked in order to move forward with your pull request.
+_All boxes must be checked before merging._  
 
-## Reviewers
-Please be aware that you are responsible for your own pull request, please contact the reviewer. 
-Let the reviewers know what code is new, and what is just refactored.
+## Reviewers  
+As the Pull Requester, **you are responsible for your own pull request.**  
+1. Send a message (with PR link) to the reviewer you choose.  
+2. If they don’t respond within a reasonable time, **remind them or choose another.**  
+3. You are also responsible for resolving feedback and notifying the reviewer after updates.  
+(*Note: GitHub notifications are often muted – always follow up with a DM.*)  
 
-# Reviewers
-_please tag them on the PR._
-Expert Reviewer: @[GitHub username]
-- Marijn (Styling, scss, js)
-- Sander (App, backend)
-- Sebastiaan (Security)
+### Suggested Reviewers  
+- [ ] Expert Reviewer: @[GitHub username]  
+- Marijn (Styling, SCSS, JS)  
+- Sander (App, Backend)  
+<!-- Temporarily removed due to personal situation -->
+<!-- - Sebastiaan (Security, SCSS) -->  
 
-Second Reviewer: @[GitHub username]
-Liefst iemand die je code al kent, maar bijvoorbeeld, kunnen ook: 
-- Ryan
-- Kacper
-- Raman
+- [ ] Second Reviewer: @[GitHub username]  
+Preferably someone familiar with the part of code you're working on. For example:  
+- Ryan  
+- Kacper  
+- Raman  
 
-## Keep or delete my branch
-- [x] Delete my branch
-- [ ] Keep my branch
+## Keep or delete my branch  
+- [x] Delete my branch after merge  
+- [ ] Keep my branch  
