@@ -1,26 +1,26 @@
-import React from "react"
+import React from "react";
 import { useSummary } from "../hooks/useSummary"
-import SummaryTable from "../components/SummaryTable"
-import SpecificationsTable from "../components/SpecificationsTable"
-import DeclarationSection from "../components/DeclarationSection"
-import FetchUserId from "../utils/FetchUserId"
-import { useNavigate } from "react-router-dom"
-import { submitAccommodation } from "../services/SubmitAccommodation.js"
+import SummaryTable from "../components/SummaryTable";
+import SpecificationsTable from "../components/SpecificationsTable";
+import DeclarationSection from "../components/DeclarationSection";
+import FetchUserId from "../utils/FetchUserId";
+import { useNavigate } from "react-router-dom";
+import { submitAccommodation } from "../services/SubmitAccommodation.js";
 
 function SummaryViewAndSubmit() {
-  const { data, toggleDrafted } = useSummary()
-  const type = data.type
-  const navigate = useNavigate()
+  const { data, toggleDrafted } = useSummary();
+  const type = data.type;
+  const navigate = useNavigate();
 
   const handleSubmit = () => {
     console.log(
       "response Promise of submitAccommodation: \n",
       submitAccommodation(navigate),
-    )
-  }
+    );
+  };
 
   return (
-    <div className="container" id="summary">
+    <div className="summary">
       <FetchUserId />
       <h2>Please check if everything is correct</h2>
       <SummaryTable data={data} type={type} />
@@ -40,7 +40,7 @@ function SummaryViewAndSubmit() {
         </button>
       </div>
     </div>
-  )
+  );
 }
 
-export default SummaryViewAndSubmit
+export default SummaryViewAndSubmit;

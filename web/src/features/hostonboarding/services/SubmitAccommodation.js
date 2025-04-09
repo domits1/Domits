@@ -1,3 +1,6 @@
+import useFormStore from "../stores/formStore";
+import mockData from "../stores/data/mockData.json";
+import { getAccessToken } from "../../../services/getAccessToken";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import mockData from "./data/mockData.json"
 import { getAccessToken } from "../../../services/getAccessToken"
@@ -5,35 +8,35 @@ import { getAccessToken } from "../../../services/getAccessToken"
 export async function submitAccommodation() {
   // API URL
   const API_BASE_URL =
-    "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property"
-  const request = await collectData()
+    "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
+  const request = await collectData();
 
-  const response = await _fetch()
+  const response = await _fetch();
   async function _fetch() {
     try {
-      console.log("Start submitAccommodation, using url: ", API_BASE_URL)
-      console.log("request:\n", request)
+      console.log("Start submitAccommodation, using url: ", API_BASE_URL);
+      console.log("request:\n", request);
 
-      const response = await fetch(API_BASE_URL, request)
+      const response = await fetch(API_BASE_URL, request);
 
       if (response.data) {
         /// THIS is the result of the form:
         //Remove this line if you don't want to log the response
-        console.log("Accommodation uploaded successfully:", response.data)
+        console.log("Accommodation uploaded successfully:", response.data);
 
         //Remove this line if you don't want to log the response
         if (response.data.statusCode === 200) {
-          navigate("/hostdashboard")
+          navigate("/hostdashboard");
         }
       }
 
-      return response
+      return response;
     } catch (error) {
-      throw error
+      throw error;
     }
   }
 
-  return response
+  return response;
 
   async function collectData() {
     // Retrieve form data from FormStore
@@ -49,7 +52,7 @@ export async function submitAccommodation() {
         console.log(
           "Collected accommodationDetails: ",
           JSON.stringify(accommodationDetails, null, 2),
-        )
+        );
 
         const request = {
           method: "POST",
@@ -58,14 +61,14 @@ export async function submitAccommodation() {
             Authorization: getAccessToken(), // Retrieve the token from localStorage
           },
           body: JSON.stringify(accommodationDetails), // Use the REAL form data
-        }
+        };
 
-        return { request }
+        return { request };
       } else {
-        console.error("No Formdata found!")
+        console.error("No Formdata found!");
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   }
 }

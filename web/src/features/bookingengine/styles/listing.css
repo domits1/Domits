@@ -256,7 +256,7 @@
             height: 10%;
             border: none;
             border-radius: 2rem;
-            background: var(--primary-color);
+            background: var(--domits-guest-green);
             color: white;
             cursor: pointer;
         }
@@ -278,7 +278,7 @@
 }
 
 .reserve-button {
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white; 
     padding: 12px 20px; 
     border: none;
@@ -326,7 +326,7 @@
 }
 
 .price {
-    color: var(--primary-color);
+    color: var(--domits-guest-green);
 }
 
 .placeName {
@@ -392,7 +392,6 @@
 }
 
 .checkInCheckOut {
-    margin-top: 15px;
     background-color: #f9f9f9;
     padding: 15px;
     border-radius: 8px;
@@ -489,7 +488,7 @@
 }
 
 .backButton:hover {
-    color: var(--primary-color);
+    color: var(--domits-guest-green);
 }
 
 .disclaimer {
@@ -527,7 +526,7 @@
     bottom: 92%;
     left: 45.5%;
     transform: translateX(-50%);
-    white-space: wrap;
+    white-space: normal;
     opacity: 0;
     transition: opacity 0.3s ease;
     max-width: 15vw;

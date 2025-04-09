@@ -33,7 +33,7 @@
     flex-direction: row;
     justify-content: space-between;
     padding: 0.5rem;
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     border-radius: 1rem;
     color: white;
 }
@@ -54,15 +54,15 @@
 }
 .chat__body .contactList .displayBody .displayItem:hover {
     background-color: white;
-    color: var(--primary-color);
-    border: 1px solid var(--primary-color);
+    color: var(--domits-guest-green);
+    border: 1px solid var(--domits-guest-green);
     cursor: pointer;
 }
 .chat__body .contactList .displayBody .displayItem:hover div {
-    color: var(--primary-color);
+    color: var(--domits-guest-green);
 }
 .chat__body .contactList .displayBody .pendingContactItem:hover {
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
     border: none;
     cursor: default;
@@ -71,22 +71,22 @@
     color: white;
 }
 .chat__body .contactList .displayBody .selectedUser {
-    color: var(--primary-color);
+    color: var(--domits-guest-green);
     background-color: white;
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--domits-guest-green);
 }
 .chat__body .contactList .displayBody .selectedUser div {
-    color: var(--primary-color) !important;
+    color: var(--domits-guest-green) !important;
 }
 
 .chat__body .selected {
     border: none;
     color: white;
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
 }
 .chat__body .disabled {
-    border: 1px solid var(--primary-color);
-    color: var(--primary-color);
+    border: 1px solid var(--domits-guest-green);
+    color: var(--domits-guest-green);
     background-color: white;
 }
 .chat__body button {
@@ -136,14 +136,14 @@
 .chat__body .mainButton {
     border-radius: 0.5rem;
     color: white;
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     border: none;
     padding: 0.5rem;
 }
 .chat__body .mainButton:hover {
-    color: var(--primary-color);
+    color: var(--domits-guest-green);
     background-color: white;
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--domits-guest-green);
 }
 .hostButton {
     border-radius: 0.5rem;

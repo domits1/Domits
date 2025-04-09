@@ -3,26 +3,26 @@ import AmenityCategory from "../components/AmenityCategory"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import { useParams } from "react-router-dom"
 import OnboardingButton from "../components/OnboardingButton"
-import "../styles/onboardingHost.css"
+import "../styles/onboardingHost.scss"
 
 function AmenitiesView() {
-  const { type: accommodationType } = useParams()
+  const { type: accommodationType } = useParams();
 
   const selectedAmenities = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.selectedAmenities,
-  )
-  const setAmenities = useFormStoreHostOnboarding((state) => state.setAmenities)
+  );
+  const setAmenities = useFormStoreHostOnboarding((state) => state.setAmenities);
 
   const handleAmenityChange = (category, amenity, isChecked) => {
     const updatedAmenities = isChecked
       ? [...(selectedAmenities[category] || []), amenity]
-      : (selectedAmenities[category] || []).filter((item) => item !== amenity)
+      : (selectedAmenities[category] || []).filter((item) => item !== amenity);
 
-    setAmenities(category, updatedAmenities)
-  }
+    setAmenities(category, updatedAmenities);
+  };
 
   const typeAmenities =
-    amenities[`${accommodationType}Amenities`] || amenities.allAmenities
+    amenities[`${accommodationType}Amenities`] || amenities.allAmenities;
 
   return (
     <main className="page-body">
@@ -52,7 +52,7 @@ function AmenitiesView() {
         />
       </nav>
     </main>
-  )
+  );
 }
 
-export default AmenitiesView
+export default AmenitiesView;

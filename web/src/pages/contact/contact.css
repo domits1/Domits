@@ -75,11 +75,11 @@
 }
 
 #attachmentsbutton {
-  background: var(--secondary-color);
+  background: var(--domits-host-blue);
 }
 
 #sendbutton {
-  background: var(--primary-color);
+  background: var(--domits-guest-green);
   margin-left: auto;
 }
 
@@ -94,7 +94,7 @@
 }
 
 .Contact-button {
-  background-color: var(--primary-color);
+  background-color: var(--domits-guest-green);
   color: white;
   border-radius: 1vh;
   border: none;
