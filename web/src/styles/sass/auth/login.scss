@@ -74,10 +74,11 @@ $border-radius: 5px;
   border-radius: $border-radius;
   margin-bottom: 50px;
   box-sizing: border-box;
-}
 
-label {
-  font-size: $font-size-medium;
+  label {
+    font-size: $font-size-medium;
+  }
+
 }
 
 .loginInput {
