@@ -13,20 +13,18 @@ const OccupancyDashboard = () => {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
-    // Fetch Host ID
     const fetchHostId = async () => {
         try {
-            const userInfo = await Auth.currentUserInfo(); // Fetch authenticated user's info
-            return userInfo.attributes.sub; // Return user's unique ID
+            const userInfo = await Auth.currentUserInfo();
+            return userInfo.attributes.sub;
         } catch (err) {
             console.error("Error fetching Host ID:", err);
             setError("Failed to fetch Host ID.");
         }
     };
 
-    // Fetch Occupancy Data
     const fetchOccupancyData = async () => {
-        if (!hostId) return; // Prevent API call if Host ID is missing
+        if (!hostId) return;
 
         setLoading(true);
         setError(null);
@@ -35,7 +33,7 @@ const OccupancyDashboard = () => {
             const payload = {
                 hostId,
                 rangeType: timeFilter,
-                ...(timeFilter === "custom" && { startDate, endDate }), // Include dates if custom range
+                ...(timeFilter === "custom" && { startDate, endDate }),
             };
 
             console.log("Sending Payload:", payload);
@@ -45,12 +43,12 @@ const OccupancyDashboard = () => {
                 payload,
                 {
                     headers: { "Content-Type": "application/json" },
-                    withCredentials: false, // Set this to true if cookies or authentication is required
+                    withCredentials: false,
                 }
             );
 
             console.log("API Response:", response.data);
-            setOccupancyData(response.data); // Store API response data
+            setOccupancyData(response.data);
         } catch (err) {
             console.error("Error fetching Occupancy data:", err.message || err);
             if (err.response) {
@@ -65,7 +63,6 @@ const OccupancyDashboard = () => {
         }
     };
 
-    // Fetch Host ID on Component Mount
     useEffect(() => {
         const initializeHostId = async () => {
             const fetchedHostId = await fetchHostId();
@@ -75,17 +72,15 @@ const OccupancyDashboard = () => {
         initializeHostId();
     }, []);
 
-    // Fetch data when time filter or custom date changes
     useEffect(() => {
-        if (timeFilter === "custom" && (!startDate || !endDate)) return; // Skip incomplete custom range
+        if (timeFilter === "custom" && (!startDate || !endDate)) return;
         fetchOccupancyData();
-    }, [timeFilter, startDate, endDate, hostId]); // Depend on hostId too
+    }, [timeFilter, startDate, endDate, hostId]);
 
     return (
         <div className="or-occupancy-rate-card">
             <h3>Occupancy Rate</h3>
             <div className="occupancy-rate-card"></div>
-                {/* Time Filter Selector */}
                 <div className="time-filter">
                     <label htmlFor="timeFilter">Time Filter:</label>
                     <select
@@ -101,7 +96,6 @@ const OccupancyDashboard = () => {
                 </div>
 
 
-                {/* Custom Date Range Picker */}
                 {timeFilter === "custom" && (
                     <div className="or-custom-date-filter">
                         <div>
@@ -123,11 +117,9 @@ const OccupancyDashboard = () => {
                     </div>
                 )}
 
-                {/* Loading or Error States */}
                 {loading && <p>Loading...</p>}
                 {error && <p style={{color: "red"}}>Error: {error}</p>}
 
-                {/* Occupancy Rate Card */}
                 {occupancyData && (
                     <div className="occupancy-rate-card">
                         <p>Number of Properties: {occupancyData.totalProperties}</p>

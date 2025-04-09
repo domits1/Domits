@@ -35,7 +35,7 @@ const NightsAvailable = () => {
         const idToken = session.getIdToken().getJwtToken();
 
         const accommodationsResponse = await fetch(
-          'https://zjnqjsomdijuqdjbaumindl4a40htsug.lambda-url.eu-north-1.on.aws/',
+          'https://sw2zadbsx8.execute-api.eu-north-1.amazonaws.com/default/Host-Revenues-Production-Read-NightsAvailable',
           {
             method: 'POST',
             headers: {
@@ -71,7 +71,7 @@ const NightsAvailable = () => {
         const { startDate, endDate } = getDateRange();
 
         const nightsResponse = await fetch(
-          'https://emr2alsh2d.execute-api.eu-north-1.amazonaws.com/prod/Host-Revenues-Production-Read-NightsAvailable',
+          'https://sw2zadbsx8.execute-api.eu-north-1.amazonaws.com/default/Host-Revenues-Production-Read-NightsAvailable',
           {
             method: 'POST',
             headers: {

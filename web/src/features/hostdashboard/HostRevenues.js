@@ -12,8 +12,8 @@ import { Auth } from 'aws-amplify';
 import ClipLoader from 'react-spinners/ClipLoader';
 //import BookingTrends from './HostDashboard/HostRevenueCards/BookingTrends.jsx';
 import BookedNights from './HostRevenueCards/BookedNights.jsx';
-import NightsAvailable from './HostRevenueCards/NightsAvailable.jsx';
-import ALOSCard from './HostRevenueCards/ALOSCard.jsx';
+// import NightsAvailable from './HostRevenueCards/NightsAvailable.jsx';
+// import ALOSCard from './HostRevenueCards/ALOSCard.jsx';
 
 const GET_REVENUE = gql`
     query GetRevenue {
@@ -176,7 +176,7 @@ const HostRevenues = () => {
                                         <ADRCard hostId={cognitoUserId} />
                                         <RevPARCard />
                                         <BookedNights/>
-                                        <NightsAvailable/>
+                                        {/* <NightsAvailable/> */}
                                         {/* <ALOSCard /> */}
                                         {/*<BookingTrends />*/}
                                     </div>
