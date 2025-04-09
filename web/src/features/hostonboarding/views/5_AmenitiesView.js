@@ -25,33 +25,37 @@ function AmenitiesView() {
     amenities[`${accommodationType}Amenities`] || amenities.allAmenities;
 
   return (
-    <main className="page-body">
-      <h2 className="onboardingSectionTitle">Select Amenities</h2>
-      <p className="onboardingSectionSubtitle">
-        Choose the amenities that your property offers.
-      </p>
-      <div className="amenity-groups">
-        {Object.keys(typeAmenities).map((category) => (
-          <AmenityCategory
-            key={category}
-            category={category}
-            amenities={typeAmenities[category]}
-            selectedAmenities={selectedAmenities[category] || []}
-            handleAmenityChange={handleAmenityChange}
-          />
-        ))}
+    <div className="onboarding-host-div">
+      <div className="page-body">
+        <div className="onboarding-host-div">
+          <h2 className="onboardingSectionTitle">Select Amenities</h2>
+          <p className="onboardingSectionSubtitle">
+            Choose the amenities that your property offers.
+          </p>
+          <div className="amenity-groups">
+            {Object.keys(typeAmenities).map((category) => (
+              <AmenityCategory
+                key={category}
+                category={category}
+                amenities={typeAmenities[category]}
+                selectedAmenities={selectedAmenities[category] || []}
+                handleAmenityChange={handleAmenityChange}
+              />
+            ))}
+          </div>
+          <nav className="onboarding-button-box">
+            <OnboardingButton
+              routePath={`/hostonboarding/${accommodationType}/capacity`}
+              btnText="Go back"
+            />
+            <OnboardingButton
+              routePath={`/hostonboarding/${accommodationType}/rules`}
+              btnText="Proceed"
+            />
+          </nav>
+        </div>
       </div>
-      <nav className="onboarding-button-box">
-        <OnboardingButton
-          routePath={`/hostonboarding/${accommodationType}/capacity`}
-          btnText="Go back"
-        />
-        <OnboardingButton
-          routePath={`/hostonboarding/${accommodationType}/rules`}
-          btnText="Proceed"
-        />
-      </nav>
-    </main>
+    </div>
   );
 }
 

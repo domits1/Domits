@@ -11,27 +11,31 @@ function BoatTypeView() {
     (state) => state.accommodationDetails.boatType,
   )
   return (
-    <main className="page-body">
-      <h2 className="onboardingSectionTitle">What type of boat do you own?</h2>
-      <BoatTypeSelector
-        options={boatData.boat.types}
-        icons={boatData.boat.icons}
-        selectedType={selectedBoatType}
-        onSelectType={setBoatType}
-      />
-      <nav className="onboarding-button-box">
-        <OnboardingButton
-          class="OnboardingNextButton"
-          routePath="/hostonboarding"
-          btnText="Back"
+    <div className="onboarding-host-div">
+      <main className="page-body">
+        <h2 className="onboardingSectionTitle">
+          What type of boat do you own?
+        </h2>
+        <BoatTypeSelector
+          options={boatData.boat.types}
+          icons={boatData.boat.icons}
+          selectedType={selectedBoatType}
+          onSelectType={setBoatType}
         />
-        <OnboardingButton
-          routePath="/hostonboarding/boat/address"
-          btnText="Proceed"
-        />
-      </nav>
-    </main>
-  )
+        <nav className="onboarding-button-box">
+          <OnboardingButton
+            class="OnboardingNextButton"
+            routePath="/hostonboarding"
+            btnText="Back"
+          />
+          <OnboardingButton
+            routePath="/hostonboarding/boat/address"
+            btnText="Proceed"
+          />
+        </nav>
+      </main>
+    </div>
+  );
 }
 
 export default BoatTypeView

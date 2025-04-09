@@ -1,6 +1,6 @@
 import React from "react";
-import "./App.css";
 
+// DEZE PAGINA IS NIET IN GEBRUIK
 function Performance() {
   return (
     <div className="security">

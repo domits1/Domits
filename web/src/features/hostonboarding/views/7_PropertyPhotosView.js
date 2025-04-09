@@ -39,8 +39,9 @@ function PhotosView() {
   };
 
   return (
-    <main className="photo-gallery-container">
-      <h2 className="photo-gallery-title">Choose at least 5 photos</h2>
+    <div className="onboarding-host-div">
+      <main className="photo-gallery-container">
+        <h2 className="photo-gallery-title">Choose at least 5 photos</h2>
 
       {!images.length ? (
         <div
@@ -82,7 +83,8 @@ function PhotosView() {
             {images.length < 5 && (
               <div
                 className="small-photo add-more-box"
-                onClick={handleBoxClick}>
+                onClick={handleBoxClick}
+              >
                 <p>Add More +</p>
               </div>
             )}
@@ -98,17 +100,18 @@ function PhotosView() {
         </section>
       )}
 
-      <nav className="photo-gallery-navigation">
-        <OnboardingButton
-          routePath={`/hostonboarding/${accommodationType}/rules`}
-          btnText="Go back"
-        />
-        <OnboardingButton
-          routePath={`/hostonboarding/${accommodationType}/title`}
-          btnText="Proceed"
-        />
-      </nav>
-    </main>
+        <nav className="photo-gallery-navigation">
+          <OnboardingButton
+            routePath={`/hostonboarding/${accommodationType}/rules`}
+            btnText="Go back"
+          />
+          <OnboardingButton
+            routePath={`/hostonboarding/${accommodationType}/title`}
+            btnText="Proceed"
+          />
+        </nav>
+      </main>
+    </div>
   );
 }
 
