@@ -1,7 +1,8 @@
 const Amenity = ({amenity}) => {
     return (
-        <div>
-            <p>{amenity}</p>
+        <div className="essential-amenity-item">
+            <div className="icon">{amenity.icon}</div>
+            <p>{amenity.amenity}</p>
         </div>
     )
 }

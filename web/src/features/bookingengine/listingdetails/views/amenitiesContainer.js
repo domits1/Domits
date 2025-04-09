@@ -8,13 +8,15 @@ const AmenitiesContainer = ({amenityIds}) => {
     const featuredAmenities = amenities.filter(amenity => amenity.category === "Essentials");
 
     return (
-        <div>
-            <p className="amenities-title">This place offers the following:</p>
-            {featuredAmenities.map(amenity => {
-                return <Amenity key={amenity.id} amenity={amenity.amenity} />;
-            })}
+      <div>
+        <p className="amenities-title">This place offers the following:</p>
+        <div className="essential-amenities-container">
+          {featuredAmenities.map((amenity) => {
+            return <Amenity key={amenity.id} amenity={amenity} />;
+          })}
         </div>
-    )
+      </div>
+    );
 };
 
 export default AmenitiesContainer;

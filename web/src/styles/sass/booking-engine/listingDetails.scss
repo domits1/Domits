@@ -16,10 +16,6 @@
     margin-left: 10px;
   }
 
-  .backButton {
-    text-decoration: underline;
-  }
-
   /*
   Main Container
   */
@@ -139,11 +135,11 @@
    */
   .booking-container {
     position: relative;
-    flex: 1;
     background: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    height: 100%;
   }
 
   .booking-title {
@@ -201,6 +197,7 @@
   .inputField {
     background-color: white;
     padding: 10px 20px;
+    border: none;
     border-radius: 12px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     font-size: 14px;
@@ -257,5 +254,32 @@
   .amenities-title {
     font-size: 18px;
     font-weight: 400;
+  }
+
+  .essential-amenities-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, auto);
+    gap: 20px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .essential-amenity-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+  }
+
+  @media (max-width: 768px) {
+    .essential-amenities-container {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .essential-amenities-container {
+      grid-template-columns: 1fr;
+    }
   }
 }
