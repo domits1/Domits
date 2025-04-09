@@ -9,6 +9,8 @@ import Home from "./pages/home/Accommodations";
 import Homepage from "./pages/home/homePage.js";
 import About from "./pages/about/About";
 import Whydomits from "./pages/whydomits/Whydomitstwo.js";
+import Security from "./pages/security/security.js";
+import Release from "./pages/productupdates/release.js";
 import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import Datasafety from "./pages/datasafety/datasafety.js";
 import Helpdesk from "./pages/helpdesk/Helpdesk.js";
@@ -95,6 +97,7 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
+import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
 
 Modal.setAppElement("#root");
 
@@ -175,7 +178,7 @@ function App() {
                     <Route path="/landing" element={<Landing/>}/>
                     <Route path="/login" element={<Login/>}/>
                     <Route path="/register" element={<Register/>}/>
-                    <Route path="/listingdetails" element={<ListingDetails/>}/>
+                    <Route path="/listingdetails" element={<ListingDetails2/>}/>
                     <Route path="/bookingoverview" element={<BookingOverview/>}/>
                     <Route path="/bookingconfirmation" element={<BookingConfirmation/>}/>
                     <Route path="/paymentconfirmpage" element={<PaymentConfirmPage/>}/>
