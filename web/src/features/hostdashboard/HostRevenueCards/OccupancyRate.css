@@ -45,7 +45,6 @@
 }
 
 .or-pie-chart-wrapper{
-
     display: flex;
     justify-content: center;
     align-items: center;
@@ -53,7 +52,6 @@
 }
 
 .occupancy-rate-card p{
-
     margin: 20px 10px;
     font-size: 18px;
     font-weight: normal;
