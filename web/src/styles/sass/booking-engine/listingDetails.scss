@@ -9,6 +9,33 @@
     height: 60px;
   }
 
+  .description {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    max-height: 4.5em;
+  }
+
+  .expanded {
+    display: block;
+    max-height: none;
+  }
+
+  .toggle-button {
+    background: none;
+    color: #007bff;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 0;
+    margin-bottom: 30px;
+  }
+
   /*
   Main Container
   */
@@ -120,7 +147,7 @@
   }
 
   .details {
-    margin-bottom: 30px;
+    margin-bottom: 10px;
     color: #666;
   }
 

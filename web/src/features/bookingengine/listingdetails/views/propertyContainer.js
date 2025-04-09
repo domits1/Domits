@@ -3,6 +3,7 @@ import PricingPerNight from "../components/pricingPerNight";
 import GeneralDetails from "../components/generalDetails";
 import React from "react";
 import AmenitiesContainer from "./amenitiesContainer";
+import Description from "../components/description";
 
 const PropertyContainer = ({ property }) => {
   return (
@@ -12,7 +13,7 @@ const PropertyContainer = ({ property }) => {
       </section>
       <PricingPerNight pricing={property.pricing} />
       <GeneralDetails generalDetails={property.generalDetails} />
-
+      <Description description={property.property.description} />
       <AmenitiesContainer amenityIds={property.amenities} />
     </div>
   );
