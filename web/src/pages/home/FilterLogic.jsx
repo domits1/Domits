@@ -1,21 +1,10 @@
 import { useState } from 'react';
 
-export default function(props) {
+export default function (props) {
     const [priceValues, setPriceValues] = useState([15, 400]);
     const { onFilterApplied } = props || {};
 
-    const [seasonFilter, setSeasonFilter] = useState({
-        Spring: false,
-        Summer: false,
-        Autumn: false,
-        Winter: false,
-        Fall: false,
-        Easter: false,
-        Christmas: false,
-        LowSeason: false,
-        HighSeason: false,
-      })
-
+    const [seasonFilter, setSeasonFilter] = useState(0)
     const [selectedFacilities, setSelectedFacilities] = useState({
         wifi: false,
         parking: false,
@@ -44,10 +33,10 @@ export default function(props) {
         farmstay: false,
     });
 
-  const [showMoreFacilities, setShowMoreFacilities] = useState(false);
-  const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
+    const [showMoreFacilities, setShowMoreFacilities] = useState(false);
+    const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
 
-  const [showMoreSeasonTypes, setShowMoreSeasonTypes] = useState(false);
+    const [showMoreSeasonTypes, setShowMoreSeasonTypes] = useState(false);
 
 
 
@@ -55,11 +44,11 @@ export default function(props) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
- 
-  const fetchFilteredAccommodations = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+
+    const fetchFilteredAccommodations = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
             const minPrice = priceValues[0];
             const maxPrice = priceValues[1];
@@ -117,34 +106,34 @@ export default function(props) {
     };
 
     const handleSeasonChange = (event) => {
-      setSeasonFilter({
-          ...seasonFilter,
-          [event.target.name]: event.target.checked,
-      });
-  };
+        setSeasonFilter({
+            ...seasonFilter,
+            [event.target.name]: event.target.checked,
+        });
+    };
 
 
 
-  return {
-    priceValues,
-    setPriceValues,
-    selectedFacilities,
-    handleFacilityChange,
-    selectedPropertyTypes,
-    handlePropertyTypeChange,
-    showMoreFacilities,
-    setShowMoreFacilities,
-    showMorePropertyTypes,
-    setShowMorePropertyTypes,
-    handlePriceChange,
-    accommodationResults,
-    loading,
-    error,
-    fetchFilteredAccommodations,
-    handleSeasonChange,
-    seasonFilter,
-    setSeasonFilter,
-    showMoreSeasonTypes,
-    setShowMoreSeasonTypes,
-  };
+    return {
+        priceValues,
+        setPriceValues,
+        selectedFacilities,
+        handleFacilityChange,
+        selectedPropertyTypes,
+        handlePropertyTypeChange,
+        showMoreFacilities,
+        setShowMoreFacilities,
+        showMorePropertyTypes,
+        setShowMorePropertyTypes,
+        handlePriceChange,
+        accommodationResults,
+        loading,
+        error,
+        fetchFilteredAccommodations,
+        handleSeasonChange,
+        seasonFilter,
+        setSeasonFilter,
+        showMoreSeasonTypes,
+        setShowMoreSeasonTypes,
+    };
 };

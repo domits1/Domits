@@ -10,6 +10,10 @@
 @use "auth/login.scss";
 @use "auth/register.scss";
 
+:root {
+  --primary-color: #0D9813;
+  --secondary-color: #003366;
+}
 
 @font-face {
     font-family: "Kanit";
