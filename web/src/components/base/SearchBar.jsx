@@ -204,7 +204,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
     }
   };
 
-  const handleKeyDown = (e) => {
+  function handleKeyDown(e){
     if (e.key === 'Enter') {
       handleSearch();
     }
@@ -212,19 +212,19 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
 
   useEffect(() => {
     if (selectedDayRange.from && selectedDayRange.to) {
-      const start = new Date(
+      const startDate = new Date(
         selectedDayRange.from.year,
         selectedDayRange.from.month - 1,
         selectedDayRange.from.day
       );
-      const end = new Date(
+      const endDate = new Date(
         selectedDayRange.to.year,
         selectedDayRange.to.month - 1,
         selectedDayRange.to.day
       );
-      setDateRange([start, end]);
-      setCheckIn(start);
-      setCheckOut(end);
+      setDateRange([startDate, endDate]);
+      setCheckIn(startDate);
+      setCheckOut(endDate);
     } else {
       setDateRange([null, null]);
       setCheckIn(null);
@@ -361,7 +361,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                 />
               </div>
 
-              <button className={`searchbar-button`} type="button" onClick={handleSearch}>
+              <button className="searchbar-button" type="button" onClick={handleSearch}>
                 <FaSearchLocation size={15}
                   className="search-icon" />
                 <span className="search-text">Search</span>
