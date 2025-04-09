@@ -14,9 +14,9 @@ Description: [Please add detailed description of the changes here]
 
 ## Change size
 _Please indicate the size of this change._  
-
-- [ ] Too large (1000+ lines, mostly refactored/moved code — explain in description to avoid reviewing old logic)
   _Please clarify in the description which parts are moved/unchanged code, so the reviewer doesn’t review old logic._
+
+- [ ] Huge change (1000+ lines, mostly refactored/moved code — explain in description to avoid reviewing old logic)
 - [ ] Big change (+-max 1000)
 - [ ] Small change (less than 300)
 
