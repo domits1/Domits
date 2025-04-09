@@ -3,7 +3,7 @@ Name: @[GitHub username]
 
 ## Related Issue
 Related Issue: #[issue number] 
-resolves #[issue number] (only if it should close it)
+Closes #[issue number] (only if it should close it)
 
 ## Proposed Changes
 Description: [Please add detailed description of the changes here]
@@ -12,7 +12,8 @@ Description: [Please add detailed description of the changes here]
 - [ ] Merging into acceptance (not main)
 
 ## Change size
-- [ ] Big change (300+)
+- [ ] Too large (1000+, only  if its refactored code, please see below)
+- [ ] Big change (+-max 1000)
 - [ ] Small change (less than 300)
 
 ## Change type
@@ -20,6 +21,11 @@ Description: [Please add detailed description of the changes here]
 - [ ] New feature
 - [ ] Optimalization
 - [ ] Documentation update
+
+## Refactoring
+- [ ] Refactors following files (but didn't change the code)
+  - src/features/example.xx
+  - app/src/data/example.xx
 
 ## Npm packages 
 - [ ] NPM Packages installed
@@ -30,7 +36,7 @@ Description: [Please add detailed description of the changes here]
 ## Checklist
 - [ ] Check if you didn't use global styling -- for more explanation view https://github.com/domits1/Domits/issues/1691
 - [ ] Console.logs are deleted
-- [ ] Comments are deleted
+- [ ] Commented code is deleted
 - [ ] Jest tests are included
 - [ ] Jest tests have succeeded
 - [ ] Pull request is assigned to a reviewer
@@ -41,7 +47,21 @@ Description: [Please add detailed description of the changes here]
 All boxes must be checked in order to move forward with your pull request.
 
 ## Reviewers
-Reviewer(s): @[GitHub username]
+Please be aware that you are responsible for your own pull request, please contact the reviewer. 
+Let the reviewers know what code is new, and what is just refactored.
+
+# Reviewers
+_please tag them on the PR._
+Expert Reviewer: @[GitHub username]
+- Marijn (Styling, scss, js)
+- Sander (App, backend)
+- Sebastiaan (Security)
+
+Second Reviewer: @[GitHub username]
+Liefst iemand die je code al kent, maar bijvoorbeeld, kunnen ook: 
+- Ryan
+- Kacper
+- Raman
 
 ## Additional Information
 Additional Info: [Add any additional information here]
