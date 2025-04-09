@@ -16,7 +16,6 @@ const FilterUi = ({ onFilterApplied }) => {
     showMorePropertyTypes,
     setShowMorePropertyTypes,
     handlePriceChange,
-    loading,
     fetchFilteredAccommodations,
     handleSeasonChange,
     seasonFilter,
@@ -76,6 +75,7 @@ const FilterUi = ({ onFilterApplied }) => {
     setMinInputValue(`€${priceValues[0]}`);
     setMaxInputValue(`€${priceValues[1]}`);
   };
+
 
   return (
     <div>
