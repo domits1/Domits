@@ -4,17 +4,18 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../../context/AuthContext';
 import {styles} from "../styles/HostDashboardStyles";
+import NavigateTo from "../../../navigation/NavigationFunctions";
 
-const HostDashboard = ({navigation}) => {
+const HostHomeScreen = () => {
     const {userAttributes} = useAuth();
     const firstName = userAttributes?.given_name || 'N/A';
 
-    const screenListItem = (screenNavigationName, screenName) => {
+    const screenListItem = (navigationFunction, screenName) => {
         return (
             <View>
                 <TouchableOpacity
                     style={styles.listItem}
-                    onPress={() => navigation.navigate(screenNavigationName)}>
+                    onPress={() => navigationFunction() }>
                     <Text style={styles.listItemText}>{screenName}</Text>
                     <MaterialIcons name="chevron-right" size={22} color="#000"/>
                 </TouchableOpacity>
@@ -32,24 +33,24 @@ const HostDashboard = ({navigation}) => {
                         change app settings.
                     </Text>
                 </View>
-                {screenListItem('HostDashboardTab', 'Dashboard')}
-                {screenListItem('OnboardingHost', 'Onboarding')}
-                {screenListItem('HostCalendar', 'Calendar')}
-                {screenListItem('HostPayments', 'Payments')}
-                {screenListItem('HostListings', 'Listings')}
-                {screenListItem('HostSettings', 'Settings')}
-                {screenListItem('HostReviews', 'Reviews')}
-                {screenListItem('HostHelpDesk', 'Helpdesk')}
+                {screenListItem(NavigateTo().hostDashboard, 'Dashboard')}
+                {screenListItem(NavigateTo().onboardingHost, 'Onboarding')}
+                {screenListItem(NavigateTo().hostCalendar, 'Calendar')}
+                {screenListItem(NavigateTo().hostPayments, 'Payments')}
+                {screenListItem(NavigateTo().hostListings, 'Listings')}
+                {screenListItem(NavigateTo().hostSettings, 'Settings')}
+                {screenListItem(NavigateTo().hostReviews, 'Reviews')}
+                {screenListItem(NavigateTo().hostHelpDesk, 'Helpdesk')}
                 <View style={styles.helpSection}>
                     <Text style={styles.helpText}>
                         Do you have trouble with using our app?{'\n'}Please send a support
                         request to Domits.
                     </Text>
-                    {screenListItem('HelpAndFeedback', 'Help and Feedback')}
+                    {screenListItem(NavigateTo().helpAndFeedback, 'Help and Feedback')}
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 };
 
-export default HostDashboard;
+export default HostHomeScreen;

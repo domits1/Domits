@@ -1,18 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Image,
-} from 'react-native';
+import {ActivityIndicator, Alert, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../../../../context/AuthContext';
+import {styles} from '../styles/HostPropertiesStyles'
 
 const HostListingsTab = () => {
   const [accommodations, setAccommodations] = useState([]);
