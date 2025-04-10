@@ -210,9 +210,42 @@
 }
 
 .Booking_place {
-    margin-top: 79px;
-    margin-left: 138px;
+    font-size: 1rem;
+    margin-top: 90px;
+    margin-left: 210px;
+    font-weight: 500;
 }
+
+
+
+.messages-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: Arial, sans-serif;
+}
+
+.Booking_messages {
+    font-size: 1rem;
+    margin-top: 50px;
+    margin-left: 210px;
+    font-weight: 400;
+}
+
+.badge {
+    background-color: #28a745;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -48.75px;
+}
+
 
 .messageBoxes {
     height: 40%;
@@ -241,6 +274,28 @@
     height: auto;
     border-radius: 15px;
     margin-top: 10px;
+}
+
+.Booking_photo {
+    width: 455px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 15px;
+    margin-top: 10px;
+    margin-left: 101px;
+}
+
+.Booking_host {
+    font-size: 1rem;
+    font-weight: 400;
+    margin-left: 210px;
+}
+
+.Booking_messages_centre {
+    font-size: 1rem;
+    margin-left: 225px;
+    font-weight: 400;
+    margin-top: 30px;
 }
 
 .messageBox button {

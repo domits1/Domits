@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import editIcon from "../../images/icons/edit-05.png";
 import checkIcon from "../../images/icons/checkPng.png";
+import messageIcon from "../../images/icons/message-chat-circle.png";
 import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
 import { confirmEmailChange } from "./emailSettings";
@@ -194,7 +195,14 @@ const GuestDashboard = () => {
             </label>
             <p className="Booking_place">"Place of staying"</p>
 
-            <img src={MyPlace} alt="Description" />
+            <img className="Booking_photo" src={MyPlace} alt="Description" />
+            <p className="Booking_host">"host name"</p>
+
+            <div className="messages-container">
+              <span className="Booking_messages">Messages</span>
+              <div className="badge">9+</div>
+            </div>
+            <p className="Booking_messages_centre">Go to messaging centre</p>
           </div>
           <div className="personalInfoContent">
             <div className="personal-info-header">
