@@ -1,219 +1,182 @@
-
 .page-Host-content {
     display: flex;
     flex-direction: row;
-}
-
-.finance-span{
-    color: blue;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-.host-pc-finance {
-    flex: 1;
-    margin-left: 15vw;
-}
-
-.finance-content {
-    display: flex;
-    flex-direction: column;
-    max-width: 800px;
     align-items: flex-start;
-}
-
-.sidebar {
+    gap: 80px;
+    padding: 20px;
+  }
+  
+  /* Keep Sidebar As-Is */
+  .sidebar {
     margin-left: 67px;
     margin-top: -20px;
-}
-
-@media (max-width: 768px) {
-    .page-Host {
-        flex-direction: column;
-    }
-
-
-    .host-pc-finance {
-        margin-left: 15vw;
-    }
-}
-
-@media (min-width: 768px) and (max-width: 1024px) {
-    .page-Host {
-        flex-direction: row;
-    }
-
-
-    .host-pc-finance {
-        margin-left: 15vw;
-    }
-}
-
-@media (min-width: 1024px) {
-    .page-Host {
-        flex-direction: row;
-    }
-
-
-    .host-pc-finance {
-        margin-left: 15vw;
-    }
-}
-
-/* Keep Sidebar As-Is (Do Not Touch It) */
-.sidebar {
-    /* No changes to sidebar placement */
-}
-
-/* Finance Main Content */
-.host-pc-finance {
+  }
+  
+  /* Main Finance Content Area */
+  .host-pc-finance {
     flex: 1;
     max-width: 900px;
     padding: 30px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Add Distance from Sidebar */
-.page-Host-content {
+    background: #f4f8fb; /* Light soft blue */
+    border-radius: 20px;
+    font-family: 'Kanit', sans-serif;
+  }
+  
+  /* Inner Finance Layout */
+  .finance-content {
     display: flex;
-    align-items: flex-start;
-    gap: 80px; /* Add spacing between sidebar and finance section */
-    padding: 20px;
-}
-
-/* Finance Steps Section */
-.finance-steps {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    flex-direction: column;
+    gap: 20px;
     width: 100%;
-}
-
-.finance-steps h2 {
-    font-size: 22px;
-    font-weight: bold;
-    margin-bottom: 12px;
-}
-
-.finance-steps ul {
+  }
+  
+  /* Shared Box/Card Styles */
+  .finance-steps,
+  .payouts-section,
+  .payout-frequency,
+  .payout-status {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0, 51, 102, 0.1);
+    width: 100%;
+  }
+  
+  /* Section Headings */
+  .finance-steps h2,
+  .payouts-section h3,
+  .payout-frequency h3,
+  .payout-status h3 {
+    font-size: 1.4em;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: #003366;
+  }
+  
+  /* Finance Steps List */
+  .finance-steps ul {
     list-style: none;
     padding-left: 0;
-}
-
-.finance-steps li {
-    padding: 12px 0;
-    font-size: 16px;
+    margin: 0;
+  }
+  
+  .finance-steps li {
+    padding: 10px 0;
+    font-size: 1rem;
+    color: #000;
     display: flex;
     align-items: center;
-}
-
-/* Links */
-.finance-span {
+  }
+  
+  /* Blue Links */
+  .finance-span {
     color: #007bff;
     text-decoration: underline;
-    cursor: pointer;
     font-weight: 500;
-}
-
-.finance-span:hover {
+    cursor: pointer;
+  }
+  
+  .finance-span:hover {
     text-decoration: none;
-}
-
-/* Payouts Section */
-.payouts-section {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-    width: 100%;
-}
-
-.payouts-section h3 {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-/* Payout Table */
-.payout-table {
+  }
+  
+  /* Payout Table */
+  .payout-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
-}
-
-.payout-table th, .payout-table td {
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .payout-table th,
+  .payout-table td {
     padding: 12px;
-    border-bottom: 1px solid #ddd;
     text-align: left;
-}
-
-.payout-table th {
-    background-color: #f1f1f1;
-    font-weight: bold;
-}
-
-/* Payout Frequency Section */
-.payout-frequency {
-    margin: 20px 0;
-    background: #f8f9fa;
-    padding: 12px;
-    border-radius: 8px;
-    width: 100%;
-}
-
-.payout-frequency select {
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .payout-table th {
+    background-color: #f0f4f8;
+    font-weight: 600;
+    color: #003366;
+  }
+  
+  /* Payout Frequency Dropdown */
+  .payout-frequency select {
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 6px;
     border: 1px solid #ccc;
-    font-size: 16px;
+    font-size: 1rem;
     width: 100%;
-}
-
-/* Payout Status */
-.payout-status {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    width: 100%;
-}
-
-.status-active {
+    background: white;
+    color: #000;
+  }
+  
+  /* Payout Status Colors */
+  .status-active {
     color: #28a745;
     font-weight: bold;
-}
-
-.status-pending {
+  }
+  
+  .status-pending {
     color: #ffc107;
     font-weight: bold;
-}
-
-.status-error {
+  }
+  
+  .status-error {
     color: #dc3545;
     font-weight: bold;
-}
-
-.status-none {
+  }
+  
+  .status-none {
     color: #6c757d;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
+    font-size: 0.95rem;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .page-Host {
+      flex-direction: column;
+    }
+  
     .page-Host-content {
-        flex-direction: column;
-        align-items: center;
-        padding: 15px;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
     }
-
+  
     .host-pc-finance {
-        width: 100%;
-        padding: 15px;
+      width: 100%;
+      padding: 15px;
     }
-
-    .finance-steps, .payouts-section, .payout-status {
-        width: 100%;
+  
+    .finance-steps,
+    .payouts-section,
+    .payout-status,
+    .payout-frequency {
+      width: 100%;
     }
-}
+  }
+  
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .page-Host {
+      flex-direction: row;
+    }
+  
+    .host-pc-finance {
+      margin-left: 15vw;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .page-Host {
+      flex-direction: row;
+    }
+  
+    .host-pc-finance {
+      margin-left: 15vw;
+    }
+  }
+  

@@ -133,9 +133,6 @@ const HostFinanceTab = () => {
     return <div>Loading...</div>;
   }
 
-  console.log("Stripe Login URL:", stripeLoginUrl);
-  console.log("Bank Details Provided:", bankDetailsProvided);
-
   return (
     <main className="page-Host">
       <h2>Finance</h2>
