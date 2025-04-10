@@ -12,7 +12,7 @@ describe('Testing the About page of Domits', () => {
         cy.get('.main-footer').scrollIntoView();
     });
 
-    it.only('should load the About page successfully', () => {
+    it('should load the About page successfully', () => {
         cy.url().should('eq','https://www.domits.com/about');
         cy.title().should('not.be.empty').then((pageTitle) => {
             cy.log('The page title is: ' + pageTitle);
@@ -21,8 +21,48 @@ describe('Testing the About page of Domits', () => {
         cy.contains('About Domits').should('be.visible');
     });
 
-    it('should load the footer copyright', () => {
+    it('should display the header', () => {
+        cy.get('.highlightH2').should('be.visible')
+        .and('contain.text', 'About Domits');
+    });  
+
+    it('should display the sub-header', () => {
+        cy.get('h3.about__title').should('be.visible')
+        .and('contain.text', 'Tailor-made travel partnerships');
+    });
+
+    it('should display the footer copyright', () => {
         cy.get('.footer-copyright').should('be.visible');
+    });
+
+    it('should display the vision factbox', () => {
+        cy.get('.about__factsbox > :nth-child(1)').should('be.visible')
+        .and('contain.text', 'Vision');
+    });
+
+    it('should display the vision subtitle', () => {
+        cy.get(':nth-child(1) > .about__fact-subtitle').should('be.visible')
+        .and('contain.text', 'A healthy, safe and future-proof travel world');
+    });
+
+    it('should display the vision text', () => {
+        cy.get(':nth-child(1) > .about__fact-text').should('be.visible')
+        .and('contain.text', 'Our vision');
+    });    
+
+    it('should display the about factbox', () => {
+        cy.get('.about__factsbox > :nth-child(2)').should('be.visible')
+        .and('contain.text', 'What we do');
+    });
+
+    it('should display the about subtitle', () => {
+        cy.get(':nth-child(2) > .about__fact-subtitle').should('be.visible')
+        .and('contain.text', 'Together with partners we provide travel solutions');
+    });
+
+    it('should display the about text', () => {
+        cy.get(':nth-child(2) > .about__fact-text').should('be.visible')
+        .and('contain.text', 'We build');
     });
 });
 
@@ -41,4 +81,13 @@ describe('Testing About Page Navigation', () => {
         cy.get('.main-footer').scrollIntoView();
     });
 
+    it('should navigate to how it works page', () => {
+        cy.get('.about__text-container > :nth-child(2) > [href="/how-it-works"]').click();
+        cy.url().should('include', 'https://www.domits.com/how-it-works/');
+    });
+
+    it('should navigate to Why domits page', () => {
+        cy.get(':nth-child(2) > [href="/why-domits"]').click();
+        cy.url().should('include', 'https://www.domits.com/why-domits/');
+    });    
 }); 
