@@ -23,7 +23,7 @@ function Header() {
           <View style={styles.squareContainer}>
 
             <TouchableOpacity
-                onPress={navigation.navigate('HostDashboard')}
+                onPress={navigation.navigate('HostHomeScreen')}
                 style={styles.itemContainer}>
 
               <Text style={styles.itemText}>
