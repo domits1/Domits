@@ -16,12 +16,16 @@ const ListingDetails2 = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        setError(null);
+        setProperty({});
+
         const loadData = async () => {
             try {
                 setProperty(await FetchPropertyById(id));
                 setLoading(false);
             } catch (error) {
                 setError("Something went wrong while fetching the requested data, please try again later.")
+                console.error(error);
                 setLoading(false);
             }
         };
