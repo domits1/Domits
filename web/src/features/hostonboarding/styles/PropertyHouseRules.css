@@ -1,0 +1,140 @@
+/* --- START OF FILE PropertyHouseRules.css --- */
+
+/* Use variables from AmenityStyles.css if imported globally, or redefine */
+:root {
+    --primary-color: #1d3b5e;
+    --primary-hover-color: #27466c;
+    --background-color: #f8f9fa;
+    --container-bg-color: #ffffff;
+    --border-color: #dee2e6;
+    --text-color: #212529;
+    --text-muted-color: #6c757d;
+    --error-color: #dc3545; /* Red for errors */
+    --border-radius-md: 0.5rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 2.5rem;
+}
+
+/* Main container for the house rules section */
+.houseRulesContainer {
+    width: 100%;
+    max-width: 700px; /* Adjust max-width as needed */
+    margin: var(--spacing-lg) auto; /* Center the container */
+    padding: var(--spacing-xl);
+    background: var(--container-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+}
+
+/* Styling for the toggle checkboxes */
+.toggle-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg); /* Space between checkboxes */
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Styling for the horizontal rule */
+.houseRulesContainer hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: var(--spacing-xl) 0; /* Space above and below hr */
+}
+
+/* Styling for the TimeSelector component wrapper */
+.time-selector-section {
+    display: flex;
+    flex-direction: column; /* Stack label and controls vertically */
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg); /* Space between time selectors */
+}
+
+.time-selector-section:last-of-type {
+    margin-bottom: 0; /* No bottom margin on the last one */
+}
+
+.time-selector-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: var(--spacing-sm); /* Space below the main label (Check-in/Check-out) */
+}
+
+.time-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md); /* Gap between "From", select, "Til", select */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.time-controls span {
+    font-size: 0.95rem;
+    color: var(--text-muted-color);
+    min-width: 30px; /* Give "From"/"Til" labels some space */
+    text-align: right;
+}
+
+.time-controls select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background-color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    flex-grow: 1; /* Allow selects to grow */
+    min-width: 100px; /* Minimum width for selects */
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.time-controls select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(29, 59, 94, 0.25); /* Focus ring */
+}
+
+/* Error state styling for select */
+.time-controls select.input-error {
+    border-color: var(--error-color);
+}
+.time-controls select.input-error:focus {
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25); /* Red focus ring */
+}
+
+.error-message {
+    font-size: 0.85rem;
+    color: var(--error-color);
+    margin-top: var(--spacing-xs);
+    /* Position this appropriately if needed, maybe within .time-controls or .time-selector-section */
+    width: 100%; /* Span full width below controls */
+    text-align: left; /* Or center/right as needed */
+    padding-left: calc(30px + var(--spacing-md)); /* Align roughly under selects */
+}
+
+
+/* Reuse onboarding button styles */
+/* Ensure .page-body has appropriate padding */
+.page-body {
+    padding: var(--spacing-xl) var(--spacing-md);
+}
+
+/* Assuming .onboarding-button-box styles are defined globally or in another imported CSS */
+/* If not, copy the relevant styles from AmenityStyles.css here */
+.onboarding-button-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: var(--spacing-xxl) auto 0; /* Auto horizontal margins center it */
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    max-width: 700px; /* Match container width */
+    width: 100%;
+}
+
+/* ... (copy button styles from AmenityStyles.css if necessary) ... */
+
+
+/* --- END OF FILE PropertyHouseRules.css --- */

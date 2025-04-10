@@ -217,7 +217,7 @@ h2{
   align-items: flex-start;
   border: 1px solid #ccc;
   border-radius: 10px;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   width: 80%; /* Increased from 450px to percentage */
   max-width: 800px; /* Add max-width to prevent it from getting too wide */
   margin: 0 40px; /* Changed to equal margins on both sides */

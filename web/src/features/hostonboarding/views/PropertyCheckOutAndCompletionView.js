@@ -9,9 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 function SummaryView() {
     const { data, toggleDrafted } = useSummary();
-    const type = data.type;
     const navigate = useNavigate();
-
     const submitAccommodation = useFormStore((state) => state.submitAccommodation);
 
     const [declare, setDeclare] = useState(false);
@@ -22,9 +20,23 @@ function SummaryView() {
             alert("You must agree to the terms and declare the property is legitimate.");
             return;
         }
-        await submitAccommodation();
-        navigate("/hostdashboard/listings");
+        try {
+            await submitAccommodation(navigate);
+        } catch (error) {
+            console.error("Submission failed in view:", error);
+        }
     };
+
+    if (!data) {
+        return (
+            <div className="container" id="summary">
+                <p>Loading summary data...</p>
+            </div>
+        );
+    }
+
+    const type = data.type || "";
+    const drafted = data.Drafted ?? true;
 
     return (
         <div className="container" id="summary">
@@ -32,9 +44,8 @@ function SummaryView() {
             <h2>Please check if everything is correct</h2>
             <SummaryTable data={data} type={type} />
             <SpecificationsTable data={data} type={type} />
-            {/* <FeatureTable features={data.Features} /> */}
             <DeclarationSection
-                drafted={data.Drafted}
+                drafted={drafted}
                 toggleDrafted={toggleDrafted}
                 declare={declare}
                 toggleDeclareDrafted={() => setDeclare(!declare)}
@@ -44,13 +55,14 @@ function SummaryView() {
             <div className="onboarding-button-box">
                 <button
                     className="onboarding-button"
-                    onClick={() => console.log("Go back")}
+                    onClick={() => navigate(-1)}
                 >
                     Go back to change
                 </button>
                 <button
                     className="onboarding-button"
                     onClick={handleSubmit}
+                    disabled={!declare || !confirm}
                 >
                     Confirm and proceed
                 </button>

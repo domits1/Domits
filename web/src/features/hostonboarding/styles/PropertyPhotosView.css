@@ -1,0 +1,268 @@
+/* START OF FILE PropertyPhotosView.css */
+
+/* Reset or Base Styles (Scoped to container if needed) */
+/* Avoid `all: unset` which can be too broad */
+.photo-gallery-container *,
+.photo-gallery-container *::before,
+.photo-gallery-container *::after {
+    box-sizing: border-box; /* Common best practice */
+}
+
+/* Main container */
+.photo-gallery-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 25px;
+    font-family: Arial, sans-serif;
+    max-width: 900px; /* Adjust max-width as needed */
+    margin: 0 auto;
+    background-color: #ffffff; /* Light background */
+    margin-top: 2rem; /* <<< Added this line to push the component down */
+}
+
+.photo-gallery-title {
+    font-size: 1.8em; /* Relative units */
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.photo-gallery-subtitle {
+    font-size: 1em;
+    color: #555;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+/* Initial Drag and Drop Area */
+.drag-drop-area {
+    width: 100%; /* Take available width */
+    max-width: 600px; /* Limit width */
+    min-height: 250px; /* Use min-height */
+    border: 3px dashed #ccc;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column; /* Stack text/button */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #888;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    padding: 20px;
+    background-color: #fff;
+    margin-bottom: 20px; /* Spacing if needed */
+}
+
+.drag-drop-area p {
+    margin: 5px 0;
+    font-size: 1.1em;
+}
+.drag-drop-area small {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+.drag-drop-area.drag-over {
+    border-color: #007bff;
+    background-color: #e9f5ff; /* Lighter blue */
+    color: #0056b3;
+}
+
+/* Simple styled button for upload */
+.upload-button-styled {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 10px;
+    transition: background-color 0.2s ease;
+}
+.upload-button-styled:hover {
+    background-color: #0056b3;
+}
+
+
+/* Image Grid Section */
+.photo-gallery-section {
+    width: 100%;
+    max-width: 850px; /* Adjust as needed */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* For grid drag over */
+    padding: 10px; /* Add padding for visual separation during drag over */
+    border-radius: 8px;
+    border: 2px solid transparent; /* Placeholder for drag over border */
+}
+
+/* Style when dragging NEW files over the grid area */
+.photo-gallery-section.grid-drag-over {
+    background-color: #e9f5ff; /* Light blue background */
+    border-color: #007bff; /* Blue dashed border */
+    border-style: dashed;
+}
+
+.photo-gallery-images {
+    display: grid;
+    /* Define columns: First column takes more space for large, second less */
+    /* This needs refinement based on how large/small photos are arranged */
+    /* Let's stick to the original 2-col grid for small items */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    width: 100%;
+}
+
+/* Image Preview Containers (Large and Small) */
+.large-photo,
+.small-photo {
+    position: relative; /* For absolute positioning of delete button and label */
+    background-color: #e0e0e0; /* Placeholder bg */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden; /* Ensure image stays within bounds */
+    cursor: grab; /* Indicate draggable */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    aspect-ratio: 16 / 10; /* Example aspect ratio, adjust as needed */
+}
+
+.large-photo {
+    grid-column: span 2; /* Make the first item span both columns */
+    aspect-ratio: 16 / 9; /* Wider aspect ratio for cover */
+    border: 2px solid #4CAF50; /* Highlight the cover photo */
+}
+
+.small-photo {
+    aspect-ratio: 1 / 1; /* Square aspect ratio for smaller photos */
+}
+
+
+/* Styling when an image is being dragged */
+.large-photo.dragging,
+.small-photo.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+    transform: scale(0.95); /* Slightly shrink */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Styling for potential drop target (when reordering) */
+/* Apply a class like 'drag-over-target' via JS onDragEnter/Leave if needed */
+/* .large-photo.drag-over-target,
+.small-photo.drag-over-target {
+    border: 2px dashed #28a745;
+} */
+
+
+/* Image Element Styling */
+.accommodation-thumbnail,
+.file-image {
+    display: block; /* Remove extra space below image */
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Cover the container */
+    object-position: center; /* Center the image */
+}
+
+/* Cover Photo Label */
+.cover-photo-label {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 3px 8px;
+    font-size: 0.8em;
+    border-radius: 4px;
+    pointer-events: none; /* Don't interfere with drag/click */
+}
+
+/* Delete Button */
+.image-delete-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent */
+    border: 1px solid #aaa;
+    border-radius: 50%; /* Circular */
+    width: 30px; /* Fixed size */
+    height: 30px; /* Fixed size */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1em; /* Adjust emoji size if needed */
+    line-height: 1; /* Ensure emoji is centered */
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    color: #333; /* Use a standard color */
+}
+
+.image-delete-button:hover {
+    background-color: #fff;
+    border-color: #dc3545; /* Red border on hover */
+    color: #dc3545; /* Red icon color */
+    transform: scale(1.1);
+}
+.image-delete-button:focus {
+    outline: 2px solid #007bff; /* Focus ring */
+    outline-offset: 1px;
+}
+
+/* Add More Box */
+.add-more-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #888;
+    cursor: pointer;
+    border: 2px dashed #ccc; /* Dashed border like drop zone */
+    background-color: #f8f9fa; /* Light background */
+    transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.add-more-box:hover,
+.add-more-box:focus {
+    border-color: #007bff;
+    background-color: #e9f5ff;
+    color: #0056b3;
+    outline: none; /* Remove default focus outline if custom style is applied */
+}
+
+.add-more-box p {
+    margin: 5px 0 0 0; /* Adjust spacing */
+    font-weight: bold;
+}
+
+.add-more-icon {
+    font-size: 2.5em; /* Larger plus icon */
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+/* Navigation */
+.photo-gallery-navigation {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 850px; /* Match section width */
+    margin-top: 30px;
+    padding: 0 10px; /* Align with section padding */
+}
+
+/* Warning Text */
+.warning-text { /* Note: This class wasn't used in the JS, but styling is here */
+    color: #dc3545; /* Red color for warnings */
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+/* Example: Disabled button styling (if not handled by Button component) */
+/* .button-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+} */
+/* END OF FILE PropertyPhotosView.css */

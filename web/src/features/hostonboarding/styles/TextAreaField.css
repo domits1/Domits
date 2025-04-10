@@ -1,0 +1,68 @@
+/* --- START OF FILE src/components/TextAreaField.css --- */
+
+.textarea-field-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 1rem; /* Default spacing below the field */
+}
+
+.textarea-field-label {
+    margin-bottom: 6px;
+    font-weight: bold;
+    font-size: 0.95em;
+    color: #333;
+}
+
+.textarea-field-input {
+    width: 100%;
+    min-height: 150px; /* Or adjust as needed */
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1em;
+    line-height: 1.5;
+    resize: vertical;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box; /* Include padding/border in width */
+}
+
+.textarea-field-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Info container below textarea */
+.textarea-field-info {
+    display: flex;
+    /* Justify content based on whether hint and counter are both present */
+    /* Default: push counter to the right */
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    padding: 0 2px; /* Minimal horizontal padding */
+    margin-top: 4px; /* Space between textarea and info */
+    font-size: 0.85em;
+    color: #666;
+}
+
+/* If both hint and counter are shown, put space between them */
+.textarea-field-info:has(.textarea-field-hint):has(.textarea-field-counter) {
+    justify-content: space-between;
+}
+
+.textarea-field-hint {
+    /* Styles for hint text if needed */
+    flex-grow: 1; /* Allow hint to take available space if needed */
+    text-align: left;
+}
+
+.textarea-field-counter {
+    /* Styles for counter text if needed */
+    text-align: right;
+    flex-shrink: 0; /* Prevent counter from shrinking */
+}
+
+/* --- END OF FILE src/components/TextAreaField.css --- */

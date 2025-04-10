@@ -1,69 +1,122 @@
-import React, { useEffect } from "react";
+// --- START OF FILE PropertyRateView.js ---
+
+import React, { useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import PricingRow from "../components/PricingRow";
-import { usePricing } from "../hooks/useProperyRate";
+import { usePricing } from "../hooks/useProperyRate"; // Corrected hook path typo
 import Button from "../components/button";
+import '../styles/PropertyRateView.css'; // Import the CSS
 
-function PricingView() {
-  const { type: accommodationType } = useParams();
-  const { pricing, updatePricing, calculateServiceFee } = usePricing();
+const safeParseFloat = (value) => parseFloat(value) || 0;
 
-  useEffect(() => {
-    calculateServiceFee();
-  }, [pricing.Rent, pricing.CleaningFee, calculateServiceFee]);
+function PropertyRateView() {
+    const { type: accommodationType } = useParams();
+    // Assuming usePricing hook provides the initial state (e.g., Rent: '180')
+    const { pricing, updatePricing, calculateServiceFee } = usePricing();
 
-  const totalGuestPrice =
-    (parseFloat(pricing.Rent) || 0) +
-    (parseFloat(pricing.CleaningFee) || 0) +
-    (parseFloat(pricing.ServiceFee) || 0);
+    const rentAmount = useMemo(() => safeParseFloat(pricing.Rent), [pricing.Rent]);
+    const cleaningFeeAmount = useMemo(() => safeParseFloat(pricing.CleaningFee), [pricing.CleaningFee]);
+    const serviceFeeAmount = useMemo(() => safeParseFloat(pricing.ServiceFee), [pricing.ServiceFee]);
 
-  const totalEarnings =
-    (parseFloat(pricing.Rent) || 0) + (parseFloat(pricing.CleaningFee) || 0);
+    useEffect(() => {
+        calculateServiceFee();
+    }, [rentAmount, cleaningFeeAmount, calculateServiceFee]);
 
-  return (
-    <main className="container">
-      <h2 className="onboardingSectionTitle">Set Your Rate</h2>
-      <h2 className="acco-price">
-        {pricing.Rent
-          ? `€ ${parseFloat(pricing.Rent).toFixed(0)}`
-          : "Enter your base rate"}
-      </h2>
+    const totalGuestPrice = rentAmount + cleaningFeeAmount + serviceFeeAmount;
+    const totalEarnings = rentAmount + cleaningFeeAmount;
 
-      <section className="accommodation-pricing">
-        <PricingRow
-          label="Base rate"
-          value={pricing.Rent}
-          onChange={(value) => updatePricing("Rent", value)}
-        />
-        {pricing.Features.ExtraServices.includes(
-          "Cleaning service (add service fee manually)"
-        ) && (
-          <PricingRow
-            label="Cleaning fee"
-            value={pricing.CleaningFee}
-            onChange={(value) => updatePricing("CleaningFee", value)}
-          />
-        )}
-        <PricingRow label="Service fees" value={pricing.ServiceFee} readonly />
-        <hr />
-        <PricingRow label="Guest's price" value={totalGuestPrice} readonly />
-      </section>
+    const showCleaningFeeInput = pricing.Features?.ExtraServices?.includes(
+        "Cleaning service (add service fee manually)"
+    );
 
-      <section className="accommodation-pricing">
-        <PricingRow label="You earn" value={totalEarnings} readonly />
-      </section>
-      <nav className="onboarding-button-box">
-        <Button
-          routePath={`/hostonboarding/${accommodationType}/photos`}
-          btnText="Go back"
-        />
-        <Button
-          routePath={`/hostonboarding/${accommodationType}/availability`}
-          btnText="Proceed"
-        />
-      </nav>
-    </main>
-  );
+    return (
+        <main className="container">
+
+            <div className="title-section">
+                <h1>Set Your Nightly Rate</h1>
+                <p>Define the pricing for your guests and see your potential earnings.</p>
+            </div>
+
+            {/* Right-aligned total price */}
+            <div className="price-display-header">
+                {/* This will now reflect calculations based on the initial state from usePricing */}
+                <h2>€{totalGuestPrice.toFixed(2)}</h2>
+            </div>
+
+            {/* Main Pricing Card */}
+            <div className="pricing-card">
+
+                <section className="pricing-section">
+                    <h3>Base Pricing</h3>
+                    <PricingRow
+                        label="Base rate per night"
+                        // The 'value' comes from the usePricing hook's state
+                        value={pricing.Rent ?? ""}
+                        onChange={(value) => updatePricing("Rent", value)}
+                        // Placeholder updated to 180
+                        placeholder="180"
+                        inputId="base-rate"
+                    />
+                    {showCleaningFeeInput && (
+                        <PricingRow
+                            label="Cleaning fee"
+                            value={pricing.CleaningFee ?? ""}
+                            onChange={(value) => updatePricing("CleaningFee", value)}
+                            placeholder="50" // Assuming placeholder for cleaning fee
+                            tooltip="One-time fee charged per stay for cleaning."
+                            inputId="cleaning-fee"
+                        />
+                    )}
+                </section>
+
+                <section className="pricing-section">
+                    <h3>Guest Price Breakdown</h3>
+                    <PricingRow label="Base rate" value={rentAmount} readonly />
+                    {showCleaningFeeInput && (
+                        <PricingRow label="Cleaning fee" value={cleaningFeeAmount} readonly />
+                    )}
+                    <PricingRow
+                        label="Service fee"
+                        value={serviceFeeAmount}
+                        readonly
+                        tooltip="Fee covering platform costs and services."
+                    />
+                    <PricingRow
+                        label="Total Guest Price per night"
+                        value={totalGuestPrice}
+                        readonly
+                        isTotal={true}
+                        tooltip="This is the total price the guest will see (excluding taxes)."
+                    />
+                </section>
+
+                <section className="pricing-section host-earnings-section">
+                    <h3>Host Earnings</h3>
+                    <PricingRow
+                        label="Your potential earnings per night"
+                        value={totalEarnings}
+                        readonly
+                        isTotal={true} // Apply total styling
+                        tooltip="This is what you receive (Base Rate + Cleaning Fee, before any taxes or host service fees if applicable)."
+                    />
+                </section>
+            </div> {/* End of pricing-card */}
+
+            <nav className="onboarding-button-box">
+                <Button
+                    routePath={`/hostonboarding/${accommodationType}/photos`}
+                    btnText="← Go back"
+                    variant="secondary"
+                />
+                <Button
+                    routePath={`/hostonboarding/${accommodationType}/availability`}
+                    btnText="Proceed →"
+                    variant="primary"
+                />
+            </nav>
+        </main>
+    );
 }
 
-export default PricingView;
+export default PropertyRateView;
+// --- END OF FILE PropertyRateView.js ---

@@ -1,0 +1,289 @@
+/* --- START OF FILE PropertyRateView.css --- */
+
+/* General Body & Container Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    color: #32325d; /* Default text color - slightly softer black */
+    background-color: #fff; /* White background as per screenshot */
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Container */
+.container {
+    max-width: 900px; /* Wider container like screenshot */
+    margin: 3rem auto; /* More vertical margin */
+    padding: 0 1rem;
+}
+
+/* Title Section Styles */
+.title-section {
+    text-align: center;
+    margin-bottom: 1.5rem; /* Reduced space below title */
+}
+
+.title-section h1 {
+    font-size: 1.75rem; /* 28px */
+    font-weight: 600;
+    color: #32325d;
+    margin-bottom: 0.5rem;
+}
+
+.title-section p {
+    font-size: 1rem; /* 16px */
+    color: #6b7c93; /* Lighter secondary text */
+    margin-bottom: 0;
+}
+
+/* Main Price Display (Right-Aligned) */
+.price-display-header {
+    text-align: right;
+    margin-bottom: 1.5rem; /* Space below price, above card */
+    padding-right: 0.5rem;
+}
+
+.price-display-header h2 {
+    font-size: 1.75rem; /* 28px */
+    font-weight: 600;
+    color: #32325d; /* Match heading color */
+    margin: 0;
+}
+
+.price-display-header p {
+    display: none;
+}
+
+/* Pricing Card */
+.pricing-card {
+    background-color: #fff;
+    border: 1px solid #eef2f7; /* Very light border, almost invisible */
+    border-radius: 6px; /* Slightly less rounded corners */
+    /* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); Subtle shadow - optional */
+    box-shadow: none; /* No shadow as per screenshot */
+    padding: 0.5rem 2rem 1.5rem 2rem; /* Adjusted padding: less top */
+    overflow: hidden;
+}
+
+/* Pricing Section Styles */
+.pricing-section {
+    margin-top: 1.5rem; /* Add top margin for spacing between sections */
+    margin-bottom: 1rem; /* Reduce bottom margin slightly */
+}
+.pricing-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.pricing-section h3 {
+    font-size: 1.125rem; /* 18px */
+    font-weight: 600; /* Bold heading */
+    color: #32325d;
+    margin: 0 0 0.75rem 0; /* Only bottom margin */
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #eef2f7; /* Very light separator */
+}
+
+/* Pricing Row Styles */
+.pricing-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.9rem 0; /* Increased padding for more space */
+    border-bottom: 1px solid #eef2f7; /* Very light row separator */
+    min-height: 54px; /* Ensure consistent height */
+}
+
+/* Remove border from the last row within its section */
+.pricing-section .pricing-row:last-child {
+    border-bottom: none;
+}
+
+/* Style for rows marked as totals */
+.pricing-row-total .pricing-label,
+.pricing-row-total .pricing-value {
+    font-weight: 500; /* Medium weight for totals */
+    color: #32325d; /* Standard dark color for totals */
+    font-size: 1rem; /* Slightly larger font for totals */
+}
+
+.pricing-label {
+    color: #525f7f; /* Label text color */
+    font-size: 0.95rem; /* Standard label size */
+    display: flex;
+    align-items: center;
+    padding-right: 1rem;
+    flex-shrink: 0;
+}
+
+/* Tooltip Icon Styles - Simplified */
+.tooltip-icon {
+    margin-left: 0.4rem;
+    color: #a0aec0; /* Gray color */
+    cursor: help;
+    font-size: 0.9em; /* Slightly smaller */
+    font-weight: normal; /* Not bold */
+    /* Remove border, background, specific sizing */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-style: normal;
+}
+.tooltip-icon:hover {
+    color: #718096; /* Slightly darker on hover */
+}
+
+/* Input Wrapper (for adornment positioning) */
+.pricing-input-wrapper {
+    position: relative;
+    width: 150px; /* Wider input area */
+    display: inline-block;
+}
+
+/* Input Adornment (€ symbol) */
+.input-adornment {
+    position: absolute;
+    left: 0.75rem; /* Position inside padding */
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0; /* Gray color for symbol */
+    pointer-events: none;
+    font-size: 0.95rem;
+    line-height: 1; /* Ensure consistent vertical alignment */
+}
+
+/* Input Field Styles - Screenshot Match */
+.pricing-input {
+    width: 100%;
+    padding: 0.7rem 0.75rem 0.7rem 2.2rem; /* Adjusted padding T/R/B/L */
+    border: 1px solid #f8f9fa; /* Border same color as background initially */
+    background-color: #f8f9fa; /* Light gray background */
+    border-radius: 4px;
+    font-size: 0.95rem;
+    color: #32325d; /* Input text color */
+    box-shadow: none; /* No inset shadow */
+    -moz-appearance: textfield;
+    appearance: textfield;
+    text-align: right;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.pricing-input::-webkit-outer-spin-button,
+.pricing-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.pricing-input::placeholder {
+    color: #a0aec0;
+    text-align: right;
+}
+
+.pricing-input:focus {
+    outline: none;
+    border-color: #a0aec0; /* Subtle gray border on focus */
+    background-color: #fff; /* White background on focus */
+    /* Optional: add subtle focus ring if needed for accessibility */
+    /* box-shadow: 0 0 0 2px rgba(160, 174, 192, 0.2); */
+}
+
+/* Readonly Value Styles - Align with Input */
+.pricing-value {
+    font-weight: 500; /* Medium weight */
+    color: #32325d; /* Match input text color */
+    font-size: 0.95rem; /* Match input text size */
+    text-align: right;
+    /* Match input dimensions/padding for alignment */
+    min-width: 150px; /* Match input wrapper width */
+    padding: 0.7rem 0.75rem; /* Match input padding (T/R/B) - Left handled by alignment */
+    box-sizing: border-box;
+    line-height: 1.6; /* Match body line-height */
+}
+
+/* Host Earnings Section - Subtle Green Background */
+.host-earnings-section {
+    background-color: #f0fff4; /* Very light green from previous example - works well */
+    /* Apply padding similar to card, but adjust for background */
+    margin: 1.5rem -2rem -1.5rem -2rem; /* Extend background to card padding edges */
+    padding: 1rem 2rem; /* Apply padding inside the background area */
+    border-top: 1px solid #e6fffa; /* Very light top border */
+    border-bottom: 1px solid #e6fffa; /* Very light bottom border */
+}
+/* Make last section styling consistent */
+.pricing-card .host-earnings-section:last-of-type {
+    margin-bottom: -1.5rem; /* Ensure it aligns with card bottom */
+    border-bottom-left-radius: 6px; /* Match card radius */
+    border-bottom-right-radius: 6px;
+    border-bottom: none; /* No extra border if it's the very last thing */
+}
+
+.host-earnings-section h3 {
+    color: #2f855a; /* Darker green heading */
+    border-bottom-color: #c6f6d5; /* Slightly more visible border */
+    margin-top: 0;
+}
+
+/* Style total row within host earnings */
+.host-earnings-section .pricing-row-total .pricing-label,
+.host-earnings-section .pricing-row-total .pricing-value {
+    font-weight: 500;
+    color: #2f855a; /* Match heading green */
+    font-size: 1rem;
+}
+.host-earnings-section .pricing-row:last-child {
+    border-bottom: none; /* No border on the last row */
+}
+
+
+/* Navigation Button Box */
+.onboarding-button-box {
+    margin-top: 2.5rem; /* More space above buttons */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eef2f7; /* Lighter separator line */
+}
+
+/* Base Button Styles */
+.button {
+    padding: 0.75rem 1.5rem; /* Padding from screenshot */
+    border-radius: 4px; /* Match input radius */
+    font-size: 0.9rem;
+    font-weight: 600; /* Bolder button text */
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.5;
+}
+.button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.25); /* Consistent focus ring */
+}
+
+/* Primary Button (Proceed) - Dark Blue/Gray */
+.button-primary {
+    background-color: #2c3e50; /* Dark blue/gray from screenshot */
+    color: #fff;
+    border-color: #2c3e50;
+}
+.button-primary:hover {
+    background-color: #34495e; /* Slightly lighter shade on hover */
+    border-color: #34495e;
+}
+
+/* Secondary Button (Go back) - Outline */
+.button-secondary {
+    background-color: #fff;
+    color: #2c3e50; /* Match primary text color */
+    border-color: #dee2e6; /* Standard light gray border */
+}
+.button-secondary:hover {
+    background-color: #f8f9fa; /* Very light gray background */
+    border-color: #adb5bd; /* Slightly darker border on hover */
+    color: #34495e; /* Slightly darker text on hover */
+}
+
+/* --- END OF FILE PropertyRateView.css --- */

@@ -1,25 +1,28 @@
 import React, { useEffect } from "react";
-import { Auth } from "aws-amplify"; // Assuming you're using AWS Amplify Auth
-import useFormStore from "../stores/formStore"; // Update with your store path
+import { Auth } from "aws-amplify";
+import useFormStore from "../stores/formStore";
 
 const FetchUserId = () => {
   const setOwnerId = useFormStore((state) => state.setOwnerId);
+  const ownerId = useFormStore((state) => state.accommodationDetails.ownerId);
 
   useEffect(() => {
     const asyncUserId = async () => {
-      try {
-        const userInfo = await Auth.currentAuthenticatedUser();
-        const userId = userInfo.attributes.sub;
-        setOwnerId(userId); // Set the userId in the form store
-      } catch (error) {
-        console.error("Error fetching user ID:", error);
+      if (!ownerId) {
+        try {
+          const userInfo = await Auth.currentAuthenticatedUser();
+          const userId = userInfo.attributes.sub;
+          setOwnerId(userId);
+        } catch (error) {
+          console.error("Error fetching user ID:", error);
+        }
       }
     };
 
     asyncUserId();
-  }, [setOwnerId]);
+  }, [ownerId, setOwnerId]);
 
-  return null; // This component doesn't render anything visible
+  return null;
 };
 
 export default FetchUserId;

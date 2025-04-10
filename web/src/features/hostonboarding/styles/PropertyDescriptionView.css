@@ -1,0 +1,173 @@
+/* --- Styles for PropertyDescriptionView --- */
+/* --- Focuses on layout and styles for components other than TextAreaField --- */
+
+/* Main container for the Description View */
+.description-view-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* Stretch children */
+    padding: 25px;
+    font-family: Arial, sans-serif;
+    max-width: 700px; /* Adjust max-width as needed */
+    margin: 2rem auto 0 auto; /* Add top margin, center horizontally */
+    background-color: #ffffff; /* Light background */
+}
+
+/* Title and Subtitle */
+.onboardingSectionTitle {
+    font-size: 1.8em;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+    text-align: center;
+}
+
+.onboardingSectionSubtitle {
+    font-size: 1em;
+    color: #555;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+/* --- Wrapper for TextAreaField --- */
+/* Use this class on the TextAreaField component in PropertyDescriptionView.js */
+/* to control spacing around it within this specific view */
+.description-textarea-wrapper {
+    margin-bottom: 30px; /* Spacing below the text area field before the next section */
+    /* Add any other view-specific wrapper styles here if needed */
+}
+
+/* --- Specification Form Container --- */
+/* Styles for the SpecificationForm component container */
+.specification-form {
+    width: 100%;
+    margin-bottom: 30px; /* Space before navigation buttons */
+    border-top: 1px solid #eee; /* Separator line */
+    padding-top: 25px;
+}
+
+.specification-form h1 {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #444;
+    margin-top: 20px; /* Space above section titles */
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee; /* Underline section titles */
+}
+
+.specification-form h1:first-of-type {
+    margin-top: 0; /* No extra top margin for the very first h1 */
+}
+
+
+/* --- Sub-Component Styles --- */
+/* These styles apply to LabeledInput, RadioGroup, CheckboxGroup */
+/* Ideally, these components would also have their own CSS files. */
+/* If they do, remove these styles from here and import their respective CSS. */
+
+/* LabeledInput Component Styling */
+.labeled-input {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column; /* Stack label above input */
+}
+
+.labeled-input label {
+    margin-bottom: 6px;
+    font-weight: bold;
+    font-size: 0.95em;
+    color: #333;
+}
+
+.labeled-input input[type="text"],
+.labeled-input input[type="number"],
+.labeled-input input[type="date"],
+.labeled-input input:not([type="radio"]):not([type="checkbox"]) {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.labeled-input input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.labeled-input input[type="date"]:invalid {
+    color: #999; /* Style placeholder-like text for date */
+}
+
+/* RadioGroup Component Styling */
+.radio-group {
+    margin-bottom: 20px;
+}
+
+.radio-group > label:first-child { /* Main group label */
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 0.95em;
+    color: #333;
+}
+
+.radio-group label:not(:first-child) { /* Individual option labels */
+    display: inline-flex;
+    align-items: center;
+    margin-right: 20px;
+    cursor: pointer;
+    font-weight: normal;
+    font-size: 1em;
+    color: #555;
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 8px;
+    accent-color: #007bff; /* Modern radio color */
+}
+
+/* Checkbox Group Styling */
+.checkbox-group {
+    margin-top: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column; /* Stack checkboxes */
+    gap: 10px; /* Space between checkboxes */
+}
+
+.checkbox-group label {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1em;
+    color: #555;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 8px;
+    accent-color: #007bff; /* Modern checkbox color */
+}
+
+/* --- Navigation Buttons Container --- */
+.onboarding-button-box {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 20px; /* Space above buttons */
+    padding-top: 20px;
+    border-top: 1px solid #eee; /* Separator line */
+}
+
+/* --- Disabled Button Fallback --- */
+/* Apply this class if your Button component doesn't handle disabled state visually */
+.button-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #ccc; /* Example disabled background */
+}
