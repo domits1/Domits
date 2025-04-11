@@ -91,7 +91,7 @@
 
 .accocard-price {
   font-size: 18px;
-  color: var(--primary-color);
+  color: var(--domits-guest-green);
   margin-bottom: 8px;
   font-weight: 500;
 }
@@ -128,7 +128,7 @@
 }
 
 .why-domits-link {
-  background-color: var(--primary-color);
+  background-color: var(--domits-guest-green);
   color: white;
   padding: 10px 10px;
   text-decoration: none;

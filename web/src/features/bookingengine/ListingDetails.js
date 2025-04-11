@@ -499,7 +499,7 @@ const ListingDetails = () => {
                 body: JSON.stringify(requestData)
             });
             if (!response.ok) {
-                throw new Error('Failed to fetch host information');
+                throw new Error('Failed to fetch accommodation reviews information');
             }
             const responseData = await response.json();
             setReviews(responseData);

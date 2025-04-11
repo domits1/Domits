@@ -14,13 +14,13 @@
 }
 
 .hiwCardImg, .hiwCardImgHost {
-  background-color: var(--primary-color);
+  background-color: var(--domits-guest-green);
   width: 100%;
   height: 150px;
 }
 
 .hiwCardImgHost {
-  background-color: var(--secondary-color);
+  background-color: var(--domits-host-blue);
 }
 
 .hiwCardHeading {
@@ -35,7 +35,7 @@
 
 .hiwBtn, .hiwBtnHost {
   color: white;
-  background-color: var(--primary-color);
+  background-color: var(--domits-guest-green);
   text-decoration: none;
   width: 100%;
   text-align: center;
@@ -47,7 +47,7 @@
 }
 
 .hiwBtnHost {
-  background-color: var(--secondary-color);
+  background-color: var(--domits-host-blue);
 }
 
 @media (max-width: 1000px) {

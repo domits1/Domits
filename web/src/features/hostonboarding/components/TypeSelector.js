@@ -1,5 +1,5 @@
 
-function AccommodationTypeSelector({
+function AccommodationTypeSelector( {
   options,
   icons,
   selectedType,

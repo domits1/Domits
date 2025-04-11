@@ -39,6 +39,6 @@
     color: white;
 }
 #cancelButton:hover{
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
 }

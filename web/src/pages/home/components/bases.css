@@ -89,7 +89,7 @@ body {
     align-items: center;
     gap: 10px;
     padding: 12px;
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     border: none;
     border-radius: 10px;
     cursor: pointer;
@@ -157,7 +157,7 @@ body {
 .header-dropdown-login-button {
     margin-top: 0;
     margin-bottom: 10px;
-    background: var(--primary-color);
+    background: var(--domits-guest-green);
     border: none;
     box-shadow: none;
 }
@@ -165,7 +165,7 @@ body {
 .header-dropdown-register-button,
 .header-dropdown-logout-button {
     margin-top: 10px;
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     border: none;
     box-shadow: none;
 }

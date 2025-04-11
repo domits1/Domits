@@ -118,7 +118,7 @@
 .guest-chat-message.sent .guest-message-content {
     display: inline-block;
 
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
     border-radius: 0.5rem;
     padding: 0.3rem 1rem;
@@ -136,7 +136,7 @@
 }
 
 .guest-chat-message.received .guest-message-content {
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     color: white;
     display: inline-block;
     border-radius: 0.5rem;
@@ -172,7 +172,7 @@
     width: 15%;
     align-self: center;
     border-radius: 1rem;
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
     border: none;
     cursor: pointer;

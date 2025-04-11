@@ -160,8 +160,8 @@
 
 .contact-list-toggle button {
     background-color: white;
-    color: var(--secondary-color);
-    border: 1px solid var(--secondary-color);
+    color: var(--domits-host-blue);
+    border: 1px solid var(--domits-host-blue);
     padding: 10px 20px;
     border-radius: 5%;
     cursor: pointer;
@@ -171,6 +171,6 @@
 }
 
 .contact-list-toggle button.active {
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     color: white;
 }

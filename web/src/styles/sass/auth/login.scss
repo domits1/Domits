@@ -1,5 +1,5 @@
-$primary-color: var(--primary-color);
-$secondary-color: var(--secondary-color);
+$primary-color: var(--domits-guest-green);
+$secondary-color: var(--domits-host-blue);
 $hover-primary: #6fb873;
 $hover-secondary: #4a86c3;
 $font-family: 'Kanit', sans-serif;
@@ -74,10 +74,11 @@ $border-radius: 5px;
   border-radius: $border-radius;
   margin-bottom: 50px;
   box-sizing: border-box;
-}
 
-label {
-  font-size: $font-size-medium;
+  label {
+    font-size: $font-size-medium;
+  }
+
 }
 
 .loginInput {

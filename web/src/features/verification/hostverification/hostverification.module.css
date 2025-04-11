@@ -133,7 +133,7 @@ hr {
 }
 
 .publish-btn {
-  background-color: var(--secondary-color);
+  background-color: var(--domits-host-blue);
   color: white;
   border: 0px;
   padding: 7px 40px;

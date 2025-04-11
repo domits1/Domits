@@ -1,4 +1,4 @@
-.job-detail-container{
+.job-detail-container {
     max-width: 100%;
     margin: 0 auto;
     /* padding: 20px; */
@@ -10,7 +10,7 @@
     justify-content: space-between;
     align-items: center;
     /* padding: 20px; */
-    
+
 }
 
 .left-container {
@@ -27,7 +27,7 @@
 }
 
 .company-name {
-    color: var(--primary-color);
+    color: var(--domits-guest-green);
     font-size: 45px;
     font-weight: bold;
     display: block;
@@ -50,7 +50,7 @@
     padding: 10px 20px;
     font-size: 1em;
     color: white;
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     border-radius: 5px;
 }
 
@@ -100,7 +100,7 @@
 
 .resp-heading {
     font-size: 48px;
-    color: var(--primary-color);
+    color: var(--domits-guest-green);
     margin-bottom: 20px;
     font-weight: 600;
 }
@@ -112,7 +112,7 @@
 }
 
 .technologies {
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -139,12 +139,13 @@
 }
 
 .exp-heading {
-    color: var(--primary-color);
+    color: var(--domits-guest-green);
     font-size: 48px;
     font-weight: 600;
 }
 
-.exp-container-top, .exp-container-bottom {
+.exp-container-top,
+.exp-container-bottom {
     margin: auto;
 }
 
@@ -156,12 +157,15 @@
     max-width: 800px;
 }
 
-.exp-container-top, .exp-container-bottom, .apply .job-detail-list li {
+.exp-container-top,
+.exp-container-bottom,
+.apply .job-detail-list li {
     font-size: 18px;
     position: relative;
     padding-left: 25px;
     line-height: 1.7;
 }
+
 .job-detail-list li::before {
     content: '';
     position: absolute;
@@ -184,4 +188,157 @@
 .apply p {
     max-width: 550px;
     font-size: 18px;
+}
+
+
+@media (max-width: 1200px) {
+
+    .left-container,
+    .right-container {
+        max-width: 100%;
+        padding: 10px;
+    }
+
+    .left-container h1 {
+        font-size: 36px;
+    }
+
+    .company-name {
+        font-size: 32px;
+    }
+
+    .resp-heading,
+    .tech-heading,
+    .exp-heading {
+        font-size: 36px;
+    }
+
+    .resp-right p,
+    .apply p,
+    .left-container p {
+        font-size: 16px;
+    }
+
+    .resp-container img {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .job-tags {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .right-container img {
+        border-radius: 0;
+    }
+
+    .responsibilities {
+        flex-direction: column;
+        padding: 20px 0;
+    }
+
+    .resp-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .technologies {
+        padding: 15px 0 30px 0;
+    }
+
+    .exp-container-top,
+    .exp-container-bottom {
+        padding: 0 15px;
+    }
+
+    .apply {
+        padding: 0 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .left-container h1 {
+        font-size: 28px;
+    }
+
+    .company-name {
+        font-size: 24px;
+    }
+
+    .resp-heading,
+    .tech-heading,
+    .exp-heading {
+        font-size: 28px;
+    }
+
+    .resp-right p,
+    .apply p,
+    .left-container p {
+        font-size: 14px;
+    }
+
+    .tag {
+        font-size: 0.9em;
+        padding: 8px 15px;
+    }
+
+    .apply p {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .technologies {
+        padding: 20px 10px 40px 10px;
+        text-align: center;
+    }
+
+    .technologies p {
+        font-size: 18px;
+        max-width: 90%;
+    }
+
+    .tech-heading {
+        font-size: 36px;
+    }
+}
+
+@media (max-width: 768px) {
+    .technologies {
+        padding: 15px 10px 30px 10px;
+        text-align: center;
+    }
+
+    .technologies p {
+        font-size: 16px;
+        max-width: 100%;
+    }
+
+    .tech-heading {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .technologies {
+        padding: 10px 5px 20px 5px;
+        text-align: center;
+    }
+
+    .technologies p {
+        font-size: 14px;
+        max-width: 100%;
+    }
+
+    .tech-heading {
+        font-size: 24px;
+    }
 }

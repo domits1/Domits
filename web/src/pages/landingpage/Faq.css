@@ -27,8 +27,8 @@
   flex-direction: row ;
   color: white;
   border-radius: 8px;
-  background-color: var(--primary-color);
-  border: 2px solid var(--primary-color);
+  background-color: var(--domits-guest-green);
+  border: 2px solid var(--domits-guest-green);
   padding: 10px 20px;
   margin: 10px 0 0 0;
   cursor: pointer;
@@ -62,8 +62,8 @@
 .category{
   color: white;
   border-radius: 8px;
-  background-color: var(--primary-color);
-  border: 2px solid var(--primary-color);
+  background-color: var(--domits-guest-green);
+  border: 2px solid var(--domits-guest-green);
   padding: 10px 20px;
   margin: 30px 20px;
   cursor: pointer;
@@ -71,7 +71,7 @@
 
 .faq-box {
   width: 50%;
-  border: 2px solid var(--primary-color);
+  border: 2px solid var(--domits-guest-green);
   border-radius: 10px;
   margin: 10px 0;
   padding: 15px;

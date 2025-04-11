@@ -21,7 +21,7 @@
 }
 
 .filter-container button.active, .filter-container button:hover {
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
 }
 
@@ -74,7 +74,7 @@
     transition: max-height 0.4s ease-in-out;
 }
 .apply-button {
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
     margin: 10px auto;
     border: none;

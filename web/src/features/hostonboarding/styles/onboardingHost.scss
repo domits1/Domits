@@ -1,0 +1,698 @@
+$domits-guest-green: #0D9813;
+$domits-host-blue: #003366;
+
+$border-radius: 8px;
+$light-gray: #ccc;
+$input-time-gray: #2a2c2d;
+$white: #fff;
+$off-white: #f0f0f0;
+
+.onboarding-host-div {
+
+  /* Headings */
+  h2 {
+    text-align: center;
+    flex-wrap: wrap;
+  }
+
+  .onboardingSectionSubtitle {
+    text-align: center;
+  }
+
+  /* Divs */
+  .map-section {
+    min-width: 45%;
+  }
+
+  .flex-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 44px;
+    width: 100%;
+  }
+
+  .form-row {
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+  .textInput {
+    width: 30vw;
+    height: 30vh;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    text-align: left;
+    padding: 11px 15px;
+    border-radius: 5px;
+  }
+
+  .images-container {
+    width: 300px;
+    height: 300px;
+    border: 1px solid $light-gray;
+    border-radius: 5px;
+
+    margin-bottom: 15px;
+    position: relative;
+
+  }
+
+  .file-image {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;
+  }
+
+  .amenity-groups {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 2rem;
+  }
+
+  .listing-calendar {
+    margin-left: 10%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .staying_nights {
+    margin-left: 2%;
+    margin-top: 1%;
+  }
+
+  .stayMinMaxBox {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stayMinMaxField {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1vw;
+  }
+
+  .minMaxButtons {
+    align-self: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 1.5vw;
+  }
+
+
+  .check-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 1rem;
+    justify-content: start;
+    flex-wrap: wrap;
+  }
+
+  .Check-checkbox {
+    width: 10rem;
+  }
+
+  .delete-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: black;
+    background-color: $white;
+    border: 1px solid $light-gray;
+    border-radius: 1vh;
+    padding: 5px;
+    cursor: pointer;
+  }
+
+  .placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: $off-white;
+    border-radius: 5px;
+    font-size: 0.8rem;
+  }
+
+  .textInput,
+  .radioInput {
+    padding: 11px 15px;
+    border-radius: 5px;
+    border: 1px solid var(--domits-host-blue);
+  }
+
+  .file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .slider-bar {
+    display: flex;
+    flex-direction: row;
+    gap: 2em;
+
+    .priceSlider {
+      width: 40vw;
+    }
+  }
+
+
+  .form-row {
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+  .thumbnail-container {
+    height: 400px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .formContainer {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin: auto;
+  }
+
+
+  .loading {
+    display: flex;
+    flex-direction: column;
+    padding: 10em 20em;
+
+    .spinner-text {
+      font-weight: bold;
+      font-size: 2em;
+    }
+
+    .spinner {
+      width: 20vw;
+      height: auto;
+      align-self: center;
+    }
+  }
+
+  .accommodation-types {
+    padding: 5%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 5%;
+    justify-items: center;
+    align-items: center;
+  }
+
+  .boat-types {
+    padding: 5%;
+    margin-bottom: 10%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 5%;
+    justify-items: center;
+    align-items: center;
+  }
+
+  @media (max-width: 768px) {
+    .boat-types {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 1em;
+    border: 2px solid transparent;
+    transition: border-color 0.3s;
+  }
+
+  .option.selected {
+    border-color: $domits-host-blue;
+  }
+
+  .accommodation-icon {
+    width: 7.5vw;
+    height: auto;
+    margin-bottom: 5%;
+  }
+
+  .accommodation-types .option p {
+    margin: 0;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .onboarding-button-box {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .onboarding-button {
+    background-color: $domits-host-blue;
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+
+  .onboarding-button-disabled {
+    background-color: darkgray;
+    border: none;
+    color: gray;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 20px;
+    cursor: not-allowed;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+
+  .guest-access {
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+    justify-content: space-between;
+    gap: 1.5em;
+
+    .guest-access-item {
+      border: 1px solid $domits-host-blue;
+      border-radius: 1.25em;
+      padding: 0 2em;
+    }
+
+    .guest-access-item-selected {
+      border: 1px solid $domits-host-blue;
+      border-radius: 1.25em;
+      padding: 0 2em;
+      background-color: $domits-host-blue;
+      color: white;
+
+      p {
+        color: white;
+      }
+    }
+  }
+
+  .acco-location {
+    display: flex;
+    flex-direction: row;
+    padding: 1em 7.5vw;
+    justify-content: space-evenly;
+    gap: 5vw;
+
+    .location-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 30vw;
+
+      .locationText {
+        margin-bottom: 10%;
+      }
+    }
+  }
+
+  .round-button {
+    width: 1.5em;
+    margin-top: 0;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid $domits-host-blue;
+    background-color: white;
+    color: $domits-host-blue;
+    text-align: center;
+    line-height: 1.25em;
+    font-size: 16px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.3s;
+    font-weight: bold;
+  }
+
+  .round-button:hover {
+    background-color: $domits-host-blue;
+    color: white;
+  }
+
+  .guest-amount {
+    margin: 0 20%;
+    padding: 2em;
+
+    .guest-amount-item {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
+      .amount-btn-box {
+        align-self: center;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 1vw;
+      }
+    }
+  }
+
+  .amenity-icon {
+    width: 4.5vw;
+    height: auto;
+    margin-bottom: 5%;
+  }
+
+  .image-upload {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6em 0;
+    border-radius: 2em;
+    border: 1px solid $domits-host-blue;
+    text-align: center;
+    margin: 0 20%;
+
+    .file-input-thumbnail {
+      align-self: center;
+    }
+  }
+
+  .accommodation-thumbnail {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;
+  }
+
+  .accommodation-images {
+    padding: 5%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 5%;
+    justify-items: center;
+    align-items: center;
+  }
+
+  .accommodation-title, .accommodation-specification {
+    align-self: center;
+  }
+
+  .accommodation-specification {
+    max-width: 50%;
+
+    .radioBtn-box, .radioBtn-box-vertical, input {
+      margin-bottom: 5%;
+    }
+
+    .accommodation-general {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .accommodation-technical {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-gap: 5%;
+    }
+  }
+
+  .radioBtn-box {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    gap: 5%;
+  }
+
+  .summary {
+    //text-align: left; probably not intentional but was assigned to .container before, and .summary was class=container
+    margin: 5rem 7rem 0 7rem;
+
+    h3 {
+      margin-bottom: 2%;
+    }
+
+    th {
+      border-bottom: 1px solid $light-gray;
+      text-align: center;
+    }
+  }
+
+  .accommodation-summary {
+    width: 100%;
+    border-collapse: collapse;
+
+    tr {
+      margin-bottom: 5%;
+      text-align: justify;
+    }
+  }
+
+  .check-box-vertical {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 5%;
+    margin-bottom: 10%;
+  }
+
+  .textInput-field {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid $light-gray;
+    border-radius: 5px;
+    margin-bottom: 10%;
+  }
+
+  .acco-price {
+    padding: 5%;
+    font-weight: bold;
+    color: black;
+  }
+
+  .accommodation-pricing {
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+    padding: 2em;
+    border: 3px solid $domits-host-blue;
+    border-radius: 2em;
+    width: 20vw;
+    margin-bottom: 1em;
+
+    hr {
+      clear: both;
+      display: block;
+      width: 96%;
+      background-color: black;
+      height: 1px;
+    }
+  }
+
+  .onboardingSectionTitle {
+    margin: 0;
+    padding: 0;
+  }
+
+  .pricing-input {
+    width: 20%;
+  }
+
+  .pricing-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .button-box-last {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1.5em;
+    padding: 2em;
+  }
+
+  .amenity-header {
+    text-align: left;
+  }
+
+  @media (max-width: 640px) {
+    .accommodation-types {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .accommodation-images {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .file-image, .accommodation-thumbnail {
+      width: 30%;
+      height: 30%;
+    }
+    .file-input {
+      width: 35%;
+      height: 35%;
+    }
+    .images-container {
+      height: auto;
+      width: auto;
+    }
+
+    .acco-location {
+      flex-direction: column;
+    }
+    .location-left, .location-right {
+      width: 70vw !important;
+    }
+
+    .guest-amount {
+      margin: 0 10%;
+      padding: 0;
+    }
+
+    .amount-btn-box {
+      gap: 2vw !important;
+    }
+
+    .textInput {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .accommodation-pricing {
+      width: 75%;
+    }
+  }
+
+  .houseRulesContainer {
+    background-color: #ededed68;
+    border-radius: 10px;
+    max-width: 600px;
+    height: auto;
+    padding: 20px;
+    margin: auto;
+  }
+
+  .toggle-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .toggle-label {
+    margin-right: 10px;
+    font-size: 16px;
+  }
+
+  .toggle-switch {
+    display: inline-block;
+    background: #8b8b8b;
+    border-radius: 16px;
+    width: 58px;
+    height: 32px;
+    position: relative;
+    transition: background 0.25s;
+  }
+
+  .toggle-switch:before {
+    display: block;
+    background: linear-gradient(to bottom, $white 0%, #eee 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    transition: left 0.25s;
+  }
+
+  .toggle-checkbox:checked + .toggle-switch {
+    background: $domits-host-blue;
+  }
+
+
+  .toggle-checkbox:checked + .toggle-switch:before {
+    left: 30px;
+  }
+
+  .toggle-checkbox {
+    position: absolute;
+    visibility: hidden;
+  }
+
+
+  .toggle-switch:before, .toggle-switch:after {
+    content: "";
+  }
+
+
+  .Check {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 30px;
+
+  }
+
+  input[type="time"] {
+    border: none;
+    color: $input-time-gray;
+    font-size: 14px;
+    width: 120px;
+    padding: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+
+  .verifyCheck {
+    width: 60vw;
+    line-height: normal;
+  }
+
+  .termsCondition {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .amenity-groups {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 400px) {
+    .check-box {
+      grid-template-columns: 1fr;
+    }
+
+    .check-box label {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+  }
+}
