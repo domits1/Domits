@@ -17,16 +17,13 @@ export const useAddressInput = (accommodationType) => {
   const handleChange =
     accommodationType === "boat"
       ? (value) => {
-          console.log("Updating Boat Details:", value)
           setBoatDetails(value)
         }
       : accommodationType === "camper"
         ? (value) => {
-            console.log("Updating Camper Details:", value)
             setCamperDetails(value)
           }
         : (value) => {
-            console.log("Updating General Address:", value)
             setAddress(value)
           }
   return { options, details, handleChange }

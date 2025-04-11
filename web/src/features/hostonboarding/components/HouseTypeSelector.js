@@ -2,10 +2,9 @@ import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 
 /**
  * Entire house/room/shared room
- * @param header
- * @param description
+ * @param {string} header
+ * @param {number} description
  * @returns {JSX.Element}
- * @constructor
  */
 function HouseTypeSelector({ header, description }) {
   // Currently selected

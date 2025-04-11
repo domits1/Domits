@@ -1,6 +1,5 @@
-import React from "react"
+import React, { useState } from "react"
 import styles from "./hostverification.module.css"
-import { useState } from "react"
 import Loading from "./components/Loading"
 import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired"
 import useFormStoreHostOnboarding from "../../hostonboarding/stores/formStoreHostOnboarding"
@@ -25,7 +24,6 @@ const RegistrationNumber = () => {
     useIsRegistrationNumberRequired(address)
 
   const [isCheckboxChecked, setIsCheckboxChecked] = useState(false)
-  const isButtonDisabled = registrationNumber && !isCheckboxChecked
 
   if (loading) {
     return <Loading />

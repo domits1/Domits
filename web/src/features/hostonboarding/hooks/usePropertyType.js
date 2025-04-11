@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom"
-import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
+import { useNavigate } from "react-router-dom";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 
 // move to next screen based on building/boat/camper
 export const useHandleAccommodationTypeProceed = () => {
@@ -11,9 +11,10 @@ export const useHandleAccommodationTypeProceed = () => {
     (state) => state.markStepComplete,
   )
 
-  const handleProceed = () => {
+  return () => {
     if (!selectedType) {
-      return
+      alert('please choose an accommodation type, before proceeding.')
+      return false;
     }
 
     markStepComplete("type")
@@ -25,7 +26,6 @@ export const useHandleAccommodationTypeProceed = () => {
     } else if (selectedType === "Camper") {
       navigate("/hostonboarding/camper")
     }
+    return true
   }
-
-  return { handleProceed }
 }

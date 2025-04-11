@@ -2,7 +2,6 @@ import { useParams } from "react-router-dom";
 import TextAreaField from "../components/TextAreaField";
 import { useAccommodationTitle } from "../hooks/usePropertyName";
 import OnboardingButton from "../components/OnboardingButton";
-import {submitAccommodation} from "../services/SubmitAccommodation";
 import React from "react";
 
 // Step 8

@@ -1,7 +1,6 @@
 import React from "react"
 
 function SummaryTable({ data, type }) {
-  console.log(data.selectedAmenities)
   const formatBoolean = (value) => (value ? "Yes" : "No")
 
   const DateFormatterDD_MM_YYYY = (dateString) => {
