@@ -1,56 +1,38 @@
-import '../../support/commands'
+describe("Guest Dashboard full flow test (live)", () => {
+  beforeEach(() => {
+    cy.viewport(1920, 1080);
+  });
 
-describe('Landing Page Tests', () => {
-    beforeEach(() => {
-        cy.viewport(1920, 1080);
-    });
+  it("logs in as guest and navigates through the dashboard sections", () => {
 
-    it('Should display the landing page and load key sections', () => {
-        cy.loginAsGuest();
-        cy.get('.header-links > .headerHostButton').click();
-        cy.get('.edit-icon-background').click();
-        cy.get(':nth-child(2) > .guest-edit-input').should('be.visible').clear().type(' testpersoondomits@gmail.com ' , { force: true });
-        cy.get(':nth-child(3) > .guest-edit-input').clear().type('Test', { force: true });
-        cy.wait(2000);
-        cy.get('.edit-icon-background').click();
-        cy.wait(2000);
-        
-        cy.intercept('GET', '**/currentUserInfo', {
-            statusCode: 200,
-            body: {
-                attributes: {
-                    email: 'testpersoondomits@gmail.com',
-                    given_name: '...long name...',
-                },
-            },
-        });
-    });
+    cy.visit("https://www.domits.com/");
 
-    describe('Guest Dashboard Initial Render', () => {
-        it('should fetch and display user data', () => {
-            cy.loginAsGuest();
-            cy.intercept('GET', '**/currentUserInfo', {
-                statusCode: 200,
-                body: {
-                    attributes: {
-                        email: 'testpersoondomits@gmail.com',
-                        given_name: 'Test',
-                    },
-                },
-            });
-            cy.get('.header-links > .headerHostButton').click();
+ 
+    cy.get(
+      '.header-personal-menu > [src="/static/media/arrow-down-icon.59bf2e60938fc6833daa025b7260e7f6.svg"]'
+    ).click();
+    cy.get(".header-dropdown-login-button").click();
 
-            cy.contains('Email:').next().should('contain', 'testpersoondomits@gmail.com');
-            cy.contains('Name:').next().should('contain', 'Test');
-        });
-    });
+    cy.get('input[type="email"]').type("testpersoondomits@gmail.com");
+    cy.get('input[type="password"]').type("Gmail.com1");
+    cy.get('button[type="submit"]').click();
 
-    describe('Edit Button Toggle', () => {
-        it('should toggle edit mode for email and name', () => {
-            cy.loginAsGuest();
-            cy.get('.header-links > .headerHostButton').click();
-            cy.wait(500);
-            cy.get('.edit-icon-background').click();
-        });
-    });
+    cy.url().should("include", "/hostdashboard");
+
+    cy.get(".header-links > .headerHostButton").click();
+
+    cy.url().should("include", "/guestdashboard");
+
+ 
+    cy.get(".dashboardSections > :nth-child(2)").should("be.visible").click();
+    cy.url().should("include", "/guestdashboard/bookings");
+
+    cy.get(".dashboardSections > .active").should("be.visible").click();
+    cy.get(".dashboardSections > .active").should("be.visible").click(); 
+
+    
+    cy.get(".dashboardSections > :nth-child(4)").should("be.visible").click();
+    cy.url().should("include", "/guestdashboard/settings");
+    cy.contains("Phone:").should("be.visible");
+  });
 });
