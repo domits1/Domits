@@ -6,6 +6,7 @@ import MessagesStackNavigator from './messagesStackNavigator';
 import MainNavigationStack from './mainNavigationStack';
 import AccountNavigationStack from './accountNavigationStack';
 import {useAuth} from '../context/AuthContext';
+import {styles} from './styles/BottomTabNavigatorStyles';
 
 const Tab = createBottomTabNavigator();
 
@@ -16,12 +17,8 @@ function BottomTabNavigator() {
     <Tab.Navigator
       screenOptions={({route}) => ({
         tabBarShowLabel: false,
-        tabBarStyle: {
-          backgroundColor: '#f0f0f0',
-          borderTopColor: 'transparent',
-          height: 60,
-          paddingBottom: 10,
-        },
+        tabBarStyle: {...styles.bottomTabBar},
+        tabBarItemStyle: {...styles.tabBarItem},
         tabBarIcon: ({focused, color, size}) => {
           let iconName;
           switch (route.name) {
@@ -39,14 +36,13 @@ function BottomTabNavigator() {
           }
 
           return (
-            <View style={{alignItems: 'center', justifyContent: 'center'}}>
+            <View style={styles.navigationItem}>
               <MaterialIcons
                 name={iconName}
                 size={30}
-                color={focused ? '#007AFF' : '#8e8e93'}
+                color={focused ? styles.navItemFocusedColor.color : styles.navItemDefaultColor.color}
               />
-              <Text
-                style={{color: focused ? '#007AFF' : '#8e8e93', fontSize: 12}}>
+              <Text style={[styles.navigationItemText, {color: focused ? styles.navItemFocusedColor.color : styles.navItemDefaultColor.color}]}>
                 {route.name}
               </Text>
             </View>
