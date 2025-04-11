@@ -9,6 +9,8 @@ import Home from "./pages/home/Accommodations";
 import Homepage from "./pages/home/homePage.js";
 import About from "./pages/about/About";
 import Whydomits from "./pages/whydomits/Whydomitstwo.js";
+import Security from "./pages/security/security.js";
+import Release from "./pages/productupdates/release.js";
 import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import Datasafety from "./pages/datasafety/datasafety.js";
 import Helpdesk from "./pages/helpdesk/Helpdesk.js";
@@ -69,24 +71,23 @@ import ReviewPage from "./features/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
-import PropertyGuestAmountView from './features/hostonboarding/views/PropertyGuestAmountView';
-import PropertyAmenitiesView from './features/hostonboarding/views/PropertyAmenitiesView';
+import PropertyGuestAmountView from './features/hostonboarding/views/4_PropertyCapacityView';
+import PropertyAmenitiesView from './features/hostonboarding/views/5_AmenitiesView';
 
-import AccommodationTypeView from "./features/hostonboarding/views/PropertyTypeView.js";
-import GuestAccessView from "./features/hostonboarding/views/HouseTypeView.js";
-import BoatTypeView from "./features/hostonboarding/views/BoatTypeView.js";
-import CamperTypeView from "./features/hostonboarding/views/CamperTypeView.js";
-import AddressInputView from "./features/hostonboarding/views/PropertyLocationView.js";
-import CapacityView from "./features/hostonboarding/views/PropertyGuestAmountView.js";
-import AmenitiesView from "./features/hostonboarding/views/PropertyAmenitiesView.js";
-import HouseRulesView from "./features/hostonboarding/views/PropertyHouseRulesView.js";
-import PhotosView from "./features/hostonboarding/views/PropertyPhotosView.js";
-import AccommodationTitleView from "./features/hostonboarding/views/PropertyNameView.js";
-import DescriptionView from "./features/hostonboarding/views/PropertyDescriptionView.js";
-import PricingView from "./features/hostonboarding/views/PropertyRateView.js";
-import AvailabilityView from "./features/hostonboarding/views/PropertyCalendarAvailabilityView.js";
+import AccommodationTypeView from "./features/hostonboarding/views/1_AccommodationTypeView.js";
+import HouseTypeView from "./features/hostonboarding/views/2_HouseTypeView.js";
+import BoatTypeView from "./features/hostonboarding/views/1b_BoatTypeView.js";
+import CamperTypeView from "./features/hostonboarding/views/1c_CamperTypeView.js";
+import AddressInputView from "./features/hostonboarding/views/3_AddressInputView.js";
+import CapacityView from "./features/hostonboarding/views/4_PropertyCapacityView.js";
+import PropertyHouseRulesView from "./features/hostonboarding/views/6_PropertyHouseRulesView.js";
+import PhotosView from "./features/hostonboarding/views/7_PropertyPhotosView.js";
+import PropertyTitleView from "./features/hostonboarding/views/8_PropertyTitleView.js";
+import PropertyDescriptionView from "./features/hostonboarding/views/9_PropertyDescriptionView.js";
+import PropertyRateView from "./features/hostonboarding/views/10_PropertyRateView.js";
+import PropertyAvailabilityView from "./features/hostonboarding/views/11_PropertyAvailabilityView.js";
 import RegistrationNumberView from "./features/verification/hostverification/HostVerifyRegistrationNumber.js";
-import SummaryView from "./features/hostonboarding/views/PropertyCheckOutAndCompletionView.js";
+import SummaryViewAndSubmit from "./features/hostonboarding/views/12_SummaryViewAndSubmit.js";
 import {ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -97,6 +98,7 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
+import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
 
 
 Modal.setAppElement("#root");
@@ -178,7 +180,7 @@ function App() {
                     <Route path="/landing" element={<Landing/>}/>
                     <Route path="/login" element={<Login/>}/>
                     <Route path="/register" element={<Register/>}/>
-                    <Route path="/listingdetails" element={<ListingDetails/>}/>
+                    <Route path="/listingdetails" element={<ListingDetails2/>}/>
                     <Route path="/bookingoverview" element={<BookingOverview/>}/>
                     <Route path="/bookingconfirmation" element={<BookingConfirmation/>}/>
                     <Route path="/paymentconfirmpage" element={<PaymentConfirmPage/>}/>
@@ -294,25 +296,21 @@ function App() {
                     {/* Host Onboarding v3 */}
                     <Route path="/hostonboarding" element={<AccommodationTypeView/>}/>
                     <Route path="/hostonboarding/accommodation"
-                           element={<StepGuard step="type"><GuestAccessView/></StepGuard>}/>
+                           element={<StepGuard step="type"><HouseTypeView/></StepGuard>}/>
                     <Route path="/hostonboarding/boat"
                            element={<StepGuard step="type"><BoatTypeView/></StepGuard>}/>
                     <Route path="/hostonboarding/camper"
                            element={<StepGuard step="type"><CamperTypeView/></StepGuard>}/>
                     <Route path="/hostonboarding/:type/address" element={<AddressInputView/>}/>
                     <Route path="/hostonboarding/:type/capacity" element={<CapacityView/>}/>
-                    <Route path="/hostonboarding/:type/rules" element={<HouseRulesView/>}/>
+                    <Route path="/hostonboarding/:type/rules" element={<PropertyHouseRulesView/>}/>
                     <Route path="/hostonboarding/:type/photos" element={<PhotosView/>}/>
-                    <Route path="/hostonboarding/:type/title" element={<AccommodationTitleView/>}/>
-                    <Route path="/hostonboarding/:type/description" element={<DescriptionView/>}/>
-                    <Route path="/hostonboarding/:type/pricing" element={<PricingView/>}/>
-                    <Route path="/hostonboarding/:type/availability" element={<AvailabilityView/>}/>
-                    <Route path="/hostonboarding/legal/registrationnumber"
-                           element={<RegistrationNumberView/>}/>
-
-                    <Route
-                        path="/hostonboarding/summary"
-                        element={<SummaryView/>}
+                    <Route path="/hostonboarding/:type/title" element={<PropertyTitleView/>}/>
+                    <Route path="/hostonboarding/:type/description" element={<PropertyDescriptionView/>}/>
+                    <Route path="/hostonboarding/:type/pricing" element={<PropertyRateView/>}/>
+                    <Route path="/hostonboarding/:type/availability" element={<PropertyAvailabilityView/>}/>
+                    <Route path="/hostonboarding/legal/registrationnumber" element={<RegistrationNumberView/>}/>
+                    <Route path="/hostonboarding/summary" element={<SummaryViewAndSubmit/>}
                     />
                     <Route
                         path="/*"
