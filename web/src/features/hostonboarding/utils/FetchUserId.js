@@ -1,6 +1,6 @@
 import React, { useEffect } from "react"
-import { Auth } from "aws-amplify" // Assuming you're using AWS Amplify Auth
-import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding" // Update with your store path
+import { Auth } from "aws-amplify"
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 
 // Todo: Old, renew
 const FetchUserId = () => {
@@ -11,7 +11,7 @@ const FetchUserId = () => {
       try {
         const userInfo = await Auth.currentAuthenticatedUser()
         const userId = userInfo.attributes.sub
-        setOwnerId(userId) // Set the userId in the form store
+        setOwnerId(userId) // Sets the userId in the form store
       } catch (error) {
         console.error("Error fetching user ID:", error)
       }
@@ -19,8 +19,6 @@ const FetchUserId = () => {
 
     asyncUserId()
   }, [setOwnerId])
-
-  return null // This component doesn't render anything visible
 }
 
 export default FetchUserId
