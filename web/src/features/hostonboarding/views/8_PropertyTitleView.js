@@ -17,23 +17,23 @@ function PropertyTitleView() {
           A short title works best. Don't worry, you can always change it later.
         </p>
 
-        <TextAreaField
-          label="Title"
-          value={title}
-          onChange={(value) => handleInputChange("title", value)}
-          maxLength={128}
-          placeholder="Enter your title here..."
-        />
+          <TextAreaField
+              label="Title"
+              value={title}
+              onChange={(value) => handleInputChange("title", value)}
+              maxLength={128}
+              placeholder="Enter your title here..."
+          />
 
-        <h2 className="onboardingSectionTitle">Give it a suitable subtitle</h2>
+          <h2 className="onboardingSectionTitle">Give it a suitable subtitle</h2>
 
-        <TextAreaField
-          label="Subtitle"
-          value={subtitle}
-          onChange={(value) => handleInputChange("subtitle", value)}
-          maxLength={128}
-          placeholder="Enter your subtitle here..."
-        />
+          <TextAreaField
+              label="Subtitle"
+              value={subtitle}
+              onChange={(value) => handleInputChange("subtitle", value)}
+              maxLength={128}
+              placeholder="Enter your subtitle here..."
+          />
 
         <nav className="onboarding-button-box">
           <OnboardingButton

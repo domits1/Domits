@@ -1,15 +1,17 @@
 // Desc: dependend step 2 - Choose the type of camper you want to list on the platform
 
-import CamperTypeSelector from "../components/TypeSelector";
-import { camperData } from "../constants/camperData";
-import useFormStore from "../stores/formStore";
-import OnboardingButton from "../components/OnboardingButton";
+import CamperTypeSelector from "../components/TypeSelector"
+import { camperData } from "../constants/camperData"
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
+import OnboardingButton from "../components/OnboardingButton"
 
 function CamperTypeView() {
-  const setCamperType = useFormStore((state) => state.setCamperType);
-  const selectedCamperType = useFormStore(
+  const setCamperType = useFormStoreHostOnboarding(
+    (state) => state.setCamperType,
+  )
+  const selectedCamperType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.camperType,
-  );
+  )
   return (
     <div className="onboarding-host-div">
       <main className="page-body">

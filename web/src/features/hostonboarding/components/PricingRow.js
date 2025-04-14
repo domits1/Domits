@@ -1,5 +1,3 @@
-import React from "react";
-
 function PricingRow({
   label,
   value,
@@ -28,7 +26,7 @@ function PricingRow({
         />
       )}
     </div>
-  );
+  )
 }
 
-export default PricingRow;
+export default PricingRow

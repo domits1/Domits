@@ -1,18 +1,20 @@
-import useFormStore from "../stores/formStore";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 
 export const useHouseRules = () => {
-  const houseRules = useFormStore(
-    (state) => state.accommodationDetails.houseRules
-  );
-  const updateHouseRule = useFormStore((state) => state.setHouseRule);
+  const houseRules = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.houseRules,
+  )
+  const updateHouseRule = useFormStoreHostOnboarding(
+    (state) => state.setHouseRule,
+  )
 
   const handleCheckboxChange = (rule, value) => {
-    updateHouseRule(rule, value);
-  };
+    updateHouseRule(rule, value)
+  }
 
   const handleTimeChange = (rule, subKey, value) => {
-    updateHouseRule(rule, value, subKey);
-  };
+    updateHouseRule(rule, value, subKey)
+  }
 
-  return { houseRules, handleCheckboxChange, handleTimeChange };
-};
+  return { houseRules, handleCheckboxChange, handleTimeChange }
+}

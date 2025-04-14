@@ -1,6 +1,5 @@
-import useFormStore from "../stores/formStore";
-import mockData from "../stores/data/mockData.json";
 import { getAccessToken } from "../../../services/getAccessToken";
+import useFormStore from "../stores/formStoreHostOnboarding";
 
 export async function submitAccommodation() {
   // API URL
@@ -8,7 +7,6 @@ export async function submitAccommodation() {
     "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
   const request = await collectData();
 
-  const response = await _fetch();
   async function _fetch() {
     try {
       console.log("Start submitAccommodation, using url: ", API_BASE_URL);
@@ -33,12 +31,12 @@ export async function submitAccommodation() {
     }
   }
 
-  return response;
+  return await _fetch();
 
   async function collectData() {
     // Retrieve form data from FormStore
     let accommodationDetails = useFormStore.getState();
-    // let accommodationDetails = await getAccommodationDetails();
+    console.log(accommodationDetails.accommodationDetails);
 
     try {
       if (

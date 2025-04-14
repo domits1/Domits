@@ -1,5 +1,5 @@
-import GuestAccessTypeSelector from "../components/GuestAccessTypeSelector";
-import OnboardingButton from "../components/OnboardingButton";
+import HouseTypeSelector from "../components/HouseTypeSelector"
+import OnboardingButton from "../components/OnboardingButton"
 
 // Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
 export default function HouseTypeView() {
@@ -10,15 +10,15 @@ export default function HouseTypeView() {
           <h2 className="onboardingSectionTitle">
             What kind of space do your guests have access to?
           </h2>
-          <GuestAccessTypeSelector
+          <HouseTypeSelector
             header="Entire house"
             description="Guests have the entire space to themselves"
           />
-          <GuestAccessTypeSelector
+          <HouseTypeSelector
             header="Private room"
             description="Guests have their own private room for sleeping"
           />
-          <GuestAccessTypeSelector
+          <HouseTypeSelector
             header="Shared room"
             description="Guests sleep in a room or common area that they may share with you or others"
           />

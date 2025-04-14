@@ -1,32 +1,32 @@
 // Desc: Step 4 - Add the number of guests that can stay in the accommodation you want to list on the platform
 
-import GuestAmountItem from "../components/GuestAmountItem";
-import { useParams } from "react-router-dom";
-import useFormStore from "../stores/formStore";
-import { accommodationFields } from "../constants/propertyAmountofGuestData";
-import OnboardingButton from "../components/OnboardingButton";
+import GuestAmountItem from "../components/GuestAmountItem"
+import { useParams } from "react-router-dom"
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
+import { accommodationFields } from "../constants/propertyAmountofGuestData"
+import OnboardingButton from "../components/OnboardingButton"
 
 function PropertyCapacityView() {
   const { type: accommodationType } = useParams();
 
-  const accommodationCapacity = useFormStore(
+  const accommodationCapacity = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.accommodationCapacity,
-  );
-  const setAccommodationCapacity = useFormStore(
+  )
+  const setAccommodationCapacity = useFormStoreHostOnboarding(
     (state) => state.setAccommodationCapacity,
-  );
+  )
 
-  const fields = accommodationFields[accommodationType];
+  const fields = accommodationFields[accommodationType]
 
   const incrementAmount = (key, max) => {
     if (accommodationCapacity[key] < max) {
-      setAccommodationCapacity(key, accommodationCapacity[key] + 1);
+        setAccommodationCapacity(key, accommodationCapacity[key] + 1);
     }
   };
 
   const decrementAmount = (key) => {
     if (accommodationCapacity[key] > 0) {
-      setAccommodationCapacity(key, accommodationCapacity[key] - 1);
+        setAccommodationCapacity(key, accommodationCapacity[key] - 1);
     }
   };
   return (

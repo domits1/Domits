@@ -1,21 +1,25 @@
-import useFormStore from "../stores/formStore";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 
 export const useDescription = () => {
-  const description = useFormStore((state) => state.accommodationDetails.description);
-  const boatSpecifications = useFormStore(
-    (state) => state.accommodationDetails.boatSpecifications
-  );
-  const camperSpecifications = useFormStore(
-    (state) => state.accommodationDetails.camperSpecifications
-  );
+  const description = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.description,
+  )
+  const boatSpecifications = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.boatSpecifications,
+  )
+  const camperSpecifications = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.camperSpecifications,
+  )
 
-  const updateDescription = useFormStore((state) => state.updateDescription);
-  const updateBoatSpecification = useFormStore(
-    (state) => state.updateBoatSpecification
-  );
-  const updateCamperSpecification = useFormStore(
-    (state) => state.updateCamperSpecification
-  );
+  const updateDescription = useFormStoreHostOnboarding(
+    (state) => state.updateDescription,
+  )
+  const updateBoatSpecification = useFormStoreHostOnboarding(
+    (state) => state.updateBoatSpecification,
+  )
+  const updateCamperSpecification = useFormStoreHostOnboarding(
+    (state) => state.updateCamperSpecification,
+  )
 
   return {
     description,
@@ -24,5 +28,5 @@ export const useDescription = () => {
     updateDescription,
     updateBoatSpecification,
     updateCamperSpecification,
-  };
-};
+  }
+}

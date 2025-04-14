@@ -1,15 +1,15 @@
 // Desc: dependend step 2 - Choose the type of boat you want to list on the platform
 
-import BoatTypeSelector from "../components/TypeSelector";
-import { boatData } from "../constants/boatData";
-import useFormStore from "../stores/formStore";
-import OnboardingButton from "../components/OnboardingButton";
+import BoatTypeSelector from "../components/TypeSelector"
+import { boatData } from "../constants/boatData"
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
+import OnboardingButton from "../components/OnboardingButton"
 
 function BoatTypeView() {
-  const setBoatType = useFormStore((state) => state.setBoatType);
-  const selectedBoatType = useFormStore(
+  const setBoatType = useFormStoreHostOnboarding((state) => state.setBoatType)
+  const selectedBoatType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.boatType,
-  );
+  )
   return (
     <div className="onboarding-host-div">
       <main className="page-body">
@@ -38,4 +38,4 @@ function BoatTypeView() {
   );
 }
 
-export default BoatTypeView;
+export default BoatTypeView

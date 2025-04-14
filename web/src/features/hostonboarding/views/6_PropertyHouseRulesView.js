@@ -1,8 +1,8 @@
-import { useParams } from "react-router-dom";
-import HouseRuleCheckbox from "../components/HouseRuleCheckbox";
-import TimeSelector from "../components/TimeSelector";
-import { useHouseRules } from "../hooks/usePropertyHouseRules";
-import OnboardingButton from "../components/OnboardingButton";
+import { useParams } from "react-router-dom"
+import HouseRuleCheckbox from "../components/HouseRuleCheckbox"
+import TimeSelector from "../components/TimeSelector"
+import { useHouseRules } from "../hooks/usePropertyHouseRules"
+import OnboardingButton from "../components/OnboardingButton"
 
 // Step 6
 function PropertyHouseRulesView() {
