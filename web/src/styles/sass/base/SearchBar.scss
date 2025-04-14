@@ -48,10 +48,6 @@ $primary-domits-color: #0d9813;
 
   > div {
     position: relative;
-    transition:
-      background 150ms ease,
-      width 150ms ease;
-
     &::before {
       position: absolute;
       content: "";
