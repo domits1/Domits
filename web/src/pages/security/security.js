@@ -2,6 +2,8 @@ import React from "react";
 import "./security.css";
 import vision from "../../images/icons/vision.png";
 import whatwedo from "../../images/icons/route.png";
+import "./security.css";
+
 
 function Security() {
   return (
