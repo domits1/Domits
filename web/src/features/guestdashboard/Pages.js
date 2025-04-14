@@ -9,7 +9,7 @@ import RevieuwsIcon from "@mui/icons-material/StarBorderOutlined";
 import Settings from "@mui/icons-material/Settings";
 
 function Pages() {
-  const [activeTab, setActiveTab] = useState("/guestdashboard");
+  const [activeTab, setActiveTab] = useState();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,10 +29,7 @@ function Pages() {
         <br />
         <div className="dropdown-section">
           <div>
-            <select
-              onChange={(e) => handleNavigation(e.target.value)}
-              defaultValue="Guest Options"
-            >
+            <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Guest Options">
               <option disabled>Guest Options</option>
               <option value="/guestdashboard">Dashboard</option>
               <option value="/guestdashboard/bookings">Bookings</option>
@@ -47,8 +44,7 @@ function Pages() {
       <div className="dashboardSections">
         <div
           className={`wijzers ${activeTab === "/guestdashboard" ? "active" : ""}`}
-          onClick={() => navigate("/guestdashboard")}
-        >
+          onClick={() => navigate("/guestdashboard")}>
           <div className="Mui">
             <DashboardIcon />
           </div>
@@ -56,8 +52,7 @@ function Pages() {
         </div>
         <div
           className={`wijzers ${activeTab === "/guestdashboard/bookings" ? "active" : ""}`}
-          onClick={() => navigate("/guestdashboard/bookings")}
-        >
+          onClick={() => navigate("/guestdashboard/bookings")}>
           <div className="Mui">
             <BookingIcon />
           </div>
@@ -65,8 +60,7 @@ function Pages() {
         </div>
         <div
           className={`wijzers ${activeTab === "/guestdashboard/chat" ? "active" : ""}`}
-          onClick={() => navigate("/guestdashboard/chat")}
-        >
+          onClick={() => navigate("/guestdashboard/chat")}>
           <div className="Mui">
             <MessageIcon />
           </div>
@@ -82,8 +76,7 @@ function Pages() {
         </div> */}
         <div
           className={`wijzers ${activeTab === "/guestdashboard/reviews" ? "active" : ""}`}
-          onClick={() => navigate("/guestdashboard/reviews")}
-        >
+          onClick={() => navigate("/guestdashboard/reviews")}>
           <div className="Mui">
             <RevieuwsIcon />
           </div>
@@ -91,8 +84,7 @@ function Pages() {
         </div>
         <div
           className={`wijzers ${activeTab === "/guestdashboard/settings" ? "active" : ""}`}
-          onClick={() => navigate("/guestdashboard/settings")}
-        >
+          onClick={() => navigate("/guestdashboard/settings")}>
           <div className="Mui">
             <Settings />
           </div>

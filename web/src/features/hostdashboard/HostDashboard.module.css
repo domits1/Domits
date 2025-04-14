@@ -120,16 +120,16 @@
 }
 
 .isDrafted {
-    color: var(--secondary-color);
+    color: var(--domits-host-blue);
 }
 
 .isLive {
-    color: var(--secondary-color);
+    color: var(--domits-host-blue);
 }
 
 .greenBtn {
     color: white;
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     border: none;
     padding: 10px 25px;
     border-radius: 10px;
