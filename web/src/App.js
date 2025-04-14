@@ -108,10 +108,10 @@ function App() {
 
   // Apollo Client
   const client = new ApolloClient({
-    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql", //
+    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
     cache: new InMemoryCache(),
     headers: {
-      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm", // Replace with your AppSync API key
+      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",
     },
   });
 
@@ -225,7 +225,7 @@ function App() {
 
                   <Route path="/hostchatbot" element={<Hostchatbot />} />
                     {/* Host Chatbot */}
-                    {/* <Route path="/hostchatbot" element={<Hostchatbot />} /> */}
+                    <Route path="/hostchatbot" element={<Hostchatbot />} />
                   
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
@@ -237,12 +237,10 @@ function App() {
                       <GuestProtectedRoute>
                         <Routes>
                           <Route path="/" element={<GuestDashboard />} />
-                          <Route path="messages" element={<ListingDetails />} />
+                          <Route path="messages" element={<GuestMessages />} />
                           <Route path="payments" element={<GuestPayments />} />
-                          {/* <Route path="reviews" element={<GuestReviews />} /> */}
                           <Route path="bookings" element={<GuestBooking />} />
                           <Route path="settings" element={<GuestSettings />} />
-                          <Route path="chat" element={<GuestMessages />} />
                         </Routes>
                       </GuestProtectedRoute>
                     }
