@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import './styles/guestdashboard.css';
+import './guestdashboard.css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/DashboardCustomizeRounded';
 import BookingIcon from '@mui/icons-material/LanguageOutlined';
@@ -9,7 +9,7 @@ import RevieuwsIcon from '@mui/icons-material/StarBorderOutlined';
 import Settings from '@mui/icons-material/Settings';
 
 function Pages() {
-  const [activeTab, setActiveTab] = useState('/guestdashboard');
+  const [activeTab, setActiveTab] = useState();
   const navigate = useNavigate();
   const location = useLocation();
 

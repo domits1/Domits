@@ -1,4 +1,4 @@
-import styles from "./styles/hostverification.module.css";
+import styles from "./hostverification.module.css";
 import Option from "./components/Option";
 import useStripeVerification from "./hooks/useStripeVerification";
 import useIsUserPhoneNumberVerified from "./hooks/useIsUserPhoneNumberVerified";

@@ -1,5 +1,5 @@
 import React from 'react';
-import './styles/RevenueOverview.css';
+import './RevenueOverview.css';
 
 const RevenueOverview = ({ title, value }) => {
     return (

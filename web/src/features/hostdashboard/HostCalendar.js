@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from "react";
 import Pages from "./Pages";
-import './styles/HostHomepage.css'
+import './HostHomepage.css'
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import CalendarComponent from "./CalendarComponent";
-import styles from "./styles/HostDashboard.module.css";
-import calenderStyles from "./styles/HostCalendar.module.css";
+import styles from "./HostDashboard.module.css";
+import calenderStyles from "./HostCalendar.module.css";
 import {generateUUID} from "../../utils/generateUUID.js";
 import {formatDate, uploadICalToS3} from "../../utils/iCalFormatHost";
 

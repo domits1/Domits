@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { Amplify, Auth } from 'aws-amplify';
 import aws from 'aws-sdk';
 import awsExports from './aws-exports';
-import './styles/index.css';
+import './styles/sass/app.scss';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';

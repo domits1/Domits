@@ -334,6 +334,7 @@ const Register = () => {
                             onChange={phone => setFormData(prevState => ({ ...prevState, phone }))}
                             inputClass="registerInput"
                             containerClass="phoneInputContainer"
+                            inputStyle={{ width: '110%', border: '1px solid #999' }}
                         />
 
                         <label>Password*</label>

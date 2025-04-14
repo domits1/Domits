@@ -1,11 +1,12 @@
-function AccommodationTypeSelector({
+
+function AccommodationTypeSelector( {
   options,
   icons,
   selectedType,
   onSelectType,
 }) {
   return (
-    <section className="accommodation-types vertical-list bordered-list">
+    <section className="accommodation-types">
       {options.map((option, index) => (
         <div
           key={index}
@@ -17,7 +18,7 @@ function AccommodationTypeSelector({
             src={icons[option]}
             alt={option}
           />
-          <span className="option-text">{option}</span>
+          {option}
         </div>
       ))}
     </section>

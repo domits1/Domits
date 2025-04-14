@@ -1,0 +1,1726 @@
+body.hide-header .app-header {
+  display: none;
+  visibility: hidden;
+}
+
+.domits-homepage .accocard-content {
+  background-color: #f9f9f9;
+}
+
+.domits-homepage {
+  background-color: #f9f9f9;
+  position: relative;
+  z-index: auto;
+}
+
+.domits-accommodationGroup {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.domits-searchContainer {
+  height: 87vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/villaHomepage.jpg");
+  background-size: cover;
+  background-position: 70% 100%;
+  background-repeat: no-repeat;
+  width: 100%;
+}
+
+.domits-searchTextCon {
+  padding-top: 32vh;
+  color: white;
+  text-align: center;
+  font-size: 4rem;
+  width: 100%;
+  font-weight: 100;
+}
+
+.domits-searchText {
+  font-size: 3rem;
+  padding-bottom: 2vh;
+}
+
+.domits-trendingContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 2vh;
+  flex-wrap: wrap;
+}
+
+.domits-trendingContainer>div {
+  width: 12vw;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+  font-size: 16px;
+  margin-left: 2%;
+  margin-right: 2%;
+}
+
+.domits-trendingContainer>div:hover::after {
+  content: attr(data-popup-text);
+  display: block;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 15px;
+  position: absolute;
+  white-space: normal;
+  z-index: 10;
+  width: 20%;
+  height: auto;
+  overflow: auto;
+  transform: translateX(50%);
+  transform: translateY(90%);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.popup-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 250px;
+  height: 90px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  background-color: white;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.popup-box {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  padding: 8px;
+  border-radius: 5px;
+  top: 100%;
+  left: 0;
+  width: 250px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.domits-searchbarCon {
+  padding-top: 1vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.domits-subHead {
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-align: center;
+  padding-left: 0;
+}
+
+.domits-iconsContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9f9f9;
+  flex-wrap: wrap;
+  height: 10vh;
+  padding: 0 4%;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;700&display=swap");
+
+.App-header {
+  background-color: rgb(255, 255, 255);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: calc(10px + 2vmin);
+  color: black;
+  padding-left: 10px;
+}
+
+.Places-text {
+  color: rgb(0, 0, 0);
+  margin-left: 60px;
+  margin-bottom: 20px;
+}
+
+.countries-container,
+.more-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.small-countries-container,
+.more-small-countries-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.country-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.country-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.country-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.country-card p {
+  margin-left: 7px;
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.small-country-card h3 {
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 500;
+}
+
+.small-country-card p {
+  display: none;
+}
+
+.small-country-card img {
+  height: 150px;
+}
+
+.countries-container> :nth-child(1),
+.more-countries-container> :nth-child(1) {
+  grid-column: span 2;
+}
+
+
+.countries-container> :nth-child(2),
+.more-countries-container> :nth-child(2) {
+  grid-column: span 1;
+}
+
+
+.countries-container> :nth-child(3),
+.more-countries-container> :nth-child(3) {
+  grid-column: span 1;
+}
+
+
+.asia-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.small-asia-countries-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.asia-country-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.asia-country-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.asia-country-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.asia-country-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.small-asia-country-card h3 {
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 500;
+}
+
+.small-asia-country-card p {
+  display: none;
+}
+
+.small-asia-country-card img {
+  height: 150px;
+}
+
+
+.asia-countries-container> :nth-child(1) {
+  grid-column: span 2;
+}
+
+
+.asia-countries-container> :nth-child(2) {
+  grid-column: span 1;
+}
+
+
+.asia-countries-container> :nth-child(3) {
+  grid-column: span 1;
+}
+
+.caribbean-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.small-caribbean-countries-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.caribbean-country-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.caribbean-country-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.caribbean-country-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.caribbean-country-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.small-caribbean-country-card h3 {
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 500;
+}
+
+.small-caribbean-country-card p {
+  display: none;
+}
+
+.small-caribbean-country-card img {
+  height: 150px;
+}
+
+
+.caribbean-countries-container> :nth-child(1) {
+  grid-column: span 1;
+}
+
+
+.caribbean-countries-container> :nth-child(2) {
+  grid-column: span 1;
+}
+
+
+.caribbean-countries-container> :nth-child(3) {
+  grid-column: span 2;
+}
+
+
+.ski-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.small-ski-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.ski-country-card,
+.small-ski-country-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.ski-country-card img,
+.small-ski-country-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.ski-country-card h3,
+.small-ski-country-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.ski-country-card p,
+.small-ski-country-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+
+.ski-countries-container> :nth-child(1) {
+  grid-column: span 1;
+}
+
+
+.ski-countries-container> :nth-child(2) {
+  grid-column: span 1;
+}
+
+
+.ski-countries-container> :nth-child(3) {
+  grid-column: span 2;
+}
+
+
+.ski-countries-container> :nth-child(4) {
+  grid-column: span 2;
+}
+
+
+.ski-countries-container> :nth-child(5) {
+  grid-column: span 1;
+}
+
+
+.ski-countries-container> :nth-child(6) {
+  grid-column: span 1;
+}
+
+
+.seasons-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.season-card {
+  overflow: hidden;
+}
+
+.season-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.season-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.interest-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.interest-container:nth-child(2) {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.interest-container:nth-child(3) {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.interest-card {
+  overflow: hidden;
+}
+
+.interest-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.interest-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.interest-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.interests-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.interest-card {
+  overflow: hidden;
+}
+
+.interest-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.interest-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.interest-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+
+.interests-container> :nth-child(1) {
+  grid-column: span 1;
+}
+
+.interests-container> :nth-child(2) {
+  grid-column: span 1;
+
+}
+
+.interests-container> :nth-child(3) {
+  grid-column: span 2;
+
+}
+
+.interests-container> :nth-child(4) {
+  grid-column: span 1;
+
+}
+
+.interests-container> :nth-child(5) {
+  grid-column: span 1;
+
+}
+
+.interests-container> :nth-child(6) {
+  grid-column: span 1;
+
+}
+
+.interests-container> :nth-child(7) {
+  grid-column: span 1;
+
+}
+
+.interests-container> :nth-child(8) {
+  grid-column: span 2;
+
+}
+
+.interests-container> :nth-child(9) {
+  grid-column: span 2;
+
+}
+
+.groups-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.group-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.group-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.group-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.group-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.groups-container> :nth-child(1) {
+  grid-column: span 1;
+
+}
+
+.groups-container> :nth-child(2) {
+  grid-column: span 1;
+
+}
+
+.groups-container> :nth-child(3) {
+  grid-column: span 2;
+
+}
+
+.groups-container> :nth-child(4) {
+  grid-column: span 2;
+
+}
+
+.groups-container> :nth-child(5) {
+  grid-column: span 1;
+
+}
+
+.groups-container> :nth-child(6) {
+  grid-column: span 1;
+
+}
+
+
+@media (max-width: 767px) {
+
+  .countries-container,
+  .more-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-countries-container,
+  .more-small-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-countries-container,
+  .more-small-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+
+  .asia-countries-container,
+  .more-asia-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-asia-countries-container,
+  .more-small-asia-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-asia-countries-container,
+  .more-small-asia-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+
+  .caribbean-countries-container,
+  .more-caribbean-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-caribbean-countries-container,
+  .more-small-caribbean-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-caribbean-countries-container,
+  .more-small-caribbean-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+
+  .ski-countries-container,
+  .more-ski-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-ski-countries-container,
+  .more-small-ski-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-ski-countries-container,
+  .more-small-ski-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+
+  .seasons-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .season-card img {
+    height: 150px;
+  }
+
+  .season-card h3 {
+    font-size: 18px;
+  }
+
+
+  .interests-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .interest-card img {
+    height: 150px;
+  }
+
+  .interest-card h3 {
+    font-size: 18px;
+  }
+
+  .interest-card p {
+    font-size: 14px;
+  }
+
+
+  .groups-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .group-card img {
+    height: 150px;
+  }
+
+  .group-card h3 {
+    font-size: 18px;
+  }
+
+  .group-card p {
+    font-size: 14px;
+  }
+}
+
+.show-more-button {
+  border: none;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 13px;
+  margin: 20px auto;
+  cursor: pointer;
+  border-radius: 5px;
+  width: calc(100% / 5 - 16px);
+  background-color: transparent;
+}
+
+
+@media (max-width: 400px) {
+
+  .countries-container,
+  .more-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-countries-container,
+  .more-small-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-countries-container,
+  .more-small-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .country-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 15px;
+    padding: 0;
+  }
+
+  .small-country-card img {
+    height: 75px;
+  }
+
+
+  .asia-countries-container,
+  .more-asia-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .asia-country-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 15px;
+    padding: 0;
+  }
+
+  .small-asia-country-card img {
+    height: 75px;
+  }
+
+  .small-asia-countries-container,
+  .more-small-asia-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-asia-countries-container,
+  .more-small-asia-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+
+  .caribbean-countries-container,
+  .more-caribbean-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-caribbean-countries-container,
+  .more-small-caribbean-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-caribbean-countries-container,
+  .more-small-caribbean-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .small-caribbean-country-card img {
+    height: 75px;
+  }
+
+
+  .ski-countries-container,
+  .more-ski-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-ski-countries-container,
+  .more-small-ski-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-ski-countries-container,
+  .more-small-ski-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+
+  .seasons-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .season-card img {
+    height: 150px;
+  }
+
+  .season-card h3 {
+    font-size: 18px;
+  }
+
+  .season-card img {
+    height: 120px;
+  }
+
+
+  .interests-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .interest-card img {
+    height: 150px;
+  }
+
+  .interest-card h3 {
+    font-size: 18px;
+  }
+
+  .interest-card p {
+    font-size: 14px;
+  }
+
+  .interest-card img {
+    height: 120px;
+  }
+
+
+  .groups-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .group-card img {
+    height: 150px;
+  }
+
+  .group-card h3 {
+    font-size: 18px;
+  }
+
+  .group-card p {
+    font-size: 14px;
+  }
+
+  .group-card img {
+    height: 125px;
+  }
+}
+
+@media (max-width: 400px) {
+  .Places-text {
+    color: rgb(0, 0, 0);
+    margin-left: 0px;
+    margin-bottom: 20px;
+  }
+}
+
+
+.domits-iconsContainerText {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.domits-iconTextGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+}
+
+.domits-iconsContainerText img {
+  width: 30px;
+}
+
+.domits-communityContainer {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 4vh;
+  padding-bottom: 8vh;
+}
+
+.domits-communityButtons {
+  display: flex;
+  align-items: center;
+  font-size: 1.5vw;
+  margin-top: 1.5rem;
+  gap: 8vw;
+  justify-content: center;
+}
+
+.domits-hostButton,
+.domits-SearchButton {
+  border: none;
+  border-radius: 0.6em;
+  padding: 8px 4vw;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-size: 0.9vw;
+}
+
+.domits-hostButton {
+  background-color: #003366;
+  color: white;
+}
+
+.domits-hostButton a,
+.domits-SearchButton a {
+  text-decoration: none;
+  color: white;
+}
+
+.domits-SearchButton {
+  background-color: #0d9813;
+  color: white;
+}
+
+.domits-communityHead {
+  font-size: 3vw;
+  font-weight: 450;
+}
+
+.domits-communityGroup {
+  font-size: 1.5vw;
+  font-weight: 300;
+  height: 15vh;
+  text-align: left;
+  padding-left: 27.2vw;
+}
+
+@media (max-width: 1440px) {
+  .domits-accocard {
+    height: auto;
+  }
+}
+
+@media (max-width: 1024px) {
+  .domits-accocard {
+    width: clamp(220px, 20vw, 300px);
+  }
+
+  .domits-iconsContainerText {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .domits-searchTextCon {
+    font-size: 5em;
+  }
+
+  .domits-communityContainer {
+    padding: 2vh 5vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .domits-accocard {
+    width: 40%;
+    height: auto;
+  }
+
+  .domits-searchText {
+    font-size: 0.6em;
+  }
+
+  .domits-searchTextCon {
+    font-size: 3em;
+  }
+
+  .domits-communityContainer {
+    padding: 2vh 3vw;
+  }
+
+  .domits-communityButtons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .domits-subHead {
+    font-size: 2rem;
+    margin-left: 2vw;
+    text-align: center;
+  }
+
+  .domits-accommodationGroup {
+    padding-left: 0vh;
+    flex-direction: column;
+    margin-left: 15px;
+    margin-right: 15px;
+  }
+
+  .domits-trendingContainer {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin: 0 auto;
+    padding: 10px 0;
+  }
+
+  .domits-trendingContainer>div {
+    width: 90%;
+    font-size: 16px;
+  }
+
+  .domits-searchTextCon {
+    font-size: 2.5em;
+    padding-top: 20vh;
+  }
+
+  .domits-searchText {
+    font-size: 1em;
+  }
+
+  .domits-communityContainer {
+    padding: 2vh 5vw;
+    text-align: center;
+  }
+
+  .domits-communityButtons {
+    flex-direction: column;
+    gap: 10px;
+    margin: 10px auto;
+  }
+
+  .domits-hostButton,
+  .domits-SearchButton {
+    font-size: 1rem;
+    padding: 10px 20px;
+    width: 80%;
+    margin: 5px auto;
+  }
+
+  .domits-searchbarCon {
+    padding-top: 15px;
+  }
+
+  .domits-iconsContainer {
+    flex-direction: column;
+    gap: 15px;
+    height: auto;
+    padding: 10px 5vw;
+  }
+
+  .domits-iconsContainer p {
+    font-size: 0.8rem;
+  }
+
+  .domits-communityHead {
+    font-size: 1.8rem;
+  }
+
+  .domits-communityGroup {
+    font-size: 1rem;
+    width: 85%;
+    margin: 0 auto;
+    text-align: center;
+    padding-left: 6vw;
+    height: 5vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .domits-searchTextCon {
+    font-size: 2em;
+  }
+
+  .domits-searchText {
+    font-size: 1em;
+  }
+
+  .domits-subHead {
+    font-size: 1.5rem;
+    margin: 20px auto;
+    text-align: center;
+  }
+
+  .domits-trendingContainer>div {
+    font-size: 14px;
+  }
+
+  .domits-communityHead {
+    font-size: 1.5rem;
+  }
+
+  .domits-hostButton,
+  .domits-SearchButton {
+    font-size: 0.8rem;
+    padding: 8px 15px;
+  }
+
+  .domits-iconsContainerText {
+    font-size: 1rem;
+  }
+
+  .domits-searchContainer {
+    height: 50vh;
+  }
+
+  .domits-trendingContainer>div:hover::after {
+    width: 60%;
+    transform: translateX(0%);
+    transform: translateY(0%);
+  }
+
+  .domits-communityContainer {
+    padding: 4vh 5vw;
+  }
+}
+
+.become-host-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: 4.5rem;
+  border-radius: 1rem;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: auto;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.become-host-content {
+  text-align: left;
+  max-width: 350px;
+  flex: 1;
+}
+
+.become-host-content h1 {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.become-host-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #555;
+}
+
+.become-host-content li {
+  margin-bottom: 0.5rem;
+}
+
+.list-property-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  background-color: #1d4ed8;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background 0.3s;
+}
+
+.list-property-button:hover {
+  background-color: #1e40af;
+}
+
+.host-images {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 300px;
+  height: auto;
+}
+
+.host-image {
+  width: 180px;
+  border-radius: 0.75rem;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.host-image:first-child {
+  width: 220px;
+}
+
+.host-image:last-child {
+  width: 270px;
+}
+
+
+@media (max-width: 1024px) {
+  .become-host-section {
+    flex-direction: column;
+    text-align: center;
+    padding: 3rem;
+  }
+
+  .become-host-content {
+    max-width: 100%;
+  }
+
+  .host-images {
+    flex-direction: row;
+    gap: 1rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .host-image {
+    width: 160px;
+  }
+
+  .host-image:first-child {
+    width: 200px;
+  }
+
+  .host-image:last-child {
+    width: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .become-host-section {
+    padding: 2rem;
+  }
+
+  .become-host-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .list-property-button {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .host-images {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .host-image {
+    width: 140px;
+  }
+
+  .host-image:first-child {
+    width: 180px;
+  }
+
+  .host-image:last-child {
+    width: 230px;
+  }
+}
+
+@media (max-width: 480px) {
+  .become-host-section {
+    padding: 1.5rem;
+  }
+
+  .become-host-content h1 {
+    font-size: 1.25rem;
+  }
+
+  .list-property-button {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .host-images {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .host-image {
+    width: 120px;
+  }
+
+  .host-image:first-child {
+    width: 160px;
+  }
+
+  .host-image:last-child {
+    width: 200px;
+  }
+}
+
+.review-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 40px;
+  margin-bottom: 40px;
+  padding: 15px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.arrow-button {
+  background-color: #D9D9D9;
+  color: black;
+  border: 0.1px solid black;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.arrow-button:hover {
+  background-color: #b7b5b5;
+}
+
+.arrow-button:first-of-type {
+  left: 15px;
+}
+
+.arrow-button:last-of-type {
+  right: 15px;
+}
+
+.review-list {
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.review-card {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  text-align: center;
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: calc(33.33% - 20px);
+  margin-right: 20px;
+  box-sizing: border-box;
+  width: 350px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.review-profile-pic {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.review-location {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.review-stars {
+  color: #f5c518;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.review-text {
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+}
+
+
+@media (max-width: 1024px) {
+  .review-card {
+    flex-basis: calc(50% - 20px);
+    width: auto;
+    height: 350px;
+  }
+
+  .review-text {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 4;
+  }
+
+  .review-profile-pic {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 768px) {
+  .review-card {
+    flex-basis: calc(100% - 20px);
+    width: 100%;
+    height: auto;
+  }
+
+  .review-text {
+    font-size: 0.85rem;
+    -webkit-line-clamp: 3;
+  }
+
+  .review-profile-pic {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+@media (max-width: 480px) {
+  .review-container {
+    padding: 10px;
+  }
+
+  .review-card {
+    flex-basis: 100%;
+    width: 100%;
+    height: auto;
+    margin-right: 0;
+  }
+
+  .review-text {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .review-profile-pic {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .review-card {
+    flex-basis: calc(50% - 20px);
+    width: auto;
+    height: 350px;
+  }
+
+  .review-text {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 4;
+  }
+
+  .review-profile-pic {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 768px) {
+  .review-card {
+    flex-basis: calc(100% - 20px);
+    width: 100%;
+    height: auto;
+  }
+
+  .review-text {
+    font-size: 0.85rem;
+    -webkit-line-clamp: 3;
+  }
+
+  .review-profile-pic {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+@media (max-width: 480px) {
+  .review-container {
+    padding: 10px;
+  }
+
+  .review-card {
+    flex-basis: 100%;
+    width: 100%;
+    height: auto;
+    margin-right: 0;
+  }
+
+  .review-text {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .review-profile-pic {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .review-card {
+    flex-basis: calc(50% - 20px);
+    width: auto;
+    height: 350px;
+  }
+
+  .review-text {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 4;
+  }
+
+  .review-profile-pic {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 768px) {
+  .review-card {
+    flex-basis: 100%;
+    width: 100%;
+    height: auto;
+  }
+
+  .review-text {
+    font-size: 0.85rem;
+    -webkit-line-clamp: 3;
+  }
+
+  .review-profile-pic {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .review-container {
+    padding: 10px;
+  }
+
+  .review-card {
+    flex-basis: 100%;
+    width: 100%;
+    height: auto;
+    margin-right: 0;
+  }
+
+  .review-text {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .review-profile-pic {
+    width: 40px;
+    height: 40px;
+  }
+}

@@ -1,0 +1,37 @@
+import React from "react";
+import CalendarComponent from "../../hostdashboard/hostcalendar/views/Calender";
+import { useParams } from "react-router-dom";
+import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
+import Button from "../components/OnboardingButton";
+import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
+
+function AvailabilityView() {
+  const { type: accommodationType } = useParams();
+  const { availability, updateSelectedDates } = useAvailability();
+  const { handleProceed } = useHandleLegalProceed();
+
+  return (
+      <main className="container">
+        <h2 className="onboardingSectionTitle">Share your first availability</h2>
+        <p className="onboardingSectionSubtitle">
+          You can edit and delete availabilities later within your dashboard
+        </p>
+
+        <CalendarComponent
+            passedProp={availability}
+            isNew={true}
+            updateDates={updateSelectedDates}
+        />
+
+        <nav className="onboarding-button-box">
+          <Button
+              routePath={`/hostonboarding/${accommodationType}/pricing`}
+              btnText="Go back"
+          />
+          <Button onClick={handleProceed} btnText="Proceed" />
+        </nav>
+      </main>
+  );
+}
+
+export default AvailabilityView;

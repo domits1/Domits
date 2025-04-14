@@ -1,5 +1,5 @@
 import React from "react";
-import '../disclaimers/styles/disclaimers.css'
+import '../disclaimers/disclaimers.css'
 
 const Policy = () =>{
     return(

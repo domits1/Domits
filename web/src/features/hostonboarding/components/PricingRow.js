@@ -1,5 +1,3 @@
-// --- START OF FILE components/PricingRow.js ---
-
 import React from "react";
 import PropTypes from "prop-types";
 
@@ -75,4 +73,3 @@ PricingRow.propTypes = {
 };
 
 export default PricingRow;
-// --- END OF FILE components/PricingRow.js ---

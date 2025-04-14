@@ -8,6 +8,7 @@ import instagramIcon from "../../images/icons/Instagram.jpg";
 import xIcon from "../../images/icons/x.png";
 import { ReactComponent as InstagramIcon } from "../../images/instagram.svg";
 import { Link } from "react-router-dom";
+
 const currentYear = new Date().getFullYear();
 
 const Footer = () => {
@@ -41,6 +42,11 @@ const Footer = () => {
             <li>
               <Link to="/security" className="footer-links">
                 Security
+              </Link>
+            </li>
+            <li>
+              <Link to="/performance" className="footer-links">
+                Performance
               </Link>
             </li>
             <li>

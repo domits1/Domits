@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
-import "./styles/RevPAR.css";
+import "./RevPAR.css";
 
 const RevPARCard = () => {
     const [ownerId, setOwnerId] = useState(null); // Owner ID from Cognito

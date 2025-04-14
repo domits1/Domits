@@ -1,10 +1,10 @@
 import React from "react";
-import styles from "./styles/hostverification.module.css";
+import styles from "./hostverification.module.css";
 import { useState } from "react";
 import Loading from "./components/Loading";
 import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired";
 import useFormStore from "../../hostonboarding/stores/formStore";
-import Button from "../../hostonboarding/components/button";
+import OnboardingButton from "../../hostonboarding/components/OnboardingButton";
 
 const RegistrationNumber = () => {
   const accommodationType = useFormStore((state) => state.accommodationDetails.type);
@@ -47,10 +47,10 @@ const RegistrationNumber = () => {
             <h2>Registration number (optional)</h2>
           )}
           <input
-              type="text"
-              placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
-              value={registrationNumber}
-              onChange={(e) => setRegistrationNumber(e.target.value)}
+            type="text"
+            placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
+            value={registrationNumber}
+            onChange={setRegistrationNumber}
           ></input>
         </div>
         <div className={styles["registrationnumber-address"]}>
@@ -80,11 +80,11 @@ const RegistrationNumber = () => {
       </div>
       <hr></hr>
       <div className={styles["bottom-container"]}>
-        <Button
+        <OnboardingButton
           routePath={`/hostonboarding/${accommodationType}/availability`}
           btnText="Go back"
         />
-        <Button routePath={`/hostonboarding/summary`}  btnText="Proceed" />
+        <OnboardingButton routePath={`/hostonboarding/summary`} btnText="Proceed" />
       </div>
     </main>
   );

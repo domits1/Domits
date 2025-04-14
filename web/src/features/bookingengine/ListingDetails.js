@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Link, useLocation, useNavigate} from "react-router-dom";
-import "./styles/listing.css";
+// import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../../utils/DateFormatterYYYY_MM_DD";
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
@@ -499,7 +499,7 @@ const ListingDetails = () => {
                 body: JSON.stringify(requestData)
             });
             if (!response.ok) {
-                throw new Error('Failed to fetch host information');
+                throw new Error('Failed to fetch accommodation reviews information');
             }
             const responseData = await response.json();
             setReviews(responseData);

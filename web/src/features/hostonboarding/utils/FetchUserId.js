@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Auth } from "aws-amplify";
 import useFormStore from "../stores/formStore";
 
+// Todo: Old, renew
 const FetchUserId = () => {
   const setOwnerId = useFormStore((state) => state.setOwnerId);
   const ownerId = useFormStore((state) => state.accommodationDetails.ownerId);

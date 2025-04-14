@@ -4,7 +4,7 @@
     width: 100%;
     padding: 8px 15px;
     margin-top: 15px;
-    background: var(--secondary-color);
+    background: var(--domits-host-blue);
     box-shadow: none;
     border-radius: 5px;
     border: none;
@@ -13,50 +13,6 @@
     display: block;
     text-align: center;
     text-decoration: none;
-    cursor: pointer;
-}
-
-.react-tel-input .form-control {
-    /* !Important wordt hier gebruikt om de css van de packages te overwriten met deze aanpassingen */
-    width: 110% !important;
-    height: auto !important;
-    margin-top: 5px !important;
-    margin-bottom: 12px !important;
-    background: white !important;
-    box-shadow: none !important;
-    border-radius: 5px !important;
-    border: 1px solid #999 !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    display: inline-flex !important;
-    box-sizing: border-box;
-  }
-
-.countryCodeDropdown {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #999;
-    border-radius: 5px;
-    background-color: white;
-    font-size: 14px;
-    color: black;
-    outline: none;
-    appearance: none;
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNNC42NyA2bDUuMzMgNS4zMyA1LjMzLTUuMzNhLjUuNSAwIDAwLS43MDcuNzE2bC01LjY3IDUuNjctNS42Ny01LjY3YS41LjUgMCAwMC43MDctLjcwN3oiIGZpbGw9IiMzMzMiLz48L3N2Zz4=');
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 12px;
-    position: relative;
-    /* z-index: 1000; */
-}
-
-.countryCodeDropdown:focus {
-    border-color: #4a86c3;
-    box-shadow: 0 0 5px rgba(74, 134, 195, 0.5);
-}
-
-.countryCodeDropdown:hover {
-    border-color: #4a86c3;
     cursor: pointer;
 }
 
