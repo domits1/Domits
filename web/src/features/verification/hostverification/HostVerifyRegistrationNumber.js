@@ -1,33 +1,35 @@
-import React from "react";
-import styles from "./hostverification.module.css";
-import { useState } from "react";
-import Loading from "./components/Loading";
-import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired";
-import useFormStore from "../../hostonboarding/stores/formStore";
-import OnboardingButton from "../../hostonboarding/components/OnboardingButton";
+import React, { useState } from "react"
+import styles from "./hostverification.module.css"
+import Loading from "./components/Loading"
+import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired"
+import useFormStoreHostOnboarding from "../../hostonboarding/stores/formStoreHostOnboarding"
+import OnboardingButton from "../../hostonboarding/components/OnboardingButton"
 
 const RegistrationNumber = () => {
-  const accommodationType = useFormStore((state) => state.accommodationDetails.type);
-  const address = useFormStore((state) => state.accommodationDetails.address);
-  const registrationNumber = useFormStore(
-    (state) => state.accommodationDetails.registrationNumber
-  );
+  const accommodationType = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.type,
+  )
+  const address = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.address,
+  )
+  const registrationNumber = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.registrationNumber,
+  )
 
-  const setRegistrationNumber = useFormStore(
-    (state) => state.setRegistrationNumber
-  );
+  const setRegistrationNumber = useFormStoreHostOnboarding(
+    (state) => state.setRegistrationNumber,
+  )
 
   const { isRegistrationNumberRequired, loading, error } =
-    useIsRegistrationNumberRequired(address);
+    useIsRegistrationNumberRequired(address)
 
-  const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
-  const isButtonDisabled = registrationNumber && !isCheckboxChecked;
+  const [isCheckboxChecked, setIsCheckboxChecked] = useState(false)
 
   if (loading) {
-    return <Loading />;
+    return <Loading />
   }
   if (error) {
-    return <p>Something went wrong {error.message}</p>;
+    return <p>Something went wrong {error.message}</p>
   }
   return (
     <main className={styles["verification-container"]}>
@@ -50,8 +52,7 @@ const RegistrationNumber = () => {
             type="text"
             placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
             value={registrationNumber}
-            onChange={setRegistrationNumber}
-          ></input>
+            onChange={setRegistrationNumber}></input>
         </div>
         <div className={styles["registrationnumber-address"]}>
           <h2>Listing address</h2>
@@ -84,9 +85,12 @@ const RegistrationNumber = () => {
           routePath={`/hostonboarding/${accommodationType}/availability`}
           btnText="Go back"
         />
-        <OnboardingButton routePath={`/hostonboarding/summary`} btnText="Proceed" />
+        <OnboardingButton
+          routePath={`/hostonboarding/summary`}
+          btnText="Proceed"
+        />
       </div>
     </main>
-  );
-};
-export default RegistrationNumber;
+  )
+}
+export default RegistrationNumber

@@ -2,9 +2,10 @@
  * Fetch the owner data by a given id.
  * @param ownerId - The id of the owner to be fetched.
  * @param setOwner - Function to set the owner.
+ * @param setLoading - Function to update the loading state.
  * @returns - Update the owner.
  */
-const FetchOwnerData = async (ownerId, setOwner) => {
+const FetchOwnerData = async (ownerId, setOwner, setLoading) => {
     if (!ownerId) {
         return;
     }
@@ -20,27 +21,50 @@ const FetchOwnerData = async (ownerId, setOwner) => {
                 body: JSON.stringify({UserId: ownerId}),
             },
         );
+
         if (!response.ok) {
             throw new Error('Failed to fetch owner data');
         }
+
         const responseData = await response.json();
         const data = responseData.body ? JSON.parse(responseData.body) : null;
+
         if (!data) {
             console.error('No data found in response body');
             return;
         }
 
-        const attributesObject = data[0].Attributes.reduce((acc, attr) => {
-            acc[attr.Name] = attr.Value;
-            return acc;
-        }, {});
-        setOwner(
-            attributesObject.given_name + ' ' + attributesObject.family_name ||
-            'Unknown Host',
-        );
+        const parsedBody =
+            typeof responseData.body === 'string'
+                ? JSON.parse(responseData.body)
+                : responseData.body;
+        const formattedData = transformRawUserData(parsedBody)
+
+        setOwner(formattedData)
+
     } catch (error) {
         console.error('Error fetching owner data:', error);
+    } finally {
+        setLoading(false);
     }
+};
+
+/**
+ * Transform host user data to object.
+ * Helper function for GetUserInfo lambda function before DB refactor (March 2025)
+ * @param data - Raw host user data
+ * @returns object
+ */
+const transformRawUserData = (data) => {
+    if (!data || data.length === 0) return null; // Handle empty case
+    const user = data[0];
+
+    const attributesObject = user.Attributes.reduce((acc, attr) => {
+        acc[attr.Name] = attr.Value;
+        return acc;
+    }, {});
+
+    return {...user, ...attributesObject, Attributes: undefined};
 };
 
 export default FetchOwnerData;
