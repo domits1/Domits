@@ -37,7 +37,7 @@ import HostListings from "./features/hostdashboard/HostListings";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostPayments from "./features/hostdashboard/HostPayments";
-import HostPricing from "./features/hostdashboard/HostPricing";
+import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing.js";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 
 import HostProperty from "./features/hostdashboard/HostProperty";
