@@ -19,11 +19,10 @@ describe('Testing the About page of Domits', () => {
         });
 
         cy.contains('About Domits').should('be.visible');
-    });
+    });    
 
-    it('should display the header', () => {
-        cy.get('.highlightH2').should('be.visible')
-        .and('contain.text', 'About Domits');
+    it('should display the about container', () => {
+        cy.get('.about').should('be.visible');
     });  
 
     it('should display the sub-header', () => {
@@ -38,6 +37,10 @@ describe('Testing the About page of Domits', () => {
     it('should display the vision factbox', () => {
         cy.get('.about__factsbox > :nth-child(1)').should('be.visible')
         .and('contain.text', 'Vision');
+    });
+    
+    it('should display the vision logo', () => {
+        cy.get(':nth-child(1) > .about__fact-header > .about__fact-image').should('be.visible');
     });
 
     it('should display the vision subtitle', () => {
@@ -54,6 +57,10 @@ describe('Testing the About page of Domits', () => {
         cy.get('.about__factsbox > :nth-child(2)').should('be.visible')
         .and('contain.text', 'What we do');
     });
+    
+    it('should display the about logo', () => {
+        cy.get(':nth-child(2) > .about__fact-header > .about__fact-image').should('be.visible');
+    });
 
     it('should display the about subtitle', () => {
         cy.get(':nth-child(2) > .about__fact-subtitle').should('be.visible')
@@ -64,7 +71,37 @@ describe('Testing the About page of Domits', () => {
         cy.get(':nth-child(2) > .about__fact-text').should('be.visible')
         .and('contain.text', 'We build');
     });
+
+    it('should display the about crew container', () => {
+        cy.get('.about__crew').should('be.visible');
+    });
+
+    it('should display the about crew title', () => {
+        cy.get('.about__who-we-are-title').should('be.visible');
+    });
+
+    it('should display the about crew sub-title', () => {
+        cy.get('.about__who-we-are-subtitle').should('be.visible');
+    });
+    
+    it('should display the about crew founder', () => {
+        cy.contains('Stefan').should('be.visible');
+    });
+
+    it('should display the about crew founder title', () => {
+        cy.contains('Founder').should('be.visible');
+    });
+    
+    it('should display the about footer container', () => {
+        cy.get('.about__footer').should('be.visible');
+    });
+
+    it('should display the about footer content', () => {
+        cy.get('.about__footer-text').should('be.visible')
+        .and('contain.text', 'We believe that every employee can be a conscious founder.');
+    });
 });
+
 
 
 describe('Testing About Page Navigation', () => {
