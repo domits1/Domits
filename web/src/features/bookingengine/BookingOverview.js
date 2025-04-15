@@ -10,6 +10,7 @@ import Calender from '@mui/icons-material/CalendarTodayOutlined';
 import People from '@mui/icons-material/PeopleAltOutlined';
 import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
 import Back from '@mui/icons-material/KeyboardBackspace';
+import { TypeMetaFieldDef } from 'graphql';
 
 const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
@@ -35,7 +36,8 @@ const BookingOverview = () => {
     const [accommodation, setAccommodation] = useState(null);
     const [cleaningFee, setCleaningFee] = useState(null);
     const [roomRate, setRoomRate] = useState(null);
-    const [taxes, setTaxes] = useState(null)
+    const [totalPrice, setTotalPrice] = useState(null);
+    const [taxes, setTaxes] = useState(1.09)
     const [ServiceFee, setServiceFee] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const location = useLocation();
@@ -44,7 +46,7 @@ const BookingOverview = () => {
     const checkIn = searchParams.get('checkInDate');
     const checkOut = searchParams.get('checkOutDate');
     const adults = parseInt(searchParams.get('guests'), 10);
-    const amountOfGuest = searchParams.get('amountOfGuest');
+    const amountOfGuest = searchParams.get('guests');
     const kids = parseInt(searchParams.get('kids'), 10); // remove kids soon or leave code? unused either way
     const pets = searchParams.get('pets'); // is this even used?
 
@@ -63,17 +65,21 @@ const BookingOverview = () => {
                 setCleaningFee(responseData.pricing.cleaning); 
                 setServiceFee(responseData.pricing.service);  
 
-                const numberOfDays = calculateDaysBetweenDates(checkIn, checkOut);
-                setRoomRate(rawRoomRate * numberOfDays);
+                const numberOfDays = await calculateDaysBetweenDates(checkIn, checkOut);
+                const totalRoomRate = rawRoomRate * numberOfDays;
+                setRoomRate(totalRoomRate);
 
+                const total = totalRoomRate + responseData.pricing.cleaning + responseData.pricing.service;
+                setTotalPrice(total);
 
-                setBookingDetails({ accommodation: responseData, checkIn, checkOut, adults, kids, pets, amountOfGuest });
+                setBookingDetails({ accommodation: responseData, checkIn, checkOut, adults, kids, pets, amountOfGuest });  
+
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
         };   
 
-        const calculateDaysBetweenDates = (startDate, endDate) => {
+        const calculateDaysBetweenDates = async (startDate, endDate) => {
             const start = new Date(parseFloat(startDate));
             const end = new Date(parseFloat(endDate));
             const differenceInTime = end - start;
@@ -81,7 +87,7 @@ const BookingOverview = () => {
             console.log("DEBUG: Difference in Days booking: ", differenceInDays);
             return differenceInDays;
         };
-        
+
         fetchAccommodation();
     }, [id, checkIn, checkOut, adults, kids, pets]);
 
@@ -128,8 +134,8 @@ const BookingOverview = () => {
             }
         };
 
-        if (accommodation && accommodation.OwnerId) {
-            fetchOwnerStripeId(accommodation.OwnerId);
+        if (accommodation && accommodation.property.hostId) {
+            fetchOwnerStripeId(accommodation.property.hostId);
         }
     }, [accommodation]);
 
@@ -158,11 +164,11 @@ const BookingOverview = () => {
 
         const paymentID = generateUUID();
         const userId = cognitoUserId;
-        const accommodationTitle = accommodation.Title;
+        const accommodationTitle = accommodation.property.title;
         const accommodationId = id;
-        const ownerId = accommodation.OwnerId;
-        const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
-        const totalAmount = Math.round(basePrice + cleaningFee * 100 + ServiceFee * 100 + taxes * 100);
+        const ownerId = accommodation.property.hostId;
+        const basePrice = 0;
+        const totalAmount = 0;
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -173,7 +179,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Accepted",
-            price: accommodationPrice,
+            price: totalAmount,
             startDate,
             endDate,
             cleaningFee,
@@ -188,7 +194,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Failed",
-            price: accommodationPrice,
+            price: totalAmount,
             startDate,
             endDate,
             cleaningFee,
@@ -205,11 +211,12 @@ const BookingOverview = () => {
             basePrice: basePrice,
             totalAmount: totalAmount,
             currency: 'eur',
-            productName: accommodation.Title,
+            productName: accommodation.property.title,
             successUrl: successUrl,
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
+        console.log(checkoutData);
 
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
@@ -334,7 +341,7 @@ const BookingOverview = () => {
                     <div className="detail-row total-price">
                         <span className="detail-label">Total:</span>
                         <span className="detail-value">
-                            € {(roomRate + cleaningFee + taxes + ServiceFee).toFixed(2)}
+                            € {(totalPrice || 0).toFixed(2)}
                         </span>
                     </div>
                 </div>  
