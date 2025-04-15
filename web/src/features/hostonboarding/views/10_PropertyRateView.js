@@ -30,29 +30,25 @@ function PropertyRateView() {
             : "Enter your base rate"}
         </h2>
 
-        <section className="accommodation-pricing">
+      <section className="accommodation-pricing">
+        <PricingRow
+          label="Base rate"
+          value={pricing.Rent}
+          onChange={(value) => updatePricing("Rent", value)}
+        />
+        {pricing.Features.ExtraServices.includes(
+          "Cleaning service (add service fee manually)"
+        ) && (
           <PricingRow
-            label="Base rate"
-            value={pricing.Rent}
-            onChange={(value) => updatePricing("Rent", value)}
+            label="Cleaning fee"
+            value={pricing.CleaningFee}
+            onChange={(value) => updatePricing("CleaningFee", value)}
           />
-          {pricing.Features.ExtraServices.includes(
-            "Cleaning service (add service fee manually)",
-          ) && (
-            <PricingRow
-              label="Cleaning fee"
-              value={pricing.CleaningFee}
-              onChange={(value) => updatePricing("CleaningFee", value)}
-            />
-          )}
-          <PricingRow
-            label="Service fees"
-            value={pricing.ServiceFee}
-            readonly
-          />
-          <hr />
-          <PricingRow label="Guest's price" value={totalGuestPrice} readonly />
-        </section>
+        )}
+        <PricingRow label="Service fees" value={pricing.ServiceFee} readonly />
+        <hr />
+        <PricingRow label="Guest's price" value={totalGuestPrice} readonly />
+      </section>
 
         <section className="accommodation-pricing">
           <PricingRow label="You earn" value={totalEarnings} readonly />

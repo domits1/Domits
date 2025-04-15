@@ -20,14 +20,14 @@ function PropertyDescriptionView() {
     accommodationType === "boat"
       ? boatSpecifications
       : accommodationType === "camper"
-        ? camperSpecifications
-        : null;
+      ? camperSpecifications
+      : null;
   const updateSpecification =
     accommodationType === "boat"
       ? updateBoatSpecification
       : accommodationType === "camper"
-        ? updateCamperSpecification
-        : null;
+      ? updateCamperSpecification
+      : null;
 
   return (
     <div className="onboarding-host-div">

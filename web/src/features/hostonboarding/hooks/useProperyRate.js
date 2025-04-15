@@ -1,9 +1,15 @@
-import useFormStore from "../stores/formStore";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 
 export const usePricing = () => {
-  const pricing = useFormStore((state) => state.accommodationDetails);
-  const updatePricing = useFormStore((state) => state.updatePricing);
-  const calculateServiceFee = useFormStore((state) => state.calculateServiceFee);
+  const pricing = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails,
+  )
+  const updatePricing = useFormStoreHostOnboarding(
+    (state) => state.updatePricing,
+  )
+  const calculateServiceFee = useFormStoreHostOnboarding(
+    (state) => state.calculateServiceFee,
+  )
 
-  return { pricing, updatePricing, calculateServiceFee };
-};
+  return { pricing, updatePricing, calculateServiceFee }
+}
