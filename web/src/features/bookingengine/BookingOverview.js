@@ -59,16 +59,29 @@ const BookingOverview = () => {
                 console.log("DEBUG: ", responseData);
                 setAccommodation(responseData);
 
-
+                const rawRoomRate = responseData.pricing.roomRate;
                 setCleaningFee(responseData.pricing.cleaning); 
                 setServiceFee(responseData.pricing.service);  
-                setRoomRate(responseData.pricing.roomRate);
-                setTaxes(responseData.pricing.roomRate / 100 * 9); // Assuming BTW is 9% (boilerplate...)
+
+                const numberOfDays = calculateDaysBetweenDates(checkIn, checkOut);
+                setRoomRate(rawRoomRate * numberOfDays);
+
+
                 setBookingDetails({ accommodation: responseData, checkIn, checkOut, adults, kids, pets, amountOfGuest });
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
         };   
+
+        const calculateDaysBetweenDates = (startDate, endDate) => {
+            const start = new Date(parseFloat(startDate));
+            const end = new Date(parseFloat(endDate));
+            const differenceInTime = end - start;
+            const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+            console.log("DEBUG: Difference in Days booking: ", differenceInDays);
+            return differenceInDays;
+        };
+        
         fetchAccommodation();
     }, [id, checkIn, checkOut, adults, kids, pets]);
 
@@ -135,19 +148,6 @@ const BookingOverview = () => {
     if (!bookingDetails || !accommodation) {
         return <div>Loading...</div>;
     }
-
-    
-    const calculateDaysBetweenDates = (startDate, endDate) => {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const differenceInTime = end - start;
-        const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-        return differenceInDays;
-    };
-
-    const numberOfDays = calculateDaysBetweenDates(checkIn, checkOut);
-
-    const accommodationPrice = roomRate * numberOfDays; // important
 
     const initiateStripeCheckout = async () => {
         if (!cognitoUserId || !ownerStripeId) {
@@ -245,7 +245,7 @@ const BookingOverview = () => {
         setIsProcessing(true);
         initiateStripeCheckout();
     };
-//    console.log(`DEBUG: id:${id}, checkin:${checkIn}, checkout: ${checkOut}, guests: ${adults}`);
+    console.log(`DEBUG: id:${id}, checkin:${checkIn}, checkout: ${checkOut}, guests: ${adults}`);
     return (
         <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
         <div className="booking-header">
