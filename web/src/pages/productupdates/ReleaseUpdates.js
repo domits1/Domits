@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./release-Updates.css";
 import { TwitterTweetEmbed } from 'react-twitter-embed';
-import axios from "axios";
 
 function ReleaseUpdates() {
   const [embedError, setEmbedError] = useState(false);
@@ -10,14 +9,15 @@ function ReleaseUpdates() {
  
   const fetchTweets = async () => {
     try {
-      const response = await axios.get("https://3s9jeu0laf.execute-api.eu-north-1.amazonaws.com/default/FetchTweetsinDB");
+      const response = await fetch("https://3s9jeu0laf.execute-api.eu-north-1.amazonaws.com/default/FetchTweetsinDB");
+      const data = await response.json();
 
       // Log the response object to see its structure
-      console.log("Full response object:", response);
+      console.log("Full response object:", data);
 
-      if (response.data && response.data.tweetIds) {
-        setTweets(response.data.tweetIds); // Set the data only if it's valid
-        console.log("✅ Fetched tweets:", response.data.tweetIds);
+      if (data && data.tweetIds) {
+        setTweets(data.tweetIds); // Set the data only if it's valid
+        console.log("✅ Fetched tweets:", data.tweetIds);
       } else {
         console.log("❌ No tweetIds found in the response.");
         setError(true); // Mark error if data is missing
@@ -31,10 +31,6 @@ function ReleaseUpdates() {
   useEffect(() => {
     fetchTweets(); // Call function when component mounts
   }, []);
-
-  useEffect(() => {
-    console.log("📦 Tweets updated:", tweets);
-  }, [tweets]);
 
   return (
     <div className="updates-container"> 
