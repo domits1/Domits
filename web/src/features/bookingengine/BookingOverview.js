@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import {Link, useNavigate} from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
@@ -32,45 +33,45 @@ const BookingOverview = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const [accommodation, setAccommodation] = useState(null);
+    const [cleaningFee, setCleaningFee] = useState(null);
+    const [roomRate, setRoomRate] = useState(null);
+    const [taxes, setTaxes] = useState(null)
+    const [ServiceFee, setServiceFee] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const id = searchParams.get('id');
-    const checkIn = searchParams.get('checkIn');
-    const checkOut = searchParams.get('checkOut');
-    const adults = parseInt(searchParams.get('adults'), 10);
-    const kids = parseInt(searchParams.get('kids'), 10);
-    const pets = searchParams.get('pets');
-    const cleaningFee = parseFloat(searchParams.get('cleaningFee'));
+    const checkIn = searchParams.get('checkInDate');
+    const checkOut = searchParams.get('checkOutDate');
+    const adults = parseInt(searchParams.get('guests'), 10);
     const amountOfGuest = searchParams.get('amountOfGuest');
-    const taxes = parseFloat(searchParams.get('taxes')); 
-    const ServiceFee = parseFloat(searchParams.get('ServiceFee'));
+    const kids = parseInt(searchParams.get('kids'), 10); // remove kids soon or leave code? unused either way
+    const pets = searchParams.get('pets'); // is this even used?
 
-
+    const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/"
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
-
+    
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
-                const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ ID: id })
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch accommodation data');
-                }
+                const response = await fetch(`https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${id}`);
                 const responseData = await response.json();
-                const data = JSON.parse(responseData.body);
-                setAccommodation(data);
-                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets, amountOfGuest });
+                console.log("DEBUG: ", responseData);
+                setAccommodation(responseData);
+
+
+                setCleaningFee(responseData.pricing.cleaning); 
+                setServiceFee(responseData.pricing.service);  
+                setRoomRate(responseData.pricing.roomRate);
+                setTaxes(responseData.pricing.roomRate / 100 * 9); // Assuming BTW is 9% (boilerplate...)
+                setBookingDetails({ accommodation: responseData, checkIn, checkOut, adults, kids, pets, amountOfGuest });
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
-        };
+        };   
         fetchAccommodation();
     }, [id, checkIn, checkOut, adults, kids, pets]);
+
 
     useEffect(() => {
         const checkAuthentication = async () => {
@@ -135,6 +136,7 @@ const BookingOverview = () => {
         return <div>Loading...</div>;
     }
 
+    
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -144,7 +146,8 @@ const BookingOverview = () => {
     };
 
     const numberOfDays = calculateDaysBetweenDates(checkIn, checkOut);
-    const accommodationPrice = accommodation.Rent * numberOfDays;
+
+    const accommodationPrice = roomRate * numberOfDays; // important
 
     const initiateStripeCheckout = async () => {
         if (!cognitoUserId || !ownerStripeId) {
@@ -242,7 +245,7 @@ const BookingOverview = () => {
         setIsProcessing(true);
         initiateStripeCheckout();
     };
-    
+//    console.log(`DEBUG: id:${id}, checkin:${checkIn}, checkout: ${checkOut}, guests: ${adults}`);
     return (
         <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
         <div className="booking-header">
@@ -253,25 +256,25 @@ const BookingOverview = () => {
             </div>
             <h1>Booking Overview</h1>
         </div>
-
+        
         <div className="Bookingcontainer">
             {/* Right Panel */}
             <div className="right-panel">
-                <div>Your journey</div>
+                <div>Your Journey</div>
                 <div className="booking-details">
                     <div className="detail-row">
                         <span className="detail-label"><Calender /> Date:</span>
                         <span className="detail-value">
-                            {DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}
+                            {DateFormatterDD_MM_YYYY(parseFloat(checkIn))} - {DateFormatterDD_MM_YYYY(parseFloat(checkOut))}
                         </span>
                     </div>
                     <div className="detail-row">
                         <span className="detail-label"><People /> Guests:</span>
-                        <span className="detail-value">{adults} adults - {kids} kids</span>
+                        <span className="detail-value">{adults} guests</span>
                     </div>
                     <div className="detail-row">
                         <span className="detail-label"><Cleaning /> Cleaning Fee:</span>
-                        <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
+                        <span className="detail-value">€ {(cleaningFee).toFixed(2)}</span>
                     </div>
                 </div>
 
@@ -298,40 +301,40 @@ const BookingOverview = () => {
                     <div className="booking-details-name">
                         <img
                             className="bookingDetailsImage"
-                            src={accommodation.Images && Object.values(accommodation.Images)[0]}
+                            src={`${S3_URL}${accommodation.images?.[0]?.key || ''}`} 
                             alt="Accommodation"
                         />
                         <div>
-                            <h1 className="booking-title">{accommodation.Title}</h1>
-                            <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
+                            <h1 className="booking-title">{accommodation.property.title}</h1>
+                            <span className="acco-title-span">{accommodation.location.city}, {accommodation.location.country}</span>
                         </div>
                     </div>
                     <hr />
 
                     <div className="detail-row">
                         <span className="detail-label">Price:</span>
-                        <span className="detail-value">€ {accommodationPrice.toFixed(2)}</span>
-                    </div>
+                        <span className="detail-value">€ {(roomRate || 0).toFixed(2)}</span>
+                        </div>
 
                     <div className="detail-row">
                         <span className="detail-label">Taxes:</span>
-                        <span className="detail-value">€ {(taxes).toFixed(2)}</span>
+                        <span className="detail-value">€ {(taxes || 0).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
                         <span className="detail-label">Cleaning fee:</span>
-                        <span className="detail-value">€ {(cleaningFee).toFixed(2)}</span>
+                        <span className="detail-value">€ {(cleaningFee || 0).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
                         <span className="detail-label">Service fee:</span>
-                        <span className="detail-value">€ {(ServiceFee).toFixed(2)}</span>
+                        <span className="detail-value">€ {(ServiceFee || 0).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row total-price">
                         <span className="detail-label">Total:</span>
                         <span className="detail-value">
-                            € {(accommodationPrice + cleaningFee / 100 + taxes + ServiceFee).toFixed(2)}
+                            € {(roomRate + cleaningFee + taxes + ServiceFee).toFixed(2)}
                         </span>
                     </div>
                 </div>  
