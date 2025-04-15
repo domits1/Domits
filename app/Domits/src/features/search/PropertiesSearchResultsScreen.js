@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import FetchAccommodationsData from './hooks/FetchAccommodationsData'
-import FormatAccommodationData from "../../components/utils/mappings/FormatAccommodationData";
-import TranslatedText from "../translation/components/TranslatedText";
+import FetchAccommodationsData from '../features/search/FetchAccommodationsData'
+import FormatAccommodationData from "../components/utils/mappings/FormatAccommodationData";
+import TranslatedText from "../features/translation/components/TranslatedText";
 import {styles} from "./styles/PropertiesSearchResultsStyles";
+import NavigateTo from "../navigation/NavigationFunctions";
 
 const PropertiesSearchResultsScreen = ({searchResults}) => {
     const [accommodationsList, setAccommodationsList] = useState([]);
@@ -29,11 +30,11 @@ const PropertiesSearchResultsScreen = ({searchResults}) => {
     }
 
     /**
-     * Go to the details page of the pressed accommodation
-     * @param accommodation - The accommodation pressed on
+     * Go to the details page of the pressed accommodation.
+     * @param accommodationId - The id of the accommodation that is pressed on.
      */
-    const handleAccommodationPress = accommodation => {
-        navigation.navigate('Detailpage', {accommodation});
+    const handleAccommodationPress = accommodationId => {
+        NavigateTo(navigation, {accommodationId: accommodationId}).detailPage();
     };
 
     /**
@@ -52,7 +53,7 @@ const PropertiesSearchResultsScreen = ({searchResults}) => {
                 <TouchableOpacity
                     style={[styles.card, containerWidth ? { width: containerWidth } : null]}
                     key={accommodation.id}
-                    onPress={() => handleAccommodationPress(accommodation)}>
+                    onPress={() => handleAccommodationPress(accommodation.id)}>
                     <Image source={{uri: accommodation.image}}
                            style={styles.image}
                            onLayout={(event) => {

@@ -10,20 +10,24 @@ import React from "react";
 const Stack = createNativeStackNavigator();
 
 function AccountNavigationStack() {
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}>
-        <Stack.Screen name={"AccountScreen"} component={Account} />
-        <Stack.Screen name={"HostProfile"} component={HostProfileTab} />
-        <Stack.Screen name={"GuestProfile"} component={GuestProfileTab} />
-        <Stack.Screen name={"Login"} component={LoginScreen} />
-        <Stack.Screen name={"Register"} component={Register} />
-        <Stack.Screen name={"ConfirmEmail"} component={ConfirmEmail} />
+    return (
+        <Stack.Navigator
+            screenOptions={{headerShown: false,}}>
+            {/* General */}
+            <Stack.Screen name={"Login"} component={LoginScreen}/>
+            <Stack.Screen name={"Register"} component={Register}/>
+            <Stack.Screen name={"ConfirmEmail"} component={ConfirmEmail}/>
 
-    </Stack.Navigator>
-  );
+            {/* Account */}
+            <Stack.Screen name={"AccountScreen"} component={Account}/>
+
+            {/* Host */}
+            <Stack.Screen name={"HostProfile"} component={HostProfileTab}/>
+
+            {/* Guest */}
+            <Stack.Screen name={"GuestProfile"} component={GuestProfileTab}/>
+        </Stack.Navigator>
+    );
 }
 
 export default AccountNavigationStack;

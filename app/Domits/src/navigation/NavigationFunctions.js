@@ -1,37 +1,39 @@
-import {useNavigation} from "@react-navigation/native";
-
 /**
  * Navigation helper functions to navigate to screens.
  *
  * React Navigation uses strings to navigate screens, making navigations difficult to find and maintain.
  *
- * @param options - Extra parameters to be given in the navigation.
+ * @param navigation - Navigation hook from component.
+ * @param parameters - Extra parameters to be given in the navigation.
  * @returns - A function to navigate to a screen.
  * @constructor
  */
-const NavigateTo = (options) => {
-    const navigation = useNavigation();
+const NavigateTo = (navigation, parameters) => {
+    if (!navigation) {
+        throw new Error("Navigation parameter is required");
+    }
 
     return {
-        /**
-         * Main navigation stack
-         */
         // General
         homeScreen: () => navigation.navigate("HomeScreen"),
         helpAndFeedback: () => navigation.navigate("HelpAndFeedback"),
 
-        // Features
+        // Home features
         scan: () => navigation.navigate("Scan"),
         pay: () => navigation.navigate("Pay"),
         pocket: () => navigation.navigate("Pocket"),
 
-        // User
+        // Account
         emailSettings: () => navigation.navigate("emailSettings"),
         settings: () => navigation.navigate("Settings"),
+        loginScreen: () => navigation.navigate("Login"),
+        registerScreen: () => navigation.navigate("Register"),
+        confirmEmailScreen: () => navigation.navigate("ConfirmEmail"),
+        accountScreen: () => navigation.navigate("AccountScreen"),
 
         // Host
-        hostHomeScreen: () => navigation.navigate("HostHomeScreen"),
         hostProfile: () => navigation.navigate("HostProfile"),
+        hostHomeScreen: () => navigation.navigate("HostHomeScreen"),
         hostSettings: () => navigation.navigate("HostSettings"),
         hostHelpDesk: () => navigation.navigate("HostHelpDesk"),
         listProperty: () => navigation.navigate("ListProperty"),
@@ -49,6 +51,7 @@ const NavigateTo = (options) => {
         reviewAndSubmitScreen: () => navigation.navigate("ReviewAndSubmitScreen"),
 
         // Guest
+        guestProfile: () => navigation.navigate("GuestProfile"),
         guestDashboard: () => navigation.navigate("GuestDashboard"),
         profile: () => navigation.navigate("Profile"),
         guestBookings: () => navigation.navigate("guestBookings"),
@@ -57,21 +60,14 @@ const NavigateTo = (options) => {
         bookings: () => navigation.navigate("Bookings"),
 
         // Property
-        detailPage: () => navigation.navigate("Detailpage"),
+        detailPage: () => navigation.navigate("Detailpage", parameters),
 
         // Booking Engine
-        bookingProcess: () => navigation.navigate("BookingProcess"),
+        bookingProcess: () => navigation.navigate("BookingProcess", parameters),
         simulateStripe: () => navigation.navigate("simulateStripe"),
         paymentAccepted: () => navigation.navigate("paymentAccepted"),
         paymentDeclined: () => navigation.navigate("paymentDeclined"),
 
-        /**todo
-         * Messages navigation stack
-         */
-
-        /**todo
-         * Account navigation stack
-         */
     };
 }
 

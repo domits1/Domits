@@ -6,7 +6,7 @@ import {useAuth} from '../../../context/AuthContext';
 import {styles} from "../styles/HostDashboardStyles";
 import NavigateTo from "../../../navigation/NavigationFunctions";
 
-const HostHomeScreen = () => {
+const HostHomeScreen = ({navigation}) => {
     const {userAttributes} = useAuth();
     const firstName = userAttributes?.given_name || 'N/A';
 
@@ -33,20 +33,20 @@ const HostHomeScreen = () => {
                         change app settings.
                     </Text>
                 </View>
-                {screenListItem(NavigateTo().hostDashboard, 'Dashboard')}
-                {screenListItem(NavigateTo().onboardingHost, 'Onboarding')}
-                {screenListItem(NavigateTo().hostCalendar, 'Calendar')}
-                {screenListItem(NavigateTo().hostPayments, 'Payments')}
-                {screenListItem(NavigateTo().hostListings, 'Listings')}
-                {screenListItem(NavigateTo().hostSettings, 'Settings')}
-                {screenListItem(NavigateTo().hostReviews, 'Reviews')}
-                {screenListItem(NavigateTo().hostHelpDesk, 'Helpdesk')}
+                {screenListItem(NavigateTo(navigation).hostDashboard, 'Dashboard')}
+                {screenListItem(NavigateTo(navigation).onboardingHost, 'Onboarding')}
+                {screenListItem(NavigateTo(navigation).hostCalendar, 'Calendar')}
+                {screenListItem(NavigateTo(navigation).hostPayments, 'Payments')}
+                {screenListItem(NavigateTo(navigation).hostListings, 'Listings')}
+                {screenListItem(NavigateTo(navigation).hostSettings, 'Settings')}
+                {screenListItem(NavigateTo(navigation).hostReviews, 'Reviews')}
+                {screenListItem(NavigateTo(navigation).hostHelpDesk, 'Helpdesk')}
                 <View style={styles.helpSection}>
                     <Text style={styles.helpText}>
                         Do you have trouble with using our app?{'\n'}Please send a support
                         request to Domits.
                     </Text>
-                    {screenListItem(NavigateTo().helpAndFeedback, 'Help and Feedback')}
+                    {screenListItem(NavigateTo(navigation).helpAndFeedback, 'Help and Feedback')}
                 </View>
             </ScrollView>
         </SafeAreaView>
