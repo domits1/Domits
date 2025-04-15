@@ -1,12 +1,13 @@
+//Booking-engine
 @use "booking-engine/imagegallery.scss";
 @use "booking-engine/listing.scss";
 @use "booking-engine/bookingoverview.scss";
 @use "booking-engine/paymentConfirmPage.scss";
-
+//Base
 @use "base/header.scss";
 @use "base/footer.scss";
 @use "base/MenuBar.scss";
-
+//Auth
 @use "auth/login.scss";
 @use "auth/register.scss";
 

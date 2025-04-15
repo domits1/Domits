@@ -19,8 +19,12 @@ function Header({ setSearchResults, setLoading }) {
   const [group, setGroup] = useState("");
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [currentView, setCurrentView] = useState("guest"); 
+  const [currentView, setCurrentView] = useState("guest");
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
+  const hiddenSearchPaths = [
+    "/"
+    // Add more paths here as needed
+  ];
 
 
   useEffect(() => {
@@ -31,18 +35,18 @@ function Header({ setSearchResults, setLoading }) {
     setDropdownVisible(false);
   }, [location]);
 
-    // useEffect(() => {
-    //     // Voeg het Trustpilot-script toe
-    //     const script = document.createElement('script');
-    //     script.src = '//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js';
-    //     script.async = true;
-    //     document.head.appendChild(script);
+  // useEffect(() => {
+  //     // Voeg het Trustpilot-script toe
+  //     const script = document.createElement('script');
+  //     script.src = '//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js';
+  //     script.async = true;
+  //     document.head.appendChild(script);
 
-    //     // Verwijder het script bij demontage van de component
-    //     return () => {
-    //         document.head.removeChild(script);
-    //     };
-    // }, []);
+  //     // Verwijder het script bij demontage van de component
+  //     return () => {
+  //         document.head.removeChild(script);
+  //     };
+  // }, []);
 
 
   const checkAuthentication = async () => {
@@ -228,22 +232,23 @@ function Header({ setSearchResults, setLoading }) {
     <div className="App">
       <header className="app-header">
         <nav
-          className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${
-            isActiveSearchBar ? "no-scroll" : ""
-          }`}
+          className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""
+            }`}
         >
           <div className="logo">
             <a href="/home">
               <img src={logo} width={150} alt="Logo" />
             </a>
           </div>
-          <div className="App">
-            <SearchBar
-              setSearchResults={setSearchResults}
-              setLoading={setLoading}
-              toggleBar={toggleSearchBar}
-            />
-          </div>
+          {!hiddenSearchPaths.includes(location.pathname) && (
+            <div className="App">
+              <SearchBar
+                setSearchResults={setSearchResults}
+                setLoading={setLoading}
+                toggleBar={toggleSearchBar}
+              />
+            </div>
+          )}
 
           <div className="headerRight">
             <ul className="header-links">

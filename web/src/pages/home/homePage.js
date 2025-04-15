@@ -12,7 +12,7 @@ import { reviews } from "../home/store/constants";
 import { categories as groups } from "../home/store/constants";
 import { img } from "../home/store/constants";
 import "swiper/css/pagination";
-import Header from "./Header";
+import Header from "../../components/base/Header";
 import greece from "../../pages/home/Images/greece.webp";
 import netherlands from "../../pages/home/Images/netherlands.webp";
 import france from "../../pages/home/Images/france.webp";
@@ -388,13 +388,13 @@ const Homepage = () => {
     };
   }, [isFixed]);
 
-  useEffect(() => {
-    document.body.classList.add("hide-header");
+  // useEffect(() => {
+  //   document.body.classList.add("hide-header");
 
-    return () => {
-      document.body.classList.remove("hide-header");
-    };
-  }, []);
+  //   return () => {
+  //     document.body.classList.remove("hide-header");
+  //   };
+  // }, []);
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -433,7 +433,6 @@ const Homepage = () => {
 
   return (
     <>
-      <Header />
       <div className="domits-homepage">
         <div className="domits-searchContainer">
           <div className="domits-searchTextCon">
