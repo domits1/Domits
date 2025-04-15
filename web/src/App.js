@@ -28,7 +28,6 @@ import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
 import GuestWishlistPage from "./features/guestdashboard/pages/GuestWishlistPage";
-import GuestMessages from './features/guestdashboard/guestmessages/pages/guestMessages.js';
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
@@ -97,7 +96,6 @@ import FlowContext from "./services/FlowContext";
 import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
-
 
 Modal.setAppElement("#root");
 
