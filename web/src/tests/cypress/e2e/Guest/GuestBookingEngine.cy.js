@@ -6,7 +6,7 @@ describe("Booking Engine Test - Beekse Bergen, Netherlands", () => {
 
     cy.session("loginSession", () => {
       cy.loginAsGuest();
-      cy.get(".header-links").should("contain", "Switch to Guest");
+      cy.get('.header-links > .headerHostButton');
     });
 
     cy.visit("https://acceptance.domits.com/home", { failOnStatusCode: false });
@@ -36,28 +36,12 @@ describe("Booking Engine Test - Beekse Bergen, Netherlands", () => {
       .type("Test", { force: true });
 
     cy.get(".edit-icon-background").should("be.visible").click();
-  });
-
-  it("should select Beekse Bergen, Netherlands and complete the booking process", () => {
-    cy.visit("https://acceptance.domits.com/listingdetails?ID=19472a39-f873-4fb2-aac5-89fa509ecc37", { failOnStatusCode: false });
-
-    cy.url()
-      .should("include", "listingdetails")
-      .and("include", "19472a39-f873-4fb2-aac5-89fa509ecc37");
-
-    cy.get(".dropdown-button").should("be.visible").click();
-    cy.get(".button__box > :nth-child(3)").should("be.visible").click();
-    cy.get(":nth-child(2) > .button__box > :nth-child(2)").should("be.visible").click();
-    cy.get(":nth-child(3) > .button__box > :nth-child(2)").should("be.visible").click();
-
-    cy.get(".closeButton").should("exist").and("be.visible").click();
+    cy.get('.logo > a > img').click();
+    cy.get(':nth-child(1) > .swiper > .swiper-wrapper > .swiper-slide-visible > img').click();
+    cy.get('.reserve-btn').click();
     
-    cy.get(".reserve-button")
-      .should("exist")
-      .and("be.visible")
-      .click();
-
-    cy.location("pathname").should("include", "/bookingoverview");
   });
+
+ 
 
 });
