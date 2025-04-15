@@ -9,7 +9,7 @@ import RevieuwsIcon from '@mui/icons-material/StarBorderOutlined';
 import Settings from '@mui/icons-material/Settings';
 
 function Pages() {
-  const [activeTab, setActiveTab] = useState('/guestdashboard');
+  const [activeTab, setActiveTab] = useState();
   const navigate = useNavigate();
   const location = useLocation();
 

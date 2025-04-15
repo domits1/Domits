@@ -56,19 +56,56 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
     },
     // Main content
-    mainContentContainer: {
+    contentContainer: {
+        flex: 1,
+    },
+    propertyDetailsContainer: {
         marginTop: 10,
         marginHorizontal: 15,
     },
-    // Accommodation image
+    // Property image
     imageContainer: {
         flexDirection: 'row',
     },
     image: {
         height: 250,
     },
+    // Images rendering dot
+    counterContainer: {
+        borderWidth: 2,
+        borderColor: 'rgba(0, 0, 0, 0.0)',
+        borderTopLeftRadius: 8,
+        borderBottomRightRadius: 8,
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    counterText: {
+        fontSize: 16,
+        color: 'white',
+        fontFamily: 'MotivaSansRegular.woff',
+        marginLeft: 2,
+    },
+    dotContainer: {
+        flexDirection: 'row',
+        position: 'absolute',
+        bottom: 10,
+        alignSelf: 'center',
+    },
+    dot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        marginHorizontal: 4,
+    },
+    activeDot: {
+        backgroundColor: 'green',
+    },
+    inactiveDot: {
+        backgroundColor: 'gray',
+    },
     // Main information
-    mainInfoContainer: {
+    mainDetailsContainer: {
         marginBottom: 10,
     },
     subtitleText: {
@@ -106,6 +143,7 @@ export const styles = StyleSheet.create({
         borderColor: 'grey',
         borderRadius: 10,
         marginVertical: 10,
+        maxWidth: 500,
     },
     // Booking button
     bookingButtonContainer: {
@@ -166,20 +204,6 @@ export const styles = StyleSheet.create({
         fontSize: 14,
         color: 'black',
     },
-    // Host
-    nameButton: {
-        width: 110,
-        borderWidth: 1,
-        borderColor: 'green',
-        borderRadius: 12,
-        padding: 10,
-    },
-    nameText: {
-        color: 'black',
-        fontSize: 12,
-        fontFamily: 'MotivaSansBold.woff',
-        textAlign: 'center',
-    },
     // All amenities modal
     modalOverlay: {
         flex: 1,
@@ -216,39 +240,5 @@ export const styles = StyleSheet.create({
         fontSize: 16,
         color: 'black',
         textAlign: 'center',
-    },
-    // Rendering dot
-    counterContainer: {
-        borderWidth: 2,
-        borderColor: 'rgba(0, 0, 0, 0.0)',
-        borderTopLeftRadius: 8,
-        borderBottomRightRadius: 8,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    counterText: {
-        fontSize: 16,
-        color: 'white',
-        fontFamily: 'MotivaSansRegular.woff',
-        marginLeft: 2,
-    },
-    dotContainer: {
-        flexDirection: 'row',
-        position: 'absolute',
-        bottom: 10,
-        alignSelf: 'center',
-    },
-    dot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        marginHorizontal: 4,
-    },
-    activeDot: {
-        backgroundColor: 'green',
-    },
-    inactiveDot: {
-        backgroundColor: 'gray',
     },
 });

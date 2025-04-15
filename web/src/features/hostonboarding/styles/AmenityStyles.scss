@@ -1,0 +1,109 @@
+$domits-guest-green: #0D9813;
+$domits-host-blue: #003366;
+
+$border-radius: 8px;
+$light-gray: #ccc;
+$input-time-gray: #2a2c2d;
+$white: #fff;
+$off-white: #f0f0f0;
+
+.centered-amenities {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: $white;
+    padding: 60px 20px;
+}
+
+.amenity-container {
+    width: 90%;
+    max-width: 900px;
+    text-align: center;
+    padding: 40px;
+    border: 2px solid $off-white;
+    border-radius: $border-radius;
+    background: $white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.amenity-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.amenity-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    justify-content: start;
+    align-items: center;
+}
+
+.amenity-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px;
+    border-radius: $border-radius;
+    background: $white;
+    transition: all 0.3s ease;
+    width: fit-content;
+    .amenity-item:hover {
+        background: $white;
+        border-color: $domits-host-blue;
+    }
+}
+
+.amenity-item label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+}
+
+.amenity-item input[type="checkbox"] {
+    transform: scale(1.2);
+    cursor: pointer;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.onboarding-button-box {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    max-width: 600px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    .onboarding-button {
+        width: 45%;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: $border-radius;
+        border: none;
+        background: $domits-host-blue;
+        color: $white;
+        cursor: pointer;
+        transition: background 0.3s;
+        .onboarding-button:hover {
+            background: #27466c;
+        }
+    }
+
+    .button-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+

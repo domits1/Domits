@@ -6,7 +6,7 @@
 .loginButton {
     width: 100%;
     padding: 8px 15px;
-    background: var(--primary-color);
+    background: var(--domits-guest-green);
     border-radius: 5px;
     border: none;
     box-shadow: none;
@@ -23,7 +23,7 @@
 .registerButtonLogin {
     width: 100%;
     padding: 8px 15px;
-    background: var(--secondary-color);
+    background: var(--domits-host-blue);
     box-shadow: none;
     border-radius: 5px;
     border: none;
@@ -79,7 +79,7 @@ label {
     margin-bottom: 10px;
     background: white;
     border-radius: 5px;
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--domits-guest-green);
     justify-content: flex-start;
     align-items: center;
     display: inline-flex;
