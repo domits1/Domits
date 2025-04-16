@@ -12,8 +12,13 @@ $breakpoint-sm: 480px;
 
 // Header Styling
 .app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background: white;
   box-shadow: 0 2px 6px 0 $box-shadow-color;
-  padding: $header-padding;
   text-align: center;
 
   .header-nav {
@@ -21,7 +26,7 @@ $breakpoint-sm: 480px;
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
+    margin: 10px;
 
     .logo {
       @media screen and (max-width: $breakpoint-lg) {
@@ -107,7 +112,7 @@ $breakpoint-sm: 480px;
     .headerHostButton,
     .headerButtons {
       border: none;
-      background: none;
+      // background: none;
       box-shadow: none;
       margin-right: 10px;
 
@@ -129,6 +134,7 @@ $breakpoint-sm: 480px;
   }
 
   @media screen and (max-width: $breakpoint-lg) {
+
     .App,
     .header-nav {
       position: sticky;
