@@ -27,11 +27,14 @@ const ListingDetails2 = () => {
         const loadData = async () => {
             try {
                 const fetchedProperty = await FetchPropertyById(id);
+                console.log(fetchedProperty);
                 setProperty(fetchedProperty);
                 setHostId(fetchedProperty.property.hostId);
 
                 const hostData = await fetchHostInfo(fetchedProperty.property.hostId);
                 console.log("Host data in ListingDetails:", hostData);
+                const email = hostData[0].Attributes.find(attr => attr.Name === "email")?.Value;
+                console.log("Host email:", email);
                 setHost(hostData);
                 setLoading(false);
             } catch (error) {

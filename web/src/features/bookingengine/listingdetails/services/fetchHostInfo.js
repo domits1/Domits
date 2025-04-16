@@ -15,7 +15,6 @@ const fetchHostInfo = async (ownerId) => {
         }
         const responseData = await response.json();
         const hostData = JSON.parse(responseData.body);
-        console.log("dit is hostData:", hostData);
         return hostData;
 
     } catch (error) {
