@@ -4,7 +4,7 @@
       "selector-max-type": [
         0,
         {
-          "message": "Gebruik geen globale type-selectors, maak gebruik van classes of BEM.",
+          "message": "Do not use global styling",
           "severity": "error"
         }
       ],
@@ -12,7 +12,7 @@
       "selector-max-universal": [
         0,
         {
-          "message": "Gebruik geen universele selectors. Houd je styling specifiek.",
+          "message": "Do not use universal styling",
           "severity": "error"
         }
       ],
@@ -20,14 +20,14 @@
       "min-nesting-depth": [
         1, 
         {
-        "message": "Houd je CSS overzichtelijk.",
+        "message": "Minimal nesting depth is 1.",
         "severity": "warning"
       }],
 
       "max-nesting-depth": [
         4,
         {
-          "message": "Houd je CSS overzichtelijk.",
+          "message": "Maximum nesting depth is 4.",
           "severity": "warning"
         }
       ],
