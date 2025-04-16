@@ -23,6 +23,7 @@ import ChatWidget from "./features/chatwidget/ChatWidget";
 import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import GuestBooking from "./features/guestdashboard/GuestBooking";
+import guestMessages from "./features/guestdashboard/guestmessages/pages/guestMessages";
 import GuestDashboard from "./features/guestdashboard/GuestDashboard";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
@@ -95,6 +96,7 @@ import FlowContext from "./services/FlowContext";
 import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
+import GuestMessages from "./features/guestdashboard/guestmessages/pages/guestMessages";
 
 Modal.setAppElement("#root");
 
@@ -203,7 +205,7 @@ function App() {
                       <Route path="reviews" element={<GuestReviews />} />
                       <Route path="bookings" element={<GuestBooking />} />
                       <Route path="settings" element={<GuestSettings />} />
-                      {/*<Route path="chat" element={<Chat/>}/>*/}
+                      <Route path="chat" element={<GuestMessages/>}/>
                     </Routes>
                   </GuestProtectedRoute>}
                 />
