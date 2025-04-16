@@ -62,6 +62,7 @@ export const useDynamicPricing = () => {
       let eventFactor = rand2 < 0.1 ? 1.2 : 1.0;
       let occupancyRate = 0.4 + rand3 * 0.6;
       let localAttractionsPopularity = 0.8 + rand4 * 0.4;
+      let noiseFactor = 1 + (rand3 - 0.5) * 0.1;
 
       let finalPrice =
         basePrice *
@@ -71,6 +72,7 @@ export const useDynamicPricing = () => {
         occupancyRate *
         localAttractionsPopularity *
         (0.5 + competitorPrice / (basePrice * 2)) *
+        noiseFactor;
 
       data.push({
         date: day,
