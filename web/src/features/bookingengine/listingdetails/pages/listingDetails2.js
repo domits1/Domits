@@ -17,6 +17,7 @@ const ListingDetails2 = () => {
     const [error, setError] = useState(null);
     const [hostId, setHostId] = useState(null);
     const [host, setHost] = useState(null);
+    const [hostEmail, setHostEmail] = useState(null);
 
 
     useEffect(() => {
@@ -28,7 +29,9 @@ const ListingDetails2 = () => {
                 const fetchedProperty = await FetchPropertyById(id);
                 setProperty(fetchedProperty);
                 setHostId(fetchedProperty.property.hostId);
+
                 const hostData = await fetchHostInfo(fetchedProperty.property.hostId);
+                console.log("Host data in ListingDetails:", hostData);
                 setHost(hostData);
                 setLoading(false);
             } catch (error) {

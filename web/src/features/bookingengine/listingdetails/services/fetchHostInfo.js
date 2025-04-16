@@ -16,7 +16,7 @@ const fetchHostInfo = async (ownerId) => {
         const responseData = await response.json();
         const hostData = JSON.parse(responseData.body);
         console.log("dit is hostData:", hostData);
-        setHost(hostData);
+        return hostData;
 
     } catch (error) {
         console.error('Error fetching host info:', error);
