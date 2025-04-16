@@ -63,7 +63,7 @@ h3 {
     flex-direction: column;
     justify-content: space-between;
     width: 49%;
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     border-radius: 20px;
     padding: 20px;
     margin-top: 20px;
@@ -157,7 +157,7 @@ h3 {
 }
 
 .about__member>p:nth-of-type(1) {
-    color: var(--primary-color);
+    color: var(--domits-guest-green);
 }
 
 .about__avatar {
