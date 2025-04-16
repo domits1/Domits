@@ -20,14 +20,15 @@ $breakpoint-sm: 480px;
   background: white;
   box-shadow: 0 2px 6px 0 $box-shadow-color;
   text-align: center;
-  height: auto;
+  height: 100%;
+  max-height: 90px;
 
   .header-nav {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    margin: 10px;
+    margin: 20px;
 
     .logo {
       @media screen and (max-width: $breakpoint-lg) {
@@ -42,6 +43,7 @@ $breakpoint-sm: 480px;
     .headerRight {
       display: flex;
       align-items: center;
+      gap: 10px;
 
       @media screen and (max-width: $breakpoint-lg) {
         margin-left: 3vw;
