@@ -13,6 +13,7 @@ import {useAuth} from '../../../context/AuthContext';
 import {useNavigation} from '@react-navigation/native';
 import ImageSlider from '../../../screens/utils/ImageSlider';
 import DateFormatterDD_MM_YYYY from "../../../screens/utils/DateFormatterDD_MM_YYYY";
+import NavigateTo from "../../../navigation/NavigationFunctions";
 
 const HostDashboardTab = () => {
   const {userAttributes} = useAuth();
@@ -65,12 +66,12 @@ const HostDashboardTab = () => {
 
         <View style={styles.rowContainer}>
           <Button
-            onPress={() => navigation.navigate('HostListingsTab')}
+            onPress={() => NavigateTo(navigation).hostListings() }
             style={styles.sectionButton}>
             <Text style={styles.infoText}>Go to listing</Text>
           </Button>
           <Button
-            onPress={() => navigation.navigate('OnboardingHost')}
+            onPress={() => NavigateTo(navigation).hostOnboarding() }
             style={styles.sectionButton}>
             <Text style={styles.infoText}>Add accommodation</Text>
           </Button>
@@ -95,9 +96,7 @@ const HostDashboardTab = () => {
                 style={styles.dashboardCard}
                 onPress={() =>
                   !accommodation.Drafted
-                    ? navigation.navigate('ListingDetails', {
-                        ID: accommodation.ID,
-                      })
+                    ? NavigateTo(navigation, {accommodationId: accommodation.ID}).propertyDetails()
                     : Alert.alert(
                         'Alert',
                         'This accommodation is drafted and cannot be viewed in listing details!',

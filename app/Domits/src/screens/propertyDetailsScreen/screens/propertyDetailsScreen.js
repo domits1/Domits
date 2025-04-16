@@ -64,7 +64,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
     }, [amountOfNights, parsedAccommodation]);
 
     const handleHomeScreenPress = () => {
-        NavigateTo(navigation).homeScreen();
+        NavigateTo(navigation).home();
     };
 
     const handleFirstDateSelected = (date) => {

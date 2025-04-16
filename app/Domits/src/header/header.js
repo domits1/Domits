@@ -5,6 +5,7 @@ import {useAuth} from '../context/AuthContext';
 import TranslatedText from '../features/translation/components/TranslatedText';
 import SelectLanguagePopup from '../features/translation/components/SelectLanguagePopup';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import NavigateTo from "../navigation/NavigationFunctions";
 
 function Header() {
   const navigation = useNavigation();
@@ -13,7 +14,7 @@ function Header() {
   const [isLanguagePopupOpen, setIsLanguagePopupOpen] = useState(false);
 
   const handleBookingsPress = () => {
-    navigation.navigate('Bookings');
+    NavigateTo(navigation).guestBookings();
   };
 
   if (isAuthenticated) {

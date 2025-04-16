@@ -2,35 +2,34 @@ import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import GuestDashboard from "../screens/guestdashboard/guestDashboard";
 import Scan from "../header/scan";
 import Pay from "../header/pay";
-import Bookings from "../header/bookings";
+import GuestBookings from "../header/bookings";
 import Pocket from "../header/pocket";
-import PropertyDetailsScreen from "../screens/propertyDetailsScreen/screens/propertyDetailsScreen";
+import PropertyDetails from "../screens/propertyDetailsScreen/screens/propertyDetailsScreen";
 import BookingProcess from "../features/bookingengine/screens/BookingEngineScreen";
-import simulateStripe from "../features/bookingengine/simulateStripe";
-import paymentAccepted from "../features/bookingengine/screens/PaymentAcceptedScreen";
-import paymentDeclined from "../features/bookingengine/screens/PaymentDeclinedScreen";
-import guestBookings from "../screens/guestdashboard/screens/GuestBookingsTab";
-import Landing from "../screens/Landing";
-import profile from "../screens/guestdashboard/GuestProfileTab";
-import paymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
-import reviews from "../screens/guestdashboard/GuestReviewsTab";
+import SimulateStripe from "../features/bookingengine/simulateStripe";
+import PaymentAccepted from "../features/bookingengine/screens/PaymentAcceptedScreen";
+import PaymentDeclined from "../features/bookingengine/screens/PaymentDeclinedScreen";
+import GuestNewConfirmedBooking from "../screens/guestdashboard/screens/GuestBookingsTab";
+import HostOnboardingLanding from "../screens/Landing";
+import GuestProfile from "../screens/guestdashboard/GuestProfileTab";
+import GuestPaymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
+import GuestReviews from "../screens/guestdashboard/GuestReviewsTab";
 import settings from "../screens/guestdashboard/GuestSettingsTab";
-import helpAndFeedback from "../screens/guestdashboard/GuestHelpAndFeedbackTab";
-import HostHomeScreen from "../features/hostdashboard/screens/HostHomeScreen";
+import HelpAndFeedback from "../screens/guestdashboard/GuestHelpAndFeedbackTab";
+import HostHome from "../features/hostdashboard/screens/HostHomeScreen";
 import HostCalendar from "../features/hostdashboard/hostcalendar/screens/HostCalendarTab";
 import HostReviews from "../features/hostdashboard/hostreviews/screens/HostReviewsTab";
 import HostProfile from "../screens/hostprofile/HostProfileTab";
-import OnboardingHost from "../screens/apphostonboarding/OnboardingHost";
+import HostOnboarding from "../screens/apphostonboarding/OnboardingHost";
 import HostPayments from "../features/hostdashboard/hostfinance/screens/HostPaymentsTab";
 import HostListings from "../features/hostdashboard/hostproperty/screens/HostListingsTab";
-import ListProperty from "../features/hostdashboard/hostproperty/screens/HostListingsTab";
 import HostSettings from "../screens/hostprofile/HostSettingsTab";
 import emailSettings from "../screens/hostprofile/emailSettings";
 import HostHelpDesk from "../features/hostdashboard/hosthelpdesk/screens/HostHelpDesk";
 import React from "react";
 import HostDashboard from "../features/hostdashboard/screens/HostDashboardTab";
-import ReviewAndSubmitScreen from "../screens/oldHostonboarding/ReviewAndSubmitScreen";
-import HomeScreen from "../features/search/HomeScreen";
+import HostReviewPropertyChanges from "../screens/oldHostonboarding/ReviewAndSubmitScreen";
+import Home from "../features/search/HomeScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -41,53 +40,47 @@ function MainNavigationStack() {
                 headerShown: false,
             }}>
             {/* General */}
-            <Stack.Screen name="HomeScreen" component={HomeScreen}/>
-            <Stack.Screen name="HelpAndFeedback" component={helpAndFeedback}/>
+            <Stack.Screen name="home" component={Home}/>
+            <Stack.Screen name="help-and-feedback" component={HelpAndFeedback}/>
 
             {/* Features */}
-            <Stack.Screen name="Scan" component={Scan}/>
-            <Stack.Screen name="Pay" component={Pay}/>
-            <Stack.Screen name="Pocket" component={Pocket}/>
-
-            {/* User */}
-            <Stack.Screen name="emailSettings" component={emailSettings}/>
-            <Stack.Screen name="Settings" component={settings}/>
+            <Stack.Screen name="scan" component={Scan}/>
+            <Stack.Screen name="pay" component={Pay}/>
+            <Stack.Screen name="pocket" component={Pocket}/>
 
             {/* Host */}
-            <Stack.Screen name="HostHomeScreen" component={HostHomeScreen}/>
-            <Stack.Screen name="HostProfile" component={HostProfile}/>
-            <Stack.Screen name="HostSettings" component={HostSettings}/>
-            <Stack.Screen name="HostHelpDesk" component={HostHelpDesk}/>
-            <Stack.Screen name="ListProperty" component={ListProperty}/>
+            <Stack.Screen name="host-home" component={HostHome}/>
+            <Stack.Screen name="host-profile" component={HostProfile}/>
+            <Stack.Screen name="host-help-desk" component={HostHelpDesk}/>
+            <Stack.Screen name="host-listings" component={HostListings}/>
 
             {/* Host dashboard */}
-            <Stack.Screen name="HostDashboard" component={HostDashboard}/>
-            <Stack.Screen name="HostCalendar" component={HostCalendar}/>
-            <Stack.Screen name="HostReviews" component={HostReviews}/>
-            <Stack.Screen name="HostPayments" component={HostPayments}/>
-            <Stack.Screen name="HostListings" component={HostListings}/>
+            <Stack.Screen name="host-dashboard" component={HostDashboard}/>
+            <Stack.Screen name="host-calendar" component={HostCalendar}/>
+            <Stack.Screen name="host-reviews" component={HostReviews}/>
+            <Stack.Screen name="host-payments" component={HostPayments}/>
 
             {/* Host Onboarding */}
-            <Stack.Screen name="Landing" component={Landing}/>
-            <Stack.Screen name="OnboardingHost" component={OnboardingHost}/>
-            <Stack.Screen name="ReviewAndSubmitScreen" component={ReviewAndSubmitScreen}/>
+            <Stack.Screen name="host-onboarding-landing" component={HostOnboardingLanding}/>
+            <Stack.Screen name="host-onboarding" component={HostOnboarding}/>
+            <Stack.Screen name="host-review-property-changes" component={HostReviewPropertyChanges}/>
 
             {/* Guest */}
-            <Stack.Screen name="GuestDashboard" component={GuestDashboard}/>
-            <Stack.Screen name="Profile" component={profile}/>
-            <Stack.Screen name="guestBookings" component={guestBookings}/>
-            <Stack.Screen name="PaymentMethods" component={paymentMethods}/>
-            <Stack.Screen name="Reviews" component={reviews}/>
-            <Stack.Screen name="Bookings" component={Bookings}/>
+            <Stack.Screen name="guest-dashboard" component={GuestDashboard}/>
+            <Stack.Screen name="guest-profile" component={GuestProfile}/>
+            <Stack.Screen name="guest-payment-methods" component={GuestPaymentMethods}/>
+            <Stack.Screen name="guest-reviews" component={GuestReviews}/>
+            <Stack.Screen name="guest-bookings" component={GuestBookings}/>
 
             {/* Property */}
-            <Stack.Screen name="Detailpage" component={PropertyDetailsScreen}/>
+            <Stack.Screen name="property-details" component={PropertyDetails}/>
 
             {/* Booking Engine*/}
-            <Stack.Screen name="BookingProcess" component={BookingProcess}/>
-            <Stack.Screen name="simulateStripe" component={simulateStripe}/>
-            <Stack.Screen name="paymentAccepted" component={paymentAccepted}/>
-            <Stack.Screen name="paymentDeclined" component={paymentDeclined}/>
+            <Stack.Screen name="booking-process" component={BookingProcess}/>
+            <Stack.Screen name="simulate-stripe" component={SimulateStripe}/>
+            <Stack.Screen name="payment-accepted" component={PaymentAccepted}/>
+            <Stack.Screen name="payment-declined" component={PaymentDeclined}/>
+            <Stack.Screen name="guest-new-confirmed-booking" component={GuestNewConfirmedBooking}/>
 
         </Stack.Navigator>
     );

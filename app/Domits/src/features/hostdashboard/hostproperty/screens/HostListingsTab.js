@@ -5,6 +5,8 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../../../../context/AuthContext';
 import {styles} from '../styles/HostPropertiesStyles'
+import LoadingScreen from "../../../../screens/loadingscreen/screens/LoadingScreen";
+import NavigateTo from "../../../../navigation/NavigationFunctions";
 
 const HostListingsTab = () => {
   const [accommodations, setAccommodations] = useState([]);
@@ -101,12 +103,12 @@ const HostListingsTab = () => {
     );
   };
 
-  const navigateToDetailPage = accommodation => {
-    navigation.navigate('HostDetailPage', {accommodation});
+  const navigateToDetailPage = accommodationId => {
+    NavigateTo(navigation, {accommodation: accommodationId}).propertyDetails();
   };
 
-  const addAccommodation = () => {
-    navigation.navigate('ListProperty');
+  const addProperty = () => {
+    NavigateTo(navigation).listProperty();
   };
 
   return (
@@ -115,7 +117,7 @@ const HostListingsTab = () => {
         <View style={styles.header}>
           <Text style={styles.headerText}>Listings</Text>
         </View>
-        <TouchableOpacity onPress={addAccommodation} style={styles.listItem}>
+        <TouchableOpacity onPress={addProperty} style={styles.listItem}>
           <Text style={styles.listItemText}>Add new accommodation</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -123,7 +125,7 @@ const HostListingsTab = () => {
           <View style={styles.box}>
             <Text style={styles.boxText}>Current Listings</Text>
             {isLoading ? (
-              <ActivityIndicator size="large" color="#003366" />
+              <LoadingScreen/>
             ) : accommodations.length > 0 ? (
               accommodations.map(item => {
                 const imageUrls = item.Images ? Object.values(item.Images) : [];
@@ -140,7 +142,7 @@ const HostListingsTab = () => {
                   <TouchableOpacity
                     key={item.ID}
                     style={styles.accommodationItem}
-                    onPress={() => navigateToDetailPage(item)}>
+                    onPress={() => navigateToDetailPage(item.ID)}>
                     {primaryImageUrl && (
                       <Image
                         source={{uri: primaryImageUrl}}

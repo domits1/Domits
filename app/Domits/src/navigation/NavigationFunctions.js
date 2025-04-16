@@ -15,58 +15,58 @@ const NavigateTo = (navigation, parameters) => {
 
     return {
         // General
-        homeScreen: () => navigation.navigate("HomeScreen"),
-        helpAndFeedback: () => navigation.navigate("HelpAndFeedback"),
+        home: () => navigation.navigate("home"),
+        helpAndFeedback: () => navigation.navigate("help-and-feedback"),
 
         // Home features
-        scan: () => navigation.navigate("Scan"),
-        pay: () => navigation.navigate("Pay"),
-        pocket: () => navigation.navigate("Pocket"),
+        scan: () => navigation.navigate("scan"),
+        pay: () => navigation.navigate("pay"),
+        pocket: () => navigation.navigate("pocket"),
 
         // Account
-        emailSettings: () => navigation.navigate("emailSettings"),
-        settings: () => navigation.navigate("Settings"),
-        loginScreen: () => navigation.navigate("Login"),
-        registerScreen: () => navigation.navigate("Register"),
-        confirmEmailScreen: () => navigation.navigate("ConfirmEmail"),
-        accountScreen: () => navigation.navigate("AccountScreen"),
+        login: () => navigation.navigate("login"),
+        register: () => navigation.navigate("register"),
+        account: () => navigation.navigate("account"),
+
+        // Account Settings
+        hostAccountSettings: () => navigation.navigate("host-account-settings"),
+        guestAccountSettings: () => navigation.navigate("guest-account-settings"),
+        changeAccountSettings: () => navigation.navigate("change-account-settings"),
+        confirmEmail: () => navigation.navigate("confirm-email"),
 
         // Host
-        hostProfile: () => navigation.navigate("HostProfile"),
-        hostHomeScreen: () => navigation.navigate("HostHomeScreen"),
-        hostSettings: () => navigation.navigate("HostSettings"),
-        hostHelpDesk: () => navigation.navigate("HostHelpDesk"),
-        listProperty: () => navigation.navigate("ListProperty"),
+        hostHome: () => navigation.navigate("host-home"),
+        hostProfile: () => navigation.navigate("host-profile"),
+        hostHelpDesk: () => navigation.navigate("host-help-desk"),
+        hostListings: () => navigation.navigate("host-listings"),
 
         // Host Dashboard
-        hostDashboard: () => navigation.navigate("HostDashboard"),
-        hostCalendar: () => navigation.navigate("HostCalendar"),
-        hostReviews: () => navigation.navigate("HostReviews"),
-        hostPayments: () => navigation.navigate("HostPayments"),
-        hostListings: () => navigation.navigate("HostListings"),
+        hostDashboard: () => navigation.navigate("host-dashboard"),
+        hostCalendar: () => navigation.navigate("host-calendar"),
+        hostReviews: () => navigation.navigate("host-reviews"),
+        hostPayments: () => navigation.navigate("host-payments"),
 
         // Host Onboarding
-        landing: () => navigation.navigate("Landing"),
-        onboardingHost: () => navigation.navigate("OnboardingHost"),
-        reviewAndSubmitScreen: () => navigation.navigate("ReviewAndSubmitScreen"),
+        hostOnboardingLanding: () => navigation.navigate("host-onboarding-landing"),
+        hostOnboarding: () => navigation.navigate("host-onboarding"),
+        hostReviewPropertyChanges: () => navigation.navigate("host-review-property-changes", parameters),
 
         // Guest
-        guestProfile: () => navigation.navigate("GuestProfile"),
-        guestDashboard: () => navigation.navigate("GuestDashboard"),
-        profile: () => navigation.navigate("Profile"),
-        guestBookings: () => navigation.navigate("guestBookings"),
-        paymentMethods: () => navigation.navigate("PaymentMethods"),
-        reviews: () => navigation.navigate("Reviews"),
-        bookings: () => navigation.navigate("Bookings"),
+        guestDashboard: () => navigation.navigate("guest-dashboard"),
+        guestProfile: () => navigation.navigate("guest-profile"),
+        guestPaymentMethods: () => navigation.navigate("guest-payment-methods"),
+        guestReviews: () => navigation.navigate("guest-reviews"),
+        guestBookings: () => navigation.navigate("guest-bookings"),
 
         // Property
-        detailPage: () => navigation.navigate("Detailpage", parameters),
+        propertyDetails: () => navigation.navigate("property-details", parameters),
 
         // Booking Engine
-        bookingProcess: () => navigation.navigate("BookingProcess", parameters),
-        simulateStripe: () => navigation.navigate("simulateStripe"),
-        paymentAccepted: () => navigation.navigate("paymentAccepted"),
-        paymentDeclined: () => navigation.navigate("paymentDeclined"),
+        bookingProcess: () => navigation.navigate("booking-process", parameters),
+        simulateStripe: () => navigation.navigate("simulate-stripe", parameters),
+        paymentAccepted: () => navigation.navigate("payment-accepted", parameters),
+        paymentDeclined: () => navigation.navigate("payment-declined", parameters),
+        guestNewConfirmedBooking: () => navigation.navigate("guest-new-confirmed-booking", parameters),
 
     };
 }

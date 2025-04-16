@@ -12,6 +12,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {deleteUser} from '../GeneralUtils/GenUtils';
 import {useAuth} from '../../context/AuthContext';
+import NavigateTo from "../../navigation/NavigationFunctions";
 
 const HostSettings = () => {
   const navigation = useNavigation();
@@ -33,7 +34,7 @@ const HostSettings = () => {
           onPress: async () => {
             try {
               await deleteUser(userId); // Ensure account deletion completes
-              navigation.navigate('LoginScreen'); // Navigate to LoginScreen after success
+              NavigateTo(navigation).login();
             } catch (error) {
               console.error('Failed to delete account:', error);
               alert('Error deleting account. Please try again.');
@@ -54,7 +55,7 @@ const HostSettings = () => {
         </View>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('emailSettings')}>
+          onPress={() => NavigateTo(navigation).changeAccountSettings() }>
           <Text style={styles.listItemText}>Change email/name</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -72,7 +73,7 @@ const HostSettings = () => {
         {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('HostHelpDesk')}>
+          onPress={() => NavigateTo(navigation).hostHelpDesk() }>
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>

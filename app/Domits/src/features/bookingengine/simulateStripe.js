@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import NavigateTo from "../../navigation/NavigationFunctions";
 
 const SimulateStripe = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
@@ -9,20 +10,20 @@ const SimulateStripe = ({navigation, route}) => {
   const pets = route.params.pets;
   const nights = route.params.nights;
   const handlePaymentAccepted = () => {
-    navigation.navigate('paymentAccepted', {
+    NavigateTo(navigation, {
       parsedAccommodation: parsedAccommodation,
       calculateCost: calculateCost,
       adults: adults,
       kids: kids,
       pets: pets,
       nights: nights,
-    });
+    }).paymentAccepted();
   };
 
   const handlePaymentDeclined = () => {
-    navigation.navigate('paymentDeclined', {
+    NavigateTo(navigation, {
       parsedAccommodation: parsedAccommodation,
-    });
+    }).paymentDeclined();
   };
 
   return (

@@ -1,18 +1,11 @@
 import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Switch,
-} from 'react-native';
+import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../context/AuthContext';
 import {useNavigation} from '@react-navigation/native';
 import {deleteUser} from '../GeneralUtils/GenUtils';
+import NavigateTo from "../../navigation/NavigationFunctions";
 
 const GuestSettingsTab = () => {
   const {userAttributes} = useAuth();
@@ -39,7 +32,7 @@ const GuestSettingsTab = () => {
             onPress: async () => {
               try {
                 await deleteUser(userId); // Ensure account deletion completes
-                navigation.navigate('LoginScreen'); // Navigate to LoginScreen after success
+                NavigateTo(navigation).login();
               } catch (error) {
                 console.error('Failed to delete account:', error);
                 alert('Error deleting account. Please try again.');
@@ -88,13 +81,13 @@ const GuestSettingsTab = () => {
         {/*</View>*/}
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('emailSettings')}>
+          onPress={() => NavigateTo(navigation).changeAccountSettings() }>
           <Text style={styles.listItemText}>Change email/name</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('HostHelpDesk')}>
+          onPress={() => NavigateTo(navigation).hostHelpDesk() }>
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>

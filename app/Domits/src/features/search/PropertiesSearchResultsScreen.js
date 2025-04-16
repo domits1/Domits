@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
+import {Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {styles} from "./styles/PropertiesSearchResultsStyles";
 import FormatAccommodationData from "../../components/utils/mappings/FormatAccommodationData";
 import TranslatedText from "../translation/components/TranslatedText";
 import FetchAccommodationsData from "./hooks/FetchAccommodationsData";
 import NavigateTo from "../../navigation/NavigationFunctions";
+import LoadingScreen from "../../screens/loadingscreen/screens/LoadingScreen";
 
 const PropertiesSearchResultsScreen = ({searchResults}) => {
     const [accommodationsList, setAccommodationsList] = useState([]);
@@ -21,20 +22,12 @@ const PropertiesSearchResultsScreen = ({searchResults}) => {
         }
     }, [searchResults]);
 
-    if (loading) {
-        return (
-            <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color="green"/>
-            </View>
-        );
-    }
-
     /**
      * Go to the details page of the pressed accommodation.
      * @param accommodationId - The id of the accommodation that is pressed on.
      */
     const handleAccommodationPress = accommodationId => {
-        NavigateTo(navigation, {accommodationId: accommodationId}).detailPage();
+        NavigateTo(navigation, {accommodationId: accommodationId}).propertyDetails();
     };
 
     /**
@@ -46,6 +39,8 @@ const PropertiesSearchResultsScreen = ({searchResults}) => {
     const renderSpecText = (value, suffix = '') => {
         return value !== undefined ? <Text style={styles.spec}>{value} {suffix}</Text> : null;
     };
+
+    if (loading) { return <LoadingScreen loadingName={"properties"}/> }
 
     return (
         <ScrollView contentContainerStyle={styles.container}>

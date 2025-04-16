@@ -34,11 +34,11 @@ const HostHomeScreen = ({navigation}) => {
                     </Text>
                 </View>
                 {screenListItem(NavigateTo(navigation).hostDashboard, 'Dashboard')}
-                {screenListItem(NavigateTo(navigation).onboardingHost, 'Onboarding')}
+                {screenListItem(NavigateTo(navigation).hostOnboarding, 'Onboarding')}
                 {screenListItem(NavigateTo(navigation).hostCalendar, 'Calendar')}
                 {screenListItem(NavigateTo(navigation).hostPayments, 'Payments')}
                 {screenListItem(NavigateTo(navigation).hostListings, 'Listings')}
-                {screenListItem(NavigateTo(navigation).hostSettings, 'Settings')}
+                {screenListItem(NavigateTo(navigation).hostAccountSettings, 'Settings')}
                 {screenListItem(NavigateTo(navigation).hostReviews, 'Reviews')}
                 {screenListItem(NavigateTo(navigation).hostHelpDesk, 'Helpdesk')}
                 <View style={styles.helpSection}>
