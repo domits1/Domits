@@ -16,7 +16,6 @@ import PriceInput from './PriceInput';
 import CalendarPricingView from './CalendarPricingView';
 import '../styles/DynamicPricingModal.css';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -27,26 +26,30 @@ ChartJS.register(
   Legend
 );
 
-const handlePriceUpdate = (date, newPrice) => {
-  const updatedPriceHistory = priceHistory.map(item => 
-    toYMD(item.date) === toYMD(date) 
-      ? { ...item, price: newPrice }
-      : item
-  );
-  onPriceHistoryUpdate(updatedPriceHistory);
+const formatYMD = (date) => {
+  return format(date, 'yyyy-MM-dd');
 };
+
 const DynamicPricingModal = ({ 
   isOpen, 
   onClose, 
-  basePrice, 
+  basePrice,
   priceHistory, 
-  onBasePriceChange 
+  onBasePriceChange,
+  onPriceHistoryUpdate 
 }) => {
+  const handlePriceUpdate = (date, newPrice) => {
+    const updatedPriceHistory = priceHistory.map(item => 
+      formatYMD(item.date) === formatYMD(date)
+        ? { ...item, price: newPrice }
+        : item
+    );
+    onPriceHistoryUpdate(updatedPriceHistory);
+  };
+
   const priceData = useMemo(() => {
     const labels = priceHistory.map((entry) => format(entry.date, "dd MMM yyyy"));
     const data = priceHistory.map((entry) => entry.price);
-    
-
     
     return {
       labels,
@@ -203,12 +206,12 @@ DynamicPricingModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   basePrice: PropTypes.number.isRequired,
-  onPriceHistoryUpdate: PropTypes.func.isRequired,
   priceHistory: PropTypes.arrayOf(PropTypes.shape({
     date: PropTypes.instanceOf(Date).isRequired,
     price: PropTypes.number.isRequired
   })).isRequired,
-  onBasePriceChange: PropTypes.func.isRequired
+  onBasePriceChange: PropTypes.func.isRequired,
+  onPriceHistoryUpdate: PropTypes.func.isRequired
 };
 
 export default DynamicPricingModal;

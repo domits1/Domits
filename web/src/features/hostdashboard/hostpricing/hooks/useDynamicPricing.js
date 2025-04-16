@@ -283,8 +283,9 @@ export const useDynamicPricing = () => {
 
   return {
     priceHistory,
+    setPriceHistory,
     basePrice,
     initializeDynamicPricing,
     updateBasePrice
   };
-}; 
+};
