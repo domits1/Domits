@@ -20,6 +20,8 @@ $breakpoint-sm: 480px;
   background: white;
   box-shadow: 0 2px 6px 0 $box-shadow-color;
   text-align: center;
+  height: 100%;
+  max-height: 100px;
 
   .header-nav {
     display: flex;
@@ -114,7 +116,6 @@ $breakpoint-sm: 480px;
       border: none;
       // background: none;
       box-shadow: none;
-      margin-right: 10px;
 
       &.headerHostButton {
         @media screen and (max-width: $breakpoint-lg) {
