@@ -128,7 +128,7 @@
 .chat-message.sent .message-content {
     display: inline-block;
 
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     color: white;
     border-radius: 0.5rem;
     padding: 0.3rem 1rem;
@@ -146,7 +146,7 @@
 }
 
 .chat-message.received .message-content {
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
     display: inline-block;
     border-radius: 0.5rem;
@@ -183,7 +183,7 @@
     width: 15%;
     align-self: center;
     border-radius: 1rem;
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     color: white;
     border: none;
     cursor: pointer;
@@ -225,7 +225,7 @@
     height: 2.5em;
     align-self: center;
     border-radius: 0.5rem;
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
     border: none;
     cursor: pointer;
@@ -234,7 +234,7 @@
 .review-link-button {
     height: 2.5em;
     border-radius: 0.5rem;
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     color: white;
     border: none;
     cursor: pointer;

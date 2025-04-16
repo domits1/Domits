@@ -1,57 +1,75 @@
+//Booking-engine
 @use "booking-engine/imagegallery.scss";
 @use "booking-engine/listing.scss";
 @use "booking-engine/bookingoverview.scss";
 @use "booking-engine/paymentConfirmPage.scss";
+//Base
+@use "base/header.scss";
+@use "base/footer.scss";
+@use "base/MenuBar.scss";
+@use "base/SearchBar.scss";
+//Auth
+@use "auth/login.scss";
+@use "auth/register.scss";
+
+:root {
+  --primary-color: #0D9813;
+  --secondary-color: #003366;
+}
 
 @font-face {
     font-family: "Kanit";
     src: local("KanitThin"),
-     url("./fonts/kanit/Kanit-Thin.ttf") format("truetype");
+     url("../../fonts/kanit/Kanit-Thin.ttf") format("truetype");
     font-weight: 200;
    }
-  
+
   @font-face {
     font-family: "Kanit";
     src: local("KanitLight"),
-     url("./fonts/kanit/Kanit-Light.ttf") format("truetype");
+     url("../../fonts/kanit/Kanit-Light.ttf") format("truetype");
     font-weight: 300;
    }
-  
+
   @font-face {
     font-family: "Kanit";
     src: local("KanitRegular"),
-     url("./fonts/kanit/Kanit-Regular.ttf") format("truetype");
+     url("../../fonts/kanit/Kanit-Regular.ttf") format("truetype");
     font-weight: 400;
    }
-  
+
    @font-face {
     font-family: "Kanit";
     src: local("KanitMedium"),
-     url("./fonts/kanit/Kanit-Medium.ttf") format("truetype");
+     url("../../fonts/kanit/Kanit-Medium.ttf") format("truetype");
     font-weight: 500;
    }
-  
+
    @font-face {
     font-family: "Kanit";
     src: local("KanitSemiBold"),
-     url("./fonts/kanit/Kanit-SemiBold.ttf") format("truetype");
+     url("../../fonts/kanit/Kanit-SemiBold.ttf") format("truetype");
     font-weight: 600;
    }
-  
+
    @font-face {
     font-family: "Kanit";
     src: local("KanitBold"),
-     url("./fonts/kanit/Kanit-Bold.ttf") format("truetype");
+     url("../../fonts/kanit/Kanit-Bold.ttf") format("truetype");
     font-weight: 700;
    }
   
   body {
-    margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    margin: auto;
+  }
+
+  html {
+    margin-top: 90px;
   }
   
   code {

@@ -1,0 +1,78 @@
+// Variables
+$primary-color: var(--primary-color);
+$secondary-color: var(--secondary-color);
+$dropdown-bg: white;
+$dropdown-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+$dropdown-radius: 10px;
+$button-radius: 15px;
+$button-font-size: 16px;
+$button-font-weight: 400;
+$button-line-height: 24px;
+$button-gap: 10px;
+
+// Menu Bar Styling
+.personalMenuDropdown {
+  position: relative;
+  display: inline-block;
+  z-index: 2;
+
+  .personalMenuDropdownContent {
+    display: none;
+
+    &.show {
+      display: block;
+    }
+
+    padding: 20px 25px;
+    position: absolute;
+    background-color: $dropdown-bg;
+    width: auto;
+    min-width: 240px;
+    box-shadow: $dropdown-shadow;
+    z-index: 1;
+    top: calc(100% + 5px);
+    right: 0;
+    border-radius: $dropdown-radius;
+
+    button {
+      padding: 8px 15px;
+      border-radius: $button-radius;
+      justify-content: center;
+      align-items: center;
+      gap: $button-gap;
+      display: inline-flex;
+      width: 100%;
+      color: white;
+      font-size: $button-font-size;
+      font-weight: $button-font-weight;
+      line-height: $button-line-height;
+      word-wrap: break-word;
+
+      &:hover {
+        opacity: 90%;
+      }
+    }
+  }
+}
+
+.dropdownLoginButton {
+  margin-top: 0;
+  margin-bottom: 10px;
+  background: $primary-color;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.dropdownRegisterButton,
+.dropdownLogoutButton {
+  margin-top: 10px;
+  background-color: $secondary-color;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.dropdownLogoutButton {
+  margin-top: 20px;
+}

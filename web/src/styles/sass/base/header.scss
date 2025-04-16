@@ -1,0 +1,153 @@
+// Variables
+$primary-color: var(--primary-color);
+$header-padding: 20px 50px 5px 50px;
+$button-padding: 12px;
+$button-font-size: 18px;
+$button-radius: 10px;
+$box-shadow-color: #0d1a2626;
+$hover-background: #3fb3663a;
+$breakpoint-lg: 1024px;
+$breakpoint-md: 768px;
+$breakpoint-sm: 480px;
+
+// Header Styling
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background: white;
+  box-shadow: 0 2px 6px 0 $box-shadow-color;
+  text-align: center;
+  height: 100%;
+  max-height: 90px;
+
+  .header-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px;
+
+    .logo {
+      @media screen and (max-width: $breakpoint-lg) {
+        margin: 0 1vw 0 -4vw;
+      }
+
+      @media screen and (max-width: $breakpoint-md) {
+        padding-top: 2vh;
+      }
+    }
+
+    .headerRight {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      @media screen and (max-width: $breakpoint-lg) {
+        margin-left: 3vw;
+      }
+
+      @media screen and (max-width: $breakpoint-md) {
+        flex-direction: row;
+        justify-content: center;
+        width: 69%;
+        margin-top: 20px;
+      }
+
+      @media screen and (max-width: $breakpoint-md) {
+        display: none;
+      }
+
+      @media screen and (max-width: $breakpoint-sm) {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    .headerButtons,
+    .personalMenu {
+      color: black;
+      text-align: center;
+      padding: $button-padding;
+      font-size: $button-font-size;
+      border-radius: $button-radius;
+      display: inline-flex;
+      cursor: pointer;
+      width: auto;
+      box-shadow: 0 0 5px hsl(0 0% 78%);
+      justify-content: center;
+
+      &:hover {
+        background: $hover-background;
+        padding: $button-padding;
+      }
+
+      @media screen and (max-width: $breakpoint-md) {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: center;
+      }
+
+      @media screen and (max-width: $breakpoint-sm) {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: center;
+      }
+    }
+
+    .personalMenu {
+      border: none;
+      background-color: $primary-color;
+      gap: 10px;
+      display: flex;
+
+      &:hover {
+        opacity: 90%;
+      }
+
+      @media screen and (max-width: $breakpoint-lg) {
+        margin-left: -15%;
+      }
+    }
+
+    .headerHostButton,
+    .headerButtons {
+      border: none;
+      // background: none;
+      box-shadow: none;
+
+      &.headerHostButton {
+        @media screen and (max-width: $breakpoint-lg) {
+          margin-left: -15%;
+          font-size: 13px;
+        }
+      }
+    }
+
+    .helloUsername {
+      margin-bottom: 10px;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 24px;
+      word-wrap: break-word;
+    }
+  }
+
+  @media screen and (max-width: $breakpoint-lg) {
+
+    .App,
+    .header-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: white;
+      width: 100%;
+    }
+  }
+
+  @media screen and (max-width: $breakpoint-md) {
+    padding: 0;
+  }
+}

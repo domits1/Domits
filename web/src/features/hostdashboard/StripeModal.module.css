@@ -5,7 +5,7 @@
     height: 2vw;
     margin-left: auto;
     margin-right: auto;
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     padding: 0.5vw;
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
     text-align: center;
@@ -34,7 +34,7 @@
   }
   
   .StripeModal button {
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     border: none;
     border-radius: 40px;
     font-size: 1.5em;

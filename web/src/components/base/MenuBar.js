@@ -1,5 +1,4 @@
 import React, {useState, useEffect, useContext} from 'react';
-import './MenuBar.css';
 import { HouseOutlined as HouseOutlinedIcon, ForumOutlined as ForumOutlinedIcon, AccountCircleOutlined as AccountCircleOutlinedIcon} from '@mui/icons-material';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
@@ -165,32 +164,32 @@ function MenuBar() {
         }
     };
 
-    return (
-        <div className="bottom-menu-bar">
-            <div className="menu">
-                <div className='menuButtons'>
-                    <button className='headerButtons' onClick={Home}><HouseOutlinedIcon className='imgMenu'/><p className='textMenu'>Home</p></button>
-                    <button className='headerButtons' onClick={navigateToMessages}><ForumOutlinedIcon className='imgMenu'/><p className='textMenu'>Messages</p></button>
+//     return (
+//         <div className="bottom-menu-bar">
+//             <div className="menu">
+//                 <div className='menuButtons'>
+//                     <button className='headerButtons' onClick={Home}><HouseOutlinedIcon className='imgMenu'/><p className='textMenu'>Home</p></button>
+//                     <button className='headerButtons' onClick={navigateToMessages}><ForumOutlinedIcon className='imgMenu'/><p className='textMenu'>Messages</p></button>
 
 
-                    <button className="headerButtons" onClick={toggleDropdown}>
-          <AccountCircleOutlinedIcon className='imgMenu'/><p className='textMenu'>Profile</p>
-        </button>
+//                     <button className="headerButtons" onClick={toggleDropdown}>
+//           <AccountCircleOutlinedIcon className='imgMenu'/><p className='textMenu'>Profile</p>
+//         </button>
 
-        <div className={"bottomPersonalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
-          {isLoggedIn ? renderDropdownMenu() : (
-            <>
-              <button onClick={navigateToLogin} className="dropdownLoginButton">
-                Login<img src={loginArrow} alt="Login Arrow"/>
-              </button>
-              <button onClick={navigateToRegister} className="dropdownRegisterButton">Register</button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  </div>
-);
+//         <div className={"bottomPersonalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
+//           {isLoggedIn ? renderDropdownMenu() : (
+//             <>
+//               <button onClick={navigateToLogin} className="dropdownLoginButton">
+//                 Login<img src={loginArrow} alt="Login Arrow"/>
+//               </button>
+//               <button onClick={navigateToRegister} className="dropdownRegisterButton">Register</button>
+//             </>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   </div>
+// );
 }
 
 export default MenuBar;
