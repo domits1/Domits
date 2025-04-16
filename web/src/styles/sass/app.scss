@@ -1,12 +1,14 @@
+//Booking-engine
 @use "booking-engine/imagegallery.scss";
 @use "booking-engine/listing.scss";
 @use "booking-engine/bookingoverview.scss";
 @use "booking-engine/paymentConfirmPage.scss";
-
+//Base
 @use "base/header.scss";
 @use "base/footer.scss";
 @use "base/MenuBar.scss";
-
+@use "base/SearchBar.scss";
+//Auth
 @use "auth/login.scss";
 @use "auth/register.scss";
 
@@ -58,12 +60,16 @@
    }
   
   body {
-    margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    margin: auto;
+  }
+
+  html {
+    margin-top: 90px;
   }
   
   code {
