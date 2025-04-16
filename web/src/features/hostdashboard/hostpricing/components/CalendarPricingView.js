@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { format, compareAsc } from 'date-fns';
 
@@ -48,14 +48,38 @@ function getPriceForDate(date, priceHistory) {
   return found ? found.price : null;
 }
 
-const CalendarPricingView = ({ priceHistory }) => {
+const CalendarPricingView = ({ priceHistory, onPriceUpdate }) => {
   const minDate = getMinDate(priceHistory);
   const maxDate = getMaxDate(priceHistory);
+  const [editingCell, setEditingCell] = useState(null);
+  const [editValue, setEditValue] = useState('');
   if (!minDate || !maxDate) return null;
 
   const allPrices = useMemo(() => priceHistory.map((item) => item.price), [priceHistory]);
   const minPrice = Math.min(...allPrices);
   const maxPrice = Math.max(...allPrices);
+  const handleDoubleClick = (date, price) => {
+    setEditingCell(toYMD(date));
+    setEditValue(price || '');
+  };
+
+  const handlePriceSubmit = (date) => {
+    const newPrice = parseFloat(editValue);
+    if (!isNaN(newPrice) && newPrice >= 0) {
+      onPriceUpdate(date, newPrice);
+    }
+    setEditingCell(null);
+    setEditValue('');
+  };
+
+  const handleKeyPress = (e, date) => {
+    if (e.key === 'Enter') {
+      handlePriceSubmit(date);
+    } else if (e.key === 'Escape') {
+      setEditingCell(null);
+      setEditValue('');
+    }
+  };
 
   const getCellBackgroundColor = (price) => {
     if (price == null) return "#f7f7f7";
@@ -72,6 +96,25 @@ const CalendarPricingView = ({ priceHistory }) => {
   const allDates = useMemo(() => createDateRange(minDate, maxDate), [minDate, maxDate]);
   const weeks = useMemo(() => chunkIntoWeeks(allDates), [allDates]);
   const weekDayHeaders = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const renderLegend = () => {
+    return (
+      <div className="calendar-legend">
+        <div className="legend-item">
+          <div className="legend-color" style={{ backgroundColor: getCellBackgroundColor(minPrice) }}></div>
+          <span>Lowest Price: €{minPrice}</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color" style={{ backgroundColor: getCellBackgroundColor(maxPrice) }}></div>
+          <span>Highest Price: €{maxPrice}</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color" style={{ backgroundColor: "#f7f7f7" }}></div>
+          <span>No Price Set</span>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="enhanced-calendar-wrapper">
@@ -90,18 +133,35 @@ const CalendarPricingView = ({ priceHistory }) => {
               {week.map((date, dIndex) => {
                 const price = getPriceForDate(date, priceHistory);
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                const dateKey = toYMD(date);
+                const isEditing = editingCell === dateKey;
 
                 return (
                   <td
                     key={dIndex}
-                    className={`calendar-day ${isWeekend ? "weekend-day" : ""}`}
+                    className={`calendar-day ${isWeekend ? "weekend-day" : ""} ${
+                      isEditing ? "editing" : ""
+                    }`}
                     style={{
                       backgroundColor: getCellBackgroundColor(price),
                     }}
+                    onDoubleClick={() => handleDoubleClick(date, price)}
                   >
                     <div className="calendar-date">{format(date, "dd/MM")}</div>
-                    {price != null && (
-                      <div className="calendar-price">€{price}</div>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        className="calendar-price-input"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onKeyDown={(e) => handleKeyPress(e, date)}
+                        onBlur={() => handlePriceSubmit(date)}
+                        autoFocus
+                      />
+                    ) : (
+                      price != null && (
+                        <div className="calendar-price">€{price}</div>
+                      )
                     )}
                   </td>
                 );
@@ -110,6 +170,7 @@ const CalendarPricingView = ({ priceHistory }) => {
           ))}
         </tbody>
       </table>
+      {renderLegend()}
     </div>
   );
 };
@@ -118,7 +179,8 @@ CalendarPricingView.propTypes = {
   priceHistory: PropTypes.arrayOf(PropTypes.shape({
     date: PropTypes.instanceOf(Date).isRequired,
     price: PropTypes.number.isRequired
-  })).isRequired
+  })).isRequired,
+  onPriceUpdate: PropTypes.func.isRequired
 };
 
-export default CalendarPricingView; 
+export default CalendarPricingView;

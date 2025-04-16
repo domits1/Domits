@@ -30,21 +30,17 @@ import GuestSettings from "./features/guestdashboard/GuestSettings";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
-import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
-import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostPayments from "./features/hostdashboard/HostPayments";
-import HostPricing from "./features/hostdashboard/HostPricing";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
-import HostHousekeeping from "./features/hostdashboard/Housekeeping.js";
-import HostIoTHub from "./features/hostdashboard/HostIoTHub";
+
 import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
 import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostMonitoring from "./features/hostdashboard/HostMonitoring";
@@ -236,7 +232,7 @@ function App() {
                       <Route path="messages" element={<HostMessages />} />
                       <Route path="reporting" element={<HostPayments />} />
                       <Route path="settings" element={<HostSettings />} />
-                      <Route path="reviews" element={<HostReviews />} />
+                      {/* <Route path="reviews" element={<HostReviews />} /> */}
                       <Route path="chat" element={<HostMessages />} />
                       <Route path="reservations" element={<HostReservations />} />
                       <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}

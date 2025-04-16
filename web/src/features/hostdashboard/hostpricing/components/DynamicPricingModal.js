@@ -27,6 +27,14 @@ ChartJS.register(
   Legend
 );
 
+const handlePriceUpdate = (date, newPrice) => {
+  const updatedPriceHistory = priceHistory.map(item => 
+    toYMD(item.date) === toYMD(date) 
+      ? { ...item, price: newPrice }
+      : item
+  );
+  onPriceHistoryUpdate(updatedPriceHistory);
+};
 const DynamicPricingModal = ({ 
   isOpen, 
   onClose, 
@@ -37,7 +45,9 @@ const DynamicPricingModal = ({
   const priceData = useMemo(() => {
     const labels = priceHistory.map((entry) => format(entry.date, "dd MMM yyyy"));
     const data = priceHistory.map((entry) => entry.price);
+    
 
+    
     return {
       labels,
       datasets: [
@@ -178,21 +188,11 @@ const DynamicPricingModal = ({
 
         <h2>AI Dynamic Pricing</h2>
 
-        <div className="base-price-input">
-          <label htmlFor="basePrice">Base Price (€): </label>
-          <PriceInput
-            id="basePrice"
-            value={basePrice}
-            onChange={(e) => onBasePriceChange(parseFloat(e.target.value) || 0)}
-            ariaLabel="Base price input"
-          />
-        </div>
-
         <div className="chart-container">
-          <div style={{ width: '100%', height: '400px', marginBottom: '2rem' }}>
+          <div style={{ width: '95%', height: '400px', marginBottom: '2rem' }}>
             <Line data={priceData} options={chartOptions} />
           </div>
-          <CalendarPricingView priceHistory={priceHistory} />
+          <CalendarPricingView priceHistory={priceHistory} onPriceUpdate={handlePriceUpdate}/>
         </div>
       </div>
     </div>
@@ -203,6 +203,7 @@ DynamicPricingModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   basePrice: PropTypes.number.isRequired,
+  onPriceHistoryUpdate: PropTypes.func.isRequired,
   priceHistory: PropTypes.arrayOf(PropTypes.shape({
     date: PropTypes.instanceOf(Date).isRequired,
     price: PropTypes.number.isRequired

@@ -78,6 +78,21 @@ const HostPricing = () => {
     setSelectedAccommodation(null);
   };
 
+  const handlePriceHistoryUpdate = async (updatedPriceHistory) => {  const handlePriceHistoryUpdate = async (updatedPriceHistory) => {
+    setPriceHistory(updatedPriceHistory);
+  };
+  
+  <DynamicPricingModal
+    isOpen={isModalOpen}
+    onClose={closeModal}
+    basePrice={basePrice}
+    priceHistory={priceHistory}
+    onBasePriceChange={handleBasePriceChange}
+    onPriceHistoryUpdate={handlePriceHistoryUpdate}
+  />
+    setPriceHistory(updatedPriceHistory);
+  };
+
   const handleBasePriceChange = async (newPrice) => {
     if (selectedAccommodation) {
       await updateBasePrice(newPrice, selectedAccommodation);
@@ -295,6 +310,7 @@ const HostPricing = () => {
               basePrice={basePrice}
               priceHistory={priceHistory}
               onBasePriceChange={handleBasePriceChange}
+              onPriceHistoryUpdate={handlePriceHistoryUpdate}
             />
           )}
 
