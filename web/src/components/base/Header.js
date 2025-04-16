@@ -251,46 +251,44 @@ function Header({ setSearchResults, setLoading }) {
           )}
 
           <div className="headerRight">
-            <ul className="header-links">
-              {!isLoggedIn ? (
-                <button
-                  className="headerButtons headerHostButton"
-                  onClick={navigateToLanding}
-                >
-                  Become a Host
-                </button>
-              ) : group === "Host" ? (
-                <button
-                  className="headerButtons headerHostButton"
-                  onClick={navigateToDashboard}
-                >
-                  {currentView === "guest"
-                    ? "Switch to Host"
-                    : "Switch to Guest"}
-                </button>
-              ) : (
-                <button
-                  className="headerButtons headerHostButton"
-                  onClick={navigateToLanding}
-                >
-                  Become a Host
-                </button>
-              )}
-              {isLoggedIn && group === "Traveler" && (
-                <button
-                  className="headerButtons"
-                  onClick={navigateToGuestDashboard}
-                >
-                  Go to Dashboard
-                </button>
-              )}
+            {!isLoggedIn ? (
               <button
-                className="headerButtons nineDotsButton"
-                onClick={navigateToNinedots}
+                className="headerButtons headerHostButton"
+                onClick={navigateToLanding}
               >
-                <img src={nineDots} alt="Nine Dots" />
+                Become a Host
               </button>
-            </ul>
+            ) : group === "Host" ? (
+              <button
+                className="headerButtons headerHostButton"
+                onClick={navigateToDashboard}
+              >
+                {currentView === "guest"
+                  ? "Switch to Host"
+                  : "Switch to Guest"}
+              </button>
+            ) : (
+              <button
+                className="headerButtons headerHostButton"
+                onClick={navigateToLanding}
+              >
+                Become a Host
+              </button>
+            )}
+            {isLoggedIn && group === "Traveler" && (
+              <button
+                className="headerButtons"
+                onClick={navigateToGuestDashboard}
+              >
+                Go to Dashboard
+              </button>
+            )}
+            <button
+              className="headerButtons nineDotsButton"
+              onClick={navigateToNinedots}
+            >
+              <img src={nineDots} alt="Nine Dots" />
+            </button>
             <div className="personalMenuDropdown">
               <button className="personalMenu" onClick={toggleDropdown}>
                 <img src={profile} alt="Profile Icon" />
