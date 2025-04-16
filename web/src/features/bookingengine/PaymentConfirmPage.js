@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-// import "./paymentconfirmpage.css";
+import "./paymentconfirmpage.scss";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import ImageGallery from "./ImageGallery";
 import useAddUserToContactList from "./hooks/useAddUserToContactList";
@@ -52,6 +52,7 @@ const BookingConfirmationOverview = () => {
                 if (!parsedBody.bookingDetails) {
                     throw new Error("Booking details not found.");
                 }
+                console.log(parsedBody);
                 setBookingDetails(parsedBody.bookingDetails);
                 setAccommodationDetails(parsedBody.accommodationDetails);
 

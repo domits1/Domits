@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import {Link, useNavigate} from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
-// import "./bookingoverview.css";
+import "./styles/bookingoverview.scss";
 import RegisterModule from "../auth/RegisterModule";
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
@@ -36,6 +36,8 @@ const BookingOverview = () => {
     const [accommodation, setAccommodation] = useState(null);
     const [cleaningFee, setCleaningFee] = useState(null);
     const [roomRate, setRoomRate] = useState(null);
+    const [rawRoomRate, setRawRoomRate] = useState(null);
+    const [numberOfDays, setNumberOfDays] = useState(null);
     const [totalPrice, setTotalPrice] = useState(null);
     const [taxes, setTaxes] = useState(1.09)
     const [ServiceFee, setServiceFee] = useState(null);
@@ -58,14 +60,16 @@ const BookingOverview = () => {
             try {
                 const response = await fetch(`https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${id}`);
                 const responseData = await response.json();
-                console.log("DEBUG: ", responseData);
+                //console.log("DEBUG: ", responseData);
                 setAccommodation(responseData);
 
                 const rawRoomRate = responseData.pricing.roomRate;
+                setRawRoomRate(rawRoomRate); // Used in booking details tab
                 setCleaningFee(responseData.pricing.cleaning); 
                 setServiceFee(responseData.pricing.service);  
 
                 const numberOfDays = await calculateDaysBetweenDates(checkIn, checkOut);
+                setNumberOfDays(numberOfDays);
                 const totalRoomRate = rawRoomRate * numberOfDays;
                 setRoomRate(totalRoomRate);
 
@@ -84,7 +88,7 @@ const BookingOverview = () => {
             const end = new Date(parseFloat(endDate));
             const differenceInTime = end - start;
             const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-            console.log("DEBUG: Difference in Days booking: ", differenceInDays);
+            //console.log("DEBUG: Difference in Days booking: ", differenceInDays);
             return differenceInDays;
         };
 
@@ -216,7 +220,7 @@ const BookingOverview = () => {
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
-        console.log(checkoutData);
+        //console.log(checkoutData);
 
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
@@ -252,7 +256,7 @@ const BookingOverview = () => {
         setIsProcessing(true);
         initiateStripeCheckout();
     };
-    console.log(`DEBUG: id:${id}, checkin:${checkIn}, checkout: ${checkOut}, guests: ${adults}`);
+    //console.log(`DEBUG: id:${id}, checkin:${checkIn}, checkout: ${checkOut}, guests: ${adults}`);
     return (
         <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
         <div className="booking-header">
@@ -319,13 +323,17 @@ const BookingOverview = () => {
                     <hr />
 
                     <div className="detail-row">
-                        <span className="detail-label">Price:</span>
+                        <span className="detail-label"><b>Price info:</b></span>
+                    </div>
+
+                    <div className="detail-row">
+                        <span className="detail-label">€ {(rawRoomRate || 0).toFixed(2)} x {numberOfDays} nights </span>
                         <span className="detail-value">€ {(roomRate || 0).toFixed(2)}</span>
-                        </div>
+                    </div>
 
                     <div className="detail-row">
                         <span className="detail-label">Taxes:</span>
-                        <span className="detail-value">€ {(taxes || 0).toFixed(2)}</span>
+                        <span className="detail-value">€ {(0).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
