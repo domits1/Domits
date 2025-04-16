@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useSummary } from "../hooks/useSummary";
 import SummaryTable from "../components/SummaryTable";
 import SpecificationsTable from "../components/SpecificationsTable";
@@ -6,6 +6,7 @@ import DeclarationSection from "../components/DeclarationSection";
 import FetchUserId from "../utils/FetchUserId";
 import { useNavigate } from "react-router-dom";
 import { submitAccommodation } from "../services/SubmitAccommodation.js";
+import useFormStore from "../stores/formStoreHostOnboarding";
 
 function SummaryViewAndSubmit() {
   const { data, toggleDrafted } = useSummary();
@@ -18,6 +19,10 @@ function SummaryViewAndSubmit() {
       submitAccommodation(navigate),
     );
   };
+
+  useEffect(() => {
+    console.log(useFormStore.getState());
+  }, []);
 
   return (
     <div className="onboarding-host-div">

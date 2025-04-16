@@ -3,8 +3,7 @@ import useFormStore from "../stores/formStoreHostOnboarding";
 
 export async function submitAccommodation() {
   // API URL
-  const API_BASE_URL =
-    "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
+  const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
   const request = await collectData();
 
   async function _fetch() {
@@ -39,17 +38,11 @@ export async function submitAccommodation() {
     console.log(accommodationDetails.accommodationDetails);
 
     try {
-      if (
-        accommodationDetails &&
-        Object.keys(accommodationDetails).length > 0
-      ) {
+      if (accommodationDetails && Object.keys(accommodationDetails).length > 0) {
         // Log the formdata
-        console.log(
-          "Collected accommodationDetails: ",
-          JSON.stringify(accommodationDetails, null, 2),
-        );
+        console.log("Collected accommodationDetails: ", JSON.stringify(accommodationDetails, null, 2));
 
-        const request = {
+        return {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -57,8 +50,6 @@ export async function submitAccommodation() {
           },
           body: JSON.stringify(accommodationDetails), // Use the REAL form data
         };
-
-        return { request };
       } else {
         console.error("No Formdata found!");
       }
