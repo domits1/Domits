@@ -1,268 +1,351 @@
 .bottom-menu-bar {
-    display: none;
+  display: none;
+}
+
+.menu {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  margin: 0 auto;
+  gap: 10px;
 }
 
 .menuButtons {
-    float: right;
-    display: flex;
-    align-items: center;
+  float: right;
+  display: flex;
+  align-items: center;
 }
 
 .headerButtons,
 .personalMenu {
-    float: left;
-    color: black;
-    text-align: center;
-    padding: 12px;
-    font-size: 10px;
-    border-radius: 10px;
-    margin-top: 0;
-    display: inline-flex;
-    font-family: Kanit, sans-serif;
-    cursor: pointer;
-    width: auto;
-    box-shadow: 0 0 5px hsl(0 0% 78%);
+  float: left;
+  color: black;
+  text-align: center;
+  padding: 12px;
+  font-size: 10px;
+  border-radius: 10px;
+  margin-top: 0;
+  display: inline-flex;
+  font-family: Kanit, sans-serif;
+  cursor: pointer;
+  width: auto;
+  box-shadow: 0 0 5px hsl(0 0% 78%);
 }
 
 .textMenu {
-    font-size: 11px;
+  font-size: 11px;
 }
 
 .imgMenu {
-    font-size: 70px;
+  font-size: 70px;
 }
 
 .personalMenu {
-    border: none;
-    background-color: var(--primary-color);
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    display: flex;
+  border: none;
+  background-color: var(--primary-color);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  display: flex;
 }
 
 .headerHostButton,
 .headerButtons {
-    border: none;
-    background: none;
-    box-shadow: none;
-    margin-right: 10px;
+  border: none;
+  background: none;
+  box-shadow: none;
+  margin-right: 10px;
 }
 
 .bottomPersonalMenuDropdownContent {
-    position: relative;
-    display: inline-block;
-    z-index: 1;
+  position: relative;
+  display: inline-block;
+  z-index: 1;
 }
 
 .bottomPersonalMenuDropdownContent {
-    display: none;
+  display: none;
 }
 
 .bottomPersonalMenuDropdownContent.show {
-    display: block;
+  display: block;
 }
 
 .bottomPersonalMenuDropdownContent .bottomPersonalMenuDropdownContent {
-    padding: 20px 25px 20px 25px;
-    position: absolute;
-    background-color: white;
-    width: auto;
-    min-width: 240px;
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-    top: calc(100% + 5px);
-    right: 0;
-    border-radius: 10px;
+  padding: 20px 25px 20px 25px;
+  position: absolute;
+  background-color: white;
+  width: auto;
+  min-width: 240px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  top: calc(100% + 5px);
+  right: 0;
+  border-radius: 10px;
 }
 
 .bottomPersonalMenuDropdownContent button {
-    padding: 8px 15px;
-    border-radius: 15px;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    display: inline-flex;
-    width: 100%;
-    color: white;
-    font-size: 16px;
-    font-family: Kanit, sans-serif;
-    font-weight: 400;
-    line-height: 24px;
-    word-wrap: break-word;
+  padding: 8px 15px;
+  border-radius: 15px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  display: inline-flex;
+  width: 100%;
+  color: white;
+  font-size: 16px;
+  font-family: Kanit, sans-serif;
+  font-weight: 400;
+  line-height: 24px;
+  word-wrap: break-word;
 }
 
 .dropdownLoginButton {
-    margin-top: 0;
-    margin-bottom: 10px;
-    background: var(--primary-color);
-    border: none;
-    box-shadow: none;
+  margin-top: 0;
+  margin-bottom: 10px;
+  background: var(--primary-color);
+  border: none;
+  box-shadow: none;
 }
 
 .dropdownRegisterButton,
 .dropdownLogoutButton {
-    margin-top: 10px;
-    background-color: var(--secondary-color);
-    border: none;
-    box-shadow: none;
+  margin-top: 10px;
+  background-color: var(--secondary-color);
+  border: none;
+  box-shadow: none;
 }
 
 .dropdownLogoutButton {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
-.bottomPersonalMenuDropdownContent .bottomPersonalMenuDropdownContent button:hover {
-    opacity: 90%;
+.bottomPersonalMenuDropdownContent
+  .bottomPersonalMenuDropdownContent
+  button:hover {
+  opacity: 90%;
 }
 
 .headerButtons {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin: 10px;
-    gap: 8px;
-    color: black;
-    text-align: center;
-    padding: 12px;
-    font-size: 18px;
-    border-radius: 10px;
-    font-family: Kanit, sans-serif;
-    cursor: pointer;
-    width: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: black;
+  text-align: center;
+  padding: 12px;
+  font-size: 18px;
+  border-radius: 10px;
+  font-family: Kanit, sans-serif;
+  cursor: pointer;
+  width: auto;
 }
 
-.headerButtons img,
+.headerButtons img {
+  width: 24px;
+  height: 24px;
+}
+
+.headerButtons:hover {
+  background: #3fb3663a;
+  padding: 12px;
+}
+
 .personalMenu img {
-    width: 24px;
-    height: 24px;
-}
-
-.headerButtons:hover,
-.personalMenu:hover {
-    background: #3fb3663a;
-    padding: 12px;
+  width: 24px;
+  height: 24px;
 }
 
 .personalMenu:hover {
-    opacity: 90%;
+  opacity: 90%;
 }
 
 .helloUsername {
-    margin-bottom: 10px;
-    font-size: 18px;
-    font-family: Kanit, sans-serif;
-    font-weight: 400;
-    line-height: 24px;
-    word-wrap: break-word;
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-family: Kanit, sans-serif;
+  font-weight: 400;
+  line-height: 24px;
+  word-wrap: break-word;
 }
 
 @media screen and (max-width: 650px) {
-    .bottom-menu-bar {
-        display: flex;
-        position: sticky;
-        bottom: 0;
-        z-index: 1000;
-        background: white;
-        box-shadow: 0 0 2px 0 #0d1a2626;
-        justify-content: center;
-    }
+  .bottom-menu-bar {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    z-index: 1000;
+    background: white;
+    box-shadow: 0 0 2px 0 #0d1a2626;
+    justify-content: center;
+  }
 
-    .menu {
-        display: flex;
-        justify-content: space-between;
-        width: auto;
-        padding: 0 0 0 5px;
-        margin: -23px 10px 0 20px;
-        gap: 1px;
-    }
+  .menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    margin: 0 auto;
+    flex-direction: column;
+    gap: 10px;
+  }
 
-    .menuButtons {
-        flex-direction: row;
-        justify-content: center;
-        width: 100%;
-        margin-top: 20px;
-        align-items: center;
-        margin-right: 15%;
-    }
+  .menuButtons {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+  }
 
-    .headerButtons,
-    .personalMenu,
-    .Search-bar {
-        width: 100%;
-        margin-top: 10px;
-        margin-right: 0;
-        justify-content: center;
-        float: none;
-    }
+  .headerButtons,
+  .personalMenu,
+  .Search-bar {
+    width: 100%;
+    margin: 10px 0;
+    justify-content: center;
+    align-items: center;
+    margin-right: 0;
+    float: none;
+  }
 
-    .bottomPersonalMenuDropdownContent {
-        padding: 20px 25px 20px 25px;
-        position: absolute;
-        background-color: white;
-        width: 40%;
-        min-width: 240px;
-        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-        bottom: calc(90% + 5px);
-        right: 0;
-        border-radius: 10px;
-    }
+  .headerButtons {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    margin: 0;
+  }
+
+  .bottomPersonalMenuDropdownContent {
+    padding: 20px 25px 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: 40%;
+    min-width: 240px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    bottom: calc(90% + 5px);
+    right: 0;
+    border-radius: 10px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    margin: 0 auto;
+    flex-direction: column;
+    gap: 10px;
+  }
 }
 
 @media screen and (min-width: 651px) and (max-width: 768px) {
-    .bottom-menu-bar {
-        display: flex;
-        position: sticky;
-        bottom: 0;
-        z-index: 1000;
-        background: white;
-        width: 100%;
-        box-shadow: 0 0 2px 0 #0d1a2626;
-        justify-content: center;
-    }
+  .bottom-menu-bar {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    z-index: 1000;
+    background: white;
+    width: 100%;
+    box-shadow: 0 0 2px 0 #0d1a2626;
+    justify-content: center;
+  }
 
-    .menu {
-        display: flex;
-        justify-content: space-evenly;
-        width: 100%;
-        padding: 0 0 0 5px;
-        margin: -23px 10px 5px 20px;
-    }
+  .menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    margin: 0 auto;
+    flex-direction: row;
+    gap: 15px;
+  }
 
-    .menuButtons {
-        margin: 5% 34% 1% 10%;
-    }
+  .headerButtons {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+  }
 
-    .bottomPersonalMenuDropdownContent {
-        padding: 20px 25px 20px 25px;
-        position: absolute;
-        background-color: white;
-        width: 40%;
-        min-width: 240px;
-        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-        z-index: 1;
-        bottom: calc(90% + 5px);
-        right: 6%;
-        border-radius: 10px;
-    }
+  .menuButtons {
+    margin: 1% 34% 3% 30%;
+  }
 
-    .personalMenu {
-        margin-left: 100%;
-    }
+  .bottomPersonalMenuDropdownContent {
+    padding: 20px 25px 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: 40%;
+    min-width: 240px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    bottom: calc(90% + 5px);
+    right: 6%;
+    border-radius: 10px;
+  }
 
-    .headerHostButton {
-        margin-right: 15%;
-    }
+  .personalMenu {
+    margin-left: 100%;
+  }
+
+  .headerHostButton {
+    margin-right: 15%;
+  }
 }
 
 @media screen and (min-width: 769px) and (max-width: 1024px) {
-    .personalMenu {
-        width: 85%;
-    }
+  .menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    margin: 0 auto;
+    flex-direction: row;
+    gap: 15px;
+  }
 
-    .nineDotsButton {
-        margin-right: 4%;
-        margin-left: -15%;
-    }
+  .personalMenu {
+    width: 85%;
+  }
+
+  .nineDotsButton {
+    margin-right: 4%;
+    margin-left: -15%;
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .headerButtons {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+  }
+}
+
+@media screen and (min-width: 1025px) {
+  .menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    margin: 0 auto;
+    flex-direction: row;
+    gap: 20px;
+  }
 }

@@ -19,12 +19,13 @@ body.hide-header .app-header {
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
-  /* Added for spacing */
 }
 
 .domits-searchContainer {
   height: 87vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/villaHomepage.jpg");
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url("../../images/villaHomepage.jpg");
   background-size: cover;
   background-position: 70% 100%;
   background-repeat: no-repeat;
@@ -55,26 +56,40 @@ body.hide-header .app-header {
   margin-right: auto;
   padding-bottom: 2vh;
   flex-wrap: wrap;
-  /* Added for responsiveness */
+  position: relative;
 }
 
-.domits-trendingContainer>div {
-  width: 12vw;
+.domits-trendingContainer > div {
+  width: 200px;
+  height: 150px;
   padding: 8px;
   background-color: #f9f9f9;
   border-radius: 4px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   color: #555;
   font-size: 16px;
   margin-left: 2%;
   margin-right: 2%;
-  position: relative;
+  text-align: center;
+  overflow: hidden;
+  word-wrap: break-word;
 }
 
-.domits-trendingContainer>div:hover::after {
+.domits-trendingContainer > div p {
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.domits-trendingContainer > div:hover::after {
   content: attr(data-popup-text);
   display: block;
   background: rgba(0, 0, 0, 0.8);
@@ -88,8 +103,9 @@ body.hide-header .app-header {
   width: 20%;
   height: auto;
   overflow: auto;
-  transform: translateX(50%);
-  transform: translateY(90%);
+  transform: translateX(-50%);
+  top: 110%;
+  left: 50%;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -98,9 +114,7 @@ body.hide-header .app-header {
   align-items: center;
   justify-content: center;
   width: 250px;
-  /* Adjust this width as needed */
   height: 90px;
-  /* Adjust this height as needed */
   text-align: center;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -149,10 +163,12 @@ body.hide-header .app-header {
 
 .domits-iconsContainerText {
   font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   text-align: center;
+  justify-items: center;
+  align-items: center;
   flex-wrap: wrap;
   width: 100%;
 }
@@ -191,14 +207,15 @@ body.hide-header .app-header {
   padding: 8px 4vw;
   font-size: 0.9rem;
   cursor: pointer;
-  font-size: 0.9vw;
 }
 
 .domits-hostButton {
   background-color: #003366;
   color: white;
 }
-.domits-hostButton a, .domits-SearchButton a {
+
+.domits-hostButton a,
+.domits-SearchButton a {
   text-decoration: none;
   color: white;
 }
@@ -293,7 +310,7 @@ body.hide-header .app-header {
     padding: 10px 0;
   }
 
-  .domits-trendingContainer>div {
+  .domits-trendingContainer > div {
     width: 90%;
     font-size: 16px;
   }
@@ -370,7 +387,7 @@ body.hide-header .app-header {
     text-align: center;
   }
 
-  .domits-trendingContainer>div {
+  .domits-trendingContainer > div {
     font-size: 14px;
   }
 
@@ -392,7 +409,7 @@ body.hide-header .app-header {
     height: 50vh;
   }
 
-  .domits-trendingContainer>div:hover::after {
+  .domits-trendingContainer > div:hover::after {
     width: 60%;
     transform: translateX(0%);
     transform: translateY(0%);
@@ -400,6 +417,5 @@ body.hide-header .app-header {
 
   .domits-communityContainer {
     padding: 4vh 5vw;
-    /* Increase padding for more space */
   }
 }
