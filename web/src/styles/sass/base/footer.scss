@@ -55,7 +55,7 @@ $font-size-medium: 16px;
 }
 
 .footer-copyright {
-  background-color: $primary-color;
+  background-color: #0D9813;
   flex-shrink: 0;
   margin-top: auto;
   display: flex;
@@ -84,6 +84,8 @@ $font-size-medium: 16px;
     display: inline;
     margin-left: 20px;
     text-decoration-line: underline;
+        color: black;
+        margin-top: 5px;
 
     &:hover {
       text-decoration: underline;
