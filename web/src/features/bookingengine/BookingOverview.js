@@ -261,7 +261,7 @@ const BookingOverview = () => {
         <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
         <div className="booking-header">
             <div className="goBackButton">
-                <Link to={`/listingdetails?ID=${accommodation.ID}`}>
+                <Link to={`/listingdetails?ID=${id}`}>
                     <Back />
                 </Link>
             </div>
