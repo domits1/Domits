@@ -1,7 +1,4 @@
-/* General Styling */
-/* momenteel box sizing weg gehaalt omdat het voor marin problemen zorgt */
 * {
-    /* box-sizing: border-box; */
     margin: 0;
     padding: 0;
 }
@@ -20,7 +17,7 @@ body {
     font-family: Kanit, sans-serif;
 }
 
-/* Header Styling */
+
 .app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 20px 50px 5px 50px;
@@ -169,7 +166,7 @@ body {
     word-wrap: break-word;
 }
 
-/* Media Queries */
+
 @media screen and (max-width: 1024px) {
     .header-nav {
         flex-wrap: nowrap;
@@ -283,7 +280,7 @@ body {
     }
 }
 
-/* Footer Styling */
+
 .main-footer {
     background-color: #f8f8f8;
 }
