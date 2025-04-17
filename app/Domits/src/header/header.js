@@ -24,6 +24,15 @@ function Header() {
           <View style={styles.squareContainer}>
 
             <TouchableOpacity
+                onPress={() => NavigateTo(navigation).guestDashboard()}
+                style={styles.itemContainer}>
+              <MaterialIcons name={'mail'} size={45} color={'black'} />
+              <Text style={styles.itemText}>
+                profile
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               onPress={handleBookingsPress}
               style={styles.itemContainer}>
               <Image

@@ -9,7 +9,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import {useAuth} from '../../context/AuthContext';
+import {useAuth} from '../../../context/AuthContext';
 import {changeEmail, confirmEmailChange} from './emailConfig';
 import {fetchUserAttributes} from 'aws-amplify/auth';
 

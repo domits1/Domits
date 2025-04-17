@@ -2,13 +2,13 @@ import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import Account from "../screens/account";
 import LoginScreen from "../screens/login/loginScreen";
 import Register from "../screens/login/register";
-import HostProfileTab from "../screens/hostprofile/HostProfileTab";
-import GuestProfileTab from "../screens/guestdashboard/GuestProfileTab";
+import HostProfileTab from "../screens/profile/hostprofile/HostProfileTab";
+import GuestProfileTab from "../screens/profile/guestprofile/screens/GuestProfileTab";
 import ConfirmEmail from "../screens/login/confirmMail";
 import React from "react";
-import emailSettings from "../screens/hostprofile/emailSettings";
+import emailSettings from "../screens/profile/hostprofile/emailSettings";
 import settings from "../screens/guestdashboard/GuestSettingsTab";
-import HostSettings from "../screens/hostprofile/HostSettingsTab";
+import HostSettings from "../screens/profile/hostprofile/screens/HostSettingsTab";
 
 const Stack = createNativeStackNavigator();
 

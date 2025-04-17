@@ -1,16 +1,11 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import {ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useAuth} from '../../context/AuthContext';
+import {useAuth} from '../../../../context/AuthContext';
+import {styles} from '../../styles/AccountHomeStyles';
 
-const GuestDashboard = ({navigation}) => {
+const GuestHome = ({navigation}) => {
   const navigateTo = screen => {
     navigation.navigate(screen);
   };
@@ -67,52 +62,4 @@ const GuestDashboard = ({navigation}) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  welcomeText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  descriptionText: {
-    fontSize: 16,
-    color: 'gray',
-    marginTop: 8,
-    marginBottom: 20,
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  listItemText: {
-    fontSize: 18,
-  },
-  helpSection: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  helpText: {
-    fontSize: 16,
-    color: 'gray',
-  },
-  helpButton: {
-    marginTop: 10,
-  },
-  helpButtonText: {
-    fontSize: 18,
-    color: '#000',
-  },
-});
-
-export default GuestDashboard;
+export default GuestHome;

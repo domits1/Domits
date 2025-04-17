@@ -1,5 +1,5 @@
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
-import GuestDashboard from "../screens/guestdashboard/guestDashboard";
+import GuestHome from "../screens/accounthome/guestaccounthome/screens/GuestHome";
 import Scan from "../header/scan";
 import Pay from "../header/pay";
 import GuestBookings from "../header/bookings";
@@ -11,20 +11,20 @@ import PaymentAccepted from "../features/bookingengine/screens/PaymentAcceptedSc
 import PaymentDeclined from "../features/bookingengine/screens/PaymentDeclinedScreen";
 import GuestNewConfirmedBooking from "../screens/guestdashboard/screens/GuestBookingsTab";
 import HostOnboardingLanding from "../screens/Landing";
-import GuestProfile from "../screens/guestdashboard/GuestProfileTab";
+import GuestProfile from "../screens/profile/guestprofile/screens/GuestProfileTab";
 import GuestPaymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
 import GuestReviews from "../screens/guestdashboard/GuestReviewsTab";
-import settings from "../screens/guestdashboard/GuestSettingsTab";
+import GuestSettings from "../screens/guestdashboard/GuestSettingsTab";
 import HelpAndFeedback from "../screens/guestdashboard/GuestHelpAndFeedbackTab";
-import HostHome from "../features/hostdashboard/screens/HostHomeScreen";
+import HostHome from "../screens/accounthome/hostaccounthome/screens/HostHome";
 import HostCalendar from "../features/hostdashboard/hostcalendar/screens/HostCalendarTab";
 import HostReviews from "../features/hostdashboard/hostreviews/screens/HostReviewsTab";
-import HostProfile from "../screens/hostprofile/HostProfileTab";
+import HostProfile from "../screens/profile/hostprofile/HostProfileTab";
 import HostOnboarding from "../screens/apphostonboarding/OnboardingHost";
 import HostPayments from "../features/hostdashboard/hostfinance/screens/HostPaymentsTab";
 import HostListings from "../features/hostdashboard/hostproperty/screens/HostListingsTab";
-import HostSettings from "../screens/hostprofile/HostSettingsTab";
-import emailSettings from "../screens/hostprofile/emailSettings";
+import HostSettings from "../screens/profile/hostprofile/screens/HostSettingsTab";
+import emailSettings from "../screens/profile/hostprofile/emailSettings";
 import HostHelpDesk from "../features/hostdashboard/hosthelpdesk/screens/HostHelpDesk";
 import React from "react";
 import HostDashboard from "../features/hostdashboard/screens/HostDashboardTab";
@@ -51,6 +51,7 @@ function MainNavigationStack() {
             {/* Host */}
             <Stack.Screen name="host-home" component={HostHome}/>
             <Stack.Screen name="host-profile" component={HostProfile}/>
+            <Stack.Screen name="host-settings" component={HostSettings}/>
             <Stack.Screen name="host-help-desk" component={HostHelpDesk}/>
             <Stack.Screen name="host-listings" component={HostListings}/>
 
@@ -66,8 +67,9 @@ function MainNavigationStack() {
             <Stack.Screen name="host-review-property-changes" component={HostReviewPropertyChanges}/>
 
             {/* Guest */}
-            <Stack.Screen name="guest-dashboard" component={GuestDashboard}/>
+            <Stack.Screen name="guest-dashboard" component={GuestHome}/>
             <Stack.Screen name="guest-profile" component={GuestProfile}/>
+            <Stack.Screen name="guest-settings" component={GuestSettings}/>
             <Stack.Screen name="guest-payment-methods" component={GuestPaymentMethods}/>
             <Stack.Screen name="guest-reviews" component={GuestReviews}/>
             <Stack.Screen name="guest-bookings" component={GuestBookings}/>

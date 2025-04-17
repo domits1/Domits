@@ -1,51 +1,18 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import {ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
-import {deleteUser} from '../GeneralUtils/GenUtils';
-import {useAuth} from '../../context/AuthContext';
-import NavigateTo from "../../navigation/NavigationFunctions";
+import {useAuth} from '../../../../context/AuthContext';
+import NavigateTo from "../../../../navigation/NavigationFunctions";
+import {deleteAccount} from "../../utils/ProfileFunctions";
 
-const HostSettings = () => {
-  const navigation = useNavigation();
+const HostSettings = (navigation) => {
   const {userAttributes} = useAuth();
   const userId = userAttributes?.sub;
 
-  const handleDeleteAccount = async () => {
-    Alert.alert(
-      'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone.',
-      [
-        {
-          text: 'Cancel',
-          onPress: () => console.log('Cancel Pressed'),
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          onPress: async () => {
-            try {
-              await deleteUser(userId); // Ensure account deletion completes
-              NavigateTo(navigation).login();
-            } catch (error) {
-              console.error('Failed to delete account:', error);
-              alert('Error deleting account. Please try again.');
-            }
-          },
-          style: 'destructive', // Makes the button appear as a destructive action on iOS
-        },
-      ],
-      {cancelable: true}, // Allows tapping outside to cancel
-    );
-  };
+  const handleDeleteAccount = () => {
+    deleteAccount(navigation, userId).then();
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>

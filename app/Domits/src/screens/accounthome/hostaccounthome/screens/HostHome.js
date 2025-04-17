@@ -2,11 +2,11 @@ import React from 'react';
 import {ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useAuth} from '../../../context/AuthContext';
-import {styles} from "../styles/HostDashboardStyles";
-import NavigateTo from "../../../navigation/NavigationFunctions";
+import {useAuth} from '../../../../context/AuthContext';
+import {styles} from '../../styles/AccountHomeStyles';
+import NavigateTo from "../../../../navigation/NavigationFunctions";
 
-const HostHomeScreen = ({navigation}) => {
+const HostHome = ({navigation}) => {
     const {userAttributes} = useAuth();
     const firstName = userAttributes?.given_name || 'N/A';
 
@@ -53,4 +53,4 @@ const HostHomeScreen = ({navigation}) => {
     );
 };
 
-export default HostHomeScreen;
+export default HostHome;

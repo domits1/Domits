@@ -1,49 +1,21 @@
 import React, {useState} from 'react';
-import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity,} from 'react-native';
+import {ScrollView, StyleSheet, Text, TouchableOpacity,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../context/AuthContext';
-import {useNavigation} from '@react-navigation/native';
-import {deleteUser} from '../GeneralUtils/GenUtils';
 import NavigateTo from "../../navigation/NavigationFunctions";
+import {deleteAccount} from "../profile/utils/ProfileFunctions";
 
-const GuestSettingsTab = () => {
+const GuestSettingsTab = (navigation) => {
   const {userAttributes} = useAuth();
   const userId = userAttributes?.sub;
-  const navigation = useNavigation();
 
   const [highContrast, setHighContrast] = useState(false);
   const [showPaymentInfo, setShowPaymentInfo] = useState(true);
 
-
-
-  const handleDeleteAccount = async () => {
-    Alert.alert(
-        'Delete Account',
-        'Are you sure you want to delete your account? This action cannot be undone.',
-        [
-          {
-            text: 'Cancel',
-            onPress: () => console.log('Cancel Pressed'),
-            style: 'cancel',
-          },
-          {
-            text: 'Delete',
-            onPress: async () => {
-              try {
-                await deleteUser(userId); // Ensure account deletion completes
-                NavigateTo(navigation).login();
-              } catch (error) {
-                console.error('Failed to delete account:', error);
-                alert('Error deleting account. Please try again.');
-              }
-            },
-            style: 'destructive', // Makes the button appear as a destructive action on iOS
-          },
-        ],
-        {cancelable: true} // Allows tapping outside to cancel
-    );
-  };
+  const handleDeleteAccount = () => {
+    deleteAccount(navigation, userId).then();
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -87,8 +59,8 @@ const GuestSettingsTab = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => NavigateTo(navigation).hostHelpDesk() }>
-          <Text style={styles.listItemText}>Q&A Helpdesk</Text>
+          onPress={() => NavigateTo(navigation).helpAndFeedback() }>
+          <Text style={styles.listItemText}>Help & Feedback</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         <TouchableOpacity
