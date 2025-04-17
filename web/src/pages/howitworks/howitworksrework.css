@@ -88,7 +88,7 @@
 }
 
 .howitworks__info-block--guests {
-  background: var(--primary-color);
+  background: var(--domits-guest-green);
 }
 
 .howitworks__info-block--hosts {
@@ -233,7 +233,7 @@
   }
 
   .howitworks__info-block.howitworks__info-block--guests>.howitworks__info-item {
-    background: var(--primary-color);
+    background: var(--domits-guest-green);
     border-radius: 1rem;
     margin-top: 1rem;
     margin-bottom: 1rem;

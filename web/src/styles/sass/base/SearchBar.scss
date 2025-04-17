@@ -5,6 +5,7 @@ $shadow-default: 0 0 5px hsl(0 0% 78%);
 $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 $primary-domits-color: #0d9813;
 
+
 @mixin flex-center {
   display: flex;
   justify-content: center;
@@ -46,7 +47,7 @@ $primary-domits-color: #0d9813;
   height: 3.43rem;
   background-color: white;
 
-  > div {
+  >div {
     position: relative;
     &::before {
       position: absolute;
@@ -191,7 +192,7 @@ $primary-domits-color: #0d9813;
 
   .Search-error-message {
     background-color: #f8d7da;
-    color: #721c24;
+    color: #ff0019;
     border: 2px solid #f5c6cb;
     padding: 24px 36px;
     border-radius: 16px;
@@ -217,8 +218,8 @@ $primary-domits-color: #0d9813;
     border-radius: $border-radius-lg;
     padding: 1.5625rem;
     z-index: 999;
-    width: 25.125rem;
-    min-width: 15.625rem;
+    width: 25rem;
+    min-width: 15rem;
     box-sizing: border-box;
     cursor: auto;
 
@@ -321,7 +322,6 @@ $primary-domits-color: #0d9813;
     color: $primary-domits-color;
     font-size: 1rem;
     font-weight: 500;
-    margin-top: 0.1rem;
   }
 
   .Search-guestP {
@@ -329,7 +329,6 @@ $primary-domits-color: #0d9813;
     font-weight: 500;
     color: #000;
     font-size: 0.75rem;
-    margin-top: 1rem;
   }
 
   @include mobile {
@@ -346,7 +345,7 @@ $primary-domits-color: #0d9813;
     padding: 0.6rem;
     box-sizing: border-box;
 
-    > div::before {
+    >div::before {
       display: none;
     }
 
@@ -438,9 +437,9 @@ $primary-domits-color: #0d9813;
     width: 85%;
   }
 
-  @media (max-width: 1000px) {
-    width: 100%;
-  }
+  // @media (max-width: 1000px) {
+  //   width: 100%;
+  // }
 
   @media (min-width: 2500px) {
     .responsive-calendar {
@@ -461,6 +460,7 @@ $primary-domits-color: #0d9813;
   }
 
   @media (max-width: 1500px) {
+
     .Calendar__monthSelectorItemText,
     .Calendar__yearSelectorText {
       font-size: 10px !important;
@@ -468,6 +468,7 @@ $primary-domits-color: #0d9813;
   }
 
   @media (max-width: 1200px) {
+
     .Calendar__monthSelectorItemText,
     .Calendar__yearSelectorText {
       font-size: 7px !important;
@@ -475,6 +476,7 @@ $primary-domits-color: #0d9813;
   }
 
   @include mobile {
+
     .Calendar__monthSelectorItemText,
     .Calendar__yearSelectorText {
       font-size: 1rem !important;
@@ -482,6 +484,7 @@ $primary-domits-color: #0d9813;
   }
 
   @media (min-width: 2500px) {
+
     .Calendar__monthSelectorItemText,
     .Calendar__yearSelectorText {
       font-size: 15px !important;
@@ -489,6 +492,7 @@ $primary-domits-color: #0d9813;
   }
 
   @include mobile {
+
     .input-calendar-checkInOut,
     .DatePicker__input {
       font-size: 0.5rem;
@@ -496,6 +500,7 @@ $primary-domits-color: #0d9813;
   }
 
   @include mobile {
+
     .Search-button-section,
     .searchSelectContainer,
     .Search-check-in-out {
@@ -566,7 +571,7 @@ $primary-domits-color: #0d9813;
       margin-top: 0.5rem;
     }
 
-    .Search-bar-main > div::before {
+    .Search-bar-main>div::before {
       background: transparent;
     }
 
@@ -649,7 +654,8 @@ $primary-domits-color: #0d9813;
       margin-bottom: 0.5rem;
       text-overflow: ellipsis;
     }
-    .Search-bar-main > div::before {
+
+    .Search-bar-main>div::before {
       display: none;
     }
   }
@@ -768,73 +774,72 @@ $primary-domits-color: #0d9813;
     cursor: pointer;
     font-size: 1.1rem;
   }
-}
 
-.responsive-calendar {
-  font-size: 11px !important;
-}
 
-.DatePicker {
-  position: relative;
-  display: inline-block;
-  z-index: 100;
-  height: 0.1%;
-}
+  .responsive-calendar {
+    font-size: 11px !important;
+  }
 
-.DatePicker__calendarContainer.-top {
-  height: 4vh;
-}
+  .DatePicker {
+    position: relative;
+    display: inline-block;
+    z-index: 100;
+    height: 0.1%;
+  }
 
-.DatePicker__input {
-  position: relative;
-  background: transparent;
-  font-size: 12px;
-  border: 1px solid transparent;
-  outline: none;
-  width: 80%;
-  text-align: center;
-  transform: translateY(-3.77rem);
-  padding-bottom: 1rem;
-  color: transparent;
-  cursor: pointer;
-  height: 2.3rem;
-}
+  .DatePicker__calendarContainer.-top {
+    height: 4vh;
+  }
 
-.DatePicker__input::selection {
-  background: transparent;
-}
+  .DatePicker__input {
+    position: relative;
+    background: transparent;
+    font-size: 12px;
+    border: 1px solid transparent;
+    outline: none;
+    width: 80%;
+    text-align: center;
+    transform: translateY(-3.77rem);
+    padding-bottom: 1rem;
+    color: transparent;
+    cursor: pointer;
+    height: 2.3rem;
+  }
 
-.DatePicker__input::placeholder {
-  color: transparent;
-}
+  .DatePicker__input::selection {
+    background: transparent;
+  }
 
-.Calendar__monthYear > * {
-  font-size: 1.4em;
-  color: black;
-}
+  .DatePicker__input::placeholder {
+    color: transparent;
+  }
 
-.Calendar__yearSelectorText {
-  border: none;
-  font-size: 1em;
-  min-width: 85%;
-  padding: 0.2em 0.5em;
-  border-radius: 8.5px;
-}
+  .Calendar__monthYear>* {
+    font-size: 1.4em;
+    color: black;
+  }
 
-.Calendar__monthSelectorItemText {
-  font-size: 0.8em;
-}
+  .Calendar__yearSelectorText {
+    border: none;
+    font-size: 1em;
+    min-width: 85%;
+    padding: 0.2em 0.5em;
+    border-radius: 8.5px;
+  }
 
-.Calendar__sectionWrapper {
-  position: relative;
-  min-height: 25.4em;
-  overflow: hidden;
-}
+  .Calendar__monthSelectorItemText {
+    font-size: 0.8em;
+  }
 
-.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(
-    .-selectedEnd
-  ):not(.-selectedBetween) {
-  color: inherit;
+  .Calendar__sectionWrapper {
+    position: relative;
+    min-height: 25.4em;
+    overflow: hidden;
+  }
+
+  .Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(.-selectedEnd):not(.-selectedBetween) {
+    color: inherit;
+  }
 }
 
 .mobile-search-button {
@@ -860,8 +865,5 @@ $primary-domits-color: #0d9813;
     transition: transform 0.3s ease-in-out;
     cursor: pointer;
 
-    &:hover {
-      background-color: #f8f8f8;
-    }
   }
 }
