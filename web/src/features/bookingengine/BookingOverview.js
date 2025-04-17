@@ -208,7 +208,7 @@ const BookingOverview = () => {
         }).toString();
 
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
-        const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
+        //const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
 
         const checkoutData = {
             userId: cognitoUserId,

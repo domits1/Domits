@@ -17,7 +17,7 @@ import { UserProvider } from "./features/auth/UserContext";
 import BookingOverview from "./features/bookingengine/BookingOverview";
 import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
-import BookingConfirmation from "./features/bookingengine/PaymentConfirm";
+import BookingConfirmation from "./features/bookingengine/BookingConfirm.js";
 import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import Chatbot from "./features/guestaiagent/chatbot";
