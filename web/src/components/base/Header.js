@@ -21,6 +21,10 @@ function Header({ setSearchResults, setLoading }) {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [currentView, setCurrentView] = useState("guest");
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
+  const hiddenSearchPaths = [
+    "/"
+    // Add more paths here as needed
+  ];
 
   useEffect(() => {
     checkAuthentication();
@@ -30,18 +34,6 @@ function Header({ setSearchResults, setLoading }) {
     setDropdownVisible(false);
   }, [location]);
 
-  // useEffect(() => {
-  //     // Voeg het Trustpilot-script toe
-  //     const script = document.createElement('script');
-  //     script.src = '//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js';
-  //     script.async = true;
-  //     document.head.appendChild(script);
-
-  //     // Verwijder het script bij demontage van de component
-  //     return () => {
-  //         document.head.removeChild(script);
-  //     };
-  // }, []);
 
   const checkAuthentication = async () => {
     try {
@@ -230,64 +222,63 @@ function Header({ setSearchResults, setLoading }) {
     <div className="App">
       <header className="app-header">
         <nav
-          className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${
-            isActiveSearchBar ? "no-scroll" : ""
-          }`}
+          className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""
+            }`}
         >
           <div className="logo">
             <a href="/home">
               <img src={logo} width={150} alt="Logo" />
             </a>
           </div>
-          <div className="App">
-            <SearchBar
-              setSearchResults={setSearchResults}
-              setLoading={setLoading}
-              toggleBar={toggleSearchBar}
-            />
-          </div>
+          {!hiddenSearchPaths.includes(location.pathname) && (
+            <div className="App">
+              <SearchBar
+                setSearchResults={setSearchResults}
+                setLoading={setLoading}
+                toggleBar={toggleSearchBar}
+              />
+            </div>
+          )}
 
           <div className="headerRight">
-            <ul className="header-links">
-              {!isLoggedIn ? (
-                <button
-                  className="headerButtons headerHostButton"
-                  onClick={navigateToLanding}
-                >
-                  Become a Host
-                </button>
-              ) : group === "Host" ? (
-                <button
-                  className="headerButtons headerHostButton"
-                  onClick={navigateToDashboard}
-                >
-                  {currentView === "guest"
-                    ? "Switch to Host"
-                    : "Switch to Guest"}
-                </button>
-              ) : (
-                <button
-                  className="headerButtons headerHostButton"
-                  onClick={navigateToLanding}
-                >
-                  Become a Host
-                </button>
-              )}
-              {isLoggedIn && group === "Traveler" && (
-                <button
-                  className="headerButtons"
-                  onClick={navigateToGuestDashboard}
-                >
-                  Go to Dashboard
-                </button>
-              )}
+            {!isLoggedIn ? (
               <button
-                className="headerButtons nineDotsButton"
-                onClick={navigateToNinedots}
+                className="headerButtons headerHostButton"
+                onClick={navigateToLanding}
               >
-                <img src={nineDots} alt="Nine Dots" />
+                Become a Host
               </button>
-            </ul>
+            ) : group === "Host" ? (
+              <button
+                className="headerButtons headerHostButton"
+                onClick={navigateToDashboard}
+              >
+                {currentView === "guest"
+                  ? "Switch to Host"
+                  : "Switch to Guest"}
+              </button>
+            ) : (
+              <button
+                className="headerButtons headerHostButton"
+                onClick={navigateToLanding}
+              >
+                Become a Host
+              </button>
+            )}
+            {isLoggedIn && group === "Traveler" && (
+              <button
+                className="headerButtons"
+                onClick={navigateToGuestDashboard}
+              >
+                Go to Dashboard
+              </button>
+            )}
+            <button
+              className="headerButtons nineDotsButton"
+              onClick={navigateToNinedots}
+            >
+              <img src={nineDots} alt="Nine Dots" />
+            </button>
             <div className="personalMenuDropdown">
               <button className="personalMenu" onClick={toggleDropdown}>
                 <img src={profile} alt="Profile Icon" />

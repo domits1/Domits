@@ -1,9 +1,3 @@
-/* global styling */
-html, body {
-  height: 100%;
-  margin: 0;
-}
-
 .headertext-container h1{
   font-size: 1.625em;
   font-weight: 800;
