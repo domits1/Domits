@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./paymentconfirmpage.scss";
+import "./styles/BookingConfirmOverview.scss";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import ImageGallery from "./ImageGallery";
 import useAddUserToContactList from "./hooks/useAddUserToContactList";
@@ -15,6 +15,8 @@ const BookingConfirmationOverview = () => {
     const { success, addUserToContactList } = useAddUserToContactList();
     const [contactAdded, setContactAdded] = useState(false);
     const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768); // State to track screen size
+
+    const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/"
 
     useEffect(() => {
         const handleResize = () => {
@@ -37,25 +39,45 @@ const BookingConfirmationOverview = () => {
             }
 
             try {
+                // Get property_id from paymentID
                 const response = await fetch(
-                    `https://cmxggcetwh.execute-api.eu-north-1.amazonaws.com/default/Guest-Booking-Production-Read-PaymentConfirmation?paymentID=${paymentID}`
+                    `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=paymentId&paymentID=${paymentID}`
                 );
 
                 if (!response.ok) {
                     throw new Error(`Error fetching booking details: ${response.statusText}`);
                 }
-
                 const data = await response.json();
 
-                const parsedBody = data.body ? JSON.parse(data.body) : data;
+                const parsedData = data.body ? JSON.parse(data.body) : data;
+                const bookingData = parsedData.response.response[0];
 
-                if (!parsedBody.bookingDetails) {
+                const id = bookingData.property_id.S;
+                console.log(id);
+
+                // get accommodationdata from accommodationID
+                const accommodationId = await fetch(
+                    `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${id}`
+                );
+
+                if (!accommodationId.ok) {
+                    throw new Error(`Error fetching booking details: ${response.statusText}`);
+                }
+                const accommodationData = await accommodationId.json();
+
+                console.log(accommodationData)
+                console.log(bookingData)
+
+                if (!bookingData) {
                     throw new Error("Booking details not found.");
                 }
-                console.log(parsedBody);
-                setBookingDetails(parsedBody.bookingDetails);
-                setAccommodationDetails(parsedBody.accommodationDetails);
 
+                const bookingInfo = extractBookingDetails(bookingData, accommodationData);
+                //const accommodationDetails = extractAccommodationDetails(accommodationData);
+
+                console.log("Booking details are: ", bookingInfo);
+
+                setBookingDetails(bookingInfo);
             } catch (error) {
                 console.error("Fetch Error:", error);
                 setError("Failed to load booking details.");
@@ -72,6 +94,30 @@ const BookingConfirmationOverview = () => {
         return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     };
 
+    const extractBookingDetails = (bookingData, accommodationData) => {
+        return {
+            StartDate: bookingData.arrivalDate.N,
+            EndDate: bookingData.departureDate.N,
+            Guests: bookingData.guests.N,
+            GuestID: bookingData.guestId.S,
+            AccoID: bookingData.property_id.S,
+            HostID: accommodationData.property.hostId,
+            Status: bookingData.status.S,
+            Title: accommodationData.property.title,
+            Price: accommodationData.pricing.roomRate,
+            Taxes: 0,
+            CleaningFee: accommodationData.pricing.cleaning,
+            ServiceFee: accommodationData.pricing.service,
+            Images: accommodationData.images,
+        }
+    }
+
+/*     const extractAccommodationDetails = (bookingData) => {
+        return {
+            StartDate: bookingData.arrivalDate.N,
+            EndDate: bookingData.departureDate.N
+        }
+    } */
     const calculateTotalPrice = (bookingDetails) => {
         const price = parseFloat(bookingDetails?.Price) || 0;
         const taxes = parseFloat(bookingDetails?.Taxes) || 0;
@@ -108,8 +154,8 @@ const BookingConfirmationOverview = () => {
             {/* Conditionally render the left element */}
             {!isMobileView && (
                 <div className="left">
-                    {accommodationDetails?.Images && Object.keys(accommodationDetails.Images).length > 0 ? (
-                        <ImageGallery images={Object.values(accommodationDetails.Images)} />
+                    {bookingDetails?.Images && bookingDetails.Images.length > 0 ?(
+                        <ImageGallery images={bookingDetails.Images.map(img => `${S3_URL}${img.key}`)} />
                     ) : (
                         <p>No images available for this accommodation.</p>
                     )}
@@ -123,8 +169,8 @@ const BookingConfirmationOverview = () => {
 
                 {isMobileView && (
                     <div className="left mobile-left">
-                        {accommodationDetails?.Images && Object.keys(accommodationDetails.Images).length > 0 ? (
-                            <ImageGallery images={Object.values(accommodationDetails.Images)} />
+                        {bookingDetails?.Images && Object.keys(bookingDetails.Images).length > 0 ? (
+                            <ImageGallery images={Object.values(`${S3_URL}bookingDetails.Images`)} />
                         ) : (
                             <p>No images available for this accommodation.</p>
                         )}
@@ -134,7 +180,7 @@ const BookingConfirmationOverview = () => {
                     <div>
                         <h3>
                             Booking{" "}
-                            {bookingDetails.Status === "Confirmed"
+                            {bookingDetails.Status === "Accepted"
                                 ? "Confirmed"
                                 : bookingDetails.Status === "Failed"
                                     ? "Failed"
@@ -142,14 +188,14 @@ const BookingConfirmationOverview = () => {
                         </h3>
                         <p>
                             <strong>Check-in:</strong>{" "}
-                            {accommodationDetails?.StartDate
-                                ? new Date(accommodationDetails.StartDate).toLocaleDateString()
+                            {bookingDetails?.StartDate
+                                ? new Date(Number(bookingDetails.StartDate)).toLocaleDateString()
                                 : "N/A"}
                         </p>
                         <p>
                             <strong>Check-out:</strong>{" "}
-                            {accommodationDetails?.EndDate
-                                ? new Date(accommodationDetails.EndDate).toLocaleDateString()
+                            {bookingDetails?.EndDate
+                                ? new Date(Number(bookingDetails.EndDate)).toLocaleDateString()
                                 : "N/A"}
                         </p>
                     </div>
@@ -164,13 +210,13 @@ const BookingConfirmationOverview = () => {
                     <div className="price-breakdown">
                         <div className="row">
                             <p>Guests:</p>
-                            <p>{bookingDetails?.AmountOfGuest}</p>
+                            <p>{bookingDetails?.Guests}</p>
                         </div>
 
                         <div className="row">
                             <p>Date</p>
                             <p>
-                                {formatDate(bookingDetails?.StartDate)} - {formatDate(bookingDetails?.EndDate)}
+                                {formatDate(Number(bookingDetails?.StartDate))} - {formatDate(Number(bookingDetails?.EndDate))}
                             </p>
                         </div>
                     </div>

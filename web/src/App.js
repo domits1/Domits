@@ -14,11 +14,11 @@ import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
 import { UserProvider } from "./features/auth/UserContext";
-import BookingOverview from "./features/bookingengine/BookingOverview";
 import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
-import BookingConfirmation from "./features/bookingengine/BookingConfirm.js";
-import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
+import BookingOverview from "./features/bookingengine/BookingOverview";
+import BookingSend from "./features/bookingengine/BookingSend";
+import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
@@ -176,8 +176,8 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/listingdetails" element={<ListingDetails2 />} />
                 <Route path="/bookingoverview" element={<BookingOverview />} />
-                <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
+                <Route path="/bookingsend" element={<BookingSend />} />
+                <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                 <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
                 <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView />} />
 

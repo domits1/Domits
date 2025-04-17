@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
-const BookingConfirm = () => {
+const BookingSend = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [accommodationTitle, setAccommodationTitle] = useState("");
@@ -71,7 +71,7 @@ const BookingConfirm = () => {
 
 
                 if (response.ok) {
-                    navigate(`/paymentconfirmpage?paymentID=${paymentID}`);
+                    navigate(`/bookingconfirmationoverview?paymentID=${paymentID}`);
                 } else {
                     const errorMessage = await response.text();
                     console.error("Failed to store booking:", errorMessage);
@@ -95,4 +95,4 @@ const BookingConfirm = () => {
     );
 };
 
-export default BookingConfirm;
+export default BookingSend;

@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import {Link, useNavigate} from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
-import "./styles/bookingoverview.scss";
+import "./styles/BookingOverview.scss";
 import RegisterModule from "../auth/RegisterModule";
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
@@ -207,8 +207,8 @@ const BookingOverview = () => {
             ServiceFee
         }).toString();
 
-        const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
-        //const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
+        const successUrl = `${currentDomain}/bookingsend?${successQueryParams}`;
+        const cancelUrl = `${currentDomain}/bookingsend?${cancelQueryParams}`;
 
         const checkoutData = {
             userId: cognitoUserId,
@@ -362,4 +362,4 @@ const BookingOverview = () => {
     );
 };
 
-export default BookingOverview;
+export default BookingOverview  ;
