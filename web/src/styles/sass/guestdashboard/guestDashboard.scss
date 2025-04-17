@@ -1,0 +1,338 @@
+// Variables
+$main-green: #0D9813;
+$hover-green: #6CD46F;
+$light-gray: #f9f9f9;
+$shadow-color: rgba(0, 0, 0, 0.1);
+$radius: 15px;
+$transition: 0.3s;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+  margin: 30px auto;
+
+  .dashboards,
+  .dashboard {
+    display: grid;
+    grid-template-columns: 250px auto;
+    gap: 5%;
+  }
+
+  .dashboardSections {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .wijzers {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    cursor: pointer;
+    width: 200px;
+    padding: 5px 1rem 5px 1vh;
+    border: 0.1px solid black;
+    border-radius: $radius;
+    margin-bottom: 15px;
+    height: 8vh;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 1rem;
+    transition: all $transition ease;
+
+    img {
+      object-fit: cover;
+    }
+
+    &:hover,
+    &.active {
+      background-color: var(--domits-guest-green);
+      color: white;
+
+      p {
+        color: white;
+      }
+    }
+
+    &.disabled:hover {
+      cursor: not-allowed;
+      box-shadow: none;
+      border: 0.5px solid black;
+    }
+  }
+
+  .contentContainer {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .reviewColumn {
+    width: 48%;
+    min-width: 155px;
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .reviewBox {
+    margin: 10px 5px 0 0;
+    padding: 10px;
+    height: 100%;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    border-radius: 10px;
+    flex-wrap: wrap;
+  }
+
+  .review-tab {
+    display: flex;
+    flex-direction: column;
+    margin: 5%;
+    padding: 12px;
+    border-radius: $radius;
+    animation: fade-up 1s;
+
+    &:hover {
+      box-shadow: 4px 4px $main-green;
+      transition: $transition;
+    }
+  }
+
+  .review-date {
+    color: $main-green;
+  }
+
+  .review-delete {
+    align-self: end;
+    width: 40px;
+    height: 40px;
+    border: none;
+    padding: 0;
+    background-color: white;
+
+    &:hover {
+      cursor: pointer;
+      transform: scale(1.2);
+    }
+  }
+
+  .review-alert {
+    margin: 10%;
+  }
+
+  .cross {
+    width: 30px;
+    height: 30px;
+  }
+
+  .content {
+    display: flex;
+    justify-content: center;
+    gap: 15%;
+    padding: 20px;
+
+    .leftContent {
+      height: 360px;
+    }
+  }
+
+  .bookingBox,
+  .messageBox {
+    background-color: #fff;
+    border-radius: $radius;
+    padding: 20px;
+    box-shadow: 0px 2px 4px $shadow-color;
+    margin-bottom: 20px;
+    width: 60%;
+
+    img {
+      width: 20%;
+      height: auto;
+      border-radius: $radius;
+      margin-top: 10px;
+    }
+
+    button {
+      align-self: flex-end;
+      padding: 10px 20px;
+      font-size: 14px;
+      border: none;
+      border-radius: $radius;
+      cursor: pointer;
+    }
+  }
+
+  .viewAllBooking {
+    color: $main-green;
+    text-decoration: none;
+  }
+
+  .personalInfoContent {
+    flex: 1;
+    width: 100%;
+    padding: 20px;
+    margin-left: 1px;
+    flex-direction: column;
+  }
+
+  .accomodation-side {
+    flex: 2;
+    padding: 20px;
+  }
+
+  .infoBox {
+    background-color: #fff;
+    border-radius: $radius;
+    padding: 20px;
+    margin-bottom: 10px;
+    box-shadow: 0px 2px 4px $shadow-color;
+    display: flex;
+    align-items: center;
+    width: auto;
+
+    i {
+      margin-right: 10px;
+      color: darken($main-green, 5%);
+    }
+
+    span {
+      margin-right: auto;
+      font-size: 1.3rem;
+      font-weight: 400;
+    }
+
+    p {
+      font-size: 1.3rem;
+      font-weight: 300;
+    }
+  }
+
+  .button.last-button {
+    margin-top: 60px;
+  }
+
+  .button i {
+    margin-right: 10px;
+    color: #888;
+  }
+
+  .icon {
+    width: 24px;
+    height: 24px;
+    padding: 5px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    object-fit: contain;
+    margin-right: 10px;
+    background-color: $light-gray;
+    display: inline-block;
+  }
+
+  .personal-info-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .edit-icon-background {
+    background-color: $main-green;
+    border-radius: $radius;
+    padding: 0.4rem;
+    margin-left: 5%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    text-align: center;
+
+    &:hover {
+      background-color: $hover-green;
+    }
+
+    .guest-edit-icon,
+    .guest-check-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      object-fit: contain;
+    }
+
+    .guest-edit-icon {
+      width: 1.6rem;
+      height: 1.6rem;
+    }
+
+    .guest-check-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+  }
+
+  .guest-edit-input {
+    font-size: 1.3rem;
+    font-weight: 300;
+    margin-left: -2%;
+  }
+
+  @keyframes fade-up {
+    0% {
+      opacity: 0;
+      transform: translateY(30px) scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0px) scale(1);
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .dashboardSections {
+      visibility: hidden;
+      width: 0;
+      height: 0;
+    }
+  }
+
+  @media screen and (max-width: 830px) {
+    .dashboards,
+    .dashboard {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wijzers {
+      width: 90%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .reviewColumn {
+      width: 100%;
+
+      h2.review-header {
+        font-size: 1.5em;
+      }
+    }
+
+    .infoBox {
+      padding: 10px;
+      font-size: 0.8em;
+      width: 90%;
+      flex-wrap: wrap;
+    }
+
+    .dashboardSections {
+      visibility: hidden;
+      width: 0;
+      height: 0;
+    }
+  }
+}
