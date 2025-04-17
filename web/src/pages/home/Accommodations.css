@@ -91,7 +91,7 @@
 
 .accocard-price {
   font-size: 18px;
-  color: var(--primary-color);
+  color: var(--domits-guest-green);
   margin-bottom: 8px;
   font-weight: 500;
 }
@@ -128,7 +128,7 @@
 }
 
 .why-domits-link {
-  background-color: var(--primary-color);
+  background-color: var(--domits-guest-green);
   color: white;
   padding: 10px 10px;
   text-decoration: none;
@@ -301,16 +301,6 @@
   background: #007bff;
   opacity: 1;
   z-index: 15 !important;
-}
-
-body {
-  position: relative;
-  height: 100%;
-  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  color: #000;
-  margin: 0;
-  padding: 0;
 }
 
 /* this class makes the description of accommodation in mobile view not visable...*/

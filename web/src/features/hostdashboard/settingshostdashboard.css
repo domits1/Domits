@@ -99,7 +99,7 @@
 }
 
 .host-icon-background {
-    background-color: var(--secondary-color);
+    background-color: var(--domits-host-blue);
     border-radius: 15px;
     padding: 0.4rem;
     margin-left: 5%;

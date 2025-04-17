@@ -69,7 +69,6 @@ body.hide-header .app-header {
   font-size: 16px;
   margin-left: 2%;
   margin-right: 2%;
-  position: relative;
 }
 
 .domits-trendingContainer>div:hover::after {

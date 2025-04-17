@@ -1,5 +1,4 @@
 // Service to get accesstoken of loggedin user from localstorage
-
 export function getAccessToken() {
     const keys = Object.keys(localStorage).filter(
         (key) =>

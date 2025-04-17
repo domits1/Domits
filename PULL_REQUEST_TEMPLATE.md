@@ -3,16 +3,21 @@ Name: @[GitHub username]
 
 ## Related Issue
 Related Issue: #[issue number] 
-resolves #[issue number] (only if it should close it)
+Closes #[issue number] (only if it should close it)
 
 ## Proposed Changes
 Description: [Please add detailed description of the changes here]
+
 
 ## Branch management
 - [ ] Merging into acceptance (not main)
 
 ## Change size
-- [ ] Big change (300+)
+_Please indicate the size of this change._  
+  _Please clarify in the description which parts are moved/unchanged code, so the reviewer doesn’t review old logic._
+
+- [ ] Huge change (1000+ lines, mostly refactored/moved code — explain in description to avoid reviewing old logic)
+- [ ] Big change (+-max 1000)
 - [ ] Small change (less than 300)
 
 ## Change type
@@ -21,31 +26,59 @@ Description: [Please add detailed description of the changes here]
 - [ ] Optimalization
 - [ ] Documentation update
 
+## Refactoring
+- [ ] Refactors following files (but didn't change the code)
+  _- src/features/example.xx_
+  _- app/src/data/example.xx_
+
 ## Npm packages 
 - [ ] NPM Packages installed
 - [ ] NPM Packages removed
 - [ ] NPM Packages updated
 - [ ] Did you check for vulnerabilities using "npm audit"?
 
-## Checklist
-- [ ] Check if you didn't use global styling -- for more explanation view https://github.com/domits1/Domits/issues/1691
-- [ ] Console.logs are deleted
-- [ ] Comments are deleted
+## PR workflow
+_0. Pull the latest version of *Acceptance* `$git pull origin/acceptance`_
+_1. Create a “branch” (version)_
+_2. Commit and push your changes_
+_3. Test your code locally_
+_4. Open a “Pull Request” (PR = propose changes)_
+_5. Discuss and request review of your code_
+_6. “Merge” your branch to the master branch_
+
+## Checklist  
+- [ ] No global styling (see [#1691](https://github.com/domits1/Domits/issues/1691) for why)  
+- [ ] No `console.log` left in code  
+- [ ] No commented-out code remains  
 - [ ] Jest tests are included
-- [ ] Jest tests have succeeded
-- [ ] Pull request is assigned to a reviewer
-- [ ] Pull request title is descriptive and includes the issue number
-- [ ] Code has been tested in a local environment
-- [ ] No sensitive data (e.g., passwords, keys) are hardcoded
+- [ ] Jest tests are passing  
+- [ ] Pull request has an assigned reviewer  
+- [ ] PR title is descriptive and includes issue number  
+- [ ] Code tested locally  
+- [ ] No hardcoded sensitive data (e.g., API-keys/passwords)  
 
-All boxes must be checked in order to move forward with your pull request.
+_All boxes must be checked before merging._  
 
-## Reviewers
-Reviewer(s): @[GitHub username]
+## Reviewers  
+As the Pull Requester, **you are responsible for your own pull request.**  
+1. Send a message (with PR link) to the reviewer you choose.  
+2. If they don’t respond within a reasonable time, **remind them or choose another.**  
+3. You are also responsible for resolving feedback and notifying the reviewer after updates.  
+(*Note: GitHub notifications are often muted – always follow up with a DM.*)  
 
-## Additional Information
-Additional Info: [Add any additional information here]
+### Suggested Reviewers  
+- [ ] Expert Reviewer: @[GitHub username]  
+- Marijn (Styling, SCSS, JS)  
+- Sander (App, Backend)  
+<!-- Temporarily removed due to personal situation -->
+<!-- - Sebastiaan (Security, SCSS) -->  
 
-## Keep or delete my branch
-- [x] Delete my branch
-- [ ] Keep my branch
+- [ ] Second Reviewer: @[GitHub username]  
+Preferably someone familiar with the part of code you're working on. For example:  
+- Ryan  
+- Kacper  
+- Raman  
+
+## Keep or delete my branch  
+- [x] Delete my branch after merge  
+- [ ] Keep my branch  
