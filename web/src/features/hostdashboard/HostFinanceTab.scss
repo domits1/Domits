@@ -1,0 +1,182 @@
+.page-Host-content {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 80px;
+    padding: 20px;
+  }
+  
+  /* Keep Sidebar As-Is */
+  .sidebar {
+    margin-left: 67px;
+    margin-top: -20px;
+  }
+  
+  /* Main Finance Content Area */
+  .host-pc-finance {
+    flex: 1;
+    max-width: 900px;
+    padding: 30px;
+    background: #f4f8fb; /* Light soft blue */
+    border-radius: 20px;
+    font-family: 'Kanit', sans-serif;
+  }
+  
+  /* Inner Finance Layout */
+  .finance-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+  
+  /* Shared Box/Card Styles */
+  .finance-steps,
+  .payouts-section,
+  .payout-frequency,
+  .payout-status {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0, 51, 102, 0.1);
+    width: 100%;
+  }
+  
+  /* Section Headings */
+  .finance-steps h2,
+  .payouts-section h3,
+  .payout-frequency h3,
+  .payout-status h3 {
+    font-size: 1.4em;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: #003366;
+  }
+  
+  /* Finance Steps List */
+  .finance-steps ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  
+  .finance-steps li {
+    padding: 10px 0;
+    font-size: 1rem;
+    color: #000;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Blue Links */
+  .finance-span {
+    color: #007bff;
+    text-decoration: underline;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .finance-span:hover {
+    text-decoration: none;
+  }
+  
+  /* Payout Table */
+  .payout-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .payout-table th,
+  .payout-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .payout-table th {
+    background-color: #f0f4f8;
+    font-weight: 600;
+    color: #003366;
+  }
+  
+  /* Payout Frequency Dropdown */
+  .payout-frequency select {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    width: 100%;
+    background: white;
+    color: #000;
+  }
+  
+  /* Payout Status Colors */
+  .status-active {
+    color: #28a745;
+    font-weight: bold;
+  }
+  
+  .status-pending {
+    color: #ffc107;
+    font-weight: bold;
+  }
+  
+  .status-error {
+    color: #dc3545;
+    font-weight: bold;
+  }
+  
+  .status-none {
+    color: #6c757d;
+    font-size: 0.95rem;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .page-Host {
+      flex-direction: column;
+    }
+  
+    .page-Host-content {
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
+    }
+  
+    .host-pc-finance {
+      width: 100%;
+      padding: 15px;
+    }
+  
+    .finance-steps,
+    .payouts-section,
+    .payout-status,
+    .payout-frequency {
+      width: 100%;
+    }
+  }
+  
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .page-Host {
+      flex-direction: row;
+    }
+  
+    .host-pc-finance {
+      margin-left: 15vw;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .page-Host {
+      flex-direction: row;
+    }
+  
+    .host-pc-finance {
+      margin-left: 15vw;
+    }
+  }
+  
