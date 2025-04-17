@@ -175,6 +175,46 @@ body.hide-header .app-header {
   margin-bottom: 20px;
 }
 
+/* AppDownloadButtons.css */
+.store-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.store-badge {
+  height: 50px;
+  transition: transform 0.2s ease;
+}
+
+.store-badge:hover {
+  transform: scale(1.05);
+}
+
+
+.More_Destinations_button {
+  background-color: #0d9813;
+  color: white;
+  text-decoration: none;
+  border: none;
+  border-radius: 0.6em;
+  padding: 8px 4vw;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-left: 650px;
+  margin-top: 55px;
+}
+
+.More_Destinations_button a {
+  color: white;
+  text-decoration: none;
+}
+
+.More_Destinations_button:hover {
+  background-color: #0b7e10;
+}
+
 .countries-container,
 .more-countries-container {
   display: grid;
@@ -698,7 +738,39 @@ body.hide-header .app-header {
 .groups-container> :nth-child(6) {
   grid-column: span 1;
 
+
+
 }
+
+/* PromoSection.css */
+.promo-container {
+  text-align: center;
+  padding: 2rem;
+  max-width: 690px;
+  margin: 0 auto;
+}
+
+.promo-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.promo-button {
+  background-color: #0f9d00;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.promo-button:hover {
+  background-color: #0c7a00;
+}
+
 
 
 @media (max-width: 767px) {

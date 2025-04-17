@@ -62,10 +62,7 @@ import culture from "../../pages/home/Images/culture.webp";
 import culinary from "../../pages/home/Images/culinary.webp";
 import waterman from "../../pages/home/Images/waterman.webp";
 import sleutelvrouw from "../../pages/home/Images/sleutelvrouw.webp";
-import {
-  FetchAllPropertyTypes,
-  FetchPropertyType,
-} from "../home/services/fetchProperties";
+import { FetchAllPropertyTypes, FetchPropertyType } from "../home/services/fetchProperties";
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -417,10 +414,7 @@ const Homepage = () => {
       console.error("Event or event target is undefined.");
       return;
     }
-    if (
-      e.target.closest(".swiper-button-next") ||
-      e.target.closest(".swiper-button-prev")
-    ) {
+    if (e.target.closest(".swiper-button-next") || e.target.closest(".swiper-button-prev")) {
       e.stopPropagation();
       return;
     }
@@ -437,9 +431,7 @@ const Homepage = () => {
       <div className="domits-homepage">
         <div className="domits-searchContainer">
           <div className="domits-searchTextCon">
-            <h3 className="domits-searchText">
-              Book holiday homes, boats and campers..
-            </h3>
+            <h3 className="domits-searchText">Book holiday homes, boats and campers..</h3>
           </div>
           <div className="domits-searchbarCon">
             <SearchBar
@@ -473,51 +465,11 @@ const Homepage = () => {
         </div>
 
         <div className="domits-boatContainer">
-          <div className="domits-boatText">
-            <h3 className="domits-subHead">
-              Trending accommodations this month
-            </h3>
-
-            <div className="domits-trendingContainer">
-              {[
-                {
-                  emoji: "🎖️",
-                  title: "Best price guarantee",
-                  text: "We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.",
-                },
-                {
-                  emoji: "✅",
-                  title: "Accommodation booking guarantee",
-                  text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.",
-                },
-                {
-                  emoji: "🤝",
-                  title: "Guarantee of stay at the accommodation",
-                  text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
-                },
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="popup-trigger"
-                  onClick={() => handlePopupClick(item.text)}
-                >
-                  {item.emoji} {item.title}
-                  {activePopup === item.text && (
-                    <div className="popup-box">{item.text}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
           <div className="domits-accommodationGroup">
             {propertyLoading === false ? (
               allAccommodations.length > 0 ? (
                 allAccommodations.map((property) => (
-                  <AccommodationCard
-                    key={property.property.id}
-                    accommodation={property}
-                    onClick={handleClick}
-                  />
+                  <AccommodationCard key={property.property.id} accommodation={property} onClick={handleClick} />
                 ))
               ) : (
                 <div>No trending properties available.</div>
@@ -538,11 +490,7 @@ const Homepage = () => {
             {boatLoading === false ? (
               boatAccommodations.length > 0 ? (
                 boatAccommodations.map((boat) => (
-                  <AccommodationCard
-                    key={boat.property.id}
-                    accommodation={boat}
-                    onClick={handleClick}
-                  />
+                  <AccommodationCard key={boat.property.id} accommodation={boat} onClick={handleClick} />
                 ))
               ) : (
                 <div>No boats available.</div>
@@ -561,13 +509,7 @@ const Homepage = () => {
             {camperLoading === false ? (
               camperAccommodations.length > 0 ? (
                 camperAccommodations.map((camper) => {
-                  return (
-                    <AccommodationCard
-                      key={camper.property.id}
-                      accommodation={camper}
-                      onClick={handleClick}
-                    />
-                  );
+                  return <AccommodationCard key={camper.property.id} accommodation={camper} onClick={handleClick} />;
                 })
               ) : (
                 <div>No campers available.</div>
@@ -578,6 +520,62 @@ const Homepage = () => {
                 .map((_, index) => <SkeletonLoader key={index} />)
             )}
           </div>
+        </div>
+
+        <div className="More_Destinations">
+          <button className="More_Destinations_button">
+            <a href="#">Explore more destinations around the world</a>
+          </button>
+        </div>
+
+        <div className="domits-communityContainer">
+          <h2 className="domits-communityHead">Need help? Join the community</h2>
+          <p className="domits-communityGroup">Domits has a travel community for hosts, guests, and employees</p>
+          <div className="domits-communityButtons">
+            <button className="domits-hostButton">
+              <a href="/landing">Become a host</a>
+            </button>
+            <button className="domits-SearchButton">
+              <a href="/home">Search & book</a>
+            </button>
+          </div>
+        </div>
+        <div className="store-buttons">
+          <a href="https://apps.apple.com/" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+              alt="Download on the App Store"
+              className="store-badge"
+            />
+          </a>
+          <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+              alt="Get it on Google Play"
+              className="store-badge"
+            />
+          </a>
+        </div>
+
+        {/* Updated Review Section */}
+        <div className="review-container">
+          <button className="arrow-button" onClick={handlePreviousReview}>
+            &lt;
+          </button>
+          <div className="review-list">
+            {visibleReviews.map((review, index) => (
+              <div className="review-card" key={index}>
+                <img src={review.img} alt={review.name} className="review-profile-pic" />
+                <h3>{review.name}</h3>
+                <p className="review-location">Host from The Netherlands</p>
+                <div className="review-stars">★★★★★</div>
+                <p className="review-text">{review.text}</p>
+              </div>
+            ))}
+          </div>
+          <button className="arrow-button" onClick={handleNextReview}>
+            &gt;
+          </button>
         </div>
 
         <div className="become-host-section">
@@ -592,12 +590,7 @@ const Homepage = () => {
           </div>
           <div className="host-images">
             {hostImages.map((image, index) => (
-              <img
-                key={index}
-                src={image.src}
-                alt={image.alt}
-                className="host-image"
-              />
+              <img key={index} src={image.src} alt={image.alt} className="host-image" />
             ))}
           </div>
         </div>
@@ -606,11 +599,7 @@ const Homepage = () => {
         <div className="countries-container">
           {countries.map((country, index) => (
             <div className="country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -621,11 +610,7 @@ const Homepage = () => {
         <div className="small-countries-container">
           {smallCountries.map((country, index) => (
             <div className="country-card small-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -637,11 +622,7 @@ const Homepage = () => {
         <div className="asia-countries-container">
           {asiaCountries.map((country, index) => (
             <div className="country-card asia-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -652,11 +633,7 @@ const Homepage = () => {
         <div className="small-asia-countries-container">
           {smallAsiaCountries.map((country, index) => (
             <div className="country-card small-asia-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -667,11 +644,7 @@ const Homepage = () => {
         <div className="caribbean-countries-container">
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -681,15 +654,8 @@ const Homepage = () => {
         </div>
         <div className="small-caribbean-countries-container">
           {smallCaribbeanCountries.map((country, index) => (
-            <div
-              className="country-card small-caribbean-country-card"
-              key={index}
-            >
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+            <div className="country-card small-caribbean-country-card" key={index}>
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -700,11 +666,7 @@ const Homepage = () => {
         <div className="ski-countries-container">
           {skiCountries.map((country, index) => (
             <div className="country-card ski-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -716,11 +678,7 @@ const Homepage = () => {
         <div className="seasons-container">
           {seasons.map((season, index) => (
             <div className="season-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={season.img} alt={season.name} />
               </a>
               <h3>{season.name}</h3>
@@ -731,11 +689,7 @@ const Homepage = () => {
         <div className="interests-container">
           {interests.map((interest, index) => (
             <div className="interest-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={interest.img} alt={interest.name} />
               </a>
               <h3>{interest.name}</h3>
@@ -747,11 +701,7 @@ const Homepage = () => {
         <div className="groups-container">
           {groups.map((group, index) => (
             <div className="group-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={group.img} alt={group.name} />
               </a>
               <h3>{group.name}</h3>
@@ -760,43 +710,12 @@ const Homepage = () => {
           ))}
         </div>
       </div>
-      {/* Updated Review Section */}
-      <div className="review-container">
-        <button className="arrow-button" onClick={handlePreviousReview}>
-          &lt;
-        </button>
-        <div className="review-list">
-          {visibleReviews.map((review, index) => (
-            <div className="review-card" key={index}>
-              <img
-                src={review.img}
-                alt={review.name}
-                className="review-profile-pic"
-              />
-              <h3>{review.name}</h3>
-              <p className="review-location">Host from The Netherlands</p>
-              <div className="review-stars">★★★★★</div>
-              <p className="review-text">{review.text}</p>
-            </div>
-          ))}
-        </div>
-        <button className="arrow-button" onClick={handleNextReview}>
-          &gt;
-        </button>
-      </div>
-      <div className="domits-communityContainer">
-        <h2 className="domits-communityHead">Need help? Join the community</h2>
-        <p className="domits-communityGroup">
-          Domits has a travel community for hosts, guests, and employees
-        </p>
-        <div className="domits-communityButtons">
-          <button className="domits-hostButton">
-            <a href="/landing">Become a host</a>
-          </button>
-          <button className="domits-SearchButton">
-            <a href="/home">Search & book</a>
-          </button>
-        </div>
+      <div className="promo-container">
+        <h2 className="promo-title">
+          Discover the Best Ski Destinations for Every Interest and Group – Click Here to Explore Our Seasonal and
+          Popular Options!
+        </h2>
+        <button className="promo-button">Click here!</button>
       </div>
     </>
   );
