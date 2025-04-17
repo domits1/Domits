@@ -67,7 +67,7 @@ const GuestWishlistPage = () => {
       <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
         {wishlist.map((item) => {
           const { property, propertyImages, propertyGeneralDetails, propertyPricing } = item;
-          const imageUrl = `https://your-image-base-url.com/${propertyImages?.[0]?.key}`;
+          const imageUrl = `https://accommodation.s3.eu-north-1.amazonaws.com/${propertyImages?.[0]?.key}`;
           const beds = propertyGeneralDetails.find(d => d.detail === "Beds")?.value || 0;
           const baths = propertyGeneralDetails.find(d => d.detail === "Bathrooms")?.value || 0;
           const guests = propertyGeneralDetails.find(d => d.detail === "Guests")?.value || 0;
