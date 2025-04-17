@@ -164,14 +164,12 @@ const BookingConfirmationOverview = () => {
 
             <div className="right-panel">
                 <h1>Payment Confirmation</h1>
-
                 {bookingDetails && <h3>{bookingDetails.Title}</h3>}
-
                 {isMobileView && (
                     <div className="left mobile-left">
-                        {bookingDetails?.Images && Object.keys(bookingDetails.Images).length > 0 ? (
-                            <ImageGallery images={Object.values(`${S3_URL}bookingDetails.Images`)} />
-                        ) : (
+                    {bookingDetails?.Images && bookingDetails.Images.length > 0 ?(
+                        <ImageGallery images={bookingDetails.Images.map(img => `${S3_URL}${img.key}`)} />
+                    ) : (
                             <p>No images available for this accommodation.</p>
                         )}
                     </div>
