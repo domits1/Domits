@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 
 export const useHandleLegalProceed = () => {
-  console.log("Proceed button clicked.");
   const navigate = useNavigate()
   const selectedType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.type,

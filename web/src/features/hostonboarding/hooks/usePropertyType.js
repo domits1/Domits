@@ -3,7 +3,6 @@ import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 
 // move to next screen based on building/boat/camper
 export const useHandleAccommodationTypeProceed = () => {
-  console.log("Proceed button clicked.")
   const navigate = useNavigate()
   const selectedType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.type,

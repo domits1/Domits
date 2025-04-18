@@ -5,16 +5,16 @@ export const useHouseRules = () => {
     (state) => state.accommodationDetails.houseRules,
   )
 
-  const checkIn = useFormStoreHostOnboarding(
-    (state) => state.accommodationDetails.checkIn,
-  )
-
   const updateHouseRule = useFormStoreHostOnboarding(
     (state) => state.setHouseRule,
   )
 
   const updateCheckIn = useFormStoreHostOnboarding(
     (state) => state.setCheckIn,
+  )
+
+  const checkIn = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.checkIn,
   )
 
   const handleCheckboxChange = (rule, value) => {
