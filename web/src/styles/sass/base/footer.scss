@@ -1,5 +1,6 @@
 // Variables
 $primary-color: var(--primary-color);
+$secondary-color: #003366;
 $footer-bg: #f8f8f8;
 $footer-text-color: #000;
 $footer-link-size: 1rem;
@@ -102,7 +103,7 @@ $breakpoint-sm: 480px;
 
   .footer-copyright-text {
     color: $secondary-color;
-    font-size: $font-size-medium;
+    font-size: 10px;
     font-weight: 300;
     line-height: 150%;
   }

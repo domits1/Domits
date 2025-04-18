@@ -130,8 +130,7 @@ const Footer = () => {
                   href="https://www.linkedin.com/company/domits"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="footer-icons"
-                >
+                  className="footer-icons">
                   <img src={linkedinIcon} alt="LinkedIn" />
                 </a>
               </li>
@@ -140,18 +139,12 @@ const Footer = () => {
                   href="https://www.instagram.com/domits_/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="footer-icons"
-                >
+                  className="footer-icons">
                   <img src={instagramIcon} alt="Instagram" />
                 </a>
               </li>
               <li>
-                <a
-                  href="https://x.com/Domits_"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="footer-icons"
-                >
+                <a href="https://x.com/Domits_" target="_blank" rel="noopener noreferrer" className="footer-icons">
                   <img src={xIcon} alt="X" />
                 </a>
               </li>
@@ -169,8 +162,7 @@ const Footer = () => {
                   href="https://maps.google.com/?q=2013+AS+Haarlem+Kinderhuissingel+6-K"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="footer-links"
-                >
+                  className="footer-links">
                   2013 AS, Haarlem
                 </a>
               </li>
@@ -179,8 +171,7 @@ const Footer = () => {
                   href="https://maps.google.com/?q=2013+AS+Haarlem+Kinderhuissingel+6-K"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="footer-links"
-                >
+                  className="footer-links">
                   Kinderhuissingel 6-K
                 </a>
               </li>
@@ -193,30 +184,23 @@ const Footer = () => {
         <div className="logo">
           <img src={logo} width={100} alt="Logo" />
         </div>
-          <Link to="/policy" className="footer-links">
-            Privacy policy
-          </Link>
-          <Link to="/terms" className="footer-links">
-            Terms and Conditions
-          </Link>
-          <Link to="/disclaimers" className="footer-links">
-            Disclaimer
-          </Link>
-        <a
-          href=""
-          target="_blank"
-          rel="noopener noreferrer"
-          className="footer-links"
-        >
+        <Link to="/policy" className="footer-links">
+          Privacy policy
+        </Link>
+        <Link to="/terms" className="footer-links">
+          Terms and Conditions
+        </Link>
+        <Link to="/disclaimers" className="footer-links">
+          Disclaimer
+        </Link>
+        <a href="" target="_blank" rel="noopener noreferrer" className="footer-links">
           Sitemap
         </a>
       </div>
 
       {/* Copyright Block */}
       <div className="footer-copyright">
-        <p className="footer-copyright-text">
-          Rights reserved, Domits.com © {currentYear}
-        </p>
+        <p className="footer-copyright-text">Rights reserved, Domits.com © {currentYear}</p>
       </div>
     </footer>
   );

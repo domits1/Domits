@@ -19,10 +19,11 @@ body.hide-header .app-header {
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
+  margin-top: 50px;
 }
 
 .domits-searchContainer {
-  height: 87vh;
+  height: 75vh;
   background:
     linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
     url("../../images/villaHomepage.jpg");
@@ -200,9 +201,9 @@ body.hide-header .app-header {
   border: none;
   border-radius: 0.6em;
   padding: 8px 4vw;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  margin-left: 650px;
+  margin-left: 690px;
   margin-top: 55px;
 }
 

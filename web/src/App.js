@@ -25,6 +25,8 @@ import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import GuestBooking from "./features/guestdashboard/GuestBooking";
 import GuestDashboard from "./features/guestdashboard/GuestDashboard";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
+import Security from "./pages/security/security.js";
+import Performance from "./pages/Performance/performance.js";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
@@ -170,6 +172,8 @@ function App() {
                   <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
                   <Route path="/how-it-works" element={<Howitworks />} />
                   <Route path="/why-domits" element={<Whydomits />} />
+                  <Route path="/security" element={<Security />} />
+                  <Route path="/performance" element={<Performance />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/travelinnovation" element={<Travelinnovation />} />
                   <Route path="/release" element={<ReleaseUpdates />} />
