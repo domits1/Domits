@@ -7,21 +7,20 @@ import FetchUserId from "../utils/FetchUserId";
 import { useNavigate } from "react-router-dom";
 import { submitAccommodation } from "../services/SubmitAccommodation.js";
 import useFormStore from "../stores/formStoreHostOnboarding";
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 function SummaryViewAndSubmit() {
+  const builder = useBuilder();
   const { data, toggleDrafted } = useSummary();
   const type = data.type;
   const navigate = useNavigate();
 
   const handleSubmit = () => {
-    console.log(
-      "response Promise of submitAccommodation: \n",
-      submitAccommodation(navigate),
-    );
+    submitAccommodation(navigate, builder);
   };
 
   useEffect(() => {
-    console.log(useFormStore.getState());
+    console.log(builder.build());
   }, []);
 
   return (
@@ -32,15 +31,9 @@ function SummaryViewAndSubmit() {
         <SummaryTable data={data} type={type} />
         <SpecificationsTable data={data} type={type} />
         {/* <FeatureTable features={data.Features} /> */}
-        <DeclarationSection
-          drafted={data.Drafted}
-          toggleDrafted={toggleDrafted}
-        />
+        <DeclarationSection drafted={data.Drafted} toggleDrafted={toggleDrafted} />
         <div className="onboarding-button-box">
-          <button
-            className="onboarding-button"
-            onClick={() => console.log("Go back")}
-          >
+          <button className="onboarding-button" onClick={() => console.log("Go back")}>
             Go back to change
           </button>
           <button className="onboarding-button" onClick={handleSubmit}>

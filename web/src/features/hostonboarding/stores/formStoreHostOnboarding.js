@@ -5,6 +5,16 @@ import { create } from "zustand"
  * Stores the accommodationdetails, steps-progress and dynamically updated nested fields.
  */
 const useFormStoreHostOnboarding = create((set) => ({
+  technicalDetails: {
+    length: null,
+    height: null,
+    fuelConsumption: null,
+    speed: null,
+    renovationYear: null,
+    transmission: "Automatic",
+    generalPeriodicInspection: null,
+    fourWheelDrive: false,
+  },
 
   location: {
     country: "",
@@ -42,9 +52,9 @@ const useFormStoreHostOnboarding = create((set) => ({
     selectedAmenities: {},
 
     houseRules: {
-      AllowSmoking: false,
-      AllowPets: false,
-      AllowParties: false,
+      SmokingAllowed: false,
+      PetsAllowed: false,
+      "Parties/EventsAllowed": false,
     },
 
     checkIn: {
@@ -122,6 +132,14 @@ const useFormStoreHostOnboarding = create((set) => ({
       accommodationDetails: {
         ...state.accommodationDetails,
         boatDetails: { ...state.accommodationDetails.boatDetails, ...details },
+      },
+    })),
+
+  updateTechnicalDetails: (key, value) =>
+    set((state) => ({
+      technicalDetails: {
+        ...state.technicalDetails,
+        [key]: value,
       },
     })),
 

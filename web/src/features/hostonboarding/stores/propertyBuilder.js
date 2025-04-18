@@ -25,7 +25,7 @@ export class PropertyBuilder {
   }
 
   addAvailability(availabilities) {
-    this.propertyAvailabilities = availabilities.map(
+    this.propertyAvailability = availabilities.map(
       (availability) =>
         new PropertyAvailability(
           "",
@@ -107,7 +107,7 @@ export class PropertyBuilder {
 
   addImages(images) {
     this.propertyImages = images.map(
-      (image) => new PropertyImage("", image.key),
+      (image) => new PropertyImage("", "", image),
     );
     return this;
   }

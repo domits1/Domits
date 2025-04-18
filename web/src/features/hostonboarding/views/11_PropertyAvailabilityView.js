@@ -5,11 +5,12 @@ import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
 import OnboardingButton from "../components/OnboardingButton";
 import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 function PropertyAvailabilityView() {
-  const selectedType = useFormStoreHostOnboarding(
-    (state) => state.accommodationDetails.type,
-  )
+  const form = useFormStoreHostOnboarding();
+  const builder = useBuilder();
+  const selectedType = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
 
   const navigate = useNavigate();
 
@@ -35,9 +36,21 @@ function PropertyAvailabilityView() {
           <OnboardingButton routePath={`/hostonboarding/${accommodationType}/pricing`} btnText="Go back" />
           <OnboardingButton
             onClick={() => {
+              builder.addAvailability([{availableStartDate: Date.now() + 600000, availableEndDate: 3023923200000}]);
               if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) {
                 navigate("/hostonboarding/legal/registrationnumber");
               } else {
+                builder.addProperty({
+                  title: form.accommodationDetails.title,
+                  subtitle: form.accommodationDetails.subtitle,
+                  description: form.accommodationDetails.description,
+                  guestCapacity: form.accommodationDetails.accommodationCapacity.GuestAmount,
+                  registrationNumber: "",
+                  status: "",
+                  propertyType: selectedType,
+                  createdAt: Date.now(),
+                  updatedAt: Date.now()
+                });
                 navigate("/hostonboarding/summary");
               }
             }}

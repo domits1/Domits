@@ -12,8 +12,8 @@ export class PropertyModel {
     updatedAt;
 
     constructor(params) {
-        this._id = params.id;
-        this._hostId = params.hostId;
+        this._id = "";
+        this._hostId = "";
         this._title = params.title;
         this._subtitle = params.subtitle;
         this._description = params.description;
@@ -95,7 +95,7 @@ export class PropertyModel {
         this.createdAt = value;
     }
 
-    set _updatedAt(value) {
+    set     _updatedAt(value) {
         if (typeof value !== "number") {
             throw new Error("propertyModel - Updated at must be a number.")
         }

@@ -1,10 +1,12 @@
 export class PropertyImage {
     property_id;
     key;
+    image;
 
-    constructor(property_id, key) {
+    constructor(property_id, key, image) {
         this._property_id = property_id;
         this._key = key;
+        this._image = image;
     }
 
     set _property_id(id) {
@@ -19,5 +21,13 @@ export class PropertyImage {
             throw new Error("propertyImage - Key must be a string.")
         }
         this.key = value;
+    }
+
+    set _image(value) {
+        console.log(value)
+        if (!value.startsWith("data:image/")) {
+            throw new Error("Image must be an image.")
+        }
+        this.image = value;
     }
 }
