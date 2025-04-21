@@ -1,25 +1,235 @@
 $domits-guest-green: #0D9813;
 $domits-host-blue: #003366;
+$domits-host-blue-light: #e0f2ff; // Lighter shade for selected background
+$domits-host-blue-dark: #002244; // Darker shade for button hover
 
-$border-radius: 8px;
-$light-gray: #ccc;
+$border-radius: 8px; // Standard border radius
+$light-gray: #ccc; // Used for borders
 $input-time-gray: #2a2c2d;
-$white: #fff;
-$off-white: #f0f0f0;
+$white: #fff; // White background for content and options
+$off-white: #f8f8f8; // Lighter background for the page
+$border-color-selected: #006ce4; // Border color for selected option
 
 .onboarding-host-div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  // Increased horizontal padding for more space on sides
+  padding: 3rem 3rem; // Increased left/right padding
+  background-color: $off-white; // Page background
+  min-height: 100vh; // Ensure it takes at least full viewport height
 
-  /* Headings */
-  h2 {
-    text-align: center;
-    flex-wrap: wrap;
+  .page-body {
+    width: 100%;
+    // Slightly reduced max-width again based on visual
+    max-width: 600px;
+    background-color: $white; // White background for the main content area
+    padding: 3rem; // Padding inside the content area
+    border-radius: $border-radius;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Subtle shadow
+    flex-grow: 1; // Allow page-body to grow and push buttons down if needed
+    margin: 0 auto; // Ensure page-body is centered
+    margin-bottom: 3rem; // Add space below the page-body before the button box
+
+    h2 {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      color: #333;
+      font-size: 2rem;
+    }
+
+    .onboardingSectionTitle { // Alias for h2, ensure consistency
+      margin-bottom: 2.5rem;
+      color: #333;
+      font-size: 2rem;
+    }
+
+    .onboardingSectionSubtitle {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #555;
+      font-size: 1.1rem;
+    }
+
+    // Accommodation Type Selector Options Container (Specific to page-body layout)
+    .accommodation-types {
+      display: flex; // Stack options vertically
+      flex-direction: column;
+      gap: 0.75rem; // Space between each option item
+      padding: 0; // Remove padding from the container itself
+      border: none; // Remove border from the container
+      background-color: transparent; // Remove background from the container
+      // Styles for centering and max-width within page-body
+      width: 100%; // Use available width, respecting max-width
+      max-width: 550px; // Set a maximum width for the options container
+      margin: 0 auto; // Center the options container horizontally within page-body
+      box-shadow: none;
+
+      // Individual Option Item Styles
+      .option {
+        display: flex; // Layout for icon and text
+        align-items: center;
+        cursor: pointer;
+        // Adjusted padding
+        padding: 1.5rem; // Apply 1.5rem padding to all sides
+        border: 1px solid $light-gray; // Subtle border around each option
+        border-radius: $border-radius; // Rounded corners for each option
+        transition: all 0.2s ease-in-out;
+        background-color: $white; // White background for each option box
+        width: 90%; // Makes each option 100% width of the centered container
+
+        &:hover {
+          background-color: #f9f9f9; // Slightly lighter hover background
+          border-color: darken($light-gray, 10%); // Darker border on hover
+        }
+
+        &.selected {
+          background-color: $domits-host-blue-light; // Light blue background for selected
+          border-color: $border-color-selected; // Blue border for selected
+          // Optional: Add a subtle shadow to the selected item
+          // box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .accommodation-icon {
+          width: 40px; // Adjusted icon size (based on image appearance)
+          height: 40px; // Adjusted icon size
+          margin-right: 1.5rem; // Space between icon and text
+          object-fit: contain;
+          flex-shrink: 0; // Prevent icon from shrinking
+          color: #555; // Default icon color (can be adjusted)
+          // Optional: Selected icon color
+          .selected & {
+            color: $domits-host-blue;
+          }
+        }
+
+        .option-text { // Styles for the text description
+          flex-grow: 1;
+          text-align: left;
+          font-size: 1.1rem; // Slightly larger font size than default
+          font-weight: 500;
+          color: #262626;
+          line-height: 1.4; // Improve readability
+        }
+
+        p { // Ensure consistency for any direct <p> tags inside option
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 500;
+          color: #262626;
+          text-align: left;
+          flex-grow: 1;
+          line-height: 1.4;
+        }
+      }
+    }
   }
 
-  .onboardingSectionSubtitle {
-    text-align: center;
+  // Container styles for other views if they don't use .page-body
+  .container {
+    width: 100%;
+    max-width: 600px; // Match max-width of page-body for consistency
+    background-color: $white;
+    padding: 3rem; // Match padding of page-body for consistency
+    border-radius: $border-radius;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    flex-grow: 1;
+    margin: 0 auto; // Center the container
+    margin-bottom: 3rem; // Add space below the container before the button box
+
+    // You might need to add specific styles for content *inside* .container
+    // based on the structure of HouseTypeView, like .guest-access h2
+    .guest-access {
+      display: flex;
+      flex-direction: column;
+      // align-self: center; // Removed align-self here as .container handles alignment
+      justify-content: space-between;
+      gap: 1.5em;
+
+      h2 { // Style h2 inside .guest-access if needed
+        text-align: center;
+        margin-bottom: 2.5rem;
+        color: #333;
+        font-size: 2rem;
+      }
+
+      // Rest of guest-access styles (.guest-access-item, etc.)
+      .guest-access-item {
+        border: 1px solid $domits-host-blue;
+        border-radius: 1.25em;
+        padding: 0 2em; // Adjust padding for internal balance if needed
+      }
+
+      .guest-access-item-selected {
+        border: 1px solid $domits-host-blue;
+        border-radius: 1.25em;
+        padding: 0 2em; // Adjust padding for internal balance if needed
+        background-color: $domits-host-blue;
+        color: $white;
+
+        p {
+          color: $white;
+        }
+      }
+    }
   }
 
-  /* Divs */
+
+  // Button Navigation - MOVED OUTSIDE .page-body NESTING
+  .onboarding-button-box {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3rem; // Use margin-top here as the container has margin-bottom
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+    width: 100%; // Ensure button box spans the width of the onboarding-host-div
+    max-width: 600px; // Match the max-width of the content containers
+    margin: 0 auto; // Center the button box
+
+    .onboarding-button {
+      background-color: $domits-host-blue;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.2s ease, opacity 0.2s ease; // Add opacity for disabled
+      min-width: 120px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      &.secondary {
+        background-color: $white;
+        color: $domits-host-blue;
+        border: 1px solid $domits-host-blue;
+        box-shadow: none;
+        &:hover {
+          background-color: $domits-host-blue-light;
+        }
+      }
+
+      &:hover:not(:disabled) {
+        background-color: $domits-host-blue-dark;
+      }
+
+      &:disabled {
+        background-color: #ccc;
+        color: #888;
+        cursor: not-allowed;
+        opacity: 0.7;
+        box-shadow: none;
+      }
+    }
+  }
+
+
+  /* --- Keep other styles from the combined version below --- */
+  /* General */
+  // h2 is already covered above within .page-body and .container
+
   .map-section {
     min-width: 45%;
   }
@@ -47,6 +257,7 @@ $off-white: #f0f0f0;
     text-align: left;
     padding: 11px 15px;
     border-radius: 5px;
+    border: 1px solid $domits-host-blue;
   }
 
   .images-container {
@@ -54,10 +265,8 @@ $off-white: #f0f0f0;
     height: 300px;
     border: 1px solid $light-gray;
     border-radius: 5px;
-
     margin-bottom: 15px;
     position: relative;
-
   }
 
   .file-image {
@@ -105,7 +314,6 @@ $off-white: #f0f0f0;
     gap: 1.5vw;
   }
 
-
   .check-box {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -116,6 +324,19 @@ $off-white: #f0f0f0;
 
   .Check-checkbox {
     width: 10rem;
+  }
+
+  .textarea-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .textarea-field {
+    width: 100%;
+    max-width: 500px;
   }
 
   .delete-button {
@@ -141,11 +362,10 @@ $off-white: #f0f0f0;
     font-size: 0.8rem;
   }
 
-  .textInput,
   .radioInput {
     padding: 11px 15px;
     border-radius: 5px;
-    border: 1px solid var(--domits-host-blue);
+    border: 1px solid $domits-host-blue;
   }
 
   .file-input {
@@ -167,12 +387,6 @@ $off-white: #f0f0f0;
     }
   }
 
-
-  .form-row {
-    justify-content: space-between;
-    flex-wrap: nowrap;
-  }
-
   .thumbnail-container {
     height: 400px;
     width: 100%;
@@ -185,7 +399,6 @@ $off-white: #f0f0f0;
     flex-wrap: wrap;
     margin: auto;
   }
-
 
   .loading {
     display: flex;
@@ -204,14 +417,36 @@ $off-white: #f0f0f0;
     }
   }
 
-  .accommodation-types {
-    padding: 5%;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 5%;
-    justify-items: center;
+  // Keep original .option and .accommodation-icon outside of .accommodation-types for potential other uses
+  // Note: Styles within .accommodation-types .option take precedence
+  .option { // This might still be needed if .option is used elsewhere without a parent class
+    display: flex;
+    flex-direction: row;
     align-items: center;
+    cursor: pointer;
+    padding: 25px;
+    border: 1px solid transparent;
+    transition: all 0.3s;
+    width: 100%;
   }
+
+  .option.selected { // This might still be needed if .option is used elsewhere
+    background-color: $domits-host-blue-light;
+    border-color: $border-color-selected;
+  }
+
+  .option:hover { // This might still be needed if .option is used elsewhere
+    background-color: #f5f5f5;
+    border-color: #e7e7e7;
+  }
+
+  .accommodation-icon { // This might still be needed if .accommodation-icon is used elsewhere
+    width: 65px;
+    height: 65px;
+    margin-right: 22px;
+    margin-bottom: 0;
+  }
+
 
   .boat-types {
     padding: 5%;
@@ -223,97 +458,10 @@ $off-white: #f0f0f0;
     align-items: center;
   }
 
-  @media (max-width: 768px) {
-    .boat-types {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
 
-  .option {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    padding: 1em;
-    border: 2px solid transparent;
-    transition: border-color 0.3s;
-  }
+  // .guest-access is now styled within .container above
+  // .guest-access { ... }
 
-  .option.selected {
-    border-color: $domits-host-blue;
-  }
-
-  .accommodation-icon {
-    width: 7.5vw;
-    height: auto;
-    margin-bottom: 5%;
-  }
-
-  .accommodation-types .option p {
-    margin: 0;
-    font-size: 14px;
-    text-align: center;
-  }
-
-  .onboarding-button-box {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .onboarding-button {
-    background-color: $domits-host-blue;
-    border: none;
-    color: white;
-    padding: 12px 24px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    margin-top: 20px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-  }
-
-  .onboarding-button-disabled {
-    background-color: darkgray;
-    border: none;
-    color: gray;
-    padding: 12px 24px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    margin-top: 20px;
-    cursor: not-allowed;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-  }
-
-  .guest-access {
-    display: flex;
-    flex-direction: column;
-    align-self: center;
-    justify-content: space-between;
-    gap: 1.5em;
-
-    .guest-access-item {
-      border: 1px solid $domits-host-blue;
-      border-radius: 1.25em;
-      padding: 0 2em;
-    }
-
-    .guest-access-item-selected {
-      border: 1px solid $domits-host-blue;
-      border-radius: 1.25em;
-      padding: 0 2em;
-      background-color: $domits-host-blue;
-      color: white;
-
-      p {
-        color: white;
-      }
-    }
-  }
 
   .acco-location {
     display: flex;
@@ -442,7 +590,6 @@ $off-white: #f0f0f0;
   }
 
   .summary {
-    //text-align: left; probably not intentional but was assigned to .container before, and .summary was class=container
     margin: 5rem 7rem 0 7rem;
 
     h3 {
@@ -507,11 +654,6 @@ $off-white: #f0f0f0;
     }
   }
 
-  .onboardingSectionTitle {
-    margin: 0;
-    padding: 0;
-  }
-
   .pricing-input {
     width: 20%;
   }
@@ -534,10 +676,147 @@ $off-white: #f0f0f0;
     text-align: left;
   }
 
-  @media (max-width: 640px) {
-    .accommodation-types {
+  .houseRulesContainer {
+    background-color: #ededed68;
+    border-radius: 10px;
+    max-width: 600px;
+    height: auto;
+    padding: 20px;
+    margin: auto;
+  }
+
+  .toggle-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .toggle-label {
+    margin-right: 10px;
+    font-size: 16px;
+  }
+
+  .toggle-switch {
+    display: inline-block;
+    background: #8b8b8b;
+    border-radius: 16px;
+    width: 58px;
+    height: 32px;
+    position: relative;
+    transition: background 0.25s;
+
+    &:before {
+      display: block;
+      background: linear-gradient(to bottom, $white 0%, #eee 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+      width: 24px;
+      height: 24px;
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      transition: left 0.25s;
+      content: "";
+    }
+    &:after {
+      content: "";
+    }
+  }
+
+  .toggle-checkbox {
+    position: absolute;
+    visibility: hidden;
+
+    &:checked + .toggle-switch {
+      background: $domits-host-blue;
+
+      &:before {
+        left: 30px;
+      }
+    }
+  }
+
+  .Check {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 30px;
+  }
+
+  input[type="time"] {
+    border: none;
+    color: $input-time-gray;
+    font-size: 14px;
+    width: 120px;
+    padding: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .verifyCheck {
+    width: 60vw;
+    line-height: normal;
+  }
+
+  .termsCondition {
+    text-decoration: underline;
+  }
+
+
+  /* Media Queries */
+  @media (max-width: 768px) {
+    .amenity-groups {
+      grid-template-columns: 1fr;
+    }
+    .boat-types {
       grid-template-columns: repeat(2, 1fr);
     }
+    .page-body, .container { // Apply to both container types
+      padding: 2rem; // Adjusted padding for smaller screens
+      margin-bottom: 2rem; // Adjust margin-bottom for smaller screens
+    }
+    h2, .onboardingSectionTitle {
+      font-size: 1.75rem;
+    }
+    .onboardingSectionSubtitle {
+      font-size: 1rem;
+    }
+    .accommodation-types {
+      // Adjusted max-width for smaller screens
+      max-width: 90%; // Make it take up more width on smaller screens
+      .option {
+        padding: 1.2rem; // Apply 1.2rem padding to all sides
+        .accommodation-icon {
+          width: 35px;
+          height: 35px;
+          margin-right: 1rem; // Keep margin-right
+        }
+        .option-text, p {
+          font-size: 1rem;
+        }
+      }
+    }
+    .onboarding-button-box { // Stack buttons vertically on smaller screens
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 2rem; // Adjust margin-top for smaller screens
+      .onboarding-button {
+        width: 100%; // Make buttons full width
+        min-width: auto;
+      }
+    }
+  }
+
+  @media (max-width: 640px) {
+    // Keep existing 640px styles
     .accommodation-images {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -581,118 +860,51 @@ $off-white: #f0f0f0;
     }
   }
 
-  .houseRulesContainer {
-    background-color: #ededed68;
-    border-radius: 10px;
-    max-width: 600px;
-    height: auto;
-    padding: 20px;
-    margin: auto;
-  }
-
-  .toggle-container {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-
-  .toggle {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .toggle-label {
-    margin-right: 10px;
-    font-size: 16px;
-  }
-
-  .toggle-switch {
-    display: inline-block;
-    background: #8b8b8b;
-    border-radius: 16px;
-    width: 58px;
-    height: 32px;
-    position: relative;
-    transition: background 0.25s;
-  }
-
-  .toggle-switch:before {
-    display: block;
-    background: linear-gradient(to bottom, $white 0%, #eee 100%);
-    border-radius: 50%;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
-    width: 24px;
-    height: 24px;
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    transition: left 0.25s;
-  }
-
-  .toggle-checkbox:checked + .toggle-switch {
-    background: $domits-host-blue;
-  }
-
-
-  .toggle-checkbox:checked + .toggle-switch:before {
-    left: 30px;
-  }
-
-  .toggle-checkbox {
-    position: absolute;
-    visibility: hidden;
-  }
-
-
-  .toggle-switch:before, .toggle-switch:after {
-    content: "";
-  }
-
-
-  .Check {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    align-items: center;
-    margin-top: 30px;
-
-  }
-
-  input[type="time"] {
-    border: none;
-    color: $input-time-gray;
-    font-size: 14px;
-    width: 120px;
-    padding: 10px;
-    margin-left: 10px;
-    margin-right: 10px;
-  }
-
-
-  .verifyCheck {
-    width: 60vw;
-    line-height: normal;
-  }
-
-  .termsCondition {
-    text-decoration: underline;
-  }
-
-  @media (max-width: 768px) {
-    .amenity-groups {
-      grid-template-columns: 1fr;
+  @media (max-width: 480px) {
+    .page-body, .container { // Apply to both container types
+      padding: 1rem; // Adjusted padding for smaller screens
+      margin-bottom: 1.5rem; // Adjust margin-bottom for smaller screens
+    }
+    h2, .onboardingSectionTitle {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .accommodation-types {
+      gap: 0.5rem;
+      // Adjusted max-width for smaller screens
+      max-width: 95%; // Make it take up even more width on small screens
+      .option {
+        padding: 1rem; // Apply 1rem padding to all sides
+        .accommodation-icon {
+          width: 30px;
+          height: 30px;
+          margin-right: 0.7rem; // Keep margin-right
+        }
+        .option-text, p {
+          font-size: 1rem;
+        }
+      }
+    }
+    .onboarding-button-box {
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-top: 1.5rem; // Adjust margin-top for smaller screens
+      padding-top: 1.5rem;
+      .onboarding-button {
+        width: 100%;
+      }
     }
   }
+
+
   @media (max-width: 400px) {
     .check-box {
       grid-template-columns: 1fr;
-    }
 
-    .check-box label {
-      display: block;
-      margin-bottom: 0.5rem;
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+      }
     }
   }
 }

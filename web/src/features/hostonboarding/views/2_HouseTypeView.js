@@ -25,7 +25,9 @@ export default function HouseTypeView() {
         </section>
 
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath="/hostonboarding" btnText="Go back" />
+          <OnboardingButton
+            routePath="/hostonboarding"
+            btnText="Go back" />
           <OnboardingButton
             routePath="/hostonboarding/accommodation/address"
             btnText="Proceed"
