@@ -4,7 +4,7 @@ import "./styles/BookingConfirmOverview.scss";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import ImageGallery from "./ImageGallery";
 import useAddUserToContactList from "./hooks/useAddUserToContactList";
-
+import BookingFetchData from "./services/BookingFetchData";
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
 import People from '@mui/icons-material/PeopleAltOutlined';
 import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
@@ -42,45 +42,9 @@ const BookingConfirmationOverview = () => {
                 setLoading(false);
                 return;
             }
-
             try {
-                // Get property_id from paymentID
-                const response = await fetch(
-                    `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=paymentId&paymentID=${paymentID}`
-                );
-
-                if (!response.ok) {
-                    throw new Error(`Error fetching booking details: ${response.statusText}`);
-                }
-                const data = await response.json();
-
-                const parsedData = data.body ? JSON.parse(data.body) : data;
-                const bookingData = parsedData.response.response[0];
-
-                const id = bookingData.property_id.S;
-                console.log(id);
-
-                // get accommodationdata from accommodationID
-                const accommodationId = await fetch(
-                    `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${id}`
-                );
-
-                if (!accommodationId.ok) {
-                    throw new Error(`Error fetching booking details: ${response.statusText}`);
-                }
-                const accommodationData = await accommodationId.json();
-
-                console.log(accommodationData)
-                console.log(bookingData)
-
-                if (!bookingData) {
-                    throw new Error("Booking details not found.");
-                }
-
-                const bookingInfo = extractBookingDetails(bookingData, accommodationData);
-
-                console.log("Booking details are: ", bookingInfo);
-
+                const data = await BookingFetchData(paymentID);
+                const bookingInfo = extractBookingDetails(data.bookingData, data.accommodationData);
                 setBookingDetails(bookingInfo);
             } catch (error) {
                 console.error("Fetch Error:", error);

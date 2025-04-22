@@ -151,7 +151,7 @@ const BookingOverview = () => {
         checkAuthentication();
     }, []);
 
-    if (!bookingDetails || !accommodation) {
+    if (!bookingDetails || !accommodation ) {
         return <div>Loading...</div>;
     }
 
