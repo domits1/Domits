@@ -5,6 +5,14 @@ import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutli
 import ImageGallery from "./ImageGallery";
 import useAddUserToContactList from "./hooks/useAddUserToContactList";
 
+import Calender from '@mui/icons-material/CalendarTodayOutlined';
+import People from '@mui/icons-material/PeopleAltOutlined';
+import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import RoomServiceIcon from '@mui/icons-material/RoomService';
+import { Calendar } from "@hassanmojab/react-modern-calendar-datepicker";
+import { Room } from "@mui/icons-material";
+
 const BookingConfirmationOverview = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -207,12 +215,13 @@ const BookingConfirmationOverview = () => {
 
                     <div className="price-breakdown">
                         <div className="row">
-                            <p>Guests:</p>
+                            <p><People />Guests:</p>
+                            
                             <p>{bookingDetails?.Guests}</p>
                         </div>
 
                         <div className="row">
-                            <p>Date</p>
+                            <p><Calender />Date</p>
                             <p>
                                 {formatDate(Number(bookingDetails?.StartDate))} - {formatDate(Number(bookingDetails?.EndDate))}
                             </p>
@@ -221,27 +230,27 @@ const BookingConfirmationOverview = () => {
 
                     <div className="price-breakdown">
                         <div className="row">
-                            <p>Price</p>
-                            <p>€ {bookingDetails?.Price}</p>
+                            <p><AttachMoneyIcon />Price</p>
+                            <p>$ {bookingDetails?.Price}</p>
                         </div>
                         <div className="row">
-                            <p>Taxes</p>
-                            <p>€ {bookingDetails?.Taxes}</p>
+                            <p><AttachMoneyIcon />Taxes</p>
+                            <p>$ {bookingDetails?.Taxes}</p>
                         </div>
                         <div className="row">
-                            <p>Cleaning fee</p>
-                            <p>€ {bookingDetails?.CleaningFee}</p>
+                            <p><Cleaning />Cleaning fee</p>
+                            <p>$ {bookingDetails?.CleaningFee}</p>
                         </div>
 
                         <div className="row">
-                            <p>Domit service fee:</p>
-                            <p>€ {bookingDetails?.ServiceFee}</p>
+                            <p><RoomServiceIcon />Domits service fee:</p>
+                            <p>$ {bookingDetails?.ServiceFee}</p>
                         </div>
                     </div>
 
                     <div className="total-price">
                         <strong>Total:</strong>
-                        <strong>€ {calculateTotalPrice(bookingDetails)}</strong>
+                        <strong>$ {calculateTotalPrice(bookingDetails)}</strong>
                     </div>
                 </div>
 
