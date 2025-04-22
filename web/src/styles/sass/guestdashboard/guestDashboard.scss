@@ -6,12 +6,7 @@ $shadow-color: rgba(0, 0, 0, 0.1);
 $radius: 15px;
 $transition: 0.3s;
 
-.container {
-  display: flex;
-  flex-direction: column;
-  width: 90%;
-  margin: 30px auto;
-
+.GuestDashboard-container {
   .dashboards,
   .dashboard {
     display: grid;
