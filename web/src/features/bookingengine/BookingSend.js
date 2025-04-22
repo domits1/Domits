@@ -10,7 +10,6 @@ const BookingSend = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        console.log("BookingConfirm rendered");
         const queryParams = new URLSearchParams(location.search);
 
         // The following values are currently not used for the payload: ownerId, price, cleaningFee,ServiceFee and
