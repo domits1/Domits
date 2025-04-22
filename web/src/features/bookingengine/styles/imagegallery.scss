@@ -8,112 +8,104 @@
   flex-direction: column;
   justify-content: flex-start;
   gap: 5px;
-}
 
-.selected-image {
-  position: relative;
-  width: 100%;
-  max-width: 516px;
-  border-radius: 15px;
-  overflow: hidden;
-
-  .selected-image img {
-    width: 100%; /* Ensure the image takes the full width of its container */
-    max-width: 516px; /* Limit the maximum width */
-    height: 100%; /* Force the image to fill the height */
-    max-height: 340px; /* Set the maximum height */
-    border-radius: 15px; /* Optional: Add rounded corners */
-    object-fit: cover; /* Ensure the image fills the area while maintaining its aspect ratio */
-    aspect-ratio: 16 / 9;
-    margin: auto;
-  }
+  .selected-image {
+    position: relative;
+    width: 100%;
+    max-width: 516px;
+    border-radius: 15px;
+    overflow: hidden;
   
-  .image-thumbnails {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px; 
-
-    .image-thumbnails img {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      cursor: pointer;
-      opacity: 0.6;
-      border-radius: 15px;
-      transition: opacity 0.3s ease, transform 0.3s ease;
+    .selected-image img {
+      width: 100%; /* Ensure the image takes the full width of its container */
+      max-width: 516px; /* Limit the maximum width */
+      height: 100%; /* Force the image to fill the height */
+      max-height: 340px; /* Set the maximum height */
+      border-radius: 15px; /* Optional: Add rounded corners */
+      object-fit: cover; /* Ensure the image fills the area while maintaining its aspect ratio */
+      aspect-ratio: 16 / 9;
+      margin: auto;
     }
-
-    .image-thumbnails img.active,
-    .image-thumbnails img:hover {
-    opacity: 1;
-    transform: scale(1.05); 
-    }
-
-    .share-button,
-    .like-button {
-      position: absolute;
-      top: 10px;
-      background-color: rgba(255, 255, 255, 0.8);
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-      transition: background-color 0.3s ease, transform 0.2s ease;
-    }
-
-    .share-button {
-      left: 10px;
-    }
-
-    .like-button {
-      right: 10px;
-    }
-
-    .like-button:hover,
-    .share-button:hover {
-      background-color: rgba(200, 200, 200, 0.8);
-      transform: scale(1.1); 
-    }
-
-    .like-button:focus,
-    .share-button:focus {
-      outline: 2px solid #007aff;
-    }
-
-    .show-all-button {
-      position: absolute;
-      margin-top: 10px;
-      padding: 10px 20px;
-      backdrop-filter: blur(10px);
-      background: rgba(0, 0, 0, 0.383);
-      border-radius: 15px;
-      cursor: pointer;
-      transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
-      color: white;
-      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-      align-self: flex-end;
-    }
-
-    .show-all-button:hover {
-      background-color: rgba(255, 255, 255, 0.2); /* Add a slight background on hover */
-      color: #ffffff; /* Keep the text color white */
-      transform: scale(1.05); /* Slight zoom effect on hover */
-    }
+  
+    .image-thumbnails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; 
+  
+      .image-thumbnails img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        cursor: pointer;
+        opacity: 0.6;
+        border-radius: 15px;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+  
+      .image-thumbnails img.active,
+      .image-thumbnails img:hover {
+      opacity: 1;
+      transform: scale(1.05); 
+      }
+  
+      .share-button,
+      .like-button {
+        position: absolute;
+        top: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s ease, transform 0.2s ease;
+      }
+  
+      .share-button {
+        left: 10px;
+      }
+  
+      .like-button {
+        right: 10px;
+      }
+  
+      .like-button:hover,
+      .share-button:hover {
+        background-color: rgba(200, 200, 200, 0.8);
+        transform: scale(1.1); 
+      }
+  
+      .like-button:focus,
+      .share-button:focus {
+        outline: 2px solid #007aff;
+      }
+  
+      .show-all-button {
+        position: absolute;
+        margin-top: 10px;
+        padding: 10px 20px;
+        backdrop-filter: blur(10px);
+        background: rgba(0, 0, 0, 0.383);
+        border-radius: 15px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        color: white;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        align-self: flex-end;
+      }
+      
+      .show-all-button:hover {
+        background-color: rgba(255, 255, 255, 0.2); /* Add a slight background on hover */
+        color: #ffffff; /* Keep the text color white */
+        transform: scale(1.05); /* Slight zoom effect on hover */
+      }
+    }  
+  }
 }
-
-}
-
-
-
-
-
-
-
 
 
 /* Overlay styles */
@@ -192,68 +184,71 @@
 @media (min-width: 601px) and (max-width: 1200px) {
   .overlay-thumbnail {
     width: 80%; /* Scale images for medium-sized screens */
-  }
 
-  .selected-image {
-    margin: 0 auto; /* Center the selected image horizontally */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .selected-image img {
-    width: 100%; /* Ensure the image scales properly */
-    max-width: 600px; /* Limit the maximum width */
-    height: auto; /* Maintain aspect ratio */
+    .selected-image {
+      margin: 0 auto; /* Center the selected image horizontally */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  
+    .selected-image img {
+      width: 100%; /* Ensure the image scales properly */
+      max-width: 600px; /* Limit the maximum width */
+      height: auto; /* Maintain aspect ratio */
+    }
   }
 }
+
+
 
 @media (max-width: 600px) {
   .selected-image img {
       width: 100%;
       height: auto;
-  }
 
-  .image-thumbnails img {
-      width: 80px;
-      height: 80px;
-  }
-
-  .share-button,
-  .like-button {
-      width: 30px;
-      height: 30px;
-  }
-
-  .image-gallery-container{
-      max-width: 300px;
-      margin: auto;
+      .image-thumbnails img {
+        width: 80px;
+        height: 80px;
+    }
+  
+    .share-button,
+    .like-button {
+        width: 30px;
+        height: 30px;
+    }
+  
+    .image-gallery-container{
+        max-width: 300px;
+        margin: auto;
+    }
   }
 }
+
+
 
 @media (min-width: 601px) and (max-width: 1200px) {
   .selected-image img {
       width: 100%;
       height: auto;
-  }
 
-
-  .image-thumbnails {
-      display: none;
-  }
-  .image-thumbnails img {
-      width: 120px;
-      height: 120px;
-  }
-
-  .share-button,
-  .like-button {
-      width: 35px;
-      height: 35px;
-  }
-
-  .show-all-button {
-      display: none;
+    .image-thumbnails {
+        display: none;
+    }
+    .image-thumbnails img {
+        width: 120px;
+        height: 120px;
+    }
+  
+    .share-button,
+    .like-button {
+        width: 35px;
+        height: 35px;
+    }
+  
+    .show-all-button {
+        display: none;
+    }
   }
 }
 
@@ -263,10 +258,9 @@
       flex-direction: row;
       gap: 20px; /* Adjust gap as needed */
   }
-
-  .selected-image {
+    .selected-image {
       flex: 1;
-  }
+    }
 
   .image-thumbnails {
       display: flex;
@@ -294,9 +288,10 @@
 @media (max-width: 600px) {
   .image-thumbnails {
     display: none; /* Hide thumbnails on phone screens */
-  }
 
   .show-all-button {
-    display: none;
+      display: none;
+    }
   }
+
 }
