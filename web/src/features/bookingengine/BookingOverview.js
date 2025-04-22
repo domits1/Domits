@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import {Link, useNavigate} from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
-// import "./bookingoverview.css";
+import "./styles/BookingOverview.scss";
 import RegisterModule from "../auth/RegisterModule";
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
@@ -32,45 +32,65 @@ const BookingOverview = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const [accommodation, setAccommodation] = useState(null);
+    const [cleaningFee, setCleaningFee] = useState(null);
+    const [roomRate, setRoomRate] = useState(null);
+    const [rawRoomRate, setRawRoomRate] = useState(null);
+    const [numberOfDays, setNumberOfDays] = useState(null);
+    const [totalPrice, setTotalPrice] = useState(null);
+    const [taxes, setTaxes] = useState(1.09)
+    const [ServiceFee, setServiceFee] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const id = searchParams.get('id');
-    const checkIn = searchParams.get('checkIn');
-    const checkOut = searchParams.get('checkOut');
-    const adults = parseInt(searchParams.get('adults'), 10);
-    const kids = parseInt(searchParams.get('kids'), 10);
-    const pets = searchParams.get('pets');
-    const cleaningFee = parseFloat(searchParams.get('cleaningFee'));
-    const amountOfGuest = searchParams.get('amountOfGuest');
-    const taxes = parseFloat(searchParams.get('taxes')); 
-    const ServiceFee = parseFloat(searchParams.get('ServiceFee'));
+    const checkIn = searchParams.get('checkInDate');
+    const checkOut = searchParams.get('checkOutDate');
+    const adults = parseInt(searchParams.get('guests'), 10);
+    const amountOfGuest = searchParams.get('guests');
+    const kids = parseInt(searchParams.get('kids'), 10); 
+    const pets = searchParams.get('pets'); 
 
-
+    const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/"
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
-
+    
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
-                const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ ID: id })
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch accommodation data');
-                }
+                const response = await fetch(`https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${id}`);
                 const responseData = await response.json();
-                const data = JSON.parse(responseData.body);
-                setAccommodation(data);
-                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets, amountOfGuest });
+                setAccommodation(responseData);
+
+                const rawRoomRate = responseData.pricing.roomRate;
+                setRawRoomRate(rawRoomRate); // Used in booking details tab
+                setCleaningFee(responseData.pricing.cleaning); 
+                setServiceFee(responseData.pricing.service);  
+
+                const numberOfDays = await calculateDaysBetweenDates(checkIn, checkOut);
+                setNumberOfDays(numberOfDays);
+                const totalRoomRate = rawRoomRate * numberOfDays;
+                setRoomRate(totalRoomRate);
+
+                const total = totalRoomRate + responseData.pricing.cleaning + responseData.pricing.service;
+                setTotalPrice(total);
+
+                setBookingDetails({ accommodation: responseData, checkIn, checkOut, adults, kids, pets, amountOfGuest });  
+
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
+        };   
+
+        const calculateDaysBetweenDates = async (startDate, endDate) => {
+            const start = new Date(parseFloat(startDate));
+            const end = new Date(parseFloat(endDate));
+            const differenceInTime = end - start;
+            const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+            return differenceInDays;
         };
+
         fetchAccommodation();
     }, [id, checkIn, checkOut, adults, kids, pets]);
+
 
     useEffect(() => {
         const checkAuthentication = async () => {
@@ -114,8 +134,8 @@ const BookingOverview = () => {
             }
         };
 
-        if (accommodation && accommodation.OwnerId) {
-            fetchOwnerStripeId(accommodation.OwnerId);
+        if (accommodation && accommodation.property.hostId) {
+            fetchOwnerStripeId(accommodation.property.hostId);
         }
     }, [accommodation]);
 
@@ -131,20 +151,9 @@ const BookingOverview = () => {
         checkAuthentication();
     }, []);
 
-    if (!bookingDetails || !accommodation) {
+    if (!bookingDetails || !accommodation ) {
         return <div>Loading...</div>;
     }
-
-    const calculateDaysBetweenDates = (startDate, endDate) => {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const differenceInTime = end - start;
-        const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-        return differenceInDays;
-    };
-
-    const numberOfDays = calculateDaysBetweenDates(checkIn, checkOut);
-    const accommodationPrice = accommodation.Rent * numberOfDays;
 
     const initiateStripeCheckout = async () => {
         if (!cognitoUserId || !ownerStripeId) {
@@ -155,11 +164,11 @@ const BookingOverview = () => {
 
         const paymentID = generateUUID();
         const userId = cognitoUserId;
-        const accommodationTitle = accommodation.Title;
+        const accommodationTitle = accommodation.property.title;
         const accommodationId = id;
-        const ownerId = accommodation.OwnerId;
-        const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
-        const totalAmount = Math.round(basePrice + cleaningFee * 100 + ServiceFee * 100 + taxes * 100);
+        const ownerId = accommodation.property.hostId;
+        const basePrice = 0;
+        const totalAmount = 0;
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -170,7 +179,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Accepted",
-            price: accommodationPrice,
+            price: totalAmount,
             startDate,
             endDate,
             cleaningFee,
@@ -185,7 +194,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Failed",
-            price: accommodationPrice,
+            price: totalAmount,
             startDate,
             endDate,
             cleaningFee,
@@ -194,15 +203,15 @@ const BookingOverview = () => {
             ServiceFee
         }).toString();
 
-        const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
-        const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
+        const successUrl = `${currentDomain}/bookingsend?${successQueryParams}`;
+        const cancelUrl = `${currentDomain}/bookingsend?${cancelQueryParams}`;
 
         const checkoutData = {
             userId: cognitoUserId,
             basePrice: basePrice,
             totalAmount: totalAmount,
             currency: 'eur',
-            productName: accommodation.Title,
+            productName: accommodation.property.title,
             successUrl: successUrl,
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
@@ -242,36 +251,35 @@ const BookingOverview = () => {
         setIsProcessing(true);
         initiateStripeCheckout();
     };
-    
     return (
         <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
         <div className="booking-header">
             <div className="goBackButton">
-                <Link to={`/listingdetails?ID=${accommodation.ID}`}>
+                <Link to={`/listingdetails?ID=${id}`}>
                     <Back />
                 </Link>
             </div>
             <h1>Booking Overview</h1>
         </div>
-
+        
         <div className="Bookingcontainer">
             {/* Right Panel */}
             <div className="right-panel">
-                <div>Your journey</div>
+                <div>Your Journey</div>
                 <div className="booking-details">
                     <div className="detail-row">
                         <span className="detail-label"><Calender /> Date:</span>
                         <span className="detail-value">
-                            {DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}
+                            {DateFormatterDD_MM_YYYY(parseFloat(checkIn))} - {DateFormatterDD_MM_YYYY(parseFloat(checkOut))}
                         </span>
                     </div>
                     <div className="detail-row">
                         <span className="detail-label"><People /> Guests:</span>
-                        <span className="detail-value">{adults} adults - {kids} kids</span>
+                        <span className="detail-value">{adults} guests</span>
                     </div>
                     <div className="detail-row">
                         <span className="detail-label"><Cleaning /> Cleaning Fee:</span>
-                        <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
+                        <span className="detail-value">€ {(cleaningFee).toFixed(2)}</span>
                     </div>
                 </div>
 
@@ -298,40 +306,44 @@ const BookingOverview = () => {
                     <div className="booking-details-name">
                         <img
                             className="bookingDetailsImage"
-                            src={accommodation.Images && Object.values(accommodation.Images)[0]}
+                            src={`${S3_URL}${accommodation.images?.[0]?.key || ''}`} 
                             alt="Accommodation"
                         />
                         <div>
-                            <h1 className="booking-title">{accommodation.Title}</h1>
-                            <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
+                            <h1 className="booking-title">{accommodation.property.title}</h1>
+                            <span className="acco-title-span">{accommodation.location.city}, {accommodation.location.country}</span>
                         </div>
                     </div>
                     <hr />
 
                     <div className="detail-row">
-                        <span className="detail-label">Price:</span>
-                        <span className="detail-value">€ {accommodationPrice.toFixed(2)}</span>
+                        <span className="detail-label"><b>Price info:</b></span>
+                    </div>
+
+                    <div className="detail-row">
+                        <span className="detail-label">€ {(rawRoomRate || 0).toFixed(2)} x {numberOfDays} nights </span>
+                        <span className="detail-value">€ {(roomRate || 0).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
                         <span className="detail-label">Taxes:</span>
-                        <span className="detail-value">€ {(taxes).toFixed(2)}</span>
+                        <span className="detail-value">€ {(0).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
                         <span className="detail-label">Cleaning fee:</span>
-                        <span className="detail-value">€ {(cleaningFee).toFixed(2)}</span>
+                        <span className="detail-value">€ {(cleaningFee || 0).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
                         <span className="detail-label">Service fee:</span>
-                        <span className="detail-value">€ {(ServiceFee).toFixed(2)}</span>
+                        <span className="detail-value">€ {(ServiceFee || 0).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row total-price">
                         <span className="detail-label">Total:</span>
                         <span className="detail-value">
-                            € {(accommodationPrice + cleaningFee / 100 + taxes + ServiceFee).toFixed(2)}
+                            € {(totalPrice || 0).toFixed(2)}
                         </span>
                     </div>
                 </div>  
@@ -344,4 +356,4 @@ const BookingOverview = () => {
     );
 };
 
-export default BookingOverview;
+export default BookingOverview  ;
