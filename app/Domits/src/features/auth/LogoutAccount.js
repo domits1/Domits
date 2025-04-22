@@ -1,10 +1,11 @@
 import {signOut} from '@aws-amplify/auth';
+import NavigateTo from "../../navigation/NavigationFunctions";
 
 const LogoutAccount = async (navigation, checkAuth) => {
   try {
-    await signOut(); // Logs out the user
-    checkAuth(); // Update authentication state in context
-    navigation.navigate('Login'); // Navigate to login screen after logout
+    await signOut();
+    checkAuth();
+    NavigateTo(navigation).login();
   } catch (error) {
     console.error('Error signing out:', error);
   }
