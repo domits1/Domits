@@ -10,14 +10,11 @@ import People from '@mui/icons-material/PeopleAltOutlined';
 import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
-import { Calendar } from "@hassanmojab/react-modern-calendar-datepicker";
-import { Room } from "@mui/icons-material";
 
 const BookingConfirmationOverview = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [bookingDetails, setBookingDetails] = useState(null);
-    const [accommodationDetails, setAccommodationDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { success, addUserToContactList } = useAddUserToContactList();
@@ -119,12 +116,6 @@ const BookingConfirmationOverview = () => {
         }
     }
 
-/*     const extractAccommodationDetails = (bookingData) => {
-        return {
-            StartDate: bookingData.arrivalDate.N,
-            EndDate: bookingData.departureDate.N
-        }
-    } */
     const calculateTotalPrice = (bookingDetails) => {
         const price = parseFloat(bookingDetails?.Price) || 0;
         const taxes = parseFloat(bookingDetails?.Taxes) || 0;

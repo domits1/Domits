@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import {Link, useNavigate} from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import "./styles/BookingOverview.scss";
 import RegisterModule from "../auth/RegisterModule";
@@ -10,8 +9,6 @@ import Calender from '@mui/icons-material/CalendarTodayOutlined';
 import People from '@mui/icons-material/PeopleAltOutlined';
 import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
 import Back from '@mui/icons-material/KeyboardBackspace';
-
-import { TypeMetaFieldDef } from 'graphql';
 
 const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
