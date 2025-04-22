@@ -83,15 +83,9 @@ $breakpoint-sm: 480px;
       }
     }
   }
-
-  .footer-icons img {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 0.5rem;
-    margin: 10px;
-  }
 }
 
+// Copyright Section
 .footer-copyright {
   background-color: #0D9813;
   flex-shrink: 0;
@@ -109,6 +103,7 @@ $breakpoint-sm: 480px;
   }
 }
 
+// Terms Section
 .footer-terms {
   margin: 10px auto;
   padding: 0;
@@ -122,8 +117,8 @@ $breakpoint-sm: 480px;
     display: inline;
     margin-left: 20px;
     text-decoration-line: underline;
-        color: black;
-        margin-top: 5px;
+    color: black;
+    margin-top: 5px;
 
     &:hover {
       text-decoration: underline;
@@ -135,54 +130,9 @@ $breakpoint-sm: 480px;
     }
   }
 
-  .footer-terms {
-    margin: 10px auto;
-    padding: 0;
-    width: 90%;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin-top: 20px;
-
-    a {
-      display: inline;
-      margin-left: 20px;
-      text-decoration-line: underline;
-
-      &:hover {
-        text-decoration: underline;
-      }
-
-      @media screen and (max-width: $breakpoint-sm) {
-        margin: 5px 0;
-      }
-    }
-
-    @media screen and (max-width: $breakpoint-sm) {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-  }
-
-  .footer-copyright {
-    background-color: $primary-color;
-    flex-shrink: 0;
-    margin-top: auto;
-    display: flex;
+  @media screen and (max-width: $breakpoint-sm) {
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: $footer-padding;
-
-    &-text {
-      color: #fff;
-      font-size: 16px;
-      font-weight: $footer-font-light;
-      line-height: $footer-line-height;
-
-      @media screen and (max-width: $breakpoint-sm) {
-        font-size: 14px;
-      }
-    }
+    text-align: center;
   }
 }
