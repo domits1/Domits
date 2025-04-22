@@ -50,8 +50,8 @@ const BookingOverview = () => {
     const checkOut = searchParams.get('checkOutDate');
     const adults = parseInt(searchParams.get('guests'), 10);
     const amountOfGuest = searchParams.get('guests');
-    const kids = parseInt(searchParams.get('kids'), 10); // remove kids soon or leave code? unused either way
-    const pets = searchParams.get('pets'); // is this even used?
+    const kids = parseInt(searchParams.get('kids'), 10); 
+    const pets = searchParams.get('pets'); 
 
     const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/"
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
@@ -61,7 +61,6 @@ const BookingOverview = () => {
             try {
                 const response = await fetch(`https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${id}`);
                 const responseData = await response.json();
-                //console.log("DEBUG: ", responseData);
                 setAccommodation(responseData);
 
                 const rawRoomRate = responseData.pricing.roomRate;
@@ -89,7 +88,6 @@ const BookingOverview = () => {
             const end = new Date(parseFloat(endDate));
             const differenceInTime = end - start;
             const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-            //console.log("DEBUG: Difference in Days booking: ", differenceInDays);
             return differenceInDays;
         };
 
@@ -221,7 +219,6 @@ const BookingOverview = () => {
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
-        //console.log(checkoutData);
 
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
@@ -257,7 +254,6 @@ const BookingOverview = () => {
         setIsProcessing(true);
         initiateStripeCheckout();
     };
-    //console.log(`DEBUG: id:${id}, checkin:${checkIn}, checkout: ${checkOut}, guests: ${adults}`);
     return (
         <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
         <div className="booking-header">

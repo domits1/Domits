@@ -81,7 +81,6 @@ const BookingConfirmationOverview = () => {
                 }
 
                 const bookingInfo = extractBookingDetails(bookingData, accommodationData);
-                //const accommodationDetails = extractAccommodationDetails(accommodationData);
 
                 console.log("Booking details are: ", bookingInfo);
 
