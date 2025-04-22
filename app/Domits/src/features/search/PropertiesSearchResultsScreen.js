@@ -1,10 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
+import {Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import FetchAccommodationsData from './hooks/FetchAccommodationsData'
+import {styles} from "./styles/PropertiesSearchResultsStyles";
 import FormatAccommodationData from "../../components/utils/mappings/FormatAccommodationData";
 import TranslatedText from "../translation/components/TranslatedText";
-import {styles} from "./styles/PropertiesSearchResultsStyles";
+import FetchAccommodationsData from "./hooks/FetchAccommodationsData";
+import NavigateTo from "../../navigation/NavigationFunctions";
+import LoadingScreen from "../../screens/loadingscreen/screens/LoadingScreen";
 
 const PropertiesSearchResultsScreen = ({searchResults}) => {
     const [accommodationsList, setAccommodationsList] = useState([]);
@@ -20,20 +22,12 @@ const PropertiesSearchResultsScreen = ({searchResults}) => {
         }
     }, [searchResults]);
 
-    if (loading) {
-        return (
-            <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color="green"/>
-            </View>
-        );
-    }
-
     /**
-     * Go to the details page of the pressed accommodation
-     * @param accommodation - The accommodation pressed on
+     * Go to the details page of the pressed accommodation.
+     * @param accommodationId - The id of the accommodation that is pressed on.
      */
-    const handleAccommodationPress = accommodation => {
-        navigation.navigate('Detailpage', {accommodation});
+    const handleAccommodationPress = accommodationId => {
+        NavigateTo(navigation, {accommodationId: accommodationId}).propertyDetails();
     };
 
     /**
@@ -46,13 +40,15 @@ const PropertiesSearchResultsScreen = ({searchResults}) => {
         return value !== undefined ? <Text style={styles.spec}>{value} {suffix}</Text> : null;
     };
 
+    if (loading) { return <LoadingScreen loadingName={"properties"}/> }
+
     return (
         <ScrollView contentContainerStyle={styles.container}>
             {accommodationsList.map(accommodation => (
                 <TouchableOpacity
                     style={[styles.card, containerWidth ? { width: containerWidth } : null]}
                     key={accommodation.id}
-                    onPress={() => handleAccommodationPress(accommodation)}>
+                    onPress={() => handleAccommodationPress(accommodation.id)}>
                     <Image source={{uri: accommodation.image}}
                            style={styles.image}
                            onLayout={(event) => {

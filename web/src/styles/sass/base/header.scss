@@ -1,224 +1,153 @@
 // Variables
-$primary-color: #4CAF50;
-$secondary-color: #fff;
-$border-radius: 10px;
-$font-size-small: 13px;
-$font-size-medium: 18px;
+$primary-color: var(--primary-color);
+$header-padding: 20px 50px 5px 50px;
+$button-padding: 12px;
+$button-font-size: 18px;
+$button-radius: 10px;
+$box-shadow-color: #0d1a2626;
+$hover-background: #3fb3663a;
+$breakpoint-lg: 1024px;
+$breakpoint-md: 768px;
+$breakpoint-sm: 480px;
 
-// General Header Styling
+// Header Styling
 .app-header {
-  box-shadow: 0 2px 6px 0 #0d1a2626;
-  padding: 20px 50px 5px 50px;
-  text-align: center;
-}
-
-.header-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-
-  .headerRight {
-    display: flex;
-    align-items: center;
-  }
-}
-
-.headerButtons,
-.personalMenu {
-  color: black;
+  z-index: 1000;
+  background: white;
+  box-shadow: 0 2px 6px 0 $box-shadow-color;
   text-align: center;
-  padding: 12px;
-  font-size: $font-size-medium;
-  border-radius: $border-radius;
-  display: inline-flex;
-  cursor: pointer;
-  width: auto;
-  box-shadow: 0 0 5px hsl(0 0% 78%);
-}
+  height: 100%;
+  max-height: 90px;
 
-.personalMenu {
-  border: none;
-  background-color: $primary-color;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  display: flex;
-}
+  .header-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px;
 
-.headerHostButton,
-.headerButtons {
-  border: none;
-  background: none;
-  box-shadow: none;
-  margin-right: 10px;
-}
+    .logo {
+      @media screen and (max-width: $breakpoint-lg) {
+        margin: 0 1vw 0 -4vw;
+      }
 
-.personalMenuDropdown {
-  position: relative;
-  display: inline-block;
-  z-index: 2;
-
-  .personalMenuDropdownContent {
-    display: none;
-
-    &.show {
-      display: block;
+      @media screen and (max-width: $breakpoint-md) {
+        padding-top: 2vh;
+      }
     }
 
-    padding: 20px 25px;
-    position: absolute;
-    background-color: white;
-    width: auto;
-    min-width: 240px;
-    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
-    z-index: 1;
-    top: calc(100% + 5px);
-    right: 0;
-    border-radius: $border-radius;
-
-    button {
-      padding: 8px 15px;
-      border-radius: 15px;
-      justify-content: center;
+    .headerRight {
+      display: flex;
       align-items: center;
       gap: 10px;
+
+      @media screen and (max-width: $breakpoint-lg) {
+        margin-left: 3vw;
+      }
+
+      @media screen and (max-width: $breakpoint-md) {
+        flex-direction: row;
+        justify-content: center;
+        width: 69%;
+        margin-top: 20px;
+      }
+
+      @media screen and (max-width: $breakpoint-md) {
+        display: none;
+      }
+
+      @media screen and (max-width: $breakpoint-sm) {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    .headerButtons,
+    .personalMenu {
+      color: black;
+      text-align: center;
+      padding: $button-padding;
+      font-size: $button-font-size;
+      border-radius: $button-radius;
       display: inline-flex;
-      width: 100%;
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 24px;
-      word-wrap: break-word;
+      cursor: pointer;
+      width: auto;
+      box-shadow: 0 0 5px hsl(0 0% 78%);
+      justify-content: center;
+
+      &:hover {
+        background: $hover-background;
+        padding: $button-padding;
+      }
+
+      @media screen and (max-width: $breakpoint-md) {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: center;
+      }
+
+      @media screen and (max-width: $breakpoint-sm) {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: center;
+      }
+    }
+
+    .personalMenu {
+      border: none;
+      background-color: $primary-color;
+      gap: 10px;
+      display: flex;
 
       &:hover {
         opacity: 90%;
       }
-    }
-  }
-}
 
-.headerButtons:hover {
-  background: #3fb3663a;
-  padding: 12px;
-}
-
-.personalMenu:hover {
-  opacity: 90%;
-}
-
-.helloUsername {
-  margin-bottom: 10px;
-  font-size: $font-size-medium;
-  font-weight: 400;
-  line-height: 24px;
-  word-wrap: break-word;
-}
-
-// Media Queries
-@media screen and (max-width: 1024px) {
-  .header-nav {
-    flex-wrap: nowrap;
-  }
-
-  .App,
-  .header-nav {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: white;
-    width: 100%;
-  }
-
-  .logo {
-    margin: 0 1vw 0 -4vw;
-  }
-
-  .headerRight {
-    margin-left: 3vw;
-  }
-
-  .headerButtons.headerHostButton {
-    margin-left: -15%;
-    font-size: $font-size-small;
-  }
-
-  .personalMenu {
-    margin-left: -15%;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .logo {
-    padding-top: 2vh;
-  }
-
-  .header-nav,
-  .headerRight {
-    flex-direction: row;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .headerRight {
-    width: 69%;
-    margin-top: 20px;
-  }
-
-  .headerButtons,
-  .personalMenu,
-  .Search-bar {
-    width: 100%;
-    margin-top: 10px;
-    margin-right: 0;
-    justify-content: center;
-    float: none;
-  }
-
-  .app-header {
-    padding: 0;
-  }
-
-  .headerRight {
-    display: none;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .header-nav,
-  .headerRight {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .headerButtons,
-  .personalMenu {
-    width: 100%;
-    margin-top: 10px;
-    justify-content: center;
-  }
-
-  .personalMenuDropdown .personalMenuDropdownContent {
-    width: 90%;
-    left: 5%;
-    right: 5%;
-  }
-}
-
-@media screen and (max-width: 768px) {
-    .bar-container {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 10px 20px;
+      @media screen and (max-width: $breakpoint-lg) {
+        margin-left: -15%;
+      }
     }
 
-    .header-nav {
-        display: none;
-      
-        .headerRight {
-          display: none;
+    .headerHostButton,
+    .headerButtons {
+      border: none;
+      // background: none;
+      box-shadow: none;
+
+      &.headerHostButton {
+        @media screen and (max-width: $breakpoint-lg) {
+          margin-left: -15%;
+          font-size: 13px;
         }
       }
+    }
+
+    .helloUsername {
+      margin-bottom: 10px;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 24px;
+      word-wrap: break-word;
+    }
   }
+
+  @media screen and (max-width: $breakpoint-lg) {
+
+    .App,
+    .header-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: white;
+      width: 100%;
+    }
+  }
+
+  @media screen and (max-width: $breakpoint-md) {
+    padding: 0;
+  }
+}
