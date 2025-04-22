@@ -28,13 +28,11 @@ const PropertiesSearchResultsScreen = () => {
         lastEvaluatedKeyCreatedAt,
         lastEvaluatedKeyId,
       );
-      console.log(result);
-      setAccommodationsList(result);
+      setAccommodationsList(result.properties);
 
-      if (result.length > 0) {
-        const lastItem = result[result.length - 1];
-        setLastEvaluatedKeyCreatedAt(lastItem.property.createdAt);
-        setLastEvaluatedKeyId(lastItem.property.id);
+      if (result.lastEvaluatedKey) {
+        setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
+        setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
       }
 
       setLoading(false);
