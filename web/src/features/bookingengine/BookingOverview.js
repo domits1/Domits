@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import { loadStripe } from '@stripe/stripe-js';
-import "./styles/BookingOverview.scss";
 import RegisterModule from "../auth/RegisterModule";
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
