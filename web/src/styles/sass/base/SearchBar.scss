@@ -175,6 +175,7 @@ $primary-domits-color: #0d9813;
   }
 
   .search-text {
+    display: none;
     font-size: 1rem;
     margin-right: 1rem;
   }
@@ -437,9 +438,6 @@ $primary-domits-color: #0d9813;
     width: 85%;
   }
 
-  // @media (max-width: 1000px) {
-  //   width: 100%;
-  // }
 
   @media (min-width: 2500px) {
     .responsive-calendar {
@@ -613,10 +611,7 @@ $primary-domits-color: #0d9813;
       transform: translateY(15%);
     }
   }
-
-  .search-text {
-    display: none;
-  }
+  
 
   @include mobile {
     .search-text {
