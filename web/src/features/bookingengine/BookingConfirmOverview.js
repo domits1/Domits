@@ -230,26 +230,26 @@ const BookingConfirmationOverview = () => {
                     <div className="price-breakdown">
                         <div className="row">
                             <p><AttachMoneyIcon />Price</p>
-                            <p>$ {bookingDetails?.Price}</p>
+                            <p>€ {bookingDetails?.Price}</p>
                         </div>
                         <div className="row">
                             <p><AttachMoneyIcon />Taxes</p>
-                            <p>$ {bookingDetails?.Taxes}</p>
+                            <p>€ {bookingDetails?.Taxes}</p>
                         </div>
                         <div className="row">
                             <p><Cleaning />Cleaning fee</p>
-                            <p>$ {bookingDetails?.CleaningFee}</p>
+                            <p>€ {bookingDetails?.CleaningFee}</p>
                         </div>
 
                         <div className="row">
                             <p><RoomServiceIcon />Domits service fee:</p>
-                            <p>$ {bookingDetails?.ServiceFee}</p>
+                            <p>€ {bookingDetails?.ServiceFee}</p>
                         </div>
                     </div>
 
                     <div className="total-price">
                         <strong>Total:</strong>
-                        <strong>$ {calculateTotalPrice(bookingDetails)}</strong>
+                        <strong>€ {calculateTotalPrice(bookingDetails)}</strong>
                     </div>
                 </div>
 
