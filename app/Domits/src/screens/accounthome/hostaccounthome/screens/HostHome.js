@@ -5,6 +5,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../../../context/AuthContext';
 import {styles} from '../../styles/AccountHomeStyles';
 import NavigateTo from "../../../../navigation/NavigationFunctions";
+import TranslatedText from "../../../../features/translation/components/TranslatedText";
 
 const HostHome = ({navigation}) => {
     const {userAttributes} = useAuth();
@@ -33,30 +34,66 @@ const HostHome = ({navigation}) => {
                         change app settings.
                     </Text>
                 </View>
-                {screenListItem(NavigateTo(navigation).hostDashboard, 'Dashboard')}
-                {screenListItem(NavigateTo(navigation).hostCalendar, 'Calendar')}
-                {/*pricing*/}
-                {/*reservations*/}
-                {/*messages*/}
-                {/*revenues*/}
-                {screenListItem(NavigateTo(navigation).hostReviews, 'Reviews')}
-                {/*finance*/}
-                {/*pricing*/}
-                {/*reporting*/}
-                {/*housekeeping*/}
-                {/*front office tab*/}
-                {screenListItem(NavigateTo(navigation).hostListings, 'Listings')}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Bookings & Reservations"}/></Text>
+                    {/*reservations/CRS*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Reservations')}
+                    {/*front office*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Front office')}
+                </View>
 
-                {screenListItem(NavigateTo(navigation).hostOnboarding, 'Onboarding')}
-                {screenListItem(NavigateTo(navigation).hostPayments, 'Payments')}
-                {screenListItem(NavigateTo(navigation).hostAccountSettings, 'Settings')}
-                {screenListItem(NavigateTo(navigation).hostHelpDesk, 'Helpdesk')}
-                <View style={styles.helpSection}>
-                    <Text style={styles.helpText}>
-                        Do you have trouble with using our app?{'\n'}Please send a support
-                        request to Domits.
-                    </Text>
-                    {screenListItem(NavigateTo(navigation).helpAndFeedback, 'Help and Feedback')}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Property Management"}/></Text>
+                    {screenListItem(NavigateTo(navigation).hostDashboard, 'Dashboard')}
+                    {screenListItem(NavigateTo(navigation).hostOnboarding, 'Onboarding')}
+                    {screenListItem(NavigateTo(navigation).hostListings, 'Listings')}
+                    {screenListItem(NavigateTo(navigation).hostCalendar, 'Calendar')}
+                    {/*housekeeping*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Housekeeping')}
+                    {/*IoT*/}
+                    {screenListItem(NavigateTo(navigation).home, 'IoT')}
+
+                </View>
+
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Financials & Pricing"}/></Text>
+                    {/*revenues*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Revenues')}
+                    {/*finance*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Finance')}
+                    {/*pricing*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Pricing')}
+                    {/*reporting*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Reports')}
+                    {screenListItem(NavigateTo(navigation).hostPayments, 'Payments')}
+                </View>
+
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}><TranslatedText
+                        textToTranslate={"Marketing & Monitoring"}/></Text>
+
+                    {screenListItem(NavigateTo(navigation).hostReviews, 'Reviews')}
+                    {/*distributions*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Distributions')}
+                    {/*monitoring*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Monitoring')}
+                    {/*compliance*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Compliance')}
+                    {/*promo codes*/}
+                    {screenListItem(NavigateTo(navigation).home, 'Promo codes')}
+                </View>
+
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Support"}/></Text>
+                    {screenListItem(NavigateTo(navigation).hostHelpDesk, 'Host helpdesk')}
+                    {/*how Domits works*/}
+                    {screenListItem(NavigateTo(navigation).home, 'How Domits works')}
+                    {/*feedback*/}
+                    {screenListItem(NavigateTo(navigation).helpAndFeedback, 'Feedback')}
+                </View>
+
+                <View style={styles.sectionContainer}>
+                    {screenListItem(NavigateTo(navigation).hostAccountSettings, 'Settings')}
                 </View>
             </ScrollView>
         </SafeAreaView>

@@ -3,47 +3,40 @@ import {StyleSheet} from "react-native";
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     header: {
         marginTop: 20,
-        paddingHorizontal: 20,
     },
     welcomeText: {
-        fontSize: 22,
+        fontSize: 30,
         fontWeight: 'bold',
+        marginHorizontal: 10,
     },
     descriptionText: {
         fontSize: 16,
         color: 'gray',
         marginTop: 8,
         marginBottom: 20,
+        marginHorizontal: 10,
+    },
+    sectionContainer: {
+        backgroundColor: '#fff',
+        padding: 20,
+        marginVertical: 10,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 10,
     },
     listItem: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
+        paddingVertical: 10,
+        marginHorizontal: 10,
     },
     listItemText: {
         fontSize: 18,
-    },
-    helpSection: {
-        marginTop: 20,
-        paddingHorizontal: 20,
-    },
-    helpText: {
-        fontSize: 16,
-        color: 'gray',
-    },
-    helpButton: {
-        marginTop: 10,
-    },
-    helpButtonText: {
-        fontSize: 18,
-        color: '#000',
     },
 });
