@@ -5,8 +5,9 @@ import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
 import ContactList from "../components/hostContactList";
 import HostChatScreen from "../components/hostChatScreen";
+import HostBookingTab from "../components/hostBookingTab";
 import useFetchConnectionId from '../hooks/useFetchConnectionId';
-import "../styles/hostMessages.css";
+import "../styles/sass/hostMessages.css";
 
 const HostMessages = () => {
     return (
@@ -55,11 +56,16 @@ const HostMessagesContent = () => {
             isTablet ? !!selectedContactId :
                 true;
 
+    const showBookingTab =
+        isMobile ? !selectedContactId :
+            isTablet ? !selectedContactId :
+                true;
+
+
 
     return (
         <WebSocketProvider userId={userId}>
             <main className="page-body">
-                <h2>Messages</h2>
                 {userId ? (
                     <>
                         <div className="host-chat-components">
@@ -85,6 +91,15 @@ const HostMessagesContent = () => {
                                     handleContactListMessage={handleContactListMessage}
                                     contactId={selectedContactId}
                                     connectionId={connectionId}
+                                    contactName={selectedContactName}
+                                    onBack={isMobile ? handleBackToContacts : null}
+                                    onClose={isTablet ? handleBackToContacts : null}
+                                />
+                            )}
+                            {showBookingTab && (
+                                <HostBookingTab
+                                    userId={userId}
+                                    contactId={selectedContactId}
                                     contactName={selectedContactName}
                                     onBack={isMobile ? handleBackToContacts : null}
                                     onClose={isTablet ? handleBackToContacts : null}

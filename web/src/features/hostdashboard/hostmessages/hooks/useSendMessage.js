@@ -23,7 +23,6 @@ export const useSendMessage = (userId) => {
             fileUrls: fileUrls,
             channelId: channelID,
         };
-        console.log(message);
         
 
         setSending(true);
