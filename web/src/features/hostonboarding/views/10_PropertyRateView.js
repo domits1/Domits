@@ -3,8 +3,10 @@ import { useParams } from "react-router-dom";
 import PricingRow from "../components/PricingRow";
 import { usePricing } from "../hooks/useProperyRate";
 import OnboardingButton from "../components/OnboardingButton";
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 function PropertyRateView() {
+  const builder = useBuilder();
   const { type: accommodationType } = useParams();
   const { pricing, updatePricing, calculateServiceFee } = usePricing();
 
@@ -59,6 +61,9 @@ function PropertyRateView() {
             btnText="Go back"
           />
           <OnboardingButton
+            onClick={ () => {
+              builder.addPricing({roomRate: pricing.Rent, cleaning: pricing.CleaningFee, service: pricing.ServiceFee});
+            }}
             routePath={`/hostonboarding/${accommodationType}/availability`}
             btnText="Proceed"
           />

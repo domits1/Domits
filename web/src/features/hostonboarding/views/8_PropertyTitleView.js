@@ -3,6 +3,7 @@ import TextAreaField from "../components/TextAreaField";
 import { useAccommodationTitle } from "../hooks/usePropertyName";
 import OnboardingButton from "../components/OnboardingButton";
 import React from "react";
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 // Step 8
 function PropertyTitleView() {

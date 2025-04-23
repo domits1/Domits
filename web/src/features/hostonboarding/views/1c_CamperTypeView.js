@@ -4,8 +4,10 @@ import CamperTypeSelector from "../components/TypeSelector"
 import { camperData } from "../constants/camperData"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import OnboardingButton from "../components/OnboardingButton"
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 function CamperTypeView() {
+  const builder = useBuilder();
   const setCamperType = useFormStoreHostOnboarding(
     (state) => state.setCamperType,
   )
@@ -27,6 +29,10 @@ function CamperTypeView() {
         <nav className="onboarding-button-box">
           <OnboardingButton routePath="/hostonboarding" btnText="Back" />
           <OnboardingButton
+            onClick={ () => {
+              builder.addPropertyType({type: "Camper", spaceType: selectedCamperType});
+              console.log(builder);
+            }}
             routePath="/hostonboarding/camper/address"
             btnText="Proceed"
           />
