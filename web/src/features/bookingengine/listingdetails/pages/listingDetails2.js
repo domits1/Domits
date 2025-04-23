@@ -32,7 +32,6 @@ const ListingDetails2 = () => {
 
                 const hostData = await fetchHostInfo(fetchedProperty.property.hostId);
                 const email = hostData[0].Attributes.find(attr => attr.Name === "email")?.Value;
-                console.log("Host email:", email);
                 setHost(hostData);
                 setHostEmail(email);
                 setLoading(false);
