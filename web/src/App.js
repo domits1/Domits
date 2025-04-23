@@ -14,11 +14,11 @@ import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
 import { UserProvider } from "./features/auth/UserContext";
-import BookingOverview from "./features/bookingengine/BookingOverview";
 import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
-import BookingConfirmation from "./features/bookingengine/PaymentConfirm";
-import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
+import BookingOverview from "./features/bookingengine/BookingOverview";
+import BookingSend from "./features/bookingengine/BookingSend";
+import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
@@ -63,7 +63,6 @@ import HouseTypeView from "./features/hostonboarding/views/2_HouseTypeView.js";
 import AddressInputView from "./features/hostonboarding/views/3_AddressInputView.js";
 import PropertyGuestAmountView from "./features/hostonboarding/views/4_PropertyCapacityView";
 import CapacityView from "./features/hostonboarding/views/4_PropertyCapacityView.js";
-import PropertyAmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import PropertyHouseRulesView from "./features/hostonboarding/views/6_PropertyHouseRulesView.js";
 import PhotosView from "./features/hostonboarding/views/7_PropertyPhotosView.js";
 import PropertyTitleView from "./features/hostonboarding/views/8_PropertyTitleView.js";
@@ -97,6 +96,8 @@ import FlowContext from "./services/FlowContext";
 import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
+import { BuilderProvider } from "./context/propertyBuilderContext";
+import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 
 Modal.setAppElement("#root");
 
@@ -186,7 +187,6 @@ function App() {
                   <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
                   <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
                   <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView />} />
-
                   {/* Chat */}
                   {/*<Route path="/chat" element={<Chat/>}/>*/}
                   <Route path="/employeechat" element={<EmployeeChat />} />
@@ -322,6 +322,7 @@ function App() {
       </FlowContext.Provider>
     </ApolloProvider>
   );
+
 }
 
 export default App;

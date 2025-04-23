@@ -80,6 +80,9 @@ const Homepage = () => {
   const [propertyLoading, setPropertyLoading] = useState(false);
   const [allAccommodations, setAllAccommodations] = useState([]);
 
+  const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
+  const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
+
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
 
@@ -96,8 +99,15 @@ const Homepage = () => {
         setCamperAccommodations(data.slice(0, 3));
         setCamperLoading(false);
       });
-      FetchAllPropertyTypes().then((data) => {
-        setAllAccommodations(data.slice(6, 9));
+      FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId).then((data) => {
+        if (data.lastEvaluatedKey) {
+          setLastEvaluatedKeyCreatedAt(data.lastEvaluatedKey.createdAt);
+          setLastEvaluatedKeyId(data.lastEvaluatedKey.id);
+        } else {
+          setLastEvaluatedKeyCreatedAt(null);
+          setLastEvaluatedKeyId(null)
+        }
+        setAllAccommodations(data.properties.slice(6, 9));
         setPropertyLoading(false);
       });
     }
@@ -576,6 +586,7 @@ const Homepage = () => {
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
               <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
