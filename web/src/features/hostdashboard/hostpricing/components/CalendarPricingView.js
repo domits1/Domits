@@ -21,7 +21,7 @@ function getMaxDate(priceHistory) {
 function createDateRange(start, end) {
   let dates = [];
   let current = new Date(start);
-  while (current <= end) {
+  while (current) {
     dates.push(new Date(current));
     current.setDate(current.getDate() + 1);
   }
