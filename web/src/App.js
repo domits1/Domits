@@ -71,7 +71,7 @@ import PropertyDescriptionView from "./features/hostonboarding/views/9_PropertyD
 import ReviewPage from "./features/review/ReviewPage";
 import StripeCallback from "./features/stripe/StripeCallback";
 
-import Sustainability from "./features/sustainability/Sustainability";
+import Sustainability from "./pages/home/sustainability/Sustainability.js";
 import HostVerificationView from "./features/verification/hostverification/HostVerification.js";
 import PhoneNumberView from "./features/verification/hostverification/HostVerifyPhoneNumber.js";
 import PhoneNumberConfirmView from "./features/verification/hostverification/HostVerifyPhoneNumberConfirm.js";
@@ -91,7 +91,7 @@ import Policy from "./pages/policy/Policy";
 import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
 import Terms from "./pages/terms/Terms";
-import Travelinnovation from "./pages/travelinnovationlab/travelinnovation";
+import Travelinnovation from "./pages/travelinnovationlab/travelinnovation.js";
 import Whydomits from "./pages/whydomits/Whydomitstwo.js";
 import FlowContext from "./services/FlowContext";
 import PageNotFound from "./utils/error/404NotFound";
@@ -175,7 +175,7 @@ function App() {
                   <Route path="/security" element={<Security />} />
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/contact" element={<Contact />} />
-                  <Route path="/travelinnovation" element={<Travelinnovation />} />
+                  <Route path="/travelinnovationlab" element={<Travelinnovation />} />
                   <Route path="/release" element={<ReleaseUpdates />} />
                   <Route path="/landing" element={<Landing />} />
                   <Route path="/login" element={<Login />} />

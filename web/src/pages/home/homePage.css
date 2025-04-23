@@ -177,43 +177,24 @@ body.hide-header .app-header {
 }
 
 
-.store-buttons {
+.Explore_More {
   display: flex;
-  gap: 1rem;
-  align-items: center;
   justify-content: center;
+  margin-top: 50px;
 }
 
-.store-badge {
-  height: 50px;
-  transition: transform 0.2s ease;
-}
-
-.store-badge:hover {
-  transform: scale(1.05);
-}
-
-
-.More_Destinations_button {
-  background-color: #0d9813;
+.Explore_More_button {
+  background-color: #0f9d00;
   color: white;
-  text-decoration: none;
   border: none;
-  border-radius: 0.6em;
-  padding: 8px 4vw;
-  font-size: 1.1rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 12px;
   cursor: pointer;
-  margin-left: 690px;
-  margin-top: 55px;
-}
-
-.More_Destinations_button a {
-  color: white;
-  text-decoration: none;
-}
-
-.More_Destinations_button:hover {
-  background-color: #0b7e10;
+  transition: background-color 0.2s ease;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
 }
 
 .countries-container,
@@ -1103,14 +1084,14 @@ body.hide-header .app-header {
 .domits-iconsContainerText {
   font-size: 1.2rem;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
   gap: 10px;
   text-align: center;
   justify-items: center;
   align-items: center;
-  flex-wrap: wrap;
   width: 100%;
 }
+
 
 .domits-iconTextGroup {
   display: flex;
@@ -1399,7 +1380,7 @@ body.hide-header .app-header {
 .list-property-button {
   margin-top: 1rem;
   padding: 0.5rem 1.5rem;
-  background-color: #1d4ed8;
+  background-color: #003366;
   color: white;
   font-weight: 600;
   border: none;

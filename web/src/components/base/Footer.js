@@ -50,6 +50,16 @@ const Footer = () => {
               </Link>
             </li>
             <li>
+              <Link to="/sustainability" className="footer-links">
+                Sustainability
+              </Link>
+            </li>
+            <li>
+              <Link to="/travelinnovationlab" className="footer-links">
+                Travel innovation
+              </Link>
+            </li>
+            <li>
               <Link to="/career" className="footer-links">
                 Careers
               </Link>
