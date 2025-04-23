@@ -10,8 +10,9 @@
     display: flex;
     flex-direction: row;
     gap: 20px;
-    margin: 0 30px;
-    padding: 0;
+    margin: 0 auto;
+    max-width: 1500px; // or any value that fits your design
+    padding: 0 30px; // optional horizontal padding inside the centered layout
 
     .property-container {
       .image-section {
