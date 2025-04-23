@@ -2,13 +2,13 @@ import React, { useState, useEffect, useContext } from 'react';
 import useFetchContacts from '../hooks/useFetchContacts';
 import ContactItem from './hostContactItem';
 import { WebSocketContext } from '../context/webSocketContext';
-import '../styles/hostContactList.css';
 
 const ContactList = ({ userId, onContactClick, message }) => {
     const { contacts, pendingContacts, loading, error, setContacts } = useFetchContacts(userId);
     const { messages: wsMessages } = useContext(WebSocketContext);
+    const [selectedContactId, setSelectedContactId] = useState(null);
     const [displayType, setDisplayType] = useState('contacts');
-    
+
     useEffect(() => {
         const updateContactsFromWS = async () => {
             if (wsMessages.length === 0) return;
@@ -64,6 +64,7 @@ const ContactList = ({ userId, onContactClick, message }) => {
     const noContactsMessage = displayType === 'contacts' ? 'No contacts found.' : 'No pending contacts found.';
 
     const handleContactClick = (contactId, contactName) => {
+        setSelectedContactId(contactId);
         if (onContactClick) {
             onContactClick(contactId, contactName);
         }
@@ -71,7 +72,7 @@ const ContactList = ({ userId, onContactClick, message }) => {
 
     return (
         <div className="contact-list-modal">
-            <div className="contact-list-toggle">
+            {/* <div className="contact-list-toggle">
                 <button
                     onClick={() => setDisplayType('contacts')}
                     className={displayType === 'contacts' ? 'active' : ''}
@@ -84,8 +85,20 @@ const ContactList = ({ userId, onContactClick, message }) => {
                 >
                     Incoming requests
                 </button>
-            </div>
+            </div> */}
+            <h3>Message dashboard</h3>
 
+
+            <div className="contact-list-toggle">
+                <select
+                    value={displayType}
+                    onChange={(e) => setDisplayType(e.target.value)}
+                    className="contact-dropdown"
+                >
+                    <option value="contacts">Contacts</option>
+                    <option value="pendingContacts">Incoming Requests</option>
+                </select>
+            </div>
             <ul className="contact-list-list">
                 {loading ? (
                     <p className="contact-list-loading-text">Loading contacts...</p>
@@ -101,7 +114,7 @@ const ContactList = ({ userId, onContactClick, message }) => {
                         .map((contact) => (
                             <li
                                 key={contact.userId}
-                                className={`contact-list-list-item ${displayType === 'pendingContacts' ? 'disabled' : ''}`}
+                                className={`contact-list-list-item ${displayType === 'pendingContacts' ? 'disabled' : ''} `}
                                 onClick={() => {
                                     if (displayType !== 'pendingContacts') {
                                         handleContactClick(contact.recipientId, contact.givenName);
@@ -112,6 +125,7 @@ const ContactList = ({ userId, onContactClick, message }) => {
                                     contact={contact}
                                     isPending={displayType === 'pendingContacts'}
                                     setContacts={setContacts}
+                                    selected={selectedContactId === contact.recipientId}
 
                                 />
                             </li>
