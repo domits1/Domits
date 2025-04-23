@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import profileImage from '../domits-logo.jpg';
 import useUpdateContactRequest from "../hooks/useUpdateContactRequest";
+import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
 
-const ContactItem = ({ contact, isPending, setContacts, selected}) => {
+
+const ContactItem = ({ contact, isPending, setContacts, selected }) => {
     const [error, setError] = useState(null);
     const { updateContactRequest } = useUpdateContactRequest(setContacts);
+    const { bookingDetails, accommodation } = useFetchBookingDetails(contact.hostId, contact.recipientId);
 
+    const accoImage = accommodation?.Images?.[0] && Object.values(accommodation.Images[0])[0];
+
+    console.log(bookingDetails);
 
     const handleAccept = async () => {
         try {
@@ -25,16 +31,31 @@ const ContactItem = ({ contact, isPending, setContacts, selected}) => {
 
     return (
         <div className={`contact-item-content ${selected ? 'selected' : ''}`}>
-            <img src={profileImage} alt="Profile" className="contact-item-profile-image" />
+
+            <div className={`contact-item-image-container ${!accoImage ? 'no-accommodation-image' : ''}`}>
+                {accoImage && (
+                    <img src={accoImage} alt="Accommodation" className="contact-item-accommodation-image" />
+                )}
+                <img src={profileImage} alt="Profile" className="contact-item-profile-image" />
+            </div>
+
             <div className="contact-item-text-container">
                 <p className="contact-item-full-name">{contact.givenName}</p>
                 {!isPending && (
                     <p className="contact-item-subtitle">
+                        {bookingDetails?.Status === "Accepted" && (
+                            <p id='status'>Reservation approved</p>
+                        )}
+
+                        {bookingDetails?.Status === "Pending" && (
+                            <p id='status'>Inquiry sent</p>
+                        )}
                         {contact.latestMessage.text
-                            ? contact.latestMessage.text || "No message yet" 
+                            ? contact.latestMessage.text || "No message yet"
                             : "No message history yet"}
                     </p>
                 )}
+
                 {isPending && (
                     <>
                         <div className="contact-item-buttons-container">
