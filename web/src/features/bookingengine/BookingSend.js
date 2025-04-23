@@ -37,7 +37,6 @@ const BookingSend = () => {
 
         const decodedAccommodationTitle = rawAccommodationTitle ? decodeURIComponent(rawAccommodationTitle) : "Unknown";
         setAccommodationTitle(decodedAccommodationTitle);
-        console.log(getAccessToken());
         const payload = {
             headers: {
                 Authorization: getAccessToken()
