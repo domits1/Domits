@@ -15,12 +15,21 @@ const ChatMessage = ({ message, userId, contactName }) => {
                 <span className="message-time">{formatDate(createdAt)}</span>
             </div>
             <div className="message-content">{text}</div>
-            
+
             {fileUrls && fileUrls.length > 0 && (
                 <div className="message-attachments">
-                    {fileUrls.map((fileUrl, index) => (
-                        <img key={index} src={fileUrl} alt="Attachment" className="message-image" />
-                    ))}
+                    {fileUrls.map((fileUrl, index) => {
+                        const isVideo = fileUrl.endsWith('.mp4');
+
+                        return isVideo ? (
+                            <video key={index} controls className="message-video">
+                                <source src={fileUrl} type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video>
+                        ) : (
+                            <img key={index} src={fileUrl} alt="Attachment" className="message-image" />
+                        );
+                    })}
                 </div>
             )}
         </div>

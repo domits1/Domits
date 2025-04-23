@@ -361,7 +361,7 @@
   margin-top: 5px;
   justify-content: flex-start;
 }
-.host-chat-components .host-chat-screen .message-image {
+.host-chat-components .host-chat-screen .message-image, .host-chat-components .host-chat-screen .message-video {
   max-width: 100%;
   max-height: 200px;
   border-radius: 8px;

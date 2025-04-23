@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useUploadUrl } from "../hooks/useUploadURL";
-
+import { FaImages } from 'react-icons/fa';
 
 const ChatUploadAttachment = ({ onUploadComplete }) => {
     const [files, setFiles] = useState([]);
@@ -114,7 +114,7 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
                 onDrop={handleDrop}
                 className="add-file-button"
             >
-                Add files
+                <FaImages />
             </button>
 
             <input

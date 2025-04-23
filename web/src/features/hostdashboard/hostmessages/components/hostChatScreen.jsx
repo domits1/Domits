@@ -6,9 +6,8 @@ import ChatMessage from './chatMessage';
 import ChatUploadAttachment from './chatUploadAttachment';
 import { WebSocketContext } from '../context/webSocketContext';
 import { v4 as uuidv4 } from 'uuid';
-import '../styles/hostChatScreen.css';
 import profileImage from '../domits-logo.jpg';
-import { FaHome, FaUsers, FaCalendar, FaTimes } from 'react-icons/fa';
+import { FaPaperPlane, FaTimes } from 'react-icons/fa';
 
 
 
@@ -70,7 +69,7 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
                 addNewMessage(sentMessage);
 
                 setNewMessage('');
-                setUploadedFileUrls([]); 
+                setUploadedFileUrls([]);
             } catch (error) {
                 console.error("Onverwachte fout bij verzenden:", error);
             }
@@ -92,7 +91,8 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
 
                         <div className="host-chat-header-grid">
                             <h3>{contactName}</h3>
-                            <p style={{ visibility: bookingDetails?.Title ? 'visible' : 'hidden' }}>
+                            <p>Translation on</p>
+                            {/* <p style={{ visibility: bookingDetails?.Title ? 'visible' : 'hidden' }}>
                                 <FaHome style={{ marginRight: '8px' }} /> {bookingDetails?.Title}
                             </p>
 
@@ -102,7 +102,7 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
 
                             <p style={{ visibility: bookingDetails?.StartDate && bookingDetails?.EndDate ? 'visible' : 'hidden' }}>
                                 <FaCalendar style={{ marginRight: '8px' }} /> {bookingDetails?.StartDate} / {bookingDetails?.EndDate}
-                            </p>
+                            </p> */}
 
                         </div>
                     </div>
@@ -132,10 +132,12 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
                 </div>
 
                 <div className="chat-input">
+                    <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+
                     <textarea
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder=""
+                        placeholder="Type a message..."
                         className="message-input-textarea"
                         onKeyUp={(e) => {
                             if (e.key === "Enter") {
@@ -147,21 +149,14 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
                         onClick={handleSendMessage}
                         className="message-input-send-button"
                         disabled={sending}
+                        title="Send"
                     >
-                        {sending ? 'Sending...' : 'Send'}
+                        {sending ? 'Sending...' : <FaPaperPlane />}
                     </button>
                 </div>
 
                 {sendError && <p className="error-message">{sendError.message}</p>}
 
-            </div>
-            <div className='host-chat-buttons'>
-
-                <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
-                <button
-                    onClick={handleSendReviewLink}
-                    className="review-link-button"
-                >Send review link</button>
             </div>
         </div>
     ) : null;

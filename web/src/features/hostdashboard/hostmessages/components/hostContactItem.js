@@ -11,7 +11,6 @@ const ContactItem = ({ contact, isPending, setContacts, selected }) => {
 
     const accoImage = accommodation?.Images?.[0] && Object.values(accommodation.Images[0])[0];
 
-    console.log(bookingDetails);
 
     const handleAccept = async () => {
         try {
@@ -30,9 +29,9 @@ const ContactItem = ({ contact, isPending, setContacts, selected }) => {
     };
 
     return (
-        <div className={`contact-item-content ${selected ? 'selected' : ''}`}>
+        <div className={`contact-item-content ${selected ? 'selected' : ''} ${!accoImage ? 'no-accommodation-image' : ''}`}>
 
-            <div className={`contact-item-image-container ${!accoImage ? 'no-accommodation-image' : ''}`}>
+            <div className={`contact-item-image-container `}>
                 {accoImage && (
                     <img src={accoImage} alt="Accommodation" className="contact-item-accommodation-image" />
                 )}
