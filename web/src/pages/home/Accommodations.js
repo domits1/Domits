@@ -9,7 +9,10 @@ import { FetchAllPropertyTypes } from "./services/fetchProperties";
 
 const Accommodations = ({ searchResults }) => {
     const [accolist, setAccolist] = useState([]);
-    const [accommodationImages, setAccommodationImages] = useState([]);
+
+    const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
+    const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
+
     const [filterLoading, setFilterLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
 
@@ -51,8 +54,15 @@ const Accommodations = ({ searchResults }) => {
                     setSearchLoading(false);
                 }, 500);
             } else {
-                const properties = await FetchAllPropertyTypes();
-                setAccolist(properties);
+                const result = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
+                if (result.lastEvaluatedKey) {
+                    setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
+                    setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
+                } else {
+                    setLastEvaluatedKeyCreatedAt(null);
+                    setLastEvaluatedKeyId(null)
+                }
+                setAccolist(result.properties);
             }
             setSearchLoading(false);
         }
