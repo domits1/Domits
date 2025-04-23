@@ -25,7 +25,6 @@ function convertDatesToDBDates(selectedDates) {
         newDate["availableEndDate"] = new Date(year2, month2, day2).getTime();
         updatedList.push(newDate);
     }
-    console.log(updatedList)
     return updatedList
 }
 
