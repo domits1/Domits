@@ -2,6 +2,7 @@ import {     } from "lodash";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import { getAccessToken } from "../../services/getAccessToken";
 
 const BookingSend = () => {
     const location = useLocation();
@@ -36,8 +37,11 @@ const BookingSend = () => {
 
         const decodedAccommodationTitle = rawAccommodationTitle ? decodeURIComponent(rawAccommodationTitle) : "Unknown";
         setAccommodationTitle(decodedAccommodationTitle);
-
+        console.log(getAccessToken());
         const payload = {
+            headers: {
+                Authorization: getAccessToken()
+            },
             body: {
                 identifiers: {
                     property_Id: accommodationId,
