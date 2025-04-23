@@ -1,5 +1,4 @@
-//This is written by Marijn Klappe
-import convertToNumDate from "./convertToDate";
+import convertToNumDate from "./../utils/ConvertToDate";
 
 /**
  * getCalDays is a function used to retrieve the day numbers of the selected month and year.
@@ -9,7 +8,7 @@ import convertToNumDate from "./convertToDate";
  * @param {number} year
  * @returns {{date: number, day: number}[]} the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
  */
-function getCalDays(month, year) {
+function getCalDays(year, month) {
     const dateArray = [];
 
     const getDaysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
@@ -52,4 +51,26 @@ function getCalDays(month, year) {
     return dateArray;
 }
 
-export default getCalDays;
+/**
+ * this function returns the month view from an selected month
+ * 
+ * @param {Object} props
+ * @param {number} props.year 
+ * @param {number} props.month  number 0-11
+ * @param {function} props.dayClick
+ * 
+ * @returns {JSX.Element}
+ */
+export default function GetMonthView({ year, month, dayClick}) {
+    const calendarDays = getCalDays(year, month)
+
+    return (
+        <div className="month-wrapper">
+            {calendarDays.map((dayObj, index) => (
+                <a href="#day" date={dayObj.date} onClick={dayClick}>
+                    {dayObj.day}
+                </a>
+            ))}
+        </div>
+    )
+}
