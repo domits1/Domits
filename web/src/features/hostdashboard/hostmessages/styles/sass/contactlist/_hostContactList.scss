@@ -103,28 +103,19 @@
                     flex-shrink: 0;
                 }
 
-                &.no-accommodation-image {
-                    margin-right: 2.75rem;
-                    .contact-item-profile-image {
-                        position: absolute;
-                        width: 2.5rem;
-                        height: 2.5rem;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                    }
-                }
+
             }
 
             .contact-item-text-container {
                 height: 100%;
-                width: 100%;
+                width: 62.5%;
                 padding-right: 1rem;
+
                 p {
                     margin: 0;
                     padding: 0;
                 }
-                
+
                 .contact-item-full-name {
                     font-family: 'Kanit', sans-serif;
                     font-weight: 400;
@@ -144,6 +135,10 @@
                     font-size: 0.75em;
                     color: #000;
 
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+
                     #status {
                         font-weight: 501;
                         font-size: smaller;
@@ -153,7 +148,74 @@
             }
 
 
+            &.no-accommodation-image {
+
+
+                .contact-item-image-container {
+                    position: static;
+                    height: 100%;
+                    width: 35%;
+                    margin-right: 0.5rem;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+
+                    .contact-item-profile-image {
+                        position: static;
+                        width: 2.5rem;
+                        height: 2.5rem;
+                        top: 0;
+                        left: 0;
+                    }
+
+                }
+
+
+                .contact-item-text-container {
+                    height: 100%;
+                    width: 100%;
+                    padding-right: 1rem;
+
+                    p {
+                        margin: 0;
+                        padding: 0;
+                    }
+
+                    .contact-item-full-name {
+                        font-family: 'Kanit', sans-serif;
+                        font-weight: 400;
+                        font-size: 1em;
+                        color: #000;
+                        padding: 0;
+                        margin: 0;
+                        margin-top: 0.5rem;
+
+                    }
+
+                    .contact-item-subtitle {
+                        font-family: 'Kanit', sans-serif;
+                        padding: 0;
+                        margin: 0;
+                        font-weight: 400;
+                        font-size: 0.75em;
+                        color: #000;
+                        max-height: 50%;
+                        white-space: normal;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+
+                        #status {
+                            font-weight: 501;
+                            font-size: smaller;
+                            color: #000;
+                        }
+                    }
+                }
+
+            }
         }
+
+
 
     }
 
