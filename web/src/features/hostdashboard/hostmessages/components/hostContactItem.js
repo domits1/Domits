@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import profileImage from '../domits-logo.jpg';
 import useUpdateContactRequest from "../hooks/useUpdateContactRequest";
 
-const ContactItem = ({ contact, isPending, setContacts }) => {
+const ContactItem = ({ contact, isPending, setContacts, selected}) => {
     const [error, setError] = useState(null);
     const { updateContactRequest } = useUpdateContactRequest(setContacts);
 
@@ -24,7 +24,7 @@ const ContactItem = ({ contact, isPending, setContacts }) => {
     };
 
     return (
-        <div className="contact-item-content">
+        <div className={`contact-item-content ${selected ? 'selected' : ''}`}>
             <img src={profileImage} alt="Profile" className="contact-item-profile-image" />
             <div className="contact-item-text-container">
                 <p className="contact-item-full-name">{contact.givenName}</p>
