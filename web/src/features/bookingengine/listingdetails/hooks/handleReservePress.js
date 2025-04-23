@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 function useHandleReservePress() {
     const navigate = useNavigate();
 
-    return (id, checkInDate, checkOutDate, guests) => {
+    return (id, checkInDate, checkOutDate, guests, hostEmail) => {
         const details = {
             id,
             checkInDate,
             checkOutDate,
-            guests
+            guests,
+            hostEmail
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
