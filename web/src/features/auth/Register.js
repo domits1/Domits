@@ -2,9 +2,8 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import FlowContext from '../../services/FlowContext';
-import './Register.css';
 import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
+// import 'react-phone-input-2/lib/style.css';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -332,9 +331,6 @@ const Register = () => {
                             country={'nl'}
                             value={formData.phone}
                             onChange={phone => setFormData(prevState => ({ ...prevState, phone }))}
-                            inputClass="registerInput"
-                            containerClass="phoneInputContainer"
-                            inputStyle={{ width: '110%', border: '1px solid #999' }}
                         />
 
                         <label>Password*</label>
