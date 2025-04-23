@@ -1,20 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-// import "./paymentconfirmpage.css";
+import "./styles/BookingConfirmOverview.scss";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import ImageGallery from "./ImageGallery";
 import useAddUserToContactList from "./hooks/useAddUserToContactList";
+import BookingFetchData from "./services/BookingFetchData";
+import Calender from '@mui/icons-material/CalendarTodayOutlined';
+import People from '@mui/icons-material/PeopleAltOutlined';
+import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import RoomServiceIcon from '@mui/icons-material/RoomService';
 
 const BookingConfirmationOverview = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [bookingDetails, setBookingDetails] = useState(null);
-    const [accommodationDetails, setAccommodationDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { success, addUserToContactList } = useAddUserToContactList();
     const [contactAdded, setContactAdded] = useState(false);
     const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768); // State to track screen size
+
+    const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/"
 
     useEffect(() => {
         const handleResize = () => {
@@ -35,26 +42,10 @@ const BookingConfirmationOverview = () => {
                 setLoading(false);
                 return;
             }
-
             try {
-                const response = await fetch(
-                    `https://cmxggcetwh.execute-api.eu-north-1.amazonaws.com/default/Guest-Booking-Production-Read-PaymentConfirmation?paymentID=${paymentID}`
-                );
-
-                if (!response.ok) {
-                    throw new Error(`Error fetching booking details: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-
-                const parsedBody = data.body ? JSON.parse(data.body) : data;
-
-                if (!parsedBody.bookingDetails) {
-                    throw new Error("Booking details not found.");
-                }
-                setBookingDetails(parsedBody.bookingDetails);
-                setAccommodationDetails(parsedBody.accommodationDetails);
-
+                const data = await BookingFetchData(paymentID);
+                const bookingInfo = extractBookingDetails(data.bookingData, data.accommodationData);
+                setBookingDetails(bookingInfo);
             } catch (error) {
                 console.error("Fetch Error:", error);
                 setError("Failed to load booking details.");
@@ -70,6 +61,24 @@ const BookingConfirmationOverview = () => {
         if (!date) return "";
         return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     };
+
+    const extractBookingDetails = (bookingData, accommodationData) => {
+        return {
+            StartDate: bookingData.arrivalDate.N,
+            EndDate: bookingData.departureDate.N,
+            Guests: bookingData.guests.N,
+            GuestID: bookingData.guestId.S,
+            AccoID: bookingData.property_id.S,
+            HostID: accommodationData.property.hostId,
+            Status: bookingData.status.S,
+            Title: accommodationData.property.title,
+            Price: accommodationData.pricing.roomRate,
+            Taxes: 0,
+            CleaningFee: accommodationData.pricing.cleaning,
+            ServiceFee: accommodationData.pricing.service,
+            Images: accommodationData.images,
+        }
+    }
 
     const calculateTotalPrice = (bookingDetails) => {
         const price = parseFloat(bookingDetails?.Price) || 0;
@@ -107,8 +116,8 @@ const BookingConfirmationOverview = () => {
             {/* Conditionally render the left element */}
             {!isMobileView && (
                 <div className="left">
-                    {accommodationDetails?.Images && Object.keys(accommodationDetails.Images).length > 0 ? (
-                        <ImageGallery images={Object.values(accommodationDetails.Images)} />
+                    {bookingDetails?.Images && bookingDetails.Images.length > 0 ?(
+                        <ImageGallery images={bookingDetails.Images.map(img => `${S3_URL}${img.key}`)} />
                     ) : (
                         <p>No images available for this accommodation.</p>
                     )}
@@ -117,14 +126,12 @@ const BookingConfirmationOverview = () => {
 
             <div className="right-panel">
                 <h1>Payment Confirmation</h1>
-
                 {bookingDetails && <h3>{bookingDetails.Title}</h3>}
-
                 {isMobileView && (
                     <div className="left mobile-left">
-                        {accommodationDetails?.Images && Object.keys(accommodationDetails.Images).length > 0 ? (
-                            <ImageGallery images={Object.values(accommodationDetails.Images)} />
-                        ) : (
+                    {bookingDetails?.Images && bookingDetails.Images.length > 0 ?(
+                        <ImageGallery images={bookingDetails.Images.map(img => `${S3_URL}${img.key}`)} />
+                    ) : (
                             <p>No images available for this accommodation.</p>
                         )}
                     </div>
@@ -133,7 +140,7 @@ const BookingConfirmationOverview = () => {
                     <div>
                         <h3>
                             Booking{" "}
-                            {bookingDetails.Status === "Confirmed"
+                            {bookingDetails.Status === "Accepted"
                                 ? "Confirmed"
                                 : bookingDetails.Status === "Failed"
                                     ? "Failed"
@@ -141,14 +148,14 @@ const BookingConfirmationOverview = () => {
                         </h3>
                         <p>
                             <strong>Check-in:</strong>{" "}
-                            {accommodationDetails?.StartDate
-                                ? new Date(accommodationDetails.StartDate).toLocaleDateString()
+                            {bookingDetails?.StartDate
+                                ? new Date(Number(bookingDetails.StartDate)).toLocaleDateString()
                                 : "N/A"}
                         </p>
                         <p>
                             <strong>Check-out:</strong>{" "}
-                            {accommodationDetails?.EndDate
-                                ? new Date(accommodationDetails.EndDate).toLocaleDateString()
+                            {bookingDetails?.EndDate
+                                ? new Date(Number(bookingDetails.EndDate)).toLocaleDateString()
                                 : "N/A"}
                         </p>
                     </div>
@@ -162,34 +169,35 @@ const BookingConfirmationOverview = () => {
 
                     <div className="price-breakdown">
                         <div className="row">
-                            <p>Guests:</p>
-                            <p>{bookingDetails?.AmountOfGuest}</p>
+                            <p><People />Guests:</p>
+                            
+                            <p>{bookingDetails?.Guests}</p>
                         </div>
 
                         <div className="row">
-                            <p>Date</p>
+                            <p><Calender />Date</p>
                             <p>
-                                {formatDate(bookingDetails?.StartDate)} - {formatDate(bookingDetails?.EndDate)}
+                                {formatDate(Number(bookingDetails?.StartDate))} - {formatDate(Number(bookingDetails?.EndDate))}
                             </p>
                         </div>
                     </div>
 
                     <div className="price-breakdown">
                         <div className="row">
-                            <p>Price</p>
+                            <p><AttachMoneyIcon />Price</p>
                             <p>€ {bookingDetails?.Price}</p>
                         </div>
                         <div className="row">
-                            <p>Taxes</p>
+                            <p><AttachMoneyIcon />Taxes</p>
                             <p>€ {bookingDetails?.Taxes}</p>
                         </div>
                         <div className="row">
-                            <p>Cleaning fee</p>
+                            <p><Cleaning />Cleaning fee</p>
                             <p>€ {bookingDetails?.CleaningFee}</p>
                         </div>
 
                         <div className="row">
-                            <p>Domit service fee:</p>
+                            <p><RoomServiceIcon />Domits service fee:</p>
                             <p>€ {bookingDetails?.ServiceFee}</p>
                         </div>
                     </div>

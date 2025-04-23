@@ -4,19 +4,30 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../../../context/AuthContext';
 import {styles} from '../../styles/AccountHomeStyles';
-import NavigateTo from "../../../../navigation/NavigationFunctions";
+import {
+    HOME_SCREEN,
+    FEEDBACK_SCREEN,
+    HOST_ACCOUNT_SETTINGS_SCREEN,
+    HOST_CALENDAR_SCREEN,
+    HOST_DASHBOARD_SCREEN,
+    HOST_HELP_DESK_SCREEN,
+    HOST_LISTINGS_SCREEN,
+    HOST_ONBOARDING_SCREEN,
+    HOST_PAYMENTS_SCREEN,
+    HOST_REVIEWS_SCREEN
+} from "../../../../navigation/utils/NavigationNameConstants";
 import TranslatedText from "../../../../features/translation/components/TranslatedText";
 
 const HostHome = ({navigation}) => {
     const {userAttributes} = useAuth();
     const firstName = userAttributes?.given_name || 'N/A';
 
-    const screenListItem = (navigationFunction, screenName) => {
+    const screenListItem = (navigationName, screenName) => {
         return (
             <View>
                 <TouchableOpacity
                     style={styles.listItem}
-                    onPress={() => navigationFunction() }>
+                    onPress={() => navigation.navigate(navigationName) }>
                     <Text style={styles.listItemText}>{screenName}</Text>
                     <MaterialIcons name="chevron-right" size={22} color="#000"/>
                 </TouchableOpacity>
@@ -37,63 +48,63 @@ const HostHome = ({navigation}) => {
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Bookings & Reservations"}/></Text>
                     {/*reservations/CRS*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Reservations')}
+                    {screenListItem(HOME_SCREEN, 'Reservations')}
                     {/*front office*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Front office')}
+                    {screenListItem(HOME_SCREEN, 'Front office')}
                 </View>
 
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Property Management"}/></Text>
-                    {screenListItem(NavigateTo(navigation).hostDashboard, 'Dashboard')}
-                    {screenListItem(NavigateTo(navigation).hostOnboarding, 'Onboarding')}
-                    {screenListItem(NavigateTo(navigation).hostListings, 'Listings')}
-                    {screenListItem(NavigateTo(navigation).hostCalendar, 'Calendar')}
+                    {screenListItem(HOST_DASHBOARD_SCREEN, 'Dashboard')}
+                    {screenListItem(HOST_ONBOARDING_SCREEN, 'Onboarding')}
+                    {screenListItem(HOST_LISTINGS_SCREEN, 'Listings')}
+                    {screenListItem(HOST_CALENDAR_SCREEN, 'Calendar')}
                     {/*housekeeping*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Housekeeping')}
+                    {screenListItem(HOME_SCREEN, 'Housekeeping')}
                     {/*IoT*/}
-                    {screenListItem(NavigateTo(navigation).home, 'IoT')}
+                    {screenListItem(HOME_SCREEN, 'IoT')}
 
                 </View>
 
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Financials & Pricing"}/></Text>
                     {/*revenues*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Revenues')}
+                    {screenListItem(HOME_SCREEN, 'Revenues')}
                     {/*finance*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Finance')}
+                    {screenListItem(HOME_SCREEN, 'Finance')}
                     {/*pricing*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Pricing')}
+                    {screenListItem(HOME_SCREEN, 'Pricing')}
                     {/*reporting*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Reports')}
-                    {screenListItem(NavigateTo(navigation).hostPayments, 'Payments')}
+                    {screenListItem(HOME_SCREEN, 'Reports')}
+                    {screenListItem(HOST_PAYMENTS_SCREEN, 'Payments')}
                 </View>
 
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionTitle}><TranslatedText
                         textToTranslate={"Marketing & Monitoring"}/></Text>
 
-                    {screenListItem(NavigateTo(navigation).hostReviews, 'Reviews')}
+                    {screenListItem(HOST_REVIEWS_SCREEN, 'Reviews')}
                     {/*distributions*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Distributions')}
+                    {screenListItem(HOME_SCREEN, 'Distributions')}
                     {/*monitoring*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Monitoring')}
+                    {screenListItem(HOME_SCREEN, 'Monitoring')}
                     {/*compliance*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Compliance')}
+                    {screenListItem(HOME_SCREEN, 'Compliance')}
                     {/*promo codes*/}
-                    {screenListItem(NavigateTo(navigation).home, 'Promo codes')}
+                    {screenListItem(HOME_SCREEN, 'Promo codes')}
                 </View>
 
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Support"}/></Text>
-                    {screenListItem(NavigateTo(navigation).hostHelpDesk, 'Host helpdesk')}
+                    {screenListItem(HOST_HELP_DESK_SCREEN, 'Helpdesk')}
                     {/*how Domits works*/}
-                    {screenListItem(NavigateTo(navigation).home, 'How Domits works')}
+                    {screenListItem(HOME_SCREEN, 'How Domits works')}
                     {/*feedback*/}
-                    {screenListItem(NavigateTo(navigation).helpAndFeedback, 'Feedback')}
+                    {screenListItem(FEEDBACK_SCREEN, 'Feedback')}
                 </View>
 
                 <View style={styles.sectionContainer}>
-                    {screenListItem(NavigateTo(navigation).hostAccountSettings, 'Settings')}
+                    {screenListItem(HOST_ACCOUNT_SETTINGS_SCREEN, 'Settings')}
                 </View>
             </ScrollView>
         </SafeAreaView>
