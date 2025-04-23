@@ -1,0 +1,12 @@
+@import './contactlist/hostContactList';
+@import './chatscreen/hostChatScreen';
+@import './bookingtab/hostBookingTab';
+
+.host-chat-components {
+    display: flex;
+    flex-direction: row;
+
+    .host-chat-side {
+        margin-right: 5em;
+    }
+}
