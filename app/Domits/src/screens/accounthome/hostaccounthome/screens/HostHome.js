@@ -34,12 +34,22 @@ const HostHome = ({navigation}) => {
                     </Text>
                 </View>
                 {screenListItem(NavigateTo(navigation).hostDashboard, 'Dashboard')}
-                {screenListItem(NavigateTo(navigation).hostOnboarding, 'Onboarding')}
                 {screenListItem(NavigateTo(navigation).hostCalendar, 'Calendar')}
-                {screenListItem(NavigateTo(navigation).hostPayments, 'Payments')}
-                {screenListItem(NavigateTo(navigation).hostListings, 'Listings')}
-                {screenListItem(NavigateTo(navigation).hostAccountSettings, 'Settings')}
+                {/*pricing*/}
+                {/*reservations*/}
+                {/*messages*/}
+                {/*revenues*/}
                 {screenListItem(NavigateTo(navigation).hostReviews, 'Reviews')}
+                {/*finance*/}
+                {/*pricing*/}
+                {/*reporting*/}
+                {/*housekeeping*/}
+                {/*front office tab*/}
+                {screenListItem(NavigateTo(navigation).hostListings, 'Listings')}
+
+                {screenListItem(NavigateTo(navigation).hostOnboarding, 'Onboarding')}
+                {screenListItem(NavigateTo(navigation).hostPayments, 'Payments')}
+                {screenListItem(NavigateTo(navigation).hostAccountSettings, 'Settings')}
                 {screenListItem(NavigateTo(navigation).hostHelpDesk, 'Helpdesk')}
                 <View style={styles.helpSection}>
                     <Text style={styles.helpText}>
