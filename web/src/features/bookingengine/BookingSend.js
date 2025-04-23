@@ -50,10 +50,7 @@ const BookingSend = () => {
                     status: state,
                     arrivalDate: parseFloat(startDate),
                     departureDate: parseFloat(endDate),
-                },
-                tax: {
-                    tourism: parseFloat(taxes),
-                },
+                }
             }
         };
 
