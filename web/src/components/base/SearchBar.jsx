@@ -10,7 +10,7 @@ import Select from 'react-select';
 import '../../styles/sass/base/SearchBar.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
+export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
@@ -146,7 +146,9 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   }, [location]);
 
   const performSearch = async (accommodation, address, totalGuests) => {
-    setLoading(true);
+    if (setLoading) {
+      setLoading(true);
+    }
     setError('');
 
     const queryParams = new URLSearchParams();
@@ -186,7 +188,9 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
     } catch (error) {
       setError('Er is een fout opgetreden bij het ophalen van de gegevens.');
     } finally {
-      setLoading(false);
+      if (setLoading) {
+        setLoading(false);
+      }
     }
   };
 

@@ -47,7 +47,7 @@
 
 .why-domits__card {
     width: 39.2%;
-    background: var(--primary-color);
+    background: var(--domits-guest-green);
     min-height: 9.3rem;
     border-radius: 10px;
     display: flex;
@@ -65,7 +65,7 @@
 }
 
 .why-domits-bar {
-    background-color: var(--primary-color);
+    background-color: var(--domits-guest-green);
     color: white;
     align-items: center;
     height: 5vh;

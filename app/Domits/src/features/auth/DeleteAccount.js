@@ -1,5 +1,6 @@
 import {Alert} from 'react-native';
 import {deleteUser} from '@aws-amplify/auth';
+import NavigateTo from "../../navigation/NavigationFunctions";
 
 const DeleteAccount = async (userId, navigation) => {
   Alert.alert(
@@ -16,7 +17,7 @@ const DeleteAccount = async (userId, navigation) => {
         onPress: async () => {
           try {
             await deleteUser(userId); // Ensure account deletion completes
-            navigation.navigate('Login'); // Navigate to LoginScreen after success
+            NavigateTo(navigation).login();
           } catch (error) {
             console.error('Failed to delete account:', error);
           }
