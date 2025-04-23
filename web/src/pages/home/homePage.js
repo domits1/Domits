@@ -103,6 +103,9 @@ const Homepage = () => {
         if (data.lastEvaluatedKey) {
           setLastEvaluatedKeyCreatedAt(data.lastEvaluatedKey.createdAt);
           setLastEvaluatedKeyId(data.lastEvaluatedKey.id);
+        } else {
+          setLastEvaluatedKeyCreatedAt(null);
+          setLastEvaluatedKeyId(null)
         }
         setAllAccommodations(data.properties.slice(6, 9));
         setPropertyLoading(false);

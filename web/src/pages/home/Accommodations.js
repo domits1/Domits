@@ -58,6 +58,9 @@ const Accommodations = ({ searchResults }) => {
                 if (result.lastEvaluatedKey) {
                     setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
                     setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
+                } else {
+                    setLastEvaluatedKeyCreatedAt(null);
+                    setLastEvaluatedKeyId(null)
                 }
                 setAccolist(result.properties);
             }
