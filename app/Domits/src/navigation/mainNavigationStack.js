@@ -59,7 +59,7 @@ import {
     PROPERTY_DETAILS_SCREEN,
     SCAN_SCREEN,
     SIMULATE_STRIPE_SCREEN,
-} from './NavigationNameConstants';
+} from './utils/NavigationNameConstants';
 
 const Stack = createNativeStackNavigator();
 

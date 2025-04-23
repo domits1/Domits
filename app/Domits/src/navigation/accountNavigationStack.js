@@ -19,7 +19,7 @@ import {
     HOST_PROFILE_SCREEN,
     LOGIN_SCREEN,
     REGISTER_SCREEN
-} from './NavigationNameConstants';
+} from './utils/NavigationNameConstants';
 
 const Stack = createNativeStackNavigator();
 

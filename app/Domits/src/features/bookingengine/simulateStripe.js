@@ -1,6 +1,6 @@
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import NavigateTo from "../../navigation/NavigationFunctions";
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {PAYMENT_ACCEPTED_SCREEN, PAYMENT_DECLINED_SCREEN} from "../../navigation/utils/NavigationNameConstants";
 
 const SimulateStripe = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
@@ -10,20 +10,20 @@ const SimulateStripe = ({navigation, route}) => {
   const pets = route.params.pets;
   const nights = route.params.nights;
   const handlePaymentAccepted = () => {
-    NavigateTo(navigation, {
+    navigation.navigate(PAYMENT_ACCEPTED_SCREEN, {
       parsedAccommodation: parsedAccommodation,
       calculateCost: calculateCost,
       adults: adults,
       kids: kids,
       pets: pets,
       nights: nights,
-    }).paymentAccepted();
+    });
   };
 
   const handlePaymentDeclined = () => {
-    NavigateTo(navigation, {
+    navigation.navigate(PAYMENT_DECLINED_SCREEN, {
       parsedAccommodation: parsedAccommodation,
-    }).paymentDeclined();
+    });
   };
 
   return (
