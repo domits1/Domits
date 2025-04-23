@@ -204,7 +204,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
     }
   };
 
-  function handleKeyDown(e){
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
     }
@@ -212,19 +212,19 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
 
   useEffect(() => {
     if (selectedDayRange.from && selectedDayRange.to) {
-      const startDate = new Date(
+      const start = new Date(
         selectedDayRange.from.year,
         selectedDayRange.from.month - 1,
         selectedDayRange.from.day
       );
-      const endDate = new Date(
+      const end = new Date(
         selectedDayRange.to.year,
         selectedDayRange.to.month - 1,
         selectedDayRange.to.day
       );
-      setDateRange([startDate, endDate]);
-      setCheckIn(startDate);
-      setCheckOut(endDate);
+      setDateRange([start, end]);
+      setCheckIn(start);
+      setCheckOut(end);
     } else {
       setDateRange([null, null]);
       setCheckIn(null);
@@ -341,9 +341,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                 <input
                   className="input-calendar-checkInOut"
                   type="text"
-                  value={startDate && endDate
-                    ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
-                    : ''}
+                  value={startDate && endDate ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}` : ''}
                   readOnly={true}
                 />
                 {!startDate && !endDate && (
@@ -366,7 +364,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   className="search-icon" />
                 <span className="search-text">Search</span>
               </button>
-
             </div>
             {/* momenteel niet te gebruiken omdat de styling er voor moet aangepast worden */}
             {/* {isBarActive && <FilterButton />} */}
