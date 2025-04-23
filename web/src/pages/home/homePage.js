@@ -641,43 +641,6 @@ const Homepage = () => {
           ))}
         </div>
       </div>
-      {/*
-  <div className="domits-communityContainer">
-    <h2 className="domits-communityHead">Need help? Join the community</h2>
-    <p className="domits-communityGroup">Domits has a travel community for hosts, guests, and employees</p>
-    <div className="domits-communityButtons">
-      <button className="domits-hostButton">
-        <a href="/landing">Become a host</a>
-      </button>
-      <button className="domits-SearchButton">
-        <a href="/home">Search & book</a>
-      </button>
-    </div>
-  </div>
-*/}
-
-      {/*
-  Updated Review Section
-  <div className="review-container">
-    <button className="arrow-button" onClick={handlePreviousReview}>
-      &lt;
-    </button>
-    <div className="review-list">
-      {visibleReviews.map((review, index) => (
-        <div className="review-card" key={index}>
-          <img src={review.img} alt={review.name} className="review-profile-pic" />
-          <h3>{review.name}</h3>
-          <p className="review-location">Host from The Netherlands</p>
-          <div className="review-stars">★★★★★</div>
-          <p className="review-text">{review.text}</p>
-        </div>
-      ))}
-    </div>
-    <button className="arrow-button" onClick={handleNextReview}>
-      &gt;
-    </button>
-  </div>
-*/}
     </>
   );
 };
