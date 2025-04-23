@@ -13,6 +13,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {NativeModules} from 'react-native';
 import React, {useState} from 'react';
 import TranslatedText from './TranslatedText';
+import LoadingScreen from "../../../screens/loadingscreen/screens/LoadingScreen";
 
 const {EncryptedSharedPreferences} = NativeModules;
 
@@ -28,11 +29,7 @@ const SelectLanguagePopup = ({isVisible, setIsVisible}) => {
       visible={isVisible}
       onRequestClose={() => setIsVisible(!isVisible)}>
       {loading ? (
-        <View style={style.overlay}>
-          <View style={style.loaderContainer}>
-            <ActivityIndicator size="large" color="#0000ff" />
-          </View>
-        </View>
+        <LoadingScreen/>
       ) : (
         <Pressable
           style={style.overlay}
