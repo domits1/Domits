@@ -61,7 +61,6 @@ import HouseTypeView from "./features/hostonboarding/views/2_HouseTypeView.js";
 import AddressInputView from "./features/hostonboarding/views/3_AddressInputView.js";
 import PropertyGuestAmountView from "./features/hostonboarding/views/4_PropertyCapacityView";
 import CapacityView from "./features/hostonboarding/views/4_PropertyCapacityView.js";
-import PropertyAmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import PropertyHouseRulesView from "./features/hostonboarding/views/6_PropertyHouseRulesView.js";
 import PhotosView from "./features/hostonboarding/views/7_PropertyPhotosView.js";
 import PropertyTitleView from "./features/hostonboarding/views/8_PropertyTitleView.js";
@@ -96,7 +95,7 @@ import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
-import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView123";
+import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 
 Modal.setAppElement("#root");
 
@@ -181,7 +180,6 @@ function App() {
                 <Route path="/bookingsend" element={<BookingSend />} />
                 <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                 <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
-                <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView />} />
 
                 {/* Chat */}
                 {/*<Route path="/chat" element={<Chat/>}/>*/}
