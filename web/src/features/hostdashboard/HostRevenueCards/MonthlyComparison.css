@@ -6,7 +6,6 @@
     padding: 20px;
 }
 
-/* Monthly Comparison card */
 .mc-comparison-card {
     padding: 20px;
     border: 1px solid #e0e0e0;
@@ -20,7 +19,6 @@
     height: auto;
 }
 
-/* Header styling */
 .mc-card-header {
     font-size: 1.2em;
     font-weight: normal;
@@ -28,7 +26,6 @@
     margin-bottom: 10px;
 }
 
-/* Chart area */
 .mc-chart-container {
     padding: 20px; 
     background-color: #f9f9f9; 

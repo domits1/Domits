@@ -167,15 +167,7 @@ function HostCalendar() {
       <div className={styles.dashboardHost}>
         <Pages />
         {isLoading ? (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "42vh",
-              width: "72.5%",
-            }}
-          >
+          <div className="loading-spinner-calender">
             <img src={spinner} />
           </div>
         ) : accommodations.length < 1 ? (
