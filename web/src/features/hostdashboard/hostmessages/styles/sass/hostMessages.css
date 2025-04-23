@@ -63,28 +63,70 @@
 .contact-list-modal .contact-list-list .contact-item-content.selected {
   background-color: rgb(205, 205, 205);
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-profile-image {
-  width: 2.5rem;
-  height: 2.5rem;
-  margin-right: 1em;
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-image-container {
+  position: relative;
+  width: 35%;
+  margin-right: 0.5rem;
+}
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-image-container .contact-item-profile-image {
+  position: absolute;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   background-color: #e0e0e0;
   flex-shrink: 0;
+  top: -30%;
+  left: -15%;
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-full-name {
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-image-container .contact-item-accommodation-image {
+  display: block;
+  width: 5rem;
+  height: 2.5rem;
+  margin-right: 1em;
+  border-radius: 10%;
+  background-color: #e0e0e0;
+  flex-shrink: 0;
+}
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-image-container.no-accommodation-image {
+  margin-right: 2.75rem;
+}
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-image-container.no-accommodation-image .contact-item-profile-image {
+  position: absolute;
+  width: 2.5rem;
+  height: 2.5rem;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container {
+  height: 100%;
+  width: 100%;
+  padding-right: 1rem;
+}
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container p {
+  margin: 0;
+  padding: 0;
+}
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container .contact-item-full-name {
   font-family: "Kanit", sans-serif;
   font-weight: 400;
   font-size: 1em;
   color: #000;
   padding: 0;
   margin: 0;
+  margin-top: 0.5rem;
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-subtitle {
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container .contact-item-subtitle {
   font-family: "Kanit", sans-serif;
   padding: 0;
   margin: 0;
   font-weight: 400;
   font-size: 0.75em;
+  color: #000;
+}
+.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container .contact-item-subtitle #status {
+  font-weight: 501;
+  font-size: smaller;
   color: #000;
 }
 

@@ -36,7 +36,7 @@
             color: #333;
             cursor: pointer;
             box-shadow: -2px 3px 5px rgba(0, 0, 0, 0.1);
-            box-sizing: border-box; // 👈 prevents border from affecting size
+            box-sizing: border-box;
             transition: border-color 0.2s ease;
 
             &:focus {
@@ -77,32 +77,81 @@
 
             }
 
-            .contact-item-profile-image {
-                width: 2.5rem;
-                height: 2.5rem;
-                margin-right: 1em;
-                border-radius: 50%;
-                background-color: #e0e0e0;
-                flex-shrink: 0;
+            .contact-item-image-container {
+                position: relative;
+                width: 35%;
+                margin-right: 0.5rem;
+
+                .contact-item-profile-image {
+                    position: absolute;
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 50%;
+                    background-color: #e0e0e0;
+                    flex-shrink: 0;
+                    top: -30%;
+                    left: -15%;
+                }
+
+                .contact-item-accommodation-image {
+                    display: block;
+                    width: 5rem;
+                    height: 2.5rem;
+                    margin-right: 1em;
+                    border-radius: 10%;
+                    background-color: #e0e0e0;
+                    flex-shrink: 0;
+                }
+
+                &.no-accommodation-image {
+                    margin-right: 2.75rem;
+                    .contact-item-profile-image {
+                        position: absolute;
+                        width: 2.5rem;
+                        height: 2.5rem;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                    }
+                }
             }
 
-            .contact-item-full-name {
-                font-family: 'Kanit', sans-serif;
-                font-weight: 400;
-                font-size: 1em;
-                color: #000;
-                padding: 0;
-                margin: 0;
+            .contact-item-text-container {
+                height: 100%;
+                width: 100%;
+                padding-right: 1rem;
+                p {
+                    margin: 0;
+                    padding: 0;
+                }
+                
+                .contact-item-full-name {
+                    font-family: 'Kanit', sans-serif;
+                    font-weight: 400;
+                    font-size: 1em;
+                    color: #000;
+                    padding: 0;
+                    margin: 0;
+                    margin-top: 0.5rem;
+
+                }
+
+                .contact-item-subtitle {
+                    font-family: 'Kanit', sans-serif;
+                    padding: 0;
+                    margin: 0;
+                    font-weight: 400;
+                    font-size: 0.75em;
+                    color: #000;
+
+                    #status {
+                        font-weight: 501;
+                        font-size: smaller;
+                        color: #000;
+                    }
+                }
             }
 
-            .contact-item-subtitle {
-                font-family: 'Kanit', sans-serif;
-                padding: 0;
-                margin: 0;
-                font-weight: 400;
-                font-size: 0.75em;
-                color: #000;
-            }
 
         }
 
