@@ -25,6 +25,7 @@ const BookingOverview = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userData, setUserData] = useState({ username: "", email: "", phone_number: "" });
     const [cognitoUserId, setCognitoUserId] = useState(null);
+    const [cognitoUserEmail, setCognitoUserEmail] = useState(null);
     const [ownerStripeId, setOwnerStripeId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -47,7 +48,8 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('guests'), 10);
     const amountOfGuest = searchParams.get('guests');
     const kids = parseInt(searchParams.get('kids'), 10); 
-    const pets = searchParams.get('pets'); 
+    const pets = searchParams.get('pets');
+    const hostEmail = searchParams.get("hostEmail");
 
     const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/"
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
@@ -103,6 +105,7 @@ const BookingOverview = () => {
                     phone_number: userAttributes['phone_number'],
                 });
                 setCognitoUserId(userAttributes.sub);
+                setCognitoUserEmail(userAttributes['email']);
             } catch (error) {
                 setIsLoggedIn(false);
                 console.error('Error logging in:', error);
@@ -163,6 +166,7 @@ const BookingOverview = () => {
 
         const paymentID = generateUUID();
         const userId = cognitoUserId;
+        const userEmail = cognitoUserEmail;
         const accommodationTitle = accommodation.property.title;
         const accommodationId = id;
         const ownerId = accommodation.property.hostId;
@@ -175,6 +179,7 @@ const BookingOverview = () => {
             paymentID,
             accommodationTitle,
             userId,
+            userEmail,
             accommodationId,
             ownerId,
             State: "Accepted",
@@ -184,7 +189,8 @@ const BookingOverview = () => {
             cleaningFee,
             amountOfGuest,
             taxes,
-            ServiceFee
+            ServiceFee,
+            hostEmail
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
