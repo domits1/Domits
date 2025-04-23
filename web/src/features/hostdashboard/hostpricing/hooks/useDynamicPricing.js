@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import * as tf from '@tensorflow/tfjs';
 
 function seededRandom(seed) {
-  var x = Math.sin(seed) * 10000;
+  let x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
 

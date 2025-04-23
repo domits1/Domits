@@ -51,7 +51,7 @@
     gap: 20px;
 }
 
-.alos-details p2 {
+.alos-details p {
     margin: 20px 10px;
     font-size: 120px;
     font-weight: normal;
@@ -99,7 +99,7 @@
         margin: 10px 0;
     }
     
-    .alos-details p2 {
+    .alos-details p {
         font-size: 90px;
     }
 }
