@@ -173,20 +173,18 @@ function App() {
                   <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
                   <Route path="/how-it-works" element={<Howitworks />} />
                   <Route path="/why-domits" element={<Whydomits />} />
-                  <Route path="/security" element={<Security />} />
-                  <Route path="/performance" element={<Performance />} />
                   <Route path="/contact" element={<Contact />} />
-                  <Route path="/travelinnovationlab" element={<Travelinnovation />} />
+                  <Route path="/travelinnovation" element={<Travelinnovation />} />
                   <Route path="/release" element={<ReleaseUpdates />} />
                   <Route path="/landing" element={<Landing />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/listingdetails" element={<ListingDetails2 />} />
                   <Route path="/bookingoverview" element={<BookingOverview />} />
-                  <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                  <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
+                  <Route path="/bookingsend" element={<BookingSend />} />
+                  <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                   <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
-                  <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView />} />
+
                   {/* Chat */}
                   {/*<Route path="/chat" element={<Chat/>}/>*/}
                   <Route path="/employeechat" element={<EmployeeChat />} />
@@ -274,41 +272,52 @@ function App() {
                   <Route path="/*" element={<PageNotFound />} />
 
                   {/* Host Onboarding v3 */}
-                  <Route path="/hostonboarding" element={<AccommodationTypeView />} />
                   <Route
-                    path="/hostonboarding/accommodation"
+                    path="/hostonboarding/*"
                     element={
-                      <StepGuard step="type">
-                        <HouseTypeView />
-                      </StepGuard>
+                      <BuilderProvider>
+                        <Routes>
+                          <Route path="" element={<AccommodationTypeView />} />
+                          <Route
+                            path="accommodation"
+                            element={
+                              <StepGuard step="type">
+                                <HouseTypeView />
+                              </StepGuard>
+                            }
+                          />
+                          <Route
+                            path="boat"
+                            element={
+                              <StepGuard step="type">
+                                <BoatTypeView />
+                              </StepGuard>
+                            }
+                          />
+                          <Route
+                            path="camper"
+                            element={
+                              <StepGuard step="type">
+                                <CamperTypeView />
+                              </StepGuard>
+                            }
+                          />
+                          <Route path=":type/address" element={<AddressInputView />} />
+                          <Route path=":type/capacity" element={<CapacityView />} />
+                          <Route path=":type/capacity" element={<PropertyGuestAmountView />} />
+                          <Route path=":type/amenities" element={<AmenitiesView />} />
+                          <Route path=":type/rules" element={<PropertyHouseRulesView />} />
+                          <Route path=":type/photos" element={<PhotosView />} />
+                          <Route path=":type/title" element={<PropertyTitleView />} />
+                          <Route path=":type/description" element={<PropertyDescriptionView />} />
+                          <Route path=":type/pricing" element={<PropertyRateView />} />
+                          <Route path=":type/availability" element={<PropertyAvailabilityView />} />
+                          <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
+                          <Route path="summary" element={<SummaryViewAndSubmit />} />
+                        </Routes>
+                      </BuilderProvider>
                     }
                   />
-                  <Route
-                    path="/hostonboarding/boat"
-                    element={
-                      <StepGuard step="type">
-                        <BoatTypeView />
-                      </StepGuard>
-                    }
-                  />
-                  <Route
-                    path="/hostonboarding/camper"
-                    element={
-                      <StepGuard step="type">
-                        <CamperTypeView />
-                      </StepGuard>
-                    }
-                  />
-                  <Route path="/hostonboarding/:type/address" element={<AddressInputView />} />
-                  <Route path="/hostonboarding/:type/capacity" element={<CapacityView />} />
-                  <Route path="/hostonboarding/:type/rules" element={<PropertyHouseRulesView />} />
-                  <Route path="/hostonboarding/:type/photos" element={<PhotosView />} />
-                  <Route path="/hostonboarding/:type/title" element={<PropertyTitleView />} />
-                  <Route path="/hostonboarding/:type/description" element={<PropertyDescriptionView />} />
-                  <Route path="/hostonboarding/:type/pricing" element={<PropertyRateView />} />
-                  <Route path="/hostonboarding/:type/availability" element={<PropertyAvailabilityView />} />
-                  <Route path="/hostonboarding/legal/registrationnumber" element={<RegistrationNumberView />} />
-                  <Route path="/hostonboarding/summary" element={<SummaryViewAndSubmit />} />
                   <Route path="/*" element={<Home />} />
                 </Routes>
                 {renderFooter()}
