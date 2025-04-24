@@ -3,8 +3,8 @@ import {ScrollView, StyleSheet, Text, TouchableOpacity,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../context/AuthContext';
-import NavigateTo from "../../navigation/NavigationFunctions";
 import {deleteAccount} from "../profile/utils/ProfileFunctions";
+import {CHANGE_ACCOUNT_SETTINGS_SCREEN, FEEDBACK_SCREEN} from "../../navigation/utils/NavigationNameConstants";
 
 const GuestSettingsTab = (navigation) => {
   const {userAttributes} = useAuth();
@@ -53,13 +53,13 @@ const GuestSettingsTab = (navigation) => {
         {/*</View>*/}
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => NavigateTo(navigation).changeAccountSettings() }>
+          onPress={() => navigation.navigate(CHANGE_ACCOUNT_SETTINGS_SCREEN) }>
           <Text style={styles.listItemText}>Change email/name</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => NavigateTo(navigation).helpAndFeedback() }>
+          onPress={() => navigation.navigate(FEEDBACK_SCREEN) }>
           <Text style={styles.listItemText}>Help & Feedback</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>

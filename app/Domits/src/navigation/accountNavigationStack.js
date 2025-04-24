@@ -9,6 +9,17 @@ import React from "react";
 import emailSettings from "../screens/profile/hostprofile/emailSettings";
 import settings from "../screens/guestdashboard/GuestSettingsTab";
 import HostSettings from "../screens/profile/hostprofile/screens/HostSettingsTab";
+import {
+    ACCOUNT_SCREEN,
+    CHANGE_ACCOUNT_SETTINGS_SCREEN,
+    CONFIRM_EMAIL_SCREEN,
+    GUEST_ACCOUNT_SETTINGS_SCREEN,
+    GUEST_PROFILE_SCREEN,
+    HOST_ACCOUNT_SETTINGS_SCREEN,
+    HOST_PROFILE_SCREEN,
+    LOGIN_SCREEN,
+    REGISTER_SCREEN
+} from './utils/NavigationNameConstants';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,21 +28,21 @@ function AccountNavigationStack() {
         <Stack.Navigator
             screenOptions={{headerShown: false,}}>
             {/* Account */}
-            <Stack.Screen name={"login"} component={LoginScreen}/>
-            <Stack.Screen name={"register"} component={Register}/>
-            <Stack.Screen name={"account"} component={Account}/>
+            <Stack.Screen name={LOGIN_SCREEN} component={LoginScreen}/>
+            <Stack.Screen name={REGISTER_SCREEN} component={Register}/>
+            <Stack.Screen name={ACCOUNT_SCREEN} component={Account}/>
 
-            {/* Account settings*/}
-            <Stack.Screen name="host-account-settings" component={HostSettings}/>
-            <Stack.Screen name={"guest-account-settings"} component={settings}/>
-            <Stack.Screen name={"change-account-settings"} component={emailSettings}/>
-            <Stack.Screen name={"confirm-email"} component={ConfirmEmail}/>
+            {/* Account Settings */}
+            <Stack.Screen name={HOST_ACCOUNT_SETTINGS_SCREEN} component={HostSettings}/>
+            <Stack.Screen name={GUEST_ACCOUNT_SETTINGS_SCREEN} component={settings}/>
+            <Stack.Screen name={CHANGE_ACCOUNT_SETTINGS_SCREEN} component={emailSettings}/>
+            <Stack.Screen name={CONFIRM_EMAIL_SCREEN} component={ConfirmEmail}/>
 
             {/* Host */}
-            <Stack.Screen name={"host-profile"} component={HostProfileTab}/>
+            <Stack.Screen name={HOST_PROFILE_SCREEN} component={HostProfileTab}/>
 
             {/* Guest */}
-            <Stack.Screen name={"guest-profile"} component={GuestProfileTab}/>
+            <Stack.Screen name={GUEST_PROFILE_SCREEN} component={GuestProfileTab}/>
         </Stack.Navigator>
     );
 }
