@@ -1,19 +1,16 @@
-import React, {useState, useEffect} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Button} from '@aws-amplify/ui-react-native/src/primitives';
 import {useAuth} from '../../../context/AuthContext';
 import {useNavigation} from '@react-navigation/native';
 import ImageSlider from '../../../screens/utils/ImageSlider';
 import DateFormatterDD_MM_YYYY from "../../../screens/utils/DateFormatterDD_MM_YYYY";
-import NavigateTo from "../../../navigation/NavigationFunctions";
+import {
+  HOST_LISTINGS_SCREEN,
+  HOST_ONBOARDING_SCREEN,
+  PROPERTY_DETAILS_SCREEN
+} from "../../../navigation/utils/NavigationNameConstants";
 
 const HostDashboardTab = () => {
   const {userAttributes} = useAuth();
@@ -66,12 +63,12 @@ const HostDashboardTab = () => {
 
         <View style={styles.rowContainer}>
           <Button
-            onPress={() => NavigateTo(navigation).hostListings() }
+            onPress={() => navigation.navigate(HOST_LISTINGS_SCREEN) }
             style={styles.sectionButton}>
             <Text style={styles.infoText}>Go to listing</Text>
           </Button>
           <Button
-            onPress={() => NavigateTo(navigation).hostOnboarding() }
+            onPress={() => navigation.navigate(HOST_ONBOARDING_SCREEN) }
             style={styles.sectionButton}>
             <Text style={styles.infoText}>Add accommodation</Text>
           </Button>
@@ -96,7 +93,7 @@ const HostDashboardTab = () => {
                 style={styles.dashboardCard}
                 onPress={() =>
                   !accommodation.Drafted
-                    ? NavigateTo(navigation, {accommodationId: accommodation.ID}).propertyDetails()
+                    ? navigation.navigate(PROPERTY_DETAILS_SCREEN, {accommodationId: accommodation.ID})
                     : Alert.alert(
                         'Alert',
                         'This accommodation is drafted and cannot be viewed in listing details!',

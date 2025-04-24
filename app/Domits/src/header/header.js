@@ -5,7 +5,7 @@ import {useAuth} from '../context/AuthContext';
 import TranslatedText from '../features/translation/components/TranslatedText';
 import SelectLanguagePopup from '../features/translation/components/SelectLanguagePopup';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import NavigateTo from "../navigation/NavigationFunctions";
+import {GUEST_BOOKINGS_SCREEN} from "../navigation/utils/NavigationNameConstants";
 
 function Header() {
   const navigation = useNavigation();
@@ -14,7 +14,7 @@ function Header() {
   const [isLanguagePopupOpen, setIsLanguagePopupOpen] = useState(false);
 
   const handleBookingsPress = () => {
-    NavigateTo(navigation).guestBookings();
+    navigation.navigate(GUEST_BOOKINGS_SCREEN);
   };
 
   if (isAuthenticated) {
@@ -22,15 +22,6 @@ function Header() {
       <View style={styles.headerContainer}>
         <View style={styles.contentContainer}>
           <View style={styles.squareContainer}>
-
-            <TouchableOpacity
-                onPress={() => NavigateTo(navigation).guestDashboard()}
-                style={styles.itemContainer}>
-              <MaterialIcons name={'mail'} size={45} color={'black'} />
-              <Text style={styles.itemText}>
-                profile
-              </Text>
-            </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleBookingsPress}

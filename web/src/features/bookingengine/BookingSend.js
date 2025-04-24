@@ -1,8 +1,10 @@
+import {     } from "lodash";
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import { getAccessToken } from "../../services/getAccessToken";
 
-const PaymentConfirm = () => {
+const BookingSend = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [accommodationTitle, setAccommodationTitle] = useState("");
@@ -11,12 +13,14 @@ const PaymentConfirm = () => {
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
 
+        // The following values are currently not used for the payload: ownerId, price, cleaningFee,ServiceFee and
+        // accommodationTitle. These will likely be removed but for now left incase needed for other operations.
         const paymentID = queryParams.get("paymentID") || uuidv4(); 
         const userId = queryParams.get("userId");
         const accommodationId = queryParams.get("accommodationId");
         const rawAccommodationTitle = queryParams.get("accommodationTitle");
         const ownerId = queryParams.get("ownerId");
-        const State = queryParams.get("State");
+        const state = queryParams.get("State");
         const price = queryParams.get("price");
         const startDate = queryParams.get("startDate");
         const endDate = queryParams.get("endDate");
@@ -25,7 +29,7 @@ const PaymentConfirm = () => {
         const taxes = queryParams.get("taxes");
         const ServiceFee = queryParams.get("ServiceFee");
 
-        if (!userId || !accommodationId || !ownerId || !State || !price) {
+        if (!userId || !accommodationId || !ownerId || !state || !price) {
             console.error("❌ Missing required booking fields!");
             setError("Missing required booking details.");
             return;
@@ -33,38 +37,42 @@ const PaymentConfirm = () => {
 
         const decodedAccommodationTitle = rawAccommodationTitle ? decodeURIComponent(rawAccommodationTitle) : "Unknown";
         setAccommodationTitle(decodedAccommodationTitle);
-
         const payload = {
-            ID: paymentID,  
-            paymentID, 
-            userId,
-            accommodationId,
-            accommodationTitle: decodedAccommodationTitle,
-            ownerId,
-            State,
-            price,
-            startDate,
-            endDate,
-            cleaningFee,
-            amountOfGuest,
-            taxes,
-            ServiceFee
+            headers: {
+                Authorization: getAccessToken()
+            },
+            body: {
+                identifiers: {
+                    property_Id: accommodationId,
+                    guest_Id: userId,
+                    payment_Id: paymentID,
+                },
+                general: {
+                    guests: parseFloat(amountOfGuest),
+                    latePayment: false,
+                    status: state,
+                    arrivalDate: parseFloat(startDate),
+                    departureDate: parseFloat(endDate),
+                },
+                tax: {
+                    tourism: parseFloat(taxes),
+                },
+            }
         };
 
         const storeBooking = async () => {
             try {
                 const response = await fetch(
-                    "https://enpt37588f.execute-api.eu-north-1.amazonaws.com/default/store-booking",
+                    "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings",
                     {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload),
                     }
                 );
 
 
                 if (response.ok) {
-                    navigate(`/paymentconfirmpage?paymentID=${paymentID}`);
+                    navigate(`/bookingconfirmationoverview?paymentID=${paymentID}`);
                 } else {
                     const errorMessage = await response.text();
                     console.error("Failed to store booking:", errorMessage);
@@ -83,8 +91,9 @@ const PaymentConfirm = () => {
         <div>
             <h1>Processing Payment...</h1>
             {error && <p style={{ color: "red" }}>{error}</p>}
+            <p></p>
         </div>
     );
 };
 
-export default PaymentConfirm;
+export default BookingSend;
