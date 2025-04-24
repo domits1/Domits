@@ -187,7 +187,6 @@ function App() {
                   <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
                   <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
                   <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView />} />
-
                   {/* Chat */}
                   {/*<Route path="/chat" element={<Chat/>}/>*/}
                   <Route path="/employeechat" element={<EmployeeChat />} />
