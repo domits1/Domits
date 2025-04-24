@@ -7,6 +7,7 @@ import MainNavigationStack from './mainNavigationStack';
 import AccountNavigationStack from './accountNavigationStack';
 import {useAuth} from '../context/AuthContext';
 import {styles} from './styles/BottomTabNavigatorStyles';
+import { backgroundColor } from "react-native-calendars/src/style";
 
 const Tab = createBottomTabNavigator();
 
@@ -40,9 +41,21 @@ function BottomTabNavigator() {
               <MaterialIcons
                 name={iconName}
                 size={30}
-                color={focused ? styles.navItemFocusedColor.color : styles.navItemDefaultColor.color}
+                color={
+                  focused
+                    ? styles.navItemFocusedColor.color
+                    : styles.navItemDefaultColor.color
+                }
               />
-              <Text style={[styles.navigationItemText, {color: focused ? styles.navItemFocusedColor.color : styles.navItemDefaultColor.color}]}>
+              <Text
+                style={[
+                  styles.navigationItemText,
+                  {
+                    color: focused
+                      ? styles.navItemFocusedColor.color
+                      : styles.navItemDefaultColor.color,
+                  },
+                ]}>
                 {route.name}
               </Text>
             </View>
@@ -61,7 +74,7 @@ function BottomTabNavigator() {
           name="Messages"
           component={MessagesStackNavigator}
           options={{
-          headerShown: false,
+            headerShown: false,
           }}
         />
       )}

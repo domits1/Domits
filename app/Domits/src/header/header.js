@@ -16,11 +16,11 @@ function Header() {
     navigation.navigate('Bookings');
   };
 
-  if (isAuthenticated) {
-    return (
-      <View style={styles.headerContainer}>
-        <View style={styles.contentContainer}>
-          <View style={styles.squareContainer}>
+  return (
+    <View style={styles.headerContainer}>
+      <View style={styles.contentContainer}>
+        <View style={styles.squareContainer}>
+          {isAuthenticated && (
             <TouchableOpacity
               onPress={handleBookingsPress}
               style={styles.itemContainer}>
@@ -31,24 +31,24 @@ function Header() {
                 <TranslatedText textToTranslate={'bookings'} />
               </Text>
             </TouchableOpacity>
+          )}
 
-            <TouchableOpacity
-              onPress={() => setIsLanguagePopupOpen(true)}
-              style={styles.itemContainer}>
-              <MaterialIcons name={'language'} size={45} color={'black'} />
-              <Text style={styles.itemText}>
-                <TranslatedText textToTranslate={'language'} />
-              </Text>
-            </TouchableOpacity>
-            <SelectLanguagePopup
-              isVisible={isLanguagePopupOpen}
-              setIsVisible={setIsLanguagePopupOpen}
-            />
-          </View>
+          <TouchableOpacity
+            onPress={() => setIsLanguagePopupOpen(true)}
+            style={styles.itemContainer}>
+            <MaterialIcons name={'language'} size={45} color={'black'} />
+            <Text style={styles.itemText}>
+              <TranslatedText textToTranslate={'language'} />
+            </Text>
+          </TouchableOpacity>
+          <SelectLanguagePopup
+            isVisible={isLanguagePopupOpen}
+            setIsVisible={setIsLanguagePopupOpen}
+          />
         </View>
       </View>
-    );
-  }
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
