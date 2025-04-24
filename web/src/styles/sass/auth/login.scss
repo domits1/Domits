@@ -1,110 +1,142 @@
-$primary-color: var(--domits-guest-green);
-$secondary-color: var(--domits-host-blue);
-$hover-primary: #6fb873;
-$hover-secondary: #4a86c3;
-$font-family: 'Kanit', sans-serif;
-$font-size-large: 30px;
-$font-size-medium: 18px;
-$font-size-small: 14px;
+// Variables
+$guest-green: var(--primary-color);
+$host-blue: var(--secondary-color);
+$hover-green: #6fb873;
+$hover-blue: #4a86c3;
+$text-color: black;
+$font-main: 'Kanit', sans-serif;
+$input-padding: 8px 15px;
 $border-radius: 5px;
+$button-font-size: 18px;
+$title-font-size: 30px;
+$no-account-font-size: 14px;
 
-.loginLogo {
-  width: 15%;
-  margin-top: 25px;
-}
-
-.loginButton {
-  width: 100%;
-  padding: 8px 15px;
-  background: $primary-color;
-  border-radius: $border-radius;
-  border: none;
-  box-shadow: none;
-  color: white;
-  font-size: $font-size-medium;
-  cursor: pointer;
-  margin-top: 15px;
-
-  &:hover {
-    background: $hover-primary;
-  }
-}
-
-.registerButtonLogin {
-  width: 100%;
-  padding: 8px 15px;
-  background: $secondary-color;
-  box-shadow: none;
-  border-radius: $border-radius;
-  border: none;
-  color: white;
-  font-size: $font-size-medium;
-  display: block;
-  text-align: center;
-  text-decoration: none;
-  cursor: pointer;
-  margin-top: 15px;
-
-  &:hover {
-    background: $hover-secondary;
-  }
-}
-
-.loginTitle {
-  color: black;
-  font-size: $font-size-large;
-  font-family: $font-family;
-  font-weight: 400;
-  line-height: 54px;
-  word-wrap: break-word;
-  margin-top: 40px;
-}
-
+// Nesting Styles
 .loginContainer {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-}
 
-.loginForm {
-  min-width: 373px;
-  width: 100%;
-  padding: 15px 30px;
-  border-radius: $border-radius;
-  margin-bottom: 50px;
-  box-sizing: border-box;
-
-  label {
-    font-size: $font-size-medium;
+  .loginLogo {
+    width: 15%;
+    margin-top: 25px;
   }
 
-}
+  .loginTitle {
+    color: $text-color;
+    font-size: $title-font-size;
+    font-family: $font-main;
+    font-weight: 400;
+    line-height: 54px;
+    word-wrap: break-word;
+    margin-top: 40px;
+  }
 
-.loginInput {
-  width: 100%;
-  height: auto;
-  padding: 8px 15px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  background: white;
-  border-radius: $border-radius;
-  border: 1px solid $primary-color;
-  justify-content: flex-start;
-  align-items: center;
-  display: inline-flex;
+  .loginForm {
+    min-width: 373px;
+    width: 100%;
+    padding: 15px 30px;
+    border-radius: $border-radius;
+    margin-bottom: 50px;
+    box-sizing: border-box;
 
-  &.passwordContainer {
-    position: relative;
+    label {
+      font-size: $button-font-size;
+    }
 
-    .togglePasswordButton {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
+    .loginInput {
+      width: 100%;
+      height: auto;
+      padding: $input-padding;
+      margin: 10px 0;
+      background: white;
+      border-radius: $border-radius;
+      border: 1px solid black;
+      display: inline-flex;
+      justify-content: flex-start;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    .passwordContainer {
+      position: relative;
+
+      .togglePasswordButton {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
+    }
+
+    .loginButton {
+      width: 100%;
+      padding: $input-padding;
+      background: $guest-green;
+      border-radius: $border-radius;
       border: none;
+      box-shadow: none;
+      color: white;
+      font-size: $button-font-size;
       cursor: pointer;
+      margin-top: 15px;
+
+      &:hover {
+        background: $hover-green;
+      }
+    }
+
+    .registerButtonLogin {
+      width: 100%;
+      padding: $input-padding;
+      background: $host-blue;
+      border-radius: $border-radius;
+      border: none;
+      box-shadow: none;
+      color: white;
+      font-size: $button-font-size;
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      margin-top: 15px;
+
+      &:hover {
+        background: $hover-blue;
+      }
+    }
+
+    .errorText {
+      margin: 10px 0;
+      padding: $input-padding;
+      text-align: center;
+      border: 1px solid darkred;
+      background: red;
+      opacity: 0.7;
+      color: white;
+      border-radius: $border-radius;
+    }
+
+    .forgotPasswordText {
+      &:hover {
+        color: royalblue;
+        cursor: pointer;
+      }
+    }
+
+    .noAccountText {
+      color: $text-color;
+      margin-top: 20px;
+      font-size: $no-account-font-size;
+      font-family: $font-main;
+      font-weight: 400;
+      line-height: 18px;
+      word-wrap: break-word;
+      align-self: flex-start;
     }
   }
 }
@@ -112,34 +144,4 @@ $border-radius: 5px;
 .emailSection {
   padding: 6rem;
   margin-bottom: 15%;
-}
-
-.forgotPasswordText {
-  &:hover {
-    color: royalblue;
-    cursor: pointer;
-  }
-}
-
-.noAccountText {
-  color: black;
-  margin-top: 20px;
-  font-size: $font-size-small;
-  font-family: $font-family;
-  font-weight: 400;
-  line-height: 18px;
-  word-wrap: break-word;
-  align-self: flex-start;
-}
-
-.errorText {
-  margin-top: 10px;
-  margin-bottom: 10px;
-  padding: 8px 15px;
-  text-align: center;
-  border: 1px solid darkred;
-  background: red;
-  opacity: 0.7;
-  color: white;
-  border-radius: $border-radius;
 }

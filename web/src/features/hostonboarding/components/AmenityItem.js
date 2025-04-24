@@ -1,15 +1,15 @@
 import React from "react";
 
-function AmenityItem({ category, amenity, checked, onChange }) {
+function AmenityItem({ amenity, checked, onChange }) {
   return (
     <label>
       <input
         type="checkbox"
-        name={amenity}
+        name={amenity.amenity}
         checked={checked}
-        onChange={(e) => onChange(category, amenity, e.target.checked)}
+        onChange={(e) => onChange(amenity)}
       />
-      {amenity}
+      {amenity.amenity}
     </label>
   );
 }
