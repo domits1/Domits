@@ -3,6 +3,7 @@ import { getAccessToken } from "../utils/authUtils";
 import "../../guestdashboard/styles/GuestWishlistPage.scss";
 import GuestSelector from "../../guestdashboard/components/GuestSelector";
 import GuestActions from "../../guestdashboard/components/GuestActions";
+import FavoriteIcon from "@mui/icons-material/Favorite"; // ❤️ icon
 
 const GuestWishlistPage = () => {
   const [wishlist, setWishlist] = useState([]);
@@ -46,12 +47,40 @@ const GuestWishlistPage = () => {
     fetchWishlist();
   }, []);
 
+  //  Remove accommodation from wishlist
+  const handleUnlike = async (e, accommodationId) => {
+    e.stopPropagation();
+
+    const token = getAccessToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
+        method: "DELETE",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ accommodationId }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to remove from wishlist");
+      }
+
+      // Update UI after removal
+      setWishlist((prev) => prev.filter((item) => item.property.id !== accommodationId));
+    } catch (err) {
+      console.error(" Error removing from wishlist:", err.message);
+    }
+  };
+
   if (loading) return <p>Loading your wishlist...</p>;
   if (wishlist.length === 0) return <p>You have not saved any favorites yet.</p>;
 
   return (
     <div className="pageContainer">
-      {/* 🚀 Top bar layout zoals Booking.com */}
+     
       <div className="wishlistTopBar">
         <div className="wishlistActionsRow">
           <GuestActions
@@ -62,7 +91,7 @@ const GuestWishlistPage = () => {
           />
         </div>
 
-        {/* ✅ Nieuwe wishlistHeader met wishlistSubRow */}
+        {/* Header with wishlist count and selector */}
         <div className="wishlistHeader">
           <h2>My Wishlist</h2>
           <div className="wishlistSubRow">
@@ -72,7 +101,7 @@ const GuestWishlistPage = () => {
         </div>
       </div>
 
-      {/* 🏡 Wishlist Cards */}
+      {/*  Wishlist Cards */}
       <div className="cardList">
         {wishlist.map((item) => {
           const { property, propertyImages, propertyGeneralDetails, propertyPricing } = item;
@@ -85,6 +114,12 @@ const GuestWishlistPage = () => {
           return (
             <div key={property.id} className="card">
               <img src={imageUrl} alt={property.title} className="cardImage" />
+
+              {/* ❤️ Unlike button */}
+              <button className="cardLikeButton" onClick={(e) => handleUnlike(e, property.id)}>
+                <FavoriteIcon sx={{ color: "#ec5050" }} />
+              </button>
+
               <div className="cardContent">
                 <h3>{property.title}</h3>
                 <p className="cardSubtitle">{property.subtitle}</p>
