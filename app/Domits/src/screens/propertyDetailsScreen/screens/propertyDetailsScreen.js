@@ -13,9 +13,10 @@ import PropertyImagesView from "../views/PropertyImagesView";
 import LoadingScreen from "../../loadingscreen/screens/LoadingScreen";
 import PropertyMainDetailsView from "../views/PropertyMainDetailsView";
 import HostSectionView from "../../hostdashboard/components/HostSectionView";
+import {BOOKING_PROCESS_SCREEN, HOME_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 
 const PropertyDetailsScreen = ({route, navigation}) => {
-    const accommodationId = route.params.accommodation.id;
+    const accommodationId = route.params.accommodationId;
     const [parsedAccommodation, setParsedAccommodation] = useState({});
     const [loading, setLoading] = useState(true);
     const [images, setImages] = useState([]);
@@ -63,7 +64,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
     }, [amountOfNights, parsedAccommodation]);
 
     const handleHomeScreenPress = () => {
-        navigation.navigate('HomeScreen');
+        navigation.navigate(HOME_SCREEN);
     };
 
     const handleFirstDateSelected = (date) => {
@@ -78,12 +79,10 @@ const PropertyDetailsScreen = ({route, navigation}) => {
         if (!firstSelectedDate || !lastSelectedDate) {
             ToastAndroid.show("Please select a start and end date", ToastAndroid.SHORT)
         } else {
-            navigation.navigate('BookingProcess', {
-                firstSelectedDate,
+            navigation.navigate(BOOKING_PROCESS_SCREEN, {firstSelectedDate,
                 lastSelectedDate,
                 parsedAccommodation,
-                images,
-            });
+                images,})
         }
     };
 

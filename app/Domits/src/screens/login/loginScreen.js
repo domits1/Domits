@@ -1,19 +1,12 @@
 import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import {SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,} from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {signIn} from '@aws-amplify/auth'; // Correct import for Amplify Auth
 import {useAuth} from '../../context/AuthContext'; // Ensure the path is correct
 import 'react-native-get-random-values';
 import {Label} from '@aws-amplify/ui-react-native/src/primitives';
+import LoadingScreen from "../loadingscreen/screens/LoadingScreen";
+import {ACCOUNT_SCREEN, HOME_SCREEN, REGISTER_SCREEN} from "../../navigation/utils/NavigationNameConstants";
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -26,7 +19,7 @@ const LoginScreen = () => {
     React.useCallback(() => {
       setLoading(true);
       if (isAuthenticated) {
-        navigation.navigate('AccountScreen');
+        navigation.navigate(ACCOUNT_SCREEN);
       } else {
         setLoading(false);
       }
@@ -45,9 +38,8 @@ const LoginScreen = () => {
     try {
       await signIn({username: email, password}); // Ensure the correct parameters
       checkAuth(); // Update the global auth state
-      navigation.navigate('HomeScreen');
+      navigation.navigate(HOME_SCREEN)
     } catch (error) {
-      // console.error('Error logging in:', error);
       setErrorMessage('Invalid username or password. Please try again.');
     }
   };
@@ -58,9 +50,7 @@ const LoginScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
+      <LoadingScreen/>
     );
   } else {
     return (
@@ -121,7 +111,7 @@ const LoginScreen = () => {
             <TouchableOpacity
               style={styles.registerButton}
               onPress={() => {
-                navigation.navigate('Register');
+                navigation.navigate(REGISTER_SCREEN);
               }}>
               <Text style={styles.registerButtonText}>Register</Text>
             </TouchableOpacity>

@@ -5,6 +5,7 @@ import {useAuth} from '../context/AuthContext';
 import TranslatedText from '../features/translation/components/TranslatedText';
 import SelectLanguagePopup from '../features/translation/components/SelectLanguagePopup';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {GUEST_BOOKINGS_SCREEN} from "../navigation/utils/NavigationNameConstants";
 
 function Header() {
   const navigation = useNavigation();
@@ -13,7 +14,7 @@ function Header() {
   const [isLanguagePopupOpen, setIsLanguagePopupOpen] = useState(false);
 
   const handleBookingsPress = () => {
-    navigation.navigate('Bookings');
+    navigation.navigate(GUEST_BOOKINGS_SCREEN);
   };
 
   if (isAuthenticated) {
@@ -21,6 +22,7 @@ function Header() {
       <View style={styles.headerContainer}>
         <View style={styles.contentContainer}>
           <View style={styles.squareContainer}>
+
             <TouchableOpacity
               onPress={handleBookingsPress}
               style={styles.itemContainer}>

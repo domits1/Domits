@@ -1,13 +1,7 @@
 import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import {ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {HOST_REVIEW_PROPERTY_CHANGES_SCREEN} from "../../navigation/utils/NavigationNameConstants";
 
 function PriceSettingScreen({route, navigation}) {
   const [price, setPrice] = useState('');
@@ -27,9 +21,7 @@ function PriceSettingScreen({route, navigation}) {
       CancelPolicy: cancelPolicy,
       GuestType: guestType,
     };
-    navigation.navigate('ReviewAndSubmitScreen', {
-      listingData: updatedListingData,
-    });
+    navigation.navigate(HOST_REVIEW_PROPERTY_CHANGES_SCREEN, {updatedListingData});
   };
 
   return (
