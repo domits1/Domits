@@ -6,6 +6,7 @@ import LoginScreen from "../screens/login/loginScreen";
 import Register from "../screens/login/register";
 import ConfirmEmail from "../screens/login/confirmMail";
 import settings from "../screens/guestdashboard/GuestSettingsTab";
+import HostSettings from "../screens/profile/hostprofile/screens/HostSettingsTab";
 import {
     ACCOUNT_SCREEN,
     CHANGE_ACCOUNT_SETTINGS_SCREEN,
