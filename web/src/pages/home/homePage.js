@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import "../home/homePage.css";
 import verifiedLogo from "../../images/icons/verify-icon.png";
@@ -407,6 +408,10 @@ const Homepage = () => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
 
+  const navigateToLanding = () => {
+    navigate("/landing");
+  };
+
   const handlePopupClick = (text) => {
     setActivePopup(activePopup === text ? null : text);
   };
@@ -427,7 +432,6 @@ const Homepage = () => {
             />
           </div>
         </div>
-
         <div className="domits-iconsContainer">
           <div className="domits-iconsContainerText">
             <div className="domits-iconTextGroup">
@@ -448,7 +452,6 @@ const Homepage = () => {
             </div>
           </div>
         </div>
-
         <div className="domits-boatContainer">
           <div className="domits-accommodationGroup">
             {propertyLoading === false ? (
@@ -466,7 +469,6 @@ const Homepage = () => {
             )}
           </div>
         </div>
-
         <div className="domits-boatContainer">
           <div className="domits-boatText">
             <h3 className="domits-subHead">Rent a boat for any occasion</h3>
@@ -487,7 +489,6 @@ const Homepage = () => {
             )}
           </div>
         </div>
-
         <div className="domits-boatContainer">
           <h3 className="domits-subHead">Discover Beautiful Campers</h3>
           <div className="domits-accommodationGroup">
@@ -515,9 +516,9 @@ const Homepage = () => {
               <li>Manage everything centrally.</li>
               <li>Increase your booking metrics.</li>
             </ul>
-            <a href="https://www.domits.com/landing" rel="noopener noreferrer">
-              <button className="list-property-button">List your property</button>{" "}
-            </a>
+            <button className="list-property-button" onClick={navigateToLanding}>
+              Become a Host
+            </button>
           </div>
           <div className="host-images">
             {hostImages.map((image, index) => (
@@ -525,12 +526,11 @@ const Homepage = () => {
             ))}
           </div>
         </div>
-
         <h1 className="Places-text">Countries in Europe</h1>
         <div className="countries-container">
           {countries.map((country, index) => (
             <div className="country-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -541,7 +541,7 @@ const Homepage = () => {
         <div className="small-countries-container">
           {smallCountries.map((country, index) => (
             <div className="country-card small-country-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -553,7 +553,7 @@ const Homepage = () => {
         <div className="asia-countries-container">
           {asiaCountries.map((country, index) => (
             <div className="country-card asia-country-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -564,7 +564,7 @@ const Homepage = () => {
         <div className="small-asia-countries-container">
           {smallAsiaCountries.map((country, index) => (
             <div className="country-card small-asia-country-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -575,7 +575,7 @@ const Homepage = () => {
         <div className="caribbean-countries-container">
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -586,7 +586,7 @@ const Homepage = () => {
         <div className="small-caribbean-countries-container">
           {smallCaribbeanCountries.map((country, index) => (
             <div className="country-card small-caribbean-country-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -597,7 +597,7 @@ const Homepage = () => {
         <div className="ski-countries-container">
           {skiCountries.map((country, index) => (
             <div className="country-card ski-country-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -609,7 +609,7 @@ const Homepage = () => {
         <div className="seasons-container">
           {seasons.map((season, index) => (
             <div className="season-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={season.img} alt={season.name} />
               </a>
               <h3>{season.name}</h3>
@@ -620,7 +620,7 @@ const Homepage = () => {
         <div className="interests-container">
           {interests.map((interest, index) => (
             <div className="interest-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={interest.img} alt={interest.name} />
               </a>
               <h3>{interest.name}</h3>
@@ -632,7 +632,7 @@ const Homepage = () => {
         <div className="groups-container">
           {groups.map((group, index) => (
             <div className="group-card" key={index}>
-              <a href="https://www.domits.com/home/" rel="noopener noreferrer">
+              <a href="/home" rel="noopener noreferrer">
                 <img src={group.img} alt={group.name} />
               </a>
               <h3>{group.name}</h3>
