@@ -6,7 +6,7 @@ import DeleteAccount from '../features/auth/DeleteAccount';
 import LogoutAccount from '../features/auth/LogoutAccount';
 import TranslatedText from '../features/translation/components/TranslatedText';
 import LoadingScreen from "./loadingscreen/screens/LoadingScreen";
-import NavigateTo from "../navigation/NavigationFunctions";
+import {LOGIN_SCREEN} from "../navigation/utils/NavigationNameConstants";
 
 const Account = () => {
   const navigation = useNavigation();
@@ -17,7 +17,7 @@ const Account = () => {
     React.useCallback(() => {
       setLoading(true);
       if (!isAuthenticated) {
-        NavigateTo(navigation).login();
+          navigation.navigate(LOGIN_SCREEN);
       } else {
         setLoading(false);
       }

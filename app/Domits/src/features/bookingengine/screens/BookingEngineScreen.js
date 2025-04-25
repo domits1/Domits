@@ -7,7 +7,7 @@ import {styles} from "../styles/BookingEngineStyles";
 import BookingEngineGuestsPopup from "../components/BookingEngineGuestsPopup";
 import FetchBookingsByProperty from "../hooks/FetchBookingsByProperty";
 import CalculateNumberOfNights from "../utils/CalculateNumberOfNights";
-import NavigateTo from "../../../navigation/NavigationFunctions";
+import {SIMULATE_STRIPE_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 
 const BookingEngineScreen = ({navigation, route}) => {
   const parsedFirstSelectedDate = route.params.firstSelectedDate;
@@ -41,14 +41,14 @@ const BookingEngineScreen = ({navigation, route}) => {
   }
 
   const handleBookButton = () => {
-    NavigateTo(navigation, {
+    navigation.navigate(SIMULATE_STRIPE_SCREEN, {
       parsedAccommodation: parsedAccommodation,
       calculateCost: calculateCost(),
       adults: adults,
       kids: kids,
       pets: pets,
       nights: nights,
-    }).simulateStripe();
+    });
   };
 
   const toggleCalendarModal = () => {

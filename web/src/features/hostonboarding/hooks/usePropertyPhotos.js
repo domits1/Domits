@@ -10,7 +10,7 @@ export default function usePhotos() {
   const MIN_HEIGHT = 500;
   const MIN_SIZE = 50000;
   const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
-  const MAX_IMAGES = 5;
+  const MAX_IMAGES = 10;
 
   const validateImage = (file, callback) => {
     if (!file) return;
