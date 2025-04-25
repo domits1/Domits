@@ -1,7 +1,7 @@
 import React from 'react';
 
 const ChatMessage = ({ message, userId, contactName }) => {
-    const { userId: senderId, text, createdAt, isRead, isSent } = message;
+    const { userId: senderId, text, createdAt, isRead, isSent, fileUrls } = message;
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -15,6 +15,22 @@ const ChatMessage = ({ message, userId, contactName }) => {
                 <span className="guest-message-time">{formatDate(createdAt)}</span>
             </div>
             <div className="guest-message-content">{text}</div>
+            {fileUrls && fileUrls.length > 0 && (
+                <div className="guest-message-attachments">
+                    {fileUrls.map((fileUrl, index) => {
+                        const isVideo = fileUrl.endsWith('.mp4');
+
+                        return isVideo ? (
+                            <video key={index} controls className="message-video">
+                                <source src={fileUrl} type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video>
+                        ) : (
+                            <img key={index} src={fileUrl} alt="Attachment" className="message-image" />
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 };
