@@ -58,10 +58,6 @@ const BookingSend = () => {
                 },
                 tax: {
                     tourism: parseFloat(taxes),
-                },
-                emails: {
-                    guestEmail: userEmail,
-                    hostEmail: hostEmail,
                 }
             }
         };
