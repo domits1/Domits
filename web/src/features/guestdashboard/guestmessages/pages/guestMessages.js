@@ -87,7 +87,8 @@ const GuestMessagesContent = () => {
                                     contactId={selectedContactId}
                                     connectionId={connectionId}
                                     contactName={selectedContactName}
-                                    onBack={isMobile ? handleBackToContacts : null}
+                                    onBack={(isTablet) ? handleBackToContacts : null}
+
                                 />
                             )}
                             {showChatScreen && (

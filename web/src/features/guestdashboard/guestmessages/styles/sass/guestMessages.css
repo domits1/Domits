@@ -1,4 +1,4 @@
-.contact-list-modal {
+.guest-contact-list-modal {
   background-color: #fff;
   display: flex;
   flex-direction: column;
@@ -12,17 +12,17 @@
   max-width: 17.5rem;
   height: 90vh;
 }
-.contact-list-modal h3 {
+.guest-contact-list-modal h3 {
   padding: 0;
   font-family: "Kanit", sans-serif;
   font-weight: 400;
   font-size: 1.75em;
 }
-.contact-list-modal::-webkit-scrollbar {
+.guest-contact-list-modal::-webkit-scrollbar {
   width: 6px;
   opacity: 0;
 }
-.contact-list-modal .contact-list-toggle .contact-dropdown {
+.guest-contact-list-modal .guest-contact-list-toggle .contact-dropdown {
   padding: 0.4rem 0.6rem;
   font-size: 1rem;
   border-radius: 1rem;
@@ -34,11 +34,11 @@
   box-sizing: border-box;
   transition: border-color 0.2s ease;
 }
-.contact-list-modal .contact-list-toggle .contact-dropdown:focus {
+.guest-contact-list-modal .guest-contact-list-toggle .contact-dropdown:focus {
   outline: none;
   box-shadow: 0 0 0 1px black, -2px 1px 3px rgba(0, 0, 0, 0.1);
 }
-.contact-list-modal .contact-list-list {
+.guest-contact-list-modal .guest-contact-list-list {
   overflow-y: auto;
   scrollbar-width: none;
   list-style-type: none;
@@ -48,7 +48,7 @@
   flex-direction: column;
   gap: 10px;
 }
-.contact-list-modal .contact-list-list .contact-item-content {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -57,18 +57,18 @@
   padding: 0rem 1rem;
   height: 5rem;
 }
-.contact-list-modal .contact-list-list .contact-item-content:hover {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content:hover {
   background-color: rgb(235, 235, 235);
 }
-.contact-list-modal .contact-list-list .contact-item-content.selected {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content.selected {
   background-color: rgb(205, 205, 205);
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-image-container {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content .guest-contact-item-image-container {
   position: relative;
   width: 35%;
   margin-right: 0.5rem;
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-image-container .contact-item-profile-image {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content .guest-contact-item-image-container .guest-contact-item-profile-image {
   position: absolute;
   width: 2rem;
   height: 2rem;
@@ -78,7 +78,7 @@
   top: -30%;
   left: -15%;
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-image-container .contact-item-accommodation-image {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content .guest-contact-item-image-container .guest-contact-item-accommodation-image {
   display: block;
   width: 5rem;
   height: 2.5rem;
@@ -87,16 +87,16 @@
   background-color: #e0e0e0;
   flex-shrink: 0;
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content .guest-contact-item-text-container {
   height: 100%;
   width: 62.5%;
   padding-right: 1rem;
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container p {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content .guest-contact-item-text-container p {
   margin: 0;
   padding: 0;
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container .contact-item-full-name {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content .guest-contact-item-text-container .guest-contact-item-full-name {
   font-family: "Kanit", sans-serif;
   font-weight: 400;
   font-size: 1em;
@@ -105,7 +105,7 @@
   margin: 0;
   margin-top: 0.5rem;
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container .contact-item-subtitle {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content .guest-contact-item-text-container .guest-contact-item-subtitle {
   font-family: "Kanit", sans-serif;
   padding: 0;
   margin: 0;
@@ -116,12 +116,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.contact-list-modal .contact-list-list .contact-item-content .contact-item-text-container .contact-item-subtitle #status {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content .guest-contact-item-text-container .guest-contact-item-subtitle #status {
   font-weight: 501;
   font-size: smaller;
   color: #000;
 }
-.contact-list-modal .contact-list-list .contact-item-content.no-accommodation-image .contact-item-image-container {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content.no-accommodation-image .guest-contact-item-image-container {
   position: static;
   height: 100%;
   width: 35%;
@@ -130,23 +130,23 @@
   justify-content: center;
   align-items: center;
 }
-.contact-list-modal .contact-list-list .contact-item-content.no-accommodation-image .contact-item-image-container .contact-item-profile-image {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content.no-accommodation-image .guest-contact-item-image-container .guest-contact-item-profile-image {
   position: static;
   width: 2.5rem;
   height: 2.5rem;
   top: 0;
   left: 0;
 }
-.contact-list-modal .contact-list-list .contact-item-content.no-accommodation-image .contact-item-text-container {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content.no-accommodation-image .guest-contact-item-text-container {
   height: 100%;
   width: 100%;
   padding-right: 1rem;
 }
-.contact-list-modal .contact-list-list .contact-item-content.no-accommodation-image .contact-item-text-container p {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content.no-accommodation-image .guest-contact-item-text-container p {
   margin: 0;
   padding: 0;
 }
-.contact-list-modal .contact-list-list .contact-item-content.no-accommodation-image .contact-item-text-container .contact-item-full-name {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content.no-accommodation-image .guest-contact-item-text-container .guest-contact-item-full-name {
   font-family: "Kanit", sans-serif;
   font-weight: 400;
   font-size: 1em;
@@ -155,7 +155,7 @@
   margin: 0;
   margin-top: 0.5rem;
 }
-.contact-list-modal .contact-list-list .contact-item-content.no-accommodation-image .contact-item-text-container .contact-item-subtitle {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content.no-accommodation-image .guest-contact-item-text-container .guest-contact-item-subtitle {
   font-family: "Kanit", sans-serif;
   padding: 0;
   margin: 0;
@@ -167,17 +167,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.contact-list-modal .contact-list-list .contact-item-content.no-accommodation-image .contact-item-text-container .contact-item-subtitle #status {
+.guest-contact-list-modal .guest-contact-list-list .guest-contact-item-content.no-accommodation-image .guest-contact-item-text-container .guest-contact-item-subtitle #status {
   font-weight: 501;
   font-size: smaller;
   color: #000;
 }
 
-.host-chat-components {
+.guest-chat-components {
   display: flex;
   flex-direction: row;
 }
-.host-chat-components .host-chat-screen {
+.guest-chat-components .guest-chat-screen {
   background-color: #fff;
   display: flex;
   flex-direction: column;
@@ -189,14 +189,14 @@
   border-left: 0.05rem rgb(150, 150, 150) solid;
   border-right: 0.05rem rgb(150, 150, 150) solid;
 }
-.host-chat-components .host-chat-screen .host-chat-header {
+.guest-chat-components .guest-chat-screen .guest-chat-header {
   display: flex;
   width: 100%;
   margin: 0 auto;
   margin-top: 1rem;
   border-bottom: 0.05rem solid rgb(150, 150, 150);
 }
-.host-chat-components .host-chat-screen .host-chat-header .back-to-contacts-button {
+.guest-chat-components .guest-chat-screen .guest-chat-header .back-to-contacts-button {
   background: none;
   border: none;
   font-size: 1rem;
@@ -204,7 +204,7 @@
   cursor: pointer;
   margin-left: 1rem;
 }
-.host-chat-components .host-chat-screen .host-chat-header .profile-img {
+.guest-chat-components .guest-chat-screen .guest-chat-header .guest-profile-img {
   width: 2.5em;
   height: 2.5em;
   border-radius: 50%;
@@ -213,41 +213,41 @@
   margin-left: 3rem;
   margin-bottom: 1rem;
 }
-.host-chat-components .host-chat-screen .host-chat-header .host-chat-header-grid {
+.guest-chat-components .guest-chat-screen .guest-chat-header .guest-chat-header-grid {
   margin-left: 0.5rem;
 }
-.host-chat-components .host-chat-screen .host-chat-header .host-chat-header-grid p {
+.guest-chat-components .guest-chat-screen .guest-chat-header .guest-chat-header-grid p {
   margin: 0;
   font-size: 0.7rem;
   font-weight: 500;
   display: flex;
   align-items: center;
 }
-.host-chat-components .host-chat-screen .host-chat-header h3 {
+.guest-chat-components .guest-chat-screen .guest-chat-header h3 {
   font-size: medium;
   font-weight: 500;
   margin: 0;
   padding: 0;
 }
-.host-chat-components .host-chat-screen .chat-screen {
+.guest-chat-components .guest-chat-screen .chat-screen {
   display: flex;
   flex-direction: column-reverse;
   height: 100%;
   overflow-y: auto;
 }
-.host-chat-components .host-chat-screen .chat-screen .chat-message.received {
+.guest-chat-components .guest-chat-screen .chat-screen .guest-chat-message.received {
   margin-bottom: 1rem;
   margin-left: 1.25rem;
 }
-.host-chat-components .host-chat-screen .chat-screen .chat-message.received .message-header {
+.guest-chat-components .guest-chat-screen .chat-screen .guest-chat-message.received .guest-message-header {
   display: flex;
   flex-direction: row;
   margin-bottom: 0.25rem;
   gap: 0.5rem;
   align-items: center;
 }
-.host-chat-components .host-chat-screen .chat-screen .chat-message.received .message-content {
-  background-color: rgb(196, 230, 197);
+.guest-chat-components .guest-chat-screen .chat-screen .guest-chat-message.received .guest-message-content {
+  background-color: rgb(91, 126, 158);
   color: black;
   display: inline-block;
   border-radius: 1rem;
@@ -256,26 +256,26 @@
   max-width: 70%;
   word-wrap: break-word;
 }
-.host-chat-components .host-chat-screen .chat-screen .chat-message.received .message-attachments {
+.guest-chat-components .guest-chat-screen .chat-screen .guest-chat-message.received .guest-message-attachments {
   justify-content: flex-start;
 }
-.host-chat-components .host-chat-screen .chat-screen .chat-message.sent {
+.guest-chat-components .guest-chat-screen .chat-screen .guest-chat-message.sent {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   margin-bottom: 1rem;
   margin-right: 1.25rem;
 }
-.host-chat-components .host-chat-screen .chat-screen .chat-message.sent .message-header {
+.guest-chat-components .guest-chat-screen .chat-screen .guest-message-header {
   display: flex;
   flex-direction: row-reverse;
   margin-bottom: 0.5rem;
   gap: 0.5rem;
   align-items: center;
 }
-.host-chat-components .host-chat-screen .chat-screen .chat-message.sent .message-content {
+.guest-chat-components .guest-chat-screen .chat-screen .guest-message-content {
   display: inline-block;
-  background-color: rgb(91, 126, 158);
+  background-color: rgb(196, 230, 197);
   color: black;
   border-radius: 1rem;
   padding: 0.3rem 1.25rem;
@@ -284,10 +284,10 @@
   max-width: 70%;
   word-wrap: break-word;
 }
-.host-chat-components .host-chat-screen .chat-screen .chat-message.sent .message-attachments {
+.guest-chat-components .guest-chat-screen .chat-screen .guest-message-attachments {
   justify-content: flex-end;
 }
-.host-chat-components .host-chat-screen .chat-input {
+.guest-chat-components .guest-chat-screen .guest-chat-input {
   display: flex;
   justify-self: flex-end;
   flex-direction: row;
@@ -297,14 +297,14 @@
   height: 10.5%;
   position: relative;
 }
-.host-chat-components .host-chat-screen .chat-input .add-attachment {
+.guest-chat-components .guest-chat-screen .guest-chat-input .guest-add-attachment {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
   width: 10%;
 }
-.host-chat-components .host-chat-screen .chat-input .add-attachment .add-file-button {
+.guest-chat-components .guest-chat-screen .guest-chat-input .guest-add-attachment .guest-add-file-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -318,11 +318,11 @@
   cursor: pointer;
   box-shadow: -2px 3px 5px rgba(0, 0, 0, 0.2);
 }
-.host-chat-components .host-chat-screen .chat-input .add-attachment .add-file-button:hover {
+.guest-chat-components .guest-chat-screen .guest-chat-input .guest-add-attachment .guest-add-file-button:hover {
   color: grey;
   border: grey solid 1px;
 }
-.host-chat-components .host-chat-screen .chat-input .message-input-textarea {
+.guest-chat-components .guest-chat-screen .guest-chat-input .guest-message-input-textarea {
   background-color: rgb(217, 217, 217);
   height: 30%;
   width: 80%;
@@ -332,45 +332,45 @@
   padding: 0.5rem 2.5rem 0.5rem 1rem;
   overflow-y: auto;
 }
-.host-chat-components .host-chat-screen .chat-input .message-input-textarea::-moz-placeholder {
+.guest-chat-components .guest-chat-screen .guest-chat-input .guest-message-input-textarea::-moz-placeholder {
   color: black;
   font-weight: 600;
   opacity: 1;
 }
-.host-chat-components .host-chat-screen .chat-input .message-input-textarea::placeholder {
+.guest-chat-components .guest-chat-screen .guest-chat-input .guest-message-input-textarea::placeholder {
   color: black;
   font-weight: 600;
   opacity: 1;
 }
-.host-chat-components .host-chat-screen .chat-input .message-input-textarea::-webkit-scrollbar {
+.guest-chat-components .guest-chat-screen .guest-chat-input .guest-message-input-textarea::-webkit-scrollbar {
   display: none;
 }
-.host-chat-components .host-chat-screen .chat-input .message-input-send-button {
+.guest-chat-components .guest-chat-screen .guest-chat-input .guest-message-input-send-button {
   position: absolute;
   background: none;
   border: none;
   right: 1rem;
 }
-.host-chat-components .host-chat-screen .chat-input .message-input-send-button:hover {
+.guest-chat-components .guest-chat-screen .guest-chat-input .guest-message-input-send-button:hover {
   color: grey;
 }
-.host-chat-components .host-chat-screen .sender-name {
+.guest-chat-components .guest-chat-screen .guest-sender-name {
   font-size: 0.9rem;
   color: grey;
 }
-.host-chat-components .host-chat-screen .message-time {
+.guest-chat-components .guest-chat-screen .guest-message-time {
   font-size: 0.9rem;
   color: grey;
 }
-.host-chat-components .host-chat-screen .message-attachments {
+.guest-chat-components .guest-chat-screen .guest-message-attachments {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 5px;
   justify-content: flex-start;
 }
-.host-chat-components .host-chat-screen .message-image,
-.host-chat-components .host-chat-screen .message-video {
+.guest-chat-components .guest-chat-screen .message-image,
+.guest-chat-components .guest-chat-screen .message-video {
   max-width: 100%;
   max-height: 200px;
   border-radius: 8px;
@@ -378,7 +378,7 @@
      object-fit: cover;
 }
 @media (max-width: 875px) {
-  .host-chat-components .host-chat-screen {
+  .guest-chat-components .guest-chat-screen {
     min-width: 28rem;
     max-width: 28rem;
     min-height: 30rem;
@@ -386,17 +386,17 @@
   }
 }
 @media (max-width: 600px) {
-  .host-chat-components .host-chat-screen {
+  .guest-chat-components .guest-chat-screen {
     width: 70%;
   }
 }
 @media (max-width: 600px) {
-  .host-chat-components .host-chat-buttons {
+  .guest-chat-components .guest-chat-buttons {
     width: 85%;
   }
 }
 
-.host-booking-tab {
+.guest-booking-tab {
   display: flex;
   flex-direction: column;
   padding-right: 2rem;
@@ -406,54 +406,54 @@
   min-width: 16rem;
   overflow-y: auto;
 }
-.host-booking-tab::-webkit-scrollbar {
+.guest-booking-tab::-webkit-scrollbar {
   width: 0.25rem;
 }
-.host-booking-tab::-webkit-scrollbar-thumb {
+.guest-booking-tab::-webkit-scrollbar-thumb {
   background-color: #888;
   border-radius: 1rem;
 }
-.host-booking-tab::-webkit-scrollbar-track {
+.guest-booking-tab::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
-.host-booking-tab h3 {
+.guest-booking-tab h3 {
   padding: 0;
   margin: 0;
 }
-.host-booking-tab h4 {
+.guest-booking-tab h4 {
   padding: 0;
   margin: 0;
 }
-.host-booking-tab p {
+.guest-booking-tab p {
   padding: 0;
   margin: 0;
 }
-.host-booking-tab .acco-image {
+.guest-booking-tab .acco-image {
   display: flex;
   flex-direction: column;
   height: 15rem;
 }
-.host-booking-tab .acco-image img {
+.guest-booking-tab .acco-image img {
   align-self: center;
   width: 100%;
   height: 65%;
   border-radius: 1rem;
 }
-.host-booking-tab .booking-status {
+.guest-booking-tab .booking-status {
   display: flex;
   align-items: center;
   flex-direction: column;
 }
-.host-booking-tab .booking-status h3 {
+.guest-booking-tab .booking-status h3 {
   padding: 0;
   margin: 0;
   align-self: flex-start;
 }
-.host-booking-tab .booking-status p {
+.guest-booking-tab .booking-status p {
   text-align: center;
   margin-bottom: 1rem;
 }
-.host-booking-tab .booking-status button {
+.guest-booking-tab .booking-status button {
   align-self: center;
   background-color: white;
   border: solid black 2px;
@@ -463,7 +463,7 @@
   border-radius: 1rem;
   font-size: 1rem;
 }
-.host-booking-tab .chekin-checkout {
+.guest-booking-tab .chekin-checkout {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -474,73 +474,56 @@
   padding-bottom: 1rem;
   justify-content: space-between;
 }
-.host-booking-tab .chekin-checkout .checkin,
-.host-booking-tab .chekin-checkout .checkout {
+.guest-booking-tab .chekin-checkout .checkin,
+.guest-booking-tab .chekin-checkout .checkout {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.host-booking-tab .chekin-checkout h3 {
+.guest-booking-tab .chekin-checkout h3 {
   padding: 0;
   margin: 0;
 }
-.host-booking-tab .chekin-checkout .nights :nth-child(1) {
+.guest-booking-tab .chekin-checkout .nights :nth-child(1) {
   padding-left: 1rem;
   border-bottom: solid black 1px;
 }
-.host-booking-tab .street {
+.guest-booking-tab .street {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 0.5rem;
 }
-.host-booking-tab .street .iconHouse {
+.guest-booking-tab .street .iconHouse {
   margin-right: 1rem;
   font-size: 1.5rem;
 }
-.host-booking-tab .reservation-details {
+.guest-booking-tab .reservation-details {
   display: flex;
   flex-direction: column;
   margin-bottom: 1rem;
 }
-.host-booking-tab .reservation-details h4 {
+.guest-booking-tab .reservation-details h4 {
   font-weight: 505;
   font-size: 0.95rem;
 }
-.host-booking-tab .reservation-details .guest-amount {
+.guest-booking-tab .reservation-details .guest-amount {
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
-.host-booking-tab .reservation-details .booking-id {
+.guest-booking-tab .reservation-details .booking-id {
   border-top: 1px solid black;
   border-bottom: 1px solid black;
   padding-top: 1rem;
   padding-bottom: 1rem;
   margin-bottom: 1rem;
 }
-.host-booking-tab .earnings {
-  margin-right: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: solid black 1px;
-}
-.host-booking-tab .earnings h4 {
-  font-weight: 505;
-  font-size: 0.95rem;
-}
-.host-booking-tab .earnings .rent-nights,
-.host-booking-tab .earnings .cleaning-fee,
-.host-booking-tab .earnings .service-fee,
-.host-booking-tab .earnings .total-earnings {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
 
-.host-chat-components {
+.guest-chat-components {
   display: flex;
   flex-direction: row;
 }
-.host-chat-components .ContactsBack-button {
+.guest-chat-components .ContactsBack-button {
   display: block;
   width: 100%;
   max-width: 400px;
@@ -554,17 +537,40 @@
   cursor: pointer;
   text-align: center;
 }
-
+.guest-chat-components .close-chat-button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: none;
+}
+.guest-chat-components .close-chat-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  margin-left: auto;
+  cursor: pointer;
+  color: #333;
+}
+.guest-chat-components .close-chat-button:hover {
+  color: #666;
+}
+@media (min-width: 768px) and (max-width: 1145px) {
+  .guest-chat-components .close-chat-button {
+    display: block;
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+}
 @media (max-width: 768px) {
-  .host-chat-components {
+  .guest-chat-components {
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 1rem;
   }
-}
-@media (min-width: 769px) {
-  .ContactsBack-button {
-    display: none;
-  }
-}/*# sourceMappingURL=hostMessages.css.map */
+}/*# sourceMappingURL=guestMessages.css.map */
