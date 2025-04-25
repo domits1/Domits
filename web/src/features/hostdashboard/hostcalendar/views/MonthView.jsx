@@ -66,8 +66,16 @@ export default function GetMonthView({ year, month, dayClick}) {
 
     return (
         <div className="month-wrapper">
+            {(() => {
+                const items = [];
+                const days = ["M","T","W","T","F","S","S"];
+                for (let i = 0; i < days.length; i++) {
+                    items.push(<span className="day" key={i}>{days[i]}</span>);
+                }
+                return items;
+            })()}
             {calendarDays.map((dayObj, index) => (
-                <a href="#day" date={dayObj.date} onClick={dayClick}>
+                <a className="day" href="#day" date={dayObj.date} onClick={dayClick}>
                     {dayObj.day}
                 </a>
             ))}

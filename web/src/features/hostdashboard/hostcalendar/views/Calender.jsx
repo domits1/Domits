@@ -2,6 +2,8 @@ import { useState } from 'react';
 import getMonthName from '../utils/GetMonth';
 import GetMonthView from './MonthView';
 
+import { ReactComponent as Left_arrow } from './left-arrow.svg';
+import { ReactComponent as Right_arrow } from './right-arrow.svg';
 import './../styles/Calender.scss'
 
 /**
@@ -71,16 +73,11 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
     return (
         <div className="calender-container">
             <div className="column">
-                <div className="wrapper">
+                <div className="calender-wrapper">
                     <div className="top-bar">
-                        <h1>
-                            {getMonthName(month)} {year}
-                        </h1>
-
-                        <div className="btn-wrapper">
-                            <a href='#btn' onClick={prevMonth}>prev month</a>
-                            <a href='#btn' onClick={nextMonth}>next month</a>
-                        </div>
+                        <a href='#btn' onClick={prevMonth}><Left_arrow/></a>
+                        <h1> {getMonthName(month)} {year} </h1>
+                        <a href='#btn' onClick={nextMonth}><Right_arrow/></a>
                     </div>
                     <div className="calender">
                         <GetMonthView year={year} month={month} dayClick={dayClick} />

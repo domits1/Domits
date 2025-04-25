@@ -1,0 +1,131 @@
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
+@mixin respond-to($breakpoint) {
+    @if $breakpoint ==sm {
+        @media (max-width: $breakpoint-sm) {
+            @content;
+        }
+    }
+
+    @else if $breakpoint ==md {
+        @media (max-width: $breakpoint-md) {
+            @content;
+        }
+    }
+
+    @else if $breakpoint ==lg {
+        @media (max-width: $breakpoint-lg) {
+            @content;
+        }
+    }
+
+    @else if $breakpoint ==xl {
+        @media (max-width: $breakpoint-xl) {
+            @content;
+        }
+    }
+}
+
+
+.calender-container {
+    display: flex;
+    justify-content: center;
+
+    .column {
+        .calender-wrapper {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid black;
+            border-radius: 15px;
+            width: auto;
+            padding: 25px;
+
+            .top-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                border: 1px solid black;
+                border-radius: 15px;
+                padding: 10px;
+
+                h1 {
+                    font-weight: 500;
+                    font-size: 20px;
+                    line-height: 20px;
+                    margin: 0;
+                    padding: 0;
+                }
+            }
+
+            .calender {
+                .month-wrapper {
+                    display: grid;
+                    grid-template-columns: repeat(7, 1fr);
+
+                    .day {
+                        color: #0D1C0D;
+                        size: 14px;
+                        font-weight: 500;
+                        width: 50px;
+                        height: 50px;
+                        text-align: center;
+                        text-decoration: none;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+
+                    }
+                }
+            }
+        }
+    }
+
+    @include respond-to(md) {
+        .column{
+            .calender-wrapper{
+                padding: 20px;
+                .top-bar{
+                    h1 {
+                        font-weight: 500;
+                        font-size: 17px;
+                        line-height: 17px;
+                    }
+                }
+                .calender{
+                    .month-wrapper{
+                        .day{
+                            width: 40px;
+                            height: 40px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @include respond-to(sm) {
+        .column{
+            .calender-wrapper{
+                padding: 15px;
+                .top-bar{
+                    h1 {
+                        font-weight: 500;
+                        font-size: 15px;
+                        line-height: 15px;
+                    }
+                }
+                .calender{
+                    .month-wrapper{
+                        .day{
+                            width: 30px;
+                            height: 30px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
