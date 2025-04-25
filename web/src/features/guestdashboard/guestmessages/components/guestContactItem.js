@@ -1,16 +1,37 @@
 import React, { useState } from 'react';
 import profileImage from '../domits-logo.jpg';
+import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
 
-const ContactItem = ({ contact, updateContactRequest, isPending }) => {
+
+const ContactItem = ({ contact, userId, isPending, selected }) => {
     const [error, setError] = useState(null);
+    const { bookingDetails, accommodation } = useFetchBookingDetails(contact.hostId, userId);
+
+    const accoImage = accommodation?.Images?.[0] && Object.values(accommodation.Images[0])[0];
+
+
 
     return (
-        <div className="guest-contact-item-content">
-            <img src={profileImage} alt="Profile" className="guest-contact-item-profile-image" />
+        <div className={`guest-contact-item-content ${selected ? 'selected' : ''} ${!accoImage ? 'no-accommodation-image' : ''}`}>
+
+            <div className={`guest-contact-item-image-container `}>
+                {accoImage && (
+                    <img src={accoImage} alt="Accommodation" className="guest-contact-item-accommodation-image" />
+                )}
+                <img src={profileImage} alt="Profile" className="guest-contact-item-profile-image" />
+            </div>
+
             <div className="guest-contact-item-text-container">
                 <p className="guest-contact-item-full-name">{contact.givenName}</p>
                 {!isPending && (
                     <p className="guest-contact-item-subtitle">
+                        {bookingDetails?.Status === "Accepted" && (
+                            <p id='status'>Reservation approved</p>
+                        )}
+
+                        {bookingDetails?.Status === "Pending" && (
+                            <p id='status'>Inquiry sent</p>
+                        )}
                         {contact.latestMessage.text
                             ? contact.latestMessage.text || "No message yet"
                             : "No message history yet"}
