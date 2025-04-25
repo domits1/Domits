@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Alert, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
+import {Alert, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../../../../context/AuthContext';
 import {styles} from '../styles/HostPropertiesStyles'
 import LoadingScreen from "../../../../screens/loadingscreen/screens/LoadingScreen";
-import NavigateTo from "../../../../navigation/NavigationFunctions";
+import {HOST_ONBOARDING_SCREEN, PROPERTY_DETAILS_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 
 const HostListingsTab = () => {
   const [accommodations, setAccommodations] = useState([]);
@@ -104,11 +104,11 @@ const HostListingsTab = () => {
   };
 
   const navigateToDetailPage = accommodationId => {
-    NavigateTo(navigation, {accommodation: accommodationId}).propertyDetails();
+    navigation.navigate(PROPERTY_DETAILS_SCREEN, {accommodation: accommodationId});
   };
 
   const addProperty = () => {
-    NavigateTo(navigation).listProperty();
+    navigation.navigate(HOST_ONBOARDING_SCREEN);
   };
 
   return (

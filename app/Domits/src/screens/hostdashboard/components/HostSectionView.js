@@ -2,7 +2,6 @@ import {Text, View} from "react-native";
 import {styles} from "../styles/HostSectionStyles";
 import TranslatedText from "../../../features/translation/components/TranslatedText";
 import React, {useEffect, useState} from "react";
-import FetchOwnerData from "../../../features/search/hooks/FetchOwnerData";
 import LoadingScreen from "../../loadingscreen/screens/LoadingScreen";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
@@ -11,9 +10,7 @@ const HostSectionView = ({ownerId, navigation}) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        FetchOwnerData(ownerId, setOwner, setLoading).then().catch(error => {
-            console.error('Error fetching owner data:', error);
-        });
+      console.error("Something went wrong!");
     }, [ownerId]);
 
     if (loading) {

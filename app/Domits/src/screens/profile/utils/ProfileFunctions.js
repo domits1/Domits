@@ -1,6 +1,6 @@
 import {Alert} from "react-native";
 import {deleteUser} from "../../GeneralUtils/GenUtils";
-import NavigateTo from "../../../navigation/NavigationFunctions";
+import {LOGIN_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 
 export const setUserAttributes = async (userAttributes, setFirstName, setEmailAddress) => {
     try {
@@ -26,7 +26,7 @@ export const deleteAccount = async (navigation, userId) => {
                 onPress: async () => {
                     try {
                         await deleteUser(userId); // Ensure account deletion completes
-                        NavigateTo(navigation).login();
+                        navigation.navigate(LOGIN_SCREEN);
                     } catch (error) {
                         console.error('Failed to delete account:', error);
                         alert('Error deleting account. Please try again.');

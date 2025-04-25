@@ -3,7 +3,7 @@ import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {styles} from '../styles/PaymentStyles';
-import NavigateTo from "../../../navigation/NavigationFunctions";
+import {GUEST_NEW_CONFIRMED_BOOKING_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 
 const PaymentAcceptedScreen = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
@@ -14,14 +14,14 @@ const PaymentAcceptedScreen = ({navigation, route}) => {
   const nights = route.params.nights;
 
   const handleButton = () => {
-    NavigateTo(navigation, {
+    navigation.navigate(GUEST_NEW_CONFIRMED_BOOKING_SCREEN, {
       parsedAccommodation: parsedAccommodation,
       calculateCost: calculateCost,
       adults: adults,
       kids: kids,
       pets: pets,
       nights: nights,
-    }).guestNewConfirmedBooking();
+    });
   };
 
   return (
