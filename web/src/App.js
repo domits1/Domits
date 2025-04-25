@@ -14,11 +14,11 @@ import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
 import { UserProvider } from "./features/auth/UserContext";
-import BookingOverview from "./features/bookingengine/BookingOverview";
 import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
-import BookingConfirmation from "./features/bookingengine/PaymentConfirm";
-import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
+import BookingOverview from "./features/bookingengine/BookingOverview";
+import BookingSend from "./features/bookingengine/BookingSend";
+import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
@@ -30,20 +30,20 @@ import GuestSettings from "./features/guestdashboard/GuestSettings";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
-import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
-import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostPayments from "./features/hostdashboard/HostPayments";
-import HostPricing from "./features/hostdashboard/HostPricing";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
-import HostReviews from "./features/hostdashboard/HostReviews";
+
+import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
+import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
+import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSettings from "./features/hostdashboard/HostSettings";
 import HostSetup from "./features/hostdashboard/HostSetup";
@@ -61,7 +61,6 @@ import HouseTypeView from "./features/hostonboarding/views/2_HouseTypeView.js";
 import AddressInputView from "./features/hostonboarding/views/3_AddressInputView.js";
 import PropertyGuestAmountView from "./features/hostonboarding/views/4_PropertyCapacityView";
 import CapacityView from "./features/hostonboarding/views/4_PropertyCapacityView.js";
-import PropertyAmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import PropertyHouseRulesView from "./features/hostonboarding/views/6_PropertyHouseRulesView.js";
 import PhotosView from "./features/hostonboarding/views/7_PropertyPhotosView.js";
 import PropertyTitleView from "./features/hostonboarding/views/8_PropertyTitleView.js";
@@ -95,6 +94,8 @@ import FlowContext from "./services/FlowContext";
 import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
+import { BuilderProvider } from "./context/propertyBuilderContext";
+import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 
 Modal.setAppElement("#root");
 
@@ -176,10 +177,9 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/listingdetails" element={<ListingDetails2 />} />
                 <Route path="/bookingoverview" element={<BookingOverview />} />
-                <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
+                <Route path="/bookingsend" element={<BookingSend />} />
+                <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                 <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
-                <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView />} />
 
                 {/* Chat */}
                 {/*<Route path="/chat" element={<Chat/>}/>*/}
@@ -232,7 +232,7 @@ function App() {
                       <Route path="messages" element={<HostMessages />} />
                       <Route path="reporting" element={<HostPayments />} />
                       <Route path="settings" element={<HostSettings />} />
-                      <Route path="reviews" element={<HostReviews />} />
+                      {/* <Route path="reviews" element={<HostReviews />} /> */}
                       <Route path="chat" element={<HostMessages />} />
                       <Route path="reservations" element={<HostReservations />} />
                       <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
@@ -262,35 +262,31 @@ function App() {
                 <Route path="/*" element={<PageNotFound />} />
 
                 {/* Host Onboarding v3 */}
-                <Route path="/hostonboarding" element={<AccommodationTypeView />} />
                 <Route
-                  path="/hostonboarding/accommodation"
-                  element={<StepGuard step="type">
-                    <HouseTypeView />
-                  </StepGuard>}
+                  path="/hostonboarding/*"
+                  element={
+                    <BuilderProvider>
+                      <Routes>
+                        <Route path="" element={<AccommodationTypeView />} />
+                        <Route path="accommodation" element={<StepGuard step="type"><HouseTypeView /></StepGuard>} />
+                        <Route path="boat" element={<StepGuard step="type"><BoatTypeView /></StepGuard>} />
+                        <Route path="camper" element={<StepGuard step="type"><CamperTypeView /></StepGuard>} />
+                        <Route path=":type/address" element={<AddressInputView />} />
+                        <Route path=":type/capacity" element={<CapacityView />} />
+                        <Route path=":type/capacity" element={<PropertyGuestAmountView />} />
+                        <Route path=":type/amenities" element={<AmenitiesView />} />
+                        <Route path=":type/rules" element={<PropertyHouseRulesView />} />
+                        <Route path=":type/photos" element={<PhotosView />} />
+                        <Route path=":type/title" element={<PropertyTitleView />} />
+                        <Route path=":type/description" element={<PropertyDescriptionView />} />
+                        <Route path=":type/pricing" element={<PropertyRateView />} />
+                        <Route path=":type/availability" element={<PropertyAvailabilityView />} />
+                        <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
+                        <Route path="summary" element={<SummaryViewAndSubmit />} />
+                      </Routes>
+                    </BuilderProvider>
+                  }
                 />
-                <Route
-                  path="/hostonboarding/boat"
-                  element={<StepGuard step="type">
-                    <BoatTypeView />
-                  </StepGuard>}
-                />
-                <Route
-                  path="/hostonboarding/camper"
-                  element={<StepGuard step="type">
-                    <CamperTypeView />
-                  </StepGuard>}
-                />
-                <Route path="/hostonboarding/:type/address" element={<AddressInputView />} />
-                <Route path="/hostonboarding/:type/capacity" element={<CapacityView />} />
-                <Route path="/hostonboarding/:type/rules" element={<PropertyHouseRulesView />} />
-                <Route path="/hostonboarding/:type/photos" element={<PhotosView />} />
-                <Route path="/hostonboarding/:type/title" element={<PropertyTitleView />} />
-                <Route path="/hostonboarding/:type/description" element={<PropertyDescriptionView />} />
-                <Route path="/hostonboarding/:type/pricing" element={<PropertyRateView />} />
-                <Route path="/hostonboarding/:type/availability" element={<PropertyAvailabilityView />} />
-                <Route path="/hostonboarding/legal/registrationnumber" element={<RegistrationNumberView />} />
-                <Route path="/hostonboarding/summary" element={<SummaryViewAndSubmit />} />
                 <Route path="/*" element={<Home />} />
               </Routes>
               {renderFooter()}

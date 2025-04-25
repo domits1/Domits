@@ -12,7 +12,7 @@ import { reviews } from "../home/store/constants";
 import { categories as groups } from "../home/store/constants";
 import { img } from "../home/store/constants";
 import "swiper/css/pagination";
-import Header from "./Header";
+import Header from "../../components/base/Header";
 import greece from "../../pages/home/Images/greece.webp";
 import netherlands from "../../pages/home/Images/netherlands.webp";
 import france from "../../pages/home/Images/france.webp";
@@ -62,10 +62,7 @@ import culture from "../../pages/home/Images/culture.webp";
 import culinary from "../../pages/home/Images/culinary.webp";
 import waterman from "../../pages/home/Images/waterman.webp";
 import sleutelvrouw from "../../pages/home/Images/sleutelvrouw.webp";
-import {
-  FetchAllPropertyTypes,
-  FetchPropertyType,
-} from "../home/services/fetchProperties";
+import { FetchAllPropertyTypes, FetchPropertyType } from "../home/services/fetchProperties";
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -83,6 +80,9 @@ const Homepage = () => {
   const [propertyLoading, setPropertyLoading] = useState(false);
   const [allAccommodations, setAllAccommodations] = useState([]);
 
+  const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
+  const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
+
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
 
@@ -99,8 +99,15 @@ const Homepage = () => {
         setCamperAccommodations(data.slice(0, 3));
         setCamperLoading(false);
       });
-      FetchAllPropertyTypes().then((data) => {
-        setAllAccommodations(data.slice(6, 9));
+      FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId).then((data) => {
+        if (data.lastEvaluatedKey) {
+          setLastEvaluatedKeyCreatedAt(data.lastEvaluatedKey.createdAt);
+          setLastEvaluatedKeyId(data.lastEvaluatedKey.id);
+        } else {
+          setLastEvaluatedKeyCreatedAt(null);
+          setLastEvaluatedKeyId(null)
+        }
+        setAllAccommodations(data.properties.slice(6, 9));
         setPropertyLoading(false);
       });
     }
@@ -388,14 +395,6 @@ const Homepage = () => {
     };
   }, [isFixed]);
 
-  useEffect(() => {
-    document.body.classList.add("hide-header");
-
-    return () => {
-      document.body.classList.remove("hide-header");
-    };
-  }, []);
-
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleNextReview = () => {
@@ -417,10 +416,7 @@ const Homepage = () => {
       console.error("Event or event target is undefined.");
       return;
     }
-    if (
-      e.target.closest(".swiper-button-next") ||
-      e.target.closest(".swiper-button-prev")
-    ) {
+    if (e.target.closest(".swiper-button-next") || e.target.closest(".swiper-button-prev")) {
       e.stopPropagation();
       return;
     }
@@ -433,13 +429,10 @@ const Homepage = () => {
 
   return (
     <>
-      <Header />
       <div className="domits-homepage">
         <div className="domits-searchContainer">
           <div className="domits-searchTextCon">
-            <h3 className="domits-searchText">
-              Book holiday homes, boats and campers..
-            </h3>
+            <h3 className="domits-searchText">Book holiday homes, boats and campers..</h3>
           </div>
           <div className="domits-searchbarCon">
             <SearchBar
@@ -474,9 +467,7 @@ const Homepage = () => {
 
         <div className="domits-boatContainer">
           <div className="domits-boatText">
-            <h3 className="domits-subHead">
-              Trending accommodations this month
-            </h3>
+            <h3 className="domits-subHead">Trending accommodations this month</h3>
 
             <div className="domits-trendingContainer">
               {[
@@ -496,15 +487,9 @@ const Homepage = () => {
                   text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
                 },
               ].map((item, index) => (
-                <div
-                  key={index}
-                  className="popup-trigger"
-                  onClick={() => handlePopupClick(item.text)}
-                >
+                <div key={index} className="popup-trigger" onClick={() => handlePopupClick(item.text)}>
                   {item.emoji} {item.title}
-                  {activePopup === item.text && (
-                    <div className="popup-box">{item.text}</div>
-                  )}
+                  {activePopup === item.text && <div className="popup-box">{item.text}</div>}
                 </div>
               ))}
             </div>
@@ -513,11 +498,7 @@ const Homepage = () => {
             {propertyLoading === false ? (
               allAccommodations.length > 0 ? (
                 allAccommodations.map((property) => (
-                  <AccommodationCard
-                    key={property.property.id}
-                    accommodation={property}
-                    onClick={handleClick}
-                  />
+                  <AccommodationCard key={property.property.id} accommodation={property} onClick={handleClick} />
                 ))
               ) : (
                 <div>No trending properties available.</div>
@@ -538,11 +519,7 @@ const Homepage = () => {
             {boatLoading === false ? (
               boatAccommodations.length > 0 ? (
                 boatAccommodations.map((boat) => (
-                  <AccommodationCard
-                    key={boat.property.id}
-                    accommodation={boat}
-                    onClick={handleClick}
-                  />
+                  <AccommodationCard key={boat.property.id} accommodation={boat} onClick={handleClick} />
                 ))
               ) : (
                 <div>No boats available.</div>
@@ -561,13 +538,7 @@ const Homepage = () => {
             {camperLoading === false ? (
               camperAccommodations.length > 0 ? (
                 camperAccommodations.map((camper) => {
-                  return (
-                    <AccommodationCard
-                      key={camper.property.id}
-                      accommodation={camper}
-                      onClick={handleClick}
-                    />
-                  );
+                  return <AccommodationCard key={camper.property.id} accommodation={camper} onClick={handleClick} />;
                 })
               ) : (
                 <div>No campers available.</div>
@@ -592,12 +563,7 @@ const Homepage = () => {
           </div>
           <div className="host-images">
             {hostImages.map((image, index) => (
-              <img
-                key={index}
-                src={image.src}
-                alt={image.alt}
-                className="host-image"
-              />
+              <img key={index} src={image.src} alt={image.alt} className="host-image" />
             ))}
           </div>
         </div>
@@ -606,11 +572,7 @@ const Homepage = () => {
         <div className="countries-container">
           {countries.map((country, index) => (
             <div className="country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -621,11 +583,7 @@ const Homepage = () => {
         <div className="small-countries-container">
           {smallCountries.map((country, index) => (
             <div className="country-card small-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -637,11 +595,7 @@ const Homepage = () => {
         <div className="asia-countries-container">
           {asiaCountries.map((country, index) => (
             <div className="country-card asia-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -652,11 +606,7 @@ const Homepage = () => {
         <div className="small-asia-countries-container">
           {smallAsiaCountries.map((country, index) => (
             <div className="country-card small-asia-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -667,11 +617,7 @@ const Homepage = () => {
         <div className="caribbean-countries-container">
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -681,15 +627,8 @@ const Homepage = () => {
         </div>
         <div className="small-caribbean-countries-container">
           {smallCaribbeanCountries.map((country, index) => (
-            <div
-              className="country-card small-caribbean-country-card"
-              key={index}
-            >
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+            <div className="country-card small-caribbean-country-card" key={index}>
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -700,11 +639,7 @@ const Homepage = () => {
         <div className="ski-countries-container">
           {skiCountries.map((country, index) => (
             <div className="country-card ski-country-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={country.img} alt={country.name} />
               </a>
               <h3>{country.name}</h3>
@@ -716,11 +651,7 @@ const Homepage = () => {
         <div className="seasons-container">
           {seasons.map((season, index) => (
             <div className="season-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={season.img} alt={season.name} />
               </a>
               <h3>{season.name}</h3>
@@ -731,11 +662,7 @@ const Homepage = () => {
         <div className="interests-container">
           {interests.map((interest, index) => (
             <div className="interest-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={interest.img} alt={interest.name} />
               </a>
               <h3>{interest.name}</h3>
@@ -747,11 +674,7 @@ const Homepage = () => {
         <div className="groups-container">
           {groups.map((group, index) => (
             <div className="group-card" key={index}>
-              <a
-                href="https://www.domits.com/home/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
                 <img src={group.img} alt={group.name} />
               </a>
               <h3>{group.name}</h3>
@@ -768,11 +691,7 @@ const Homepage = () => {
         <div className="review-list">
           {visibleReviews.map((review, index) => (
             <div className="review-card" key={index}>
-              <img
-                src={review.img}
-                alt={review.name}
-                className="review-profile-pic"
-              />
+              <img src={review.img} alt={review.name} className="review-profile-pic" />
               <h3>{review.name}</h3>
               <p className="review-location">Host from The Netherlands</p>
               <div className="review-stars">★★★★★</div>
@@ -786,9 +705,7 @@ const Homepage = () => {
       </div>
       <div className="domits-communityContainer">
         <h2 className="domits-communityHead">Need help? Join the community</h2>
-        <p className="domits-communityGroup">
-          Domits has a travel community for hosts, guests, and employees
-        </p>
+        <p className="domits-communityGroup">Domits has a travel community for hosts, guests, and employees</p>
         <div className="domits-communityButtons">
           <button className="domits-hostButton">
             <a href="/landing">Become a host</a>
