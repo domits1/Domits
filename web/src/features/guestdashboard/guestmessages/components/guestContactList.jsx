@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import useFetchContacts from '../hooks/useFetchContacts';
 import ContactItem from './guestContactItem';
-import '../styles/guestContactList.css';
 
 const ContactList = ({ userId, onContactClick, message }) => {
     const { contacts, pendingContacts, loading, error, setContacts } = useFetchContacts(userId);
+    const [selectedContactId, setSelectedContactId] = useState(null);
     const [displayType, setDisplayType] = useState('contacts');
 
     if (error) {
@@ -22,19 +22,17 @@ const ContactList = ({ userId, onContactClick, message }) => {
 
     return (
         <div className="guest-contact-list-modal">
+            <h3>Message dashboard</h3>
+
             <div className="guest-contact-list-toggle">
-                <button
-                    onClick={() => setDisplayType('contacts')}
-                    className={displayType === 'contacts' ? 'active' : ''}
+                <select
+                    value={displayType}
+                    onChange={(e) => setDisplayType(e.target.value)}
+                    className="contact-dropdown"
                 >
-                    Contacts
-                </button>
-                <button
-                    onClick={() => setDisplayType('pendingContacts')}
-                    className={displayType === 'pendingContacts' ? 'active' : ''}
-                >
-                    Sent requests
-                </button>
+                    <option value="contacts">Contacts</option>
+                    <option value="pendingContacts">Sent requests</option>
+                </select>
             </div>
 
             <ul className="guest-contact-list-list">
@@ -54,6 +52,9 @@ const ContactList = ({ userId, onContactClick, message }) => {
                                 <ContactItem
                                     contact={contact}
                                     isPending={displayType === 'pendingContacts'}
+                                    userId={userId}
+                                    selected={selectedContactId === contact.recipientId}
+
                                 />
                             </li>
                         ))

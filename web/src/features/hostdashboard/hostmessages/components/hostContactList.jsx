@@ -72,22 +72,7 @@ const ContactList = ({ userId, onContactClick, message }) => {
 
     return (
         <div className="contact-list-modal">
-            {/* <div className="contact-list-toggle">
-                <button
-                    onClick={() => setDisplayType('contacts')}
-                    className={displayType === 'contacts' ? 'active' : ''}
-                >
-                    Contacts
-                </button>
-                <button
-                    onClick={() => setDisplayType('pendingContacts')}
-                    className={displayType === 'pendingContacts' ? 'active' : ''}
-                >
-                    Incoming requests
-                </button>
-            </div> */}
             <h3>Message dashboard</h3>
-
 
             <div className="contact-list-toggle">
                 <select
