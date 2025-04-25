@@ -44,57 +44,33 @@ const PropertyMainDetailsView = ({property}) => {
         <View>
             <View style={styles.mainDetailsContainer}>
                 <Text style={styles.subtitleText}>
-                    {property.Subtitle.trim()}
+                    {property.property.subtitle.trim()}
                 </Text>
                 <Text style={styles.costPerNightText}>
-                    €{Number(property.Rent).toFixed(2)} {" "}
+                    €{Number(property.pricing.roomRate).toFixed(2)} {" "}
                     <TranslatedText textToTranslate={"per night"}/>
                 </Text>
                 <Text>{renderDateRange()}</Text>
             </View>
 
             <View style={styles.borderContainer}>
-                <View style={styles.mainAmenityContainer}>
-                    <View style={styles.featureIcon}>
-                        {featureIcons["Multiple guests"]}
+                {property.generalDetails.map((item, index) => (
+                    <View style={styles.mainAmenityContainer} key={item.detail + index}>
+                        <View style={styles.featureIcon}>
+                            {featureIcons[item.detail]}
+                        </View>
+                        <Text style={styles.mainAmenitiesText}>
+                            {item.value} <TranslatedText textToTranslate={item.detail}/>
+                        </Text>
                     </View>
-                    <Text style={styles.mainAmenitiesText}>
-                        {property.GuestAmount} <TranslatedText textToTranslate={"guests"}/>
-                    </Text>
-                </View>
-                <View style={styles.mainAmenityContainer}>
-                    <View style={styles.featureIcon}>
-                        {featureIcons["Bedroom"]}
-                    </View>
-                    <Text style={styles.mainAmenitiesText}>
-                        {property.bedrooms || 0} <TranslatedText textToTranslate={"bedrooms"}/>
-                    </Text>
-                </View>
-                <View style={styles.mainAmenityContainer}>
-                    <View style={styles.featureIcon}>
-                        {featureIcons["Bed"]}
-                    </View>
-                    <Text style={styles.mainAmenitiesText}>
-                        {property.Beds} <TranslatedText textToTranslate={"beds"}/>
-                    </Text>
-                </View>
-                <View style={styles.mainAmenityContainer}>
-                    <View style={styles.featureIcon}>
-                        {featureIcons["Bathroom"]}
-                    </View>
-                    <Text style={styles.mainAmenitiesText}>
-                        {property.Bathrooms} <TranslatedText textToTranslate={"bathrooms"}/>
+                ))}
+
+                <View style={styles.descriptionContainer}>
+                    <Text style={styles.descriptionText}>
+                        {property.property.description.trim()}
                     </Text>
                 </View>
             </View>
-
-
-            <View style={styles.descriptionContainer}>
-                <Text style={styles.descriptionText}>
-                    {property.Description.trim()}
-                </Text>
-            </View>
-
         </View>
     )
 }

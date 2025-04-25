@@ -1,9 +1,9 @@
 {
   "translation": {
-    "beds": "Bed(s)",
-    "bathrooms": "Bathroom(s)",
-    "bedrooms": "Bedroom(s)",
-    "guests": "Guest(s)",
+    "Beds": "Bed(s)",
+    "Bathrooms": "Bathroom(s)",
+    "Bedrooms": "Bedroom(s)",
+    "Guests": "Guest(s)",
     "per night": "per night",
     "bookings": "Bookings",
     "book": "Book",

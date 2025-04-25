@@ -241,4 +241,18 @@ export const styles = StyleSheet.create({
         color: 'black',
         textAlign: 'center',
     },
+    toastContainer: {
+        position: 'absolute',
+        bottom: 50,
+        left: 50,
+        right: 50,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 15,
+        borderRadius: 5,
+        zIndex: 999,
+    },
+    toastText: {
+        color: '#fff',
+        fontSize: 16,
+    },
 });

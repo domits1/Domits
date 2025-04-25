@@ -22,10 +22,12 @@ const PropertyImagesView = ({images}) => {
                 pagingEnabled={true}
                 onScroll={handleScroll}
                 scrollEventThrottle={100}>
-                {Object.entries(images).map(([key, url]) => (
-                    <View key={key}>
+                {images.map(image => (
+                    <View key={image.key}>
                         <Image
-                            source={{uri: url.uri}}
+                            source={{
+                                uri: `https://accommodation.s3.eu-north-1.amazonaws.com/${image.key}`,
+                            }}
                             style={[styles.image, {width: imageWidth}]}
                         />
                     </View>
