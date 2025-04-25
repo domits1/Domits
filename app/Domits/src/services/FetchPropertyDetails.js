@@ -1,0 +1,12 @@
+async function FetchPropertyDetails(id) {
+  try {
+    const response = await fetch(
+      `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/details?property=${id}`,
+    );
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export default FetchPropertyDetails;

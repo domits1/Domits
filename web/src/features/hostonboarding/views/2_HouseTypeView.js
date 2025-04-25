@@ -1,8 +1,14 @@
 import HouseTypeSelector from "../components/HouseTypeSelector"
 import OnboardingButton from "../components/OnboardingButton"
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 // Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
 export default function HouseTypeView() {
+  const builder = useBuilder();
+  const selectedType = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.guestAccessType,
+  )
   return (
     <div className="onboarding-host-div">
       <main className="container">
@@ -27,6 +33,10 @@ export default function HouseTypeView() {
         <nav className="onboarding-button-box">
           <OnboardingButton routePath="/hostonboarding" btnText="Go back" />
           <OnboardingButton
+            onClick={ () => {
+              builder.addPropertyType({type: "House", spaceType: selectedType});
+              console.log(builder);
+            }}
             routePath="/hostonboarding/accommodation/address"
             btnText="Proceed"
           />
