@@ -57,7 +57,7 @@ const PropertyMainDetailsView = ({property}) => {
                 {property.generalDetails.map((item, index) => (
                     <View style={styles.mainAmenityContainer} key={item.detail + index}>
                         <View style={styles.featureIcon}>
-                            {featureIcons[item.detail]}
+                            {featureIcons.find(icon => item.detail === icon.amenity)?.icon}
                         </View>
                         <Text style={styles.mainAmenitiesText}>
                             {item.value} <TranslatedText textToTranslate={item.detail}/>
