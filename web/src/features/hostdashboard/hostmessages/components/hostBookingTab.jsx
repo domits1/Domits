@@ -3,12 +3,10 @@ import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
 
 import { FaHome } from 'react-icons/fa';
 
-
 const HostBookingTab = ({ userId, contactId }) => {
     const { bookingDetails, accommodation } = useFetchBookingDetails(userId, contactId);
-    const firstImage = accommodation?.Images?.[0] && Object.values(accommodation.Images[0])[0];
+    const firstImage = accommodation?.Images?.image1;
     const price = accommodation?.Rent * bookingDetails?.Nights;
-
 
     return (
         <div className="host-booking-tab-container">
@@ -18,7 +16,7 @@ const HostBookingTab = ({ userId, contactId }) => {
 
                     <div className="acco-image">
                         {accommodation?.Title && <h3>{accommodation.Title}</h3>}
-                        {accommodation?.Images?.[0] && (
+                        {accommodation?.Images?.image1 && (
                             <img
                                 src={firstImage}
                                 alt="Accommodation"
@@ -26,10 +24,23 @@ const HostBookingTab = ({ userId, contactId }) => {
                         )}
                     </div>
                     {bookingDetails?.Status === 'Accepted' && (
-                        <div className="booking-successful">
+                        <div className="booking-status">
                             <h3>Booking Successful</h3>
                             <p>If you need to offer or request money for an issue from the trip, you can use Domits support.</p>
                             <button className="report-problem-button">Report a Problem</button>
+                        </div>
+                    )}
+                    {bookingDetails?.Status === 'Pending' && (
+                        <div className="booking-status">
+                            <h3>Reservation Pending</h3>
+                            <p>Your booking request has been sent. We’ll notify you once it’s accepted or declined.</p>
+                        </div>
+                    )}
+                    {bookingDetails?.Status === 'Failed' && (
+                        <div className="booking-status">
+                            <h3>Reservation Failed</h3>
+                            <p>Something went wrong while processing your reservation. Please try again or contact support.</p>
+                            <button className="retry-booking-button">Try Again</button>
                         </div>
                     )}
                     <div className="chekin-checkout">
@@ -99,11 +110,6 @@ const HostBookingTab = ({ userId, contactId }) => {
                             <h4>Total $</h4>
                             <h4>${price + accommodation?.CleaningFee + accommodation?.ServiceFee}</h4>
                         </div>
-                    </div>
-
-                    <div className="space">
-
-
                     </div>
 
                 </div>
