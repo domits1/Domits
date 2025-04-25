@@ -62,6 +62,36 @@ const BookingSend = () => {
             }
         };
 
+        const userEmailPayload = {
+            toEmail: userEmail,
+            subject: "Booking Confirmation",
+            body: `Hello ${userId},\n\nYour booking for ${accommodationTitle} has been successfully processed!\n\nDetails:\n- Arrival Date: ${startDate}\n- Departure Date: ${endDate}\n- Guests: ${amountOfGuest}\n\nThank you for booking with us!`
+        };
+        
+        const hostEmailPayload = {
+            toEmail: hostEmail,
+            subject: "New Booking Received",
+            body: `Hello ${ownerId},\n\nYou have received a new booking for your property ${accommodationTitle}.\n\nDetails:\n- Guest: ${userEmail}\n- Arrival Date: ${startDate}\n- Departure Date: ${endDate}\n- Guests: ${amountOfGuest}\n\nPlease prepare for their stay.`
+        };
+        
+        const sendEmail = async (emailPayload) => {
+            try {
+                const response = await fetch("https://7rbkep2b70.execute-api.eu-north-1.amazonaws.com/default/EmailNotificationService", {
+                    method: "POST",
+                    body: JSON.stringify(emailPayload),
+                });
+        
+                if (response.ok) {
+                    console.log("Email sent successfully!");
+                } else {
+                    const errorMessage = await response.text();
+                    console.error("Failed to send email:", errorMessage);
+                }
+            } catch (error) {
+                console.error("Error sending email:", error);
+            }
+        };
+        
         const storeBooking = async () => {
             try {
                 const response = await fetch(
@@ -72,8 +102,9 @@ const BookingSend = () => {
                     }
                 );
 
-
                 if (response.ok) {
+                    sendEmail(userEmailPayload);
+                    sendEmail(hostEmailPayload);
                     navigate(`/bookingconfirmationoverview?paymentID=${paymentID}`);
                 } else {
                     const errorMessage = await response.text();
