@@ -38,7 +38,8 @@ const HostPricing = () => {
     priceHistory,
     basePrice,
     initializeDynamicPricing,
-    updateBasePrice
+    updateBasePrice,
+    setPriceHistory
   } = useDynamicPricing();
 
   const itemsPerPage = viewMode === 'details' ? 3 : 7;
@@ -76,6 +77,10 @@ const HostPricing = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedAccommodation(null);
+  };
+
+  const handlePriceHistoryUpdate = async (updatedPriceHistory) => {
+    setPriceHistory(updatedPriceHistory);
   };
 
   const handleBasePriceChange = async (newPrice) => {
@@ -295,6 +300,7 @@ const HostPricing = () => {
               basePrice={basePrice}
               priceHistory={priceHistory}
               onBasePriceChange={handleBasePriceChange}
+              onPriceHistoryUpdate={handlePriceHistoryUpdate}
             />
           )}
 

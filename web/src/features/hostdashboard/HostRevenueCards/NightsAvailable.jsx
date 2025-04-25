@@ -8,6 +8,19 @@ const NightsAvailable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const getDateRange = () => {
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + 10);
+
+    const format = (date) => date.toISOString().split('T')[0];
+
+    return {
+      startDate: format(today),
+      endDate: format(endDate),
+    };
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -15,18 +28,14 @@ const NightsAvailable = () => {
         setError(null);
 
         const userInfo = await Auth.currentUserInfo();
-        if (!userInfo?.attributes?.sub) {
-          throw new Error('User ID not found');
-        }
-        const userId = userInfo.attributes.sub;
+        const userId = userInfo?.attributes?.sub;
+        if (!userId) throw new Error('User ID not found');
 
         const session = await Auth.currentSession();
-        const idToken = session.getIdToken().getJwtToken(); 
-
-        console.log('Fetching accommodations for userId:', userId);
+        const idToken = session.getIdToken().getJwtToken();
 
         const accommodationsResponse = await fetch(
-          'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Read-AccommodationsByOwner',
+          'https://sw2zadbsx8.execute-api.eu-north-1.amazonaws.com/default/Host-Revenues-Production-Read-NightsAvailable',
           {
             method: 'POST',
             headers: {
@@ -41,39 +50,28 @@ const NightsAvailable = () => {
         if (!accommodationsResponse.ok) {
           const errorText = await accommodationsResponse.text();
           console.error('Accommodations API error:', errorText);
-          throw new Error(
-            `Accommodations request failed: ${accommodationsResponse.status}`
-          );
+          throw new Error(`Accommodations request failed: ${accommodationsResponse.status}`);
         }
 
         const accommodationsData = await accommodationsResponse.json();
-        console.log('Accommodations API Response:', accommodationsData);
-
-        if (!accommodationsData.body) {
-          throw new Error('No data received from Accommodations API');
-        }
+        if (!accommodationsData.body) throw new Error('No data received from Accommodations API');
 
         let accommodations;
         try {
           accommodations = JSON.parse(accommodationsData.body);
         } catch (e) {
-          console.error('JSON Parse Error (accommodations):', e);
           throw new Error('Invalid accommodations data format');
         }
 
-        if (!Array.isArray(accommodations)) {
-          throw new Error('Accommodations data is not an array');
-        }
+        if (!Array.isArray(accommodations)) throw new Error('Accommodations data is not an array');
 
-        const activeProperties = accommodations.filter(
-          (acc) => !acc.Drafted?.BOOL
-        );
+        const activeProperties = accommodations.filter((acc) => !acc.Drafted?.BOOL);
         setTotalProperties(activeProperties.length);
 
-        console.log('Fetching available nights for userId:', userId);
+        const { startDate, endDate } = getDateRange();
 
         const nightsResponse = await fetch(
-          'https://emr2alsh2d.execute-api.eu-north-1.amazonaws.com/prod/Host-Revenues-Production-Read-NightsAvailable',
+          'https://sw2zadbsx8.execute-api.eu-north-1.amazonaws.com/default/Host-Revenues-Production-Read-NightsAvailable',
           {
             method: 'POST',
             headers: {
@@ -82,8 +80,8 @@ const NightsAvailable = () => {
             },
             body: JSON.stringify({
               periodType: 'custom',
-              startDate: '2025-03-01',
-              endDate: '2025-03-10',
+              startDate,
+              endDate,
               hostId: userId,
             }),
           }
@@ -92,17 +90,11 @@ const NightsAvailable = () => {
         if (!nightsResponse.ok) {
           const errorText = await nightsResponse.text();
           console.error('Nights API error:', errorText);
-          throw new Error(
-            `Available Nights request failed: ${nightsResponse.status}`
-          );
+          throw new Error(`Available Nights request failed: ${nightsResponse.status}`);
         }
 
         const nightsData = await nightsResponse.json();
-        console.log('Nights API Response:', nightsData);
-
-        if (nightsData.error) {
-          throw new Error(nightsData.error);
-        }
+        if (nightsData.error) throw new Error(nightsData.error);
 
         if (typeof nightsData.availableNights === 'number') {
           setAvailableNights(nightsData.availableNights);

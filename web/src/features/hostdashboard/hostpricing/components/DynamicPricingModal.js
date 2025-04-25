@@ -16,7 +16,6 @@ import PriceInput from './PriceInput';
 import CalendarPricingView from './CalendarPricingView';
 import '../styles/DynamicPricingModal.css';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -27,17 +26,31 @@ ChartJS.register(
   Legend
 );
 
+const formatYMD = (date) => {
+  return format(date, 'yyyy-MM-dd');
+};
+
 const DynamicPricingModal = ({ 
   isOpen, 
   onClose, 
-  basePrice, 
+  basePrice,
   priceHistory, 
-  onBasePriceChange 
+  onBasePriceChange,
+  onPriceHistoryUpdate 
 }) => {
+  const handlePriceUpdate = (date, newPrice) => {
+    const updatedPriceHistory = priceHistory.map(item => 
+      formatYMD(item.date) === formatYMD(date)
+        ? { ...item, price: newPrice }
+        : item
+    );
+    onPriceHistoryUpdate(updatedPriceHistory);
+  };
+
   const priceData = useMemo(() => {
     const labels = priceHistory.map((entry) => format(entry.date, "dd MMM yyyy"));
     const data = priceHistory.map((entry) => entry.price);
-
+    
     return {
       labels,
       datasets: [
@@ -178,21 +191,11 @@ const DynamicPricingModal = ({
 
         <h2>AI Dynamic Pricing</h2>
 
-        <div className="base-price-input">
-          <label htmlFor="basePrice">Base Price (€): </label>
-          <PriceInput
-            id="basePrice"
-            value={basePrice}
-            onChange={(e) => onBasePriceChange(parseFloat(e.target.value) || 0)}
-            ariaLabel="Base price input"
-          />
-        </div>
-
         <div className="chart-container">
-          <div style={{ width: '100%', height: '400px', marginBottom: '2rem' }}>
+          <div style={{ width: '95%', height: '400px', marginBottom: '2rem' }}>
             <Line data={priceData} options={chartOptions} />
           </div>
-          <CalendarPricingView priceHistory={priceHistory} />
+          <CalendarPricingView priceHistory={priceHistory} onPriceUpdate={handlePriceUpdate}/>
         </div>
       </div>
     </div>
@@ -207,7 +210,8 @@ DynamicPricingModal.propTypes = {
     date: PropTypes.instanceOf(Date).isRequired,
     price: PropTypes.number.isRequired
   })).isRequired,
-  onBasePriceChange: PropTypes.func.isRequired
+  onBasePriceChange: PropTypes.func.isRequired,
+  onPriceHistoryUpdate: PropTypes.func.isRequired
 };
 
 export default DynamicPricingModal;

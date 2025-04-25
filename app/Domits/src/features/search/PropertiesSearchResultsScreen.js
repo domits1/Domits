@@ -5,8 +5,8 @@ import {styles} from "./styles/PropertiesSearchResultsStyles";
 import FormatAccommodationData from "../../components/utils/mappings/FormatAccommodationData";
 import TranslatedText from "../translation/components/TranslatedText";
 import FetchAccommodationsData from "./hooks/FetchAccommodationsData";
-import NavigateTo from "../../navigation/NavigationFunctions";
 import LoadingScreen from "../../screens/loadingscreen/screens/LoadingScreen";
+import {PROPERTY_DETAILS_SCREEN} from "../../navigation/utils/NavigationNameConstants";
 
 const PropertiesSearchResultsScreen = ({searchResults}) => {
     const [accommodationsList, setAccommodationsList] = useState([]);
@@ -27,7 +27,7 @@ const PropertiesSearchResultsScreen = ({searchResults}) => {
      * @param accommodationId - The id of the accommodation that is pressed on.
      */
     const handleAccommodationPress = accommodationId => {
-        NavigateTo(navigation, {accommodationId: accommodationId}).propertyDetails();
+        navigation.navigate(PROPERTY_DETAILS_SCREEN, {accommodationId: accommodationId});
     };
 
     /**

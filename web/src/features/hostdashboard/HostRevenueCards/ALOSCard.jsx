@@ -25,7 +25,7 @@ const ALOSCard = () => {
         console.log('Fetching average length of stay for userId:', userId);
 
         const response = await fetch(
-          'https://api.example.com/average-length-of-stay',
+          'https://wsoz1pj35e.execute-api.eu-north-1.amazonaws.com/default/',
           {
             method: 'POST',
             headers: {
@@ -83,7 +83,7 @@ const ALOSCard = () => {
         {loading ? (
           <p>Loading...</p>
         ) : error ? (
-          <p style={{ color: 'red' }}>Error: {error}</p>
+          <p>Error: {error}</p>
         ) : (
           <p>{averageLengthOfStay} nights</p>
         )}

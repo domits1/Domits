@@ -6,7 +6,6 @@ const PriceInput = ({
   onChange, 
   disabled = false, 
   ariaLabel = "Price input",
-  className = "",
   step = "0.1"
 }) => (
   <input

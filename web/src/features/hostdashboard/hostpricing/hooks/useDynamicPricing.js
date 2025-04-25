@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import * as tf from '@tensorflow/tfjs';
 
 function seededRandom(seed) {
-  var x = Math.sin(seed) * 10000;
+  let x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
 
@@ -57,7 +57,7 @@ export const useDynamicPricing = () => {
         seasonalFactor = 1.1;
       }
 
-      let weekendFactor = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.05 : 1.0;
+      let weekendFactor = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.2 : 1.25;
       let competitorPrice = basePrice + (rand1 - 0.5) * 60;
       let eventFactor = rand2 < 0.1 ? 1.2 : 1.0;
       let occupancyRate = 0.4 + rand3 * 0.6;
@@ -283,8 +283,9 @@ export const useDynamicPricing = () => {
 
   return {
     priceHistory,
+    setPriceHistory,
     basePrice,
     initializeDynamicPricing,
     updateBasePrice
   };
-}; 
+};
