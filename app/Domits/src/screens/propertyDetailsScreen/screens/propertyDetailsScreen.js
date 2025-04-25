@@ -17,7 +17,6 @@ import RenderAmenities from '../hooks/RenderAmenities';
 import PropertyImagesView from '../views/PropertyImagesView';
 import LoadingScreen from '../../loadingscreen/screens/LoadingScreen';
 import PropertyMainDetailsView from '../views/PropertyMainDetailsView';
-import HostSectionView from '../../hostdashboard/components/HostSectionView';
 import {
     BOOKING_PROCESS_SCREEN,
     HOME_SCREEN,
@@ -37,7 +36,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
     const fetchPropertyDetails = useCallback(async () => {
         const property = await FetchPropertyDetails(route.params.property.property.id);
         if (property.property) {
-            setProperty(property)
+            setProperty(property);
         }
     })
 
@@ -98,80 +97,66 @@ const PropertyDetailsScreen = ({route, navigation}) => {
                             onFirstDateSelected={date => setFirstSelectedDate(date)}
                             onLastDateSelected={date => setLastSelectedDate(date)}
                             property={property}
-                            handleOnBookPress={
-                                handleOnBookPress
-                            }
                         />
-
-                        <View>
-                            <Text>
-                                Nights: €
-                                {Number(property.pricing.roomRate * nights).toFixed(2)}
-                            </Text>
-                            <Text>
-                                Cleaning fee: €{property.pricing.cleaning.toFixed(2)}
-                            </Text>
-                            <Text>
-                                Service fee: €{property.pricing.service.toFixed(2)}
-                            </Text>
-                            <Text>Total
-                                cost: {
-                                (
+                        <View style={styles.bookingContainer}>
+                            <View>
+                                <Text>
+                                    Nights: €
+                                    {Number(property.pricing.roomRate * nights).toFixed(2)}
+                                </Text>
+                                <Text>
+                                    Cleaning fee: €{property.pricing.cleaning.toFixed(2)}
+                                </Text>
+                                <Text>
+                                    Service fee: €{property.pricing.service.toFixed(2)}
+                                </Text>
+                                <Text>Total cost: {(
                                     property.pricing.roomRate * nights +
                                     property.pricing.cleaning +
                                     property.pricing.service
                                 ).toFixed(2)}</Text>
+                            </View>
+
+                            <View style={styles.bookingButtonContainer}>
+                                <View style={styles.bookingButton}>
+                                    <TouchableOpacity
+                                        onPress={handleOnBookPress}
+                                        style={styles.bookingButtonContent}>
+                                        <Text style={styles.bookingButtonText}>
+                                            <TranslatedText textToTranslate={'book'}/>
+                                        </Text>
+                                        <Ionicons
+                                            name={'arrow-forward-circle-outline'}
+                                            size={24}
+                                            style={styles.bookingButtonIcon}
+                                        />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
                         </View>
 
-                        {/*<View style={styles.bookingButtonContainer}>*/}
-                        {/*  <View style={styles.bookingButton}>*/}
-                        {/*    <TouchableOpacity*/}
-                        {/*      onPress={handleOnBookPress}*/}
-                        {/*      style={styles.bookingButtonContent}>*/}
-                        {/*      <Text style={styles.bookingButtonText}>*/}
-                        {/*        <TranslatedText textToTranslate={'book'} />*/}
-                        {/*      </Text>*/}
-                        {/*      <Ionicons*/}
-                        {/*        name={'arrow-forward-circle-outline'}*/}
-                        {/*        size={24}*/}
-                        {/*        style={styles.bookingButtonIcon}*/}
-                        {/*      />*/}
-                        {/*    </TouchableOpacity>*/}
-                        {/*  </View>*/}
-                        {/*</View>*/}
+                        <View style={styles.categoryDivider}/>
 
-                        {/*<View style={styles.categoryDivider} />*/}
-
-                        {/*<Text style={styles.categoryTitle}>*/}
-                        {/*  <TranslatedText textToTranslate={'amenities'} />*/}
-                        {/*</Text>*/}
-                        {/*<View style={styles.amenities}>*/}
-                        {/*  {RenderAmenities(parsedAccommodation)}*/}
-                        {/*</View>*/}
-                        {/*<View>*/}
-                        {/*  <TouchableOpacity*/}
-                        {/*    onPress={toggleAmenitiesModal}*/}
-                        {/*    style={styles.ShowAllAmenitiesButton}>*/}
-                        {/*    <Text style={styles.ShowAllAmenitiesButtonText}>*/}
-                        {/*      <TranslatedText textToTranslate={'show all amenities'} />*/}
-                        {/*    </Text>*/}
-                        {/*  </TouchableOpacity>*/}
-                        {/*  {showAmenitiesModal && (*/}
-                        {/*    <AmenitiesPopup*/}
-                        {/*      features={parsedAccommodation.Features}*/}
-                        {/*      onClose={toggleAmenitiesModal}*/}
-                        {/*    />*/}
-                        {/*  )}*/}
-                        {/*</View>*/}
-
-                        {/*<View style={styles.categoryDivider} />*/}
-
-                        {/*<HostSectionView*/}
-                        {/*  ownerId={parsedAccommodation.OwnerId}*/}
-                        {/*  navigation={navigation}*/}
-                        {/*/>*/}
-
-                        {/*<View style={styles.categoryDivider} />*/}
+                        <Text style={styles.categoryTitle}>
+                            <TranslatedText textToTranslate={'amenities'}/>
+                        </Text>
+                        <View style={styles.amenities}>
+                            <RenderAmenities propertyAmenities={property.amenities}/>
+                        </View>
+                          <TouchableOpacity
+                            onPress={toggleAmenitiesModal}
+                            style={styles.ShowAllAmenitiesButton}>
+                            <Text style={styles.ShowAllAmenitiesButtonText}>
+                              <TranslatedText textToTranslate={'show all amenities'} />
+                            </Text>
+                          </TouchableOpacity>
+                          {showAmenitiesModal && (
+                            <AmenitiesPopup
+                              propertyAmenities={property.amenities}
+                              onClose={toggleAmenitiesModal}
+                            />
+                          )}
+                        <View style={styles.categoryDivider}/>
                     </View>
                 </ScrollView>
             </View>

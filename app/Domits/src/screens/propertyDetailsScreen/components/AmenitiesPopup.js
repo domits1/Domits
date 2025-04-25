@@ -1,10 +1,23 @@
-import {Image, Modal, ScrollView, Text, TouchableOpacity, View} from "react-native";
+import {Modal, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import {styles} from "../styles/propertyDetailsStyles";
-import featureIcons from "../../../ui-components/FeatureIcons";
 import React from "react";
 import TranslatedText from "../../../features/translation/components/TranslatedText";
+import amenities from "../../../ui-components/FeatureIcons";
 
-const AmenitiesPopup = ({features, onClose}) => {
+const AmenitiesPopup = ({propertyAmenities, onClose}) => {
+
+    const mappedPropertyAmenities = propertyAmenities.map(amenity =>
+        amenities.find(amenitiesEntry => amenitiesEntry.id === amenity.amenityId)
+    );
+
+    const amenitiesByType = mappedPropertyAmenities.reduce((categories, amenity) => {
+        if (!categories[amenity.category]) {
+            categories[amenity.category] = [];
+        }
+        categories[amenity.category].push(amenity);
+        return categories;
+    }, {});
+
     return (
         <Modal transparent={true} visible={true} animationType="slide">
             <View style={styles.modalOverlay}>
@@ -16,32 +29,20 @@ const AmenitiesPopup = ({features, onClose}) => {
                         <TranslatedText textToTranslate={"what does this place have to offer?"}/>
                     </Text>
                     <ScrollView>
-                        {Object.keys(features).map(category => {
-                            const categoryItems = features[category];
-                            if (categoryItems.length > 0) {
-                                return (
-                                    <View key={category}>
-                                        <Text style={styles.categorySubTitle}>{category}</Text>
-                                        <View style={styles.subCategoryDivider}/>
-                                        {categoryItems.map((item, index) => (
-                                            <View key={index} style={styles.categoryItem}>
-                                                {typeof featureIcons[item] === 'string' ? (
-                                                    <Image
-                                                        source={{uri: featureIcons[item]}}
-                                                        style={styles.featureIcon}
-                                                    />
-                                                ) : featureIcons[item] ? (
-                                                    <View style={styles.featureIcon}>
-                                                        {featureIcons[item]}
-                                                    </View>
-                                                ) : null}
-                                                <Text style={styles.featureText}>{item}</Text>
-                                            </View>
-                                        ))}
-                                    </View>
-                                );
-                            }
-                            return null;
+                        {Object.keys(amenitiesByType).sort().map(category => {
+                            const items = amenitiesByType[category];
+                            return (
+                                <View key={category}>
+                                    <Text style={styles.categorySubTitle}>{category}</Text>
+                                    <View style={styles.subCategoryDivider}/>
+                                    {items.map((item, index) => (
+                                        <View key={index} style={styles.categoryItem}>
+                                            {item.icon}
+                                            <Text style={styles.featureText}>{item.amenity}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            );
                         })}
                     </ScrollView>
                 </View>

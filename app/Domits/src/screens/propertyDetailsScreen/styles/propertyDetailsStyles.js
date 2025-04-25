@@ -147,7 +147,15 @@ export const styles = StyleSheet.create({
     },
     // Booking button
     bookingButtonContainer: {
-        marginHorizontal: 20,
+        position: 'absolute',
+        bottom: 2,
+        right: 0,
+    },
+    bookingContainer: {
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
     },
     bookingButton: {
         borderRadius: 15,
