@@ -26,7 +26,8 @@ const HostMessagesContent = () => {
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
     const isMobile = screenWidth < 768;
-    const isTablet = screenWidth >= 768 && screenWidth < 1145;
+    const isTablet = screenWidth >= 768 && screenWidth < 1440;
+
     useEffect(() => {
         const handleResize = () => setScreenWidth(window.innerWidth);
         window.addEventListener("resize", handleResize);
@@ -49,18 +50,12 @@ const HostMessagesContent = () => {
     const showContactList =
         isMobile ? !selectedContactId :
             isTablet ? !selectedContactId :
-                true;
+                    true;
 
     const showChatScreen =
         isMobile ? !!selectedContactId :
             isTablet ? !!selectedContactId :
-                true;
-
-    const showBookingTab =
-        isMobile ? !selectedContactId :
-            isTablet ? !selectedContactId :
-                true;
-
+                    true;
 
 
     return (
@@ -92,18 +87,17 @@ const HostMessagesContent = () => {
                                     contactId={selectedContactId}
                                     connectionId={connectionId}
                                     contactName={selectedContactName}
-                                    onBack={isMobile ? handleBackToContacts : null}
-                                    onClose={isTablet ? handleBackToContacts : null}
+                                    onBack={(isTablet) ? handleBackToContacts : null}
                                 />
                             )}
-                            {showBookingTab && (
-                                <HostBookingTab
-                                    userId={userId}
-                                    contactId={selectedContactId}
-                                    contactName={selectedContactName}
-                                    onBack={isMobile ? handleBackToContacts : null}
-                                    onClose={isTablet ? handleBackToContacts : null}
-                                />
+                            {showChatScreen && (
+                                <div className="host-booking-tab-overlay">
+                                    <HostBookingTab
+                                        userId={userId}
+                                        contactId={selectedContactId}
+                                        contactName={selectedContactName}
+                                    />
+                                </div>
                             )}
                         </div>
                     </>
