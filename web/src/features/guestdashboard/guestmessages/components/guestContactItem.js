@@ -6,9 +6,7 @@ import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
 const ContactItem = ({ contact, userId, isPending, selected }) => {
     const [error, setError] = useState(null);
     const { bookingDetails, accommodation } = useFetchBookingDetails(contact.hostId, userId);
-
-    const accoImage = accommodation?.Images?.[0] && Object.values(accommodation.Images[0])[0];
-
+    const accoImage = accommodation?.Images?.image1;
 
 
     return (
@@ -32,6 +30,10 @@ const ContactItem = ({ contact, userId, isPending, selected }) => {
                         {bookingDetails?.Status === "Pending" && (
                             <p id='status'>Inquiry sent</p>
                         )}
+                        {bookingDetails?.Status === "Failed" && (
+                            <p id='status'>Reservation unsuccessful</p>
+                        )}
+                        
                         {contact.latestMessage.text
                             ? contact.latestMessage.text || "No message yet"
                             : "No message history yet"}

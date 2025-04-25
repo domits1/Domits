@@ -9,7 +9,8 @@ const ContactItem = ({ contact, isPending, setContacts, selected }) => {
     const { updateContactRequest } = useUpdateContactRequest(setContacts);
     const { bookingDetails, accommodation } = useFetchBookingDetails(contact.hostId, contact.recipientId);
 
-    const accoImage = accommodation?.Images?.[0] && Object.values(accommodation.Images[0])[0];
+    const accoImage = accommodation?.Images?.image1;
+
 
 
     const handleAccept = async () => {
@@ -48,6 +49,9 @@ const ContactItem = ({ contact, isPending, setContacts, selected }) => {
 
                         {bookingDetails?.Status === "Pending" && (
                             <p id='status'>Inquiry sent</p>
+                        )}
+                        {bookingDetails?.Status === "Failed" && (
+                            <p id='status'>Reservation unsuccessful</p>
                         )}
                         {contact.latestMessage.text
                             ? contact.latestMessage.text || "No message yet"
