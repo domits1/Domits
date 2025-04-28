@@ -29,7 +29,7 @@ function Header() {
                 source={require('../images/icons/app-bookings-icon-black.png')}
               />
               <Text style={styles.itemText}>
-                <TranslatedText textToTranslate={'bookings'} />
+                <TranslatedText textToTranslate={'Bookings'} />
               </Text>
             </TouchableOpacity>
           )}
@@ -38,7 +38,7 @@ function Header() {
             style={styles.itemContainer}>
             <MaterialIcons name={'language'} size={45} color={'black'} />
             <Text style={styles.itemText}>
-              <TranslatedText textToTranslate={'language'} />
+              <TranslatedText textToTranslate={'Language'} />
             </Text>
           </TouchableOpacity>
           <SelectLanguagePopup
