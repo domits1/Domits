@@ -1,0 +1,46 @@
+/* --- src/styles/components/_forms.scss --- */
+
+/* Basic appearance for all text inputs, number inputs, selects, and textareas */
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  display: block;
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #d1d5db; // Consistent border
+  border-radius: 6px;      // Consistent border radius
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #333;
+  background-color: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+  &:focus {
+    outline: none;
+    border-color: #007bff; // Theme primary color
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25); // Theme focus shadow
+  }
+
+  &::placeholder {
+    color: #9ca3af; // Consistent placeholder color
+    opacity: 1;
+  }
+}
+
+/* Base select reset */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+/* Base label styles */
+label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+  display: block; // Ensure labels are block-level by default
+  // Margin-bottom is better handled in specific layout contexts (_addressInputView.scss)
+}

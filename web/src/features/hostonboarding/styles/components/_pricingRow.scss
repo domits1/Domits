@@ -1,0 +1,175 @@
+// START OF FILE pricingView.scss (or wherever you keep PropertyRateView styles)
+
+// Assumes variables like --text-color, --text-muted-color, --border-color-light,
+// --background-color, --spacing-sm, --spacing-md, --spacing-lg, --spacing-xl,
+// --border-radius-button, --primary-color etc. are defined in :root
+
+// Container for the entire Property Rate View
+.property-rate-view {
+  .rate-container { // Main content area within the view
+    max-width: 550px; // Constrain the width of the pricing content
+    margin-left: auto;
+    margin-right: auto;
+    padding: var(--spacing-lg) var(--spacing-md); // Adjust padding as needed
+  }
+}
+
+// Styling for sections containing pricing rows (Guest Price, Your Earnings)
+.pricing-details {
+  background-color: var(--container-bg-color); // Or a slightly off-white like #fdfdfd
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-button);
+  margin-bottom: var(--spacing-xl);
+  // Optional: Add a subtle border instead of the old heavy one
+  // border: 1px solid var(--border-color-light);
+  // Optional: Add a subtle shadow
+  // box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  // Specific spacing for the earnings section if needed
+  &.host-earnings {
+    background-color: #f8f9fa; // Slightly different background for emphasis
+  }
+}
+
+// Title for each pricing section
+.pricing-section-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-top: 0; // Remove default margin
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+// Divider line between pricing rows
+.pricing-divider {
+  border: none; // Remove default border
+  height: 1px; // Specify height
+  background-color: var(--border-color-light); // Use light border color
+  margin: var(--spacing-lg) 0; // Vertical margin
+}
+
+// Container for a single Label + Input/Value row
+.pricing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; // Vertically align label and input/value
+  margin-bottom: var(--spacing-md); // Space below each row
+
+  label {
+    flex-basis: 60%; // Give label more space
+    padding-right: var(--spacing-md); // Space between label and value
+    font-size: 0.95rem;
+    color: var(--text-muted-color);
+    text-align: left; // Align label text left
+  }
+
+  // Wrapper for editable input + currency symbol
+  .pricing-input-wrapper {
+    display: flex;
+    align-items: center;
+    flex-basis: 40%; // Remaining space
+    justify-content: flex-end; // Align input content to the right
+
+    .currency-symbol {
+      margin-right: var(--spacing-xs, 4px); // Space before input
+      color: var(--text-muted-color);
+      font-weight: 500;
+    }
+  }
+
+  // The actual input field
+  .pricing-input {
+    flex-grow: 0; // Don't allow input itself to grow excessively
+    width: 80px; // Fixed width suitable for currency input
+    padding: var(--spacing-sm) var(--spacing-sm);
+    border: 1px solid var(--border-color-medium, #ccc);
+    border-radius: var(--border-radius-checkbox, 4px); // Use smaller radius
+    font-size: 1rem;
+    text-align: right; // Align number input text right
+    background-color: var(--background-color);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color, dodgerblue);
+      box-shadow: 0 0 0 2px var(--focus-ring-color, rgba(34, 34, 34, 0.3)); // Use focus ring var
+    }
+
+    // Hide spinner arrows on number input (optional)
+    &[type="number"] {
+      -moz-appearance: textfield;
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    }
+  }
+
+  // Style for the read-only value paragraph
+  .pricing-readonly-value {
+    flex-basis: 40%; // Match input wrapper basis
+    font-size: 1rem;
+    font-weight: 600; // Make readonly values slightly bolder
+    color: var(--text-color);
+    text-align: right; // Align to the right
+    margin: 0; // Remove default paragraph margin
+    padding: var(--spacing-sm) 0; // Match input vertical padding roughly
+  }
+}
+
+// Informational text in the earnings section
+.earnings-info {
+  font-size: 0.85rem;
+  color: var(--text-muted-color);
+  margin-top: var(--spacing-sm); // Space above this text
+  margin-bottom: 0; // Remove bottom margin if it's the last element
+  text-align: center; // Or left
+}
+
+// Error message styling
+.error-message {
+  color: #d9534f; // Standard error color
+  text-align: center;
+  margin-top: var(--spacing-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+
+// --- Responsive Adjustments ---
+@media (max-width: 600px) {
+  .rate-container {
+    max-width: 100%; // Allow full width
+    padding: var(--spacing-lg) var(--spacing-sm); // Reduce side padding
+  }
+
+  .rate-display {
+    font-size: 1.75rem; // Slightly smaller display rate
+  }
+
+  .pricing-details {
+    padding: var(--spacing-md); // Less padding inside sections
+  }
+
+  .pricing-row {
+    // Optional: Stack label and input on small screens if needed
+    // flex-direction: column;
+    // align-items: flex-start; // Align items left when stacked
+
+    label {
+      // flex-basis: 100%; // Take full width if stacked
+      margin-bottom: var(--spacing-xs, 4px); // Space below label if stacked
+    }
+
+    .pricing-input-wrapper,
+    .pricing-readonly-value {
+      // flex-basis: 100%; // Take full width if stacked
+      // justify-content: flex-start; // Align left if stacked
+    }
+  }
+}
+
+// END OF FILE pricingView.scss

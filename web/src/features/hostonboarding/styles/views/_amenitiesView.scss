@@ -1,0 +1,330 @@
+/** START OF FILE amenitiesView.scss (Revised for Professional Look) */
+
+// === Variables ===
+:root {
+  // Colors
+  --text-color: #222222;
+  --text-muted-color: #717171;
+  --border-color-light: #EBEBEB;
+  --border-color-medium: #b0b0b0;
+  --background-color: #FFFFFF;
+  --container-bg-color: #FFFFFF;
+
+  // Checkbox
+  --checkbox-border-color-unchecked: #b0b0b0;
+  --checkbox-border-color-checked: #222222;
+  --checkbox-bg-checked: #222222;
+  --checkbox-checkmark-color: #FFFFFF;
+  --checkbox-size: 18px;
+  --checkbox-border-width: 2px;
+  --checkmark-svg-encoded: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3 8L6.5 11.5L13.5 4.5' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  // Buttons & Focus
+  --button-primary-bg: #222222;
+  --button-primary-text: #FFFFFF;
+  --button-primary-hover-bg: #000000;
+  --button-secondary-text: #222222;
+  --button-secondary-border: #b0b0b0;
+  --button-secondary-hover-bg: #f7f7f7;
+  --focus-ring-color: rgba(34, 34, 34, 0.3);
+
+  // Dimensions & Radius
+  --border-radius-checkbox: 4px;
+  --border-radius-button: 8px;
+
+  // Spacing
+  --spacing-sm: 0.5rem;  // 8px
+  --spacing-md: 1rem;    // 16px
+  --spacing-lg: 1.5rem;  // 24px
+  --spacing-xl: 2rem;    // 32px
+
+  // Transitions
+  --transition-fast: all 0.15s ease-in-out;
+  --transition-base: all 0.2s ease-in-out;
+}
+
+// === Base & Container ===
+.onboarding-host-div { // Applies broadly to the view wrapper if needed
+  padding: var(--spacing-lg) 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.amenity-container { // The main content area for this view
+  width: 90%;
+  max-width: 700px; // Adjust as needed
+  margin: 0 auto;
+  padding: var(--spacing-xl) 0;
+  background: var(--container-bg-color);
+  border: none;
+}
+
+// === Typography ===
+.onboardingSectionTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: var(--spacing-sm);
+  padding: 0 var(--spacing-lg); // Side padding for text alignment
+  text-align: center;
+}
+
+.onboardingSectionSubtitle {
+  font-size: 1rem;
+  color: var(--text-muted-color);
+  margin-bottom: var(--spacing-xl);
+  padding: 0 var(--spacing-lg);
+  line-height: 1.6;
+  text-align: center;
+  max-width: 550px; // Constrain subtitle width
+  margin-left: auto;
+  margin-right: auto;
+}
+
+// === Amenity Layout & Styling ===
+.amenity-groups { // Grid container for categories/items
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); // Responsive columns
+  gap: 0 var(--spacing-xl); // Column gap only
+  padding: 0 var(--spacing-lg); // Side padding for the grid
+}
+
+.amenity-category { // Wrapper for each category's content
+  // No visual styling (border, bg) needed for the flat Airbnb look
+  h3 { // Category title
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: var(--spacing-md);
+    margin-top: var(--spacing-lg); // Space above title
+    padding-top: 0; // No top padding needed usually
+    border-top: none; // No separator line by default in this style
+
+    // Remove top margin/border for the very first category
+    &:first-child {
+      margin-top: 0;
+    }
+    // Hide H3 completely if desired (uncomment below)
+    /*
+    position: absolute; width: 1px; height: 1px; margin: -1px;
+    padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border: 0;
+    */
+  }
+}
+
+.amenity-items { // Wrapper for items within a category
+  display: contents; // Makes child items direct grid children of .amenity-groups
+}
+
+.amenity-item { // The <label> for each amenity item
+  display: flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  padding: var(--spacing-sm) 0; // Vertical spacing between items
+  transition: background-color var(--transition-fast);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-color);
+  line-height: 1.4;
+  padding-left: calc(var(--checkbox-size) + var(--spacing-md)); // Space for checkbox
+
+  // Custom Checkbox Box (::before pseudo-element)
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    border: var(--checkbox-border-width) solid var(--checkbox-border-color-unchecked);
+    border-radius: var(--border-radius-checkbox);
+    background-color: var(--background-color); // Usually white
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  }
+
+  // Custom Checkmark (::after pseudo-element)
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    background-image: var(--checkmark-svg-encoded);
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 65%; // Adjust checkmark size within the box
+    opacity: 0; // Hidden by default
+    transition: opacity var(--transition-fast);
+    pointer-events: none;
+  }
+
+  // Hover State
+  &:hover::before {
+    border-color: var(--text-color); // Darken border on hover
+  }
+
+  // Selected (Checked) State - applied via '.selected' class on the label
+  &.selected {
+    &::before { // Style the box when checked
+      background-color: var(--checkbox-bg-checked);
+      border-color: var(--checkbox-border-color-checked);
+    }
+    &::after { // Show the checkmark
+      opacity: 1;
+    }
+    // Keep checked style on hover
+    &:hover::before {
+      background-color: var(--checkbox-bg-checked);
+      border-color: var(--checkbox-border-color-checked);
+    }
+  }
+
+  // Native Checkbox Input - visually hidden
+  input[type='checkbox'] {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    margin: 0;
+    cursor: pointer;
+    z-index: 1; // Ensure clickable over pseudo-elements
+  }
+
+  // Focus State - applied to the label containing the focused input
+  &:focus-within::before {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--focus-ring-color); // Focus ring on the custom box
+  }
+}
+
+// === Button Styling ===
+.onboarding-button-box { // Container for navigation buttons
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg) var(--spacing-lg); // Consistent padding
+  border-top: 1px solid var(--border-color-light); // Separator line
+  gap: var(--spacing-md);
+}
+
+.onboarding-button { // Base button style (add this class to your button component)
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--border-radius-button);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-align: center;
+  line-height: 1.5;
+  flex: 0 1 auto; // Allow shrinking, don't grow
+  min-width: 100px;
+
+  &:focus-visible { // Keyboard focus
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring-color);
+  }
+
+  &:disabled { // Disabled state
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  // Primary Button Variant (add '.button-primary' class)
+  &.button-primary {
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-text);
+    border-color: var(--button-primary-bg);
+    &:hover:not(:disabled) {
+      background-color: var(--button-primary-hover-bg);
+      border-color: var(--button-primary-hover-bg);
+    }
+    &:disabled { // Specific disabled colors for primary
+      background-color: #cccccc;
+      border-color: #cccccc;
+      color: #717171;
+    }
+  }
+
+  // Secondary Button Variant (add '.button-secondary' class)
+  &.button-secondary {
+    background-color: var(--background-color);
+    color: var(--button-secondary-text);
+    border: 1px solid var(--button-secondary-border);
+    &:hover:not(:disabled) {
+      background-color: var(--button-secondary-hover-bg);
+      border-color: var(--text-color); // Darken border on hover
+    }
+    &:disabled { // Specific disabled colors for secondary
+      background-color: var(--background-color);
+      border-color: #e0e0e0;
+      color: #b0b0b0;
+    }
+  }
+}
+
+// === Responsive Adjustments ===
+@media (max-width: 768px) {
+  .amenity-container {
+    width: 100%;
+    padding: var(--spacing-lg) 0; // Adjust padding
+    max-width: none;
+  }
+
+  .onboardingSectionTitle,
+  .onboardingSectionSubtitle,
+  .amenity-groups,
+  .onboarding-button-box { // Apply consistent padding on smaller screens
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+  }
+
+  .amenity-groups { // Stack items into a single column
+    grid-template-columns: 1fr;
+    gap: 0; // Remove column gap when stacked
+  }
+
+  .amenity-item {
+    font-size: 0.95rem; // Slightly smaller text
+  }
+
+  .onboarding-button-box { // Stack buttons vertically
+    flex-direction: column-reverse; // Proceed button on top
+    align-items: stretch; // Make buttons full width
+    gap: var(--spacing-sm); // Reduce gap between stacked buttons
+  }
+
+  .onboarding-button {
+    width: 100%; // Ensure buttons take full width when stacked
+  }
+}
+
+@media (max-width: 480px) {
+  // Further adjustments for very small screens if needed
+  .onboardingSectionTitle {
+    font-size: 1.5rem;
+  }
+  .onboardingSectionSubtitle {
+    font-size: 0.9rem;
+  }
+  .onboarding-button {
+    padding: 0.7rem 1.25rem;
+    font-size: 0.95rem;
+  }
+}
+
+/** END OF FILE amenitiesView.scss */

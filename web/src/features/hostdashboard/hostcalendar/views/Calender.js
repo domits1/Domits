@@ -17,7 +17,7 @@ import trashSVG from "./trash.svg";
 import "./../styles/Calender.scss";
 
 let selectedDate = null;
-let selectedDates = [];
+export let selectedDates = [];
 let selectedMonth = new Date().getMonth();
 let selectedYear = new Date().getFullYear();
 let editMode = false;

@@ -1,0 +1,259 @@
+// --- START OF FILE photosView.scss ---
+
+// Assumes variables like --border-color-medium, --background-color, --primary-color, --spacing-md etc. are defined in :root
+
+.photo-gallery-container {
+  // Inherits general container styles potentially from base
+  // Add specific overrides if needed
+  padding: var(--spacing-lg) var(--spacing-xl); // Example padding
+}
+
+// === Initial Drag/Drop Area ===
+.drag-drop-area {
+  border: 2px dashed var(--border-color-medium);
+  border-radius: var(--border-radius-button); // Consistent radius
+  padding: var(--spacing-xl) var(--spacing-lg);
+  text-align: center;
+  cursor: pointer;
+  background-color: #fdfdfd; // Very light background
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  margin-bottom: var(--spacing-lg);
+
+  &:hover {
+    background-color: #f8f8f8;
+    border-color: var(--text-muted-color);
+  }
+
+  // Style when dragging a *file* over this area
+  &.drag-over {
+    background-color: #f0f8ff; // Light blueish indicator
+    border-color: var(--primary-color, dodgerblue); // Use primary color if defined
+    border-style: solid;
+  }
+
+  .drag-drop-icon {
+    font-size: 2.5rem;
+    color: var(--text-muted-color);
+    display: block;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  p {
+    margin: var(--spacing-xs) 0;
+    color: var(--text-color);
+    font-weight: 500;
+  }
+
+  .drag-drop-separator {
+    color: var(--text-muted-color);
+    font-size: 0.9rem;
+    margin: var(--spacing-sm) 0;
+  }
+
+  .upload-button-styled { // Mimics button appearance
+    display: inline-block; // Or block if needed
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: var(--primary-color, black); // Use primary color if defined
+    color: var(--button-primary-text, white); // Use button text color
+    border-radius: var(--border-radius-button);
+    font-weight: 600;
+    cursor: pointer; // Already on parent, but good practice
+  }
+
+  .drag-drop-info {
+    display: block;
+    margin-top: var(--spacing-md);
+    font-size: 0.85rem;
+    color: var(--text-muted-color);
+  }
+}
+
+
+// === Image Grid Section ===
+.photo-gallery-section {
+  // Style for the grid container when dragging *files* over it
+  &.grid-drag-over-upload {
+    // Subtle indication, e.g., slight background change or border
+    outline: 2px dashed var(--primary-color, dodgerblue);
+    outline-offset: -4px; // Inset the outline slightly
+    background-color: #f0f8ff; // Optional background tint
+  }
+}
+
+.photo-gallery-images {
+  display: grid;
+  // Responsive grid: fills available space, min item width 140px
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+
+// === Image Preview Item Styling (within the grid) ===
+.image-preview-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; // Creates a square aspect ratio (1:1)
+  border-radius: var(--border-radius-checkbox); // Small radius
+  overflow: hidden;
+  background-color: #f0f0f0; // Placeholder background
+  outline: 1px solid var(--border-color-light); // Subtle border
+  transition: outline-color var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
+
+  // Style when this item is actively being dragged
+  &.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+    outline-color: var(--primary-color, dodgerblue);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  // Style when another item is being dragged *over* this item
+  &.drag-over-reorder {
+    outline: 2px solid var(--primary-color, dodgerblue);
+    outline-offset: 2px; // Make outline stand out
+    transform: scale(1.03); // Slightly enlarge drop target
+  }
+
+  .image-preview-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; // Cover the area, maintain aspect ratio
+    display: block; // Remove extra space below image
+  }
+
+  .image-delete-button {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 2; // Above image and label
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+
+    &:hover {
+      background-color: rgba(200, 0, 0, 0.8);
+      transform: scale(1.1);
+    }
+
+    svg { // Style the SVG icon within the button
+      width: 16px;
+      height: 16px;
+      fill: currentColor; // Use button's text color (white)
+    }
+  }
+
+  .image-cover-label { // Label for the first image
+    position: absolute;
+    bottom: var(--spacing-sm);
+    left: var(--spacing-sm);
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: var(--border-radius-checkbox);
+    z-index: 1;
+  }
+}
+
+// First image specific style (e.g., slightly larger or different border)
+// Disabled for now to keep grid uniform, uncomment to make cover image stand out
+// .photo-gallery-images > .image-preview-wrapper:first-child {
+//    grid-column: span 2; // Example: make it take 2 columns
+//    grid-row: span 2;    // Example: make it take 2 rows
+//    padding-top: 100%; // Keep square aspect ratio if spanning
+//    border: 2px solid var(--text-color);
+// }
+
+
+// === Add More Box Styling ===
+.add-more-box {
+  // Inherits .image-preview-wrapper for aspect ratio and base styles
+  border: 2px dashed var(--border-color-medium);
+  background-color: transparent; // No placeholder bg needed
+  display: flex;
+  flex-direction: column; // Stack icon and text
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  outline: none; // Remove the default outline from wrapper
+
+  // Need to absolutely position content within the aspect-ratio box
+  > * {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 80%; // Prevent text overflowing small boxes
+  }
+
+  .add-more-icon {
+    font-size: 2.5rem;
+    color: var(--text-muted-color);
+    line-height: 1;
+    // Adjust position slightly if needed
+    transform: translate(-50%, -70%); // Move icon up
+  }
+
+  p {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-muted-color);
+    margin: 0;
+    // Adjust position slightly if needed
+    transform: translate(-50%, -20%); // Move text down
+  }
+
+  &:hover {
+    border-color: var(--text-color);
+    background-color: #f8f8f8;
+    .add-more-icon, p {
+      color: var(--text-color);
+    }
+  }
+}
+
+// === Error Message ===
+.error-message {
+  color: #d9534f; // Example error color
+  text-align: center;
+  margin-top: var(--spacing-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+
+// === Responsive (Add more specific tweaks if needed) ===
+@media (max-width: 768px) {
+  .photo-gallery-images {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .photo-gallery-images {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--spacing-xs); // Smaller gap
+  }
+  .onboardingSectionTitle { font-size: 1.5rem; }
+  .onboardingSectionSubtitle { font-size: 0.9rem; }
+}
+
+// --- END OF FILE photosView.scss ---

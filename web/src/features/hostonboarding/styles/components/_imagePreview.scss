@@ -1,0 +1,71 @@
+// Styles for the ImagePreview component (used within PhotosView)
+.onboarding-host-div {
+  // These are component styles, but they were not nested in the original.
+  // Keeping them outside PhotosView specific container for clarity.
+
+  .images-container { // Container for a single image preview
+    width: 300px; // Fixed width - consider using percentages or max-width
+    height: 300px; // Fixed height - consider using percentages or aspect-ratio
+    border: 1px solid $light-gray;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    position: relative;
+    overflow: hidden; // Ensure image doesn't spill out if larger
+  }
+
+  .file-image { // The actual <img> tag
+    width: 100%; // Make image fill its container
+    height: 100%; // Make image fill its container
+    object-fit: cover; // Crop image to fit while maintaining aspect ratio
+  }
+
+  .delete-button { // Button overlaid on the image
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: black;
+    background-color: $white;
+    border: 1px solid $light-gray;
+    border-radius: 1vh; // Using viewport height for radius
+    padding: 5px;
+    cursor: pointer;
+    z-index: 1; // Ensure it's above the image
+  }
+
+  .placeholder { // Style for the placeholder area before image is loaded
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: $off-white;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+}
+// Note: The file-input style is a bit tricky - it's absolute positioned over a div.
+// Let's move the file-input and add-more-box styles to PhotosView.scss as they are specific to that page's upload mechanism.
+
+// Media Queries for Image Preview items
+@media (max-width: 640px) {
+  .onboarding-host-div {
+    .images-container { // Adjusted size
+      width: 150px; // Example smaller size, adjust as needed
+      height: 150px;
+    }
+    .file-image { // Will scale with container
+      width: 100%;
+      height: 100%;
+    }
+    .delete-button { // May need size adjustment on smaller screens
+      width: 20px; height: 20px; font-size: 0.7rem; // Example adjustments
+    }
+    .placeholder { // Will scale with container
+      font-size: 0.7rem; // Smaller text
+    }
+  }
+  // Note: The original media query also adjusted .file-image, .accommodation-thumbnail, .file-input, .images-container widths/heights with percentages.
+  // We need to decide if these apply to the ImagePreview component or the main PhotoGallery container.
+  // Let's add them to PhotosView.scss to target the container and nested items directly.
+}

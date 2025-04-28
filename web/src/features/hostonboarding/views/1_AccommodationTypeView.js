@@ -1,22 +1,23 @@
-import React from "react"
-import AccommodationTypeSelector from "../components/TypeSelector"
-import { useHandleAccommodationTypeProceed } from "../hooks/usePropertyType"
-import { accommodationData } from "../constants/propertyTypeData"
-import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
-import OnboardingButton from "../components/OnboardingButton"
+import React from "react";
+import AccommodationTypeSelector from "../components/TypeSelector";
+import { useHandleAccommodationTypeProceed } from "../hooks/usePropertyType";
+import { accommodationData } from "../constants/propertyTypeData";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
+import OnboardingButton from "../components/OnboardingButton";
+import "../styles/onboardingHost.scss";
 
-// Desc: Step 1 - Choose the type of accommodation you want to list on the platform
 export default function AccommodationTypeView() {
   // Currently selected
   const selectedAccommodationType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.type,
-  )
+  );
   // Set the type
   const setAccommodationType = useFormStoreHostOnboarding(
     (state) => state.setAccommodationType,
-  )
+  );
 
-  const handleProceed = useHandleAccommodationTypeProceed()
+  const handleProceed = useHandleAccommodationTypeProceed();
+  const isProceedDisabled = !selectedAccommodationType;
 
   return (
     <div className="onboarding-host-div">
@@ -35,7 +36,11 @@ export default function AccommodationTypeView() {
             routePath="/hostdashboard"
             btnText="Go to dashboard"
           />
-          <OnboardingButton onClick={handleProceed} btnText="Proceed" />
+          <OnboardingButton
+            onClick={handleProceed}
+            btnText="Proceed"
+            disabled={isProceedDisabled}
+          />
         </nav>
       </main>
     </div>

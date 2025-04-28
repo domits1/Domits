@@ -1,0 +1,25 @@
+// Styles specific to the House Rules View
+.onboarding-host-div {
+  // The .houseRulesContainer itself
+  .houseRulesContainer {
+    background-color: #ededed68;
+    border-radius: 10px;
+    max-width: 600px; // Matches general container width
+    height: auto;
+    padding: 20px;
+    margin: auto; // Center the block within its parent (page-body/container or onboarding-host-div)
+    margin-bottom: 2rem; // Added margin bottom for spacing before buttons
+    // If this is nested under .page-body or .container, the max-width and auto margin might be redundant.
+  }
+
+  // Toggle styles are defined in components/_houseRuleCheckbox.scss
+
+  // Checkbox container styles specific to House Rules view if different from general forms
+  // The general .check-box, .check-box-vertical, .Check classes are in _forms.scss
+  // If House Rules uses these and needs overrides, they would go here, e.g:
+  // .houseRulesContainer {
+  //   .check-box {
+  //      // overrides here
+  //   }
+  // }
+}

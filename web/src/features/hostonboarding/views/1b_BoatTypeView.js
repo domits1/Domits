@@ -4,12 +4,20 @@ import BoatTypeSelector from "../components/TypeSelector"
 import { boatData } from "../constants/boatData"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import OnboardingButton from "../components/OnboardingButton"
+import "../styles/onboardingHost.scss";
 
 function BoatTypeView() {
-  const setBoatType = useFormStoreHostOnboarding((state) => state.setBoatType)
+  const setBoatType = useFormStoreHostOnboarding((state) => state.setBoatType);
   const selectedBoatType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.boatType,
-  )
+  );
+  const selectedGuestAccessType = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.guestAccessType,
+  );
+
+  // Update isProceedDisabled to include selectedBoatType
+  const isProceedDisabled = !selectedBoatType;
+
   return (
     <div className="onboarding-host-div">
       <main className="page-body">
@@ -31,6 +39,7 @@ function BoatTypeView() {
           <OnboardingButton
             routePath="/hostonboarding/boat/address"
             btnText="Proceed"
+            disabled={isProceedDisabled}
           />
         </nav>
       </main>

@@ -1,0 +1,101 @@
+// Styles for the reusable OnboardingButton component and the button navigation box
+.onboarding-host-div {
+  // Button Navigation Box - Base styles (used by all views)
+  .onboarding-button-box {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3rem; // Use margin-top here as the container has margin-bottom
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+    width: 100%;
+    max-width: 600px; // Match the max-width of the general content containers
+    margin: 0 auto; // Center the button box
+    // Added gap for spacing between buttons, especially when wrapping
+    gap: 1rem; // Use 1rem gap from the common media query consensus
+  }
+
+  // Styles for the actual OnboardingButton component (the <button> or <a>)
+  .onboarding-button-box {
+    .onboarding-button { // Target the component's root element
+      // Base styles from main file
+      background-color: $domits-host-blue;
+      border: none;
+      color: white;
+      padding: 12px 24px; // Using pixel padding from main file
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 5px; // Using pixel border-radius from main file
+      transition: background-color 0.2s ease, opacity 0.2s ease; // Add opacity for disabled
+      min-width: 120px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // Added subtle shadow
+
+      // Styles when the 'secondary' variant class is applied
+      &.secondary {
+        background-color: $white;
+        color: $domits-host-blue;
+        border: 1px solid $domits-host-blue;
+        box-shadow: none;
+        &:hover {
+          background-color: $domits-host-blue-light;
+        }
+      }
+
+      // Hover state (when not disabled)
+      &:hover:not(:disabled) {
+        background-color: $domits-host-blue-dark;
+      }
+
+      // Disabled state (consistent across views)
+      &:disabled {
+        background-color: #ccc; // Using main file gray color
+        color: #888; // Using main file color
+        cursor: not-allowed;
+        opacity: 0.7; // Using main file opacity
+        box-shadow: none;
+        // Removed !important and CSS variables from AmenityStyles version for consistency with main file's simpler style
+      }
+
+      // Focus state (from AmenityStyles, generally good for accessibility)
+      &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--focus-ring-color), 0 1px 2px rgba(0, 0, 0, 0.05); // Using CSS Variable
+      }
+    }
+  }
+}
+
+// Media Queries for Button Box and Buttons
+@media (max-width: 768px) {
+  .onboarding-host-div {
+    .onboarding-button-box {
+      flex-direction: column; // Stack buttons vertically
+      align-items: stretch; // Make buttons full width
+      gap: 1rem; // Consistent gap
+      margin-top: 2rem; // Adjusted margin
+      padding-top: 2rem; // Adjusted padding
+
+      .onboarding-button {
+        width: 100%; // Make buttons full width
+        min-width: auto; // Remove min-width constraint
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .onboarding-host-div {
+    .onboarding-button-box {
+      gap: 0.8rem; // Smaller gap
+      margin-top: 1.5rem; // Adjusted margin
+      padding-top: 1.5rem; // Adjusted padding
+
+      .onboarding-button {
+        padding: 0.6rem 1.2rem; // Slightly smaller padding (using rems from AmenityStyles consensus)
+        font-size: 0.95rem; // Slightly smaller font size (using rems from AmenityStyles consensus)
+      }
+    }
+  }
+}

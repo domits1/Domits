@@ -1,0 +1,75 @@
+/* --- src/styles/pages/_addressInputView.scss --- */
+
+/* Styles specific to the Address Input View layout and elements */
+/* Assumes general page layout (.onboarding-host-div, .page-body) and base subtitles */
+/* (.onboardingSectionSubtitle) are defined elsewhere (e.g., _onboardingBase.scss) */
+
+.acco-location-map {
+  width: 100%;
+  height: 400px;
+  margin-bottom: 30px; // Space below map
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.address-details-heading {
+  margin-top: 30px;   // Space above heading
+  margin-bottom: 10px;  // Space below heading
+  font-size: 1.4rem;
+  color: #333;
+  font-weight: 700;
+}
+
+/* Specific styling for the subtitle directly above the address form */
+.address-form-details-subtitle {
+  // Inherits base styles from .onboardingSectionSubtitle (assuming it's defined)
+  margin-top: 0;
+  margin-bottom: 25px; // Increased space below this specific subtitle
+  line-height: 1.6;
+  color: #555;
+}
+
+.address-details-form-container {
+  margin-bottom: 40px; // Space before the button navigation
+}
+
+.location-details-form {
+  display: grid;
+  grid-template-columns: 1fr; // Single column by default
+  gap: 20px;                 // Space between form fields
+
+  @media (min-width: 600px) {
+    // Use auto-fit columns on wider screens
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  /* Label spacing within this specific form */
+  label {
+    margin-bottom: 8px; // Space between label and its input/select
+    // Font/color styles inherited from base _forms.scss
+  }
+
+  /* Select dropdown arrow override for this form context */
+  select {
+    // Base appearance (border, padding, etc.) inherited from _forms.scss
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2C114.7L159.1%2C242.6c-4.7%2C4.7-12.3%2C4.7-17%2C0L5.4%2C114.7c-4.7-4.7-4.7-12.3%2C0-17l19.8-19.8 c4.7-4.7%2C12.3-4.7%2C17%2C0l110.3%2C110.3L249.1%2C77.9c4.7-4.7%2C12.3-4.7%2C17%2C0l19.8%2C19.8C291.7%2C102.4%2C291.7%2C110%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 15px center; // Position arrow consistently with padding
+    background-size: 12px;                 // Arrow size
+    padding-right: 40px;                   // Add padding to prevent text overlap
+  }
+
+  /* Inputs within this form inherit styles from _forms.scss */
+  input[type="text"],
+  input[type="number"] {
+    // No specific overrides needed here unless layout dictates it
+  }
+}
+
+/* Spacing and divider for the bottom navigation buttons */
+.onboarding-button-box {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #eee; // Light separator line
+}

@@ -1,0 +1,85 @@
+// Styles specific to the Summary View
+.onboarding-host-div {
+  .summary { // The main container for the summary view
+    margin: 5rem 7rem 0 7rem; // Very large fixed margin - consider using relative units and max-width
+    max-width: 900px; // Added max-width assumption
+    margin-left: auto; margin-right: auto; // Center the block
+    padding: 2rem; // Add padding for internal spacing
+    background-color: $white; // Add background
+    border-radius: $border-radius; // Add border-radius
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // Add shadow
+    margin-bottom: 3rem; // Add space before final button box
+
+    h3 { // Heading within summary
+      margin-bottom: 2%; // Percentage margin
+    }
+  }
+
+  .accommodation-summary { // Styles for the summary table
+    width: 100%;
+    border-collapse: collapse; // Removes space between table cells
+
+    th { // Table header cells
+      border-bottom: 1px solid $light-gray;
+      text-align: center;
+    }
+
+    tr { // Table rows
+      // margin-bottom doesn't apply to table rows directly
+      text-align: justify; // Text alignment within cells
+    }
+    td { // Add padding to cells for spacing
+      padding: 10px 0; // Example padding top/bottom
+      &:first-child { padding-left: 0; } // Adjust padding for first/last columns
+      &:last-child { padding-right: 0; }
+    }
+  }
+
+  // Final Button Box (potentially different from the standard one)
+  .button-box-last { // Styles for the button box at the end of the summary
+    display: flex;
+    flex-direction: row; // Buttons side-by-side
+    justify-content: center; // Center buttons
+    gap: 1.5em; // Space between buttons
+    padding: 2em; // Padding around the buttons block
+    width: 100%; // Span full width of parent (.summary)
+    max-width: 600px; // Max width for centering
+    margin: 0 auto; // Center the button box within .summary
+
+    // Styles for the actual buttons within this specific box
+    // The SummarySubmitView uses raw <button> tags, not OnboardingButton component.
+    // These styles target those raw buttons.
+    button {
+      background-color: $domits-host-blue;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.2s ease, opacity 0.2s ease;
+      min-width: 120px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // Subtle shadow
+
+      &:hover:not(:disabled) {
+        background-color: $domits-host-blue-dark;
+      }
+
+      &:disabled { // Disabled state (consistent with OnboardingButton)
+        background-color: #ccc;
+        color: #888;
+        cursor: not-allowed;
+        opacity: 0.7;
+        box-shadow: none;
+      }
+    }
+    // If you had a "Go back" button here, you might add a secondary style
+    // button.secondary { ... }
+  }
+}
+// Note: The SummarySubmitView component needs its buttons updated to use the OnboardingButton component for consistency,
+// or the styles for raw buttons in .button-box-last need to be complete copies of the OnboardingButton styles.
+// Using the component is preferred.

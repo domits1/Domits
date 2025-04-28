@@ -4,14 +4,22 @@ import CamperTypeSelector from "../components/TypeSelector"
 import { camperData } from "../constants/camperData"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import OnboardingButton from "../components/OnboardingButton"
+import "../styles/onboardingHost.scss";
 
 function CamperTypeView() {
   const setCamperType = useFormStoreHostOnboarding(
     (state) => state.setCamperType,
-  )
+  );
   const selectedCamperType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.camperType,
-  )
+  );
+  const selectedGuestAccessType = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.guestAccessType,
+  );
+
+  // Update isProceedDisabled to include selectedCamperType
+  const isProceedDisabled = !selectedCamperType;
+
   return (
     <div className="onboarding-host-div">
       <main className="page-body">
@@ -29,6 +37,7 @@ function CamperTypeView() {
           <OnboardingButton
             routePath="/hostonboarding/camper/address"
             btnText="Proceed"
+            disabled={isProceedDisabled}
           />
         </nav>
       </main>

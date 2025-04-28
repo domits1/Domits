@@ -1,8 +1,23 @@
 import HouseTypeSelector from "../components/HouseTypeSelector"
 import OnboardingButton from "../components/OnboardingButton"
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
+import "../styles/onboardingHost.scss";
 
 // Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
 export default function HouseTypeView() {
+  const selectedGuestAccessType = useFormStoreHostOnboarding((state) => state.accommodationDetails.guestAccessType);
+  const setGuestAccessType = useFormStoreHostOnboarding((state) => state.setGuestAccessType); // Assuming this setter exists in your store
+
+  // This logic is correct
+  const isProceedDisabled = !selectedGuestAccessType;
+
+  // Define the values for easier reference
+  const GUEST_ACCESS_TYPES = {
+    ENTIRE: "Entire house",
+    PRIVATE: "Private room",
+    SHARED: "Shared room",
+  };
+
   return (
     <div className="onboarding-host-div">
       <main className="container">
@@ -31,6 +46,7 @@ export default function HouseTypeView() {
           <OnboardingButton
             routePath="/hostonboarding/accommodation/address"
             btnText="Proceed"
+            disabled={isProceedDisabled}
           />
         </nav>
       </main>

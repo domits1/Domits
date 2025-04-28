@@ -1,0 +1,48 @@
+// SCSS Variables
+$domits-guest-green: #0D9813;
+$domits-host-blue: #003366;
+$domits-host-blue-light: #e0f2ff; // Lighter shade for selected background
+$domits-host-blue-dark: #002244; // Darker shade for button hover
+$border-radius: 8px; // Standard border radius
+$light-gray: #ccc; // Used for borders
+$input-time-gray: #2a2c2d;
+$white: #fff; // White background for content and options
+$off-white: #f8f8f8; // Lighter background for the page
+$border-color-selected: #006ce4; // Border color for selected option
+
+// CSS Custom Properties (from AmenityStyles - make them available globally)
+:root {
+  // Theme Colors
+  --primary-color: #1d3b5e; // Used for buttons, titles, etc.
+  --primary-hover-color: #27466c;
+  --primary-light-color: #f8f9fa; // Optional selected item background
+  --secondary-color: #6c757d;
+  --secondary-hover-color: #5a6268;
+  --background-color: #f8f9fa; // Similar to $off-white
+  --container-bg-color: #ffffff; // Similar to $white
+  --border-color: #e2e8f0; // Default item border
+  --checkbox-border-color: #212529;
+  --text-color: #1f2937;
+  --text-muted-color: #6b7280;
+  --text-light-color: #ffffff;
+  --focus-ring-color: rgba(29, 59, 94, 0.4);
+
+  // Dimensions & Radius
+  --border-radius-sm: 0.15rem;
+  --border-radius-md: 0.375rem; // ~6px
+  --border-radius-lg: 0.5rem; // ~8px, similar to $border-radius
+  --checkbox-size: 1.1em;
+  --checkbox-border-width: 1.5px;
+
+  // Spacing units
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-xxl: 2.5rem;
+
+  // Transitions
+  --transition-fast: all 0.15s ease-in-out;
+  --transition-base: all 0.2s ease-in-out;
+}

@@ -1,0 +1,65 @@
+// Styles for the GuestAmountItem component and the guest-amount container
+.onboarding-host-div {
+  .container { // Nested under .container in GuestAmountView
+    .guest-amount { // The main section containing amount items
+      margin: 0 20%; // Specific margin
+      padding: 2em; // Specific padding
+
+      .guest-amount-item { // Display row for label and buttons
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+
+        .amount-btn-box { // Container for the increment/decrement buttons
+          align-self: center;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          gap: 1vw; // Using viewport width for gap - consider using a fixed unit or rems
+        }
+      }
+    }
+  }
+
+  // Round button style (used by GuestAmountItem)
+  .round-button {
+    width: 1.5em;
+    margin-top: 0;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid $domits-host-blue;
+    background-color: white;
+    color: $domits-host-blue;
+    text-align: center;
+    line-height: 1.25em;
+    font-size: 16px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.3s;
+    font-weight: bold;
+  }
+
+  .round-button:hover {
+    background-color: $domits-host-blue;
+    color: white;
+  }
+}
+
+// Media Queries for Guest Amount
+@media (max-width: 640px) {
+  .onboarding-host-div {
+    .container {
+      .guest-amount {
+        margin: 0 10%; // Adjusted margin
+        padding: 0; // Removed padding
+      }
+      .guest-amount { // Repeat selector for specificity if needed, but nested is usually enough
+        .guest-amount-item {
+          .amount-btn-box {
+            gap: 2vw !important; // Using !important - consider restructuring
+          }
+        }
+      }
+    }
+  }
+}

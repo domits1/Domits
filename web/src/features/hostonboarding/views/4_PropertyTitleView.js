@@ -2,12 +2,19 @@ import { useParams } from "react-router-dom";
 import TextAreaField from "../components/TextAreaField";
 import { useAccommodationTitle } from "../hooks/usePropertyName";
 import OnboardingButton from "../components/OnboardingButton";
-import React from "react";
+import React, { useMemo } from "react";
+import "../styles/onboardingHost.scss";
 
-// Step 8
 function PropertyTitleView() {
   const { type: accommodationType } = useParams();
   const { title, subtitle, handleInputChange } = useAccommodationTitle();
+
+  const isProceedDisabled = useMemo(() => {
+    // Example logic: disable if title is empty or only whitespace
+    return !title || title.trim() === '';
+    // Or if description is also required:
+    // return !title || title.trim() === '' || !description || description.trim() === '';
+  }, [title /*, description */]); // Add relevant dependencies
 
   return (
     <div className="onboarding-host-div">
@@ -17,32 +24,27 @@ function PropertyTitleView() {
           A short title works best. Don't worry, you can always change it later.
         </p>
 
+        <div className={ "textarea-container"}>
           <TextAreaField
-              label="Title"
+            className="textarea-field"
               value={title}
               onChange={(value) => handleInputChange("title", value)}
               maxLength={128}
               placeholder="Enter your title here..."
-          />
+              draggable={false}
 
-          <h2 className="onboardingSectionTitle">Give it a suitable subtitle</h2>
-
-          <TextAreaField
-              label="Subtitle"
-              value={subtitle}
-              onChange={(value) => handleInputChange("subtitle", value)}
-              maxLength={128}
-              placeholder="Enter your subtitle here..."
           />
+        </div>
 
         <nav className="onboarding-button-box">
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/photos`}
+            routePath={`/hostonboarding/${accommodationType}/address`}
             btnText="Go back"
           />
           <OnboardingButton
             routePath={`/hostonboarding/${accommodationType}/description`}
             btnText="Proceed"
+            disabled={isProceedDisabled}
           />
         </nav>
       </main>

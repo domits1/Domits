@@ -1,0 +1,78 @@
+// Styles for the HouseRuleCheckbox component and toggle/time selectors
+.onboarding-host-div {
+  // Note: These selectors were nested under .houseRulesContainer in the original.
+  // Keeping them here as component styles that might be used elsewhere.
+  // The .houseRulesContainer itself is styled in views/_houseRulesView.scss
+
+  .toggle-container { // Wrapper around a group of toggles
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .toggle { // Wrapper around a single toggle (label + switch)
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .toggle-label { // Text label for the toggle
+    margin-right: 10px;
+    font-size: 16px;
+  }
+
+  .toggle-switch { // The visual representation of the switch
+    display: inline-block;
+    background: #8b8b8b;
+    border-radius: 16px; // Pill shape
+    width: 58px;
+    height: 32px;
+    position: relative;
+    transition: background 0.25s;
+
+    // The switch handle (the circle)
+    &:before {
+      display: block;
+      background: linear-gradient(to bottom, $white 0%, #eee 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+      width: 24px;
+      height: 24px;
+      position: absolute;
+      top: 4px;
+      left: 4px; // Starting position
+      transition: left 0.25s;
+      content: "";
+    }
+    &:after { // Empty content needed for some browsers/styles
+      content: "";
+    }
+  }
+
+  // The actual checkbox input (hidden)
+  .toggle-checkbox {
+    position: absolute;
+    visibility: hidden;
+
+    // Style the switch when the hidden checkbox is checked
+    &:checked + .toggle-switch {
+      background: $domits-host-blue; // Blue background when checked
+
+      &:before {
+        left: 30px; // Move handle to the right
+      }
+    }
+  }
+
+  // Styles related to time inputs (moved here from original, but could be a separate _timeSelector.scss)
+  // input[type="time"] { // Targeting native input type directly might need more specific selector if you have other time inputs
+  //   border: none;
+  //   color: $input-time-gray;
+  //   font-size: 14px;
+  //   width: 120px;
+  //   padding: 10px;
+  //   margin-left: 10px;
+  //   margin-right: 10px;
+  // }
+}

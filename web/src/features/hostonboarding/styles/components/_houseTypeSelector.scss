@@ -1,0 +1,37 @@
+// Styles for HouseTypeView and its Guest Access section
+.onboarding-host-div {
+  .container { // Nested under .container in HouseTypeView
+    .guest-access { // The main section in HouseTypeView
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.5em;
+
+      h2 { // Style h2 specifically inside .guest-access (overrides general h2 if more specific)
+        text-align: center;
+        margin-bottom: 2.5rem;
+        color: #333;
+        font-size: 2rem;
+      }
+
+      .guest-access-item { // Default style for individual items
+        border: 1px solid $domits-host-blue;
+        border-radius: 1.25em;
+        padding: 0 2em; // Adjust padding for internal balance if needed
+      }
+
+      .guest-access-item-selected { // Style for the selected item
+        border: 1px solid $domits-host-blue;
+        border-radius: 1.25em;
+        padding: 0 2em;
+        background-color: $domits-host-blue;
+        color: $white;
+
+        p {
+          color: $white;
+        }
+      }
+      // Note: The actual selection logic and application of these classes is handled in the HouseTypeSelector component's JS/React code.
+    }
+  }
+}

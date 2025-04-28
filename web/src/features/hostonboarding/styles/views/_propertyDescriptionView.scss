@@ -1,0 +1,58 @@
+/* --- src/styles/views/propertyTitleView.scss --- */
+
+.container {
+  max-width: 650px;
+  width: 100%;
+  margin: 40px auto;
+  padding: 30px 40px;
+  box-sizing: border-box;
+  background-color: #fff;
+}
+
+.textarea-container {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+/* Specific styling for the textarea within this view */
+.container .textarea-container textarea.textarea-field {
+  display: block;         /* Ensure block layout */
+  width: 100%;            /* Fill container width */
+  box-sizing: border-box; /* Include padding/border in width */
+  min-height: 240px;      /* Increased minimum height */
+  resize: none;           /* Disable resizing handle */
+  padding: 12px 15px;
+  margin: 0 0 8px 0;      /* Bottom margin for spacing */
+  border: 1px solid #ccc; /* Standard border - adjust color as needed */
+  border-radius: 5px;     /* Optional: slightly rounded corners */
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+/* Style for the character count */
+.textarea-container .char-count {
+  display: block;
+  width: 100%;
+  text-align: right;      /* Align count to the right */
+  font-size: 0.85rem;
+  color: #777;
+}
+
+/* Styles for the button box layout */
+.onboarding-button-box {
+  margin-top: 30px;       /* Adjusted top margin */
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+
+  @media (max-width: 450px) { // Adjusted breakpoint
+    flex-direction: column;
+    > * { // Target direct children (buttons/links)
+      width: 100%;
+    }
+  }
+}

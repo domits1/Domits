@@ -1,95 +1,116 @@
-import { useState } from "react";
+// --- START OF FILE usePropertyPhotos.js ---
+
+import { useState, useCallback } from "react"; // Added useCallback
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Constants
+export const MAX_IMAGES = 5; // Max number of images allowed
+export const MIN_IMAGES_REQUIRED = 5; // Min number for proceeding
+export const ALLOWED_FORMATS = ["image/jpeg", "image/png", "image/webp"];
+export const MIN_WIDTH = 500;
+export const MIN_HEIGHT = 500;
+const MIN_SIZE_BYTES = 50000; // 50 KB
+
 export default function usePhotos() {
-  const [images, setImages] = useState([]);
-  const [isDragOver, setIsDragOver] = useState(false);
+  const [images, setImages] = useState([]); // Array of base64 image strings
 
-  const MIN_WIDTH = 500;
-  const MIN_HEIGHT = 500;
-  const MIN_SIZE = 50000;
-  const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
-  const MAX_IMAGES = 5;
-
-  const validateImage = (file, callback) => {
+  // --- Image Validation ---
+  const validateImage = useCallback((file, onSuccess) => {
     if (!file) return;
 
-    if (!allowedFormats.includes(file.type)) {
-      toast.error("❌ Alleen JPG, PNG of WEBP toegestaan.");
+    // Type Check
+    if (!ALLOWED_FORMATS.includes(file.type)) {
+      toast.error(`❌ Invalid format. Allowed: JPG, PNG, WEBP.`);
       return;
     }
 
-    if (file.size < MIN_SIZE) {
-      toast.error("❌ Afbeelding is te klein (min. 50 KB).");
+    // Size Check (Bytes)
+    if (file.size < MIN_SIZE_BYTES) {
+      toast.error(`❌ Image too small (min. ${MIN_SIZE_BYTES / 1000} KB).`);
       return;
     }
 
+    // Dimension Check
     const img = new Image();
-    img.src = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file); // Create temporary URL
+
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl); // Clean up temporary URL
       if (img.width < MIN_WIDTH || img.height < MIN_HEIGHT) {
-        toast.error(`❌ Afbeelding moet minimaal ${MIN_WIDTH}x${MIN_HEIGHT} pixels zijn.`);
+        toast.error(`❌ Image dimensions too small (min. ${MIN_WIDTH}x${MIN_HEIGHT}px).`);
       } else {
-        callback(file);
+        onSuccess(file); // Validation passed
       }
     };
     img.onerror = () => {
-      toast.error("❌ Ongeldige afbeelding.");
+      URL.revokeObjectURL(objectUrl); // Clean up on error too
+      toast.error("❌ Could not read image file.");
     };
-  };
+    img.src = objectUrl;
+  }, []); // Empty dependency array as constants are stable
 
-  const handleFileChange = (files) => {
-    if (images.length >= MAX_IMAGES) {
-      toast.error(`❌ Je kunt maximaal ${MAX_IMAGES} afbeeldingen uploaden.`);
-      return;
-    }
+  // --- Handle Adding Files ---
+  const handleFileChange = useCallback((files) => {
+    const filesToProcess = Array.from(files);
+    let currentImageCount = images.length; // Use state directly inside callback if needed via function form of setState
 
-    let newImages = [...images];
-
-    Array.from(files).forEach((file) => {
-      if (newImages.length < MAX_IMAGES) {
-        validateImage(file, (validFile) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            newImages = [...newImages, reader.result];
-            setImages(newImages);
-            toast.success("✅ Afbeelding toegevoegd!");
-          };
-          reader.readAsDataURL(validFile);
-        });
-      } else {
-        toast.error(`❌ Maximaal ${MAX_IMAGES} afbeeldingen toegestaan.`);
+    filesToProcess.forEach((file) => {
+      if (currentImageCount >= MAX_IMAGES) {
+        toast.warn(`⚠️ Maximum ${MAX_IMAGES} images allowed. Some files ignored.`);
+        return; // Stop processing if max reached
       }
-    });
-  };
-  
 
-  const deleteImage = (index) => {
+      validateImage(file, (validFile) => {
+        // Check count *again* inside async callback before adding
+        setImages(prevImages => {
+          if (prevImages.length < MAX_IMAGES) {
+            const reader = new FileReader();
+            reader.onload = () => {
+              // Update state functionally to ensure we have the latest count
+              setImages(current => [...current, reader.result]);
+              toast.success("✅ Image added!");
+            };
+            reader.readAsDataURL(validFile);
+            currentImageCount++; // Increment count after deciding to process
+            return prevImages; // Return previous state until reader loads
+          } else {
+            // This case should be rare due to outer check, but belt-and-suspenders
+            toast.warn(`⚠️ Maximum ${MAX_IMAGES} images reached.`);
+            return prevImages;
+          }
+        });
+
+      });
+    });
+  }, [validateImage, images.length]); // Dependency: validateImage, images.length (outer check)
+
+  // --- Delete Image ---
+  const deleteImage = useCallback((indexToDelete) => {
+    setImages((prev) => prev.filter((_, i) => i !== indexToDelete));
+    toast.info("🗑️ Image removed.");
+  }, []); // Empty dependency array
+
+  // --- Reorder Images ---
+  const reorderImages = useCallback((dragIndex, hoverIndex) => {
     setImages((prev) => {
-      const updatedImages = prev.filter((_, i) => i !== index);
+      const updatedImages = [...prev];
+      const draggedImage = updatedImages[dragIndex];
+      // Remove dragged item and insert at hover position
+      updatedImages.splice(dragIndex, 1);
+      updatedImages.splice(hoverIndex, 0, draggedImage);
       return updatedImages;
     });
-    toast.info("🗑️ Afbeelding verwijderd.");
-  };
-
-  const reorderImages = (fromIndex, toIndex) => {
-    setImages((prev) => {
-      const newImages = [...prev];
-      const [movedImage] = newImages.splice(fromIndex, 1);
-      newImages.splice(toIndex, 0, movedImage);
-      return newImages;
-    });
-    toast.info("🔄 Afbeeldingen opnieuw gerangschikt.");
-  };
-  
+    // Optional: Toast notification for reorder can be annoying, maybe remove
+    // toast.info("🔄 Images reordered.");
+  }, []); // Empty dependency array
 
   return {
     images,
     handleFileChange,
     deleteImage,
     reorderImages,
-    isDragOver,
-    setIsDragOver,
+    // No drag state needed from hook
   };
 }
+// --- END OF FILE usePropertyPhotos.js ---
