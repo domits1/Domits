@@ -80,18 +80,22 @@ const styles = StyleSheet.create({
 
     address: {
         fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 4,
+        letterSpacing: 1.5,
         textDecorationStyle: 'solid',
+        fontWeight: 'bold',
+        color: "#000000"
     },
 
     price: {
         fontSize: 18,
+        letterSpacing: 1.5,
         textDecorationLine: 'underline',
         textDecorationStyle: 'solid',
+        fontWeight: 'bold',
+        color: "#000000"
     },
 
     night: {
-        fontWeight: 'normal',
+        fontWeight: 'bold',
     },
 });
