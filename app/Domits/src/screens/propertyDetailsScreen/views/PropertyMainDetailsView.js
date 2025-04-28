@@ -43,10 +43,10 @@ const PropertyMainDetailsView = ({property}) => {
     return (
         <View>
             <View style={styles.mainDetailsContainer}>
-                <Text style={styles.subtitleText}>
+                <Text style={styles.subtitleText} testID={"propertyDetailsSubtitle"}>
                     {property.property.subtitle.trim()}
                 </Text>
-                <Text style={styles.costPerNightText}>
+                <Text style={styles.costPerNightText} testID={"propertyDetailsPerNight"}>
                     €{Number(property.pricing.roomRate).toFixed(2)} {" "}
                     <TranslatedText textToTranslate={"Per night"}/>
                 </Text>
@@ -66,7 +66,7 @@ const PropertyMainDetailsView = ({property}) => {
                 ))}
 
                 <View style={styles.descriptionContainer}>
-                    <Text style={styles.descriptionText}>
+                    <Text style={styles.descriptionText} testID={"propertyDetailsDescription"}>
                         {property.property.description.trim()}
                     </Text>
                 </View>

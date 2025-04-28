@@ -21,7 +21,8 @@ import {
     BOOKING_PROCESS_SCREEN,
     HOME_SCREEN,
 } from '../../../navigation/utils/NavigationNameConstants';
-import FetchPropertyDetails from '../../../services/FetchPropertyDetails';
+import PropertyRepository from "../../../services/property/propertyRepository";
+import TestPropertyRepository from "../../../services/property/test/testPropertyRepository";
 
 const PropertyDetailsScreen = ({route, navigation}) => {
     const [property, setProperty] = useState({});
@@ -30,11 +31,11 @@ const PropertyDetailsScreen = ({route, navigation}) => {
     const [firstSelectedDate, setFirstSelectedDate] = useState(null);
     const [lastSelectedDate, setLastSelectedDate] = useState(null);
 
-    /**
-     * Fetch current accommodation data.
-     */
+    const propertyRepository =
+        process.env.REACT_APP_TESTING === "true" ? new TestPropertyRepository() : new PropertyRepository();
+
     const fetchPropertyDetails = useCallback(async () => {
-        const property = await FetchPropertyDetails(route.params.property.property.id);
+        const property = await propertyRepository.fetchPropertyDetails(route.params.property.property.id);
         if (property.property) {
             setProperty(property);
         }
@@ -84,7 +85,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
                             style={styles.headerIcon}
                         />
                     </TouchableOpacity>
-                    <Text style={styles.titleText}>{property.property.title}</Text>
+                    <Text testID={"propertyDetailsTitle"} style={styles.titleText}>{property.property.title}</Text>
                 </View>
 
                 <ScrollView style={styles.contentContainer}>
@@ -100,17 +101,16 @@ const PropertyDetailsScreen = ({route, navigation}) => {
                         />
                         <View style={styles.bookingContainer}>
                             <View>
-                                <Text>
-                                    Nights: €
-                                    {Number(property.pricing.roomRate * nights).toFixed(2)}
+                                <Text testID={"propertyDetailsRoomRate"}>
+                                    Nights: €{(property.pricing.roomRate * nights).toFixed(2)}
                                 </Text>
-                                <Text>
+                                <Text testID={"propertyDetailsCleaning"}>
                                     Cleaning fee: €{property.pricing.cleaning.toFixed(2)}
                                 </Text>
-                                <Text>
+                                <Text testID={"propertyDetailsService"}>
                                     Service fee: €{property.pricing.service.toFixed(2)}
                                 </Text>
-                                <Text>Total cost: {(
+                                <Text testID={"propertyDetailsTotalCost"}>Total cost: {(
                                     property.pricing.roomRate * nights +
                                     property.pricing.cleaning +
                                     property.pricing.service

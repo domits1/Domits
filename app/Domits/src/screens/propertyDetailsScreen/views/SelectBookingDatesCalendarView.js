@@ -117,6 +117,7 @@ const SelectBookingDatesCalendarView = ({onFirstDateSelected, onLastDateSelected
         return (
             <View>
                 <Calendar
+                    testID={"calendar-list"}
                     style={styles.calendar}
                     minDate={getFutureDate(0).toISOString()}
                     maxDate={getFutureDate(365).toISOString()}
