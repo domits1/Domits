@@ -63,6 +63,7 @@ import culinary from "../../pages/home/Images/culinary.webp";
 import waterman from "../../pages/home/Images/waterman.webp";
 import sleutelvrouw from "../../pages/home/Images/sleutelvrouw.webp";
 import { FetchAllPropertyTypes, FetchPropertyType } from "../home/services/fetchProperties";
+import { LanguageContext } from "../../context/LanguageContext";
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -82,6 +83,8 @@ const Homepage = () => {
 
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
+  const {language} = useContext(LanguageContext);
+  const {searchText} = content[language].Homepage;
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
@@ -432,7 +435,7 @@ const Homepage = () => {
       <div className="domits-homepage">
         <div className="domits-searchContainer">
           <div className="domits-searchTextCon">
-            <h3 className="domits-searchText">Book holiday homes, boats and campers..</h3>
+            <h3 className="domits-searchText">{searchText}</h3>
           </div>
           <div className="domits-searchbarCon">
             <SearchBar
