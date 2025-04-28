@@ -123,7 +123,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
                                         onPress={handleOnBookPress}
                                         style={styles.bookingButtonContent}>
                                         <Text style={styles.bookingButtonText}>
-                                            <TranslatedText textToTranslate={'book'}/>
+                                            <TranslatedText textToTranslate={'Book'}/>
                                         </Text>
                                         <Ionicons
                                             name={'arrow-forward-circle-outline'}
@@ -138,7 +138,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
                         <View style={styles.categoryDivider}/>
 
                         <Text style={styles.categoryTitle}>
-                            <TranslatedText textToTranslate={'amenities'}/>
+                            <TranslatedText textToTranslate={'Amenities'}/>
                         </Text>
                         <View style={styles.amenities}>
                             <RenderAmenities propertyAmenities={property.amenities}/>
@@ -147,7 +147,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
                             onPress={toggleAmenitiesModal}
                             style={styles.ShowAllAmenitiesButton}>
                             <Text style={styles.ShowAllAmenitiesButtonText}>
-                              <TranslatedText textToTranslate={'show all amenities'} />
+                              <TranslatedText textToTranslate={'Show all amenities'} />
                             </Text>
                           </TouchableOpacity>
                           {showAmenitiesModal && (

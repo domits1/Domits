@@ -26,7 +26,7 @@ const AmenitiesPopup = ({propertyAmenities, onClose}) => {
                         <Text style={styles.closeButtonText}>✖</Text>
                     </TouchableOpacity>
                     <Text style={styles.modalTitle}>
-                        <TranslatedText textToTranslate={"what does this place have to offer?"}/>
+                        <TranslatedText textToTranslate={"What does this place have to offer?"}/>
                     </Text>
                     <ScrollView>
                         {Object.keys(amenitiesByType).sort().map(category => {

@@ -48,7 +48,7 @@ const PropertyMainDetailsView = ({property}) => {
                 </Text>
                 <Text style={styles.costPerNightText}>
                     €{Number(property.pricing.roomRate).toFixed(2)} {" "}
-                    <TranslatedText textToTranslate={"per night"}/>
+                    <TranslatedText textToTranslate={"Per night"}/>
                 </Text>
                 <Text>{renderDateRange()}</Text>
             </View>
