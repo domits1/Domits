@@ -61,7 +61,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
             navigation.navigate(BOOKING_PROCESS_SCREEN, {
                 firstSelectedDate,
                 lastSelectedDate,
-                property: property.property.id,
+                property: property,
             });
         }
     };
