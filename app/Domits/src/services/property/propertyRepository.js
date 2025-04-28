@@ -1,6 +1,7 @@
 class PropertyRepository {
 
-    constructor() {}
+    constructor() {
+    }
 
     async fetchPropertyDetails(id) {
         try {
@@ -24,10 +25,10 @@ class PropertyRepository {
         }
     }
 
-    async fetchPropertyByCountry(country, lastEvaluatedKeyId) {
+    async fetchPropertyByCountry(country, lastEvaluatedKeyId, lastEvaluatedKeyCity) {
         try {
             const response = await fetch(
-                `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byCountry?country=${country}&lastEvaluatedKeyId=${lastEvaluatedKeyId}`,
+                `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byCountry?country=${country}&lastEvaluatedKeyId=${lastEvaluatedKeyId}&lastEvaluatedKeyCity=${lastEvaluatedKeyCity}`,
             );
             return await response.json();
         } catch (error) {

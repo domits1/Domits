@@ -19,8 +19,9 @@ const HomeScreen = () => {
     });
 
     const [propertiesByCountry, setPropertiesByCountry] = useState([]);
-    const [byCountrylastEvaluatedKey, setByCountrylastEvaluatedKey] = useState({
+    const [byCountryLastEvaluatedKey, setByCountryLastEvaluatedKey] = useState({
         id: null,
+        city: null
     })
 
     const [country, setCountry] = useState("");
@@ -32,22 +33,25 @@ const HomeScreen = () => {
 
     const [loading, setLoading] = useState(false);
     const [favoritesLoading, setFavoritesLoading] = useState(false);
+    const [originalDataSetLoaded, setOriginalDataSetLoaded] = useState(false);
 
     const fetchProperties = useCallback(async () => {
         setLoading(true);
 
         setPropertiesByCountry([])
-        setByCountrylastEvaluatedKey({id: null})
+        setByCountryLastEvaluatedKey({id: null, city: null})
 
         const response = await propertyRepository.fetchAllPropertyTypes(
             lastEvaluatedKey.createdAt,
             lastEvaluatedKey.id,
         );
 
-        setProperties(response.properties);
+        setProperties([...properties, ...response.properties]);
         setLastEvaluatedKey(
             response.lastEvaluatedKey ?? {createdAt: null, id: null},
         );
+
+        originalDataSetLoaded ? setOriginalDataSetLoaded(true) : null;
 
         setLoading(false);
     }, [lastEvaluatedKey]);
@@ -78,7 +82,7 @@ const HomeScreen = () => {
 
     const fetchNextDataSet = () => {
         if (propertiesByCountry.length > 0) {
-            if (byCountrylastEvaluatedKey.id) {
+            if (byCountryLastEvaluatedKey.id) {
                 fetchPropertiesByCountry(country)
             }
         }
@@ -96,7 +100,15 @@ const HomeScreen = () => {
     };
 
     const renderFooter = () => {
-        if (!lastEvaluatedKey.createdAt && !lastEvaluatedKey.id || !byCountrylastEvaluatedKey.id) {
+        if (loading) {
+            return (
+                <View style={{padding: 16, alignItems: 'center'}}>
+                    <ActivityIndicator size="large"/>
+                </View>
+            );
+        }
+
+        if (!lastEvaluatedKey.createdAt && !lastEvaluatedKey.id && !byCountryLastEvaluatedKey.id && !byCountryLastEvaluatedKey.city) {
             return (
                 <View style={{padding: 16, alignItems: 'center'}}>
                     <Text style={{color: '#666'}}>
@@ -104,29 +116,33 @@ const HomeScreen = () => {
                     </Text>
                 </View>
             );
-        } else {
-            return <ActivityIndicator size="large"/>;
         }
+
+        return null;
     };
 
     const fetchPropertiesByCountry = useCallback(async (country) => {
         setLoading(true);
 
-        setProperties([])
-        setLastEvaluatedKey({createdAt: null, id: null})
+        setProperties([]);
+        setLastEvaluatedKey({createdAt: null, id: null});
 
-        const response = await propertyRepository.fetchPropertyByCountry(country, byCountrylastEvaluatedKey.id)
+        const response = await
+            propertyRepository.fetchPropertyByCountry(
+                country, byCountryLastEvaluatedKey.id, byCountryLastEvaluatedKey.city
+            );
 
-        setByCountrylastEvaluatedKey(
-            response.lastEvaluatedKey ?? {id: null},
+        setByCountryLastEvaluatedKey(
+            response.lastEvaluatedKey ?? {id: null, city: null},
         );
+
         if (response.properties.length > 0) {
-            setPropertiesByCountry(response.properties);
+            setPropertiesByCountry([...propertiesByCountry, ...response.properties]);
         } else {
             setPropertiesByCountry([])
         }
         setLoading(false);
-    }, [byCountrylastEvaluatedKey]);
+    }, [byCountryLastEvaluatedKey]);
 
     return (
         <>
@@ -134,7 +150,7 @@ const HomeScreen = () => {
                     onSearchButtonPress={fetchPropertiesByCountry}
                     onCancelButtonPress={fetchProperties}/>
             <HomeTopBarTabs/>
-            {loading || favoritesLoading ? (
+            {loading && originalDataSetLoaded || favoritesLoading ? (
                 <View style={styles.activityIndicatorContainer}>
                     <ActivityIndicator size="small"/>
                 </View>
