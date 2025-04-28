@@ -3,7 +3,9 @@ import { getAccessToken } from "../utils/authUtils";
 import "../../guestdashboard/styles/GuestWishlistPage.scss";
 import GuestSelector from "../../guestdashboard/components/GuestSelector";
 import GuestActions from "../../guestdashboard/components/GuestActions";
-import FavoriteIcon from "@mui/icons-material/Favorite"; // ❤️ icon
+
+import AccommodationCard from "../../../pages/home/AccommodationCard";
+import "../../../pages/home/Accommodations.css";
 
 const GuestWishlistPage = () => {
   const [wishlist, setWishlist] = useState([]);
@@ -15,7 +17,6 @@ const GuestWishlistPage = () => {
       if (!token) return;
 
       // Fetch all wishlist accommodation IDs
-
       try {
         const res = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
           headers: {
@@ -30,7 +31,7 @@ const GuestWishlistPage = () => {
 
         if (ids.length === 0) return setWishlist([]);
 
-        //Fetch full property details for each ID
+        // Fetch full property details for each ID
         const detailsRes = await fetch(
           `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/set?properties=${ids.join(",")}`
         );
@@ -47,15 +48,15 @@ const GuestWishlistPage = () => {
     fetchWishlist();
   }, []);
 
-  //  Remove accommodation from wishlist
-  const handleUnlike = async (e, accommodationId) => {
-    e.stopPropagation();
+  // Remove accommodation from wishlist (instant UI update)
+  const handleUnlike = async (accommodationId) => {
+    setWishlist((prev) => prev.filter((item) => item.property.id !== accommodationId));
 
     const token = getAccessToken();
     if (!token) return;
 
     try {
-      const res = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
+      const response = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
         method: "DELETE",
         headers: {
           Authorization: token,
@@ -64,15 +65,10 @@ const GuestWishlistPage = () => {
         body: JSON.stringify({ accommodationId }),
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to remove from wishlist");
+      if (!response.ok) {
+        throw new Error("Failed to perform wishlist deletion");
       }
-
-      // Update UI after removal
-      setWishlist((prev) => prev.filter((item) => item.property.id !== accommodationId));
-    } catch (err) {
-      console.error(" Error removing from wishlist:", err.message);
-    }
+    } catch (err) {}
   };
 
   if (loading) return <p>Loading your wishlist...</p>;
@@ -80,7 +76,6 @@ const GuestWishlistPage = () => {
 
   return (
     <div className="pageContainer">
-     
       <div className="wishlistTopBar">
         <div className="wishlistActionsRow">
           <GuestActions
@@ -91,7 +86,6 @@ const GuestWishlistPage = () => {
           />
         </div>
 
-        {/* Header with wishlist count and selector */}
         <div className="wishlistHeader">
           <h2>My Wishlist</h2>
           <div className="wishlistSubRow">
@@ -101,36 +95,19 @@ const GuestWishlistPage = () => {
         </div>
       </div>
 
-      {/*  Wishlist Cards */}
       <div className="cardList">
-        {wishlist.map((item) => {
-          const { property, propertyImages, propertyGeneralDetails, propertyPricing } = item;
-          const imageUrl = `https://accommodation.s3.eu-north-1.amazonaws.com/${propertyImages?.[0]?.key}`;
-          const beds = propertyGeneralDetails.find((d) => d.detail === "Beds")?.value || 0;
-          const baths = propertyGeneralDetails.find((d) => d.detail === "Bathrooms")?.value || 0;
-          const guests = propertyGeneralDetails.find((d) => d.detail === "Guests")?.value || 0;
-          const price = propertyPricing?.roomRate || 0;
+        {wishlist.map((item) => (
+          <div key={item.property?.id} className="wishlistCardWrapper">
+            <AccommodationCard
+              accommodation={item}
+              onClick={() => console.log("Go to details of", item.property?.id)}
+            />
 
-          return (
-            <div key={property.id} className="card">
-              <img src={imageUrl} alt={property.title} className="cardImage" />
-
-              {/* ❤️ Unlike button */}
-              <button className="cardLikeButton" onClick={(e) => handleUnlike(e, property.id)}>
-                <FavoriteIcon sx={{ color: "#ec5050" }} />
-              </button>
-
-              <div className="cardContent">
-                <h3>{property.title}</h3>
-                <p className="cardSubtitle">{property.subtitle}</p>
-                <p className="cardDetails">
-                  {guests} guests • {beds} beds • {baths} baths
-                </p>
-                <p className="cardPrice">€{price} / night</p>
-              </div>
-            </div>
-          );
-        })}
+            <button className="DeleteButton" onClick={() => handleUnlike(item.property?.id)}>
+              Delete ❤️
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
