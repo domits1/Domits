@@ -8,6 +8,7 @@ import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
 import './fonts/kanit/Kanit-Regular.ttf';
+import LanguageContextProvider from './context/LanguageContext.js'
 
 // Configure AWS
 aws.config.update({
@@ -27,7 +28,9 @@ Auth.configure(awsExports);
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
-        <App />
+        <LanguageContextProvider>
+            <App />
+        </LanguageContextProvider>
     </React.StrictMode>
 );
 
