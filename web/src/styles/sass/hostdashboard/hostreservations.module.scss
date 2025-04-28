@@ -3,6 +3,7 @@ $primary-color: #4CAF50;
 $secondary-color: #333;
 $highlight-color: #4a647c;
 $background-color: #f9f9f9;
+$font-size-data: 14px;
 $base-spacing: 1em;
 $button-padding: 0.2em 2.2em;
 $border-color: #ddd;
@@ -11,7 +12,10 @@ $button-size-large: 17px;
 $box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 $border-radius: 8px;
 
-
+//////////
+/// Todo: cleanup unused styling
+//////////
+/// 
 .reservationContainer {
     display: flex;
     flex-direction: row;
@@ -30,11 +34,11 @@ $border-radius: 8px;
         font-size: $button-size-large;
         background-color: #ffffff;
         border: 1px solid #0000004a;
-        border-radius: 10px;
+        border-radius: 8px;
         padding: $button-padding;
         margin: 10px 0.5px;
         box-shadow: 6px 6px 12px $border-color, -6px -6px 12px $border-outer;
-        box-shadow: inset 0px 10px 10px rgba(0, 0, 0, 0.18);
+        box-shadow: inset 0px 10px 10px rgba(0, 0, 0, 0.15);
         transition: background 0.2s ease, color 0.2s ease;
 
         &:hover {
@@ -44,29 +48,30 @@ $border-radius: 8px;
     }
 
     //////////
-    // Sorting box styling
+    // Sorting box top styling
     //////////
     
     .reservationSortBox {
         display: flex;
+        justify-content: space-between;
+        align-items: center;
         border: 1px solid $border-color;
         border-radius: 8px;
         overflow: hidden;
         background-color: $background-color;
         padding: $button-padding;
 
-        .reservationBarTop button {
-            line-height: 2.5em;
+        button {
             flex: 1;
             border: none;
             background-color: transparent;
-            padding: 0.2em 0.5em;
+            padding: 0.1em 0.5em 0.4em;
             font-size: 1em;
-            
+            text-align: center;
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
 
-            &:not(:last-child) { // REMOVE DIVIDER BEFORE PR
+            &:not(last-child) { // REMOVE DIVIDER BEFORE PR
                 border-right: 1px solid #ddd; 
             }
 
@@ -83,6 +88,36 @@ $border-radius: 8px;
             //////////
         }
 
+    }
+
+    //////////
+    /// Sorting box datacontainer styling
+    //////////
+    .reservationData {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin: 1em 0em;
+        padding: 0em 0.2em;
+
+        > * {
+            flex: 0 0 calc (12.5px - 10px);
+            margin: 5px;
+        }
+    }
+    
+    .reservationRow {
+        display: flex;
+        justify-content: space-between;
+        border: 1px solid $border-color;
+        border-radius: 8px;
+        padding: 1.5em 1em;
+        margin: 20px 20px;
+
+        .singleReservationRow {
+            display: flex;
+            justify-content: space-between;
+        }
     }
 
 }

@@ -41,29 +41,25 @@ const HostReservations = () => {
                         </section>
                     </section>
                     <section className={styles.reservationData}>
-                        <div className={styles.reservationBar1}> {/* Reservation Id */}
-                            <p>1241254215125</p>
-                        </div>
-                        <div className={styles.reservationBar2}> {/* Accommodation name */}
-                            <p>Discover unique views in the world of boilerplate code! Experience STUNNING views while sipping on an nice beer!</p>
-                        </div>
-                        <div className={styles.reservationBar3}> {/* Reserved dates */}
-                            <p>April 29 - May 02, 2025</p>
-                        </div>
-                        <div className={styles.reservationBar4}> {/* Requested on */}
-                            <p>April 26</p>
-                        </div>
-                        <div className={styles.reservationBar5}> {/* Guest name */}
-                            <p>Mike</p>
-                        </div>
-                        <div className={styles.reservationBar6}> {/* Rate */}
-                            <p>€821</p>
-                        </div>
-                        <div className={styles.reservationBar7}> {/* Payed */}
-                            <p>Yes</p>
-                        </div>
-                        <div className={styles.reservationBar8}> {/* Status */}
-                            <p>Accepted</p>
+                    <div className={styles.reservationRow}>
+                            <div className={styles.singleReservationRow}>1241254211`231231242142145125</div>
+                            <div className={styles.singleReservationRow}>Discover unique views in t-</div>
+                            <div className={styles.singleReservationRow}>April 29 - May 0-</div>
+                            <div className={styles.singleReservationRow}>April 26</div>
+                            <div className={styles.singleReservationRow}>Mike</div>
+                            <div className={styles.singleReservationRow}>€821</div>
+                            <div className={styles.singleReservationRow}>Yes</div>
+                            <div className={styles.singleReservationRow}>Accepted</div>
+                       </div>
+                       <div className={styles.reservationRow}>
+                            <div className={styles.singleReservationRow}>1241254215125</div>
+                            <div className={styles.singleReservationRow}>Discover unique views in t-</div>
+                            <div className={styles.singleReservationRow}>April 29 - May 0-</div>
+                            <div className={styles.singleReservationRow}>April 26</div>
+                            <div className={styles.singleReservationRow}>Mike</div>
+                            <div className={styles.singleReservationRow}>€821</div>
+                            <div className={styles.singleReservationRow}>Yes</div>
+                            <div className={styles.singleReservationRow}>Accepted</div>
                         </div>
                     </section>
                 </section>
