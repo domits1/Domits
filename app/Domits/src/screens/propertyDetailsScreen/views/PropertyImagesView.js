@@ -1,6 +1,7 @@
 import {Dimensions, Image, ScrollView, View} from "react-native";
 import {styles} from "../styles/propertyDetailsStyles";
 import React, {useState} from "react";
+import {S3URL} from "../../../store/constants";
 
 const PropertyImagesView = ({images}) => {
     const [currentPage, setCurrentPage] = useState(0);
@@ -22,10 +23,12 @@ const PropertyImagesView = ({images}) => {
                 pagingEnabled={true}
                 onScroll={handleScroll}
                 scrollEventThrottle={100}>
-                {Object.entries(images).map(([key, url]) => (
-                    <View key={key}>
+                {images.map(image => (
+                    <View key={image.key}>
                         <Image
-                            source={{uri: url.uri}}
+                            source={{
+                                uri: `${S3URL}${image.key}`,
+                            }}
                             style={[styles.image, {width: imageWidth}]}
                         />
                     </View>
