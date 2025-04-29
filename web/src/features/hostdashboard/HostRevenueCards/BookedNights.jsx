@@ -74,6 +74,7 @@ const BookedNights = () => {
                         <select
                             id="periodType"
                             value={periodType}
+                            className="timeFilter"
                             onChange={(e) => setPeriodType(e.target.value)}
                         >
                             <option value="monthly">Monthly</option>

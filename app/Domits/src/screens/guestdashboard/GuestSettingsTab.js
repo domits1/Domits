@@ -3,7 +3,7 @@ import {ScrollView, StyleSheet, Text, TouchableOpacity,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../context/AuthContext';
-import {deleteAccount} from "../profile/utils/ProfileFunctions";
+import deleteAccount from '../../features/auth/DeleteAccount';
 import {CHANGE_ACCOUNT_SETTINGS_SCREEN, FEEDBACK_SCREEN} from "../../navigation/utils/NavigationNameConstants";
 
 const GuestSettingsTab = (navigation) => {

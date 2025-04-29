@@ -5,7 +5,7 @@ import {useAuth} from '../context/AuthContext';
 import TranslatedText from '../features/translation/components/TranslatedText';
 import SelectLanguagePopup from '../features/translation/components/SelectLanguagePopup';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {GUEST_BOOKINGS_SCREEN} from "../navigation/utils/NavigationNameConstants";
+import {GUEST_BOOKINGS_SCREEN} from '../navigation/utils/NavigationNameConstants';
 
 function Header() {
   const navigation = useNavigation();
@@ -17,12 +17,11 @@ function Header() {
     navigation.navigate(GUEST_BOOKINGS_SCREEN);
   };
 
-  if (isAuthenticated) {
-    return (
-      <View style={styles.headerContainer}>
-        <View style={styles.contentContainer}>
-          <View style={styles.squareContainer}>
-
+  return (
+    <View style={styles.headerContainer}>
+      <View style={styles.contentContainer}>
+        <View style={styles.squareContainer}>
+          {isAuthenticated && (
             <TouchableOpacity
               onPress={handleBookingsPress}
               style={styles.itemContainer}>
@@ -30,27 +29,26 @@ function Header() {
                 source={require('../images/icons/app-bookings-icon-black.png')}
               />
               <Text style={styles.itemText}>
-                <TranslatedText textToTranslate={'bookings'} />
+                <TranslatedText textToTranslate={'Bookings'} />
               </Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setIsLanguagePopupOpen(true)}
-              style={styles.itemContainer}>
-              <MaterialIcons name={'language'} size={45} color={'black'} />
-              <Text style={styles.itemText}>
-                <TranslatedText textToTranslate={'language'} />
-              </Text>
-            </TouchableOpacity>
-            <SelectLanguagePopup
-              isVisible={isLanguagePopupOpen}
-              setIsVisible={setIsLanguagePopupOpen}
-            />
-          </View>
+          )}
+          <TouchableOpacity
+            onPress={() => setIsLanguagePopupOpen(true)}
+            style={styles.itemContainer}>
+            <MaterialIcons name={'language'} size={45} color={'black'} />
+            <Text style={styles.itemText}>
+              <TranslatedText textToTranslate={'Language'} />
+            </Text>
+          </TouchableOpacity>
+          <SelectLanguagePopup
+            isVisible={isLanguagePopupOpen}
+            setIsVisible={setIsLanguagePopupOpen}
+          />
         </View>
       </View>
-    );
-  }
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

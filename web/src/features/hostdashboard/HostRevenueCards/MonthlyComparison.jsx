@@ -6,7 +6,7 @@ function MonthlyComparison({ data }) {
     return (
         <div className="mc-comparison-card">
             <BarChart
-                width={1000}
+                width={820}
                 height={350}
                 data={data}
                 margin={{ top: 20, right: 30, left: 0, bottom: 0 }}

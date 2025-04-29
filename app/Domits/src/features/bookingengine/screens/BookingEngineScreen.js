@@ -8,12 +8,15 @@ import BookingEngineGuestsPopup from "../components/BookingEngineGuestsPopup";
 import FetchBookingsByProperty from "../hooks/FetchBookingsByProperty";
 import CalculateNumberOfNights from "../utils/CalculateNumberOfNights";
 import {SIMULATE_STRIPE_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
+import {S3URL} from "../../../store/constants";
 
 const BookingEngineScreen = ({navigation, route}) => {
   const parsedFirstSelectedDate = route.params.firstSelectedDate;
   const parsedLastSelectedDate = route.params.lastSelectedDate;
-  const parsedAccommodation = route.params.parsedAccommodation;
-  const images = route.params.images;
+  const property = route.params.property;
+  console.log("Images DEBUG:" , property.images);
+  console.log("Property DEBUG:", property);
+  const propertyImages = property.images;
   const [showDatePopUp, setShowDatePopUp] = useState(false);
   const [showGuestAmountPopUp, setShowGuestAmountPopUp] = useState(false);
   const [selectedDates, setSelectedDates] = useState({});
@@ -33,8 +36,8 @@ const BookingEngineScreen = ({navigation, route}) => {
     }, [selectedDates])
 
     useEffect(() => {
-        FetchBookingsByProperty(parsedAccommodation, setBookings, setBookedDates);
-    }, [parsedAccommodation]);
+        FetchBookingsByProperty(property, setBookings, setBookedDates);
+    }, [property]);
 
   const handleDatesSelected = (startDate, endDate) => {
     setSelectedDates({startDate: startDate, endDate: endDate})
@@ -42,7 +45,7 @@ const BookingEngineScreen = ({navigation, route}) => {
 
   const handleBookButton = () => {
     navigation.navigate(SIMULATE_STRIPE_SCREEN, {
-      parsedAccommodation: parsedAccommodation,
+      parsedAccommodation: property,
       calculateCost: calculateCost(),
       adults: adults,
       kids: kids,
@@ -65,9 +68,9 @@ const BookingEngineScreen = ({navigation, route}) => {
    */
   const calculateCost = () => {
     return (
-      parsedAccommodation.Rent * nights +
-      parsedAccommodation.CleaningFee +
-      parsedAccommodation.ServiceFee
+      property.Rent * nights +
+      property.CleaningFee +
+      property.ServiceFee
     ).toFixed(2);
   };
 
@@ -83,11 +86,11 @@ const BookingEngineScreen = ({navigation, route}) => {
           />
           <Text style={styles.headerText}>Detail</Text>
         </View>
-        <Image source={{uri: images[0].uri}} style={styles.image} />
+        <Image source={{uri: `${S3URL}${propertyImages[0].key}`}} style={styles.image} />
         <View style={styles.detailsContainer}>
-          <Text style={styles.title}>{parsedAccommodation.Title}</Text>
+          <Text style={styles.title}>{property.property.title}</Text>
           <Text style={styles.description}>
-            {parsedAccommodation.Description}
+            {property.property.description}
           </Text>
           <View style={styles.separator} />
           <View style={styles.section}>
@@ -105,9 +108,9 @@ const BookingEngineScreen = ({navigation, route}) => {
             <BookingEngineCalendarPopup
               onClose={toggleCalendarModal}
               onConfirm={handleDatesSelected}
-              dateRanges={parsedAccommodation.DateRanges}
+              dateRanges={property.DateRanges}
               bookedDates={bookedDates}
-              property={parsedAccommodation}
+              property={property}
             />
 
           )}
@@ -124,7 +127,7 @@ const BookingEngineScreen = ({navigation, route}) => {
           {showGuestAmountPopUp && (
               <BookingEngineGuestsPopup
                   onClose={handleGuestAmountPopUp}
-                  maxGuests={parsedAccommodation.GuestAmount}
+                  maxGuests={property.GuestAmount}
                   currentAdults={adults}
                   currentKids={kids}
                   currentPets={pets}
@@ -141,18 +144,16 @@ const BookingEngineScreen = ({navigation, route}) => {
             </Text>
 
             <Text style={styles.priceDetailText}>
-              €{Number(parsedAccommodation.Rent).toFixed(2)} night x {nights} nights - €
-              {(parsedAccommodation.Rent * nights).toFixed(2)}
+              €{Number(property.pricing.roomRate).toFixed(2)} night x {nights} nights - €
+              {(property.pricing.roomRate * nights).toFixed(2)}
             </Text>
 
             <Text style={styles.priceDetailText}>
-              Cleaning fee - €{parsedAccommodation.CleaningFee.toFixed(2)}
+              Cleaning fee - €{property.pricing.cleaning.toFixed(2)}
             </Text>
 
-            <Text style={styles.priceDetailText}>Cat tax - €0.00</Text>
-
             <Text style={styles.priceDetailText}>
-              Domits service fee - €{parsedAccommodation.ServiceFee.toFixed(2)}
+              Domits service fee - €{property.pricing.service.toFixed(2)}
             </Text>
 
             <Text style={styles.total}>Total - €{calculateCost()}</Text>
