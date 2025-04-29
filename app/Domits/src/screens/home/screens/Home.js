@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, FlatList, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, FlatList, Text, View} from 'react-native';
 
 import PropertyCard from '../views/PropertyCard';
 import HomeTopBarTabs from '../../../header/homeTopBarTabs';
@@ -10,6 +10,7 @@ import RemoveFromWishlist from "../../../services/wishlist/RemoveFromWishlist";
 import PropertyRepository from "../../../services/property/propertyRepository";
 import TestPropertyRepository from "../../../services/property/test/testPropertyRepository";
 import Header from "../components/header";
+import styles from "../styles/Home";
 
 const HomeScreen = () => {
     const [properties, setProperties] = useState([]);
@@ -168,12 +169,3 @@ const HomeScreen = () => {
 };
 
 export default HomeScreen;
-
-const styles = StyleSheet.create({
-    activityIndicatorContainer: {
-        width: '100%',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-    }
-})
