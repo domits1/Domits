@@ -10,7 +10,6 @@ import FlowContext from '../../services/FlowContext';
 import { Auth } from 'aws-amplify';
 import './components/bases.css';
 import { SearchBar } from '../../components/base/SearchBar';
-import { LanguageContext } from '../../context/LanguageContext';
 
 function Header({ setSearchResults, setLoading }) {
     const navigate = useNavigate();
@@ -23,10 +22,6 @@ function Header({ setSearchResults, setLoading }) {
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [currentView, setCurrentView] = useState('guest');
     const [isBarActive, setIsBarActive] = useState(false);    
-    const {language, setLanguage} = useContext(LanguageContext);
-    const selectLanguage = (e) => {
-        setLanguage(e.target.value)
-    }
 
 
     const searchBarRef = useRef(null);
@@ -194,16 +189,6 @@ function Header({ setSearchResults, setLoading }) {
                     <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} toggleBar={toggleBar}  />
                 </div>
                 <div className="header-right">
-                <div>
-                    <p>testing</p>
-                </div>
-                <div className={"language-toggle"}>
-                    <label htmlFor="">Language</label>
-                    <select value={language} onChange={selectLanguage}>
-                        <option value="nl">Nederlands</option>
-                        <option value="en">English</option>
-                    </select>
-                </div>
 
                 {/* <ul className='header-links'> */}
                             {!isLoggedIn ? (
