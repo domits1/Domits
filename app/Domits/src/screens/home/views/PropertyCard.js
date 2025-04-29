@@ -3,6 +3,7 @@ import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {PROPERTY_DETAILS_SCREEN} from '../../../navigation/utils/NavigationNameConstants';
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import {S3URL} from "../../../store/constants";
 
 const PropertyCard = ({property, isFavorite, onFavoritePress}) => {
     const navigation = useNavigation();
@@ -13,7 +14,7 @@ const PropertyCard = ({property, isFavorite, onFavoritePress}) => {
             onPress={() => navigation.navigate(PROPERTY_DETAILS_SCREEN, {property})}>
             <Image
                 source={{
-                    uri: `https://accommodation.s3.eu-north-1.amazonaws.com/${property.propertyImages[0].key}`,
+                    uri: `${S3URL}${property.propertyImages[0].key}`,
                 }}
                 style={styles.image}
                 resizeMode="cover"

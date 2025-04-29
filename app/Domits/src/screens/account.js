@@ -34,12 +34,12 @@ const Account = () => {
         <TouchableOpacity
           onPress={() => LogoutAccount(navigation, checkAuth)}
           style={styles.listItem}>
-          <TranslatedText textToTranslate={'logout'} />
+          <TranslatedText textToTranslate={'Logout'} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => DeleteAccount(user.userId, navigation)}
           style={styles.listItem}>
-          <TranslatedText textToTranslate={'delete account'} />
+          <TranslatedText textToTranslate={'Delete account'} />
         </TouchableOpacity>
       </SafeAreaView>
     );

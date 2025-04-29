@@ -4,10 +4,11 @@ import {ActivityIndicator, FlatList, Text, View} from 'react-native';
 import PropertyCard from '../views/PropertyCard';
 import Header from '../../../header/header';
 
-import FetchAllPropertyTypes from '../../../services/FetchAllPropertyTypes';
 import GetWishlist from "../../../services/wishlist/GetWishlist";
 import addToWishlist from "../../../services/wishlist/AddToWishlist";
 import RemoveFromWishlist from "../../../services/wishlist/RemoveFromWishlist";
+import PropertyRepository from "../../../services/property/propertyRepository";
+import TestPropertyRepository from "../../../services/property/test/testPropertyRepository";
 
 const HomeScreen = () => {
     const [properties, setProperties] = useState([]);
@@ -16,6 +17,9 @@ const HomeScreen = () => {
         createdAt: null,
         id: null,
     });
+
+    const propertyRepository =
+        process.env.REACT_APP_TESTING === "true" ? new TestPropertyRepository() : new PropertyRepository();
 
     const [favorites, setFavorites] = useState([]);
 
@@ -27,7 +31,7 @@ const HomeScreen = () => {
     const fetchProperties = useCallback(async () => {
         setLoading(true);
 
-        const response = await FetchAllPropertyTypes(
+        const response = await propertyRepository.fetchAllPropertyTypes(
             lastEvaluatedKey.createdAt,
             lastEvaluatedKey.id,
         );
