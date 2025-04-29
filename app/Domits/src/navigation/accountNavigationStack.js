@@ -24,7 +24,10 @@ const Stack = createNativeStackNavigator();
 function AccountNavigationStack() {
     return (
         <Stack.Navigator
-            screenOptions={{headerShown: false,}}>
+            screenOptions={{
+                headerShown: false,
+                contentStyle: {backgroundColor: "#FFFFFF"}
+            }}>
             {/* Account */}
             <Stack.Screen name={LOGIN_SCREEN} component={LoginScreen}/>
             <Stack.Screen name={REGISTER_SCREEN} component={Register}/>
