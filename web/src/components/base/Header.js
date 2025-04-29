@@ -9,6 +9,7 @@ import FlowContext from "../../services/FlowContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Auth } from "aws-amplify";
+import {LanguageContext} from "../../context/LanguageContext.js";
 
 
 function Header({ setSearchResults, setLoading }) {
@@ -25,6 +26,11 @@ function Header({ setSearchResults, setLoading }) {
     "/"
     // Add more paths here as needed
   ];
+  const {language, setLanguage} = useContext(LanguageContext);
+  const selectLanguage = (e) => {
+      setLanguage(e.target.value);
+      console.log(e.target.value);
+  };
 
 
   useEffect(() => {
@@ -230,7 +236,16 @@ function Header({ setSearchResults, setLoading }) {
 
   return (
     <div className="App">
-      <header className="app-header">
+      <header className="app-header">  
+      {/* added here */}
+        <div className={"language-toggle"}>
+            <label htmlFor="">Language</label>
+            <select value={language} onChange={selectLanguage}>
+                <option value="nl">Nederlands</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+
         <nav
           className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""
             }`}
