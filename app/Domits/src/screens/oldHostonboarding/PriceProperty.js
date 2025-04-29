@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import NavigateTo from "../../navigation/NavigationFunctions";
 
 function PriceSettingScreen({route, navigation}) {
   const [price, setPrice] = useState('');
@@ -27,9 +28,7 @@ function PriceSettingScreen({route, navigation}) {
       CancelPolicy: cancelPolicy,
       GuestType: guestType,
     };
-    navigation.navigate('ReviewAndSubmitScreen', {
-      listingData: updatedListingData,
-    });
+    NavigateTo(navigation, {updatedListingData}).hostReviewPropertyChanges();
   };
 
   return (

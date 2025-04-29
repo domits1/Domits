@@ -1,16 +1,14 @@
-// --- START OF FILE 10_PropertyRateView.js ---
-
-import React, { useEffect, useCallback } from "react"; // Added useCallback
+import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import PricingRow from "../components/PricingRow"; // Ensure correct path
 import { usePricing } from "../hooks/useProperyRate"; // Ensure correct path
 import OnboardingButton from "../components/OnboardingButton"; // Ensure correct path
 import "../styles/onboardingHost.scss"; // Ensure this imports pricing specific styles
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 function PropertyRateView() {
+  const builder = useBuilder();
   const { type: accommodationType } = useParams();
-  // Assuming usePricing provides the specific slice needed (accommodationDetails)
-  // and the correct update function from the store.
   const { pricing, updatePricing, calculateServiceFee } = usePricing();
 
   // Ensure pricing object and nested properties exist to prevent errors
@@ -110,6 +108,9 @@ function PropertyRateView() {
           />
           <OnboardingButton
             routePath={`/hostonboarding/${accommodationType}/availability`} // Check path
+            onClick={ () => {
+              builder.addPricing({roomRate: pricing.Rent, cleaning: pricing.CleaningFee, service: pricing.ServiceFee});
+            }}
             btnText="Proceed"
             variant="primary" // Ensure variant prop is used
             disabled={isProceedDisabled} // Disable if base rate is missing
@@ -122,4 +123,3 @@ function PropertyRateView() {
 }
 
 export default PropertyRateView;
-// --- END OF FILE 10_PropertyRateView.js ---

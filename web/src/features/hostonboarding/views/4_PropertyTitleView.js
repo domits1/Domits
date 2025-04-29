@@ -4,6 +4,7 @@ import { useAccommodationTitle } from "../hooks/usePropertyName";
 import OnboardingButton from "../components/OnboardingButton";
 import React, { useMemo } from "react";
 import "../styles/onboardingHost.scss";
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 function PropertyTitleView() {
   const { type: accommodationType } = useParams();
@@ -31,8 +32,6 @@ function PropertyTitleView() {
               onChange={(value) => handleInputChange("title", value)}
               maxLength={128}
               placeholder="Enter your title here..."
-              draggable={false}
-
           />
         </div>
 

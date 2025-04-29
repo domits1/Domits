@@ -28,17 +28,4 @@ amplifytools.xcconfig
 .vscode/
 app/.idea/
 
-web/src/features/hostonboarding/views/d10_PropertyRateView.js
-web/src/features/hostonboarding/views/d11_PropertyAvailabilityView.js
-web/src/features/hostonboarding/views/d12_SummarySubmitView.js
-web/src/features/hostonboarding/views/d1_AccommodationTypeView.js
-web/src/features/hostonboarding/views/d1b_BoatTypeView.js
-web/src/features/hostonboarding/views/d1c_CamperTypeView.js
-web/src/features/hostonboarding/views/d2_HouseTypeView.js
-web/src/features/hostonboarding/views/d3_AddressInputView.js
-web/src/features/hostonboarding/views/d4_PropertyCapacityView.js
-web/src/features/hostonboarding/views/d5_AmenitiesView.js
-web/src/features/hostonboarding/views/d6_PropertyHouseRulesView.js
-web/src/features/hostonboarding/views/d7_PropertyPhotosView.js
-web/src/features/hostonboarding/views/d8_PropertyTitleView.js
-web/src/features/hostonboarding/views/d9_PropertyDescriptionView.js
+/gource.log

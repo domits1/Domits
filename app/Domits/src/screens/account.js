@@ -1,16 +1,12 @@
 import React, {useState} from 'react';
-import {
-  View,
-  SafeAreaView,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
-import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import {SafeAreaView, StyleSheet, TouchableOpacity,} from 'react-native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
 import DeleteAccount from '../features/auth/DeleteAccount';
 import LogoutAccount from '../features/auth/LogoutAccount';
 import TranslatedText from '../features/translation/components/TranslatedText';
+import LoadingScreen from "./loadingscreen/screens/LoadingScreen";
+import NavigateTo from "../navigation/NavigationFunctions";
 
 const Account = () => {
   const navigation = useNavigation();
@@ -21,7 +17,7 @@ const Account = () => {
     React.useCallback(() => {
       setLoading(true);
       if (!isAuthenticated) {
-        navigation.navigate('Login');
+        NavigateTo(navigation).login();
       } else {
         setLoading(false);
       }
@@ -30,9 +26,7 @@ const Account = () => {
 
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
+      <LoadingScreen loadingName={'account'}/>
     );
   } else {
     return (

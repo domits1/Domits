@@ -1,6 +1,10 @@
 @import  "slick-carousel/slick/slick.css";
 @import "slick-carousel/slick/slick-theme.css";
 
+.warning-content {
+  display: none;
+}
+
 .hostchatbot-toggle-button {
   position: fixed;
   bottom: 20px;

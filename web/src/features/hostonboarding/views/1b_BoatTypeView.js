@@ -5,9 +5,11 @@ import { boatData } from "../constants/boatData"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import OnboardingButton from "../components/OnboardingButton"
 import "../styles/onboardingHost.scss";
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 function BoatTypeView() {
   const setBoatType = useFormStoreHostOnboarding((state) => state.setBoatType);
+  const builder = useBuilder();
   const selectedBoatType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.boatType,
   );
@@ -37,6 +39,10 @@ function BoatTypeView() {
             btnText="Back"
           />
           <OnboardingButton
+            onClick={ () => {
+              builder.addPropertyType({type: "Boat", spaceType: selectedBoatType});
+              console.log(builder);
+            }}
             routePath="/hostonboarding/boat/address"
             btnText="Proceed"
             disabled={isProceedDisabled}
