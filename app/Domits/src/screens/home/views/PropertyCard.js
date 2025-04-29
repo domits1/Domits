@@ -11,27 +11,31 @@ const PropertyCard = ({property, isFavorite, onFavoritePress}) => {
 
     return (
         <TouchableOpacity
+            testID={"CardContainer"}
             style={styles.card}
             onPress={() => navigation.navigate(PROPERTY_DETAILS_SCREEN, {property})}>
             <Image
+                testID={"CardImage"}
                 source={{
                     uri: `${S3URL}${property.propertyImages[0].key}`,
                 }}
                 style={styles.image}
                 resizeMode="cover"
             />
-            <TouchableOpacity style={styles.favorite} onPress={() => onFavoritePress(property.property.id)}>
+            <TouchableOpacity testID={"FavoriteButton"} style={styles.favorite} onPress={() => onFavoritePress(property.property.id)}>
                 {isFavorite ? (
-                    <MaterialIcons name={"favorite"} size={30} color={"green"}/>
+                    <MaterialIcons testID="FavoritedIcon" name={"favorite"} size={30} color={"green"}/>
                 ) : (
-                    <MaterialIcons name={"favorite-border"} size={30} color={"green"}/>
+                    <MaterialIcons testID="UnfavoritedIcon" name={"favorite-border"} size={30} color={"green"}/>
                 )}
             </TouchableOpacity>
             <View>
                 <View style={styles.title}>
-                    <Text
-                        style={styles.address}>{property.propertyLocation.country}, {property.propertyLocation.city}</Text>
-                    <Text style={styles.price}>
+                    <Text testID={"PropertyLocation"}
+                        style={styles.address}>
+                        {property.propertyLocation.country}, {property.propertyLocation.city}
+                    </Text>
+                    <Text testID={"PropertyPricing"} style={styles.price}>
                         ${property.propertyPricing.roomRate}{' '}
                         <Text style={styles.night}>night</Text>
                     </Text>

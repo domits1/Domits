@@ -10,22 +10,30 @@ const Header = ({country, setCountry, loading, onSearchButtonPress, onCancelButt
         <View style={styles.headerContainer}>
             <View style={styles.contentContainer}>
                 {country && (
-                    <TouchableOpacity disabled={loading} onPress={() => {
-                        onCancelButtonPress()
-                        setCountry("")
-                    }}>
-                        <Icon name={"delete"} size={20} style={styles.leadingIcon} />
+                    <TouchableOpacity
+                        testID="delete-button"
+                        disabled={loading}
+                        onPress={() => {
+                            onCancelButtonPress();
+                            setCountry('');
+                        }}>
+                        <Icon name="delete" size={20} style={styles.leadingIcon}/>
                     </TouchableOpacity>
                 )}
                 <TextInput
+                    testID={"SearchBar"}
                     style={styles.textInput}
                     value={country}
                     onChangeText={setCountry}
                     placeholder={t("Where to")}
                 >
                 </TextInput>
-                <TouchableOpacity disabled={loading} onPress={() => onSearchButtonPress(country)}>
-                    <Icon name={"search"} size={20} style={styles.trailingIcon} />
+                <TouchableOpacity
+                    testID={"SearchButton"}
+                    disabled={loading}
+                    onPress={() => onSearchButtonPress(country)}
+                >
+                    <Icon name={"search"} size={20} style={styles.trailingIcon}/>
                 </TouchableOpacity>
             </View>
         </View>

@@ -12,6 +12,10 @@ class TestPropertyRepository {
     async fetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId) {
         return propertyTypes
     }
+
+    async fetchPropertyByCountry(country, lastEvaluatedKeyId, lastEvaluatedKeyCity) {
+        return propertyTypes
+    }
 }
 
 export default TestPropertyRepository;
