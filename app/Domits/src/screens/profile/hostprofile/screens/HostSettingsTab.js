@@ -3,8 +3,8 @@ import {ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-nativ
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../../../context/AuthContext';
-import NavigateTo from "../../../../navigation/NavigationFunctions";
 import {deleteAccount} from "../../utils/ProfileFunctions";
+import {CHANGE_ACCOUNT_SETTINGS_SCREEN, HOST_HELP_DESK_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 
 const HostSettings = (navigation) => {
   const {userAttributes} = useAuth();
@@ -22,7 +22,7 @@ const HostSettings = (navigation) => {
         </View>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => NavigateTo(navigation).changeAccountSettings() }>
+          onPress={() => navigation.navigate(CHANGE_ACCOUNT_SETTINGS_SCREEN) }>
           <Text style={styles.listItemText}>Change email/name</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -40,7 +40,7 @@ const HostSettings = (navigation) => {
         {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => NavigateTo(navigation).hostHelpDesk() }>
+          onPress={() => navigation.navigate(HOST_HELP_DESK_SCREEN) }>
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>

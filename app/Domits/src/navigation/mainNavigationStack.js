@@ -1,91 +1,141 @@
-import {createNativeStackNavigator} from "@react-navigation/native-stack";
-import GuestHome from "../screens/accounthome/guestaccounthome/screens/GuestHome";
-import Scan from "../header/scan";
-import Pay from "../header/pay";
-import GuestBookings from "../header/bookings";
-import Pocket from "../header/pocket";
-import PropertyDetails from "../screens/propertyDetailsScreen/screens/propertyDetailsScreen";
-import BookingProcess from "../features/bookingengine/screens/BookingEngineScreen";
-import SimulateStripe from "../features/bookingengine/simulateStripe";
-import PaymentAccepted from "../features/bookingengine/screens/PaymentAcceptedScreen";
-import PaymentDeclined from "../features/bookingengine/screens/PaymentDeclinedScreen";
-import GuestNewConfirmedBooking from "../screens/guestdashboard/screens/GuestBookingsTab";
-import HostOnboardingLanding from "../screens/Landing";
-import GuestProfile from "../screens/profile/guestprofile/screens/GuestProfileTab";
-import GuestPaymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
-import GuestReviews from "../screens/guestdashboard/GuestReviewsTab";
-import GuestSettings from "../screens/guestdashboard/GuestSettingsTab";
-import HelpAndFeedback from "../screens/guestdashboard/GuestHelpAndFeedbackTab";
-import HostHome from "../screens/accounthome/hostaccounthome/screens/HostHome";
-import HostCalendar from "../features/hostdashboard/hostcalendar/screens/HostCalendarTab";
-import HostReviews from "../features/hostdashboard/hostreviews/screens/HostReviewsTab";
-import HostProfile from "../screens/profile/hostprofile/HostProfileTab";
-import HostOnboarding from "../screens/apphostonboarding/OnboardingHost";
-import HostPayments from "../features/hostdashboard/hostfinance/screens/HostPaymentsTab";
-import HostListings from "../features/hostdashboard/hostproperty/screens/HostListingsTab";
-import HostSettings from "../screens/profile/hostprofile/screens/HostSettingsTab";
-import emailSettings from "../screens/profile/hostprofile/emailSettings";
-import HostHelpDesk from "../features/hostdashboard/hosthelpdesk/screens/HostHelpDesk";
-import React from "react";
-import HostDashboard from "../features/hostdashboard/screens/HostDashboardTab";
-import HostReviewPropertyChanges from "../screens/oldHostonboarding/ReviewAndSubmitScreen";
-import Home from "../features/search/HomeScreen";
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import GuestHome from '../screens/accounthome/guestaccounthome/screens/GuestHome';
+import Scan from '../header/scan';
+import Pay from '../header/pay';
+import GuestBookings from '../header/bookings';
+import Pocket from '../header/pocket';
+import PropertyDetails from '../screens/propertyDetailsScreen/screens/propertyDetailsScreen';
+import BookingProcess from '../features/bookingengine/screens/BookingEngineScreen';
+import SimulateStripe from '../features/bookingengine/simulateStripe';
+import PaymentAccepted from '../features/bookingengine/screens/PaymentAcceptedScreen';
+import PaymentDeclined from '../features/bookingengine/screens/PaymentDeclinedScreen';
+import GuestNewConfirmedBooking from '../screens/guestdashboard/screens/GuestBookingsTab';
+import HostOnboardingLanding from '../screens/Landing';
+import GuestProfile from '../screens/profile/guestprofile/screens/GuestProfileTab';
+import GuestPaymentMethods from '../screens/guestdashboard/GuestPaymentsTab';
+import GuestReviews from '../screens/guestdashboard/GuestReviewsTab';
+import GuestSettings from '../screens/guestdashboard/GuestSettingsTab';
+import HelpAndFeedback from '../screens/guestdashboard/GuestHelpAndFeedbackTab';
+import HostHome from '../screens/accounthome/hostaccounthome/screens/HostHome';
+import HostCalendar from '../features/hostdashboard/hostcalendar/screens/HostCalendarTab';
+import HostReviews from '../features/hostdashboard/hostreviews/screens/HostReviewsTab';
+import HostProfile from '../screens/profile/hostprofile/HostProfileTab';
+import HostOnboarding from '../screens/apphostonboarding/OnboardingHost';
+import HostPayments from '../features/hostdashboard/hostfinance/screens/HostPaymentsTab';
+import HostListings from '../features/hostdashboard/hostproperty/screens/HostListingsTab';
+import HostSettings from '../screens/profile/hostprofile/screens/HostSettingsTab';
+import HostHelpDesk from '../features/hostdashboard/hosthelpdesk/screens/HostHelpDesk';
+import React from 'react';
+import HostDashboard from '../features/hostdashboard/screens/HostDashboardTab';
+import HostReviewPropertyChanges from '../screens/oldHostonboarding/ReviewAndSubmitScreen';
+import HomeScreen from '../screens/home/screens/Home';
+import {
+  BOOKING_PROCESS_SCREEN,
+  FEEDBACK_SCREEN,
+  GUEST_BOOKINGS_SCREEN,
+  GUEST_DASHBOARD_SCREEN,
+  GUEST_NEW_CONFIRMED_BOOKING_SCREEN,
+  GUEST_PAYMENT_METHODS_SCREEN,
+  GUEST_PROFILE_SCREEN,
+  GUEST_REVIEWS_SCREEN,
+  GUEST_SETTINGS_SCREEN,
+  HOME_SCREEN,
+  HOST_CALENDAR_SCREEN,
+  HOST_DASHBOARD_SCREEN,
+  HOST_HELP_DESK_SCREEN,
+  HOST_HOME_SCREEN,
+  HOST_LISTINGS_SCREEN,
+  HOST_ONBOARDING_LANDING_SCREEN,
+  HOST_ONBOARDING_SCREEN,
+  HOST_PAYMENTS_SCREEN,
+  HOST_PROFILE_SCREEN,
+  HOST_REVIEW_PROPERTY_CHANGES_SCREEN,
+  HOST_REVIEWS_SCREEN,
+  HOST_SETTINGS_SCREEN,
+  PAY_SCREEN,
+  PAYMENT_ACCEPTED_SCREEN,
+  PAYMENT_DECLINED_SCREEN,
+  POCKET_SCREEN,
+  PROPERTY_DETAILS_SCREEN,
+  SCAN_SCREEN,
+  SIMULATE_STRIPE_SCREEN,
+} from './utils/NavigationNameConstants';
 
 const Stack = createNativeStackNavigator();
 
 function MainNavigationStack() {
-    return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false,
-            }}>
-            {/* General */}
-            <Stack.Screen name="home" component={Home}/>
-            <Stack.Screen name="help-and-feedback" component={HelpAndFeedback}/>
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}>
+      {/* General */}
+      <Stack.Screen name={HOME_SCREEN} component={HomeScreen} />
+      <Stack.Screen name={FEEDBACK_SCREEN} component={HelpAndFeedback} />
 
-            {/* Features */}
-            <Stack.Screen name="scan" component={Scan}/>
-            <Stack.Screen name="pay" component={Pay}/>
-            <Stack.Screen name="pocket" component={Pocket}/>
+      {/* Features */}
+      <Stack.Screen name={SCAN_SCREEN} component={Scan} />
+      <Stack.Screen name={PAY_SCREEN} component={Pay} />
+      <Stack.Screen name={POCKET_SCREEN} component={Pocket} />
 
-            {/* Host */}
-            <Stack.Screen name="host-home" component={HostHome}/>
-            <Stack.Screen name="host-profile" component={HostProfile}/>
-            <Stack.Screen name="host-settings" component={HostSettings}/>
-            <Stack.Screen name="host-help-desk" component={HostHelpDesk}/>
-            <Stack.Screen name="host-listings" component={HostListings}/>
+      {/* Host */}
+      <Stack.Screen name={HOST_HOME_SCREEN} component={HostHome} />
+      <Stack.Screen name={HOST_PROFILE_SCREEN} component={HostProfile} />
+      <Stack.Screen name={HOST_SETTINGS_SCREEN} component={HostSettings} />
+      <Stack.Screen name={HOST_HELP_DESK_SCREEN} component={HostHelpDesk} />
+      <Stack.Screen name={HOST_LISTINGS_SCREEN} component={HostListings} />
 
-            {/* Host dashboard */}
-            <Stack.Screen name="host-dashboard" component={HostDashboard}/>
-            <Stack.Screen name="host-calendar" component={HostCalendar}/>
-            <Stack.Screen name="host-reviews" component={HostReviews}/>
-            <Stack.Screen name="host-payments" component={HostPayments}/>
+      {/* Host Dashboard */}
+      <Stack.Screen name={HOST_DASHBOARD_SCREEN} component={HostDashboard} />
+      <Stack.Screen name={HOST_CALENDAR_SCREEN} component={HostCalendar} />
+      <Stack.Screen name={HOST_REVIEWS_SCREEN} component={HostReviews} />
+      <Stack.Screen name={HOST_PAYMENTS_SCREEN} component={HostPayments} />
 
-            {/* Host Onboarding */}
-            <Stack.Screen name="host-onboarding-landing" component={HostOnboardingLanding}/>
-            <Stack.Screen name="host-onboarding" component={HostOnboarding}/>
-            <Stack.Screen name="host-review-property-changes" component={HostReviewPropertyChanges}/>
+      {/* Host Onboarding */}
+      <Stack.Screen
+        name={HOST_ONBOARDING_LANDING_SCREEN}
+        component={HostOnboardingLanding}
+      />
+      <Stack.Screen name={HOST_ONBOARDING_SCREEN} component={HostOnboarding} />
+      <Stack.Screen
+        name={HOST_REVIEW_PROPERTY_CHANGES_SCREEN}
+        component={HostReviewPropertyChanges}
+      />
 
-            {/* Guest */}
-            <Stack.Screen name="guest-dashboard" component={GuestHome}/>
-            <Stack.Screen name="guest-profile" component={GuestProfile}/>
-            <Stack.Screen name="guest-settings" component={GuestSettings}/>
-            <Stack.Screen name="guest-payment-methods" component={GuestPaymentMethods}/>
-            <Stack.Screen name="guest-reviews" component={GuestReviews}/>
-            <Stack.Screen name="guest-bookings" component={GuestBookings}/>
+      {/* Guest */}
+      <Stack.Screen name={GUEST_DASHBOARD_SCREEN} component={GuestHome} />
+      <Stack.Screen name={GUEST_PROFILE_SCREEN} component={GuestProfile} />
+      <Stack.Screen name={GUEST_SETTINGS_SCREEN} component={GuestSettings} />
+      <Stack.Screen
+        name={GUEST_PAYMENT_METHODS_SCREEN}
+        component={GuestPaymentMethods}
+      />
+      <Stack.Screen name={GUEST_REVIEWS_SCREEN} component={GuestReviews} />
+      <Stack.Screen name={GUEST_BOOKINGS_SCREEN} component={GuestBookings} />
 
-            {/* Property */}
-            <Stack.Screen name="property-details" component={PropertyDetails}/>
+      {/* Property */}
+      <Stack.Screen
+        name={PROPERTY_DETAILS_SCREEN}
+        component={PropertyDetails}
+      />
 
-            {/* Booking Engine*/}
-            <Stack.Screen name="booking-process" component={BookingProcess}/>
-            <Stack.Screen name="simulate-stripe" component={SimulateStripe}/>
-            <Stack.Screen name="payment-accepted" component={PaymentAccepted}/>
-            <Stack.Screen name="payment-declined" component={PaymentDeclined}/>
-            <Stack.Screen name="guest-new-confirmed-booking" component={GuestNewConfirmedBooking}/>
-
-        </Stack.Navigator>
-    );
+      {/* Booking Engine */}
+      <Stack.Screen name={BOOKING_PROCESS_SCREEN} component={BookingProcess} />
+      <Stack.Screen name={SIMULATE_STRIPE_SCREEN} component={SimulateStripe} />
+      <Stack.Screen
+        name={PAYMENT_ACCEPTED_SCREEN}
+        component={PaymentAccepted}
+      />
+      <Stack.Screen
+        name={PAYMENT_DECLINED_SCREEN}
+        component={PaymentDeclined}
+      />
+      <Stack.Screen
+        name={GUEST_NEW_CONFIRMED_BOOKING_SCREEN}
+        component={GuestNewConfirmedBooking}
+      />
+    </Stack.Navigator>
+  );
 }
 
 export default MainNavigationStack;

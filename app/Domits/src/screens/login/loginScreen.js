@@ -6,7 +6,7 @@ import {useAuth} from '../../context/AuthContext'; // Ensure the path is correct
 import 'react-native-get-random-values';
 import {Label} from '@aws-amplify/ui-react-native/src/primitives';
 import LoadingScreen from "../loadingscreen/screens/LoadingScreen";
-import NavigateTo from "../../navigation/NavigationFunctions";
+import {ACCOUNT_SCREEN, HOME_SCREEN, REGISTER_SCREEN} from "../../navigation/utils/NavigationNameConstants";
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -19,7 +19,7 @@ const LoginScreen = () => {
     React.useCallback(() => {
       setLoading(true);
       if (isAuthenticated) {
-        NavigateTo(navigation).account();
+        navigation.navigate(ACCOUNT_SCREEN);
       } else {
         setLoading(false);
       }
@@ -38,7 +38,7 @@ const LoginScreen = () => {
     try {
       await signIn({username: email, password}); // Ensure the correct parameters
       checkAuth(); // Update the global auth state
-      NavigateTo(navigation).home();
+      navigation.navigate(HOME_SCREEN)
     } catch (error) {
       setErrorMessage('Invalid username or password. Please try again.');
     }
@@ -111,7 +111,7 @@ const LoginScreen = () => {
             <TouchableOpacity
               style={styles.registerButton}
               onPress={() => {
-                NavigateTo(navigation).register();
+                navigation.navigate(REGISTER_SCREEN);
               }}>
               <Text style={styles.registerButtonText}>Register</Text>
             </TouchableOpacity>

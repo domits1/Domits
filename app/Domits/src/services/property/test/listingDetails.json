@@ -1,0 +1,174 @@
+{
+  "property": {
+    "id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+    "hostId": "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3",
+    "title": "Unique Yacht Stay with Stunning Views in the Port of Sète",
+    "subtitle": "Relax on the Water in a Cozy Boat with Two Bedrooms, Perfect for Couples or Small Groups",
+    "description": "Set sail into a memorable stay aboard this charming yacht docked in the peaceful Bassin du Midi in the Port of Sète. Offering a one-of-a-kind experience, the boat features two comfortable bedrooms, a spacious living area, and a modern kitchen. You’ll enjoy beautiful views of the marina, harbor, and city skyline right from your windows. With access to small local shops within walking distance and a supermarket just a short drive away, convenience meets relaxation. Ideal for 1-4 guests, this boat is perfect for those seeking a tranquil getaway with an adventure on the water..",
+    "guestCapacity": 4,
+    "registrationNumber": "test",
+    "status": "ACTIVE",
+    "propertyType": "Boat",
+    "createdAt": 1742473309350,
+    "updatedAt": 0
+  },
+  "amenities": [
+    {
+      "id": "33f2ab53-a875-4807-95bb-6f81f5fe1450",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "amenityId": "5"
+    },
+    {
+      "id": "6c4fb878-55ab-4cba-9f32-8c34ca279577",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "amenityId": "37"
+    },
+    {
+      "id": "0bfe0ea1-5a63-4324-bf5f-38f6644864a2",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "amenityId": "27"
+    },
+    {
+      "id": "3d2712ac-e2d5-4c96-9e3b-8ef6e9a45feb",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "amenityId": "1"
+    },
+    {
+      "id": "4098ae08-4828-4bdb-9b22-2ed69f4cd91d",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "amenityId": "28"
+    },
+    {
+      "id": "96757566-ef9a-46ea-9ac3-f05460f28555",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "amenityId": "29"
+    },
+    {
+      "id": "c99a0c35-7a8a-4319-a5e8-a0ad9fd324f3",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "amenityId": "30"
+    },
+    {
+      "id": "4b824eb2-5f1a-4713-be21-a31628034093",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "amenityId": "44"
+    },
+    {
+      "id": "decf8baa-0369-4b45-85d4-87a3165e2742",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "amenityId": "24"
+    }
+  ],
+  "availability": [
+    {
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "availableStartDate": 0,
+      "availableEndDate": 5000000000000
+    }
+  ],
+  "availabilityRestrictions": [
+    {
+      "id": "50414d04-5d84-426e-b58e-30e6c1487424",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "restriction": "MaximumStay",
+      "value": 1
+    }
+  ],
+  "checkIn": {
+    "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+    "checkIn": {
+      "from": 1,
+      "till": 2
+    },
+    "checkOut": {
+      "from": 1,
+      "till": 2
+    }
+  },
+  "generalDetails": [
+    {
+      "id": "fc06aa69-f6c1-438d-afc6-e5575385a973",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "detail": "Beds",
+      "value": 4
+    },
+    {
+      "id": "6287fbe0-f657-4705-a0d5-2e81b61b7222",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "detail": "Bathrooms",
+      "value": 2
+    },
+    {
+      "id": "509ae155-4cd9-4dbb-9f61-5c618e618327",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "detail": "Bedrooms",
+      "value": 2
+    },
+    {
+      "id": "1a8d0093-72bb-4785-a65e-0b0b2aeca24d",
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "detail": "Guests",
+      "value": 4
+    }
+  ],
+  "images": [
+    {
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "key": "images/1/420/Picture3.jpg"
+    },
+    {
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "key": "images/1/420/Picture2.jpg"
+    },
+    {
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "key": "images/1/420/Picture4.jpg"
+    },
+    {
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "key": "images/1/420/Picture1.jpg"
+    },
+    {
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "key": "images/1/420/Picture5.jpg"
+    }
+  ],
+  "location": {
+    "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+    "country": "France",
+    "city": "Sète",
+    "street": "The Ocean",
+    "houseNumber": 6,
+    "houseNumberExtension": "",
+    "postalCode": "1611KG Ocean"
+  },
+  "pricing": {
+    "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+    "roomRate": 160,
+    "cleaning": 15,
+    "service": 10
+  },
+  "rules": [
+    {
+      "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+      "rule": "PetsAllowed",
+      "value": false
+    }
+  ],
+  "propertyType": {
+    "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+    "property_type": "Boat",
+    "spaceType": "Full house"
+  },
+  "technicalDetails": {
+    "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
+    "length": 900,
+    "height": 400,
+    "fuelConsumption": 100,
+    "speed": 50,
+    "renovationYear": 2022,
+    "transmission": "Manual",
+    "generalPeriodicInspection": 2021,
+    "fourWheelDrive": true
+  }
+}

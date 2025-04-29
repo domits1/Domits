@@ -30,13 +30,13 @@ function PropertyAvailabilityView() {
           isNew={true}
           updateDates={updateSelectedDates}
           calenderType="host"
+          builder = {builder}
         />
 
         <nav className="onboarding-button-box">
           <OnboardingButton routePath={`/hostonboarding/${accommodationType}/pricing`} btnText="Go back" />
           <OnboardingButton
             onClick={() => {
-              builder.addAvailability([{availableStartDate: Date.now() + 600000, availableEndDate: 3023923200000}]);
               if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) {
                 navigate("/hostonboarding/legal/registrationnumber");
               } else {
