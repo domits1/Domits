@@ -12,8 +12,12 @@ import TestPropertyRepository from "../../../services/property/test/testProperty
 import Header from "../components/header";
 import styles from "../styles/Home";
 import ToastMessage from "../../../components/ToastMessage";
+import TranslatedText from "../../../features/translation/components/TranslatedText";
+import {useTranslation} from "react-i18next";
 
 const HomeScreen = () => {
+    const {t} = useTranslation();
+
     const [properties, setProperties] = useState([]);
     const [lastEvaluatedKey, setLastEvaluatedKey] = useState({
         createdAt: null,
@@ -104,7 +108,7 @@ const HomeScreen = () => {
     const renderFooter = () => {
         if (loading) {
             return (
-                <View style={{padding: 16, alignItems: 'center'}}>
+                <View style={styles.indicators}>
                     <ActivityIndicator size="large"/>
                 </View>
             );
@@ -112,9 +116,9 @@ const HomeScreen = () => {
 
         if (!lastEvaluatedKey.createdAt && !lastEvaluatedKey.id && !byCountryLastEvaluatedKey.id && !byCountryLastEvaluatedKey.city) {
             return (
-                <View style={{padding: 16, alignItems: 'center'}}>
-                    <Text style={{color: '#666'}}>
-                        No properties found.
+                <View style={styles.indicators}>
+                    <Text style={styles.errors}>
+                        <TranslatedText textToTranslate={"No property found."} />
                     </Text>
                 </View>
             );
@@ -145,7 +149,7 @@ const HomeScreen = () => {
                 setPropertiesByCountry([])
             }
         } catch (error) {
-            ToastMessage(error.message, ToastAndroid.SHORT)
+            ToastMessage(t(error.message), ToastAndroid.SHORT)
         }
         setLoading(false);
     }, [byCountryLastEvaluatedKey]);

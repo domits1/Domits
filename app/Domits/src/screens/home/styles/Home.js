@@ -6,6 +6,12 @@ const styles = StyleSheet.create({
         height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    indicators: {
+        padding: 16, alignItems: 'center',
+    },
+    errors: {
+        color: '#FF3300'
     }
 })
 
