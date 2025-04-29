@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, FlatList, Text, View} from 'react-native';
+import {ActivityIndicator, FlatList, Text, ToastAndroid, View} from 'react-native';
 
 import PropertyCard from '../views/PropertyCard';
 import HomeTopBarTabs from '../../../header/homeTopBarTabs';
@@ -11,6 +11,7 @@ import PropertyRepository from "../../../services/property/propertyRepository";
 import TestPropertyRepository from "../../../services/property/test/testPropertyRepository";
 import Header from "../components/header";
 import styles from "../styles/Home";
+import ToastMessage from "../../../components/ToastMessage";
 
 const HomeScreen = () => {
     const [properties, setProperties] = useState([]);
@@ -125,22 +126,26 @@ const HomeScreen = () => {
     const fetchPropertiesByCountry = useCallback(async (country) => {
         setLoading(true);
 
-        setProperties([]);
-        setLastEvaluatedKey({createdAt: null, id: null});
+        try {
+            setProperties([]);
+            setLastEvaluatedKey({createdAt: null, id: null});
 
-        const response = await
-            propertyRepository.fetchPropertyByCountry(
-                country, byCountryLastEvaluatedKey.id, byCountryLastEvaluatedKey.city
+            const response = await
+                propertyRepository.fetchPropertyByCountry(
+                    country, byCountryLastEvaluatedKey.id, byCountryLastEvaluatedKey.city
+                );
+
+            setByCountryLastEvaluatedKey(
+                response.lastEvaluatedKey ?? {id: null, city: null},
             );
 
-        setByCountryLastEvaluatedKey(
-            response.lastEvaluatedKey ?? {id: null, city: null},
-        );
-
-        if (response.properties.length > 0) {
-            setPropertiesByCountry([...propertiesByCountry, ...response.properties]);
-        } else {
-            setPropertiesByCountry([])
+            if (response.properties.length > 0) {
+                setPropertiesByCountry([...propertiesByCountry, ...response.properties]);
+            } else {
+                setPropertiesByCountry([])
+            }
+        } catch (error) {
+            ToastMessage(error.message, ToastAndroid.SHORT)
         }
         setLoading(false);
     }, [byCountryLastEvaluatedKey]);

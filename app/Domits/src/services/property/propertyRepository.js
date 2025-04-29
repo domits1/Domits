@@ -8,9 +8,13 @@ class PropertyRepository {
             const response = await fetch(
                 `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${id}`,
             );
+            if (!response.ok) {
+                throw {message: await response.json()};
+            }
             return await response.json();
         } catch (error) {
             console.error(error);
+            throw error;
         }
     }
 
@@ -19,9 +23,13 @@ class PropertyRepository {
             const response = await fetch(
                 `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/all?lastEvaluatedKeyCreatedAt=${lastEvaluatedKeyCreatedAt}&lastEvaluatedKeyId=${lastEvaluatedKeyId}`,
             );
+            if (!response.ok) {
+                throw {message: await response.json()};
+            }
             return await response.json();
         } catch (error) {
             console.error(error);
+            throw error;
         }
     }
 
@@ -30,9 +38,13 @@ class PropertyRepository {
             const response = await fetch(
                 `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byCountry?country=${country}&lastEvaluatedKeyId=${lastEvaluatedKeyId}&lastEvaluatedKeyCity=${lastEvaluatedKeyCity}`,
             );
+            if (!response.ok) {
+                throw {message: await response.json()};
+            }
             return await response.json();
         } catch (error) {
             console.error(error);
+            throw error;
         }
     }
 }
