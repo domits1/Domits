@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import './ALOSCard.css';
+import './ALOSCard.scss';
 
 const ALOSCard = () => {
   const [averageLengthOfStay, setAverageLengthOfStay] = useState(0);

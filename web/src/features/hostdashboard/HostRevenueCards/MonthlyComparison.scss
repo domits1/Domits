@@ -17,14 +17,15 @@
 .mc-comparison-card canvas { 
     max-width: 80%; 
     height: auto;
+    
+    .mc-card-header {
+        font-size: 1.2em;
+        font-weight: normal;
+        color: #333;
+        margin-bottom: 10px;
+    }
 }
 
-.mc-card-header {
-    font-size: 1.2em;
-    font-weight: normal;
-    color: #333;
-    margin-bottom: 10px;
-}
 
 .mc-chart-container {
     padding: 20px; 

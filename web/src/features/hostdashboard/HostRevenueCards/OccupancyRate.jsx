@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "./OccupancyRate.css";
+import "./OccupancyRate.scss";
 import { Auth } from "aws-amplify";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 
