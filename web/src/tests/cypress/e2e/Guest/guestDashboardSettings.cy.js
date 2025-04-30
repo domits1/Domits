@@ -1,33 +1,43 @@
-import '../../support/commands';
-
-describe('Landing Page Tests', () => {
-    beforeEach(() => {
-        cy.viewport(1920, 1080);
-        cy.loginAsGuest();
+describe("Guest Booking Engine - Login Flow", () => {
+  beforeEach(() => {
+    cy.visit("https://acceptance.domits.com/", {
+      failOnStatusCode: false,
+      pageLoadTimeout: 0,
     });
+  });
 
-    it('Should display the landing page and load key sections', () => {
-        cy.get('.header-links > .headerHostButton').click();
-        cy.wait(500);
-        cy.get('.edit-icon-background').click();
-        cy.get(':nth-child(2) > .guest-edit-input')
-            .should('be.visible')
-            .clear()
-            .type('ffkdjrvrrrrv grrrrrrrbfdkg fdkgdb@gmail.com');
+  it("should allow user to login quickly and reliably", () => {
+    cy.get('[src="/static/media/profile-icon.0cd455f54ee6076e94d35d8e3bb148c8.svg"]').should("be.visible").click();
 
-        cy.get(':nth-child(3) > .guest-edit-input')
-            .clear()
-            .type('adaswrrwdadadsa', { force: true });
+    cy.get(".dropdownLoginButton").should("be.visible").click();
 
-        cy.wait(2000);
+    cy.url().should("include", "/login");
 
-        cy.get('.edit-icon-background').click();
+    cy.get("#email").should("be.visible").type("testpersoondomits@gmail.com");
 
-        cy.wait(2000);
+    cy.get('.passwordContainer input[type="password"]').should("be.visible").type("Gmail.com1");
 
-        cy.intercept('GET', '**/currentUserInfo', { statusCode: 200 });
-        cy.get('.edit-icon-background')
-            .scrollIntoView()
-            .should('be.visible');
-    });
+    cy.get(".loginButton").should("be.visible").click();
+
+    cy.url().should("not.include", "/login");
+
+    cy.get(".hostchatbot-close-button").should("be.visible").click();
+
+    cy.get(".headerHostButton").should("be.visible").click();
+
+    cy.get(".dashboardSections > :nth-child(4)").should("be.visible").click();
+
+    cy.get('.personalInfoContent > :nth-child(2) > :nth-child(3)').should("be.visible").click();
+    cy.get(':nth-child(2) > [style="display: flex;"] > .guest-edit-input').should("be.visible").clear({ force: true }).type("Testdomit@gmail.com", { force: true });
+
+    cy.get(".personalInfoContent > :nth-child(3)").should("be.visible").click();
+
+    cy.get(".personalInfoContent > :nth-child(3) > :nth-child(3)").should("be.visible").click();
+
+    cy.get(':nth-child(3) > [style="display: flex;"] > .guest-edit-input').clear({ force: true }).type("Test", { force: true });
+
+    cy.get('.personalInfoContent > :nth-child(4) > :nth-child(3)').should("be.visible").click();
+    cy.get('[style="display: flex; gap: 5px; align-items: center;"] > .guest-edit-input').should("be.visible").clear({ force: true }).type("0685702355", { force: true });
+    
+  });
 });

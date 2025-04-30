@@ -1,47 +1,35 @@
-import "../../support/commands";
-
-describe("Booking Engine Test - Beekse Bergen, Netherlands", () => {
+describe("Guest Booking Engine - Login Flow", () => {
   beforeEach(() => {
-    cy.viewport(1920, 1080);
-
-    cy.session("loginSession", () => {
-      cy.loginAsGuest();
-      cy.get('.header-links > .headerHostButton');
+    cy.visit("https://acceptance.domits.com/", {
+      failOnStatusCode: false,
+      pageLoadTimeout: 0,
     });
-
-    cy.visit("https://acceptance.domits.com/home", { failOnStatusCode: false });
-
-    cy.get(".header-links")
-      .should("be.visible")
-      .then(($header) => {
-        cy.wrap($header).should("contain", "Switch to Guest");
-      });
   });
 
-  it("Should log in as a guest", () => {
-    cy.get(".header-links > .headerHostButton")
-      .should("be.visible")
-      .click();
+  it("should allow user to login and make a reservation", () => {
+    cy.get('[src="/static/media/profile-icon.0cd455f54ee6076e94d35d8e3bb148c8.svg"]').should("be.visible").click();
 
-    cy.get(".edit-icon-background").should("be.visible").click();
+    cy.get(".dropdownLoginButton").should("be.visible").click();
 
-    cy.get(":nth-child(2) > .guest-edit-input")
-      .should("be.visible")
-      .clear()
-      .type("testpersoondomits@gmail.com", { force: true });
+    cy.url().should("include", "/login");
 
-    cy.get(":nth-child(3) > .guest-edit-input")
-      .should("be.visible")
-      .clear()
-      .type("Test", { force: true });
+    cy.get("#email").should("be.visible").type("testpersoondomits@gmail.com");
 
-    cy.get(".edit-icon-background").should("be.visible").click();
-    cy.get('.logo > a > img').click();
-    cy.get(':nth-child(1) > .swiper > .swiper-wrapper > .swiper-slide-visible > img').click();
-    cy.get('.reserve-btn').click();
+    cy.get('.passwordContainer input[type="password"]').should("be.visible").type("Gmail.com1");
+
+    cy.get(".loginButton").should("be.visible").click();
+
+    cy.url().should("not.include", "/login");
+
+    cy.get(".logo > a > img").should("be.visible").click();
+
+    cy.get(":nth-child(1) > .accocard-content > .accocard-detail").should("be.visible").click();
+
+    cy.get('[style="width: auto;"] > input').should("be.visible").type("2025-06-01");
+
+    cy.get('[style="width: auto; margin-left: 10px;"] > input').should("be.visible").type("2025-06-03");
+
+    cy.get(".reserve-btn").should("be.visible").click();
     
   });
-
- 
-
 });
