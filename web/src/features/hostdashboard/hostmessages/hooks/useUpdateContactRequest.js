@@ -7,7 +7,6 @@ const useUpdateContactRequest = (setContacts) => {
     const updateContactRequest = async (id, status) => {
         setLoading(true);
         setError(null);
-        console.log('Sending to Lambda:', { Id: id, Status: status });
 
         try {
             const response = await fetch(

@@ -9,8 +9,6 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
 
     useEffect(() => {
         if (uploadUrl && fileUrl && fileUrl !== uploadedFileUrl) {
-            console.log("Upload URL:", uploadUrl);
-            console.log("File URL:", fileUrl);
 
             setUploadedFileUrl(fileUrl);
             onUploadComplete(fileUrl);
