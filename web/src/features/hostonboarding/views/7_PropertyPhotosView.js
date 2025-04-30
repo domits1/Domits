@@ -4,9 +4,11 @@ import usePhotos from "../hooks/usePropertyPhotos";
 import OnboardingButton from "../components/OnboardingButton";
 import { useRef, useState } from "react";
 import "../styles/PhotoVieuw.scss";
+import { useBuilder } from "../../../context/propertyBuilderContext";
 
 // step 7
 function PhotosView() {
+  const builder = useBuilder();
   const { type: accommodationType } = useParams();
   const {
     images,
@@ -80,11 +82,8 @@ function PhotosView() {
                 onDrop={handleDrop}
               />
             ))}
-            {images.length < 5 && (
-              <div
-                className="small-photo add-more-box"
-                onClick={handleBoxClick}
-              >
+            {images.length < 10 && (
+              <div className="small-photo add-more-box" onClick={handleBoxClick}>
                 <p>Add More +</p>
               </div>
             )}
@@ -106,6 +105,9 @@ function PhotosView() {
             btnText="Go back"
           />
           <OnboardingButton
+            onClick={() => {
+              builder.addImages(images);
+            }}
             routePath={`/hostonboarding/${accommodationType}/title`}
             btnText="Proceed"
           />

@@ -16,7 +16,7 @@ export default function AccommodationTypeView() {
     (state) => state.setAccommodationType,
   )
 
-  const { handleProceed } = useHandleAccommodationTypeProceed()
+  const handleProceed = useHandleAccommodationTypeProceed()
 
   return (
     <div className="onboarding-host-div">

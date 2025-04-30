@@ -47,7 +47,7 @@
   width: 3.2vw;
 }
 
-.container {
+/* .container {
   width: 90%;
   height: 100%;
   margin: auto;
@@ -56,7 +56,7 @@
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
-}
+} */
 
 .wijzer {
   display: flex;
@@ -675,4 +675,12 @@
 
 #logoutButton:hover {
   background-color: #3da942;
+}
+
+.loading-spinner-calender{
+  display: "flex";
+  justify-content: "center";
+  align-items: "center";
+  height: "42vh";
+  width: "72.5%";
 }

@@ -28,3 +28,4 @@ amplifytools.xcconfig
 .vscode/
 app/.idea/
 
+/gource.log

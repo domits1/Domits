@@ -1,5 +1,5 @@
 .or-occupancy-rate-card {
-    width: 320px;
+    width: 300px;
     padding: 20px;
     margin: 20px auto;
     border: 1px solid #ddd;
@@ -7,7 +7,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     background-color: #f9f9f9;
     text-align: center;
-    height: 460px;
+    height: 440px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -16,10 +16,35 @@
     font-weight: 400 ;
     color: #333;
     text-align: center;
-    margin-bottom: 20px;
 }
-.or-pie-chart-wrapper{
 
+.or-custom-date-filter {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.or-custom-date-filter input[type="date"] {
+    border: 2px solid #eef2f7;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #2c3e50;
+    transition: all 0.2s ease;
+}
+
+.or-custom-date-filter input[type="date"]:hover {
+    border-color: #2196f3;
+    background-color: #f8fafd;
+}
+
+.or-custom-date-filter input[type="date"]:focus {
+    outline: none;
+    border-color: #2196f3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+}
+
+.or-pie-chart-wrapper{
     display: flex;
     justify-content: center;
     align-items: center;
@@ -27,9 +52,8 @@
 }
 
 .occupancy-rate-card p{
-
     margin: 20px 10px;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: normal;
     color: #444;
 }
