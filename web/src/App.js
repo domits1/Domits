@@ -23,7 +23,7 @@ import ChatWidget from "./features/chatwidget/ChatWidget";
 import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import GuestBooking from "./features/guestdashboard/GuestBooking";
-import guestMessages from "./features/guestdashboard/guestmessages/pages/guestMessages";
+import GuestMessages from "./features/guestdashboard/guestmessages/pages/guestMessages";
 import GuestDashboard from "./features/guestdashboard/GuestDashboard";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
@@ -97,7 +97,6 @@ import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
-import GuestMessages from "./features/guestdashboard/guestmessages/pages/guestMessages";
 
 Modal.setAppElement("#root");
 
