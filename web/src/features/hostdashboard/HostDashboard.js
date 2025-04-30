@@ -12,6 +12,7 @@ import ImageSlider from "../../utils/ImageSlider";
 import editIcon from "../../images/icons/edit-05.png";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import {getAccessToken} from "../../services/getAccessToken.js";
+import { toast } from 'react-toastify';
 
 function HostDashboard() {
     const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
@@ -97,18 +98,6 @@ function HostDashboard() {
         }
     };
 
-    const accommodation = {
-        property: {
-            title: '',
-            id: '',
-            description: '',
-        },
-        location: {
-            city: '',
-            country: ''
-        }
-    }
-
     return (
         <main className="page-body">
             <h2>Dashboard</h2>
@@ -148,19 +137,15 @@ function HostDashboard() {
                             className={styles.dashboardCard}
                             onClick={() => {
                                 if (accommodation.property.status) {
-                                alert('Deze accommodatie is in concept en kan niet bekeken worden.');
+                                toast.warning('Deze accommodatie is in concept en kan niet bekeken worden.');
                                 } else {
                                 navigate(`/listingdetails?ID=${accommodation.property.id}`);
                                 }
                             }}
                             >
                             {/* Vervang dit door jouw ImageSlider-component of <img> */}
-                            {accommodation.images?.length ? (
-                                <ImageSlider
-                                images={accommodation.images}
-                                seconds={5}
-                                page="dashboard"
-                                />
+                            {accommodation.images?.length > 0 ? (
+                                <img src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`} alt="Geen afbeelding beschikbaar" className='img-listed-dashboard' />
                             ) : (
                                 <img src={placeholderImage} alt="Geen afbeelding beschikbaar" />
                             )}
@@ -171,7 +156,6 @@ function HostDashboard() {
                                 </p>
                                 <p className={styles.accommodationLocation}>
                                 {accommodation.location.city}
-                                {accommodation.property.subtitle && `, ${accommodation.property.subtitle}`}
                                 </p>
                             </div>
 
@@ -179,7 +163,7 @@ function HostDashboard() {
                                 <span className={accommodation.property.status ? styles.status : styles.isLive}>
                                 {accommodation.property.status ? 'Drafted' : 'Live'}
                                 </span>
-                                <span>Listed on: {DateFormatterDD_MM_YYYY(accommodation.createdAt)}</span>
+                                <span>Listed on: {DateFormatterDD_MM_YYYY(accommodation.property.createdAt)}</span>
                             </div>
                             </div>
                         ))

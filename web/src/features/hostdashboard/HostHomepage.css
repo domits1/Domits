@@ -684,3 +684,9 @@
   height: "42vh";
   width: "72.5%";
 }
+
+.img-listed-dashboard{
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+}
