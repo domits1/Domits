@@ -7,7 +7,7 @@ import ContactList from "../components/hostContactList";
 import HostChatScreen from "../components/hostChatScreen";
 import HostBookingTab from "../components/hostBookingTab";
 import useFetchConnectionId from '../hooks/useFetchConnectionId';
-import "../styles/sass/hostMessages.css";
+import "../styles/sass/hostMessages.scss";
 
 const HostMessages = () => {
     return (
