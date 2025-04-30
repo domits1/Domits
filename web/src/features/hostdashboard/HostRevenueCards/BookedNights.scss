@@ -9,7 +9,12 @@
     text-align: center;
     height: 440px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-
+    
+    .booked-nights-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
     .time-filter {
         display: flex;
         justify-content: center;
@@ -71,13 +76,13 @@
             color: #2196f3;
         }
     }
+    .time-filter label {
+        font-size: 15px;
+        font-weight: 500;
+        color: #2c3e50;
+    }
 }
 
-.time-filter label {
-    font-size: 15px;
-    font-weight: 500;
-    color: #2c3e50;
-}
 
 .booked-nights-card-container{
     margin: 0 auto;
@@ -111,55 +116,51 @@
         font-weight: normal;
         color: #003366;
     }
-}
 
-.custom-date-filter {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.custom-date-filter input[type="date"] {
-    border: 2px solid #eef2f7;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
-    color: #2c3e50;
-    transition: all 0.2s ease;
-}
-
-.custom-date-filter input[type="date"]:hover {
-    border-color: #2196f3;
-    background-color: #f8fafd;
-}
-
-.custom-date-filter input[type="date"]:focus {
-    outline: none;
-    border-color: #2196f3;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
-}
-
-.custom-date-filter input {
-    margin-bottom: 10px;
-    font-size: 15px;
-    font-weight: normal;
-    color: #555;
-}
-
-.custom-date-filter label {
-    font-size: 15px;
-    font-weight: normal;
-    color: #555;
-}
-
-.booked-nights-details {
-    font-size: 15px;
-    font-weight: normal;
-    color: #444;
-    margin-top: 70px;
-}
-
-.booked-nights-card:hover {
-    transform: scale(1.02);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    .custom-date-filter {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .custom-date-filter input[type="date"] {
+        border: 2px solid #eef2f7;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 14px;
+        color: #2c3e50;
+        transition: all 0.2s ease;
+    }
+    
+    .custom-date-filter input[type="date"]:hover {
+        border-color: #2196f3;
+        background-color: #f8fafd;
+    }
+    
+    .custom-date-filter input[type="date"]:focus {
+        outline: none;
+        border-color: #2196f3;
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+    }
+    
+    .custom-date-filter input {
+        margin-bottom: 10px;
+        font-size: 15px;
+        font-weight: normal;
+        color: #555;
+    }
+    
+    .custom-date-filter label {
+        font-size: 15px;
+        font-weight: normal;
+        color: #555;
+    }
+    
+    .booked-nights-details {
+        font-size: 15px;
+        font-weight: normal;
+        color: #444;
+        margin-top: 70px;
+    }
+    
 }

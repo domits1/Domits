@@ -1,4 +1,3 @@
-/* General Card Styling */
 .ro-revenue-card {
     padding: 5px; 
     border-radius: 10px;
@@ -10,33 +9,33 @@
         transform: translateY(-5px);
         box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.2);
     }
-    
+
     .ro-revenue-title {
         font-size: 15px;
         margin-bottom: 10px;
         color: #333;
         font-weight: 300;
     }
-    
+
     .ro-revenue-value {
         font-size: 2rem;
         margin-bottom: 20px;
         color: #003366;
     }
-}
 
-.ro-card-grid {
-    display: Flex;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-    gap: 20px;
-    justify-items: center;
-    padding: 20px;
-    width: 100%;
-}
+    .ro-card-grid {
+        display: Flex;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+        gap: 20px;
+        justify-items: center;
+        padding: 20px;
+        width: 100%;
+    }
 
 
-@media (max-width: 768px) {
-    .ro-revenue-card {
-        max-width: 100%;
+    @media (max-width: 768px) {
+        .ro-revenue-card {
+            max-width: 100%;
+        }
     }
 }
