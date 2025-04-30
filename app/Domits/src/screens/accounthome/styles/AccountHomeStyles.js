@@ -12,13 +12,6 @@ export const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginHorizontal: 10,
     },
-    descriptionText: {
-        fontSize: 16,
-        color: 'gray',
-        marginTop: 8,
-        marginBottom: 20,
-        marginHorizontal: 10,
-    },
     sectionContainer: {
         backgroundColor: '#fff',
         padding: 20,
@@ -29,14 +22,18 @@ export const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 10,
     },
-    listItem: {
+    tabItem: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingVertical: 10,
         marginHorizontal: 10,
     },
-    listItemText: {
+    tabItemText: {
         fontSize: 18,
+    },
+    logOutButtonText: {
+        fontSize: 18,
+        color: '#ff3c3c',
     },
 });

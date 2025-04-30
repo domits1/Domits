@@ -9,7 +9,9 @@ import React from "react";
 import emailSettings from "../screens/profile/hostprofile/emailSettings";
 import settings from "../screens/guestdashboard/GuestSettingsTab";
 import HostSettings from "../screens/profile/hostprofile/screens/HostSettingsTab";
+import AccountHome from "../screens/accounthome/screens/AccountHome";
 import {
+    ACCOUNT_HOME_SCREEN,
     ACCOUNT_SCREEN,
     CHANGE_ACCOUNT_SETTINGS_SCREEN,
     CONFIRM_EMAIL_SCREEN,
@@ -31,6 +33,7 @@ function AccountNavigationStack() {
             <Stack.Screen name={LOGIN_SCREEN} component={LoginScreen}/>
             <Stack.Screen name={REGISTER_SCREEN} component={Register}/>
             <Stack.Screen name={ACCOUNT_SCREEN} component={Account}/>
+            <Stack.Screen name={ACCOUNT_HOME_SCREEN} component={AccountHome}/>
 
             {/* Account Settings */}
             <Stack.Screen name={HOST_ACCOUNT_SETTINGS_SCREEN} component={HostSettings}/>
