@@ -241,13 +241,11 @@ function Header({ setSearchResults, setLoading }) {
             </a>
           </div>
           {!hiddenSearchPaths.includes(location.pathname) && (
-            <div className="App">
               <SearchBar
                 setSearchResults={setSearchResults}
                 setLoading={setLoading}
                 toggleBar={toggleSearchBar}
               />
-            </div>
           )}
 
           <div className="headerRight">
