@@ -11,9 +11,7 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
         if (uploadUrl && fileUrl && fileUrl !== uploadedFileUrl) {
         
             setUploadedFileUrl(fileUrl);
-
-            // Call onUploadComplete only once
-            onUploadComplete(fileUrl);  // Notify parent about the completed upload
+            onUploadComplete(fileUrl);
         }
     }, [uploadUrl, fileUrl, uploadedFileUrl, onUploadComplete]);
 

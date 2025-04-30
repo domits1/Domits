@@ -76,11 +76,6 @@ const HostBookingTab = ({ userId, contactId }) => {
                             <p>Booking ID: {bookingDetails?.ID}</p>
                         </div>
 
-                        {/* <div className="guest-info">
-                    <h4>Guest contact info </h4>
-
-                </div> */}
-
                         <div className="house-rules">
                             <h4>House rules</h4>
                             <p>{accommodation?.Capacity} guests maximum</p>

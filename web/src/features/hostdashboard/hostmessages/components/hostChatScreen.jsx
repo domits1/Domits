@@ -87,7 +87,6 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
                             <FaArrowLeft />
                         </button>
                     )}
-                    {/* <img src={contactImage} alt={contactName} className="profile-img" /> */}
                     <img src={profileImage} alt={contactName} className="profile-img" />
                     <div className="host-chat-header-info">
 

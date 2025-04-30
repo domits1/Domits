@@ -84,7 +84,6 @@ const GuestChatScreen = ({ userId, contactId, contactName, connectionId, handleC
                             <FaArrowLeft />
                         </button>
                     )}
-                    {/* <img src={contactImage} alt={contactName} className="profile-img" /> */}
                     <img src={profileImage} alt={contactName} className="guest-profile-img" />
                     <div className="guest-chat-header-info">
 
