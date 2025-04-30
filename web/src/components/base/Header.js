@@ -236,16 +236,7 @@ function Header({ setSearchResults, setLoading }) {
 
   return (
     <div className="App">
-      <header className="app-header">  
-      {/* added here */}
-        <div className={"language-toggle"}>
-            <label htmlFor="">Language</label>
-            <select value={language} onChange={selectLanguage}>
-                <option value="nl">Nederlands</option>
-                <option value="en">English</option>
-            </select>
-        </div>
-
+      <header className="app-header">
         <nav
           className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""
             }`}
@@ -265,7 +256,16 @@ function Header({ setSearchResults, setLoading }) {
             </div>
           )}
 
-          <div className="headerRight">
+          <div className="headerRight">  
+          {/* added here */}
+
+            <div class="language-toggle">
+              <i class="fas fa-globe"></i>
+              <select value={language} onChange={selectLanguage}>
+                <option value="en">English</option>
+                <option value="nl">Nederlands</option>
+              </select>
+            </div>
             {!isLoggedIn ? (
               <button
                 className="headerButtons headerHostButton"
