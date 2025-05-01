@@ -6,11 +6,7 @@ import LoadingScreen from '../../loadingscreen/screens/LoadingScreen';
 import BookingRepository from '../../../services/availability/bookingRepository';
 import ToastMessage from '../../../components/ToastMessage';
 
-const SelectBookingDatesCalendarView = ({
-                                            onFirstDateSelected,
-                                            onLastDateSelected,
-                                            property,
-                                        }) => {
+const SelectBookingDatesCalendarView = ({firstDateSelected, onFirstDateSelected, lastDateSelected, onLastDateSelected, property, clickEnabled = false}) => {
     const [unavailableDates, setUnavailableDates] = useState({});
     const [markedDates, setMarkedDates] = useState({});
     const [loading, setLoading] = useState(true);
@@ -60,20 +56,20 @@ const SelectBookingDatesCalendarView = ({
     const onDateClick = useCallback(day => {
         const selectedDate = day.dateString;
         const nonAvailableDates = unavailableDates.reduce((obj, item) => {
-            obj[item] = { disabled: true };
+            obj[item] = {disabled: true};
             return obj;
         }, {});
 
         if (nonAvailableDates[selectedDate]) return;
 
         const updateMarkedDates = (dates) => {
-            setMarkedDates({ ...nonAvailableDates, ...dates });
+            setMarkedDates({...nonAvailableDates, ...dates});
         };
 
         const handleDateSelection = (range) => {
-            const newMarkedDates = { ...nonAvailableDates };
+            const newMarkedDates = {...nonAvailableDates};
             range.forEach(date => {
-                newMarkedDates[date] = { selected: true, color: 'green' };
+                newMarkedDates[date] = {selected: true, color: 'green'};
             });
             updateMarkedDates(newMarkedDates);
         };
@@ -83,7 +79,7 @@ const SelectBookingDatesCalendarView = ({
 
         if (firstSelectedDate && !lastSelectedDate) {
             if (new Date(selectedDate) <= new Date(firstSelectedDate) || !isValidRange(firstSelectedDate, selectedDate, nonAvailableDates)) {
-                updateMarkedDates({ [selectedDate]: { selected: true, color: 'green' } });
+                updateMarkedDates({[selectedDate]: {selected: true, color: 'green'}});
                 onFirstDateSelected(selectedDate);
             } else {
                 const dateRange = generateDateRange(firstSelectedDate, selectedDate);
@@ -91,11 +87,11 @@ const SelectBookingDatesCalendarView = ({
                 onLastDateSelected(selectedDate);
             }
         } else if (lastSelectedDate) {
-            updateMarkedDates({ [selectedDate]: { selected: true, color: 'green' } });
+            updateMarkedDates({[selectedDate]: {selected: true, color: 'green'}});
             onFirstDateSelected(selectedDate);
             onLastDateSelected(null);
         } else {
-            updateMarkedDates({ [selectedDate]: { selected: true, color: 'green' } });
+            updateMarkedDates({[selectedDate]: {selected: true, color: 'green'}});
             onFirstDateSelected(selectedDate);
         }
     }, [markedDates, unavailableDates]);
@@ -130,6 +126,11 @@ const SelectBookingDatesCalendarView = ({
             dates.forEach(date => {
                 dateMarks[date] = {disabled: true};
             })
+            if (firstDateSelected && lastDateSelected) {
+                generateDateRange(firstDateSelected, lastDateSelected).forEach((date) => {
+                    dateMarks[date] = {selected: true, color: 'green'};
+                })
+            }
             setMarkedDates(dateMarks);
             setUnavailableDates(dates);
             setLoading(false);
@@ -160,7 +161,7 @@ const SelectBookingDatesCalendarView = ({
                     maxDate={getFutureDate(365).toISOString()}
                     markingType={'period'}
                     markedDates={markedDates}
-                    onDayPress={onDateClick}
+                    onDayPress={clickEnabled ? onDateClick : null}
                     hideExtraDays
                     theme={{
                         todayTextColor: 'green',

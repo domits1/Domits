@@ -1,38 +1,46 @@
 import React, {useEffect, useState} from 'react';
-import {Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
+import {Image, Modal, Pressable, ScrollView, Text, ToastAndroid, TouchableOpacity, View,} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import BookingEngineCalendarPopup from "../components/BookingEngineCalendarPopup";
 import {styles} from "../styles/BookingEngineStyles";
 import BookingEngineGuestsPopup from "../components/BookingEngineGuestsPopup";
 import CalculateNumberOfNights from "../utils/CalculateNumberOfNights";
 import {SIMULATE_STRIPE_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 import {S3URL} from "../../../store/constants";
+import SelectBookingDatesCalendarView
+    from "../../../screens/propertyDetailsScreen/views/SelectBookingDatesCalendarView";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 const BookingEngineScreen = ({navigation, route}) => {
-    const parsedFirstSelectedDate = route.params.firstSelectedDate;
-    const parsedLastSelectedDate = route.params.lastSelectedDate;
+    const [firstSelectedDate, setFirstSelectedDate] = useState(route.params.firstSelectedDate);
+    const [lastSelectedDate, setLastSelectedDate] = useState(route.params.lastSelectedDate);
     const property = route.params.property;
     const propertyImages = property.images;
     const [showDatePopUp, setShowDatePopUp] = useState(false);
     const [showGuestAmountPopUp, setShowGuestAmountPopUp] = useState(false);
     const [adults, setAdults] = useState(1);
     const [kids, setKids] = useState(0);
-    const [bookedDates, setBookedDates] = useState([]);
     const [nights, setNights] = useState(0);
 
     useEffect(() => {
-        setNights(CalculateNumberOfNights(parsedFirstSelectedDate, parsedLastSelectedDate))
-    }, [])
+        setNights(CalculateNumberOfNights(firstSelectedDate, lastSelectedDate))
+    }, [firstSelectedDate, lastSelectedDate]);
 
     const handleBookButton = () => {
-        navigation.navigate(SIMULATE_STRIPE_SCREEN, {
-            parsedAccommodation: property,
-            calculateCost: calculateCost(),
-            adults: adults,
-            kids: kids,
-            nights: nights,
-        });
+        if (!firstSelectedDate || !lastSelectedDate) {
+            ToastAndroid.show(
+                'Please select a start and end date',
+                ToastAndroid.SHORT,
+            );
+        } else {
+            navigation.navigate(SIMULATE_STRIPE_SCREEN, {
+                parsedAccommodation: property,
+                calculateCost: calculateCost(),
+                adults: adults,
+                kids: kids,
+                nights: nights,
+            });
+        }
     };
 
     const toggleCalendarModal = () => {
@@ -77,8 +85,8 @@ const BookingEngineScreen = ({navigation, route}) => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Dates</Text>
                         <Text style={styles.sectionContent}>
-                            {parsedFirstSelectedDate && parsedLastSelectedDate
-                                ? `${parsedFirstSelectedDate} - ${parsedLastSelectedDate}`
+                            {firstSelectedDate && lastSelectedDate
+                                ? `${firstSelectedDate} - ${lastSelectedDate}`
                                 : 'Choose dates'}
                         </Text>
                         <TouchableOpacity onPress={toggleCalendarModal}>
@@ -86,14 +94,30 @@ const BookingEngineScreen = ({navigation, route}) => {
                         </TouchableOpacity>
                     </View>
                     {showDatePopUp && (
-                        <BookingEngineCalendarPopup
-                            onClose={toggleCalendarModal}
-                            onConfirm={handleDatesSelected}
-                            dateRanges={property.DateRanges}
-                            bookedDates={bookedDates}
-                            property={property}
-                        />
-
+                        <Modal
+                            animationType="fade"
+                            transparent={true}
+                            visible={showDatePopUp}
+                            onRequestClose={() => setShowDatePopUp(false)}
+                        >
+                            <Pressable onPress={() => setShowDatePopUp(false)} style={styles.modalOverlay}>
+                                <View style={styles.modalContent}>
+                                    <TouchableOpacity
+                                        style={styles.closeButton}
+                                        onPress={() => setShowDatePopUp(false)}>
+                                        <MaterialIcons name="close" size={24} color="#333" />
+                                    </TouchableOpacity>
+                                    <SelectBookingDatesCalendarView
+                                        firstDateSelected={firstSelectedDate}
+                                        lastDateSelected={lastSelectedDate}
+                                        onFirstDateSelected={setFirstSelectedDate}
+                                        onLastDateSelected={setLastSelectedDate}
+                                        property={property}
+                                        clickEnabled={true}
+                                    />
+                                </View>
+                            </Pressable>
+                        </Modal>
                     )}
                     <View style={styles.separator}/>
                     <View style={styles.section}>
