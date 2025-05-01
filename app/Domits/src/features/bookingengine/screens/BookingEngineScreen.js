@@ -16,28 +16,14 @@ const BookingEngineScreen = ({navigation, route}) => {
     const propertyImages = property.images;
     const [showDatePopUp, setShowDatePopUp] = useState(false);
     const [showGuestAmountPopUp, setShowGuestAmountPopUp] = useState(false);
-    const [selectedDates, setSelectedDates] = useState({});
     const [adults, setAdults] = useState(1);
     const [kids, setKids] = useState(0);
-    const [pets, setPets] = useState(0);
     const [bookedDates, setBookedDates] = useState([]);
     const [nights, setNights] = useState(0);
 
     useEffect(() => {
-        handleDatesSelected(parsedFirstSelectedDate, parsedLastSelectedDate)
-    }, [parsedFirstSelectedDate, parsedLastSelectedDate])
-
-    useEffect(() => {
-        CalculateNumberOfNights(selectedDates.startDate, selectedDates.endDate, setNights)
-    }, [selectedDates])
-
-    // useEffect(() => {
-    //     FetchBookingsByProperty(property, setBookings, setBookedDates);
-    // }, [property]);
-
-    const handleDatesSelected = (startDate, endDate) => {
-        setSelectedDates({startDate: startDate, endDate: endDate})
-    }
+        setNights(CalculateNumberOfNights(parsedFirstSelectedDate, parsedLastSelectedDate))
+    }, [])
 
     const handleBookButton = () => {
         navigation.navigate(SIMULATE_STRIPE_SCREEN, {
@@ -45,7 +31,6 @@ const BookingEngineScreen = ({navigation, route}) => {
             calculateCost: calculateCost(),
             adults: adults,
             kids: kids,
-            pets: pets,
             nights: nights,
         });
     };
@@ -92,8 +77,8 @@ const BookingEngineScreen = ({navigation, route}) => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Dates</Text>
                         <Text style={styles.sectionContent}>
-                            {selectedDates && selectedDates.startDate && selectedDates.endDate
-                                ? `${selectedDates.startDate} - ${selectedDates.endDate}`
+                            {parsedFirstSelectedDate && parsedLastSelectedDate
+                                ? `${parsedFirstSelectedDate} - ${parsedLastSelectedDate}`
                                 : 'Choose dates'}
                         </Text>
                         <TouchableOpacity onPress={toggleCalendarModal}>
@@ -114,7 +99,7 @@ const BookingEngineScreen = ({navigation, route}) => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Guests</Text>
                         <Text style={styles.sectionContent}>
-                            {adults} adults - {kids} kids - {pets} pets
+                            {adults} adults - {kids} kids
                         </Text>
                         <TouchableOpacity onPress={handleGuestAmountPopUp}>
                             <Text style={styles.linkText}>Change</Text>
@@ -126,17 +111,15 @@ const BookingEngineScreen = ({navigation, route}) => {
                             maxGuests={property.generalDetails.find(detail => detail.detail === "Guests").value}
                             currentAdults={adults}
                             currentKids={kids}
-                            currentPets={pets}
                             setAdults={setAdults}
                             setKids={setKids}
-                            setPets={setPets}
                         />
                     )}
                     <View style={styles.separator}/>
                     <View style={styles.priceDetails}>
                         <Text style={styles.sectionTitle}>Price details</Text>
                         <Text style={styles.sectionContent}>
-                            {adults} adults - {kids} kids - {pets} pets | {nights} nights
+                            {adults} adults - {kids} kids | {nights} nights
                         </Text>
 
                         <Text style={styles.priceDetailText}>

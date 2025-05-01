@@ -7,198 +7,181 @@ import BookingRepository from '../../../services/availability/bookingRepository'
 import ToastMessage from '../../../components/ToastMessage';
 
 const SelectBookingDatesCalendarView = ({
-  onFirstDateSelected,
-  onLastDateSelected,
-  property,
-}) => {
-  const [firstSelectedDate, setFirstSelectedDate] = useState(null);
-  const [lastSelectedDate, setLastSelectedDate] = useState(null);
-  const [markedDates, setMarkedDates] = useState({});
-  const [loading, setLoading] = useState(true);
+                                            onFirstDateSelected,
+                                            onLastDateSelected,
+                                            property,
+                                        }) => {
+    const [unavailableDates, setUnavailableDates] = useState({});
+    const [markedDates, setMarkedDates] = useState({});
+    const [loading, setLoading] = useState(true);
 
-  const fetchReservationDates = useCallback(async ({id, date}) => {
-    try {
-      return await new BookingRepository()
-        .getBookingsByPropertyIdAndFromDate(id, date)
-        .map(data => generateDateRange(data.arrivalDate, data.departureDate));
-    } catch (error) {
-      console.error(error);
-      if (error === 204) {
-        return [];
-      }
-      ToastMessage(error.message, ToastAndroid.LONG);
-    }
-  }, []);
-
-  const getAvailableDates = useCallback(async () => {
-    const availabilities = property.availability;
-    const availableDates = [];
-
-    availabilities.forEach(availability => {
-      availableDates.push(
-        generateDateRange(
-          availability.availableStartDate,
-          availability.availableEndDate,
-        ),
-      );
-    });
-    return availableDates;
-  }, [property]);
-
-  const getUnavailableDates = useCallback(async ({availableDates}) => {
-    const today = new Date();
-
-    const nonAvailableDates = [];
-    for (let i = 0; i < 365; i++) {
-      const date = new Date();
-      date.setDate(today.getDate() + i);
-      if (!availableDates.includes(date)) {
-        nonAvailableDates.push(date.getTime());
-      }
-    }
-    return nonAvailableDates;
-  }, []);
-
-  const onDateClick = useCallback(
-    day => {
-      const selectedDate = day.dateString;
-      const unavailableDates = getUnavailableDates();
-
-      if (unavailableDates[selectedDate]) {
-        return;
-      }
-
-      if (firstSelectedDate && !lastSelectedDate) {
-        const dateRange = generateDateRange(firstSelectedDate, selectedDate);
-        for (let date of dateRange) {
-          if (unavailableDates[date]) {
-            return;
-          }
+    const fetchReservationDates = useCallback(async (id, date) => {
+        try {
+            const repo = new BookingRepository();
+            const response = await repo.getBookingsByPropertyIdAndFromDate(id, date);
+            return response.flatMap(data => generateDateRange(data.arrivalDate, data.departureDate));
+        } catch (error) {
+            if (error === 204) {
+                return [];
+            }
+            ToastMessage(error.message, ToastAndroid.LONG);
         }
-      }
+    }, []);
 
-      if (
-        !lastSelectedDate &&
-        firstSelectedDate &&
-        new Date(selectedDate) > new Date(firstSelectedDate)
-      ) {
-        const dateRange = generateDateRange(firstSelectedDate, selectedDate);
-        const newMarkedDates = {...markedDates};
+    const getAvailableDates = useCallback(async () => {
+        const availabilities = property.availability;
+        return availabilities.flatMap(availability =>
+            generateDateRange(
+                availability.availableStartDate,
+                availability.availableEndDate,
+            )
+        );
+    }, [property]);
 
-        dateRange.forEach(date => {
-          newMarkedDates[date] = {selected: true, color: 'green'};
-        });
+    const getUnavailableDates = useCallback(async availableDates => {
+        const today = new Date();
 
-        setLastSelectedDate(selectedDate);
-        onLastDateSelected(selectedDate);
-        setMarkedDates(newMarkedDates);
-      } else if (lastSelectedDate) {
-        const newMarkedDates = {...unavailableDates};
+        const availableArray = availableDates.map(date => new Date(date).toISOString().split('T')[0])
 
-        setFirstSelectedDate(selectedDate);
-        onFirstDateSelected(selectedDate);
-        setLastSelectedDate(null);
-        onLastDateSelected(null);
-        newMarkedDates[selectedDate] = {selected: true, color: 'green'};
+        const nonAvailableDates = [];
+        for (let i = 0; i < 365; i++) {
+            const date = new Date();
+            date.setDate(today.getDate() + i);
+            const dateStr = date.toISOString().split('T')[0];
 
-        setMarkedDates(newMarkedDates);
-      } else {
-        const newMarkedDates = {...unavailableDates};
-        setFirstSelectedDate(selectedDate);
-        onFirstDateSelected(selectedDate);
+            if (!availableArray.find(date => date === dateStr)) {
+                nonAvailableDates.push(dateStr);
+            }
+        }
 
-        newMarkedDates[selectedDate] = {selected: true, color: 'green'};
-        setMarkedDates(newMarkedDates);
-      }
-    },
-    [
-      firstSelectedDate,
-      getUnavailableDates,
-      lastSelectedDate,
-      markedDates,
-      onFirstDateSelected,
-      onLastDateSelected,
-    ],
-  );
+        return nonAvailableDates;
+    }, []);
 
-  const generateDateRange = (start, end) => {
-    const dateArray = [];
-    let currentDate = new Date(start);
+    const onDateClick = useCallback(day => {
+        const selectedDate = day.dateString;
+        const nonAvailableDates = unavailableDates.reduce((obj, item) => {
+            obj[item] = { disabled: true };
+            return obj;
+        }, {});
 
-    while (currentDate <= new Date(end)) {
-      dateArray.push(currentDate.toISOString().split('T')[0]);
-      currentDate.setDate(currentDate.getDate() + 1);
+        if (nonAvailableDates[selectedDate]) return;
+
+        const updateMarkedDates = (dates) => {
+            setMarkedDates({ ...nonAvailableDates, ...dates });
+        };
+
+        const handleDateSelection = (range) => {
+            const newMarkedDates = { ...nonAvailableDates };
+            range.forEach(date => {
+                newMarkedDates[date] = { selected: true, color: 'green' };
+            });
+            updateMarkedDates(newMarkedDates);
+        };
+
+        const firstSelectedDate = Object.keys(markedDates).find(date => markedDates[date]?.selected);
+        const lastSelectedDate = Object.keys(markedDates).find(date => markedDates[date]?.selected && date !== firstSelectedDate);
+
+        if (firstSelectedDate && !lastSelectedDate) {
+            if (new Date(selectedDate) <= new Date(firstSelectedDate) || !isValidRange(firstSelectedDate, selectedDate, nonAvailableDates)) {
+                updateMarkedDates({ [selectedDate]: { selected: true, color: 'green' } });
+                onFirstDateSelected(selectedDate);
+            } else {
+                const dateRange = generateDateRange(firstSelectedDate, selectedDate);
+                handleDateSelection(dateRange);
+                onLastDateSelected(selectedDate);
+            }
+        } else if (lastSelectedDate) {
+            updateMarkedDates({ [selectedDate]: { selected: true, color: 'green' } });
+            onFirstDateSelected(selectedDate);
+            onLastDateSelected(null);
+        } else {
+            updateMarkedDates({ [selectedDate]: { selected: true, color: 'green' } });
+            onFirstDateSelected(selectedDate);
+        }
+    }, [markedDates, unavailableDates]);
+
+    const isValidRange = (startDate, endDate, nonAvailableDates) => {
+        return !generateDateRange(startDate, endDate).some(date => nonAvailableDates[date]);
+    };
+
+    const generateDateRange = (start, end) => {
+        const dateArray = [];
+        let currentDate = new Date(start);
+        const endDate = new Date(end);
+
+        while (currentDate <= endDate) {
+            dateArray.push(currentDate.toISOString().split('T')[0]);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return dateArray;
+    };
+
+
+    useEffect(() => {
+        async function renderUnavailableDates() {
+            const reservationDates = await fetchReservationDates(property.property.id, Date.now());
+            const unAvailableDates = await getUnavailableDates(await getAvailableDates());
+            return [...reservationDates, ...unAvailableDates];
+        }
+
+        renderUnavailableDates().then(dates => {
+            let dateMarks = {};
+            dates.forEach(date => {
+                dateMarks[date] = {disabled: true};
+            })
+            setMarkedDates(dateMarks);
+            setUnavailableDates(dates);
+            setLoading(false);
+        })
+
+    }, [
+        fetchReservationDates,
+        property.id,
+        getUnavailableDates,
+        getAvailableDates,
+    ]);
+
+    const getFutureDate = daysInTheFuture => {
+        const date = new Date();
+        date.setDate(date.getDate() + daysInTheFuture);
+        return date;
+    };
+
+    if (loading) {
+        return <LoadingScreen loadingName={'calendar'}/>;
+    } else {
+        return (
+            <View>
+                <Calendar
+                    testID={'calendar-list'}
+                    style={styles.calendar}
+                    minDate={getFutureDate(0).toISOString()}
+                    maxDate={getFutureDate(365).toISOString()}
+                    markingType={'period'}
+                    markedDates={markedDates}
+                    onDayPress={onDateClick}
+                    hideExtraDays
+                    theme={{
+                        todayTextColor: 'green',
+                        arrowColor: 'green',
+                        stylesheet: {
+                            calendar: {
+                                header: {
+                                    week: {
+                                        marginTop: 30,
+                                        marginHorizontal: 12,
+                                        flexDirection: 'row',
+                                        justifyContent: 'space-between',
+                                    },
+                                },
+                            },
+                        },
+                    }}
+                />
+            </View>
+        );
     }
-
-    return dateArray;
-  };
-
-  useEffect(() => {
-    async function renderUnavailableDates() {
-      const reservationDates = await fetchReservationDates(property.property.id, Date.now());
-      const unAvailableDates = await getUnavailableDates(await getAvailableDates());
-      let dateMarks = {};
-      reservationDates.forEach(
-          date => (dateMarks[date.toISOString().split('T')[0]] = {disabled: true}),
-      );
-      unAvailableDates.forEach(
-          date => (dateMarks[date.toISOString().split('T')[0]] = {disabled: true}),
-      );
-      return dateMarks;
-    }
-
-    renderUnavailableDates().then(dates => {
-      setMarkedDates(dates);
-      setLoading(false);
-    })
-
-  }, [
-    fetchReservationDates,
-    property.id,
-    getUnavailableDates,
-    getAvailableDates,
-  ]);
-
-  const getFutureDate = daysInTheFuture => {
-    const date = new Date();
-    date.setDate(date.getDate() + daysInTheFuture);
-    return date;
-  };
-
-  if (loading) {
-    return <LoadingScreen loadingName={'calendar'} />;
-  } else {
-    return (
-      <View>
-        <Calendar
-          testID={'calendar-list'}
-          style={styles.calendar}
-          minDate={getFutureDate(0).toISOString()}
-          maxDate={getFutureDate(365).toISOString()}
-          markingType={'period'}
-          markedDates={markedDates}
-          onDayPress={onDateClick}
-          hideExtraDays
-          theme={{
-            todayTextColor: 'green',
-            arrowColor: 'green',
-            stylesheet: {
-              calendar: {
-                header: {
-                  week: {
-                    marginTop: 30,
-                    marginHorizontal: 12,
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                  },
-                },
-              },
-            },
-          }}
-        />
-      </View>
-    );
-  }
 };
 
 export default SelectBookingDatesCalendarView;
