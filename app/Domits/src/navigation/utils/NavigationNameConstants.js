@@ -1,6 +1,6 @@
 // General
 export const HOME_SCREEN = "home";
-export const FEEDBACK_SCREEN = "help-and-feedback";
+export const FEEDBACK_SCREEN = "feedback";
 
 // Features
 export const SCAN_SCREEN = "scan";
@@ -8,7 +8,6 @@ export const PAY_SCREEN = "pay";
 export const POCKET_SCREEN = "pocket";
 
 // Host
-export const HOST_HOME_SCREEN = "host-home";
 export const HOST_PROFILE_SCREEN = "host-profile";
 export const HOST_SETTINGS_SCREEN = "host-settings";
 export const HOST_HELP_DESK_SCREEN = "host-help-desk";
@@ -19,6 +18,7 @@ export const HOST_DASHBOARD_SCREEN = "host-dashboard";
 export const HOST_CALENDAR_SCREEN = "host-calendar";
 export const HOST_REVIEWS_SCREEN = "host-reviews";
 export const HOST_PAYMENTS_SCREEN = "host-payments";
+export const HOST_RESERVATIONS_SCREEN = "host-reservations";
 
 // Host Onboarding
 export const HOST_ONBOARDING_LANDING_SCREEN = "host-onboarding-landing";
@@ -50,7 +50,9 @@ export const ACCOUNT_SCREEN = "account";
 export const ACCOUNT_HOME_SCREEN = "account-home";
 
 // Account Settings
-export const HOST_ACCOUNT_SETTINGS_SCREEN = "host-account-settings";
-export const GUEST_ACCOUNT_SETTINGS_SCREEN = "guest-account-settings";
+export const ACCOUNT_DASHBOARD_SCREEN = "account-dashboard";
 export const CHANGE_ACCOUNT_SETTINGS_SCREEN = "change-account-settings";
 export const CONFIRM_EMAIL_SCREEN = "confirm-email";
+
+// App Settings
+export const APP_SETTINGS_SCREEN = "app-settings";

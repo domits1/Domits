@@ -5,16 +5,18 @@ import React, {useEffect, useState} from "react";
 import TranslatedText from "../../../features/translation/components/TranslatedText";
 import {useAuth} from "../../../context/AuthContext";
 import {
+    ACCOUNT_DASHBOARD_SCREEN,
+    APP_SETTINGS_SCREEN,
     FEEDBACK_SCREEN,
     GUEST_BOOKINGS_SCREEN,
     GUEST_DASHBOARD_SCREEN,
     GUEST_PAYMENT_METHODS_SCREEN,
     GUEST_REVIEWS_SCREEN, GUEST_SETTINGS_SCREEN,
-    HOST_CALENDAR_SCREEN,
+    HOST_CALENDAR_SCREEN, HOST_DASHBOARD_SCREEN,
     HOST_HELP_DESK_SCREEN,
     HOST_LISTINGS_SCREEN,
     HOST_ONBOARDING_LANDING_SCREEN,
-    HOST_PAYMENTS_SCREEN, LOGIN_SCREEN
+    HOST_PAYMENTS_SCREEN, HOST_RESERVATIONS_SCREEN, HOST_REVIEWS_SCREEN, LOGIN_SCREEN
 } from "../../../navigation/utils/NavigationNameConstants";
 import LogoutAccount from "../../../features/auth/LogoutAccount";
 import {useFocusEffect} from "@react-navigation/native";
@@ -69,7 +71,7 @@ const AccountHome = ({navigation}) => {
                     {/* Dashboard */}
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Account"}/></Text>
-                        {tabItem(GUEST_DASHBOARD_SCREEN, 'Dashboard')}
+                        {tabItem(ACCOUNT_DASHBOARD_SCREEN, 'Dashboard')}
                         {/* Log out */}
                         <View>
                             <TouchableOpacity
@@ -90,6 +92,12 @@ const AccountHome = ({navigation}) => {
                                 {tabItem(GUEST_BOOKINGS_SCREEN, 'Bookings')}
                                 {tabItem(GUEST_PAYMENT_METHODS_SCREEN, 'Payments')}
                                 {tabItem(GUEST_REVIEWS_SCREEN, 'Reviews')}
+                            </View>
+                        }
+
+                        {userRole === hostUserRole &&
+                            <View>
+                                {tabItem(HOST_RESERVATIONS_SCREEN, 'Reservations')}
                             </View>
                         }
                     </View>
@@ -113,7 +121,7 @@ const AccountHome = ({navigation}) => {
                             <View style={styles.sectionContainer}>
                                 <Text style={styles.sectionTitle}><TranslatedText
                                     textToTranslate={"Marketing & Monitoring"}/></Text>
-                                {/*todo*/}
+                                {tabItem(HOST_REVIEWS_SCREEN, 'Reviews')}
                             </View>
                         </View>
                     }
@@ -122,6 +130,7 @@ const AccountHome = ({navigation}) => {
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Preferences"}/></Text>
                         {/*todo*/}
+                        {tabItem(APP_SETTINGS_SCREEN, 'Settings')}
                     </View>
 
                     <View style={styles.sectionContainer}>
@@ -136,10 +145,14 @@ const AccountHome = ({navigation}) => {
                     </View>
 
                     {/* Host onboarding */}
-                    <View style={styles.sectionContainer}>
-                        <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Become a host"}/></Text>
-                        {tabItem(HOST_ONBOARDING_LANDING_SCREEN, 'List your property')}
-                    </View>
+                    {userRole === guestUserRole &&
+                        <View style={styles.sectionContainer}>
+                            <Text style={styles.sectionTitle}>
+                                <TranslatedText textToTranslate={"Become a host"}/>
+                            </Text>
+                            {tabItem(HOST_ONBOARDING_LANDING_SCREEN, 'List your property')}
+                        </View>
+                    }
 
                 </ScrollView>
             </SafeAreaView>
