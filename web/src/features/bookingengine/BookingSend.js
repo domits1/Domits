@@ -57,6 +57,10 @@ const BookingSend = () => {
                 },
             }
         };
+        console.log(payload);
+        console.log("Start date is: ", startDate);
+        console.log("End date is: ", endDate);
+
             const storeBooking = async () => {
             try {
                 const response = await fetch(
