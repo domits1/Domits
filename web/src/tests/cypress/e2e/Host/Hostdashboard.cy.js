@@ -1,34 +1,47 @@
-import '../../support/commands';
-
-describe('Landing Page Tests', () => {
-    beforeEach(() => {
-        cy.viewport(1920, 1080);
+describe("Guest Booking Engine - Login Flow", () => {
+  beforeEach(() => {
+    cy.visit("https://acceptance.domits.com/", {
+      failOnStatusCode: false,
+      pageLoadTimeout: 0,
     });
+  });
 
-        it("logs in as guest and navigates through the dashboard sections", () => {
-      
-          cy.visit("https://www.domits.com/");
-      
-       
-          cy.get(
-            '.header-personal-menu > [src="/static/media/arrow-down-icon.59bf2e60938fc6833daa025b7260e7f6.svg"]'
-          ).click();
-          cy.get(".header-dropdown-login-button").click();
-      
-          cy.get('input[type="email"]').type("testpersoondomits@gmail.com");
-          cy.get('input[type="password"]').type("Gmail.com1");
-          cy.get('button[type="submit"]').click();
-      
-          cy.url().should("include", "/hostdashboard");
+  it("should allow user to login quickly and reliably", () => {
+    cy.get('[src="/static/media/profile-icon.0cd455f54ee6076e94d35d8e3bb148c8.svg"]').should("be.visible").click();
 
-          cy.get('.dashboardSection > :nth-child(3)').should("be.visible").click();
-          cy.get('.dashboardSection > :nth-child(4)').should("be.visible").click();
-          cy.get('.dashboardSection > .active').should("be.visible").click();
-          cy.get('.dashboardSection > :nth-child(5)').should("be.visible").click();
-          cy.get('.contact-item-profile-image').should("be.visible").click();
-          cy.get('.dashboardSection > :nth-child(6)').should("be.visible").click();
-          cy.get('.dashboardSection > :nth-child(8)').should("be.visible").click();
-        
-        });
-      });
-      
+    cy.get(".dropdownLoginButton").should("be.visible").click();
+
+    cy.url().should("include", "/login");
+
+    cy.get("#email").should("be.visible").type("testpersoondomits@gmail.com");
+
+    cy.get('.passwordContainer input[type="password"]').should("be.visible").type("Gmail.com1");
+
+    cy.get(".loginButton").should("be.visible").click();
+
+    cy.url().should("not.include", "/login");
+
+    cy.get(".hostchatbot-close-button").should("be.visible").click();
+
+    cy.get('.dashboardSection > :nth-child(3) > p').should("be.visible").click();
+    
+    cy.get('.dashboardSection > :nth-child(3) > p').should("be.visible").click();
+
+    cy.get(':nth-child(4) > p').should("be.visible").click();
+
+    cy.get(':nth-child(5) > p').should("be.visible").click();
+
+    cy.get(':nth-child(6) > p').should("be.visible").click();
+
+    cy.get(':nth-child(7) > p').should("be.visible").click();
+
+    cy.get(':nth-child(8) > p').should("be.visible").click();
+
+    cy.get(':nth-child(9) > p').should("be.visible").click();
+
+    cy.get(':nth-child(10) > p').should("be.visible").click();
+
+    cy.get(':nth-child(11) > p').should("be.visible").click();
+    
+  });
+});
