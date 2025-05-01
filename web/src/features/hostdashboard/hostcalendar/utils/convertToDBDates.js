@@ -15,14 +15,14 @@ function convertDatesToDBDates(selectedDates) {
         const month = date.substring(4, 6) - 1;
         const day = date.substring(6, 8);
 
-        newDate["availableStartDate"] = new Date(year, month, day).getTime();
+        newDate["availableStartDate"] = Date.UTC(year, month, day);
 
         let date2 = selectedDates[i][1].toString();
 
         const year2 = date2.substring(0, 4);
         const month2 = date2.substring(4, 6) - 1;
         const day2 = date2.substring(6, 8);
-        newDate["availableEndDate"] = new Date(year2, month2, day2).getTime();
+        newDate["availableEndDate"] = Date.UTC(year2, month2, day2);
         updatedList.push(newDate);
     }
     return updatedList
