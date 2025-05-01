@@ -96,6 +96,7 @@ import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
+import Navbar from './components/base/navbar';
 
 Modal.setAppElement("#root");
 
@@ -296,6 +297,7 @@ function App() {
             </div>
           </UserProvider>
         </AuthProvider>
+        <Navbar/>
       </Router>
     </FlowContext.Provider>
   </ApolloProvider>);

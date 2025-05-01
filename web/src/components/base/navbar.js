@@ -1,99 +1,36 @@
-import React, { useState } from "react";
-import nineDots from "../../images/dots-grid.svg";
-import profile from "../../images/profile-icon.svg";
-import arrowDown from "../../images/arrow-down-icon.svg";
-import loginArrow from "../../images/whitearrow.png";
-import logoutArrow from "../../images/log-out-04.svg";
-import { useNavigate } from "react-router-dom";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Home, MessageCircle, User } from 'lucide-react';
 
-const HamburgerMenu = ({ isLoggedIn, group, currentView, username, toggleDropdown, dropdownVisible, renderDropdownMenu, navigateToLanding, navigateToDashboard, navigateToGuestDashboard, navigateToNinedots, navigateToLogin, navigateToRegister }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
+const Navbar = ({ isLoggedIn }) => {
+  const navigate = useNavigate();
 
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
+  const handleNavigation = (path) => {
+    if (!isLoggedIn && (path === "/chat" || path === "/guestdashboard")) {
+      navigate("/login"); // Redirect to login if not logged in
+    } else {
+      navigate(path); // Navigate to the desired path
+    }
   };
 
   return (
-    <div className="hamburger-menu">
-      <button className="hamburger-icon" onClick={toggleMenu}>
-        ☰
-      </button>
-      {menuOpen && (
-        <div className="hamburger-menu-content">
-          {!isLoggedIn ? (
-            <button
-              className="headerButtons headerHostButton"
-              onClick={navigateToLanding}
-            >
-              Become a Host
-            </button>
-          ) : group === "Host" ? (
-            <button
-              className="headerButtons headerHostButton"
-              onClick={navigateToDashboard}
-            >
-              {currentView === "guest"
-                ? "Switch to Host"
-                : "Switch to Guest"}
-            </button>
-          ) : (
-            <button
-              className="headerButtons headerHostButton"
-              onClick={navigateToLanding}
-            >
-              Become a Host
-            </button>
-          )}
-          {isLoggedIn && group === "Traveler" && (
-            <button
-              className="headerButtons"
-              onClick={navigateToGuestDashboard}
-            >
-              Go to Dashboard
-            </button>
-          )}
-          <button
-            className="headerButtons nineDotsButton"
-            onClick={navigateToNinedots}
-          >
-            <img src={nineDots} alt="Nine Dots" />
-          </button>
-          <div className="personalMenuDropdown">
-            <button className="personalMenu" onClick={toggleDropdown}>
-              <img src={profile} alt="Profile Icon" />
-              <img src={arrowDown} alt="Dropdown Arrow" />
-            </button>
-            <div
-              className={
-                "personalMenuDropdownContent" +
-                (dropdownVisible ? " show" : "")
-              }
-            >
-              {isLoggedIn ? (
-                renderDropdownMenu()
-              ) : (
-                <>
-                  <button
-                    onClick={navigateToLogin}
-                    className="dropdownLoginButton"
-                  >
-                    Login
-                    <img src={loginArrow} alt="Login Arrow" />
-                  </button>
-                  <button
-                    onClick={navigateToRegister}
-                    className="dropdownRegisterButton"
-                  >
-                    Register
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    <nav className="bottom-navbar">
+      <div className="nav-item" onClick={() => handleNavigation("/home")}>
+        <Home size={24} />
+        <span>Home</span>
+      </div>
+
+      <div className="nav-item" onClick={() => handleNavigation("/chat")}>
+        <MessageCircle size={24} />
+        <span>Messages</span>
+      </div>
+
+      <div className="nav-item" onClick={() => handleNavigation("/guestdashboard")}>
+        <User size={24} />
+        <span>Account</span>
+      </div>
+    </nav>
   );
 };
 
-export default HamburgerMenu;
+export default Navbar;
