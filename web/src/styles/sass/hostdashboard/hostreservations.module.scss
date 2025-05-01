@@ -1,5 +1,5 @@
-// Variables 
-$primary-color: #4CAF50;
+// Variables
+$primary-color: #4caf50;
 $secondary-color: #333;
 $highlight-color: #4a647c;
 $background-color: #f9f9f9;
@@ -15,110 +15,76 @@ $border-radius: 8px;
 //////////
 /// Todo: cleanup unused styling
 //////////
-/// 
+///
 .reservationContainer {
+  display: flex;
+  flex-direction: row;
+
+  .reservationContent {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    margin-left: 5%;
+    min-height: 55rem;
+  }
 
-    .reservationContent {
-        display: flex;
-        flex-direction: column;
-        margin-left: 5%;
-        min-height: 55rem;
+  //////////
+  // Top menu styling
+  //////////
+  .reservationButtons button {
+    font-size: $button-size-large;
+    background-color: #ffffff;
+    border: 1px solid #0000004a;
+    border-radius: 8px;
+    padding: $button-padding;
+    margin: 10px 0.5px;
+    box-shadow:
+      6px 6px 12px $border-color,
+      -6px -6px 12px $border-outer;
+    box-shadow: inset 0px 10px 10px rgba(0, 0, 0, 0.15);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+
+    &:hover {
+      background-color: $highlight-color;
+      color: #ffffff;
+    }
+  }
+
+  /*  .reservationData {
+      overflow-x: auto;
+    } */
+
+  .reservationTable {
+    display: block;
+
+    thead,
+    tr {
+      table-layout: fixed;
+      width: 100%;
+      border-collapse: collapse;
+      border: 3px solid purple;
+  
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
-    //////////
-    // Top menu styling
-    //////////
-    .reservationButtons button {
-        font-size: $button-size-large;
-        background-color: #ffffff;
-        border: 1px solid #0000004a;
-        border-radius: 8px;
-        padding: $button-padding;
-        margin: 10px 0.5px;
-        box-shadow: 6px 6px 12px $border-color, -6px -6px 12px $border-outer;
-        box-shadow: inset 0px 10px 10px rgba(0, 0, 0, 0.15);
-        transition: background 0.2s ease, color 0.2s ease;
-
-        &:hover {
-            background-color: $highlight-color;
-            color: #ffffff;
-        }
+    tbody,
+    tr {
+      margin: 10px 0.5px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
-    //////////
-    // Sorting box top styling
-    //////////
-    
-    .reservationSortBox {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: 1px solid $border-color;
-        border-radius: 8px;
-        overflow: hidden;
-        background-color: $background-color;
-        padding: $button-padding;
+    .reservationIcons{
+      cursor: pointer;
+      display: inline-flex;
+      transition: transform 0.2s;
 
-        button {
-            flex: 1;
-            border: none;
-            background-color: transparent;
-            padding: 0.1em 0.5em 0.4em;
-            font-size: 1em;
-            text-align: center;
-            cursor: pointer;
-            transition: background-color 0.2s ease, color 0.2s ease;
-
-            &:not(last-child) { // REMOVE DIVIDER BEFORE PR
-                border-right: 1px solid #ddd; 
-            }
-
-            .icon {
-                transition: color 0.2 ease;
-                
-                &:hover {
-                    color: $highlight-color;
-                }
-            }
-
-            //////////
-            /// TODO: Responsive design!
-            //////////
-        }
-
+      &:hover {
+        transform: scale(1.1);
+      }
     }
-
-    //////////
-    /// Sorting box datacontainer styling
-    //////////
-    .reservationData {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        margin: 1em 0em;
-        padding: 0em 0.2em;
-
-        > * {
-            flex: 0 0 calc (12.5px - 10px);
-            margin: 5px;
-        }
-    }
-    
-    .reservationRow {
-        display: flex;
-        justify-content: space-between;
-        border: 1px solid $border-color;
-        border-radius: 8px;
-        padding: 1.5em 1em;
-        margin: 20px 20px;
-
-        .singleReservationRow {
-            display: flex;
-            justify-content: space-between;
-        }
-    }
-
+  }
 }
-
