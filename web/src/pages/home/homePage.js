@@ -85,7 +85,11 @@ const Homepage = () => {
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
   const {language} = useContext(LanguageContext);
-  const {searchText} = content[language].homepage;
+  const {searchText,securePayments,verifiedGuest,quickPhone,qualityGuarantee,subHead,
+    bestPrice,bookingGuarantee,stayGuarantee,subHead2,subHead3,bh,bhLi1,bhLi2,bhLi3,
+    listPropertyBtn,placeText,placeText2,placeText3,placeText4,placeText5,placeText6,
+    placeText7,accommodationHead,communityGroup,hostBtn,searchBtn
+  } = content[language].homepage;
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
@@ -452,42 +456,42 @@ const Homepage = () => {
           <div className="domits-iconsContainerText">
             <div className="domits-iconTextGroup">
               <img src={bill} alt="bill" />
-              <p>Secure payments</p>
+              <p>{securePayments}</p>
             </div>
             <div className="domits-iconTextGroup">
               <img src={verifiedLogo} alt="verified logo" />
-              <p>Verified guests/hosts</p>
+              <p>{verifiedGuest}</p>
             </div>
             <div className="domits-iconTextGroup">
               <img src={question} alt="question" />
-              <p>Quick phone support</p>
+              <p>{quickPhone}</p>
             </div>
             <div className="domits-iconTextGroup">
               <img src={checkMark} alt="checkMark" />
-              <p>Domits quality guarantee</p>
+              <p>{qualityGuarantee}</p>
             </div>
           </div>
         </div>
 
         <div className="domits-boatContainer">
           <div className="domits-boatText">
-            <h3 className="domits-subHead">Trending accommodations this month</h3>
+            <h3 className="domits-subHead">{subHead}</h3>
 
             <div className="domits-trendingContainer">
               {[
                 {
                   emoji: "🎖️",
-                  title: "Best price guarantee",
+                  title: `${bestPrice}`,
                   text: "We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.",
                 },
                 {
                   emoji: "✅",
-                  title: "Accommodation booking guarantee",
+                  title: `${bookingGuarantee}`,
                   text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.",
                 },
                 {
                   emoji: "🤝",
-                  title: "Guarantee of stay at the accommodation",
+                  title: `${stayGuarantee}`,
                   text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
                 },
               ].map((item, index) => (
@@ -517,7 +521,7 @@ const Homepage = () => {
 
         <div className="domits-boatContainer">
           <div className="domits-boatText">
-            <h3 className="domits-subHead">Rent a boat for any occasion</h3>
+            <h3 className="domits-subHead">{subHead2}</h3>
           </div>
           <div className="domits-accommodationGroup">
             {boatLoading === false ? (
@@ -537,7 +541,7 @@ const Homepage = () => {
         </div>
 
         <div className="domits-boatContainer">
-          <h3 className="domits-subHead">Discover Beautiful Campers</h3>
+          <h3 className="domits-subHead">{subHead3}</h3>
           <div className="domits-accommodationGroup">
             {camperLoading === false ? (
               camperAccommodations.length > 0 ? (
@@ -557,13 +561,13 @@ const Homepage = () => {
 
         <div className="become-host-section">
           <div className="become-host-content">
-            <h1 className="BH">Become a host</h1>
+            <h1 className="BH">{bh}</h1>
             <ul>
-              <li>List your property for free.</li>
-              <li>Manage everything centrally.</li>
-              <li>Increase your booking metrics.</li>
+              <li>{bhLi1}</li>
+              <li>{bhLi2}</li>
+              <li>{bhLi3}</li>
             </ul>
-            <button className="list-property-button">List your property</button>
+            <button className="list-property-button">{listPropertyBtn}</button>
           </div>
           <div className="host-images">
             {hostImages.map((image, index) => (
@@ -572,7 +576,7 @@ const Homepage = () => {
           </div>
         </div>
 
-        <h1 className="Places-text">Countries in Europe</h1>
+        <h1 className="Places-text">{placeText}</h1>
         <div className="countries-container">
           {countries.map((country, index) => (
             <div className="country-card" key={index}>
@@ -595,7 +599,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Destinations in Asia</h1>
+        <h1 className="Places-text">{placeText2}</h1>
         <div className="asia-countries-container">
           {asiaCountries.map((country, index) => (
             <div className="country-card asia-country-card" key={index}>
@@ -617,7 +621,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Islands in the Caribbean</h1>
+        <h1 className="Places-text">{placeText3}</h1>
         <div className="caribbean-countries-container">
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
@@ -639,7 +643,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Popular ski destinations</h1>
+        <h1 className="Places-text">{placeText4}</h1>
         <div className="ski-countries-container">
           {skiCountries.map((country, index) => (
             <div className="country-card ski-country-card" key={index}>
@@ -651,7 +655,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Favorites by Season</h1>
+        <h1 className="Places-text">{placeText5}</h1>
         <div className="seasons-container">
           {seasons.map((season, index) => (
             <div className="season-card" key={index}>
@@ -662,7 +666,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Great picks by interest</h1>
+        <h1 className="Places-text">{placeText6}</h1>
         <div className="interests-container">
           {interests.map((interest, index) => (
             <div className="interest-card" key={index}>
@@ -674,7 +678,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Accommodations by group</h1>
+        <h1 className="Places-text">{placeText7}</h1>
         <div className="groups-container">
           {groups.map((group, index) => (
             <div className="group-card" key={index}>
@@ -708,14 +712,14 @@ const Homepage = () => {
         </button>
       </div>
       <div className="domits-communityContainer">
-        <h2 className="domits-communityHead">Need help? Join the community</h2>
-        <p className="domits-communityGroup">Domits has a travel community for hosts, guests, and employees</p>
+        <h2 className="domits-communityHead">{accommodationHead}</h2>
+        <p className="domits-communityGroup">{communityGroup}</p>
         <div className="domits-communityButtons">
           <button className="domits-hostButton">
-            <a href="/landing">Become a host</a>
+            <a href="/landing">{hostBtn}</a>
           </button>
           <button className="domits-SearchButton">
-            <a href="/home">Search & book</a>
+            <a href="/home">{searchBtn}</a>
           </button>
         </div>
       </div>
