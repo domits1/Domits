@@ -172,4 +172,12 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+
 });
