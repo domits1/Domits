@@ -1,5 +1,22 @@
 {
     "en": {
+        "component" : {
+            "hostBtn": "Become a host",
+            "loginBtn": "Login",
+            "registerBtn": "Register",
+            "dashboardBtn": "Dashboard",
+            "calendarBtn": "Calendar",
+            "reservationBtn": "Reservations",
+            "messageBtn": "Messages",
+            "logoutBtn": "Log out",
+            "hello": "Hello",
+            "profileBtn": "Profile",
+            "paymentBtn": "Payments",
+            "settingBtn": "Settings",
+            "switchGuestBtn": "Switch to Guest",
+            "switchHostBtn": "Switch to Host"
+        },
+
         "homepage": {
             "searchText": "Book holiday homes, boats and campers..",
             "search-place-input": "Search Destination",
@@ -36,6 +53,23 @@
     },
 
     "nl" : {
+        "component" : {
+            "hostBtn": "Word gastheer",
+            "loginBtn": "Inloggen",
+            "registerBtn": "Aanmelden",
+            "dashboardBtn": "Dashboard",
+            "calendarBtn": "Kalender",
+            "reservationBtn": "Reserveringen",
+            "messageBtn": "Berichten",
+            "logoutBtn": "Uitloggen",
+            "hello": "Hoi",
+            "profileBtn": "Profiel",
+            "paymentBtn": "Betalingen",
+            "settingBtn": "Instellingen",
+            "switchGuestBtn": "Overschakelen naar gast",
+            "switchHostBtn": "Overschakelen naar host"
+        },
+
         "homepage": {
             "searchText": "Boek vakantiehuizen, boten en campers..",
             "search-place-input": "Zoekbestemming",
