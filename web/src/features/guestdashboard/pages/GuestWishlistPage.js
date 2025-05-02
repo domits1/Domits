@@ -26,8 +26,8 @@ const GuestWishlistPage = () => {
         });
 
         const data = await res.json();
-        const ids =
-          data?.AccommodationIDs?.map((entry) => (typeof entry === "object" && entry.S ? entry.S : entry)) || [];
+        
+        const ids = data?.AccommodationIDs || [];
 
         if (ids.length === 0) return setWishlist([]);
 
