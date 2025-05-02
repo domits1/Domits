@@ -10,6 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Auth } from "aws-amplify";
 import {LanguageContext} from "../../context/LanguageContext.js";
+import content from "../../content/content.json";
 
 
 function Header({ setSearchResults, setLoading }) {
@@ -31,6 +32,9 @@ function Header({ setSearchResults, setLoading }) {
       setLanguage(e.target.value);
       console.log(e.target.value);
   };
+  const {hostBtn,loginBtn,dashboardBtn,registerBtn,calendarBtn,reservationBtn,messageBtn,
+    logoutBtn,hello,profileBtn,paymentBtn,settingBtn,switchGuestBtn,switchHostBtn
+  } = content[language].component;
 
 
   useEffect(() => {
@@ -163,33 +167,33 @@ function Header({ setSearchResults, setLoading }) {
     if (currentView === "host") {
       return (
         <>
-          <div className="helloUsername">Hello {username}!</div>
+          <div className="helloUsername">{hello} {username}!</div>
           <button
             onClick={navigateToHostDashboard}
             className="dropdownLoginButton"
           >
-            Dashboard
+            {dashboardBtn}
           </button>
           <button
             onClick={() => navigate("/hostdashboard/calendar")}
             className="dropdownLoginButton"
           >
-            Calendar
+            {calendarBtn}
           </button>
           <button
             onClick={() => navigate("/hostdashboard/reservations")}
             className="dropdownLoginButton"
           >
-            Reservations
+            {reservationBtn}
           </button>
           <button
             onClick={() => navigate("/hostdashboard/chat")}
             className="dropdownLoginButton"
           >
-            Messages
+            {messageBtn}
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out
+            {logoutBtn}
             <img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
@@ -197,27 +201,27 @@ function Header({ setSearchResults, setLoading }) {
     } else {
       return (
         <>
-          <div className="helloUsername">Hello {username}!</div>
+          <div className="helloUsername">{hello} {username}!</div>
           <button
             onClick={navigateToGuestDashboard}
             className="dropdownLoginButton"
           >
-            Profile
+            {profileBtn}
           </button>
           <button onClick={navigateToMessages} className="dropdownLoginButton">
-            Messages
+            {messageBtn}
           </button>
           <button onClick={navigateToPayments} className="dropdownLoginButton">
-            Payments
+            {paymentBtn}
           </button>
           {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
             Reviews
           </button> */}
           <button onClick={navigateToSettings} className="dropdownLoginButton">
-            Settings
+            {settingBtn}
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out
+            {logoutBtn}
             <img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
@@ -271,7 +275,7 @@ function Header({ setSearchResults, setLoading }) {
                 className="headerButtons headerHostButton"
                 onClick={navigateToLanding}
               >
-                Become a Host
+                {hostBtn}
               </button>
             ) : group === "Host" ? (
               <button
@@ -279,15 +283,15 @@ function Header({ setSearchResults, setLoading }) {
                 onClick={navigateToDashboard}
               >
                 {currentView === "guest"
-                  ? "Switch to Host"
-                  : "Switch to Guest"}
+                  ? `${switchHostBtn}`
+                  : `${switchGuestBtn}`}
               </button>
             ) : (
               <button
                 className="headerButtons headerHostButton"
                 onClick={navigateToLanding}
               >
-                Become a Host
+                {hostBtn}
               </button>
             )}
             {isLoggedIn && group === "Traveler" && (
@@ -323,14 +327,14 @@ function Header({ setSearchResults, setLoading }) {
                       onClick={navigateToLogin}
                       className="dropdownLoginButton"
                     >
-                      Login
+                      {loginBtn}
                       <img src={loginArrow} alt="Login Arrow" />
                     </button>
                     <button
                       onClick={navigateToRegister}
                       className="dropdownRegisterButton"
                     >
-                      Register
+                      {registerBtn}
                     </button>
                   </>
                 )}
