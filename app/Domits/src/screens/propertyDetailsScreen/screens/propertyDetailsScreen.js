@@ -98,6 +98,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
                             onFirstDateSelected={date => setFirstSelectedDate(date)}
                             onLastDateSelected={date => setLastSelectedDate(date)}
                             property={property}
+                            clickEnabled={true}
                         />
                         <View style={styles.bookingContainer}>
                             <View>
