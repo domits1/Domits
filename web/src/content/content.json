@@ -14,7 +14,23 @@
             "paymentBtn": "Payments",
             "settingBtn": "Settings",
             "switchGuestBtn": "Switch to Guest",
-            "switchHostBtn": "Switch to Host"
+            "switchHostBtn": "Switch to Host",
+            "searchDestinationLbl": "Search Destination",
+            "houseLbl": "House",
+            "boatLbl": "Boat",
+            "camperLbl": "Camper",
+            "accommodationLbl": "Accommodation",
+            "checkinoutLbl": "Check in • out",
+            "guestLbl": "Guests",
+            "adultLbl": "Adults",
+            "childrenLbl": "Children",
+            "infantsLbl": "Infants",
+            "petLbl": "Pets",
+            "age16Lbl": "Ages 16 or above",
+            "age12Lbl": "Ages 2–16",
+            "age0Lbl": "Ages 0–2",
+            "normalPetLbl": "Normal sized pets",
+            "searchLbl": "Search"
         },
 
         "homepage": {
@@ -67,7 +83,23 @@
             "paymentBtn": "Betalingen",
             "settingBtn": "Instellingen",
             "switchGuestBtn": "Overschakelen naar gast",
-            "switchHostBtn": "Overschakelen naar host"
+            "switchHostBtn": "Overschakelen naar host",
+            "searchDestinationLbl": "Zoekbestemming",
+            "houseLbl": "Huis",
+            "boatLbl": "Boot",
+            "camperLbl": "Kampeerder",
+            "accommodationLbl": "Accommodatie",
+            "checkinoutLbl": "in • uitchecken",
+            "guestLbl": "Gasten",
+            "adultLbl": "Volwassenen",
+            "childrenLbl": "Kinderen",
+            "infantsLbl": "Baby's",
+            "petLbl": "Huisdieren",
+            "age16Lbl": "16 jaar of ouder",
+            "age12Lbl": "Leeftijd 2–16 jaar",
+            "age0Lbl": "Leeftijd 0–2 jaar",
+            "normalPetLbl": "Huisdieren van normale grootte",
+            "searchLbl": "Zoeken"
         },
 
         "homepage": {
