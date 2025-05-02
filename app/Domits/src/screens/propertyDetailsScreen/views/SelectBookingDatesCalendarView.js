@@ -1,170 +1,188 @@
-import {View} from "react-native";
-import {Calendar, CalendarUtils} from "react-native-calendars/src/index";
-import {styles} from "../styles/propertyDetailsStyles";
-import React, {useCallback, useEffect, useState} from "react";
-import LoadingScreen from "../../loadingscreen/screens/LoadingScreen";
+import {ToastAndroid, View} from 'react-native';
+import {Calendar} from 'react-native-calendars/src/index';
+import {styles} from '../styles/propertyDetailsStyles';
+import React, {useCallback, useEffect, useState} from 'react';
+import LoadingScreen from '../../loadingscreen/screens/LoadingScreen';
+import BookingRepository from '../../../services/availability/bookingRepository';
+import ToastMessage from '../../../components/ToastMessage';
 
-const SelectBookingDatesCalendarView = ({onFirstDateSelected, onLastDateSelected, property}) => {
-    const [firstSelectedDate, setFirstSelectedDate] = useState(null);
-    const [lastSelectedDate, setLastSelectedDate] = useState(null);
-    const [markedDates, setMarkedDates] = useState({})
-    const [initialDate, setInitialDate] = useState({})
-    const [availableDates, setAvailableDates] = useState({})
-    const [calendarLoading, setCalendarLoading] = useState(true)
+const SelectBookingDatesCalendarView = ({firstDateSelected, onFirstDateSelected, lastDateSelected, onLastDateSelected, property, clickEnabled = false}) => {
+    const [unavailableDates, setUnavailableDates] = useState({});
+    const [markedDates, setMarkedDates] = useState({});
+    const [loading, setLoading] = useState(true);
 
-    const getCurrentDate = () => {
-        return new Date().toISOString().split('T')[0];
-    };
+    const fetchReservationDates = useCallback(async (id, date) => {
+        try {
+            const repo = new BookingRepository();
+            const response = await repo.getBookingsByPropertyIdAndFromDate(id, date);
+            return response.flatMap(data => generateDateRange(data.arrivalDate, data.departureDate));
+        } catch (error) {
+            if (error === 204) {
+                return [];
+            }
+            ToastMessage(error.message, ToastAndroid.LONG);
+        }
+    }, []);
 
-    useEffect(() => {
-        //fixme: available booking dates of properties are currently only in the past.
-        // setInitialDate(getCurrentDate)
-        setInitialDate("2024-10-01")
+    const getAvailableDates = useCallback(async () => {
+        const availabilities = property.availability;
+        return availabilities.flatMap(availability =>
+            generateDateRange(
+                availability.availableStartDate,
+                availability.availableEndDate,
+            )
+        );
+    }, [property]);
 
-        // Load calendar
-        setAvailabilityRanges()
-        setCalendarLoading(false)
+    const getUnavailableDates = useCallback(async availableDates => {
+        const today = new Date();
 
-    }, [initialDate, property])
+        const availableArray = availableDates.map(date => new Date(date).toISOString().split('T')[0])
 
-    /**
-     * Set which dates are available for booking a year in advance from the initial date.
-     */
-    const setAvailabilityRanges = () => {
-        const dateRanges = property.DateRanges || [];
-        let dates = new Set();
+        const nonAvailableDates = [];
+        for (let i = 0; i < 365; i++) {
+            const date = new Date();
+            date.setDate(today.getDate() + i);
+            const dateStr = date.toISOString().split('T')[0];
 
-        const startDate = initialDate;
-        const endDate = getDate(356); // Track available dates a year in advance
-        const allDates = generateDateRange(startDate, endDate);
+            if (!availableArray.find(date => date === dateStr)) {
+                nonAvailableDates.push(dateStr);
+            }
+        }
 
-        // Mark all dates as disabled by default
-        const newMarkedDates = {};
-        allDates.forEach(date => {
-            newMarkedDates[date] = {disabled: true, disableTouchEvent: true};
-        });
+        return nonAvailableDates;
+    }, []);
 
-        // Add and mark available dates
-        dateRanges.forEach(range => {
-            const startDate = new Date(range.startDate);
-            const endDate = new Date(range.endDate);
-            const rangeDates = generateDateRange(startDate, endDate);
+    const onDateClick = useCallback(day => {
+        const selectedDate = day.dateString;
+        const nonAvailableDates = unavailableDates.reduce((obj, item) => {
+            obj[item] = {disabled: true};
+            return obj;
+        }, {});
 
-            rangeDates.forEach(date => {
-                dates.add(date);
-                newMarkedDates[date] = {disabled: false, disableTouchEvent: false}; // Mark available dates as active
+        if (nonAvailableDates[selectedDate]) return;
+
+        const updateMarkedDates = (dates) => {
+            setMarkedDates({...nonAvailableDates, ...dates});
+        };
+
+        const handleDateSelection = (range) => {
+            const newMarkedDates = {...nonAvailableDates};
+            range.forEach(date => {
+                newMarkedDates[date] = {selected: true, color: 'green'};
             });
-        });
+            updateMarkedDates(newMarkedDates);
+        };
 
-        setAvailableDates(newMarkedDates);
-        setMarkedDates(newMarkedDates);
+        const firstSelectedDate = Object.keys(markedDates).find(date => markedDates[date]?.selected);
+        const lastSelectedDate = Object.keys(markedDates).find(date => markedDates[date]?.selected && date !== firstSelectedDate);
+
+        if (firstSelectedDate && !lastSelectedDate) {
+            if (new Date(selectedDate) <= new Date(firstSelectedDate) || !isValidRange(firstSelectedDate, selectedDate, nonAvailableDates)) {
+                updateMarkedDates({[selectedDate]: {selected: true, color: 'green'}});
+                onFirstDateSelected(selectedDate);
+            } else {
+                const dateRange = generateDateRange(firstSelectedDate, selectedDate);
+                handleDateSelection(dateRange);
+                onLastDateSelected(selectedDate);
+            }
+        } else if (lastSelectedDate) {
+            updateMarkedDates({[selectedDate]: {selected: true, color: 'green'}});
+            onFirstDateSelected(selectedDate);
+            onLastDateSelected(null);
+        } else {
+            updateMarkedDates({[selectedDate]: {selected: true, color: 'green'}});
+            onFirstDateSelected(selectedDate);
+        }
+    }, [markedDates, unavailableDates]);
+
+    const isValidRange = (startDate, endDate, nonAvailableDates) => {
+        return !generateDateRange(startDate, endDate).some(date => nonAvailableDates[date]);
     };
 
-    /**
-     * Generate an array of dates from a given start and end date.
-     * @param start - Start date.
-     * @param end - End date.
-     * @returns {*[]} - Array of dates with the format "yyyy-mm-dd".
-     */
     const generateDateRange = (start, end) => {
         const dateArray = [];
         let currentDate = new Date(start);
+        const endDate = new Date(end);
 
-        while (currentDate <= new Date(end)) {
+        while (currentDate <= endDate) {
             dateArray.push(currentDate.toISOString().split('T')[0]);
             currentDate.setDate(currentDate.getDate() + 1);
         }
 
-        return dateArray
-    }
-
-    /**
-     * Get the date with a given amount of days from the initial date.
-     * @param count - amount of day increments.
-     * @returns {any} - Date with the format "yyyy-mm-dd".
-     */
-    const getDate = (count) => {
-        const date = new Date(initialDate);
-        const newDate = date.setDate(date.getDate() + count);
-        return CalendarUtils.getCalendarDateString(newDate);
+        return dateArray;
     };
 
-    /**
-     * Handle pressing a date and update the selected date range.
-     */
-    const onDayPress = useCallback((day) => {
-        const selectedDate = day.dateString
 
-        if (!lastSelectedDate && firstSelectedDate && new Date(selectedDate) > new Date(firstSelectedDate)) { // Select first date.
-            const dateRange = generateDateRange(firstSelectedDate, selectedDate);
-            const newMarkedDates = {...markedDates};
-
-            // Mark the dates in the range
-            dateRange.forEach(date => {
-                newMarkedDates[date] = {selected: true, color: 'green'};
-            });
-
-            setLastSelectedDate(selectedDate);
-            setMarkedDates(newMarkedDates);
-            onLastDateSelected(selectedDate);
-        } else if (lastSelectedDate) { // Reset to first date if last date has been selected.
-            const newMarkedDates = {...availableDates};
-
-            setFirstSelectedDate(selectedDate);
-            setLastSelectedDate(null);
-            newMarkedDates[selectedDate] = {selected: true, color: 'green'};
-
-            setMarkedDates(newMarkedDates);
-            onFirstDateSelected(selectedDate);
-            onLastDateSelected(null);
-        } else { // Select first date.
-            const newMarkedDates = {...availableDates};
-            setFirstSelectedDate(selectedDate);
-            newMarkedDates[selectedDate] = {selected: true, color: 'green'};
-
-            setMarkedDates(newMarkedDates);
-            onFirstDateSelected(selectedDate)
+    useEffect(() => {
+        async function renderUnavailableDates() {
+            const reservationDates = await fetchReservationDates(property.property.id, Date.now());
+            const unAvailableDates = await getUnavailableDates(await getAvailableDates());
+            return [...reservationDates, ...unAvailableDates];
         }
 
-    }, [firstSelectedDate, lastSelectedDate, availableDates]);
+        renderUnavailableDates().then(dates => {
+            let dateMarks = {};
+            dates.forEach(date => {
+                dateMarks[date] = {disabled: true};
+            })
+            if (firstDateSelected && lastDateSelected) {
+                generateDateRange(firstDateSelected, lastDateSelected).forEach((date) => {
+                    dateMarks[date] = {selected: true, color: 'green'};
+                })
+            }
+            setMarkedDates(dateMarks);
+            setUnavailableDates(dates);
+            setLoading(false);
+        })
 
-    // Loading view for calendar
-    if (calendarLoading) {
-        return <LoadingScreen loadingName={"calendar"}/>
+    }, [
+        fetchReservationDates,
+        property.id,
+        getUnavailableDates,
+        getAvailableDates,
+    ]);
+
+    const getFutureDate = daysInTheFuture => {
+        const date = new Date();
+        date.setDate(date.getDate() + daysInTheFuture);
+        return date;
+    };
+
+    if (loading) {
+        return <LoadingScreen loadingName={'calendar'}/>;
+    } else {
+        return (
+            <View>
+                <Calendar
+                    testID={'calendar-list'}
+                    style={styles.calendar}
+                    minDate={getFutureDate(0).toISOString()}
+                    maxDate={getFutureDate(365).toISOString()}
+                    markingType={'period'}
+                    markedDates={markedDates}
+                    onDayPress={clickEnabled ? onDateClick : null}
+                    hideExtraDays
+                    theme={{
+                        todayTextColor: 'green',
+                        arrowColor: 'green',
+                        stylesheet: {
+                            calendar: {
+                                header: {
+                                    week: {
+                                        marginTop: 30,
+                                        marginHorizontal: 12,
+                                        flexDirection: 'row',
+                                        justifyContent: 'space-between',
+                                    },
+                                },
+                            },
+                        },
+                    }}
+                />
+            </View>
+        );
     }
-
-    return (
-        <View>
-            <Calendar
-                style={styles.calendar}
-                minDate={initialDate.toString()} // Set min selectable date
-                maxDate={getDate(356 - 1)} // Set max selectable date to one year
-                current={initialDate.toString()}
-                onDayPress={onDayPress}
-                markedDates={markedDates}
-                markingType={"period"}
-                disableAllTouchEventsForDisabledDays
-                hideExtraDays
-
-                theme={{
-                    todayTextColor: 'green',
-                    arrowColor: 'green',
-                    stylesheet: {
-                        calendar: {
-                            header: {
-                                week: {
-                                    marginTop: 30,
-                                    marginHorizontal: 12,
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between'
-                                }
-                            }
-                        }
-                    }
-                }}
-            />
-        </View>
-    )
-}
+};
 
 export default SelectBookingDatesCalendarView;

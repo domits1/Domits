@@ -19,7 +19,7 @@ const HostSectionView = ({ownerId, navigation}) => {
 
     return (
         <View>
-            <Text style={styles.categoryTitle}><TranslatedText textToTranslate={"hosted by"}/></Text>
+            <Text style={styles.categoryTitle}><TranslatedText textToTranslate={"Hosted by"}/></Text>
             <View style={styles.hostInfoContainer}>
                 <View style={styles.nameButton}>
                     <Text style={styles.nameText}>{owner.given_name} {owner.family_name}</Text>

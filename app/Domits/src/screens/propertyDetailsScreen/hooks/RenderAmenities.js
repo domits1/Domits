@@ -1,28 +1,36 @@
 import {Text, View} from "react-native";
 import {styles} from "../styles/propertyDetailsStyles";
-import featureIcons from "../../../ui-components/FeatureIcons";
 import React from "react";
+import amenities from "../../../ui-components/FeatureIcons";
 
-const RenderAmenities = (parsedAccommodation) => {
-    const allAmenities = parsedAccommodation.Features || {};
-    const categoriesToShow = Object.keys(allAmenities)
-        .filter(category => allAmenities[category].length > 0)
-        .slice(0, 3);
 
-    return categoriesToShow.map((category, categoryIndex) => {
-        const items = allAmenities[category].slice(0, 5);
+const RenderAmenities = ({propertyAmenities}) => {
 
+    const mappedPropertyAmenities = propertyAmenities.map(amenity =>
+        amenities.find(amenitiesEntry => amenitiesEntry.id === amenity.amenityId)
+    );
+
+    const amenitiesByType = mappedPropertyAmenities.reduce((categories, amenity) => {
+        if (!categories[amenity.category]) {
+            categories[amenity.category] = [];
+        }
+        categories[amenity.category].push(amenity);
+        return categories;
+    }, {});
+
+    const categoriesToShow = Object.keys(amenitiesByType).slice(0, 3);
+
+    return categoriesToShow.sort().map((category) => {
+        const items = amenitiesByType[category];
         return (
-            <View key={categoryIndex}>
+            <View key={category}>
                 <Text style={styles.categorySubTitle}>{category}</Text>
                 <View style={styles.subCategoryDivider}/>
 
-                {items.map((item, itemIndex) => (
-                    <View key={itemIndex} style={styles.featureIconItem}>
-                        {featureIcons[item] ? (
-                            <View style={styles.featureIcon}>{featureIcons[item]}</View>
-                        ) : null}
-                        <Text style={styles.featureText}>{item}</Text>
+                {items.map((amenity) => (
+                    <View key={amenity.id} style={styles.featureIconItem}>
+                        {amenity.icon}
+                        <Text style={styles.featureText}>{amenity.amenity}</Text>
                     </View>
                 ))}
             </View>

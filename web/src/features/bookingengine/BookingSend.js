@@ -12,6 +12,7 @@ const BookingSend = () => {
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
+        const authToken = getAccessToken();
 
         // The following values are currently not used for the payload: ownerId, price, cleaningFee,ServiceFee and
         // accommodationTitle. These will likely be removed but for now left incase needed for other operations.
@@ -40,9 +41,6 @@ const BookingSend = () => {
         const decodedAccommodationTitle = rawAccommodationTitle ? decodeURIComponent(rawAccommodationTitle) : "Unknown";
         setAccommodationTitle(decodedAccommodationTitle);
         const payload = {
-            headers: {
-                Authorization: getAccessToken()
-            },
             body: {
                 identifiers: {
                     property_Id: accommodationId,
@@ -65,14 +63,16 @@ const BookingSend = () => {
                 }
             }
         };
-        
-        const storeBooking = async () => {
+            const storeBooking = async () => {
             try {
                 const response = await fetch(
                     "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings",
                     {
                         method: "POST",
                         body: JSON.stringify(payload),
+                        headers: {
+                            "Authorization": authToken
+                        }
                     }
                 );
 
