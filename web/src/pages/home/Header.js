@@ -193,7 +193,7 @@ function Header({ setSearchResults, setLoading }) {
                 {/* <ul className='header-links'> */}
                             {!isLoggedIn ? (
                                 <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-                                    Become a Host
+                                    {hostBtn}
                                 </button>
                             ) : group === 'Host' ? (
                                 <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
@@ -201,7 +201,7 @@ function Header({ setSearchResults, setLoading }) {
                                 </button>
                             ) : (
                                 <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-                                    Become a Host
+                                    {hostBtn}
                                 </button>
                             )}
                             {isLoggedIn && group === 'Traveler' && (
