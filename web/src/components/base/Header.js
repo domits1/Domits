@@ -261,8 +261,6 @@ function Header({ setSearchResults, setLoading }) {
           )}
 
           <div className="headerRight">  
-          {/* added here */}
-
             <div class="language-toggle">
               <i class="fas fa-globe"></i>
               <select value={language} onChange={selectLanguage}>
