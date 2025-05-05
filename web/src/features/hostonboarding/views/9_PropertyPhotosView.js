@@ -1,13 +1,17 @@
 // --- START OF FILE 9_PropertyPhotosView.js ---
 
 import React, { useRef, useState, useCallback, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import ImagePreview from "../components/ImagePreview"; // Ensure correct path
 import usePhotos, { MAX_IMAGES, MIN_IMAGES_REQUIRED, ALLOWED_FORMATS, MIN_WIDTH, MIN_HEIGHT } from "../hooks/usePropertyPhotos"; // Import constants
 import OnboardingButton from "../components/OnboardingButton";
 import "../styles/onboardingHost.scss"; // Main import likely includes photosView.scss
+import { useBuilder } from '../../../context/propertyBuilderContext';
 
 function PropertyPhotosView() {
+  const builder = useBuilder();
+  const navigate = useNavigate();
+
   const { type: accommodationType } = useParams();
   const {
     images,
@@ -15,6 +19,8 @@ function PropertyPhotosView() {
     deleteImage,
     reorderImages,
   } = usePhotos(); // Hook manages image data and core logic
+
+
 
   // --- Local UI State ---
   const [draggedIndex, setDraggedIndex] = useState(null);         // Index of image being dragged for reorder
@@ -215,7 +221,12 @@ function PropertyPhotosView() {
             variant="secondary"
           />
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/pricing`} // Adjust path if needed
+            onClick={() => {
+
+              builder.addImages(images);
+              console.log("Builder after adding images:", builder);
+              navigate(`/hostonboarding/${accommodationType}/pricing`);
+            }}
             btnText="Proceed"
             variant="primary"
             disabled={isProceedDisabled}

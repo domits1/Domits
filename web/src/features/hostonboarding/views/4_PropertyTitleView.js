@@ -1,21 +1,22 @@
-import { useParams } from "react-router-dom";
 import TextAreaField from "../components/TextAreaField";
 import { useAccommodationTitle } from "../hooks/usePropertyName";
 import OnboardingButton from "../components/OnboardingButton";
 import React, { useMemo } from "react";
-import "../styles/onboardingHost.scss";
-import { useBuilder } from "../../../context/propertyBuilderContext";
+import "../styles/views/_propertyTitleView.scss";
+import { useParams, useNavigate } from "react-router-dom";
+import { useBuilder } from '../../../context/propertyBuilderContext';
+
 
 function PropertyTitleView() {
+  const builder = useBuilder();
+  const navigate = useNavigate();
+
   const { type: accommodationType } = useParams();
   const { title, subtitle, handleInputChange } = useAccommodationTitle();
 
   const isProceedDisabled = useMemo(() => {
-    // Example logic: disable if title is empty or only whitespace
     return !title || title.trim() === '';
-    // Or if description is also required:
-    // return !title || title.trim() === '' || !description || description.trim() === '';
-  }, [title /*, description */]); // Add relevant dependencies
+  }, [title]);
 
   return (
     <div className="onboarding-host-div">
@@ -41,7 +42,11 @@ function PropertyTitleView() {
             btnText="Go back"
           />
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/description`}
+            onClick={() => {
+              builder.addProperty({ title: title, subtitle: subtitle }); // Correctly passes partial update
+              console.log("Builder after adding title:", builder);
+              navigate(`/hostonboarding/${accommodationType}/description`);
+            }}
             btnText="Proceed"
             disabled={isProceedDisabled}
           />

@@ -1,13 +1,15 @@
 import React from "react";
+import { useParams, useNavigate } from "react-router-dom"; // Add useNavigate here
 import AccommodationTypeSelector from "../components/TypeSelector";
 import { useHandleAccommodationTypeProceed } from "../hooks/usePropertyType";
 import { accommodationData } from "../constants/propertyTypeData";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import OnboardingButton from "../components/OnboardingButton";
-import "../styles/onboardingHost.scss";
+import "../styles/TypeSelector.scss";
+import "../styles/_base.scss";
 
 export default function AccommodationTypeView() {
-  // Currently selected
+  const navigate = useNavigate();
   const selectedAccommodationType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.type,
   );

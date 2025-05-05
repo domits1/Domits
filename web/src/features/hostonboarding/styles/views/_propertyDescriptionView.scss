@@ -1,58 +1,142 @@
-/* --- src/styles/views/propertyTitleView.scss --- */
+/* --- src/styles/views/_propertyDescriptionView.scss --- */
+/* Styles specific to the Property Description View - Attempt 2 */
 
-.container {
+// Target the container more specifically if needed (adjust if your top-level div class is different)
+.onboarding-host-div > .container.page-body {
+  // Reiterate core layout properties
+  display: block !important; // Use !important temporarily for debugging if needed - REMOVE LATER
+  flex-direction: column !important; // Use !important temporarily for debugging if needed - REMOVE LATER
+  align-items: stretch !important; // Use !important temporarily for debugging if needed - REMOVE LATER
+
   max-width: 650px;
-  width: 100%;
+  width: 90%;
   margin: 40px auto;
   padding: 30px 40px;
   box-sizing: border-box;
-  background-color: #fff;
-}
+  background-color: #fff; // Use variable $background-color or similar if defined
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); // Use variable $box-shadow if defined
 
-.textarea-container {
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 15px;
-  text-align: left;
-}
+  // Explicitly set direct children to take full width within the flex container
+  > .onboardingSectionTitle,
+  > .onboardingSectionSubtitle,
+  > .textarea-container,
+  > .specification-form-container,
+  > .error-messages-container,
+  > .onboarding-button-box {
+    width: 100%;
+    box-sizing: border-box; // Ensure padding doesn't cause overflow
+  }
 
-/* Specific styling for the textarea within this view */
-.container .textarea-container textarea.textarea-field {
-  display: block;         /* Ensure block layout */
-  width: 100%;            /* Fill container width */
-  box-sizing: border-box; /* Include padding/border in width */
-  min-height: 240px;      /* Increased minimum height */
-  resize: none;           /* Disable resizing handle */
-  padding: 12px 15px;
-  margin: 0 0 8px 0;      /* Bottom margin for spacing */
-  border: 1px solid #ccc; /* Standard border - adjust color as needed */
-  border-radius: 5px;     /* Optional: slightly rounded corners */
-  font-size: 1rem;
-  line-height: 1.4;
-}
+  // Style title and subtitle (mostly unchanged, ensure text-align)
+  > .onboardingSectionTitle {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333; // Use variable $text-color-dark if defined
+    text-align: left;
+  }
 
-/* Style for the character count */
-.textarea-container .char-count {
-  display: block;
-  width: 100%;
-  text-align: right;      /* Align count to the right */
-  font-size: 0.85rem;
-  color: #777;
-}
+  > .onboardingSectionSubtitle {
+    font-size: 1rem;
+    color: #666; // Use variable $text-color-light if defined
+    margin-bottom: 30px;
+    text-align: left;
+  }
 
-/* Styles for the button box layout */
-.onboarding-button-box {
-  margin-top: 30px;       /* Adjusted top margin */
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
+  // Text Area Styling (mostly unchanged, ensure alignment helpers)
+  > .textarea-container {
+    margin-bottom: 15px;
+    text-align: left;
 
-  @media (max-width: 450px) { // Adjusted breakpoint
-    flex-direction: column;
-    > * { // Target direct children (buttons/links)
-      width: 100%;
+    .text-area-field-container.onboarding-textarea {
+      display: block;
+      flex-direction: column;
+      align-items: stretch;
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #444;
+        padding-left: 2px;
+      }
+
+      .hint-text {
+        font-size: 0.9rem;
+        color: #777;
+        margin-bottom: 8px;
+        padding-left: 2px;
+      }
+
+      textarea.textInput {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 240px;
+        resize: none;
+        padding: 12px 15px;
+        margin: 0 0 8px 0;
+        border: 1px solid #ccc; // Use variable $border-color
+        border-radius: 5px; // Use variable $border-radius
+        font-size: 1rem;
+        line-height: 1.4;
+        background-color: #fff;
+
+        &:focus {
+          border-color: #007bff; // Use variable $primary-color
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); // Use variable $focus-shadow
+        }
+      }
+
+      .char-count {
+        display: block;
+        width: 100%;
+        text-align: right;
+        font-size: 0.85rem;
+        color: #777;
+        padding-right: 5px;
+      }
     }
   }
+
+  // Specification Form Container Styles (Unchanged)
+  > .specification-form-container {
+    // ... (styles from previous version) ...
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee; // Use variable $border-color
+
+    .specification-form { /* styles... */ }
+    .required-hint { /* styles... */ }
+  }
+
+  // Error Messages Container (Ensure placement before buttons in HTML)
+  > .error-messages-container {
+    margin-top: 15px;
+    margin-bottom: 20px;
+
+    .error-message {
+      color: #d9534f; // Use variable $danger-color
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      text-align: left;
+      padding-left: 2px;
+    }
+  }
+
+  // Button Box Styles (Unchanged)
+  > .onboarding-button-box {
+    // ... (styles from previous version) ...
+    margin-top: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #eee; // Use variable $border-color
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    @media (max-width: 480px) { /* styles... */ }
+  }
 }
+
+// Remember to remove any temporary '!important' flags after debugging!

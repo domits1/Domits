@@ -1,22 +1,40 @@
 import React from "react";
 
-// Destructure className from props
-function TextAreaField({ label, value, onChange, maxLength, placeholder, className }) {
+function TextAreaField({
+                         label,
+                         value = "", // Provide default value
+                         onChange,
+                         maxLength,
+                         placeholder,
+                         className,
+                         showCounter,
+                         hintText,
+                         required, // Added required prop
+                       }) {
+  const handleChange = (event) => {
+    if (onChange) {
+      onChange(event.target.value);
+    }
+  };
+
   return (
-    // Apply the passed className along with the existing one
-    // Using template literals ensures both classes are applied if className is provided
-    <section className={`accommodation-title ${className || ''}`}>
-      <label>{label}</label>
+    <section className={`text-area-field-container ${className || ""}`}>
+      {label && <label>{label}</label>}
+      {hintText && <p className="hint-text">{hintText}</p>}
       <textarea
         className="textInput locationText" // Keep existing classes if needed
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleChange}
         placeholder={placeholder}
         maxLength={maxLength}
-        required
-        style={{ resize: 'none' }} // Add this line
+        required={required} // Use required prop
+        style={{ resize: "none" }}
       />
-      <p>{value.length}/{maxLength}</p>
+      {showCounter && maxLength && (
+        <p className="char-count">
+          {value?.length ?? 0}/{maxLength}
+        </p>
+      )}
     </section>
   );
 }

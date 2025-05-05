@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import PricingRow from "../components/PricingRow"; // Ensure correct path
 import { usePricing } from "../hooks/useProperyRate"; // Ensure correct path
 import OnboardingButton from "../components/OnboardingButton"; // Ensure correct path
@@ -8,6 +8,8 @@ import { useBuilder } from "../../../context/propertyBuilderContext";
 
 function PropertyRateView() {
   const builder = useBuilder();
+  const navigate = useNavigate();
+
   const { type: accommodationType } = useParams();
   const { pricing, updatePricing, calculateServiceFee } = usePricing();
 
@@ -107,13 +109,18 @@ function PropertyRateView() {
             variant="secondary" // Ensure variant prop is used
           />
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/availability`} // Check path
-            onClick={ () => {
-              builder.addPricing({roomRate: pricing.Rent, cleaning: pricing.CleaningFee, service: pricing.ServiceFee});
+            onClick={() => {
+              builder.addPricing({
+                roomRate: parseFloat(pricing.Rent) || 0,
+                cleaning: parseFloat(pricing.CleaningFee) || 0,
+                service: parseFloat(pricing.ServiceFee) || 0
+              });
+              console.log("Builder after adding pricing:", builder);
+              navigate(`/hostonboarding/${accommodationType}/availability`);
             }}
             btnText="Proceed"
-            variant="primary" // Ensure variant prop is used
-            disabled={isProceedDisabled} // Disable if base rate is missing
+            variant="primary"
+            disabled={isProceedDisabled}
           />
         </nav>
         {isProceedDisabled && <p className="error-message">Please enter a valid base rate per night.</p>}

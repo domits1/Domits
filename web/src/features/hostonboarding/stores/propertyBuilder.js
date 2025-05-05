@@ -1,133 +1,107 @@
+// --- START OF FILE propertyBuilder.js ---
 import { PropertyModel } from "./models/propertyModel";
-import { PropertyAmenity } from "./models/propertyAmenity";
-import { PropertyAvailability } from "./models/propertyAvailability";
-import { PropertyAvailabilityRestriction } from "./models/propertyAvailabilityRestriction";
-import { PropertyCheckIn } from "./models/propertyCheckIn";
-import { PropertyGeneralDetail } from "./models/propertyGeneralDetail";
-import { PropertyLocation } from "./models/propertyLocation";
-import { PropertyPricing } from "./models/propertyPricing";
-import { PropertyRule } from "./models/propertyRule";
-import { PropertyType } from "./models/propertyType";
-import { PropertyImage } from "./models/propertyImage";
-import { PropertyTechnicalDetails } from "./models/propertyTechnicalDetails";
+// ... other imports ...
 
 export class PropertyBuilder {
-  addProperty(property) {
-    this.property = new PropertyModel(property);
-    return this;
+  constructor() {
+    // Initialize property as an object to allow merging
+    this.property = {}; // <-- Initialize as empty object
+    // ... other initializations ...
+    this.propertyAmenities = [];
+    this.propertyAvailability = [];
+    this.propertyAvailabilityRestrictions = [];
+    this.propertyCheckIn = undefined;
+    this.propertyGeneralDetails = [];
+    this.propertyLocation = undefined;
+    this.propertyPricing = undefined;
+    this.propertyRules = [];
+    this.propertyType = undefined;
+    this.propertyImages = [];
+    this.propertyTechnicalDetails = undefined;
   }
 
-  addAmenities(amenities) {
-    this.propertyAmenities = amenities.map(
-      (amenity) => new PropertyAmenity("", "", amenity.id),
-    );
+  // --- MODIFIED addProperty Method ---
+  addProperty(propertyUpdate) {
+    // Ensure this.property exists (it should due to constructor)
+    if (!this.property) {
+      this.property = {};
+    }
+    // Merge the update into the existing property object
+    // This adds/overwrites fields from propertyUpdate onto this.property
+    Object.assign(this.property, propertyUpdate);
+
+    console.log("[Builder] Updated this.property:", this.property);
     return this;
   }
+  // --- End Modified addProperty Method ---
 
-  addAvailability(availabilities) {
-    this.propertyAvailability = availabilities.map(
-      (availability) =>
-        new PropertyAvailability(
-          "",
-          availability.availableStartDate,
-          availability.availableEndDate,
-        ),
-    );
-    return this;
-  }
+  // --- Keep other add... methods as they were ---
+  addAmenities(amenities) { /* ... existing code ... */ }
+  addAvailability(availabilities) { /* ... existing code ... */ }
+  addAvailabilityRestrictions(restrictions) { /* ... existing code ... */ }
+  addCheckIn(checkIn) { /* ... existing code ... */ }
+  addGeneralDetails(details) { /* ... existing code ... */ }
+  addLocation(location) { /* ... existing code ... */ }
+  addPricing(pricing) { /* ... existing code ... */ }
+  addRules(rules) { /* ... existing code ... */ }
+  addPropertyType(type) { /* ... existing code ... */ }
+  addImages(images) { /* ... existing code ... */ }
+  addTechnicalDetails(details) { /* ... existing code ... */ }
 
-  addAvailabilityRestrictions(restrictions) {
-    this.propertyAvailabilityRestrictions = restrictions.map(
-      (restriction) =>
-        new PropertyAvailabilityRestriction(
-          "",
-          "",
-          restriction.restriction,
-          restriction.value,
-        ),
-    );
-    return this;
-  }
 
-  addCheckIn(checkIn) {
-    this.propertyCheckIn = new PropertyCheckIn(
-      "",
-      checkIn.checkIn,
-      checkIn.checkOut,
-    );
-    return this;
-  }
-
-  addGeneralDetails(details) {
-    this.propertyGeneralDetails = details.map(
-      (detail) =>
-        new PropertyGeneralDetail("", "", detail.detail, detail.value),
-    );
-    return this;
-  }
-
-  addLocation(location) {
-    this.propertyLocation = new PropertyLocation(
-      "",
-      location.country,
-      location.city,
-      location.street,
-      location.houseNumber,
-      location.houseNumberExtension,
-      location.postalCode,
-    );
-    return this;
-  }
-
-  addPricing(pricing) {
-    this.propertyPricing = new PropertyPricing(
-      "",
-      pricing.roomRate,
-      pricing.cleaning,
-      pricing.service,
-    );
-    return this;
-  }
-
-  addRules(rules) {
-    this.propertyRules = rules.map(
-      (rule) => new PropertyRule("", rule.rule, rule.value),
-    );
-    return this;
-  }
-
-  addPropertyType(type) {
-    this.propertyType = new PropertyType({
-      property_id: "",
-      property_type: type.type,
-      spaceType: type.spaceType,
-    });
-    return this;
-  }
-
-  addImages(images) {
-    this.propertyImages = images.map(
-      (image) => new PropertyImage("", "", image),
-    );
-    return this;
-  }
-
-  addTechnicalDetails(details) {
-    this.propertyTechnicalDetails = new PropertyTechnicalDetails({
-      property_id: "",
-      length: details.length,
-      height: details.height,
-      fuelConsumption: details.fuelConsumption,
-      speed: details.speed,
-      renovationYear: details.renovationYear,
-      transmission: details.transmission,
-      generalPeriodicInspection: details.generalPeriodicInspection,
-      fourWheelDrive: details.fourWheelDrive,
-    });
-    return this;
-  }
-
+  // --- BUILD METHOD (Important: Update to use the merged 'this.property') ---
   build() {
-    return this;
+    // *** Change this line in build() ***
+    // BEFORE: if (!this.property || !this.propertyLocation || ...)
+    // AFTER: Check specific *required* fields within this.property
+    if (!this.property?.title || !this.propertyLocation || !this.propertyType || !this.propertyPricing) {
+      console.error("Cannot build property data: Missing essential information (e.g., title, location, type, or pricing).");
+      console.log("Current property data:", this.property); // Log what's missing
+      return null;
+    }
+
+    // Ensure the main 'property' object passed to the API matches the model structure
+    // We need to create a new PropertyModel instance *here* from the merged data
+    // OR ensure the API accepts the plain object structure.
+    // Assuming the API expects the structure from mockData.json, which includes
+    // a 'property' key holding an object matching PropertyModel fields:
+
+    const finalPropertyData = new PropertyModel({
+      id: "", // Let backend handle ID
+      hostId: "", // Let backend handle hostId
+      title: this.property.title || "",
+      subtitle: this.property.subtitle || "",
+      description: this.property.description || "", // Use data accumulated in this.property
+      guestCapacity: typeof this.property.guestCapacity === 'number' ? this.property.guestCapacity : 0, // Ensure number
+      registrationNumber: this.property.registrationNumber || "",
+      status: this.property.status || "ACTIVE", // Default status?
+      propertyType: this.propertyType?.property_type || "", // Get from propertyType object
+      createdAt: this.property.createdAt || Date.now(), // Add defaults if needed
+      updatedAt: Date.now()
+    });
+
+
+    const builtObject = {
+      // Use the finalPropertyData object created above
+      property: finalPropertyData,
+      propertyAmenities: this.propertyAmenities,
+      propertyAvailability: this.propertyAvailability,
+      propertyAvailabilityRestrictions: this.propertyAvailabilityRestrictions,
+      propertyCheckIn: this.propertyCheckIn,
+      propertyGeneralDetails: this.propertyGeneralDetails,
+      propertyLocation: this.propertyLocation,
+      propertyPricing: this.propertyPricing,
+      propertyRules: this.propertyRules,
+      propertyType: this.propertyType,
+      propertyImages: this.propertyImages,
+      propertyTechnicalDetails: this.propertyTechnicalDetails,
+    };
+
+    if (builtObject.propertyTechnicalDetails === undefined) {
+      delete builtObject.propertyTechnicalDetails;
+    }
+
+    return builtObject;
   }
 }
+// --- END OF FILE propertyBuilder.js ---

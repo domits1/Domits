@@ -1,31 +1,34 @@
-// --- START OF FILE 7_AmenitiesView.js ---
+import React, { useState } from "react";
+import AmenityCategory from "../components/AmenityCategory";
+import OnboardingButton from "../components/OnboardingButton";
+import { useBuilder } from "../../../context/propertyBuilderContext";
+import amenities from "../../../store/amenities";
+import "../styles/onboardingHost.scss";
+import { useParams, useNavigate } from "react-router-dom";
 
-import { amenities } from "../constants/propertyAmenitiesData";
-import AmenityCategory from "../components/AmenityCategory"; // Ensure this path is correct
-import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
-import { useParams } from "react-router-dom";
-import OnboardingButton from "../components/OnboardingButton"; // Ensure path is correct
-import React from "react";
-import "../styles/onboardingHost.scss"; // Main SCSS import
+const AmenitiesView = () => {
+  const builder = useBuilder();
+  const navigate = useNavigate();
 
-function AmenitiesView() {
   const { type: accommodationType } = useParams();
 
-  const selectedAmenities = useFormStoreHostOnboarding(
-    (state) => state.accommodationDetails.selectedAmenities,
-  );
-  const setAmenities = useFormStoreHostOnboarding((state) => state.setAmenities);
+  const amenitiesByType = amenities.reduce((categories, amenity) => {
+    if (!categories[amenity.category]) {
+      categories[amenity.category] = [];
+    }
+    categories[amenity.category].push(amenity);
+    return categories;
+  }, {});
 
-  const handleAmenityChange = (category, amenity, isChecked) => {
-    const currentCategoryAmenities = selectedAmenities?.[category] || [];
-    const updatedAmenities = isChecked
-      ? [...currentCategoryAmenities, amenity]
-      : currentCategoryAmenities.filter((item) => item !== amenity);
-    setAmenities(category, updatedAmenities);
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
+
+  const handleAmenityChange = (amenity) => {
+    if (selectedAmenities.includes(amenity)) {
+      setSelectedAmenities(selectedAmenities.filter((a) => a !== amenity));
+    } else {
+      setSelectedAmenities([...selectedAmenities, amenity]);
+    }
   };
-
-  const typeAmenities =
-    amenities[`${accommodationType}Amenities`] || amenities.allAmenities || {};
 
   const isProceedDisabled = Object.values(selectedAmenities || {}).every(
     (list) => list.length === 0
@@ -33,52 +36,36 @@ function AmenitiesView() {
 
   return (
     <div className="onboarding-host-div">
-      <main className="amenity-container">
+      <div className="amenity-container">
         <h2 className="onboardingSectionTitle">Select Amenities</h2>
-        <p className="onboardingSectionSubtitle">
-          Choose the amenities that your property offers.
-        </p>
-
-        {/* This div is the grid container - NO INLINE STYLES HERE */}
+        <p className="onboardingSectionSubtitle">Choose the amenities that your property offers.</p>
         <div className="amenity-groups">
-          {Object.keys(typeAmenities).length > 0 ? (
-            Object.keys(typeAmenities).map((category) => (
-              // Use the updated AmenityCategory component
-              <AmenityCategory
-                key={category}
-                category={category}
-                amenities={typeAmenities[category]} // Pass the list of amenity names
-                selectedAmenities={selectedAmenities?.[category] || []} // Pass selected for *this* category
-                handleAmenityChange={handleAmenityChange}
-              />
-            ))
-          ) : (
-            // Consider styling this paragraph if needed
-            <p style={{ padding: '0 var(--spacing-lg)' }}>
-              No amenities defined for this accommodation type.
-            </p>
-          )}
+          {Object.keys(amenitiesByType).map((category) => (
+            <AmenityCategory
+              key={category}
+              category={category}
+              amenities={amenitiesByType[category]}
+              selectedAmenities={selectedAmenities}
+              handleAmenityChange={handleAmenityChange}
+            />
+          ))}
         </div>
-
         <nav className="onboarding-button-box">
-          {/* Ensure OnboardingButton adds 'onboarding-button' and variant classes */}
+          <OnboardingButton routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Go back" />
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/capacity`}
-            btnText="Go back"
-            variant="secondary"
-          />
-          <OnboardingButton
+            onClick={() => {
+              builder.addAmenities(selectedAmenities);
+              console.log("Builder after adding amenities:", builder);
+              navigate(`/hostonboarding/${accommodationType}/rules`);
+            }}
             routePath={`/hostonboarding/${accommodationType}/rules`}
             btnText="Proceed"
-            variant="primary" // Explicitly set primary variant
             disabled={isProceedDisabled}
           />
         </nav>
-      </main>
+      </div>
     </div>
   );
-}
+};
 
 export default AmenitiesView;
-
-// --- END OF FILE 7_AmenitiesView.js ---

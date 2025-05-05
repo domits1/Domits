@@ -3,20 +3,19 @@ import AddressFormFields from "../components/AddressFormFields"; // Using relati
 import OnboardingButton from "../components/OnboardingButton"; // Using relative path
 import InteractiveMap from "../components/InteractiveMap"; // Using relative path
 import countryList from "react-select-country-list";
-import "../styles/onboardingHost.scss";
-import { useParams } from "react-router-dom";
+import "../styles/views/_addressInputView.scss";
+import { useParams, useNavigate } from "react-router-dom";
 
 import { useAddressInput } from "../hooks/usePropertyLocation";
 import { useBuilder } from "../../../context/propertyBuilderContext";
-import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
-import { useState } from "react";
+// import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"; // Not directly used here anymore, hook handles it
 
 function AddressInputView() {
-  const [location, setLocation] = useState({});
   const builder = useBuilder();
-  const form = useFormStoreHostOnboarding();
+  const navigate = useNavigate();
+
+  // const form = useFormStoreHostOnboarding(); // Hook manages store access
   const { type: accommodationType } = useParams();
-  // Ensure useAddressInput hook returns handleLocationUpdate and handleManualInputChange
   const { details, handleLocationUpdate, handleManualInputChange } = useAddressInput(accommodationType);
 
   const countryOptions = useMemo(() => {
@@ -32,16 +31,17 @@ function AddressInputView() {
     return null;
   }, [details]);
 
-  // Logic for disabling the Proceed button
+  // Logic for disabling the Proceed button (remains the same, uses 'details' from hook)
   const isProceedDisabled = useMemo(() => {
     const hasCoords = typeof details?.latitude === "number" && typeof details?.longitude === "number";
     const hasBasicAddress = details?.country && details?.city;
     if (accommodationType === "boat") {
-      // Requires coordinates OR (basic address + harbor)
       return !(hasCoords || (hasBasicAddress && details.harbor));
     } else {
-      // Default case (camper, house, etc.): Requires coordinates OR (basic address + street + zipCode)
-      return !(hasCoords || (hasBasicAddress && details.street && details.zipCode));
+      // Default case: Requires coordinates OR (basic address + street + zipCode)
+      // Adjusted check: street might contain house number now based on hook logic
+      const hasStreetAndZip = details?.street && details?.zipCode;
+      return !(hasCoords || (hasBasicAddress && hasStreetAndZip));
     }
   }, [details, accommodationType]);
 
@@ -64,32 +64,28 @@ function AddressInputView() {
         </section>
 
         <h3 className="address-details-heading">Verify or Adjust Address Details:</h3>
-        {/* Replaced inline style with CSS classes */}
         <p className="onboardingSectionSubtitle address-form-details-subtitle">
           The address below is based on the map selection. Please verify and adjust if needed.
         </p>
-        <h2 className="onboardingSectionTitle">
+        {/* This duplicate section title/subtitle seems redundant */}
+        {/* <h2 className="onboardingSectionTitle">
           {accommodationType === "boat"
             ? "Where can we find your boat?"
             : accommodationType === "camper"
               ? "Where can we find your camper?"
               : "Where can we find your accommodation?"}
         </h2>
-        <p className="onboardingSectionSubtitle">We only share your address with guests after they have booked.</p>
+        <p className="onboardingSectionSubtitle">We only share your address with guests after they have booked.</p> */}
 
         <section className="address-details-form-container">
           <div className="location-details-form">
             <AddressFormFields
-              type={accommodationType}
-              details={details || {}}
-              handleChange={handleManualInputChange} // Passed handler from hook
-              countryOptions={countryOptions}
-              location={location}
-              setLocation={setLocation}
-              countryOptions={options.map((country) => ({
-                value: country,
-                label: country,
-              }))}
+              type={accommodationType} // Pass type for conditional fields if needed
+              details={details || {}} // Pass details from hook/store
+              handleChange={handleManualInputChange} // Pass handler from hook
+              countryOptions={countryOptions} // Pass calculated country options
+              // REMOVE local state props: location={location} setLocation={setLocation}
+              // REMOVE incorrect countryOptions prop: countryOptions={options.map(...)}
             />
           </div>
         </section>
@@ -98,25 +94,23 @@ function AddressInputView() {
           <OnboardingButton routePath={`/hostonboarding/${accommodationType}`} btnText="Go back" />
           <OnboardingButton
             onClick={() => {
-              const houseNumberAndExtension = location.houseNumber.split(" ");
-              if (houseNumberAndExtension > 1) {
-                location.houseNumber = houseNumberAndExtension[0];
-                location.houseNumberExtension = houseNumberAndExtension[1];
-              } else {
-                location.houseNumber = houseNumberAndExtension[0];
-                location.houseNumberExtension = "";
-              }
+              console.log("Proceeding with address details:", details); // 'details' is from useAddressInput hook
+              // Ensure houseNumber is a number or undefined if empty/invalid
+              const houseNum = parseFloat(details.houseNumber);
               builder.addLocation({
-                country: location.country,
-                city: location.city,
-                street: location.street,
-                houseNumber: parseFloat(location.houseNumber),
-                houseNumberExtension: location.houseNumberExtension,
-                postalCode: location.postalCode,
-              })
-              console.log(builder);
+                country: details.country || "",
+                city: details.city || "",
+                street: details.street || "",
+                houseNumber: !isNaN(houseNum) ? houseNum : undefined,
+                houseNumberExtension: details.houseNumberExtension || "",
+                postalCode: details.zipCode || details.postalCode || "",
+              });
+              console.log("Builder state after adding location:", builder);
+
+              // Debug: Check navigate right before calling it
+              console.log('Type of navigate in onClick:', typeof navigate, navigate);
+              navigate(`/hostonboarding/${accommodationType}/title`);
             }}
-            routePath={`/hostonboarding/${accommodationType}/capacity`}
             btnText="Proceed"
             disabled={isProceedDisabled} // Disabled logic applied
           />

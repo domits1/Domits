@@ -7,9 +7,8 @@ function Button({ btnText, onClick, routePath, disabled, className = '' }) {
 
   const handleClick = () => {
     if (onClick) {
-      onClick();
-    }
-    if (routePath) {
+      onClick(); // Let the onClick handler potentially call navigate()
+    } else if (routePath) { // Only navigate via routePath if no onClick handles it
       navigate(routePath);
     }
   };

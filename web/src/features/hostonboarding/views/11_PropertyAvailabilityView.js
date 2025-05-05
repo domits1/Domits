@@ -1,6 +1,6 @@
 import React from "react";
 import CalendarComponent from "../../hostdashboard/hostcalendar/views/Calender";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
 import OnboardingButton from "../components/OnboardingButton";
 import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
@@ -8,11 +8,11 @@ import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import { useBuilder } from "../../../context/propertyBuilderContext";
 
 function PropertyAvailabilityView() {
-  const form = useFormStoreHostOnboarding();
-  const builder = useBuilder();
-  const selectedType = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
-
   const navigate = useNavigate();
+  const builder = useBuilder();
+
+  const form = useFormStoreHostOnboarding();
+  const selectedType = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
 
   const { type: accommodationType } = useParams();
   const { availability, updateSelectedDates } = useAvailability();
@@ -36,26 +36,49 @@ function PropertyAvailabilityView() {
           <OnboardingButton routePath={`/hostonboarding/${accommodationType}/pricing`} btnText="Go back" />
           <OnboardingButton
             onClick={() => {
-              builder.addAvailability([{availableStartDate: Date.now() + 600000, availableEndDate: 3023923200000}]);
-              if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) {
+              // 'availability' is from useAvailability hook
+              const selectedDatesData = availability?.selectedDates;
+              let datesAdded = false; // Flag to track if dates were successfully added
+
+              if (selectedDatesData && selectedDatesData.startDate && selectedDatesData.endDate) {
+                // Convert ISO strings back to timestamps (numbers)
+                const startDateTimestamp = new Date(selectedDatesData.startDate).getTime();
+                const endDateTimestamp = new Date(selectedDatesData.endDate).getTime();
+
+                if (!isNaN(startDateTimestamp) && !isNaN(endDateTimestamp)) {
+                  builder.addAvailability([{
+                    availableStartDate: startDateTimestamp,
+                    availableEndDate: endDateTimestamp
+                  }]);
+                  datesAdded = true; // Mark dates as added
+                } else {
+                  console.error("Invalid date format in selectedDates state.");
+                  // Optionally show error toast to user
+                  // toast.error("Invalid availability dates selected.");
+                  // Consider NOT navigating if dates are required and invalid
+                  // return;
+                }
+              } else {
+                console.warn("No valid selected dates found to add to builder.");
+                // Decide if proceeding without dates is allowed. If not:
+                // toast.error("Please select an availability date range.");
+                // return;
+              }
+
+              // *** REMOVE addProperty call from here - should be done earlier ***
+
+              console.log("Builder after adding availability (Dates added:", datesAdded, "):", builder);
+
+              // Proceed with navigation
+              if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) { // selectedType from Zustand
                 navigate("/hostonboarding/legal/registrationnumber");
               } else {
-                builder.addProperty({
-                  title: form.accommodationDetails.title,
-                  subtitle: form.accommodationDetails.subtitle,
-                  description: form.accommodationDetails.description,
-                  guestCapacity: form.accommodationDetails.accommodationCapacity.GuestAmount,
-                  registrationNumber: "",
-                  status: "",
-                  propertyType: selectedType,
-                  createdAt: Date.now(),
-                  updatedAt: Date.now()
-                });
                 navigate("/hostonboarding/summary");
               }
             }}
             btnText="Proceed"
           />
+
         </nav>
       </main>
     </div>

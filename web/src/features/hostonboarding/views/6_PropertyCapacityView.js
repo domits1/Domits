@@ -1,12 +1,16 @@
 import GuestAmountItem from "../components/GuestAmountItem"
-import { useParams } from "react-router-dom"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import { accommodationFields } from "../constants/propertyAmountofGuestData"
 import OnboardingButton from "../components/OnboardingButton"
 import React from "react"; // React import is present
 import "../styles/onboardingHost.scss";
+import { useParams, useNavigate } from "react-router-dom";
+import { useBuilder } from '../../../context/propertyBuilderContext';
 
 function GuestAmountView() {
+  const builder = useBuilder();
+  const navigate = useNavigate();
+
   const { type: accommodationType } = useParams();
 
   const accommodationCapacity = useFormStoreHostOnboarding(
@@ -17,7 +21,7 @@ function GuestAmountView() {
   );
 
   // Ensure fields is defined before accessing
-  const fields = accommodationFields[accommodationType] || []; // Add fallback []
+  const fields = accommodationFields || []; // Add fallback []
 
   const incrementAmount = (key, max) => {
     // Add check for accommodationCapacity[key] existence before incrementing
@@ -73,7 +77,23 @@ function GuestAmountView() {
             variant="secondary"
           />
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/amenities`}
+            onClick={() => {
+              // Assuming addProperty merges. Update the specific fields.
+              builder.addProperty({ guestCapacity: accommodationCapacity.GuestAmount });
+              // If you need Bedrooms, Bathrooms etc., add them here too
+              // builder.addProperty({
+              //   guestCapacity: accommodationCapacity.GuestAmount,
+              //   // Add other capacity fields IF they belong in the main PropertyModel
+              // });
+              // OR if they belong in GeneralDetails:
+              // const detailsToAdd = Object.entries(accommodationCapacity)
+              //    .filter(([key, value]) => value > 0)
+              //    .map(([key, value]) => ({ detail: key, value: value }));
+              // if (detailsToAdd.length > 0) builder.addGeneralDetails(detailsToAdd);
+
+              console.log("Builder after adding capacity:", builder);
+              navigate(`/hostonboarding/${accommodationType}/amenities`);
+            }}
             btnText="Proceed"
             disabled={isProceedDisabled}
             className={isProceedDisabled ? "button-disabled" : ""}
