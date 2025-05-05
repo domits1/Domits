@@ -27,6 +27,6 @@
     "sass": "^1.86.0",
     "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",
-    "ws": "^8.18.0"
+    "ws": "^8.18.2"
   }
 }
