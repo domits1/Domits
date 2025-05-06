@@ -1,26 +1,38 @@
 import React from 'react';
 import {render, fireEvent, waitFor, screen} from '@testing-library/react-native';
-import SelectBookingDatesCalendarView from '../views/SelectBookingDatesCalendarView';
-import LoadingScreen from '../../loadingscreen/screens/LoadingScreen';
+import CalendarComponent from './CalendarComponent';
+import LoadingScreen from '../../screens/loadingscreen/screens/LoadingScreen';
 import {beforeEach, describe, expect, it} from "@jest/globals";
 
-jest.mock('../../loadingscreen/screens/LoadingScreen', () => {
+jest.mock('../../screens/loadingscreen/screens/LoadingScreen', () => {
     return jest.fn(() => {
         return <></>;
     });
 });
 
-describe('SelectBookingDatesCalendarView', () => {
+describe('CalendarComponent', () => {
+    function getFutureDate(daysInTheFuture) {
+        const date = new Date();
+        date.setDate(date.getDate() + daysInTheFuture);
+        return date;
+    }
+
     const mockFirstDateSelected = jest.fn();
     const mockLastDateSelected = jest.fn();
 
     const property = {
+        property: {
+            id: "test"
+        },
         availability: [
             {
-                availableStartDate: new Date(Date.now() + 24 * 60 * 60 * 1000).getTime(),
-                availableEndDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).getTime(),
+                availableStartDate: getFutureDate(1).getTime(),
+                availableEndDate: getFutureDate(15).getTime(),
             },
         ],
+        availabilityRestrictions: [
+            {restriction: "MaximumNightsPerYear", value: 10},
+        ]
     };
 
     beforeEach(() => {
@@ -29,10 +41,11 @@ describe('SelectBookingDatesCalendarView', () => {
 
     it('shows LoadingScreen initially', () => {
         render(
-            <SelectBookingDatesCalendarView
+            <CalendarComponent
                 onFirstDateSelected={mockFirstDateSelected}
                 onLastDateSelected={mockLastDateSelected}
                 property={property}
+                clickEnabled={true}
             />
         );
 
@@ -41,10 +54,11 @@ describe('SelectBookingDatesCalendarView', () => {
 
     it('renders the Calendar after loading', async () => {
         render(
-            <SelectBookingDatesCalendarView
+            <CalendarComponent
                 onFirstDateSelected={mockFirstDateSelected}
                 onLastDateSelected={mockLastDateSelected}
                 property={property}
+                clickEnabled={true}
             />
         );
 
@@ -54,10 +68,11 @@ describe('SelectBookingDatesCalendarView', () => {
 
     it('handles selecting the next two days, considering month change', async () => {
         render(
-            <SelectBookingDatesCalendarView
+            <CalendarComponent
                 onFirstDateSelected={mockFirstDateSelected}
                 onLastDateSelected={mockLastDateSelected}
                 property={property}
+                clickEnabled={true}
             />
         );
 
@@ -83,10 +98,11 @@ describe('SelectBookingDatesCalendarView', () => {
 
     it('does not allow selecting unavailable dates', async () => {
         render(
-            <SelectBookingDatesCalendarView
+            <CalendarComponent
                 onFirstDateSelected={mockFirstDateSelected}
                 onLastDateSelected={mockLastDateSelected}
                 property={property}
+                clickEnabled={true}
             />
         );
 
@@ -101,12 +117,35 @@ describe('SelectBookingDatesCalendarView', () => {
         expect(mockLastDateSelected).not.toHaveBeenCalled();
     });
 
-    it('resets selection if user selects a new start date after finishing a range', async () => {
+    it('does not allow selecting dates that would exceed the MaximumNightsPerYear restriction', async () => {
         render(
-            <SelectBookingDatesCalendarView
+            <CalendarComponent
                 onFirstDateSelected={mockFirstDateSelected}
                 onLastDateSelected={mockLastDateSelected}
                 property={property}
+                clickEnabled={true}
+            />
+        );
+
+        const calendar = await waitFor(() => screen.findByTestId('calendar-list'));
+
+        const firstFutureDate = getFutureDate(11);
+        fireEvent(calendar, 'dayPress', {dateString: firstFutureDate.toISOString().split('T')[0]});
+
+        const secondFutureDate = getFutureDate(18)
+        fireEvent(calendar, 'dayPress', {dateString: secondFutureDate.toISOString().split('T')[0]});
+
+        expect(mockFirstDateSelected).toHaveBeenCalled();
+        expect(mockLastDateSelected).not.toHaveBeenCalled();
+    });
+
+    it('resets selection if user selects a new start date after finishing a range', async () => {
+        render(
+            <CalendarComponent
+                onFirstDateSelected={mockFirstDateSelected}
+                onLastDateSelected={mockLastDateSelected}
+                property={property}
+                clickEnabled={true}
             />
         );
 

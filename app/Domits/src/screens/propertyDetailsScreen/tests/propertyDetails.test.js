@@ -29,7 +29,7 @@ describe("Property details", () => {
         render(<PropertyDetailsScreen route={{params: {property: {property: {id: mockDetails.property.id}}}}}/>);
 
         await waitFor(() => {
-            expect(screen.queryByTestId("loadingScreen")).toBeNull();
+            expect(screen.getByTestId("propertyDetailsTitle")).toBeTruthy()
         });
 
         expect(screen.getByTestId("propertyDetailsTitle").props.children).toContain(mockDetails.property.title);
