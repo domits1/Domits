@@ -1,34 +1,28 @@
-import {SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
+import {SafeAreaView, ScrollView, Text, View} from "react-native";
 import {styles} from "../styles/AccountHomeStyles";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import React, {useEffect, useState} from "react";
-import TranslatedText from "../../../features/translation/components/TranslatedText";
+import React, {useState} from "react";
 import {useAuth} from "../../../context/AuthContext";
-import {
-    ACCOUNT_DASHBOARD_SCREEN,
-    APP_SETTINGS_SCREEN,
-    FEEDBACK_SCREEN,
-    GUEST_BOOKINGS_SCREEN,
-    GUEST_DASHBOARD_SCREEN,
-    GUEST_PAYMENT_METHODS_SCREEN,
-    GUEST_REVIEWS_SCREEN, GUEST_SETTINGS_SCREEN,
-    HOST_CALENDAR_SCREEN, HOST_DASHBOARD_SCREEN,
-    HOST_HELP_DESK_SCREEN,
-    HOST_PROPERTIES_SCREEN,
-    HOST_ONBOARDING_LANDING_SCREEN,
-    HOST_PAYMENTS_SCREEN, HOST_RESERVATIONS_SCREEN, HOST_REVIEWS_SCREEN, LOGIN_SCREEN
-} from "../../../navigation/utils/NavigationNameConstants";
-import LogoutAccount from "../../../features/auth/LogoutAccount";
+import {LOGIN_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 import {useFocusEffect} from "@react-navigation/native";
 import LoadingScreen from "../../loadingscreen/screens/LoadingScreen";
+import HostOnboardingView from "../views/HostOnboardingView";
+import PreferencesView from "../views/PreferencesView";
+import HelpAndSupportView from "../views/HelpAndSupportView";
+import MarketingAndMonitoringView from "../views/MarketingAndMonitoringView";
+import FinancialsAndPricingView from "../views/FinancialsAndPricingView";
+import PropertyManagementView from "../views/PropertyManagementView";
+import BookingsView from "../views/BookingsView";
+import DashboardView from "../views/DashboardView";
 
 const AccountHome = ({navigation}) => {
-    const {isAuthenticated, user, userAttributes, checkAuth} = useAuth();
+    const {isAuthenticated, user, userAttributes} = useAuth();
     const [loading, setLoading] = useState(true);
     const firstName = userAttributes?.given_name || 'N/A';
     const userRole = userAttributes['custom:group'];
-    const hostUserRole = 'Host';
-    const guestUserRole = 'Traveler';
+    const roles = {
+        host: 'Host',
+        guest: 'Traveler',
+    }
 
     useFocusEffect(
         React.useCallback(() => {
@@ -40,21 +34,6 @@ const AccountHome = ({navigation}) => {
             }
         }, [isAuthenticated, navigation]),
     );
-
-    const tabItem = (navigationName, itemName) => {
-        return (
-            <View>
-                <TouchableOpacity
-                    style={styles.tabItem}
-                    onPress={() => navigation.navigate(navigationName) }>
-                    <Text style={styles.tabItemText}>
-                        <TranslatedText textToTranslate={itemName}/>
-                    </Text>
-                    <MaterialIcons name="chevron-right" size={22} color="#000"/>
-                </TouchableOpacity>
-            </View>
-        )
-    }
 
     if (loading) {
         return (
@@ -68,91 +47,14 @@ const AccountHome = ({navigation}) => {
                         <Text style={styles.welcomeText}>Welcome: {firstName}</Text>
                     </View>
 
-                    {/* Dashboard */}
-                    <View style={styles.sectionContainer}>
-                        <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Account"}/></Text>
-                        {tabItem(ACCOUNT_DASHBOARD_SCREEN, 'Dashboard')}
-                        {/* Log out */}
-                        <View>
-                            <TouchableOpacity
-                                style={styles.tabItem}
-                                onPress={() => LogoutAccount(navigation, checkAuth)}>
-                                <Text style={styles.logOutButtonText}>
-                                    <TranslatedText textToTranslate={'Logout'}/>
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    {/* Bookings */}
-                    <View style={styles.sectionContainer}>
-                        <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Bookings"}/></Text>
-                        {userRole === guestUserRole &&
-                            <View>
-                                {tabItem(GUEST_BOOKINGS_SCREEN, 'Bookings')}
-                                {tabItem(GUEST_PAYMENT_METHODS_SCREEN, 'Payments')}
-                                {tabItem(GUEST_REVIEWS_SCREEN, 'Reviews')}
-                            </View>
-                        }
-
-                        {userRole === hostUserRole &&
-                            <View>
-                                {tabItem(HOST_RESERVATIONS_SCREEN, 'Reservations')}
-                            </View>
-                        }
-                    </View>
-
-                    {userRole === hostUserRole &&
-                        <View>
-                            {/* Property management*/}
-                            <View style={styles.sectionContainer}>
-                                <Text style={styles.sectionTitle}><TranslatedText
-                                    textToTranslate={"Property Management"}/></Text>
-                                {tabItem(HOST_PROPERTIES_SCREEN, 'Properties')}
-                                {tabItem(HOST_CALENDAR_SCREEN, 'Calendar & Prices')}
-                            </View>
-                            {/*Financials & Pricing */}
-                            <View style={styles.sectionContainer}>
-                                <Text style={styles.sectionTitle}><TranslatedText
-                                    textToTranslate={"Financials & Pricing"}/></Text>
-                                {tabItem(HOST_PAYMENTS_SCREEN, 'Payments')}
-                            </View>
-                            {/* Marketing & Monitoring*/}
-                            <View style={styles.sectionContainer}>
-                                <Text style={styles.sectionTitle}><TranslatedText
-                                    textToTranslate={"Marketing & Monitoring"}/></Text>
-                                {tabItem(HOST_REVIEWS_SCREEN, 'Reviews')}
-                            </View>
-                        </View>
-                    }
-
-                    {/* Preferences */}
-                    <View style={styles.sectionContainer}>
-                        <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Preferences"}/></Text>
-                        {/*todo*/}
-                        {tabItem(APP_SETTINGS_SCREEN, 'Settings')}
-                    </View>
-
-                    <View style={styles.sectionContainer}>
-                        <Text style={styles.sectionTitle}><TranslatedText textToTranslate={"Help & Support"}/></Text>
-                        {tabItem(FEEDBACK_SCREEN, 'Feedback')}
-
-                        {userRole === hostUserRole &&
-                            <View>
-                                {tabItem(HOST_HELP_DESK_SCREEN, 'Helpdesk')}
-                            </View>
-                        }
-                    </View>
-
-                    {/* Host onboarding */}
-                    {userRole === guestUserRole &&
-                        <View style={styles.sectionContainer}>
-                            <Text style={styles.sectionTitle}>
-                                <TranslatedText textToTranslate={"Become a host"}/>
-                            </Text>
-                            {tabItem(HOST_ONBOARDING_LANDING_SCREEN, 'List your property')}
-                        </View>
-                    }
+                    <DashboardView userRole={userRole} roles={roles} setLoading={setLoading}/>
+                    <BookingsView userRole={userRole} roles={roles}/>
+                    <PropertyManagementView userRole={userRole} roles={roles}/>
+                    <FinancialsAndPricingView userRole={userRole} roles={roles}/>
+                    <MarketingAndMonitoringView userRole={userRole} roles={roles}/>
+                    <PreferencesView userRole={userRole} roles={roles}/>
+                    <HelpAndSupportView userRole={userRole} roles={roles}/>
+                    <HostOnboardingView userRole={userRole} roles={roles}/>
 
                 </ScrollView>
             </SafeAreaView>

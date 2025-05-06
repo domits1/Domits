@@ -14,7 +14,8 @@ export const styles = StyleSheet.create({
     },
     sectionContainer: {
         backgroundColor: '#fff',
-        padding: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 5,
         marginVertical: 10,
     },
     sectionTitle: {
