@@ -70,17 +70,20 @@
           },
           "community": {
             "title": "Need help? Join the community",
-            "description": "Domits has a travel community hosts, guests, and employees"
+            "description": "Domits has a travel community hosts, guests, and employees",
+            "button": "Search & Book"
           }
         },
         "filters": {
           "season": {
+            "title": "Favorites by Season",
             "spring": "Spring",
             "summer": "Summer",
             "fall": "Fall",
             "winter": "Winter"
           },
           "interest": {
+            "title": "Great picks by interest",
             "luxury": "Luxury",
             "beach": "Beach",
             "lastMinute": "Last minute",
@@ -92,6 +95,7 @@
             "culinary": "Culinary"
           },
           "groups": {
+            "title": "Accommodations by group",
             "description": "Vacation houses and apartments",
             "friends": "Friends",
             "couples": "Couples",
@@ -149,6 +153,7 @@
           "ski": {
             "title": "Popular ski destinations",
             "locations": {
+              "austria": "Austria", 
               "frenchAlps": "French Alps",
               "switzerland": "Switzerland",
               "chamonix": "Chamonix-Mont-Blanc",
@@ -231,17 +236,20 @@
           },
           "community": {
             "title": "Hulp nodig? Word lid van de community",
-            "description": "Domits heeft een reiscommunity bestaande uit gastheren, gasten en medewerkers"
+            "description": "Domits heeft een reiscommunity bestaande uit gastheren, gasten en medewerkers",
+            "button": "Zoeken & boeken"
           }
         },
         "filters": {
           "season": {
+            "title": "Favorieten per seizoen",
             "spring": "Lente",
             "summer": "Zomer",
             "fall": "Herfst",
             "winter": "Winter"
           },
           "interest": {
+            "title": "Geweldige keuzes op basis van interesse",
             "luxury": "Luxe",
             "beach": "Strand",
             "lastMinute": "Laatste moment",
@@ -253,6 +261,7 @@
             "culinary": "Culinair"
           },
           "groups": {
+            "title": "Accommodaties per groep",
             "description": "Vakantiehuizen en appartementen",
             "friends": "Vrienden",
             "couples": "Koppels",
@@ -310,6 +319,7 @@
           "ski": {
             "title": "Populaire skibestemmingen",
             "locations": {
+              "austria": "Oostenrijk", 
               "frenchAlps": "Franse Alpen",
               "switzerland": "Zwitserland",
               "chamonix": "Chamonix-Mont-Blanc",
