@@ -1,48 +1,48 @@
-import content from "../../../content/content.json";
 import friends from "../Images/friends.webp";
 import couples from "../Images/couples.webp";
 import family from "../Images/family.webp";
 import solo from "../Images/solo.webp";
 import senior from "../Images/senior.webp";
 import petFriendly from "../Images/petfriendly.webp";
+import content from "../../../content/content.json";
+import content2 from "../../../content/content2.json";
 import { useContext } from "react";
 import { LanguageContext } from "../../../context/LanguageContext.js";
 
 export const useCategories = () => {
-    const { language } = useContext(LanguageContext);
-    const {vacationrentalLbl,friendsLbl,couplesLbl,familyChildFriendlyLbl,soloLbl,seniorLbl,petFriendlyLbl
-    } = content[language].homepage;    
+    const { language } = useContext(LanguageContext);    
+    const groups = content2[language].homepage.filters.groups;
     
     return [
        {
-           name: `${friendsLbl}`,
+           name: `${groups.friends}`,
            img: friends,
-           description: `${vacationrentalLbl}`,
+           description: `${groups.description}`,
          },
          {
-           name: `${couplesLbl}`,
+           name: `${groups.couples}`,
            img: couples,
-           description: `${vacationrentalLbl}`,
+           description: `${groups.description}`,
          },
          {
-           name: `${familyChildFriendlyLbl}`,
+           name: `${groups.family}`,
            img: family,
-           description: `${vacationrentalLbl}`,
+           description: `${groups.description}`,
          },
          {
-           name: `${soloLbl}`,
+           name: `${groups.solo}`,
            img: solo,
-           description: `${vacationrentalLbl}`,
+           description: `${groups.description}`,
          },
          {
-           name: `${seniorLbl}`,
+           name: `${groups.senior}`,
            img: senior,
-           description: `${vacationrentalLbl}`,
+           description: `${groups.description}`,
          },
          {
-           name: `${petFriendlyLbl}`,
+           name: `${groups.petFriendly}`,
            img: petFriendly,
-           description: `${vacationrentalLbl}`,
+           description: `${groups.description}`,
          }, 
     ];
 };
