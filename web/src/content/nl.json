@@ -74,6 +74,21 @@
           },
           "office": {
             "title": "Kantoor"
+          },
+          "policy": {
+            "title": "Privacybeleid"
+          },
+          "termsConditions": {
+            "title": "Algemene voorwaarden"
+          },
+          "disclaimer": {
+            "title": "Disclaimer"
+          },
+          "sitemap": {
+            "title": "Sitemap"
+          },
+          "rightsReserved": {
+            "title": "Alle rechten voorbehouden"
           }
         }
       },

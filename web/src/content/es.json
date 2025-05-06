@@ -74,6 +74,21 @@
         },
         "office": {
           "title": "Oficina"
+        },
+        "policy": {
+          "title": "Política de privacidad"
+        },
+        "termsConditions": {
+          "title": "Términos y condiciones"
+        },
+        "disclaimer": {
+          "title": "Aviso legal"
+        },
+        "sitemap": {
+          "title": "Mapa del sitio"
+        },
+        "rightsReserved": {
+          "title": "Todos los derechos reservados"
         }
       }
     },

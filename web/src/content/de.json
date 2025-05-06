@@ -74,6 +74,21 @@
         },
         "office": {
           "title": "Büro"
+        },
+        "policy": {
+          "title": "Datenschutzerklärung"
+        },
+        "termsConditions": {
+          "title": "Allgemeine Geschäftsbedingungen"
+        },
+        "disclaimer": {
+          "title": "Haftungsausschluss"
+        },
+        "sitemap": {
+          "title": "Seitenübersicht"
+        },
+        "rightsReserved": {
+          "title": "Alle Rechte vorbehalten"
         }
       }
     },

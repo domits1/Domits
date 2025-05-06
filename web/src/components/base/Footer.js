@@ -208,13 +208,13 @@ const Footer = () => {
           <img src={logo} width={100} alt="Logo" />
         </div>
           <Link to="/policy" className="footer-links">
-            Privacy policy
+            {footerContent.policy.title}
           </Link>
           <Link to="/terms" className="footer-links">
-            Terms and Conditions
+            {footerContent.termsConditions.title}
           </Link>
           <Link to="/disclaimers" className="footer-links">
-            Disclaimer
+            {footerContent.disclaimer.title}
           </Link>
         <a
           href=""
@@ -222,14 +222,14 @@ const Footer = () => {
           rel="noopener noreferrer"
           className="footer-links"
         >
-          Sitemap
+          {footerContent.sitemap.title}
         </a>
       </div>
 
       {/* Copyright Block */}
       <div className="footer-copyright">
         <p className="footer-copyright-text">
-          Rights reserved, Domits.com © {currentYear}
+        {footerContent.rightsReserved.title}, Domits.com © {currentYear}
         </p>
       </div>
     </footer>

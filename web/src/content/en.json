@@ -74,6 +74,21 @@
           },
           "office": {
             "title": "Office"
+          },
+          "policy": {
+            "title": "Privacy policy"
+          },
+          "termsConditions": {
+            "title": "Terms and Conditions"
+          },
+          "disclaimer": {
+            "title": "Disclaimer"
+          },
+          "sitemap": {
+            "title": "Sitemap"
+          },
+          "rightsReserved": {
+            "title": "Rights reserved"
           }
         }
       },
