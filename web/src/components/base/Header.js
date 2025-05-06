@@ -275,7 +275,7 @@ function Header({ setSearchResults, setLoading }) {
               <select value={language} onChange={selectLanguage}>
                 <option value="en">English</option>
                 <option value="nl">Nederlands</option>
-                <option value="de">Duits</option>
+                <option value="de">Deutsch</option>
                 <option value="es">Español</option>
               </select>
             </div>
