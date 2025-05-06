@@ -46,7 +46,6 @@ export const GUEST_NEW_CONFIRMED_BOOKING_SCREEN = "guest-new-confirmed-booking";
 // Account
 export const LOGIN_SCREEN = "login";
 export const REGISTER_SCREEN = "register";
-export const ACCOUNT_SCREEN = "account";
 export const ACCOUNT_HOME_SCREEN = "account-home";
 
 // Account Settings
