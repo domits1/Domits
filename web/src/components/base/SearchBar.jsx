@@ -13,11 +13,13 @@ import {LanguageContext} from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
+import es from "../../content/es.json";
 
 const contentByLanguage = {
   en,
   nl,
   de,
+  es,
 };
 
 export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {

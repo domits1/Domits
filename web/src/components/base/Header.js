@@ -13,11 +13,13 @@ import {LanguageContext} from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
+import es from "../../content/es.json";
 
 const contentByLanguage = {
   en,
   nl,
   de,
+  es,
 };
 
 
@@ -274,6 +276,7 @@ function Header({ setSearchResults, setLoading }) {
                 <option value="en">English</option>
                 <option value="nl">Nederlands</option>
                 <option value="de">Duits</option>
+                <option value="es">Español</option>
               </select>
             </div>
             {!isLoggedIn ? (

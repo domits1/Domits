@@ -1,0 +1,205 @@
+{
+    "component": {
+      "user": {
+        "hello": "Hola",
+        "profile": "Perfil",
+        "login": "Iniciar sesión",
+        "register": "Registrarse",
+        "logout": "Cerrar sesión",
+        "settings": "Configuración",
+        "payments": "Pagos",
+        "dashboard": "Panel",
+        "messages": "Mensajes",
+        "calendar": "Calendario",
+        "reservations": "Reservas",
+        "switchToGuest": "Cambiar a huésped",
+        "switchToHost": "Cambiar a anfitrión",
+        "becomeHost": "Conviértete en anfitrión"
+      },
+      "search": {
+        "destination": "Buscar destino",
+        "accommodation": "Alojamiento",
+        "checkInOut": "Entrada • Salida",
+        "guests": "Huéspedes",
+        "adults": "Adultos",
+        "children": "Niños",
+        "infants": "Bebés",
+        "pets": "Mascotas",
+        "search": "Buscar",
+        "house": "Casa",
+        "boat": "Barco",
+        "camper": "Caravana",
+        "ageGroups": {
+          "adults": "Mayores de 16 años",
+          "children": "De 2 a 16 años",
+          "infants": "De 0 a 2 años",
+          "pets": "Mascotas de tamaño normal"
+        }
+      },
+      "footer": {
+        "navigation": {
+          "title": "Navegación",
+          "whyDomits": "Por qué Domits",
+          "howItWorks": "Cómo funciona",
+          "producUpdates": "Actualizaciones del producto",
+          "about": "Sobre nosotros",
+          "security": "Seguridad",
+          "performance": "Rendimiento",
+          "careers": "Carreras",
+          "contact": "Contacto"
+        },
+        "guest": {
+          "title": "Huésped",
+          "searchAndBook": "Buscar y reservar",
+          "helpDeskForGuests": "Ayuda para huéspedes",
+          "sustainability": "Sostenibilidad"
+        },
+        "host": {
+          "title": "Anfitriones",
+          "becomeHost": "Conviértete en anfitrión",
+          "helpdeskForHosts": "Ayuda para anfitriones",
+          "sustainability": "Sostenibilidad"
+        },
+        "network": {
+          "title": "Red",
+          "guests": "Huéspedes",
+          "hosts": "Anfitriones",
+          "developers": "Desarrolladores",
+          "partners": "Socios",
+          "students": "Estudiantes",
+          "startups": "Startups"
+        },
+        "socials": {
+          "title": "Redes sociales"
+        },
+        "office": {
+          "title": "Oficina"
+        }
+      }
+    },
+    "homepage": {
+      "hero": {
+        "title": "Reserva casas de vacaciones, barcos y caravanas...",
+        "searchPlaceholder": "Buscar destino",
+        "searchTitle": "Alojamiento",
+        "searchGuests": "Huéspedes"
+      },
+      "features": {
+        "securePayments": "Pagos seguros",
+        "verifiedGuest": "Huéspedes/anfitriones verificados",
+        "quickPhone": "Soporte telefónico rápido",
+        "qualityGuarantee": "Garantía de calidad de Domits",
+        "bestPrice": "Garantía del mejor precio",
+        "bookingGuarantee": "Garantía de reserva de alojamiento",
+        "stayGuarantee": "Garantía de estancia en el alojamiento"
+      },
+      "sections": {
+        "trending": "Alojamientos populares este mes",
+        "rentBoat": "Alquila un barco para cualquier ocasión",
+        "discoverCampers": "Descubre hermosas caravanas",
+        "becomeHost": {
+          "title": "Conviértete en anfitrión",
+          "points": [
+            "Publica tu propiedad gratis.",
+            "Administra todo de forma centralizada.",
+            "Aumenta tus reservas."
+          ],
+          "button": "Publica tu propiedad"
+        },
+        "community": {
+          "title": "¿Necesitas ayuda? Únete a la comunidad",
+          "description": "Domits cuenta con una comunidad de viajes: anfitriones, huéspedes y empleados",
+          "button": "Buscar y reservar"
+        }
+      },
+      "filters": {
+        "season": {
+          "title": "Favoritos por temporada",
+          "spring": "Primavera",
+          "summer": "Verano",
+          "fall": "Otoño",
+          "winter": "Invierno"
+        },
+        "interest": {
+          "title": "Elecciones por interés",
+          "luxury": "Lujo",
+          "beach": "Playa",
+          "lastMinute": "Última hora",
+          "wellness": "Bienestar",
+          "romantic": "Romántico",
+          "adventure": "Aventura",
+          "nature": "Naturaleza",
+          "culture": "Cultura",
+          "culinary": "Culinario"
+        },
+        "groups": {
+          "title": "Alojamientos por grupo",
+          "description": "Casas y apartamentos vacacionales",
+          "friends": "Amigos",
+          "couples": "Parejas",
+          "family": "Familiar y apto para niños",
+          "solo": "Solo",
+          "senior": "Mayores",
+          "petFriendly": "Apto para mascotas"
+        }
+      },
+      "destinations": {
+        "europe": {
+          "title": "Países en Europa",
+          "countries": {
+            "netherlands": "Países Bajos",
+            "france": "Francia",
+            "spain": "España",
+            "italy": "Italia",
+            "belgium": "Bélgica",
+            "germany": "Alemania",
+            "greece": "Grecia",
+            "unitedKingdom": "Reino Unido",
+            "portugal": "Portugal",
+            "croatia": "Croacia",
+            "poland": "Polonia",
+            "austria": "Austria",
+            "czech": "Chequia"
+          }
+        },
+        "asia": {
+          "title": "Destinos en Asia",
+          "countries": {
+            "philippines": "Filipinas",
+            "thailand": "Tailandia",
+            "indonesia": "Indonesia",
+            "india": "India",
+            "malaysia": "Malasia",
+            "vietnam": "Vietnam",
+            "turkey": "Turquía",
+            "singapore": "Singapur"
+          }
+        },
+        "caribbean": {
+          "title": "Islas del Caribe",
+          "locations": {
+            "aruba": "Aruba",
+            "bonaire": "Bonaire",
+            "curacao": "Curazao",
+            "saintBarthelemy": "San Bartolomé",
+            "costaRica": "Costa Rica",
+            "dominicanRepublic": "República Dominicana",
+            "puertoRico": "Puerto Rico",
+            "stMaarten": "San Martín"
+          }
+        },
+        "ski": {
+          "title": "Destinos de esquí populares",
+          "locations": {
+            "austria": "Austria",
+            "frenchAlps": "Alpes franceses",
+            "switzerland": "Suiza",
+            "chamonix": "Chamonix-Mont-Blanc",
+            "blackForest": "Selva Negra",
+            "italyTrentino": "Italia Trentino"
+          }
+        }
+      }
+    }
+  }
+  
