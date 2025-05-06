@@ -27,6 +27,7 @@ import GuestDashboard from "./features/guestdashboard/GuestDashboard";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
+import GuestWishlistPage from "./features/guestdashboard/pages/GuestWishlistPage";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
@@ -204,6 +205,7 @@ function App() {
                       <Route path="reviews" element={<GuestReviews />} />
                       <Route path="bookings" element={<GuestBooking />} />
                       <Route path="settings" element={<GuestSettings />} />
+                      <Route path="wishlist" element={<GuestWishlistPage />} />
                       {/*<Route path="chat" element={<Chat/>}/>*/}
                     </Routes>
                   </GuestProtectedRoute>}
@@ -304,3 +306,4 @@ function App() {
 }
 
 export default App;
+

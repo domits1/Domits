@@ -3,7 +3,7 @@ import {styles} from "../styles/propertyDetailsStyles";
 import React, {useState} from "react";
 import {S3URL} from "../../../store/constants";
 
-const PropertyImagesView = ({images}) => {
+const ImagesView = ({images}) => {
     const [currentPage, setCurrentPage] = useState(0);
     const imageWidth = Dimensions.get('window').width;
 
@@ -53,4 +53,4 @@ const PropertyImagesView = ({images}) => {
     )
 }
 
-export default PropertyImagesView;
+export default ImagesView;
