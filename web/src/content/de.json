@@ -201,6 +201,28 @@
           }
         }
       }
-    }
+    },
+    "travelInnovationLabs": {
+        "title": "Travel Innovation Labs",
+        "description": "Nachhaltige Wertschöpfung",
+        "groups": {
+          "flyWheel": {
+            "title": "Travel Innovation Schwungrad",
+            "description": "Die Mission von Domits ist es, das Reisen zu vereinfachen. Für eine nachhaltige Wertschöpfung haben wir drei Innovationslabore, die sich in unserem Schwungrad vereinen. Die Labs sind Travel Finance, Travel Business und Travel & Alltag."
+          },
+          "finance": {
+            "title": "Travel Finance",
+            "description": "Im Kern beginnt alles mit der Vereinfachung von Reisefinanzen. Wir konzentrieren uns auf Reisezahlungen, Reisekapital, Reiseversicherungen und Reiseinvestitionen."
+          },
+          "business": {
+            "title": "Travel Business",
+            "description": "Um alle Reisestakeholder zu bedienen, haben wir vier Geschäftsbereiche: #1 Wachstum, #2 Menschen, #3 Cloud-IT und #4 KI-Daten."
+          },
+          "dailyLife": {
+            "title": "Reisen & Alltag",
+            "description": "Der finanzielle Geschäftsfluss bietet Möglichkeiten, grenzenlose Freiheit für Reisen & Alltag zu erleben, wie Unterkunftsdienste, Mobilitätsdienste, kommunale Dienste, lokale Services und vieles mehr..."
+          }
+        }
+      }
   }
   

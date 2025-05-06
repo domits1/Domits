@@ -201,6 +201,28 @@
             }
           }
         }
-      }
+      },
+      "travelInnovationLabs": {
+          "title": "Travel Innovation Labs",
+          "description": "Duurzame Waardecreatie",
+          "groups": {
+            "flyWheel": {
+              "title": "Travel Innovation Flywheel",
+              "description": "De missie van Domits is om reizen te vereenvoudigen. Voor duurzame waardecreatie hebben we drie innovatielabs die samenkomen in onze flywheel. De labs zijn travel finance, travel business en travel & dagelijks leven."
+            },
+            "finance": {
+              "title": "Travel Finance",
+              "description": "De kern begint met het vereenvoudigen van travel finance. We richten ons op reisbetalingen, reisfinanciering, reisverzekeringen en reisbeleggingen."
+            },
+            "business": {
+              "title": "Travel Business",
+              "description": "Om alle reisstakeholders te bedienen, hebben we vier businessdivisies: #1 groei, #2 mensen, #3 cloud ICT en #4 AI data."
+            },
+            "dailyLife": {
+              "title": "Travel & Dagelijks Leven",
+              "description": "De financiële bedrijfsstroom biedt mogelijkheden om grenzeloze vrijheid te ervaren voor reizen & dagelijks leven, zoals accommodatiediensten, mobiliteitsdiensten, gemeentelijke diensten, lokale diensten en nog veel meer..."
+            }
+          }
+        } 
   }
   

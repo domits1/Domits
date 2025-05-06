@@ -200,6 +200,29 @@
           }
         }
       }
-    }
+    },
+    "travelInnovationLabs": {
+        "title": "Laboratorios de Innovación en Viajes",
+        "description": "Creación de Valor Sostenible",
+        "groups": {
+            "flyWheel": {
+                "title": "Rueda de Innovación en Viajes",
+                "description": "La misión de Domits es simplificar los viajes. Para una creación de valor sostenible, contamos con tres laboratorios de innovación que se integran en nuestra rueda de innovación. Los laboratorios son: finanzas de viajes, negocios de viajes y viajes & vida diaria."
+            },
+            "finance": {
+                "title": "Finanzas de Viajes",
+                "description": "El núcleo comienza con la simplificación de las finanzas de viaje. Nos enfocamos en pagos de viaje, capital de viaje, seguros de viaje e inversiones en viajes."
+            },
+            "business": {
+                "title": "Negocios de Viajes",
+                "description": "Para atender a todos los actores del viaje, tenemos cuatro divisiones de negocio: #1 crecimiento, #2 personas, #3 nube TIC y #4 datos e IA."
+            },
+            "dailyLife": {
+                "title": "Viajes y Vida Diaria",
+                "description": "El flujo financiero del negocio ofrece oportunidades para experimentar una libertad ilimitada en los viajes y la vida diaria, como servicios de alojamiento, movilidad, servicios municipales, servicios locales y muchos más..."
+            }
+        }
+        }
+
   }
   
