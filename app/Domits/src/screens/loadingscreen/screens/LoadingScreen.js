@@ -13,7 +13,7 @@ const LoadingScreen = ({loadingName}) => {
      return (
         <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color={COLORS.domitsGuestGreen}/>
-            <Text style={styles.loadingText}>
+            <Text style={styles.loadingText} testID={"loadingScreen"}>
                 <TranslatedText textToTranslate={"loading"}/> <TranslatedText textToTranslate={loadingName}/>
             </Text>
         </View>

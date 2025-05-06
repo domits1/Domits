@@ -11,7 +11,7 @@ import PaymentDeclined from "../features/bookingengine/screens/PaymentDeclinedSc
 import GuestNewConfirmedBooking from "../screens/guestdashboard/screens/GuestBookingsTab";
 import HostProfile from "../screens/profile/hostprofile/HostProfileTab";
 import React from "react";
-import Home from "../features/search/HomeScreen";
+import HomeScreen from '../screens/home/screens/Home';
 import {
     BOOKING_PROCESS_SCREEN,
     GUEST_BOOKINGS_SCREEN,
@@ -34,9 +34,10 @@ function MainNavigationStack() {
         <Stack.Navigator
             screenOptions={{
                 headerShown: false,
+                contentStyle: {backgroundColor: "#FFFFFF"}
             }}>
             {/* General */}
-            <Stack.Screen name={HOME_SCREEN} component={Home}/>
+            <Stack.Screen name={HOME_SCREEN} component={HomeScreen}/>
 
             {/* Features */}
             <Stack.Screen name={SCAN_SCREEN} component={Scan}/>

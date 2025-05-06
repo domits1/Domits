@@ -37,7 +37,7 @@ const SelectLanguagePopup = ({isVisible, setIsVisible}) => {
           <View style={style.modal}>
             <View style={style.header}>
               <Text style={style.title} testID={'title'}>
-                <TranslatedText textToTranslate={'select a language'} />
+                <TranslatedText textToTranslate={'Select a language'} />
               </Text>
               <TouchableOpacity
                 style={style.closeButton}

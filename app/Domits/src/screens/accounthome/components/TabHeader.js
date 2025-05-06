@@ -32,6 +32,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         paddingHorizontal: 16,
         marginTop: 20,
+        marginBottom: 10,
     },
     leftIcon: {
         flex: 1,
@@ -40,7 +41,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     titleText: {
-        flex: 2,
+        flex: 15,
         textAlign: "center",
         fontSize: 30,
         fontWeight: 'bold',

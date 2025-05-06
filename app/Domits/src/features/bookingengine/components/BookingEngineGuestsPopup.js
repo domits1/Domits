@@ -3,11 +3,10 @@ import {styles} from "../styles/BookingEngineStyles";
 import React, {useState} from "react";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
-const BookingEngineGuestsPopup = ({onClose, maxGuests, currentAdults, currentKids, currentPets, setAdults, setKids, setPets}) => {
+const BookingEngineGuestsPopup = ({onClose, maxGuests, currentAdults, currentKids, setAdults, setKids}) => {
     const [tempAdults, setTempAdults] = useState(currentAdults || 1);
     const [tempKids, setTempKids] = useState(currentKids || 0);
-    const [tempPets, setTempPets] = useState(currentPets || 0);
-    const totalGuests = tempAdults + tempKids + tempPets;
+    const totalGuests = tempAdults + tempKids;
 
     /**
      * Increment the amount of guests.
@@ -21,9 +20,6 @@ const BookingEngineGuestsPopup = ({onClose, maxGuests, currentAdults, currentKid
             }
             if (type === 'kids') {
                 setTempKids(tempKids + 1);
-            }
-            if (type === 'pets') {
-                setTempPets(tempPets + 1);
             }
         } else {
             ToastAndroid.show(`Max amount of guests (${maxGuests}) selected.`, ToastAndroid.SHORT)
@@ -42,9 +38,6 @@ const BookingEngineGuestsPopup = ({onClose, maxGuests, currentAdults, currentKid
         if (type === 'kids' && tempKids > 0) {
             setTempKids(tempKids - 1);
         }
-        if (type === 'pets' && tempPets > 0) {
-            setTempPets(tempPets - 1);
-        }
     };
 
     /**
@@ -53,7 +46,6 @@ const BookingEngineGuestsPopup = ({onClose, maxGuests, currentAdults, currentKid
     const confirmGuestSelection = () => {
         setAdults(tempAdults);
         setKids(tempKids);
-        setPets(tempPets);
         onClose();
     };
 
@@ -92,20 +84,6 @@ const BookingEngineGuestsPopup = ({onClose, maxGuests, currentAdults, currentKid
                             </TouchableOpacity>
                             <Text style={styles.counterText}>{tempKids}</Text>
                             <TouchableOpacity onPress={() => incrementGuests('kids')}>
-                                <Text style={styles.counterButton}>+</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    {/* Pets */}
-                    <View style={styles.guestRow}>
-                        <Text style={styles.guestType}>Pets</Text>
-                        <View style={styles.counterContainer}>
-                            <TouchableOpacity onPress={() => decrementGuests('pets')}>
-                                <Text style={styles.counterButton}>-</Text>
-                            </TouchableOpacity>
-                            <Text style={styles.counterText}>{tempPets}</Text>
-                            <TouchableOpacity onPress={() => incrementGuests('pets')}>
                                 <Text style={styles.counterButton}>+</Text>
                             </TouchableOpacity>
                         </View>

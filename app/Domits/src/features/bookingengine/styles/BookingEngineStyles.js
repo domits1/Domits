@@ -28,13 +28,7 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: '#0056b3',
   },
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingHorizontal: 10,
-  },
+  // Header styles moved to separate component
   headerText: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -171,5 +165,12 @@ export const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
   },
 });
