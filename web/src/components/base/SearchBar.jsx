@@ -10,7 +10,6 @@ import Select from 'react-select';
 import '../../styles/sass/base/SearchBar.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {LanguageContext} from "../../context/LanguageContext.js";
-import content from "../../content/content.json";
 import content2 from "../../content/content2.json";
 
 export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
