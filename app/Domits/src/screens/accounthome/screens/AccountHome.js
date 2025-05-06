@@ -14,7 +14,7 @@ import {
     GUEST_REVIEWS_SCREEN, GUEST_SETTINGS_SCREEN,
     HOST_CALENDAR_SCREEN, HOST_DASHBOARD_SCREEN,
     HOST_HELP_DESK_SCREEN,
-    HOST_LISTINGS_SCREEN,
+    HOST_PROPERTIES_SCREEN,
     HOST_ONBOARDING_LANDING_SCREEN,
     HOST_PAYMENTS_SCREEN, HOST_RESERVATIONS_SCREEN, HOST_REVIEWS_SCREEN, LOGIN_SCREEN
 } from "../../../navigation/utils/NavigationNameConstants";
@@ -108,7 +108,7 @@ const AccountHome = ({navigation}) => {
                             <View style={styles.sectionContainer}>
                                 <Text style={styles.sectionTitle}><TranslatedText
                                     textToTranslate={"Property Management"}/></Text>
-                                {tabItem(HOST_LISTINGS_SCREEN, 'Properties')}
+                                {tabItem(HOST_PROPERTIES_SCREEN, 'Properties')}
                                 {tabItem(HOST_CALENDAR_SCREEN, 'Calendar & Prices')}
                             </View>
                             {/*Financials & Pricing */}

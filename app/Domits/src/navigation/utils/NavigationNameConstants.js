@@ -11,7 +11,7 @@ export const POCKET_SCREEN = "pocket";
 export const HOST_PROFILE_SCREEN = "host-profile";
 export const HOST_SETTINGS_SCREEN = "host-settings";
 export const HOST_HELP_DESK_SCREEN = "host-help-desk";
-export const HOST_LISTINGS_SCREEN = "host-listings";
+export const HOST_PROPERTIES_SCREEN = "host-properties";
 
 // Host Dashboard
 export const HOST_DASHBOARD_SCREEN = "host-dashboard";
