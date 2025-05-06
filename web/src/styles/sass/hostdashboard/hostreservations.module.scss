@@ -16,6 +16,15 @@ $border-radius: 8px;
 /// Todo: cleanup unused styling
 //////////
 ///
+
+//////////
+/// Style items in center (Center loading gif)
+//////////
+.CenterMe {
+  display: flex;
+  margin: auto;
+  text-align: center;
+}
 .reservationContainer {
   display: flex;
   flex-direction: row;
