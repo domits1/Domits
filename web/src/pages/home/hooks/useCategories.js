@@ -4,7 +4,6 @@ import family from "../Images/family.webp";
 import solo from "../Images/solo.webp";
 import senior from "../Images/senior.webp";
 import petFriendly from "../Images/petfriendly.webp";
-import content from "../../../content/content.json";
 import content2 from "../../../content/content2.json";
 import { useContext } from "react";
 import { LanguageContext } from "../../../context/LanguageContext.js";
