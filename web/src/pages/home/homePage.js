@@ -9,7 +9,7 @@ import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
 import { reviews } from "../home/store/constants";
-import { categories as groups } from "../home/store/constants";
+import { useCategories } from "../home/hooks/useCategories.js";
 import { img } from "../home/store/constants";
 import "swiper/css/pagination";
 import Header from "../../components/base/Header";
@@ -84,12 +84,61 @@ const Homepage = () => {
 
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
+  const groups = useCategories();
   const {language} = useContext(LanguageContext);
+
   const {searchText,securePayments,verifiedGuest,quickPhone,qualityGuarantee,subHead,
     bestPrice,bookingGuarantee,stayGuarantee,subHead2,subHead3,bh,bhLi1,bhLi2,bhLi3,
     listPropertyBtn,placeText,placeText2,placeText3,placeText4,placeText5,placeText6,
-    placeText7,accommodationHead,communityGroup,hostBtn,searchBtn
+    placeText7,accommodationHead,communityGroup,hostBtn,searchBtn,luxuryLbl,beachLbl,
+    lastminuteLbl,wellnessLbl,romanticLbl,adventureLbl,natureLbl,cultureLbl,culinaryLbl,
+    vacationrentalLbl
   } = content[language].homepage;
+
+  const homepageContent = content[language].homepage;
+  const countryLabels = {
+    netherlands: homepageContent.netherlandsLbl,
+    france: homepageContent.franceLbl,
+    spain: homepageContent.spainLbl,
+    italy: homepageContent.italyLbl,
+    belgium: homepageContent.belgiumLbl,
+    germany: homepageContent.germanyLbl,
+    greece: homepageContent.greeceLbl,
+    unitedKingdom: homepageContent.unitedkingdomLbl,
+    portugal: homepageContent.portugalLbl,
+    croatia: homepageContent.croatiaLbl,
+    poland: homepageContent.polandLbl,
+    austria: homepageContent.austriaLbl,
+    czech: homepageContent.czechLbl,
+    philippines: homepageContent.philippinesLbl,
+    thailand: homepageContent.thailandLbl,
+    indonesia: homepageContent.indonesiaLbl,
+    india: homepageContent.indiaLbl,
+    malaysia: homepageContent.malaysiaLbl,
+    vietnam: homepageContent.vietnamLbl,
+    turkey: homepageContent.turkeyLbl,
+    singapore: homepageContent.singaporeLbl,
+    aruba: homepageContent.arubaLbl,
+    bonaire: homepageContent.bonaireLbl,
+    curacao: homepageContent.curacaoLbl,
+    saintBarthelemy: homepageContent.saintbarthelemyLbl,
+    costaRica: homepageContent.costaricaLbl,
+    dominicanRepublic: homepageContent.dominicanrepublicLbl,
+    puertoRico: homepageContent.puertoricoLbl,
+    stMaarten: homepageContent.stmaartenLbl,
+    frenchAlps: homepageContent.frenchalpsLbl,
+    switzerland: homepageContent.switzerlandLbl,
+    chamonixMontBlanc: homepageContent.chamonixmontblancLbl,
+    blackForest: homepageContent.blackforestLbl,
+    italyTrentino: homepageContent.italytrentinoLbl
+  };
+
+  const seasonalLabels = {
+    spring: homepageContent.springLbl,
+    summer: homepageContent.summerLbl,
+    fall: homepageContent.fallLbl,
+    winter: homepageContent.winterLbl
+  };
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
@@ -134,252 +183,252 @@ const Homepage = () => {
 
   const countries = [
     {
-      name: "The Netherlands",
+      name: `${countryLabels.netherlands}`,
       img: netherlands,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "France",
+      name: `${countryLabels.france}`,
       img: france,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Spain",
+      name: `${countryLabels.spain}`,
       img: spain,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
   ];
 
   const smallCountries = [
     {
-      name: "Italy",
+      name: `${countryLabels.italy}`,
       img: italy,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Belgium",
+      name: `${countryLabels.belgium}`,
       img: belgium,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Germany",
+      name: `${countryLabels.germany}`,
       img: germany,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Greece",
+      name: `${countryLabels.greece}`,
       img: greece,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "United Kingdom",
+      name: `${countryLabels.unitedKingdom}`,
       img: uk,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Portugal",
+      name: `${countryLabels.portugal}`,
       img: portugal,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Croatia",
+      name: `${countryLabels.croatia}`,
       img: croatia,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Poland",
+      name: `${countryLabels.poland}`,
       img: poland,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Austria",
+      name: `${countryLabels.austria}`,
       img: austria,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Czech",
+      name: `${countryLabels.czech}`,
       img: czech,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
   ];
 
   const asiaCountries = [
     {
-      name: "Philippines",
+      name: `${countryLabels.philippines}`,
       img: philippines,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Thailand",
+      name: `${countryLabels.thailand}`,
       img: thailand,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Indonesia",
+      name: `${countryLabels.indonesia}`,
       img: indonesia,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
   ];
 
   const smallAsiaCountries = [
     {
-      name: "India",
+      name: `${countryLabels.india}`,
       img: india,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Malaysia",
+      name: `${countryLabels.malaysia}`,
       img: malaysia,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Vietnam",
+      name: `${countryLabels.vietnam}`,
       img: vietnam,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Turkey",
+      name: `${countryLabels.turkey}`,
       img: turkey,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Singapore",
+      name: `${countryLabels.singapore}`,
       img: singapore,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
   ];
 
   const caribbeanCountries = [
     {
-      name: "Aruba",
+      name: `${countryLabels.aruba}`,
       img: aruba,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Bonaire",
+      name: `${countryLabels.bonaire}`,
       img: bonaire,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Curacao",
+      name: `${countryLabels.curacao}`,
       img: curacao,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
   ];
 
   const smallCaribbeanCountries = [
     {
-      name: "Saint Barthelemy",
+      name: `${countryLabels.saintBarthelemy}`,
       img: saintBarthelemy,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Costa Rica",
+      name: `${countryLabels.costaRica}`,
       img: costaRica,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Dominican Republic",
+      name: `${countryLabels.dominicanRepublic}`,
       img: dominicanRepublic,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Puerto Rico",
+      name: `${countryLabels.puertoRico}`,
       img: puertroRico,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "St. Maarten",
+      name: `${countryLabels.stMaarten}`,
       img: stMaarten,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
   ];
 
   const skiCountries = [
     {
-      name: "Austria",
+      name: `${countryLabels.austria}`,
       img: austria,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "French Alps",
+      name: `${countryLabels.frenchAlps}`,
       img: frenchalps,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Switzerland",
+      name: `${countryLabels.switzerland}`,
       img: switzerland,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Chamonix-Mont-Blanc",
+      name: `${countryLabels.chamonixMontBlanc}`,
       img: chamonix,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Black Forest",
+      name: `${countryLabels.blackForest}`,
       img: blackforest,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Italy Trentino",
+      name: `${countryLabels.italyTrentino}`,
       img: italyTrentino,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
   ];
 
   const seasons = [
-    { name: "Spring", img: spring },
-    { name: "Summer", img: summer },
-    { name: "Fall", img: fall },
-    { name: "Winter", img: winter },
+    { name: `${seasonalLabels.spring}`, img: spring },
+    { name: `${seasonalLabels.summer}`, img: summer },
+    { name: `${seasonalLabels.fall}`, img: fall },
+    { name: `${seasonalLabels.winter}`, img: winter },
   ];
 
   const interests = [
     {
-      name: "Luxury",
+      name: `${luxuryLbl}`,
       img: luxury,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Beach",
+      name: `${beachLbl}`,
       img: beach,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Last minute",
+      name: `${lastminuteLbl}`,
       img: lastMinute,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Wellness",
+      name: `${wellnessLbl}`,
       img: wellness,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Romantic",
+      name: `${romanticLbl}`,
       img: romantic,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Adventure",
+      name: `${adventureLbl}`,
       img: adventure,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Nature",
+      name: `${natureLbl}`,
       img: nature,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Culture",
+      name: `${cultureLbl}`,
       img: culture,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
     {
-      name: "Culinary",
+      name: `${culinaryLbl}`,
       img: culinary,
-      description: "Vacation Rentals and Apartments",
+      description: `${vacationrentalLbl}`,
     },
   ];
 
