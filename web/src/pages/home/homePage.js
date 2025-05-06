@@ -64,7 +64,7 @@ import waterman from "../../pages/home/Images/waterman.webp";
 import sleutelvrouw from "../../pages/home/Images/sleutelvrouw.webp";
 import { FetchAllPropertyTypes, FetchPropertyType } from "../home/services/fetchProperties";
 import { LanguageContext } from "../../context/LanguageContext.js";
-import content2 from "../../content/content2.json";
+import content from "../../content/content.json";
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -86,7 +86,7 @@ const Homepage = () => {
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
   const groups = useCategories();
   const {language} = useContext(LanguageContext);
-  const homepageContent2 = content2[language].homepage;
+  const homePageContent = content[language].homepage;
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
@@ -131,252 +131,252 @@ const Homepage = () => {
 
   const countries = [
     {
-      name: `${homepageContent2.destinations.europe.countries.netherlands}`,
+      name: `${homePageContent.destinations.europe.countries.netherlands}`,
       img: netherlands,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.france}`,
+      name: `${homePageContent.destinations.europe.countries.france}`,
       img: france,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.spain}`,
+      name: `${homePageContent.destinations.europe.countries.spain}`,
       img: spain,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const smallCountries = [
     {
-      name: `${homepageContent2.destinations.europe.countries.italy}`,
+      name: `${homePageContent.destinations.europe.countries.italy}`,
       img: italy,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.belgium}`,
+      name: `${homePageContent.destinations.europe.countries.belgium}`,
       img: belgium,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.germany}`,
+      name: `${homePageContent.destinations.europe.countries.germany}`,
       img: germany,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.greece}`,
+      name: `${homePageContent.destinations.europe.countries.greece}`,
       img: greece,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.unitedKingdom}`,
+      name: `${homePageContent.destinations.europe.countries.unitedKingdom}`,
       img: uk,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.portugal}`,
+      name: `${homePageContent.destinations.europe.countries.portugal}`,
       img: portugal,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.croatia}`,
+      name: `${homePageContent.destinations.europe.countries.croatia}`,
       img: croatia,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.poland}`,
+      name: `${homePageContent.destinations.europe.countries.poland}`,
       img: poland,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.austria}`,
+      name: `${homePageContent.destinations.europe.countries.austria}`,
       img: austria,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.europe.countries.czech}`,
+      name: `${homePageContent.destinations.europe.countries.czech}`,
       img: czech,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const asiaCountries = [
     {
-      name: `${homepageContent2.destinations.asia.countries.philippines}`,
+      name: `${homePageContent.destinations.asia.countries.philippines}`,
       img: philippines,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.asia.countries.thailand}`,
+      name: `${homePageContent.destinations.asia.countries.thailand}`,
       img: thailand,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.asia.countries.indonesia}`,
+      name: `${homePageContent.destinations.asia.countries.indonesia}`,
       img: indonesia,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const smallAsiaCountries = [
     {
-      name: `${homepageContent2.destinations.asia.countries.india}`,
+      name: `${homePageContent.destinations.asia.countries.india}`,
       img: india,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.asia.countries.malaysia}`,
+      name: `${homePageContent.destinations.asia.countries.malaysia}`,
       img: malaysia,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.asia.countries.vietnam}`,
+      name: `${homePageContent.destinations.asia.countries.vietnam}`,
       img: vietnam,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.asia.countries.turkey}`,
+      name: `${homePageContent.destinations.asia.countries.turkey}`,
       img: turkey,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.asia.countries.singapore}`,
+      name: `${homePageContent.destinations.asia.countries.singapore}`,
       img: singapore,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const caribbeanCountries = [
     {
-      name: `${homepageContent2.destinations.caribbean.locations.aruba}`,
+      name: `${homePageContent.destinations.caribbean.locations.aruba}`,
       img: aruba,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.caribbean.locations.bonaire}`,
+      name: `${homePageContent.destinations.caribbean.locations.bonaire}`,
       img: bonaire,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.caribbean.locations.curacao}`,
+      name: `${homePageContent.destinations.caribbean.locations.curacao}`,
       img: curacao,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const smallCaribbeanCountries = [
     {
-      name: `${homepageContent2.destinations.caribbean.locations.saintBarthelemy}`,
+      name: `${homePageContent.destinations.caribbean.locations.saintBarthelemy}`,
       img: saintBarthelemy,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.caribbean.locations.costaRica}`,
+      name: `${homePageContent.destinations.caribbean.locations.costaRica}`,
       img: costaRica,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.caribbean.locations.dominicanRepublic}`,
+      name: `${homePageContent.destinations.caribbean.locations.dominicanRepublic}`,
       img: dominicanRepublic,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.caribbean.locations.puertoRico}`,
+      name: `${homePageContent.destinations.caribbean.locations.puertoRico}`,
       img: puertroRico,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.caribbean.locations.stMaarten}`,
+      name: `${homePageContent.destinations.caribbean.locations.stMaarten}`,
       img: stMaarten,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const skiCountries = [
     {
-      name: `${homepageContent2.destinations.ski.locations.austria}`,
+      name: `${homePageContent.destinations.ski.locations.austria}`,
       img: austria,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.ski.locations.frenchAlps}`,
+      name: `${homePageContent.destinations.ski.locations.frenchAlps}`,
       img: frenchalps,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.ski.locations.switzerland}`,
+      name: `${homePageContent.destinations.ski.locations.switzerland}`,
       img: switzerland,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.ski.locations.chamonix}`,
+      name: `${homePageContent.destinations.ski.locations.chamonix}`,
       img: chamonix,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.ski.locations.blackForest}`,
+      name: `${homePageContent.destinations.ski.locations.blackForest}`,
       img: blackforest,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.destinations.ski.locations.italyTrentino}`,
+      name: `${homePageContent.destinations.ski.locations.italyTrentino}`,
       img: italyTrentino,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const seasons = [
-    { name: `${homepageContent2.filters.season.spring}`, img: spring },
-    { name: `${homepageContent2.filters.season.summer}`, img: summer },
-    { name: `${homepageContent2.filters.season.fall}`, img: fall },
-    { name: `${homepageContent2.filters.season.winter}`, img: winter },
+    { name: `${homePageContent.filters.season.spring}`, img: spring },
+    { name: `${homePageContent.filters.season.summer}`, img: summer },
+    { name: `${homePageContent.filters.season.fall}`, img: fall },
+    { name: `${homePageContent.filters.season.winter}`, img: winter },
   ];
 
   const interests = [
     {
-      name: `${homepageContent2.filters.interest.luxury}`,
+      name: `${homePageContent.filters.interest.luxury}`,
       img: luxury,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.filters.interest.beach}`,
+      name: `${homePageContent.filters.interest.beach}`,
       img: beach,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.filters.interest.lastMinute}`,
+      name: `${homePageContent.filters.interest.lastMinute}`,
       img: lastMinute,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.filters.interest.wellness}`,
+      name: `${homePageContent.filters.interest.wellness}`,
       img: wellness,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.filters.interest.romantic}`,
+      name: `${homePageContent.filters.interest.romantic}`,
       img: romantic,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.filters.interest.adventure}`,
+      name: `${homePageContent.filters.interest.adventure}`,
       img: adventure,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.filters.interest.nature}`,
+      name: `${homePageContent.filters.interest.nature}`,
       img: nature,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.filters.interest.culture}`,
+      name: `${homePageContent.filters.interest.culture}`,
       img: culture,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: `${homepageContent2.filters.interest.culinary}`,
+      name: `${homePageContent.filters.interest.culinary}`,
       img: culinary,
-      description: `${homepageContent2.filters.groups.description}`,
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
@@ -437,7 +437,7 @@ const Homepage = () => {
       <div className="domits-homepage">
         <div className="domits-searchContainer">
           <div className="domits-searchTextCon">
-            <h3 className="domits-searchText">{homepageContent2.hero.title}</h3>
+            <h3 className="domits-searchText">{homePageContent.hero.title}</h3>
           </div>
           <div className="domits-searchbarCon">
             <SearchBar
@@ -453,42 +453,42 @@ const Homepage = () => {
           <div className="domits-iconsContainerText">
             <div className="domits-iconTextGroup">
               <img src={bill} alt="bill" />
-              <p>{homepageContent2.features.securePayments}</p>
+              <p>{homePageContent.features.securePayments}</p>
             </div>
             <div className="domits-iconTextGroup">
               <img src={verifiedLogo} alt="verified logo" />
-              <p>{homepageContent2.features.verifiedGuest}</p>
+              <p>{homePageContent.features.verifiedGuest}</p>
             </div>
             <div className="domits-iconTextGroup">
               <img src={question} alt="question" />
-              <p>{homepageContent2.features.quickPhone}</p>
+              <p>{homePageContent.features.quickPhone}</p>
             </div>
             <div className="domits-iconTextGroup">
               <img src={checkMark} alt="checkMark" />
-              <p>{homepageContent2.features.qualityGuarantee}</p>
+              <p>{homePageContent.features.qualityGuarantee}</p>
             </div>
           </div>
         </div>
 
         <div className="domits-boatContainer">
           <div className="domits-boatText">
-            <h3 className="domits-subHead">{homepageContent2.sections.trending}</h3>
+            <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
 
             <div className="domits-trendingContainer">
               {[
                 {
                   emoji: "🎖️",
-                  title: `${homepageContent2.features.bestPrice}`,
+                  title: `${homePageContent.features.bestPrice}`,
                   text: "We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.",
                 },
                 {
                   emoji: "✅",
-                  title: `${homepageContent2.features.bookingGuarantee}`,
+                  title: `${homePageContent.features.bookingGuarantee}`,
                   text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.",
                 },
                 {
                   emoji: "🤝",
-                  title: `${homepageContent2.features.stayGuarantee}`,
+                  title: `${homePageContent.features.stayGuarantee}`,
                   text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
                 },
               ].map((item, index) => (
@@ -518,7 +518,7 @@ const Homepage = () => {
 
         <div className="domits-boatContainer">
           <div className="domits-boatText">
-            <h3 className="domits-subHead">{homepageContent2.sections.rentBoat}</h3>
+            <h3 className="domits-subHead">{homePageContent.sections.rentBoat}</h3>
           </div>
           <div className="domits-accommodationGroup">
             {boatLoading === false ? (
@@ -538,7 +538,7 @@ const Homepage = () => {
         </div>
 
         <div className="domits-boatContainer">
-          <h3 className="domits-subHead">{homepageContent2.sections.discoverCampers}</h3>
+          <h3 className="domits-subHead">{homePageContent.sections.discoverCampers}</h3>
           <div className="domits-accommodationGroup">
             {camperLoading === false ? (
               camperAccommodations.length > 0 ? (
@@ -558,13 +558,13 @@ const Homepage = () => {
 
         <div className="become-host-section">
           <div className="become-host-content">
-            <h1 className="BH">{homepageContent2.sections.becomeHost.title}</h1>
+            <h1 className="BH">{homePageContent.sections.becomeHost.title}</h1>
             <ul>
-              <li>{homepageContent2.sections.becomeHost.points[0]}</li>
-              <li>{homepageContent2.sections.becomeHost.points[1]}</li>
-              <li>{homepageContent2.sections.becomeHost.points[2]}</li>
+              <li>{homePageContent.sections.becomeHost.points[0]}</li>
+              <li>{homePageContent.sections.becomeHost.points[1]}</li>
+              <li>{homePageContent.sections.becomeHost.points[2]}</li>
             </ul>
-            <button className="list-property-button">{homepageContent2.sections.becomeHost.button}</button>
+            <button className="list-property-button">{homePageContent.sections.becomeHost.button}</button>
           </div>
           <div className="host-images">
             {hostImages.map((image, index) => (
@@ -573,7 +573,7 @@ const Homepage = () => {
           </div>
         </div>
 
-        <h1 className="Places-text">{homepageContent2.destinations.europe.title}</h1>
+        <h1 className="Places-text">{homePageContent.destinations.europe.title}</h1>
         <div className="countries-container">
           {countries.map((country, index) => (
             <div className="country-card" key={index}>
@@ -596,7 +596,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">{homepageContent2.destinations.asia.title}</h1>
+        <h1 className="Places-text">{homePageContent.destinations.asia.title}</h1>
         <div className="asia-countries-container">
           {asiaCountries.map((country, index) => (
             <div className="country-card asia-country-card" key={index}>
@@ -618,7 +618,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">{homepageContent2.destinations.caribbean.title}</h1>
+        <h1 className="Places-text">{homePageContent.destinations.caribbean.title}</h1>
         <div className="caribbean-countries-container">
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
@@ -640,7 +640,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">{homepageContent2.destinations.ski.title}</h1>
+        <h1 className="Places-text">{homePageContent.destinations.ski.title}</h1>
         <div className="ski-countries-container">
           {skiCountries.map((country, index) => (
             <div className="country-card ski-country-card" key={index}>
@@ -652,7 +652,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">{homepageContent2.filters.season.title}</h1>
+        <h1 className="Places-text">{homePageContent.filters.season.title}</h1>
         <div className="seasons-container">
           {seasons.map((season, index) => (
             <div className="season-card" key={index}>
@@ -663,7 +663,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">{homepageContent2.filters.interest.title}</h1>
+        <h1 className="Places-text">{homePageContent.filters.interest.title}</h1>
         <div className="interests-container">
           {interests.map((interest, index) => (
             <div className="interest-card" key={index}>
@@ -675,7 +675,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">{homepageContent2.filters.groups.title}</h1>
+        <h1 className="Places-text">{homePageContent.filters.groups.title}</h1>
         <div className="groups-container">
           {groups.map((group, index) => (
             <div className="group-card" key={index}>
@@ -709,14 +709,14 @@ const Homepage = () => {
         </button>
       </div>
       <div className="domits-communityContainer">
-        <h2 className="domits-communityHead">{homepageContent2.sections.community.title}</h2>
-        <p className="domits-communityGroup">{homepageContent2.sections.community.description}</p>
+        <h2 className="domits-communityHead">{homePageContent.sections.community.title}</h2>
+        <p className="domits-communityGroup">{homePageContent.sections.community.description}</p>
         <div className="domits-communityButtons">
           <button className="domits-hostButton">
-            <a href="/landing">{homepageContent2.sections.becomeHost.title}</a>
+            <a href="/landing">{homePageContent.sections.becomeHost.title}</a>
           </button>
           <button className="domits-SearchButton">
-            <a href="/home">{homepageContent2.sections.community.button}</a>
+            <a href="/home">{homePageContent.sections.community.button}</a>
           </button>
         </div>
       </div>
