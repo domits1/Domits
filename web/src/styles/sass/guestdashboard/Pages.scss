@@ -1,0 +1,57 @@
+.guest-pages {
+    position: relative;
+    padding: 1rem;
+  
+    .hamburger-btn {
+      background: none;
+      border: none;
+      font-size: 2rem;
+      cursor: pointer;
+      position: relative;
+      z-index: 10;
+    }
+  
+    .menu-content {
+      margin-top: 1rem;
+      background: #f8f8f8;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  
+      select {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+      }
+  
+      .dashboard-sections {
+        display: flex;
+        flex-direction: column;
+  
+        .wijzer {
+          display: flex;
+          align-items: center;
+          padding: 10px;
+          margin-bottom: 10px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background 0.3s ease;
+  
+          .icon {
+            margin-right: 10px;
+          }
+  
+          &:hover {
+            background-color: #e0f7e9;
+          }
+  
+          &.active {
+            background-color: #0D9813;
+            color: white;
+          }
+        }
+      }
+    }
+  }
+  

@@ -161,20 +161,20 @@ const GuestDashboard = () => {
     };
 
     return (
-        <div className="page-body">
+        <div className="guest-dashboard-page-body">
             <h2>Dashboard</h2>
-            <div className="dashboards">
+            <div className="guest-dashboard-dashboards">
                 <Pages />
-                <div className="content">
-                    <div className="personalInfoContent">
-                        <div className="personal-info-header">
+                <div className="guest-dashboard-content">
+                    <div className="guest-dashboard-personalInfoContent">
+                        <div className="guest-dashboard-personal-info-header">
                             <h3>Personal Information</h3>
-                            <div onClick={toggleEditState} className="edit-icon-background">
-                                <img src={isEditing ? checkIcon : editIcon} alt="Edit" className="guest-edit-icon" />
+                            <div onClick={toggleEditState} className="guest-dashboard-edit-icon-background">
+                                <img src={isEditing ? checkIcon : editIcon} alt="Edit" className="guest-dashboard-guest-edit-icon" />
                             </div>
                         </div>
 
-                        <div className="infoBox">
+                        <div className="guest-dashboard-infoBox">
                             <span>Email:</span>
                             {isEditing ? (
                                 <>
@@ -184,14 +184,14 @@ const GuestDashboard = () => {
                                         value={tempUser.email}
                                         onChange={handleInputChange}
                                         onKeyPress={handleKeyPress}
-                                        className="guest-edit-input"
+                                        className="guest-dashboard-guest-edit-input"
                                     />
                                 </>
                             ) : (
                                 <p>{user.email}</p>
                             )}
                         </div>
-                        <div className="infoBox">
+                        <div className="guest-dashboard-infoBox">
                             <span>Name:</span>
                             {isEditing ? (
                                 <>
@@ -201,7 +201,7 @@ const GuestDashboard = () => {
                                         value={tempUser.name}
                                         onChange={handleInputChange}
                                         onKeyPress={handleKeyPress}
-                                        className="guest-edit-input"
+                                        className="guest-dashboard-guest-edit-input"
                                         minLength={1}
                                         maxLength={35}
                                         pattern="[A-Za-z\s]+"
@@ -213,9 +213,9 @@ const GuestDashboard = () => {
                         </div>
                     </div>
 
-                    <div className="accomodation-side">
+                    <div className="guest-dashboard-accomodation-side">
                         <label>
-                            <a className="viewAllBooking" href="#">View all bookings</a>
+                            <a className="guest-dashboard-viewAllBooking" href="#">View all bookings</a>
                         </label>
 
                     </div>

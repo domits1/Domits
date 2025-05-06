@@ -2,9 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {Auth} from 'aws-amplify';
 import {useNavigate} from 'react-router-dom';
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
-
 import Pages from './Pages.js';
-import './paymentsguestdashboard.css';
 
 const BookingGuestDashboard = () => {
     const navigate = useNavigate();
@@ -106,10 +104,10 @@ const BookingGuestDashboard = () => {
 
     const handleBookingListPopup = () => {
         return (
-            <div className="popup-overlay" onClick={handleClosePopUp}>
-                <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+            <div className="guest-booking-popup-overlay" onClick={handleClosePopUp}>
+                <div className="guest-booking-popup-content" onClick={(e) => e.stopPropagation()}>
                     <h3>Cancelable Bookings</h3>
-                    <table className="popup-bookings-table">
+                    <table className="guest-booking-popup-bookings-table">
                         <thead>
                         <tr>
                             <th>Title</th>
@@ -131,9 +129,9 @@ const BookingGuestDashboard = () => {
                                     <td>{dateFormatterDD_MM_YYYY(booking.StartDate)}</td>
                                     <td>{dateFormatterDD_MM_YYYY(booking.EndDate)}</td>
                                     <td>{dateFormatterDD_MM_YYYY(booking.createdAt)}</td>
-                                    <td className="cancelButtonCell">
+                                    <td className="guest-booking-cancelButtonCell">
                                         <button
-                                            className="cancelBookingButtonCell"
+                                            className="guest-booking-cancelBookingButtonCell"
                                             onClick={() => handleCancelation(booking)}
                                         >
                                             X
@@ -150,13 +148,12 @@ const BookingGuestDashboard = () => {
     };
 
     return (
-        <div className="page-body">
-            <h2>Booking</h2>
-            <div className='dashboards'>
+        <div className="guest-booking-page-body">
+            <div className='guest-booking-dashboards'>
                 <Pages/>
-                <div className="bookingContent">
-                    <div className="bookingContentHeader">
-                        <div className="filterContainer">
+                <div className="guest-booking-bookingContent">
+                    <div className="guest-booking-bookingContentHeader">
+                        <div className="guest-booking-filterContainer">
                             <label htmlFor="status-filter">Filter by status:</label>
                             <select id="status-filter" value={filter} onChange={handleFilterChange}>
                                 <option value="All">All</option>
@@ -166,8 +163,8 @@ const BookingGuestDashboard = () => {
                                 <option value="Pending">Pending</option>
                             </select>
                         </div>
-                        <div className="cancelBookingButton">
-                            <button className="cancelBooking"
+                        <div className="guest-booking-cancelBookingButton">
+                            <button className="guest-booking-cancelBooking"
                                     onClick={toggleBookingList}
                             >Cancel Booking
                             </button>
@@ -176,8 +173,8 @@ const BookingGuestDashboard = () => {
                     {loading ? (
                         <p>Loading...</p>
                     ) : (
-                        <div className="table-wrapper">
-                            <table className="bookings-table">
+                        <div className="guest-booking-table-wrapper">
+                            <table className="guest-booking-bookings-table">
                                 <thead>
                                 <tr>
                                     <th>Title</th>
