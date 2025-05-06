@@ -1,0 +1,79 @@
+.pageContainer {
+  padding: 20px;
+
+  h2 {
+    margin-bottom: 10px;
+  }
+
+  p {
+    &.wishlistCount {
+      margin-bottom: 20px;
+    }
+  }
+
+  .wishlistTopBar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .wishlistActionsRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .wishlistHeader {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      h2 {
+        margin: 0;
+      }
+
+      .wishlistSubRow {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        .wishlistCount {
+          color: rgb(11, 11, 11);
+          font-size: 14px;
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  .cardList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+
+    .wishlistCardWrapper {
+      position: relative;
+    }
+
+    .DeleteButton {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #f0f0f0;
+      }
+    }
+  }
+}

@@ -1,14 +1,11 @@
 import {Text, View} from "react-native";
 import {styles} from "../styles/propertyDetailsStyles";
 import React from "react";
-import amenities from "../../../ui-components/FeatureIcons";
+import mapPropertyAmenities from "./mapPropertyAmenities";
 
+const RenderAmenities = ({propertyAmenities, categoriesToSlice}) => {
 
-const RenderAmenities = ({propertyAmenities}) => {
-
-    const mappedPropertyAmenities = propertyAmenities.map(amenity =>
-        amenities.find(amenitiesEntry => amenitiesEntry.id === amenity.amenityId)
-    );
+    const mappedPropertyAmenities = mapPropertyAmenities(propertyAmenities);
 
     const amenitiesByType = mappedPropertyAmenities.reduce((categories, amenity) => {
         if (!categories[amenity.category]) {
@@ -18,7 +15,7 @@ const RenderAmenities = ({propertyAmenities}) => {
         return categories;
     }, {});
 
-    const categoriesToShow = Object.keys(amenitiesByType).slice(0, 3);
+    const categoriesToShow = Object.keys(amenitiesByType).slice(0, categoriesToSlice);
 
     return categoriesToShow.sort().map((category) => {
         const items = amenitiesByType[category];

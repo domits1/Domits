@@ -1,0 +1,148 @@
+.guestActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  flex-wrap: wrap;
+
+  .label {
+    font-weight: 500;
+  }
+
+  .dropdownWrapper {
+    position: relative;
+
+    .dropdownToggle {
+      padding: 8px 12px;
+      border: 1px solid #00c203;
+      border-radius: 6px;
+      background-color: white;
+      color: #00c203;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .dropdownMenu {
+      position: absolute;
+      top: 110%;
+      left: 0;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+      width: 250px;
+      z-index: 100;
+
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 6px 0;
+          font-size: 14px;
+          gap: 6px;
+
+          span {
+            flex: 1;
+            cursor: pointer;
+          }
+
+          input {
+            flex: 1;
+            padding: 4px 6px;
+          }
+
+          .badge {
+            background: #333;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 20px;
+            margin-right: 4px;
+          }
+
+          button {
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: #00c203;
+            cursor: pointer;
+
+            &:hover {
+              color: #03ab05;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .actionBtn {
+    background-color: #00c203;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #03ab05;
+    }
+  }
+
+  .popup {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    margin-top: 10px;
+    width: 300px;
+    z-index: 100;
+
+    .popupTitle {
+      font-weight: 600;
+      margin-bottom: 8px;
+
+      span {
+        color: red;
+      }
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .confirmBtn {
+      width: 100%;
+      background-color: #00c203;
+      color: white;
+      padding: 10px;
+      border: none;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #03ab05;
+      }
+    }
+  }
+}

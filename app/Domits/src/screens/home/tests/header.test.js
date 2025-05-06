@@ -34,12 +34,12 @@ describe('Header Component', () => {
     it('renders delete button after TextInput is given', () => {
         render(<Header {...props} />)
 
-        expect(screen.queryByTestId('DeleteButton')).toBeNull();
+        expect(screen.queryByTestId('delete-button')).toBeNull();
 
         props.country = "Spain";
         render(<Header {...props} />)
 
-        expect(screen.getByTestId('DeleteButton')).toBeTruthy();
+        expect(screen.getByTestId('delete-button')).toBeTruthy();
     })
 
     it('calls setCountry when input changes', () => {
@@ -67,7 +67,7 @@ describe('Header Component', () => {
         props.country = "Spain";
         render(<Header {...props} />)
 
-        const button = screen.getByTestId('DeleteButton');
+        const button = screen.getByTestId('delete-button');
         expect(button).toBeTruthy();
 
         fireEvent.press(button);
@@ -82,7 +82,7 @@ describe('Header Component', () => {
 
         render(<Header {...props} />)
 
-        const deleteButton = screen.getByTestId('DeleteButton');
+        const deleteButton = screen.getByTestId('delete-button');
         expect(deleteButton.props.accessibilityState?.disabled).toBe(true);
 
         const searchButton = screen.getByTestId('SearchButton');
