@@ -36,6 +36,46 @@
             "infants": "Ages 0–2",
             "pets": "Normal sized pets"
           }
+        },
+        "footer": {
+          "navigation" : {
+            "title": "Navigation",
+            "whyDomits": "Why Domits",
+            "howItWorks": "How it works",
+            "producUpdates": "Product Updates",
+            "about": "About us",
+            "security": "Security",
+            "performance": "Performance",
+            "careers": "Careers",
+            "contact": "Contact"
+          },
+          "guest": {
+            "title": "Guest",
+            "searchAndBook": "Search and book",
+            "helpDeskForGuests": "Helpdesk for guests",
+            "sustainability": "Sustainability"
+          },
+          "host": {
+            "title": "Hosts",
+            "becomeHost": "Become a host",
+            "helpdeskForHosts": "Helpdesk for hosts",
+            "sustainability": "Sustainability"
+          },
+          "network": {
+            "title": "Network",
+            "guests": "Guests",
+            "hosts": "Hosts",
+            "developers": "Developers",
+            "partners": "Partners",
+            "students": "Students",
+            "startups": "Startups"
+          },
+          "socials": {
+            "title": "Socials"
+          },
+          "office": {
+            "title": "Office"
+          }
         }
       },
   
@@ -201,6 +241,46 @@
             "children": "Leeftijd 2–16 jaar",
             "infants": "Leeftijd 0–2",
             "pets": "Huisdieren van normale grootte"
+          }
+        },
+        "footer": {
+          "navigation" : {
+            "title": "Navigatie",
+            "whyDomits": "Waarom Domits",
+            "howItWorks": "Hoe het werkt",
+            "producUpdates": "Productupdates",
+            "about": "Over ons",
+            "security": "Beveiliging",
+            "performance": "Prestatie",
+            "careers": "Carrières",
+            "contact": "Contact"
+          },
+          "guest": {
+            "title": "Gast",
+            "searchAndBook": "Zoeken en boeken",
+            "helpDeskForGuests": "Helpdesk voor gasten",
+            "sustainability": "Duurzaamheid"
+          },
+          "host": {
+            "title": "Gastheren",
+            "becomeHost": "Word gastheer",
+            "helpdeskForHosts": "Helpdesk voor hosts",
+            "sustainability": "Duurzaamheid"
+          },
+          "network": {
+            "title": "Netwerk",
+            "guests": "Gasten",
+            "hosts": "Gastheren",
+            "developers": "Ontwikkelaars",
+            "partners": "Partners",
+            "students": "Studenten",
+            "startups": "Startups"
+          },
+          "socials": {
+            "title": "Sociale media"
+          },
+          "office": {
+            "title": "Kantoor"
           }
         }
       },
