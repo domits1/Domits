@@ -11,6 +11,7 @@ import '../../styles/sass/base/SearchBar.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {LanguageContext} from "../../context/LanguageContext.js";
 import content from "../../content/content.json";
+import content2 from "../../content/content2.json";
 
 export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -32,10 +33,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   const [isBarActive, setIsBarActive] = useState(false);
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
   const {language} = useContext(LanguageContext);
-  const {searchDestinationLbl,houseLbl,boatLbl,camperLbl,accommodationLbl
-    ,checkinoutLbl,guestLbl,adultLbl,childrenLbl,infantsLbl,petLbl,age16Lbl,age12Lbl
-    ,age0Lbl,normalPetLbl,searchLbl
-  } = content[language].component
+  const searchContent = content2[language].component.search;
 
   const handleButtonClick = (e) => {
     e.stopPropagation();
@@ -266,7 +264,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
               <div className="Search-location">
                 <input
                   type="search"
-                  placeholder={searchDestinationLbl}
+                  placeholder={searchContent.destination}
                   value={address}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
@@ -278,13 +276,13 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   value={accommodation ? { label: accommodation, value: accommodation } : null}
                   onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
                   options={[
-                    { value: 'House', label: <><FaHome /> {houseLbl}</> },
-                    { value: 'Boat', label: <><FaShip /> {boatLbl}</> },
-                    { value: 'Camper', label: <><FaCaravan /> {camperLbl}</> },
+                    { value: 'House', label: <><FaHome /> {searchContent.house}</> },
+                    { value: 'Boat', label: <><FaShip /> {searchContent.boat}</> },
+                    { value: 'Camper', label: <><FaCaravan /> {searchContent.camper}</> },
                   ]}
                   isSearchable={false}
                   isClearable={true}
-                  placeholder={<span className="searchTitle">{accommodationLbl}</span>}
+                  placeholder={<span className="searchTitle">{searchContent.accommodation}</span>}
                   classNamePrefix="custom-select-dropdown-menu"
                   components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                 />
@@ -292,7 +290,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
 
               <div className={`Search-button-section ${showGuestDropdown ? 'active' : ''}`}
                 onClick={toggleGuestDropdown}>
-                <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>{guestLbl}</p>
+                <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>{searchContent.guests}</p>
                 {totalGuests > 0 && (
                   <button className="search-clear-guests" onClick={resetGuests}>
                     <FaTimes />
@@ -314,29 +312,29 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   )}
 
                   <GuestCounter
-                    label={<><FaUser /> {adultLbl}</>}
-                    description={age16Lbl}
+                    label={<><FaUser /> {searchContent.adults}</>}
+                    description={searchContent.ageGroups.adults}
                     value={adults}
                     onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
                     onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
                   />
                   <GuestCounter
-                    label={<><FaChild /> {childrenLbl}</>}
-                    description={age12Lbl}
+                    label={<><FaChild /> {searchContent.children}</>}
+                    description={searchContent.ageGroups.children}
                     value={children}
                     onIncrement={() => incrementGuests(children, setChildren)}
                     onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
                   />
                   <GuestCounter
-                    label={<><FaBaby /> {infantsLbl}</>}
-                    description={age0Lbl}
+                    label={<><FaBaby /> {searchContent.infants}</>}
+                    description={searchContent.ageGroups.infants}
                     value={infants}
                     onIncrement={() => incrementGuests(infants, setInfants)}
                     onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
                   />
                   <GuestCounter
-                    label={<><FaPaw /> {petLbl}</>}
-                    description={normalPetLbl}
+                    label={<><FaPaw /> {searchContent.pets}</>}
+                    description={searchContent.ageGroups.pets}
                     value={pets}
                     onIncrement={() => incrementGuests(pets, setPets)}
                     onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
@@ -355,7 +353,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                 />
                 {!startDate && !endDate && (
                   <span className='Calendar-placeholder'>
-                    {checkinoutLbl}
+                    {searchContent.checkInOut}
                   </span>
                 )}
                 <DatePicker
@@ -371,7 +369,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
               <button className="searchbar-button" type="button" onClick={handleSearch}>
                 <FaSearchLocation size={15}
                   className="search-icon" />
-                <span className="search-text">{searchLbl}</span>
+                <span className="search-text">{searchContent.search}</span>
               </button>
 
             </div>
