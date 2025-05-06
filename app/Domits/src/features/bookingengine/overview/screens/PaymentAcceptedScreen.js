@@ -3,7 +3,7 @@ import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {styles} from '../styles/PaymentStyles';
-import {GUEST_NEW_CONFIRMED_BOOKING_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
+import {GUEST_NEW_CONFIRMED_BOOKING_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 
 const PaymentAcceptedScreen = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;

@@ -1,6 +1,6 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {PAYMENT_ACCEPTED_SCREEN, PAYMENT_DECLINED_SCREEN} from "../../navigation/utils/NavigationNameConstants";
+import {PAYMENT_ACCEPTED_SCREEN, PAYMENT_DECLINED_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 
 const SimulateStripe = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;

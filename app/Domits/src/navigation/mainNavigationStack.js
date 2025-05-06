@@ -5,10 +5,10 @@ import Pay from '../header/pay';
 import GuestBookings from '../header/bookings';
 import Pocket from '../header/pocket';
 import PropertyDetails from '../screens/propertyDetailsScreen/screens/propertyDetailsScreen';
-import BookingProcess from '../features/bookingengine/screens/BookingEngineScreen';
-import SimulateStripe from '../features/bookingengine/simulateStripe';
-import PaymentAccepted from '../features/bookingengine/screens/PaymentAcceptedScreen';
-import PaymentDeclined from '../features/bookingengine/screens/PaymentDeclinedScreen';
+import BookingProcess from '../features/bookingengine/overview/screens/BookingEngineScreen';
+import SimulateStripe from '../features/bookingengine/overview/simulateStripe';
+import PaymentAccepted from '../features/bookingengine/overview/screens/PaymentAcceptedScreen';
+import PaymentDeclined from '../features/bookingengine/overview/screens/PaymentDeclinedScreen';
 import GuestNewConfirmedBooking from '../screens/guestdashboard/screens/GuestBookingsTab';
 import HostOnboardingLanding from '../screens/Landing';
 import GuestProfile from '../screens/profile/guestprofile/screens/GuestProfileTab';
@@ -59,7 +59,9 @@ import {
     PROPERTY_DETAILS_SCREEN,
     SCAN_SCREEN,
     SIMULATE_STRIPE_SCREEN,
+    STRIPE_PROCESS_SCREEN
 } from './utils/NavigationNameConstants';
+import StripePayment from "../features/bookingengine/stripe/screens/StripePayment";
 
 const Stack = createNativeStackNavigator();
 
@@ -122,6 +124,7 @@ function MainNavigationStack() {
 
             {/* Booking Engine */}
             <Stack.Screen name={BOOKING_PROCESS_SCREEN} component={BookingProcess}/>
+            <Stack.Screen name={STRIPE_PROCESS_SCREEN} component={StripePayment}/>
             <Stack.Screen name={SIMULATE_STRIPE_SCREEN} component={SimulateStripe}/>
             <Stack.Screen
                 name={PAYMENT_ACCEPTED_SCREEN}

@@ -1,7 +1,7 @@
 import {Modal, Pressable, Text, TouchableOpacity, View} from "react-native";
 import {styles} from "../styles/BookingEngineStyles";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import CalendarComponent from "../../calendar/CalendarComponent";
+import CalendarComponent from "../../../calendar/CalendarComponent";
 import React from "react";
 
 const CalendarView = ({

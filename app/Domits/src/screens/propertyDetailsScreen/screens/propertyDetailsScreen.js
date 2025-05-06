@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {styles} from '../styles/propertyDetailsStyles';
-import CalculateNumberOfNights from '../../../features/bookingengine/utils/CalculateNumberOfNights';
+import CalculateNumberOfNights from '../../../features/bookingengine/overview/utils/CalculateNumberOfNights';
 import ImagesView from '../views/imagesView';
 import LoadingScreen from '../../loadingscreen/screens/LoadingScreen';
 import PropertyMainDetailsView from '../views/PropertyMainDetailsView';

@@ -38,6 +38,7 @@ export const PROPERTY_DETAILS_SCREEN = "property-details";
 
 // Booking Engine
 export const BOOKING_PROCESS_SCREEN = "booking-process";
+export const STRIPE_PROCESS_SCREEN = "stripe-process"
 export const SIMULATE_STRIPE_SCREEN = "simulate-stripe";
 export const PAYMENT_ACCEPTED_SCREEN = "payment-accepted";
 export const PAYMENT_DECLINED_SCREEN = "payment-declined";

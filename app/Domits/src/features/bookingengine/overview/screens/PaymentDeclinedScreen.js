@@ -3,7 +3,7 @@ import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {styles} from '../styles/PaymentStyles';
-import {HOME_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
+import {HOME_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 
 const PaymentDeclinedScreen = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
