@@ -12,13 +12,13 @@ const AmenitiesView = ({property, toggleAmenitiesModal, showAmenitiesModal}) => 
                 <TranslatedText textToTranslate={'Amenities'}/>
             </Text>
             <View style={styles.amenities}>
-                <RenderAmenities propertyAmenities={property.amenities}/>
+                <RenderAmenities propertyAmenities={property.amenities} categoriesToSlice={3} />
             </View>
             <TouchableOpacity
                 onPress={toggleAmenitiesModal}
                 style={styles.ShowAllAmenitiesButton}>
                 <Text style={styles.ShowAllAmenitiesButtonText}>
-                    <TranslatedText textToTranslate={'Show all amenities'}/>
+                    <TranslatedText textToTranslate={'Show all amenities'} />
                 </Text>
             </TouchableOpacity>
             {showAmenitiesModal && (
