@@ -10,7 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Auth } from "aws-amplify";
 import {LanguageContext} from "../../context/LanguageContext.js";
-import content2 from "../../content/content2.json";
+import content from "../../content/content.json";
 
 
 function Header({ setSearchResults, setLoading }) {
@@ -33,7 +33,7 @@ function Header({ setSearchResults, setLoading }) {
       console.log(e.target.value);
   };
 
-  const components = content2[language].component;
+  const components = content[language].component;
 
 
   useEffect(() => {
