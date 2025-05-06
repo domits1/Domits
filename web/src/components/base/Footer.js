@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import logo from "../../images/logo.svg";
 import Appstorebadge from "../../images/assets/appstorebadge.svg";
 import Playstorebadge from "../../images/assets/playstorebadge.svg";
@@ -8,55 +8,60 @@ import instagramIcon from "../../images/icons/Instagram.jpg";
 import xIcon from "../../images/icons/x.png";
 import { ReactComponent as InstagramIcon } from "../../images/instagram.svg";
 import { Link } from "react-router-dom";
+import {LanguageContext} from "../../context/LanguageContext.js";
+import content from "../../content/content.json";
 
-const currentYear = new Date().getFullYear();
 
-const Footer = () => {
+const Footer = () => {  
+  const currentYear = new Date().getFullYear();
+  const {language} = useContext(LanguageContext);
+  const footerContent = content[language].component.footer;
+
   return (
     <footer className="main-footer">
       <div className="footer-content">
         {/* Navigation section */}
         <div className="footer-section">
-          <h4 className="footer-headers">Navigation</h4>
+          <h4 className="footer-headers">{footerContent.navigation.title}</h4>
           <ul className="footer-lists">
             <li>
               <Link to="/why-domits" className="footer-links">
-                Why Domits
+                {footerContent.navigation.whyDomits}
               </Link>
             </li>
             <li>
               <Link to="/how-it-works" className="footer-links">
-                How it works
+                {footerContent.navigation.howItWorks}
               </Link>
             </li>
             <li>
               <Link to="/release" className="footer-links">
-                Product Updates
+                {footerContent.navigation.productUpdates}
               </Link>
             </li>
             <li>
               <Link to="/about" className="footer-links">
-                About
+                {footerContent.navigation.about}
               </Link>
             </li>
             <li>
               <Link to="/security" className="footer-links">
-                Security
+                {footerContent.navigation.security}
               </Link>
             </li>
             <li>
               <Link to="/performance" className="footer-links">
-                Performance
+                {footerContent.navigation.performance}
               </Link>
             </li>
             <li>
               <Link to="/career" className="footer-links">
-                Careers
+                {footerContent.navigation.careers}
               </Link>
             </li>
             <li>
               <Link to="/contact" className="footer-links">
-                Contact
+                {footerContent.navigation.contact}
               </Link>
             </li>
             <br />
@@ -65,21 +70,21 @@ const Footer = () => {
 
         {/* Guests section */}
         <div className="footer-section">
-          <h4 className="footer-headers">Guests</h4>
+          <h4 className="footer-headers">{footerContent.guest.title}</h4>
           <ul className="footer-lists">
             <li>
               <Link to="/" className="footer-links">
-                Search and book
+                {footerContent.guest.searchAndBook}
               </Link>
             </li>
             <li>
               <Link to="/helpdesk-guest" className="footer-links">
-                Helpdesk for guests
+                {footerContent.guest.helpDeskForGuests}
               </Link>
             </li>
             <li>
               <Link to="/sustainability" className="footer-links">
-                Sustainability
+                {footerContent.guest.sustainability}
               </Link>
             </li>
           </ul>
@@ -87,21 +92,21 @@ const Footer = () => {
 
         {/* Hosts section */}
         <div className="footer-section">
-          <h4 className="footer-headers">Hosts</h4>
+          <h4 className="footer-headers">{footerContent.host.title}</h4>
           <ul className="footer-lists">
             <li>
               <Link to="/landing" className="footer-links">
-                Become a host
+                {footerContent.host.becomeHost}
               </Link>
             </li>
             <li>
               <Link to="/helpdesk-host" className="footer-links">
-                Helpdesk for hosts
+                {footerContent.host.helpDeskForHosts}
               </Link>
             </li>
             <li>
               <Link to="/sustainability" className="footer-links">
-                Sustainability
+                {footerContent.host.sustainability}
               </Link>
             </li>
           </ul>
@@ -109,21 +114,21 @@ const Footer = () => {
 
         {/* Network section */}
         <div className="footer-section borderline">
-          <h4 className="footer-headers">Network</h4>
+          <h4 className="footer-headers">{footerContent.network.title}</h4>
           <ul className="footer-lists">
-            <li className="footer-links">Guests</li>
-            <li className="footer-links">Hosts</li>
-            <li className="footer-links">Developers</li>
-            <li className="footer-links">Partners</li>
-            <li className="footer-links">Students</li>
-            <li className="footer-links">Startups</li>
+            <li className="footer-links">{footerContent.network.guests}</li>
+            <li className="footer-links">{footerContent.network.hosts}</li>
+            <li className="footer-links">{footerContent.network.developers}</li>
+            <li className="footer-links">{footerContent.network.partners}</li>
+            <li className="footer-links">{footerContent.network.students}</li>
+            <li className="footer-links">{footerContent.network.startups}</li>
           </ul>
         </div>
 
         {/* Socials section */}
         <div className="footer-section-grid">
           <div className="footer-section">
-            <h4 className="footer-headers">Socials</h4>
+            <h4 className="footer-headers">{footerContent.socials.title}</h4>
             <ul className="footer-lists">
               <li>
                 <a
@@ -162,7 +167,7 @@ const Footer = () => {
         {/* Office section */}
         <div className="footer-section-grid">
           <div className="footer-section">
-            <h4 className="footer-headers">Office</h4>
+            <h4 className="footer-headers">{footerContent.office.title}</h4>
             <ul className="footer-lists">
               <li className="footer-links">
                 <a
