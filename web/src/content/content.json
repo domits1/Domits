@@ -1,247 +1,334 @@
 {
     "en": {
-        "component" : {
-            "hostBtn": "Become a host",
-            "loginBtn": "Login",
-            "registerBtn": "Register",
-            "dashboardBtn": "Dashboard",
-            "calendarBtn": "Calendar",
-            "reservationBtn": "Reservations",
-            "messageBtn": "Messages",
-            "logoutBtn": "Log out",
-            "hello": "Hello",
-            "profileBtn": "Profile",
-            "paymentBtn": "Payments",
-            "settingBtn": "Settings",
-            "switchGuestBtn": "Switch to Guest",
-            "switchHostBtn": "Switch to Host",
-            "searchDestinationLbl": "Search Destination",
-            "houseLbl": "House",
-            "boatLbl": "Boat",
-            "camperLbl": "Camper",
-            "accommodationLbl": "Accommodation",
-            "checkinoutLbl": "Check in • out",
-            "guestLbl": "Guests",
-            "adultLbl": "Adults",
-            "childrenLbl": "Children",
-            "infantsLbl": "Infants",
-            "petLbl": "Pets",
-            "age16Lbl": "Ages 16 or above",
-            "age12Lbl": "Ages 2–16",
-            "age0Lbl": "Ages 0–2",
-            "normalPetLbl": "Normal sized pets",
-            "searchLbl": "Search"
+      "component": {
+        "user": {
+          "hello": "Hello",
+          "profile": "Profile",
+          "login": "Login",
+          "register": "Register",
+          "logout": "Log out",
+          "settings": "Settings",
+          "payments": "Payments",
+          "dashboard": "Dashboard",
+          "messages": "Messages",
+          "calendar": "Calendar",
+          "reservations": "Reservations",
+          "switchToGuest": "Switch to Guest",
+          "switchToHost": "Switch to Host",
+          "becomeHost": "Become a host"
         },
-
-        "homepage": {
-            "searchText": "Book holiday homes, boats and campers..",
-            "search-place-input": "Search Destination",
-            "searchTitle": "Accommodation",
-            "searchTitleGuest": "Guests",
-            "securePayments": "Secure payments",
-            "verifiedGuest": "Verified guests/hosts",
-            "quickPhone": "Quick phone support",
-            "qualityGuarantee": "Domits quality guarantee",
-            "subHead": "Trending accommodations this month",
-            "bestPrice": "Best price guarantee",
-            "bookingGuarantee": "Accommodation booking guarantee",
-            "stayGuarantee": "Guarantee of stay at the accommodation",
-            "subHead2": "Rent a boat for any occasion",
-            "subHead3": "Discover Beautiful Campers",
-            "bh": "Become a host",
-            "bhLi1": "List your property for free.",
-            "bhLi2": "Manage everything centrally.",
-            "bhLi3": "Increase your booking metrics.",
-            "listPropertyBtn": "List your property",
-            "placeText": "Countries in Europe",            
-            "placeText2": "Destinations in Asia",         
-            "placeText3": "Islands in the Caribbean",    
-            "placeText4": "Popular ski destinations",     
-            "placeText5": "Favorites by Season",   
-            "placeText6": "Great picks by interest",
-            "placeText7": "Accommodations by group",
-            "accommodationHead": "Need help? Join the community",
-            "communityGroup": "Domits has a travel community hosts, guests, and employees",
-            "hostBtn": "Become a host",
-            "searchBtn": "Search & book",
-            "springLbl": "Spring",
-            "summerLbl": "Summer",
-            "fallLbl": "Fall",
-            "winterLbl": "Winter",
-            "luxuryLbl": "Luxury",
-            "beachLbl": "Beach",
-            "lastminuteLbl": "Last minute",
-            "wellnessLbl": "Wellness",
-            "romanticLbl": "Romantic",
-            "adventureLbl": "Adventure",
-            "natureLbl": "Nature",
-            "cultureLbl": "Culture",
-            "culinaryLbl": "Culinary",
-            "vacationrentalLbl": "Vacation Rentals and Apartments",
-            "netherlandsLbl": "The Netherlands",
-            "franceLbl": "France",
-            "spainLbl": "Spain",
-            "italyLbl": "Italy",
-            "belgiumLbl": "Belgium",
-            "germanyLbl": "Germany",
-            "greeceLbl": "Greece",
-            "unitedkingdomLbl": "United Kingdom",
-            "portugalLbl": "Portugal",
-            "croatiaLbl": "Croatia",
-            "polandLbl": "Poland",
-            "austriaLbl": "Austria",
-            "czechLbl": "Czech",
-            "philippinesLbl": "Philippines",
-            "thailandLbl": "Thailand",
-            "indonesiaLbl": "Indonesia",
-            "indiaLbl": "India",
-            "malaysiaLbl": "Malaysia",
-            "vietnamLbl": "Vietnam",
-            "turkeyLbl": "Turkey",
-            "singaporeLbl": "Singapore",
-            "arubaLbl": "Aruba",
-            "bonaireLbl": "Bonaire",
-            "curacaoLbl": "Curacao",
-            "saintbarthelemyLbl": "Saint Barthelemy",
-            "costaricaLbl": "Costa Rica",
-            "dominicanrepublicLbl": "Dominican Republic",
-            "puertoricoLbl": "Puerto Rico",
-            "stmaartenLbl": "St. Maarten",
-            "frenchalpsLbl": "French Alps",
-            "switzerlandLbl": "Switzerland",
-            "chamonixmontblancLbl": "Chamonix-Mont-Blanc",
-            "blackforestLbl": "Black Forest",
-            "italytrentinoLbl": "Italy Trentino",
-            "friendsLbl": "Friends",
-            "couplesLbl": "Couples",
-            "familyChildFriendlyLbl": "Family & child friendly",
-            "soloLbl": "Solo",
-            "seniorLbl": "Senior",
-            "petFriendlyLbl": "Pet Friendly"
+        "search": {
+          "destination": "Search Destination",
+          "accommodation": "Accommodation",
+          "checkInOut": "Check in • out",
+          "guests": "Guests",
+          "adults": "Adults",
+          "children": "Children",
+          "infants": "Infants",
+          "pets": "Pets",
+          "search": "Search",
+          "house": "House",
+          "boat": "Boat",
+          "camper": "Camper",
+          "ageGroups": {
+            "adults": "Ages 16 or above",
+            "children": "Ages 2–16",
+            "infants": "Ages 0–2",
+            "pets": "Normal sized pets"
+          }
         }
-
+      },
+  
+      "homepage": {
+        "hero": {
+          "title": "Book holiday homes, boats and campers..",
+          "searchPlaceholder": "Search Destination",
+          "searchTitle": "Accommodation",
+          "searchGuests": "Guests"
+        },
+        "features": {
+          "securePayments": "Secure payments",
+          "verifiedGuest": "Verified guests/hosts",
+          "quickPhone": "Quick phone support",
+          "qualityGuarantee": "Domits quality guarantee",
+          "bestPrice": "Best price guarantee",
+          "bookingGuarantee": "Accommodation booking guarantee",
+          "stayGuarantee": "Guarantee of stay at the accommodation"
+        },
+        "sections": {
+          "trending": "Trending accommodations this month",
+          "rentBoat": "Rent a boat for any occasion",
+          "discoverCampers": "Discover Beautiful Campers",
+          "becomeHost": {
+            "title": "Become a host",
+            "points": [
+              "List your property for free.",
+              "Manage everything centrally.",
+              "Increase your booking metrics."
+            ],
+            "button": "List your property"
+          },
+          "community": {
+            "title": "Need help? Join the community",
+            "description": "Domits has a travel community hosts, guests, and employees",
+            "button": "Search & Book"
+          }
+        },
+        "filters": {
+          "season": {
+            "title": "Favorites by Season",
+            "spring": "Spring",
+            "summer": "Summer",
+            "fall": "Fall",
+            "winter": "Winter"
+          },
+          "interest": {
+            "title": "Great picks by interest",
+            "luxury": "Luxury",
+            "beach": "Beach",
+            "lastMinute": "Last minute",
+            "wellness": "Wellness",
+            "romantic": "Romantic",
+            "adventure": "Adventure",
+            "nature": "Nature",
+            "culture": "Culture",
+            "culinary": "Culinary"
+          },
+          "groups": {
+            "title": "Accommodations by group",
+            "description": "Vacation houses and apartments",
+            "friends": "Friends",
+            "couples": "Couples",
+            "family": "Family & child friendly",
+            "solo": "Solo",
+            "senior": "Senior",
+            "petFriendly": "Pet Friendly"
+          }
+        },
+        "destinations": {
+          "europe": {
+            "title": "Countries in Europe",
+            "countries": {
+              "netherlands": "The Netherlands",
+              "france": "France",
+              "spain": "Spain",
+              "italy": "Italy",
+              "belgium": "Belgium",
+              "germany": "Germany",
+              "greece": "Greece",
+              "unitedKingdom": "United Kingdom",
+              "portugal": "Portugal",
+              "croatia": "Croatia",
+              "poland": "Poland",
+              "austria": "Austria",
+              "czech": "Czech"
+            }
+          },
+          "asia": {
+            "title": "Destinations in Asia",
+            "countries": {
+              "philippines": "Philippines",
+              "thailand": "Thailand",
+              "indonesia": "Indonesia",
+              "india": "India",
+              "malaysia": "Malaysia",
+              "vietnam": "Vietnam",
+              "turkey": "Turkey",
+              "singapore": "Singapore"
+            }
+          },
+          "caribbean": {
+            "title": "Islands in the Caribbean",
+            "locations": {
+              "aruba": "Aruba",
+              "bonaire": "Bonaire",
+              "curacao": "Curacao",
+              "saintBarthelemy": "Saint Barthelemy",
+              "costaRica": "Costa Rica",
+              "dominicanRepublic": "Dominican Republic",
+              "puertoRico": "Puerto Rico",
+              "stMaarten": "St. Maarten"
+            }
+          },
+          "ski": {
+            "title": "Popular ski destinations",
+            "locations": {
+              "austria": "Austria", 
+              "frenchAlps": "French Alps",
+              "switzerland": "Switzerland",
+              "chamonix": "Chamonix-Mont-Blanc",
+              "blackForest": "Black Forest",
+              "italyTrentino": "Italy Trentino"
+            }
+          }
+        }
+      }
     },
 
-    "nl" : {
-        "component" : {
-            "hostBtn": "Word gastheer",
-            "loginBtn": "Inloggen",
-            "registerBtn": "Aanmelden",
-            "dashboardBtn": "Dashboard",
-            "calendarBtn": "Kalender",
-            "reservationBtn": "Reserveringen",
-            "messageBtn": "Berichten",
-            "logoutBtn": "Uitloggen",
-            "hello": "Hoi",
-            "profileBtn": "Profiel",
-            "paymentBtn": "Betalingen",
-            "settingBtn": "Instellingen",
-            "switchGuestBtn": "Overschakelen naar gast",
-            "switchHostBtn": "Overschakelen naar host",
-            "searchDestinationLbl": "Zoekbestemming",
-            "houseLbl": "Huis",
-            "boatLbl": "Boot",
-            "camperLbl": "Kampeerder",
-            "accommodationLbl": "Accommodatie",
-            "checkinoutLbl": "in • uitchecken",
-            "guestLbl": "Gasten",
-            "adultLbl": "Volwassenen",
-            "childrenLbl": "Kinderen",
-            "infantsLbl": "Baby's",
-            "petLbl": "Huisdieren",
-            "age16Lbl": "16 jaar of ouder",
-            "age12Lbl": "Leeftijd 2–16 jaar",
-            "age0Lbl": "Leeftijd 0–2 jaar",
-            "normalPetLbl": "Huisdieren van normale grootte",
-            "searchLbl": "Zoeken"
+    "nl": {
+      "component": {
+        "user": {
+          "hello": "Hallo",
+          "profile": "Profiel",
+          "login": "Login",
+          "register": "Register",
+          "logout": "Uitloggen",
+          "settings": "Instellingen",
+          "payments": "Betalingen",
+          "dashboard": "Dashboard",
+          "messages": "Berichten",
+          "calendar": "Kalender",
+          "reservations": "Reserveringen",
+          "switchToGuest": "Overschakelen naar gast",
+          "switchToHost": "Overschakelen naar host",
+          "becomeHost": "Word gastheer"
         },
-
-        "homepage": {
-            "searchText": "Boek vakantiehuizen, boten en campers..",
-            "search-place-input": "Zoekbestemming",
-            "searchTitle": "Accommodatie",
-            "searchTitleGuest": "Gasten",
-            "securePayments": "Veilige betalingen",
-            "verifiedGuest": "Geverifieerde gasten/gastheren",
-            "quickPhone": "Snelle telefonische ondersteuning",
-            "qualityGuarantee": "Domits kwaliteitsgarantie",
-            "subHead": "Populaire accommodaties deze maand",            
-            "bestPrice": "Beste prijsgarantie",
-            "bookingGuarantee": "Garantie voor accommodatieboeking",
-            "stayGuarantee": "Garantie op verblijf in de accommodatie",
-            "subHead2": "Huur een boot voor elke gelegenheid",
-            "subHead3": "Ontdek prachtige campers",
-            "bh": "Word gastheer",            
-            "bhLi1": "Vermeld uw eigendom gratis.",            
-            "bhLi2": "Beheer alles centraal.",
-            "bhLi3": "Verhoog uw boekingsstatistieken",
-            "listPropertyBtn": "Uw woning vermelden",
-            "placeText": "Landen in Europa",       
-            "placeText2": "Bestemmingen in Azië",   
-            "placeText3": "Eilanden in het Caribisch gebied", 
-            "placeText4": "Populaire skibestemmingen",  
-            "placeText5": "Favorieten per seizoen",
-            "placeText6": "Geweldige keuzes op basis van interesse",
-            "placeText7": "Accommodaties per groep",
-            "accommodationHead": "Hulp nodig? Word lid van de community",
-            "communityGroup": "Domits heeft een reiscommunity bestaande uit gastheren, gasten en medewerkers",
-            "hostBtn": "Word gastheer",
-            "searchBtn": "Zoeken & boeken",
-            "springLbl": "Lente",
-            "summerLbl": "Zomer",
-            "fallLbl": "Herfst",
-            "winterLbl": "Winter",
-            "luxuryLbl": "Luxe",
-            "beachLbl": "Strand",
-            "lastminuteLbl": "Laatste moment",
-            "wellnessLbl": "Welzijn",
-            "romanticLbl": "Romantisch",
-            "adventureLbl": "Avontuur",
-            "natureLbl": "Natuur",
-            "cultureLbl": "Cultuur",
-            "culinaryLbl": "Culinair",
-            "vacationrentalLbl": "Vakantiehuizen en appartementen",
-            "netherlandsLbl": "Nederland",
-            "franceLbl": "Frankrijk",
-            "spainLbl": "Spanje",
-            "italyLbl": "Italië",
-            "belgiumLbl": "België",
-            "germanyLbl": "Duitsland",
-            "greeceLbl": "Griekenland",
-            "unitedkingdomLbl": "Verenigd Koninkrijk",
-            "portugalLbl": "Portugal",
-            "croatiaLbl": "Kroatië",
-            "polandLbl": "Polen",
-            "austriaLbl": "Oostenrijk",
-            "czechLbl": "Tsjechisch",
-            "philippinesLbl": "Filippijnen",
-            "thailandLbl": "Thailand",
-            "indonesiaLbl": "Indonesië",
-            "indiaLbl": "Indië",
-            "malaysiaLbl": "Maleisië",
-            "vietnamLbl": "Vietnam",
-            "turkeyLbl": "Turkije",
-            "singaporeLbl": "Singapore",
-            "arubaLbl": "Aruba",
-            "bonaireLbl": "Bonaire",
-            "curacaoLbl": "Curacao",
-            "saintbarthelemyLbl": "Sint-Barthelemy",
-            "costaricaLbl": "Costa Rica",
-            "dominicanrepublicLbl": "Dominicaanse Republiek",
-            "puertoricoLbl": "Puerto Rico",
-            "stmaartenLbl": "Sint Maarten",
-            "frenchalpsLbl": "Franse Alpen",
-            "switzerlandLbl": "Zwitserland",
-            "chamonixmontblancLbl": "Chamonix-Mont-Blanc",
-            "blackforestLbl": "Zwarte Woud",
-            "italytrentinoLbl": "Italië Trentino",
-            "friendsLbl": "Vrienden",
-            "couplesLbl": "Koppels",
-            "familyChildFriendlyLbl": "Gezins- en kindvriendelijk",
-            "soloLbl": "Solo",
-            "seniorLbl": "Senior",
-            "petFriendlyLbl": "Huisdiervriendelijk"                                                                                                      
+        "search": {
+          "destination": "Zoekbestemming",
+          "accommodation": "Accommodatie",
+          "checkInOut": "In • uitchecken",
+          "guests": "Gasten",
+          "adults": "Volwassenen",
+          "children": "Kinderen",
+          "infants": "Baby's",
+          "pets": "Huisdieren",
+          "search": "Zoekopdracht",
+          "house": "Huis",
+          "boat": "Boot",
+          "camper": "Kampeerder",
+          "ageGroups": {
+            "adults": "16 jaar of ouder",
+            "children": "Leeftijd 2–16 jaar",
+            "infants": "Leeftijd 0–2",
+            "pets": "Huisdieren van normale grootte"
+          }
         }
-
+      },
+  
+      "homepage": {
+        "hero": {
+          "title": "Boek vakantiehuizen, boten en campers.",
+          "searchPlaceholder": "Zoekbestemming",
+          "searchTitle": "Accommodatie",
+          "searchGuests": "Gasten"
+        },
+        "features": {
+          "securePayments": "Veilige betalingen",
+          "verifiedGuest": "Geverifieerde gasten/gastheren",
+          "quickPhone": "Snelle telefonische ondersteuning",
+          "qualityGuarantee": "Domits kwaliteitsgarantie",
+          "bestPrice": "Beste prijsgarantie",
+          "bookingGuarantee": "Garantie voor accommodatieboeking",
+          "stayGuarantee": "Garantie op verblijf in de accommodatie"
+        },
+        "sections": {
+          "trending": "Populaire accommodaties deze maand",
+          "rentBoat": "Huur een boot voor elke gelegenheid",
+          "discoverCampers": "Ontdek prachtige campers",
+          "becomeHost": {
+            "title": "Word gastheer/gastvrouw",
+            "points": [
+              "Vermeld uw eigendom gratis.",
+              "Beheer alles centraal.",
+              "Verhoog uw boekingscijfers."
+            ],
+            "button": "Uw woning vermelden"
+          },
+          "community": {
+            "title": "Hulp nodig? Word lid van de community",
+            "description": "Domits heeft een reiscommunity bestaande uit gastheren, gasten en medewerkers",
+            "button": "Zoeken & boeken"
+          }
+        },
+        "filters": {
+          "season": {
+            "title": "Favorieten per seizoen",
+            "spring": "Lente",
+            "summer": "Zomer",
+            "fall": "Herfst",
+            "winter": "Winter"
+          },
+          "interest": {
+            "title": "Geweldige keuzes op basis van interesse",
+            "luxury": "Luxe",
+            "beach": "Strand",
+            "lastMinute": "Laatste moment",
+            "wellness": "Welzijn",
+            "romantic": "Romantisch",
+            "adventure": "Avontuur",
+            "nature": "Natuur",
+            "culture": "Cultuur",
+            "culinary": "Culinair"
+          },
+          "groups": {
+            "title": "Accommodaties per groep",
+            "description": "Vakantiehuizen en appartementen",
+            "friends": "Vrienden",
+            "couples": "Koppels",
+            "family": "Gezins- en kindvriendelijk",
+            "solo": "Solo",
+            "senior": "Senior",
+            "petFriendly": "Huisdiervriendelijk"
+          }
+        },
+        "destinations": {
+          "europe": {
+            "title": "Landen in Europa",
+            "countries": {
+              "netherlands": "Nederland",
+              "france": "Frankrijk",
+              "spain": "Spanje",
+              "italy": "Italië",
+              "belgium": "België",
+              "germany": "Duitsland",
+              "greece": "Griekenland",
+              "unitedKingdom": "Verenigd Koninkrijk",
+              "portugal": "Portugal",
+              "croatia": "Kroatië",
+              "poland": "Polen",
+              "austria": "Oostenrijk",
+              "czech": "Tsjechisch"
+            }
+          },
+          "asia": {
+            "title": "Bestemmingen in Azië",
+            "countries": {
+              "philippines": "Filippijnen",
+              "thailand": "Thailand",
+              "indonesia": "Indonesië",
+              "india": "Indië",
+              "malaysia": "Maleisië",
+              "vietnam": "Vietnam",
+              "turkey": "Turkije",
+              "singapore": "Singapore"
+            }
+          },
+          "caribbean": {
+            "title": "Eilanden in het Caribisch gebied",
+            "locations": {
+              "aruba": "Aruba",
+              "bonaire": "Bonaire",
+              "curacao": "Curacao",
+              "saintBarthelemy": "Sint-Barthelemy",
+              "costaRica": "Costa Rica",
+              "dominicanRepublic": "Dominicaanse Republiek",
+              "puertoRico": "Puerto Rico",
+              "stMaarten": "Sint Maarten"
+            }
+          },
+          "ski": {
+            "title": "Populaire skibestemmingen",
+            "locations": {
+              "austria": "Oostenrijk", 
+              "frenchAlps": "Franse Alpen",
+              "switzerland": "Zwitserland",
+              "chamonix": "Chamonix-Mont-Blanc",
+              "blackForest": "Zwarte Woud",
+              "italyTrentino": "Italië Trentino"
+            }
+          }
+        }
+      }
     }
-}
+  }
+  
