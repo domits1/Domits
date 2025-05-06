@@ -12,10 +12,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {LanguageContext} from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
+import de from "../../content/de.json";
 
 const contentByLanguage = {
   en,
   nl,
+  de,
 };
 
 export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {

@@ -12,10 +12,12 @@ import { Auth } from "aws-amplify";
 import {LanguageContext} from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
+import de from "../../content/de.json";
 
 const contentByLanguage = {
   en,
   nl,
+  de,
 };
 
 
@@ -271,6 +273,7 @@ function Header({ setSearchResults, setLoading }) {
               <select value={language} onChange={selectLanguage}>
                 <option value="en">English</option>
                 <option value="nl">Nederlands</option>
+                <option value="de">Duits</option>
               </select>
             </div>
             {!isLoggedIn ? (
