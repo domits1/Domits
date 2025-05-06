@@ -1,15 +1,16 @@
 import React, {useEffect, useState} from 'react';
-import {Image, Modal, Pressable, ScrollView, Text, ToastAndroid, TouchableOpacity, View,} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import {Image, ScrollView, Text, ToastAndroid, TouchableOpacity, View,} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {styles} from "../styles/BookingEngineStyles";
 import BookingEngineGuestsPopup from "../components/BookingEngineGuestsPopup";
 import CalculateNumberOfNights from "../utils/CalculateNumberOfNights";
 import {SIMULATE_STRIPE_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 import {S3URL} from "../../../store/constants";
-import SelectBookingDatesCalendarView
-    from "../../../screens/propertyDetailsScreen/views/SelectBookingDatesCalendarView";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import ToastMessage from "../../../components/ToastMessage";
+import Header from "../components/Header";
+import TitleView from "../views/TitleView";
+import CalendarView from "../views/CalendarView";
+import PricingView from "../views/PricingView";
 
 const BookingEngineScreen = ({navigation, route}) => {
     const [firstSelectedDate, setFirstSelectedDate] = useState(route.params.firstSelectedDate);
@@ -23,19 +24,24 @@ const BookingEngineScreen = ({navigation, route}) => {
     const [nights, setNights] = useState(0);
 
     useEffect(() => {
-        setNights(CalculateNumberOfNights(firstSelectedDate, lastSelectedDate))
+        setNights(CalculateNumberOfNights(firstSelectedDate, lastSelectedDate));
     }, [firstSelectedDate, lastSelectedDate]);
 
+    /**
+     * Confirms both the firstSelectedDate and lastSelectedDate
+     * are set.
+     * @Shows a toast message if this is not the case.
+     * @Navigates if both dates are set.
+     */
     const handleBookButton = () => {
         if (!firstSelectedDate || !lastSelectedDate) {
-            ToastAndroid.show(
+            ToastMessage(
                 'Please select a start and end date',
                 ToastAndroid.SHORT,
             );
         } else {
             navigation.navigate(SIMULATE_STRIPE_SCREEN, {
                 parsedAccommodation: property,
-                calculateCost: calculateCost(),
                 adults: adults,
                 kids: kids,
                 nights: nights,
@@ -43,95 +49,36 @@ const BookingEngineScreen = ({navigation, route}) => {
         }
     };
 
-    const toggleCalendarModal = () => {
-        setShowDatePopUp(!showDatePopUp);
-    };
-
-    const handleGuestAmountPopUp = () => {
-        setShowGuestAmountPopUp(!showGuestAmountPopUp);
-    };
-
-    /**
-     * Calculate the total cost of a booking.
-     * @returns {string} - Summed up costs of a booking.
-     */
-    const calculateCost = () => {
-        return (
-            (property.pricing.roomRate * nights) +
-            property.pricing.cleaning +
-            property.pricing.service
-        ).toFixed(2);
-    };
-
     return (
         <SafeAreaView style={{flex: 1}}>
             <ScrollView>
-                <View style={styles.header}>
-                    <Icon
-                        name="chevron-back-outline"
-                        size={30}
-                        color="black"
-                        onPress={() => navigation.goBack()}
-                    />
-                    <Text style={styles.headerText}>Detail</Text>
-                </View>
+                <Header navigation={navigation}/>
                 <Image source={{uri: `${S3URL}${propertyImages[0].key}`}} style={styles.image}/>
                 <View style={styles.detailsContainer}>
-                    <Text style={styles.title}>{property.property.title}</Text>
-                    <Text style={styles.description}>
-                        {property.property.description}
-                    </Text>
+                    <TitleView property={property}/>
                     <View style={styles.separator}/>
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Dates</Text>
-                        <Text style={styles.sectionContent}>
-                            {firstSelectedDate && lastSelectedDate
-                                ? `${firstSelectedDate} - ${lastSelectedDate}`
-                                : 'Choose dates'}
-                        </Text>
-                        <TouchableOpacity onPress={toggleCalendarModal}>
-                            <Text style={styles.linkText}>Change</Text>
-                        </TouchableOpacity>
-                    </View>
-                    {showDatePopUp && (
-                        <Modal
-                            animationType="fade"
-                            transparent={true}
-                            visible={showDatePopUp}
-                            onRequestClose={() => setShowDatePopUp(false)}
-                        >
-                            <Pressable onPress={() => setShowDatePopUp(false)} style={styles.modalOverlay}>
-                                <View style={styles.modalContent}>
-                                    <TouchableOpacity
-                                        style={styles.closeButton}
-                                        onPress={() => setShowDatePopUp(false)}>
-                                        <MaterialIcons name="close" size={24} color="#333" />
-                                    </TouchableOpacity>
-                                    <SelectBookingDatesCalendarView
-                                        firstDateSelected={firstSelectedDate}
-                                        lastDateSelected={lastSelectedDate}
-                                        onFirstDateSelected={setFirstSelectedDate}
-                                        onLastDateSelected={setLastSelectedDate}
-                                        property={property}
-                                        clickEnabled={true}
-                                    />
-                                </View>
-                            </Pressable>
-                        </Modal>
-                    )}
+                    <CalendarView
+                        showDatePopUp={showDatePopUp}
+                        setShowDatePopUp={setShowDatePopUp}
+                        firstSelectedDate={firstSelectedDate}
+                        lastSelectedDate={lastSelectedDate}
+                        setFirstSelectedDate={setFirstSelectedDate}
+                        setLastSelectedDate={setLastSelectedDate}
+                        property={property}
+                    />
                     <View style={styles.separator}/>
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Guests</Text>
                         <Text style={styles.sectionContent}>
                             {adults} adults - {kids} kids
                         </Text>
-                        <TouchableOpacity onPress={handleGuestAmountPopUp}>
+                        <TouchableOpacity onPress={() => setShowGuestAmountPopUp(!showGuestAmountPopUp)}>
                             <Text style={styles.linkText}>Change</Text>
                         </TouchableOpacity>
                     </View>
                     {showGuestAmountPopUp && (
                         <BookingEngineGuestsPopup
-                            onClose={handleGuestAmountPopUp}
+                            onClose={() => setShowGuestAmountPopUp(!showGuestAmountPopUp)}
                             maxGuests={property.generalDetails.find(detail => detail.detail === "Guests").value}
                             currentAdults={adults}
                             currentKids={kids}
@@ -140,27 +87,7 @@ const BookingEngineScreen = ({navigation, route}) => {
                         />
                     )}
                     <View style={styles.separator}/>
-                    <View style={styles.priceDetails}>
-                        <Text style={styles.sectionTitle}>Price details</Text>
-                        <Text style={styles.sectionContent}>
-                            {adults} adults - {kids} kids | {nights} nights
-                        </Text>
-
-                        <Text style={styles.priceDetailText}>
-                            €{Number(property.pricing.roomRate).toFixed(2)} night x {nights} nights - €
-                            {(property.pricing.roomRate * nights).toFixed(2)}
-                        </Text>
-
-                        <Text style={styles.priceDetailText}>
-                            Cleaning fee - €{property.pricing.cleaning.toFixed(2)}
-                        </Text>
-
-                        <Text style={styles.priceDetailText}>
-                            Domits service fee - €{property.pricing.service.toFixed(2)}
-                        </Text>
-
-                        <Text style={styles.total}>Total - €{calculateCost()}</Text>
-                    </View>
+                    <PricingView kids={kids} adults={adults} nights={nights} property={property} />
                 </View>
                 <TouchableOpacity onPress={handleBookButton} style={styles.bookButton}>
                     <Text style={styles.bookButtonText}>Confirm & Pay</Text>
