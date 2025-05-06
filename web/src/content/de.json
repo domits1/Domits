@@ -238,6 +238,33 @@
             "description": "Der finanzielle Geschäftsfluss bietet Möglichkeiten, grenzenlose Freiheit für Reisen & Alltag zu erleben, wie Unterkunftsdienste, Mobilitätsdienste, kommunale Dienste, lokale Services und vieles mehr..."
           }
         }
+      },
+      "about": {
+        "title": "Über Domits",
+        "description": "Maßgeschneiderte Reisepartnerschaften",
+        "mission": {
+          "title": "Mission: Reisen vereinfachen.",
+          "description": "In unserem wachsenden Traveltech-Netzwerk befinden sich junge Fachkräfte, Influencer, Traveltechs, Unternehmen und Partner. Es gibt außerdem Talentpools mit Studierenden aus IT, Data Science, Cybersecurity, KI, ML, Marketing und IT-Recht.",
+          "howItWorks": "wie Domits funktioniert",
+          "whyDomits": "Warum Domits wählen",
+          "readHere": "Hier mehr lesen über ",
+          "and": " und "
+        },
+        "vision": {
+          "title": "Vision",
+          "subTitle": "Eine gesunde, sichere und zukunftssichere Reisewelt",
+          "description": "Unsere Vision ist eine Reisewelt mit weniger Problemen in Bezug auf Gesundheit, Sicherheit und Zukunftssicherheit. Jetzt und in der Zukunft – das ist es, worauf Domits abzielt. Jeder berücksichtigt, wie Menschen mit diesen Problemen umgehen und welche Möglichkeiten sie haben. Gemeinsam mit Partnern arbeiten wir jeden Tag daran, Reisen zu vereinfachen."
+        },
+        "whatWeDo": {
+          "title": "Was wir tun",
+          "subTitle": "Gemeinsam mit Partnern bieten wir Reiselösungen",
+          "description": "Wir bauen unsere Reiseplattform auf, um Unterkünfte zu listen, zu suchen und zu buchen. Darüber hinaus bieten wir Traveltech-Entwicklung und Beratung für eine ausgewählte Gruppe von Partnern an. \nWir sind offen für Kooperationen durch Ventures und unsere ",
+          "travelInnovation": "Reiseinnovationslabore"
+        },
+        "footerText": {
+          "description": "Wir glauben, dass jeder Mitarbeiter ein bewusster Gründer sein kann. Und du darfst auf diese Weise denken und handeln. Ein bewusster Gründer ist ein Unternehmer, der Entscheidungen auf der Grundlage von Gesundheit, Sicherheit und Zukunftsfähigkeit trifft. Für sich selbst, die Organisation, Kunden, Partner und die Gesellschaft.",
+          "description2": "Du übernimmst Verantwortung. Entdeckst neue Wege, um Dinge zu erledigen. Und kommst mit neuen Ideen und Lösungen. Du möchtest gemeinsam schaffen, bauen und entwickeln. Wir sind immer auf der Suche nach neuen Gründern."
+        }
       }
-  }
+}
   

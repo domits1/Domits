@@ -238,6 +238,33 @@
               "description": "De financiële bedrijfsstroom biedt mogelijkheden om grenzeloze vrijheid te ervaren voor reizen & dagelijks leven, zoals accommodatiediensten, mobiliteitsdiensten, gemeentelijke diensten, lokale diensten en nog veel meer..."
             }
           }
+        },
+        "about": {
+          "title": "Over Domits",
+          "description": "Reispartners op maat",
+          "mission": {
+            "title": "Missie: Reizen vereenvoudigen.",
+            "description": "In ons groeiende traveltech-netwerk zitten jonge professionals, influencers, traveltechs, bedrijven en partners. Er zijn ook talentpools met studenten van IT, Data Science, Cybersecurity, AI, ML, Marketing en IT-recht.",
+            "howItWorks": "hoe Domits werkt",
+            "whyDomits": "Waarom kiezen voor Domits",
+            "readHere": "Lees hier meer over ",
+            "and": " en "
+          },
+          "vision": {
+            "title": "Visie",
+            "subTitle": "Een gezonde, veilige en toekomstbestendige reiswereld",
+            "description": "Onze visie is een reiswereld met minder problemen op het gebied van gezondheid, veiligheid en toekomstbestendigheid. Nu en in de toekomst, dat is waar Domits naar streeft. Iedereen houdt rekening met hoe mensen omgaan met deze problemen en hun mogelijkheden. Samen met partners werken we elke dag aan het vereenvoudigen van reizen."
+          },
+          "whatWeDo": {
+            "title": "Wat doen we",
+            "subTitle": "Samen met partners bieden we reistechnologische oplossingen",
+            "description": "We bouwen ons reisplatform om accommodaties te plaatsen, te zoeken en te boeken. Daarnaast bieden we traveltech-ontwikkeling en consultancy aan voor een selecte groep partners. \nWe staan open voor samenwerking via ventures en onze ",
+            "travelInnovation": "reistechnologie-labs"
+          },
+          "footerText": {
+            "description": "Wij geloven dat elke werknemer een bewuste oprichter kan zijn. En je mag op die manier denken en handelen. Een bewuste oprichter is een ondernemer die beslissingen neemt op basis van gezondheid, veiligheid en toekomstbestendigheid. Voor zichzelf, de organisatie, klanten, partners en de samenleving.",
+            "description2": "Je neemt verantwoordelijkheid. Ontdekt nieuwe manieren om dingen gedaan te krijgen. En komt met nieuwe ideeën en oplossingen. Je wilt samen creëren, bouwen en ontwikkelen. We zijn altijd op zoek naar nieuwe oprichters."
+          }
         } 
-  }
+}
   

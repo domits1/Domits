@@ -238,6 +238,33 @@
               "description": "The financial business flow provides opportunities to experience limitless freedom for travel & daily life, like accommodation services, mobility services, municipal services, local services, and many more..."
             }
           }
+        },
+        "about": {
+          "title": "About Domits",
+          "description": "Tailor-made travel partnerships",
+          "mission": {
+            "title": "Mission: Simplify travel.",
+            "description": "In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners. There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.",
+            "howItWorks": "how Domits works",
+            "whyDomits": "Why to choose Domits",
+            "readHere": "Read here more about ",
+            "and": " and "
+          },
+          "vision": {
+            "title": "Vision",
+            "subTitle": "A healthy, safe and future-proof travel world",
+            "description": "Our vision is a travel world that has less problems with health, safety and future-proofing. Now and in the future, that is what Domits has in mind. Everyone takes into account how people deal with these problems and their options. Together with partners, we work every day to simplify travel."
+          },
+          "whatWeDo": {
+            "title": "What we do",
+            "subTitle": "Together with partners we provide travel solutions",
+            "description": "We build our travel platform to list, search and book accommodations. Besides that we are providing traveltech development and consultancy for a select group of partners. \nWe are open to cooperate through ventures and our ",
+            "travelInnovation": "travel innovation labs"
+          },
+          "footerText": {
+            "description" : " We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.",
+            "description2": "You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders."
+          }
         }
-  }
+}
   
