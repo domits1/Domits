@@ -4,13 +4,19 @@ import family from "../Images/family.webp";
 import solo from "../Images/solo.webp";
 import senior from "../Images/senior.webp";
 import petFriendly from "../Images/petfriendly.webp";
-import content from "../../../content/content.json";
 import { useContext } from "react";
 import { LanguageContext } from "../../../context/LanguageContext.js";
+import en from "../../../content/en.json";
+import nl from "../../../content/nl.json";
+
+const contentByLanguage = {
+  en,
+  nl,
+};
 
 export const useCategories = () => {
     const { language } = useContext(LanguageContext);    
-    const groups = content[language].homepage.filters.groups;
+    const groups = contentByLanguage[language]?.homepage.filters.groups;
     
     return [
        {

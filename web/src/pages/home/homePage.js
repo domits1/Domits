@@ -64,7 +64,13 @@ import waterman from "../../pages/home/Images/waterman.webp";
 import sleutelvrouw from "../../pages/home/Images/sleutelvrouw.webp";
 import { FetchAllPropertyTypes, FetchPropertyType } from "../home/services/fetchProperties";
 import { LanguageContext } from "../../context/LanguageContext.js";
-import content from "../../content/content.json";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+
+const contentByLanguage = {
+  en,
+  nl,
+};
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -86,7 +92,7 @@ const Homepage = () => {
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
   const groups = useCategories();
   const {language} = useContext(LanguageContext);
-  const homePageContent = content[language].homepage;
+  const homePageContent = contentByLanguage[language]?.homepage;
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();

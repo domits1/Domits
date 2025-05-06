@@ -10,7 +10,13 @@ import Select from 'react-select';
 import '../../styles/sass/base/SearchBar.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {LanguageContext} from "../../context/LanguageContext.js";
-import content from "../../content/content.json";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+
+const contentByLanguage = {
+  en,
+  nl,
+};
 
 export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -32,7 +38,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   const [isBarActive, setIsBarActive] = useState(false);
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
   const {language} = useContext(LanguageContext);
-  const searchContent = content[language].component.search;
+  const searchContent = contentByLanguage[language]?.component.search;
 
   const handleButtonClick = (e) => {
     e.stopPropagation();

@@ -10,7 +10,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Auth } from "aws-amplify";
 import {LanguageContext} from "../../context/LanguageContext.js";
-import content from "../../content/content.json";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+
+const contentByLanguage = {
+  en,
+  nl,
+};
 
 
 function Header({ setSearchResults, setLoading }) {
@@ -33,7 +39,7 @@ function Header({ setSearchResults, setLoading }) {
       console.log(e.target.value);
   };
 
-  const components = content[language].component;
+  const components = contentByLanguage[language]?.component;
 
 
   useEffect(() => {
