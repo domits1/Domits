@@ -9,13 +9,18 @@ import xIcon from "../../images/icons/x.png";
 import { ReactComponent as InstagramIcon } from "../../images/instagram.svg";
 import { Link } from "react-router-dom";
 import {LanguageContext} from "../../context/LanguageContext.js";
-import content from "../../content/content.json";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
 
+const contentByLanguage = {
+  en,
+  nl,
+};
 
 const Footer = () => {  
   const currentYear = new Date().getFullYear();
   const {language} = useContext(LanguageContext);
-  const footerContent = content[language].component.footer;
+  const footerContent = contentByLanguage[language]?.component.footer;
 
   return (
     <footer className="main-footer">
