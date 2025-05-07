@@ -150,7 +150,6 @@ function GuestReviews() {
         <main className="page-body">
             <h2>Reviews</h2>
             <div className={styles.reviewGrid}>
-                <Pages />
                 <div className={styles.contentContainer}>
                     <div className={styles.reviewColumn}>
                         <div className={styles.reviewBox}>

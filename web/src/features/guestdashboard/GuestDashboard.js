@@ -164,7 +164,6 @@ const GuestDashboard = () => {
         <div className="guest-dashboard-page-body">
             <h2>Dashboard</h2>
             <div className="guest-dashboard-dashboards">
-                <Pages />
                 <div className="guest-dashboard-content">
                     <div className="guest-dashboard-personalInfoContent">
                         <div className="guest-dashboard-personal-info-header">

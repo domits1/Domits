@@ -352,7 +352,7 @@ const GuestDashboard = () => {
         <div className="page-body">
             <h2>Dashboard</h2>
             <div className="dashboards">
-                <Pages/>
+
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>

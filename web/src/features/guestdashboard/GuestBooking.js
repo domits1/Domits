@@ -150,7 +150,6 @@ const BookingGuestDashboard = () => {
     return (
         <div className="guest-booking-page-body">
             <div className='guest-booking-dashboards'>
-                <Pages/>
                 <div className="guest-booking-bookingContent">
                     <div className="guest-booking-bookingContentHeader">
                         <div className="guest-booking-filterContainer">

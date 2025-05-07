@@ -98,6 +98,8 @@ import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
+import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
+
 
 Modal.setAppElement("#root");
 
@@ -196,20 +198,13 @@ function App() {
 
                 {/* Guest Dashboard */}
                 <Route
-                  path="/guestdashboard/*"
-                  element={<GuestProtectedRoute>
-                    <Routes>
-                      <Route path="/" element={<GuestDashboard />} />
-                      <Route path="messages" element={<ListingDetails />} />
-                      <Route path="payments" element={<GuestPayments />} />
-                      <Route path="reviews" element={<GuestReviews />} />
-                      <Route path="bookings" element={<GuestBooking />} />
-                      <Route path="settings" element={<GuestSettings />} />
-                      <Route path="wishlist" element={<GuestWishlistPage />} />
-                      {/*<Route path="chat" element={<Chat/>}/>*/}
-                    </Routes>
-                  </GuestProtectedRoute>}
-                />
+                    path="/guestdashboard/*"
+                    element={
+                      <GuestProtectedRoute>
+                        <MainDashboardGuest />
+                      </GuestProtectedRoute>
+                    }
+                  />
 
                 {/* Host Management */}
                 {/* <Route path="/enlist" element={<HostOnboarding />} /> */}

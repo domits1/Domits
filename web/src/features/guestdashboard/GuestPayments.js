@@ -49,7 +49,6 @@ const PaymentsGuestDashboard = () => {
         <div className="page-body">
             <h2>Payments</h2>
             <div className='dashboards'>
-                <Pages />
             </div>
             <div className="content">
                 {loading ? (

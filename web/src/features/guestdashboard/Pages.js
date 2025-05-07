@@ -1,64 +1,46 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from 'react-router-dom';
-import DashboardIcon from '@mui/icons-material/DashboardCustomizeRounded';
-import BookingIcon from '@mui/icons-material/LanguageOutlined';
-import MessageIcon from '@mui/icons-material/QuestionAnswerOutlined';
-import WishlistIcon from '@mui/icons-material/Favorite';
-import Settings from '@mui/icons-material/Settings';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
+import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
+import BookingIcon from "@mui/icons-material/LanguageOutlined";
+import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
+import WishlistIcon from "@mui/icons-material/Favorite";
+import Settings from "@mui/icons-material/Settings";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
 
-function Pages() {
-  const [activeTab, setActiveTab] = useState();
+function Pages({ onNavigate }) {
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  useEffect(() => {
-    setActiveTab(location.pathname);
-  }, [location.pathname]);
-
-  const handleNavigation = (value) => {
-    navigate(value);
-    setIsOpen(false);
+  const toggleSidebar = () => {
+    setIsOpen((prev) => !prev);
   };
 
   return (
-    <main className="guest-pages">
-      <button className="hamburger-btn" onClick={() => setIsOpen(!isOpen)}>
+    <div className="guest-pages">
+      <button className="hamburger-btn" onClick={toggleSidebar}>
         {isOpen ? <CloseIcon /> : <MenuIcon />}
       </button>
 
-      {isOpen && (
+      <div className={`sidebar ${isOpen ? "open" : ""}`}>
+        <button className="close-sidebar-btn" onClick={toggleSidebar}>
+          <CloseIcon />
+        </button>
         <div className="menu-content">
-          <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Guest Options">
-            <option disabled>Guest Options</option>
-            <option value="/guestdashboard">Dashboard</option>
-            <option value="/guestdashboard/wishlist">Wishlist</option>
-            <option value="/guestdashboard/bookings">Bookings</option>
-            <option value="/guestdashboard/chat">Messages</option>
-            <option value="/guestdashboard/settings">Settings</option>
-          </select>
-
           <div className="dashboard-sections">
-            <MenuItem icon={<DashboardIcon />} path="/guestdashboard" label="Dashboard" activeTab={activeTab} handleNavigation={handleNavigation} />
-            <MenuItem icon={<BookingIcon />} path="/guestdashboard/bookings" label="Bookings" activeTab={activeTab} handleNavigation={handleNavigation} />
-            <MenuItem icon={<MessageIcon />} path="/guestdashboard/chat" label="Messages" activeTab={activeTab} handleNavigation={handleNavigation} />
-            <MenuItem icon={<WishlistIcon />} path="/guestdashboard/Wishlist" label="Wishlist" activeTab={activeTab} handleNavigation={handleNavigation} />
-            <MenuItem icon={<Settings />} path="/guestdashboard/settings" label="Settings" activeTab={activeTab} handleNavigation={handleNavigation} />
+            <MenuItem icon={<DashboardIcon />} label="Dashboard" handleNavigation={() => onNavigate("Dashboard")} />
+            <MenuItem icon={<BookingIcon />} label="Bookings" handleNavigation={() => onNavigate("Bookings")} />
+            <MenuItem icon={<MessageIcon />} label="Messages" handleNavigation={() => onNavigate("Messages")} />
+            <MenuItem icon={<WishlistIcon />} label="Wishlist" handleNavigation={() => onNavigate("Wishlist")} />
+            <MenuItem icon={<Settings />} label="Settings" handleNavigation={() => onNavigate("Settings")} />
           </div>
         </div>
-      )}
-    </main>
+      </div>
+    </div>
   );
 }
 
-function MenuItem({ icon, path, label, activeTab, handleNavigation }) {
+function MenuItem({ icon, label, handleNavigation }) {
   return (
-    <div
-      className={`wijzer ${activeTab === path ? "active" : ""}`}
-      onClick={() => handleNavigation(path)}
-    >
+    <div className="wijzer" onClick={handleNavigation}>
       <div className="icon">{icon}</div>
       <p>{label}</p>
     </div>
