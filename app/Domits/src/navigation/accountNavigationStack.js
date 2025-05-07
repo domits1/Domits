@@ -1,6 +1,6 @@
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import LoginScreen from "../screens/login/loginScreen";
-import Register from "../screens/login/screens/register";
+import Register from "../screens/login/register/screens/register";
 import HostProfileTab from "../screens/profile/hostprofile/HostProfileTab";
 import GuestProfileTab from "../screens/profile/guestprofile/screens/GuestProfileTab";
 import ConfirmEmail from "../screens/login/confirmMail";
@@ -37,7 +37,7 @@ import {
 import AppSettingsTab from "../screens/accounthome/features/appsettings/screens/AppSettingsTab";
 import GuestReviews from "../screens/guestdashboard/GuestReviewsTab";
 import GuestPaymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
-import HostOnboardingLanding from "../screens/Landing";
+import HostOnboardingLanding from "../screens/login/hostonboardinglanding/screens/Landing";
 import HostOnboarding from "../screens/apphostonboarding/OnboardingHost";
 import HostReviewPropertyChanges from "../screens/oldHostonboarding/ReviewAndSubmitScreen";
 import HostDashboard from "../features/hostdashboard/screens/HostDashboardTab";
