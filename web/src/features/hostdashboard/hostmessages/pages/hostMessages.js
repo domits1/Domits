@@ -3,7 +3,7 @@ import { WebSocketProvider } from "../context/webSocketContext";
 import Pages from "../../Pages";
 import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
-import ContactList from "../components/hostContactList";
+import HostContactList from "../components/hostContactList";
 import HostChatScreen from "../components/hostChatScreen";
 import HostBookingTab from "../components/hostBookingTab";
 import useFetchConnectionId from '../hooks/useFetchConnectionId';
@@ -18,13 +18,12 @@ const HostMessages = () => {
 };
 
 const HostMessagesContent = () => {
-    const { userId } = useAuth();
+    const { userId, accessToken } = useAuth();
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [selectedContactName, setSelectedContactName] = useState(null);
     const { connectionId } = useFetchConnectionId(selectedContactId) || { connectionId: null };
     const [message, setMessage] = useState([]);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-
     const isMobile = screenWidth < 768;
     const isTablet = screenWidth >= 768 && screenWidth < 1440;
 
@@ -50,12 +49,12 @@ const HostMessagesContent = () => {
     const showContactList =
         isMobile ? !selectedContactId :
             isTablet ? !selectedContactId :
-                    true;
+                true;
 
     const showChatScreen =
         isMobile ? !!selectedContactId :
             isTablet ? !!selectedContactId :
-                    true;
+                true;
 
 
     return (
@@ -69,7 +68,7 @@ const HostMessagesContent = () => {
                             </div>
 
                             {showContactList && (
-                                <ContactList
+                                <HostContactList
                                     userId={userId}
                                     onContactClick={handleContactClick}
                                     message={message}
@@ -94,6 +93,7 @@ const HostMessagesContent = () => {
                                 <div className="host-booking-tab-overlay">
                                     <HostBookingTab
                                         userId={userId}
+                                        accessToken={accessToken}
                                         contactId={selectedContactId}
                                         contactName={selectedContactName}
                                     />

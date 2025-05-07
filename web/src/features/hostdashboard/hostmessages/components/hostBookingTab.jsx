@@ -1,114 +1,44 @@
 import React from 'react';
 import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
-
-import { FaHome } from 'react-icons/fa';
+import BookingTab from '../../../../components/messages/BookingTab';
+import '../styles/sass/bookingtab/hostBookingTab.scss';
 
 const HostBookingTab = ({ userId, contactId }) => {
     const { bookingDetails, accommodation } = useFetchBookingDetails(userId, contactId);
-    const firstImage = accommodation?.Images?.image1;
-    const price = accommodation?.Rent * bookingDetails?.Nights;
+    const earnings = accommodation?.pricing?.roomRate * bookingDetails?.Nights;
+    const roomRate = accommodation?.pricing?.roomRate || 0;
+    const cleaning = accommodation?.pricing?.cleaning || 0;
+    const service = accommodation?.pricing?.service || 0;
+
+    const earningsComponent = (
+        <div className="earnings">
+            <h3>Earnings</h3>
+            <div className="rent-nights">
+                <h4>${roomRate} x {bookingDetails?.Nights} nights</h4>
+                <p>${earnings}</p>
+            </div>
+            <div className="cleaning-fee">
+                <h4>Cleaning fee</h4>
+                <p>${cleaning}</p>
+            </div>
+            <div className="service-fee">
+                <h4>Service fee</h4>
+                <p>${service}</p>
+            </div>
+            <div className="total-earnings">
+                <h4>Total $</h4>
+                <h4>${earnings + accommodation?.pricing?.cleaning + accommodation?.pricing?.service}</h4>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="host-booking-tab-container">
-            {bookingDetails && (
-                <div className="host-booking-tab">
-
-
-                    <div className="acco-image">
-                        {accommodation?.Title && <h3>{accommodation.Title}</h3>}
-                        {accommodation?.Images?.image1 && (
-                            <img
-                                src={firstImage}
-                                alt="Accommodation"
-                            />
-                        )}
-                    </div>
-                    {bookingDetails?.Status === 'Accepted' && (
-                        <div className="booking-status">
-                            <h3>Booking Successful</h3>
-                            <p>If you need to offer or request money for an issue from the trip, you can use Domits support.</p>
-                            <button className="report-problem-button">Report a Problem</button>
-                        </div>
-                    )}
-                    {bookingDetails?.Status === 'Pending' && (
-                        <div className="booking-status">
-                            <h3>Reservation Pending</h3>
-                            <p>Your booking request has been sent. We’ll notify you once it’s accepted or declined.</p>
-                        </div>
-                    )}
-                    {bookingDetails?.Status === 'Failed' && (
-                        <div className="booking-status">
-                            <h3>Reservation Failed</h3>
-                            <p>Something went wrong while processing your reservation. Please try again or contact support.</p>
-                            <button className="retry-booking-button">Try Again</button>
-                        </div>
-                    )}
-                    <div className="chekin-checkout">
-                        <div className="checkin">
-                            <h3>Check in</h3>
-                            <p>{bookingDetails?.StartDate}</p>
-                            <p>{accommodation?.CheckIn?.From}-{accommodation?.CheckIn?.Til}</p>
-                        </div>
-                        <div className="nights">
-                            <p>{bookingDetails?.Nights}</p>
-                            <p>nights</p>
-
-                        </div>
-                        <div className="checkout">
-                            <h3>Check out</h3>
-                            <p>{bookingDetails?.EndDate}</p>
-                            <p>{accommodation?.CheckOut?.From}-{accommodation?.CheckOut?.Til}</p>
-                        </div>
-                    </div>
-                    <div className="street">
-                        <div className="iconHouse"><FaHome />
-                        </div> <p>{accommodation?.Street}</p>
-                    </div>
-                    <div className="reservation-details">
-                        <h3>Reservation Details</h3>
-                        <div className="guest-amount">
-                            <h4>Amount of guests</h4>
-                            <p>{bookingDetails?.AmountOfGuest} Travelers</p>
-                        </div>
-
-
-                        <div className="booking-id">
-                            <p>Booking ID: {bookingDetails?.ID}</p>
-                        </div>
-
-                        <div className="house-rules">
-                            <h4>House rules</h4>
-                            <p>{accommodation?.Capacity} guests maximum</p>
-                            {!accommodation?.HouseRules.AllowPets && <p>No pets</p>}
-
-                            {!accommodation?.HouseRules.AllowParties && <p>No parties</p>}
-                            {!accommodation?.HouseRules.AllowSmoking && <p>No smoking</p>}
-
-                        </div>
-
-                    </div>
-                    <div className="earnings">
-                        <h3>Earnings</h3>
-                        <div className="rent-nights">
-                            <h4>${accommodation?.Rent} x {bookingDetails?.Nights} nights</h4>
-                            <p>${price}</p>
-                        </div>
-                        <div className="cleaning-fee">
-                            <h4>Cleaning fee</h4>
-                            <p>${accommodation?.CleaningFee}</p>
-                        </div>
-                        <div className="service-fee">
-                            <h4>Service fee</h4>
-                            <p>${accommodation?.ServiceFee}</p>
-                        </div>
-                        <div className="total-earnings">
-                            <h4>Total $</h4>
-                            <h4>${price + accommodation?.CleaningFee + accommodation?.ServiceFee}</h4>
-                        </div>
-                    </div>
-
-                </div>
-            )}
+        <div className="host-booking-tab">
+            <BookingTab
+                bookingDetails={bookingDetails}
+                accommodation={accommodation}
+                earningsComponent={earningsComponent}
+            />
         </div>
     );
 };

@@ -26,7 +26,7 @@
         opacity: 0;
     }
 
-    .guest-contact-list-toggle {
+    .contact-list-toggle {
         .contact-dropdown {
             padding: 0.4rem 0.6rem;
             font-size: 1rem;
@@ -49,7 +49,7 @@
     }
 
 
-    .guest-contact-list-list {
+    .contact-list-list {
         overflow-y: auto;
         scrollbar-width: none;
         list-style-type: none;
@@ -59,7 +59,7 @@
         flex-direction: column;
         gap: 10px;
 
-        .guest-contact-item-content {
+        .contact-item-content {
             display: flex;
             flex-direction: row;
             align-items: center;
@@ -77,12 +77,12 @@
 
             }
 
-            .guest-contact-item-image-container {
+            .contact-item-image-container {
                 position: relative;
                 width: 35%;
                 margin-right: 0.5rem;
 
-                .guest-contact-item-profile-image {
+                .contact-item-profile-image {
                     position: absolute;
                     width: 2rem;
                     height: 2rem;
@@ -93,7 +93,7 @@
                     left: -15%;
                 }
 
-                .guest-contact-item-accommodation-image {
+                .contact-item-accommodation-image {
                     display: block;
                     width: 5rem;
                     height: 2.5rem;
@@ -106,7 +106,7 @@
 
             }
 
-            .guest-contact-item-text-container {
+            .contact-item-text-container {
                 height: 100%;
                 width: 62.5%;
                 padding-right: 1rem;
@@ -116,7 +116,7 @@
                     padding: 0;
                 }
 
-                .guest-contact-item-full-name {
+                .contact-item-full-name {
                     font-family: 'Kanit', sans-serif;
                     font-weight: 400;
                     font-size: 1em;
@@ -127,7 +127,7 @@
 
                 }
 
-                .guest-contact-item-subtitle {
+                .contact-item-subtitle {
                     font-family: 'Kanit', sans-serif;
                     padding: 0;
                     margin: 0;
@@ -151,7 +151,7 @@
             &.no-accommodation-image {
 
 
-                .guest-contact-item-image-container {
+                .contact-item-image-container {
                     position: static;
                     height: 100%;
                     width: 35%;
@@ -171,7 +171,7 @@
                 }
 
 
-                .guest-contact-item-text-container {
+                .contact-item-text-container {
                     height: 100%;
                     width: 100%;
                     padding-right: 1rem;
@@ -181,7 +181,7 @@
                         padding: 0;
                     }
 
-                    .guest-contact-item-full-name {
+                    .contact-item-full-name {
                         font-family: 'Kanit', sans-serif;
                         font-weight: 400;
                         font-size: 1em;
@@ -192,7 +192,7 @@
 
                     }
 
-                    .guest-contact-item-subtitle {
+                    .contact-item-subtitle {
                         font-family: 'Kanit', sans-serif;
                         padding: 0;
                         margin: 0;

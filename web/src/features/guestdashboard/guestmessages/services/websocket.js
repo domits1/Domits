@@ -26,7 +26,6 @@ export const connectWebSocket = (userId, onMessageReceived) => {
     };
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log(data)
         onMessageReceived(data);
     };
     socket.onclose = () => {

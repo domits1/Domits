@@ -3,7 +3,7 @@ import { WebSocketProvider } from "../context/webSocketContext";
 import Pages from "../../Pages";
 import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
-import ContactList from "../components/guestContactList";
+import GuestContactList from "../components/guestContactList";
 import GuestChatScreen from "../components/guestChatScreen";
 import GuestBookingTab from "../components/guestBookingTab";
 import useFetchConnectionId from "../hooks/useFetchConnectionId";
@@ -69,7 +69,7 @@ const GuestMessagesContent = () => {
 
 
                             {showContactList && (
-                                <ContactList
+                                <GuestContactList
                                     userId={userId}
                                     onContactClick={handleContactClick}
                                     message={message}

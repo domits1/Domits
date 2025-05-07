@@ -4,17 +4,7 @@ import { FaImages } from 'react-icons/fa';
 
 const ChatUploadAttachment = ({ onUploadComplete }) => {
     const [files, setFiles] = useState([]);
-    const [uploadedFileUrl, setUploadedFileUrl] = useState(null);
-    const { uploadUrl, fileUrl, loading, error, getUploadUrl } = useUploadUrl();
-
-    useEffect(() => {
-        if (uploadUrl && fileUrl && fileUrl !== uploadedFileUrl) {
-        
-            setUploadedFileUrl(fileUrl);
-            onUploadComplete(fileUrl);
-        }
-    }, [uploadUrl, fileUrl, uploadedFileUrl, onUploadComplete]);
-
+    const { getUploadUrl } = useUploadUrl();
 
     const handleAddAttachment = async () => {
         document.getElementById('fileInput').click();
@@ -38,33 +28,38 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
     const handleAttachments = async (droppedFiles) => {
         const file = droppedFiles[0];
         const response = await getUploadUrl(file.type);
-    
+
         if (!response.uploadUrl || !response.fields) {
             console.error("Failed to retrieve an upload URL");
             return;
         }
-    
+
         const formData = new FormData();
         Object.entries(response.fields).forEach(([key, value]) => {
             formData.append(key, value);
         });
-        formData.append("file", file); 
-    
+        formData.append("file", file);
+
         const uploadResponse = await fetch(response.uploadUrl, {
             method: 'POST',
             body: formData,
         });
-    
+
         if (!uploadResponse.ok) {
             console.error("Failed to upload file", await uploadResponse.text());
         } else {
             console.log("File uploaded successfully:", response.fileUrl);
-            setFiles((prevFiles) => [...prevFiles, { name: file.name, type: file.type, url: response.fileUrl }]);
-            onUploadComplete(response.fileUrl); 
+            const uploadedFile = {
+                name: file.name,
+                type: file.type,
+                url: response.fileUrl,
+            };
+            setFiles((prev) => [...prev, uploadedFile]);
+            onUploadComplete(response.fileUrl);
         }
     };
-    
-    
+
+
 
     const handleFileInputChange = (e) => {
         const selectedFiles = e.target.files;
@@ -94,7 +89,7 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
             } else {
                 return (
                     <div key={index} className="file-preview">
-                       <a href={file.url} target="_blank" rel="noopener noreferrer">{file.name}</a>
+                        <a href={file.url} target="_blank" rel="noopener noreferrer">{file.name}</a>
                     </div>
                 );
             }
