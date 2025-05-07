@@ -208,7 +208,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
     }
   };
 
-  const handleKeyDown = (e) => {
+  function handleKeyDown(e){
     if (e.key === 'Enter') {
       handleSearch();
     }
