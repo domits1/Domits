@@ -237,7 +237,7 @@ function Header({ setSearchResults, setLoading }) {
         >
           <div className="logo">
             <a href="/home">
-              <img src={logo} width={150} alt="Logo" />
+              <img src={logo} width={200} alt="Logo" />
             </a>
           </div>
           {!hiddenSearchPaths.includes(location.pathname) && (
