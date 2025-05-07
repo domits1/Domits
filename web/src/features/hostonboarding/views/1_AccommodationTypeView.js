@@ -1,5 +1,6 @@
+// Filename: AccommodationTypeView.js
 import React from "react";
-import { useParams, useNavigate } from "react-router-dom"; // Add useNavigate here
+import { useNavigate } from "react-router-dom";
 import AccommodationTypeSelector from "../components/TypeSelector";
 import { useHandleAccommodationTypeProceed } from "../hooks/usePropertyType";
 import { accommodationData } from "../constants/propertyTypeData";
@@ -9,15 +10,14 @@ import "../styles/TypeSelector.scss";
 import "../styles/_base.scss";
 
 export default function AccommodationTypeView() {
-  const navigate = useNavigate();
   const selectedAccommodationType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.type,
   );
-  // Set the type
   const setAccommodationType = useFormStoreHostOnboarding(
     (state) => state.setAccommodationType,
   );
 
+  // Hook handles navigation based on selected type in store
   const handleProceed = useHandleAccommodationTypeProceed();
   const isProceedDisabled = !selectedAccommodationType;
 

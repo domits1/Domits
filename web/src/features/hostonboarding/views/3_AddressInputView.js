@@ -1,50 +1,42 @@
-import React, { useMemo } from "react";
-import AddressFormFields from "../components/AddressFormFields"; // Using relative path
-import OnboardingButton from "../components/OnboardingButton"; // Using relative path
-import InteractiveMap from "../components/InteractiveMap"; // Using relative path
-import countryList from "react-select-country-list";
-import "../styles/views/_addressInputView.scss";
+// Filename: AddressInputView.js
+import React, { useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
-import { useAddressInput } from "../hooks/usePropertyLocation";
-import { useBuilder } from "../../../context/propertyBuilderContext";
-// import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"; // Not directly used here anymore, hook handles it
+import AddressFormFields from "../components/AddressFormFields";
+import OnboardingButton from "../components/OnboardingButton";
+import InteractiveMap from "../components/InteractiveMap";
+import "../styles/views/_addressInputView.scss";
+import { useAddressInput } from "../hooks/usePropertyLocation"; // Hook updates the store
 
 function AddressInputView() {
-  const builder = useBuilder();
   const navigate = useNavigate();
-
-  // const form = useFormStoreHostOnboarding(); // Hook manages store access
   const { type: accommodationType } = useParams();
+
   const { details, handleLocationUpdate, handleManualInputChange } = useAddressInput(accommodationType);
 
-  const countryOptions = useMemo(() => {
-    return countryList()
-      .getData()
-      .map((country) => ({ value: country.label, label: country.label }));
-  }, []);
-
   const initialCoords = useMemo(() => {
-    if (details && typeof details.latitude === "number" && typeof details.longitude === "number") {
+    if (details?.latitude && details?.longitude) {
       return { latitude: details.latitude, longitude: details.longitude };
     }
     return null;
-  }, [details]);
+  }, [details?.latitude, details?.longitude]);
 
-  // Logic for disabling the Proceed button (remains the same, uses 'details' from hook)
   const isProceedDisabled = useMemo(() => {
-    const hasCoords = typeof details?.latitude === "number" && typeof details?.longitude === "number";
-    const hasBasicAddress = details?.country && details?.city;
-    if (accommodationType === "boat") {
-      return !(hasCoords || (hasBasicAddress && details.harbor));
+    const commonRequired = details?.country && details?.city;
+    if (!commonRequired) return true;
+
+    if (accommodationType === 'boat') {
+      return !details?.harbor;
     } else {
-      // Default case: Requires coordinates OR (basic address + street + zipCode)
-      // Adjusted check: street might contain house number now based on hook logic
-      const hasStreetAndZip = details?.street && details?.zipCode;
-      return !(hasCoords || (hasBasicAddress && hasStreetAndZip));
+      return !details?.street || !details?.zipCode;
     }
   }, [details, accommodationType]);
 
+  const handleProceed = useCallback(() => {
+    if (isProceedDisabled) return;
+
+    console.log("Proceeding from AddressInputView. Address details in store:", details);
+    navigate(`/hostonboarding/${accommodationType}/title`);
+  }, [navigate, accommodationType, details, isProceedDisabled]);
 
   return (
     <div className="onboarding-host-div">
@@ -52,67 +44,46 @@ function AddressInputView() {
         <h2 className="onboardingSectionTitle">Pinpoint your location on the map</h2>
         <p className="onboardingSectionSubtitle">
           Click on the map to set your location. We only share the exact address after booking.
-          {accommodationType === "boat" && " For boats, make sure the harbor name is correct below."}
+          {accommodationType === "boat" && " For boats, please verify the harbor name below."}
           {accommodationType === "camper" && " For campers, you can adjust the address if the parked location differs."}
         </p>
 
         <section className="acco-location-map">
           <InteractiveMap
             initialCoords={initialCoords}
-            onLocationSelect={handleLocationUpdate} // Passed handler from hook
+            onLocationSelect={handleLocationUpdate}
           />
         </section>
 
         <h3 className="address-details-heading">Verify or Adjust Address Details:</h3>
         <p className="onboardingSectionSubtitle address-form-details-subtitle">
-          The address below is based on the map selection. Please verify and adjust if needed.
+          The address below may update based on map selection. Please verify and adjust if needed.
+          {accommodationType === 'boat' && ' Ensure the Harbor Name is correct.'}
         </p>
-        {/* This duplicate section title/subtitle seems redundant */}
-        {/* <h2 className="onboardingSectionTitle">
-          {accommodationType === "boat"
-            ? "Where can we find your boat?"
-            : accommodationType === "camper"
-              ? "Where can we find your camper?"
-              : "Where can we find your accommodation?"}
-        </h2>
-        <p className="onboardingSectionSubtitle">We only share your address with guests after they have booked.</p> */}
 
         <section className="address-details-form-container">
           <div className="location-details-form">
             <AddressFormFields
-              type={accommodationType} // Pass type for conditional fields if needed
-              details={details || {}} // Pass details from hook/store
-              handleChange={handleManualInputChange} // Pass handler from hook
-              countryOptions={countryOptions} // Pass calculated country options
-              // REMOVE local state props: location={location} setLocation={setLocation}
-              // REMOVE incorrect countryOptions prop: countryOptions={options.map(...)}
+              type={accommodationType}
+              details={details || {}}
+              handleChange={handleManualInputChange}
             />
           </div>
         </section>
 
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath={`/hostonboarding/${accommodationType}`} btnText="Go back" />
           <OnboardingButton
-            onClick={() => {
-              console.log("Proceeding with address details:", details); // 'details' is from useAddressInput hook
-              // Ensure houseNumber is a number or undefined if empty/invalid
-              const houseNum = parseFloat(details.houseNumber);
-              builder.addLocation({
-                country: details.country || "",
-                city: details.city || "",
-                street: details.street || "",
-                houseNumber: !isNaN(houseNum) ? houseNum : undefined,
-                houseNumberExtension: details.houseNumberExtension || "",
-                postalCode: details.zipCode || details.postalCode || "",
-              });
-              console.log("Builder state after adding location:", builder);
-
-              // Debug: Check navigate right before calling it
-              console.log('Type of navigate in onClick:', typeof navigate, navigate);
-              navigate(`/hostonboarding/${accommodationType}/title`);
-            }}
+            routePath={
+              accommodationType === 'boat' ? '/hostonboarding/boat' :
+                accommodationType === 'camper' ? '/hostonboarding/camper' :
+                  '/hostonboarding/accommodation'
+            }
+            btnText="Go back"
+          />
+          <OnboardingButton
+            onClick={handleProceed}
             btnText="Proceed"
-            disabled={isProceedDisabled} // Disabled logic applied
+            disabled={isProceedDisabled}
           />
         </nav>
       </main>

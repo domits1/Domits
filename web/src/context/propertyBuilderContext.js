@@ -1,26 +1,14 @@
-import React, { createContext, useContext, useRef } from "react"; // Added useRef
+import { createContext, useContext } from "react";
 import { PropertyBuilder } from "../features/hostonboarding/stores/propertyBuilder";
 
-const BuilderContext = createContext(null);
+const BuilderContext = createContext(new PropertyBuilder());
 
-export const useBuilder = () => {
-  const context = useContext(BuilderContext);
-  if (context === null) {
-    throw new Error("useBuilder must be used within a BuilderProvider");
-  }
-  return context;
-};
+export const useBuilder = () => useContext(BuilderContext);
 
 export const BuilderProvider = ({ children }) => {
-
-  const builderRef = useRef(null);
-  if (builderRef.current === null) {
-    builderRef.current = new PropertyBuilder();
-    console.log("BuilderProvider: Created NEW PropertyBuilder instance");
-  }
-
+  const builder = new PropertyBuilder();
   return (
-    <BuilderContext.Provider value={builderRef.current}>
+    <BuilderContext.Provider value={builder}>
       {children}
     </BuilderContext.Provider>
   );

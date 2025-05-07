@@ -6,45 +6,53 @@ import ImagePreview from "../components/ImagePreview"; // Ensure correct path
 import usePhotos, { MAX_IMAGES, MIN_IMAGES_REQUIRED, ALLOWED_FORMATS, MIN_WIDTH, MIN_HEIGHT } from "../hooks/usePropertyPhotos"; // Import constants
 import OnboardingButton from "../components/OnboardingButton";
 import "../styles/onboardingHost.scss"; // Main import likely includes photosView.scss
-import { useBuilder } from '../../../context/propertyBuilderContext';
+// REMOVED: import { useBuilder } from '../../../context/propertyBuilderContext';
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"; // Import Zustand store hook
 
 function PropertyPhotosView() {
-  const builder = useBuilder();
+  // REMOVED: const builder = useBuilder();
   const navigate = useNavigate();
-
   const { type: accommodationType } = useParams();
+
+  // --- Zustand Store ---
+  // Get the action to update the 'images' object within accommodationDetails
+  const updateAccommodationDetail = useFormStoreHostOnboarding(
+    (state) => state.updateAccommodationDetail
+  );
+  // -------------------
+
+  // --- Local Photo Management Hook ---
   const {
-    images,
+    images, // This holds the array of base64 strings from the hook's local state
     handleFileChange,
     deleteImage,
     reorderImages,
-  } = usePhotos(); // Hook manages image data and core logic
+  } = usePhotos(); // Hook manages image data and core logic locally
+  // ---------------------------------
 
 
-
-  // --- Local UI State ---
-  const [draggedIndex, setDraggedIndex] = useState(null);         // Index of image being dragged for reorder
-  const [dragOverIndex, setDragOverIndex] = useState(null);       // Index of image being hovered over during reorder
-  const [isInitialDragOver, setIsInitialDragOver] = useState(false); // Dragging file over initial empty area
-  const [isGridDragOver, setIsGridDragOver] = useState(false);     // Dragging file over the image grid area
-
+  // --- Local UI State (Remains the same) ---
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [isInitialDragOver, setIsInitialDragOver] = useState(false);
+  const [isGridDragOver, setIsGridDragOver] = useState(false);
   const fileInputRef = useRef(null);
+  // --------------------------------------
 
-  // --- Reordering Handlers ---
+  // --- Reordering Handlers (Remain the same) ---
   const handleDragStartReorder = useCallback((index) => {
     setDraggedIndex(index);
-    setDragOverIndex(null); // Clear hover state when starting drag
+    setDragOverIndex(null);
   }, []);
 
   const handleDragEnterReorder = useCallback((index) => {
-    // Only set hover state if dragging *another* image over this one
     if (draggedIndex !== null && draggedIndex !== index) {
       setDragOverIndex(index);
     }
   }, [draggedIndex]);
 
   const handleDragLeaveReorder = useCallback(() => {
-    setDragOverIndex(null); // Clear hover state when leaving item
+    setDragOverIndex(null);
   }, []);
 
   const handleDropReorder = useCallback((targetIndex) => {
@@ -52,13 +60,14 @@ function PropertyPhotosView() {
       reorderImages(draggedIndex, targetIndex);
     }
     setDraggedIndex(null);
-    setDragOverIndex(null); // Clear states on drop
+    setDragOverIndex(null);
   }, [draggedIndex, reorderImages]);
+  // ------------------------------------------
 
-  // --- File Input Trigger ---
+  // --- File Input Trigger (Remains the same) ---
   const triggerFileInput = useCallback(() => {
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Clear previous selection for onChange to fire
+      fileInputRef.current.value = "";
       fileInputRef.current.click();
     }
   }, []);
@@ -68,40 +77,32 @@ function PropertyPhotosView() {
       handleFileChange(event.target.files);
     }
   }, [handleFileChange]);
+  // -------------------------------------------
 
-  // --- File Upload Drag/Drop Handlers ---
+  // --- File Upload Drag/Drop Handlers (Remain the same) ---
   const handleDropUpload = useCallback((event) => {
     event.preventDefault();
     setIsInitialDragOver(false);
     setIsGridDragOver(false);
-
-    // Check if files are being dropped
     if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
-      // Only handle if NOT currently reordering an image
       if (draggedIndex === null) {
         handleFileChange(event.dataTransfer.files);
       }
     } else {
-      // If not dropping files, it might be an internal reorder drop that missed target
-      // Or some other drag type - reset states just in case
       console.log("Dropped item was not a file.");
     }
-    // Reset reorder drag state in case a reorder drag was aborted by dropping here
     setDraggedIndex(null);
     setDragOverIndex(null);
-
-  }, [handleFileChange, draggedIndex]); // Added draggedIndex dependency
+  }, [handleFileChange, draggedIndex]);
 
   const handleInitialDragOver = useCallback((event) => {
-    event.preventDefault(); // Allow drop
-    // Check if the dragged item contains files
+    event.preventDefault();
     if (event.dataTransfer.types.includes('Files')) {
       setIsInitialDragOver(true);
     }
   }, []);
 
   const handleInitialDragLeave = useCallback((event) => {
-    // Check if relatedTarget indicates leaving the window/area entirely
     if (!event.currentTarget.contains(event.relatedTarget)) {
       setIsInitialDragOver(false);
     }
@@ -109,36 +110,66 @@ function PropertyPhotosView() {
 
   const handleGridDragEnter = useCallback((event) => {
     event.preventDefault();
-    // Check if files are being dragged over the grid and we're not reordering
     if (event.dataTransfer.types.includes('Files') && draggedIndex === null) {
       setIsGridDragOver(true);
     }
   }, [draggedIndex]);
 
   const handleGridDragOver = useCallback((event) => {
-    event.preventDefault(); // Keep allowing drop while over grid
-    // Optional: Could add throttling here if performance is an issue
+    event.preventDefault();
   }, []);
 
   const handleGridDragLeave = useCallback((event) => {
-    // Check if relatedTarget indicates leaving the grid area entirely
     if (!event.currentTarget.contains(event.relatedTarget)) {
       setIsGridDragOver(false);
     }
   }, []);
+  // -------------------------------------------------------
 
-  // --- Derived State & Validation ---
+  // --- Derived State & Validation (Remain the same) ---
   const isProceedDisabled = useMemo(() => images.length < MIN_IMAGES_REQUIRED, [images.length]);
   const showAddMore = useMemo(() => images.length > 0 && images.length < MAX_IMAGES, [images.length]);
+  // --------------------------------------------------
 
-  // --- JSX ---
+  // --- *** MODIFIED Proceed Logic *** ---
+  const handleProceed = useCallback(() => {
+    if (isProceedDisabled) return;
+
+    // 1. Transform the 'images' array (base64 strings from usePhotos hook)
+    //    into the object format required by the Zustand store ({ image1: '...', image2: '...' }).
+    const imagesObjectForStore = images.reduce((acc, base64String, index) => {
+      acc[`image${index + 1}`] = base64String;
+      return acc;
+    }, {});
+
+    // 2. Update the Zustand store using the existing updateAccommodationDetail action.
+    updateAccommodationDetail('images', imagesObjectForStore);
+    console.log("Updated Zustand store with images object:", imagesObjectForStore); // Log the saved object
+
+    // REMOVED: builder.addImages(images);
+    // REMOVED: console.log("Builder after adding images:", builder);
+
+    // 3. Navigate to the next step.
+    navigate(`/hostonboarding/${accommodationType}/pricing`);
+
+  }, [
+    navigate,
+    accommodationType,
+    images, // The array from usePhotos hook is the source
+    isProceedDisabled,
+    updateAccommodationDetail // Zustand action is now a dependency
+    // REMOVED: builder
+  ]);
+  // --- ****************************** ---
+
+  // --- JSX (largely remains the same, updates OnboardingButton onClick) ---
   return (
     <div className="onboarding-host-div">
-      <main className="photo-gallery-container"> {/* Use class for specific view styling */}
-        <h2 className="onboardingSectionTitle"> {/* Use generic class */}
+      <main className="photo-gallery-container">
+        <h2 className="onboardingSectionTitle">
           Property Photos ({images.length} / {MAX_IMAGES})
         </h2>
-        <p className="onboardingSectionSubtitle"> {/* Use generic class */}
+        <p className="onboardingSectionSubtitle">
           Add at least {MIN_IMAGES_REQUIRED} photos. The first photo is the cover. Drag to reorder.
         </p>
 
@@ -153,7 +184,7 @@ function PropertyPhotosView() {
         />
 
         {images.length === 0 ? (
-          // Initial Empty State
+          // Initial Empty State (unchanged)
           <div
             className={`drag-drop-area ${isInitialDragOver ? "drag-over" : ""}`}
             onClick={triggerFileInput}
@@ -165,41 +196,40 @@ function PropertyPhotosView() {
             aria-label="Upload photos area"
             onKeyPress={(e) => (e.key === 'Enter' || e.key === ' ') && triggerFileInput()}
           >
-            <span className="drag-drop-icon" aria-hidden="true">📤</span> {/* Replace with better icon */}
+            <span className="drag-drop-icon" aria-hidden="true">📤</span>
             <p>Drag & drop photos here</p>
             <p className="drag-drop-separator">or</p>
-            {/* Button is visually styled, but click handled by parent div */}
             <span className="upload-button-styled">Click to upload</span>
             <small className="drag-drop-info">Min {MIN_WIDTH}x{MIN_HEIGHT}px, Max {MAX_IMAGES} photos</small>
           </div>
         ) : (
-          // Images Present State
+          // Images Present State (unchanged)
           <section
             className={`photo-gallery-section ${isGridDragOver ? 'grid-drag-over-upload' : ''}`}
-            onDragEnter={handleGridDragEnter} // Detect file drag entering grid
-            onDragOver={handleGridDragOver}  // Detect file drag over grid
-            onDragLeave={handleGridDragLeave} // Detect file drag leaving grid
-            onDrop={handleDropUpload}      // Handle file drop ON THE GRID background
+            onDragEnter={handleGridDragEnter}
+            onDragOver={handleGridDragOver}
+            onDragLeave={handleGridDragLeave}
+            onDrop={handleDropUpload}
           >
-            <div className="photo-gallery-images"> {/* Grid container */}
+            <div className="photo-gallery-images">
               {images.map((image, index) => (
                 <ImagePreview
-                  key={image.substring(image.length - 20) + index} // Simple key strategy
+                  key={image.substring(image.length - 20) + index}
                   image={image}
                   index={index}
                   isDragging={draggedIndex === index}
-                  isDragOver={dragOverIndex === index} // Is another item being dragged over this one?
+                  isDragOver={dragOverIndex === index}
                   onDelete={deleteImage}
                   onDragStart={handleDragStartReorder}
-                  onDropReorder={handleDropReorder} // Handle drop for reordering *onto* an item
-                  onDragEnterReorder={handleDragEnterReorder} // Handle hover *over* an item during reorder
-                  onDragLeaveReorder={handleDragLeaveReorder} // Handle leaving hover *over* an item
+                  onDropReorder={handleDropReorder}
+                  onDragEnterReorder={handleDragEnterReorder}
+                  onDragLeaveReorder={handleDragLeaveReorder}
                 />
               ))}
 
               {showAddMore && (
                 <div
-                  className="image-preview-wrapper add-more-box" // Use wrapper class + specific class
+                  className="image-preview-wrapper add-more-box"
                   onClick={triggerFileInput}
                   role="button"
                   tabIndex={0}
@@ -214,23 +244,20 @@ function PropertyPhotosView() {
           </section>
         )}
 
-        <nav className="onboarding-button-box"> {/* Generic button container class */}
+        <nav className="onboarding-button-box">
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/rules`} // Adjust path if needed
+            routePath={`/hostonboarding/${accommodationType}/rules`}
             btnText="Go back"
             variant="secondary"
           />
+          {/* *** MODIFIED OnboardingButton onClick *** */}
           <OnboardingButton
-            onClick={() => {
-
-              builder.addImages(images);
-              console.log("Builder after adding images:", builder);
-              navigate(`/hostonboarding/${accommodationType}/pricing`);
-            }}
+            onClick={handleProceed} // Use the refactored handleProceed
             btnText="Proceed"
             variant="primary"
             disabled={isProceedDisabled}
           />
+          {/* ************************************** */}
         </nav>
 
         {isProceedDisabled && images.length > 0 && (

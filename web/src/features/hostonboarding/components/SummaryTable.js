@@ -1,198 +1,103 @@
-import React from "react"
+// --- START OF REFACTORED SummaryTable.js ---
+import React from "react";
 
-function SummaryTable({ data, type }) {
-  const formatBoolean = (value) => (value ? "Yes" : "No")
+function SummaryTable({ data, type }) { // Receive plain 'data' object and 'type'
 
-  const DateFormatterDD_MM_YYYY = (dateString) => {
-    if (!dateString) return "N/A"
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-GB") // Formats to dd/mm/yyyy
+  // Helper function to display value or "N/A" if null/undefined/empty string
+  const displayValue = (value) => (value !== null && value !== undefined && value !== '') ? value : "N/A";
+
+  // Helper for currency formatting
+  const displayCurrency = (value) => {
+    const num = parseFloat(value);
+    return typeof num === 'number' && !isNaN(num) ? `€${num.toFixed(2)}` : "N/A";
   }
 
-  // Extract startDate and endDate from selectedDates
-  const { startDate, endDate } = data.availability.selectedDates || {}
+  // Helper for boolean formatting
+  const displayBoolean = (value) => typeof value === 'boolean' ? (value ? "Yes" : "No") : "N/A";
 
-  // Format the date range
-  const dateRange =
-    startDate && endDate
-      ? `Available from ${DateFormatterDD_MM_YYYY(
-          startDate,
-        )} to ${DateFormatterDD_MM_YYYY(endDate)}`
-      : "Date range not set"
+  // Helper for date formatting (pass ISO string)
+  const DateFormatterDD_MM_YYYY = (isoString) => {
+    if (!isoString) return "N/A";
+    try {
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) return "Invalid Date";
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+      const year = date.getUTCFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return "Invalid Date";
+    }
+  };
+
+  // Format the availability date range using data properties
+  const dateRange = data.availabilityStartDate && data.availabilityEndDate
+    ? `Available from ${DateFormatterDD_MM_YYYY(data.availabilityStartDate)} to ${DateFormatterDD_MM_YYYY(data.availabilityEndDate)}`
+    : "Date range not set";
 
   return (
     <table className="accommodation-summary">
       <tbody>
-        <tr>
-          <th colSpan="2">
-            <h3>Property Details:</h3>
-          </th>
-        </tr>
-        <tr>
-          <td>Title:</td>
-          <td>{data.title || "N/A"}</td>
-        </tr>
-        <tr>
-          <td>Description:</td>
-          <td>{data.description || "N/A"}</td>
-        </tr>
-        <tr>
-          <td>Rent:</td>
-          <td>€{data.Rent || "N/A"}</td>
-        </tr>
-        <tr>
-          <td>Cleaning fee:</td>
-          <td>€{data.CleaningFee || "N/A"}</td>
-        </tr>
-        <tr>
-          <td>Accommodation Type:</td>
-          <td>{type || "N/A"}</td>
-        </tr>
-        <tr>
-          <td>Date Range:</td>
-          <td>{dateRange}</td>
-        </tr>
-        <tr>
-          <td>Number of Guests:</td>
-          <td>{data.accommodationCapacity.GuestAmount || 0}</td>
-        </tr>
+      <tr><th colSpan="2"><h3>Property Details:</h3></th></tr>
+      <tr><td>Title:</td><td>{displayValue(data.title)}</td></tr>
+      <tr><td>Description:</td><td>{displayValue(data.description)}</td></tr>
+      <tr><td>Rent:</td><td>{displayCurrency(data.rent)}</td></tr>
+      <tr><td>Cleaning fee:</td><td>{displayCurrency(data.cleaningFee)}</td></tr>
+      <tr><td>Service fee:</td><td>{displayCurrency(data.serviceFee)}</td></tr>
+      <tr><td>Accommodation Type:</td><td>{displayValue(type)}</td></tr> {/* Use type prop */}
+      <tr><td>Date Range:</td><td>{dateRange}</td></tr>
+      <tr><td>Number of Guests:</td><td>{displayValue(data.guestAmount)}</td></tr>
 
-        {/* Render details based on type */}
-        {type === "House" && (
-          <>
-            <tr>
-              <td>Number of Bedrooms:</td>
-              <td>{data.accommodationCapacity.Bedrooms || 0}</td>
-            </tr>
-            <tr>
-              <td>Number of Bathrooms:</td>
-              <td>{data.accommodationCapacity.Bathrooms || 0}</td>
-            </tr>
-            <tr>
-              <td>Country:</td>
-              <td>{data.address.country || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>City:</td>
-              <td>{data.address.city || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>Postal Code:</td>
-              <td>{data.address.zipCode || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>Street + House Nr.:</td>
-              <td>{data.address.street || "N/A"}</td>
-            </tr>
-          </>
-        )}
+      {/* Render details based on type prop */}
+      {/* Using direct access like data.bedrooms, data.country etc. */}
+      {["House", "Villa", "Apartment", "Cottage"].includes(type) && (
+        <>
+          <tr><td>Number of Bedrooms:</td><td>{displayValue(data.bedrooms)}</td></tr>
+          <tr><td>Number of Bathrooms:</td><td>{displayValue(data.bathrooms)}</td></tr>
+          <tr><td>Number of Beds:</td><td>{displayValue(data.beds)}</td></tr>
+          <tr><td>Country:</td><td>{displayValue(data.country)}</td></tr>
+          <tr><td>City:</td><td>{displayValue(data.city)}</td></tr>
+          <tr><td>Street:</td><td>{displayValue(data.street)}</td></tr>
+          <tr><td>House Nr:</td><td>{displayValue(data.houseNumber)}{data.houseNumberExtension ? ` ${data.houseNumberExtension}`: ''}</td></tr>
+          <tr><td>Postal Code:</td><td>{displayValue(data.postalCode)}</td></tr>
+        </>
+      )}
 
-        {type === "Camper" && (
-          <>
-            <tr>
-              <td>Country:</td>
-              <td>{data.camperDetails.country || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>City:</td>
-              <td>{data.camperDetails.city || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>Postal Code:</td>
-              <td>{data.camperDetails.zipCode || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>Street + House Nr.:</td>
-              <td>{data.camperDetails.street || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>Height:</td>
-              <td>{data.camperSpecifications.Height || "N/A"} meters</td>
-            </tr>
-            <tr>
-              <td>Length:</td>
-              <td>{data.camperSpecifications.Length || "N/A"} meters</td>
-            </tr>
-            <tr>
-              <td>Fuel Usage:</td>
-              <td>{data.camperSpecifications.FuelTank || "N/A"} Liters/hour</td>
-            </tr>
-            <tr>
-              <td>Transmission:</td>
-              <td>{data.camperSpecifications.Transmission || "N/A"}</td>
-            </tr>
-          </>
-        )}
+      {type === "Camper" && (
+        <>
+          <tr><td>Country:</td><td>{displayValue(data.country)}</td></tr>
+          <tr><td>City:</td><td>{displayValue(data.city)}</td></tr>
+          <tr><td>Street:</td><td>{displayValue(data.street)}</td></tr>
+          <tr><td>Postal Code:</td><td>{displayValue(data.postalCode)}</td></tr>
+          {/* Specifications are shown in SpecificationsTable */}
+        </>
+      )}
 
-        {type === "Boat" && (
-          <>
-            <tr>
-              <td>Country:</td>
-              <td>{data.boatDetails.country || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>City:</td>
-              <td>{data.boatDetails.city || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>Number of Cabins:</td>
-              <td>{data.accommodationCapacity.Cabins || 0}</td>
-            </tr>
-            <tr>
-              <td>Fuel Usage:</td>
-              <td>{data.boatSpecifications.FuelTank || "N/A"} Liters/hour</td>
-            </tr>
-            <tr>
-              <td>Top Speed:</td>
-              <td>{data.boatSpecifications.Speed || "N/A"} km/h</td>
-            </tr>
-            <tr>
-              <td>Length:</td>
-              <td>{data.boatSpecifications.Length || "N/A"} meters</td>
-            </tr>
-          </>
-        )}
+      {type === "Boat" && (
+        <>
+          <tr><td>Number of Cabins:</td><td>{displayValue(data.cabins)}</td></tr>
+          <tr><td>Country:</td><td>{displayValue(data.country)}</td></tr>
+          <tr><td>City:</td><td>{displayValue(data.city)}</td></tr>
+          <tr><td>Harbor:</td><td>{displayValue(data.harbor)}</td></tr>
+          {/* Specifications are shown in SpecificationsTable */}
+        </>
+      )}
 
-        {/* Common Fields */}
-        <tr>
-          <td>Smoking:</td>
-          <td>{formatBoolean(data.houseRules.AllowSmoking)}</td>
-        </tr>
-        <tr>
-          <td>Pets:</td>
-          <td>{formatBoolean(data.houseRules.AllowPets)}</td>
-        </tr>
-        <tr>
-          <td>Parties/events:</td>
-          <td>{formatBoolean(data.houseRules.AllowParties)}</td>
-        </tr>
-        <tr>
-          <td>Checkin:</td>
-          <td>
-            From: {data.checkIn.CheckIn.from || "N/A"} Til:{" "}
-            {data.checkIn.CheckIn.till || "N/A"}
-          </td>
-        </tr>
-        <tr>
-          <td>Checkout:</td>
-          <td>
-            From: {data.checkIn.CheckOut.from || "N/A"} Til:{" "}
-            {data.checkIn.CheckOut.till || "N/A"}
-          </td>
-        </tr>
-        {/* Display Selected Amenities */}
-        {data.selectedAmenities &&
-          Object.entries(data.selectedAmenities).map(
-            ([category, amenities]) => (
-              <tr key={category}>
-                <td>{category}:</td>
-                <td>{amenities.length > 0 ? amenities.join(", ") : "N/A"}</td>
-              </tr>
-            ),
-          )}
+      {/* Common Fields */}
+      <tr><th colSpan="2"><h3>Rules & Check-in:</h3></th></tr>
+      <tr><td>Smoking Allowed:</td><td>{displayBoolean(data.smokingAllowed)}</td></tr>
+      <tr><td>Pets Allowed:</td><td>{displayBoolean(data.petsAllowed)}</td></tr>
+      <tr><td>Parties/Events Allowed:</td><td>{displayBoolean(data.partiesEventsAllowed)}</td></tr>
+      <tr><td>Check-in Time:</td><td>From: {displayValue(data.checkInFrom)} Till: {displayValue(data.checkInTill)}</td></tr>
+      <tr><td>Check-out Time:</td><td>From: {displayValue(data.checkOutFrom)} Till: {displayValue(data.checkOutTill)}</td></tr>
+
+      <tr><th colSpan="2"><h3>Amenities:</h3></th></tr>
+      {/* Ensure amenities string isn't empty before displaying */}
+      <tr><td colSpan="2">{displayValue(data.amenities) === "N/A" ? "N/A" : data.amenities}</td></tr>
       </tbody>
     </table>
-  )
+  );
 }
 
-export default SummaryTable
+export default SummaryTable;
+// --- END OF REFACTORED SummaryTable.js ---

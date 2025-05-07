@@ -1,129 +1,156 @@
-import React, { useEffect, useCallback } from "react";
+// File: input_file_32.js (PropertyRateView)
+import React, { useEffect, useCallback, useMemo } from "react"; // Added useMemo
 import { useParams, useNavigate } from "react-router-dom";
 import PricingRow from "../components/PricingRow"; // Ensure correct path
 import { usePricing } from "../hooks/useProperyRate"; // Ensure correct path
 import OnboardingButton from "../components/OnboardingButton"; // Ensure correct path
 import "../styles/onboardingHost.scss"; // Ensure this imports pricing specific styles
-import { useBuilder } from "../../../context/propertyBuilderContext";
+// REMOVED: import { useBuilder } from "../../../context/propertyBuilderContext";
+// Import toast for potential user feedback, although not strictly needed if validation prevents proceed
+import { toast } from "react-toastify";
 
 function PropertyRateView() {
-  const builder = useBuilder();
+  // REMOVED: const builder = useBuilder();
   const navigate = useNavigate();
-
   const { type: accommodationType } = useParams();
+
+  // --- State and Actions from Hook (Unchanged) ---
   const { pricing, updatePricing, calculateServiceFee } = usePricing();
+  // ---------------------------------------------
 
-  // Ensure pricing object and nested properties exist to prevent errors
-  const baseRate = pricing?.Rent ?? ""; // Use empty string as default for input
+  // --- Derived State for Inputs/Display (Unchanged) ---
+  const baseRate = pricing?.Rent ?? "";
   const cleaningFee = pricing?.CleaningFee ?? "";
-  const serviceFee = pricing?.ServiceFee ?? 0; // Default to 0 for calculation
-  const showCleaningFeeRow = pricing?.Features?.ExtraServices?.includes(
-    "Cleaning service (add service fee manually)" // Check optional chaining
-  );
+  const serviceFee = pricing?.ServiceFee ?? 0;
+  const showCleaningFeeRow = useMemo(() => pricing?.Features?.ExtraServices?.includes(
+    "Cleaning service (add service fee manually)"
+  ), [pricing?.Features?.ExtraServices]);
+  // ---------------------------------------------
 
-  // Memoize the update handlers using useCallback
+  // --- Memoized Input Handlers (Unchanged) ---
   const handleBaseRateChange = useCallback((newValue) => {
-    // Validate/parse within the handler or in the store action
     updatePricing("Rent", newValue);
   }, [updatePricing]);
 
   const handleCleaningFeeChange = useCallback((newValue) => {
-    // Validate/parse within the handler or in the store action
     updatePricing("CleaningFee", newValue);
   }, [updatePricing]);
+  // -----------------------------------------
 
-
+  // --- Effect for Service Fee Calculation (Unchanged) ---
   useEffect(() => {
-    // Calculate service fee whenever relevant inputs change
-    // Pass values directly to avoid dependency on the whole pricing object if possible
-    // This depends on how calculateServiceFee is implemented in the store
-    calculateServiceFee(/* Optionally pass baseRate, cleaningFee if needed */);
-  }, [baseRate, cleaningFee, calculateServiceFee]); // Dependencies based on calculation inputs
+    calculateServiceFee();
+  }, [baseRate, cleaningFee, calculateServiceFee]);
+  // -----------------------------------------------
 
-  // Calculate totals safely, ensuring values are numbers
-  const numBaseRate = parseFloat(baseRate) || 0;
-  const numCleaningFee = parseFloat(cleaningFee) || 0;
-  const numServiceFee = parseFloat(serviceFee) || 0;
+  // --- Calculations for Readonly Fields (Unchanged) ---
+  const numBaseRate = useMemo(() => parseFloat(baseRate) || 0, [baseRate]);
+  const numCleaningFee = useMemo(() => parseFloat(cleaningFee) || 0, [cleaningFee]);
+  const numServiceFee = useMemo(() => parseFloat(serviceFee) || 0, [serviceFee]);
+  const totalGuestPrice = useMemo(() => numBaseRate + numCleaningFee + numServiceFee, [numBaseRate, numCleaningFee, numServiceFee]);
+  const totalEarnings = useMemo(() => numBaseRate + numCleaningFee, [numBaseRate, numCleaningFee]);
+  // -----------------------------------------
 
-  const totalGuestPrice = numBaseRate + numCleaningFee + numServiceFee;
-  const totalEarnings = numBaseRate + numCleaningFee;
+  // --- Disabled State (Unchanged) ---
+  const isProceedDisabled = useMemo(() => numBaseRate <= 0, [numBaseRate]);
+  // -----------------------------
 
-  // Determine if proceed should be disabled (e.g., base rate not set)
-  const isProceedDisabled = !numBaseRate || numBaseRate <= 0;
+  // --- *** MODIFIED Proceed Logic *** ---
+  const handleProceed = useCallback(() => {
+    if (isProceedDisabled) {
+      // Optional: Add user feedback if needed
+      // toast.error("Please enter a valid base rate greater than 0.");
+      return;
+    }
 
+    // Data (Rent, CleaningFee, ServiceFee) is already updated in the Zustand store
+    // by handleBaseRateChange, handleCleaningFeeChange, and calculateServiceFee effect.
+    // No need to prepare data or call builder.
+
+    // REMOVED: const pricingData = { /* ... */ };
+    // REMOVED: builder.addPricing(pricingData);
+    // REMOVED: console.log("Builder after adding pricing:", builder);
+
+    // Log the current pricing state from the store for confirmation
+    console.log("Proceeding from PropertyRateView. Pricing data in store:", {
+      Rent: numBaseRate, // Use the calculated numeric value for logging
+      CleaningFee: numCleaningFee,
+      ServiceFee: numServiceFee
+    });
+
+    // Just navigate to the next step
+    navigate(`/hostonboarding/${accommodationType}/availability`);
+
+  }, [
+    navigate,
+    accommodationType,
+    numBaseRate, // Keep for logging and validation check
+    numCleaningFee, // Keep for logging
+    numServiceFee, // Keep for logging
+    isProceedDisabled
+    // REMOVED: builder dependency
+  ]); // Dependencies updated
+  // --- **************************** ---
+
+  // --- JSX (Unchanged) ---
   return (
-    // Add a specific class for this view if needed for styling overrides
     <div className="onboarding-host-div property-rate-view">
-      {/* Use main for semantic content area */}
-      <main className="rate-container page-body"> {/* Use more specific class + generic */}
+      <main className="rate-container page-body">
         <h2 className="onboardingSectionTitle">Set Your Rate</h2>
 
-        {/* Section for guest price breakdown */}
+        {/* Guest Price Section */}
         <section className="pricing-details guest-pricing">
           <h3 className="pricing-section-title">Guest Price Breakdown</h3>
           <PricingRow
-            label="Base rate per night"
+            label="Base rate per night*"
             value={baseRate}
-            onChange={handleBaseRateChange} // Pass the specific handler
+            onChange={handleBaseRateChange}
             placeholder="e.g. 100"
           />
           {showCleaningFeeRow && (
             <PricingRow
               label="Cleaning fee"
               value={cleaningFee}
-              onChange={handleCleaningFeeChange} // Pass the specific handler
+              onChange={handleCleaningFeeChange}
               placeholder="e.g. 25"
             />
           )}
           <PricingRow
-            label="Service fees"
-            // Pass the calculated number directly
+            label="Service fee (Host)"
             value={numServiceFee}
             readonly
           />
           <hr className="pricing-divider"/>
           <PricingRow
-            label="Total guest price"
-            // Pass the calculated number directly
+            label="Total price for Guest (excl. Domits fee)"
             value={totalGuestPrice}
             readonly
           />
         </section>
 
-        {/* Section for host earnings */}
+        {/* Host Earnings Section */}
         <section className="pricing-details host-earnings">
           <h3 className="pricing-section-title">Your Earnings</h3>
           <PricingRow
             label="You earn per night"
-            // Pass the calculated number directly
             value={totalEarnings}
             readonly />
-          <p className="earnings-info">This is your nightly rate plus any fees like cleaning, minus service fees.</p>
+          <p className="earnings-info">This is your nightly rate plus any fees like cleaning, minus the Host Service Fee shown above.</p>
         </section>
 
         {/* Navigation */}
         <nav className="onboarding-button-box">
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/photos`} // Check path
+            routePath={`/hostonboarding/${accommodationType}/photos`}
             btnText="Go back"
-            variant="secondary" // Ensure variant prop is used
           />
           <OnboardingButton
-            onClick={() => {
-              builder.addPricing({
-                roomRate: parseFloat(pricing.Rent) || 0,
-                cleaning: parseFloat(pricing.CleaningFee) || 0,
-                service: parseFloat(pricing.ServiceFee) || 0
-              });
-              console.log("Builder after adding pricing:", builder);
-              navigate(`/hostonboarding/${accommodationType}/availability`);
-            }}
+            onClick={handleProceed} // Calls the modified handler
             btnText="Proceed"
-            variant="primary"
             disabled={isProceedDisabled}
           />
         </nav>
-        {isProceedDisabled && <p className="error-message">Please enter a valid base rate per night.</p>}
+        {isProceedDisabled && <p className="error-message">Please enter a valid base rate per night (greater than 0).</p>}
       </main>
     </div>
   );

@@ -1,85 +1,101 @@
-import React from "react";
-import CalendarComponent from "../../hostdashboard/hostcalendar/views/Calender";
+// File: input_file_33.js (PropertyAvailabilityView)
+import React, { useCallback, useMemo } from "react"; // Added useCallback, useMemo
 import { useParams, useNavigate } from "react-router-dom";
-import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
+import CalendarComponent from "../../hostdashboard/hostcalendar/views/Calender"; // Check path
+import { useAvailability } from "../hooks/usePropertyCalenderAvailability"; // Check path
 import OnboardingButton from "../components/OnboardingButton";
-import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
+// Removed unused hook import: import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
-import { useBuilder } from "../../../context/propertyBuilderContext";
+// REMOVED: import { useBuilder } from "../../../context/propertyBuilderContext";
+import { toast } from "react-toastify"; // For user feedback
 
 function PropertyAvailabilityView() {
   const navigate = useNavigate();
-  const builder = useBuilder();
-
-  const form = useFormStoreHostOnboarding();
-  const selectedType = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
-
+  // REMOVED: const builder = useBuilder();
   const { type: accommodationType } = useParams();
+
+  // --- State & Setters from Store/Hooks (Unchanged) ---
   const { availability, updateSelectedDates } = useAvailability();
+  const selectedType = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
+  const selectedDates = useMemo(() => availability?.selectedDates, [availability]);
+  // ----------------------------------------
 
-  const { handleProceedToLegal } = useHandleLegalProceed();
+  // --- Disabled State (Unchanged) ---
+  const isProceedDisabled = useMemo(() => {
+    // The store saves selectedDates as { startDate: ISOString, endDate: ISOString }
+    return !selectedDates || !selectedDates.startDate || !selectedDates.endDate;
+  }, [selectedDates]);
+  // --------------------
 
+  // --- *** MODIFIED Proceed Logic *** ---
+  const handleProceed = useCallback(() => {
+    if (isProceedDisabled) {
+      toast.error("Please select an availability date range.");
+      return;
+    }
+
+    // The selected dates (startDate, endDate as ISO strings) are already
+    // stored in the Zustand state within accommodationDetails.availability.selectedDates
+    // by the updateSelectedDates action, which is triggered by the CalendarComponent.
+    // No need to extract, convert, or add them again here.
+
+    // REMOVED: let datesAdded = false;
+    // REMOVED: Timestamp conversion logic
+    // REMOVED: Validation of timestamps
+    // REMOVED: builder.addAvailability call
+    // REMOVED: console.log("Builder after adding availability...");
+
+    // Log the state from the store for confirmation
+    console.log("Proceeding from PropertyAvailabilityView. Availability data in store:", availability); // Log the whole availability slice
+
+    // Navigate based on the property type stored in Zustand (Unchanged)
+    if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) {
+      navigate("/hostonboarding/legal/registrationnumber");
+    } else {
+      navigate("/hostonboarding/summary");
+    }
+
+  }, [
+    navigate,
+    selectedType, // Used for navigation logic
+    availability, // Log the current state
+    isProceedDisabled
+    // REMOVED: builder dependency
+    // REMOVED: selectedDates dependency (now covered by 'availability')
+  ]); // Dependencies updated
+  // --- **************************** ---
+
+  // --- JSX (Unchanged) ---
   return (
     <div className="onboarding-host-div">
-      <main className="container">
-        <h2 className="onboardingSectionTitle">Share your first availability</h2>
-        <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within your dashboard</p>
+      <main className="container page-body">
+        <h2 className="onboardingSectionTitle">Select Your First Availability</h2>
+        <p className="onboardingSectionSubtitle">
+          Choose a start and end date for when your property is available.
+          You can add more ranges and block dates later in your dashboard.
+        </p>
 
         <CalendarComponent
-          passedProp={availability}
+          passedProp={availability} // Pass full availability object which includes selectedDates
           isNew={true}
-          updateDates={updateSelectedDates}
+          updateDates={updateSelectedDates} // Calendar updates the store directly
           calenderType="host"
         />
 
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath={`/hostonboarding/${accommodationType}/pricing`} btnText="Go back" />
           <OnboardingButton
-            onClick={() => {
-              // 'availability' is from useAvailability hook
-              const selectedDatesData = availability?.selectedDates;
-              let datesAdded = false; // Flag to track if dates were successfully added
-
-              if (selectedDatesData && selectedDatesData.startDate && selectedDatesData.endDate) {
-                // Convert ISO strings back to timestamps (numbers)
-                const startDateTimestamp = new Date(selectedDatesData.startDate).getTime();
-                const endDateTimestamp = new Date(selectedDatesData.endDate).getTime();
-
-                if (!isNaN(startDateTimestamp) && !isNaN(endDateTimestamp)) {
-                  builder.addAvailability([{
-                    availableStartDate: startDateTimestamp,
-                    availableEndDate: endDateTimestamp
-                  }]);
-                  datesAdded = true; // Mark dates as added
-                } else {
-                  console.error("Invalid date format in selectedDates state.");
-                  // Optionally show error toast to user
-                  // toast.error("Invalid availability dates selected.");
-                  // Consider NOT navigating if dates are required and invalid
-                  // return;
-                }
-              } else {
-                console.warn("No valid selected dates found to add to builder.");
-                // Decide if proceeding without dates is allowed. If not:
-                // toast.error("Please select an availability date range.");
-                // return;
-              }
-
-              // *** REMOVE addProperty call from here - should be done earlier ***
-
-              console.log("Builder after adding availability (Dates added:", datesAdded, "):", builder);
-
-              // Proceed with navigation
-              if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) { // selectedType from Zustand
-                navigate("/hostonboarding/legal/registrationnumber");
-              } else {
-                navigate("/hostonboarding/summary");
-              }
-            }}
-            btnText="Proceed"
+            routePath={`/hostonboarding/${accommodationType}/pricing`}
+            btnText="Go back"
           />
-
+          <OnboardingButton
+            onClick={handleProceed} // Use the modified handler
+            btnText="Proceed"
+            disabled={isProceedDisabled}
+          />
         </nav>
+        {isProceedDisabled && (
+          <p className="error-message" style={{ marginTop: '10px' }}>Please select a start and end date on the calendar.</p>
+        )}
       </main>
     </div>
   );

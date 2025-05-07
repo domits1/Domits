@@ -1,36 +1,38 @@
-import HouseTypeSelector from "../components/HouseTypeSelector"
-import OnboardingButton from "../components/OnboardingButton"
+// Filename: HouseTypeView.js
+import React, { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import HouseTypeSelector from "../components/HouseTypeSelector";
+import OnboardingButton from "../components/OnboardingButton";
 import "../styles/TypeSelector.scss";
 import "../styles/_base.scss";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
-import { useBuilder } from "../../../context/propertyBuilderContext";
-import { useParams, useNavigate } from "react-router-dom";
 
-// Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
 export default function HouseTypeView() {
   const navigate = useNavigate();
-  const builder = useBuilder();
+  // Removed: const builder = useBuilder();
 
-  const selectedGuestAccessType = useFormStoreHostOnboarding((state) => state.accommodationDetails.guestAccessType);
-  const setGuestAccessType = useFormStoreHostOnboarding((state) => state.setGuestAccessType); // Assuming this setter exists in your store
+  // Read state and get setter from Zustand
+  const selectedGuestAccessType = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.guestAccessType,
+  );
+  const setGuestAccessType = useFormStoreHostOnboarding(
+    (state) => state.setGuestAccessType, // Ensure correct setter name
+  );
 
-  // This logic is correct
   const isProceedDisabled = !selectedGuestAccessType;
 
-  // Define the values for easier reference
-  const GUEST_ACCESS_TYPES = {
-    ENTIRE: "Entire house",
-    PRIVATE: "Private room",
-    SHARED: "Shared room",
-  };
+  // Define handleProceed outside JSX
+  const handleProceed = useCallback(() => {
+    if (isProceedDisabled) return;
 
+    console.log("Proceeding from HouseTypeView. Guest access type in store:", selectedGuestAccessType);
+    navigate("/hostonboarding/accommodation/address");
 
-  const selectedType = useFormStoreHostOnboarding(
-    (state) => state.accommodationDetails.guestAccessType,
-  )
+  }, [navigate, selectedGuestAccessType, isProceedDisabled]);
+
   return (
     <div className="onboarding-host-div">
-      <main className="container">
+      <main className="container page-body">
         <section className="guest-access">
           <h2 className="onboardingSectionTitle">
             What kind of space do your guests have access to?
@@ -38,27 +40,30 @@ export default function HouseTypeView() {
           <HouseTypeSelector
             header="Entire house"
             description="Guests have the entire space to themselves"
+            onSelectType={setGuestAccessType}
+            selectedType={selectedGuestAccessType}
           />
           <HouseTypeSelector
             header="Private room"
             description="Guests have their own private room for sleeping"
+            onSelectType={setGuestAccessType}
+            selectedType={selectedGuestAccessType}
           />
           <HouseTypeSelector
             header="Shared room"
             description="Guests sleep in a room or common area that they may share with you or others"
+            onSelectType={setGuestAccessType}
+            selectedType={selectedGuestAccessType}
           />
         </section>
 
         <nav className="onboarding-button-box">
           <OnboardingButton
             routePath="/hostonboarding"
-            btnText="Go back" />
+            btnText="Go back"
+          />
           <OnboardingButton
-            onClick={() => {
-              builder.addPropertyType({type: "House", spaceType: selectedType}); // 'selectedType' is already defined in this file as guestAccessType
-              console.log("Builder after adding house type:", builder);
-              navigate("/hostonboarding/accommodation/address");
-            }}
+            onClick={handleProceed}
             btnText="Proceed"
             disabled={isProceedDisabled}
           />

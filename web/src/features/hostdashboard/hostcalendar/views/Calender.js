@@ -1,292 +1,245 @@
-/**
- * This is written by Marijn Klappe
- *
- * If you do not understand what is happening here, do not change anything. If something needs to be adjusted, contact me via discord --@marijn3--
- */
-import React, { useState } from "react";
-import convertDatesToDBDates from "../utils/convertToDBDates";
+import React, { useState, useEffect, useCallback } from "react";
 import decodeDateNumber from "../utils/decodeDateNumber";
 import convertDateToHTML from "../utils/convertDateToHTML";
 import getCalDays from "../utils/getCalDays";
-import newDate from "../utils/newDate";
-import deleteDate from "../utils/deleteDate";
+import newDateImmutable from "../utils/newDateImmutable"; // Assuming you create/adapt this
+import deleteDateImmutable from "../utils/deleteDateImmutable"; // Assuming you create/adapt this
 import getMonthName from "../utils/getMonthName";
 import leftArrowSVG from "./left-arrow.svg";
 import rightArrowSVG from "./right-arrow.svg";
 import trashSVG from "./trash.svg";
 import "./../styles/Calender.scss";
 
-let selectedDate = null;
-export let selectedDates = [];
-let selectedMonth = new Date().getMonth();
-let selectedYear = new Date().getFullYear();
-let editMode = false;
+function CalendarComponent({ updateDates, calenderType, displayMonths = 1 }) {
+    const [currentSelectedMonth, setCurrentSelectedMonth] = useState(new Date().getMonth());
+    const [currentSelectedYear, setCurrentSelectedYear] = useState(new Date().getFullYear());
+    const [currentlySelectedDates, setCurrentlySelectedDates] = useState([]); // Array of [startNum, endNum]
+    const [firstSelection, setFirstSelection] = useState(null);
+    const [isEditMode, setIsEditMode] = useState(false);
 
-/**
- * CalendarComponent is a component that displays a calendar
- * 
- * @param {Object} props
- * @param {*} props.passedProp
- * @param {boolean} props.isNew
- * @param {*} props.updateDates
- * @param {"host" | "guest"} props.calenderType
- * @param {1 | 2} props.displayMonths
- * 
- * @returns {JSX.Element}
- */
-function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displayMonths = 1 }) {
-    const [selectedMonthState, setSelectedMonth] = useState(selectedMonth);
-    const [selectedYearState, setSelectedYear] = useState(selectedYear);
-    const [calenderGridObject, setGrid] = useState(
-        getGridObject(selectedMonth, selectedYear),
-    );
-    const [datesGridObject, setDates] = useState(getDatesObject(selectedDates));
-    const [editModeClass, setEditMode] = useState("switch-btn");
+    const callUpdateDates = useCallback((datesArray) => {
+        if (typeof updateDates === 'function') {
+            try {
+                const formattedDates = datesArray.map(range => {
+                    const startDecoded = decodeDateNumber(range[0]);
+                    const endDecoded = decodeDateNumber(range[1]);
+                    // Ensure Date objects are created in UTC to avoid timezone offset issues
+                    // The time part will be 00:00:00 UTC
+                    const startDate = new Date(Date.UTC(startDecoded[0], startDecoded[1], startDecoded[2]));
+                    const endDate = new Date(Date.UTC(endDecoded[0], endDecoded[1], endDecoded[2]));
 
-    /**
-     * this function handles the interaction when a day is clicked, it selects a new date
-     *
-     * @param {MouseEvent} e
-     */
-    function dayClick(e) {
+                    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                        console.error("Invalid date created during formatting:", range);
+                        return null; // Or handle error appropriately
+                    }
+                    return { startDate, endDate };
+                }).filter(Boolean); // Filter out any nulls from errors
+
+                console.log('[CalendarComponent] Calling updateDates with:', formattedDates);
+                updateDates(formattedDates);
+            } catch(error) {
+                console.error("Error formatting dates for updateDates prop:", error);
+                updateDates([]); // Send empty array on error
+            }
+        }
+    }, [updateDates]);
+
+    const dayClick = useCallback((e) => {
         e.preventDefault();
         const anchorElement = e.currentTarget;
-        let date = Number(anchorElement.getAttribute("dateNumber"));
+        const dateNumber = Number(anchorElement.getAttribute("data-datenumber"));
 
-        if (selectedDate == null) {
-            selectedDate = date;
+        if (firstSelection === null) {
+            setFirstSelection(dateNumber);
         } else {
-            if (editMode) {
-                if (selectedDate > date) {
-                    deleteDate([date, selectedDate], selectedDates);
-                } else {
-                    deleteDate([selectedDate, date], selectedDates);
-                }
+            let newRange = [firstSelection, dateNumber].sort((a, b) => a - b);
+            let updatedDates;
+
+            if (isEditMode) {
+                updatedDates = deleteDateImmutable(currentlySelectedDates, newRange);
             } else {
-                if (selectedDate > date) {
-                    newDate([date, selectedDate], selectedDates);
-                } else {
-                    newDate([selectedDate, date], selectedDates);
-                }
+                updatedDates = newDateImmutable(currentlySelectedDates, newRange);
             }
-            selectedDate = null;
+
+            setCurrentlySelectedDates(updatedDates);
+            callUpdateDates(updatedDates);
+            setFirstSelection(null);
         }
+    }, [firstSelection, isEditMode, currentlySelectedDates, callUpdateDates]);
 
-        setDates(getDatesObject(selectedDates));
-        setGrid(getGridObject(selectedMonth, selectedYear));
-    }
-
-    /**
-     * this function returns the class name of the day, this is used to style the day
-     *
-     * @param {number} date the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
-     * @param {[number,number]} currentDate this is the current selected month and year month is stored as 0-11
-     * @returns {string}
-     */
-    function getDayClassName(date, currentDate) {
+    const getDayClassName = useCallback((date, currentMonth) => {
         let dayClass = "";
         let dateDecode = decodeDateNumber(date);
-        if (dateDecode[1] != currentDate[0]) {
+        if (dateDecode[1] !== currentMonth) {
             dayClass += "other-month";
         }
 
-        if (date == selectedDate) {
+        if (date === firstSelection) {
             dayClass += " day-selected";
         }
 
-        for (let i = 0; i < selectedDates.length; i++) {
-            let v = selectedDates[i];
+        currentlySelectedDates.forEach(v => {
             if (date >= v[0] && date <= v[1]) {
                 dayClass += " day-range";
             }
-
-            if (date == v[0]) {
+            if (date === v[0]) {
                 dayClass += " day-range-start";
             }
-
-            if (date == v[1]) {
+            if (date === v[1]) {
                 dayClass += " day-range-end";
             }
-        }
+        });
 
-        return dayClass;
-    }
+        return dayClass.trim();
+    }, [firstSelection, currentlySelectedDates]);
 
-    /**
-     * this function is called when the user clicks the trash icon, the date is removed from the selectedDates
-     *
-     * @param {MouseEvent} e
-     */
-    function deleteDateBtn(e) {
+
+    const deleteDateBtn = useCallback((e) => {
         e.preventDefault();
-        const anchorElement = e.currentTarget;
-        const index =
-            anchorElement.parentElement.parentElement.getAttribute("index");
-        selectedDates.splice(index, 1);
-        setDates(getDatesObject(selectedDates));
-        setGrid(getGridObject(selectedMonth, selectedYear));
-    }
-
-    /**
-     * this function returns the selected dates as an HTML element
-     *
-     * @param {[number,number][]} dates the dates have a (year month day structure) e.g. 18890420 is 1889 Apr 20
-     * @returns {Element[]}
-     */
-    function getDatesObject(dates) {
-        const tableData = [];
-        for (let i = 0; i < dates.length; i++) {
-            const date = dates[i];
-            tableData.push(
-                <div className="date" index={i}>
-                    {convertDateToHTML(date[0])} - {convertDateToHTML(date[1])}
-                    <a href="#trash">
-                        <img src={trashSVG} alt="" onClick={deleteDateBtn} />
-                    </a>
-                </div>,
-            );
+        const index = Number(e.currentTarget.closest('.date')?.getAttribute("data-index"));
+        if (typeof index === 'number' && !isNaN(index)) {
+            const updatedDates = currentlySelectedDates.filter((_, i) => i !== index);
+            setCurrentlySelectedDates(updatedDates);
+            callUpdateDates(updatedDates);
         }
+    }, [currentlySelectedDates, callUpdateDates]);
 
-        return tableData;
-    }
+    const getDatesObject = useCallback((dates) => {
+        return dates.map((date, i) => (
+          <div className="date" data-index={i} key={`date-${date[0]}-${i}`}>
+              {convertDateToHTML(date[0])} - {convertDateToHTML(date[1])}
+              {calenderType === 'host' && (
+                <button onClick={deleteDateBtn} className="delete-date-btn" aria-label="Delete date range">
+                    <img src={trashSVG} alt="Delete" />
+                </button>
+              )}
+          </div>
+        ));
+    }, [deleteDateBtn, calenderType]);
 
-    /**
-     * this function returns the month days as an HTML element
-     *
-     * @param {number} month the month is stored here from 0-11 so 0 is January and 11 is December
-     * @param {number} year
-     * @returns {Element[]}
-     */
-    function getGridObject(month, year) {
+    const getGridObject = useCallback((month, year) => {
         const calDays = getCalDays(month, year);
-        const tableData = [];
+        const rows = [];
 
         for (let i = 0; i < 6; i++) {
-            tableData.push(
-                <tr>
-                    {[...Array(7)].map((_, j) => (
-                        <td>
-                            <a
-                                className={getDayClassName(calDays[i * 7 + j].date, [
-                                    month,
-                                    year,
-                                ])}
-                                dateNumber={calDays[i * 7 + j].date}
-                                onClick={dayClick}
-                                href="#day-click"
+            rows.push(
+              <tr key={`week-${year}-${month}-${i}`}>
+                  {[...Array(7)].map((_, j) => {
+                      const dayIndex = i * 7 + j;
+                      const dayData = calDays[dayIndex];
+                      if (!dayData) return <td key={`empty-${j}`}></td>; // Handle potential empty cells if logic changes
+
+                      const dateNum = dayData.date;
+                      const dayDisplay = dayData.day;
+
+                      return (
+                        <td key={`day-${dateNum}`}>
+                            <button
+                              className={`day-button ${getDayClassName(dateNum, month)}`}
+                              data-datenumber={dateNum}
+                              onClick={dayClick}
                             >
-                                {calDays[i * 7 + j].day}
-                            </a>
+                                {dayDisplay}
+                            </button>
                         </td>
-                    ))}
-                </tr>,
+                      );
+                  })}
+              </tr>,
             );
         }
+        return rows;
+    }, [dayClick, getDayClassName]);
 
-        return tableData;
-    }
 
-    /**
-     * this function is called when the user clicks the nextMonth button, the Calendar is updated with the days of the next month
-     *
-     * @param {MouseEvent} e
-     */
-    function nextMonthBtn(e) {
+    const nextMonthBtn = useCallback((e) => {
         e.preventDefault();
+        setCurrentSelectedMonth(prevMonth => {
+            if (prevMonth === 11) {
+                setCurrentSelectedYear(prevYear => prevYear + 1);
+                return 0;
+            } else {
+                return prevMonth + 1;
+            }
+        });
+    }, []);
 
-        if (selectedMonth == 11) {
-            selectedMonth = 0;
-            selectedYear++;
-        } else {
-            selectedMonth++;
-        }
-
-        setSelectedMonth(selectedMonth);
-        setSelectedYear(selectedYear);
-        setGrid(getGridObject(selectedMonth, selectedYear));
-    }
-
-    /**
-     * this function is called when the user clicks the previousMonth button, the Calendar is updated with the days of the previous month
-     *
-     * @param {MouseEvent} e
-     */
-    function previusMonthBtn(e) {
+    const previousMonthBtn = useCallback((e) => {
         e.preventDefault();
+        setCurrentSelectedMonth(prevMonth => {
+            if (prevMonth === 0) {
+                setCurrentSelectedYear(prevYear => prevYear - 1);
+                return 11;
+            } else {
+                return prevMonth - 1;
+            }
+        });
+    }, []);
 
-        if (selectedMonth == 0) {
-            selectedMonth = 11;
-            selectedYear--;
-        } else {
-            selectedMonth--;
-        }
-
-        setSelectedMonth(selectedMonth);
-        setSelectedYear(selectedYear);
-        setGrid(getGridObject(selectedMonth, selectedYear));
-    }
-
-    /**
-     * this function is called when the user clicks the switch button, the edit mode is toggled
-     *
-     * @param {MouseEvent} e
-     */
-    function switchBtn(e) {
+    const switchBtn = useCallback((e) => {
         e.preventDefault();
-        if (editMode) {
-            editMode = false;
-            setEditMode("switch-btn");
-        } else {
-            editMode = true;
-            setEditMode("switch-btn active");
-        }
-    }
+        setIsEditMode(prevMode => !prevMode);
+        setFirstSelection(null); // Reset selection when switching modes
+    }, []);
+
+    const calenderGrid = getGridObject(currentSelectedMonth, currentSelectedYear);
+    const datesList = getDatesObject(currentlySelectedDates);
+    const editModeClass = isEditMode ? "switch-btn active" : "switch-btn";
 
     return (
-        <div className="calender-container">
-            <div className="calender">
+      <div className="calender-container">
+          <div className="calender">
+              <div className="column">
+                  <div className="header">
+                      <h4>
+                          {getMonthName(currentSelectedMonth)} {currentSelectedYear}
+                      </h4>
+                      <div className="btn-container">
+                          <button onClick={previousMonthBtn} aria-label="Previous month">
+                              <img src={leftArrowSVG} alt="Previous" />
+                          </button>
+                          <button onClick={nextMonthBtn} aria-label="Next month">
+                              <img src={rightArrowSVG} alt="Next" />
+                          </button>
+                      </div>
+                  </div>
+                  <div className="days">
+                      <div className="day-labels">
+                          {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((day) => (
+                            <div className="day-label" key={day}>
+                                <span>{day}</span>
+                            </div>
+                          ))}
+                      </div>
+                      <table className="calender-days">
+                          <tbody>
+                          {calenderGrid}
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+              {calenderType === 'host' && (
                 <div className="column">
-                    <div className="header">
-                        <h4>
-                            {getMonthName(selectedMonthState)} {selectedYearState}
-                        </h4>
-                        <div className="btn-container">
-                            <a href="" onClick={previusMonthBtn}>
-                                <img src={leftArrowSVG} alt="" />
-                            </a>
-                            <a href="" onClick={nextMonthBtn}>
-                                <img src={rightArrowSVG} alt="" />
-                            </a>
-                        </div>
-                    </div>
-                    <div className="days">
-                        <div className="day-labels">
-                            {["mo", "tu", "we", "th", "fr", "sa", "su"].map((day) => (
-                                <div className="day-label">
-                                    <span>{day}</span>
-                                </div>
-                            ))}
-                        </div>
-                        <table className="calender-days">{calenderGridObject}</table>
-                    </div>
+                    <h4>Selected Ranges</h4>
+                    <div className="wrapper dates-list">{datesList}</div>
                 </div>
-                {calenderType === 'host' && (
-                    <div className="column">
-                        <div className="wrapper">{datesGridObject}</div>
-                    </div>
-                )}
-            </div>
+              )}
+          </div>
+          {calenderType === 'host' && (
             <div className="options-column">
                 <div className="option">
-                    <h4>Switch edit mode</h4>
-                    <a
-                        className={editModeClass}
-                        onClick={switchBtn}
-                        href="#switch-edit-mode"
-                    ></a>
+                    <h4>Switch add/remove mode</h4>
+                    <button
+                      className={editModeClass}
+                      onClick={switchBtn}
+                      aria-label={isEditMode ? "Switch to add mode" : "Switch to remove mode"}
+                    >
+                        <span className="switch-indicator"></span>
+                    </button>
+                    <span>{isEditMode ? "Remove" : "Add"}</span>
                 </div>
             </div>
-        </div>
+          )}
+      </div>
     );
 }
 

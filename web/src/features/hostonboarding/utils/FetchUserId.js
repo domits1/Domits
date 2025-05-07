@@ -1,24 +1,45 @@
-import React, { useEffect } from "react"
-import { Auth } from "aws-amplify"
-import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
+import React, { useEffect } from "react";
+import { Auth } from "aws-amplify";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 
-// Todo: Old, renew
 const FetchUserId = () => {
-  const setOwnerId = useFormStoreHostOnboarding((state) => state.setOwnerId)
+  // --- ADD THIS LOG ---
+  console.log("[FetchUserId] Component function executed.");
+  // --------------------
+
+  const setOwnerId = useFormStoreHostOnboarding((state) => state.setOwnerId);
 
   useEffect(() => {
+    console.log("[FetchUserId] useEffect triggered.");
+
     const asyncUserId = async () => {
+      console.log("[FetchUserId] Attempting to fetch authenticated user...");
       try {
-        const userInfo = await Auth.currentAuthenticatedUser()
-        const userId = userInfo.attributes.sub
-        setOwnerId(userId) // Sets the userId in the form store
+        const userInfo = await Auth.currentAuthenticatedUser();
+        console.log("[FetchUserId] Auth.currentAuthenticatedUser SUCCESS:", userInfo);
+
+        if (userInfo && userInfo.attributes && userInfo.attributes.sub) {
+          const userId = userInfo.attributes.sub;
+          console.log("[FetchUserId] Extracted userId (sub):", userId);
+          console.log("[FetchUserId] Calling setOwnerId...");
+          setOwnerId(userId);
+          console.log("[FetchUserId] setOwnerId called.");
+        } else {
+          console.error("[FetchUserId] Error: userInfo object missing attributes.sub:", userInfo);
+        }
+
       } catch (error) {
-        console.error("Error fetching user ID:", error)
+        console.error("[FetchUserId] Error fetching user ID:", error);
+        if (error === 'The user is not authenticated') {
+          console.error("[FetchUserId] Critical: User is not authenticated when reaching summary page!");
+        }
       }
-    }
+    };
 
-    asyncUserId()
-  }, [setOwnerId])
-}
+    asyncUserId();
+  }, [setOwnerId]);
 
-export default FetchUserId
+  return null; // Component renders nothing
+};
+
+export default FetchUserId;

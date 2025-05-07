@@ -1,26 +1,28 @@
-// Desc: dependend step 2 - Choose the type of boat you want to list on the platform
-
-import BoatTypeSelector from "../components/TypeSelector"
-import { boatData } from "../constants/boatData"
-import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
-import OnboardingButton from "../components/OnboardingButton"
+import React, { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import BoatTypeSelector from "../components/TypeSelector";
+import { boatData } from "../constants/boatData";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
+import OnboardingButton from "../components/OnboardingButton";
 import "../styles/onboardingHost.scss";
-import { useBuilder } from "../../../context/propertyBuilderContext";
-import { useParams, useNavigate } from "react-router-dom";
 
 function BoatTypeView() {
   const navigate = useNavigate();
-  const setBoatType = useFormStoreHostOnboarding((state) => state.setBoatType);
-  const builder = useBuilder();
+
   const selectedBoatType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.boatType,
   );
-  const selectedGuestAccessType = useFormStoreHostOnboarding(
-    (state) => state.accommodationDetails.guestAccessType,
-  );
+  const setBoatType = useFormStoreHostOnboarding((state) => state.setBoatType);
 
-  // Update isProceedDisabled to include selectedBoatType
   const isProceedDisabled = !selectedBoatType;
+
+  const handleProceed = useCallback(() => {
+    if (isProceedDisabled) return;
+
+    console.log("Proceeding from BoatTypeView. Boat type in store:", selectedBoatType);
+    navigate("/hostonboarding/boat/address");
+
+  }, [navigate, selectedBoatType, isProceedDisabled]);
 
   return (
     <div className="onboarding-host-div">
@@ -36,16 +38,11 @@ function BoatTypeView() {
         />
         <nav className="onboarding-button-box">
           <OnboardingButton
-            class="OnboardingNextButton"
             routePath="/hostonboarding"
             btnText="Back"
           />
           <OnboardingButton
-            onClick={() => {
-              builder.addPropertyType({type: "Boat", spaceType: selectedBoatType});
-              console.log("Builder after adding boat type:", builder);
-              navigate("/hostonboarding/boat/address");
-            }}
+            onClick={handleProceed}
             btnText="Proceed"
             disabled={isProceedDisabled}
           />
@@ -55,4 +52,4 @@ function BoatTypeView() {
   );
 }
 
-export default BoatTypeView
+export default BoatTypeView;

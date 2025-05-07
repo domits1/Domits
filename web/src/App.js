@@ -59,7 +59,6 @@ import BoatTypeView from "./features/hostonboarding/views/1b_BoatTypeView.js";
 import CamperTypeView from "./features/hostonboarding/views/1c_CamperTypeView.js";
 import HouseTypeView from "./features/hostonboarding/views/2_HouseTypeView.js";
 import AddressInputView from "./features/hostonboarding/views/3_AddressInputView.js";
-import PropertyGuestAmountView from "./features/hostonboarding/views/6_PropertyCapacityView";
 import CapacityView from "./features/hostonboarding/views/6_PropertyCapacityView.js";
 import AmenitiesView from "./features/hostonboarding/views/7_AmenitiesView";
 import PropertyHouseRulesView from "./features/hostonboarding/views/8_PropertyHouseRulesView.js";
@@ -96,6 +95,7 @@ import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
+import FetchUserId from "./features/hostonboarding/utils/FetchUserId"; // Import FetchUserId
 
 Modal.setAppElement("#root");
 
@@ -103,11 +103,10 @@ function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [setLoading] = useState(false);
 
-  // Apollo Client
   const client = new ApolloClient({
-    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql", //
+    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
     cache: new InMemoryCache(), headers: {
-      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm", // Replace with your AppSync API key
+      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",
     },
   });
 
@@ -138,8 +137,6 @@ function App() {
   const [flowState, setFlowState] = useState({ isHost: false });
 
   return (<ApolloProvider client={client}>
-    {" "}
-    {/* ApolloProvider */}
     <ToastContainer
       position="top-right"
       autoClose={3000}
@@ -181,18 +178,11 @@ function App() {
                 <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                 <Route path=":type/capacity" element={<CapacityView />} />
 
-                {/* Chat */}
-                {/*<Route path="/chat" element={<Chat/>}/>*/}
                 <Route path="/employeechat" element={<EmployeeChat />} />
                 <Route path="/chatbot" element={<Chatbot />} />
-
-                {/* Host Chatbot */}
                 <Route path="/hostchatbot" element={<Hostchatbot />} />
-
-                {/* Review */}
                 <Route path="/review" element={<ReviewPage />} />
 
-                {/* Guest Dashboard */}
                 <Route
                   path="/guestdashboard/*"
                   element={<GuestProtectedRoute>
@@ -203,15 +193,10 @@ function App() {
                       <Route path="reviews" element={<GuestReviews />} />
                       <Route path="bookings" element={<GuestBooking />} />
                       <Route path="settings" element={<GuestSettings />} />
-                      {/*<Route path="chat" element={<Chat/>}/>*/}
                     </Routes>
                   </GuestProtectedRoute>}
                 />
 
-                {/* Host Management */}
-                {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
-
-                {/* Verification */}
                 <Route path="/verify" element={<HostVerificationView />} />
                 <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                 <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
@@ -235,7 +220,7 @@ function App() {
                       <Route path="reviews" element={<HostReviews />} />
                       <Route path="chat" element={<HostMessages />} />
                       <Route path="reservations" element={<HostReservations />} />
-                      <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
+                      <Route path="revenues" element={<HostRevenues />} />
                       <Route path="housekeeping" element={<HostHousekeeping />} />
                       <Route path="iot-hub" element={<HostIoTHub />} />
                       <Route path="pricing" element={<HostPricing />} />
@@ -250,7 +235,6 @@ function App() {
                 />
                 <Route path="/stripe/callback" element={<StripeCallback />} />
 
-                {/* Career, Policies, and Terms */}
                 <Route path="/career" element={<Careers />} />
                 <Route path="/job/:id" element={<JobDetails />} />
                 <Route path="/policy" element={<Policy />} />
@@ -258,7 +242,6 @@ function App() {
                 <Route path="/disclaimers" element={<Disclaimers />} />
                 <Route path="/Sustainability" element={<Sustainability />} />
 
-                {/* Error*/}
                 <Route path="/*" element={<PageNotFound />} />
 
                 {/* Host Onboarding v3 */}
@@ -273,7 +256,7 @@ function App() {
                         <Route path="camper" element={<StepGuard step="type"><CamperTypeView /></StepGuard>} />
                         <Route path=":type/address" element={<AddressInputView />} />
                         <Route path=":type/capacity" element={<CapacityView />} />
-                        <Route path=":type/capacity" element={<PropertyGuestAmountView />} />
+                        {/* Removed duplicate :type/capacity route */}
                         <Route path=":type/amenities" element={<AmenitiesView />} />
                         <Route path=":type/rules" element={<PropertyHouseRulesView />} />
                         <Route path=":type/photos" element={<PhotosView />} />
@@ -282,7 +265,16 @@ function App() {
                         <Route path=":type/pricing" element={<PropertyRateView />} />
                         <Route path=":type/availability" element={<PropertyAvailabilityView />} />
                         <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
-                        <Route path="summary" element={<SummaryViewAndSubmit />} />
+                        {/* Modified summary route */}
+                        <Route
+                          path="summary"
+                          element={
+                            <React.Fragment>
+                              <FetchUserId />
+                              <SummaryViewAndSubmit />
+                            </React.Fragment>
+                          }
+                        />
                       </Routes>
                     </BuilderProvider>
                   }

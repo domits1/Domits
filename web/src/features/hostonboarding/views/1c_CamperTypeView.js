@@ -1,28 +1,32 @@
-// Desc: dependend step 2 - Choose the type of camper you want to list on the platform
-
-import CamperTypeSelector from "../components/TypeSelector"
-import { camperData } from "../constants/camperData"
-import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
-import OnboardingButton from "../components/OnboardingButton"
+// Filename: CamperTypeView.js
+import React, { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import CamperTypeSelector from "../components/TypeSelector";
+import { camperData } from "../constants/camperData";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
+import OnboardingButton from "../components/OnboardingButton";
 import "../styles/onboardingHost.scss";
-import { useBuilder } from "../../../context/propertyBuilderContext";
-import { useParams, useNavigate } from "react-router-dom";
 
 function CamperTypeView() {
   const navigate = useNavigate();
-  const builder = useBuilder();
-  const setCamperType = useFormStoreHostOnboarding(
-    (state) => state.setCamperType,
-  );
+
   const selectedCamperType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.camperType,
   );
-  const selectedGuestAccessType = useFormStoreHostOnboarding(
-    (state) => state.accommodationDetails.guestAccessType,
+  const setCamperType = useFormStoreHostOnboarding(
+    (state) => state.setCamperType,
   );
 
-  // Update isProceedDisabled to include selectedCamperType
   const isProceedDisabled = !selectedCamperType;
+
+  // Define handleProceed outside JSX
+  const handleProceed = useCallback(() => {
+    if (isProceedDisabled) return;
+
+    console.log("Proceeding from CamperTypeView. Camper type in store:", selectedCamperType);
+    navigate("/hostonboarding/camper/address");
+
+  }, [navigate, selectedCamperType, isProceedDisabled]);
 
   return (
     <div className="onboarding-host-div">
@@ -39,11 +43,7 @@ function CamperTypeView() {
         <nav className="onboarding-button-box">
           <OnboardingButton routePath="/hostonboarding" btnText="Back" />
           <OnboardingButton
-            onClick={() => {
-              builder.addPropertyType({type: "Camper", spaceType: selectedCamperType});
-              console.log("Builder after adding camper type:", builder);
-              navigate("/hostonboarding/camper/address");
-            }}
+            onClick={handleProceed}
             btnText="Proceed"
             disabled={isProceedDisabled}
           />

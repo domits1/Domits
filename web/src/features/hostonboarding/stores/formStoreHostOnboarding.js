@@ -32,7 +32,7 @@ const useFormStoreHostOnboarding = create((set) => ({
   accommodationDetails: {
     type: "",
     title: "",
-    subtitle: "",
+    subtitle: "test-subtitle",
     guestAccessType: "",
     boatType: "",
     camperType: "",
