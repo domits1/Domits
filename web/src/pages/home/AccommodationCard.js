@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import {Swiper, SwiperSlide} from 'swiper/react';
 import './Accommodations.css';
 import 'swiper/css';
@@ -11,14 +11,82 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import BedOutlinedIcon from '@mui/icons-material/BedOutlined';
+import { getAccessToken } from "../../features/guestdashboard/utils/authUtils";
 
 const AccommodationCard = ({ accommodation, onClick} ) => {
     const [liked, setLiked] = useState(false);
 
-    const handleLike = (e) => {
-        e.stopPropagation();
-        setLiked(!liked);
-    };
+
+    //Check if this accommodation is already liked when the page/component loads
+        useEffect(() => {
+            const checkIfLiked = async () => {
+                const token = getAccessToken();
+                if (!token) return;
+    
+                try {
+                    const response = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
+                        method: "GET",
+                        headers: {
+                            Authorization: token,
+                            "Content-Type": "application/json",
+                            "Origin": window.location.origin
+                        }
+                    });
+    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Failed to fetch wishlist: ${errorText}`);
+                    }
+    
+                    const result = await response.json();
+                    const likedIds = result.AccommodationIDs || [];
+                    const accommodationId = accommodation.property?.id;
+    
+                    if (likedIds.includes(accommodationId)) {
+                        setLiked(true);
+                    }
+                } catch (err) {
+                    console.error(" Wishlist ophalen mislukt:", err.message || err);
+                }
+            };
+    
+            checkIfLiked();
+        }, [accommodation]);
+    
+        // Like/unlike functionality
+
+        const handleLike = async (e) => {
+            e.stopPropagation();
+    
+            const token = getAccessToken();
+            if (!token) return;
+    
+            const accommodationId = accommodation.property?.id;
+            const method = liked ? "DELETE" : "POST";
+    
+            try {
+                const response = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
+                    method,
+                    headers: {
+                        Authorization: token,
+                        "Content-Type": "application/json",
+                        "Origin": window.location.origin
+                    },
+                    body: JSON.stringify({ accommodationId })
+                });
+    
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to perform wishlist action: ${errorText}`);
+                }
+    
+                setLiked(!liked);
+            } catch (err) {
+                console.error("Failed to perform wishlist action:", err.message || err);
+            }
+        };
+    
+
 
     const handleShare = (e, ID) => {
         e.stopPropagation();
