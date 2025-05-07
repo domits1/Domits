@@ -27,23 +27,24 @@ import GuestDashboard from "./features/guestdashboard/GuestDashboard";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
+import GuestWishlistPage from "./features/guestdashboard/pages/GuestWishlistPage";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
-import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
-import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostPayments from "./features/hostdashboard/HostPayments";
-import HostPricing from "./features/hostdashboard/HostPricing";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
-import HostReviews from "./features/hostdashboard/HostReviews";
+
+import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
+import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
+import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSettings from "./features/hostdashboard/HostSettings";
 import HostSetup from "./features/hostdashboard/HostSetup";
@@ -61,7 +62,6 @@ import HouseTypeView from "./features/hostonboarding/views/2_HouseTypeView.js";
 import AddressInputView from "./features/hostonboarding/views/3_AddressInputView.js";
 import PropertyGuestAmountView from "./features/hostonboarding/views/4_PropertyCapacityView";
 import CapacityView from "./features/hostonboarding/views/4_PropertyCapacityView.js";
-import PropertyAmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import PropertyHouseRulesView from "./features/hostonboarding/views/6_PropertyHouseRulesView.js";
 import PhotosView from "./features/hostonboarding/views/7_PropertyPhotosView.js";
 import PropertyTitleView from "./features/hostonboarding/views/8_PropertyTitleView.js";
@@ -96,7 +96,7 @@ import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
-import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView123";
+import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 
 Modal.setAppElement("#root");
 
@@ -181,7 +181,6 @@ function App() {
                 <Route path="/bookingsend" element={<BookingSend />} />
                 <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                 <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
-                <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView />} />
 
                 {/* Chat */}
                 {/*<Route path="/chat" element={<Chat/>}/>*/}
@@ -205,6 +204,7 @@ function App() {
                       <Route path="reviews" element={<GuestReviews />} />
                       <Route path="bookings" element={<GuestBooking />} />
                       <Route path="settings" element={<GuestSettings />} />
+                      <Route path="wishlist" element={<GuestWishlistPage />} />
                       {/*<Route path="chat" element={<Chat/>}/>*/}
                     </Routes>
                   </GuestProtectedRoute>}
@@ -234,7 +234,7 @@ function App() {
                       <Route path="messages" element={<HostMessages />} />
                       <Route path="reporting" element={<HostPayments />} />
                       <Route path="settings" element={<HostSettings />} />
-                      <Route path="reviews" element={<HostReviews />} />
+                      {/* <Route path="reviews" element={<HostReviews />} /> */}
                       <Route path="chat" element={<HostMessages />} />
                       <Route path="reservations" element={<HostReservations />} />
                       <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
@@ -304,3 +304,4 @@ function App() {
 }
 
 export default App;
+

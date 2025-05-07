@@ -2,20 +2,17 @@
  * Calculate the number of nights for a date range.
  * @param startDate - Start of the date range.
  * @param endDate - End of the date range.
- * @param setNumberOfNights - Function to set the number of nights.
  * @constructor
  */
-const CalculateNumberOfNights = (startDate, endDate, setNumberOfNights)  => {
-    const start = new Date(startDate)
-    const end = new Date(endDate)
+const CalculateNumberOfNights = (startDate, endDate)  => {
+    const start = new Date(new Date(startDate).setHours(0, 0, 0, 0));
+    const end = new Date(new Date(endDate).setHours(0, 0, 0, 0));
 
     if (endDate != null){
         const timeDifference = end.getTime() - start.getTime();
-        const days = timeDifference / (1000 * 3600 * 24);
-        setNumberOfNights(days);
-    } else {
-        setNumberOfNights(0)
+        return timeDifference / (1000 * 60 * 60 * 24);
     }
+    return 0;
 }
 
 export default CalculateNumberOfNights;
