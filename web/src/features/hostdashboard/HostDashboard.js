@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Pages from "./Pages.js";
-import './HostHomepage.css';
+import './HostHomepage.scss';
 import './PagesDropdown.css';
 import styles from './HostDashboard.module.css'
 import StripeModal from './StripeModal.js';

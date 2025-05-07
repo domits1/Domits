@@ -10,9 +10,9 @@
   height: 440px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 
-  .adr-card h3 {
-    font-size: 20px ;
-    font-weight: 400 ;
+  h3 {
+    font-size: 20px;
+    font-weight: 400;
     color: #333;
     text-align: center;
   }
@@ -25,6 +25,12 @@
     padding: 12px 15px;
     background-color: #f9f9f9;
     border-radius: 12px;
+
+    label {
+      font-size: 15px;
+      font-weight: 500;
+      color: #2c3e50;
+    }
   }
 
   .timeFilter {
@@ -46,124 +52,91 @@
     background-repeat: no-repeat;
     background-position: calc(100% - 15px) center;
     padding-right: 40px;
-    .timeFilter:hover {
+
+    &:hover {
       border-color: #2196f3;
       background-color: #f8fafd;
       transform: translateY(-1px);
       box-shadow: 0 3px 6px rgba(33, 150, 243, 0.1);
     }
-  
-    .timeFilter:focus {
+
+    &:focus {
       outline: none;
       border-color: #2196f3;
       background-color: #ffffff;
       box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
     }
-    .timeFilter::-ms-expand {
+
+    &::-ms-expand {
       display: none;
     }
-  
-    .timeFilter option {
+
+    option {
       padding: 12px;
       font-size: 14px;
       color: #2c3e50;
       background-color: #ffffff;
-    }
-  
-    .timeFilter option:hover,
-    .timeFilter option:focus {
-      background-color: #f1f8ff;
-      color: #2196f3;
-    }
-  
-    .time-filter label {
-      font-size: 15px;
-      font-weight: 500;
-      color: #2c3e50;
-    }
-  
-    @media (max-width: 768px) {
-      .time-filter {
-          flex-direction: column;
-          padding: 15px;
-          gap: 12px;
-      }
-  
-      .timeFilter {
-          width: 100%;
+
+      &:hover,
+      &:focus {
+        background-color: #f1f8ff;
+        color: #2196f3;
       }
     }
   }
-
-
 
   .custom-date-filter {
     display: flex;
     gap: 10px;
     align-items: center;
-  }
+    flex-wrap: wrap;
 
-  .custom-date-filter input[type="date"] {
-    border: 2px solid #eef2f7;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
-    color: #2c3e50;
-    transition: all 0.2s ease;
-  }
+    input[type="date"] {
+      border: 2px solid #eef2f7;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      color: #2c3e50;
+      transition: all 0.2s ease;
 
-  .custom-date-filter input[type="date"]:hover {
-    border-color: #2196f3;
-    background-color: #f8fafd;
-  }
+      &:hover {
+        border-color: #2196f3;
+        background-color: #f8fafd;
+      }
 
-  .custom-date-filter input[type="date"]:focus {
-    outline: none;
-    border-color: #2196f3;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
-  }
-
-  @media (max-width: 768px) {
-    .time-filter {
-        flex-direction: column;
-        padding: 15px;
-        gap: 12px;
+      &:focus {
+        outline: none;
+        border-color: #2196f3;
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+      }
     }
 
-    .timeFilter,
-    .custom-date-filter input[type="date"] {
-        width: 100%;
-    }
-
-    .custom-date-filter {
-        flex-direction: column;
-        width: 100%;
-    }
-  }
-
-  .custom-date-filter input {
-    margin-bottom: 10px;
-    font-size: 15px;
-    font-weight: normal;
-    color: #555;
-  }
-
-  .custom-date-filter label {
-    font-size: 15px;
-    font-weight: normal;
-    color: #555;
-  }
-
-  .adr-details p {
-    margin: 20px 10px;
-    font-size: 18px;
-    font-weight: normal;
-    color: #444;
-    .adr-details strong {
+    input {
+      margin-bottom: 10px;
+      font-size: 15px;
       font-weight: normal;
+      color: #555;
+    }
+
+    label {
+      font-size: 15px;
+      font-weight: normal;
+      color: #555;
     }
   }
 
+  .adr-details {
+    p {
+      margin: 20px 10px;
+      font-size: 18px;
+      font-weight: normal;
+      color: #444;
+
+      strong {
+        font-weight: normal;
+      }
+    }
+  }
 
   .adr-card-container {
     display: flex;
@@ -171,16 +144,34 @@
     align-items: center;
     width: 100%;
     border-radius: 30px;
+
     .adr-graph {
       width: 100%;
       max-width: 600px;
       margin-top: 20px;
     }
-  
-    .adr-card:hover {
+
+    &:hover {
       transform: scale(1.02);
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
   }
 
+  @media (max-width: 768px) {
+    .time-filter {
+      flex-direction: column;
+      padding: 15px;
+      gap: 12px;
+    }
+
+    .timeFilter,
+    .custom-date-filter input[type="date"] {
+      width: 100%;
+    }
+
+    .custom-date-filter {
+      flex-direction: column;
+      width: 100%;
+    }
   }
 }
