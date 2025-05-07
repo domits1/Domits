@@ -177,6 +177,8 @@ function App() {
                   <Route path="/travelinnovation" element={<Travelinnovation />} />
                   <Route path="/release" element={<ReleaseUpdates />} />
                   <Route path="/landing" element={<Landing />} />
+                  <Route path="/security" element={<Security />} />
+                  <Route path="/performance" element={<Performance />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/listingdetails" element={<ListingDetails2 />} />
