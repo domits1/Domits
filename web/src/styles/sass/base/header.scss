@@ -36,13 +36,7 @@ $breakpoint-sm: 480px;
       }
 
       @media screen and (max-width: $breakpoint-md) {
-        padding-top: 10vh;
-
-      }
-
-      @media screen and (max-width: 1026px) {
-        margin: 0 1vw 0 -2vw;
-
+        padding-top: 2vh;
       }
     }
 
