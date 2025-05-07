@@ -47,16 +47,12 @@ function HostCalendar() {
         return;
       } else {
         try {
-          const response = await fetch(
-            `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property`,
-            {
-              method: "GET",
-              headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "Authorization": getAccessToken()
-              },
-            }
-          );
+          const response = await fetch('https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all', {
+            method: 'GET',
+            headers: {
+            'Authorization': getAccessToken(),
+          }
+          });
           if (!response.ok) {
             throw new Error("Failed to fetch");
           }

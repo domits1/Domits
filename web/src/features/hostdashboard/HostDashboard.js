@@ -137,13 +137,12 @@ function HostDashboard() {
                             className={styles.dashboardCard}
                             onClick={() => {
                                 if (accommodation.property.status) {
-                                toast.warning('Deze accommodatie is in concept en kan niet bekeken worden.');
+                                toast.warning('This listing is still in draft mode. Please publish it to make it live.');
                                 } else {
                                 navigate(`/listingdetails?ID=${accommodation.property.id}`);
                                 }
                             }}
                             >
-                            {/* Vervang dit door jouw ImageSlider-component of <img> */}
                             {accommodation.images?.length > 0 ? (
                                 <img src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`} alt="Geen afbeelding beschikbaar" className='img-listed-dashboard' />
                             ) : (

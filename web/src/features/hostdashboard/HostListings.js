@@ -5,8 +5,11 @@ import add from "../../images/icons/host-add.png";
 import {useLocation, useNavigate} from 'react-router-dom';
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
-import PageSwitcher from "../../utils/PageSwitcher";
 import { useSetLiveEligibility } from "./hooks/useSetLiveEligibility";
+import { getAccessToken } from "../../services/getAccessToken.js";
+import { toast } from "react-toastify";
+import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+
 
 function HostListings() {
     const [accommodations, setAccommodations] = useState([]);
@@ -50,7 +53,6 @@ function HostListings() {
     }, [userId]);
 
     useEffect(() => {
-        fetchAccommodations();
         if (userId) {
             fetchAccommodations().catch(console.error);
         }
@@ -58,19 +60,21 @@ function HostListings() {
     const fetchAccommodations = async () => {
         setIsLoading(true);
         if (!userId) {
-            return;
+          console.log("No user id")
+          return;
         } else {
             try {
-                const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
-                    method: 'POST',
-                    body: JSON.stringify({ OwnerId: userId }),
-                    headers: {'Content-type': 'application/json; charset=UTF-8',
+                const response = await fetch('https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': getAccessToken(),
                     }
                 });
                 if (!response.ok) {
-                    throw new Error('Failed to fetch');
+                  throw new Error('Failed to fetch');
                 }
                 const data = await response.json();
+                console.log("Fetched data:", data);
                 if (data.body && typeof data.body === 'string') {
                     const accommodationsArray = JSON.parse(data.body);
                     if (Array.isArray(accommodationsArray)) {
@@ -87,6 +91,7 @@ function HostListings() {
             }
         }
     };
+    
     const asyncEditAccommodation = async (accoId, accoTitle) => {
         if (confirm(`Do you wish to edit ${accoTitle}?`)) {
             if (accoId) {
@@ -185,7 +190,6 @@ function HostListings() {
         }
     }
 
-
     return (
         <div className="page-body">
             <h2>Listings</h2>
@@ -208,7 +212,7 @@ function HostListings() {
                                 <p className={styles.header}>Current listings</p>
                                 {accommodations.length > 0 ? (
                                     <PageSwitcher
-                                        accommodations={accommodations.filter(acco => acco.Drafted === false)}
+                                        accommodations={accommodations.filter(acco => acco.property.status === "ACTIVE")}
                                         amount={3}
                                         bankDetailsProvided={bankDetailsProvided}
                                         onEdit={asyncEditAccommodation}
@@ -224,21 +228,50 @@ function HostListings() {
                             <section className={styles.listingsDisplay}>
                                 <p className={styles.header}>Drafted listings</p>
                                 {isLoading ? (
-                                    <div className={styles.loadingContainer}>
-                                        <img className={styles.spinner} src={spinner}/>
-                                    </div>
-                                ) : accommodations.length > 0 ? (
-                                    <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === true)}
-                                                  amount={3}
-                                                  bankDetailsProvided={bankDetailsProvided}
-                                                  onEdit={asyncEditAccommodation}
-                                                  onDelete={asyncDeleteAccommodation}
-                                                  onUpdate={asyncChangeAccommodationStatus}/>
-                                ) : (
-                                    <div>
-                                        <p>It appears that you have not drafted any accommodations yet...</p>
-                                    </div>
-                                )}
+                                  <div className={styles.loader}>
+                                      <img src={spinner} alt="Laden…" />
+                                  </div>
+                                  ) : accommodations.length > 0 ? (
+                                  accommodations.map((accommodation, index) => (
+                                      <div
+                                      key={accommodation.property.id || index}
+                                      className={styles.dashboardCard}
+                                      onClick={() => {
+                                          if (accommodation.property.status) {
+                                          toast.warning('This listing is still in draft mode. Please publish it to make it live.');
+                                          } else {
+                                          navigate(`/listingdetails?ID=${accommodation.property.id}`);
+                                          }
+                                      }}
+                                      >
+                                      {accommodation.images?.length > 0 ? (
+                                          <img src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`} alt="Geen afbeelding beschikbaar" className='img-listed-dashboard' />
+                                      ) : (
+                                          <img src={placeholderImage} alt="Geen afbeelding beschikbaar" />
+                                      )}
+
+                                      <div className={styles.accommodationText}>
+                                          <p className={styles.accommodationTitle}>
+                                          {accommodation.property.title}
+                                          </p>
+                                          <p className={styles.accommodationLocation}>
+                                          {accommodation.location.city}
+                                          </p>
+                                      </div>
+
+                                      <div className={styles.accommodationDetails}>
+                                          <span className={accommodation.property.status ? styles.status : styles.isLive}>
+                                          {accommodation.property.status ? 'Drafted' : 'Live'}
+                                          </span>
+                                          <span>Listed on: {DateFormatterDD_MM_YYYY(accommodation.property.createdAt)}</span>
+                                      </div>
+                                      </div>
+                                  ))
+                                  ) : (
+                                  <div className={styles.emptyState}>
+                                      <p>You havent placed any accommodation yet.</p>
+                                  </div>
+                                  )}
                             </section>
                         </div>
                     )}
