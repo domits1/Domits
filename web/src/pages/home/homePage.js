@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import "../home/homePage.css";
 import verifiedLogo from "../../images/icons/verify-icon.png";
@@ -11,9 +10,8 @@ import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
 import { reviews } from "../home/store/constants";
 import { categories as groups } from "../home/store/constants";
-import { img } from "../home/store/constants";
 import "swiper/css/pagination";
-import Header from "../../components/base/Header";
+
 import greece from "../../pages/home/Images/greece.webp";
 import netherlands from "../../pages/home/Images/netherlands.webp";
 import france from "../../pages/home/Images/france.webp";
