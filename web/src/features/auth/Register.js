@@ -46,6 +46,11 @@ const Register = () => {
     const strengthTextRef = useRef(null);
     const strengthContainerRef = useRef(null); // Declare the strengthContainerRef
 
+    const handleLoginClick = (e) => {
+        e.preventDefault()
+        navigate('/login');
+    };
+
 
     const handleHostChange = (e) => {
         setFlowState(prevState => ({
@@ -381,7 +386,7 @@ const Register = () => {
                             /> Become a Host
                         </label>
                         <div className="alreadyAccountText">
-                            Already have an account? <a href="/web/src/features/auth/Login">Log in here</a>
+                            Already have an account? <a onClick={handleLoginClick} href="#login">Log in here</a>
                         </div>
                         {errorMessage && <div className="errorText">{errorMessage}</div>}
                         <button type="submit" className="registerButton" onClick={() => setShouldShake(true)}>Sign Up
