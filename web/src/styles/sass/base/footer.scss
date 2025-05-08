@@ -16,6 +16,8 @@ $breakpoint-sm: 480px;
 // Footer Styling
 .main-footer {
   background-color: $footer-bg;
+  position: relative;
+  z-index: 1000;
 
   .footer-content {
     margin: auto;

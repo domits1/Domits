@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import './guestdashboard.css';
+// import './guestdashboard.css';
 import Pages from './Pages.js';
-import './paymentsguestdashboard.css';
+// import './paymentsguestdashboard.css';
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY.js';
 import spinner from '../../images/spinnner.gif';
 
@@ -49,7 +49,6 @@ const PaymentsGuestDashboard = () => {
         <div className="page-body">
             <h2>Payments</h2>
             <div className='dashboards'>
-                <Pages />
             </div>
             <div className="content">
                 {loading ? (

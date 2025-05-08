@@ -23,8 +23,8 @@
 }
 
 .sidebar {
-    margin-left: 67px;
-    margin-top: -20px;
+    /* margin-left: 67px;
+    margin-top: -20px; */
 }
 
 @media (max-width: 768px) {

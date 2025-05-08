@@ -345,6 +345,7 @@ $primary-domits-color: #0d9813;
     height: auto;
     padding: 0.6rem;
     box-sizing: border-box;
+    margin: 10px;
 
     >div::before {
       display: none;
@@ -434,9 +435,9 @@ $primary-domits-color: #0d9813;
     }
   }
 
-  @include tablet {
-    width: 85%;
-  }
+  // @include tablet {
+  //   width: 85%;
+  // }
 
   // @media (max-width: 1000px) {
   //   width: 100%;
@@ -848,8 +849,8 @@ $primary-domits-color: #0d9813;
 
   @include mobile {
     display: block;
-    width: 100%;
-    margin: 0 auto 0.5rem auto;
+    // width: 100%;
+    // margin: 0 auto 0.5rem auto;
     padding: 0.8rem;
     background-color: #ffffff;
     border: 1px solid #e2e2e4;
