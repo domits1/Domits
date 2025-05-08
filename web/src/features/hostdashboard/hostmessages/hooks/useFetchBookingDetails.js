@@ -54,7 +54,7 @@ const useFetchBookingDetails = (hostId, guestId, {
                         `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/${accommodationEndpoint}?property=${bookingData.property_id}`,
                         {
                             method: 'GET',
-                            headers: withAuth ? { Authorization: getAccessToken(hostId) } : {},
+                            headers: withAuth ? { Authorization: getAccessToken(hostId) } : {Authorization: getAccessToken(guestId)},
                         }
                     );
                     if (!accoRes.ok) {
