@@ -3,10 +3,11 @@ import { WebSocketProvider } from "../context/webSocketContext";
 import Pages from "../../Pages";
 import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
-import ContactList from "../components/hostContactList";
+import HostContactList from "../components/hostContactList";
 import HostChatScreen from "../components/hostChatScreen";
+import HostBookingTab from "../components/hostBookingTab";
 import useFetchConnectionId from '../hooks/useFetchConnectionId';
-import "../styles/hostMessages.css";
+import "../styles/sass/hostMessages.scss";
 
 const HostMessages = () => {
     return (
@@ -17,15 +18,15 @@ const HostMessages = () => {
 };
 
 const HostMessagesContent = () => {
-    const { userId } = useAuth();
+    const { userId, accessToken } = useAuth();
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [selectedContactName, setSelectedContactName] = useState(null);
     const { connectionId } = useFetchConnectionId(selectedContactId) || { connectionId: null };
     const [message, setMessage] = useState([]);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-
     const isMobile = screenWidth < 768;
-    const isTablet = screenWidth >= 768 && screenWidth < 1145;
+    const isTablet = screenWidth >= 768 && screenWidth < 1440;
+
     useEffect(() => {
         const handleResize = () => setScreenWidth(window.innerWidth);
         window.addEventListener("resize", handleResize);
@@ -59,7 +60,6 @@ const HostMessagesContent = () => {
     return (
         <WebSocketProvider userId={userId}>
             <main className="page-body">
-                <h2>Messages</h2>
                 {userId ? (
                     <>
                         <div className="host-chat-components">
@@ -68,7 +68,7 @@ const HostMessagesContent = () => {
                             </div>
 
                             {showContactList && (
-                                <ContactList
+                                <HostContactList
                                     userId={userId}
                                     onContactClick={handleContactClick}
                                     message={message}
@@ -86,9 +86,18 @@ const HostMessagesContent = () => {
                                     contactId={selectedContactId}
                                     connectionId={connectionId}
                                     contactName={selectedContactName}
-                                    onBack={isMobile ? handleBackToContacts : null}
-                                    onClose={isTablet ? handleBackToContacts : null}
+                                    onBack={(isTablet) ? handleBackToContacts : null}
                                 />
+                            )}
+                            {showChatScreen && (
+                                <div className="host-booking-tab-overlay">
+                                    <HostBookingTab
+                                        userId={userId}
+                                        accessToken={accessToken}
+                                        contactId={selectedContactId}
+                                        contactName={selectedContactName}
+                                    />
+                                </div>
                             )}
                         </div>
                     </>

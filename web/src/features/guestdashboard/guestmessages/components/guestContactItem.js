@@ -1,26 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import profileImage from '../domits-logo.jpg';
+import useFetchBookingDetails from '../../../hostdashboard/hostmessages/hooks/useFetchBookingDetails';
+import ContactItem from '../../../../components/messages/ContactItem';
 
-const ContactItem = ({ contact, updateContactRequest, isPending }) => {
-    const [error, setError] = useState(null);
+
+const GuestContactItem = ({ contact, userId, isPending, selected }) => {
+    const { bookingDetails, accommodation } = useFetchBookingDetails(contact.hostId, userId, {
+        accommodationEndpoint: 'bookingEngine/listingDetails',
+    });
+    const key = accommodation?.images?.[0]?.key;
+    const accoImage = key
+        ? `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`
+        : null;
 
     return (
-        <div className="guest-contact-item-content">
-            <img src={profileImage} alt="Profile" className="guest-contact-item-profile-image" />
-            <div className="guest-contact-item-text-container">
-                <p className="guest-contact-item-full-name">{contact.givenName}</p>
-                {!isPending && (
-                    <p className="guest-contact-item-subtitle">
-                        {contact.latestMessage.text
-                            ? contact.latestMessage.text || "No message yet"
-                            : "No message history yet"}
-                    </p>
-                )}
-            </div>
-
-            {error && <p className="error-message">{error}</p>}
-        </div>
+        <ContactItem
+            contact={contact}
+            isPending={isPending}
+            selected={selected}
+            userId={userId}
+            accoImage={accoImage}
+            profileImage={profileImage}
+            bookingDetails={bookingDetails}
+        />
     );
 };
 
-export default ContactItem;
+export default GuestContactItem;

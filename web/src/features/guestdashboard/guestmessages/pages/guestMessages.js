@@ -3,10 +3,11 @@ import { WebSocketProvider } from "../context/webSocketContext";
 import Pages from "../../Pages";
 import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
-import ContactList from "../components/guestContactList";
+import GuestContactList from "../components/guestContactList";
 import GuestChatScreen from "../components/guestChatScreen";
+import GuestBookingTab from "../components/guestBookingTab";
 import useFetchConnectionId from "../hooks/useFetchConnectionId";
-import "../styles/guestMessages.css";
+import "../styles/sass/guestMessages.scss";
 
 const GuestMessages = () => {
     return (
@@ -24,7 +25,7 @@ const GuestMessagesContent = () => {
     const [message, setMessage] = useState([]);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
     const isMobile = screenWidth < 768;
-    const isTablet = screenWidth >= 768 && screenWidth < 1145;
+    const isTablet = screenWidth >= 768 && screenWidth < 1440;
 
     useEffect(() => {
         const handleResize = () => setScreenWidth(window.innerWidth);
@@ -59,7 +60,6 @@ const GuestMessagesContent = () => {
     return (
         <WebSocketProvider userId={userId}>
             <main className="page-body">
-                <h2>Messages</h2>
                 {userId ? (
                     <>
                         <div className="guest-chat-components">
@@ -69,7 +69,7 @@ const GuestMessagesContent = () => {
 
 
                             {showContactList && (
-                                <ContactList
+                                <GuestContactList
                                     userId={userId}
                                     onContactClick={handleContactClick}
                                     message={message}
@@ -80,7 +80,28 @@ const GuestMessagesContent = () => {
                                     ← Back to contacts
                                 </button>
                             )}
-                            <GuestChatScreen userId={userId} handleContactListMessage={handleContactListMessage} contactId={selectedContactId} connectionId={connectionId} contactName={selectedContactName} />
+                            {showChatScreen && (
+                                <GuestChatScreen
+                                    userId={userId}
+                                    handleContactListMessage={handleContactListMessage}
+                                    contactId={selectedContactId}
+                                    connectionId={connectionId}
+                                    contactName={selectedContactName}
+                                    onBack={(isTablet) ? handleBackToContacts : null}
+
+                                />
+                            )}
+                            {showChatScreen && (
+
+                                <div className="guest-booking-tab-overlay">
+                                    <GuestBookingTab
+                                        userId={userId}
+                                        contactId={selectedContactId}
+                                        contactName={selectedContactName}
+                                    />
+                                </div>
+                            )}
+
                         </div>
                     </>
                 ) : (
