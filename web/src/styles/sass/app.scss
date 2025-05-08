@@ -11,6 +11,12 @@
 //Auth
 @use "auth/login.scss";
 @use "auth/register.scss";
+//hostdashboard
+@use "hostdashboard/HostDashboard.module.scss";
+@use "hostdashboard/HostHomepage.scss";
+//guestdashboard
+@use "guestdashboard/guestDashboard.scss";
+
 
 :root {
   --primary-color: #0D9813;
