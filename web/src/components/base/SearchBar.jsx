@@ -158,14 +158,14 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
     }
 
     if (address) {
-      queryParams.append('searchTerm', address);
+      queryParams.append('country', address);
     }
 
     if (totalGuests > 0) {
       queryParams.append('guests', totalGuests);
     }
 
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams.toString()}`;
+    const apiUrl = `https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction?${queryParams.toString()}`;
 
     try {
       const response = await fetch(apiUrl);
