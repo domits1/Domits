@@ -460,6 +460,30 @@ const Homepage = () => {
             </div>
           </div>
         </div>
+        <div className="domits-trendingContainer">
+          {[
+            {
+              emoji: "🎖️",
+              title: "Best price guarantee",
+              text: "We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.",
+            },
+            {
+              emoji: "✅",
+              title: "Accommodation booking guarantee",
+              text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.",
+            },
+            {
+              emoji: "🤝",
+              title: "Guarantee of stay at the accommodation",
+              text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
+            },
+          ].map((item, index) => (
+            <div key={index} className="popup-trigger" onClick={() => handlePopupClick(item.text)}>
+              {item.emoji} {item.title}
+              {activePopup === item.text && <div className="popup-box">{item.text}</div>}
+            </div>
+          ))}
+        </div>
         <div className="domits-boatContainer">
           <div className="domits-accommodationGroup">
             {propertyLoading === false ? (
