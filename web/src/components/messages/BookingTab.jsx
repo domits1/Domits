@@ -4,7 +4,6 @@ import React from "react";
 const BookingTab = ({ bookingDetails, accommodation, earningsComponent, }) => {
     const firstImage = `https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation?.images?.[0]?.key}`;
     const formatHour = (hour) => {
-        // const padded = hour.toString().padStart(2, "0");
         return `${hour}:00`;
       };
 

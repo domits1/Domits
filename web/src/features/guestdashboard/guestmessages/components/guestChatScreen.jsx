@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useContext } from 'react';
 import GuestChatMessage from './guestChatMessage';
 import ChatScreen from '../../../../components/messages/ChatScreen';
 import { WebSocketContext } from '../context/webSocketContext';

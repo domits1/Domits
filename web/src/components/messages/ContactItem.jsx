@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 const ContactItem = ({ contact, userId, isPending, selected, setContacts, handleAccept, handleReject, accoImage, profileImage, bookingDetails,  }) => {
-    const [error, setError] = useState(null);
 
     return (
         <div className={`contact-item-content ${selected ? 'selected' : ''} ${!accoImage ? 'no-accommodation-image' : ''}`}>

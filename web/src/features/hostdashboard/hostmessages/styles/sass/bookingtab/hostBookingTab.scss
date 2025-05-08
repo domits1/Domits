@@ -39,12 +39,11 @@
     .acco-image {
         display: flex;
         flex-direction: column;
-        height: 15rem;
 
         img {
             align-self: center;
             width: 100%;
-            height: 65%;
+            height: 10vw;
             border-radius: 1rem;
         }
     }

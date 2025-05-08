@@ -1,7 +1,6 @@
 import React from 'react';
 import useFetchBookingDetails from '../../../hostdashboard/hostmessages/hooks/useFetchBookingDetails';
 import BookingTab from '../../../../components/messages/BookingTab';
-import { FaHome } from 'react-icons/fa';
 import '../styles/sass/bookingtab/guestBookingTab.scss';
 
 

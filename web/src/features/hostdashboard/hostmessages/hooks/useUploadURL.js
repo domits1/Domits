@@ -1,5 +1,3 @@
-import { useState, useCallback } from 'react';
-
 export const useUploadUrl = (userId) => {
     const getUploadUrl = async (fileType) => {
         const response = await fetch('https://d141hj02ed.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Create-UploadUrl', {

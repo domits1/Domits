@@ -232,7 +232,6 @@
 
         @media (max-width: 875px) {
             min-width: 28rem;
-            max-width: 28rem;
             min-height: 30rem;
             max-height: 30rem;
         }
@@ -247,6 +246,9 @@
             width: 85%;
         }
     }
-
+    @media (max-width: 768px) {
+          display: flex;
+          justify-content: center;  
+    }
 
 }

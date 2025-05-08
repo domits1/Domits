@@ -1,4 +1,3 @@
-import { property } from 'lodash';
 import { useState, useEffect } from 'react';
 import { getAccessToken } from '../../../../services/getAccessToken';
 
