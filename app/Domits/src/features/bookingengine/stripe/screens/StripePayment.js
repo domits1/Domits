@@ -9,26 +9,32 @@ import BookingDatesView from '../views/BookingDatesView';
 import CalendarModal from '../components/CalendarModal';
 import BookingGuestsView from '../views/BookingGuestsView';
 import GuestsModal from '../components/GuestsModal';
-import LineDivider from "../../../../components/LineDivider";
-import calculateNumberOfNights from "../utils/CalculateNumberOfNights";
-import PricingView from "../views/PricingView";
-import ConfirmAndPayButton from "../components/ConfirmAndPayButton";
+import LineDivider from '../../../../components/LineDivider';
+import calculateNumberOfNights from '../utils/CalculateNumberOfNights';
+import PricingView from '../views/PricingView';
+import ConfirmAndPayButton from '../components/ConfirmAndPayButton';
+import {StripeProvider, useStripe} from '@stripe/stripe-react-native';
+import {HOME_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 
 const StripePayment = ({navigation, route}) => {
   const property = route.params.property;
 
   const [arrivalDate, setArrivalDate] = useState(route.params.arrivalDate);
-  const [departureDate, setDepartureDate] = useState(route.params.departureDate,);
+  const [departureDate, setDepartureDate] = useState(
+    route.params.departureDate,
+  );
   const [showDatePopUp, setShowDatePopUp] = useState(false);
 
-  const [nights, setNights] = useState(calculateNumberOfNights(arrivalDate, departureDate));
+  const [nights, setNights] = useState(
+    calculateNumberOfNights(arrivalDate, departureDate),
+  );
 
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
   const [showGuestsPopUp, setShowGuestsPopUp] = useState(false);
 
   useEffect(() => {
-    setNights(calculateNumberOfNights(arrivalDate, departureDate))
+    setNights(calculateNumberOfNights(arrivalDate, departureDate));
   }, [arrivalDate, departureDate]);
 
   useEffect(() => {
@@ -36,62 +42,87 @@ const StripePayment = ({navigation, route}) => {
     // See https://docs.stripe.com/payments/accept-a-payment?platform=react-native#setup-server-side
   });
 
+  const {initPaymentSheet, presentPaymentSheet} = useStripe();
+  const openPaymentSheet = async () => {
+    const {error} = await initPaymentSheet({
+      paymentIntentClientSecret: "",
+      merchantDisplayName: 'Domits',
+    });
+
+    if (error) {
+      console.error('Payment failed', error);
+    } else {
+      const {error} = await presentPaymentSheet();
+      if (error) {
+        console.error(error.message);
+      } else {
+        navigation.navigate(HOME_SCREEN);
+      }
+    }
+  };
+
   return (
     <>
-      <View style={styles.container}>
-        <Header navigation={navigation} />
-        <Image
-          source={{uri: `${S3URL}${property.images[0].key}`}}
-          style={styles.image}
-        />
-        <Spacer />
-        <LocationView property={property} />
-        <Spacer />
-        <BookingDatesView
-          arrivalDate={arrivalDate}
-          departureDate={departureDate}
-          onChangePress={() => setShowDatePopUp(true)}
-        />
-        <Spacer />
-        <BookingGuestsView
-          adults={adults}
-          kids={kids}
-          onChangePress={() => setShowGuestsPopUp(true)}
-        />
-        <LineDivider />
-        <PricingView adults={adults} kids={kids} nights={nights} pricing={property.pricing} />
-        <Spacer />
-        <ConfirmAndPayButton />
-      </View>
-      {/*<StripeProvider*/}
-      {/*  publishableKey={*/}
-      {/*    'pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3'*/}
-      {/*  }*/}
-      {/*  urlScheme={'com.domits.domits'}></StripeProvider>*/}
-      {showDatePopUp && (
-        <CalendarModal
-          showDatePopUp={showDatePopUp}
-          setShowDatePopUp={setShowDatePopUp}
-          property={property}
-          setFirstSelectedDate={setArrivalDate}
-          firstSelectedDate={arrivalDate}
-          setLastSelectedDate={setDepartureDate}
-          lastSelectedDate={departureDate}
-        />
-      )}
-      {showGuestsPopUp && (
-        <GuestsModal
-          onClose={() => setShowGuestsPopUp(false)}
-          maxGuests={
-            property.generalDetails.find(detail => detail.detail === 'Guests')
-              .value
-          }
-          currentAdults={adults}
-          currentKids={kids}
-          setAdults={setAdults}
-          setKids={setKids}
-        />
-      )}
+      <StripeProvider
+        publishableKey={
+          'pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3'
+        }
+        urlScheme={'com.domits.domits'}>
+        <View style={styles.container}>
+          <Header navigation={navigation} />
+          <Image
+            source={{uri: `${S3URL}${property.images[0].key}`}}
+            style={styles.image}
+          />
+          <Spacer />
+          <LocationView property={property} />
+          <Spacer />
+          <BookingDatesView
+            arrivalDate={arrivalDate}
+            departureDate={departureDate}
+            onChangePress={() => setShowDatePopUp(true)}
+          />
+          <Spacer />
+          <BookingGuestsView
+            adults={adults}
+            kids={kids}
+            onChangePress={() => setShowGuestsPopUp(true)}
+          />
+          <LineDivider />
+          <PricingView
+            adults={adults}
+            kids={kids}
+            nights={nights}
+            pricing={property.pricing}
+          />
+          <Spacer />
+          <ConfirmAndPayButton onPress={() => openPaymentSheet()} />
+        </View>
+        {showDatePopUp && (
+          <CalendarModal
+            showDatePopUp={showDatePopUp}
+            setShowDatePopUp={setShowDatePopUp}
+            property={property}
+            setFirstSelectedDate={setArrivalDate}
+            firstSelectedDate={arrivalDate}
+            setLastSelectedDate={setDepartureDate}
+            lastSelectedDate={departureDate}
+          />
+        )}
+        {showGuestsPopUp && (
+          <GuestsModal
+            onClose={() => setShowGuestsPopUp(false)}
+            maxGuests={
+              property.generalDetails.find(detail => detail.detail === 'Guests')
+                .value
+            }
+            currentAdults={adults}
+            currentKids={kids}
+            setAdults={setAdults}
+            setKids={setKids}
+          />
+        )}
+      </StripeProvider>
     </>
   );
 };
