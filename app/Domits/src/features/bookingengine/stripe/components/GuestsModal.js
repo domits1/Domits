@@ -1,9 +1,9 @@
 import {Modal, Text, ToastAndroid, TouchableOpacity, View} from "react-native";
-import {styles} from "../styles/BookingEngineStyles";
+import {styles} from "../styles/styles";
 import React, {useState} from "react";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
-const BookingEngineGuestsPopup = ({onClose, maxGuests, currentAdults, currentKids, setAdults, setKids}) => {
+const GuestsModal = ({onClose, maxGuests, currentAdults, currentKids, setAdults, setKids}) => {
     const [tempAdults, setTempAdults] = useState(currentAdults || 1);
     const [tempKids, setTempKids] = useState(currentKids || 0);
     const totalGuests = tempAdults + tempKids;
@@ -101,4 +101,4 @@ const BookingEngineGuestsPopup = ({onClose, maxGuests, currentAdults, currentKid
     );
 }
 
-export default BookingEngineGuestsPopup;
+export default GuestsModal;

@@ -6,13 +6,12 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {styles} from '../styles/propertyDetailsStyles';
-import CalculateNumberOfNights from '../../../features/bookingengine/overview/utils/CalculateNumberOfNights';
+import CalculateNumberOfNights from '../../../features/bookingengine/stripe/utils/CalculateNumberOfNights';
 import ImagesView from '../views/imagesView';
 import LoadingScreen from '../../loadingscreen/screens/LoadingScreen';
 import PropertyMainDetailsView from '../views/PropertyMainDetailsView';
 import {
-    BOOKING_PROCESS_SCREEN,
-    HOME_SCREEN,
+    HOME_SCREEN, STRIPE_PROCESS_SCREEN,
 } from '../../../navigation/utils/NavigationNameConstants';
 import PropertyRepository from "../../../services/property/propertyRepository";
 import TestPropertyRepository from "../../../services/property/test/testPropertyRepository";
@@ -53,9 +52,9 @@ const PropertyDetailsScreen = ({route, navigation}) => {
                 ToastAndroid.SHORT,
             );
         } else {
-            navigation.navigate(BOOKING_PROCESS_SCREEN, {
-                firstSelectedDate,
-                lastSelectedDate,
+            navigation.navigate(STRIPE_PROCESS_SCREEN, {
+                arrivalDate: firstSelectedDate,
+                departureDate: lastSelectedDate,
                 property: property,
             });
         }

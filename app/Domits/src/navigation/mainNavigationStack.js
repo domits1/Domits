@@ -5,10 +5,6 @@ import Pay from '../header/pay';
 import GuestBookings from '../header/bookings';
 import Pocket from '../header/pocket';
 import PropertyDetails from '../screens/propertyDetailsScreen/screens/propertyDetailsScreen';
-import BookingProcess from '../features/bookingengine/overview/screens/BookingEngineScreen';
-import SimulateStripe from '../features/bookingengine/overview/simulateStripe';
-import PaymentAccepted from '../features/bookingengine/overview/screens/PaymentAcceptedScreen';
-import PaymentDeclined from '../features/bookingengine/overview/screens/PaymentDeclinedScreen';
 import GuestNewConfirmedBooking from '../screens/guestdashboard/screens/GuestBookingsTab';
 import HostOnboardingLanding from '../screens/Landing';
 import GuestProfile from '../screens/profile/guestprofile/screens/GuestProfileTab';
@@ -30,7 +26,6 @@ import HostDashboard from '../features/hostdashboard/screens/HostDashboardTab';
 import HostReviewPropertyChanges from '../screens/oldHostonboarding/ReviewAndSubmitScreen';
 import HomeScreen from '../screens/home/screens/Home';
 import {
-    BOOKING_PROCESS_SCREEN,
     FEEDBACK_SCREEN,
     GUEST_BOOKINGS_SCREEN,
     GUEST_DASHBOARD_SCREEN,
@@ -53,12 +48,9 @@ import {
     HOST_REVIEWS_SCREEN,
     HOST_SETTINGS_SCREEN,
     PAY_SCREEN,
-    PAYMENT_ACCEPTED_SCREEN,
-    PAYMENT_DECLINED_SCREEN,
     POCKET_SCREEN,
     PROPERTY_DETAILS_SCREEN,
     SCAN_SCREEN,
-    SIMULATE_STRIPE_SCREEN,
     STRIPE_PROCESS_SCREEN
 } from './utils/NavigationNameConstants';
 import StripePayment from "../features/bookingengine/stripe/screens/StripePayment";
@@ -123,17 +115,7 @@ function MainNavigationStack() {
             />
 
             {/* Booking Engine */}
-            <Stack.Screen name={BOOKING_PROCESS_SCREEN} component={BookingProcess}/>
             <Stack.Screen name={STRIPE_PROCESS_SCREEN} component={StripePayment}/>
-            <Stack.Screen name={SIMULATE_STRIPE_SCREEN} component={SimulateStripe}/>
-            <Stack.Screen
-                name={PAYMENT_ACCEPTED_SCREEN}
-                component={PaymentAccepted}
-            />
-            <Stack.Screen
-                name={PAYMENT_DECLINED_SCREEN}
-                component={PaymentDeclined}
-            />
             <Stack.Screen
                 name={GUEST_NEW_CONFIRMED_BOOKING_SCREEN}
                 component={GuestNewConfirmedBooking}
