@@ -48,7 +48,6 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
         if (!uploadResponse.ok) {
             console.error("Failed to upload file", await uploadResponse.text());
         } else {
-            console.log("File uploaded successfully:", response.fileUrl);
             const uploadedFile = {
                 name: file.name,
                 type: file.type,

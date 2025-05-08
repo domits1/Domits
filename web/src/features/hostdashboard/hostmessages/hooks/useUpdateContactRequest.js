@@ -19,10 +19,8 @@ const useUpdateContactRequest = (setContacts) => {
             );
 
             const data = await response.json();
-            console.log('Response JSON:', data);
             setContacts((prevContacts) => {
                 const updatedContacts = prevContacts.filter(contact => contact.ID !== id);
-                console.log('Updated contacts:', updatedContacts);
                 return updatedContacts;
             });
 

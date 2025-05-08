@@ -33,8 +33,6 @@ const ContactItem = ({ contact, userId, isPending, selected, setContacts, handle
                     </div>
                 )}
             </div>
-
-            {error && <p className="error-message">{error}</p>}
         </div>
     );
 };

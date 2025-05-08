@@ -8,9 +8,15 @@ import ContactItem from '../../../../components/messages/ContactItem';
 const HostContactItem = ({ contact, isPending, setContacts, selected }) => {
     const [error, setError] = useState(null);
     const { updateContactRequest } = useUpdateContactRequest(setContacts);
-    const { bookingDetails, accommodation } = useFetchBookingDetails(contact.hostId, contact.recipientId);
-    const accoImage = accommodation?.Images?.image1;
-    
+    const { bookingDetails, accommodation } = useFetchBookingDetails(contact.hostId, contact.recipientId, {
+        withAuth: true,
+        accommodationEndpoint: 'hostDashboard/single',
+    });
+    const key = accommodation?.images?.[0]?.key;
+    const accoImage = key
+        ? `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`
+        : null;
+
 
     const handleAccept = async () => {
         try {
@@ -36,11 +42,11 @@ const HostContactItem = ({ contact, isPending, setContacts, selected }) => {
             selected={selected}
             handleAccept={handleAccept}
             handleReject={handleReject}
-            accoImage={accoImage}
+            accoImage={accoImage || null}
             profileImage={profileImage}
             bookingDetails={bookingDetails}
-            
-            
+
+
         />
     );
 };

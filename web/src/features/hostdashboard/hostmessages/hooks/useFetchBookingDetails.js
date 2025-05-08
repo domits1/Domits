@@ -2,7 +2,10 @@ import { property } from 'lodash';
 import { useState, useEffect } from 'react';
 import { getAccessToken } from '../../../../services/getAccessToken';
 
-const useFetchBookingDetails = (hostId, guestId, accessToken) => {
+const useFetchBookingDetails = (hostId, guestId, {
+    withAuth = false,
+    accommodationEndpoint = 'listingDetails',
+} = {}) => {
     const [bookingDetails, setBookingDetails] = useState(null);
     const [accommodation, setAccommodation] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -48,17 +51,17 @@ const useFetchBookingDetails = (hostId, guestId, accessToken) => {
                 // setBookingDetails({ ...bookingData });
 
                 if (bookingData?.property_id) {
-                    const accoRes = await fetch(`https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/single?property=${bookingData.property_id}`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': getAccessToken(hostId),
+                    const accoRes = await fetch(
+                        `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/${accommodationEndpoint}?property=${bookingData.property_id}`,
+                        {
+                            method: 'GET',
+                            headers: withAuth ? { Authorization: getAccessToken(hostId) } : {},
                         }
-                    });
+                    );
                     if (!accoRes.ok) {
                         throw new Error('Failed to fetch accommodation');
                     }
                     const accoRaw = await accoRes.json();
-                    console.log('Accommodation:', accoRaw);
 
                     const accoData = typeof accoRaw.body === 'string'
                         ? JSON.parse(accoRaw.body)
@@ -77,7 +80,7 @@ const useFetchBookingDetails = (hostId, guestId, accessToken) => {
         };
 
         fetchData();
-    }, [hostId, guestId]);
+    }, [hostId, guestId, withAuth, accommodationEndpoint]);
 
     return { bookingDetails, accommodation, loading, error };
 };
