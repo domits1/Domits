@@ -55,38 +55,77 @@
     border-radius: 1rem;
 }
 .dashboardCard {
-    height: 35vh;
-    width: 17vw;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border-radius: 0.5em;
     position: relative;
-}
-.accommodationText {
-    padding: 0.25em;
-    width: 80%;
-    background-color: black;
-    backdrop-filter: blur(10px);
-    border-radius: 0.5em;
-    text-align: center;
     display: flex;
     flex-direction: column;
-    position: absolute;
-    justify-self: center;
-    top: 10%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-.accommodationTitle {
-    color: white;
+    justify-content: flex-end;
+    overflow: hidden;
+    height: 40vh;
+    width: 17vw;
+    margin: 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background-color: #f5f5f5;
+    cursor: pointer;
+  }
+  
+  .dashboardCard:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  }
+  
+  .dashboardCard img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+  
+  .accommodationText {
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.25rem;
+    color: black;
+  }
+  
+  .accommodationTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    max-width: 90%;
     margin: 0;
-    font-size: 0.75em;
-    background-color: black;
-}
-.accommodationLocation {
-    color: white;
-    font-size: 0.6em;
-    margin-top: 1%;
-}
+  }
+  
+  .accommodationLocation {
+    font-size: 0.875rem;
+    opacity: 0.85;
+    margin: 0;
+  }
+  
+  .accommodationDetails {
+    background: #fff;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .status {
+    color: #d9534f;
+    font-weight: 500;
+  }
+  
+  .isLive {
+    color: #5cb85c;
+    font-weight: 500;
+  }
+  
 .accommodationImg {
     max-height: 70%;
     max-width: none;
