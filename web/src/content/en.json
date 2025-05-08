@@ -1,0 +1,270 @@
+{
+      "component": {
+        "user": {
+          "hello": "Hello",
+          "profile": "Profile",
+          "login": "Login",
+          "register": "Register",
+          "logout": "Log out",
+          "settings": "Settings",
+          "payments": "Payments",
+          "dashboard": "Dashboard",
+          "messages": "Messages",
+          "calendar": "Calendar",
+          "reservations": "Reservations",
+          "switchToGuest": "Switch to Guest",
+          "switchToHost": "Switch to Host",
+          "becomeHost": "Become a host"
+        },
+        "search": {
+          "destination": "Search Destination",
+          "accommodation": "Accommodation",
+          "checkInOut": "Check in • out",
+          "guests": "Guests",
+          "adults": "Adults",
+          "children": "Children",
+          "infants": "Infants",
+          "pets": "Pets",
+          "search": "Search",
+          "house": "House",
+          "boat": "Boat",
+          "camper": "Camper",
+          "ageGroups": {
+            "adults": "Ages 16 or above",
+            "children": "Ages 2–16",
+            "infants": "Ages 0–2",
+            "pets": "Normal sized pets"
+          }
+        },
+        "footer": {
+          "navigation" : {
+            "title": "Navigation",
+            "whyDomits": "Why Domits",
+            "howItWorks": "How it works",
+            "producUpdates": "Product Updates",
+            "about": "About us",
+            "security": "Security",
+            "performance": "Performance",
+            "careers": "Careers",
+            "contact": "Contact"
+          },
+          "guest": {
+            "title": "Guest",
+            "searchAndBook": "Search and book",
+            "helpDeskForGuests": "Helpdesk for guests",
+            "sustainability": "Sustainability"
+          },
+          "host": {
+            "title": "Hosts",
+            "becomeHost": "Become a host",
+            "helpdeskForHosts": "Helpdesk for hosts",
+            "sustainability": "Sustainability"
+          },
+          "network": {
+            "title": "Network",
+            "guests": "Guests",
+            "hosts": "Hosts",
+            "developers": "Developers",
+            "partners": "Partners",
+            "students": "Students",
+            "startups": "Startups"
+          },
+          "socials": {
+            "title": "Socials"
+          },
+          "office": {
+            "title": "Office"
+          },
+          "policy": {
+            "title": "Privacy policy"
+          },
+          "termsConditions": {
+            "title": "Terms and Conditions"
+          },
+          "disclaimer": {
+            "title": "Disclaimer"
+          },
+          "sitemap": {
+            "title": "Sitemap"
+          },
+          "rightsReserved": {
+            "title": "Rights reserved"
+          }
+        }
+      },
+  
+      "homepage": {
+        "hero": {
+          "title": "Book holiday homes, boats and campers..",
+          "searchPlaceholder": "Search Destination",
+          "searchTitle": "Accommodation",
+          "searchGuests": "Guests"
+        },
+        "features": {
+          "securePayments": "Secure payments",
+          "verifiedGuest": "Verified guests/hosts",
+          "quickPhone": "Quick phone support",
+          "qualityGuarantee": "Domits quality guarantee",
+          "bestPrice": "Best price guarantee",
+          "bookingGuarantee": "Accommodation booking guarantee",
+          "stayGuarantee": "Guarantee of stay at the accommodation"
+        },
+        "sections": {
+          "trending": "Trending accommodations this month",
+          "rentBoat": "Rent a boat for any occasion",
+          "discoverCampers": "Discover Beautiful Campers",
+          "becomeHost": {
+            "title": "Become a host",
+            "points": [
+              "List your property for free.",
+              "Manage everything centrally.",
+              "Increase your booking metrics."
+            ],
+            "button": "List your property"
+          },
+          "community": {
+            "title": "Need help? Join the community",
+            "description": "Domits has a travel community hosts, guests, and employees",
+            "button": "Search & Book"
+          }
+        },
+        "filters": {
+          "season": {
+            "title": "Favorites by Season",
+            "spring": "Spring",
+            "summer": "Summer",
+            "fall": "Fall",
+            "winter": "Winter"
+          },
+          "interest": {
+            "title": "Great picks by interest",
+            "luxury": "Luxury",
+            "beach": "Beach",
+            "lastMinute": "Last minute",
+            "wellness": "Wellness",
+            "romantic": "Romantic",
+            "adventure": "Adventure",
+            "nature": "Nature",
+            "culture": "Culture",
+            "culinary": "Culinary"
+          },
+          "groups": {
+            "title": "Accommodations by group",
+            "description": "Vacation houses and apartments",
+            "friends": "Friends",
+            "couples": "Couples",
+            "family": "Family & child friendly",
+            "solo": "Solo",
+            "senior": "Senior",
+            "petFriendly": "Pet Friendly"
+          }
+        },
+        "destinations": {
+          "europe": {
+            "title": "Countries in Europe",
+            "countries": {
+              "netherlands": "The Netherlands",
+              "france": "France",
+              "spain": "Spain",
+              "italy": "Italy",
+              "belgium": "Belgium",
+              "germany": "Germany",
+              "greece": "Greece",
+              "unitedKingdom": "United Kingdom",
+              "portugal": "Portugal",
+              "croatia": "Croatia",
+              "poland": "Poland",
+              "austria": "Austria",
+              "czech": "Czech"
+            }
+          },
+          "asia": {
+            "title": "Destinations in Asia",
+            "countries": {
+              "philippines": "Philippines",
+              "thailand": "Thailand",
+              "indonesia": "Indonesia",
+              "india": "India",
+              "malaysia": "Malaysia",
+              "vietnam": "Vietnam",
+              "turkey": "Turkey",
+              "singapore": "Singapore"
+            }
+          },
+          "caribbean": {
+            "title": "Islands in the Caribbean",
+            "locations": {
+              "aruba": "Aruba",
+              "bonaire": "Bonaire",
+              "curacao": "Curacao",
+              "saintBarthelemy": "Saint Barthelemy",
+              "costaRica": "Costa Rica",
+              "dominicanRepublic": "Dominican Republic",
+              "puertoRico": "Puerto Rico",
+              "stMaarten": "St. Maarten"
+            }
+          },
+          "ski": {
+            "title": "Popular ski destinations",
+            "locations": {
+              "austria": "Austria", 
+              "frenchAlps": "French Alps",
+              "switzerland": "Switzerland",
+              "chamonix": "Chamonix-Mont-Blanc",
+              "blackForest": "Black Forest",
+              "italyTrentino": "Italy Trentino"
+            }
+          }
+        }
+      },
+      "travelInnovationLabs": {
+          "title": "Travel Innovation Labs",
+          "description": "Sustainable Value Creation",
+          "groups" : {
+            "flyWheel": {
+              "title": "Travel Innovation Flywheel",
+              "description": "The mission of Domits is to simplify travel. For sustainable value creation, we have three innovation labs which come together in our flywheel. The labs are travel finance, travel business, and travel & daily life."
+            },
+            "finance": {
+              "title": "Travel Finance",
+              "description": "The core starts with simplifying travel finance. We focus on travel payments, travel capital, travel insurance, and travel investing."
+            },
+            "business": {
+              "title": "Travel Business",
+              "description": "To serve all travel stakeholders, we have four business divisions: #1 growth, #2 people, #3 cloud ICT, and #4 AI data."
+            },
+            "dailyLife": {
+              "title": "Travel & Daily Life",
+              "description": "The financial business flow provides opportunities to experience limitless freedom for travel & daily life, like accommodation services, mobility services, municipal services, local services, and many more..."
+            }
+          }
+        },
+        "about": {
+          "title": "About Domits",
+          "description": "Tailor-made travel partnerships",
+          "mission": {
+            "title": "Mission: Simplify travel.",
+            "description": "In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners. There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.",
+            "howItWorks": "how Domits works",
+            "whyDomits": "Why to choose Domits",
+            "readHere": "Read here more about ",
+            "and": " and "
+          },
+          "vision": {
+            "title": "Vision",
+            "subTitle": "A healthy, safe and future-proof travel world",
+            "description": "Our vision is a travel world that has less problems with health, safety and future-proofing. Now and in the future, that is what Domits has in mind. Everyone takes into account how people deal with these problems and their options. Together with partners, we work every day to simplify travel."
+          },
+          "whatWeDo": {
+            "title": "What we do",
+            "subTitle": "Together with partners we provide travel solutions",
+            "description": "We build our travel platform to list, search and book accommodations. Besides that we are providing traveltech development and consultancy for a select group of partners. \nWe are open to cooperate through ventures and our ",
+            "travelInnovation": "travel innovation labs"
+          },
+          "footerText": {
+            "description" : " We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.",
+            "description2": "You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders."
+          }
+        }
+}
+  

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import './about.css';
 import vision from '../../images/icons/vision.png';
 import whatwedo from '../../images/icons/route.png';
@@ -23,60 +23,66 @@ import Kacper from '../../images/about-img/Kacper.png';
 import Etka from '../../images/about-img/Etka.jpg';
 import Sebastiaan from '../../images/about-img/Sebastiaan.png';
 import Raman from '../../images/about-img/Raman.jpg';
+import {LanguageContext} from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+
+const contentByLanguage = {
+  en,
+  nl,
+  de,
+  es,
+};
 
 // Handy tool for editing the images:
 // https://imageresizer.com/image-compressor
 
 function About() {
+    const {language} = useContext(LanguageContext);
+    const aboutContent = contentByLanguage[language]?.about;
+
     return (
         <div className="about">
             <div className="about__title-container">
-                <h2 className="about__title"><span className="highlightH2">About Domits</span></h2>
-                <h3 className="about__title">Tailor-made travel partnerships</h3>
+                <h2 className="about__title"><span className="highlightH2">{aboutContent.title}</span></h2>
+                <h3 className="about__title">{aboutContent.description}</h3>
             </div>
             <div className="about__subtitle-container">
-                <h4>Mission: Simplify travel.</h4>
+                <h4>{aboutContent.mission.title}</h4>
             </div>
 
             <div className="about__text-container">
                 <p className="about__text about__text--margintop">
-                    In our growing traveltech network are young professionals, influencers, traveltechs, companies and
-                    partners. There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML,
-                    Marketing and IT law.
+                   {aboutContent.mission.description}
                 </p>
 
                 <p className="about__text about__text--margintop">
-                    Read here more about <a className="ref" href="/how-it-works">how Domits works</a> and <a
-                    className="ref" href="/why-domits">Why to choose Domits</a>.
+                    {aboutContent.mission.readHere}<a className="ref" href="/how-it-works">{aboutContent.mission.howItWorks}</a>{aboutContent.mission.and}<a
+                    className="ref" href="/why-domits">{aboutContent.mission.whyDomits}</a>.
                 </p>
             </div>
             <br/>
             <div className="about__factsbox">
                 <div className="about__fact">
                     <div className="about__fact-header">
-                        <p className="about__fact-title">Vision</p>
+                        <p className="about__fact-title">{aboutContent.vision.title}</p>
                         <img className="about__fact-image" src={vision} alt="Vision"/>
                     </div>
-                    <p className="about__fact-subtitle">A healthy, safe and future-proof travel world</p>
+                    <p className="about__fact-subtitle">{aboutContent.vision.subTitle}</p>
                     <p className="about__fact-text">
-                        Our vision is a travel world that has less problems with health, safety and future-proofing.
-                        Now and in the future, that is what Domits has in mind.
-                        Everyone takes into account how people deal with these problems and their options.
-                        Together with partners, we work every day to simplify travel.
+                        {aboutContent.vision.description}
                     </p>
                 </div>
                 <div className="about__fact">
                     <div className="about__fact-header">
-                        <p className="about__fact-title">What we do</p>
+                        <p className="about__fact-title">{aboutContent.whatWeDo.title}</p>
                         <img className="about__fact-image" src={whatwedo} alt="What we do"/>
                     </div>
-                    <p className="about__fact-subtitle">Together with partners we provide travel solutions</p>
+                    <p className="about__fact-subtitle">{aboutContent.whatWeDo.subTitle}</p>
                     <p className="about__fact-text">
-                        We build our travel platform to list, search and book accommodations.
-                        Besides that we are providing traveltech development and consultancy for a select group of
-                        partners.
-                        We are open to cooperate through ventures and our <a className="ref" href="/travelinnovation">travel
-                        innovation labs</a>.
+                        {aboutContent.whatWeDo.description}<a className="ref" href="/travelinnovation">{aboutContent.whatWeDo.travelInnovation}</a>.
                     </p>
                 </div>
             </div>
@@ -181,14 +187,10 @@ function About() {
                 </div>
                 <div className="about__footer">
                     <p className="about__footer-text">
-                        We believe that every employee can be a conscious founder. And you are allowed to think and act
-                        that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and
-                        future-proofing. For themselves, the organization, customers, partners and society.
+                        {aboutContent.footerText.description}
                     </p>
                     <p className="about__footer-text">
-                        You take responsibility. Discovers new ways to get things done. And comes up with new ideas and
-                        solutions. You want to create, build and develop together. We are always looking for new
-                        founders.
+                        {aboutContent.footerText.description2}
                     </p>
                 </div>
             </div>

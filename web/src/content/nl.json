@@ -1,0 +1,270 @@
+{
+      "component": {
+        "user": {
+          "hello": "Hallo",
+          "profile": "Profiel",
+          "login": "Login",
+          "register": "Register",
+          "logout": "Uitloggen",
+          "settings": "Instellingen",
+          "payments": "Betalingen",
+          "dashboard": "Dashboard",
+          "messages": "Berichten",
+          "calendar": "Kalender",
+          "reservations": "Reserveringen",
+          "switchToGuest": "Overschakelen naar gast",
+          "switchToHost": "Overschakelen naar host",
+          "becomeHost": "Word gastheer"
+        },
+        "search": {
+          "destination": "Zoekbestemming",
+          "accommodation": "Accommodatie",
+          "checkInOut": "In • uitchecken",
+          "guests": "Gasten",
+          "adults": "Volwassenen",
+          "children": "Kinderen",
+          "infants": "Baby's",
+          "pets": "Huisdieren",
+          "search": "Zoekopdracht",
+          "house": "Huis",
+          "boat": "Boot",
+          "camper": "Kampeerder",
+          "ageGroups": {
+            "adults": "16 jaar of ouder",
+            "children": "Leeftijd 2–16 jaar",
+            "infants": "Leeftijd 0–2",
+            "pets": "Huisdieren van normale grootte"
+          }
+        },
+        "footer": {
+          "navigation" : {
+            "title": "Navigatie",
+            "whyDomits": "Waarom Domits",
+            "howItWorks": "Hoe het werkt",
+            "producUpdates": "Productupdates",
+            "about": "Over ons",
+            "security": "Beveiliging",
+            "performance": "Prestatie",
+            "careers": "Carrières",
+            "contact": "Contact"
+          },
+          "guest": {
+            "title": "Gast",
+            "searchAndBook": "Zoeken en boeken",
+            "helpDeskForGuests": "Helpdesk voor gasten",
+            "sustainability": "Duurzaamheid"
+          },
+          "host": {
+            "title": "Gastheren",
+            "becomeHost": "Word gastheer",
+            "helpdeskForHosts": "Helpdesk voor hosts",
+            "sustainability": "Duurzaamheid"
+          },
+          "network": {
+            "title": "Netwerk",
+            "guests": "Gasten",
+            "hosts": "Gastheren",
+            "developers": "Ontwikkelaars",
+            "partners": "Partners",
+            "students": "Studenten",
+            "startups": "Startups"
+          },
+          "socials": {
+            "title": "Sociale media"
+          },
+          "office": {
+            "title": "Kantoor"
+          },
+          "policy": {
+            "title": "Privacybeleid"
+          },
+          "termsConditions": {
+            "title": "Algemene voorwaarden"
+          },
+          "disclaimer": {
+            "title": "Disclaimer"
+          },
+          "sitemap": {
+            "title": "Sitemap"
+          },
+          "rightsReserved": {
+            "title": "Alle rechten voorbehouden"
+          }
+        }
+      },
+  
+      "homepage": {
+        "hero": {
+          "title": "Boek vakantiehuizen, boten en campers.",
+          "searchPlaceholder": "Zoekbestemming",
+          "searchTitle": "Accommodatie",
+          "searchGuests": "Gasten"
+        },
+        "features": {
+          "securePayments": "Veilige betalingen",
+          "verifiedGuest": "Geverifieerde gasten/gastheren",
+          "quickPhone": "Snelle telefonische ondersteuning",
+          "qualityGuarantee": "Domits kwaliteitsgarantie",
+          "bestPrice": "Beste prijsgarantie",
+          "bookingGuarantee": "Garantie voor accommodatieboeking",
+          "stayGuarantee": "Garantie op verblijf in de accommodatie"
+        },
+        "sections": {
+          "trending": "Populaire accommodaties deze maand",
+          "rentBoat": "Huur een boot voor elke gelegenheid",
+          "discoverCampers": "Ontdek prachtige campers",
+          "becomeHost": {
+            "title": "Word gastheer/gastvrouw",
+            "points": [
+              "Vermeld uw eigendom gratis.",
+              "Beheer alles centraal.",
+              "Verhoog uw boekingscijfers."
+            ],
+            "button": "Uw woning vermelden"
+          },
+          "community": {
+            "title": "Hulp nodig? Word lid van de community",
+            "description": "Domits heeft een reiscommunity bestaande uit gastheren, gasten en medewerkers",
+            "button": "Zoeken & boeken"
+          }
+        },
+        "filters": {
+          "season": {
+            "title": "Favorieten per seizoen",
+            "spring": "Lente",
+            "summer": "Zomer",
+            "fall": "Herfst",
+            "winter": "Winter"
+          },
+          "interest": {
+            "title": "Geweldige keuzes op basis van interesse",
+            "luxury": "Luxe",
+            "beach": "Strand",
+            "lastMinute": "Laatste moment",
+            "wellness": "Welzijn",
+            "romantic": "Romantisch",
+            "adventure": "Avontuur",
+            "nature": "Natuur",
+            "culture": "Cultuur",
+            "culinary": "Culinair"
+          },
+          "groups": {
+            "title": "Accommodaties per groep",
+            "description": "Vakantiehuizen en appartementen",
+            "friends": "Vrienden",
+            "couples": "Koppels",
+            "family": "Gezins- en kindvriendelijk",
+            "solo": "Solo",
+            "senior": "Senior",
+            "petFriendly": "Huisdiervriendelijk"
+          }
+        },
+        "destinations": {
+          "europe": {
+            "title": "Landen in Europa",
+            "countries": {
+              "netherlands": "Nederland",
+              "france": "Frankrijk",
+              "spain": "Spanje",
+              "italy": "Italië",
+              "belgium": "België",
+              "germany": "Duitsland",
+              "greece": "Griekenland",
+              "unitedKingdom": "Verenigd Koninkrijk",
+              "portugal": "Portugal",
+              "croatia": "Kroatië",
+              "poland": "Polen",
+              "austria": "Oostenrijk",
+              "czech": "Tsjechisch"
+            }
+          },
+          "asia": {
+            "title": "Bestemmingen in Azië",
+            "countries": {
+              "philippines": "Filippijnen",
+              "thailand": "Thailand",
+              "indonesia": "Indonesië",
+              "india": "Indië",
+              "malaysia": "Maleisië",
+              "vietnam": "Vietnam",
+              "turkey": "Turkije",
+              "singapore": "Singapore"
+            }
+          },
+          "caribbean": {
+            "title": "Eilanden in het Caribisch gebied",
+            "locations": {
+              "aruba": "Aruba",
+              "bonaire": "Bonaire",
+              "curacao": "Curacao",
+              "saintBarthelemy": "Sint-Barthelemy",
+              "costaRica": "Costa Rica",
+              "dominicanRepublic": "Dominicaanse Republiek",
+              "puertoRico": "Puerto Rico",
+              "stMaarten": "Sint Maarten"
+            }
+          },
+          "ski": {
+            "title": "Populaire skibestemmingen",
+            "locations": {
+              "austria": "Oostenrijk", 
+              "frenchAlps": "Franse Alpen",
+              "switzerland": "Zwitserland",
+              "chamonix": "Chamonix-Mont-Blanc",
+              "blackForest": "Zwarte Woud",
+              "italyTrentino": "Italië Trentino"
+            }
+          }
+        }
+      },
+      "travelInnovationLabs": {
+          "title": "Travel Innovation Labs",
+          "description": "Duurzame Waardecreatie",
+          "groups": {
+            "flyWheel": {
+              "title": "Travel Innovation Flywheel",
+              "description": "De missie van Domits is om reizen te vereenvoudigen. Voor duurzame waardecreatie hebben we drie innovatielabs die samenkomen in onze flywheel. De labs zijn travel finance, travel business en travel & dagelijks leven."
+            },
+            "finance": {
+              "title": "Travel Finance",
+              "description": "De kern begint met het vereenvoudigen van travel finance. We richten ons op reisbetalingen, reisfinanciering, reisverzekeringen en reisbeleggingen."
+            },
+            "business": {
+              "title": "Travel Business",
+              "description": "Om alle reisstakeholders te bedienen, hebben we vier businessdivisies: #1 groei, #2 mensen, #3 cloud ICT en #4 AI data."
+            },
+            "dailyLife": {
+              "title": "Travel & Dagelijks Leven",
+              "description": "De financiële bedrijfsstroom biedt mogelijkheden om grenzeloze vrijheid te ervaren voor reizen & dagelijks leven, zoals accommodatiediensten, mobiliteitsdiensten, gemeentelijke diensten, lokale diensten en nog veel meer..."
+            }
+          }
+        },
+        "about": {
+          "title": "Over Domits",
+          "description": "Reispartners op maat",
+          "mission": {
+            "title": "Missie: Reizen vereenvoudigen.",
+            "description": "In ons groeiende traveltech-netwerk zitten jonge professionals, influencers, traveltechs, bedrijven en partners. Er zijn ook talentpools met studenten van IT, Data Science, Cybersecurity, AI, ML, Marketing en IT-recht.",
+            "howItWorks": "hoe Domits werkt",
+            "whyDomits": "Waarom kiezen voor Domits",
+            "readHere": "Lees hier meer over ",
+            "and": " en "
+          },
+          "vision": {
+            "title": "Visie",
+            "subTitle": "Een gezonde, veilige en toekomstbestendige reiswereld",
+            "description": "Onze visie is een reiswereld met minder problemen op het gebied van gezondheid, veiligheid en toekomstbestendigheid. Nu en in de toekomst, dat is waar Domits naar streeft. Iedereen houdt rekening met hoe mensen omgaan met deze problemen en hun mogelijkheden. Samen met partners werken we elke dag aan het vereenvoudigen van reizen."
+          },
+          "whatWeDo": {
+            "title": "Wat doen we",
+            "subTitle": "Samen met partners bieden we reistechnologische oplossingen",
+            "description": "We bouwen ons reisplatform om accommodaties te plaatsen, te zoeken en te boeken. Daarnaast bieden we traveltech-ontwikkeling en consultancy aan voor een selecte groep partners. \nWe staan open voor samenwerking via ventures en onze ",
+            "travelInnovation": "reistechnologie-labs"
+          },
+          "footerText": {
+            "description": "Wij geloven dat elke werknemer een bewuste oprichter kan zijn. En je mag op die manier denken en handelen. Een bewuste oprichter is een ondernemer die beslissingen neemt op basis van gezondheid, veiligheid en toekomstbestendigheid. Voor zichzelf, de organisatie, klanten, partners en de samenleving.",
+            "description2": "Je neemt verantwoordelijkheid. Ontdekt nieuwe manieren om dingen gedaan te krijgen. En komt met nieuwe ideeën en oplossingen. Je wilt samen creëren, bouwen en ontwikkelen. We zijn altijd op zoek naar nieuwe oprichters."
+          }
+        } 
+}
+  

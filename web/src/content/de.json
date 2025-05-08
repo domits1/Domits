@@ -1,0 +1,270 @@
+{
+    "component": {
+      "user": {
+        "hello": "Hallo",
+        "profile": "Profil",
+        "login": "Anmelden",
+        "register": "Registrieren",
+        "logout": "Abmelden",
+        "settings": "Einstellungen",
+        "payments": "Zahlungen",
+        "dashboard": "Dashboard",
+        "messages": "Nachrichten",
+        "calendar": "Kalender",
+        "reservations": "Reservierungen",
+        "switchToGuest": "Zu Gast wechseln",
+        "switchToHost": "Zu Gastgeber wechseln",
+        "becomeHost": "Gastgeber werden"
+      },
+      "search": {
+        "destination": "Reiseziel suchen",
+        "accommodation": "Unterkunft",
+        "checkInOut": "Ein • Auschecken",
+        "guests": "Gäste",
+        "adults": "Erwachsene",
+        "children": "Kinder",
+        "infants": "Kleinkinder",
+        "pets": "Haustiere",
+        "search": "Suchen",
+        "house": "Haus",
+        "boat": "Boot",
+        "camper": "Wohnmobil",
+        "ageGroups": {
+          "adults": "Ab 16 Jahren",
+          "children": "2–16 Jahre",
+          "infants": "0–2 Jahre",
+          "pets": "Normale Haustiere"
+        }
+      },
+      "footer": {
+        "navigation": {
+          "title": "Navigation",
+          "whyDomits": "Warum Domits",
+          "howItWorks": "Wie es funktioniert",
+          "producUpdates": "Produktupdates",
+          "about": "Über uns",
+          "security": "Sicherheit",
+          "performance": "Leistung",
+          "careers": "Karriere",
+          "contact": "Kontakt"
+        },
+        "guest": {
+          "title": "Gäste",
+          "searchAndBook": "Suchen und buchen",
+          "helpDeskForGuests": "Hilfecenter für Gäste",
+          "sustainability": "Nachhaltigkeit"
+        },
+        "host": {
+          "title": "Gastgeber",
+          "becomeHost": "Gastgeber werden",
+          "helpdeskForHosts": "Hilfecenter für Gastgeber",
+          "sustainability": "Nachhaltigkeit"
+        },
+        "network": {
+          "title": "Netzwerk",
+          "guests": "Gäste",
+          "hosts": "Gastgeber",
+          "developers": "Entwickler",
+          "partners": "Partner",
+          "students": "Studierende",
+          "startups": "Startups"
+        },
+        "socials": {
+          "title": "Soziale Medien"
+        },
+        "office": {
+          "title": "Büro"
+        },
+        "policy": {
+          "title": "Datenschutzerklärung"
+        },
+        "termsConditions": {
+          "title": "Allgemeine Geschäftsbedingungen"
+        },
+        "disclaimer": {
+          "title": "Haftungsausschluss"
+        },
+        "sitemap": {
+          "title": "Seitenübersicht"
+        },
+        "rightsReserved": {
+          "title": "Alle Rechte vorbehalten"
+        }
+      }
+    },
+  
+    "homepage": {
+      "hero": {
+        "title": "Buche Ferienhäuser, Boote und Wohnmobile...",
+        "searchPlaceholder": "Reiseziel suchen",
+        "searchTitle": "Unterkunft",
+        "searchGuests": "Gäste"
+      },
+      "features": {
+        "securePayments": "Sichere Zahlungen",
+        "verifiedGuest": "Verifizierte Gäste/Gastgeber",
+        "quickPhone": "Schneller Telefonsupport",
+        "qualityGuarantee": "Domits Qualitätsgarantie",
+        "bestPrice": "Bestpreisgarantie",
+        "bookingGuarantee": "Buchungsgarantie für Unterkünfte",
+        "stayGuarantee": "Aufenthaltsgarantie"
+      },
+      "sections": {
+        "trending": "Trendunterkünfte in diesem Monat",
+        "rentBoat": "Boot für jeden Anlass mieten",
+        "discoverCampers": "Schöne Wohnmobile entdecken",
+        "becomeHost": {
+          "title": "Gastgeber werden",
+          "points": [
+            "Inseriere deine Unterkunft kostenlos.",
+            "Verwalte alles zentral.",
+            "Steigere deine Buchungen."
+          ],
+          "button": "Unterkunft inserieren"
+        },
+        "community": {
+          "title": "Brauchen Sie Hilfe? Treten Sie der Community bei",
+          "description": "Domits hat eine Reisecommunity mit Gastgebern, Gästen und Mitarbeitenden",
+          "button": "Suchen & Buchen"
+        }
+      },
+      "filters": {
+        "season": {
+          "title": "Favoriten nach Jahreszeit",
+          "spring": "Frühling",
+          "summer": "Sommer",
+          "fall": "Herbst",
+          "winter": "Winter"
+        },
+        "interest": {
+          "title": "Top-Empfehlungen nach Interesse",
+          "luxury": "Luxus",
+          "beach": "Strand",
+          "lastMinute": "Last Minute",
+          "wellness": "Wellness",
+          "romantic": "Romantik",
+          "adventure": "Abenteuer",
+          "nature": "Natur",
+          "culture": "Kultur",
+          "culinary": "Kulinarisch"
+        },
+        "groups": {
+          "title": "Unterkünfte nach Gruppen",
+          "description": "Ferienhäuser und Apartments",
+          "friends": "Freunde",
+          "couples": "Paare",
+          "family": "Familienfreundlich",
+          "solo": "Alleinreisende",
+          "senior": "Senioren",
+          "petFriendly": "Haustierfreundlich"
+        }
+      },
+      "destinations": {
+        "europe": {
+          "title": "Länder in Europa",
+          "countries": {
+            "netherlands": "Niederlande",
+            "france": "Frankreich",
+            "spain": "Spanien",
+            "italy": "Italien",
+            "belgium": "Belgien",
+            "germany": "Deutschland",
+            "greece": "Griechenland",
+            "unitedKingdom": "Vereinigtes Königreich",
+            "portugal": "Portugal",
+            "croatia": "Kroatien",
+            "poland": "Polen",
+            "austria": "Österreich",
+            "czech": "Tschechien"
+          }
+        },
+        "asia": {
+          "title": "Reiseziele in Asien",
+          "countries": {
+            "philippines": "Philippinen",
+            "thailand": "Thailand",
+            "indonesia": "Indonesien",
+            "india": "Indien",
+            "malaysia": "Malaysia",
+            "vietnam": "Vietnam",
+            "turkey": "Türkei",
+            "singapore": "Singapur"
+          }
+        },
+        "caribbean": {
+          "title": "Inseln in der Karibik",
+          "locations": {
+            "aruba": "Aruba",
+            "bonaire": "Bonaire",
+            "curacao": "Curaçao",
+            "saintBarthelemy": "Saint-Barthélemy",
+            "costaRica": "Costa Rica",
+            "dominicanRepublic": "Dominikanische Republik",
+            "puertoRico": "Puerto Rico",
+            "stMaarten": "St. Maarten"
+          }
+        },
+        "ski": {
+          "title": "Beliebte Skigebiete",
+          "locations": {
+            "austria": "Österreich",
+            "frenchAlps": "Französische Alpen",
+            "switzerland": "Schweiz",
+            "chamonix": "Chamonix-Mont-Blanc",
+            "blackForest": "Schwarzwald",
+            "italyTrentino": "Italien Trentino"
+          }
+        }
+      }
+    },
+    "travelInnovationLabs": {
+        "title": "Travel Innovation Labs",
+        "description": "Nachhaltige Wertschöpfung",
+        "groups": {
+          "flyWheel": {
+            "title": "Travel Innovation Schwungrad",
+            "description": "Die Mission von Domits ist es, das Reisen zu vereinfachen. Für eine nachhaltige Wertschöpfung haben wir drei Innovationslabore, die sich in unserem Schwungrad vereinen. Die Labs sind Travel Finance, Travel Business und Travel & Alltag."
+          },
+          "finance": {
+            "title": "Travel Finance",
+            "description": "Im Kern beginnt alles mit der Vereinfachung von Reisefinanzen. Wir konzentrieren uns auf Reisezahlungen, Reisekapital, Reiseversicherungen und Reiseinvestitionen."
+          },
+          "business": {
+            "title": "Travel Business",
+            "description": "Um alle Reisestakeholder zu bedienen, haben wir vier Geschäftsbereiche: #1 Wachstum, #2 Menschen, #3 Cloud-IT und #4 KI-Daten."
+          },
+          "dailyLife": {
+            "title": "Reisen & Alltag",
+            "description": "Der finanzielle Geschäftsfluss bietet Möglichkeiten, grenzenlose Freiheit für Reisen & Alltag zu erleben, wie Unterkunftsdienste, Mobilitätsdienste, kommunale Dienste, lokale Services und vieles mehr..."
+          }
+        }
+      },
+      "about": {
+        "title": "Über Domits",
+        "description": "Maßgeschneiderte Reisepartnerschaften",
+        "mission": {
+          "title": "Mission: Reisen vereinfachen.",
+          "description": "In unserem wachsenden Traveltech-Netzwerk befinden sich junge Fachkräfte, Influencer, Traveltechs, Unternehmen und Partner. Es gibt außerdem Talentpools mit Studierenden aus IT, Data Science, Cybersecurity, KI, ML, Marketing und IT-Recht.",
+          "howItWorks": "wie Domits funktioniert",
+          "whyDomits": "Warum Domits wählen",
+          "readHere": "Hier mehr lesen über ",
+          "and": " und "
+        },
+        "vision": {
+          "title": "Vision",
+          "subTitle": "Eine gesunde, sichere und zukunftssichere Reisewelt",
+          "description": "Unsere Vision ist eine Reisewelt mit weniger Problemen in Bezug auf Gesundheit, Sicherheit und Zukunftssicherheit. Jetzt und in der Zukunft – das ist es, worauf Domits abzielt. Jeder berücksichtigt, wie Menschen mit diesen Problemen umgehen und welche Möglichkeiten sie haben. Gemeinsam mit Partnern arbeiten wir jeden Tag daran, Reisen zu vereinfachen."
+        },
+        "whatWeDo": {
+          "title": "Was wir tun",
+          "subTitle": "Gemeinsam mit Partnern bieten wir Reiselösungen",
+          "description": "Wir bauen unsere Reiseplattform auf, um Unterkünfte zu listen, zu suchen und zu buchen. Darüber hinaus bieten wir Traveltech-Entwicklung und Beratung für eine ausgewählte Gruppe von Partnern an. \nWir sind offen für Kooperationen durch Ventures und unsere ",
+          "travelInnovation": "Reiseinnovationslabore"
+        },
+        "footerText": {
+          "description": "Wir glauben, dass jeder Mitarbeiter ein bewusster Gründer sein kann. Und du darfst auf diese Weise denken und handeln. Ein bewusster Gründer ist ein Unternehmer, der Entscheidungen auf der Grundlage von Gesundheit, Sicherheit und Zukunftsfähigkeit trifft. Für sich selbst, die Organisation, Kunden, Partner und die Gesellschaft.",
+          "description2": "Du übernimmst Verantwortung. Entdeckst neue Wege, um Dinge zu erledigen. Und kommst mit neuen Ideen und Lösungen. Du möchtest gemeinsam schaffen, bauen und entwickeln. Wir sind immer auf der Suche nach neuen Gründern."
+        }
+      }
+}
+  
