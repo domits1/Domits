@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
   },
   label: {
     color: 'black',
-    fontWeight: '500',
+    fontWeight: '800',
     fontSize: 16,
     lineHeight: 24,
   },
