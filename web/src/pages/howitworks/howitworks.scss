@@ -73,7 +73,7 @@ $background-color_2: #052C5A;
         }
 
         &--hosts {
-            background: var(--secondary-color);;
+            background: var(--secondary-color);
             margin-bottom: 7rem;
         }
 
@@ -114,21 +114,19 @@ $background-color_2: #052C5A;
             max-width: 19rem;
         }
     }
-}
 
-.borderleft {
-    border-left: 0.2rem solid white;
-    padding-left: 2rem;
-}
+    .borderleft {
+        border-left: 0.2rem solid white;
+        padding-left: 2rem;
+    }
 
-.borderright {
-    border-right: 0.2rem solid white;
-    padding-right: 1rem;
-    padding-left: 2rem;
-}
+    .borderright {
+        border-right: 0.2rem solid white;
+        padding-right: 1rem;
+        padding-left: 2rem;
+    }
 
-@media (max-width: 1292px) {
-    .howitworks__main {
+    @media (max-width: 1292px) {
         padding-left: 1rem;
 
         .howitworks__info-block {
@@ -162,10 +160,8 @@ $background-color_2: #052C5A;
             margin-bottom: 1.1rem;
         }
     }
-}
 
-@media (max-width: 1090px) {
-    .howitworks__main {
+    @media (max-width: 1090px) {
         .howitworks__info-header {
             margin-bottom: 0.5rem;
 
@@ -182,24 +178,20 @@ $background-color_2: #052C5A;
             }
         }
     }
-}
 
-@media (max-width: 975px) {
-    .howitworks__main {
+    @media (max-width: 975px) {
         .howitworks__info-block {
             width: 95%;
         }
     }
-}
 
-@media (max-width: 840px) {
-    .howitworks__main {
+    @media (max-width: 840px) {
         .howitworks__info-block {
             &--guests {
                 background-color: $background-color_1;
                 gap: 0rem;
 
-                >.howitworks__info-item {
+                > .howitworks__info-item {
                     background: var(--domits-guest-green);
                     border-radius: 1rem;
                     margin-top: 1rem;
@@ -215,7 +207,7 @@ $background-color_2: #052C5A;
                 background-color: --primary-color;
                 gap: 0rem;
 
-                >.howitworks__info-item {
+                > .howitworks__info-item {
                     background-color: --secondary-color;
                     border-radius: 1rem;
                     margin-top: 1rem;
@@ -247,10 +239,8 @@ $background-color_2: #052C5A;
             padding: 0;
         }
     }
-}
 
-@media (max-width: 768px) {
-    .howitworks__main {
+    @media (max-width: 768px) {
         .howitworks__titles-container {
             width: 80%;
         }
@@ -264,10 +254,8 @@ $background-color_2: #052C5A;
             margin: 0.5rem auto;
         }
     }
-}
 
-@media (max-width: 475px) {
-    .howitworks__main {
+    @media (max-width: 475px) {
         .howitworks__title {
             font-size: 1.9em;
         }
