@@ -1,139 +1,147 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 export default function (props) {
-    const [priceValues, setPriceValues] = useState([15, 400]);
-    const { onFilterApplied } = props || {};
+  const [priceValues, setPriceValues] = useState([15, 400]);
+  const { onFilterApplied } = props || {};
 
-    const [seasonFilter, setSeasonFilter] = useState(0)
-    const [selectedFacilities, setSelectedFacilities] = useState({
-        wifi: false,
-        parking: false,
-        gym: false,
-        spa: false,
-        swimmingPool: false,
-        restaurant: false,
-        petFriendly: false,
-        airConditioning: false,
-        breakfast: false,
-        bar: false,
-    });
+  const [seasonFilter, setSeasonFilter] = useState({
+    Spring: false,
+    Summer: false,
+    Autumn: false,
+    Winter: false,
+    Fall: false,
+    Easter: false,
+    Christmas: false,
+    LowSeason: false,
+    HighSeason: false,
+  });
 
-    const [selectedPropertyTypes, setSelectedPropertyTypes] = useState({
-        apartment: false,
-        villa: false,
-        bungalow: false,
-        studio: false,
-        penthouse: false,
-        cottage: false,
-        townhouse: false,
-        cabin: false,
-        chalet: false,
-        duplex: false,
-        mansion: false,
-        farmstay: false,
-    });
+  const [selectedFacilities, setSelectedFacilities] = useState({
+    wifi: false,
+    parking: false,
+    gym: false,
+    spa: false,
+    swimmingPool: false,
+    restaurant: false,
+    petFriendly: false,
+    airConditioning: false,
+    breakfast: false,
+    bar: false,
+  });
 
-    const [showMoreFacilities, setShowMoreFacilities] = useState(false);
-    const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
+  const [selectedPropertyTypes, setSelectedPropertyTypes] = useState({
+    apartment: false,
+    villa: false,
+    bungalow: false,
+    studio: false,
+    penthouse: false,
+    cottage: false,
+    townhouse: false,
+    cabin: false,
+    chalet: false,
+    duplex: false,
+    mansion: false,
+    farmstay: false,
+  });
 
-    const [showMoreSeasonTypes, setShowMoreSeasonTypes] = useState(false);
+  const [showMoreFacilities, setShowMoreFacilities] = useState(false);
+  const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
 
+  const [showMoreSeasonTypes, setShowMoreSeasonTypes] = useState(false);
 
+  const [accommodationResults, setAccommodationResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    const [accommodationResults, setAccommodationResults] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+  const fetchFilteredAccommodations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
+      const minPrice = priceValues[0];
+      const maxPrice = priceValues[1];
 
-    const fetchFilteredAccommodations = async () => {
-        try {
-            setLoading(true);
-            setError(null);
+      const url = new URL(
+        "https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction"
+      );
+      url.searchParams.append("minPrice", minPrice);
+      url.searchParams.append("maxPrice", maxPrice);
 
-            const minPrice = priceValues[0];
-            const maxPrice = priceValues[1];
+      const response = await fetch(url);
+      const data = await response.json();
 
-            const url = new URL('https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction');
-            url.searchParams.append('minPrice', minPrice);
-            url.searchParams.append('maxPrice', maxPrice);
+      if (data && Array.isArray(data) && data.length > 0) {
+        setAccommodationResults(data);
 
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data && Array.isArray(data) && data.length > 0) {
-                setAccommodationResults(data);
-
-                if (onFilterApplied && typeof onFilterApplied === 'function') {
-                    onFilterApplied(data);
-                }
-            } else if (data && data.items && Array.isArray(data.items)) {
-                setAccommodationResults(data.items);
-
-                if (onFilterApplied && typeof onFilterApplied === 'function') {
-                    onFilterApplied(data.items);
-                }
-            } else {
-                throw new Error('No accommodations found for these criteria');
-            }
-        } catch (err) {
-            setError(err.message);
-            console.error("Error fetching accommodations:", err);
-        } finally {
-            setLoading(false);
+        if (onFilterApplied && typeof onFilterApplied === "function") {
+          onFilterApplied(data);
         }
-    };
+      } else if (data && data.items && Array.isArray(data.items)) {
+        setAccommodationResults(data.items);
 
-    const handlePriceChange = (index, value) => {
-        const newValues = [...priceValues];
-        newValues[index] = Number(value);
-        if (newValues[0] <= newValues[1]) {
-            setPriceValues(newValues);
+        if (onFilterApplied && typeof onFilterApplied === "function") {
+          onFilterApplied(data.items);
         }
-    };
+      } else {
+        throw new Error("No accommodations found for these criteria");
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching accommodations:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleFacilityChange = (event) => {
-        setSelectedFacilities({
-            ...selectedFacilities,
-            [event.target.name]: event.target.checked,
-        });
-    };
+  const handlePriceChange = (index, value) => {
+    const newValues = [...priceValues];
+    newValues[index] = Number(value);
+    if (newValues[0] <= newValues[1]) {
+      setPriceValues(newValues);
+    }
+  };
 
-    const handlePropertyTypeChange = (event) => {
-        setSelectedPropertyTypes({
-            ...selectedPropertyTypes,
-            [event.target.name]: event.target.checked,
-        });
-    };
+  const handleFacilityChange = (event) => {
+    setSelectedFacilities({
+      ...selectedFacilities,
+      [event.target.name]: event.target.checked,
+    });
+  };
 
-    const handleSeasonChange = (event) => {
-        setSeasonFilter({
-            ...seasonFilter,
-            [event.target.name]: event.target.checked,
-        });
-    };
+  const handlePropertyTypeChange = (event) => {
+    setSelectedPropertyTypes({
+      ...selectedPropertyTypes,
+      [event.target.name]: event.target.checked,
+    });
+  };
 
+  const handleSeasonChange = (event) => {
+    setSeasonFilter({
+      ...seasonFilter,
+      [event.target.name]: event.target.checked,
+    });
+  };
 
-
-    return {
-        priceValues,
-        setPriceValues,
-        selectedFacilities,
-        handleFacilityChange,
-        selectedPropertyTypes,
-        handlePropertyTypeChange,
-        showMoreFacilities,
-        setShowMoreFacilities,
-        showMorePropertyTypes,
-        setShowMorePropertyTypes,
-        handlePriceChange,
-        accommodationResults,
-        loading,
-        error,
-        fetchFilteredAccommodations,
-        handleSeasonChange,
-        seasonFilter,
-        setSeasonFilter,
-        showMoreSeasonTypes,
-        setShowMoreSeasonTypes,
-    };
-};
+  return {
+    priceValues,
+    setPriceValues,
+    selectedFacilities,
+    handleFacilityChange,
+    selectedPropertyTypes,
+    handlePropertyTypeChange,
+    showMoreFacilities,
+    setShowMoreFacilities,
+    showMorePropertyTypes,
+    setShowMorePropertyTypes,
+    handlePriceChange,
+    accommodationResults,
+    loading,
+    error,
+    fetchFilteredAccommodations,
+    handleSeasonChange,
+    seasonFilter,
+    setSeasonFilter,
+    showMoreSeasonTypes,
+    setShowMoreSeasonTypes,
+  };
+}
