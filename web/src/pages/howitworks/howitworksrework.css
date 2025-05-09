@@ -87,15 +87,6 @@
   gap: 2rem;
 }
 
-.howitworks__info-block--guests {
-  background: var(--domits-guest-green);
-}
-
-.howitworks__info-block--hosts {
-  background: #052C5A;
-  margin-bottom: 7rem;
-}
-
 .howitworks__info-item {
   width: 22.9em;
   margin-top: 1rem;
@@ -209,19 +200,8 @@
 @media (max-width: 975px) {
   .howitworks__info-block {
     width: 95%;
-  }
-}
+  };
 
-@media (max-width: 840px) {
-  .howitworks__info-block.howitworks__info-block--guests {
-    background-color: transparent;
-    gap: 0rem;
-  }
-
-  .howitworks__info-block.howitworks__info-block--hosts {
-    background-color: transparent;
-    gap: 0rem;
-  }
 
   .howitworks__info-title {
     padding-right: 1.5rem;
@@ -233,7 +213,7 @@
   }
 
   .howitworks__info-block.howitworks__info-block--guests>.howitworks__info-item {
-    background: var(--domits-guest-green);
+    background: rgb(88, 153, 22);
     border-radius: 1rem;
     margin-top: 1rem;
     margin-bottom: 1rem;
