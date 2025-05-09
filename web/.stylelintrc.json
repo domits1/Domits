@@ -1,0 +1,39 @@
+{
+    "extends": ["stylelint-config-standard"],
+    "rules": {
+      "selector-max-type": [
+        0,
+        {
+          "message": "Do not use global styling",
+          "severity": "error"
+        }
+      ],
+  
+      "selector-max-universal": [
+        0,
+        {
+          "message": "Do not use universal styling",
+          "severity": "error"
+        }
+      ],
+  
+      "min-nesting-depth": [
+        1, 
+        {
+        "message": "Minimal nesting depth is 1.",
+        "severity": "warning"
+      }],
+
+      "max-nesting-depth": [
+        4,
+        {
+          "message": "Maximum nesting depth is 4.",
+          "severity": "warning"
+        }
+      ],
+  
+      "comment-no-empty": true,
+      "no-invalid-double-slash-comments": true
+    }
+  }
+  

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+
 import "./guestdashboard.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
@@ -32,6 +33,7 @@ function Pages() {
             <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Guest Options">
               <option disabled>Guest Options</option>
               <option value="/guestdashboard">Dashboard</option>
+              <option value="/guestdashboard/wishlist">Wishlist</option>
               <option value="/guestdashboard/bookings">Bookings</option>
               <option value="/guestdashboard/chat">Messages</option>
               {/* <option value="/guestdashboard/payments">Payments</option> */}
@@ -65,6 +67,14 @@ function Pages() {
             <MessageIcon />
           </div>
           <p>Messages</p>
+        </div>
+        <div
+          className={`wijzers ${activeTab === "/guestdashboard/Wishlist" ? "active" : ""}`}
+          onClick={() => navigate("/guestdashboard/Wishlist")}
+        >
+          <div className="Mui">
+          <WishlistIcon/></div>
+          <p>Wishlist</p>
         </div>
         {/* <div
           className={`wijzers ${activeTab === "/guestdashboard/payments" ? "active" : ""}`}

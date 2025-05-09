@@ -29,23 +29,24 @@ import Security from "./pages/security/security.js";
 import Performance from "./pages/Performance/performance.js";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
+import GuestWishlistPage from "./features/guestdashboard/pages/GuestWishlistPage";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
-import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
-import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostPayments from "./features/hostdashboard/HostPayments";
-import HostPricing from "./features/hostdashboard/HostPricing";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
-import HostReviews from "./features/hostdashboard/HostReviews";
+
+import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
+import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
+import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSettings from "./features/hostdashboard/HostSettings";
 import HostSetup from "./features/hostdashboard/HostSetup";
@@ -198,23 +199,22 @@ function App() {
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
 
-                  {/* Guest Dashboard */}
-                  <Route
-                    path="/guestdashboard/*"
-                    element={
-                      <GuestProtectedRoute>
-                        <Routes>
-                          <Route path="/" element={<GuestDashboard />} />
-                          <Route path="messages" element={<ListingDetails />} />
-                          <Route path="payments" element={<GuestPayments />} />
-                          <Route path="reviews" element={<GuestReviews />} />
-                          <Route path="bookings" element={<GuestBooking />} />
-                          <Route path="settings" element={<GuestSettings />} />
-                          {/*<Route path="chat" element={<Chat/>}/>*/}
-                        </Routes>
-                      </GuestProtectedRoute>
-                    }
-                  />
+                {/* Guest Dashboard */}
+                <Route
+                  path="/guestdashboard/*"
+                  element={<GuestProtectedRoute>
+                    <Routes>
+                      <Route path="/" element={<GuestDashboard />} />
+                      <Route path="messages" element={<ListingDetails />} />
+                      <Route path="payments" element={<GuestPayments />} />
+                      <Route path="reviews" element={<GuestReviews />} />
+                      <Route path="bookings" element={<GuestBooking />} />
+                      <Route path="settings" element={<GuestSettings />} />
+                      <Route path="wishlist" element={<GuestWishlistPage />} />
+                      {/*<Route path="chat" element={<Chat/>}/>*/}
+                    </Routes>
+                  </GuestProtectedRoute>}
+                />
 
                   {/* Host Management */}
                   {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
@@ -224,43 +224,40 @@ function App() {
                   <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                   <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
 
-                  <Route
-                    path="/hostdashboard"
-                    element={
-                      <HostProtectedRoute>
-                        <HostDashboard />
-                      </HostProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/hostdashboard/*"
-                    element={
-                      <HostProtectedRoute>
-                        <Routes>
-                          <Route path="property" element={<HostProperty />} />
-                          <Route path="listings" element={<HostListings />} />
-                          <Route path="calendar" element={<HostCalendar />} />
-                          <Route path="messages" element={<HostMessages />} />
-                          <Route path="reporting" element={<HostPayments />} />
-                          <Route path="settings" element={<HostSettings />} />
-                          <Route path="reviews" element={<HostReviews />} />
-                          <Route path="chat" element={<HostMessages />} />
-                          <Route path="reservations" element={<HostReservations />} />
-                          <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
-                          <Route path="housekeeping" element={<HostHousekeeping />} />
-                          <Route path="iot-hub" element={<HostIoTHub />} />
-                          <Route path="pricing" element={<HostPricing />} />
-                          <Route path="distribution" element={<HostDistribution />} />
-                          <Route path="monitoring" element={<HostMonitoring />} />
-                          <Route path="screening" element={<HostScreening />} />
-                          <Route path="setup" element={<HostSetup />} />
-                          <Route path="promo-codes" element={<HostPromoCodes />} />
-                          <Route path="finance" element={<HostFinanceTab />} />
-                        </Routes>
-                      </HostProtectedRoute>
-                    }
-                  />
-                  <Route path="/stripe/callback" element={<StripeCallback />} />
+                <Route
+                  path="/hostdashboard"
+                  element={<HostProtectedRoute>
+                    <HostDashboard />
+                  </HostProtectedRoute>}
+                />
+                <Route
+                  path="/hostdashboard/*"
+                  element={<HostProtectedRoute>
+                    <Routes>
+                      <Route path="property" element={<HostProperty />} />
+                      <Route path="listings" element={<HostListings />} />
+                      <Route path="calendar" element={<HostCalendar />} />
+                      <Route path="messages" element={<HostMessages />} />
+                      <Route path="reporting" element={<HostPayments />} />
+                      <Route path="settings" element={<HostSettings />} />
+                      {/* <Route path="reviews" element={<HostReviews />} /> */}
+                      <Route path="chat" element={<HostMessages />} />
+                      <Route path="reservations" element={<HostReservations />} />
+                      <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
+                      <Route path="housekeeping" element={<HostHousekeeping />} />
+                      <Route path="iot-hub" element={<HostIoTHub />} />
+                      <Route path="pricing" element={<HostPricing />} />
+                      <Route path="distribution" element={<HostDistribution />} />
+                      <Route path="monitoring" element={<HostMonitoring />} />
+                      <Route path="screening" element={<HostScreening />} />
+                      <Route path="setup" element={<HostSetup />} />
+                      <Route path="promo-codes" element={<HostPromoCodes />} />
+                      <Route path="finance" element={<HostFinanceTab />} />
+                    </Routes>
+                  </HostProtectedRoute>}
+                />
+                <Route path="/stripe/callback" element={<StripeCallback />} />
+
 
                   {/* Career, Policies, and Terms */}
                   <Route path="/career" element={<Careers />} />
@@ -336,3 +333,4 @@ function App() {
 }
 
 export default App;
+

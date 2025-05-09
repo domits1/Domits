@@ -203,7 +203,7 @@ function Header({ setSearchResults, setLoading }) {
         <nav
           className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""}`}>
           <div className="logo">
-            <a href="/home">
+            <a href="/">
               <img src={logo} width={150} alt="Logo" />
             </a>
           </div>
