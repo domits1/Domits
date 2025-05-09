@@ -1,17 +1,22 @@
+//features
 //Booking-engine
-@use "booking-engine/imagegallery.scss";
-@use "booking-engine/listing.scss";
-@use "booking-engine/bookingoverview.scss";
-@use "booking-engine/paymentConfirmPage.scss";
-@use "booking-engine/overlay.scss";
+@use "features/booking-engine/imagegallery.scss";
+@use "features/booking-engine/listing.scss";
+@use "features/booking-engine/bookingoverview.scss";
+@use "features/booking-engine/paymentConfirmPage.scss";
+@use "features/booking-engine/overlay.scss";
 //Base
-@use "base/header.scss";
-@use "base/footer.scss";
-@use "base/MenuBar.scss";
-@use "base/SearchBar.scss";
+@use "features/base/header.scss";
+@use "features/base/footer.scss";
+@use "features/base/MenuBar.scss";
+@use "features/base/SearchBar.scss";
 //Auth
-@use "auth/login.scss";
-@use "auth/register.scss";
+@use "features/auth/login.scss";
+@use "features/auth/register.scss";
+
+//pages
+//howitworks
+@use "pages/howitworks/howitworksrework.scss";
 
 :root {
   --primary-color: #0D9813;
