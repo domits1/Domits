@@ -25,6 +25,8 @@ import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import GuestBooking from "./features/guestdashboard/GuestBooking";
 import GuestDashboard from "./features/guestdashboard/GuestDashboard";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
+import Security from "./pages/security/security.js";
+import Performance from "./pages/Performance/performance.js";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
 import GuestWishlistPage from "./features/guestdashboard/pages/GuestWishlistPage";
@@ -69,7 +71,7 @@ import PropertyDescriptionView from "./features/hostonboarding/views/9_PropertyD
 import ReviewPage from "./features/review/ReviewPage";
 import StripeCallback from "./features/stripe/StripeCallback";
 
-import Sustainability from "./features/sustainability/Sustainability";
+import Sustainability from "./pages/home/sustainability/Sustainability.js";
 import HostVerificationView from "./features/verification/hostverification/HostVerification.js";
 import PhoneNumberView from "./features/verification/hostverification/HostVerifyPhoneNumber.js";
 import PhoneNumberConfirmView from "./features/verification/hostverification/HostVerifyPhoneNumberConfirm.js";
@@ -89,7 +91,7 @@ import Policy from "./pages/policy/Policy";
 import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
 import Terms from "./pages/terms/Terms";
-import Travelinnovation from "./pages/travelinnovationlab/travelinnovation";
+import Travelinnovation from "./pages/travelinnovationlab/travelinnovation.js";
 import Whydomits from "./pages/whydomits/Whydomitstwo.js";
 import FlowContext from "./services/FlowContext";
 import PageNotFound from "./utils/error/404NotFound";
@@ -107,7 +109,8 @@ function App() {
   // Apollo Client
   const client = new ApolloClient({
     uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql", //
-    cache: new InMemoryCache(), headers: {
+    cache: new InMemoryCache(),
+    headers: {
       "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm", // Replace with your AppSync API key
     },
   });
@@ -138,60 +141,63 @@ function App() {
 
   const [flowState, setFlowState] = useState({ isHost: false });
 
-  return (<ApolloProvider client={client}>
-    {" "}
-    {/* ApolloProvider */}
-    <ToastContainer
-      position="top-right"
-      autoClose={3000}
-      hideProgressBar={false}
-      newestOnTop={false}
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
-      theme="colored"
-    />
-    <FlowContext.Provider value={{ flowState, setFlowState }}>
-      <Router>
-        <ScrollToTop />
-        <AuthProvider>
-          <UserProvider>
-            <div className="App">
-              {currentPath !== "/admin" && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
-              <Routes>
-                <Route path="/home" element={<Home searchResults={searchResults} />} />
-                <Route path="/" element={<Homepage />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/releaseTwo" element={<ReleaseTwo />} />
-                <Route path="/data-safety" element={<Datasafety />} />
-                <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
-                <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
-                <Route path="/how-it-works" element={<Howitworks />} />
-                <Route path="/why-domits" element={<Whydomits />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/travelinnovation" element={<Travelinnovation />} />
-                <Route path="/release" element={<ReleaseUpdates />} />
-                <Route path="/landing" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/listingdetails" element={<ListingDetails2 />} />
-                <Route path="/bookingoverview" element={<BookingOverview />} />
-                <Route path="/bookingsend" element={<BookingSend />} />
-                <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
-                <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
+  return (
+    <ApolloProvider client={client}>
+      {" "}
+      {/* ApolloProvider */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+      <FlowContext.Provider value={{ flowState, setFlowState }}>
+        <Router>
+          <ScrollToTop />
+          <AuthProvider>
+            <UserProvider>
+              <div className="App">
+                {currentPath !== "/admin" && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
+                <Routes>
+                  <Route path="/home" element={<Home searchResults={searchResults} />} />
+                  <Route path="/" element={<Homepage />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/releaseTwo" element={<ReleaseTwo />} />
+                  <Route path="/data-safety" element={<Datasafety />} />
+                  <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
+                  <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
+                  <Route path="/how-it-works" element={<Howitworks />} />
+                  <Route path="/why-domits" element={<Whydomits />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/travelinnovation" element={<Travelinnovation />} />
+                  <Route path="/release" element={<ReleaseUpdates />} />
+                  <Route path="/landing" element={<Landing />} />
+                  <Route path="/security" element={<Security />} />
+                  <Route path="/performance" element={<Performance />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/listingdetails" element={<ListingDetails2 />} />
+                  <Route path="/bookingoverview" element={<BookingOverview />} />
+                  <Route path="/bookingsend" element={<BookingSend />} />
+                  <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
+                  <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
 
-                {/* Chat */}
-                {/*<Route path="/chat" element={<Chat/>}/>*/}
-                <Route path="/employeechat" element={<EmployeeChat />} />
-                <Route path="/chatbot" element={<Chatbot />} />
+                  {/* Chat */}
+                  {/*<Route path="/chat" element={<Chat/>}/>*/}
+                  <Route path="/employeechat" element={<EmployeeChat />} />
+                  <Route path="/chatbot" element={<Chatbot />} />
 
-                {/* Host Chatbot */}
-                <Route path="/hostchatbot" element={<Hostchatbot />} />
+                  {/* Host Chatbot */}
+                  <Route path="/hostchatbot" element={<Hostchatbot />} />
 
-                {/* Review */}
-                <Route path="/review" element={<ReviewPage />} />
+                  {/* Review */}
+                  <Route path="/review" element={<ReviewPage />} />
 
                 {/* Guest Dashboard */}
                 <Route
@@ -210,13 +216,13 @@ function App() {
                   </GuestProtectedRoute>}
                 />
 
-                {/* Host Management */}
-                {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
+                  {/* Host Management */}
+                  {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
 
-                {/* Verification */}
-                <Route path="/verify" element={<HostVerificationView />} />
-                <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
-                <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
+                  {/* Verification */}
+                  <Route path="/verify" element={<HostVerificationView />} />
+                  <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
+                  <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
 
                 <Route
                   path="/hostdashboard"
@@ -252,55 +258,78 @@ function App() {
                 />
                 <Route path="/stripe/callback" element={<StripeCallback />} />
 
-                {/* Career, Policies, and Terms */}
-                <Route path="/career" element={<Careers />} />
-                <Route path="/job/:id" element={<JobDetails />} />
-                <Route path="/policy" element={<Policy />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/disclaimers" element={<Disclaimers />} />
-                <Route path="/Sustainability" element={<Sustainability />} />
 
-                {/* Error*/}
-                <Route path="/*" element={<PageNotFound />} />
+                  {/* Career, Policies, and Terms */}
+                  <Route path="/career" element={<Careers />} />
+                  <Route path="/job/:id" element={<JobDetails />} />
+                  <Route path="/policy" element={<Policy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/disclaimers" element={<Disclaimers />} />
+                  <Route path="/Sustainability" element={<Sustainability />} />
 
-                {/* Host Onboarding v3 */}
-                <Route
-                  path="/hostonboarding/*"
-                  element={
-                    <BuilderProvider>
-                      <Routes>
-                        <Route path="" element={<AccommodationTypeView />} />
-                        <Route path="accommodation" element={<StepGuard step="type"><HouseTypeView /></StepGuard>} />
-                        <Route path="boat" element={<StepGuard step="type"><BoatTypeView /></StepGuard>} />
-                        <Route path="camper" element={<StepGuard step="type"><CamperTypeView /></StepGuard>} />
-                        <Route path=":type/address" element={<AddressInputView />} />
-                        <Route path=":type/capacity" element={<CapacityView />} />
-                        <Route path=":type/capacity" element={<PropertyGuestAmountView />} />
-                        <Route path=":type/amenities" element={<AmenitiesView />} />
-                        <Route path=":type/rules" element={<PropertyHouseRulesView />} />
-                        <Route path=":type/photos" element={<PhotosView />} />
-                        <Route path=":type/title" element={<PropertyTitleView />} />
-                        <Route path=":type/description" element={<PropertyDescriptionView />} />
-                        <Route path=":type/pricing" element={<PropertyRateView />} />
-                        <Route path=":type/availability" element={<PropertyAvailabilityView />} />
-                        <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
-                        <Route path="summary" element={<SummaryViewAndSubmit />} />
-                      </Routes>
-                    </BuilderProvider>
-                  }
-                />
-                <Route path="/*" element={<Home />} />
-              </Routes>
-              {renderFooter()}
-              {currentPath !== "/admin" && <MenuBar />}
-              {renderChatWidget()}
-              <Hostchatbot />
-            </div>
-          </UserProvider>
-        </AuthProvider>
-      </Router>
-    </FlowContext.Provider>
-  </ApolloProvider>);
+                  {/* Error*/}
+                  <Route path="/*" element={<PageNotFound />} />
+
+                  {/* Host Onboarding v3 */}
+                  <Route
+                    path="/hostonboarding/*"
+                    element={
+                      <BuilderProvider>
+                        <Routes>
+                          <Route path="" element={<AccommodationTypeView />} />
+                          <Route
+                            path="accommodation"
+                            element={
+                              <StepGuard step="type">
+                                <HouseTypeView />
+                              </StepGuard>
+                            }
+                          />
+                          <Route
+                            path="boat"
+                            element={
+                              <StepGuard step="type">
+                                <BoatTypeView />
+                              </StepGuard>
+                            }
+                          />
+                          <Route
+                            path="camper"
+                            element={
+                              <StepGuard step="type">
+                                <CamperTypeView />
+                              </StepGuard>
+                            }
+                          />
+                          <Route path=":type/address" element={<AddressInputView />} />
+                          <Route path=":type/capacity" element={<CapacityView />} />
+                          <Route path=":type/capacity" element={<PropertyGuestAmountView />} />
+                          <Route path=":type/amenities" element={<AmenitiesView />} />
+                          <Route path=":type/rules" element={<PropertyHouseRulesView />} />
+                          <Route path=":type/photos" element={<PhotosView />} />
+                          <Route path=":type/title" element={<PropertyTitleView />} />
+                          <Route path=":type/description" element={<PropertyDescriptionView />} />
+                          <Route path=":type/pricing" element={<PropertyRateView />} />
+                          <Route path=":type/availability" element={<PropertyAvailabilityView />} />
+                          <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
+                          <Route path="summary" element={<SummaryViewAndSubmit />} />
+                        </Routes>
+                      </BuilderProvider>
+                    }
+                  />
+                  <Route path="/*" element={<Home />} />
+                </Routes>
+                {renderFooter()}
+                {currentPath !== "/admin" && <MenuBar />}
+                {renderChatWidget()}
+                <Hostchatbot />
+              </div>
+            </UserProvider>
+          </AuthProvider>
+        </Router>
+      </FlowContext.Provider>
+    </ApolloProvider>
+  );
 }
 
 export default App;
