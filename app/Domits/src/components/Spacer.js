@@ -1,13 +1,7 @@
-import {StyleSheet, View} from 'react-native';
+import {View} from 'react-native';
 
-const Spacer = () => {
-  return <View style={styles.spacer} />;
+const Spacer = ({padding = null}) => {
+  return <View style={{padding: padding || 10}} />;
 };
-
-const styles = StyleSheet.create({
-  spacer: {
-    padding: 10,
-  },
-});
 
 export default Spacer;

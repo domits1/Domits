@@ -50,10 +50,12 @@ import {
     PAY_SCREEN,
     POCKET_SCREEN,
     PROPERTY_DETAILS_SCREEN,
-    SCAN_SCREEN,
+    SCAN_SCREEN, STRIPE_PAYMENT_CANCELLED_SCREEN, STRIPE_PAYMENT_CONFIRMED_SCREEN,
     STRIPE_PROCESS_SCREEN
 } from './utils/NavigationNameConstants';
 import StripePayment from "../features/bookingengine/stripe/screens/StripePayment";
+import PaymentCancelled from "../features/bookingengine/paymentcancelled/screens/PaymentCancelled";
+import PaymentConfirmed from "../features/bookingengine/paymentconfirmed/screens/PaymentConfirmed";
 
 const Stack = createNativeStackNavigator();
 
@@ -116,6 +118,8 @@ function MainNavigationStack() {
 
             {/* Booking Engine */}
             <Stack.Screen name={STRIPE_PROCESS_SCREEN} component={StripePayment}/>
+            <Stack.Screen name={STRIPE_PAYMENT_CANCELLED_SCREEN} component={PaymentCancelled}/>
+            <Stack.Screen name={STRIPE_PAYMENT_CONFIRMED_SCREEN} component={PaymentConfirmed}/>
             <Stack.Screen
                 name={GUEST_NEW_CONFIRMED_BOOKING_SCREEN}
                 component={GuestNewConfirmedBooking}
