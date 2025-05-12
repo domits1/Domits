@@ -15,33 +15,28 @@ import ReservationItem from "../../utils/ReservationItem";
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [userHasReservations, setUserHasReservations] = useState(false);
   const [bookings, setBooking] = useState(null);
   const authToken = getAccessToken();
-  
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         const bookings = await getReservationsFromToken(authToken);
         console.log(bookings);
-        setBooking(bookings);
-        toast.success(`Gathered ${bookings.length} reservations!`, {
-          position: "top-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-          });
+        if (bookings === "Data not found") {
+          toast.error("No reservations found for this user.");
+          setUserHasReservations(false);
+          return;
+        } else {
+          setBooking(bookings);
+          setUserHasReservations(true);
+        }
       } catch (error) {
         console.error("Fetch Error:", error);
       } finally {
         setIsLoading(false);
       }
-
-
     };
 
     fetchBookings();
@@ -50,7 +45,7 @@ const HostReservations = () => {
   return (
     <main className="page-body">
       {isLoading ? (
-          <img src={spinner} className={styles.CenterMe}></img>
+        <img src={spinner} className={styles.CenterMe}></img>
       ) : (
         <>
           <h2>Reservations</h2>
@@ -125,22 +120,31 @@ const HostReservations = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {bookings.map((booking) => (
-                      <tr key={booking.id}>
-                        <td className={styles.singleReservationRow}>{booking.id}</td>
-                        <td className={styles.singleReservationRow}>in the property-table</td>
-                        <td className={styles.singleReservationRow}>
-                          {new Date(booking.arrivalDate).toLocaleDateString()} - {new Date(booking.departureDate).toLocaleDateString()}
-                        </td>
-                        <td className={styles.singleReservationRow}>
-                          {new Date(booking.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className={styles.singleReservationRow}>test</td>
-                        <td className={styles.singleReservationRow}>€420</td>
-                        <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
-                        <td className={styles.singleReservationRow}>{booking.status}</td>
+                    {userHasReservations && bookings.length > 0 ? (
+                      bookings.map((booking) =>
+                        booking.items.map((item) => (
+                          <tr key={item.id}>
+                            <td className={styles.singleReservationRow}>{booking.id}</td>
+                            <td className={styles.singleReservationRow}>{booking.title}</td>
+                            <td className={styles.singleReservationRow}>
+                              {new Date(item.arrivalDate).toLocaleDateString()} -{" "}
+                              {new Date(item.departureDate).toLocaleDateString()}
+                            </td>
+                            <td className={styles.singleReservationRow}>
+                              {new Date(item.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className={styles.singleReservationRow}>wip</td>
+                            <td className={styles.singleReservationRow}>€{booking.rate}</td>
+                            <td className={styles.singleReservationRow}>{BooleanToString(item.latePayment)}</td>
+                            <td className={styles.singleReservationRow}>{item.status}</td>
+                          </tr>
+                        ))
+                      )
+                    ) : (
+                      <tr>
+                        <td className={styles.noData}>No reservations found.</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </section>

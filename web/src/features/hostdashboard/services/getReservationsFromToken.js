@@ -7,7 +7,11 @@ const getReservationsFromToken = async (token) => {
             }
         }
     );
+
     const data = await response.json();
+    if (!response.ok){
+        return "Data not found";
+    }
     return data;
 }
 

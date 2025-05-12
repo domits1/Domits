@@ -4,6 +4,7 @@ $secondary-color: #333;
 $highlight-color: #4a647c;
 $background-color: #f9f9f9;
 $font-size-data: 14px;
+$font-size-big: 16px;
 $base-spacing: 1em;
 $button-padding: 0.2em 2.2em;
 $border-color: #ddd;
@@ -77,6 +78,16 @@ $border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
+    tr,
+    td{
+      margin: 200px;
+    }
+
+    th,
+    td{
+      padding: 1.5em 1em 1.5em;
+    }
+
     tbody,
     tr {
       margin: 10px 0.5px;
@@ -86,6 +97,16 @@ $border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
+    .noData {
+      font-size: $font-size-big;
+
+      .noDataText {
+        border: none;
+        border-collapse: none;
+        background-color: transparent;
+
+      }
+    }
     .reservationIcons{
       cursor: pointer;
       display: inline-flex;
