@@ -207,14 +207,14 @@ const Register = () => {
             //     return;
             // }
 
-            const emailName = email.split('@')[0];
+            //const emailName = email.split('@')[0];
             const groupName = flowState.isHost ? "Host" : "Traveler";
             await Auth.signUp({
                 username: email,
                 password,
                 attributes: {
                     'custom:group': groupName,
-                    'custom:username': emailName + username,
+                    'custom:username': username,
                     // 'preferred_username': prefferedName, // do not remove this yet it might become usefull later if you have questions: ask Chant
                     'given_name': firstName,
                     'family_name': lastName,
@@ -225,11 +225,11 @@ const Register = () => {
                 state: { email, password }
             });
         } catch (error) {
+            console.log("Sign-up failed:", error);
             if (error.code === 'UsernameExistsException') {
                 setErrorMessage('Email already exists!');
             } else {
-                console.error("Error:", error);
-                setErrorMessage('An unexpected error occurred');
+                setErrorMessage(error.message || 'An unexpected error occurred');
             }
         }
     };
