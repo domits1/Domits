@@ -213,7 +213,7 @@ const Register = () => {
                     // 'preferred_username': prefferedName, // do not remove this yet it might become usefull later if you have questions: ask Chant
                     'given_name': firstName,
                     'family_name': lastName,
-                    'phone_number': `${countryCode}${phone}`,
+                    'phone_number': `+${phone}`,
                 },
             });
             navigate('/confirm-email', {
