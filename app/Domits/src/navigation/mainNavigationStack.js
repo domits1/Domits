@@ -1,30 +1,28 @@
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
+import React from "react";
 import Scan from "../header/scan";
 import Pay from "../header/pay";
 import GuestBookings from "../screens/guestdashboard/screens/GuestBookings";
 import Pocket from "../header/pocket";
 import PropertyDetails from "../screens/propertyDetailsScreen/screens/propertyDetailsScreen";
-import BookingProcess from "../features/bookingengine/screens/BookingEngineScreen";
-import SimulateStripe from "../features/bookingengine/simulateStripe";
-import PaymentAccepted from "../features/bookingengine/screens/PaymentAcceptedScreen";
-import PaymentDeclined from "../features/bookingengine/screens/PaymentDeclinedScreen";
 import GuestNewConfirmedBooking from "../screens/guestdashboard/screens/GuestBookingsTab";
 import HostProfile from "../screens/profile/hostprofile/HostProfileTab";
-import React from "react";
-import HomeScreen from '../screens/home/screens/Home';
+import StripePayment from "../features/bookingengine/stripe/screens/StripePayment";
+import PaymentCancelled from "../features/bookingengine/paymentcancelled/screens/PaymentCancelled";
+import PaymentConfirmed from "../features/bookingengine/paymentconfirmed/screens/PaymentConfirmed";
+import HomeScreen from "../screens/home/screens/Home";
 import {
-    BOOKING_PROCESS_SCREEN,
     GUEST_BOOKINGS_SCREEN,
     GUEST_NEW_CONFIRMED_BOOKING_SCREEN,
     HOME_SCREEN,
     HOST_PROFILE_SCREEN,
     PAY_SCREEN,
-    PAYMENT_ACCEPTED_SCREEN,
-    PAYMENT_DECLINED_SCREEN,
     POCKET_SCREEN,
     PROPERTY_DETAILS_SCREEN,
     SCAN_SCREEN,
-    SIMULATE_STRIPE_SCREEN,
+    STRIPE_PAYMENT_CANCELLED_SCREEN,
+    STRIPE_PAYMENT_CONFIRMED_SCREEN,
+    STRIPE_PROCESS_SCREEN
 } from './utils/NavigationNameConstants';
 
 const Stack = createNativeStackNavigator();
@@ -54,10 +52,9 @@ function MainNavigationStack() {
             <Stack.Screen name={PROPERTY_DETAILS_SCREEN} component={PropertyDetails}/>
 
             {/* Booking Engine */}
-            <Stack.Screen name={BOOKING_PROCESS_SCREEN} component={BookingProcess}/>
-            <Stack.Screen name={SIMULATE_STRIPE_SCREEN} component={SimulateStripe}/>
-            <Stack.Screen name={PAYMENT_ACCEPTED_SCREEN} component={PaymentAccepted}/>
-            <Stack.Screen name={PAYMENT_DECLINED_SCREEN} component={PaymentDeclined}/>
+            <Stack.Screen name={STRIPE_PROCESS_SCREEN} component={StripePayment}/>
+            <Stack.Screen name={STRIPE_PAYMENT_CANCELLED_SCREEN} component={PaymentCancelled}/>
+            <Stack.Screen name={STRIPE_PAYMENT_CONFIRMED_SCREEN} component={PaymentConfirmed}/>
             <Stack.Screen name={GUEST_NEW_CONFIRMED_BOOKING_SCREEN} component={GuestNewConfirmedBooking}/>
         </Stack.Navigator>
     );
