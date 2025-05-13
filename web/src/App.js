@@ -247,7 +247,6 @@ function App() {
                           <Route path="messages" element={<HostMessages />} />
                           <Route path="reporting" element={<HostPayments />} />
                           <Route path="settings" element={<HostSettings />} />
-                          <Route path="reviews" element={<HostReviews />} />
                           <Route path="chat" element={<HostMessages />} />
                           <Route path="reservations" element={<HostReservations />} />
                           <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
