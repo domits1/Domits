@@ -1,3 +1,5 @@
+import retrieveAccessToken from "../../features/auth/RetrieveAccessToken";
+
 class PropertyRepository {
 
     constructor() {
@@ -35,6 +37,25 @@ class PropertyRepository {
         try {
             const response = await fetch(
                 `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byCountry?country=${country}&lastEvaluatedKeyId=${lastEvaluatedKeyId}&lastEvaluatedKeyCity=${lastEvaluatedKeyCity}`,
+            );
+            if (!response.ok) {
+                throw {message: await response.json()};
+            }
+            return await response.json();
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async fetchPropertyByBookingId(bookingId) {
+        try {
+            const response = await fetch(
+                `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/booking?bookingId=${bookingId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': await retrieveAccessToken(),
+                    }
+                }
             );
             if (!response.ok) {
                 throw {message: await response.json()};

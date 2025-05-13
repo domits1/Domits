@@ -9,6 +9,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import SplashScreen from "react-native-splash-screen"
+import {StripeProvider} from "@stripe/stripe-react-native";
 
 function App() {
     const [isI18nInitialized, setIsI18nInitialized] = React.useState(false);
@@ -30,11 +31,18 @@ function App() {
         );
     } else {
         return (
-            <AuthProvider>
-                <NavigationContainer>
-                    <BottomTabNavigator/>
-                </NavigationContainer>
-            </AuthProvider>
+            <StripeProvider
+                publishableKey={
+                    'pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3'
+                }
+                urlScheme={'com.domits.domits'}
+            >
+                <AuthProvider>
+                    <NavigationContainer>
+                        <BottomTabNavigator/>
+                    </NavigationContainer>
+                </AuthProvider>
+            </StripeProvider>
         );
     }
 }

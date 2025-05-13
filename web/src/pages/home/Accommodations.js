@@ -63,8 +63,8 @@ const Accommodations = ({ searchResults }) => {
                     setLastEvaluatedKeyId(null)
                 }
                 setAccolist(result.properties);
+                setSearchLoading(false);
             }
-            setSearchLoading(false);
         }
         loadData();
     }, [searchResults]);

@@ -67,7 +67,8 @@ const HomeScreen = () => {
 
         const response = await GetWishlist();
 
-        setFavorites(response.AccommodationIDs);
+        // setFavorites(response.AccommodationIDs);
+        setFavorites([])
         setFavoritesLoading(false);
     }, []);
 

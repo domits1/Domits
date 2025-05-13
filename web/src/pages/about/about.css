@@ -34,8 +34,7 @@
     text-decoration: underline;
 }
 
-.about__title-container h2,
-h3 {
+.about__title-container h2 {
     flex-direction: column;
     font-family: 'Kanit', sans-serif;
     font-weight: 400;
