@@ -250,10 +250,11 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
     <>
       {error && (
         <div className="Search-error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
-      <div className="bar-container">
+      {/* <div className="bar-container"> */}
         {isMobile && (
           <button className="mobile-search-button" onClick={toggleSearchBar}>
-            <FaSearchLocation size={15} /> Search & Filter Accommodations
+            <FaSearchLocation size={15} /> 
+            {/* Search & Filter Accommodations */}
           </button>
         )}
 
@@ -373,7 +374,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
             {/* {isBarActive && <FilterButton />} */}
           </div>
         )}
-      </div>
+      {/* </div> */}
     </>
   );
 }
