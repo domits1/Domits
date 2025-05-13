@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
-import "./guestdashboard.css";
+
 import Pages from "./Pages.js";
 import "./paymentsguestdashboard.css";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY.js";

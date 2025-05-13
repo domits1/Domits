@@ -1,21 +1,24 @@
-/* .container {
-    display: flex;
-    flex-direction: column;
-    width: 90%;
-    margin: auto;
-    margin-top: 30px;
-    margin-bottom: 30px;
-} */
-
 .dashboards {
   display: grid;
   grid-template-columns: 250px auto;
   gap: 5%;
+
+  @media screen and (max-width: 830px) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 .dashboard {
   display: grid;
   grid-template-columns: 250px auto;
+
+  @media screen and (max-width: 830px) {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
 }
 
 .Dashboard_h2 {
@@ -26,50 +29,59 @@
 }
 
 .dashboardSections {
-  margin-left: 100px;
-  margin-top: 100px;
+  margin: 100px 0 0 100px;
   display: flex;
   flex-direction: column;
+
+  @media screen and (max-width: 768px) {
+    visibility: hidden;
+    width: 0;
+    height: 0;
+  }
+
+  @media screen and (max-width: 480px) {
+    visibility: hidden;
+    width: 0;
+    height: 0;
+  }
 }
 
 .wijzers {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  cursor: pointer;
-  margin-bottom: 15px;
+  justify-content: flex-start;
   align-items: center;
   width: 200px;
+  padding: 5px 1rem 5px 1vh;
   border: 0.1px solid black;
   border-radius: 15px;
-  padding: 5px;
-  box-sizing: border-box;
-  transition: all 0.3s ease;
-  text-align: center;
+  margin-bottom: 15px;
+  cursor: pointer;
   height: 8vh;
-  padding-left: 1vh;
   font-size: 1rem;
-  padding-right: 1rem;
-  justify-content: flex-start;
-}
+  text-align: center;
+  transition: all 0.3s ease;
 
-.wijzers img {
-  object-fit: cover;
-}
+  img {
+    object-fit: cover;
+  }
 
-.wijzers:hover {
-  background-color: var(--domits-guest-green);
-  transition: .3s;
-  color: white;
-}
+  &:hover {
+    background-color: var(--domits-guest-green);
+    color: white;
+  }
 
-.wijzers.active {
-  background-color: var(--domits-guest-green);
-  color: white;
-}
+  &.active {
+    background-color: var(--domits-guest-green);
+    color: white;
 
-.wijzers.active p {
-  color: white;
+    p {
+      color: white;
+    }
+  }
+
+  @media screen and (max-width: 830px) {
+    width: 90%;
+  }
 }
 
 .disabled:hover {
@@ -81,43 +93,59 @@
 .contentContainer {
   width: 100%;
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
 }
 
 .reviewColumn {
   width: 48%;
-  height: auto;
-  margin: 10px;
   min-width: 155px;
+  margin: 10px;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 480px) {
+    width: 100%;
+
+    h2.review-header {
+      font-size: 1.5em;
+    }
+  }
 }
 
 .reviewBox {
-  margin-right: 5px;
-  margin-top: 10px;
+  margin: 10px 5px 0 0;
   padding: 10px;
   height: 100%;
-  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
   border-radius: 10px;
+  box-shadow: 0px 2px 8px rgba(99, 99, 99, 0.2);
   flex-wrap: wrap;
 }
 
 .review-tab {
   display: flex;
   flex-direction: column;
-  border: 2px;
   border-radius: 15px;
+  padding: 12px;
   margin: 5%;
   animation: fade-up 1s;
-  padding: 12px;
+
+  &:hover {
+    box-shadow: 4px 4px #0D9813;
+    transition: 0.3s;
+  }
 }
 
-.review-tab:hover {
-  box-shadow: 4px 4px #0D9813;
-  transition: .3s;
+@keyframes fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
 }
 
 .review-date {
@@ -128,15 +156,14 @@
   align-self: end;
   width: 40px;
   height: 40px;
-  box-shadow: none;
   padding: 0;
   border: none;
   background-color: white;
-}
 
-.review-delete:hover {
-  cursor: pointer;
-  transform: scale(1.2);
+  &:hover {
+    cursor: pointer;
+    transform: scale(1.2);
+  }
 }
 
 .review-alert {
@@ -147,50 +174,6 @@
   width: 30px;
   height: 30px;
 }
-
-@keyframes fade-up {
-  0% {
-      opacity: 0;
-      transform: translateY(30px) scale(0.9);
-  }
-
-  100% {
-      opacity: 1;
-      transform: translateY(0px) scale(1);
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .dashboardSections {
-      visibility: hidden;
-      width: 0;
-      height: 0;
-  }
-}
-
-@media screen and (max-width: 830px) {
-  .dashboards {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-  }
-
-  .dashboard {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-  }
-
-  .wijzers {
-      width: 90%;
-  }
-}
-
-.button i {
-  margin-right: 10px;
-  color: #888;
-}
-
 
 .content {
   padding: 20px;
@@ -203,33 +186,58 @@
   height: 360px;
 }
 
-.bookingBox {
-  height: 60%;
+.bookingBox,
+.messageBox {
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 20px;
   margin-bottom: 20px;
-  overflow: auto;
+  width: 60%;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+
+  img {
+    width: 20%;
+    height: auto;
+    border-radius: 15px;
+    margin-top: 10px;
+  }
+}
+
+.Booking_place,
+.Booking_host,
+.Booking_messages,
+.Booking_messages_centre {
+  font-size: 1rem;
+  font-weight: 400;
+  margin-left: 210px;
 }
 
 .Booking_place {
-  font-size: 1rem;
   margin-top: 90px;
-  margin-left: 210px;
-  font-weight: 500;
 }
 
+.Booking_messages {
+  margin-top: 50px;
+}
 
+.Booking_messages_centre {
+  margin-top: 30px;
+  margin-left: 225px;
+}
+
+.Booking_photo {
+  width: 455px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 15px;
+  margin: 10px 0 0 101px;
+}
 
 .messages-container {
   display: flex;
   align-items: center;
   gap: 8px;
   font-family: Arial, sans-serif;
-}
-
-.Booking_messages {
-  font-size: 1rem;
-  margin-top: 50px;
-  margin-left: 210px;
-  font-weight: 400;
 }
 
 .badge {
@@ -246,7 +254,6 @@
   margin-bottom: -48.75px;
 }
 
-
 .messageBoxes {
   height: 40%;
   overflow: auto;
@@ -259,45 +266,6 @@
   left: 30%;
 }
 
-.bookingBox,
-.messageBox {
-  background-color: #fff;
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-  width: 60%;
-}
-
-.bookingBox img {
-  width: 20%;
-  height: auto;
-  border-radius: 15px;
-  margin-top: 10px;
-}
-
-.Booking_photo {
-  width: 455px;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 15px;
-  margin-top: 10px;
-  margin-left: 101px;
-}
-
-.Booking_host {
-  font-size: 1rem;
-  font-weight: 400;
-  margin-left: 210px;
-}
-
-.Booking_messages_centre {
-  font-size: 1rem;
-  margin-left: 225px;
-  font-weight: 400;
-  margin-top: 30px;
-}
-
 .messageBox button {
   align-self: flex-end;
   padding: 10px 20px;
@@ -308,13 +276,12 @@
 }
 
 .personalInfoContent {
-
+  display: flex;
   flex-direction: column;
   margin-left: 1px;
   width: 100%;
   flex: 1;
   padding: 20px;
-
 }
 
 .accomodation-side {
@@ -326,32 +293,43 @@
   background-color: #fff;
   border-radius: 15px;
   padding: 20px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 10px;
   display: flex;
   align-items: center;
-  width: auto;
   gap: 10px;
-}
+  width: auto;
 
-.infoBox i {
-  margin-right: 10px;
-  color: #0A760F;
-}
+  i {
+    margin-right: 10px;
+    color: #0A760F;
+  }
 
-.infoBox span {
-  margin-right: auto;
-  font-size: 1.3rem;
-  font-weight: 400;
-}
+  span {
+    margin-right: auto;
+    font-size: 1.3rem;
+    font-weight: 400;
+  }
 
-.infoBox p {
-  font-size: 1.3rem;
-  font-weight: 300;
+  p {
+    font-size: 1.3rem;
+    font-weight: 300;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px;
+    font-size: 0.8em;
+    width: 90%;
+    flex-wrap: wrap;
+  }
 }
 
 .button.last-button {
   margin-top: 60px;
+}
+
+.button i {
+  margin-right: 10px;
+  color: #888;
 }
 
 .icon {
@@ -370,7 +348,6 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  /* Ruimte tussen de koptekst en de bewerkknop */
 }
 
 .edit-icon-background {
@@ -382,62 +359,37 @@
   height: 2rem;
   text-align: center;
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+
+  &:hover {
+    background-color: #6CD46F;
+  }
 }
 
-.edit-icon-background:hover {
-  background-color: #6CD46F;
-}
-
-.guest-edit-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 1.6rem;
-  height: 1.6rem;
-  object-fit: contain;
-}
-
+.guest-edit-icon,
 .guest-check-icon {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  object-fit: contain;
+}
+
+.guest-edit-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.guest-check-icon {
   width: 2.5rem;
   height: 2.5rem;
-  object-fit: contain;
 }
 
 .guest-edit-input {
   font-size: 1.3rem;
   font-weight: 300;
   margin-left: -2%;
-}
-
-@media (max-width: 480px) {
-  .reviewColumn {
-      width: 100%;
-
-      h2.review-header {
-          font-size: 1.5em;
-      }
-  }
-
-  .infoBox {
-      padding: 10px;
-      font-size: 0.8em;
-      width: 90%;
-      flex-wrap: wrap;
-  }
-
-  .dashboardSections {
-      visibility: hidden;
-      width: 0;
-      height: 0;
-  }
 }

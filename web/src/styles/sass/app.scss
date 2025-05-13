@@ -11,6 +11,10 @@
 //Auth
 @use "auth/login.scss";
 @use "auth/register.scss";
+//guestDashboard
+@use "guestdashboard/guestDashboard.scss";
+//hostDashboard
+@use "hostdashboard/HostDashboard.module.scss";
 
 
 

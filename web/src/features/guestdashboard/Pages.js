@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import "./guestdashboard.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import BookingIcon from "@mui/icons-material/LanguageOutlined";
