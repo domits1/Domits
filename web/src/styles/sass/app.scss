@@ -9,13 +9,21 @@
 @use "base/footer.scss";
 @use "base/MenuBar.scss";
 @use "base/SearchBar.scss";
+@use "base/navbar.scss";
 //Auth
 @use "auth/login.scss";
 @use "auth/register.scss";
 
+//GuestDashboard
+@use "guestdashboard/guestDashboard.scss";
+@use "guestdashboard/Pages.scss";
+@use "guestdashboard/GuestBooking.scss";
+@use "guestdashboard/mainDashboardGuest.scss";
+
 :root {
   --primary-color: #0D9813;
   --secondary-color: #003366;
+  --domits-host-blue: #003366;
 }
 
 @font-face {

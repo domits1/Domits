@@ -8,12 +8,13 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from "react-native-safe-area-context";
+import TabHeader from "../accounthome/components/TabHeader";
 
 const GuestPaymentsTab = () => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
-        <Text style={styles.header}>Payment methods</Text>
+        <TabHeader tabTitle={'Payment methods'}/>
         <Text style={styles.description}>
           Add and/or delete your payment methods.
         </Text>
