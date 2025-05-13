@@ -13,6 +13,7 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
+import ConfirmEmailView from "./features/auth/confirmEmail/ConfirmEmailView.js";
 import { UserProvider } from "./features/auth/UserContext";
 import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
@@ -179,6 +180,7 @@ function App() {
                 <Route path="/landing" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/confirm-email" element={<ConfirmEmailView />} />
                 <Route path="/listingdetails" element={<ListingDetails2 />} />
                 <Route path="/bookingoverview" element={<BookingOverview />} />
                 <Route path="/bookingsend" element={<BookingSend />} />
