@@ -29,6 +29,7 @@ function Pages({ onNavigate }) {
             <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Guest Options">
               <option disabled>Guest Options</option>
               <option value="/guestdashboard">Dashboard</option>
+              <option value="/guestdashboard/wishlist">Wishlist</option>
               <option value="/guestdashboard/bookings">Bookings</option>
               <option value="/guestdashboard/chat">Messages</option>
               {/* <option value="/guestdashboard/payments">Payments</option> */}
@@ -62,6 +63,14 @@ function Pages({ onNavigate }) {
             <MessageIcon />
           </div>
           <p>Messages</p>
+        </div>
+        <div
+          className={`wijzers ${activeTab === "/guestdashboard/Wishlist" ? "active" : ""}`}
+          onClick={() => navigate("/guestdashboard/Wishlist")}>
+          <div className="Mui">
+            <WishlistIcon />
+          </div>
+          <p>Wishlist</p>
         </div>
         {/* <div
           className={`wijzers ${activeTab === "/guestdashboard/payments" ? "active" : ""}`}

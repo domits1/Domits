@@ -120,6 +120,7 @@ const GuestDashboard = () => {
           },
           body: JSON.stringify(params),
         }
+
       );
 
       const result = await response.json();
@@ -294,6 +295,7 @@ const GuestDashboard = () => {
               ) : (
                 <p>{user.family}</p>
               )}
+
             </div>
           </div>
         </div>

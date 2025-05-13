@@ -274,9 +274,6 @@ function App() {
                   <Route path="/disclaimers" element={<Disclaimers />} />
                   <Route path="/Sustainability" element={<Sustainability />} />
 
-                  {/* Error*/}
-                  <Route path="/*" element={<PageNotFound />} />
-
                   {/* Host Onboarding v3 */}
                   <Route
                     path="/hostonboarding/*"
