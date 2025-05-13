@@ -2,107 +2,135 @@
     padding: 2rem;
     font-family: 'Segoe UI', sans-serif;
     min-height: 100vh;
-  
+
     h2 {
-      margin-bottom: 1.5rem;
-      font-size: 2rem;
-      color: #333;
+        margin-bottom: 1.5rem;
+        font-size: 2rem;
+        color: #333;
     }
-  
-    .guest-dashboard-dashboards {
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-  
-      .guest-dashboard-content {
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        padding: 1.5rem;
-  
-        .guest-dashboard-personalInfoContent {
-          margin-bottom: 2rem;
-  
-          .guest-dashboard-personal-info-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-  
-            h3 {
-              margin: 0;
-              font-size: 1.5rem;
-              color: #444;
-            }
-  
-            .guest-dashboard-edit-icon-background {
-              background-color: #e0e0e0;
-              border-radius: 50%;
-              padding: 0.4rem;
-              cursor: pointer;
-              transition: background-color 0.3s;
-  
-              &:hover {
-                background-color: #ccc;
-              }
-  
-              .guest-dashboard-guest-edit-icon {
-                width: 20px;
-                height: 20px;
-              }
-            }
-          }
-  
-          .guest-dashboard-infoBox {
-            margin-bottom: 1rem;
-  
-            span {
-              display: block;
-              font-weight: bold;
-              margin-bottom: 0.25rem;
-              color: #333;
-            }
-  
+
+    .guest-dashboard-bookings-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        .guest-dashboard-booking-item {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+
             p {
-              margin: 0;
-              font-size: 1rem;
-              color: #555;
+                margin: 5px 0;
+                font-size: 14px;
+                color: #333;
             }
-  
-            input.guest-dashboard-guest-edit-input {
-              padding: 0.5rem;
-              font-size: 1rem;
-              width: 100%;
-              border: 1px solid #ccc;
-              border-radius: 4px;
-              transition: border 0.3s;
-  
-              &:focus {
-                border-color: #007bff;
-                outline: none;
-              }
+
+            strong {
+                font-size: 16px;
+                color: #007bff;
             }
-          }
         }
-  
-        .guest-dashboard-accomodation-side {
-          label {
-            display: block;
-            margin-top: 1rem;
-  
-            .guest-dashboard-viewAllBooking {
-              text-decoration: none;
-              color: #007bff;
-              font-weight: 500;
-              transition: color 0.3s;
-  
-              &:hover {
-                color: #0056b3;
-              }
-            }
-          }
-        }
-      }
     }
-  }
-  
+
+    .guest-dashboard-dashboards {
+        display: flex;
+        flex-direction: row;
+        gap: 2rem;
+
+        @media screen and (max-width: 1000px) {
+            flex-direction: column; 
+        }
+
+        .guest-dashboard-content {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+
+            .guest-dashboard-personalInfoContent {
+                margin-bottom: 2rem;
+
+                .guest-dashboard-personal-info-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1rem;
+
+                    h3 {
+                        margin: 0;
+                        font-size: 1.5rem;
+                        color: #444;
+                    }
+
+                    .guest-dashboard-edit-icon-background {
+                        background-color: #e0e0e0;
+                        border-radius: 50%;
+                        padding: 0.4rem;
+                        cursor: pointer;
+                        transition: background-color 0.3s;
+
+                        &:hover {
+                            background-color: #ccc;
+                        }
+
+                        .guest-dashboard-guest-edit-icon {
+                            width: 20px;
+                            height: 20px;
+                        }
+                    }
+                }
+
+                .guest-dashboard-infoBox {
+                    margin-bottom: 1rem;
+
+                    span {
+                        display: block;
+                        font-weight: bold;
+                        margin-bottom: 0.25rem;
+                        color: #333;
+                    }
+
+                    p {
+                        margin: 0;
+                        font-size: 1rem;
+                        color: #555;
+                    }
+
+                    input.guest-dashboard-guest-edit-input {
+                        padding: 0.5rem;
+                        font-size: 1rem;
+                        width: 100%;
+                        border: 1px solid #ccc;
+                        border-radius: 4px;
+                        transition: border 0.3s;
+
+                        &:focus {
+                            border-color: #007bff;
+                            outline: none;
+                        }
+                    }
+                }
+            }
+
+            .guest-dashboard-accomodation-side {
+                label {
+                    display: block;
+                    margin-top: 1rem;
+
+                    .guest-dashboard-viewAllBooking {
+                        text-decoration: none;
+                        color: #007bff;
+                        font-weight: 500;
+                        transition: color 0.3s;
+
+                        &:hover {
+                            color: #0056b3;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
