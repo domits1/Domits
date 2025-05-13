@@ -1,17 +1,12 @@
-import React, {useState, useEffect} from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {SafeAreaView, ScrollView, Text, TextInput, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {useAuth} from '../../context/AuthContext';
-import {signUp, getCurrentUser, signOut} from '@aws-amplify/auth';
+import {useAuth} from '../../../context/AuthContext';
+import {getCurrentUser, signUp} from '@aws-amplify/auth';
 import CheckBox from '@react-native-community/checkbox';
+import {CONFIRM_EMAIL_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
+import {styles} from "../styles/RegisterStyles";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 const generateRandomUsername = () => {
   const chars = String.fromCharCode(...Array(127).keys()).slice(33);
@@ -142,14 +137,12 @@ const Register = () => {
         },
       });
 
-      console.log('UserId:', userId, 'Next Step:', nextStep);
-
       if (setAuthCredentials) {
         setAuthCredentials(email, password);
       }
 
       // Navigate to confirmation screen
-      navigation.navigate('ConfirmEmail', {
+      navigation.navigate(CONFIRM_EMAIL_SCREEN, {
         email: email,
         username: email,
       });
@@ -176,9 +169,19 @@ const Register = () => {
     checkAuth();
   }, []);
 
+  const handleGoBackPress = () => {
+    navigation.goBack();
+  }
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <TouchableOpacity onPress={handleGoBackPress}>
+          <Ionicons
+              name="chevron-back-outline"
+              size={24}
+          />
+        </TouchableOpacity>
         <View style={styles.container}>
           <View style={styles.registerContainer}>
             <Text style={styles.title}>Create an Account on Domits</Text>
@@ -238,7 +241,7 @@ const Register = () => {
             {errorMessage && (
               <Text style={styles.errorText}>{errorMessage}</Text>
             )}
-            <View style={styles.viewCheck}>
+            <View style={styles.asHostCheckBox}>
               <CheckBox value={isHost} onValueChange={handleHostChange} />
               <Text>Sign up as a host</Text>
             </View>
@@ -251,56 +254,5 @@ const Register = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  container: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#ffffff',
-  },
-  registerContainer: {
-    width: '100%',
-    maxWidth: 400,
-    padding: 20,
-    backgroundColor: '#ffffff',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'black',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  label: {fontSize: 16, color: 'black', marginBottom: 5, fontWeight: '600'},
-  input: {
-    height: 50,
-    borderColor: '#003366',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  viewCheck: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  passwordRequirements: {marginBottom: 15},
-  errorText: {color: 'red', fontSize: 14, marginBottom: 20},
-  signUpButton: {
-    backgroundColor: '#003366',
-    paddingVertical: 12,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  buttonText: {color: 'white', fontSize: 20, fontWeight: 'bold'},
-});
 
 export default Register;

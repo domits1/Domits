@@ -8,14 +8,13 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {styles} from '../styles/HostPaymentsStyles';
+import TabHeader from "../../../../screens/accounthome/components/TabHeader";
 
 const HostPaymentsTab = () => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Payments</Text>
-        </View>
+        <TabHeader tabTitle={'Payments'}/>
         <View style={styles.boxColumns}>
           <View style={styles.box}>
             <Text style={styles.boxText}>Completed Payments</Text>
