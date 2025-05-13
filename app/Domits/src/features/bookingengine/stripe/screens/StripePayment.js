@@ -11,24 +11,28 @@ import BookingGuestsView from '../views/BookingGuestsView';
 import GuestsModal from '../components/GuestsModal';
 import LineDivider from '../../../../components/LineDivider';
 import calculateNumberOfNights from '../utils/CalculateNumberOfNights';
-import PricingView from '../views/PricingView';
+import PricingView from '../../global/views/PricingView';
 import ConfirmAndPayButton from '../components/ConfirmAndPayButton';
 import {useStripe} from '@stripe/stripe-react-native';
 import {
-  STRIPE_PAYMENT_CANCELLED_SCREEN, STRIPE_PAYMENT_CONFIRMED_SCREEN,
+  STRIPE_PAYMENT_CANCELLED_SCREEN,
+  STRIPE_PAYMENT_CONFIRMED_SCREEN,
 } from '../../../../navigation/utils/NavigationNameConstants';
 
 const StripePayment = ({navigation, route}) => {
   const property = route.params.property;
 
   const [arrivalDate, setArrivalDate] = useState(route.params.arrivalDate);
-  const [departureDate, setDepartureDate] = useState(route.params.departureDate);
+  const [departureDate, setDepartureDate] = useState(
+    route.params.departureDate,
+  );
   const [showDatePopUp, setShowDatePopUp] = useState(false);
 
-  const [nights, setNights] = useState(calculateNumberOfNights(arrivalDate, departureDate));
+  const [nights, setNights] = useState(
+    calculateNumberOfNights(arrivalDate, departureDate),
+  );
 
-  const [adults, setAdults] = useState(1);
-  const [kids, setKids] = useState(0);
+  const [guests, setGuests] = useState(1);
   const [showGuestsPopUp, setShowGuestsPopUp] = useState(false);
 
   const [bookingId, setBookingId] = useState(null);
@@ -39,10 +43,10 @@ const StripePayment = ({navigation, route}) => {
   }, [arrivalDate, departureDate]);
 
   useEffect(() => {
-    setPaymentSecret("")
+    setPaymentSecret('');
     // Create booking (Should return a paymentIntent, ephemeralKey and customerId (Stripe id)
     // See https://docs.stripe.com/payments/accept-a-payment?platform=react-native#setup-server-side
-    setBookingId("6a75f247-29c9-11f0-a98e-c8d9d22fb751");
+    setBookingId('6a75f247-29c9-11f0-a98e-c8d9d22fb751');
   });
 
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
@@ -55,7 +59,7 @@ const StripePayment = ({navigation, route}) => {
     if (error) {
       navigation.navigate(STRIPE_PAYMENT_CANCELLED_SCREEN, {
         property: property,
-        guests: adults + kids,
+        guests: guests,
         nights: nights,
         paymentSecret: paymentSecret,
         booking: bookingId,
@@ -65,7 +69,7 @@ const StripePayment = ({navigation, route}) => {
       if (error) {
         navigation.navigate(STRIPE_PAYMENT_CANCELLED_SCREEN, {
           property: property,
-          guests: adults + kids,
+          guests: guests,
           nights: nights,
           paymentSecret: paymentSecret,
           booking: bookingId,
@@ -73,9 +77,9 @@ const StripePayment = ({navigation, route}) => {
       } else {
         navigation.navigate(STRIPE_PAYMENT_CONFIRMED_SCREEN, {
           booking: bookingId,
-          guests: adults + kids,
+          guests: guests,
           nights: nights,
-        })
+        });
       }
     }
   };
@@ -98,14 +102,12 @@ const StripePayment = ({navigation, route}) => {
         />
         <Spacer />
         <BookingGuestsView
-          adults={adults}
-          kids={kids}
+          guests={guests}
           onChangePress={() => setShowGuestsPopUp(true)}
         />
         <LineDivider />
         <PricingView
-          adults={adults}
-          kids={kids}
+          guests={guests}
           nights={nights}
           pricing={property.pricing}
         />
@@ -130,10 +132,8 @@ const StripePayment = ({navigation, route}) => {
             property.generalDetails.find(detail => detail.detail === 'Guests')
               .value
           }
-          currentAdults={adults}
-          currentKids={kids}
-          setAdults={setAdults}
-          setKids={setKids}
+          guests={guests}
+          setGuests={setGuests}
         />
       )}
     </>
