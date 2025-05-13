@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
@@ -6,6 +7,7 @@ import Pages from "./Pages.js";
 import "./paymentsguestdashboard.css";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY.js";
 import spinner from "../../images/spinnner.gif";
+
 
 const PaymentsGuestDashboard = () => {
   const navigate = useNavigate();
@@ -48,6 +50,7 @@ const PaymentsGuestDashboard = () => {
     fetchUserInfo();
   }, []);
 
+
   return (
     <div className="page-body">
       <h2>Payments</h2>
@@ -71,6 +74,7 @@ const PaymentsGuestDashboard = () => {
                   <p>Total: &euro;{payment.amount / 100}</p>
                 </div>
               ))}
+
             </div>
             {/* Payment methods section */}
           </div>

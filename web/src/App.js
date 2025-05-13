@@ -13,6 +13,7 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
+import ConfirmEmailView from "./features/auth/confirmEmail/ConfirmEmailView.js";
 import { UserProvider } from "./features/auth/UserContext";
 import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
@@ -99,6 +100,9 @@ import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
+import Navbar from './components/base/navbar';
+import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
+
 
 Modal.setAppElement("#root");
 
@@ -140,6 +144,7 @@ function App() {
   };
 
   const [flowState, setFlowState] = useState({ isHost: false });
+
 
   return (
     <ApolloProvider client={client}>
@@ -201,20 +206,13 @@ function App() {
 
                 {/* Guest Dashboard */}
                 <Route
-                  path="/guestdashboard/*"
-                  element={<GuestProtectedRoute>
-                    <Routes>
-                      <Route path="/" element={<GuestDashboard />} />
-                      <Route path="messages" element={<ListingDetails />} />
-                      <Route path="payments" element={<GuestPayments />} />
-                      <Route path="reviews" element={<GuestReviews />} />
-                      <Route path="bookings" element={<GuestBooking />} />
-                      <Route path="settings" element={<GuestSettings />} />
-                      <Route path="wishlist" element={<GuestWishlistPage />} />
-                      {/*<Route path="chat" element={<Chat/>}/>*/}
-                    </Routes>
-                  </GuestProtectedRoute>}
-                />
+                    path="/guestdashboard/*"
+                    element={
+                      <GuestProtectedRoute>
+                        <MainDashboardGuest />
+                      </GuestProtectedRoute>
+                    }
+                  />
 
                   {/* Host Management */}
                   {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
@@ -267,69 +265,47 @@ function App() {
                   <Route path="/disclaimers" element={<Disclaimers />} />
                   <Route path="/Sustainability" element={<Sustainability />} />
 
-                  {/* Error*/}
-                  <Route path="/*" element={<PageNotFound />} />
 
-                  {/* Host Onboarding v3 */}
-                  <Route
-                    path="/hostonboarding/*"
-                    element={
-                      <BuilderProvider>
-                        <Routes>
-                          <Route path="" element={<AccommodationTypeView />} />
-                          <Route
-                            path="accommodation"
-                            element={
-                              <StepGuard step="type">
-                                <HouseTypeView />
-                              </StepGuard>
-                            }
-                          />
-                          <Route
-                            path="boat"
-                            element={
-                              <StepGuard step="type">
-                                <BoatTypeView />
-                              </StepGuard>
-                            }
-                          />
-                          <Route
-                            path="camper"
-                            element={
-                              <StepGuard step="type">
-                                <CamperTypeView />
-                              </StepGuard>
-                            }
-                          />
-                          <Route path=":type/address" element={<AddressInputView />} />
-                          <Route path=":type/capacity" element={<CapacityView />} />
-                          <Route path=":type/capacity" element={<PropertyGuestAmountView />} />
-                          <Route path=":type/amenities" element={<AmenitiesView />} />
-                          <Route path=":type/rules" element={<PropertyHouseRulesView />} />
-                          <Route path=":type/photos" element={<PhotosView />} />
-                          <Route path=":type/title" element={<PropertyTitleView />} />
-                          <Route path=":type/description" element={<PropertyDescriptionView />} />
-                          <Route path=":type/pricing" element={<PropertyRateView />} />
-                          <Route path=":type/availability" element={<PropertyAvailabilityView />} />
-                          <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
-                          <Route path="summary" element={<SummaryViewAndSubmit />} />
-                        </Routes>
-                      </BuilderProvider>
-                    }
-                  />
-                  <Route path="/*" element={<Home />} />
-                </Routes>
-                {renderFooter()}
-                {currentPath !== "/admin" && <MenuBar />}
-                {renderChatWidget()}
-                <Hostchatbot />
-              </div>
-            </UserProvider>
-          </AuthProvider>
-        </Router>
-      </FlowContext.Provider>
-    </ApolloProvider>
-  );
+                {/* Host Onboarding v3 */}
+                <Route
+                  path="/hostonboarding/*"
+                  element={
+                    <BuilderProvider>
+                      <Routes>
+                        <Route path="" element={<AccommodationTypeView />} />
+                        <Route path="accommodation" element={<StepGuard step="type"><HouseTypeView /></StepGuard>} />
+                        <Route path="boat" element={<StepGuard step="type"><BoatTypeView /></StepGuard>} />
+                        <Route path="camper" element={<StepGuard step="type"><CamperTypeView /></StepGuard>} />
+                        <Route path=":type/address" element={<AddressInputView />} />
+                        <Route path=":type/capacity" element={<CapacityView />} />
+                        <Route path=":type/capacity" element={<PropertyGuestAmountView />} />
+                        <Route path=":type/amenities" element={<AmenitiesView />} />
+                        <Route path=":type/rules" element={<PropertyHouseRulesView />} />
+                        <Route path=":type/photos" element={<PhotosView />} />
+                        <Route path=":type/title" element={<PropertyTitleView />} />
+                        <Route path=":type/description" element={<PropertyDescriptionView />} />
+                        <Route path=":type/pricing" element={<PropertyRateView />} />
+                        <Route path=":type/availability" element={<PropertyAvailabilityView />} />
+                        <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
+                        <Route path="summary" element={<SummaryViewAndSubmit />} />
+                      </Routes>
+                    </BuilderProvider>
+                  }
+                />
+                <Route path="/*" element={<Home />} />
+              </Routes>
+              {renderFooter()}
+              {currentPath !== "/admin" && <MenuBar />}
+              {renderChatWidget()}
+              <Hostchatbot />
+            </div>
+          </UserProvider>
+        </AuthProvider>
+        <Navbar/>
+      </Router>
+    </FlowContext.Provider>
+  </ApolloProvider>);
+
 }
 
 export default App;

@@ -73,10 +73,10 @@ $no-account-font-size: 14px;
       }
     }
 
-    .loginButton,
-    .registerButtonLogin {
+    .loginButton {
       width: 100%;
       padding: $input-padding;
+      background: $guest-green;
       border-radius: $border-radius;
       border: none;
       box-shadow: none;
@@ -85,28 +85,30 @@ $no-account-font-size: 14px;
       cursor: pointer;
       margin-top: 15px;
 
-      &.loginButton {
-        background: $guest-green;
-
-        &:hover {
-          background: $hover-green;
-        }
-      }
-
-      &.registerButtonLogin {
-        background: $host-blue;
-        display: block;
-        text-align: center;
-        text-decoration: none;
-
-        &:hover {
-          background: $hover-blue;
-
-        }
+      &:hover {
+        background: $hover-green;
       }
     }
 
+    .registerButtonLogin {
+      width: 100%;
+      padding: $input-padding;
+      background: $host-blue;
+      border-radius: $border-radius;
+      border: none;
+      box-shadow: none;
+      color: white;
+      font-size: $button-font-size;
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      margin-top: 15px;
 
+      &:hover {
+        background: $hover-blue;
+      }
+    }
 
     .errorText {
       margin: 10px 0;

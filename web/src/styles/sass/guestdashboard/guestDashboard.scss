@@ -1,3 +1,4 @@
+
 /* .container {
     display: flex;
     flex-direction: column;
@@ -439,5 +440,99 @@
       visibility: hidden;
       width: 0;
       height: 0;
+=======
+.guest-dashboard-page-body {
+  h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+  }
+
+  .guest-dashboard-dashboards {
+      display: flex;
+      flex-direction: column;
+
+      .guest-dashboard-content {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 20px;
+
+          .guest-dashboard-personalInfoContent {
+              flex: 1;
+              margin-right: 20px;
+
+              .guest-dashboard-personal-info-header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 15px;
+
+                  h3 {
+                      font-size: 20px;
+                      font-weight: bold;
+                  }
+
+                  .guest-dashboard-edit-icon-background {
+                      cursor: pointer;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      width: 30px;
+                      height: 30px;
+                      background-color: #f0f0f0;
+                      border-radius: 50%;
+
+                      img {
+                          width: 20px;
+                          height: 20px;
+                      }
+                  }
+              }
+
+              .guest-dashboard-infoBox {
+                  margin-bottom: 15px;
+
+                  span {
+                      font-weight: bold;
+                      display: block;
+                      margin-bottom: 5px;
+                  }
+
+                  p {
+                      font-size: 16px;
+                      color: #555;
+                  }
+
+                  .guest-dashboard-guest-edit-input {
+                      width: 100%;
+                      padding: 8px;
+                      font-size: 16px;
+                      border: 1px solid #ccc;
+                      border-radius: 4px;
+
+                      &:focus {
+                          border-color: #007bff;
+                          outline: none;
+                      }
+                  }
+              }
+          }
+
+          .guest-dashboard-accomodation-side {
+              flex: 0.3;
+
+              label {
+                  display: block;
+
+                  .guest-dashboard-viewAllBooking {
+                      color: #007bff;
+                      text-decoration: none;
+
+                      &:hover {
+                          text-decoration: underline;
+                      }
+                  }
+              }
+          }
+      }
   }
 }

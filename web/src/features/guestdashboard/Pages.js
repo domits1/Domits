@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+
 import "./guestdashboard.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
@@ -9,10 +10,10 @@ import FinanceIcon from "@mui/icons-material/CreditScoreOutlined";
 import RevieuwsIcon from "@mui/icons-material/StarBorderOutlined";
 import Settings from "@mui/icons-material/Settings";
 
-function Pages() {
-  const [activeTab, setActiveTab] = useState();
-  const navigate = useNavigate();
-  const location = useLocation();
+
+function Pages({ onNavigate }) {
+  const [isOpen, setIsOpen] = useState(false);
+
 
   useEffect(() => {
     setActiveTab(location.pathname);
@@ -102,6 +103,7 @@ function Pages() {
         </div>
       </div>
     </main>
+
   );
 }
 
