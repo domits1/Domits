@@ -1,0 +1,45 @@
+import React, { useState } from "react";
+import Pages from "./Pages";
+import GuestDashboard from "./GuestDashboard";
+import GuestBooking from "./GuestBooking";
+import GuestPayments from "./GuestPayments";
+import GuestReviews from "./GuestReviews";
+import GuestSettings from "./GuestSettings";
+
+const MainDashboardGuest = () => {
+    const [activeComponent, setActiveComponent] = useState("Dashboard");
+
+    const renderComponent = () => {
+        switch (activeComponent) {
+            case "Dashboard":
+                return <GuestDashboard />;
+            case "Bookings":
+                return <GuestBooking />;
+            case "Payments":
+                return <GuestPayments />;
+            case "Reviews":
+                return <GuestReviews />;
+            case "Settings":
+                return <GuestSettings />;
+            default:
+                return <GuestDashboard />;
+        }
+    };
+
+    const handleNavigation = (componentName) => {
+        setActiveComponent(componentName);
+    };
+
+    return (
+        <div className="main-dashboard-guest">
+            <div className="main-dashboard-sidebar">
+                <Pages onNavigate={handleNavigation} />
+            </div>
+            <div className="main-dashboard-content">
+                {renderComponent()}
+            </div>
+        </div>
+    );
+};
+
+export default MainDashboardGuest;

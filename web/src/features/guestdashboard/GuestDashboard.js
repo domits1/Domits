@@ -83,18 +83,12 @@ const GuestDashboard = () => {
       const result = await response.json();
 
       if (response.ok) {
-        if (
-          result.message ===
-          "Email update successful, please verify your new email."
-        ) {
+        if (result.message === "Email update successful, please verify your new email.") {
           setIsVerifying(true);
         } else if (result.message === "This email address is already in use.") {
           alert(result.message);
         } else {
-          console.error(
-            "Unexpected error:",
-            result.message || "No message provided"
-          );
+          console.error("Unexpected error:", result.message || "No message provided");
         }
       } else {
         console.error("Request failed with status:", response.status);
@@ -102,9 +96,7 @@ const GuestDashboard = () => {
       }
     } catch (error) {
       console.error("Error updating email:", error);
-      alert(
-        "An error occurred while updating the email. Please try again later."
-      );
+      alert("An error occurred while updating the email. Please try again later.");
     }
   };
 
@@ -172,9 +164,7 @@ const GuestDashboard = () => {
 
   const fetchAccommodations = async () => {
     try {
-      const response = await API.graphql(
-        graphqlOperation(listAccommodationsQuery)
-      );
+      const response = await API.graphql(graphqlOperation(listAccommodationsQuery));
       console.log("Accommodations:", response.data.listAccommodations.items);
     } catch (error) {
       console.error("Error listing accommodations:", error);
@@ -208,11 +198,7 @@ const GuestDashboard = () => {
             <div className="personal-info-header">
               <h3>Personal Information</h3>
               <div onClick={toggleEditState} className="edit-icon-background">
-                <img
-                  src={isEditing ? checkIcon : editIcon}
-                  alt="Edit"
-                  className="guest-edit-icon"
-                />
+                <img src={isEditing ? checkIcon : editIcon} alt="Edit" className="guest-edit-icon" />
               </div>
             </div>
 
@@ -303,8 +289,7 @@ const GuestDashboard = () => {
                     onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
                     className="guest-edit-input"
-                    maxLength={200}
-                  ></textarea>
+                    maxLength={200}></textarea>
                 </>
               ) : (
                 <p>{user.family}</p>

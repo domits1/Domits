@@ -13,6 +13,7 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
+import ConfirmEmailView from "./features/auth/confirmEmail/ConfirmEmailView.js";
 import { UserProvider } from "./features/auth/UserContext";
 import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
@@ -29,23 +30,24 @@ import Security from "./pages/security/security.js";
 import Performance from "./pages/Performance/performance.js";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
+import GuestWishlistPage from "./features/guestdashboard/pages/GuestWishlistPage";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
-import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
-import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostPayments from "./features/hostdashboard/HostPayments";
-import HostPricing from "./features/hostdashboard/HostPricing";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
-import HostReviews from "./features/hostdashboard/HostReviews";
+
+import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
+import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
+import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSettings from "./features/hostdashboard/HostSettings";
 import HostSetup from "./features/hostdashboard/HostSetup";
@@ -98,6 +100,8 @@ import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
+import Navbar from "./components/base/navbar";
+import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 
 Modal.setAppElement("#root");
 

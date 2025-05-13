@@ -1,12 +1,10 @@
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
+import React from "react";
+
 import Account from "../screens/account";
 import LoginScreen from "../screens/login/loginScreen";
 import Register from "../screens/login/register";
-import HostProfileTab from "../screens/profile/hostprofile/HostProfileTab";
-import GuestProfileTab from "../screens/profile/guestprofile/screens/GuestProfileTab";
 import ConfirmEmail from "../screens/login/confirmMail";
-import React from "react";
-import emailSettings from "../screens/profile/hostprofile/emailSettings";
 import settings from "../screens/guestdashboard/GuestSettingsTab";
 import HostSettings from "../screens/profile/hostprofile/screens/HostSettingsTab";
 import {
@@ -26,7 +24,10 @@ const Stack = createNativeStackNavigator();
 function AccountNavigationStack() {
     return (
         <Stack.Navigator
-            screenOptions={{headerShown: false,}}>
+            screenOptions={{
+                headerShown: false,
+                contentStyle: {backgroundColor: "#FFFFFF"}
+            }}>
             {/* Account */}
             <Stack.Screen name={LOGIN_SCREEN} component={LoginScreen}/>
             <Stack.Screen name={REGISTER_SCREEN} component={Register}/>
@@ -35,14 +36,14 @@ function AccountNavigationStack() {
             {/* Account Settings */}
             <Stack.Screen name={HOST_ACCOUNT_SETTINGS_SCREEN} component={HostSettings}/>
             <Stack.Screen name={GUEST_ACCOUNT_SETTINGS_SCREEN} component={settings}/>
-            <Stack.Screen name={CHANGE_ACCOUNT_SETTINGS_SCREEN} component={emailSettings}/>
+            {/*<Stack.Screen name={CHANGE_ACCOUNT_SETTINGS_SCREEN} component={emailSettings}/>*/}
             <Stack.Screen name={CONFIRM_EMAIL_SCREEN} component={ConfirmEmail}/>
 
             {/* Host */}
-            <Stack.Screen name={HOST_PROFILE_SCREEN} component={HostProfileTab}/>
+            {/*<Stack.Screen name={HOST_PROFILE_SCREEN} component={HostProfileTab}/>*/}
 
             {/* Guest */}
-            <Stack.Screen name={GUEST_PROFILE_SCREEN} component={GuestProfileTab}/>
+            {/*<Stack.Screen name={GUEST_PROFILE_SCREEN} component={GuestProfileTab}/>*/}
         </Stack.Navigator>
     );
 }
