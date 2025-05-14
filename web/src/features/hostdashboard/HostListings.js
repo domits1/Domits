@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Pages from "./Pages";
-import styles from './HostDashboard.module.css';
+import styles from './HostDashboard.module.scss';
 import add from "../../images/icons/host-add.png";
 import {useLocation, useNavigate} from 'react-router-dom';
 import { Auth } from "aws-amplify";

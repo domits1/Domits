@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Pages from "./Pages.js";
 import './HostHomepage.scss';
 import './PagesDropdown.css';
-import styles from './HostDashboard.module.css'
+import styles from './HostDashboard.module.scss'
 import StripeModal from './StripeModal.js';
 import { Auth } from 'aws-amplify';
 import {useNavigate} from "react-router-dom";
