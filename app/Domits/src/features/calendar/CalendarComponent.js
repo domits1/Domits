@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import LoadingScreen from '../../screens/loadingscreen/screens/LoadingScreen';
 import BookingRepository from '../../services/availability/bookingRepository';
 import ToastMessage from '../../components/ToastMessage';
-import CalculateNumberOfNights from "../bookingengine/utils/CalculateNumberOfNights";
+import CalculateNumberOfNights from "../bookingengine/stripe/utils/CalculateNumberOfNights";
 import TestBookingRepository from "../../services/availability/test/testBookingRepository";
 
 /**

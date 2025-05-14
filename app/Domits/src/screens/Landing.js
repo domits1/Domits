@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Register from './login/register';
+import Register from './login/screens/register';
 
 const { width } = Dimensions.get('window'); 
 

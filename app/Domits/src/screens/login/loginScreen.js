@@ -6,7 +6,7 @@ import {useAuth} from '../../context/AuthContext'; // Ensure the path is correct
 import 'react-native-get-random-values';
 import {Label} from '@aws-amplify/ui-react-native/src/primitives';
 import LoadingScreen from "../loadingscreen/screens/LoadingScreen";
-import {ACCOUNT_SCREEN, HOME_SCREEN, REGISTER_SCREEN} from "../../navigation/utils/NavigationNameConstants";
+import {ACCOUNT_HOME_SCREEN, HOME_SCREEN, REGISTER_SCREEN} from "../../navigation/utils/NavigationNameConstants";
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -19,7 +19,7 @@ const LoginScreen = () => {
     React.useCallback(() => {
       setLoading(true);
       if (isAuthenticated) {
-        navigation.navigate(ACCOUNT_SCREEN);
+        navigation.navigate(ACCOUNT_HOME_SCREEN);
       } else {
         setLoading(false);
       }

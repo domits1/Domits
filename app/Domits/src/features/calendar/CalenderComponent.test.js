@@ -62,8 +62,7 @@ describe('CalendarComponent', () => {
             />
         );
 
-        const calendar = await waitFor(() => screen.findByTestId('calendar-list'));
-        expect(calendar).toBeTruthy();
+        await waitFor(expect(() => screen.findByTestId('calendar-list')).toBeTruthy);
     });
 
     it('handles selecting the next two days, considering month change', async () => {
@@ -75,6 +74,8 @@ describe('CalendarComponent', () => {
                 clickEnabled={true}
             />
         );
+
+        await waitFor(expect(() => screen.findByTestId('calendar-list')).toBeTruthy);
 
         const today = new Date();
         const tomorrow = new Date(today);
