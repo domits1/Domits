@@ -10,7 +10,7 @@ import Select from 'react-select';
 import '../../styles/sass/base/SearchBar.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
+export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
@@ -146,7 +146,9 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   }, [location]);
 
   const performSearch = async (accommodation, address, totalGuests) => {
-    setLoading(true);
+    if (setLoading) {
+      setLoading(true);
+    }
     setError('');
 
     const queryParams = new URLSearchParams();
@@ -156,14 +158,14 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
     }
 
     if (address) {
-      queryParams.append('searchTerm', address);
+      queryParams.append('country', address);
     }
 
     if (totalGuests > 0) {
       queryParams.append('guests', totalGuests);
     }
 
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams.toString()}`;
+    const apiUrl = `https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction?${queryParams.toString()}`;
 
     try {
       const response = await fetch(apiUrl);
@@ -186,7 +188,9 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
     } catch (error) {
       setError('Er is een fout opgetreden bij het ophalen van de gegevens.');
     } finally {
-      setLoading(false);
+      if (setLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -246,10 +250,11 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
     <>
       {error && (
         <div className="Search-error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
-      <div className="bar-container">
+      {/* <div className="bar-container"> */}
         {isMobile && (
           <button className="mobile-search-button" onClick={toggleSearchBar}>
-            <FaSearchLocation size={15} /> Search & Filter Accommodations
+            <FaSearchLocation size={15} /> 
+            {/* Search & Filter Accommodations */}
           </button>
         )}
 
@@ -341,9 +346,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                 <input
                   className="input-calendar-checkInOut"
                   type="text"
-                  value={startDate && endDate
-                    ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
-                    : ''}
+                  value={startDate && endDate ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}` : ''}
                   readOnly={true}
                 />
                 {!startDate && !endDate && (
@@ -366,13 +369,12 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   className="search-icon" />
                 <span className="search-text">Search</span>
               </button>
-
             </div>
             {/* momenteel niet te gebruiken omdat de styling er voor moet aangepast worden */}
             {/* {isBarActive && <FilterButton />} */}
           </div>
         )}
-      </div>
+      {/* </div> */}
     </>
   );
 }

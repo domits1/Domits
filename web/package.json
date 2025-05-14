@@ -101,6 +101,7 @@
     "dotenv": "^16.4.7",
     "graphql": "^16.9.0",
     "immer": "^10.0.4",
+    "lucide-react": "^0.503.0",
     "node-fetch": "^2.7.0",
     "pdfjs-dist": "^2.14.305",
     "prettier": "^3.5.1",
