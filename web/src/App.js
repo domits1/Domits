@@ -13,6 +13,7 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
+import ConfirmEmailView from "./features/auth/confirmEmail/ConfirmEmailView.js";
 import { UserProvider } from "./features/auth/UserContext";
 import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
@@ -98,6 +99,9 @@ import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
+import Navbar from './components/base/navbar';
+import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
+
 
 Modal.setAppElement("#root");
 
@@ -177,6 +181,7 @@ function App() {
                 <Route path="/landing" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/confirm-email" element={<ConfirmEmailView />} />
                 <Route path="/listingdetails" element={<ListingDetails2 />} />
                 <Route path="/bookingoverview" element={<BookingOverview />} />
                 <Route path="/bookingsend" element={<BookingSend />} />
@@ -196,20 +201,13 @@ function App() {
 
                 {/* Guest Dashboard */}
                 <Route
-                  path="/guestdashboard/*"
-                  element={<GuestProtectedRoute>
-                    <Routes>
-                      <Route path="/" element={<GuestDashboard />} />
-                      <Route path="messages" element={<ListingDetails />} />
-                      <Route path="payments" element={<GuestPayments />} />
-                      <Route path="reviews" element={<GuestReviews />} />
-                      <Route path="bookings" element={<GuestBooking />} />
-                      <Route path="settings" element={<GuestSettings />} />
-                      <Route path="chat" element={<GuestMessages/>}/>
-                      <Route path="wishlist" element={<GuestWishlistPage />} />
-                    </Routes>
-                  </GuestProtectedRoute>}
-                />
+                    path="/guestdashboard/*"
+                    element={
+                      <GuestProtectedRoute>
+                        <MainDashboardGuest />
+                      </GuestProtectedRoute>
+                    }
+                  />
 
                 {/* Host Management */}
                 {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
@@ -299,6 +297,7 @@ function App() {
             </div>
           </UserProvider>
         </AuthProvider>
+        <Navbar/>
       </Router>
     </FlowContext.Provider>
   </ApolloProvider>);

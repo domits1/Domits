@@ -4,6 +4,7 @@ import { Picker } from "@react-native-picker/picker";
 import { useAuth } from "../../../../context/AuthContext";
 import CalendarComponent from "../components/CalendarComponent";
 import {styles} from "../styles/HostCalendarStyles";
+import TabHeader from "../../../../screens/accounthome/components/TabHeader";
 
 function HostCalendarTab() {
   const { userAttributes, isAuthenticated, checkAuth } = useAuth();
@@ -85,6 +86,7 @@ function HostCalendarTab() {
 
   return (
     <View style={styles.body}>
+      <TabHeader tabTitle={'Calendar & Prices'}/>
       {isLoading ? (
         <View style={styles.spinnerContainer}>
           <ActivityIndicator size="large" color="#0000ff" />

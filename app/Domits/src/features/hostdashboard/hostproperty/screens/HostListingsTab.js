@@ -7,6 +7,7 @@ import {useAuth} from '../../../../context/AuthContext';
 import {styles} from '../styles/HostPropertiesStyles'
 import LoadingScreen from "../../../../screens/loadingscreen/screens/LoadingScreen";
 import {HOST_ONBOARDING_SCREEN, PROPERTY_DETAILS_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
+import TabHeader from "../../../../screens/accounthome/components/TabHeader";
 
 const HostListingsTab = () => {
   const [accommodations, setAccommodations] = useState([]);
@@ -114,9 +115,7 @@ const HostListingsTab = () => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Listings</Text>
-        </View>
+        <TabHeader tabTitle={'Properties'}/>
         <TouchableOpacity onPress={addProperty} style={styles.listItem}>
           <Text style={styles.listItemText}>Add new accommodation</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />

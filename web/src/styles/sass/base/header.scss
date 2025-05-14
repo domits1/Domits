@@ -6,7 +6,7 @@ $button-font-size: 18px;
 $button-radius: 10px;
 $box-shadow-color: #0d1a2626;
 $hover-background: #3fb3663a;
-$breakpoint-lg: 1024px;
+$breakpoint-lg: 1250px;
 $breakpoint-md: 768px;
 $breakpoint-sm: 480px;
 
@@ -36,13 +36,7 @@ $breakpoint-sm: 480px;
       }
 
       @media screen and (max-width: $breakpoint-md) {
-        padding-top: 10vh;
-
-      }
-
-      @media screen and (max-width: 1026px) {
-        margin: 0 1vw 0 -2vw;
-
+        padding-top: 2vh;
       }
     }
 
@@ -53,7 +47,7 @@ $breakpoint-sm: 480px;
 
       @media screen and (max-width: $breakpoint-lg) {
         margin-left: 3vw;
-      
+        display: none;
       }
 
       @media screen and (max-width: $breakpoint-md) {
@@ -150,7 +144,6 @@ $breakpoint-sm: 480px;
       top: 0;
       z-index: 1000;
       background: white;
-      width: 100%;
     }
   }
 
