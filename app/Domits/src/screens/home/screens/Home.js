@@ -83,7 +83,7 @@ const HomeScreen = () => {
 
     useEffect(() => {
         fetchProperties();
-        fetchFavorites();
+        // fetchFavorites();
     }, []);
 
     const fetchNextDataSet = () => {
