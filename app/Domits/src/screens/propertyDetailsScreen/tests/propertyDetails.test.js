@@ -5,9 +5,16 @@ import i18n from "i18next";
 import {initReactI18next} from "react-i18next";
 import {LanguageReferences} from "../../../features/translation/services/Languages";
 import mockDetails from "../../../services/property/test/listingDetails.json";
+import React from "react";
 
-jest.mock('react-native-dotenv', () => ({
-    REACT_APP_TESTING: 'true',
+jest.mock('@aws-amplify/core', () => ({
+    fetchAuthSession: jest.fn().mockResolvedValue({
+        tokens: {
+            accessToken: {
+                toString: () => 'mock-access-token',
+            },
+        },
+    }),
 }));
 
 describe("Property details", () => {
@@ -29,7 +36,7 @@ describe("Property details", () => {
         render(<PropertyDetailsScreen route={{params: {property: {property: {id: mockDetails.property.id}}}}}/>);
 
         await waitFor(() => {
-            expect(screen.queryByTestId("loadingScreen")).toBeNull();
+            expect(screen.getByTestId("propertyDetailsTitle")).toBeTruthy()
         });
 
         expect(screen.getByTestId("propertyDetailsTitle").props.children).toContain(mockDetails.property.title);

@@ -1,0 +1,86 @@
+.guest-pages {
+  position: relative; /* Ensure the sidebar is contained within this container */
+
+  .hamburger-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+
+    svg {
+      font-size: 2.5rem;
+    }
+  }
+
+  .sidebar {
+    position: absolute; /* Sidebar is positioned relative to the container */
+    top: 0;
+    left: -250px; /* Hidden by default */
+    height: calc(100vh - 60px); /* Full height minus the header height */
+    min-height: 500px;
+    background: #f8f8f8;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    transition: left 0.3s ease;
+    z-index: 999;
+
+    &.open {
+      left: 0; /* Slide in when open */
+    }
+
+    .close-sidebar-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+
+      svg {
+        font-size: 2rem;
+      }
+    }
+
+    .menu-content {
+      margin-top: 3rem; /* Push content below the close button */
+
+      select {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .dashboard-sections {
+        display: flex;
+        flex-direction: column;
+
+        .wijzer {
+          display: flex;
+          align-items: center;
+          padding: 10px;
+          margin-bottom: 10px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background 0.3s ease;
+
+          .icon {
+            margin-right: 10px;
+          }
+
+          &:hover {
+            background-color: #e0f7e9;
+          }
+
+          &.active {
+            background-color: #0D9813;
+            color: white;
+          }
+        }
+      }
+    }
+  }
+}

@@ -67,7 +67,8 @@ const HomeScreen = () => {
 
         const response = await GetWishlist();
 
-        setFavorites(response.AccommodationIDs);
+        // setFavorites(response.AccommodationIDs);
+        setFavorites([])
         setFavoritesLoading(false);
     }, []);
 
@@ -83,7 +84,7 @@ const HomeScreen = () => {
 
     useEffect(() => {
         fetchProperties();
-        fetchFavorites();
+        // fetchFavorites();
     }, []);
 
     const fetchNextDataSet = () => {
