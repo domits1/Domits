@@ -195,7 +195,6 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
     }
   };
   
-
   const handleSearch = () => {
     const shouldNavigate = location.pathname !== '/home';
     if (shouldNavigate) {
