@@ -511,7 +511,7 @@ const ListingDetails = () => {
     const fetchHostInfo = async (ownerId) => {
         try {
             const requestData = {
-                OwnerId: ownerId
+                UserId: ownerId
             };
             const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
                 method: 'POST',
@@ -524,7 +524,8 @@ const ListingDetails = () => {
                 throw new Error('Failed to fetch host information');
             }
             const responseData = await response.json();
-            const hostData = JSON.parse(responseData.body)[0];
+            const hostData = JSON.parse(responseData.body);
+            console.log("dit is hostData:", hostData);
             setHost(hostData);
 
         } catch (error) {

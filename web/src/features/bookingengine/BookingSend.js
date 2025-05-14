@@ -54,7 +54,7 @@ const BookingSend = () => {
                 },
                 tax: {
                     tourism: parseFloat(taxes),
-                },
+                }
             }
         };
             const storeBooking = async () => {
@@ -69,7 +69,6 @@ const BookingSend = () => {
                         }
                     }
                 );
-
 
                 if (response.ok) {
                     navigate(`/bookingconfirmationoverview?paymentID=${paymentID}`);
