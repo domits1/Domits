@@ -74,7 +74,7 @@
     transition: max-height 0.4s ease-in-out;
 }
 .apply-button {
-    background-color: var(--domits-guest-green);
+    background-color: green;
     color: white;
     margin: 10px auto;
     border: none;

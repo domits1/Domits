@@ -94,7 +94,7 @@
 }
 
 .Contact-button {
-  background-color: var(--domits-guest-green);
+  background-color: green;
   color: white;
   border-radius: 1vh;
   border: none;
