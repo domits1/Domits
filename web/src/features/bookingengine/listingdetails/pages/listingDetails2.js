@@ -15,9 +15,6 @@ const ListingDetails2 = () => {
     const [property, setProperty] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [hostId, setHostId] = useState(null);
-    const [host, setHost] = useState(null);
-
 
     useEffect(() => {
         setError(null);
@@ -27,10 +24,8 @@ const ListingDetails2 = () => {
             try {
                 const fetchedProperty = await FetchPropertyById(id);
                 setProperty(fetchedProperty);
-                setHostId(fetchedProperty.property.hostId);
 
                 const hostData = await fetchHostInfo(fetchedProperty.property.hostId);
-                setHost(hostData);
                 setLoading(false);
             } catch (error) {
                 setError("Something went wrong while fetching the requested data, please try again later.")
