@@ -1,4 +1,5 @@
-.host-chat {
+.host-chat,
+.guest-chat {
     display: flex;
     flex-direction: row;
 
@@ -95,6 +96,34 @@
                 }
             }
 
+            .guest-chat-message.received {
+                margin-bottom: 1rem;
+                margin-left: 1.25rem;
+
+                .message-header {
+                    display: flex;
+                    flex-direction: row;
+                    margin-bottom: 0.25rem;
+                    gap: 0.5rem;
+                    align-items: center;
+                }
+
+                .message-content {
+                    background-color: rgb(91, 126, 158);
+                    color: black;
+                    display: inline-block;
+                    border-radius: 1rem;
+                    padding: 0.3rem 1.25rem;
+                    margin-right: auto;
+                    max-width: 70%;
+                    word-wrap: break-word;
+                }
+
+                .message-attachments {
+                    justify-content: flex-start;
+                }
+            }
+
             .chat-message.sent {
                 display: flex;
                 flex-direction: column;
@@ -128,6 +157,37 @@
                 }
             }
 
+            .guest-chat-message.sent {
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                margin-bottom: 1rem;
+                margin-right: 1.25rem;
+
+                .message-header {
+                    display: flex;
+                    flex-direction: row-reverse;
+                    margin-bottom: 0.5rem;
+                    gap: 0.5rem;
+                    align-items: center;
+                }
+
+                .message-content {
+                    display: inline-block;
+                    background-color: rgb(196, 230, 197);
+                    color: black;
+                    border-radius: 1rem;
+                    padding: 0.3rem 1.25rem;
+                    text-align: right;
+                    margin-left: auto;
+                    max-width: 70%;
+                    word-wrap: break-word;
+                }
+
+                .message-attachments {
+                    justify-content: flex-end;
+                }
+            }
 
         }
 
@@ -246,9 +306,10 @@
             width: 85%;
         }
     }
+
     @media (max-width: 768px) {
-          display: flex;
-          justify-content: center;  
+        display: flex;
+        justify-content: center;
     }
 
 }
