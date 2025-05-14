@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useUser } from '../../auth/UserContext';
-import "./BookedNights.css";
+import "./BookedNights.scss";
 
 const BookedNights = () => {
     const { user } = useUser(); // Access user and loading state from UserContext
