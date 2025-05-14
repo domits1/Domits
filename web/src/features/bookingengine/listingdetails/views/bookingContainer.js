@@ -4,7 +4,7 @@ import GuestSelectionContainer from "./guestSelectionContainer";
 import Pricing from "../components/pricing";
 import useHandleReservePress from "../hooks/handleReservePress";
 
-const BookingContainer = ({ property, hostEmail }) => {
+const BookingContainer = ({ property }) => {
   const [checkInDate, setCheckInDate] = useState(
     new Date(Date.now() + 86400000).toISOString().split("T")[0],
   );
@@ -43,7 +43,6 @@ const BookingContainer = ({ property, hostEmail }) => {
             new Date(checkInDate).getTime(),
             new Date(checkOutDate).getTime(),
             adults + kids,
-            hostEmail
           );
         }}
       >

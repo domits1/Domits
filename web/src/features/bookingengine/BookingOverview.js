@@ -49,7 +49,6 @@ const BookingOverview = () => {
     const amountOfGuest = searchParams.get('guests');
     const kids = parseInt(searchParams.get('kids'), 10); 
     const pets = searchParams.get('pets');
-    const hostEmail = searchParams.get("hostEmail");
 
     const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/"
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
@@ -166,7 +165,6 @@ const BookingOverview = () => {
 
         const paymentID = generateUUID();
         const userId = cognitoUserId;
-        const userEmail = cognitoUserEmail;
         const accommodationTitle = accommodation.property.title;
         const accommodationId = id;
         const ownerId = accommodation.property.hostId;
@@ -179,7 +177,6 @@ const BookingOverview = () => {
             paymentID,
             accommodationTitle,
             userId,
-            userEmail,
             accommodationId,
             ownerId,
             State: "Accepted",
@@ -190,7 +187,6 @@ const BookingOverview = () => {
             amountOfGuest,
             taxes,
             ServiceFee,
-            hostEmail
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,

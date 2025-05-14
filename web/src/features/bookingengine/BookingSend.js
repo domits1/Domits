@@ -29,8 +29,6 @@ const BookingSend = () => {
         const amountOfGuest = queryParams.get("amountOfGuest");
         const taxes = queryParams.get("taxes");
         const ServiceFee = queryParams.get("ServiceFee");
-        const hostEmail = queryParams.get("hostEmail");
-        const userEmail = queryParams.get("userEmail");
 
         if (!userId || !accommodationId || !ownerId || !state || !price) {
             console.error("❌ Missing required booking fields!");
@@ -56,10 +54,6 @@ const BookingSend = () => {
                 },
                 tax: {
                     tourism: parseFloat(taxes),
-                },
-                emails: {
-                    userEmail: userEmail,
-                    hostEmail: hostEmail,
                 }
             }
         };

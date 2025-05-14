@@ -17,7 +17,6 @@ const ListingDetails2 = () => {
     const [error, setError] = useState(null);
     const [hostId, setHostId] = useState(null);
     const [host, setHost] = useState(null);
-    const [hostEmail, setHostEmail] = useState(null);
 
 
     useEffect(() => {
@@ -31,9 +30,7 @@ const ListingDetails2 = () => {
                 setHostId(fetchedProperty.property.hostId);
 
                 const hostData = await fetchHostInfo(fetchedProperty.property.hostId);
-                const email = hostData[0].Attributes.find(attr => attr.Name === "email")?.Value;
                 setHost(hostData);
-                setHostEmail(email);
                 setLoading(false);
             } catch (error) {
                 setError("Something went wrong while fetching the requested data, please try again later.")
