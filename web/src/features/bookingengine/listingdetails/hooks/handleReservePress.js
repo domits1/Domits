@@ -8,7 +8,7 @@ function useHandleReservePress() {
             id,
             checkInDate,
             checkOutDate,
-            guests
+            guests,
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);

@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import Loading from "../../../hostdashboard/Loading";
 import FetchPropertyById from "../services/fetchPropertyById";
 import "../../../../styles/sass/features/booking-engine/listingDetails.scss";
+import fetchHostInfo from "../services/fetchHostInfo";
 import Header from "../components/header";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
@@ -21,7 +22,10 @@ const ListingDetails2 = () => {
 
         const loadData = async () => {
             try {
-                setProperty(await FetchPropertyById(id));
+                const fetchedProperty = await FetchPropertyById(id);
+                setProperty(fetchedProperty);
+
+                const hostData = await fetchHostInfo(fetchedProperty.property.hostId);
                 setLoading(false);
             } catch (error) {
                 setError("Something went wrong while fetching the requested data, please try again later.")
