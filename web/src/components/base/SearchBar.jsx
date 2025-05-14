@@ -376,7 +376,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
             {/* {isBarActive && <FilterButton />} */}
           </div>
         )}
-      {/* </div> */}
+      </div>
     </>
   );
 }
