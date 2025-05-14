@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { FaSlidersH  } from 'react-icons/fa';
 import FilterModal from './FilterModal'; 
-import './FilterOnboardingButton.css';
-
+import './FilterButtonStyling.scss';
 const FilterButton = () => {
   const [isModalOpen, setModalOpen] = useState(false);
 

@@ -9,6 +9,7 @@ import {
 import Select from 'react-select';
 import '../../styles/sass/base/SearchBar.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
+import FilterButton from './FilterButton';
 
 export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -372,7 +373,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
               </button>
             </div>
             {/* momenteel niet te gebruiken omdat de styling er voor moet aangepast worden */}
-            {/* {isBarActive && <FilterButton />} */}
+            {isBarActive && <FilterButton />}
           </div>
         )}
      
