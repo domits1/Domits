@@ -6,17 +6,17 @@
 @use "features/booking-engine/paymentConfirmPage.scss";
 @use "features/booking-engine/overlay.scss";
 //Base
-@use "features/base/header.scss";
-@use "features/base/footer.scss";
-@use "features/base/MenuBar.scss";
-@use "features/base/SearchBar.scss";
+@use "features/base/header";
+@use "features/base/footer";
+@use "features/base/menubar";
+@use "features/base/searchbar";
 //Auth
 @use "features/auth/login.scss";
 @use "features/auth/register.scss";
 
 //pages
-//howitworks
-@use "pages/howitworks/howitworksrework.scss";
+//careers
+@use "pages/careers/careers.scss";
 
 :root {
   --primary-color: #0D9813;

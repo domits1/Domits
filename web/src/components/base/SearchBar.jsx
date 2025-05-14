@@ -7,7 +7,7 @@ import {
   FaShip, FaTimesCircle, FaUser, FaChild, FaBaby, FaPaw,
 } from 'react-icons/fa';
 import Select from 'react-select';
-import '../../styles/sass/base/SearchBar.scss';
+import '../../styles/sass/features/base/SearchBar.scss';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }) => {
