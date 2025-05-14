@@ -1,5 +1,4 @@
-// ChatScreen.js
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import useFetchMessages from '../../features/hostdashboard/hostmessages/hooks/useFetchMessages';
 import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
 import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/components/chatUploadAttachment';
@@ -11,7 +10,6 @@ const ChatScreen = ({
     userId,
     contactId,
     contactName,
-    connectionId,
     handleContactListMessage,
     onBack,
     isHost = true,
@@ -56,7 +54,7 @@ const ChatScreen = ({
     const handleSendMessage = async () => {
         if ((newMessage.trim() || uploadedFileUrls.length > 0) && (uploadedFileUrls.length > 0 || newMessage.trim())) {
             try {
-                const response = await sendMessage(contactId, newMessage, connectionId, uploadedFileUrls);
+                const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
                 if (!response || !response.success) {
                     alert(`Fout bij verzenden: ${response.error || 'Probeer het later opnieuw.'}`);
                     return;

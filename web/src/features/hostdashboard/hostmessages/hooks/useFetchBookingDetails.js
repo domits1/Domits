@@ -3,7 +3,7 @@ import { getAccessToken } from '../../../../services/getAccessToken';
 
 const useFetchBookingDetails = (hostId, guestId, {
     withAuth = false,
-    accommodationEndpoint = 'listingDetails',
+    accommodationEndpoint = '',
 } = {}) => {
     const [bookingDetails, setBookingDetails] = useState(null);
     const [accommodation, setAccommodation] = useState(null);
@@ -14,7 +14,8 @@ const useFetchBookingDetails = (hostId, guestId, {
         if (!hostId || !guestId) {
             return;
         }
-
+        const token = withAuth ? getAccessToken(hostId) : getAccessToken(guestId);
+        
         const fetchData = async () => {
             setLoading(true);
             setError(null);
@@ -49,12 +50,14 @@ const useFetchBookingDetails = (hostId, guestId, {
                 setBookingDetails({ ...bookingData, Nights });
                 // setBookingDetails({ ...bookingData });
 
-                if (bookingData?.property_id) {
+                if (bookingData.property_id && accommodationEndpoint) {
                     const accoRes = await fetch(
                         `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/${accommodationEndpoint}?property=${bookingData.property_id}`,
                         {
                             method: 'GET',
-                            headers: withAuth ? { Authorization: getAccessToken(hostId) } : {Authorization: getAccessToken(guestId)},
+                            headers: {
+                                Authorization: token,
+                            }
                         }
                     );
                     if (!accoRes.ok) {

@@ -9,6 +9,9 @@ const HostBookingTab = ({ userId, contactId }) => {
             withAuth: true,
             accommodationEndpoint: 'hostDashboard/single',
         });
+    if (bookingDetails?.message === "No data found for the given hostId and guestId") {
+        return;
+    }
     const roomRate = accommodation?.pricing?.roomRate || 0;
     const cleaning = accommodation?.pricing?.cleaning || 0;
     const service = accommodation?.pricing?.service || 0;

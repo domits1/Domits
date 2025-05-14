@@ -3,9 +3,9 @@ import GuestChatMessage from './guestChatMessage';
 import ChatScreen from '../../../../components/messages/ChatScreen';
 import { WebSocketContext } from '../context/webSocketContext';
 import { useSendMessage } from '../hooks/useSendMessage';
-import '../styles/sass/chatscreen/guestChatScreen.scss';
+import '../../../hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss';
 
-const GuestChatScreen = ({ userId, contactId, contactName, connectionId, handleContactListMessage, onBack }) => {
+const GuestChatScreen = ({ userId, contactId, contactName, handleContactListMessage, onBack }) => {
     const socket = useContext(WebSocketContext);
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     
@@ -14,7 +14,6 @@ const GuestChatScreen = ({ userId, contactId, contactName, connectionId, handleC
             userId={userId}
             contactId={contactId}
             contactName={contactName}
-            connectionId={connectionId}
             handleContactListMessage={handleContactListMessage}
             onBack={onBack}
             isHost={false}

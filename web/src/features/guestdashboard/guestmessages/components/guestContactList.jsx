@@ -3,8 +3,7 @@ import useFetchContacts from '../hooks/useFetchContacts';
 import GuestContactItem from './guestContactItem';
 import { WebSocketContext } from '../context/webSocketContext';
 import ContactList from '../../../../components/messages/ContactList';
-import '../styles/sass/contactlist/guestContactList.scss';
-
+import '../../../hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
 const GuestContactList = ({ userId, onContactClick, message }) => {
     const socket = useContext(WebSocketContext);
     const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId);
