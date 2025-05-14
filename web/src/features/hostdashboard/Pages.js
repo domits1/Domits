@@ -46,6 +46,8 @@ function Pages() {
 
   return (
     <main>
+      <div className="hosthomepagecontainer">
+    
       <div className="host-dropdown">
         <br />
         {/*{loading ? (*/}
@@ -247,6 +249,7 @@ function Pages() {
         {/*    <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>*/}
         {/*  </div>*/}
         {/*)}*/}
+      </div>
       </div>
     </main>
   );
