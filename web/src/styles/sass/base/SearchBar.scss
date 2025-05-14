@@ -603,10 +603,6 @@ $primary-domits-color: #0d9813;
     .search-bar-main {
       display: none;
     }
-
-    .search-bar-container .search-bar-main {
-      display: block;
-    }
   }
 
   @include mobile {

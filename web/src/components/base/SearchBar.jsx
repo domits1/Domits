@@ -251,7 +251,6 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
     <>
       {error && (
         <div className="search-error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
-      <div className="search-bar-container">
         {isMobile && (
           <button className="mobile-search-button" onClick={toggleSearchBar}>
             <FaSearchLocation size={15} /> 
@@ -376,7 +375,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
             {/* {isBarActive && <FilterButton />} */}
           </div>
         )}
-      </div>
+     
     </>
   );
 }
