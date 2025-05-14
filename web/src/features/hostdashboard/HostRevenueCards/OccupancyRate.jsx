@@ -36,7 +36,6 @@ const OccupancyDashboard = () => {
                 ...(timeFilter === "custom" && { startDate, endDate }),
             };
 
-            console.log("Sending Payload:", payload);
 
             const response = await axios.post(
                 "https://nnppsahbzi.execute-api.eu-north-1.amazonaws.com/prod/occupancy-rate",
@@ -47,7 +46,6 @@ const OccupancyDashboard = () => {
                 }
             );
 
-            console.log("API Response:", response.data);
             setOccupancyData(response.data);
         } catch (err) {
             console.error("Error fetching Occupancy data:", err.message || err);

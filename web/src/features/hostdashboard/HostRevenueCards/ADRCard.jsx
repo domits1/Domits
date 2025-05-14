@@ -46,7 +46,6 @@ const ADRCard = () => {
                 ...(filter === "custom" && { startDate, endDate }),
             };
 
-            console.log("Sending Payload:", payload);
 
             const response = await axios.post(
                 "https://2ab5eb6gs6.execute-api.eu-north-1.amazonaws.com/prod/calculateADR",
@@ -54,7 +53,6 @@ const ADRCard = () => {
                 { headers: { "Content-Type": "application/json" } }
             );
 
-            console.log("API Response:", response.data);
 
             const { ADR, totalRevenue, roomsSold, dailyMetrics } = response.data;
 

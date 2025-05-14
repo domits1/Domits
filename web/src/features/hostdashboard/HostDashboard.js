@@ -73,7 +73,6 @@ function HostDashboard() {
     const fetchRecentAccommodations = async () => {
         setIsLoading(true);
         if (!userId) {
-            console.log("No user id")
             return;
         } else {
             try {
@@ -88,7 +87,6 @@ function HostDashboard() {
                     throw new Error('Failed to fetch');
                 }
                 const data = await response.json();
-                console.log("Fetched data:", data);
                 setAccommodations(data);
             } catch (error) {
                 console.error("Unexpected error:", error);
@@ -146,7 +144,7 @@ function HostDashboard() {
                             {accommodation.images?.length > 0 ? (
                                 <img src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`} alt="Geen afbeelding beschikbaar" className='img-listed-dashboard' />
                             ) : (
-                                <img src={placeholderImage} alt="Geen afbeelding beschikbaar" />
+                                <img src={placeholderImage} alt="No image available" />
                             )}
 
                             <div className={styles.accommodationText}>
@@ -168,7 +166,7 @@ function HostDashboard() {
                         ))
                         ) : (
                         <div className={styles.emptyState}>
-                            <p>Je hebt nog geen recente accommodaties geplaatst.</p>
+                            <p>It looks like you do not have a property.</p>
                         </div>
                         )}
                     </div>
