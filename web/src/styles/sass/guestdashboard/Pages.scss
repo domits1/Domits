@@ -24,6 +24,7 @@
     padding: 1rem;
     transition: left 0.3s ease;
     z-index: 999;
+    height: 100%;
 
     &.open {
       left: 0; /* Slide in when open */
