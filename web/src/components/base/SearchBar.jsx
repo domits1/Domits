@@ -254,7 +254,8 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
       <div className="search-bar-container">
         {isMobile && (
           <button className="mobile-search-button" onClick={toggleSearchBar}>
-            <FaSearchLocation size={15} /> Search & Filter Accommodations
+            <FaSearchLocation size={15} /> 
+            {/* Search & Filter Accommodations */}
           </button>
         )}
 
@@ -375,7 +376,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
             {/* {isBarActive && <FilterButton />} */}
           </div>
         )}
-      </div>
+      {/* </div> */}
     </>
   );
 }

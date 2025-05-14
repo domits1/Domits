@@ -7,7 +7,7 @@ import {useNavigation} from '@react-navigation/native';
 import ImageSlider from '../../../screens/utils/ImageSlider';
 import DateFormatterDD_MM_YYYY from "../../../screens/utils/DateFormatterDD_MM_YYYY";
 import {
-  HOST_LISTINGS_SCREEN,
+  HOST_PROPERTIES_SCREEN,
   HOST_ONBOARDING_SCREEN,
   PROPERTY_DETAILS_SCREEN
 } from "../../../navigation/utils/NavigationNameConstants";
@@ -63,7 +63,7 @@ const HostDashboardTab = () => {
 
         <View style={styles.rowContainer}>
           <Button
-            onPress={() => navigation.navigate(HOST_LISTINGS_SCREEN) }
+            onPress={() => navigation.navigate(HOST_PROPERTIES_SCREEN) }
             style={styles.sectionButton}>
             <Text style={styles.infoText}>Go to listing</Text>
           </Button>
