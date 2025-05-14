@@ -11,7 +11,7 @@ class BookingRepository {
       throw new Error('Failed to fetch current bookings.');
     }
     if (response.status === 204) {
-      throw 204;
+      return []
     }
     return await response.json();
   }
