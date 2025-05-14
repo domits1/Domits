@@ -1,26 +1,35 @@
 import {styles} from '../styles/styles';
 import {Text, View} from 'react-native';
 import Spacer from '../../../../components/Spacer';
+import TranslatedText from '../../../translation/components/TranslatedText';
 
 const CancelledView = ({onPress}) => {
   return (
     <View style={[styles.cancelledContainer, {maxHeight: 105}]}>
       <View style={styles.cancelledContent}>
-        <Text style={styles.cancelledLabel}>Payment cancelled.</Text>
+        <Text style={styles.cancelledLabel}>
+          <TranslatedText textToTranslate={'Payment cancelled'} />
+        </Text>
         <Spacer padding={5} />
         <Text style={styles.cancelledTextContent}>
-          Something went wrong during payment.
+          <TranslatedText
+            textToTranslate={'Something went wrong during payment'}
+          />
         </Text>
         <Text style={styles.cancelledTextContent}>
-          If you wish to cancel your booking, press{' '}
+          <TranslatedText
+            textToTranslate={'If you wish to cancel your booking'}
+          />
+          {', '}
+          <TranslatedText textToTranslate={'Press'} />{' '}
           <Text
             style={{
-                color: '#AFCBFF',
+              color: '#AFCBFF',
               fontWeight: '900',
               textDecorationLine: 'underline',
             }}
             onPress={() => onPress()}>
-            Here
+            <TranslatedText textToTranslate={"Here"} />
           </Text>
         </Text>
       </View>
