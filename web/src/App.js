@@ -15,7 +15,6 @@ import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
 import ConfirmEmailView from "./features/auth/confirmEmail/ConfirmEmailView.js";
 import { UserProvider } from "./features/auth/UserContext";
-import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
 import BookingOverview from "./features/bookingengine/BookingOverview";
 import BookingSend from "./features/bookingengine/BookingSend";
