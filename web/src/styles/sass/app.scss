@@ -19,10 +19,10 @@
 @use "pages/careers/careers.scss";
 
 //GuestDashboard
-@use "guestdashboard/guestDashboard.scss";
-@use "guestdashboard/Pages.scss";
-@use "guestdashboard/GuestBooking.scss";
-@use "guestdashboard/mainDashboardGuest.scss";
+@use "features/guestdashboard/guestDashboard.scss";
+@use "features/guestdashboard/Pages.scss";
+@use "features/guestdashboard/GuestBooking.scss";
+@use "features/guestdashboard/mainDashboardGuest.scss";
 
 :root {
   --primary-color: #0D9813;

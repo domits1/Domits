@@ -1,123 +1,120 @@
 $primary-color: var(--primary-color);
 
+.career-page {
+    .crew {
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 20px;
+        color: #333;
+    }
 
-.crew {
-    text-align: center;
-    font-size: 28px;
-    margin-bottom: 20px;
-    color: #333;
-}
+    .filter-container {
+        text-align: center;
+        margin-bottom: 20px;
 
-.filter-container {
-    text-align: center;
-    margin-bottom: 20px;
+        button {
+            margin: 0 5px;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
 
-    button {
-        margin: 0 5px;
-        padding: 10px 20px;
-        background-color: #f0f0f0;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-
-        &.active,
-        &:hover {
-            background-color: $primary-color;
-            color: white;
+            &.active,
+            &:hover {
+                background-color: $primary-color;
+                color: white;
+            }
         }
     }
-}
 
-
-.job-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.job-box {
-    position: relative;
-    flex: 1 1 calc(33.33% - 20px);
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    box-sizing: border-box;
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-
-    &:hover
-    {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-    
-        .job-description {
-         max-height: 200px;
-    }
-
-    .job-info {
-        margin-bottom: 15px;
-    }
-
-    .job-title {
-        font-size: 20px;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 5px;
-    }
-
-    .experience-level,
-    .job-location {
-        font-size: 16px;
-        color: #667;
-        margin-bottom: 5px;
-    }
-
-    .job-description {
-        font-size: 14px;
-        color: #444;
-        margin-bottom: 10px;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.4s ease-in-out;
-    }
-
-    .apply-button {
-        background-color: $primary-color;
-        color: white;
-        margin: 10px auto;
-        border: none;
-        padding: 10px 50px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    &:hover {
-        opacity: 90%;
-    }
-}
-
-
-
-@media (max-width: 900px) {
-    .job-box {
-        flex: 1 1 calc(50% - 20px);
-    }
 
     .job-list {
-        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
     }
-}
 
-@media (max-width: 600px) {
     .job-box {
-        flex: 1 1 100%;
+        position: relative;
+        flex: 1 1 calc(33.33% - 20px);
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        box-sizing: border-box;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+        &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+
+        .job-info {
+            margin-bottom: 15px;
+        }
+
+        .job-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .experience-level,
+        .job-location {
+            font-size: 16px;
+            color: #667;
+            margin-bottom: 5px;
+        }
+
+        .job-description {
+            font-size: 14px;
+            color: #444;
+            margin-bottom: 10px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out;
+        }
+
+        .apply-button {
+            background-color: $primary-color;
+            color: white;
+            margin: 10px auto;
+            border: none;
+            padding: 10px 50px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        &:hover {
+            opacity: 90%;
+        }
+    }
+
+
+
+    @media (max-width: 900px) {
+        .job-box {
+            flex: 1 1 calc(50% - 20px);
+        }
+
+        .job-list {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .job-box {
+            flex: 1 1 100%;
+        }
     }
 }

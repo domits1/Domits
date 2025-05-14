@@ -1,7 +1,7 @@
 $primary-color: var(--primary-color);
 $secondary-color: var(--secondary-color);
 
-.contact {
+.contact-page {
     width: 95%;
     color: #1a1a1a;
     font-size: 1.1em;
@@ -98,26 +98,14 @@ $secondary-color: var(--secondary-color);
         padding: 10px;
         border-radius: 10px;
     }
-}
 
-    // .contactform input::placeholder,
-    // .contactform textarea::placeholder {
-    //     text-align: left;
-    // }
-
-    // .contactform input:not(.biginput input) {
-    //     border-radius: 10px;
-    //     background: #FFF;
-    //     padding: 10px;
-    //     width: 100%;
-    //     margin: 15px 0 10px 0;
-    // }
 
     .formbuttons {
         border: 0;
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;
+       
     
 
     #attachmentsbutton,
@@ -155,49 +143,6 @@ $secondary-color: var(--secondary-color);
 }
     }
 
-   
-
-   
-
-    // .Contact-button {
-    //     background-color: green;
-    //     color: white;
-    //     border-radius: 1vh;
-    //     border: none;
-    //     height: 5vh;
-    //     width: 15vh;
-    // }
-
-    // .Contact-button a {
-    //     text-decoration: none;
-    // }
-
-    // .Contact-button:hover {
-    //     background: #3aab3f;
-    //     cursor: pointer;
-    // }
-
-    // .buttonContactContainer {
-    //     gap: 1%;
-    //     display: flex;
-    //     flex-direction: row;
-    // }
-
-    // .buttonContactContainer a {
-    //     color: white;
-    // }
-
-    // .questionsContainer {
-    //   width: 100%;
-    //   margin-top: 50px;
-    //   background-color: #f9f9f9;
-    //   padding: 20px;
-    //   box-sizing: border-box;
-    // }
-
-    // .questionsContainer h1,
-    // .questionsContainer p {
-    //   margin: 15px 0;
 
 
 @media screen and (max-width: 930px) {
@@ -228,3 +173,4 @@ $secondary-color: var(--secondary-color);
         width: 100%;
     }
 }
+};
