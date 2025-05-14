@@ -16,6 +16,10 @@ class TestPropertyRepository {
     async fetchPropertyByCountry(country, lastEvaluatedKeyId, lastEvaluatedKeyCity) {
         return propertyTypes
     }
+
+    async fetchPropertyByBookingId(bookingId) {
+        return propertyTypes.properties[0]
+    }
 }
 
 export default TestPropertyRepository;
