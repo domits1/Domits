@@ -93,6 +93,7 @@ import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
+import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 
 
 Modal.setAppElement("#root");
@@ -212,7 +213,7 @@ function App() {
                 <Route
                   path="/hostdashboard"
                   element={<HostProtectedRoute>
-                    <HostDashboard />
+                    <MainDashboardHost />
                   </HostProtectedRoute>}
                 />
                 <Route

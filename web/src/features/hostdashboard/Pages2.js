@@ -20,7 +20,7 @@ function Pages() {
     }
 
     return (
-        <div className="host-pages">
+        <div className="guest-pages">
             <button className="hamburger-btn" onClick={toggleSidebar}>
                 {isOpen ? <CloseIcon /> : <MenuIcon />}
             </button>

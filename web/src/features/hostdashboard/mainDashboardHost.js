@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Pages from "./pages2";
+import Pages from "./Pages2";
 
 
 function MainDashboardHost(){
@@ -33,7 +33,7 @@ function MainDashboardHost(){
     };
 
     return (
-        <div className="main-dashboard-host">
+        <div className="main-dashboard-guest">
             <div className="main-dashboard-sidebar">
                 <Pages onNavigate={handleNavigation} />
             </div>
