@@ -1,9 +1,20 @@
 import React from 'react';
 import {render} from '@testing-library/react-native';
 import ConfirmedView from '../views/ConfirmedView';
-import {describe, expect, it} from '@jest/globals';
+import {beforeEach, describe, expect, it} from '@jest/globals';
+import i18n from "i18next";
+import {initReactI18next} from "react-i18next";
+import {LanguageReferences} from "../../../translation/services/Languages";
 
 describe('ConfirmedView Component', () => {
+  beforeEach(async () => {
+    await i18n.use(initReactI18next).init({
+      lng: 'en',
+      fallbackLng: 'en',
+      resources: LanguageReferences,
+    });
+  })
+
   const mockUserAttributes = {
     given_name: 'John',
     family_name: 'Doe',

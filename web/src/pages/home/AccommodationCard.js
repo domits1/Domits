@@ -22,6 +22,8 @@ const AccommodationCard = ({ accommodation, onClick} ) => {
             const checkIfLiked = async () => {
                 const token = getAccessToken();
                 if (!token) return;
+
+                const accommodationId = accommodation.property?.id;
     
                 try {
                     const response = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
@@ -39,8 +41,8 @@ const AccommodationCard = ({ accommodation, onClick} ) => {
                     }
     
                     const result = await response.json();
-                    const likedIds = result.AccommodationIDs || [];
-                    const accommodationId = accommodation.property?.id;
+                    const allWishlists = result.wishlists || {};
+                    const likedIds = Object.values(allWishlists).flat();
     
                     if (likedIds.includes(accommodationId)) {
                         setLiked(true);
@@ -72,8 +74,11 @@ const AccommodationCard = ({ accommodation, onClick} ) => {
                         "Content-Type": "application/json",
                         "Origin": window.location.origin
                     },
-                    body: JSON.stringify({ accommodationId })
-                });
+                    body: JSON.stringify({
+                        propertyId: accommodationId,
+                        wishlistName: "My next trip"
+                      })
+                   });
     
                 if (!response.ok) {
                     const errorText = await response.text();
