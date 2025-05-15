@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, MessageCircle, User } from 'lucide-react';
+import '../../styles/sass/features/base/navbar.scss';
 
 const Navbar = ({ isLoggedIn }) => {
   const navigate = useNavigate();

@@ -8,6 +8,8 @@ import instagramIcon from "../../images/icons/Instagram.jpg";
 import xIcon from "../../images/icons/x.png";
 import { ReactComponent as InstagramIcon } from "../../images/instagram.svg";
 import { Link } from "react-router-dom";
+import '../../styles/sass/features/base/footer.scss';
+
 
 const currentYear = new Date().getFullYear();
 

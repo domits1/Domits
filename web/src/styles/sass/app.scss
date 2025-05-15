@@ -6,10 +6,11 @@
 @use "features/booking-engine/paymentConfirmPage.scss";
 @use "features/booking-engine/overlay.scss";
 //Base
-@use "features/base/header";
-@use "features/base/footer";
-@use "features/base/menubar";
-@use "features/base/searchbar";
+@use "features/base/header.scss";
+@use "features/base/footer.scss";
+@use "features/base/menubar.scss";
+@use "features/base/navbar.scss";
+@use "features/base/searchbar.scss";
 //Auth
 @use "features/auth/login.scss";
 @use "features/auth/register.scss";

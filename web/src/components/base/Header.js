@@ -9,6 +9,7 @@ import FlowContext from "../../services/FlowContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Auth } from "aws-amplify";
+import '../../styles/sass/features/base/header.scss';
 
 
 function Header({ setSearchResults, setLoading }) {
