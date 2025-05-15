@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import { loadStripe } from '@stripe/stripe-js';
-import RegisterModule from "../auth/RegisterModule";
+import Register from "../auth/Register";
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
 import People from '@mui/icons-material/PeopleAltOutlined';
@@ -25,6 +25,7 @@ const BookingOverview = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userData, setUserData] = useState({ username: "", email: "", phone_number: "" });
     const [cognitoUserId, setCognitoUserId] = useState(null);
+    const [cognitoUserEmail, setCognitoUserEmail] = useState(null);
     const [ownerStripeId, setOwnerStripeId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -47,7 +48,7 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('guests'), 10);
     const amountOfGuest = searchParams.get('guests');
     const kids = parseInt(searchParams.get('kids'), 10); 
-    const pets = searchParams.get('pets'); 
+    const pets = searchParams.get('pets');
 
     const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/"
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
@@ -103,6 +104,7 @@ const BookingOverview = () => {
                     phone_number: userAttributes['phone_number'],
                 });
                 setCognitoUserId(userAttributes.sub);
+                setCognitoUserEmail(userAttributes['email']);
             } catch (error) {
                 setIsLoggedIn(false);
                 console.error('Error logging in:', error);
@@ -184,7 +186,7 @@ const BookingOverview = () => {
             cleaningFee,
             amountOfGuest,
             taxes,
-            ServiceFee
+            ServiceFee,
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
@@ -285,7 +287,7 @@ const BookingOverview = () => {
                 {!isLoggedIn ? (
                     <div>
                         <h2>Please Register or Log In to Continue</h2>
-                        <RegisterModule />
+                        <Register />
                     </div>
                 ) : (
                     <button

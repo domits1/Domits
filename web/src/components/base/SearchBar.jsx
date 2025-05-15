@@ -3,8 +3,8 @@ import React, { useState, useEffect, useRef, useCallback, useMemo, useContext } 
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker, { utils } from '@hassanmojab/react-modern-calendar-datepicker';
 import {
-  FaTimes, FaSearchLocation, FaHome, FaCaravan, FaDoorClosed,
-  FaShip, FaTimesCircle, FaUser, FaChild, FaBaby, FaPaw,
+  FaTimes, FaSearchLocation, FaHome, FaCaravan,
+  FaShip, FaTimesCircle, FaUser, FaChild, FaBaby, FaPaw, 
 } from 'react-icons/fa';
 import Select from 'react-select';
 import '../../styles/sass/base/SearchBar.scss';
@@ -22,13 +22,12 @@ const contentByLanguage = {
   es,
 };
 
-export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
+export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
-  const [showResults, setShowResults] = useState(false);
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
@@ -40,7 +39,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [isBarActive, setIsBarActive] = useState(false);
-  const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
   const {language} = useContext(LanguageContext);
   const searchContent = contentByLanguage[language]?.component.search;
 
@@ -50,12 +48,12 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
 
   const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
     return (
-      <div className="Search-guestCounter" onClick={handleButtonClick}>
+      <div className="search-guest-counter" onClick={handleButtonClick}>
         <div>
-          <p className="Search-guestLabel">{label}</p>
-          <p className="Search-guestDescription">{description}</p>
+          <p className="search-guest-label">{label}</p>
+          <p className="search-guest-description">{description}</p>
         </div>
-        <div className="Search-controls">
+        <div className="search-controls">
           <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
           <span>{value}</span>
           <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
@@ -86,13 +84,16 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   };
 
   const totalGuestsDescription = useMemo(() => {
+    const totalGuests = adults + children;
     const parts = [];
-    if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
-    if (children > 0) parts.push(`${children} Child${children > 1 ? 'ren' : ''}`);
+  
+    if (totalGuests > 0) parts.push(`${totalGuests} Guest${totalGuests > 1 ? 's' : ''}`);
     if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? 's' : ''}`);
     if (pets > 0) parts.push(`${pets} Pet${pets > 1 ? 's' : ''}`);
+  
     return parts.join(', ');
-  }, [adults, children, infants, pets,]);
+  }, [adults, children, infants, pets]);
+  
 
   const guestDropdownRef = useRef();
 
@@ -160,7 +161,9 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   }, [location]);
 
   const performSearch = async (accommodation, address, totalGuests) => {
-    setLoading(true);
+    if (setLoading) {
+      setLoading(true);
+    }
     setError('');
 
     const queryParams = new URLSearchParams();
@@ -170,14 +173,14 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
     }
 
     if (address) {
-      queryParams.append('searchTerm', address);
+      queryParams.append('country', address);
     }
 
     if (totalGuests > 0) {
       queryParams.append('guests', totalGuests);
     }
 
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams.toString()}`;
+    const apiUrl = `https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction?${queryParams.toString()}`;
 
     try {
       const response = await fetch(apiUrl);
@@ -200,10 +203,12 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
     } catch (error) {
       setError('Er is een fout opgetreden bij het ophalen van de gegevens.');
     } finally {
-      setLoading(false);
+      if (setLoading) {
+        setLoading(false);
+      }
     }
   };
-
+  
   const handleSearch = () => {
     const shouldNavigate = location.pathname !== '/home';
     if (shouldNavigate) {
@@ -259,18 +264,18 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
   return (
     <>
       {error && (
-        <div className="Search-error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
-      <div className="bar-container">
+        <div className="search-error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
         {isMobile && (
           <button className="mobile-search-button" onClick={toggleSearchBar}>
-            <FaSearchLocation size={15} /> Search & Filter Accommodations
+            <FaSearchLocation size={15} /> 
+            {/* Search & Filter Accommodations */}
           </button>
         )}
 
         {(showSearchBar || !isMobile) && (
-          <div className={`Search-Bar-Main-Container ${isBarActive ? 'active' : 'inactive'}`}>
-            <div className="Search-bar-main">
-              <div className="Search-location">
+          <div className={`search-bar-main-container ${isBarActive ? 'active' : 'inactive'}`}>
+            <div className="search-bar-main">
+              <div className="search-location">
                 <input
                   type="search"
                   placeholder={searchContent.destination}
@@ -280,7 +285,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   className="search-places-input"
                 />
               </div>
-              <div className="searchSelectContainer">
+              <div className="search-select-container">
                 <Select
                   value={accommodation ? { label: accommodation, value: accommodation } : null}
                   onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
@@ -291,29 +296,30 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   ]}
                   isSearchable={false}
                   isClearable={true}
-                  placeholder={<span className="searchTitle">{searchContent.accommodation}</span>}
+                  placeholder={<span className="search-title-type">{searchContent.accommodation}</span>}
                   classNamePrefix="custom-select-dropdown-menu"
                   components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                 />
               </div>
 
-              <div className={`Search-button-section ${showGuestDropdown ? 'active' : ''}`}
+              <div className={`search-button-section ${showGuestDropdown ? 'active' : ''}`}
                 onClick={toggleGuestDropdown}>
-                <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>{searchContent.guests}</p>
+                <p className={`search-title-guest ${totalGuests > 0 ? 'hidden' : ''}`}>{searchContent.guests}</p>
                 {totalGuests > 0 && (
                   <button className="search-clear-guests" onClick={resetGuests}>
                     <FaTimes />
                   </button>
                 )}
 
-                <p className={`Search-guestP ${hasTwoGuests}`}>
+                <p className="search-guest-text">
                   {totalGuestsDescription}
                 </p>
-                <div className={`Search-guest-dropdown ${showGuestDropdown ? 'active' : ''}`}
+
+                <div className={`search-guest-dropdown ${showGuestDropdown ? 'active' : ''}`}
                   ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
                   {isMobile && (
                     <button
-                      className="Search-close-guest-dropdown"
+                      className="search-close-guest-dropdown"
                       onClick={closeGuestDropdown}
                     >
                       <FaTimes />
@@ -351,13 +357,11 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                 </div>
               </div>
 
-              <div className="Search-check-in-out">
+              <div className="search-check-in-out">
                 <input
                   className="input-calendar-checkInOut"
                   type="text"
-                  value={startDate && endDate
-                    ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
-                    : ''}
+                  value={startDate && endDate ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}` : ''}
                   readOnly={true}
                 />
                 {!startDate && !endDate && (
@@ -380,13 +384,12 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   className="search-icon" />
                 <span className="search-text">{searchContent.search}</span>
               </button>
-
             </div>
             {/* momenteel niet te gebruiken omdat de styling er voor moet aangepast worden */}
             {/* {isBarActive && <FilterButton />} */}
           </div>
         )}
-      </div>
+     
     </>
   );
 }

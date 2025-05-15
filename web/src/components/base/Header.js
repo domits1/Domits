@@ -248,28 +248,25 @@ function Header({ setSearchResults, setLoading }) {
   };
 
   return (
-    <div className="App">
-      <header className="app-header">
-        <nav
-          className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""
-            }`}
-        >
-          <div className="logo">
-            <a href="/home">
-              <img src={logo} width={150} alt="Logo" />
-            </a>
-          </div>
-          {!hiddenSearchPaths.includes(location.pathname) && (
-            <div className="App">
-              <SearchBar
-                setSearchResults={setSearchResults}
-                setLoading={setLoading}
-                toggleBar={toggleSearchBar}
-              />
-            </div>
-          )}
+    <header className="app-header">
+      <nav
+        className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""
+          }`}
+      >
+        <div className="logo">
+          <a href="/">
+            <img src={logo} width={150} alt="Logo" />
+          </a>
+        </div>
+        {!hiddenSearchPaths.includes(location.pathname) && (
+          <SearchBar
+            setSearchResults={setSearchResults}
+            setLoading={setLoading}
+            toggleBar={toggleSearchBar}
+          />
+        )}
 
-          <div className="headerRight">  
+        <div className="headerRight">  
             <div class="language-toggle">
               <i class="fas fa-globe"></i>
               <select value={language} onChange={selectLanguage}>
@@ -279,80 +276,79 @@ function Header({ setSearchResults, setLoading }) {
                 <option value="es">Español</option>
               </select>
             </div>
-            {!isLoggedIn ? (
-              <button
-                className="headerButtons headerHostButton"
-                onClick={navigateToLanding}
-              >
-                {components.user.becomeHost}
-              </button>
-            ) : group === "Host" ? (
-              <button
-                className="headerButtons headerHostButton"
-                onClick={navigateToDashboard}
-              >
-                {currentView === "guest"
-                  ? `${components.user.switchToHost}`
-                  : `${components.user.switchToGuest}`}
-              </button>
-            ) : (
-              <button
-                className="headerButtons headerHostButton"
-                onClick={navigateToLanding}
-              >
-                {components.user.becomeHost}
-              </button>
-            )}
-            {isLoggedIn && group === "Traveler" && (
-              <button
-                className="headerButtons"
-                onClick={navigateToGuestDashboard}
-              >
-                Go to Dashboard
-              </button>
-            )}
+          {!isLoggedIn ? (
             <button
-              className="headerButtons nineDotsButton"
-              onClick={navigateToNinedots}
+              className="headerButtons headerHostButton"
+              onClick={navigateToLanding}
             >
-              <img src={nineDots} alt="Nine Dots" />
+              {components.user.becomeHost}
             </button>
-            <div className="personalMenuDropdown">
-              <button className="personalMenu" onClick={toggleDropdown}>
-                <img src={profile} alt="Profile Icon" />
-                <img src={arrowDown} alt="Dropdown Arrow" />
-              </button>
-              <div
-                className={
-                  "personalMenuDropdownContent" +
-                  (dropdownVisible ? " show" : "")
-                }
-              >
-                {isLoggedIn ? (
-                  renderDropdownMenu()
-                ) : (
-                  <>
-                    <button
-                      onClick={navigateToLogin}
-                      className="dropdownLoginButton"
-                    >
-                      {components.user.login}
-                      <img src={loginArrow} alt="Login Arrow" />
-                    </button>
-                    <button
-                      onClick={navigateToRegister}
-                      className="dropdownRegisterButton"
-                    >
-                      {components.user.register}
-                    </button>
-                  </>
-                )}
-              </div>
+          ) : group === "Host" ? (
+            <button
+              className="headerButtons headerHostButton"
+              onClick={navigateToDashboard}
+            >
+              {currentView === "guest"
+                ? `${components.user.switchToHost}`
+                : `${components.user.switchToGuest}`}
+            </button>
+          ) : (
+            <button
+              className="headerButtons headerHostButton"
+              onClick={navigateToLanding}
+            >
+              {components.user.becomeHost}
+            </button>
+          )}
+          {isLoggedIn && group === "Traveler" && (
+            <button
+              className="headerButtons"
+              onClick={navigateToGuestDashboard}
+            >
+              Go to Dashboard
+            </button>
+          )}
+          <button
+            className="headerButtons nineDotsButton"
+            onClick={navigateToNinedots}
+          >
+            <img src={nineDots} alt="Nine Dots" />
+          </button>
+          <div className="personalMenuDropdown">
+            <button className="personalMenu" onClick={toggleDropdown}>
+              <img src={profile} alt="Profile Icon" />
+              <img src={arrowDown} alt="Dropdown Arrow" />
+            </button>
+            <div
+              className={
+                "personalMenuDropdownContent" +
+                (dropdownVisible ? " show" : "")
+              }
+            >
+              {isLoggedIn ? (
+                renderDropdownMenu()
+              ) : (
+                <>
+                  <button
+                    onClick={navigateToLogin}
+                    className="dropdownLoginButton"
+                  >
+                    {components.user.login}
+                    <img src={loginArrow} alt="Login Arrow" />
+                  </button>
+                  <button
+                    onClick={navigateToRegister}
+                    className="dropdownRegisterButton"
+                  >
+                    {components.user.register}
+                  </button>
+                </>
+              )}
             </div>
           </div>
-        </nav>
-      </header>
-    </div>
+        </div>
+      </nav>
+    </header>
   );
 
 }

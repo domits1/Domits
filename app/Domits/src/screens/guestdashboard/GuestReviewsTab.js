@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from "react-native-safe-area-context";
+import TabHeader from "../accounthome/components/TabHeader";
 
 const GuestReviewsTab = () => {
   // Dummy data for the example
@@ -23,8 +24,8 @@ const GuestReviewsTab = () => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
+        <TabHeader tabTitle={'Reviews'}/>
         <View style={styles.header}>
-          <Text style={styles.headerText}>Reviews</Text>
           <Text style={styles.subHeader}>
             View, edit and/or delete your reviews.
           </Text>

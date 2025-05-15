@@ -13,8 +13,8 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
+import ConfirmEmailView from "./features/auth/confirmEmail/ConfirmEmailView.js";
 import { UserProvider } from "./features/auth/UserContext";
-import ListingDetails from "./features/bookingengine/ListingDetails";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
 import BookingOverview from "./features/bookingengine/BookingOverview";
 import BookingSend from "./features/bookingengine/BookingSend";
@@ -22,12 +22,6 @@ import BookingConfirmationOverview from "./features/bookingengine/BookingConfirm
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
-import GuestBooking from "./features/guestdashboard/GuestBooking";
-import GuestDashboard from "./features/guestdashboard/GuestDashboard";
-import GuestPayments from "./features/guestdashboard/GuestPayments";
-import GuestReviews from "./features/guestdashboard/GuestReviews";
-import GuestSettings from "./features/guestdashboard/GuestSettings";
-import GuestWishlistPage from "./features/guestdashboard/pages/GuestWishlistPage";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
@@ -97,6 +91,9 @@ import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
+import Navbar from './components/base/navbar';
+import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
+
 
 Modal.setAppElement("#root");
 
@@ -176,6 +173,7 @@ function App() {
                 <Route path="/landing" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/confirm-email" element={<ConfirmEmailView />} />
                 <Route path="/listingdetails" element={<ListingDetails2 />} />
                 <Route path="/bookingoverview" element={<BookingOverview />} />
                 <Route path="/bookingsend" element={<BookingSend />} />
@@ -195,20 +193,13 @@ function App() {
 
                 {/* Guest Dashboard */}
                 <Route
-                  path="/guestdashboard/*"
-                  element={<GuestProtectedRoute>
-                    <Routes>
-                      <Route path="/" element={<GuestDashboard />} />
-                      <Route path="messages" element={<ListingDetails />} />
-                      <Route path="payments" element={<GuestPayments />} />
-                      <Route path="reviews" element={<GuestReviews />} />
-                      <Route path="bookings" element={<GuestBooking />} />
-                      <Route path="settings" element={<GuestSettings />} />
-                      <Route path="wishlist" element={<GuestWishlistPage />} />
-                      {/*<Route path="chat" element={<Chat/>}/>*/}
-                    </Routes>
-                  </GuestProtectedRoute>}
-                />
+                    path="/guestdashboard/*"
+                    element={
+                      <GuestProtectedRoute>
+                        <MainDashboardGuest />
+                      </GuestProtectedRoute>
+                    }
+                  />
 
                 {/* Host Management */}
                 {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
@@ -298,6 +289,7 @@ function App() {
             </div>
           </UserProvider>
         </AuthProvider>
+        <Navbar/>
       </Router>
     </FlowContext.Provider>
   </ApolloProvider>);
