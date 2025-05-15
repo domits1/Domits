@@ -19,11 +19,14 @@ body.hide-header .app-header {
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
+  margin-top: 50px;
 }
 
 .domits-searchContainer {
-  height: 87vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/villaHomepage.jpg");
+  height: 75vh;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url("../../images/villaHomepage.jpg");
   background-size: cover;
   background-position: 70% 100%;
   background-repeat: no-repeat;
@@ -56,19 +59,45 @@ body.hide-header .app-header {
   flex-wrap: wrap;
 }
 
+.popup-box {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  padding: 8px;
+  border-radius: 5px;
+  top: 100%;
+  left: 0;
+  width: 250px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  margin-top: 1rem;
+}
+
 .domits-trendingContainer>div {
-  width: 12vw;
+  width: 200px;
+  height: 150px;
   padding: 8px;
   background-color: #f9f9f9;
   border-radius: 4px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   color: #555;
   font-size: 16px;
   margin-left: 2%;
   margin-right: 2%;
+}
+
+.domits-trendingContainer>div p {
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
 }
 
 .domits-trendingContainer>div:hover::after {
@@ -85,8 +114,9 @@ body.hide-header .app-header {
   width: 20%;
   height: auto;
   overflow: auto;
-  transform: translateX(50%);
-  transform: translateY(90%);
+  transform: translateX(-50%);
+  top: 110%;
+  left: 50%;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -157,7 +187,28 @@ body.hide-header .app-header {
 .Places-text {
   color: rgb(0, 0, 0);
   margin-left: 60px;
-  margin-bottom: 20px;
+  margin-top: 80px;
+}
+
+
+.Explore_More {
+  display: flex;
+  justify-content: center;
+  margin-top: 50px;
+}
+
+.Explore_More_button {
+  background-color: #0f9d00;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
 }
 
 .countries-container,
@@ -683,7 +734,39 @@ body.hide-header .app-header {
 .groups-container> :nth-child(6) {
   grid-column: span 1;
 
+
+
 }
+
+
+.promo-container {
+  text-align: center;
+  padding: 2rem;
+  max-width: 690px;
+  margin: 0 auto;
+}
+
+.promo-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.promo-button {
+  background-color: #0f9d00;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.promo-button:hover {
+  background-color: #0c7a00;
+}
+
 
 
 @media (max-width: 767px) {
@@ -1014,13 +1097,15 @@ body.hide-header .app-header {
 
 .domits-iconsContainerText {
   font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+  gap: 10px;
   text-align: center;
-  flex-wrap: wrap;
+  justify-items: center;
+  align-items: center;
   width: 100%;
 }
+
 
 .domits-iconTextGroup {
   display: flex;
@@ -1056,7 +1141,6 @@ body.hide-header .app-header {
   padding: 8px 4vw;
   font-size: 0.9rem;
   cursor: pointer;
-  font-size: 0.9vw;
 }
 
 .domits-hostButton {
@@ -1310,7 +1394,7 @@ body.hide-header .app-header {
 .list-property-button {
   margin-top: 1rem;
   padding: 0.5rem 1.5rem;
-  background-color: #1d4ed8;
+  background-color: #003366;
   color: white;
   font-weight: 600;
   border: none;

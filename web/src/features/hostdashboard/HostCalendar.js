@@ -4,11 +4,9 @@ import "./HostHomepage.css";
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import CalendarComponent from "./CalendarComponent";
-import styles from "./HostDashboard.module.css";
 import calenderStyles from "./HostCalendar.module.css";
 import { generateUUID } from "../../utils/generateUUID.js";
 import { formatDate, uploadICalToS3 } from "../../utils/iCalFormatHost";
-import { getAccessToken } from "../../services/getAccessToken.js";
 
 function HostCalendar() {
   const [accommodations, setAccommodations] = useState([]);
@@ -18,9 +16,7 @@ function HostCalendar() {
 
   const handleSelectAccommodation = (event) => {
     const accommodationId = event.target.value;
-    const accommodation = accommodations.find(
-      (accommodation) => accommodation.ID === accommodationId
-    );
+    const accommodation = accommodations.find((accommodation) => accommodation.ID === accommodationId);
     setSelectedAccommodation(accommodation);
   };
 
@@ -48,12 +44,12 @@ function HostCalendar() {
       } else {
         try {
           const response = await fetch(
-            `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property`,
+            "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation",
             {
-              method: "GET",
+              method: "POST",
+              body: JSON.stringify({ OwnerId: userId }),
               headers: {
                 "Content-type": "application/json; charset=UTF-8",
-                "Authorization": getAccessToken()
               },
             }
           );
@@ -61,9 +57,16 @@ function HostCalendar() {
             throw new Error("Failed to fetch");
           }
           const data = await response.json();
-          console.log(data);
 
-          setAccommodations(data);
+          if (data.body && typeof data.body === "string") {
+            const accommodationsArray = JSON.parse(data.body);
+            if (Array.isArray(accommodationsArray)) {
+              setAccommodations(accommodationsArray);
+            } else {
+              console.error("Parsed data is not an array:", accommodationsArray);
+              setAccommodations([]);
+            }
+          }
         } catch (error) {
           console.error("Unexpected error:", error);
         } finally {
@@ -113,9 +116,7 @@ function HostCalendar() {
       for (let j = 0; j < accommodations[i].DateRanges.length; j++) {
         uid = generateUUID();
         dtStamp = formatDate(new Date());
-        dtStart = formatDate(
-          new Date(accommodations[i].DateRanges[j].startDate)
-        );
+        dtStart = formatDate(new Date(accommodations[i].DateRanges[j].startDate));
         dtEnd = formatDate(new Date(accommodations[i].DateRanges[j].endDate));
         accommodationId = accommodations[i].ID;
         street = accommodations[i].Street || "";
@@ -167,7 +168,14 @@ function HostCalendar() {
       <div className={styles.dashboardHost}>
         <Pages />
         {isLoading ? (
-          <div className="loading-spinner-calender">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "42vh",
+              width: "72.5%",
+            }}>
             <img src={spinner} />
           </div>
         ) : accommodations.length < 1 ? (
@@ -175,31 +183,24 @@ function HostCalendar() {
         ) : (
           <div className={calenderStyles.contentContainerCalendar}>
             <div className={calenderStyles.calendarHeader}>
-              <button
-                className={calenderStyles.exportICal}
-                onClick={handleICal}
-              >
+              <button className={calenderStyles.exportICal} onClick={handleICal}>
                 Export to calender
               </button>
             </div>
             <div className={calenderStyles.calendarDropdown}>
               <div>
-                <select
-                  className={calenderStyles.locationBox}
-                  onChange={handleSelectAccommodation}
-                >
+                <select className={calenderStyles.locationBox} onChange={handleSelectAccommodation}>
                   <option value="" className={calenderStyles.selectOption}>
                     Select your Accommodation
                   </option>
                   {accommodations.map((accommodation) => (
-                    <option key={accommodation.property.id} value={accommodation.property.id}>
-                      {accommodation.property.title}
+                    <option key={accommodation.ID} value={accommodation.ID}>
+                      {accommodation.Title}
                     </option>
                   ))}
                 </select>
               </div>
-              {selectedAccommodation !== null &&
-              selectedAccommodation !== undefined ? (
+              {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
                 <div>
                   <p>
                     Booking availability for
@@ -215,9 +216,7 @@ function HostCalendar() {
                   </div>
                 </div>
               ) : (
-                <div className={styles.alertMessage}>
-                  Please select your Accommodation first
-                </div>
+                <div className={styles.alertMessage}>Please select your Accommodation first</div>
               )}
             </div>
           </div>
