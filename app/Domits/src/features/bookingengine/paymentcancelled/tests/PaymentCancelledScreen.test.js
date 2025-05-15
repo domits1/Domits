@@ -5,6 +5,9 @@ import {useStripe} from '@stripe/stripe-react-native';
 import PaymentCancelled from '../screens/PaymentCancelled';
 import * as NavigationNameConstants from '../../../../navigation/utils/NavigationNameConstants';
 import {beforeEach, describe, expect, it} from '@jest/globals';
+import i18n from "i18next";
+import {initReactI18next} from "react-i18next";
+import {LanguageReferences} from "../../../translation/services/Languages";
 
 jest.mock('@stripe/stripe-react-native', () => ({
   useStripe: jest.fn(),
@@ -26,7 +29,7 @@ const mockRoute = {
     guests: 2,
     nights: 3,
     paymentSecret: 'test_payment_secret',
-    booking: '123',
+    bookingId: '123',
   },
 };
 
@@ -36,7 +39,13 @@ describe('PaymentCancelled Screen', () => {
   let mockInitPaymentSheet;
   let mockPresentPaymentSheet;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.use(initReactI18next).init({
+      lng: 'en',
+      fallbackLng: 'en',
+      resources: LanguageReferences,
+    });
+
     jest.clearAllMocks();
 
     mockInitPaymentSheet = jest.fn();
@@ -53,7 +62,7 @@ describe('PaymentCancelled Screen', () => {
       <PaymentCancelled navigation={mockNavigation} route={mockRoute} />,
     );
 
-    expect(getByText('2 guests | 3 nights')).toBeTruthy();
+    expect(getByText('2 Guest(s) | 3 Nights')).toBeTruthy();
     expect(getByText('Try Again')).toBeTruthy();
   });
 
@@ -91,7 +100,7 @@ describe('PaymentCancelled Screen', () => {
         expect(mockNavigation.navigate).toHaveBeenCalledWith(
           NavigationNameConstants.STRIPE_PAYMENT_CONFIRMED_SCREEN,
           {
-            booking: '123',
+            bookingId: '123',
             guests: 2,
             nights: 3,
           },

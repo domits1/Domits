@@ -1,9 +1,20 @@
 import React from 'react';
 import {render, fireEvent} from '@testing-library/react-native';
 import CancelledView from '../views/CancelledView';
-import {describe, expect, it, jest} from '@jest/globals';
+import {beforeEach, describe, expect, it, jest} from '@jest/globals';
+import i18n from "i18next";
+import {initReactI18next} from "react-i18next";
+import {LanguageReferences} from "../../../translation/services/Languages";
 
 describe('CancelledView Component', () => {
+  beforeEach(async () => {
+    await i18n.use(initReactI18next).init({
+      lng: 'en',
+      fallbackLng: 'en',
+      resources: LanguageReferences,
+    });
+  })
+
   it('should render all text elements correctly', () => {
     const mockOnPress = jest.fn();
 
