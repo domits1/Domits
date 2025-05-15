@@ -12,7 +12,7 @@ const EmailView = ({formData, handleDataChange, handleValidFormChange}) => {
             setErrorMessage("Email can't be empty.");
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             handleValidFormChange('email', false);
-            setErrorMessage("Not a valid email format.");
+            setErrorMessage("Does not follow the email format example@mail.com");
         } else {
             handleValidFormChange('email', true);
             setErrorMessage('');

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {SafeAreaView, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../../../../context/AuthContext';
-import {getCurrentUser} from '@aws-amplify/auth';
+import {getCurrentUser, signUp} from '@aws-amplify/auth';
 import CheckBox from '@react-native-community/checkbox';
 import {CONFIRM_EMAIL_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 import {styles} from "../styles/RegisterStyles";
@@ -32,16 +32,6 @@ const Register = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isHost, setIsHost] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState({
-    text: 'Weak',
-    color: 'red',
-    requirements: {
-      length: false,
-      uppercase: false,
-      number: false,
-      specialChar: false,
-    },
-  });
   const [validFormData, setValidFormData] = useState({
     email: false,
     password: false,
@@ -69,60 +59,41 @@ const Register = () => {
 
   const onSubmit = async () => {
     const {username, email, password, firstName, lastName} = formData;
-    if (!passwordStrength.requirements.length) {
-      setErrorMessage('Password must be at least 8 characters.');
+
+    if (!validFormData.firstname) {
+      setErrorMessage("First name is not valid.");
       return;
-    }
-    if (
-      !passwordStrength.requirements.uppercase ||
-      !passwordStrength.requirements.number
-    ) {
-      setErrorMessage(
-        'Password must contain an uppercase letter and a number.',
-      );
+    } else if (!validFormData.lastname) {
+      setErrorMessage("Last name is not valid.");
       return;
-    }
-    if (!passwordStrength.requirements.specialChar) {
-      setErrorMessage('Password must contain at least one special character.');
+    } else if (!validFormData.email) {
+      setErrorMessage("Email is not valid.");
       return;
-    }
-    if (username.length < 4) {
-      setErrorMessage('Username must be at least 4 characters long.');
+    } else if (!validFormData.password) {
+      setErrorMessage("Password must be stronger.");
       return;
-    }
-    if (firstName.length < 2 || lastName.length < 2) {
-      setErrorMessage(
-        'First and last name must be at least 2 characters long.',
-      );
-      return;
-    }
-    if (password.length < 7) {
-      setErrorMessage('Password must be at least 7 characters long.');
-      return;
-    }
-    if (!email) {
-      setErrorMessage("Email can't be empty!");
-      return;
+    } else {
+      setErrorMessage("");
     }
 
     try {
       const emailName = email.split('@')[0];
       const groupName = isHost ? 'Host' : 'Traveler';
 
-      // const {isSignUpComplete, userId, nextStep} = await signUp({
-      //   username: email, // Email as username
-      //   password,
-      //   options: {
-      //     userAttributes: {
-      //       'custom:group': groupName,
-      //       'custom:username': username + emailName,
-      //       email,
-      //       given_name: firstName,
-      //       family_name: lastName,
-      //     },
-      //     autoSignIn: true,
-      //   },
-      // });
+      const {isSignUpComplete, userId, nextStep} = await signUp({
+        username: email, // Email as username
+        password,
+        options: {
+          userAttributes: {
+            'custom:group': groupName,
+            'custom:username': username + emailName,
+            email,
+            given_name: firstName,
+            family_name: lastName,
+          },
+          autoSignIn: true,
+        },
+      });
 
       if (setAuthCredentials) {
         setAuthCredentials(email, password);
@@ -165,7 +136,7 @@ const Register = () => {
 
             <PersonalDetailsView formData={formData} handleDataChange={handleDataChange} handleValidFormChange={handleValidFormChange}/>
             <EmailView formData={formData} handleDataChange={handleDataChange} handleValidFormChange={handleValidFormChange}/>
-            <PasswordView formData={formData} setFormData={setFormData}/>
+            <PasswordView formData={formData} setFormData={setFormData} handleValidFormChange={handleValidFormChange}/>
 
             {errorMessage && (
               <Text style={styles.errorText}>{errorMessage}</Text>

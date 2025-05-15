@@ -9,26 +9,26 @@ const PersonalDetailsView = ({formData, handleDataChange, handleValidFormChange}
 
     const validateFirstName = (firstName) => {
         if (!firstName){
-            handleValidFormChange('firstName', false);
+            handleValidFormChange('firstname', false);
             setErrorFirstName("First name can't be empty.");
         } else if (firstName.length < 2){
-            handleValidFormChange('firstName', false);
+            handleValidFormChange('firstname', false);
             setErrorFirstName("First name must be at least 2 characters.");
         } else {
-            handleValidFormChange('firstName', true);
+            handleValidFormChange('firstname', true);
             setErrorFirstName('');
         }
     }
 
     const validateLastName = (lastName) => {
         if (!lastName){
-            handleValidFormChange('lastName', false);
+            handleValidFormChange('lastname', false);
             setErrorLastName("Last name can't be empty.");
         } else if (lastName.length < 2){
-            handleValidFormChange('lastName', false);
-            setErrorFirstName("Last name must be at least 2 characters.");
+            handleValidFormChange('lastname', false);
+            setErrorLastName("Last name must be at least 2 characters.");
         } else {
-            handleValidFormChange('lastName', true);
+            handleValidFormChange('lastname', true);
             setErrorLastName('');
         }
     }

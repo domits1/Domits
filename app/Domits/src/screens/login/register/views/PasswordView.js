@@ -2,7 +2,7 @@ import {Text, TextInput, View} from "react-native";
 import {styles} from "../styles/RegisterStyles";
 import React, {useState} from "react";
 
-const PasswordView = ({formData, setFormData}) => {
+const PasswordView = ({formData, setFormData, handleValidFormChange}) => {
     const [passwordStrength, setPasswordStrength] = useState({
         text: 'Weak',
         color: 'red',
@@ -22,28 +22,33 @@ const PasswordView = ({formData, setFormData}) => {
             specialChar: /[^A-Za-z0-9]/.test(password),
         };
 
-        console.log(requirements.length)
-
-
         const metRequirements = Object.values(requirements).filter(Boolean).length;
 
-        let strength = {text: 'Weak', color: 'red'};
-        if (metRequirements === 4) {
-            strength = {text: 'Very Strong', color: 'green'};
-        } else if (metRequirements === 3) {
-            strength = {text: 'Strong', color: '#088f08'};
-        } else if (metRequirements === 2) {
-            strength = {text: 'Weak', color: 'orange'};
+        let strength;
+        switch (metRequirements) {
+            case 4:
+                strength = {text: 'Very Strong', color: '#009b00'};
+                handleValidFormChange('password', true);
+                break;
+            case 3:
+                strength = {text: 'Strong', color: '#65cb29'};
+                handleValidFormChange('password', false);
+                break;
+            case 2:
+                strength = {text: 'Weak', color: '#cea911'};
+                handleValidFormChange('password', false);
+                break;
+            default:
+                strength = {text: 'Very Weak', color: '#d31515'};
+                handleValidFormChange('password', false);
         }
 
         setPasswordStrength({...strength, requirements});
     };
 
-    const handleChangePassword = (name, value) => {
-        setFormData(prevState => ({...prevState, [name]: value}));
-        if (name === 'password') {
-            checkPasswordStrength(value);
-        }
+    const handleChangePassword = (password) => {
+        setFormData(prevState => ({...prevState, ['password']: password}));
+            checkPasswordStrength(password);
     };
 
   return (
@@ -54,7 +59,7 @@ const PasswordView = ({formData, setFormData}) => {
               placeholder="Password"
               secureTextEntry
               value={formData.password}
-              onChangeText={value => handleChangePassword('password', value)}
+              onChangeText={value => handleChangePassword(value)}
           />
           <View style={styles.passwordRequirements}>
               <Text>
