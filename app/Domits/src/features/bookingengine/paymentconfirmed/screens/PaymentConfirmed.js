@@ -1,4 +1,4 @@
-import {Text, ToastAndroid, View} from 'react-native';
+import {Alert, ToastAndroid, View} from 'react-native';
 import {styles} from '../styles/styles';
 import Spacer from '../../../../components/Spacer';
 import ConfirmedView from '../views/ConfirmedView';
@@ -56,23 +56,26 @@ const PaymentConfirmed = ({navigation, route}) => {
   }, []);
 
   useEffect(() => {
-    try {
-      confirmBooking().then(() =>
-        fetchPropertyDetails().then(() =>
-            setLoading(false)
-        ),
-      );
-    } catch (error) {
-      setLoading(false);
-      ToastMessage(error.message, ToastAndroid.SHORT);
+    async function executeAsyncUseEffect() {
+      try {
+        await confirmBooking();
+        await fetchPropertyDetails();
+      } catch (error) {
+        ToastMessage(error.message, ToastAndroid.SHORT);
+      } finally {
+        setLoading(false);
+      }
     }
+
+    executeAsyncUseEffect();
   });
 
   if (loading) {
     return <LoadingScreen />;
   } else if (!property) {
-    return (
-      <Text> something went wrong while fetching property information </Text>
+    Alert.alert(
+      'Failed to fetch property details',
+      'Something went wrong while attempting to fetch the booking property details. Please contact support.',
     );
   } else {
     return (

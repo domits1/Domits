@@ -64,11 +64,10 @@ const StripePayment = ({navigation, route}) => {
       );
       await setPaymentSecret(stripeClientSecret);
       await setBookingId(bookingId);
-      setLoading(false);
     } catch (error) {
-      setLoading(false);
-      console.log(error);
       ToastMessage('Something went wrong, please try again later.', ToastAndroid.SHORT);
+    } finally {
+      setLoading(false);
     }
   });
 
