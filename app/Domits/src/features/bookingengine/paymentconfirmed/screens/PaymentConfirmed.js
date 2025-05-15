@@ -1,4 +1,4 @@
-import {ToastAndroid, View} from 'react-native';
+import {Text, ToastAndroid, View} from 'react-native';
 import {styles} from '../styles/styles';
 import Spacer from '../../../../components/Spacer';
 import ConfirmedView from '../views/ConfirmedView';
@@ -11,10 +11,12 @@ import PropertyRepository from '../../../../services/property/propertyRepository
 import ToastMessage from '../../../../components/ToastMessage';
 import LocationView from '../views/LocationView';
 import ViewBookingButton from '../components/ViewBookingButton';
-import {HOME_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
+import {HOME_SCREEN} from '../../../../navigation/utils/NavigationNameConstants';
+import TestBookingRepository from '../../../../services/availability/test/testBookingRepository';
+import BookingRepository from '../../../../services/availability/bookingRepository';
 
 const PaymentConfirmed = ({navigation, route}) => {
-  const booking = route.params.booking;
+  const bookingId = route.params.bookingId;
   const guests = route.params.guests;
   const nights = route.params.nights;
 
@@ -28,33 +30,50 @@ const PaymentConfirmed = ({navigation, route}) => {
       ? new TestPropertyRepository()
       : new PropertyRepository();
 
+  const bookingRepository =
+    process.env.REACT_APP_TESTING === 'true'
+      ? new TestBookingRepository()
+      : new BookingRepository();
+
+  const confirmBooking = useCallback(async () => {
+    const {paymentConfirmed} = await bookingRepository.confirmBooking(
+      bookingId,
+    );
+    if (!paymentConfirmed) {
+      throw new Error('Payment was not confirmed, please contact support.');
+    }
+  });
+
   const fetchPropertyDetails = useCallback(async () => {
-    try {
-      const property = await propertyRepository.fetchPropertyByBookingId(
-        booking,
-      );
-      if (property.property) {
-        setProperty(property);
-      } else {
-        ToastMessage(
-          'Something went wrong while fetching the property data.',
-          ToastAndroid.SHORT,
-        );
-      }
-    } catch (error) {
-      ToastMessage(error.message, ToastAndroid.SHORT);
+    const property = await propertyRepository.fetchPropertyByBookingId(
+      bookingId,
+    );
+    if (property.property) {
+      setProperty(property);
+    } else {
+      throw new Error('Something went wrong while fetching the property data.');
     }
   }, []);
 
   useEffect(() => {
-    // Await Confirmation
-    fetchPropertyDetails().then(() => {
+    try {
+      confirmBooking().then(() =>
+        fetchPropertyDetails().then(() =>
+            setLoading(false)
+        ),
+      );
+    } catch (error) {
       setLoading(false);
-    });
+      ToastMessage(error.message, ToastAndroid.SHORT);
+    }
   });
 
   if (loading) {
     return <LoadingScreen />;
+  } else if (!property) {
+    return (
+      <Text> something went wrong while fetching property information </Text>
+    );
   } else {
     return (
       <View style={styles.container}>
@@ -83,5 +102,4 @@ const PaymentConfirmed = ({navigation, route}) => {
     );
   }
 };
-
 export default PaymentConfirmed;

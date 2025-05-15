@@ -1,5 +1,5 @@
-import {Image, View} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import {Image, ToastAndroid, View} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
 import Header from '../components/Header';
 import {S3URL} from '../../../../store/constants';
 import {styles} from '../styles/styles';
@@ -18,8 +18,14 @@ import {
   STRIPE_PAYMENT_CANCELLED_SCREEN,
   STRIPE_PAYMENT_CONFIRMED_SCREEN,
 } from '../../../../navigation/utils/NavigationNameConstants';
+import BookingRepository from '../../../../services/availability/bookingRepository';
+import TestBookingRepository from '../../../../services/availability/test/testBookingRepository';
+import ToastMessage from '../../../../components/ToastMessage';
+import LoadingScreen from '../../../../screens/loadingscreen/screens/LoadingScreen';
 
 const StripePayment = ({navigation, route}) => {
+  const [loading, setLoading] = useState(false);
+
   const property = route.params.property;
 
   const [arrivalDate, setArrivalDate] = useState(route.params.arrivalDate);
@@ -38,16 +44,39 @@ const StripePayment = ({navigation, route}) => {
   const [bookingId, setBookingId] = useState(null);
   const [paymentSecret, setPaymentSecret] = useState(null);
 
+  const repository =
+    process.env.REACT_APP_TESTING === 'true'
+      ? new TestBookingRepository()
+      : new BookingRepository();
+
   useEffect(() => {
     setNights(calculateNumberOfNights(arrivalDate, departureDate));
   }, [arrivalDate, departureDate]);
 
-  useEffect(() => {
-    setPaymentSecret('');
-    // Create booking (Should return a paymentIntent, ephemeralKey and customerId (Stripe id)
-    // See https://docs.stripe.com/payments/accept-a-payment?platform=react-native#setup-server-side
-    setBookingId('6a75f247-29c9-11f0-a98e-c8d9d22fb751');
+  const createPayment = useCallback(async () => {
+    try {
+      setLoading(true);
+      const {stripeClientSecret, bookingId} = await repository.createBooking(
+          property.property.id,
+          guests,
+          arrivalDate,
+          departureDate,
+      );
+      await setPaymentSecret(stripeClientSecret);
+      await setBookingId(bookingId);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+      ToastMessage('Something went wrong, please try again later.', ToastAndroid.SHORT);
+    }
   });
+
+  useEffect(() => {
+    if (paymentSecret && bookingId) {
+      openPaymentSheet();
+    }
+  }, [paymentSecret, bookingId]);
 
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
   const openPaymentSheet = async () => {
@@ -62,7 +91,7 @@ const StripePayment = ({navigation, route}) => {
         guests: guests,
         nights: nights,
         paymentSecret: paymentSecret,
-        booking: bookingId,
+        bookingId: bookingId,
       });
     } else {
       const {error} = await presentPaymentSheet();
@@ -72,17 +101,21 @@ const StripePayment = ({navigation, route}) => {
           guests: guests,
           nights: nights,
           paymentSecret: paymentSecret,
-          booking: bookingId,
+          bookingId: bookingId,
         });
       } else {
         navigation.navigate(STRIPE_PAYMENT_CONFIRMED_SCREEN, {
-          booking: bookingId,
+          bookingId: bookingId,
           guests: guests,
           nights: nights,
         });
       }
     }
   };
+
+  if (loading) {
+    return <LoadingScreen />
+  }
 
   return (
     <>
@@ -112,7 +145,7 @@ const StripePayment = ({navigation, route}) => {
           pricing={property.pricing}
         />
         <Spacer />
-        <ConfirmAndPayButton onPress={() => openPaymentSheet()} />
+        <ConfirmAndPayButton onPress={() => createPayment()} />
       </View>
       {showDatePopUp && (
         <CalendarModal
