@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { getAccessToken } from "../utils/authUtils";
-import "../../guestdashboard/styles/GuestWishlistPage.scss";
-import GuestSelector from "../../guestdashboard/components/GuestSelector";
-import GuestActions from "../../guestdashboard/components/GuestActions";
+import { getAccessToken } from "./utils/authUtils";
 
-import AccommodationCard from "../../../pages/home/AccommodationCard";
-import "../../../pages/home/Accommodations.css";
+import "./styles/GuestWishlist.scss";
+
+import GuestSelector from "./components/GuestSelector";
+import GuestActions from "./components/GuestActions";
+
+import AccommodationCard from "../../pages/home/AccommodationCard";
+import "../../pages/home/Accommodations.css";
 
 const GuestWishlistPage = () => {
   const [wishlist, setWishlist] = useState([]);
