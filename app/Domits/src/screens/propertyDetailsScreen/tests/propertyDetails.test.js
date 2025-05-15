@@ -7,6 +7,15 @@ import {LanguageReferences} from "../../../features/translation/services/Languag
 import mockDetails from "../../../services/property/test/listingDetails.json";
 import React from "react";
 
+jest.mock(
+    'react-native/Libraries/Components/ToastAndroid/ToastAndroid',
+    () => ({
+        show: jest.fn(),
+        SHORT: 'short',
+        LONG: 'long',
+    }),
+);
+
 jest.mock('@aws-amplify/core', () => ({
     fetchAuthSession: jest.fn().mockResolvedValue({
         tokens: {
@@ -34,6 +43,10 @@ describe("Property details", () => {
 
     it("should display basic details", async () => {
         render(<PropertyDetailsScreen route={{params: {property: {property: {id: mockDetails.property.id}}}}}/>);
+
+        await waitFor(() => {
+            expect(screen.getByTestId("loadingScreen")).toBeNull()
+        })
 
         await waitFor(() => {
             expect(screen.getByTestId("propertyDetailsTitle")).toBeTruthy()
