@@ -81,7 +81,7 @@ const GuestBookings = ({navigation}) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView>
-        <TabHeader tabTitle={'Upcoming Bookings'} />
+        <TabHeader tabTitle={'Upcoming bookings'} />
         <View style={styles.bodyContainer}>
           {bookings.map((booking, index) => (
             <BookingView
