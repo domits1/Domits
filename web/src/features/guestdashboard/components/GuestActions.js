@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiEdit2, FiTrash2, FiChevronDown } from "react-icons/fi";
 import "../../guestdashboard/styles/GuestActions.scss";
+import { getAccessToken } from "../utils/authUtils";
 
-const GuestActions = () => {
+const GuestActions = ({ selectedList, onListChange }) => {
   const [lists, setLists] = useState([]);
-  const [selectedList, setSelectedList] = useState("My Next Trip");
   const [editingId, setEditingId] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [createPopupOpen, setCreatePopupOpen] = useState(false);
@@ -12,55 +12,134 @@ const GuestActions = () => {
 
   const wrapperRef = useRef(null);
 
-  // Create a new wishlist
-  const handleCreate = () => {
-    if (newListName.trim()) {
-      const newList = { id: Date.now(), name: newListName, count: 0 };
+  // Fetch all user wishlists
+  useEffect(() => {
+    const fetchLists = async () => {
+      const token = getAccessToken();
+      if (!token) return;
+
+      try {
+        const res = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await res.json();
+        const wishlists = data?.wishlists || {};
+        const structured = Object.entries(wishlists).map(([name, items]) => ({
+          id: name,
+          name,
+          count: items.length,
+        }));
+
+        setLists(structured);
+
+        //Make sure the selected list exists, otherwise fallback
+        if (!structured.find((l) => l.name === selectedList)) {
+          onListChange("My next trip");
+        }
+      } catch (err) {
+        console.error("❌ Error loading wishlists:", err.message);
+      }
+    };
+
+    fetchLists();
+  }, []);
+
+  //Create new list
+  const handleCreate = async () => {
+    const token = getAccessToken();
+    if (!token || !newListName.trim()) return;
+
+    try {
+      await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
+        method: "PUT",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ wishlistName: newListName }),
+      });
+
+      const newList = { id: newListName, name: newListName, count: 0 };
       setLists([...lists, newList]);
-      setSelectedList(newList.name);
+      onListChange(newListName);
       setNewListName("");
       setCreatePopupOpen(false);
+    } catch (err) {
+      console.error("❌ Error creating wishlist:", err.message);
     }
   };
 
-  // Rename a wishlist by ID
-  const handleRename = (id, name) => {
-    setLists(lists.map((list) => (list.id === id ? { ...list, name } : list)));
-    if (selectedList === lists.find((list) => list.id === id)?.name) {
-      setSelectedList(name);
+  // Rename list
+  const handleRename = async (oldName, newName) => {
+    const token = getAccessToken();
+    if (!token || !newName.trim()) return;
+
+    try {
+      await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
+        method: "PATCH",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ oldName, newName }),
+      });
+
+      const updated = lists.map((list) =>
+        list.name === oldName ? { ...list, name: newName, id: newName } : list
+      );
+      setLists(updated);
+      if (selectedList === oldName) onListChange(newName);
+      setEditingId(null);
+    } catch (err) {
+      console.error("❌ Error renaming wishlist:", err.message);
     }
-    setEditingId(null);
   };
 
-  // Delete a wishlist by ID
-  const handleDelete = (id) => {
-    const listToDelete = lists.find((list) => list.id === id);
-    setLists(lists.filter((list) => list.id !== id));
-    if (selectedList === listToDelete?.name) {
-      setSelectedList("My Next Trip");
+  // Delete list
+  const handleDelete = async (name) => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    try {
+      await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
+        method: "DELETE",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ wishlistName: name }),
+      });
+
+      const remaining = lists.filter((list) => list.name !== name);
+      setLists(remaining);
+      if (selectedList === name) onListChange("My next trip");
+    } catch (err) {
+      console.error("❌ Error deleting wishlist:", err.message);
     }
   };
 
   // Close dropdown or popup if you click outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
         setDropdownOpen(false);
         setCreatePopupOpen(false);
         setEditingId(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
     <div className="guestActions" ref={wrapperRef}>
       <label className="label">Select list:</label>
 
-      {/* Select list button */}
+      {/*  Select list  */}
       <div className="dropdownWrapper">
         <button className="dropdownToggle" onClick={() => setDropdownOpen(!dropdownOpen)}>
           {selectedList} <FiChevronDown />
@@ -75,7 +154,7 @@ const GuestActions = () => {
                     <input
                       type="text"
                       value={list.name}
-                      onChange={(e) => handleRename(list.id, e.target.value)}
+                      onChange={(e) => handleRename(list.name, e.target.value)}
                       onBlur={() => setEditingId(null)}
                       autoFocus
                     />
@@ -83,16 +162,17 @@ const GuestActions = () => {
                     <>
                       <span
                         onClick={() => {
-                          setSelectedList(list.name);
+                          onListChange(list.name);
                           setDropdownOpen(false);
-                        }}>
+                        }}
+                      >
                         {list.name}
                       </span>
                       <span className="badge">{list.count}</span>
                       <button onClick={() => setEditingId(list.id)}>
                         <FiEdit2 />
                       </button>
-                      <button onClick={() => handleDelete(list.id)}>
+                      <button onClick={() => handleDelete(list.name)}>
                         <FiTrash2 />
                       </button>
                     </>
