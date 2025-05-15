@@ -58,7 +58,9 @@ const GuestBookings = ({navigation}) => {
     async function executeAsyncFunction() {
       try {
         const bookings = await getBookingsByGuestId();
-        await getProperties(bookings);
+        if (bookings.length > 0) {
+          await getProperties(bookings);
+        }
       } catch (error) {
         ToastMessage(error.message, ToastAndroid.SHORT);
         setLoading(false);
@@ -75,7 +77,16 @@ const GuestBookings = ({navigation}) => {
   }
 
   if (!properties || properties.length === 0) {
-    return <Text>No bookings found or something went wrong.</Text>;
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView>
+          <TabHeader tabTitle={'Upcoming bookings'} />
+          <View style={styles.bodyContainer}>
+            <Text>No bookings found.</Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
   }
 
   return (
