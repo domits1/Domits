@@ -4,8 +4,10 @@ import styles from "../../verification/hostverification/hostverification.module.
 import confirmEmailStyles from "./confirmEmail.module.css";
 import Toast from "../../../components/toast/Toast";
 import { useConfirmEmailLogic } from "./ConfirmEmailLogic.js";
+import { useNavigate } from 'react-router-dom';
 
 function ConfirmEmailView() {
+  const navigate = useNavigate();
   const {
     inputRef,
     isComplete,
@@ -18,6 +20,13 @@ function ConfirmEmailView() {
     setToastConfig,
     userEmail,
   } = useConfirmEmailLogic();
+
+  function goToRegisterPage(e){
+    e.preventDefault()
+    navigate('/register');
+  }
+
+
   return (
     <main className={styles["verification-container"]}>
       <Toast
@@ -79,7 +88,7 @@ function ConfirmEmailView() {
             stroke-linejoin="round"
           />
         </svg>
-        <p>Back</p>
+        <a href="#register" onClick={goToRegisterPage}>Back</a>
       </div>
       </div>
     </main>

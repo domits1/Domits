@@ -37,10 +37,9 @@ export const GUEST_BOOKINGS_SCREEN = "guest-bookings";
 export const PROPERTY_DETAILS_SCREEN = "property-details";
 
 // Booking Engine
-export const BOOKING_PROCESS_SCREEN = "booking-process";
-export const SIMULATE_STRIPE_SCREEN = "simulate-stripe";
-export const PAYMENT_ACCEPTED_SCREEN = "payment-accepted";
-export const PAYMENT_DECLINED_SCREEN = "payment-declined";
+export const STRIPE_PROCESS_SCREEN = "stripe-process";
+export const STRIPE_PAYMENT_CONFIRMED_SCREEN = "stripe-payment-confirmed";
+export const STRIPE_PAYMENT_CANCELLED_SCREEN = "stripe-payment-cancelled";
 export const GUEST_NEW_CONFIRMED_BOOKING_SCREEN = "guest-new-confirmed-booking";
 
 // Account
