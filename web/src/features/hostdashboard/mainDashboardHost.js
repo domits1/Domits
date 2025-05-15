@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Pages from "./pages2";
 
 
 function MainDashboardHost(){
