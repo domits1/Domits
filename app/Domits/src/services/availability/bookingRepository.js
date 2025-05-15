@@ -37,7 +37,6 @@ class BookingRepository {
       },
     );
     if (!response.ok) {
-      console.log(response);
       throw new Error('Failed to create booking.');
     }
     return await response.json();
@@ -57,7 +56,6 @@ class BookingRepository {
       },
     );
     if (!response.ok) {
-        console.log(response);
         throw new Error('Failed to confirm booking.');
     }
     return await response.json();
