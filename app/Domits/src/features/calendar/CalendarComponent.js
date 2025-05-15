@@ -65,6 +65,7 @@ const CalendarComponent = ({
         try {
             const repo =
                 process.env.REACT_APP_TESTING === "true" ? new TestBookingRepository() : new BookingRepository();
+
             const response = await repo.getBookingsByPropertyIdAndFromDate(id, date);
 
             const reservedDates = response.map(data =>
@@ -85,9 +86,6 @@ const CalendarComponent = ({
 
             return reservedDates.flat();
         } catch (error) {
-            if (error === 204) {
-                return [];
-            }
             ToastMessage(error.message, ToastAndroid.LONG);
             return [];
         }
