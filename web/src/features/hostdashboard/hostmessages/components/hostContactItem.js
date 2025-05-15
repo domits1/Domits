@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
 import profileImage from '../domits-logo.jpg';
 import useUpdateContactRequest from "../hooks/useUpdateContactRequest";
+import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
+import ContactItem from '../../../../components/messages/ContactItem';
 
-const ContactItem = ({ contact, isPending, setContacts }) => {
+
+const HostContactItem = ({ contact, isPending, setContacts, selected }) => {
     const [error, setError] = useState(null);
     const { updateContactRequest } = useUpdateContactRequest(setContacts);
+    const { bookingDetails, accommodation } = useFetchBookingDetails(contact.hostId, contact.recipientId, {
+        withAuth: true,
+        accommodationEndpoint: 'hostDashboard/single',
+    });
+    const key = accommodation?.images?.[0]?.key;
+    const accoImage = key
+        ? `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`
+        : null;
 
 
     const handleAccept = async () => {
@@ -24,37 +35,20 @@ const ContactItem = ({ contact, isPending, setContacts }) => {
     };
 
     return (
-        <div className="contact-item-content">
-            <img src={profileImage} alt="Profile" className="contact-item-profile-image" />
-            <div className="contact-item-text-container">
-                <p className="contact-item-full-name">{contact.givenName}</p>
-                {!isPending && (
-                    <p className="contact-item-subtitle">
-                        {contact.latestMessage.text
-                            ? contact.latestMessage.text || "No message yet" 
-                            : "No message history yet"}
-                    </p>
-                )}
-                {isPending && (
-                    <>
-                        <div className="contact-item-buttons-container">
-                            <button onClick={handleAccept} className="accept-button">
-                                Accept
-                            </button>
-                            <button onClick={handleReject} className="reject-button">
-                                Deny
-                            </button>
-                        </div>
-                    </>
-                )}
-
-            </div>
+        <ContactItem
+            contact={contact}
+            isPending={isPending}
+            setContacts={setContacts}
+            selected={selected}
+            handleAccept={handleAccept}
+            handleReject={handleReject}
+            accoImage={accoImage || null}
+            profileImage={profileImage}
+            bookingDetails={bookingDetails}
 
 
-
-            {error && <p className="error-message">{error}</p>}
-        </div>
+        />
     );
 };
 
-export default ContactItem;
+export default HostContactItem;
