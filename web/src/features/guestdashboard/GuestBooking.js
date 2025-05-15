@@ -139,7 +139,7 @@ const BookingGuestDashboard = () => {
 
     return (
         <div className="guest-booking-page-body">
-            <div className='guest-booking-dashboards'>
+            <div className="guest-booking-dashboards">
                 <div className="guest-booking-bookingContent">
                     <div className="guest-booking-bookingContentHeader">
                         <div className="guest-booking-controls">
@@ -206,6 +206,35 @@ const BookingGuestDashboard = () => {
                     )}
 
                     {showBookingListPopup && handleBookingListPopup()}
+                </div>
+
+                {/* Previously Booked Section */}
+                <div className="previously-booked-container">
+                    <h2>Previously Booked</h2>
+                    <table className="previously-booked-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Price</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {bookings
+                                .filter(b => new Date(b.EndDate) < new Date())
+                                .map(b => (
+                                    <tr key={b.ID}>
+                                        <td>{b.Title}</td>
+                                        <td>{statusBadge(b.Status)}</td>
+                                        <td>&euro;{parseFloat(b.Price).toFixed(2)}</td>
+                                        <td>{dateFormatterDD_MM_YYYY(b.StartDate)}</td>
+                                        <td>{dateFormatterDD_MM_YYYY(b.EndDate)}</td>
+                                    </tr>
+                                ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
