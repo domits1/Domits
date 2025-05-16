@@ -65,6 +65,18 @@ class PropertyRepository {
             throw error;
         }
     }
+
+    async getPropertiesList(properties) {
+        const response = await fetch(
+            `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/set?properties=${properties.join(",")}`, {
+                method: 'GET',
+            }
+        );
+        if (!response.ok) {
+            throw new Error("Something went wrong while fetching properties.");
+        }
+        return await response.json();
+    }
 }
 
 export default PropertyRepository;
