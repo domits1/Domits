@@ -5,7 +5,6 @@ import Pay from "../header/pay";
 import GuestBookings from "../screens/guestdashboard/screens/GuestBookings";
 import Pocket from "../header/pocket";
 import PropertyDetails from "../screens/propertyDetailsScreen/screens/propertyDetailsScreen";
-import GuestNewConfirmedBooking from "../screens/guestdashboard/screens/GuestBookingsTab";
 import HostProfile from "../screens/profile/hostprofile/HostProfileTab";
 import StripePayment from "../features/bookingengine/stripe/screens/StripePayment";
 import PaymentCancelled from "../features/bookingengine/paymentcancelled/screens/PaymentCancelled";
@@ -13,7 +12,6 @@ import PaymentConfirmed from "../features/bookingengine/paymentconfirmed/screens
 import HomeScreen from "../screens/home/screens/Home";
 import {
     GUEST_BOOKINGS_SCREEN,
-    GUEST_NEW_CONFIRMED_BOOKING_SCREEN,
     HOME_SCREEN,
     HOST_PROFILE_SCREEN,
     PAY_SCREEN,
@@ -55,7 +53,6 @@ function MainNavigationStack() {
             <Stack.Screen name={STRIPE_PROCESS_SCREEN} component={StripePayment}/>
             <Stack.Screen name={STRIPE_PAYMENT_CANCELLED_SCREEN} component={PaymentCancelled}/>
             <Stack.Screen name={STRIPE_PAYMENT_CONFIRMED_SCREEN} component={PaymentConfirmed}/>
-            <Stack.Screen name={GUEST_NEW_CONFIRMED_BOOKING_SCREEN} component={GuestNewConfirmedBooking}/>
         </Stack.Navigator>
     );
 }
