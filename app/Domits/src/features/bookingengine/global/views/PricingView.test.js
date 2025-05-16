@@ -1,9 +1,20 @@
 import React from 'react';
 import {render} from '@testing-library/react-native';
 import PricingView from './PricingView';
-import {describe, expect, it} from '@jest/globals'; // Adjust the import path as needed
+import {beforeEach, describe, expect, it} from '@jest/globals';
+import i18n from "i18next";
+import {initReactI18next} from "react-i18next";
+import {LanguageReferences} from "../../../translation/services/Languages"; // Adjust the import path as needed
 
 describe('PricingView Component', () => {
+  beforeEach(async () => {
+    await i18n.use(initReactI18next).init({
+      lng: 'en',
+      fallbackLng: 'en',
+      resources: LanguageReferences,
+    });
+  })
+
   const mockPricing = {
     roomRate: 100,
     cleaning: 50,
@@ -15,7 +26,7 @@ describe('PricingView Component', () => {
       <PricingView guests={2} nights={3} pricing={mockPricing} />,
     );
 
-    expect(getByText('2 guests | 3 nights')).toBeTruthy();
+    expect(getByText('2 Guest(s) | 3 Nights')).toBeTruthy();
   });
 
   it('should display pricing calculations', () => {
@@ -24,7 +35,7 @@ describe('PricingView Component', () => {
     );
 
     // Room rate
-    expect(getByText('$100 night x 3')).toBeTruthy();
+    expect(getByText('$100 per night x 3')).toBeTruthy();
     expect(getByText('$300')).toBeTruthy();
 
     // Cleaning fee
@@ -58,8 +69,8 @@ describe('PricingView Component', () => {
       <PricingView guests={4} nights={5} pricing={differentPricing} />,
     );
 
-    expect(getByText('4 guests | 5 nights')).toBeTruthy();
-    expect(getByText('$150 night x 5')).toBeTruthy();
+    expect(getByText('4 Guest(s) | 5 Nights')).toBeTruthy();
+    expect(getByText('$150 per night x 5')).toBeTruthy();
 
     // Room rate * 5
     expect(getByText('$750')).toBeTruthy();
