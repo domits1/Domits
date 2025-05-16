@@ -7,15 +7,16 @@ import {
   ToastAndroid,
   Text,
 } from 'react-native';
-import TabHeader from '../../accounthome/components/TabHeader';
-import TestPropertyRepository from '../../../services/property/test/testPropertyRepository';
-import PropertyRepository from '../../../services/property/propertyRepository';
-import TestBookingRepository from '../../../services/availability/test/testBookingRepository';
-import BookingRepository from '../../../services/availability/bookingRepository';
-import {useAuth} from '../../../context/AuthContext';
-import ToastMessage from '../../../components/ToastMessage';
-import LoadingScreen from '../../loadingscreen/screens/LoadingScreen';
+import TabHeader from '../../../accounthome/components/TabHeader';
+import TestPropertyRepository from '../../../../services/property/test/testPropertyRepository';
+import PropertyRepository from '../../../../services/property/propertyRepository';
+import TestBookingRepository from '../../../../services/availability/test/testBookingRepository';
+import BookingRepository from '../../../../services/availability/bookingRepository';
+import {useAuth} from '../../../../context/AuthContext';
+import ToastMessage from '../../../../components/ToastMessage';
+import LoadingScreen from '../../../loadingscreen/screens/LoadingScreen';
 import BookingView from '../views/BookingView';
+import {GUEST_SINGLE_BOOKING_SCREEN} from '../../../../navigation/utils/NavigationNameConstants';
 
 const GuestBookings = ({navigation}) => {
   const {user} = useAuth();
@@ -96,9 +97,14 @@ const GuestBookings = ({navigation}) => {
         <View style={styles.bodyContainer}>
           {bookings.map((booking, index) => (
             <BookingView
-              key={booking.id.S || index}
+              key={index}
               property={properties[index]}
               booking={booking}
+              onPress={() =>
+                navigation.navigate(GUEST_SINGLE_BOOKING_SCREEN, {
+                  booking: booking,
+                })
+              }
             />
           ))}
         </View>
@@ -112,7 +118,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bodyContainer: {
-    marginTop: '15%',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',

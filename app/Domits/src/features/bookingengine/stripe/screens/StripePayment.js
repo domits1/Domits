@@ -144,7 +144,7 @@ const StripePayment = ({navigation, route}) => {
           pricing={property.pricing}
         />
         <Spacer />
-        <ConfirmAndPayButton onPress={() => createPayment()} />
+        <ConfirmAndPayButton onPress={() => createPayment()} text={"Confirm & Pay"} />
       </View>
       {showDatePopUp && (
         <CalendarModal
