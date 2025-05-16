@@ -18,8 +18,8 @@ function Contact() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState("");
     const [attachmentNames, setAttachmentNames] = useState([]);
-        const {language} = useContext(LanguageContext);
-        const contactContent = contentByLanguage[language]?.contact;
+    const {language} = useContext(LanguageContext);
+    const contactContent = contentByLanguage[language]?.contact;
 
     const API_BASE_URL = "https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail";
 
