@@ -281,6 +281,41 @@
             "description": "Wij geloven dat elke werknemer een bewuste oprichter kan zijn. En je mag op die manier denken en handelen. Een bewuste oprichter is een ondernemer die beslissingen neemt op basis van gezondheid, veiligheid en toekomstbestendigheid. Voor zichzelf, de organisatie, klanten, partners en de samenleving.",
             "description2": "Je neemt verantwoordelijkheid. Ontdekt nieuwe manieren om dingen gedaan te krijgen. En komt met nieuwe ideeën en oplossingen. Je wilt samen creëren, bouwen en ontwikkelen. We zijn altijd op zoek naar nieuwe oprichters."
           }
-        } 
+        },
+        "contact": {
+          "faq": "Veelgestelde Vragen (FAQ)",
+          "holiday": {
+            "title": "Vragen over een vakantiehuis, boot of camper?",
+            "description": "Heb je een vraag over een vakantieaccommodatie, boeking of betaling? Bekijk onze Veelgestelde Vragen (FAQ). Domits is een tussenpersoon, dus je huurt de accommodatie van de host."
+          },
+          "areYouHost": {
+            "title": "Ben je een host, eigenaar of beheerder?",
+            "description": "We staan altijd open voor nieuwe vakantiehuizen, boten en campers. Bekijk op onze hostingpagina hoe je gratis binnen enkele minuten kunt starten. Of bekijk onze FAQ voor hosts."
+          },
+          "address": {
+            "title": "Adres",
+            "description": "Domits\nKinderhuissingel 6k\n2013 AS, Haarlem"
+          },
+          "opening": {
+            "title": "Openingstijden",
+            "description": "Maandag tot vrijdag via e-mail, chat en telefoon tussen 09:00 en 17:00"
+          },
+          "contact": {
+            "title": "Contact",
+            "description": "Wij zijn beschikbaar om optimale bereikbaarheid in alle tijdzones te garanderen. Hoe specifieker je vraag, hoe sneller we je kunnen helpen! We reageren altijd zo snel mogelijk. Nog niets van ons gehoord? Controleer je spamfolder.\nMail: teamdomits@gmail.com"
+          },
+          "form": {
+            "title": "Contactformulier",
+            "description": "Wij zijn 24/7 beschikbaar om optimale bereikbaarheid in alle tijdzones te garanderen. Hoe specifieker je vraag, hoe sneller we je kunnen helpen! We reageren altijd binnen 24 uur. Nog niets van ons gehoord? Controleer je spamfolder."
+          },
+          "name": "Naam",
+          "subject": "Onderwerp",
+          "email": "Jouw e-mailadres",
+          "message": "Bericht",
+          "attachment": "Bijlagen toevoegen",
+          "send": "Bericht verzenden",
+          "guest": "Gast",
+          "host": "Gastheer"
+        }
 }
   

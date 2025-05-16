@@ -280,6 +280,41 @@
             "description": "Creemos que cada empleado puede ser un fundador consciente. Y se te permite pensar y actuar de esa manera. Un fundador consciente es un emprendedor que toma decisiones basadas en la salud, la seguridad y la sostenibilidad. Para sí mismo, la organización, los clientes, los socios y la sociedad.",
             "description2": "Tomas responsabilidad. Descubres nuevas formas de hacer las cosas. Y propones nuevas ideas y soluciones. Quieres crear, construir y desarrollar juntos. Siempre estamos buscando nuevos fundadores."
           }
+        },
+        "contact": {
+          "faq": "Preguntas Frecuentes (FAQ)",
+          "holiday": {
+            "title": "¿Tienes preguntas sobre una casa de vacaciones, barco o caravana?",
+            "description": "¿Tienes una pregunta sobre un alojamiento vacacional, una reserva o un pago? Consulta nuestras Preguntas Frecuentes (FAQ). Domits es un intermediario, por lo tanto alquilas el alojamiento al anfitrión."
+          },
+          "areYouHost": {
+            "title": "¿Eres anfitrión, propietario o administrador?",
+            "description": "Siempre estamos abiertos a nuevas casas, barcos y caravanas vacacionales. Consulta en nuestra página para anfitriones cómo puedes empezar en pocos minutos y gratis. O revisa nuestras FAQ para anfitriones."
+          },
+          "address": {
+            "title": "Dirección",
+            "description": "Domits\nKinderhuissingel 6k\n2013 AS, Haarlem"
+          },
+          "opening": {
+            "title": "Horario de atención",
+            "description": "De lunes a viernes por correo, chat y teléfono entre las 09:00 y las 17:00"
+          },
+          "contact": {
+            "title": "Contacto",
+            "description": "Estamos disponibles para garantizar la mejor accesibilidad en todas las zonas horarias. ¡Cuanto más específico seas al contactarnos, más rápido podremos ayudarte! Siempre respondemos lo antes posible. ¿Aún no has recibido respuesta? Revisa tu bandeja de spam.\nCorreo: teamdomits@gmail.com"
+          },
+          "form": {
+            "title": "Formulario de contacto",
+            "description": "Estamos disponibles las 24/7 para garantizar la mejor accesibilidad en todas las zonas horarias. Cuanto más específico seas al contactarnos, más rápido podremos ayudarte. Siempre respondemos dentro de las 24 horas. ¿Aún no has recibido respuesta? Revisa tu bandeja de spam."
+          },
+          "name": "Nombre",
+          "subject": "Asunto",
+          "email": "Tu correo electrónico",
+          "message": "Mensaje",
+          "attachment": "Agregar archivos adjuntos",
+          "send": "Enviar mensaje",
+          "guest": "Huésped",
+          "host": "Anfitrión"
         }
 }
   

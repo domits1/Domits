@@ -281,6 +281,41 @@
           "description": "Wir glauben, dass jeder Mitarbeiter ein bewusster Gründer sein kann. Und du darfst auf diese Weise denken und handeln. Ein bewusster Gründer ist ein Unternehmer, der Entscheidungen auf der Grundlage von Gesundheit, Sicherheit und Zukunftsfähigkeit trifft. Für sich selbst, die Organisation, Kunden, Partner und die Gesellschaft.",
           "description2": "Du übernimmst Verantwortung. Entdeckst neue Wege, um Dinge zu erledigen. Und kommst mit neuen Ideen und Lösungen. Du möchtest gemeinsam schaffen, bauen und entwickeln. Wir sind immer auf der Suche nach neuen Gründern."
         }
+      },
+      "contact": {
+        "faq": "Häufig gestellte Fragen (FAQ)",
+        "holiday": {
+          "title": "Fragen zu einem Ferienhaus, Boot oder Wohnmobil?",
+          "description": "Hast du eine Frage zu einer Ferienunterkunft, Buchung oder Zahlung? Schau dir unsere häufig gestellten Fragen (FAQ) an. Domits ist ein Vermittler, daher mietest du die Unterkunft direkt vom Gastgeber."
+        },
+        "areYouHost": {
+          "title": "Bist du Gastgeber, Eigentümer oder Verwalter?",
+          "description": "Wir sind immer offen für neue Ferienhäuser, Boote und Wohnmobile. Sieh dir auf unserer Gastgeber-Seite an, wie du in wenigen Minuten kostenlos starten kannst. Oder schau dir unsere FAQ für Gastgeber an."
+        },
+        "address": {
+          "title": "Adresse",
+          "description": "Domits\nKinderhuissingel 6k\n2013 AS, Haarlem"
+        },
+        "opening": {
+          "title": "Öffnungszeiten",
+          "description": "Montag bis Freitag per E-Mail, Chat und Telefon zwischen 09:00 und 17:00 Uhr"
+        },
+        "contact": {
+          "title": "Kontakt",
+          "description": "Wir sind verfügbar, um optimale Erreichbarkeit in allen Zeitzonen sicherzustellen. Je genauer deine Anfrage ist, desto schneller können wir helfen! Wir melden uns immer so schnell wie möglich. Noch keine Antwort erhalten? Überprüfe deinen Spam-Ordner.\nE-Mail: teamdomits@gmail.com"
+        },
+        "form": {
+          "title": "Kontaktformular",
+          "description": "Wir sind rund um die Uhr verfügbar, um optimale Erreichbarkeit in allen Zeitzonen sicherzustellen. Je genauer deine Anfrage ist, desto schneller können wir helfen. Wir antworten immer innerhalb von 24 Stunden. Noch keine Antwort erhalten? Überprüfe deinen Spam-Ordner."
+        },
+        "name": "Name",
+        "subject": "Betreff",
+        "email": "Deine E-Mail",
+        "message": "Nachricht",
+        "attachment": "Anhänge hinzufügen",
+        "send": "Nachricht senden",
+        "guest": "Gast",
+        "host": "Gastgeber"
       }
 }
   
