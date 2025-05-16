@@ -1,11 +1,25 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import "./contact.css";
+import {LanguageContext} from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+
+const contentByLanguage = {
+  en,
+  nl,
+  de,
+  es,
+};
 
 function Contact() {
     const [sourceEmail, setSourceEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState("");
     const [attachmentNames, setAttachmentNames] = useState([]);
+        const {language} = useContext(LanguageContext);
+        const contactContent = contentByLanguage[language]?.contact;
 
     const API_BASE_URL = "https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail";
 
@@ -114,53 +128,53 @@ function Contact() {
     return (
         <div className="contact">
             <div className="questionsContainer">
-                <h1>Frequently Asked Questions (FAQ)</h1>
+                <h1>{contactContent.faq}</h1>
             <div className="buttonContactContainer">                
             <button className="Contact-button">
-                <a href="/helpdesk-guest">Guest</a>
+                <a href="/helpdesk-guest">{contactContent.guest}</a>
             </button>
       
 
             <button className="Contact-button">
-                <a href="/helpdesk-host">Host</a>
+                <a href="/helpdesk-host">{contactContent.host}</a>
             </button>
             </div>
 
-                <h1>Questions about a holiday home, boat or camper?</h1>
+                <h1>{contactContent.holiday.title}</h1>
                 <p className="quistionText">
-                    Do you have a question about a holiday accommodation, booking, or payment? Check our Frequently Asked Questions (FAQ). Domits is an intermediary so you rent the holiday accommodation from the host.
+                    {contactContent.holiday.description}
                 </p>
 
-                <h1>Are you a host, property owner, or manager?</h1>
+                <h1>{contactContent.areYouHost.title}</h1>
                 <p className="quistionText">
-                    We're always open for new holiday homes, boats, and campers. See on our hosting page how you can start within a couple of minutes for free. Or check our FAQ for hosts.
+                    {contactContent.areYouHost.description}
                 </p>
 
-                <h1>Address</h1>
+                <h1>{contactContent.address.title}</h1>
                 <p className="quistionText">
-                    Domits<br />
-                    Kinderhuissingel 6k<br />
-                    2013 AS, Haarlem
+                    {contactContent.address.description.split('\n').map((line, index) => (
+                        <p key={index}>{line}</p>
+                    ))}
                 </p>
 
-                <h1>Opening hours</h1>
+                <h1>{contactContent.opening.title}</h1>
                 <p className="quistionText">
-                    Monday to Friday via mail, chat, and phone between 09:00 and 17:00
+                    {contactContent.opening.description}
                 </p>
 
-                <h1>Contact</h1>
+                <h1>{contactContent.contact.title}</h1>
                 <p className="quistionText">
-                    We are available to ensure optimal reachability across all time zones. The more specific you are in your reach out, the faster we can assist you! We always get back to you as soon as possible. Not received any response from us yet? Check your spam inbox.
+                    {contactContent.contact.description.split('\n').map((line, index) => (
+                        <p key={index}>{line}</p>
+                    ))}
                 </p>
-                <p className="quistionText">Mail: teamdomits@gmail.com</p>
+
             </div>
 
             <div className="contactFormContainer">
-                <h1>Contact Form</h1>
+                <h1>{contactContent.form.title}</h1>
                 <p>
-                    We are 24/7 available to ensure optimal reachability across all time zones. The more specific
-                    you are in your reach out, the faster we can assist you! We always get back to you within 24
-                    hours of reaching out. Not received any response from us yet? Check your spam inbox.
+                    {contactContent.form.description}
                 </p>
                 {feedbackMessage && (
                     <p className={`feedback ${feedbackMessage.includes("successfully") ? "success" : "error"}`}>
@@ -170,26 +184,26 @@ function Contact() {
                 <form onSubmit={handleSubmit}>
                     <div className="contactform">
                         <div className="namemessage">
-                            <label htmlFor="name">Name</label>
-                            <input type="text" id="name" placeholder="Your name" />
+                            <label htmlFor="name">{contactContent.name}</label>
+                            <input type="text" id="name" placeholder={contactContent.name} />
 
-                            <label htmlFor="subject">Subject</label>
-                            <input type="text" id="subject" placeholder="Subject" />
+                            <label htmlFor="subject">{contactContent.subject}</label>
+                            <input type="text" id="subject" placeholder={contactContent.subject} />
 
-                            <label htmlFor="sourceEmail">Your Email</label>
+                            <label htmlFor="sourceEmail">{contactContent.email}</label>
                             <input
                                 type="email"
                                 id="sourceEmail"
-                                placeholder="Your Mail"
+                                placeholder={contactContent.email}
                                 value={sourceEmail}
                                 onChange={(e) => setSourceEmail(e.target.value)}
                             />
                         </div>
                         <div className="biginput">
-                            <label htmlFor="message">Message</label>
+                            <label htmlFor="message">{contactContent.message}</label>
                             <textarea
                                 id="message"
-                                placeholder="Your Message"
+                                placeholder={contactContent.message}
                             ></textarea>
                         </div>
                     </div>
@@ -202,10 +216,10 @@ function Contact() {
                             onChange={handleAttachmentChange}
                         />
                         <button type="button" id="attachmentsbutton" onClick={handleAttachmentClick}>
-                            Add attachments
+                            {contactContent.attachment}
                         </button>
                         <button type="submit" id="sendbutton" disabled={isSubmitting}>
-                            {isSubmitting ? "Sending..." : "Send message"}
+                            {isSubmitting ? "Sending..." : `${contactContent.send}`}
                         </button>
                         <ul>
                             {attachmentNames.map((name, index) => (
