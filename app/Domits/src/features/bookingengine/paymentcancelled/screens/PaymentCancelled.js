@@ -12,7 +12,7 @@ const PaymentCancelled = ({navigation, route}) => {
   const guests = route.params.guests
   const nights = route.params.nights;
   const paymentSecret = route.params.paymentSecret;
-  const booking = route.params.booking;
+  const bookingId = route.params.bookingId;
 
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
   const openPaymentSheet = async () => {
@@ -32,7 +32,7 @@ const PaymentCancelled = ({navigation, route}) => {
           navigation.navigate(HOME_SCREEN);
         } else {
           navigation.navigate(STRIPE_PAYMENT_CONFIRMED_SCREEN, {
-            booking: booking,
+            bookingId: bookingId,
             guests: guests,
             nights: nights,
           });
