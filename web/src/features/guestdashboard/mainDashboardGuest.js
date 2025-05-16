@@ -5,44 +5,45 @@ import GuestBooking from "./GuestBooking";
 import GuestPayments from "./GuestPayments";
 import GuestReviews from "./GuestReviews";
 import GuestSettings from "./GuestSettings";
+import GuestWishlist from "./GuestWishlist";
 import GuestMessages from "./guestmessages/pages/guestMessages";
 
 const MainDashboardGuest = () => {
-    const [activeComponent, setActiveComponent] = useState("Dashboard");
+  const [activeComponent, setActiveComponent] = useState("Dashboard");
 
-    const renderComponent = () => {
-        switch (activeComponent) {
-            case "Dashboard":
-                return <GuestDashboard />;
-            case "Bookings":
-                return <GuestBooking />;
-            case "Messages":
-                return <GuestMessages />;
-            case "Payments":
-                return <GuestPayments />;
-            case "Reviews":
-                return <GuestReviews />;
-            case "Settings":
-                return <GuestSettings />;
-            default:
-                return <GuestDashboard />;
-        }
-    };
+  const renderComponent = () => {
+    switch (activeComponent) {
+      case "Dashboard":
+        return <GuestDashboard />;
+      case "Bookings":
+        return <GuestBooking />;
+      case "Messages":
+        return <GuestMessages />;
+      case "Payments":
+        return <GuestPayments />;
+      case "Reviews":
+        return <GuestReviews />;
+      case "Settings":
+        return <GuestSettings />;
+      case "Wishlist":
+        return <GuestWishlist />;
+      default:
+        return <GuestDashboard />;
+    }
+  };
 
-    const handleNavigation = (componentName) => {
-        setActiveComponent(componentName);
-    };
+  const handleNavigation = (componentName) => {
+    setActiveComponent(componentName);
+  };
 
-    return (
-        <div className="main-dashboard-guest">
-            <div className="main-dashboard-sidebar">
-                <Pages onNavigate={handleNavigation} />
-            </div>
-            <div className="main-dashboard-content">
-                {renderComponent()}
-            </div>
-        </div>
-    );
+  return (
+    <div className="main-dashboard-guest">
+      <div className="main-dashboard-sidebar">
+        <Pages onNavigate={handleNavigation} />
+      </div>
+      <div className="main-dashboard-content">{renderComponent()}</div>
+    </div>
+  );
 };
 
 export default MainDashboardGuest;
