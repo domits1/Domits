@@ -260,6 +260,22 @@
             "description": "Construimos nuestra plataforma de viajes para listar, buscar y reservar alojamientos. Además, ofrecemos desarrollo y consultoría en tecnología de viajes para un grupo selecto de socios. \nEstamos abiertos a colaborar a través de emprendimientos y nuestros ",
             "travelInnovation": "laboratorios de innovación en viajes"
           },
+          "crew": {
+            "whoWeAre": "Quiénes somos",
+            "weAreAll": "Todos somos fundadores conscientes.",
+            "founder": "Fundador",
+            "engineeringManager": "Gerente de Ingeniería",
+            "productOwner": "Propietario del producto",
+            "developer": "Desarrollador",
+            "developerAI": "Desarrollador de Agentes de IA",
+            "developerRevenue": "Desarrollador de Ingresos",
+            "developerDistribution": "Desarrollador de Distribución",
+            "security": "Seguridad",
+            "marketing": "Marketing",
+            "growth": "Crecimiento",
+            "canBeYou": "¡Tú podrías ser parte!",
+            "hiring": "¡Estamos contratando!"
+          },
           "footerText": {
             "description": "Creemos que cada empleado puede ser un fundador consciente. Y se te permite pensar y actuar de esa manera. Un fundador consciente es un emprendedor que toma decisiones basadas en la salud, la seguridad y la sostenibilidad. Para sí mismo, la organización, los clientes, los socios y la sociedad.",
             "description2": "Tomas responsabilidad. Descubres nuevas formas de hacer las cosas. Y propones nuevas ideas y soluciones. Quieres crear, construir y desarrollar juntos. Siempre estamos buscando nuevos fundadores."

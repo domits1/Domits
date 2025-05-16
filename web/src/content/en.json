@@ -261,6 +261,22 @@
             "description": "We build our travel platform to list, search and book accommodations. Besides that we are providing traveltech development and consultancy for a select group of partners. \nWe are open to cooperate through ventures and our ",
             "travelInnovation": "travel innovation labs"
           },
+          "crew": {
+            "whoWeAre": "Who we are",
+            "weAreAll": "We are all conscious founders.",
+            "founder": "Founder",
+            "engineeringManager": "Engineering Manager",
+            "productOwner": "Product Owner",
+            "developer": "Developer",
+            "developerAI": "Developer AI Agents",
+            "developerRevenue": "Developer Revenue",
+            "developerDistribution": "Developer Distribution",
+            "security": "Security",
+            "marketing": "Marketing",
+            "growth": "Growth",
+            "canBeYou": "This can be you!",
+            "hiring": "We're  hiring!"
+          },
           "footerText": {
             "description" : " We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.",
             "description2": "You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders."
