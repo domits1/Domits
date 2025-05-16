@@ -6,7 +6,6 @@ import AmenitiesPopup from '../../../propertyDetailsScreen/components/amenitiesP
 import Spacer from '../../../../components/Spacer';
 
 const PropertyView = ({property, booking}) => {
-  console.log(booking);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   return (
     <View style={styles.propertyContainer}>
