@@ -316,6 +316,120 @@
         "send": "Nachricht senden",
         "guest": "Gast",
         "host": "Gastgeber"
+      },
+      "whyDomits": {
+        "head": {
+          "title": "Warum Domits & wie wir gemeinsam gewinnen",
+          "subtitle": "Eine der sich am schnellsten entwickelnden All-in-One-Reiseplattformen.",
+          "description": "Beginne deine Reise als Gast oder Gastgeber in wenigen Minuten. Inseriere, suche und buche Ferienunterkünfte, Wohnmobile und Boote. 0 % Gebühren für Eigentümer und Verwalter. Keine versteckten Kosten oder Provisionen. Spare Verwaltungszeit mit KI-Assistenten und Einblicken. Nutze unsere globalen sicheren Zahlungsmethoden. Genieße unseren warmherzigen, kundenorientierten Ansatz und den schnellen Telefonsupport.",
+          "landing": "Kostenlos ausprobieren",
+          "discover": ", erfahre mehr unter ",
+          "howItworks": "wie es funktioniert",
+          "readMore": " oder lies mehr ",
+          "aboutUs": "über uns",
+          "ourMotto": "Unser Motto: Jeden Tag 1 % besser werden – in Produktentwicklung, Integration, Sicherheit und innovativer Reiselösungen.",
+          "travelInnovation": "Travel Innovation Labs zur Schaffung nachhaltiger Werte. Für Gastgeber: KI-gestützte Empfehlungen für Wachstum, Umsatz, Betrieb und Gästeerlebnis. Für Gäste: ein KI-Reiseassistent mit personalisierten Empfehlungen.",
+          "guest": "Gast",
+          "host": "Gastgeber",
+          "dev": "Entwickler, Daten- & Sicherheitsexperten",
+          "growth": "Wachstums-, Umsatz- & Betriebsexperten"
+        },
+        "forGuest": {
+          "title": "Warum Domits für Gäste",
+          "accommodation": {
+            "title": "Einzigartige Unterkünfte",
+            "description": "Domits bietet eine große Auswahl an Unterkunftsarten – darunter Apartments, Häuser, Villen, Wohnmobile und Boote – im Gegensatz zu traditionellen Hotels. Für jeden Geschmack und Bedarf das Richtige."
+          },
+          "experience": {
+            "title": "Lokale Erfahrungen",
+            "description": "Ein Aufenthalt über Domits ermöglicht dir, authentischer in lokale Viertel und Kulturen einzutauchen als ein Hotel in einer Touristenregion."
+          },
+          "amenities": {
+            "title": "Ausstattung",
+            "description": "Viele Domits-Unterkünfte verfügen über voll ausgestattete Küchen, Waschmaschinen und mehr Platz als ein typisches Hotelzimmer – ideal für Familien, Langzeitaufenthalte oder Selbstversorger."
+          },
+          "aiAssist": {
+            "title": "KI-Reiseassistent",
+            "description": "Erhalte Reisehilfe für deinen nächsten Trip. Spare Zeit und Kosten mit personalisierten Empfehlungen für Unterkünfte."
+          },
+          "costEffective": {
+            "title": "Kostenbewusst",
+            "description": "Domits bietet oft günstigere Alternativen als Hotels, besonders für längere Aufenthalte oder Gruppen. Gäste können durch Zimmermiete statt ganzer Immobilien zusätzlich sparen."
+          },
+          "platform": {
+            "title": "24/7 Reiseplattform",
+            "description": "Zur Finanzierung des 24/7 Betriebs berechnen wir 15 % Servicegebühr pro Buchung."
+          }
+        },
+        "forHost": {
+          "title": "Warum Domits für Gastgeber",
+          "fee": {
+            "title": "0 % Gastgebergebühr:",
+            "description": "„Keine Plattformgebühren – erhöhe deinen Gewinn mit unserer 0 %-Regel.“"
+          },
+          "income": {
+            "title": "Zusätzliche Einnahmen",
+            "description": "Viele Gastgeber vermieten ihre Häuser, Zimmer, Boote oder Wohnmobile als Neben- oder Haupteinnahmequelle."
+          },
+          "platform": {
+            "title": "All-in-One-Plattform",
+            "description": "Zentralisierter Kalender, Preise, Reservierungen, Nachrichten, Einnahmen, Bewertungen, Finanzen, Kanalmanagement und Immobilienpflege."
+          },
+          "aiAssist": {
+            "title": "KI-Assistent für Gastgeber",
+            "description": "Spare Zeit, Geld und Stress mit unserem KI-Assistenten. Optimiere Wachstum, Umsatz, Betrieb und Gästeerlebnis mit personalisierten Empfehlungen."
+          },
+          "flexibility": {
+            "title": "Flexibilität",
+            "description": "Mit Domits kannst du Gäste aus der ganzen Welt kennenlernen – eine bereichernde Erfahrung."
+          },
+          "control": {
+            "title": "Kontrolle über dein Inserat",
+            "description": "Du legst Regeln fest, z. B. Check-in-Zeiten, Hausordnung und Gästewünsche. Unser Bewertungssystem erhöht die Sicherheit beim Hosting."
+          },
+          "meetPeople": {
+            "title": "Menschen aus aller Welt treffen",
+            "description": "Du entscheidest, wann du vermietest – saisonal, gelegentlich oder durchgehend – und legst deine Preise selbst fest."
+          }
+        },
+        "forDevs": {
+          "title": "Warum Domits für Entwickler, Daten- & Sicherheitsexperten",
+          "technology": {
+            "title": "Spitzentechnologie und Skalierung",
+            "description": "Ingenieur-Herausforderungen: Domits will weltweit in großem Maßstab operieren – Millionen Nutzer in vielen Ländern. Arbeite an komplexen Systemen mit Fokus auf Leistung, Zuverlässigkeit und Skalierbarkeit.\nModerne Technologien: Domits nutzt React (Native) und AWS.\nInnovationsfreude: Wir fördern neue Tools, Frameworks und Technologien.\nIoT-Hub: Experimentiere mit Self-Check-in, Smart Locks, Kameras, Thermostaten und Lärmüberwachung."
+          },
+          "focusSecurity": {
+            "title": "Fokus auf Sicherheit & Datenschutz",
+            "description": "Sicherheitsherausforderungen: Mit Millionen von Nutzern sind Zahlungen, Datenschutz, Betrugsprävention und Einhaltung von Vorschriften (z. B. DSGVO) zentral. \nVertrauen & Sicherheit: Arbeit an Identitätsprüfung, Missbrauchsprävention und Betrugsabwehr."
+          },
+          "dataDriven": {
+            "title": "Datengetriebene Kultur",
+            "description": "Datenengineering & Analyse: Domits basiert auf datengetriebenen Entscheidungen in Produktentwicklung, User Experience und Strategie."
+          },
+          "collaborative": {
+            "title": "Kollaboratives und offenes Arbeitsumfeld",
+            "description": "Interdisziplinär: Entwickler arbeiten eng mit allen Bereichen zusammen und beeinflussen aktiv Produkt und Strategie.\nOffene Kultur: Ideen und Meinungen werden gefördert."
+          }
+        },
+        "forGrowth": {
+          "title": "Warum Domits für Wachstum-, Umsatz- & Betriebsexperten",
+          "fastGrow": {
+            "title": "Schnell wachsende Reiseplattform",
+            "description": "Große Reichweite: Domits will weltweit in tausenden Städten mit Millionen Nutzern vertreten sein. Wachstumsexperten haben hier vielfältige Optimierungsmöglichkeiten."
+          },
+          "innovative": {
+            "title": "Innovative Marketingstrategien",
+            "description": "Growth Marketing: Domits steht für kreative, virale Kampagnen. Growth Hacker experimentieren mit mutigen Ideen und datengetriebenem Kundenzuwachs.\nLokale & globale Kampagnen: Von Community-Building bis internationalem Markenaufbau."
+          },
+          "dataDriven": {
+            "title": "Datenorientierte Wachstumskultur",
+            "description": "A/B-Tests & Experimente: Ständige Plattformverbesserung durch datengestützte Tests. \nAnalytics & Personalisierung: Optimierung von Preisstrategien, Umsatzmanagement & Nutzererlebnis – eine komplexe und wirkungsvolle Herausforderung."
+          },
+          "collaborative": {
+            "title": "Kollaboratives und offenes Arbeitsumfeld",
+            "description": "Interdisziplinär: Entwickler und Wachstumsteams arbeiten eng zusammen.\nOffene Kultur: Wir fördern Meinungsvielfalt und den Austausch von Ideen."
+          }
+        }
       }
 }
   

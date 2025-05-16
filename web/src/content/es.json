@@ -315,6 +315,120 @@
           "send": "Enviar mensaje",
           "guest": "Huésped",
           "host": "Anfitrión"
+        },
+        "whyDomits": {
+          "head": {
+            "title": "Por qué Domits y cómo ganamos juntos",
+            "subtitle": "Una de las plataformas de viajes todo-en-uno de más rápido crecimiento.",
+            "description": "Comienza tu viaje como huésped o anfitrión en minutos. Publica, busca y reserva alojamientos vacacionales, autocaravanas y barcos. 0% de comisión para propietarios y administradores. Sin costes ocultos ni comisiones. Ahorra tiempo administrativo con asistentes de IA y análisis. Utiliza nuestros métodos de pago seguros globales. Disfruta de nuestra atención al cliente cálida y soporte telefónico rápido.",
+            "landing": "Pruébalo gratis",
+            "discover": ", descubre más en ",
+            "howItworks": "cómo funciona",
+            "readMore": " o lee más ",
+            "aboutUs": "sobre nosotros",
+            "ourMotto": "Nuestro lema es mejorar un 1% cada día en desarrollo de producto, integraciones, seguridad y liderazgo intelectual en viajes.",
+            "travelInnovation": "Laboratorios de Innovación en Viajes para crear valor sostenible. Para anfitriones: recomendaciones impulsadas por IA para crecimiento, ingresos, operaciones y experiencia del huésped. Para huéspedes: un asistente de viaje con IA con recomendaciones personalizadas.",
+            "guest": "Huésped",
+            "host": "Anfitrión",
+            "dev": "Desarrolladores, datos, expertos en seguridad",
+            "growth": "Expertos en crecimiento, ingresos y operaciones"
+          },
+          "forGuest": {
+            "title": "Por qué Domits para huéspedes",
+            "accommodation": {
+              "title": "Alojamientos únicos",
+              "description": "A diferencia de los hoteles tradicionales, Domits ofrece una variedad de tipos de alojamiento, incluidos apartamentos, casas, villas, autocaravanas y barcos. Esta variedad se adapta a diferentes gustos, necesidades y experiencias."
+            },
+            "experience": {
+              "title": "Experiencia local",
+              "description": "Alojarse en un alojamiento de Domits permite a los huéspedes sumergirse más en los vecindarios y culturas locales, brindando una experiencia más auténtica que la que ofrecen los hoteles en zonas turísticas."
+            },
+            "amenities": {
+              "title": "Comodidades",
+              "description": "Muchos alojamientos de Domits incluyen cocinas equipadas, lavadoras y más espacio que una habitación de hotel típica. Ideal para familias, estancias largas o quienes desean cocinar."
+            },
+            "aiAssist": {
+              "title": "Asistente de viaje con IA",
+              "description": "Recibe asistencia para tu próximo viaje. Ahorra tiempo y dinero con recomendaciones personalizadas de alojamiento."
+            },
+            "costEffective": {
+              "title": "Económico",
+              "description": "Domits suele ofrecer opciones más asequibles que los hoteles, especialmente para estancias largas o grupos. También puedes alquilar una habitación en lugar de una propiedad entera para ahorrar más."
+            },
+            "platform": {
+              "title": "Plataforma 24/7",
+              "description": "Para operar la plataforma 24/7, cobramos a los huéspedes una comisión del 15% por reserva."
+            }
+          },
+          "forHost": {
+            "title": "Por qué Domits para anfitriones",
+            "fee": {
+              "title": "0% de comisión para anfitriones:",
+              "description": "“Evita pagar comisiones de plataforma y aumenta tus ingresos con nuestra tarifa del 0%.”"
+            },
+            "income": {
+              "title": "Ingresos extra",
+              "description": "Muchos anfitriones alquilan sus casas, habitaciones, barcos o autocaravanas como fuente adicional de ingresos. Puede ser un ingreso complementario o incluso un trabajo a tiempo completo."
+            },
+            "platform": {
+              "title": "Plataforma todo-en-uno",
+              "description": "Calendario centralizado, precios, reservas, mensajes, ingresos, reseñas, finanzas, gestión de canales y cuidado del alojamiento."
+            },
+            "aiAssist": {
+              "title": "Asistente con IA para anfitriones",
+              "description": "Ahorra tiempo, dinero y preocupaciones con nuestro asistente de IA. Mejora tu rendimiento con recomendaciones personalizadas para crecimiento, ingresos, operaciones y experiencia del huésped."
+            },
+            "flexibility": {
+              "title": "Flexibilidad",
+              "description": "Ser anfitrión en Domits permite conocer personas de diferentes países y culturas, lo cual puede ser una experiencia enriquecedora y gratificante."
+            },
+            "control": {
+              "title": "Control del anuncio",
+              "description": "Los anfitriones controlan las reglas de su espacio, como los horarios de check-in, normas de la casa y preferencias de huéspedes. La plataforma de Domits también ayuda a revisar a los huéspedes para una experiencia más segura."
+            },
+            "meetPeople": {
+              "title": "Conoce gente de todo el mundo",
+              "description": "Domits permite elegir cuándo alquilar tu alojamiento: estacionalmente, ocasionalmente o a tiempo completo. También puedes establecer tus propios precios."
+            }
+          },
+          "forDevs": {
+            "title": "Por qué Domits para desarrolladores, expertos en datos y seguridad",
+            "technology": {
+              "title": "Tecnología avanzada y escalabilidad",
+              "description": "Desafíos de ingeniería: Domits busca operar a escala global con millones de usuarios. Los ingenieros trabajan en sistemas complejos, optimizando rendimiento, confiabilidad y escalabilidad.\nTecnología moderna: Domits utiliza React (Native) y AWS.\nInnovación: Se alienta a los ingenieros a experimentar con nuevas herramientas, frameworks y tecnologías.\nIoT: Experimentación con auto check-in, cerraduras inteligentes, cámaras, sensores de temperatura y monitoreo de ruido."
+            },
+            "focusSecurity": {
+              "title": "Enfoque en seguridad y privacidad",
+              "description": "Desafíos de seguridad: Con millones de usuarios y transacciones, la seguridad es crítica. Expertos en seguridad trabajan en pagos seguros, protección de datos y prevención de fraudes. Cumplir con normativas como el RGPD añade más desafíos.\nConfianza y seguridad: Incluye verificación de identidad, detección de fraudes y prevención de abusos."
+            },
+            "dataDriven": {
+              "title": "Cultura impulsada por datos",
+              "description": "Ingeniería y análisis de datos: Domits basa sus decisiones en datos, desde el desarrollo de producto hasta mejoras en la experiencia del usuario."
+            },
+            "collaborative": {
+              "title": "Entorno colaborativo y abierto",
+              "description": "Interdisciplinario: Los ingenieros trabajan estrechamente con todos los equipos y pueden influir directamente en el producto y la estrategia.\nCultura abierta: Domits fomenta un entorno donde se valoran las ideas y opiniones."
+            }
+          },
+          "forGrowth": {
+            "title": "Por qué Domits para expertos en crecimiento, ingresos y operaciones",
+            "fastGrow": {
+              "title": "Plataforma de viajes en rápido crecimiento",
+              "description": "Gran escala y alcance: Domits apunta a operar en miles de ciudades con millones de anfitriones y huéspedes. Esto ofrece grandes oportunidades para optimizar adquisición de usuarios, participación y retención."
+            },
+            "innovative": {
+              "title": "Estrategias de marketing innovadoras",
+              "description": "Marketing de crecimiento: Domits quiere ser conocida por sus estrategias creativas y virales. Los growth hackers tienen libertad para experimentar con ideas audaces basadas en datos.\nCampañas locales y globales: Desde marketing comunitario hasta conciencia de marca internacional."
+            },
+            "dataDriven": {
+              "title": "Cultura de crecimiento basada en datos",
+              "description": "Pruebas A/B y experimentación: Los growth hackers prosperan en Domits gracias al énfasis en la mejora continua basada en datos.\nAnálisis y personalización: Los expertos en ingresos pueden optimizar precios y gestión de ingresos con nuestra plataforma analítica."
+            },
+            "collaborative": {
+              "title": "Entorno colaborativo y abierto",
+              "description": "Interdisciplinario: Los ingenieros trabajan junto a todos los equipos, con gran impacto en estrategia y producto.\nCultura abierta: Se fomenta compartir ideas y opiniones."
+            }
+          }
         }
 }
   

@@ -316,6 +316,120 @@
           "send": "Bericht verzenden",
           "guest": "Gast",
           "host": "Gastheer"
+        },
+        "whyDomits": {
+          "head": {
+            "title": "Waarom Domits & hoe we samen winnen",
+            "subtitle": "Een van de snelst verbeterende alles-in-één reisplatforms.",
+            "description": "Begin je reis als gast of host binnen enkele minuten. Plaats, zoek en boek vakantieaccommodaties, campers en boten. 0% kosten voor eigenaren en beheerders. Geen verborgen kosten of commissie. Bespaar administratieve tijd met AI-assistenten en inzichten. Maak gebruik van onze wereldwijde veilige betaalmethoden. Geniet van onze klantgerichte aanpak en snelle telefonische ondersteuning.",
+            "landing": "Probeer het gratis uit",
+            "discover": ", ontdek meer op ",
+            "howItworks": "hoe het werkt",
+            "readMore": " of lees meer ",
+            "aboutUs": "over ons",
+            "ourMotto": "Ons motto is elke dag 1% beter in productontwikkeling, integraties, beveiliging en intellectueel reisleiderschap.",
+            "travelInnovation": "Travel Innovation Labs creëren duurzame waarde. Voor hosts: AI-gestuurde aanbevelingen voor groei, omzet, operatie en gastervaring. Voor gasten: een AI-reisassistent met aanbevelingen.",
+            "guest": "Gast",
+            "host": "Host",
+            "dev": "Dev, data, beveiligingsexperts",
+            "growth": "Groei, omzet en operatie-experts"
+          },
+          "forGuest": {
+            "title": "Waarom Domits voor gasten",
+            "accommodation": {
+              "title": "Unieke accommodaties",
+              "description": "In tegenstelling tot traditionele hotels biedt Domits een verscheidenheid aan accommodatietypes, waaronder appartementen, huizen, villa’s, campers en boten. Deze variatie sluit aan op verschillende smaken, behoeften en ervaringen."
+            },
+            "experience": {
+              "title": "Lokale ervaring",
+              "description": "Verblijven in een Domits-accommodatie stelt gasten vaak in staat om zich meer onder te dompelen in lokale buurten en culturen, wat zorgt voor een authentiekere ervaring dan een hotel in een toeristisch gebied."
+            },
+            "amenities": {
+              "title": "Voorzieningen",
+              "description": "Veel Domits-verblijven zijn uitgerust met een volledige keuken, wasfaciliteiten en meer ruimte dan een standaard hotelkamer. Ideaal voor gezinnen, lange verblijven of gasten die zelf willen koken."
+            },
+            "aiAssist": {
+              "title": "AI-reisassistent",
+              "description": "Ontvang reishulp voor je volgende trip. Bespaar tijd en geld met gepersonaliseerde aanbevelingen voor accommodaties."
+            },
+            "costEffective": {
+              "title": "Kosteneffectief",
+              "description": "Domits biedt vaak goedkopere opties dan hotels, vooral voor langere verblijven of groepen die de kosten kunnen delen. Gasten kunnen ook budgetopties vinden door een kamer te huren in plaats van een hele woning."
+            },
+            "platform": {
+              "title": "24/7 reisplatform",
+              "description": "Om het platform 24/7 te kunnen runnen vragen we gasten 15% servicekosten per boeking."
+            }
+          },
+          "forHost": {
+            "title": "Waarom Domits voor gastheer",
+            "fee": {
+              "title": "0% gastheerkosten:",
+              "description": "“Vermijd platformkosten en verhoog je inkomsten met onze 0% host fee.”"
+            },
+            "income": {
+              "title": "Extra inkomen",
+              "description": "Veel gastheren verhuren hun huis, extra kamer, boot of camper om extra inkomen te verdienen. Dit kan een bijverdienste of zelfs een voltijdse baan worden."
+            },
+            "platform": {
+              "title": "Alles-in-één platform",
+              "description": "Gecentraliseerde kalender, prijzen, reserveringen, berichten, inkomsten, reviews, financiën, kanaalbeheer en vastgoedbeheer."
+            },
+            "aiAssist": {
+              "title": "AI-assistent voor gastheren",
+              "description": "Bespaar tijd, kosten en frustraties met onze AI-assistent voor hosts. Verhoog prestaties met gepersonaliseerde aanbevelingen voor groei, omzet, operatie en gastervaring."
+            },
+            "flexibility": {
+              "title": "Flexibiliteit",
+              "description": "Hosten via Domits geeft mensen de kans om gasten uit verschillende landen en culturen te ontmoeten — een verrijkende en belonende ervaring."
+            },
+            "control": {
+              "title": "Controle over je aanbod",
+              "description": "Gastheren hebben controle over de regels van hun ruimte, inclusief inchecktijden, huisregels en gastvoorkeuren. Domits helpt ook bij het screenen van gasten via het beoordelingssysteem voor veilig hosten."
+            },
+            "meetPeople": {
+              "title": "Ontmoet mensen van over de hele wereld",
+              "description": "Domits stelt gastheren in staat te bepalen wanneer ze verhuren – seizoensgebonden, af en toe of fulltime – en hun eigen prijzen te bepalen."
+            }
+          },
+          "forDevs": {
+            "title": "Waarom Domits voor developers, data- en securityexperts",
+            "technology": {
+              "title": "Geavanceerde technologie en schaal",
+              "description": "Engineering-uitdagingen: Domits wil wereldwijd opereren op grote schaal met miljoenen gebruikers. Engineers werken aan complexe systemen, gericht op prestaties, betrouwbaarheid en schaalbaarheid.\nModerne tech stack: Domits gebruikt React (Native) en AWS cloudinfrastructuur.\nInnovatiegericht: Engineers krijgen vrijheid om nieuwe tools, frameworks en technologieën te verkennen.\nIoT Hub: Experimenteren met self check-in, slimme sloten, camera’s, temperatuurregelaars en andere slimme voorzieningen."
+            },
+            "focusSecurity": {
+              "title": "Focus op beveiliging en privacy",
+              "description": "Beveiligingsuitdagingen: Domits streeft naar miljoenen gebruikers en transacties – beveiliging is essentieel. Securityexperts werken aan betalingsbeveiliging, gegevensbescherming en fraudepreventie. Internationale regelgeving (zoals AVG) verhoogt de complexiteit.\nVertrouwen en veiligheid: Identity checks, fraudedetectie en systeembeveiliging zijn prioriteit."
+            },
+            "dataDriven": {
+              "title": "Data-gedreven cultuur",
+              "description": "Data-engineering & analytics: Domits baseert beslissingen op data, van productontwikkeling tot gebruikerservaring."
+            },
+            "collaborative": {
+              "title": "Samenwerkende en open werkomgeving",
+              "description": "Cross-functioneel: Engineers werken samen met alle teams. Hierdoor hebben ze directe invloed op productrichting en strategie.\nOpen cultuur: Domits stimuleert openheid en het delen van ideeën."
+            }
+          },
+          "forGrowth": {
+            "title": "Waarom Domits voor groei-, omzet- en operationele experts",
+            "fastGrow": {
+              "title": "Snelgroeiend reisplatform",
+              "description": "Enorme schaal en bereik: Domits wil opereren in duizenden steden met miljoenen hosts en gasten. Dit biedt unieke kansen voor groeistrategieën, engagement en retentie."
+            },
+            "innovative": {
+              "title": "Innovatieve marketingstrategieën",
+              "description": "Growth marketing: Creatieve, virale strategieën staan centraal. Growth hackers experimenteren met gedurfde ideeën op basis van data.\nLokale en wereldwijde campagnes: Van buurtmarketing tot internationale merkbekendheid – het aanbod aan campagnes is breed en gevarieerd."
+            },
+            "dataDriven": {
+              "title": "Data-gedreven groeicultuur",
+              "description": "A/B-testen en experimenten: Continue optimalisatie van conversies en engagement via tests.\nAnalytics en personalisatie: Data helpt omzetstrategieën te verbeteren en gebruikerservaring te personaliseren."
+            },
+            "collaborative": {
+              "title": "Samenwerkende en open werkomgeving",
+              "description": "Cross-functioneel: Engineers werken nauw samen met andere afdelingen en hebben impact op strategie.\nOpen cultuur: Medewerkers worden aangemoedigd ideeën te delen."
+            }
+          }
         }
 }
   

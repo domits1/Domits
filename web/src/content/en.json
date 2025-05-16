@@ -316,6 +316,120 @@
           "send": "Send message",
           "guest": "Guest",
           "host": "Host"
+        },
+        "whyDomits": {
+          "head": {
+            "title": "Why Domits & how we win together",
+            "subtitle": "One of the fastest improving all-in-1 travel platforms.",
+            "description": "Start your journey as a Guest or Host within minutes. List, search and book holiday accommodations, campers and boats. 0% fee for property owners and managers. There are no hidden costs or percentage cuts. Save administrative time AI assistants and insights. Make use of our global secure payment methods. Enjoy our warmhearted customer centric approach and quick phone support.",
+            "landing": "Try it out for free",
+            "discover": ", discover more on ",
+            "howItworks": "how it works",
+            "readMore": " or read more ",
+            "aboutUs": "about us",
+            "ourMotto": "Our motto is 1% better every day in product development, integrations, security and intellectual travel leadership.",
+            "travelInnovation": "Travel Innovation Labs to create sustainable value. For hosts an AI-powered recommendations for growth, revenue, operations, and the guest experience to increase revenue, occupancy and rates. For guests an AI travel assistant with recommendations.",
+            "guest": "Guest",
+            "host": "Host",
+            "dev": "Dev, data, sec experts",
+            "growth": "Growth, rev and ops experts"
+          },
+          "forGuest": {
+            "title": "Why Domits for guest",
+            "accommodation": {
+              "title": "Unique Accommodations",
+              "description": "Unlike traditional hotels, Domits offers a variety of accommodation types, including apartments, houses, villas, campers and boats. This variety can cater to different tastes, needs, and experiences."
+            },
+            "experience": {
+              "title": "Local Experience",
+              "description": "Staying in a Domits accommodation often allows guests to immerse themselves more fully in local neighborhoods and cultures, giving them a more authentic experience than they might get from a hotel in a touristy area."
+            },
+            "amenities": {
+              "title": "Amenities",
+              "description": "Many Domits rentals come with fully equipped kitchens, laundry facilities, and more space than a typical hotel room. This is especially beneficial for families, long-term guests, or those wanting to cook their own meals."
+            },
+            "aiAssist": {
+              "title": "AI Travel Assistant",
+              "description": "Receive travel assistance for your next trip. Reduce time and cost with personalized recommendations for accommodations."
+            },
+            "costEffective": {
+              "title": "Cost-Effective",
+              "description": "Domits often provides more affordable options than hotels, especially for longer stays or for groups who can split the cost of larger properties. Guests can also find budget-friendly choices by renting a room in someone's home rather than an entire property."
+            },
+            "platform": {
+              "title": "24/7 Travel platform",
+              "description": "To run the platform 24/7 we ask guests to pay 15% service fees per booking."
+            }
+          },
+          "forHost": {
+            "title" : "Why Domits for host",
+            "fee": {
+              "title": "0% host fee:",
+              "description": "“Avoid paying platform fees and increase your revenue with our 0% host fee.”"
+            },
+            "income": {
+              "title": "Extra Income",
+              "description": "Many hosts rent out their homes, spare rooms, boats or campers as a way to earn additional income. This can be a great side hustle or even a full-time job in some cases."
+            },
+            "platform": {
+              "title": "All-In-1-Platform",
+              "description": "Centralized calendar, prices, reservations, messages, revenues, reviews, finance, channel management and property care."
+            },
+            "aiAssist": {
+              "title": "AI Assistant For Host",
+              "description": "Save time, cost and headaches with our AI assistant for hosts. Boost performance with personalized AI-powered recommendations for growth, revenue, operations and the guest experience."
+            },
+            "flexibility": {
+              "title": "Flexibility",
+              "description": "Hosting on Domits gives people the opportunity to meet guests from different countries and cultures, which can be an enriching and rewarding experience."
+            },
+            "control": {
+              "title": "Control Over Listing",
+              "description": "Hosts have control over the rules of their space, including check-in times, house rules, and guest preferences. Domits's platform also helps to screen guests through its review system, making hosting safer."
+            },
+            "meetPeople": {
+              "title": "Meet People from Around the World",
+              "description": "Domits allows hosts to choose when to rent out their space, whether it's seasonally, occasionally, or full-time. They can also set their own pricing."
+            }
+          },
+          "forDevs": {
+            "title": "Why Domits for dev, data and sec experts",
+            "technology": {
+              "title": "Cutting-Edge Technology and Scale",
+              "description": "Engineering Challenges: Domits intends to operate at a massive global scale with millions of users across different countries. Engineers get to work on large-scale, complex systems, optimizing for performance, reliability, and scalability.\nModern Tech Stack: Domits uses React (Native) and AWS cloud infrastructure.\nEmphasis on Innovation: The company encourages innovation, giving engineers the freedom to explore new tools, frameworks, and technologies.\nIoT Hub: Experimentation with self check-in, smart locks, smart cameras, smart thermometers, noise monitoring and other smart home amenities."
+            },
+            "focusSecurity": {
+              "title": "Focus on Security and Privacy",
+              "description": "Security Challenges: With the intent of attracting millions of users and transactions, security is paramount at Domits. Security experts have the opportunity to tackle a broad range of security challenges such as securing payments, protecting user data, and preventing fraud and abuse. Domits’s focus on international expansion and regulatory compliance (e.g., GDPR) adds complexity, making security roles more interesting.\nTrust and Safety: Domits prioritizes trust and safety within its community. Security experts work on identity verification, detection of fraudulent listings, and abuse prevention systems."
+            },
+            "dataDriven": {
+              "title": "Data-Driven Culture",
+              "description": "Data Engineering & Analytics: Domits intends to be a highly data-driven company. It relies heavily on data to drive decision-making, product development, and user experience improvements."
+            },
+            "collaborative": {
+              "title": "Collaborative and Open Work Environment",
+              "description": "Cross-functional: Engineers at Domits work closely with everyone. This cross-functional collaboration allows technical people to have a significant impact on product direction and company strategy.\nOpen Culture: Domits promotes an open and transparent work culture where employees are encouraged to share ideas and opinions."
+            }
+          },
+            "forGrowth": {
+              "title": "Why Domits for growth, rev and ops experts",
+              "fastGrow": {
+                "title": "Fast-Growing Travel Platform",
+                "description": "Massive Scale and Reach: Domits intends to operate in thousands of cities worldwide and being used by millions of hosts and guests. This scaling opportunity offers growth hackers and revenue experts unique opportunities to optimize user acquisition, engagement, and retention strategies."
+              },
+              "innovative": {
+                "title": "Innovative Marketing Strategies",
+                "description": "Growth Marketing: Domits intends to be known for its creative and viral marketing strategies. Growth hackers at Domits are empowered to experiment with bold ideas, leveraging data to drive customer acquisition through non-traditional and viral channels.\nLocal and Global Campaigns: Domits's marketing spans both global and hyper-local strategies. Growth hackers and revenue experts have the opportunity to work on campaigns that range from local community building to international brand awareness efforts, offering a broad and varied range of challenges."
+              },
+              "dataDriven": {
+                "title": "Data-Driven Growth Culture",
+                "description": "A/B Testing and Experimentation: Growth hackers can thrive at Domits because of its strong emphasis on experimentation and data-driven decision-making. The company runs A/B tests to continuously refine its platform, optimize conversion rates, and improve user engagement.\nAnalytics and Personalization: Revenue experts can leverage Domits's data analytics platform to fine-tune pricing strategies, optimize revenue management, and personalize user experiences. Domits's marketplace dynamics require constant optimization of demand and supply, which provides revenue experts with complex, impactful challenges."
+              },
+              "collaborative": {
+                "title": "Collaborative and Open Work Environment",
+                "description": "Cross-functional: Engineers at Domits work closely with everyone. This cross-functional collaboration allows technical people to have a significant impact on product direction and company strategy.\nOpen Culture: Domits promotes an open and transparent work culture where employees are encouraged to share ideas and opinions."
+              }
+            }
         }
 }
   
