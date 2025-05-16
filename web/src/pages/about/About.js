@@ -88,9 +88,8 @@ function About() {
             </div>
 
             <div className="about__crew">
-                <h1 className="about__who-we-are-title about__who-we-are-title--margintop">Who we are</h1>
-                <p className="about__who-we-are-subtitle about__who-we-are-subtitle--marginbottom">We are all conscious
-                    founders.</p>
+                <h1 className="about__who-we-are-title about__who-we-are-title--margintop">{aboutContent.crew.whoWeAre}</h1>
+                <p className="about__who-we-are-subtitle about__who-we-are-subtitle--marginbottom">{aboutContent.crew.weAreAll}</p>
 
                 <div className="about__team">
                     <div className="about__member">
@@ -98,48 +97,48 @@ function About() {
                             <img className="about__avatar-image" src={stefan} alt="Stefan Hopman"/>
                         </div>
                         <p className="about__member-name">Stefan</p>
-                        <p className="about__member-role">Founder</p>
+                        <p className="about__member-role">{aboutContent.crew.founder}</p>
                     </div>
                     <div className="about__member">
                         <div className="about__avatar">
                             <img className="about__avatar-image" src={Robert} alt="Robert Hopman"/>
                         </div>
                         <p className="about__member-name">Robert</p>
-                        <p className="about__member-role">Engineering Manager</p>
+                        <p className="about__member-role">{aboutContent.crew.engineeringManager}</p>
                     </div>
                     <div className="about__member">
                         <div className="about__avatar">
                             <img className="about__avatar-image" src={tim} alt="Tim Hart"/>
                         </div>
                         <p className="about__member-name">Tim H.</p>
-                        <p className="about__member-role">Product Owner</p>
+                        <p className="about__member-role">{aboutContent.crew.productOwner}</p>
                     </div>
 
                     {[
-                        {name: 'Ales', src: Ales, role: 'Developer'},
-                        {name: 'Bekir', src: Bekir, role: 'Developer'},
-                        {name: 'Chant', src: Chant, role: 'Developer'},
-                        {name: 'Etka', src: Etka, role: 'Developer'},
-                        {name: 'Fejsal', src: standard, role: 'Developer'},
-                        {name: 'Hamza H.', src: standard, role: 'Developer AI Agents'},
-                        {name: 'Hamza Z.', src: standard, role: 'Developer'},
-                        {name: 'Justin', src: Justin, role: 'Developer Distribution'},
-                        {name: 'Kacper', src: Kacper, role: 'Developer'},
-                        {name: 'Martijn', src: standard, role: 'Developer'},
-                        {name: 'Mortada', src: standard, role: 'Developer Revenue'},
-                        {name: 'Mohamed', src: muhammed, role: 'Developer'},
-                        {name: 'Muhammed', src: muhammed, role: 'Developer'},
-                        {name: 'Nick Ryan', src: nick, role: 'Developer'},
-                        {name: 'Randy', src: standard, role: 'Developer Distribution'},
-                        {name: 'Raman', src: standard, role: 'Developer'},
-                        {name: 'Robin', src: Robin, role: 'Security'},
-                        {name: 'Roozbeh', src: Roozbeh, role: 'Developer Revenue'},
-                        {name: 'Ryan', src: Ryan, role: 'Developer'},
-                        {name: 'Sam', src: Sam, role: 'Developer'},
-                        {name: 'Santosh', src: Santosh, role: 'Developer'},
-                        {name: 'Sander', src: Sander, role: 'Developer'},
-                        {name: 'Sebastiaan', src: Sebastiaan, role: 'Developer'},
-                        {name: 'Sem', src: standard, role: 'Developer'},
+                        {name: 'Ales', src: Ales, role: `${aboutContent.crew.developer}`},
+                        {name: 'Bekir', src: Bekir, role: `${aboutContent.crew.developer}`},
+                        {name: 'Chant', src: Chant, role: `${aboutContent.crew.developer}`},
+                        {name: 'Etka', src: Etka, role: `${aboutContent.crew.developer}`},
+                        {name: 'Fejsal', src: standard, role: `${aboutContent.crew.developer}`},
+                        {name: 'Hamza H.', src: standard, role: `${aboutContent.crew.developerAI}`},
+                        {name: 'Hamza Z.', src: standard, role: `${aboutContent.crew.developer}`},
+                        {name: 'Justin', src: Justin, role: `${aboutContent.crew.developerDistribution}`},
+                        {name: 'Kacper', src: Kacper, role: `${aboutContent.crew.developer}`},
+                        {name: 'Martijn', src: standard, role: `${aboutContent.crew.developer}`},
+                        {name: 'Mortada', src: standard, role: `${aboutContent.crew.developerRevenue}`},
+                        {name: 'Mohamed', src: muhammed, role: `${aboutContent.crew.developer}`},
+                        {name: 'Muhammed', src: muhammed, role: `${aboutContent.crew.developer}`},
+                        {name: 'Nick Ryan', src: nick, role: `${aboutContent.crew.developer}`},
+                        {name: 'Randy', src: standard, role: `${aboutContent.crew.developerDistribution}`},
+                        {name: 'Raman', src: standard, role: `${aboutContent.crew.developer}`},
+                        {name: 'Robin', src: Robin, role: `${aboutContent.crew.security}`},
+                        {name: 'Roozbeh', src: Roozbeh, role: `${aboutContent.crew.developerRevenue}`},
+                        {name: 'Ryan', src: Ryan, role: `${aboutContent.crew.developer}`},
+                        {name: 'Sam', src: Sam, role: `${aboutContent.crew.developer}`},
+                        {name: 'Santosh', src: Santosh, role: `${aboutContent.crew.developer}`},
+                        {name: 'Sander', src: Sander, role: `${aboutContent.crew.developer}`},
+                        {name: 'Sebastiaan', src: Sebastiaan, role: `${aboutContent.crew.developer}`},
+                        {name: 'Sem', src: standard, role: `${aboutContent.crew.developer}`},
                     ]
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .map((member) => (
@@ -153,15 +152,15 @@ function About() {
                         ))}
                 </div>
 
-                <h2>Marketing</h2>
+                <h2>{aboutContent.crew.marketing}</h2>
                 <div className="about__team">
                     {[
-                        {name: 'Jared', src: Jared, role: 'Growth'},
-                        {name: 'Lisa', src: standard, role: 'Growth'},
-                        {name: 'Maroan', src: standard, role: 'Growth'},
-                        {name: 'Santiago', src: standard, role: 'Growth'},
-                        {name: 'Thijmen', src: standard, role: 'Growth'},
-                        {name: 'Vic', src: standard, role: 'Growth'},
+                        {name: 'Jared', src: Jared, role: `${aboutContent.crew.growth}`},
+                        {name: 'Lisa', src: standard, role: `${aboutContent.crew.growth}`},
+                        {name: 'Maroan', src: standard, role: `${aboutContent.crew.growth}`},
+                        {name: 'Santiago', src: standard, role: `${aboutContent.crew.growth}`},
+                        {name: 'Thijmen', src: standard, role: `${aboutContent.crew.growth}`},
+                        {name: 'Vic', src: standard, role: `${aboutContent.crew.growth}`},
                     ]
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .map((member) => (
@@ -179,8 +178,8 @@ function About() {
                             <div className="about__avatar">
                                 <img className="about__avatar-image" src={standard} alt="This can be you!"/>
                             </div>
-                            <p className="about__member-name">This can be you!</p>
-                            <p className="about__member-role">We're hiring!</p>
+                            <p className="about__member-name">{aboutContent.crew.canBeYou}</p>
+                            <p className="about__member-role">{aboutContent.crew.hiring}</p>
                         </div>
                     ))}
 
