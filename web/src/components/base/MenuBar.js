@@ -5,6 +5,8 @@ import logoutArrow from '../../images/log-out-04.svg';
 import FlowContext from '../../services/FlowContext';
 import {useNavigate, useLocation} from 'react-router-dom';
 import {Auth} from "aws-amplify";
+import '../../styles/sass/features/base/menubar.scss';
+
 
 function MenuBar() {
     const navigate = useNavigate();

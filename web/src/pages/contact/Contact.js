@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import "./contact.css";
+import '../../styles/sass/pages/contact/contact.scss';
+
 
 function Contact() {
     const [sourceEmail, setSourceEmail] = useState("");
@@ -112,7 +113,7 @@ function Contact() {
     };
 
     return (
-        <div className="contact">
+        <div className="contact-page">
             <div className="questionsContainer">
                 <h1>Frequently Asked Questions (FAQ)</h1>
             <div className="buttonContactContainer">                
