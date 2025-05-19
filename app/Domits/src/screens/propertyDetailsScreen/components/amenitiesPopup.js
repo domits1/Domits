@@ -7,6 +7,7 @@ import RenderAmenities from '../hooks/RenderAmenities';
 const AmenitiesPopup = ({propertyAmenities, onClose}) => {
   return (
     <Modal
+        testID={"amenities-popup"}
       transparent={true}
       visible={true}
       animationType="slide"
@@ -16,7 +17,7 @@ const AmenitiesPopup = ({propertyAmenities, onClose}) => {
           style={styles.modalOverlay}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <TouchableOpacity testID={"close-button"} onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>✖</Text>
           </TouchableOpacity>
           <Text style={styles.modalTitle}>
