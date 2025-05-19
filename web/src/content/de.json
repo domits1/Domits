@@ -430,6 +430,24 @@
             "description": "Interdisziplinär: Entwickler und Wachstumsteams arbeiten eng zusammen.\nOffene Kultur: Wir fördern Meinungsvielfalt und den Austausch von Ideen."
           }
         }
+      },
+      "sustainability": {
+        "title": "Nachhaltigkeit",
+        "subtitle": "Warum Domits für Nachhaltigkeit wählen?",
+        "business": {
+          "title": "1. Nachhaltiges **Geschäft**",
+          "subtitle": "Recycling-Plan mit Behältern",
+          "description": "Domits beginnt einfach damit, bewusste Entscheidungen zu treffen, wie z. B. die Wahl energieeffizienterer Geräte, und möchte sich jeden Tag um 1 % verbessern. Mit unserer Lebensmittelabfallpolitik wollen wir nicht zu streng sein und starten mit einem flexiblen Recycling-Plan für Glas, Papier, Plastik und organische Abfälle. Für Biodiversität und Ökosysteme streben wir an, mehr Bio-Lebensmittel zu essen, umweltfreundliche Reinigungsprodukte zu verwenden und papierlose Abläufe zu haben."
+        },
+        "accommodations": {
+          "title": "2. Nachhaltige **Unterkünfte**",
+          "subtitle": "Zertifizierung",
+          "description": "Domits konzentriert sich aktiv darauf, Gastgeber zu gewinnen, die bereits nachhaltig sind. Wenn sie es noch nicht sind, unterstützen wir sie Schritt für Schritt, um das Bewusstsein zu erhöhen. Irgendwann wollen wir Gastgebern Zertifikate als Nachweis für Nachhaltigkeit in den Bereichen Energie, Abfall, Biodiversität, Ökosysteme, Destinationen und Gemeinschaft verleihen."
+        },
+        "experience": {
+          "title": "3. Nachhaltige **Gästenerfahrung**",
+          "description": "Ab dem ersten Kontaktpunkt mit Domits möchten wir, dass die Gäste spüren, dass sie so nachhaltig wie möglich reisen. Domits beginnt mit Nachhaltigkeitsfiltern und einer großen Übersicht aller umweltfreundlichen Annehmlichkeiten."
+        }
       }
 }
   

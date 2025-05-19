@@ -430,6 +430,24 @@
               "description": "Cross-functioneel: Engineers werken nauw samen met andere afdelingen en hebben impact op strategie.\nOpen cultuur: Medewerkers worden aangemoedigd ideeën te delen."
             }
           }
+        },
+        "sustainability": {
+          "title": "Duurzaamheid",
+          "subtitle": "Waarom kiezen voor Domits op het gebied van duurzaamheid?",
+          "business": {
+            "title": "1. Duurzaam **Ondernemen**",
+            "subtitle": "Recyclingplan met afvalbakken",
+            "description": "Domits begint eenvoudig met bewuste keuzes, zoals het kiezen van energiezuinigere apparaten, en wil elke dag 1% verbeteren. Met ons beleid rond voedselverspilling willen we niet te streng zijn en starten we met een flexibel recyclingplan voor glas, papier, plastic en organisch afval. Voor biodiversiteit en ecosystemen streven we ernaar meer biologisch voedsel te eten, milieuvriendelijke schoonmaakproducten te gebruiken en papierloze procedures te hanteren."
+          },
+          "accommodations": {
+            "title": "2. Duurzame **Accommodaties**",
+            "subtitle": "Certificering",
+            "description": "Domits richt zich actief op het onboarden van hosts die al duurzaam zijn. Als dat nog niet het geval is, begeleiden we hen stap voor stap om het bewustzijn te vergroten. Uiteindelijk willen we hosts certificeringen geven als bewijs van duurzaamheid op het gebied van energie, afval, biodiversiteit, ecosystemen, bestemmingen en gemeenschap."
+          },
+          "experience": {
+            "title": "3. Duurzame **Gastervaring**",
+            "description": "Vanaf het eerste contactmoment met Domits willen we dat gasten voelen dat ze zo duurzaam mogelijk reizen. Domits begint met duurzaamheidsfilters en een uitgebreid overzicht van alle milieuvriendelijke voorzieningen."
+          }
         }
 }
   

@@ -429,6 +429,24 @@
               "description": "Interdisciplinario: Los ingenieros trabajan junto a todos los equipos, con gran impacto en estrategia y producto.\nCultura abierta: Se fomenta compartir ideas y opiniones."
             }
           }
+        },
+        "sustainability": {
+          "title": "Sostenibilidad",
+          "subtitle": "¿Por qué elegir Domits por su sostenibilidad?",
+          "business": {
+            "title": "1. **Negocio** Sostenible",
+            "subtitle": "Plan de reciclaje con contenedores",
+            "description": "Domits empieza de forma sencilla tomando decisiones conscientes, como elegir electrodomésticos de bajo consumo, y continuará mejorando un 1% cada día. Con nuestra política de residuos alimentarios no queremos ser demasiado estrictos y comenzamos con un plan de reciclaje flexible para vidrio, papel, plástico y orgánico. En cuanto a biodiversidad y ecosistemas, buscamos consumir más alimentos orgánicos, usar productos de limpieza ecológicos y aplicar procedimientos sin papel."
+          },
+          "accommodations": {
+            "title": "2. **Alojamientos** Sostenibles",
+            "subtitle": "Certificación",
+            "description": "Domits se enfoca activamente en incorporar anfitriones que ya son sostenibles. Si aún no lo son, los apoyamos paso a paso para aumentar su conciencia. En una etapa posterior, queremos otorgarles certificaciones como prueba de sostenibilidad en energía, residuos, biodiversidad, ecosistemas, destinos y comunidad."
+          },
+          "experience": {
+            "title": "3. **Experiencia del Huésped** Sostenible",
+            "description": "Desde el primer punto de contacto con Domits, queremos que los huéspedes sientan que están viajando de la manera más sostenible posible. Domits comienza con filtros de sostenibilidad y una amplia vista general de todas las comodidades ecológicas."
+          }
         }
 }
   

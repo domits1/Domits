@@ -430,6 +430,24 @@
                 "description": "Cross-functional: Engineers at Domits work closely with everyone. This cross-functional collaboration allows technical people to have a significant impact on product direction and company strategy.\nOpen Culture: Domits promotes an open and transparent work culture where employees are encouraged to share ideas and opinions."
               }
             }
+        },
+        "sustainability": {
+          "title": "Sustainability",
+          "subtitle": "Why choose Domits for sustainability?",
+          "business": {
+            "title": "1. Sustainable **Business**",
+            "subtitle": "Recycling plan with bins",
+            "description": "Domits is starting out simple with making conscious decisions like choosing more energy-saving appliances and will continue to improve this 1% every day. With our food waste policy we don’t want to be to rigid and starting with a flexible recycling plan for glass, paper, plastic and organic. For biodiversity and ecosystems we’re aiming to eat more organic food, use Eco-friendly cleaning products and have paperless procedures."
+          },
+          "accommodations": {
+            "title": "2. Sustainable **Accommodations**",
+            "subtitle": "Certification",
+            "description": "Domits is actively focusing on onboarding hosts that are already sustainable. If they’re not yet, we’re supporting them step-by-step to increase awareness. At a certain point we want to give hosts certifications as a proof of sustainability with energy, waste, biodiversity, ecosystems, destinations and community."
+          },
+          "experience": {
+            "title": "3. Sustainable **Guest Experience**",
+            "description": "From the first touch point with Domits for guest we want to let them feel that they are traveling as sustainable as possible. Domits begins with having sustainability filters and a large overview of all eco-friendly amenities."
+          }
         }
 }
   
