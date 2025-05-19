@@ -448,6 +448,75 @@
           "title": "3. Nachhaltige **Gästenerfahrung**",
           "description": "Ab dem ersten Kontaktpunkt mit Domits möchten wir, dass die Gäste spüren, dass sie so nachhaltig wie möglich reisen. Domits beginnt mit Nachhaltigkeitsfiltern und einer großen Übersicht aller umweltfreundlichen Annehmlichkeiten."
         }
+      },
+      "howItWorksContent": {
+        "title": "Wie Domits Funktioniert",
+        "subtitle": "Erfahre, wie Domits es sowohl Gästen als auch Gastgebern leicht macht.",
+        "guest": {
+          "title": "Gäste",
+          "destination": {
+            "title": "Suche dein Reiseziel",
+            "description": "Entdecke unzählige Ferienunterkünfte mit den benutzerfreundlichen Suchfiltern von Domits. Passe deine Suche nach Standort, Datum und Ausstattung an, um dein perfektes Match zu finden."
+          },
+          "holiday": {
+            "title": "Buche deinen nächsten Urlaub",
+            "description": "Sichere dir jetzt deinen Traumaufenthalt mit Domits! Wähle deine bevorzugte Unterkunft und buche in nur wenigen Klicks."
+          },
+          "experience": {
+            "title": "Erlebe Domits",
+            "description": "Unbegrenzter Support, personalisiertes, modernes Dashboard und Nachrichtenfunktion mit deinem Gastgeber für weitere Details."
+          }
+        },
+        "host": {
+          "title": "Gastgeber",
+          "rental": {
+            "title": "Vermiete deine Unterkunft",
+            "description": "Stelle deine Unterkunft in nur wenigen Schritten ein. Füge Fotos hinzu, beschreibe dein Objekt, lege den Preis fest und gib die Verfügbarkeit an."
+          },
+          "getPaid": {
+            "title": "Schnell, sicher und einfach bezahlt werden",
+            "description": "Verbinde deine Daten mit unserem Zahlungssystem und erhalte deine Zahlungen. Behalte den Überblick über Belegung, Einnahmenmanagement, Berichte und durchschnittlichen Tagespreis."
+          },
+          "welcomeGuest": {
+            "title": "Begrüße deine Gäste",
+            "description": "Heiße deine Gäste herzlich willkommen. Verwalte deine Unterkünfte, Kalender, Reservierungen, Nachrichten und vieles mehr."
+          }
+        },
+        "feature": {
+          "title": "Funktionsübersicht für Gastgeber",
+          "subtitle": "Umsatz steigern, Arbeitsaufwand reduzieren, unvergessliche Erlebnisse bieten",
+          "core": "#1: Kernfunktion.",
+          "bundles": "#2: Leistungs-Pakete.",
+          "bundles2": " Digitales Wachstum, Einnahmen, Betrieb, Gästeerlebnis.",
+          "support": "#3: Schulung & Unterstützung.",
+          "support2": " Support Mo–Fr 9–17 Uhr, Onboarding-Lösungen, Account-Team, Community.",
+          "pms": "Property-Management-System (PMS)",
+          "listing": "Inserate",
+          "calendar": "Kalender",
+          "messages": "Nachrichten",
+          "reservations": "Reservierungen",
+          "revenues": "Einnahmen",
+          "reviews": "Bewertungen",
+          "finance": "Finanzen",
+          "communication": "Kommunikation",
+          "inbox": "Zentrale Inbox",
+          "hostdash": "Gastgeber-Dashboard",
+          "guestdash": "Gäste-Dashboard",
+          "revManagement": "Einnahmenverwaltung",
+          "overview": "Einnahmenübersicht",
+          "rates": "Auslastungsraten",
+          "adr": "ADR (Durchschnittlicher Tagespreis)",
+          "revPar": "RevPAR (Einnahmen pro verfügbarem Zimmer)",
+          "operations": "Abläufe",
+          "reservation": "Reservierungsmanagement",
+          "pricing": "Preisgestaltung",
+          "housekeeping": "Reinigung",
+          "maintenance": "Wartungsmanagement",
+          "clientSupport": "Kundensupport",
+          "faq": "FAQ",
+          "email": "E-Mail",
+          "phone": "Telefonischer Support"
+        }
       }
 }
   

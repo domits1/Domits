@@ -447,6 +447,75 @@
             "title": "3. **Experiencia del Huésped** Sostenible",
             "description": "Desde el primer punto de contacto con Domits, queremos que los huéspedes sientan que están viajando de la manera más sostenible posible. Domits comienza con filtros de sostenibilidad y una amplia vista general de todas las comodidades ecológicas."
           }
+        },
+        "howItWorksContent": {
+          "title": "Cómo Funciona Domits",
+          "subtitle": "Descubre cómo Domits facilita todo para huéspedes y anfitriones.",
+          "guest": {
+            "title": "Huéspedes",
+            "destination": {
+              "title": "Busca tu destino",
+              "description": "Explora innumerables alojamientos vacacionales con los filtros de búsqueda fáciles de usar de Domits. Personaliza tu búsqueda por ubicación, fecha y servicios para encontrar el lugar ideal."
+            },
+            "holiday": {
+              "title": "Reserva tus próximas vacaciones",
+              "description": "¡Asegura tu estancia soñada con Domits ahora! Elige el alojamiento que prefieras y reserva en solo unos clics."
+            },
+            "experience": {
+              "title": "Vive la experiencia Domits",
+              "description": "Soporte ilimitado, panel moderno y personalizado, y mensajería con tu anfitrión para más detalles."
+            }
+          },
+          "host": {
+            "title": "Anfitriones",
+            "rental": {
+              "title": "Publica tu propiedad en alquiler",
+              "description": "Publica tu propiedad en pocos pasos. Añade fotos, describe tu espacio, establece tu precio y comparte la disponibilidad."
+            },
+            "getPaid": {
+              "title": "Recibe pagos de forma fácil, rápida y segura",
+              "description": "Conecta tus datos a nuestro sistema de pagos y cobra sin complicaciones. Supervisa tu ocupación, gestión de ingresos, informes y tarifa media diaria."
+            },
+            "welcomeGuest": {
+              "title": "Recibe a tus huéspedes",
+              "description": "Da la bienvenida a tus huéspedes con calidez. Administra tus propiedades, calendarios, reservas, mensajes y mucho más."
+            }
+          },
+          "feature": {
+            "title": "Resumen de funciones para anfitriones",
+            "subtitle": "Aumenta tus ingresos, reduce el trabajo, ofrece experiencias inolvidables",
+            "core": "#1: Función principal.",
+            "bundles": "#2: Paquetes de rendimiento.",
+            "bundles2": " Crecimiento digital, Ingresos, Operaciones, Experiencia del huésped.",
+            "support": "#3: Educación y Soporte.",
+            "support2": " Soporte de lunes a viernes de 9 a 17 h, soluciones de incorporación, equipo de cuentas, Comunidad.",
+            "pms": "Sistema de Gestión de Propiedades (PMS)",
+            "listing": "Publicaciones",
+            "calendar": "Calendario",
+            "messages": "Mensajes",
+            "reservations": "Reservas",
+            "revenues": "Ingresos",
+            "reviews": "Reseñas",
+            "finance": "Finanzas",
+            "communication": "Comunicación",
+            "inbox": "Bandeja Unificada",
+            "hostdash": "Panel de Anfitrión",
+            "guestdash": "Panel de Huésped",
+            "revManagement": "Gestión de Ingresos",
+            "overview": "Resumen de ingresos",
+            "rates": "Tasas de ocupación",
+            "adr": "ADR (Tarifa Diaria Promedio)",
+            "revPar": "RevPAR (Ingresos por habitación disponible)",
+            "operations": "Operaciones",
+            "reservation": "Gestión de reservas",
+            "pricing": "Gestión de precios",
+            "housekeeping": "Limpieza",
+            "maintenance": "Gestión de mantenimiento",
+            "clientSupport": "Atención al cliente",
+            "faq": "Preguntas Frecuentes",
+            "email": "Correo electrónico",
+            "phone": "Soporte telefónico"
+          }
         }
 }
   

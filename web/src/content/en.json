@@ -448,6 +448,75 @@
             "title": "3. Sustainable **Guest Experience**",
             "description": "From the first touch point with Domits for guest we want to let them feel that they are traveling as sustainable as possible. Domits begins with having sustainability filters and a large overview of all eco-friendly amenities."
           }
+        },
+        "howItWorksContent": {
+          "title": "How Domits Works",
+          "subtitle": "Discover how Domits makes it easy for both guests and hosts.",
+          "guest": {
+            "title": "Guests",
+            "destination": {
+              "title": "Search your destination",
+              "description": "Explore countless vacation rentals with Domits’ user-friendly search filters. Customize your search by location, date, and amenities to find your perfect match."
+            },
+            "holiday": {
+              "title": "Book your next holiday",
+              "description": "Secure your dream stay with Domits now! Choose your preferred accommodation and book in just a few clicks."
+            },
+            "experience": {
+              "title": "Experience Domits",
+              "description": "Unlimited support, personalized modern dashboard and messaging with your host for further details."
+            }
+          },
+          "host": {
+            "title": "Hosts",
+            "rental": {
+              "title": "List your property for rental",
+              "description": "List your property in a few simple steps. Add photos, describe your property, set your price and share availability."
+            },
+            "getPaid": {
+              "title": "Get paid easy, fast and safe",
+              "description": "Connect your details to our payment system and get paid. Oversee your occupancy, revenue management, reports and average daily rate."
+            },
+            "welcomeGuest": {
+              "title": "Welcome your guests",
+              "description": "Give your guests a warmhearted welcome. Manage your properties, calendars, reservations, messages and much more."
+            }
+          },
+          "feature": {
+            "title": "Feature overview for hosts",
+            "subtitle": "Increase revenue, reduce workload, deliver beautiful experiences",
+            "core": "#1: Core Feature.",
+            "bundles": "#2: Performance Bundles.",
+            "bundles2": " Digital Growth, Revenue, Operations, Guest Experience. ",
+            "support": "#3: Education & Support.",
+            "support2": " 9-5 mo-fr support, onboarding solutions, account team, Community.",
+            "pms": "Property Management System (PMS)",
+            "listing": "Listings",
+            "calendar": "Calendar",
+            "messages": "Messages",
+            "reservations":"Reservations",
+            "revenues": "Revenues",
+            "reviews": "Reviews",
+            "finance": "Finance",
+            "communication": "Communication",
+            "inbox": "Unified Inbox",
+            "hostdash": "Host Dashboard",
+            "guestdash": "Guest Dashboard",
+            "revManagement": "Revenue Management",
+            "overview": "Revenue overview",
+            "rates": "Occupancy rates",
+            "adr": "ADR (Avarage Daily Rate)",
+            "revPar": "RevPAR (Revenue per Available Room)",
+            "operations": "Operations",
+            "reservation": "Reservation management",
+            "pricing": "Pricing management",
+            "housekeeping": "Housekeeping",
+            "maintenance": "Maintenance management",
+            "clientSupport": "Client support",
+            "faq": "FAQ",
+            "email": "E-mail",
+            "phone": "Phone Support"
+          }
         }
 }
   

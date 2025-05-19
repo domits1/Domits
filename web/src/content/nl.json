@@ -448,6 +448,75 @@
             "title": "3. Duurzame **Gastervaring**",
             "description": "Vanaf het eerste contactmoment met Domits willen we dat gasten voelen dat ze zo duurzaam mogelijk reizen. Domits begint met duurzaamheidsfilters en een uitgebreid overzicht van alle milieuvriendelijke voorzieningen."
           }
+        },
+        "howItWorksContent": {
+          "title": "Hoe Domits Werkt",
+          "subtitle": "Ontdek hoe Domits het gemakkelijk maakt voor zowel gasten als hosts.",
+          "guest": {
+            "title": "Gasten",
+            "destination": {
+              "title": "Zoek je bestemming",
+              "description": "Ontdek talloze vakantiewoningen met de gebruiksvriendelijke zoekfilters van Domits. Pas je zoekopdracht aan op locatie, datum en voorzieningen om jouw perfecte match te vinden."
+            },
+            "holiday": {
+              "title": "Boek je volgende vakantie",
+              "description": "Beveilig je droomverblijf nu met Domits! Kies je favoriete accommodatie en boek in slechts een paar klikken."
+            },
+            "experience": {
+              "title": "Ervaar Domits",
+              "description": "Onbeperkte ondersteuning, een gepersonaliseerd modern dashboard en berichtenuitwisseling met je host voor meer details."
+            }
+          },
+          "host": {
+            "title": "Hosts",
+            "rental": {
+              "title": "Verhuur je woning",
+              "description": "Plaats je woning in slechts een paar eenvoudige stappen. Voeg foto's toe, beschrijf je woning, stel je prijs in en geef je beschikbaarheid door."
+            },
+            "getPaid": {
+              "title": "Laat je gemakkelijk, snel en veilig uitbetalen",
+              "description": "Koppel je gegevens aan ons betalingssysteem en ontvang je betalingen. Beheer je bezetting, omzetbeheer, rapportages en gemiddelde dagtarief."
+            },
+            "welcomeGuest": {
+              "title": "Verwelkom je gasten",
+              "description": "Geef je gasten een warm welkom. Beheer je woningen, kalenders, reserveringen, berichten en nog veel meer."
+            }
+          },
+          "feature": {
+            "title": "Functieoverzicht voor hosts",
+            "subtitle": "Verhoog je inkomsten, verminder je werkdruk, lever mooie ervaringen",
+            "core": "#1: Kernfunctie.",
+            "bundles": "#2: Prestatiebundels.",
+            "bundles2": " Digitale Groei, Inkomsten, Operaties, Gastervaring.",
+            "support": "#3: Educatie & Ondersteuning.",
+            "support2": " Ondersteuning van 9-5 ma-vr, onboarding-oplossingen, accountteam, Community.",
+            "pms": "Property Management Systeem (PMS)",
+            "listing": "Advertenties",
+            "calendar": "Kalender",
+            "messages": "Berichten",
+            "reservations": "Reserveringen",
+            "revenues": "Inkomsten",
+            "reviews": "Beoordelingen",
+            "finance": "Financiën",
+            "communication": "Communicatie",
+            "inbox": "geünificeerde inbox",
+            "hostdash": "Host Dashboard",
+            "guestdash": "Gast Dashboard",
+            "revManagement": "Omzetbeheer",
+            "overview": "Inkomstenoverzicht",
+            "rates": "Bezettingsgraad",
+            "adr": "ADR (Gemiddelde Dagprijs)",
+            "revPar": "RevPAR (Inkomsten per Beschikbare Kamer)",
+            "operations": "Operaties",
+            "reservation": "Reserveringsbeheer",
+            "pricing": "Prijsbeheer",
+            "housekeeping": "Schoonmaak",
+            "maintenance": "Onderhoudsbeheer",
+            "clientSupport": "Klantenondersteuning",
+            "faq": "Veelgestelde Vragen",
+            "email": "E-mail",
+            "phone": "Telefonische Ondersteuning"
+          }
         }
 }
   
