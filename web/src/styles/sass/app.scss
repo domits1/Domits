@@ -8,9 +8,9 @@
 //Base
 @use "features/base/header.scss";
 @use "features/base/footer.scss";
-@use "features/base/menubar.scss";
+@use "features/base/MenuBar.scss";
 @use "features/base/navbar.scss";
-@use "features/base/searchbar.scss";
+@use "features/base/SearchBar.scss";
 //Auth
 @use "features/auth/login.scss";
 @use "features/auth/register.scss";
