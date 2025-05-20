@@ -1,48 +1,41 @@
 .filter-button {
-    display: none; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  outline: 0;
+  cursor: pointer;
+  padding: 3px;
+  font-size: 0.6rem;
+  line-height: 1.875rem;
+  border: 1px solid #007bff;
+  border-radius: 50%;
+  color: #ffffff;
+  background-color: #007bff;
+  box-shadow:
+    rgba(27, 31, 35, 0.04) 0px 1px 0px 0px,
+    rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+  height: 2.5rem;
+  width: 2.5rem;
+  margin-top: 0.45rem;
+  margin-left: 0.4rem;
+}
+
+.filter-text {
+  font-size: 1rem;
+  margin-right: 1rem;
+}
+
+@media (max-width: 768px) {
+  .filter-button {
+    flex: 1;
+    height: 2.7rem;
+    border-radius: 10px;
+    margin-top: 0.5rem;
+    font-size: 0.6rem;
+    display: flex;
     align-items: center;
-    justify-content: center; 
-    background-color: #ffffff;
-    border: none;
-    color: #000;
-    cursor: pointer;
-    border-radius: 50%; 
-    font-size: 16px;
-    transition: background-color 0.3s;
-    border: #bababa solid 1px;
-    transform: translateY(1rem);
-    width: 50px; 
-    height: 50px; 
-}
-
-.filter-button svg {
-    border: none;
-    outline: none;
-}
-
-.filter-button:hover {
-    border-color: #000;
-}
-
-.icon {
-    color: black;
-}
-
-@media (max-width: 480px) {
-    .filter-button {
-        font-size: 14px;
-        padding: 6px; 
-        transform: translateY(0em);
-        display: flex;
-        justify-content: center; 
-        align-items: center; 
-        margin-left: 20px;
-        width: 40px; 
-        height: 40px; 
-    }
-
-    .filter-button svg {
-        width: 20px; 
-        height: 20px;
-    }
+    justify-content: center;
+  }
 }
