@@ -9,6 +9,8 @@ import {styles} from "../styles/RegisterStyles";
 import PersonalDetailsView from "../views/PersonalDetailsView";
 import EmailView from "../views/EmailView";
 import PasswordView from "../views/PasswordView";
+import TranslatedText from "../../../../features/translation/components/TranslatedText";
+import ChangeLanguageView from "../views/ChangeLanguageView";
 
 const generateRandomUsername = () => {
   const chars = String.fromCharCode(...Array(127).keys()).slice(33);
@@ -131,23 +133,24 @@ const Register = () => {
     <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
+          <ChangeLanguageView/>
           <View style={styles.registerContainer}>
-            <Text style={styles.title}>Create an Account on Domits</Text>
+            <Text style={styles.title}><TranslatedText textToTranslate={"Create an Account on Domits"}/></Text>
 
             <PersonalDetailsView formData={formData} handleDataChange={handleDataChange} handleValidFormChange={handleValidFormChange}/>
             <EmailView formData={formData} handleDataChange={handleDataChange} handleValidFormChange={handleValidFormChange}/>
             <PasswordView formData={formData} setFormData={setFormData} handleValidFormChange={handleValidFormChange}/>
 
             {errorMessage && (
-              <Text style={styles.errorText}>{errorMessage}</Text>
+              <Text style={styles.errorText}><TranslatedText textToTranslate={errorMessage}/></Text>
             )}
 
             <View style={styles.asHostCheckBox}>
               <CheckBox value={isHost} onValueChange={handleHostChange} />
-              <Text>Sign up as a host</Text>
+              <TranslatedText textToTranslate={"Sign up as a host"}/>
             </View>
             <TouchableOpacity style={styles.signUpButton} onPress={onSubmit}>
-              <Text style={styles.buttonText}>Sign Up</Text>
+              <Text style={styles.buttonText}><TranslatedText textToTranslate={"Sign up"}/></Text>
             </TouchableOpacity>
           </View>
         </View>

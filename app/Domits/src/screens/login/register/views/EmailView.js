@@ -2,8 +2,10 @@ import {Text, TextInput, View} from "react-native";
 import {styles} from "../styles/RegisterStyles";
 import React, {useState} from "react";
 import TranslatedText from "../../../../features/translation/components/TranslatedText";
+import {useTranslation} from "react-i18next";
 
 const EmailView = ({formData, handleDataChange, handleValidFormChange}) => {
+    const { t } = useTranslation();
     const [errorMessage, setErrorMessage] = useState('');
 
     const validateEmail = (email) => {
@@ -26,7 +28,7 @@ const EmailView = ({formData, handleDataChange, handleValidFormChange}) => {
           </Text>
           <TextInput
               style={styles.input}
-              placeholder="Email"
+              placeholder={t("Email")}
               value={formData.email}
               onChangeText={value => {
                   validateEmail(value);
@@ -34,7 +36,7 @@ const EmailView = ({formData, handleDataChange, handleValidFormChange}) => {
               }}
           />
           {errorMessage && (
-              <Text style={styles.errorText}>{errorMessage}</Text>
+              <Text style={styles.errorText}><TranslatedText textToTranslate={errorMessage}/></Text>
           )}
       </View>
   )

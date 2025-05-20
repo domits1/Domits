@@ -2,8 +2,10 @@ import {Text, TextInput, View} from "react-native";
 import {styles} from "../styles/RegisterStyles";
 import React, {useState} from "react";
 import TranslatedText from "../../../../features/translation/components/TranslatedText";
+import {useTranslation} from "react-i18next";
 
 const PersonalDetailsView = ({formData, handleDataChange, handleValidFormChange}) => {
+    const { t } = useTranslation();
     const [errorFirstName, setErrorFirstName] = useState('');
     const [errorLastName, setErrorLastName] = useState('');
 
@@ -40,7 +42,7 @@ const PersonalDetailsView = ({formData, handleDataChange, handleValidFormChange}
           </Text>
           <TextInput
               style={styles.input}
-              placeholder="First Name"
+              placeholder={t("First Name")}
               value={formData.firstName}
               onChangeText={value => {
                   validateFirstName(value);
@@ -56,7 +58,7 @@ const PersonalDetailsView = ({formData, handleDataChange, handleValidFormChange}
           </Text>
           <TextInput
               style={styles.input}
-              placeholder="Last Name"
+              placeholder={t("Last Name")}
               value={formData.lastName}
               onChangeText={value => {
                   validateLastName(value);
@@ -64,7 +66,7 @@ const PersonalDetailsView = ({formData, handleDataChange, handleValidFormChange}
               }}
           />
           {errorLastName && (
-              <Text style={styles.errorText}>{errorLastName}</Text>
+              <Text style={styles.errorText}><TranslatedText textToTranslate={errorLastName}/></Text>
           )}
       </View>
   )

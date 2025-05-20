@@ -1,8 +1,11 @@
 import {Text, TextInput, View} from "react-native";
 import {styles} from "../styles/RegisterStyles";
 import React, {useState} from "react";
+import TranslatedText from "../../../../features/translation/components/TranslatedText";
+import {useTranslation} from 'react-i18next';
 
 const PasswordView = ({formData, setFormData, handleValidFormChange}) => {
+    const { t } = useTranslation();
     const [passwordStrength, setPasswordStrength] = useState({
         text: 'Weak',
         color: 'red',
@@ -53,36 +56,41 @@ const PasswordView = ({formData, setFormData, handleValidFormChange}) => {
 
   return (
       <View>
-          <Text style={styles.label}>Password:</Text>
+          <Text style={styles.label}>
+              <TranslatedText textToTranslate={'Password'}/>:
+          </Text>
           <TextInput
               style={[styles.input, {borderColor: passwordStrength.color}]}
-              placeholder="Password"
+              placeholder={t('Password')}
               secureTextEntry
               value={formData.password}
               onChangeText={value => handleChangePassword(value)}
           />
           <View style={styles.passwordRequirements}>
               <Text>
-                  Password Strength:{' '}
+                  <TranslatedText textToTranslate={'Password Strength'}/>:{' '}
                   <Text style={{color: passwordStrength.color}}>
                       {passwordStrength.text}
                   </Text>
               </Text>
-              <Text>Requirements:</Text>
               <Text>
-                  {passwordStrength.requirements.length ? '✔' : '✘'} At least 8
-                  characters
+                  <TranslatedText textToTranslate={'Requirements'}/>:
               </Text>
               <Text>
-                  {passwordStrength.requirements.uppercase ? '✔' : '✘'} One
-                  uppercase letter
+                  {passwordStrength.requirements.length ? '✔' : '✘'}
+                  <TranslatedText textToTranslate={'At least 8 characters'}/>
               </Text>
               <Text>
-                  {passwordStrength.requirements.number ? '✔' : '✘'} One number
+                  {passwordStrength.requirements.uppercase ? '✔' : '✘'}
+                  <TranslatedText textToTranslate={'At least 1 uppercase letter'}/>
               </Text>
               <Text>
-                  {passwordStrength.requirements.specialChar ? '✔' : '✘'} One
-                  special character
+                  {passwordStrength.requirements.number ? '✔' : '✘'}
+                  <TranslatedText textToTranslate={'At least 1 number'}/>
+              </Text>
+              <Text>
+                  {passwordStrength.requirements.specialChar ? '✔' : '✘'}
+                  <TranslatedText textToTranslate={'At least 1 special character'}/>
               </Text>
           </View>
       </View>
