@@ -137,7 +137,6 @@ $breakpoint-sm: 480px;
   }
 
   @media screen and (max-width: $breakpoint-lg) {
-
     .App,
     .header-nav {
       position: sticky;
@@ -150,25 +149,14 @@ $breakpoint-sm: 480px;
   @media screen and (max-width: $breakpoint-md) {
     padding: 0;
   }
-    .bar-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 20px;
-  }
-  .SearchBarContainer.active {
-    align-content: center;
-    margin: 4vh 0 31vh 4vw;
-  }
   .search-overlay-background {
-  position: fixed;
-  top: 80px; /* hoogte van de header */
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: white;
-  z-index: 998; /* lager dan de header, maar hoger dan andere content */
-}
-
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: white;
+    z-index: 999;
+  }
+  
 }
