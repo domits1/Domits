@@ -16,7 +16,7 @@ const TabHeader = ({tabTitle}) => {
             <TouchableOpacity onPress={handleGoBack} style={styles.leftIcon}>
                 <Ionicons name="chevron-back-outline" size={24} style={styles.headerIcon}/>
             </TouchableOpacity>
-            <Text style={styles.titleText}>
+            <Text style={styles.titleText} numberOfLines={2}>
                 <TranslatedText textToTranslate={tabTitle}/>
             </Text>
             <View style={styles.rightIcon}/>
@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
         flex: 15,
         textAlign: "center",
         fontSize: 30,
+        color: "black",
         fontWeight: 'bold',
     },
     headerIcon: {
