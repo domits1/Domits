@@ -1,5 +1,6 @@
 .guest-pages {
-  position: relative; /* Ensure the sidebar is contained within this container */
+  position: relative;
+  /* Ensure the sidebar is contained within this container */
 
   .hamburger-btn {
     background: none;
@@ -14,20 +15,21 @@
   }
 
   .sidebar {
-    position: absolute; /* Sidebar is positioned relative to the container */
-    top: 0;
-    left: -250px; /* Hidden by default */
-    height: calc(100vh - 60px); /* Full height minus the header height */
-    min-height: 500px;
+    position: fixed;
+    top: 90px;
+    left: -250px;
+    width: 200px;
+    height: calc(100vh - 90px - 70px);
+    min-height: unset;
     background: #f8f8f8;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     padding: 1rem;
     transition: left 0.3s ease;
     z-index: 999;
-    height: 100%;
+    overflow-y: auto;
 
     &.open {
-      left: 0; /* Slide in when open */
+      left: 0;
     }
 
     .close-sidebar-btn {
@@ -45,7 +47,8 @@
     }
 
     .menu-content {
-      margin-top: 3rem; /* Push content below the close button */
+      margin-top: 3rem;
+      /* Push content below the close button */
 
       select {
         width: 100%;

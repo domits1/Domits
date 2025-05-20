@@ -13,229 +13,148 @@ const BookingGuestDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortAsc, setSortAsc] = useState(true);
     const [showBookingListPopup, setBookingListPopup] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        const setUserIdAsync = async () => {
+        const fetchGuestBookings = async () => {
             try {
-                const userInfo = await Auth.currentUserInfo();
-                setGuestID(userInfo.attributes.sub);
-                setGuestEmail(userInfo.attributes.email);
-            } catch (error) {
-                console.error("Error setting user info:", error);
+                const user = await Auth.currentAuthenticatedUser();
+                const guestEmail = user.attributes.email;
+                setGuestEmail(guestEmail);
+
+                const response = await fetch(`/api/guest-bookings?email=${guestEmail}`);
+                if (!response.ok) throw new Error('Failed to fetch bookings');
+
+                const data = await response.json();
+                setBookings(data);
+                setGuestID(data.length > 0 ? data[0].GuestID : null);
+            } catch (err) {
+                console.error('Error fetching bookings:', err);
+                setError('Could not load bookings. Please try again later.');
+                // navigate('/login'); // Remove this line
+            } finally {
+                setLoading(false);
             }
         };
-        setUserIdAsync();
-    }, []);
 
-    const handleClick = (ID) => {
-        navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
-    };
-
-    const fetchBookings = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch('https://j1ids2iygi.execute-api.eu-north-1.amazonaws.com/default/FetchGuestPayments', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ GuestID: guestID })
-            });
-            if (!response.ok) throw new Error('Failed to fetch bookings');
-            const data = await response.json();
-            setBookings(data);
-        } catch (error) {
-            console.error('Error fetching bookings:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (guestID) fetchBookings();
-    }, [guestID]);
+        fetchGuestBookings();
+    }, [navigate]);
 
     const handleFilterChange = (e) => setFilter(e.target.value);
     const handleSearchChange = (e) => setSearchTerm(e.target.value);
-    const toggleSortOrder = () => setSortAsc(!sortAsc);
+    const handleSortToggle = () => setSortAsc(prev => !prev);
 
-    const filteredBookings = bookings
-        .filter(booking => filter === 'All' || booking.Status === filter)
-        .filter(booking => booking.Title.toLowerCase().includes(searchTerm.toLowerCase()))
+    const filteredAndSortedBookings = bookings
+        .filter(b => filter === 'All' || b.Status === filter)
+        .filter(b => b.ListingName.toLowerCase().includes(searchTerm.toLowerCase()))
         .sort((a, b) => {
             const dateA = new Date(a.StartDate);
             const dateB = new Date(b.StartDate);
             return sortAsc ? dateA - dateB : dateB - dateA;
         });
 
-    const nextUpcomingBookingId = (() => {
-        const future = bookings.filter(b => new Date(b.StartDate) > new Date());
-        if (future.length === 0) return null;
-        return future.sort((a, b) => new Date(a.StartDate) - new Date(b.StartDate))[0].ID;
-    })();
+    const upcomingBookings = filteredAndSortedBookings.filter(b => new Date(b.EndDate) >= new Date());
+    const pastBookings = filteredAndSortedBookings.filter(b => new Date(b.EndDate) < new Date());
 
-    const statusBadge = (status) => {
-        const className = `status-badge ${status.toLowerCase()}`;
-        return <span className={className}>{status}</span>;
-    };
-
-    const handleCancelation = async (booking) => {
-        if (!window.confirm(`Are you sure you want to cancel the booking: ${booking.Title}?`)) return;
-
-        const updatedBookings = bookings.map((b) =>
-            b.ID === booking.ID ? { ...b, Status: 'Cancelled' } : b
-        );
-        setBookings(updatedBookings);
-
-        try {
-            const response = await fetch('https://5vyzv89320.execute-api.eu-north-1.amazonaws.com/default/Guest-Booking-Production-Update-CancelBooking', {
-                method: 'PUT',
-                body: JSON.stringify({ ID: booking.ID, status: 'Cancelled' }),
-                headers: { 'Content-type': 'application/json; charset=UTF-8' },
-            });
-
-            if (!response.ok) throw new Error('Failed to cancel booking');
-            await fetchBookings();
-        } catch (error) {
-            console.error('Error canceling booking:', error);
-        }
-    };
-
-    const handleBookingListPopup = () => (
-        <div className="guest-booking-popup-overlay" onClick={handleClosePopUp}>
-            <div className="guest-booking-popup-content" onClick={(e) => e.stopPropagation()}>
-                <h3>Cancelable Bookings</h3>
-                <table className="guest-booking-popup-bookings-table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Created At</th>
-                            <th>Cancel</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {bookings.filter(b => b.Status === 'Accepted').length === 0 ? (
-                            <tr><td colSpan="5">No accepted bookings available.</td></tr>
-                        ) : (
-                            bookings.filter(b => b.Status === 'Accepted').map((b) => (
-                                <tr key={b.ID}>
-                                    <td>{b.Title}</td>
-                                    <td>{dateFormatterDD_MM_YYYY(b.StartDate)}</td>
-                                    <td>{dateFormatterDD_MM_YYYY(b.EndDate)}</td>
-                                    <td>{dateFormatterDD_MM_YYYY(b.createdAt)}</td>
-                                    <td>
-                                        <button onClick={() => handleCancelation(b)}>X</button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    const renderBookingRow = (booking) => (
+        <tr key={booking.BookingID} className={new Date(booking.StartDate) >= new Date() ? 'highlight-upcoming' : ''}>
+            <td>{booking.ListingName}</td>
+            <td>{dateFormatterDD_MM_YYYY(booking.StartDate)}</td>
+            <td>{dateFormatterDD_MM_YYYY(booking.EndDate)}</td>
+            <td><span className={`status-badge ${booking.Status.toLowerCase()}`}>{booking.Status}</span></td>
+        </tr>
     );
 
-    const handleClosePopUp = () => setBookingListPopup(false);
+    if (loading) return <div className="loading">Loading your bookings...</div>;
 
     return (
         <div className="guest-booking-page-body">
             <div className="guest-booking-dashboards">
-                <div className="guest-booking-bookingContent">
-                    <div className="guest-booking-bookingContentHeader">
-                        <div className="guest-booking-controls">
-                            <label htmlFor="status-filter">Filter:</label>
-                            <select id="status-filter" value={filter} onChange={handleFilterChange}>
-                                <option value="All">All</option>
-                                <option value="Accepted">Accepted</option>
-                                <option value="Cancelled">Cancelled</option>
-                                <option value="Failed">Failed</option>
-                                <option value="Pending">Pending</option>
-                            </select>
-                            <input
-                                type="text"
-                                placeholder="Search by title..."
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                            />
-                            <button onClick={toggleSortOrder}>
-                                Sort by Start Date {sortAsc ? '▲' : '▼'}
-                            </button>
-                            <button onClick={() => setBookingListPopup(true)}>Cancel Booking</button>
-                        </div>
-                    </div>
 
-                    {loading ? (
-                        <p>Loading...</p>
-                    ) : (
-                        <div className="guest-booking-table-wrapper">
-                            <table className="guest-booking-bookings-table">
-                                <thead>
-                                    <tr>
-                                        <th>Title</th>
-                                        <th>Status</th>
-                                        <th>Price</th>
-                                        <th>Start Date</th>
-                                        <th>End Date</th>
-                                        <th>Created At</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredBookings.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="6">No bookings found. Try adjusting your filter or search.</td>
-                                        </tr>
-                                    ) : (
-                                        filteredBookings.map((booking) => (
-                                            <tr
-                                                key={booking.ID}
-                                                onClick={() => handleClick(booking.AccoID)}
-                                                className={booking.ID === nextUpcomingBookingId ? 'highlight-upcoming' : ''}
-                                            >
-                                                <td>{booking.Title}</td>
-                                                <td>{statusBadge(booking.Status)}</td>
-                                                <td>&euro;{parseFloat(booking.Price).toFixed(2)}</td>
-                                                <td>{dateFormatterDD_MM_YYYY(booking.StartDate)}</td>
-                                                <td>{dateFormatterDD_MM_YYYY(booking.EndDate)}</td>
-                                                <td>{dateFormatterDD_MM_YYYY(booking.createdAt)}</td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                <h1>Welcome, {guestEmail}</h1>
 
-                    {showBookingListPopup && handleBookingListPopup()}
+                <div className="guest-booking-controls">
+                    <select value={filter} onChange={handleFilterChange}>
+                        <option value="All">All Statuses</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="failed">Failed</option>
+                        <option value="pending">Pending</option>
+                    </select>
+
+                    <input
+                        type="text"
+                        placeholder="Search by listing name"
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+
+                    <button onClick={handleSortToggle}>
+                        Sort by Start Date {sortAsc ? '↑' : '↓'}
+                    </button>
+
+                    <button onClick={() => setBookingListPopup(prev => !prev)}>
+                        {showBookingListPopup ? 'Hide Booking List' : 'Show Booking List'}
+                    </button>
                 </div>
 
-                {/* Previously Booked Section */}
-                <div className="previously-booked-container">
-                    <h2>Previously Booked</h2>
-                    <table className="previously-booked-table">
+                {showBookingListPopup && (
+                    <div className="booking-list-popup">
+                        <h3>All Filtered Bookings</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Listing</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredAndSortedBookings.map(renderBookingRow)}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                <div className="guest-booking-bookingContent">
+                    <h2>Upcoming & Active Bookings</h2>
+                    <table>
                         <thead>
                             <tr>
-                                <th>Title</th>
+                                <th>Listing</th>
+                                <th>Start</th>
+                                <th>End</th>
                                 <th>Status</th>
-                                <th>Price</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {bookings
-                                .filter(b => new Date(b.EndDate) < new Date())
-                                .map(b => (
-                                    <tr key={b.ID}>
-                                        <td>{b.Title}</td>
-                                        <td>{statusBadge(b.Status)}</td>
-                                        <td>&euro;{parseFloat(b.Price).toFixed(2)}</td>
-                                        <td>{dateFormatterDD_MM_YYYY(b.StartDate)}</td>
-                                        <td>{dateFormatterDD_MM_YYYY(b.EndDate)}</td>
-                                    </tr>
-                                ))}
+                            {upcomingBookings.length > 0 ? upcomingBookings.map(renderBookingRow) : (
+                                <tr><td colSpan="4">No upcoming bookings found.</td></tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
+
+                <div className="previously-booked-container">
+                    <h2>Previously Booked</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Listing</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pastBookings.length > 0 ? pastBookings.map(renderBookingRow) : (
+                                <tr><td colSpan="4">No previous bookings found.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
     );
