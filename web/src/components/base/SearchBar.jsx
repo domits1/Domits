@@ -373,7 +373,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
                 <span className="search-text">Search</span>
                </button>
                {isMobile && <FilterButton />}
-          </div>
+            </div>
         </div>
       </div>
         )}

@@ -382,9 +382,11 @@ $primary-domits-color: #0d9813;
 
     .mobile-search-filter-wrapper {
       display: flex;
+      gap: 0.5rem;
       width: 100%;
 
-      .searchbar-button {
+      .searchbar-button,
+      .filter-button {
         flex: 1;
         height: 2.7rem;
         border-radius: 10px;
@@ -393,7 +395,9 @@ $primary-domits-color: #0d9813;
         display: flex;
         align-items: center;
         justify-content: center;
+      }
 
+      .searchbar-button {
         svg {
           margin-bottom: 0.8rem;
         }
