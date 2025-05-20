@@ -7,7 +7,7 @@ import {useTranslation} from 'react-i18next';
 const PasswordView = ({formData, setFormData, handleValidFormChange}) => {
     const { t } = useTranslation();
     const [passwordStrength, setPasswordStrength] = useState({
-        text: 'Weak',
+        text: 'Very Weak',
         color: 'red',
         requirements: {
             length: false,
@@ -30,15 +30,19 @@ const PasswordView = ({formData, setFormData, handleValidFormChange}) => {
         let strength;
         switch (metRequirements) {
             case 4:
-                strength = {text: 'Very Strong', color: '#009b00'};
+                strength = {text: 'Strong', color: '#009b00'};
                 handleValidFormChange('password', true);
                 break;
             case 3:
-                strength = {text: 'Strong', color: '#65cb29'};
+                strength = {text: 'Good', color: '#65cb29'};
                 handleValidFormChange('password', false);
                 break;
             case 2:
                 strength = {text: 'Weak', color: '#cea911'};
+                handleValidFormChange('password', false);
+                break;
+            case 1:
+                strength = {text: 'Very Weak', color: '#f68122'};
                 handleValidFormChange('password', false);
                 break;
             default:
@@ -69,26 +73,26 @@ const PasswordView = ({formData, setFormData, handleValidFormChange}) => {
           <View style={styles.passwordRequirements}>
               <Text>
                   <TranslatedText textToTranslate={'Password Strength'}/>:{' '}
-                  <Text style={{color: passwordStrength.color}}>
+                  <Text testID={'password-strength'} style={{color: passwordStrength.color}}>
                       {passwordStrength.text}
                   </Text>
               </Text>
               <Text>
                   <TranslatedText textToTranslate={'Requirements'}/>:
               </Text>
-              <Text>
+              <Text testID={'requirement-length'}>
                   {passwordStrength.requirements.length ? '✔' : '✘'}
                   <TranslatedText textToTranslate={'At least 8 characters'}/>
               </Text>
-              <Text>
+              <Text testID={'requirement-uppercase'}>
                   {passwordStrength.requirements.uppercase ? '✔' : '✘'}
                   <TranslatedText textToTranslate={'At least 1 uppercase letter'}/>
               </Text>
-              <Text>
+              <Text testID={'requirement-number'}>
                   {passwordStrength.requirements.number ? '✔' : '✘'}
                   <TranslatedText textToTranslate={'At least 1 number'}/>
               </Text>
-              <Text>
+              <Text testID={'requirement-special-character'}>
                   {passwordStrength.requirements.specialChar ? '✔' : '✘'}
                   <TranslatedText textToTranslate={'At least 1 special character'}/>
               </Text>
