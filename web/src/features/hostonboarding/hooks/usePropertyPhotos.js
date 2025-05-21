@@ -8,20 +8,20 @@ export default function usePhotos() {
 
   const MIN_WIDTH = 500;
   const MIN_HEIGHT = 500;
-  const MIN_SIZE = 50000;
+  const MIN_SIZE = 50000; // 50 KB
   const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
-  const MAX_IMAGES = 10;
+  const MAX_IMAGES = 30;
 
   const validateImage = (file, callback) => {
     if (!file) return;
 
     if (!allowedFormats.includes(file.type)) {
-      toast.error("❌ Alleen JPG, PNG of WEBP toegestaan.");
+      toast.error("❌ Only JPG, PNG or WEBP files are allowed.");
       return;
     }
 
     if (file.size < MIN_SIZE) {
-      toast.error("❌ Afbeelding is te klein (min. 50 KB).");
+      toast.error("❌ Image is too small (min. 50 KB).");
       return;
     }
 
@@ -29,19 +29,19 @@ export default function usePhotos() {
     img.src = URL.createObjectURL(file);
     img.onload = () => {
       if (img.width < MIN_WIDTH || img.height < MIN_HEIGHT) {
-        toast.error(`❌ Afbeelding moet minimaal ${MIN_WIDTH}x${MIN_HEIGHT} pixels zijn.`);
+        toast.error(`❌ Image must be at least ${MIN_WIDTH}×${MIN_HEIGHT} pixels.`);
       } else {
         callback(file);
       }
     };
     img.onerror = () => {
-      toast.error("❌ Ongeldige afbeelding.");
+      toast.error("❌ Invalid image.");
     };
   };
 
   const handleFileChange = (files) => {
     if (images.length >= MAX_IMAGES) {
-      toast.error(`❌ Je kunt maximaal ${MAX_IMAGES} afbeeldingen uploaden.`);
+      toast.error(`❌ You can upload a maximum of ${MAX_IMAGES} images.`);
       return;
     }
 
@@ -54,23 +54,19 @@ export default function usePhotos() {
           reader.onload = () => {
             newImages = [...newImages, reader.result];
             setImages(newImages);
-            toast.success("✅ Afbeelding toegevoegd!");
+            toast.success("✅ Image added!");
           };
           reader.readAsDataURL(validFile);
         });
       } else {
-        toast.error(`❌ Maximaal ${MAX_IMAGES} afbeeldingen toegestaan.`);
+        toast.error(`❌ Maximum of ${MAX_IMAGES} images allowed.`);
       }
     });
   };
-  
 
   const deleteImage = (index) => {
-    setImages((prev) => {
-      const updatedImages = prev.filter((_, i) => i !== index);
-      return updatedImages;
-    });
-    toast.info("🗑️ Afbeelding verwijderd.");
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    toast.info("🗑️ Image deleted.");
   };
 
   const reorderImages = (fromIndex, toIndex) => {
@@ -80,9 +76,8 @@ export default function usePhotos() {
       newImages.splice(toIndex, 0, movedImage);
       return newImages;
     });
-    toast.info("🔄 Afbeeldingen opnieuw gerangschikt.");
+    toast.info("🔄 Images reordered.");
   };
-  
 
   return {
     images,
