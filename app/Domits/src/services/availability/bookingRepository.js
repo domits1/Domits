@@ -56,7 +56,23 @@ class BookingRepository {
       },
     );
     if (!response.ok) {
-        throw new Error('Failed to confirm booking.');
+      throw new Error('Failed to confirm booking.');
+    }
+    return await response.json();
+  }
+
+  async getBookingsByGuestId(guestId) {
+    const response = await fetch(
+      `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest&guest_Id=${guestId}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: await retrieveAccessToken(),
+        },
+      },
+    );
+    if (!response.ok) {
+      throw new Error('Failed to fetch your bookings, please try again later or contact support.');
     }
     return await response.json();
   }
