@@ -126,9 +126,6 @@ describe('PropertyAmenities Component', () => {
             expect(queryByTestId('amenities-popup')).toBeTruthy();
         });
 
-        const amenitiesPopup = queryByTestId('amenities-popup');
-        expect(amenitiesPopup).toBeTruthy();
-
         const closeButton = queryByTestId('close-button');
         fireEvent.press(closeButton);
 

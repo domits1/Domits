@@ -35,6 +35,8 @@
     "Press": "press",
     "Here": "Here",
     "Price details": "Price details",
-    "Property information unavailable.": "Property information unavailable."
+    "Property information unavailable.": "Property information unavailable.",
+    "Failed to fetch property matching your booking.": "Failed to fetch property matching your booking.",
+    "Period:": "Period:"
   }
 }

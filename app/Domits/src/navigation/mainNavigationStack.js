@@ -47,27 +47,15 @@ function MainNavigationStack() {
 
       {/* Guest */}
       <Stack.Screen name={GUEST_BOOKINGS_SCREEN} component={GuestBookings} />
-      <Stack.Screen
-        name={GUEST_SINGLE_BOOKING_SCREEN}
-        component={GuestSingleBooking}
-      />
+      <Stack.Screen name={GUEST_SINGLE_BOOKING_SCREEN} component={GuestSingleBooking} />
 
       {/* Property */}
-      <Stack.Screen
-        name={PROPERTY_DETAILS_SCREEN}
-        component={PropertyDetails}
-      />
+      <Stack.Screen name={PROPERTY_DETAILS_SCREEN} component={PropertyDetails} />
 
       {/* Booking Engine */}
       <Stack.Screen name={STRIPE_PROCESS_SCREEN} component={StripePayment} />
-      <Stack.Screen
-        name={STRIPE_PAYMENT_CANCELLED_SCREEN}
-        component={PaymentCancelled}
-      />
-      <Stack.Screen
-        name={STRIPE_PAYMENT_CONFIRMED_SCREEN}
-        component={PaymentConfirmed}
-      />
+      <Stack.Screen name={STRIPE_PAYMENT_CANCELLED_SCREEN} component={PaymentCancelled} />
+      <Stack.Screen name={STRIPE_PAYMENT_CONFIRMED_SCREEN} component={PaymentConfirmed} />
     </Stack.Navigator>
   );
 }

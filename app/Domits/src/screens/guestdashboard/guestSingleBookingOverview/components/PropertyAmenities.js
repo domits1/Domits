@@ -2,6 +2,7 @@ import {Text, TouchableOpacity, View} from 'react-native';
 import {styles} from '../styles/singleBooking';
 import AmenitiesPopup from '../../../propertyDetailsScreen/components/amenitiesPopup';
 import {useState} from "react";
+import TranslatedText from "../../../../features/translation/components/TranslatedText";
 
 const PropertyAmenities = ({amenities}) => {
     const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
@@ -9,7 +10,7 @@ const PropertyAmenities = ({amenities}) => {
     <View>
       <TouchableOpacity onPress={() => setShowAmenitiesModal(true)}>
         <View style={styles.showAmenitiesContainer}>
-          <Text style={styles.showAmenitiesText}>Show amenities</Text>
+          <Text style={styles.showAmenitiesText}><TranslatedText textToTranslate={"Show all amenities"} /></Text>
         </View>
       </TouchableOpacity>
       {showAmenitiesModal && (

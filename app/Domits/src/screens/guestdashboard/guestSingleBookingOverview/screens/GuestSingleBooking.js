@@ -1,4 +1,4 @@
-import {Text, ToastAndroid, View} from 'react-native';
+import {ToastAndroid, View} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import LoadingScreen from '../../../loadingscreen/screens/LoadingScreen';
 import {styles} from '../styles/singleBooking';
@@ -12,6 +12,7 @@ import Spacer from '../../../../components/Spacer';
 import ConfirmAndPayButton from '../../../../features/bookingengine/stripe/components/ConfirmAndPayButton';
 import BookingRepository from '../../../../services/availability/bookingRepository';
 import {HOME_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
+import TranslatedText from "../../../../features/translation/components/TranslatedText";
 
 const GuestSingleBooking = ({navigation, route}) => {
   const booking = route.params.booking;
@@ -102,7 +103,7 @@ const GuestSingleBooking = ({navigation, route}) => {
     return (
       <View style={styles.container}>
         <TabHeader tabTitle={"Something went wrong."} />
-        <Text>Failed to fetch property matching your booking.</Text>
+        <TranslatedText textToTranslate={"Failed to fetch property matching your booking."} />
       </View>
     );
   }

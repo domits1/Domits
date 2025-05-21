@@ -35,6 +35,8 @@
     "Press": "klik",
     "Here": "Hier",
     "Price details": "Kosten",
-    "Property information unavailable.": "Accommodatie informatie niet beschikbaar."
+    "Property information unavailable.": "Accommodatie informatie niet beschikbaar.",
+    "Failed to fetch property matching your booking.": "Er is iets fout gegaan tijdens het zoeken van de accommodatie.",
+    "Period:": "Periode:"
   }
 }
