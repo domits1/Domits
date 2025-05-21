@@ -3,12 +3,13 @@ import {Image, View, Text, TouchableOpacity} from 'react-native';
 import {S3URL} from '../../../../store/constants';
 import {styles} from '../styles/BookingView';
 import Spacer from '../../../../components/Spacer';
+import TranslatedText from "../../../../features/translation/components/TranslatedText";
 
 const BookingView = ({property, booking, onPress}) => {
   if (!property) {
     return (
       <View style={styles.container}>
-        <Text>Property information unavailable</Text>
+        <TranslatedText textToTranslate={"Property information unavailable."} />
       </View>
     );
   }

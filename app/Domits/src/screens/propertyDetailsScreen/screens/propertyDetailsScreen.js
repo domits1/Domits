@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {ScrollView, Text, ToastAndroid, View} from 'react-native';
+import {ScrollView, ToastAndroid, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {styles} from '../styles/propertyDetailsStyles';
 import CalculateNumberOfNights from '../../../features/bookingengine/stripe/utils/CalculateNumberOfNights';
@@ -18,6 +18,7 @@ import PricingView from '../views/pricingView';
 import BookingView from '../views/bookingView';
 import AmenitiesView from '../views/amenitiesView';
 import ToastMessage from '../../../components/ToastMessage';
+import TranslatedText from "../../../features/translation/components/TranslatedText";
 
 const PropertyDetailsScreen = ({route, navigation}) => {
   const [property, setProperty] = useState({});
@@ -78,7 +79,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
             property={property}
             handleHomeScreenPress={() => navigation.navigate(HOME_SCREEN)}
           />
-          <Text>Unable to load property. Please try again later or contact support.</Text>
+          <TranslatedText textToTranslate={"Property information unavailable."} />
         </View>
       </SafeAreaView>
     );
