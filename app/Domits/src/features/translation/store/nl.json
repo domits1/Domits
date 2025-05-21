@@ -31,8 +31,10 @@
     "View booking": "Zie booking in",
     "Try Again": "Probeer Opnieuw",
     "If you wish to cancel your booking": "Als u uw boeking wil annuleren",
+    "No bookings found.": "Geen boekingen gevonden.",
     "Press": "klik",
     "Here": "Hier",
-    "Price details": "Kosten"
+    "Price details": "Kosten",
+    "Property information unavailable.": "Accommodatie informatie niet beschikbaar."
   }
 }

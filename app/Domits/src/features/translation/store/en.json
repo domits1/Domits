@@ -31,8 +31,10 @@
     "View booking": "View booking",
     "Try Again": "Try Again",
     "If you wish to cancel your booking": "If you wish to cancel your booking",
+    "No bookings found.": "No bookings found.",
     "Press": "press",
     "Here": "Here",
-    "Price details": "Price details"
+    "Price details": "Price details",
+    "Property information unavailable.": "Property information unavailable."
   }
 }

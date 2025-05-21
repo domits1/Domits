@@ -5,7 +5,6 @@ import {
   SafeAreaView,
   ScrollView,
   ToastAndroid,
-  Text,
 } from 'react-native';
 import TabHeader from '../../../accounthome/components/TabHeader';
 import TestPropertyRepository from '../../../../services/property/test/testPropertyRepository';
@@ -17,6 +16,7 @@ import ToastMessage from '../../../../components/ToastMessage';
 import LoadingScreen from '../../../loadingscreen/screens/LoadingScreen';
 import BookingView from '../views/BookingView';
 import {GUEST_SINGLE_BOOKING_SCREEN} from '../../../../navigation/utils/NavigationNameConstants';
+import TranslatedText from "../../../../features/translation/components/TranslatedText";
 
 const GuestBookings = ({navigation}) => {
   const {user} = useAuth();
@@ -64,7 +64,6 @@ const GuestBookings = ({navigation}) => {
         }
       } catch (error) {
         ToastMessage(error.message, ToastAndroid.SHORT);
-        setLoading(false);
       } finally {
         setLoading(false);
       }
@@ -83,7 +82,7 @@ const GuestBookings = ({navigation}) => {
         <ScrollView>
           <TabHeader tabTitle={'Upcoming bookings'} />
           <View style={styles.bodyContainer}>
-            <Text>No bookings found.</Text>
+            <TranslatedText textToTranslate={"No bookings found."} />
           </View>
         </ScrollView>
       </SafeAreaView>
