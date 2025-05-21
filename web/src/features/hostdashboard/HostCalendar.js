@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import Pages from "./Pages";
-import "./HostHomepage.scss";
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import CalendarComponent from "./CalendarComponent";
