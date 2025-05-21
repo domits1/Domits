@@ -1,7 +1,7 @@
 import React from "react";
-import { WebSocketProvider } from "../context/webSocketContext";
-import { UserProvider } from "../context/AuthContext";
-import { useAuth } from "../hooks/useAuth";
+import { WebSocketProvider } from "../../../hostdashboard/hostmessages/context/webSocketContext";
+import { UserProvider } from "../../../hostdashboard/hostmessages/context/AuthContext";
+import {useAuth } from "../../../hostdashboard/hostmessages/hooks/useAuth";
 import GuestContactList from "../components/guestContactList";
 import GuestChatScreen from "../components/guestChatScreen";
 import GuestBookingTab from "../components/guestBookingTab";

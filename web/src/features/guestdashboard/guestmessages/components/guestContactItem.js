@@ -3,7 +3,6 @@ import profileImage from '../domits-logo.jpg';
 import useFetchBookingDetails from '../../../hostdashboard/hostmessages/hooks/useFetchBookingDetails';
 import ContactItem from '../../../../components/messages/ContactItem';
 
-
 const GuestContactItem = ({ contact, userId, isPending, selected }) => {
     const { bookingDetails, accommodation } = useFetchBookingDetails(contact.hostId, userId, {
         accommodationEndpoint: 'bookingEngine/listingDetails',

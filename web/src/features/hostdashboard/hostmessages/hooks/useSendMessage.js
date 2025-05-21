@@ -5,7 +5,8 @@ export const useSendMessage = (userId) => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState(null);
 
-    const sendMessageHandler = async (recipientId, text, connectionId, fileUrls = []) => {
+    const sendMessageHandler = async (recipientId, text, fileUrls = []) => {
+        console.log("Sending message:", { recipientId, text, fileUrls });
         if (!userId || !recipientId || (!text.trim() && (fileUrls.length === 0))) {
             const errorMsg = "Invalid message parameters";
             setError(errorMsg);
@@ -16,7 +17,6 @@ export const useSendMessage = (userId) => {
 
         const message = {
             action: "sendMessage",
-            recipientConnectionId: connectionId,
             userId: userId,
             recipientId: recipientId,
             text: text,

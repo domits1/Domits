@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import useFetchMessages from '../../features/hostdashboard/hostmessages/hooks/useFetchMessages';
 import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
 import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/components/chatUploadAttachment';
+import { useSendMessage } from '../../features/hostdashboard/hostmessages/hooks/useSendMessage';
 import { v4 as uuidv4 } from 'uuid';
 import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
 import profileImage from '../../features/hostdashboard/hostmessages/domits-logo.jpg';
@@ -16,14 +17,12 @@ const ChatScreen = ({
     ChatMessageComponent,
     containerClass = '',
     socket,
-    sendMessage,
-    sending,
-    sendError,
 }) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const { bookingDetails } = isHost
         ? useFetchBookingDetails(userId, contactId)
         : useFetchBookingDetails(contactId, userId);
+    const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     const [newMessage, setNewMessage] = useState('');
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
     const wsMessages = socket?.messages || [];
@@ -60,6 +59,7 @@ const ChatScreen = ({
         if ((newMessage.trim() || uploadedFileUrls.length > 0) && (uploadedFileUrls.length > 0 || newMessage.trim())) {
             try {
                 const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
+                // console.log(contactId, newMessage, uploadedFileUrls);
                 if (!response || !response.success) {
                     alert(`Fout bij verzenden: ${response.error || 'Probeer het later opnieuw.'}`);
                     return;

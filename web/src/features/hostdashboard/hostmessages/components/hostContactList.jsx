@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useContext } from 'react';
 import useFetchContacts from '../hooks/useFetchContacts';
 import HostContactItem from './hostContactItem';
 import { WebSocketContext } from '../context/webSocketContext';

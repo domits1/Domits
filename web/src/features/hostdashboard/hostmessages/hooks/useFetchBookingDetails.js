@@ -48,7 +48,6 @@ const useFetchBookingDetails = (hostId, guestId, {
                 })();
 
                 setBookingDetails({ ...bookingData, Nights });
-                // setBookingDetails({ ...bookingData });
 
                 if (bookingData.property_id && accommodationEndpoint) {
                     const accoRes = await fetch(

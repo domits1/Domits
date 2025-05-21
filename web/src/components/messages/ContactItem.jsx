@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ContactItem = ({ contact, userId, isPending, selected, setContacts, handleAccept, handleReject, accoImage, profileImage, bookingDetails,  }) => {
+const ContactItem = ({ contact, userId, isPending, selected, setContacts, handleAccept, handleReject, accoImage, profileImage, bookingDetails, }) => {
 
     return (
         <div className={`contact-item-content ${selected ? 'selected' : ''} ${!accoImage ? 'no-accommodation-image' : ''}`}>
@@ -21,7 +21,11 @@ const ContactItem = ({ contact, userId, isPending, selected, setContacts, handle
                         {bookingDetails?.Status === "Failed" && <p id='status'>Reservation unsuccessful</p>}
                         {contact.latestMessage?.text
                             ? contact.latestMessage.text
-                            : "No message history yet"}
+                            : contact.latestMessage?.fileUrls?.length === 1
+                                ? `(${contact.latestMessage?.fileUrls?.length}) Image`
+                                : contact.latestMessage?.fileUrls?.length > 1
+                                ? `(${contact.latestMessage?.fileUrls?.length}) Images`
+                                : "No message history yet"}
                     </p>
                 )}
 

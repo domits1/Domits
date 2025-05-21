@@ -1,13 +1,11 @@
 import React, { useContext } from 'react';
 import GuestChatMessage from './guestChatMessage';
 import ChatScreen from '../../../../components/messages/ChatScreen';
-import { WebSocketContext } from '../context/webSocketContext';
-import { useSendMessage } from '../hooks/useSendMessage';
+import { WebSocketContext } from "../../../hostdashboard/hostmessages/context/webSocketContext";
 import '../../../hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss';
 
 const GuestChatScreen = ({ userId, contactId, contactName, handleContactListMessage, onBack }) => {
     const socket = useContext(WebSocketContext);
-    const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     
     return (
         <ChatScreen
@@ -20,9 +18,6 @@ const GuestChatScreen = ({ userId, contactId, contactName, handleContactListMess
             ChatMessageComponent={GuestChatMessage}
             containerClass="guest-chat"
             socket={socket}
-            sendMessage={sendMessage}
-            sending={sending}
-            sendError={sendError}
         />
 
     );

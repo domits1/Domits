@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import useFetchContacts from '../hooks/useFetchContacts';
 import GuestContactItem from './guestContactItem';
-import { WebSocketContext } from '../context/webSocketContext';
+import { WebSocketContext } from "../../../hostdashboard/hostmessages/context/webSocketContext";
 import ContactList from '../../../../components/messages/ContactList';
 import '../../../hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
 const GuestContactList = ({ userId, onContactClick, message }) => {

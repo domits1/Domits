@@ -1,29 +1,29 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { Auth } from 'aws-amplify';
+// import React, { createContext, useState, useEffect, useContext } from 'react';
+// import { Auth } from 'aws-amplify';
 
 
-const UserContext = createContext();
-export const useUser = () => useContext(UserContext);
+// const UserContext = createContext();
+// export const useUser = () => useContext(UserContext);
 
-export const UserProvider = ({ children }) => {
-  const [userId, setUserId] = useState(null);
+// export const UserProvider = ({ children }) => {
+//   const [userId, setUserId] = useState(null);
 
-  useEffect(() => {
-    async function getCurrentUser() {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        setUserId(user.attributes.sub);
+//   useEffect(() => {
+//     async function getCurrentUser() {
+//       try {
+//         const user = await Auth.currentAuthenticatedUser();
+//         setUserId(user.attributes.sub);
 
-      } catch (error) {
-        console.error('Error fetching authenticated user:', error);
-      }
-    }
-    getCurrentUser();
-  }, []);
+//       } catch (error) {
+//         console.error('Error fetching authenticated user:', error);
+//       }
+//     }
+//     getCurrentUser();
+//   }, []);
 
-  return (
-    <UserContext.Provider value={{ userId }}>
-      {children}
-    </UserContext.Provider>
-  );
-};
+//   return (
+//     <UserContext.Provider value={{ userId }}>
+//       {children}
+//     </UserContext.Provider>
+//   );
+// };
