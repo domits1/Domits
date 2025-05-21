@@ -1,6 +1,6 @@
 import React from "react";
 import Pages from "./Pages";
-import './HostHomepage.css'
+import './HostHomepage.scss'
 
 function HostMessages() {
 

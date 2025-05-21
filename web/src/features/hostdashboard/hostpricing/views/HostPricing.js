@@ -159,13 +159,13 @@ const HostPricing = () => {
 
                         <div className="pricing-column">
                           <p className="pricing-rate-input">
-                            <button
+                            {/* <button
                               className="dynamic-pricing-button"
                               onClick={() => openModal(accommodation)}
                               aria-label="Open dynamic pricing"
                             >
                               Dynamic
-                            </button>
+                            </button> */}
                             Rate:{' '}
                             {editMode ? (
                               <PriceInput

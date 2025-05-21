@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styles from "../features/hostdashboard/HostDashboard.module.css";
+import styles from "../features/hostdashboard/HostDashboard.module.scss";
 
 /**
  * @param images = images you want to slide through
@@ -13,7 +13,7 @@ function ImageSlider({ images, seconds, page}) {
     const ms = seconds * 1000;
 
     useEffect(() => {
-        const imageKeys = Object.keys(images).filter(key => key.startsWith('image'));
+        const imageKeys = Object.keys(images).filter(key => key === "key");
         const totalImages = imageKeys.length;
 
         setIsVisible(true);
@@ -32,11 +32,11 @@ function ImageSlider({ images, seconds, page}) {
         };
     }, [images, seconds]);
 
-    const imageSrc = images[`image${currentImageIndex + 1}`];
+    const imageSrc = images[currentImageIndex].key;
 
     return (
         <img
-            src={imageSrc}
+            src={`https://accommodation.s3.eu-north-1.amazonaws.com/${imageSrc}`}
             alt="Slideshow"
             className={`${(page === 'dashboard') ? styles.accommodationImg : styles.imgSliderImage} ${isVisible ? styles.visible : ''}`}
         />

@@ -214,6 +214,7 @@ export const styles = StyleSheet.create({
     },
     // All amenities modal
     modalOverlay: {
+        width: "100%",
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',

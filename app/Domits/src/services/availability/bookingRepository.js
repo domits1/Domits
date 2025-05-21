@@ -76,6 +76,21 @@ class BookingRepository {
     }
     return await response.json();
   }
+
+    async getPaymentByBookingId(bookingId) {
+        const response = await fetch(
+            `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=getPayment&bookingId=${bookingId}`, {
+                headers: {
+                    Authorization: await retrieveAccessToken(),
+                }
+            }
+        );
+        if (!response.ok) {
+            throw new Error('Failed to fetch payment matching your booking.');
+        }
+        return await response.json();
+    }
+
 }
 
 export default BookingRepository;

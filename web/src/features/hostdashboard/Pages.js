@@ -15,7 +15,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import stripe from "../../images/icons/stripe-icon.png";
 import spinner from "../../images/spinnner.gif";
 import { Auth } from "aws-amplify";
-import './HostHomepage.css';
+import './HostHomepage.scss';
 import add from "../../images/icons/host-add.png";
 
 function Pages() {
@@ -46,6 +46,8 @@ function Pages() {
 
   return (
     <main>
+      <div className="hosthomepagecontainer">
+    
       <div className="host-dropdown">
         <br />
         {/*{loading ? (*/}
@@ -247,6 +249,7 @@ function Pages() {
         {/*    <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>*/}
         {/*  </div>*/}
         {/*)}*/}
+      </div>
       </div>
     </main>
   );
