@@ -134,7 +134,7 @@ function HostDashboard() {
                             key={accommodation.property.id || index}
                             className={styles.dashboardCard}
                             onClick={() => {
-                                if (accommodation.property.status) {
+                                if (accommodation.property.status === "INACTIVE") {
                                 toast.warning('This listing is still in draft mode. Please publish it to make it live.');
                                 } else {
                                 navigate(`/listingdetails?ID=${accommodation.property.id}`);
