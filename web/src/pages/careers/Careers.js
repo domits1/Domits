@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Jobs from "./jobs.json";
 import JobDetails from "./jobDetails";
 import { useNavigate, useParams } from 'react-router-dom';
-import "../../styles/sass/pages/careers/careers.scss";
 import styles from '../../utils/PageSwitcher.module.css'
 
 

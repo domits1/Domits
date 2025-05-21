@@ -5,6 +5,9 @@ import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
 import { confirmEmailChange } from "./emailSettings";
 
+
+
+
 const GuestDashboard = () => {
     const [tempUser, setTempUser] = useState({ email: '', name: '' });
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });

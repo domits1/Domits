@@ -18,6 +18,12 @@
 //pages
 //careers
 @use "pages/careers/careers.scss";
+@use "pages/careers/jobDetails.scss";
+
+//contact
+@use "pages/contact/contact.scss";
+
+
 
 //GuestDashboard
 @use "features/guestdashboard/guestDashboard.scss";
