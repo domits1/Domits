@@ -11,7 +11,7 @@ import PropertyRepository from '../../../../services/property/propertyRepository
 import ToastMessage from '../../../../components/ToastMessage';
 import LocationView from '../views/LocationView';
 import ViewBookingButton from '../components/ViewBookingButton';
-import {HOME_SCREEN} from '../../../../navigation/utils/NavigationNameConstants';
+import {GUEST_BOOKINGS_SCREEN} from '../../../../navigation/utils/NavigationNameConstants';
 import TestBookingRepository from '../../../../services/availability/test/testBookingRepository';
 import BookingRepository from '../../../../services/availability/bookingRepository';
 
@@ -98,7 +98,7 @@ const PaymentConfirmed = ({navigation, route}) => {
         <ViewBookingButton
           onPress={() => {
             console.error('View booking');
-            navigation.navigate(HOME_SCREEN);
+            navigation.navigate(GUEST_BOOKINGS_SCREEN);
           }}
         />
       </View>
