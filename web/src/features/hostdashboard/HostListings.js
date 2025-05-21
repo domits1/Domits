@@ -75,7 +75,7 @@ function HostListings() {
           }
         );
         if (!response.ok) {
-          throw new Error("Failed to fetch");
+          throw new Error("Failed to fetch host properties");
         }
         const data = await response.json();
         setAccommodations(data);
@@ -246,7 +246,7 @@ function HostListings() {
                           </span>
                           <span> on: {DateFormatterDD_MM_YYYY(accommodation.property.createdAt)}</span>
                         </div>
-                                                <div className={styles.buttonBox}>
+                        <div className={styles.buttonBox}>
                           <button
                             className={styles.greenBtn}>
                             Details
