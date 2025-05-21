@@ -106,18 +106,6 @@ function SummaryTable({ data, type }) {
               <td>{data.camperDetails.street || "N/A"}</td>
             </tr>
             <tr>
-              <td>License Plate:</td>
-              <td>{data.camperSpecifications.LicensePlate || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>Brand:</td>
-              <td>{data.camperSpecifications.CamperBrand || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>Model:</td>
-              <td>{data.camperSpecifications.Model || "N/A"}</td>
-            </tr>
-            <tr>
               <td>Height:</td>
               <td>{data.camperSpecifications.Height || "N/A"} meters</td>
             </tr>
@@ -147,20 +135,8 @@ function SummaryTable({ data, type }) {
               <td>{data.boatDetails.city || "N/A"}</td>
             </tr>
             <tr>
-              <td>Harbor:</td>
-              <td>{data.boatDetails.harbor || "N/A"}</td>
-            </tr>
-            <tr>
               <td>Number of Cabins:</td>
               <td>{data.accommodationCapacity.Cabins || 0}</td>
-            </tr>
-            <tr>
-              <td>Manufacturer:</td>
-              <td>{data.boatSpecifications.Manufacturer || "N/A"}</td>
-            </tr>
-            <tr>
-              <td>Model:</td>
-              <td>{data.boatSpecifications.Model || "N/A"}</td>
             </tr>
             <tr>
               <td>Fuel Usage:</td>
@@ -193,15 +169,15 @@ function SummaryTable({ data, type }) {
         <tr>
           <td>Checkin:</td>
           <td>
-            From: {data.houseRules.CheckIn.From || "N/A"} Til:{" "}
-            {data.houseRules.CheckIn.Til || "N/A"}
+            From: {data.checkIn.CheckIn.from || "N/A"} Til:{" "}
+            {data.checkIn.CheckIn.till || "N/A"}
           </td>
         </tr>
         <tr>
           <td>Checkout:</td>
           <td>
-            From: {data.houseRules.CheckOut.From || "N/A"} Til:{" "}
-            {data.houseRules.CheckOut.Til || "N/A"}
+            From: {data.checkIn.CheckOut.from || "N/A"} Til:{" "}
+            {data.checkIn.CheckOut.till || "N/A"}
           </td>
         </tr>
         {/* Display Selected Amenities */}

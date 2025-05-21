@@ -321,10 +321,6 @@ hr {
 /* code input */
 /* Extra small devices (phones, <576px) */
 @media (max-width: 575.98px) {
-  body{
-    font-size: small;
-  }
-
   .main-container{
     width: 100%;
   }

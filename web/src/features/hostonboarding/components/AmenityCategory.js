@@ -15,8 +15,7 @@ function AmenityCategory({ category, amenities, selectedAmenities, handleAmenity
       <section className="check-box">
         {amenities.map((amenity) => (
           <AmenityItem
-            key={amenity}
-            category={category}
+            key={amenity.amenity}
             amenity={amenity}
             checked={selectedAmenities.includes(amenity)}
             onChange={handleAmenityChange}

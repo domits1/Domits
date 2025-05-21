@@ -1,14 +1,15 @@
-import React, {useEffect, useState} from "react";
-import {useLocation} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Loading from "../../../hostdashboard/Loading";
 import FetchPropertyById from "../services/fetchPropertyById";
+import fetchHostInfo from "../services/fetchHostInfo";
 import "../../../../styles/sass/booking-engine/listingDetails.scss";
 import Header from "../components/header";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
 
 const ListingDetails2 = () => {
-    const {search} = useLocation();
+    const { search } = useLocation();
     const searchParams = new URLSearchParams(search);
     const id = searchParams.get("ID");
     const [property, setProperty] = useState({});
@@ -21,7 +22,10 @@ const ListingDetails2 = () => {
 
         const loadData = async () => {
             try {
-                setProperty(await FetchPropertyById(id));
+                const fetchedProperty = await FetchPropertyById(id);
+                setProperty(fetchedProperty);
+
+                const hostData = await fetchHostInfo(fetchedProperty.property.hostId);
                 setLoading(false);
             } catch (error) {
                 setError("Something went wrong while fetching the requested data, please try again later.")
@@ -33,7 +37,7 @@ const ListingDetails2 = () => {
     }, [id]);
 
     if (loading) {
-        return <Loading/>;
+        return <Loading />;
     } else {
         return error ? (
             <div className="listing-details-error">
@@ -41,10 +45,10 @@ const ListingDetails2 = () => {
             </div>
         ) : (
             <div className="listing-details">
+                <Header title={property.property.title} />
                 <div className="container">
-                    <Header title={property.property.title}/>
-                    <PropertyContainer property={property}/>
-                    <BookingContainer property={property}/>
+                    <PropertyContainer property={property} />
+                    <BookingContainer property={property} />
                 </div>
             </div>
         );

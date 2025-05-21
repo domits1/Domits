@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Pages from "./Pages.js";
 import spinner from "../../images/spinnner.gif";
 import deleteIcon from "../../images/icons/cross.png";
-import styles from '../hostdashboard/HostReviews.module.css';
+// import styles from '../hostdashboard/HostReviews.module.css';
 import { Auth } from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
@@ -150,7 +150,6 @@ function GuestReviews() {
         <main className="page-body">
             <h2>Reviews</h2>
             <div className={styles.reviewGrid}>
-                <Pages />
                 <div className={styles.contentContainer}>
                     <div className={styles.reviewColumn}>
                         <div className={styles.reviewBox}>

@@ -4,9 +4,14 @@ import { useDescription } from "../hooks/usePropertyDescription";
 import TextAreaField from "../components/TextAreaField";
 import SpecificationForm from "../components/SpecificationForm";
 import OnboardingButton from "../components/OnboardingButton";
+import { useBuilder } from "../../../context/propertyBuilderContext";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 
 function PropertyDescriptionView() {
-  const { type: accommodationType } = useParams();
+  const builder = useBuilder();
+  const form = useFormStoreHostOnboarding();
+  const technicalDetails = useFormStoreHostOnboarding((state) => state.technicalDetails);
+  const type = builder.propertyType.property_type;
   const {
     description,
     boatSpecifications,
@@ -17,15 +22,15 @@ function PropertyDescriptionView() {
   } = useDescription();
 
   const specifications =
-    accommodationType === "boat"
+    type === "Boat"
       ? boatSpecifications
-      : accommodationType === "camper"
+      : type === "Camper"
       ? camperSpecifications
       : null;
   const updateSpecification =
-    accommodationType === "boat"
+    type === "Boat"
       ? updateBoatSpecification
-      : accommodationType === "camper"
+      : type === "Camper"
       ? updateCamperSpecification
       : null;
 
@@ -44,17 +49,31 @@ function PropertyDescriptionView() {
           placeholder="Enter your description here..."
         />
         <SpecificationForm
-          type={accommodationType}
+          type={type}
           specifications={specifications}
           updateSpecification={updateSpecification}
         />
         <nav className="onboarding-button-box">
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/title`}
+            routePath={`/hostonboarding/${type}/title`}
             btnText="Go back"
           />
           <OnboardingButton
-            routePath={`/hostonboarding/${accommodationType}/pricing`}
+            onClick={()=> {
+              if (type === "Camper" || type === "Boat") {
+                builder.addTechnicalDetails({
+                  length: technicalDetails.length,
+                  height: technicalDetails.height,
+                  fuelConsumption: technicalDetails.fuelConsumption,
+                  speed: technicalDetails.speed,
+                  renovationYear: technicalDetails.renovationYear,
+                  transmission: technicalDetails.transmission,
+                  generalPeriodicInspection: technicalDetails.generalPeriodicInspection,
+                  fourWheelDrive: technicalDetails.fourWheelDrive,
+                })
+              }
+            }}
+            routePath={`/hostonboarding/${type}/pricing`}
             btnText="Proceed"
           />
         </nav>

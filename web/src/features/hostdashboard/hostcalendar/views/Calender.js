@@ -34,7 +34,7 @@ let editMode = false;
  * 
  * @returns {JSX.Element}
  */
-function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displayMonths = 1 }) {
+function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builder, displayMonths = 1 }) {
     const [selectedMonthState, setSelectedMonth] = useState(selectedMonth);
     const [selectedYearState, setSelectedYear] = useState(selectedYear);
     const [calenderGridObject, setGrid] = useState(
@@ -74,6 +74,8 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
 
         setDates(getDatesObject(selectedDates));
         setGrid(getGridObject(selectedMonth, selectedYear));
+
+        builder.addAvailability(convertDatesToDBDates(selectedDates));
     }
 
     /**

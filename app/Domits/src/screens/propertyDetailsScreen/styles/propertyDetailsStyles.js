@@ -147,7 +147,15 @@ export const styles = StyleSheet.create({
     },
     // Booking button
     bookingButtonContainer: {
-        marginHorizontal: 20,
+        position: 'absolute',
+        bottom: 2,
+        right: 0,
+    },
+    bookingContainer: {
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
     },
     bookingButton: {
         borderRadius: 15,
@@ -240,5 +248,19 @@ export const styles = StyleSheet.create({
         fontSize: 16,
         color: 'black',
         textAlign: 'center',
+    },
+    toastContainer: {
+        position: 'absolute',
+        bottom: 50,
+        left: 50,
+        right: 50,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 15,
+        borderRadius: 5,
+        zIndex: 999,
+    },
+    toastText: {
+        color: '#fff',
+        fontSize: 16,
     },
 });

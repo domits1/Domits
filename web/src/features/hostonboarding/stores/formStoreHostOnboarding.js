@@ -5,6 +5,26 @@ import { create } from "zustand"
  * Stores the accommodationdetails, steps-progress and dynamically updated nested fields.
  */
 const useFormStoreHostOnboarding = create((set) => ({
+  technicalDetails: {
+    length: null,
+    height: null,
+    fuelConsumption: null,
+    speed: null,
+    renovationYear: null,
+    transmission: "Automatic",
+    generalPeriodicInspection: null,
+    fourWheelDrive: false,
+  },
+
+  location: {
+    country: "",
+    city: "",
+    street: "",
+    houseNumber: "",
+    houseNumberExtension: "",
+    postalCode: ""
+  },
+
   // Step progress
   completedSteps: [],
 
@@ -32,11 +52,14 @@ const useFormStoreHostOnboarding = create((set) => ({
     selectedAmenities: {},
 
     houseRules: {
-      AllowSmoking: false,
-      AllowPets: false,
-      AllowParties: false,
-      CheckIn: { From: "00:00", Til: "00:00" },
-      CheckOut: { From: "00:00", Til: "00:00" },
+      SmokingAllowed: false,
+      PetsAllowed: false,
+      "Parties/EventsAllowed": false,
+    },
+
+    checkIn: {
+      CheckIn: { from: 0, till: 0 },
+      CheckOut: { from: 0, till: 0 },
     },
 
     images: {},
@@ -112,6 +135,14 @@ const useFormStoreHostOnboarding = create((set) => ({
       },
     })),
 
+  updateTechnicalDetails: (key, value) =>
+    set((state) => ({
+      technicalDetails: {
+        ...state.technicalDetails,
+        [key]: value,
+      },
+    })),
+
   setCamperDetails: (details) =>
     set((state) => ({
       accommodationDetails: {
@@ -153,6 +184,18 @@ const useFormStoreHostOnboarding = create((set) => ({
         accommodationDetails: {
           ...state.accommodationDetails,
           houseRules: updated,
+        },
+      }
+    }),
+
+  setCheckIn: (rule, value, subKey) =>
+    set((state) => {
+      const updated = { ...state.accommodationDetails.checkIn }
+      subKey ? (updated[rule][subKey] = value) : (updated[rule] = value)
+      return {
+        accommodationDetails: {
+          ...state.accommodationDetails,
+          checkIn: updated,
         },
       }
     }),

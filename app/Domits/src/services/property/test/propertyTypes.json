@@ -1,0 +1,629 @@
+{
+  "properties": [
+    {
+      "property": {
+        "id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "hostId": "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3",
+        "title": "Luxury Yacht Stay in Barcelona’s Marina",
+        "subtitle": "Wake Up to Stunning Sea Views in a Unique Waterfront Escape",
+        "description": "Experience the beauty of Barcelona from a whole new perspective—aboard a luxurious private yacht in the city’s vibrant marina. Enjoy the gentle sway of the water, breathtaking sunsets over the Mediterranean, and easy access to the beaches and lively streets of Barcelona. This stylish yacht offers modern comforts, including a cozy bedroom, a fully equipped kitchenette, and a spacious deck perfect for sunbathing or enjoying an evening drink. Whether you're looking for a romantic getaway or a unique adventure, this floating retreat promises an unforgettable stay in Spain’s coastal gem.",
+        "guestCapacity": 6,
+        "registrationNumber": "test",
+        "status": "ACTIVE",
+        "propertyType": "Boat",
+        "createdAt": 1742398315900,
+        "updatedAt": 0
+      },
+      "propertyGeneralDetails": [
+        {
+          "id": "f9204a32-13d4-4a86-bf39-3eb94da4b10a",
+          "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+          "detail": "Beds",
+          "value": 2
+        },
+        {
+          "id": "5830d75d-9377-4d29-8112-8d04478df644",
+          "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+          "detail": "Bathrooms",
+          "value": 1
+        },
+        {
+          "id": "edec1d92-7f74-4f60-aa31-c7d3ea04e844",
+          "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+          "detail": "Bedrooms",
+          "value": 2
+        },
+        {
+          "id": "gb7s8939i0h9f0h09",
+          "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+          "detail": "Guests",
+          "value": 5
+        }
+      ],
+      "propertyPricing": {
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "roomRate": 200,
+        "cleaning": 10,
+        "service": 5
+      },
+      "propertyImages": [
+        {
+          "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+          "key": "images/1/26/Yacht-Kashmir-twin-stateroom.webp"
+        },
+        {
+          "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+          "key": "images/1/26/boatdecor2.jpg"
+        },
+        {
+          "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+          "key": "images/1/26/sitemgr_superyacht-caryali-galley.jpg"
+        },
+        {
+          "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+          "key": "images/1/26/heads1000-.jpg"
+        },
+        {
+          "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+          "key": "images/1/26/rental-Motor-boat-bGALEON-67feet-bMontauk-b_w6LUqtF.jpg"
+        }
+      ],
+      "propertyLocation": {
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "country": "Barcelona",
+        "city": "Spain",
+        "street": "Carrer de la Marina",
+        "houseNumber": 6,
+        "houseNumberExtension": "K",
+        "postalCode": "2013 AS"
+      }
+    },
+    {
+      "property": {
+        "id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+        "hostId": "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3",
+        "title": "Luxury Boat Stay in Rhodes: A Seaside Escape",
+        "subtitle": "Unwind on the Water with Stunning Views and Ultimate Comfort",
+        "description": "Experience the magic of Rhodes from the deck of your private boat, where the gentle waves and breathtaking sunsets create the perfect setting for an unforgettable getaway. Anchored in a picturesque marina, this unique stay offers both adventure and relaxation. Step aboard and enjoy modern comforts, including a cozy sleeping area, a fully equipped kitchenette, and a sun-soaked deck perfect for sipping your morning coffee or stargazing at night. Whether you're exploring the island’s crystal-clear waters or simply unwinding with the sea breeze, this boat stay promises a truly one-of-a-kind experience in Greece.",
+        "guestCapacity": 4,
+        "registrationNumber": "test",
+        "status": "ACTIVE",
+        "propertyType": "Boat",
+        "createdAt": 1742397102027,
+        "updatedAt": 0
+      },
+      "propertyGeneralDetails": [
+        {
+          "id": "b187070c-0bbe-4bec-8a1e-1746aab0d1d4",
+          "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+          "detail": "Bathrooms",
+          "value": 1
+        },
+        {
+          "id": "7e2bfafb-d4ea-4666-a8e3-b2c5b7bd3499",
+          "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+          "detail": "Beds",
+          "value": 2
+        },
+        {
+          "id": "jf89dahf8hindja09id903",
+          "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+          "detail": "Guests",
+          "value": 3
+        },
+        {
+          "id": "38ff0b60-2ecd-4046-8498-0549144aa55b",
+          "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+          "detail": "Bedrooms",
+          "value": 2
+        }
+      ],
+      "propertyPricing": {
+        "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+        "roomRate": 180,
+        "cleaning": 10,
+        "service": 5
+      },
+      "propertyImages": [
+        {
+          "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+          "key": "images/1/25/marex-310-2-scaled-1200x0-c-default.jpg"
+        },
+        {
+          "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+          "key": "images/1/25/marex_330_sejler.jpg"
+        },
+        {
+          "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+          "key": "images/1/25/126845164.jpg"
+        },
+        {
+          "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+          "key": "images/1/25/shower-water-sailing-yacht-boat.jpg"
+        },
+        {
+          "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+          "key": "images/1/25/hr412bigvcabin2491stoss.jpg"
+        }
+      ],
+      "propertyLocation": {
+        "property_id": "e2ef4793-7376-458b-b4e5-7eba2a9deb79",
+        "country": "Greece",
+        "city": "Rhodes",
+        "street": "OlypiacosRoad",
+        "houseNumber": 6,
+        "houseNumberExtension": "K",
+        "postalCode": "2013 AS"
+      }
+    },
+    {
+      "property": {
+        "id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+        "hostId": "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3",
+        "title": "Stay in Tilly: A Restored Leyland Olympian Bus in Vexin",
+        "subtitle": "Experience a Unique Farm Retreat in a Historic Double-Decker Cottage",
+        "description": "Tilly is a 12-meter Leyland Olympian, originally built in England for Hong Kong. Delivered in the 1980s for an exhibition, it was later repatriated to England in the early 2000s in spare parts. Now, Tilly continues its journey to France, where it offers an exceptional stay in a unique cottage, alongside exciting experiences on a farm set in a lush, green landscape in the heart of Vexin.",
+        "guestCapacity": 4,
+        "registrationNumber": "test",
+        "status": "ACTIVE",
+        "propertyType": "Camper",
+        "createdAt": 1742395632573,
+        "updatedAt": 0
+      },
+      "propertyGeneralDetails": [
+        {
+          "id": "18c55e6c-695c-4304-b2eb-4a9420c00f60",
+          "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+          "detail": "Beds",
+          "value": 4
+        },
+        {
+          "id": "ngudabgh24j90fm9032j90fjddsa",
+          "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+          "detail": "Guests",
+          "value": 5
+        },
+        {
+          "id": "904a6294-82f2-4a7f-9034-f4d4c15fbec3",
+          "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+          "detail": "Bedrooms",
+          "value": 2
+        },
+        {
+          "id": "8e59e811-1613-4351-8451-7ea0ba3d64d8",
+          "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+          "detail": "Bathrooms",
+          "value": 1
+        }
+      ],
+      "propertyPricing": {
+        "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+        "roomRate": 180,
+        "cleaning": 10,
+        "service": 5
+      },
+      "propertyImages": [
+        {
+          "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+          "key": "images/1/21/Afbeelding25.png"
+        },
+        {
+          "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+          "key": "images/1/21/Afbeelding22.png"
+        },
+        {
+          "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+          "key": "images/1/21/Afbeelding23.png"
+        },
+        {
+          "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+          "key": "images/1/21/Afbeelding21.png"
+        },
+        {
+          "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+          "key": "images/1/21/Afbeelding24.png"
+        }
+      ],
+      "propertyLocation": {
+        "property_id": "824837e0-3f4a-4c24-99c8-b922987514ee",
+        "country": "France",
+        "city": "Ronquerolles",
+        "street": "BonjourRoad",
+        "houseNumber": 6,
+        "houseNumberExtension": "K",
+        "postalCode": "2013 AS"
+      }
+    },
+    {
+      "property": {
+        "id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+        "hostId": "ce93f377-9ac0-46c2-9d45-cf20d33dcc33",
+        "title": "Seaside Apartments with Stunning Adriatic Views Near Trogir",
+        "subtitle": "Beachfront Escape with a Pool, Hot Tub, and Easy Access to Trogir & Split",
+        "description": "Apartments Sea  are situated on a perfect location nearby Trogir, right on the beach, with the best view on the beautiful Adriatic sea and Islands. It's peacefull and quiet area. In front of the house is  3 kilometres long seaside promenade, which contains friendly hosts and healthy food in a small Mediterranean restaurants. Both apartments are with great location and very easy access to Trogir (beautiful old town with large selection of reasonably priced restaurants) and Split via boat taxis.",
+        "guestCapacity": 6,
+        "registrationNumber": "test",
+        "status": "ACTIVE",
+        "propertyType": "Appartment",
+        "createdAt": 1742395085361,
+        "updatedAt": 0
+      },
+      "propertyGeneralDetails": [
+        {
+          "id": "89fhs8ggdspng",
+          "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+          "detail": "Guests",
+          "value": 3
+        },
+        {
+          "id": "9bd751f8-bfc5-40d9-8ec7-2b9b665334af",
+          "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+          "detail": "Bathrooms",
+          "value": 2
+        },
+        {
+          "id": "d955f0d5-2a06-4733-b425-4d1c37fb9afa",
+          "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+          "detail": "Bedrooms",
+          "value": 2
+        },
+        {
+          "id": "4becc672-f342-4f25-94c7-e5869d326ce5",
+          "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+          "detail": "Beds",
+          "value": 4
+        }
+      ],
+      "propertyPricing": {
+        "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+        "roomRate": 190,
+        "cleaning": 10,
+        "service": 5
+      },
+      "propertyImages": [
+        {
+          "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+          "key": "images/1/23/Picture2.png"
+        },
+        {
+          "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+          "key": "images/1/23/Picture5.png"
+        },
+        {
+          "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+          "key": "images/1/23/Picture3.png"
+        },
+        {
+          "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+          "key": "images/1/23/Picture4.png"
+        },
+        {
+          "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+          "key": "images/1/23/Picture1.png"
+        }
+      ],
+      "propertyLocation": {
+        "property_id": "a9bba419-5e1b-4d4a-b86d-1e22c57ca24e",
+        "country": "Croatia",
+        "city": "Seget Donji",
+        "street": "Togirstreets",
+        "houseNumber": 6,
+        "houseNumberExtension": "",
+        "postalCode": "11515 AS"
+      }
+    },
+    {
+      "property": {
+        "id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+        "hostId": "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3",
+        "title": "Fjordside Caravan Retreat in Lysebotn",
+        "subtitle": "Relax and Reconnect with Nature, Surrounded by Majestic Mountains and Scenic Views",
+        "description": "Escape to a charming and cozy caravan in the heart of Lysebotn, where breathtaking fjord views and majestic mountains create a stunning backdrop. This is the perfect retreat for relaxation, adventure, and reconnecting with nature. Step onto your spacious terrace and unwind in a hammock with a good book, soaking in the peaceful surroundings. Whether you seek excitement or tranquility, this spot offers both. Inside, the caravan is thoughtfully designed with comfort and convenience in mind. More than just a place to stay, it’s a truly unique experience!",
+        "guestCapacity": 4,
+        "registrationNumber": "test",
+        "status": "ACTIVE",
+        "propertyType": "Camper",
+        "createdAt": 1742390388314,
+        "updatedAt": 0
+      },
+      "propertyGeneralDetails": [
+        {
+          "id": " gfajkfjsoapjfpioajspocmea8",
+          "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+          "detail": "Guests",
+          "value": 4
+        },
+        {
+          "id": "65600638-b314-4b96-888a-e732770a41ee",
+          "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+          "detail": "Beds",
+          "value": 4
+        },
+        {
+          "id": "cbf36564-be6c-4156-9f6f-3acdea7677e1",
+          "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+          "detail": "Bathrooms",
+          "value": 1
+        },
+        {
+          "id": "fce01228-cc67-4232-9e5e-df38ef9c2076",
+          "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+          "detail": "Bedrooms",
+          "value": 1
+        }
+      ],
+      "propertyPricing": {
+        "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+        "roomRate": 187,
+        "cleaning": 10,
+        "service": 5
+      },
+      "propertyImages": [
+        {
+          "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+          "key": "images/1/19/Afbeelding16.png"
+        },
+        {
+          "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+          "key": "images/1/19/Afbeelding17.png"
+        },
+        {
+          "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+          "key": "images/1/19/Afbeelding20.png"
+        },
+        {
+          "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+          "key": "images/1/19/Afbeelding19.png"
+        },
+        {
+          "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+          "key": "images/1/19/Afbeelding18.png"
+        }
+      ],
+      "propertyLocation": {
+        "property_id": "00a5a252-09d4-4527-bf7c-a309fc879242",
+        "country": "Norway",
+        "city": "Sandnes",
+        "street": "OdegaardRoad",
+        "houseNumber": 6,
+        "houseNumberExtension": "K",
+        "postalCode": "2013 AS"
+      }
+    },
+    {
+      "property": {
+        "id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+        "hostId": "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3",
+        "title": "Seabreeze Airstream Overlander: Coastal Luxury in a Classic Trailer",
+        "subtitle": "Experience the Charm of a Restored 1973 Airstream with Ocean Views, Modern Comforts, and Off-Grid Serenity",
+        "description": "Seabreeze Airstream Overlander by Salt & City Stays: A beautifully restored 1973 Airstream Overlander trailer. Set in peaceful coastal fields overlooking St Brides Bay, wake up to breathtaking ocean views and refreshing sea air. Fully self-sufficient, it features solar panels, a water tank, gas heating, hot water, and a Wi-Fi hotspot. This luxurious retreat combines natural beauty with modern comfort, boasting a handcrafted oak kitchen, a spacious shower, and a king-size bed—ideal for a tranquil getaway. The Space Welcome to The Seabreeze Airstream Overlander, hosted by Salt & City Stays, where vintage charm meets contemporary luxury. This meticulously restored 1973 Airstream Overlander offers more than just accommodation—it’s a unique experience. With a stylish and character-filled interior, it perfectly blends retro aesthetics with modern amenities. Inside, you’ll discover a handcrafted oak kitchen, a large shower room with a high-pressure shower, and a plush king-size bed, all designed for ultimate comfort. Equipped with a Wi-Fi hotspot, gas heating, hot water, and solar power, this off-grid retreat ensures a seamless and relaxing stay.",
+        "guestCapacity": 2,
+        "registrationNumber": "test",
+        "status": "ACTIVE",
+        "propertyType": "Camper",
+        "createdAt": 1742389908729,
+        "updatedAt": 0
+      },
+      "propertyGeneralDetails": [
+        {
+          "id": "0b9f9adb-66a5-4577-b706-fe56826f7bfc",
+          "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+          "detail": "Beds",
+          "value": 1
+        },
+        {
+          "id": "4d1cd7ab-e1fd-40e9-892d-0e2580f18352",
+          "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+          "detail": "Bedrooms",
+          "value": 1
+        },
+        {
+          "id": "90f2b52c-5d1e-443a-bec8-f3f709356592",
+          "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+          "detail": "Bathrooms",
+          "value": 1
+        },
+        {
+          "id": "gnui4g89j230pdj90qi09dj",
+          "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+          "detail": "Guests",
+          "value": 6
+        }
+      ],
+      "propertyPricing": {
+        "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+        "roomRate": 205,
+        "cleaning": 10,
+        "service": 5
+      },
+      "propertyImages": [
+        {
+          "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+          "key": "images/1/17/Afbeelding13.png"
+        },
+        {
+          "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+          "key": "images/1/17/Afbeelding14.png"
+        },
+        {
+          "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+          "key": "images/1/17/Afbeelding11.png"
+        },
+        {
+          "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+          "key": "images/1/17/Afbeelding15.png"
+        },
+        {
+          "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+          "key": "images/1/17/Afbeelding12.png"
+        }
+      ],
+      "propertyLocation": {
+        "property_id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
+        "country": "United Kingdom",
+        "city": "Nolton Haven",
+        "street": "KingsRoad",
+        "houseNumber": 6,
+        "houseNumberExtension": "K",
+        "postalCode": "2013 AS"
+      }
+    },
+    {
+      "property": {
+        "id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+        "hostId": "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3",
+        "title": "Mountain Lodge Retreat with Stunning Lake Views",
+        "subtitle": "Experience Trentino-Alto Adige in Comfort with a Private Finnish Jacuzzi and Breathtaking Sunrises",
+        "description": "Nestled in Trentino-Alto Adige with enchanting views of the lake and mountains, this lodge offers a truly special and relaxing adventure. Immerse yourself in nature with a private wood-heated outdoor Finnish jacuzzi, perfect for enjoying the sun or snow under the starry sky. The lodge, designed in a mountain style, features a large window in the living area that offers a breathtaking view of the surroundings. P.S. Wake up to the beauty of the sunrise…",
+        "guestCapacity": 4,
+        "registrationNumber": "test",
+        "status": "ACTIVE",
+        "propertyType": "House",
+        "createdAt": 1742389409551,
+        "updatedAt": 0
+      },
+      "propertyGeneralDetails": [
+        {
+          "id": "382421ff-d5bd-4e94-98a8-57e163beaf91",
+          "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+          "detail": "Bathrooms",
+          "value": 1
+        },
+        {
+          "id": "228f5202-c86b-4d58-8c70-aeaa096099c4",
+          "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+          "detail": "Bedrooms",
+          "value": 1
+        },
+        {
+          "id": "7e1c3c73-4a99-492c-a701-f5efe99ea826",
+          "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+          "detail": "Beds",
+          "value": 2
+        },
+        {
+          "id": "gmn89h90jfndbio",
+          "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+          "detail": "Guests",
+          "value": 4
+        }
+      ],
+      "propertyPricing": {
+        "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+        "roomRate": 249,
+        "cleaning": 10,
+        "service": 5
+      },
+      "propertyImages": [
+        {
+          "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+          "key": "images/1/14/Afbeelding6.png"
+        },
+        {
+          "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+          "key": "images/1/14/Afbeelding9.png"
+        },
+        {
+          "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+          "key": "images/1/14/Afbeelding10.png"
+        },
+        {
+          "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+          "key": "images/1/14/Afbeelding8.png"
+        },
+        {
+          "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+          "key": "images/1/14/Afbeelding7.png"
+        }
+      ],
+      "propertyLocation": {
+        "property_id": "e03094c4-a702-4f65-a22b-c80bea7a2e1b",
+        "country": "Italy",
+        "city": "Bosentino",
+        "street": "ChurchRoad",
+        "houseNumber": 6,
+        "houseNumberExtension": "K",
+        "postalCode": "2013 AS"
+      }
+    },
+    {
+      "property": {
+        "id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+        "hostId": "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3",
+        "title": "Tranquil Countryside Escape in Lympsham",
+        "subtitle": "Cozy Guest House for Two with Scenic Views and Nearby Cycling Routes",
+        "description": "Welcome to our guest house! Tucked away on the outskirts of the peaceful village of Lympsham, you can enjoy the surrounding countryside while relaxing after exploring the renowned Mendips. Unwind with a glass of wine while watching the many birds in the nearby trees, or be more adventurous with the numerous local cycle routes. We look forward to welcoming you during your stay. Please note: the guest house has a shared driveway next to the main house and is not suitable for children or pets.",
+        "guestCapacity": 2,
+        "registrationNumber": "test",
+        "status": "ACTIVE",
+        "propertyType": "House",
+        "createdAt": 1742388189226,
+        "updatedAt": 0
+      },
+      "propertyGeneralDetails": [
+        {
+          "id": "014dfe16-9845-46cb-8c2e-ee8020cbb321",
+          "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+          "detail": "Bathrooms",
+          "value": 1
+        },
+        {
+          "id": "625a5999-9276-4963-ad00-453587f07b05",
+          "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+          "detail": "Bedrooms",
+          "value": 1
+        },
+        {
+          "id": "6be5295b-9199-4566-841a-f7fa596e3eb1",
+          "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+          "detail": "Beds",
+          "value": 1
+        },
+        {
+          "id": "nf89ash89fn3bibuvdhsdndapjov9023kj9c8",
+          "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+          "detail": "Guests",
+          "value": 5
+        }
+      ],
+      "propertyPricing": {
+        "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+        "roomRate": 179,
+        "cleaning": 10,
+        "service": 5
+      },
+      "propertyImages": [
+        {
+          "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+          "key": "images/1/13/Afbeelding3.png"
+        },
+        {
+          "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+          "key": "images/1/13/Afbeelding2.png"
+        },
+        {
+          "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+          "key": "images/1/13/Afbeelding4.png"
+        },
+        {
+          "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+          "key": "images/1/13/Afbeelding5.png"
+        },
+        {
+          "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+          "key": "images/1/13/Afbeelding1.png"
+        }
+      ],
+      "propertyLocation": {
+        "property_id": "6637379f-efe4-4a13-b3ec-092f2dacee70",
+        "country": "United Kingdom",
+        "city": "Lympsham",
+        "street": "ChurchRoad",
+        "houseNumber": 6,
+        "houseNumberExtension": "K",
+        "postalCode": "2013 AS"
+      }
+    }
+  ],
+  "lastEvaluatedKey": null
+}

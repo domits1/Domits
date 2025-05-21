@@ -4,8 +4,17 @@ export const useHouseRules = () => {
   const houseRules = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.houseRules,
   )
+
   const updateHouseRule = useFormStoreHostOnboarding(
     (state) => state.setHouseRule,
+  )
+
+  const updateCheckIn = useFormStoreHostOnboarding(
+    (state) => state.setCheckIn,
+  )
+
+  const checkIn = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.checkIn,
   )
 
   const handleCheckboxChange = (rule, value) => {
@@ -13,8 +22,8 @@ export const useHouseRules = () => {
   }
 
   const handleTimeChange = (rule, subKey, value) => {
-    updateHouseRule(rule, value, subKey)
+    updateCheckIn(rule, value, subKey)
   }
 
-  return { houseRules, handleCheckboxChange, handleTimeChange }
+  return { houseRules, checkIn, handleCheckboxChange, handleTimeChange }
 }

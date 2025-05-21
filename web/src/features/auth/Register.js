@@ -2,9 +2,8 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import FlowContext from '../../services/FlowContext';
-import './Register.css';
 import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
+// import 'react-phone-input-2/lib/style.css';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -46,6 +45,11 @@ const Register = () => {
     const strengthBarRef = useRef(null);
     const strengthTextRef = useRef(null);
     const strengthContainerRef = useRef(null); // Declare the strengthContainerRef
+
+    const handleLoginClick = (e) => {
+        e.preventDefault()
+        navigate('/login');
+    };
 
 
     const handleHostChange = (e) => {
@@ -203,29 +207,29 @@ const Register = () => {
             //     return;
             // }
 
-            const emailName = email.split('@')[0];
+            //const emailName = email.split('@')[0];
             const groupName = flowState.isHost ? "Host" : "Traveler";
             await Auth.signUp({
                 username: email,
                 password,
                 attributes: {
                     'custom:group': groupName,
-                    'custom:username': emailName + username,
+                    'custom:username': username,
                     // 'preferred_username': prefferedName, // do not remove this yet it might become usefull later if you have questions: ask Chant
                     'given_name': firstName,
                     'family_name': lastName,
-                    'phone_number': `${countryCode}${phone}`,
+                    'phone_number': `+${phone}`,
                 },
             });
             navigate('/confirm-email', {
                 state: { email, password }
             });
         } catch (error) {
+            console.log("Sign-up failed:", error);
             if (error.code === 'UsernameExistsException') {
                 setErrorMessage('Email already exists!');
             } else {
-                console.error("Error:", error);
-                setErrorMessage('An unexpected error occurred');
+                setErrorMessage(error.message || 'An unexpected error occurred');
             }
         }
     };
@@ -332,9 +336,6 @@ const Register = () => {
                             country={'nl'}
                             value={formData.phone}
                             onChange={phone => setFormData(prevState => ({ ...prevState, phone }))}
-                            inputClass="registerInput"
-                            containerClass="phoneInputContainer"
-                            inputStyle={{ width: '110%', border: '1px solid #999' }}
                         />
 
                         <label>Password*</label>
@@ -385,7 +386,7 @@ const Register = () => {
                             /> Become a Host
                         </label>
                         <div className="alreadyAccountText">
-                            Already have an account? <a href="/web/src/features/auth/Login">Log in here</a>
+                            Already have an account? <a onClick={handleLoginClick} href="#login">Log in here</a>
                         </div>
                         {errorMessage && <div className="errorText">{errorMessage}</div>}
                         <button type="submit" className="registerButton" onClick={() => setShouldShake(true)}>Sign Up

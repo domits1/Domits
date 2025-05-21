@@ -3,7 +3,7 @@ import editIcon from "../../images/icons/edit-05.png";
 import checkIcon from "../../images/icons/checkPng.png";
 import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
-import './PagesDropdown.css';
+// import './PagesDropdown.css';
 import { confirmEmailChange } from "./emailSettings";
 
 
@@ -352,7 +352,7 @@ const GuestDashboard = () => {
         <div className="page-body">
             <h2>Dashboard</h2>
             <div className="dashboards">
-                <Pages/>
+
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>

@@ -3,7 +3,6 @@ import styles from './Calendar.module.css';
 import {isSameDay} from "date-fns";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import {useNavigate} from "react-router-dom";
-import HostCalendar from "./HostCalendar";
 
 /**
  * TEST

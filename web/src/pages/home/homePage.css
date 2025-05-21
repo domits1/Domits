@@ -1194,7 +1194,7 @@ body.hide-header .app-header {
   }
 
   .domits-searchbarCon {
-    padding-top: 15px;
+    display: none;
   }
 
   .domits-iconsContainer {

@@ -1,0 +1,50 @@
+.image-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; // Align content to the top for scrolling
+    align-items: center;
+    z-index: 1000;
+    overflow-y: auto; // Enable vertical scrolling
+
+    .close-overlay-button {
+        position: fixed; // Keep the close button visible while scrolling
+        margin: 10px;
+        align-self: flex-end;
+        background-color: #ff4d4d;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+
+        &:hover {
+            background-color: #cc0000;
+        }
+    }
+
+    .overlay-images {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 20px;
+
+        .overlay-thumbnail {
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+
+            &:hover {
+                transform: scale(1.1);
+            }
+        }
+    }
+}
