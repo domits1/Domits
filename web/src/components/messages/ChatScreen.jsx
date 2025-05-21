@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import useFetchMessages from '../../features/hostdashboard/hostmessages/hooks/useFetchMessages';
 import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
 import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/components/chatUploadAttachment';
@@ -27,7 +27,7 @@ const ChatScreen = ({
     const [newMessage, setNewMessage] = useState('');
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
     const wsMessages = socket?.messages || [];
-
+    const addedMessageIds = useRef(new Set());
 
 
     const handleUploadComplete = (url) => {
@@ -42,11 +42,16 @@ const ChatScreen = ({
 
     useEffect(() => {
         wsMessages.forEach((msg) => {
-            if (
+            const isRelevant =
                 (msg.userId === userId && msg.recipientId === contactId) ||
-                (msg.userId === contactId && msg.recipientId === userId)
-            ) {
+                (msg.userId === contactId && msg.recipientId === userId);
+
+            const isNew = !addedMessageIds.current.has(msg.id);
+
+            if (isRelevant && isNew) {
+                console.log('WebSocket message:', msg);
                 addNewMessage(msg);
+                addedMessageIds.current.add(msg.id);
             }
         });
     }, [wsMessages, userId, contactId]);
@@ -59,8 +64,8 @@ const ChatScreen = ({
                     alert(`Fout bij verzenden: ${response.error || 'Probeer het later opnieuw.'}`);
                     return;
                 }
-
-                const sentMessage = {
+                // only for UI
+                const tempSentMessage = {
                     id: uuidv4(),
                     userId,
                     recipientId: contactId,
@@ -70,8 +75,8 @@ const ChatScreen = ({
                     isSent: true,
                 };
 
-                handleContactListMessage(sentMessage);
-                addNewMessage(sentMessage);
+                handleContactListMessage(tempSentMessage);
+                addNewMessage(tempSentMessage);
                 setNewMessage('');
                 setUploadedFileUrls([]);
             } catch (error) {
