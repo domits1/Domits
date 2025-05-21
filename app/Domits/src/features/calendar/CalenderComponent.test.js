@@ -4,6 +4,10 @@ import CalendarComponent from './CalendarComponent';
 import LoadingScreen from '../../screens/loadingscreen/screens/LoadingScreen';
 import {beforeEach, describe, expect, it} from "@jest/globals";
 
+jest.mock('@aws-amplify/core', () => ({
+    fetchAuthSession: jest.fn()
+}))
+
 jest.mock('../../screens/loadingscreen/screens/LoadingScreen', () => {
     return jest.fn(() => {
         return <></>;
