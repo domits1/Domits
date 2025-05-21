@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import './NightsAvailable.css';
+import './NightsAvailable.scss';
 
 const NightsAvailable = () => {
   const [availableNights, setAvailableNights] = useState(0);
