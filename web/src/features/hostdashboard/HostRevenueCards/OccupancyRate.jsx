@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "./OccupancyRate.css";
+import "./OccupancyRate.scss";
 import { Auth } from "aws-amplify";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 
@@ -36,7 +36,6 @@ const OccupancyDashboard = () => {
                 ...(timeFilter === "custom" && { startDate, endDate }),
             };
 
-            console.log("Sending Payload:", payload);
 
             const response = await axios.post(
                 "https://nnppsahbzi.execute-api.eu-north-1.amazonaws.com/prod/occupancy-rate",
@@ -47,7 +46,6 @@ const OccupancyDashboard = () => {
                 }
             );
 
-            console.log("API Response:", response.data);
             setOccupancyData(response.data);
         } catch (err) {
             console.error("Error fetching Occupancy data:", err.message || err);

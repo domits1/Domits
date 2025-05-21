@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useUser } from '../../auth/UserContext';
-import "./BookedNights.css";
+import "./BookedNights.scss";
 
 const BookedNights = () => {
     const { user } = useUser(); // Access user and loading state from UserContext
@@ -32,7 +32,6 @@ const BookedNights = () => {
                 ...(filter === "custom" && { startDate, endDate }), // Include dates only if custom selected
             };
 
-            console.log("Sending Payload:", payload);
 
             const response = await axios.post(
                 "https://yjzk78t2u0.execute-api.eu-north-1.amazonaws.com/prod/Host-Revenues-Production-Read-BookedNights",
@@ -40,7 +39,6 @@ const BookedNights = () => {
                 { headers: { "Content-Type": "application/json" } }
             );
 
-            console.log("API Response:", response.data);
 
             if (response.data && "bookedNights" in response.data) {
                 setBookedNights(response.data.bookedNights || 0);
