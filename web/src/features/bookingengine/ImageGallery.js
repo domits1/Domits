@@ -3,6 +3,8 @@ import IosShareIcon from '@mui/icons-material/IosShare';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
 
+
+
 const ImageGallery = ({ images }) => {
     const [selectedImg, setSelectedImg] = useState(images[0]);
     const [liked, setLiked] = useState(false);
