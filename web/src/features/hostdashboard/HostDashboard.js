@@ -126,7 +126,7 @@ function HostDashboard() {
                         </div>
                         {isLoading ? (
                         <div className={styles.loader}>
-                            <img src={spinner} alt="Laden…" />
+                            <img src={spinner} alt="Loading..." />
                         </div>
                         ) : accommodations.length > 0 ? (
                         accommodations.map((accommodation, index) => (
