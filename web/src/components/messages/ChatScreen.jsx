@@ -48,7 +48,6 @@ const ChatScreen = ({
             const isNew = !addedMessageIds.current.has(msg.id);
 
             if (isRelevant && isNew) {
-                console.log('WebSocket message:', msg);
                 addNewMessage(msg);
                 addedMessageIds.current.add(msg.id);
             }
@@ -59,7 +58,6 @@ const ChatScreen = ({
         if ((newMessage.trim() || uploadedFileUrls.length > 0) && (uploadedFileUrls.length > 0 || newMessage.trim())) {
             try {
                 const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
-                // console.log(contactId, newMessage, uploadedFileUrls);
                 if (!response || !response.success) {
                     alert(`Fout bij verzenden: ${response.error || 'Probeer het later opnieuw.'}`);
                     return;
