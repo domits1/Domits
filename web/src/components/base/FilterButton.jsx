@@ -14,7 +14,6 @@ const FilterButton = () => {
     <button
       className="filter-button"
       onClick={openModal}
-      aria-label="Open filter options"
     >
       <FaSlidersH size={15} />
       <span className="filter-text">Filter</span>
