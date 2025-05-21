@@ -160,14 +160,15 @@
   }
 
   .status {
-    color: #d9534f;
     font-weight: 500;
   }
 
-  .isLive,
+  .isLive{
+    color: green;
+  }
+
   .isDrafted {
-    color: var(--domits-host-blue);
-    font-weight: 500;
+    color: red;
   }
 
   .accommodationImg {

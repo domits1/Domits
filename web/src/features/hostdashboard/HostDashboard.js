@@ -158,7 +158,7 @@ function HostDashboard() {
 
                             <div className={styles.accommodationDetails}>
                                 <span className={accommodation.property.status ? styles.status : styles.isLive}>
-                                {accommodation.property.status ? 'Drafted' : 'Live'}
+                                {accommodation.property.status === "INACTIVE" ? 'Drafted' : 'Live'}
                                 </span>
                                 <span>Listed on: {DateFormatterDD_MM_YYYY(accommodation.property.createdAt)}</span>
                             </div>
@@ -173,8 +173,7 @@ function HostDashboard() {
                     <div className={styles.dashboardRight}>
                         <div className={styles.personalInfoContent}>
                             <h3>Personal Information</h3>
-                            <div className={styles.personalInfoBox}><img src={editIcon}
-                                                          alt="Email Icon"/><span>Email:</span> {user.email}</div>
+                            <div className={styles.personalInfoBox}><img src={editIcon} alt="Email Icon"/><span>Email:</span> {user.email}</div>
                             <div className={styles.personalInfoBox}><img src={editIcon} alt="Name Icon"/><span>Name:</span> {user.name}
                             </div>
                         </div>
