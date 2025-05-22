@@ -6,6 +6,8 @@ on:
       - 'acceptance'
       - 'main'
       - '1630-sonarqube-setup-in-github-cipipeline'
+    paths:
+      - 'frontend/**'
 
 jobs:
   tests:
