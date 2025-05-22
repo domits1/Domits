@@ -517,6 +517,60 @@
             "email": "E-mail",
             "phone": "Telefonische Ondersteuning"
           }
+        }, 
+        "policy": {
+          "title": "Domits Privacybeleid",
+          "privacy": {
+            "title": "Privacybeleid",
+            "description": "Laatst bijgewerkt: november 2024\n\n\nWij zijn ons ervan bewust dat u vertrouwen in ons stelt. Daarom zien wij het als onze verantwoordelijkheid om uw privacy te beschermen.\n\n\nOp deze pagina laten wij u weten welke gegevens wij verzamelen wanneer u onze website gebruikt, waarom wij deze gegevens verzamelen en hoe wij uw gebruikservaring verbeteren.\nZo begrijpt u precies hoe wij werken.\n\n\nDit privacybeleid is van toepassing op de diensten van Domits.\n\n\nU dient zich ervan bewust te zijn dat Domits niet verantwoordelijk is voor het privacybeleid van andere sites en bronnen.\n\n\nDoor gebruik te maken van deze website geeft u aan het privacybeleid te accepteren.\n\n\nDomits respecteert de privacy van alle gebruikers van haar site en draagt er zorg voor dat de persoonlijke informatie die u ons verschaft vertrouwelijk wordt behandeld."
+          },
+          "collectedData": {
+            "title": "Gebruik van verzamelde gegevens",
+            "service": {
+              "title": "Gebruik van onze diensten",
+              "description": "Wanneer u zich aanmeldt voor een van onze diensten, vragen wij u om persoonsgegevens te verstrekken.\nHet doel van de verwerking is het uitvoeren van de dienst. De persoonsgegevens die wij in eerste instantie verwerken zijn: naam, telefoonnummer en e-mailadres.\nDe gegevens worden opgeslagen op beveiligde servers van Domits of die van een derde partij. Wij zullen deze gegevens niet combineren met andere persoonlijke gegevens waarover wij beschikken."
+            },
+            "communication": {
+              "title": "Communicatie",
+              "description": "Wanneer u e-mail of andere berichten naar ons verzendt, is het mogelijk dat wij die berichten bewaren. Soms vragen wij u naar uw persoonlijke gegevens die voor de desbetreffende situatie relevant zijn.\nDit maakt het mogelijk uw vragen te verwerken en uw verzoeken te beantwoorden. De gegevens worden opgeslagen op beveiligde servers van Domits of die van een derde partij.\nWij zullen deze gegevens niet combineren met andere persoonlijke gegevens waarover wij beschikken."
+            }
+          },
+          "cookies": {
+            "title": "Cookies",
+            "description": "Wij verzamelen gegevens voor onderzoek om zo een beter inzicht te krijgen in onze klanten, zodat wij onze diensten hierop kunnen afstemmen.\n\n\nDeze website maakt gebruik van “cookies” (tekstbestanden die op uw computer worden geplaatst) om de website te helpen analyseren hoe gebruikers de site gebruiken.\nDe door het cookie gegenereerde informatie over uw gebruik van de website kan worden overgebracht naar beveiligde servers van Domits of die van een derde partij.\nWij gebruiken deze informatie om bij te houden hoe u de website gebruikt,\nrapporten over de website-activiteit op te stellen en andere diensten aan te bieden met betrekking tot website-activiteit en internetgebruik."
+          },
+          "purpose": {
+            "title": "Doeleinden",
+            "description": "Wij verzamelen of gebruiken geen informatie voor andere doeleinden dan de doeleinden die worden beschreven in dit privacybeleid, tenzij wij van tevoren uw toestemming hiervoor hebben verkregen."
+          },
+          "parties": {
+            "title": "Derden",
+            "description": "De mensen van Domits doen hun best om ieders privacy te respecteren, zo min mogelijk persoonsgegevens te verwerken en alle persoonsgegevens zo goed mogelijk te beveiligen.\nDe informatie wordt niet met derden gedeeld. In sommige gevallen kan de informatie intern gedeeld worden.\nOnze medewerkers zijn verplicht om de vertrouwelijkheid van uw gegevens te respecteren."
+          },
+          "changes": {
+            "title": "Wijzigingen",
+            "description": "Deze privacyverklaring is afgestemd op het gebruik van en de mogelijkheden op deze site. Eventuele aanpassingen en/of veranderingen van deze site kunnen leiden tot wijzigingen in deze privacyverklaring.\nHet is daarom raadzaam om regelmatig deze privacyverklaring te raadplegen."
+          },
+          "choices": {
+            "title": "Keuzes voor persoonsgegevens",
+            "description": "Wij bieden alle bezoekers de mogelijkheid tot het inzien, veranderen of verwijderen van alle persoonlijke informatie die op dat moment aan ons is verstrekt."
+          },
+          "newsletter": {
+            "title": "Aanpassen/uitschrijven nieuwsbriefdienst",
+            "description": "Onderaan iedere mailing vindt u de mogelijkheid om uw gegevens aan te passen of om u af te melden."
+          },
+          "communication": {
+            "title": "Aanpassen/uitschrijven communicatie",
+            "description": "Als u uw gegevens wilt aanpassen of uzelf uit onze bestanden wilt laten verwijderen, kunt u contact met ons opnemen. Zie onderstaande contactgegevens."
+          },
+          "disable": {
+            "title": "Cookies uitschakelen",
+            "description": "De meeste browsers zijn standaard ingesteld om cookies te accepteren, maar u kunt uw browser opnieuw instellen om alle cookies te weigeren of aan te geven wanneer een cookie wordt verzonden. Het is echter mogelijk dat sommige functies en services - op onze en andere websites - niet correct functioneren als cookies zijn uitgeschakeld in uw browser."
+          },
+          "questions": {
+            "title": "Vragen en feedback",
+            "description": "Wij controleren regelmatig of wij aan dit privacybeleid voldoen. Als u vragen heeft over dit privacybeleid, kunt u contact met ons opnemen."
+          }
         }
 }
   

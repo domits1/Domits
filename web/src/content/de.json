@@ -517,6 +517,60 @@
           "email": "E-Mail",
           "phone": "Telefonischer Support"
         }
+      },
+      "policy": {
+        "title": "Domits Datenschutzrichtlinie",
+        "privacy": {
+          "title": "Datenschutzrichtlinie",
+          "description": "Letzte Aktualisierung: November 2024\n\n\nWir wissen, dass Sie uns Ihr Vertrauen schenken. Daher sehen wir es als unsere Verantwortung, Ihre Privatsphäre zu schützen.\n\n\nAuf dieser Seite informieren wir Sie darüber, welche Daten wir erfassen, wenn Sie unsere Website nutzen, warum wir diese Daten sammeln und wie wir Ihre Nutzererfahrung verbessern.\nSo verstehen Sie genau, wie wir arbeiten.\n\n\nDiese Datenschutzrichtlinie gilt für die Dienste von Domits.\n\n\nBitte beachten Sie, dass Domits nicht für die Datenschutzrichtlinien anderer Websites und Quellen verantwortlich ist.\n\n\nDurch die Nutzung dieser Website stimmen Sie dieser Datenschutzrichtlinie zu.\n\n\nDomits respektiert die Privatsphäre aller Nutzer seiner Website und stellt sicher, dass die persönlichen Informationen, die Sie uns geben, vertraulich behandelt werden."
+        },
+        "collectedData": {
+          "title": "Verwendung der gesammelten Daten",
+          "service": {
+            "title": "Nutzung unserer Dienste",
+            "description": "Wenn Sie sich für einen unserer Dienste registrieren, bitten wir Sie um die Angabe persönlicher Daten.\nZweck der Verarbeitung ist die Durchführung des Dienstes. Die personenbezogenen Daten, die wir zunächst verarbeiten, sind: Name, Telefonnummer und E-Mail-Adresse.\nDie Daten werden auf den sicheren Servern von Domits oder denen eines Drittanbieters gespeichert. Wir kombinieren diese Daten nicht mit anderen persönlichen Informationen, die wir besitzen."
+          },
+          "communication": {
+            "title": "Kommunikation",
+            "description": "Wenn Sie uns E-Mails oder andere Nachrichten senden, können wir diese speichern. Manchmal bitten wir Sie um persönliche Informationen, die für die jeweilige Situation relevant sind.\nDies ermöglicht es uns, Ihre Fragen zu bearbeiten und Ihre Anfragen zu beantworten. Die Daten werden auf den sicheren Servern von Domits oder denen eines Drittanbieters gespeichert.\nWir kombinieren diese Daten nicht mit anderen persönlichen Informationen, die wir besitzen."
+          }
+        },
+        "cookies": {
+          "title": "Cookies",
+          "description": "Wir sammeln Daten für Forschungszwecke, um unsere Kunden besser zu verstehen und unsere Dienstleistungen entsprechend anzupassen.\n\n\nDiese Website verwendet „Cookies“ (Textdateien, die auf Ihrem Computer gespeichert werden), um zu analysieren, wie Nutzer die Website verwenden.\nDie durch das Cookie erzeugten Informationen über Ihre Nutzung der Website können auf sichere Server von Domits oder eines Drittanbieters übertragen werden.\nWir verwenden diese Informationen, um zu verfolgen, wie Sie die Website nutzen,\nBerichte über die Websiteaktivität zu erstellen und andere Dienstleistungen in Bezug auf Websiteaktivität und Internetnutzung anzubieten."
+        },
+        "purpose": {
+          "title": "Zwecke",
+          "description": "Wir erfassen oder verwenden Informationen nur für die in dieser Datenschutzrichtlinie beschriebenen Zwecke, es sei denn, wir haben Ihre vorherige Zustimmung erhalten."
+        },
+        "parties": {
+          "title": "Dritte Parteien",
+          "description": "Die Mitarbeitenden von Domits bemühen sich, die Privatsphäre aller zu respektieren, so wenig personenbezogene Daten wie möglich zu verarbeiten und alle personenbezogenen Daten bestmöglich zu schützen.\nDie Informationen werden nicht an Dritte weitergegeben. In bestimmten Fällen können Informationen intern weitergegeben werden.\nUnsere Mitarbeiter sind verpflichtet, die Vertraulichkeit Ihrer Daten zu wahren."
+        },
+        "changes": {
+          "title": "Änderungen",
+          "description": "Diese Datenschutzerklärung ist auf die Nutzung und die Möglichkeiten dieser Website abgestimmt. Änderungen und/oder Anpassungen der Website können zu Änderungen dieser Datenschutzerklärung führen.\nEs ist daher ratsam, diese Datenschutzerklärung regelmäßig zu konsultieren."
+        },
+        "choices": {
+          "title": "Optionen für personenbezogene Daten",
+          "description": "Wir bieten allen Besuchern die Möglichkeit, alle persönlichen Informationen, die sie uns zur Verfügung gestellt haben, einzusehen, zu ändern oder zu löschen."
+        },
+        "newsletter": {
+          "title": "Newsletter-Abonnement ändern/abbestellen",
+          "description": "Am Ende jeder E-Mail finden Sie die Möglichkeit, Ihre Daten zu ändern oder den Newsletter abzubestellen."
+        },
+        "communication": {
+          "title": "Kommunikation ändern/abbestellen",
+          "description": "Wenn Sie Ihre Daten ändern möchten oder möchten, dass wir sie aus unseren Dateien löschen, können Sie uns kontaktieren. Siehe untenstehende Kontaktdaten."
+        },
+        "disable": {
+          "title": "Cookies deaktivieren",
+          "description": "Die meisten Browser sind standardmäßig so eingestellt, dass sie Cookies akzeptieren, aber Sie können Ihren Browser neu konfigurieren, um alle Cookies abzulehnen oder anzuzeigen, wenn ein Cookie gesendet wird. Einige Funktionen und Dienste - auf unserer Website und auf anderen Websites - funktionieren möglicherweise nicht ordnungsgemäß, wenn Cookies deaktiviert sind."
+        },
+        "questions": {
+          "title": "Fragen und Feedback",
+          "description": "Wir überprüfen regelmäßig, ob wir diese Datenschutzrichtlinie einhalten. Wenn Sie Fragen zu dieser Datenschutzrichtlinie haben, kontaktieren Sie uns bitte."
+        }
       }
 }
   

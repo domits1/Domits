@@ -516,6 +516,60 @@
             "email": "Correo electrónico",
             "phone": "Soporte telefónico"
           }
+        },
+        "policy": {
+          "title": "Política de Privacidad de Domits",
+          "privacy": {
+            "title": "Política de Privacidad",
+            "description": "Última actualización: noviembre de 2024\n\n\nSomos conscientes de que depositas tu confianza en nosotros. Por eso consideramos nuestra responsabilidad proteger tu privacidad.\n\n\nEn esta página te informamos qué datos recopilamos cuando utilizas nuestro sitio web, por qué los recopilamos y cómo mejoramos tu experiencia de usuario.\nDe esta forma, entenderás exactamente cómo trabajamos.\n\n\nEsta política de privacidad se aplica a los servicios de Domits.\n\n\nDebes tener en cuenta que Domits no es responsable de las políticas de privacidad de otros sitios y fuentes.\n\n\nAl utilizar este sitio web, aceptas esta política de privacidad.\n\n\nDomits respeta la privacidad de todos los usuarios de su sitio y se asegura de que la información personal que nos proporcionas sea tratada de forma confidencial."
+          },
+          "collectedData": {
+            "title": "Uso de los datos recopilados",
+            "service": {
+              "title": "Uso de nuestros servicios",
+              "description": "Cuando te registras en uno de nuestros servicios, te pedimos información personal.\nEl propósito del tratamiento es ejecutar el servicio. Los datos personales que procesamos inicialmente son: nombre, número de teléfono y dirección de correo electrónico.\nLos datos se almacenan en los servidores seguros de Domits o de un tercero. No combinaremos estos datos con otros datos personales que tengamos."
+            },
+            "communication": {
+              "title": "Comunicación",
+              "description": "Cuando nos envías correos electrónicos u otros mensajes, es posible que los almacenemos. A veces te pedimos información personal relevante para la situación específica.\nEsto nos permite procesar tus preguntas y responder a tus solicitudes. Los datos se almacenan en los servidores seguros de Domits o de un tercero.\nNo combinaremos estos datos con otros datos personales que tengamos."
+            }
+          },
+          "cookies": {
+            "title": "Cookies",
+            "description": "Recopilamos datos para realizar investigaciones y así comprender mejor a nuestros clientes, lo que nos permite adaptar nuestros servicios en consecuencia.\n\n\nEste sitio web utiliza \"cookies\" (archivos de texto colocados en tu computadora) para ayudar a analizar cómo los usuarios utilizan el sitio.\nLa información generada por la cookie sobre tu uso del sitio web puede ser transferida a servidores seguros de Domits o de un tercero.\nUsamos esta información para rastrear cómo usas el sitio web,\npara generar informes sobre la actividad del sitio y para ofrecer otros servicios relacionados con la actividad del sitio web y el uso de Internet."
+          },
+          "purpose": {
+            "title": "Propósitos",
+            "description": "No recopilamos ni utilizamos información para otros fines distintos a los descritos en esta política de privacidad, a menos que obtengamos tu consentimiento previo."
+          },
+          "parties": {
+            "title": "Terceros",
+            "description": "El equipo de Domits hace todo lo posible para respetar la privacidad de todos, procesar la menor cantidad de datos personales posible y protegerlos de la mejor manera.\nLa información no se comparte con terceros. En algunos casos, la información puede compartirse internamente.\nNuestros empleados están obligados a respetar la confidencialidad de tus datos."
+          },
+          "changes": {
+            "title": "Cambios",
+            "description": "Esta declaración de privacidad está adaptada al uso y a las posibilidades de este sitio. Cualquier ajuste y/o cambio del sitio puede dar lugar a cambios en esta declaración de privacidad.\nPor lo tanto, se recomienda revisar esta política de privacidad con regularidad."
+          },
+          "choices": {
+            "title": "Opciones para los datos personales",
+            "description": "Ofrecemos a todos los visitantes la posibilidad de ver, modificar o eliminar toda la información personal que nos han proporcionado en cualquier momento."
+          },
+          "newsletter": {
+            "title": "Modificar/darse de baja del boletín",
+            "description": "Al final de cada correo electrónico encontrarás la opción de modificar tus datos o darte de baja del boletín."
+          },
+          "communication": {
+            "title": "Modificar/darse de baja de la comunicación",
+            "description": "Si deseas modificar tus datos o que eliminemos tu información de nuestros archivos, puedes ponerte en contacto con nosotros. Consulta nuestros datos de contacto a continuación."
+          },
+          "disable": {
+            "title": "Desactivar cookies",
+            "description": "La mayoría de los navegadores están configurados para aceptar cookies por defecto, pero puedes reconfigurar tu navegador para rechazar todas las cookies o para indicar cuándo se está enviando una cookie. Sin embargo,\nalgunas funciones y servicios - en este y otros sitios web - pueden no funcionar correctamente si las cookies están desactivadas."
+          },
+          "questions": {
+            "title": "Preguntas y comentarios",
+            "description": "Revisamos regularmente si cumplimos con esta política de privacidad. Si tienes preguntas sobre esta política de privacidad, no dudes en ponerte en contacto con nosotros."
+          }
         }
 }
   
