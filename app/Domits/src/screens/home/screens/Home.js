@@ -47,16 +47,20 @@ const HomeScreen = () => {
         setPropertiesByCountry([])
         setByCountryLastEvaluatedKey({id: null, city: null})
 
-        const response = await propertyRepository.fetchAllPropertyTypes(
-            lastEvaluatedKey.createdAt,
-            lastEvaluatedKey.id,
-        );
+        try {
+            const response = await propertyRepository.fetchAllPropertyTypes(
+                lastEvaluatedKey.createdAt,
+                lastEvaluatedKey.id,
+            );
 
-        setProperties([...properties, ...response.properties]);
-        setLastEvaluatedKey(
-            response.lastEvaluatedKey ?? {createdAt: null, id: null},
-        );
+            setProperties([...properties, ...response.properties]);
+            setLastEvaluatedKey(
+                response.lastEvaluatedKey ?? {createdAt: null, id: null},
+            );
 
+        } catch (error) {
+            ToastMessage(error.message, ToastAndroid.SHORT);
+        }
         originalDataSetLoaded ? setOriginalDataSetLoaded(true) : null;
 
         setLoading(false);

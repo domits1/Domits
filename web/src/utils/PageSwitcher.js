@@ -38,26 +38,27 @@ function PageSwitcher({ accommodations, bankDetailsProvided, amount, onEdit, onD
     return (
         <main className="page-body">
             {currentItems.map((accommodation) => (
-                <section key={accommodation.ID} className={styles.accommodationTab}>
+                <section key={accommodation.property.id} className={styles.accommodationTab}>
                     <section className={styles.accommodationLeft}>
-                        <p className={styles.accommodationTitle}>{accommodation.Title}</p>
-                        {accommodation.AccommodationType === 'Boat' ? (
-                            <p className={styles.accommodationLocation}>{accommodation.Country},
-                                {accommodation.City},
-                                {accommodation.Harbour}
+                        <p className={styles.accommodationTitle}>{accommodation.property.title}</p>
+                        {accommodation.property.type === 'Boat' ? (
+                            <p className={styles.accommodationLocation}>{accommodation.property.country},
+                                {accommodation.property.city},
                             </p>
                         ) : (
-                            <p className={styles.accommodationLocation}>{accommodation.Country},
-                                {accommodation.City},
-                                {accommodation.Street},
-                                {accommodation.PostalCode}
+                            <p className={styles.accommodationLocation}>{accommodation.property.country},
+                                {accommodation.property.city},
                             </p>
                         )}
-                        <ImageSlider images={accommodation.Images} seconds={5} page={'listing'} />
+                        {accommodation.images?.length > 0 ? (
+                            <img src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`} alt="Geen afbeelding beschikbaar" className='img-listed-dashboard' />
+                        ) : (
+                            <img src={placeholderImage} alt="Geen afbeelding beschikbaar" />
+                        )}
                     </section>
 
                     <section className={styles.accommodationRight}>
-                        <p>Subtitle: {accommodation.Subtitle}</p>
+                        <p>Subtitle: {accommodation.property.subtitle}</p>
                         <p>Listed on: {" "}
                             {isNaN(new Date(accommodation.createdAt).getTime())
                                 ? formatDate(accommodation.updatedAt)

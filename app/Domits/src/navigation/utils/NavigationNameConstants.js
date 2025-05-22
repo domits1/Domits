@@ -32,6 +32,7 @@ export const GUEST_SETTINGS_SCREEN = "guest-settings";
 export const GUEST_PAYMENT_METHODS_SCREEN = "guest-payment-methods";
 export const GUEST_REVIEWS_SCREEN = "guest-reviews";
 export const GUEST_BOOKINGS_SCREEN = "guest-bookings";
+export const GUEST_SINGLE_BOOKING_SCREEN = "guest-single-booking";
 
 // Property
 export const PROPERTY_DETAILS_SCREEN = "property-details";
@@ -40,7 +41,6 @@ export const PROPERTY_DETAILS_SCREEN = "property-details";
 export const STRIPE_PROCESS_SCREEN = "stripe-process";
 export const STRIPE_PAYMENT_CONFIRMED_SCREEN = "stripe-payment-confirmed";
 export const STRIPE_PAYMENT_CANCELLED_SCREEN = "stripe-payment-cancelled";
-export const GUEST_NEW_CONFIRMED_BOOKING_SCREEN = "guest-new-confirmed-booking";
 
 // Account
 export const LOGIN_SCREEN = "login";

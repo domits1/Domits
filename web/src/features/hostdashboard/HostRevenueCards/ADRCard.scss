@@ -1,0 +1,189 @@
+$primary-color-adr: #2196f3;
+$primary-hover-bg-adr: #f8fafd;
+$primary-focus-shadow-adr: rgba(33, 150, 243, 0.15);
+$primary-hover-shadow-adr: rgba(33, 150, 243, 0.1);
+
+$text-color-adr: #2c3e50;
+$text-muted-adr: #555;
+$text-light-adr: #444;
+
+$bg-light-adr: #f9f9f9;
+$white-adr: #ffffff;
+$border-light-adr: #eef2f7;
+
+.adr-card {
+  width: 300px;
+  padding: 20px;
+  margin: 20px auto;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: $bg-light-adr;
+  text-align: center;
+  height: 440px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 400;
+    color: #333;
+    text-align: center;
+  }
+
+  .time-filter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 15px;
+    background-color: $bg-light-adr;
+    border-radius: 12px;
+
+    label {
+      font-size: 15px;
+      font-weight: 500;
+      color: $text-color-adr;
+    }
+  }
+
+  .timeFilter {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: 2px solid $border-light-adr;
+    border-radius: 10px;
+    width: 140px;
+    height: 40px;
+    padding: 0 15px;
+    cursor: pointer;
+    background-color: $white-adr;
+    color: $text-color-adr;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%232c3e50' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");    background-repeat: no-repeat;
+    background-position: calc(100% - 15px) center;
+    padding-right: 40px;
+
+    &:hover {
+      border-color: $primary-color-adr;
+      background-color: $primary-hover-bg-adr;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px $primary-hover-shadow-adr;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color-adr;
+      background-color: $white-adr;
+      box-shadow: 0 0 0 3px $primary-focus-shadow-adr;
+    }
+
+    &::-ms-expand {
+      display: none;
+    }
+
+    option {
+      padding: 12px;
+      font-size: 14px;
+      color: $text-color-adr;
+      background-color: $white-adr;
+
+      &:hover,
+      &:focus {
+        background-color: #f1f8ff;
+        color: $primary-color-adr;
+      }
+    }
+  }
+
+  .custom-date-filter {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+
+    input[type="date"] {
+      border: 2px solid $border-light-adr;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      color: $text-color-adr;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: $primary-color-adr;
+        background-color: $primary-hover-bg-adr;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color-adr;
+        box-shadow: 0 0 0 3px $primary-focus-shadow-adr;
+      }
+    }
+
+    input {
+      margin-bottom: 10px;
+      font-size: 15px;
+      font-weight: normal;
+      color: $text-muted-adr;
+    }
+
+    label {
+      font-size: 15px;
+      font-weight: normal;
+      color: $text-muted-adr;
+    }
+  }
+
+  .adr-details {
+    p {
+      margin: 20px 10px;
+      font-size: 18px;
+      font-weight: normal;
+      color: $text-light-adr;
+
+      strong {
+        font-weight: normal;
+      }
+    }
+  }
+
+  .adr-card-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    border-radius: 30px;
+
+    .adr-graph {
+      width: 100%;
+      max-width: 600px;
+      margin-top: 20px;
+    }
+
+    &:hover {
+      transform: scale(1.02);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .time-filter {
+      flex-direction: column;
+      padding: 15px;
+      gap: 12px;
+    }
+
+    .timeFilter,
+    .custom-date-filter input[type="date"] {
+      width: 100%;
+    }
+
+    .custom-date-filter {
+      flex-direction: column;
+      width: 100%;
+    }
+  }
+}

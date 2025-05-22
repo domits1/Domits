@@ -337,7 +337,6 @@ function HostDistribution() {
   const [tempListedAccommodations, setTempListedAccommodations] = useState([]);
 
   useEffect(() => {
-    console.log("Eerste channel (debug):", channelData[0]);
   }, [channelData]);
 
   useEffect(() => {
