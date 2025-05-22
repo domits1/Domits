@@ -113,9 +113,7 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
         body: JSON.stringify({ oldName, newName }),
       });
 
-      const updated = lists.map((list) =>
-        list.name === oldName ? { ...list, name: newName, id: newName } : list
-      );
+      const updated = lists.map((list) => (list.name === oldName ? { ...list, name: newName, id: newName } : list));
       setLists(updated);
       if (selectedList === oldName) onListChange(newName);
       setEditingId(null);
@@ -194,8 +192,12 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
                         {list.name}
                       </span>
                       <span className="badge">{list.count}</span>
-                      <button onClick={() => setEditingId(list.id)}><FiEdit2 /></button>
-                      <button onClick={() => handleDelete(list.name)}><FiTrash2 /></button>
+                      {list.name !== "My next trip" && (
+                        <>
+                          <button onClick={() => setEditingId(list.id)}><FiEdit2 /></button>
+                          <button onClick={() => handleDelete(list.name)}><FiTrash2 /></button>
+                        </>
+                      )}
                     </>
                   )}
                 </li>
