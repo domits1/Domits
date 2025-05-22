@@ -498,7 +498,8 @@ const Homepage = () => {
             {propertyLoading === false ? (
               allAccommodations.length > 0 ? (
                 allAccommodations.map((property) => (
-                  <AccommodationCard key={property.property.id} accommodation={property} onClick={handleClick} />
+                  <div><h1>This kinda fucked</h1>
+                  <AccommodationCard key={property.property.id} accommodation={property} onClick={handleClick} /></div>
                 ))
               ) : (
                 <div>No trending properties available.</div>
