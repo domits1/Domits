@@ -70,9 +70,6 @@ const BookingGuestDashboard = () => {
     return (
         <div className="guest-booking-page-body">
             <div className="guest-booking-dashboards">
-
-                <h1>Welcome, {guestEmail}</h1>
-
                 <div className="guest-booking-controls">
                     <select value={filter} onChange={handleFilterChange}>
                         <option value="All">All Statuses</option>

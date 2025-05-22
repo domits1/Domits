@@ -3,6 +3,10 @@
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
+  @media (max-width: 768px) {
+    max-width: 300px;
+  }
+
   .guest-booking-dashboards {
     max-width: 1200px;
     margin: 0 auto;
