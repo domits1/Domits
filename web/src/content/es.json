@@ -570,6 +570,19 @@
             "title": "Preguntas y comentarios",
             "description": "Revisamos regularmente si cumplimos con esta política de privacidad. Si tienes preguntas sobre esta política de privacidad, no dudes en ponerte en contacto con nosotros."
           }
+        },
+        "disclaimer": {
+          "title": "Aviso Legal de Domits",
+          "subtitle": "Aviso Legal",
+          "date": "Última actualización: noviembre de 2024",
+          "definitions": {
+            "title": "Interpretación y Definiciones",
+            "description": "No se pueden derivar derechos ni hacer reclamaciones de ninguna manera sobre el contenido de este sitio web. Aunque se ha tenido el mayor cuidado posible al compilar el contenido de este sitio, es posible que cierta información se haya vuelto obsoleta o incorrecta con el tiempo.\n\n\n\nDomits no se hace responsable de ningún daño que pueda derivarse del uso de los datos del sitio creado por Domits. Domits rechaza expresamente toda responsabilidad por los daños resultantes del uso de estos datos o de los datos a los que se hace referencia mediante enlaces en este sitio. La información en este sitio está sujeta a cambios sin previo aviso.\n\n\n\n\nDomits no ofrece garantías con respecto a la naturaleza y el contenido de la información en el sitio y no se hace responsable del contenido de esta información ni de las consecuencias de su uso. Domits rechaza expresamente cualquier responsabilidad por los daños resultantes del acceso y uso del sitio. Además, no se garantiza el funcionamiento sin errores e ininterrumpido del sitio. Las referencias o enlaces a otros sitios o fuentes que no son propiedad de Domits se incluyen únicamente para la información del usuario del sitio.\n\n\n\n\nDomits no es responsable de la disponibilidad de estos sitios o fuentes. Domits no acepta ninguna responsabilidad por el contenido, la publicidad, los productos u otros asuntos presentes en dichos sitios o fuentes, ni por su disponibilidad. Domits no se hace responsable de ninguna forma de daño o pérdida causada por o relacionada con el uso o la confianza en el contenido, bienes o servicios ofrecidos en dichos sitios o fuentes."
+          },
+          "copyright": {
+            "title": "©Derechos de Autor",
+            "description": "Todos los derechos reservados. Nada de este sitio web (información, imágenes, fotos) puede ser copiado ni almacenado en una base de datos, en ninguna forma ni por ningún medio, ya sea electrónico, digital, mecánico, manual, fotográfico o de cualquier otra manera."
+          }
         }
 }
   

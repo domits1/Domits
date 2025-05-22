@@ -571,6 +571,19 @@
             "title": "Vragen en feedback",
             "description": "Wij controleren regelmatig of wij aan dit privacybeleid voldoen. Als u vragen heeft over dit privacybeleid, kunt u contact met ons opnemen."
           }
+        },
+        "disclaimer": {
+          "title": "Domits Disclaimer",
+          "subtitle": "Disclaimer",
+          "date": "Laatst bijgewerkt: november 2024",
+          "definitions": {
+            "title": "Interpretatie en Definities",
+            "description": "Aan de inhoud van deze website kunnen op geen enkele wijze rechten worden ontleend of aanspraken worden gemaakt. Hoewel de grootst mogelijke zorg is besteed aan het samenstellen van de inhoud van deze website, is het mogelijk dat bepaalde informatie na verloop van tijd verouderd of niet meer correct is.\n\n\n\nDomits is niet aansprakelijk voor enige schade die zou kunnen voortvloeien uit het gebruik van gegevens van de door Domits gemaakte site. Domits wijst hierbij uitdrukkelijk alle aansprakelijkheid af voor schade als gevolg van het gebruik van deze gegevens of gegevens waarnaar wordt verwezen via links op deze site(s). De informatie op deze site kan zonder voorafgaande aankondiging worden gewijzigd.\n\n\n\n\nDomits geeft geen garanties met betrekking tot de aard en inhoud van de informatie op de site en is niet aansprakelijk voor de inhoud van deze informatie of de gevolgen van het gebruik daarvan. Iedere aansprakelijkheid voor enige schade voortvloeiend uit toegang tot en gebruik van de site wordt door Domits uitdrukkelijk afgewezen. Tevens wordt geen garantie geboden voor het foutloos en ononderbroken functioneren van de site. Verwijzingen of verbindingen naar andere sites of bronnen die geen eigendom zijn van Domits zijn uitsluitend opgenomen ter informatie van de gebruiker van de site.\n\n\n\n\nDomits is niet verantwoordelijk voor de beschikbaarheid van deze sites of bronnen. Domits aanvaardt geen enkele aansprakelijkheid voor de inhoud, advertenties, producten of andere zaken op dergelijke sites of bronnen of voor de beschikbaarheid ervan. Domits is niet aansprakelijk voor enige vorm van schade of verlies veroorzaakt door of in verband met het gebruik van of het vertrouwen op de inhoud, goederen of diensten die op dergelijke sites of bronnen worden aangeboden."
+          },
+          "copyright": {
+            "title": "©Auteursrecht",
+            "description": "Alle rechten voorbehouden. Niets van deze website (informatie, afbeeldingen, foto’s) mag worden gekopieerd of opgeslagen in een database, in welke vorm dan ook of op welke wijze dan ook, hetzij elektronisch, digitaal, mechanisch, handmatig, fotografisch of op enige andere manier."
+          }
         }
 }
   

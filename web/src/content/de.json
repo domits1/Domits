@@ -571,6 +571,19 @@
           "title": "Fragen und Feedback",
           "description": "Wir überprüfen regelmäßig, ob wir diese Datenschutzrichtlinie einhalten. Wenn Sie Fragen zu dieser Datenschutzrichtlinie haben, kontaktieren Sie uns bitte."
         }
+      },
+      "disclaimer": {
+        "title": "Domits Haftungsausschluss",
+        "subtitle": "Haftungsausschluss",
+        "date": "Letzte Aktualisierung: November 2024",
+        "definitions": {
+          "title": "Auslegung und Definitionen",
+          "description": "Aus dem Inhalt dieser Website können keinerlei Rechte abgeleitet oder Ansprüche geltend gemacht werden. Obwohl bei der Zusammenstellung des Inhalts dieser Website größtmögliche Sorgfalt angewendet wurde, ist es möglich, dass bestimmte Informationen im Laufe der Zeit veraltet oder nicht mehr korrekt sind.\n\n\n\nDomits haftet nicht für Schäden, die sich aus der Nutzung der von Domits erstellten Daten auf der Website ergeben könnten. Domits lehnt hiermit jede Haftung für Schäden ab, die aus der Nutzung dieser Daten oder der Daten, auf die auf dieser(n) Seite(n) verwiesen wird, entstehen. Die Informationen auf dieser Website können ohne vorherige Ankündigung geändert werden.\n\n\n\n\nDomits übernimmt keine Garantie für die Art und den Inhalt der Informationen auf der Website und haftet nicht für den Inhalt dieser Informationen oder für die Folgen ihrer Nutzung. Jegliche Haftung für Schäden, die aus dem Zugriff auf und der Nutzung der Website entstehen, wird ausdrücklich von Domits ausgeschlossen. Darüber hinaus wird keine Garantie für einen fehlerfreien und unterbrechungsfreien Betrieb der Website übernommen. Verweise oder Links zu anderen Websites oder Quellen, die nicht Eigentum von Domits sind, dienen ausschließlich der Information der Nutzer dieser Website.\n\n\n\n\nDomits ist nicht verantwortlich für die Verfügbarkeit dieser Websites oder Quellen. Domits übernimmt keinerlei Haftung für Inhalte, Werbung, Produkte oder andere Aspekte solcher Websites oder Quellen oder deren Verfügbarkeit. Domits haftet nicht für Schäden oder Verluste, die durch oder im Zusammenhang mit der Nutzung oder dem Vertrauen auf Inhalte, Waren oder Dienstleistungen solcher Websites oder Quellen entstehen."
+        },
+        "copyright": {
+          "title": "©Urheberrecht",
+          "description": "Alle Rechte vorbehalten. Nichts auf dieser Website (Informationen, Bilder, Fotos) darf in irgendeiner Form oder auf irgendeine Weise kopiert oder in einer Datenbank gespeichert werden, sei es elektronisch, digital, mechanisch, manuell, fotografisch oder auf andere Weise."
+        }
       }
 }
   
