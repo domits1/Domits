@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { sendMessage } from '../services/websocket';
+import { getAccessToken } from '../../../../services/getAccessToken';
 
 export const useSendMessage = (userId) => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState(null);
+    const token = getAccessToken(userId);
 
     const sendMessageHandler = async (recipientId, text, fileUrls = []) => {
         if (!userId || !recipientId || (!text.trim() && (fileUrls.length === 0))) {
@@ -16,7 +18,7 @@ export const useSendMessage = (userId) => {
 
         const message = {
             action: "sendMessage",
-            userId: userId,
+            accessToken: token,
             recipientId: recipientId,
             text: text,
             fileUrls: fileUrls,
