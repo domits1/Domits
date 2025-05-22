@@ -95,8 +95,13 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
   };
 
   const handleRename = async (oldName, newName) => {
+    if (!newName.trim() || oldName === newName) {
+      setEditingId(null);
+      return;
+    }
+
     const token = getAccessToken();
-    if (!token || !newName.trim()) return;
+    if (!token) return;
 
     try {
       await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
@@ -115,7 +120,7 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
       if (selectedList === oldName) onListChange(newName);
       setEditingId(null);
     } catch (err) {
-      console.error(" Error renaming wishlist:", err.message);
+      console.error("Error renaming wishlist:", err.message);
     }
   };
 
@@ -138,7 +143,7 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
       setLists(remaining);
       if (selectedList === name) onListChange("My next trip");
     } catch (err) {
-      console.error(" Error deleting wishlist:", err.message);
+      console.error("Error deleting wishlist:", err.message);
     }
   };
 
@@ -172,8 +177,13 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
                     <input
                       type="text"
                       defaultValue={list.name}
-                      onBlur={(e) => handleRename(list.name, e.target.value)}
                       autoFocus
+                      onBlur={(e) => handleRename(list.name, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleRename(list.name, e.target.value);
+                        }
+                      }}
                     />
                   ) : (
                     <>
