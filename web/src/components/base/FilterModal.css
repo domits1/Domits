@@ -35,7 +35,7 @@
 }
 
 .close-menu-btn {
-  background-color: #f44336; /* Rood voor de sluitknop */
+  background-color: #f44336; 
   color: white;
   border: none;
   padding: 10px;
@@ -68,10 +68,8 @@
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 0.5rem;
-  /* background-color: #f9f9f9; */
 }
 
-/* Price Display */
 .price-display {
   display: flex;
   justify-content: space-between;
@@ -83,7 +81,6 @@
   color: #333;
 }
 
-/* Facility Checkboxes */
 .filter-section label {
   display: block;
   margin: 8px 0;

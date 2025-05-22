@@ -231,8 +231,7 @@ function Header({ setSearchResults, setLoading }) {
   return (
     <header className="app-header">
       <nav
-        className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""
-          }`}
+        className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""}`}
       >
         <div className="logo">
           <a href="/">
@@ -320,6 +319,7 @@ function Header({ setSearchResults, setLoading }) {
           </div>
         </div>
       </nav>
+      {isActiveSearchBar && <div className="search-overlay-background" />}
     </header>
   );
 

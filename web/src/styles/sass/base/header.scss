@@ -137,7 +137,6 @@ $breakpoint-sm: 480px;
   }
 
   @media screen and (max-width: $breakpoint-lg) {
-
     .App,
     .header-nav {
       position: sticky;
@@ -150,4 +149,14 @@ $breakpoint-sm: 480px;
   @media screen and (max-width: $breakpoint-md) {
     padding: 0;
   }
+  .search-overlay-background {
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: white;
+    z-index: 999;
+  }
+  
 }
