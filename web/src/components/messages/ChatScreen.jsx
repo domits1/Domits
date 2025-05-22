@@ -1,24 +1,22 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
+
 import useFetchMessages from '../../features/hostdashboard/hostmessages/hooks/useFetchMessages';
 import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
-import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/components/chatUploadAttachment';
 import { useSendMessage } from '../../features/hostdashboard/hostmessages/hooks/useSendMessage';
+
+import ChatMessage from './ChatMessage';
+import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/components/chatUploadAttachment';
+import { WebSocketContext } from '../../features/hostdashboard/hostmessages/context/webSocketContext';
+import '../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss';
 import { v4 as uuidv4 } from 'uuid';
 import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
-import profileImage from '../../features/hostdashboard/hostmessages/domits-logo.jpg';
+import profileImage from './domits-logo.jpg';
 
-const ChatScreen = ({
-    userId,
-    contactId,
-    contactName,
-    handleContactListMessage,
-    onBack,
-    isHost = true,
-    ChatMessageComponent,
-    containerClass = '',
-    socket,
-}) => {
+
+const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, onBack, dashboardType}) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
+    const socket = useContext(WebSocketContext);
+    const isHost = dashboardType === 'host';
     const { bookingDetails } = isHost
         ? useFetchBookingDetails(userId, contactId)
         : useFetchBookingDetails(contactId, userId);
@@ -27,7 +25,6 @@ const ChatScreen = ({
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
     const wsMessages = socket?.messages || [];
     const addedMessageIds = useRef(new Set());
-
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
@@ -86,7 +83,7 @@ const ChatScreen = ({
     if (!contactId) return null;
 
     return (
-        <div className={containerClass}>
+        <div className={`${dashboardType}-chat`}>
             <div className="chat-screen-container">
                 <div className="chat-header">
                     {onBack && (
@@ -108,11 +105,12 @@ const ChatScreen = ({
                         <p>{error}</p>
                     ) : (
                         messages.map((message) => (
-                            <ChatMessageComponent
+                            <ChatMessage
                                 key={message.id}
                                 message={message}
                                 userId={userId}
                                 contactName={contactName}
+                                dashboardType={dashboardType}
                             />
                         ))
                     )}

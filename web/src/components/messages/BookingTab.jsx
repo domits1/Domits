@@ -1,12 +1,41 @@
-import { FaHome } from 'react-icons/fa';
 import React from "react";
+import { FaHome } from 'react-icons/fa';
+import useFetchBookingDetails from "../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails";
+import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBookingTab.scss';
 
-const BookingTab = ({ bookingDetails, accommodation, earningsComponent, }) => {
+
+const BookingTab = ({ userId, contactId, dashboardType }) => {
+    const isGuest = dashboardType === 'guest';
+    const hostId = isGuest ? contactId : userId;
+    const guestId = isGuest ? userId : contactId;
+
+    const { bookingDetails, accommodation } = useFetchBookingDetails(
+        hostId,
+        guestId,
+        {
+            accommodationEndpoint: isGuest
+                ? 'bookingEngine/listingDetails'
+                : 'hostDashboard/single',
+            withAuth: !isGuest,
+        }
+    );
+    if (bookingDetails?.message === "No data found for the given hostId and guestId") {
+        return;
+    }
+    console.log('Calling useFetchBookingDetails with:', {
+        hostId,
+        guestId,
+    });
+
+
     const firstImage = `https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation?.images?.[0]?.key}`;
     const formatHour = (hour) => {
         return `${hour}:00`;
-      };
-
+    };
+    const roomRate = accommodation?.pricing?.roomRate || 0;
+    const cleaning = accommodation?.pricing?.cleaning || 0;
+    const service = accommodation?.pricing?.service || 0;
+    const earnings = roomRate * bookingDetails?.Nights;
 
     return (
         <div className="booking-tab-container">
@@ -77,7 +106,7 @@ const BookingTab = ({ bookingDetails, accommodation, earningsComponent, }) => {
                         <div className="house-rules">
                             <h4>House rules</h4>
                             <p>{accommodation?.Capacity} guests maximum</p>
-                            { accommodation?.rules?.[0]?.value ? <p>Pets allowed</p> : <p>No pets</p>}
+                            {accommodation?.rules?.[0]?.value ? <p>Pets allowed</p> : <p>No pets</p>}
 
                             {accommodation?.rules[1]?.value ? <p>Parties allowed</p> : <p>No parties</p>}
                             {accommodation?.rules[2]?.value ? <p>Smoking allowed</p> : <p>No smoking</p>}
@@ -85,9 +114,27 @@ const BookingTab = ({ bookingDetails, accommodation, earningsComponent, }) => {
 
                     </div>
 
-                    {earningsComponent && (
+                    {dashboardType === 'host' && (
                         <div className="earnings-section">
-                            {earningsComponent}
+                            <div className="earnings">
+                                <h3>Earnings</h3>
+                                <div className="rent-nights">
+                                    <h4>${roomRate} x {bookingDetails?.Nights} nights</h4>
+                                    <p>${earnings}</p>
+                                </div>
+                                <div className="cleaning-fee">
+                                    <h4>Cleaning fee</h4>
+                                    <p>${cleaning}</p>
+                                </div>
+                                <div className="service-fee">
+                                    <h4>Service fee</h4>
+                                    <p>${service}</p>
+                                </div>
+                                <div className="total-earnings">
+                                    <h4>Total $</h4>
+                                    <h4>${earnings + cleaning + service}</h4>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

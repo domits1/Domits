@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { WebSocketContext } from '../../features/hostdashboard/hostmessages/context/webSocketContext';
+import useFetchContacts from '../../features/hostdashboard/hostmessages/hooks/useFetchContacts';
+import ContactItem from './ContactItem';
+import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
 
-const ContactList = ({
-    userId,
-    onContactClick,
-    contacts,
-    pendingContacts,
-    setContacts,
-    message,
-    loading,
-    ContactItemComponent,
-    labels = { contacts: 'Contacts', pending: 'Pending', noContacts: 'No contacts', noPending: 'No pending contacts' },
-    classNamePrefix = 'contact-list',
-    socket
-}) => {
+const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
+    const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId, dashboardType);
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [displayType, setDisplayType] = useState('contacts');
+    const socket = useContext(WebSocketContext);
     const wsMessages = socket?.messages || [];
 
+    const labels = {
+        contacts: 'Contacts',
+        pending: 'Sent requests',
+        noContacts: 'No contacts found.',
+        noPending: 'No requests sent.'
+    }
 
     useEffect(() => {
         if (wsMessages?.length === 0) return;
@@ -57,7 +57,7 @@ const ContactList = ({
     };
 
     return (
-        <div className={`${classNamePrefix}-modal`}>
+        <div className={`${dashboardType}-contact-list-modal`}>
             <h3>Message dashboard</h3>
             <div className={`contact-list-toggle`}>
                 <select
@@ -84,12 +84,13 @@ const ContactList = ({
                                 className={`contact-list-list-item ${displayType === 'pendingContacts' ? 'disabled' : ''}`}
                                 onClick={() => displayType !== 'pendingContacts' && handleClick(contact.recipientId, contact.givenName)}
                             >
-                                <ContactItemComponent
+                                <ContactItem
                                     contact={contact}
                                     isPending={displayType === 'pendingContacts'}
                                     setContacts={setContacts}
                                     userId={userId}
                                     selected={selectedContactId === contact.recipientId}
+                                    dashboardType={dashboardType}
                                 />
                             </li>
                         ))

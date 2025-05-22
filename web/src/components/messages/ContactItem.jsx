@@ -1,6 +1,42 @@
 import React from 'react';
+import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
+import useUpdateContactRequest from '../../features/hostdashboard/hostmessages/hooks/useUpdateContactRequest';
+import profileImage from './domits-logo.jpg';
 
-const ContactItem = ({ contact, userId, isPending, selected, setContacts, handleAccept, handleReject, accoImage, profileImage, bookingDetails, }) => {
+
+const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashboardType }) => {
+    const isGuest = dashboardType === 'guest';
+    const { updateContactRequest } = useUpdateContactRequest(setContacts);
+    const { bookingDetails, accommodation } = useFetchBookingDetails(
+        contact.hostId,
+        isGuest ? userId : contact.recipientId,
+        {
+            accommodationEndpoint: isGuest
+                ? 'bookingEngine/listingDetails'
+                : 'hostDashboard/single',
+            withAuth: !isGuest,
+        }
+    );
+    const key = accommodation?.images?.[0]?.key;
+    const accoImage = key
+        ? `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`
+        : null;
+
+    const handleAccept = async () => {
+        try {
+            await updateContactRequest(contact.ID, 'accepted');
+        } catch (err) {
+            setError('Error accepting the contact request.');
+        }
+    };
+
+    const handleReject = async () => {
+        try {
+            await updateContactRequest(contact.ID, 'rejected');
+        } catch (err) {
+            setError('Error rejecting the contact request.');
+        }
+    };
 
     return (
         <div className={`contact-item-content ${selected ? 'selected' : ''} ${!accoImage ? 'no-accommodation-image' : ''}`}>
@@ -24,8 +60,8 @@ const ContactItem = ({ contact, userId, isPending, selected, setContacts, handle
                             : contact.latestMessage?.fileUrls?.length === 1
                                 ? `(${contact.latestMessage?.fileUrls?.length}) Image`
                                 : contact.latestMessage?.fileUrls?.length > 1
-                                ? `(${contact.latestMessage?.fileUrls?.length}) Images`
-                                : "No message history yet"}
+                                    ? `(${contact.latestMessage?.fileUrls?.length}) Images`
+                                    : "No message history yet"}
                     </p>
                 )}
 

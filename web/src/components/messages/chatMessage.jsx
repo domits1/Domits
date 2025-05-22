@@ -1,7 +1,8 @@
 import React from 'react';
 
-const ChatMessage = ({ message, userId, contactName, variant = 'default' }) => {
+const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
     const { userId: senderId, text, createdAt, isRead, isSent, fileUrls } = message;
+    const variant = dashboardType;
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
