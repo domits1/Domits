@@ -6,6 +6,7 @@ import GuestPayments from "./GuestPayments";
 import GuestReviews from "./GuestReviews";
 import GuestSettings from "./GuestSettings";
 import GuestWishlist from "./GuestWishlist";
+import Messages from "../../components/messages/Messages";
 
 const MainDashboardGuest = () => {
   const [activeComponent, setActiveComponent] = useState("Dashboard");
@@ -16,6 +17,8 @@ const MainDashboardGuest = () => {
         return <GuestDashboard />;
       case "Bookings":
         return <GuestBooking />;
+      case "Messages":
+        return <Messages dashboardType="guest"/>;
       case "Payments":
         return <GuestPayments />;
       case "Reviews":

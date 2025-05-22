@@ -28,7 +28,6 @@ import HostDashboard from "./features/hostdashboard/HostDashboard";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
 import HostListings from "./features/hostdashboard/HostListings";
-import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 
@@ -93,6 +92,7 @@ import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
+import Messages from "./components/messages/Messages.js";
 
 
 Modal.setAppElement("#root");
@@ -222,11 +222,10 @@ function App() {
                       <Route path="property" element={<HostProperty />} />
                       <Route path="listings" element={<HostListings />} />
                       <Route path="calendar" element={<HostCalendar />} />
-                      <Route path="messages" element={<HostMessages />} />
                       <Route path="reporting" element={<HostPayments />} />
                       <Route path="settings" element={<HostSettings />} />
                       {/* <Route path="reviews" element={<HostReviews />} /> */}
-                      <Route path="chat" element={<HostMessages />} />
+                      <Route path="chat" element={<Messages dashboardType="host" />} />
                       <Route path="reservations" element={<HostReservations />} />
                       <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
                       <Route path="housekeeping" element={<HostHousekeeping />} />

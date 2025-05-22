@@ -1,0 +1,32 @@
+.host-chat-components, .guest-chat-components {
+    display: flex;
+    flex-direction: row;
+
+    .ContactsBack-button {
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        margin: 1rem auto;
+        background: #f1f1f1;
+        color: #333;
+        border: none;
+        padding: 0.6rem 1rem;
+        font-size: 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        text-align: center;
+
+        @media (min-width: 769px) {
+            display: none;
+        }
+    }
+    @media (max-width: 768px) {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+    }
+}
+
+
+
