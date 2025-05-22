@@ -1,0 +1,230 @@
+.hr-page-body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  
+    .hr-container {
+      margin: 0 auto;
+      flex: 1;
+    }
+  
+    .hr-h1 {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+  
+    .hr-host-revenues {
+      display: flex;
+      flex-direction: row;
+    }
+  
+    .hr-pages {
+      margin-right: 20px;
+      margin-left: 67px;
+    }
+  
+    .hr-content {
+      width: 80%;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      grid-auto-rows: auto;
+      gap: 20px;
+      margin: 20px 0;
+  
+      .hr-revenue-overview {
+        display: grid;
+        gap: 10px;
+        background-color: #ffffff;
+        padding: 20px;
+        width: 30vh;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+        h3 {
+          font-size: 1.5em;
+          margin-bottom: 10px;
+        }
+  
+        .ro-revenue-card {
+          padding: 10px 15px;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          background-color: #f8f9fa;
+          text-align: center;
+        }
+      }
+  
+      .hr-monthly-comparison {
+        grid-column: 2 / 5;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-right: 200px;
+        width: 850px;
+  
+        h3 {
+          font-size: 1.5em;
+          margin-bottom: 10px;
+        }
+      }
+  
+      .hr-booking-trends {
+        grid-column: 2 / 3;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+      }
+  
+      .hr-booked-nights {
+        display: grid;
+        gap: 10px;
+        background-color: #ffffff;
+        padding: 20px;
+        width: 30vh;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        min-height: 400px;
+      }
+  
+      .hr-cards {
+        grid-column: 1 / 3;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        background-color: #ffffff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 90%;
+  
+        .hr-card {
+          padding: 20px;
+          border: 1px solid #e0e0e0;
+          border-radius: 10px;
+          background-color: #ffffff;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          text-align: center;
+        }
+      }
+    }
+  
+    .hr-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+  
+      &:hover {
+        background-color: #0056b3;
+      }
+    }
+  
+    .hr-summary {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+  
+      h4 {
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+  
+      table {
+        width: 100%;
+        border-collapse: collapse;
+  
+        th,
+        td {
+          padding: 10px;
+          border: 1px solid #dee2e6;
+          text-align: left;
+        }
+  
+        th {
+          background-color: #f1f3f5;
+        }
+      }
+  
+      .hr-download-button {
+        text-align: right;
+        margin-top: 20px;
+  
+        button {
+          padding: 10px 20px;
+          font-size: 1em;
+          border: none;
+          border-radius: 4px;
+          background-color: #007bff;
+          color: #ffffff;
+          cursor: pointer;
+        }
+      }
+    }
+  
+    .hr-revenue-spinner-container {
+      position: relative !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+      height: 100vh !important;
+      padding-left: 700px !important;
+  
+      .hr-revenue-spinner {
+        border-width: 10px !important;
+      }
+    }
+  
+    @media (max-width: 1024px) {
+      .hr-content {
+        grid-template-columns: 1fr;
+  
+        .hr-cards {
+          grid-template-columns: repeat(2, 1fr);
+        }
+  
+        .hr-booking-trends,
+        .hr-booked-nights {
+          grid-template-columns: 1fr;
+        }
+      }
+  
+      .hr-pages {
+        width: 100%;
+        margin-right: 0;
+      }
+    }
+  
+    @media (max-width: 768px) {
+      .hr-content {
+        grid-template-columns: 1fr;
+  
+        .hr-cards {
+          grid-template-columns: 1fr;
+        }
+      }
+  
+      .hr-pages {
+        width: 100%;
+        margin-right: 0;
+      }
+    }
+  
+    @media (min-width: 1200px) {
+      .hr-content {
+        grid-template-columns: 1fr 2fr;
+  
+        .hr-cards {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+    }
+  }
+  

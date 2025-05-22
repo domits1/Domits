@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import './ALOSCard.css';
+import './ALOSCard.scss';
 
 const ALOSCard = () => {
   const [averageLengthOfStay, setAverageLengthOfStay] = useState(0);
@@ -22,7 +22,6 @@ const ALOSCard = () => {
         const session = await Auth.currentSession();
         const idToken = session.getIdToken().getJwtToken(); 
 
-        console.log('Fetching average length of stay for userId:', userId);
 
         const response = await fetch(
           'https://wsoz1pj35e.execute-api.eu-north-1.amazonaws.com/default/',
@@ -46,7 +45,6 @@ const ALOSCard = () => {
         }
 
         const data = await response.json();
-        console.log('API Response:', data);
 
         if (!data.body) {
           throw new Error('No data received from API');
