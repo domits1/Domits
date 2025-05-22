@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Pages from "./Pages.js";
-import './HostRevenueStyle.css';
+import './HostRevenueStyle.scss';
 import { gql, useQuery } from '@apollo/client';
 import RevenueOverview from './HostRevenueCards/RevenueOverview.jsx';
 import axios from "axios";

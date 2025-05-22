@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Pages from "./Pages.js";
-import './HostHomepage.css';
+import './HostHomepage.scss';
 import './PagesDropdown.css';
-import styles from './HostDashboard.module.css'
+import styles from './HostDashboard.module.scss'
 import StripeModal from './StripeModal.js';
 import { Auth } from 'aws-amplify';
 import {useNavigate} from "react-router-dom";
@@ -11,6 +11,8 @@ import info from "../../images/icons/info.png";
 import ImageSlider from "../../utils/ImageSlider";
 import editIcon from "../../images/icons/edit-05.png";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import {getAccessToken} from "../../services/getAccessToken.js";
+import { toast } from 'react-toastify';
 
 function HostDashboard() {
     const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
@@ -71,21 +73,21 @@ function HostDashboard() {
     const fetchRecentAccommodations = async () => {
         setIsLoading(true);
         if (!userId) {
-            console.log("No user id")
             return;
         } else {
             try {
-                const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchRecentAccommodations', {
-                    method: 'POST',
-                    body: JSON.stringify({ OwnerId: userId }),
-                    headers: {'Content-type': 'application/json; charset=UTF-8',
+                const response = await fetch('https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': getAccessToken(),
                     }
+
                 });
                 if (!response.ok) {
                     throw new Error('Failed to fetch');
                 }
                 const data = await response.json();
-                setAccommodations(JSON.parse(data.body));
+                setAccommodations(data);
             } catch (error) {
                 console.error("Unexpected error:", error);
             } finally {
@@ -93,6 +95,7 @@ function HostDashboard() {
             }
         }
     };
+
     return (
         <main className="page-body">
             <h2>Dashboard</h2>
@@ -122,59 +125,55 @@ function HostDashboard() {
                             <p>Click on your listed accommodations to see their listing details</p>
                         </div>
                         {isLoading ? (
-                            <div>
-                                <img src={spinner} alt='spinner'/>
-                            </div>
+                        <div className={styles.loader}>
+                            <img src={spinner} alt="Loading..." />
+                        </div>
                         ) : accommodations.length > 0 ? (
-                            accommodations.map((accommodation, index) => (
-                                <div key={index} className={styles.dashboardCard}
-                                     onClick={() => !accommodation.Drafted ? navigate(`/listingdetails?ID=${accommodation.ID}`) :
-                                         alert('This accommodation is drafted and cannot be viewed in listing details!')
-                                     }>
-                                    <div className={styles.accommodationText}>
-                                        <p className={styles.accommodationTitle}>{accommodation.Title}</p>
-                                        {accommodation.AccommodationType === 'Boat' ? (
-                                            <p className={styles.accommodationLocation}>
-                                                {accommodation.City},
-                                                {accommodation.Harbour}
-                                            </p>
-                                        ) : (
-                                            <p className={styles.accommodationLocation}>
-                                                {accommodation.City},
-                                                {accommodation.Street},
-                                                {accommodation.PostalCode}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <ImageSlider images={accommodation.Images} seconds={5} page={'dashboard'}/>
-                                    <div className={styles.accommodationDetails}>
-                                        <p className={`${(accommodation.Drafted) ? styles.isDrafted : styles.isLive}`}
-                                        >Status: {accommodation.Drafted ? 'Drafted' : 'Live'}</p>
-                                        <p>Listed on: {DateFormatterDD_MM_YYYY(accommodation.createdAt)}</p>
-                                        {accommodation.DateRanges.length > 0 ?
-                                            (<p>
-                                                Available from
-                                                {" " + DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + " "}
-                                                to {" " +
-                                                DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate) + " "}
-                                            </p>) :
-                                            (<p>Date range not set</p>)
-                                        }
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div>
-                                <p>It appears that you have not listed any
-                                    accommodations recently...</p>
+                        accommodations.map((accommodation, index) => (
+                            <div
+                            key={accommodation.property.id || index}
+                            className={styles.dashboardCard}
+                            onClick={() => {
+                                if (accommodation.property.status === "INACTIVE") {
+                                toast.warning('This listing is still in draft mode. Please publish it to make it live.');
+                                } else {
+                                navigate(`/listingdetails?ID=${accommodation.property.id}`);
+                                }
+                            }}
+                            >
+                            {accommodation.images?.length > 0 ? (
+                                <img src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`} alt="Geen afbeelding beschikbaar" className='img-listed-dashboard' />
+                            ) : (
+                                <img src={placeholderImage} alt="No image available" />
+                            )}
+
+                            <div className={styles.accommodationText}>
+                                <p className={styles.accommodationTitle}>
+                                {accommodation.property.title}
+                                </p>
+                                <p className={styles.accommodationLocation}>
+                                {accommodation.location.city}
+                                </p>
                             </div>
+
+                            <div className={styles.accommodationDetails}>
+                                <span className={accommodation.property.status ? styles.status : styles.isLive}>
+                                {accommodation.property.status === "INACTIVE" ? 'Drafted' : 'Live'}
+                                </span>
+                                <span>Listed on: {DateFormatterDD_MM_YYYY(accommodation.property.createdAt)}</span>
+                            </div>
+                            </div>
+                        ))
+                        ) : (
+                        <div className={styles.emptyState}>
+                            <p>It looks like you do not have a property.</p>
+                        </div>
                         )}
                     </div>
                     <div className={styles.dashboardRight}>
                         <div className={styles.personalInfoContent}>
                             <h3>Personal Information</h3>
-                            <div className={styles.personalInfoBox}><img src={editIcon}
-                                                          alt="Email Icon"/><span>Email:</span> {user.email}</div>
+                            <div className={styles.personalInfoBox}><img src={editIcon} alt="Email Icon"/><span>Email:</span> {user.email}</div>
                             <div className={styles.personalInfoBox}><img src={editIcon} alt="Name Icon"/><span>Name:</span> {user.name}
                             </div>
                         </div>
