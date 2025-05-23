@@ -24,6 +24,10 @@ const TabHeader = ({tabTitle}) => {
     )
 }
 
+TabHeader.defaultProps = {
+    tabTitle: null,
+}
+
 const styles = StyleSheet.create({
     // Header
     header: {
