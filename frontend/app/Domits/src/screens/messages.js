@@ -32,7 +32,7 @@ export function Messages({ route, navigation }) {
           setUser({ email: attributes.email });
         }
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error('Error fetching user: ', error);
       }
     };
 
@@ -332,11 +332,6 @@ const styles = StyleSheet.create({
   chat__list: {
     justifyContent: 'flex-start',
     flexDirection: 'column',
-  },
-  chat__name: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
   },
   chat__listP: {
     fontSize: 14,

@@ -14,9 +14,9 @@ export class Controller {
 
     async getUser(event) {
         try {
-            // if (!await this.authManager.userIsAuthorized(event.headers.Authorization)) {
-            //     throw new UnauthorizedException("You are not authorized to perform this action.")
-            // }
+            if (!await this.authManager.userIsAuthorized(event.headers.Authorization)) {
+                throw new UnauthorizedException("You are not authorized to perform this action.")
+            }
             const id = event.queryStringParameters?.id;
             if (!id) {
                 throw new BadRequestException("You must provide an id");
