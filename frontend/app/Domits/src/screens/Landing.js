@@ -27,7 +27,7 @@ const Dashboard = () => {
 
         <View style={styles.infoContainer}>
           <Text style={styles.thirdHeader}>Hosting on <Text style={styles.highlightText}>Domits</Text> has never been <Text style={styles.highlightText}>easier</Text>.</Text>
-          <Text style={styles.textBoldHostDomits}>It only takes 3 steps.</Text>
+          <Text style={styles.textBoldHostDomits}>It only takes 3 steps. </Text>
           <Text style={styles.Numbers}>3.</Text>
           <Text style={styles.textBoldHostDomits}>Receive guests</Text>
           <Text style={styles.text}>Welcome your guests with a warm and personal touch.</Text>

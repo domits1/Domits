@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend/web/src
-          npm ci --verbose
+          npm i --verbose
 
       # Run Jest tests with coverage
       - name: Run Jest tests
