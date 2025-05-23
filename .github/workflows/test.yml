@@ -78,6 +78,8 @@ jobs:
       - name: Execute test suite
         run: |
           pwd
+          ls -la
+          cd backend
           npm run test
 
   validate-lambda-functions:
