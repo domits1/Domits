@@ -48,7 +48,9 @@ jobs:
 
       # Install project dependencies from root package.json
       - name: Install dependencies
-        run: npm ci
+        run: |
+          cd backend
+          npm ci
         env:
           CI: true
 
