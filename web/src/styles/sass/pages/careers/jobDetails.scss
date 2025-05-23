@@ -163,7 +163,7 @@ $secondary-color: var(--secondary-color);
     flex-direction: column;
     width: 100%;
 
-    .exp-heading {
+    h2 {
         color: $primary-color;
         font-size: 48px;
         font-weight: 600;
@@ -218,167 +218,171 @@ $secondary-color: var(--secondary-color);
         max-width: 550px;
         font-size: 18px;
     }
+
+    button{
+
+        padding: 10px 20px;
+        font-size: 1em;
+        color: white;
+        background-color: $primary-color;
+        border-radius: 5px;
+        border: 2px solid darken(#0D9813, 5%);
+        outline: none;
+
+       
+
+            &:hover {          
+            background: #3aab3f;
+            cursor: pointer;
+}
+
 }
 
 
 @media (max-width: 1200px) {
-
     .left-container,
     .right-container {
-        max-width: 100%;
-        padding: 10px;
-    }
+      max-width: 100%;
+      padding: 10px;
 
-    .left-container h1 {
+      h1 {
         font-size: 36px;
+      }
     }
 
     .company-name {
-        font-size: 32px;
+      font-size: 32px;
     }
 
     .resp-heading,
     .tech-heading,
     .exp-heading {
-        font-size: 36px;
+      font-size: 36px;
     }
 
-    .resp-right p,
-    .apply p,
-    .left-container p {
+    .resp-right,
+    .apply,
+    .left-container {
+      p {
         font-size: 16px;
+      }
     }
 
     .resp-container img {
-        width: 100%;
-    }
-}
-
-@media (max-width: 768px) {
-    .hero {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .job-tags {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .right-container img {
-        border-radius: 0;
-    }
-
-    .responsibilities {
-        flex-direction: column;
-        padding: 20px 0;
-    }
-
-    .resp-container {
-        flex-direction: column;
-        gap: 20px;
+      width: 100%;
     }
 
     .technologies {
-        padding: 15px 0 30px 0;
+      padding: 20px 10px 40px 10px;
+      text-align: center;
+
+      .tech-heading {
+        font-size: 36px;
+      }
+
+      p {
+        font-size: 18px;
+        max-width: 90%;
+      }
+    }
+  }
+
+}
+  @media (max-width: 768px) {
+    .hero {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .job-tags {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .right-container img {
+      border-radius: 0;
+    }
+
+    .responsibilities {
+      flex-direction: column;
+      padding: 20px 0;
+
+      .resp-container {
+        flex-direction: column;
+        gap: 20px;
+      }
+    }
+
+    .technologies {
+      padding: 15px 10px 30px 10px;
+      text-align: center;
+
+      .tech-heading {
+        font-size: 28px;
+      }
+
+      p {
+        font-size: 16px;
+        max-width: 100%;
+      }
     }
 
     .exp-container-top,
-    .exp-container-bottom {
-        padding: 0 15px;
-    }
-
+    .exp-container-bottom,
     .apply {
-        padding: 0 15px;
+      padding: 0 15px;
     }
-}
+  }
 
-@media (max-width: 480px) {
-    .left-container h1 {
+  @media (max-width: 480px) {
+    .left-container {
+      h1 {
         font-size: 28px;
+      }
     }
 
     .company-name {
-        font-size: 24px;
+      font-size: 24px;
     }
 
     .resp-heading,
     .tech-heading,
     .exp-heading {
-        font-size: 28px;
+      font-size: 28px;
     }
 
-    .resp-right p,
-    .apply p,
-    .left-container p {
+    .resp-right,
+    .apply,
+    .left-container {
+      p {
         font-size: 14px;
+      }
     }
 
     .tag {
-        font-size: 0.9em;
-        padding: 8px 15px;
+      font-size: 0.9em;
+      padding: 8px 15px;
     }
 
-    .apply p {
+    .apply {
+      p {
         max-width: 100%;
+      }
     }
-}
 
-@media (max-width: 1200px) {
     .technologies {
-        padding: 20px 10px 40px 10px;
-        text-align: center;
+      padding: 10px 5px 20px 5px;
+      text-align: center;
+
+      .tech-heading {
+        font-size: 24px;
+      }
+
+      p {
+        font-size: 14px;
+        max-width: 100%;
+      }
     }
+  }
 
-    .tech-heading {
-        font-size: 36px;
-    }
-
-    p {
-        font-size: 18px;
-        max-width: 90%;
-    }
-
-
-}
-
-@media (max-width: 768px) {
-    .technologies {
-        padding: 15px 10px 30px 10px;
-        text-align: center;
-
-        .tech-heading {
-            font-size: 28px;
-        }
-
-        p {
-            font-size: 16px;
-            max-width: 100%;
-        }
-    }
-
-
-
-
-}
-
-@media (max-width: 480px) {
-    .technologies {
-        padding: 10px 5px 20px 5px;
-        text-align: center;
-
-        .tech-heading {
-            font-size: 24px;
-        }
-
-        p {
-            font-size: 14px;
-            max-width: 100%;
-        }
-    }
-
-
-
-
-}

@@ -2,175 +2,204 @@ $primary-color: var(--primary-color);
 $secondary-color: var(--secondary-color);
 
 .contact-page {
-    width: 95%;
-    color: #1a1a1a;
-    font-size: 1.1em;
-    margin-bottom: 50px;
-    margin: 50px auto;
-    font-weight: 500;
+
+    h1,
+    p {
+        margin: 15px 0;
+
+    }
+
+    p.questionText {
+        width: 45vw;
+    }
+
+    .questionsContainer {
+        width: 100%;
+        margin-top: 50px;
+        background-color: #f9f9f9;
+        padding: 20px;
+        box-sizing: border-box;
+
+    }
+
 
     .buttonContactContainer {
         gap: 1%;
         display: flex;
         flex-direction: row;
 
-
         a {
             color: white;
+            text-decoration: none;
         }
 
-        .Contact-button {
-            background-color: green;
+        button {
+            background-color: $primary-color;
             color: white;
             border-radius: 1vh;
             border: none;
             height: 5vh;
             width: 15vh;
 
-
-            a {
-                text-decoration: none;
-            }
-
             &:hover {
-                background: #3aab3f;
+                background-color: #3aab3f;
                 cursor: pointer;
             }
         }
+
+
     }
 
+    .contactFormContainer {
+        padding: 20px;
+
+        form {
+            .contactform {
+                display: flex;
+                flex-wrap: wrap;
+                margin-top: 25px;
+
+                input::placeholder,
+                textarea::placeholder {
+                    text-align: left;
+
+                }
+
+                input {
+                    border-radius: 10px;
+                    background: #FFF;
+                    padding: 10px;
+                    width: 100%;
+                    margin: 15px 0 10px 0;
+                }
+
+                .namemessage,
+                .biginput {
+                    flex: 1 1 45%;
+                    margin-right: 34px;
+                    width: 100%;
+
+                }
+
+                .biginput {
+                    textarea {
+                        width: 100%;
+                        height: 240px;
+                        margin-top: 10px;
+                        box-sizing: border-box;
+                        text-align: left;
+                        padding: 10px;
+                        border-radius: 10px;
+                    }
+                }
 
 
-.questionsContainer {
-    width: 100%;
-    margin-top: 50px;
-    background-color: #f9f9f9;
-    padding: 20px;
-    box-sizing: border-box;
 
-    h1,
-    p {
-        margin: 15px 0;
+
+            }
+
+            .formbuttons {
+                border: 0;
+                display: flex;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+
+                #attachmentsbutton,
+                #sendbutton {
+                    width: 47%;
+                    height: 40px;
+                    padding: 8px 15px;
+                    margin-bottom: 20px;
+                    flex-shrink: 0;
+                    color: #FFF;
+                    border-radius: 10px;
+                    border: none;
+                    box-shadow: none;
+
+                    &:hover {
+                        cursor: pointer;
+                    }
+                }
+
+                #attachmentsbutton {
+                    background: $secondary-color;
+
+                    &:hover {
+                        background: #3e85cb;
+                    }
+                }
+
+                #sendbutton {
+                    background: $primary-color;
+                    margin-left: auto;
+
+                    &:hover {
+                        background: #46c54c;
+                    }
+                }
+            }
+
         }
 
-        .quistionText {
-            width: 45vw;
+    }
+
+
+
+    @media screen and (max-width: 930px) {
+        .contact {
+            padding: 10px;
+            margin: 10px auto;
+            font-size: 14px;
+        }
+
+        .contactFormContainer {
+            form {
+                .contactform {
+                    padding: 10px;
+
+                    .namemessage,
+                    .biginput {
+                        flex: 100%;
+                        width: 100%;
+                        margin-right: 0;
+                    }
+
+                    .biginput {
+                        textarea {
+                            height: 100px;
+                            padding: 8px;
+                            width: 100%;
+                        }
+                    }
+                }
+
+                .formbuttons {
+                    flex-direction: column;
+
+                    #attachmentsbutton,
+                    #sendbutton {
+                        width: auto;
+                        min-width: 150px;
+                        max-width: 100%;
+                        align-self: center;
+                        margin-left: 0;
+                    }
+                }
+            }
+
+        }
+
+        .buttonContactContainer {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+
+            button {
+                width: auto;
+                min-width: 150px;
+                max-width: 100%;
+            }
         }
     }
 
-
-
-    .contactform {
-        display: flex;
-        flex-wrap: wrap;
-        margin-top: 25px;
-    }
-
-
-        input::placeholder,
-        textarea::placeholder {
-        text-align: left;
-    }
-
-        input:not(.biginput input) {
-        border-radius: 10px;
-        background: #FFF;
-        padding: 10px;
-        width: 100%;
-        margin: 15px 0 10px 0;
-    }
-
-    .namemessage,
-    .biginput {
-        flex: 1 1 45%;
-        margin-right: 34px;
-        width: 100%;
-    }
-
-    .biginput{
-
-        textarea{
-        width: 100%;
-        height: 240px;
-        margin-top: 10px;
-        box-sizing: border-box;
-        text-align: left;
-        padding: 10px;
-        border-radius: 10px;
-    }
-
-
-    .formbuttons {
-        border: 0;
-        display: flex;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-       
-    
-
-    #attachmentsbutton,
-    #sendbutton {
-        width: 47%;
-        height: 40px;
-        padding: 8px 15px;
-        margin-bottom: 20px;
-        flex-shrink: 0;
-        color: #FFF;
-        border-radius: 10px;
-        border: none;
-        box-shadow: none;
-    }
-
-    #attachmentsbutton {
-        background: $secondary-color;
-
-
-        &:hover {
-        background: #3e85cb;
-        cursor: pointer;
-    }
-    }
-
-    #sendbutton {
-        background: $primary-color;
-        margin-left: auto;
-
-        &:hover {
-        background: #46c54c;
-        cursor: pointer;
-    }
 }
-}
-    }
-
-
-
-@media screen and (max-width: 930px) {
-    .contact {
-        padding: 10px;
-        margin: 10px auto;
-        font-size: 14px;
-    }
-
-    .contactform {
-        padding: 10px;
-    }
-
-    .namemessage,
-    .biginput,
-    .formbuttons {
-        flex: 100%;
-        width: 100%;
-    }
-
-    .biginput textarea {
-        height: 100px;
-        padding: 8px;
-        width: 100%;
-    }
-
-    .questionsContainer {
-        width: 100%;
-    }
-}
-};

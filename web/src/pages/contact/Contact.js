@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import '../../styles/sass/pages/contact/contact.scss';
+
 
 
 function Contact() {
