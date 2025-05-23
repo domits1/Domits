@@ -19,7 +19,7 @@ export class Controller {
             // }
             const id = event.queryStringParameters?.id;
             if (!id) {
-                throw new BadRequestException("You must provide an id.");
+                throw new BadRequestException("You must provide an id");
             }
             return {
                 statusCode: 200,
