@@ -77,7 +77,7 @@ jobs:
       # Run all tests in the project
       - name: Execute test suite
         run: |
-          echo cd
+          pwd
           npm run test
 
   validate-lambda-functions:
