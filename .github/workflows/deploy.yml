@@ -115,7 +115,7 @@ jobs:
               cp -r ./backend/functions/$FUNC_NAME/* ./deploy_temp/
           
               # Copy node_modules (using root dependencies)
-              cp -r ./node_modules ./deploy_temp/
+              cp -r ./backend/node_modules ./deploy_temp/
           
               # Create the ZIP package from the temp directory (without extra nesting)
               cd deploy_temp
