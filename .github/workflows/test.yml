@@ -48,7 +48,9 @@ jobs:
 
       # Install project dependencies from root package.json
       - name: Install dependencies
-        run: npm ci
+        run: |
+          cd backend
+          npm ci
         env:
           CI: true
 
@@ -66,13 +68,17 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          cd backend
+          npm i
         env:
           CI: true
 
       # Run all tests in the project
       - name: Execute test suite
-        run: npm run test
+        run: |
+          cd backend
+          npm run test
 
   validate-lambda-functions:
     name: Validate AWS Lambda Functions
