@@ -70,15 +70,14 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend
-          npm ci
+          npm i
         env:
           CI: true
 
       # Run all tests in the project
       - name: Execute test suite
         run: |
-          cd
-          cd backend
+          echo cd
           npm run test
 
   validate-lambda-functions:
