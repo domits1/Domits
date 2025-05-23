@@ -9,6 +9,8 @@ import xIcon from "../../images/icons/x.png";
 import { ReactComponent as InstagramIcon } from "../../images/instagram.svg";
 import { Link } from "react-router-dom";
 
+
+
 const currentYear = new Date().getFullYear();
 
 const Footer = () => {

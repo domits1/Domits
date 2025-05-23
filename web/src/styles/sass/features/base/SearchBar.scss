@@ -46,8 +46,10 @@ $primary-domits-color: #0d9813;
   height: 3.43rem;
   background-color: white;
 
-  > div {
+  >div {
+
     position: relative;
+
     &::before {
       position: absolute;
       content: "";
@@ -339,7 +341,7 @@ $primary-domits-color: #0d9813;
     box-sizing: border-box;
     margin: 10px;
 
-    > div::before {
+    >div::before {
       display: none;
     }
 
@@ -444,6 +446,7 @@ $primary-domits-color: #0d9813;
   }
 
   @media (max-width: 1500px) {
+
     .Calendar__monthSelectorItemText,
     .Calendar__yearSelectorText {
       font-size: 10px !important;
@@ -451,6 +454,7 @@ $primary-domits-color: #0d9813;
   }
 
   @media (max-width: 1200px) {
+
     .Calendar__monthSelectorItemText,
     .Calendar__yearSelectorText {
       font-size: 7px !important;
@@ -458,6 +462,7 @@ $primary-domits-color: #0d9813;
   }
 
   @include mobile {
+
     .Calendar__monthSelectorItemText,
     .Calendar__yearSelectorText {
       font-size: 1rem !important;
@@ -465,6 +470,7 @@ $primary-domits-color: #0d9813;
   }
 
   @media (min-width: 2500px) {
+
     .Calendar__monthSelectorItemText,
     .Calendar__yearSelectorText {
       font-size: 15px !important;
@@ -472,6 +478,7 @@ $primary-domits-color: #0d9813;
   }
 
   @include mobile {
+
     .input-calendar-checkInOut,
     .DatePicker__input {
       font-size: 0.5rem;
@@ -479,6 +486,7 @@ $primary-domits-color: #0d9813;
   }
 
   @include mobile {
+
     .search-button-section,
     .search-select-container,
     .search-check-in-out {
@@ -550,7 +558,7 @@ $primary-domits-color: #0d9813;
       margin-top: 0.5rem;
     }
 
-    .search-bar-main > div::before {
+    .search-bar-main>div::before {
       background: transparent;
     }
 
@@ -626,7 +634,7 @@ $primary-domits-color: #0d9813;
       text-overflow: ellipsis;
     }
 
-    .search-bar-main > div::before {
+    .search-bar-main>div::before {
       display: none;
     }
   }
@@ -784,7 +792,7 @@ $primary-domits-color: #0d9813;
     color: transparent;
   }
 
-  .Calendar__monthYear > * {
+  .Calendar__monthYear>* {
     font-size: 1.4em;
     color: black;
   }

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, MessageCircle, User } from 'lucide-react';
 
+
 const Navbar = ({ isLoggedIn }) => {
   const navigate = useNavigate();
 

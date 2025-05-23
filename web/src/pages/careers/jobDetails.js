@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import Jobs from "./jobs.json";
 import { useNavigate, useParams } from 'react-router-dom';
-import "./jobDetails.css";
 import office from '../../images/office.jpg';
 import coWork from '../../images/co-work.jpg';
 

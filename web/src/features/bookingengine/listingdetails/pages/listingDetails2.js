@@ -3,10 +3,10 @@ import { useLocation } from "react-router-dom";
 import Loading from "../../../hostdashboard/Loading";
 import FetchPropertyById from "../services/fetchPropertyById";
 import fetchHostInfo from "../services/fetchHostInfo";
-import "../../../../styles/sass/booking-engine/listingDetails.scss";
 import Header from "../components/header";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
+
 
 const ListingDetails2 = () => {
     const { search } = useLocation();

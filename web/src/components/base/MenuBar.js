@@ -6,6 +6,7 @@ import FlowContext from '../../services/FlowContext';
 import {useNavigate, useLocation} from 'react-router-dom';
 import {Auth} from "aws-amplify";
 
+
 function MenuBar() {
     const navigate = useNavigate();
     const location = useLocation();
