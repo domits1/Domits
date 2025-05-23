@@ -76,7 +76,10 @@ jobs:
 
       # Run all tests in the project
       - name: Execute test suite
-        run: npm run test
+        run: |
+          cd
+          cd backend
+          npm run test
 
   validate-lambda-functions:
     name: Validate AWS Lambda Functions
