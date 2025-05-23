@@ -23,7 +23,7 @@ export class Controller {
             }
             return {
                 statusCode: 200,
-                body: await this.service.getUser(id)
+                body: JSON.stringify(await this.service.getUser(id))
             };
         } catch (error) {
             console.error(error.message);
