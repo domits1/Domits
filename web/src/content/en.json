@@ -584,6 +584,152 @@
             "title": "©Copyright",
             "description": "All rights reserved. Nothing from this website (information, images, images) may be copied or stored in a database, in any form or by any means, whether electronic, digital, mechanical, manual, photographic or any other way."
           }
+        },
+        "landing": {
+          "list": "List your",
+          "house": "House",
+          "camper": "Camper",
+          "boat": "Boat",
+          "forFree": "for free with 0% booking fee",
+          "description": "Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.",
+          "startHosting": "Start hosting",
+          "secure": "Secure payments",
+          "verified": "Verified guests/hosts",
+          "quick": "Quick phone support",
+          "guarantee": "Domits quality guarantee",
+          "hosting": {
+            "title": "Hosting with ",
+            "domits": "Domits",
+            "title2": "has never been ",
+            "easier": "easier",
+            "subtitle": "It only takes 3 steps",
+            "first": {
+              "one": "1.",
+              "title": "List your property",
+              "description": "Start earning by listing your property for free with 0% fee in just minutes"
+            },
+            "second": {
+              "two": "2.",
+              "title": "Get paid",
+              "description": "Enjoy fast, easy and secure payments."
+            },
+            "third": {
+              "three": "3.",
+              "title": "Receive guest",
+              "description": "Welcome your guest with a warm and personal touch"
+            }
+          },
+          "why": {
+            "title": "Why should I host on",
+            "domits": "Domits",
+            "end": "?",
+            "description": "At Domits, we're not just another platform, we're building a future-focused, sustainable community with our Travel Innovation Labs. Our innovative approach ensures that your property adds meaningful value to both travelers and the environment. You'll also enjoy unlimited support and personalized, modern dashboards that make managing your listings easier than ever. But what truly sets Domits apart is our commitment to you. You're more than just a customer or data, we genuinely care about your success, and we're here every step on the way to help you thrive. Hosting with Domits means aligning with deeply embedded values of health, safety, and sustainability, creating a future-proof path for your business.",
+            "btnHosting": "Start hosting"
+          },
+          "register": {
+            "title": "Register your property",
+            "simple": "simple",
+            "and":" and ",
+            "safe": "safe",
+            "verified": {
+              "title": "Verified guests",
+              "description": "We verify guest with email address, phone, a personal message and payments with our partner Stripe."
+            },
+            "rules": {
+              "title": "Your own house rules",
+              "description": "Let your potential guests know your house rules. They must agree in order to book."
+            },
+            "how": {
+              "title": "Choose how you want to receive your bookings",
+              "description": "You can allow your guests to book directly."
+            },
+            "payments": {
+              "title": "receive payments regularly and securely",
+              "description": "You are guaranteed to be paid and can rely on fraud protection with our payments"
+            },
+            "support": {
+              "title": "Dedicated support",
+              "description": "Our rental expert team is available to assist you with any questions or issues, ensures a smooth hassle-free experience"
+            },
+            "renting": {
+              "title": "International renting",
+              "description": "You rent out your holiday home on an international market. This makes the chances of renting of out your holiday home even greater"
+            }
+          },
+          "othersSay": {
+            "title": "What others say about",
+            "domits": "Domits"
+          },
+          "rentingOut": {
+            "title": "Is your property suitable for",
+            "rent": "renting out",
+            "description": "Here is the minimal requirements checklist for renting out properties",
+            "general": {
+              "title": "General ✓",
+              "description": "The property is a fully equipped living unit that meets local rental regulations and is technically sound for renting."
+            },
+            "building": {
+              "title": "Building ✓",
+              "description": "The building's exterior, windows, doors, and common areas are well-maintained, and the heating system provides sufficient warmth and hot water."
+            },
+            "furnishing": {
+              "title": "Furnishing ✓",
+              "description": "The furnishing is in good condition, with safe electrical outlets, proper lighting, and available cleaning materials."
+            },
+            "bedroom": {
+              "title": "Bedrooms ✓",
+              "description": "The bedroom is equipped with intact beds, clean mattresses, and properly sized bedding."
+            },
+            "kitchen": {
+              "title": "Kitchen ✓",
+              "description": "The kitchen is fully equipped with functioning appliances, cooking tools, and clean dishware."
+            },
+            "pool": {
+              "title": "Pool and Jacuzzi ✓",
+              "description": "The pool and Jacuzzi are professionally installed and maintained regularly."
+            },
+            "surroundings": {
+              "title": "Surroundings ✓",
+              "description": "The outdoor areas are well-maintained, with paths and parking kept clear during winter."
+            },
+            "safety": {
+              "title": "Safety ✓",
+              "description": "The property meets safety standards with functional smoke detectors, secured balconies, safe playgrounds, and clear access paths."
+            }
+          },
+          "answerTo": {
+            "title": "Answes to ",
+            "your": "your",
+            "question": "questions",
+            "host": {
+              "title": "Getting started as a host",
+              "description": "Register as a host, connect or create your stripe account, start listing your accommodation."
+            },
+            "how": {
+              "title": "How to list your holiday rental?",
+              "description": "You can list your rental by ",
+              "becomeHost": "becoming a Domits host ",
+              "description2": "and filling in the required information. We will contact you shortly after you submit your holiday rental so you can start renting and earning!"
+            },
+            "manage": {
+              "title": "How do I create and manage my host account?",
+              "description": "Creating a Host account is easy. Click the 'Become a Host' button at the top right and follow the instructions. Once your account is set up, switch to the Host Dashboard from the menu. Here, you can add your property by providing details like type, location, and amenities. After submitting, your listing will be verified. Once approved, set your availability, pricing, and upload photos. To go live, create a Stripe account for payments. You can manage everything—availability, pricing, and details—directly from the Host Dashboard."
+            },
+            "payout": {
+              "title": "How payouts and taxes work",
+              "description": "To receive payments, you need to create a Stripe Connect account and link it to Domits via the button in your dashboard. All payments are processed through Stripe, where the necessary fees are automatically deducted."
+            },
+            "calendar": {
+              "title": "How to manage your calendar and bookings",
+              "description": "An upcoming feature will allow you to manage your bookings more efficiently directly through the dashboard. Stay tuned for updates."
+            }
+          },
+          "advice": {
+            "title": "Free personal advice from our",
+            "subtitle": "Our expert team is ready for support!",
+            "team": "rental expert team",
+            "talk": "Talk to a specialist"
+          }
         }
 }
   
