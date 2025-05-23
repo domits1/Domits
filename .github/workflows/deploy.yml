@@ -5,6 +5,7 @@ on:
     branches:
       - 'acceptance'
       - 'main'
+      - 'Repository-Restructuring'
     paths:
       - 'backend/**'
 
