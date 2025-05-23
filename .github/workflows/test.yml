@@ -77,8 +77,6 @@ jobs:
       # Run all tests in the project
       - name: Execute test suite
         run: |
-          pwd
-          ls -la
           cd backend
           npm run test
 
