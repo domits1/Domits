@@ -1,0 +1,87 @@
+//Booking-engine
+@use "booking-engine/imagegallery";
+@use "booking-engine/listing";
+@use "booking-engine/bookingoverview";
+@use "booking-engine/paymentConfirmPage";
+@use "booking-engine/overlay";
+//Base
+@use "base/header";
+@use "base/footer";
+@use "base/MenuBar";
+@use "base/SearchBar";
+@use "base/navbar";
+//Auth
+@use "auth/login";
+@use "auth/register";
+
+//GuestDashboard
+@use "guestdashboard/guestDashboard";
+@use "guestdashboard/Pages";
+@use "guestdashboard/GuestBooking";
+@use "guestdashboard/mainDashboardGuest";
+
+:root {
+  --primary-color: #0D9813;
+  --secondary-color: #003366;
+  --domits-host-blue: #003366;
+}
+
+@font-face {
+    font-family: "Kanit";
+    src: local("KanitThin"),
+     url("../../fonts/kanit/Kanit-Thin.ttf") format("truetype");
+    font-weight: 200;
+   }
+
+  @font-face {
+    font-family: "Kanit";
+    src: local("KanitLight"),
+     url("../../fonts/kanit/Kanit-Light.ttf") format("truetype");
+    font-weight: 300;
+   }
+
+  @font-face {
+    font-family: "Kanit";
+    src: local("KanitRegular"),
+     url("../../fonts/kanit/Kanit-Regular.ttf") format("truetype");
+    font-weight: 400;
+   }
+
+   @font-face {
+    font-family: "Kanit";
+    src: local("KanitMedium"),
+     url("../../fonts/kanit/Kanit-Medium.ttf") format("truetype");
+    font-weight: 500;
+   }
+
+   @font-face {
+    font-family: "Kanit";
+    src: local("KanitSemiBold"),
+     url("../../fonts/kanit/Kanit-SemiBold.ttf") format("truetype");
+    font-weight: 600;
+   }
+
+   @font-face {
+    font-family: "Kanit";
+    src: local("KanitBold"),
+     url("../../fonts/kanit/Kanit-Bold.ttf") format("truetype");
+    font-weight: 700;
+   }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: auto;
+  }
+
+  html {
+    margin-top: 90px;
+  }
+  
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+      monospace;
+  }

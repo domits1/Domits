@@ -1,0 +1,154 @@
+name: CI - Test Lambda Functions
+
+on:
+  pull_request:
+    branches:
+      - 'acceptance'
+      - 'main'
+      - 'Repository-Restructuring'
+    paths:
+      - 'backend/**'
+
+jobs:
+  setup:
+    name: Setup Environment
+    runs-on: ubuntu-latest
+    outputs:
+      changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
+    steps:
+      # Check out code with enough history to compare changes
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 100
+
+      # Fetch the target branch to determine changes
+      - name: Fetch default branch
+        run: |
+          DEFAULT_BRANCH=$(git remote show origin | grep "HEAD branch" | sed 's/.*: //')
+          git fetch origin $DEFAULT_BRANCH --depth=100
+          echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
+
+      # Check which files have changed in this PR
+      - name: Detect changed files
+        id: changed-files
+        run: |
+          CHANGED_FILES=$(git diff --name-status origin/$DEFAULT_BRANCH...HEAD)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          echo "all_changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # Set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      # Install project dependencies from root package.json
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+        env:
+          CI: true
+
+  run-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm i
+        env:
+          CI: true
+
+      # Run all tests in the project
+      - name: Execute test suite
+        run: |
+          cd backend
+          npm run test
+
+  validate-lambda-functions:
+    name: Validate AWS Lambda Functions
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      # Set up AWS credentials for API calls
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'eu-north-1' }}
+
+      # Get the list of changed files from previous job
+      - name: Create changed files list
+        run: |
+          echo '${{ needs.setup.outputs.changed-files }}' > changed_files.txt
+
+      # Verify that any Lambda function changed in the PR actually exist in AWS
+      - name: Validate changed Lambda functions
+        run: |
+          EXIT_CODE=0  # Start assuming success
+
+          # Iterate through all function directories under backend/functions/
+          for func_dir in backend/functions/*/; do
+            FUNC_NAME=$(basename "$func_dir")
+
+            # Check if this function was modified in this PR
+            if grep -qE "^[^D]\s+backend/functions/$FUNC_NAME/" changed_files.txt; then
+              echo "Function '$FUNC_NAME' was changed."
+
+              # Verify function has required metadata file
+              METADATA_FILE="./backend/functions/$FUNC_NAME/metadata.json"
+              if [ ! -f "$METADATA_FILE" ]; then
+                echo "::error ::Missing metadata.json for changed function '$FUNC_NAME'"
+                EXIT_CODE=1
+                continue
+              fi
+
+              # Extract Lambda function name from metadata
+              FUNCTION_NAME=$(node -e "
+                try {
+                  const meta = require('${METADATA_FILE}');
+                  if (!meta.functionName) throw new Error('No functionName in metadata.json');
+                  console.log(meta.functionName);
+                } catch (e) {
+                  console.error('Error reading metadata.json:', e.message);
+                  process.exit(1);
+                }
+              ")
+
+              # Verify function exists in AWS Lambda
+              echo "Checking AWS for Lambda function: $FUNCTION_NAME"
+              if aws lambda get-function --function-name "$FUNCTION_NAME" > /dev/null 2>&1; then
+                echo "✅ $FUNCTION_NAME exists in Lambda"
+              else
+                echo "::error ::Lambda function '$FUNCTION_NAME' does not exist in AWS"
+                EXIT_CODE=1
+              fi
+            fi
+          done
+
+          # Fail the workflow if any errors were encountered
+          exit $EXIT_CODE

@@ -6,6 +6,9 @@ on:
       - 'acceptance'
       - 'main'
       - '1630-sonarqube-setup-in-github-cipipeline'
+      - 'Repository-Restructuring'
+    paths:
+      - 'frontend/**'
 
 jobs:
   tests:
@@ -20,20 +23,20 @@ jobs:
       # Install and Cache NPM dependencies
       - name: Install dependencies
         run: |
-          cd web/src
-          npm ci --verbose
+          cd frontend/web/src
+          npm i --verbose
 
       # Run Jest tests with coverage
       - name: Run Jest tests
         run: |
-          cd web/src
+          cd frontend/web/src
           npm test -- --coverage --coverageDirectory=coverage
 
       # Run Cypress tests
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          working-directory: web/src/tests
+          working-directory: frontend/web/src/tests
           start: npx vite --host
 
 #  sonarqube:
