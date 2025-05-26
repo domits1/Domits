@@ -235,7 +235,7 @@ function Header({ setSearchResults, setLoading }) {
           }`}
       >
         <div className="logo">
-          <a href="/frontend/web/public">
+          <a href="/">
             <img src={logo} width={150} alt="Logo" />
           </a>
         </div>

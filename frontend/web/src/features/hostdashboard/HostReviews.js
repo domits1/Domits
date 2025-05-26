@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Pages from "./Pages.js";
 import spinner from "../../images/spinnner.gif";
 import deleteIcon from "../../images/icons/cross.png";
-import '../guestdashboard/guestdashboard.css';
 import styles from './HostReviews.module.css';
 import general from './HostDashboard.module.scss'
 import { Auth } from "aws-amplify";

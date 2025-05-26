@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
-import './Login.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
 
