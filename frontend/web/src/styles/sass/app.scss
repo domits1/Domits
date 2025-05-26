@@ -1,24 +1,36 @@
+//features
 //Booking-engine
-@use "booking-engine/imagegallery";
-@use "booking-engine/listing";
-@use "booking-engine/bookingoverview";
-@use "booking-engine/paymentConfirmPage";
-@use "booking-engine/overlay";
+@use "features/booking-engine/imagegallery";
+@use "features/booking-engine/listingDetails";
+@use "features/booking-engine/listing";
+@use "features/booking-engine/bookingoverview";
+@use "features/booking-engine/paymentConfirmPage";
+@use "features/booking-engine/overlay";
 //Base
-@use "base/header";
-@use "base/footer";
-@use "base/MenuBar";
-@use "base/SearchBar";
-@use "base/navbar";
+@use "features/base/header";
+@use "features/base/footer";
+@use "features/base/MenuBar";
+@use "features/base/navbar";
+@use "features/base/SearchBar";
 //Auth
-@use "auth/login";
-@use "auth/register";
+@use "features/auth/login";
+@use "features/auth/register";
+
+//pages
+//careers
+@use "pages/careers/careers";
+@use "pages/careers/jobDetails";
+
+//contact
+@use "pages/contact/contact";
+
+
 
 //GuestDashboard
-@use "guestdashboard/guestDashboard";
-@use "guestdashboard/Pages";
-@use "guestdashboard/GuestBooking";
-@use "guestdashboard/mainDashboardGuest";
+@use "features/guestdashboard/guestDashboard";
+@use "features/guestdashboard/Pages";
+@use "features/guestdashboard/GuestBooking";
+@use "features/guestdashboard/mainDashboardGuest";
 
 :root {
   --primary-color: #0D9813;
