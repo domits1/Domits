@@ -1,0 +1,154 @@
+.page-Host-content {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 80px;
+  padding: 20px;
+}
+
+.finance-span {
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.host-pc-finance {
+  flex: 1;
+  max-width: 900px;
+  padding: 30px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-left: 15vw;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 15px;
+  }
+}
+
+.finance-content {
+  display: flex;
+  flex-direction: column;
+  max-width: 800px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.finance-heading {
+  text-align: center;
+  width: 100%;
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.finance-steps, .payouts-section, .payout-status {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.finance-steps {
+  h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+
+    li {
+      padding: 12px 0;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+.payouts-section {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+  h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .payout-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f1f1;
+      font-weight: bold;
+    }
+  }
+}
+
+.payout-frequency {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  width: 100%;
+  margin: 20px 0;
+
+  select {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    width: 100%;
+  }
+}
+
+.payout-status {
+  h3 {
+    margin-bottom: 10px;
+  }
+
+  .status-active {
+    color: #28a745;
+    font-weight: bold;
+  }
+
+  .status-pending {
+    color: #ffc107;
+    font-weight: bold;
+  }
+
+  .status-error {
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  .status-none {
+    color: #6c757d;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-Host-content {
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+  }
+}
+
