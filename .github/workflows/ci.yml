@@ -6,7 +6,6 @@ on:
       - 'acceptance'
       - 'main'
       - '1630-sonarqube-setup-in-github-cipipeline'
-      - 'Repository-Restructuring'
     paths:
       - 'frontend/**'
 
