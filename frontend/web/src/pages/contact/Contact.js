@@ -111,7 +111,7 @@ function Contact() {
     };
 
     return (
-        <div className="contact">
+        <div className="contact-page">
             <div className="questionsContainer">
                 <h1>Frequently Asked Questions (FAQ)</h1>
             <div className="buttonContactContainer">                

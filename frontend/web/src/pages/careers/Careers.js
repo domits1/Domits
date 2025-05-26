@@ -44,7 +44,7 @@ function Career() {
     };
 
     return (
-        <main>
+        <main class="career-page">
             <h2 className="crew">Let's find a fitting job</h2>
             <div className="filter-container">
                 <button onClick={() => handleCategoryChange("All")} className={selectedCategory === "All" ? "active" : ""}>All</button>
