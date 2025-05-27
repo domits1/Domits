@@ -17,6 +17,7 @@ const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userHasReservations, setUserHasReservations] = useState(false);
   const [bookings, setBooking] = useState(null);
+  const [sortedBookings, setSortedBookings] = useState(null);
   const authToken = getAccessToken();
 
   useEffect(() => {
@@ -30,6 +31,7 @@ const HostReservations = () => {
           return;
         } else {
           setBooking(bookings);
+          setSortedBookings(sortBookings(null, bookings));
           setUserHasReservations(true);
         }
       } catch (error) {
@@ -41,6 +43,20 @@ const HostReservations = () => {
 
     fetchBookings();
   }, []);
+
+  const sortBookings = (type, bookings) => {
+    let bookingArray = [];  
+    bookings.forEach((property) => {
+      property.items.forEach((item) => {
+        bookingArray.push(item);
+      });
+    });
+    if (type === null) {
+      setSortedBookings(bookingArray);
+    } else {
+      setSortedBookings(bookingArray.filter((booking) => booking.status === type));
+    }
+  };
 
   return (
     <main className="page-body">
@@ -60,10 +76,9 @@ const HostReservations = () => {
                 </p>
               </div>
               <div className={styles.reservationButtons}>
-                <button>All</button>
-                <button>Incoming</button>
-                <button>Accepted</button>
-                <button>Cancelled</button>
+                <button onClick={() => sortBookings(null, bookings)}>All</button>
+                <button onClick={() => sortBookings("Paid", bookings)}>Paid</button>
+                <button onClick={() => sortBookings("Cancelled", bookings)}>Cancelled</button>
               </div>
               <section className={styles.reservationData}>
                 <table className={styles.reservationTable}>
@@ -120,26 +135,24 @@ const HostReservations = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {userHasReservations && bookings.length > 0 ? (
-                      bookings.map((booking) =>
-                        booking.items.map((item) => (
-                          <tr key={item.id}>
-                            <td className={styles.singleReservationRow}>{booking.id}</td>
-                            <td className={styles.singleReservationRow}>{booking.title}</td>
-                            <td className={styles.singleReservationRow}>
-                              {new Date(item.arrivalDate).toLocaleDateString()} -{" "}
-                              {new Date(item.departureDate).toLocaleDateString()}
-                            </td>
-                            <td className={styles.singleReservationRow}>
-                              {new Date(item.createdAt).toLocaleDateString()}
-                            </td>
-                            <td className={styles.singleReservationRow}>wip</td>
-                            <td className={styles.singleReservationRow}>€{booking.rate}</td>
-                            <td className={styles.singleReservationRow}>{BooleanToString(item.latePayment)}</td>
-                            <td className={styles.singleReservationRow}>{item.status}</td>
-                          </tr>
-                        ))
-                      )
+                    {userHasReservations && sortedBookings && sortedBookings.length > 0 ? (
+                      sortedBookings.map((booking) => (
+                        <tr key={booking.id}>
+                          <td className={styles.singleReservationRow}>{booking.id}</td>
+                          <td className={styles.singleReservationRow}>test</td>
+                          <td className={styles.singleReservationRow}>
+                            {new Date(booking.arrivalDate).toLocaleDateString()} -{" "}
+                            {new Date(booking.departureDate).toLocaleDateString()}
+                          </td>
+                          <td className={styles.singleReservationRow}>
+                            {new Date(booking.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className={styles.singleReservationRow}>wip</td>
+                          <td className={styles.singleReservationRow}>€200</td>
+                          <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
+                          <td className={styles.singleReservationRow}>{booking.status}</td>
+                        </tr>
+                      ))
                     ) : (
                       <tr>
                         <td className={styles.noData}>No reservations found.</td>
