@@ -21,6 +21,9 @@ const FilterUi = ({ onFilterApplied }) => {
     seasonFilter,
     setShowMoreSeasonTypes,
     showMoreSeasonTypes,
+    handleEcoChange,
+    ecoScore,
+    setEcoScore,
   } = FilterLogic({ onFilterApplied });
 
 
@@ -75,7 +78,6 @@ const FilterUi = ({ onFilterApplied }) => {
     setMinInputValue(`€${priceValues[0]}`);
     setMaxInputValue(`€${priceValues[1]}`);
   };
-
 
   return (
     <div>
@@ -248,6 +250,24 @@ const FilterUi = ({ onFilterApplied }) => {
           >
             {showMoreSeasonTypes ? 'Show Less' : 'Show More'}
           </span>
+        </div>
+      </div>
+
+      <div className="filter-section">
+        <div className='FilterTitle'>Eco Score</div>
+        <div className="facility-list">
+          {Object.keys(ecoScore).slice(0, 5).map((eco) => (
+            <label key={eco} className="facility-item">
+              <input
+                type="checkbox"
+                name={eco}
+                checked={ecoScore[eco]}
+                onChange={handleEcoChange}
+                className="filter-select-option"
+              />
+              {eco.charAt(0).toUpperCase() + eco.slice(1)}
+            </label>
+          ))}
         </div>
       </div>
     </div >

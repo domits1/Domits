@@ -8,6 +8,8 @@ import {
 } from 'react-icons/fa';
 import Select from 'react-select';
 import { useNavigate, useLocation } from 'react-router-dom';
+import FilterButton from './FilterButton';
+
 
 export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -287,7 +289,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
                 />
               </div>
 
-              <div className={`search-button-section ${showGuestDropdown ? 'active' : ''}`}
+              <div className={`search-guest-section ${showGuestDropdown ? 'active' : ''}`}
                 onClick={toggleGuestDropdown}>
                 <p className={`search-title-guest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests</p>
                 {totalGuests > 0 && (
@@ -364,15 +366,15 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
                 />
               </div>
 
+              <div className="mobile-search-filter-wrapper">
               <button className="searchbar-button" type="button" onClick={handleSearch}>
-                <FaSearchLocation size={15}
-                  className="search-icon" />
+               <FaSearchLocation size={15} className="search-icon" />
                 <span className="search-text">Search</span>
-              </button>
+               </button>
+               {isMobile && <FilterButton />}
             </div>
-            {/* momenteel niet te gebruiken omdat de styling er voor moet aangepast worden */}
-            {/* {isBarActive && <FilterButton />} */}
-          </div>
+        </div>
+      </div>
         )}
      
     </>
