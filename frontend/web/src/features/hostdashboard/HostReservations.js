@@ -17,17 +17,21 @@ const HostReservations = () => {
     const [acceptedReservations, setAcceptedReservations] = useState([]);
     const [reservedReservations, setReservedReservations] = useState([]);
     const [cancelledReservations, setCancelledReservations] = useState([]);
+    // reservations that's being shown
     const [reservationDisplay, setReservationDisplay] = useState([]);
     const [selectedReservations, setSelectedReservations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const amountOfItems = 10;
+    // Logic to determine what part of the list is visible on the current page.
     const pageCount = reservationDisplay ? Math.ceil(reservationDisplay.length / amountOfItems) : 0;
     const indexOfLastItem = currentPage * amountOfItems;
     const indexOfFirstItem = indexOfLastItem - amountOfItems;
     const currentItems = reservationDisplay ? reservationDisplay.slice(indexOfFirstItem, indexOfLastItem) : [];
+    //Keeps track of whether the list should be reverse sorted.
     const [reversed, setReversed] = useState(false);
 
+    //If the current page is empty, and we are not on page 1, go back one page.
     useEffect(() => {
         if (currentItems.length === 0 && currentPage > 1) {
             setCurrentPage(currentPage - 1);
@@ -47,7 +51,7 @@ const HostReservations = () => {
     const selectAll = () => {
         setSelectedReservations(pendingReservations);
     }
-
+    //Processing data after retrieval
     const handleData = (data) => {
         if (data) {
             setReservations(data.allReservations);
@@ -57,6 +61,7 @@ const HostReservations = () => {
             setPendingReservations(data.pendingReservations);
         }
     };
+    // Change the reservationdisplay based on chosen option
     useEffect(() => {
         switch (selectedOption) {
             case "Booking requests":
@@ -87,7 +92,7 @@ const HostReservations = () => {
     const handleUndoSelect = () => {
         setSelectedReservations([]);
     }
-
+    // Sets the userId
     useEffect(() => {
         const setUserIdAsync = async () => {
             try {
@@ -100,6 +105,7 @@ const HostReservations = () => {
 
         setUserIdAsync();
     }, []);
+
     const fetchReservations = async (index) => {
         if (!userId) {
             console.log("No user!")
@@ -119,7 +125,9 @@ const HostReservations = () => {
                 if (!response.ok) {
                     throw new Error('Failed to fetch');
                 }
+                // Parse the response from the server as JSON (convert response to JavaScript object)
                 const data = await response.json();
+                // Parse the 'body' property (which is a JSON string) into a JavaScript object
                 const parsedData = JSON.parse(data.body);
                 await handleData(parsedData);
             } catch (error) {
