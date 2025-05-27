@@ -1,7 +1,14 @@
+import { getAccessToken } from "../../../services/getAccessToken";
 
 const BookingFetchData = async (paymentID) => {
         const response = await fetch(
-            `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=paymentId&paymentID=${paymentID}`
+            `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=paymentId&paymentID=${paymentID}`,
+            {
+                headers: {
+                    Authorization: getAccessToken()
+                }
+
+            }
         );
 
         if (!response.ok) {
