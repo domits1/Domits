@@ -14,16 +14,9 @@ class CognitoRepository{
             console.log("UserID from CognitoRepository.mjs", response.Username);
             return response;
         } catch (error) {
+            console.error(error);
             throw new Unauthorized("Invalid auth token. Try getting a new token.");
         }
     }
-
-    async authorizeGroupRequest(specifiedGroup, verifyGroup){ // WIP!
-        console.log("authorizeGroupRequest, i got the ", specifiedGroup, verifyGroup);
-    }
-
-    async verifyUserRequest(){
-        
-    } 
 }
 export default CognitoRepository;

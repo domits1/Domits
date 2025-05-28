@@ -63,7 +63,7 @@ class BookingModel {
     }
 
     set _latePayment(latePayment) { // to be extended on later
-        if (typeof latePayment !== "bool"){
+        if (typeof latePayment !== "boolean"){
             throw new TypeException("BookingService - latePayment must be a bool.")
         }
         this.latePayment = latePayment;
@@ -83,7 +83,7 @@ class BookingModel {
         this.property_id = property_id;
     }
 
-    set status(status) { //decided by Stripe
+    set status(receivedStatus) { //decided by Stripe
         if (typeof status !== "string"){
             throw new TypeException("BookingService - status must be a string.")
         }

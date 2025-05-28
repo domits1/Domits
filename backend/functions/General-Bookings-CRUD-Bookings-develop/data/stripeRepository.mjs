@@ -1,8 +1,6 @@
 import Stripe from 'stripe';
-import { DynamoDBClient, QueryCommand, PutItemCommand, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, QueryCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
-import LambdaRepository from "./lambdaRepository.mjs"
-import { randomUUID } from "crypto";
 import NotFoundException from "../util/exception/NotFoundException.mjs"
 import SystemManagerRepository from './systemManagerRepository.mjs';
 
@@ -66,6 +64,7 @@ class StripeRepository {
     try {
       const response = await client.send(params);
       console.log(response);
+      return await createCheckoutSession();
     } catch (error) {
       console.error(error)
       throw new Error("Failed to save payment data.");
@@ -76,15 +75,15 @@ class StripeRepository {
         success_url: 'https://example.com/success',
         line_items: [
           {
-            price: 'price_1MotwRLkdIwHu7ixYcPLm5uZ',
+            price: 500,
             quantity: 2,
           },
         ],
         mode: 'payment',
       });
       const response = await client.send(session);
-      console.log(session);
-      return session;
+      console.log(response);
+      return response;
     }
   }
 

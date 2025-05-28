@@ -3,7 +3,6 @@ import IdentifierModel from "./model/identifierModel.mjs";
 import GetParamsModel from "./model/getParamsModel.mjs";
 import AuthManager from "../auth/authManager.mjs";
 import sendEmail from './sendEmail.mjs';
-import Unauthorized from "../util/exception/Unauthorized.mjs";
 import Forbidden from "../util/exception/Forbidden.mjs";
 import ReservationRepository from "../data/reservationRepository.mjs";
 import StripeRepository from "../data/stripeRepository.mjs";
@@ -26,7 +25,6 @@ class BookingService {
 	// -----------
 
 	async create(event) {
-		let returnedValue;
 		//await this.verifyEventDataTypes(event);
 		const authenticatedUser = await this.authManager.authenticateUser(event.Authorization);
 		const userEmail = authenticatedUser.email
@@ -69,29 +67,38 @@ class BookingService {
 		let authToken;
 		await this.verifyQueryDataTypes(event);
 		switch (event.event.readType) {
-			case "property":
+			case "property": {
 				await this.authManager.authenticateUser(event.Authorization);
 				return await this.reservationRepository.readByPropertyId(event.event.property_Id);
-			case "guest":
+			}
+			case "guest": {
 				await this.authManager.authenticateUser(event.Authorization);
 				return await this.reservationRepository.readByGuestId(event.event.guest_Id);
-			case "createdAt":
+			}
+
+			case "createdAt": {
 				return await this.reservationRepository.readByDate(event.event.createdAt, event.event.property_Id);
-			case "paymentId":
+			}
+			case "paymentId": { 
 				await this.authManager.authenticateUser(event.Authorization);
 				return await this.reservationRepository.readByPaymentId(event.event.paymentID);
-			case "hostId":
+			}
+			case "hostId": { 
 				authToken = await this.authManager.authenticateUser(event.Authorization);
 				console.log("De hostId:", authToken.sub);
 				return await this.reservationRepository.readByHostId(authToken.sub);
-			case "departureDate":
+			}
+			case "departureDate":{
 				return await this.reservationRepository.readByDepartureDate(event.event.departureDate, event.event.property_Id);
-			case "getId":
+			}
+			case "getId":{
 				authToken = await this.authManager.authenticateUser(event.Authorization);
 				return {
 					response: authToken.sub
 				}
+			}
 			case "getPayment":
+				{
 				const user = await this.authManager.authenticateUser(event.Authorization);
 				const booking = await this.reservationRepository.getBookingById(event.event.bookingId);
 				if (booking.guestId !== user.sub) {
@@ -102,12 +109,14 @@ class BookingService {
 					statusCode: 200,
 					response: payment.stripeClientSecret
 				}
+			}
 			default:
-				throw new Error("Unable to determine what read type to use.");
+				{
+					throw new Error("Unable to determine what read type to use.");
+				}
+			}
 		}
 
-
-	}
 
 	// -----------
 	// verify Booking POST request
@@ -120,6 +129,7 @@ class BookingService {
 				GeneralModel.verifyGeneralData(event);
 			}
 		} catch (error) {
+			console.error(error);
 			throw new Forbidden("Unable to verify data! Check your request or contact support!");
 		}
 	}
@@ -132,6 +142,7 @@ class BookingService {
 		try {
 			//await this.getParamsModel.verifyGetParams(params);
 		} catch (error) {
+			console.error(error);
 			throw new Forbidden("Unable to verify data! Check your request or contact support!");
 		}
 	}

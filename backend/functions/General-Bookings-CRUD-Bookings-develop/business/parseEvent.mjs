@@ -31,6 +31,7 @@ class ParseEvent {
 			}
 			return compiledevent;
 		} catch (error) {
+			console.error(error);
 			throw new Error("Unable to parse your request!");
 		}
 	}
@@ -48,8 +49,8 @@ class ParseEvent {
 			}
 			return compiledevent;
 		} catch (error) {
+			console.error(error);
 			throw new Error("Unable to parse your request");
-
 		}
 	}
 }

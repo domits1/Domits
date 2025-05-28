@@ -16,6 +16,7 @@ class GetParamsModel {
 					break;
 			}
 		} catch (error) {
+			console.error(error);
 			throw new Error("Unable to verify your ReadType!")
 		}
 
