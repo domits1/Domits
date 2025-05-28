@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getAccessToken } from "../utils/authUtils";
+import { fetchWishlists, moveAccommodation } from "../services/wishlistService";
 
 const WishlistChoice = ({ propertyId, activeList, show, onClose }) => {
   const [showEdit, setShowEdit] = useState(false);
@@ -10,20 +11,10 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose }) => {
   const popupRef = useRef();
 
   // Fetch user's wishlists
-  useEffect(() => {
-    const fetchWishlists = async () => {
+   useEffect(() => {
+    const getWishlists = async () => {
       try {
-        const token = getAccessToken();
-        const res = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-          method: "GET",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-            "Origin": window.location.origin,
-          },
-        });
-
-        const data = await res.json();
+        const data = await fetchWishlists();
         setWishlists(Object.keys(data.wishlists || {}));
       } catch (err) {
         console.error("Failed to fetch wishlists", err);
@@ -31,7 +22,7 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose }) => {
     };
 
     if (show) {
-      fetchWishlists();
+      loadWishlists();
       setShowEdit(false);
     }
   }, [show]);
@@ -67,21 +58,8 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose }) => {
     }
 
     // Send PATCH request to move the accommodation from old list to the selected/new lis
-    try {
-      await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-        method: "PATCH",
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-          "Origin": window.location.origin,
-        },
-        body: JSON.stringify({
-          oldName: activeList,
-          newName: listToUse,
-          propertyId: propertyId,
-        }),
-      });
-
+     try {
+      await moveAccommodation(activeList, listToUse, propertyId);
       onClose();
     } catch (err) {
       console.error("Failed to move accommodation:", err.message);
