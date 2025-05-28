@@ -1,4 +1,3 @@
-import React from 'react';
 
 const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
     const { userId: senderId, text, createdAt, isRead, isSent, fileUrls } = message;

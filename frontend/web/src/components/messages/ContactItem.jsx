@@ -1,4 +1,3 @@
-import React from 'react';
 import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
 import useUpdateContactRequest from '../../features/hostdashboard/hostmessages/hooks/useUpdateContactRequest';
 import profileImage from './domits-logo.jpg';

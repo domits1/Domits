@@ -1,4 +1,3 @@
-import React from "react";
 import { FaHome } from 'react-icons/fa';
 import useFetchBookingDetails from "../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails";
 import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBookingTab.scss';
@@ -22,11 +21,6 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
     if (bookingDetails?.message === "No data found for the given hostId and guestId") {
         return;
     }
-    console.log('Calling useFetchBookingDetails with:', {
-        hostId,
-        guestId,
-    });
-
 
     const firstImage = `https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation?.images?.[0]?.key}`;
     const formatHour = (hour) => {
