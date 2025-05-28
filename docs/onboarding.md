@@ -78,3 +78,36 @@ Questions:
 Questions:
 - Can you explain programming language JS/TS? 
 - What are the elements or parts of this language?
+
+# Levels to complete
+
+## level 1
+
+**Technical Skills**
+- [] JavaScript fundamentals (ES6+): let/const, arrow functions, promises, async/await
+- [] JavaScript Proof of Skills (link to source)
+- [] HTML/CSS: Flexbox, Grid, responsive design, basic accessibility
+- [] HTML/CSS Proof of Skills (link to source)
+- [] Git basics: clone, commit, push, pull, branches, merge conflicts
+- [] Git Proof of Skills (link to source of clone, commit, push, pull, branches, merge conflicts)
+- [] Basic debugging in browser dev tools
+- [] Debugging Proof of Skills (link to source)
+- [] Frontend framework basics: React (hooks, JSX, components, props/state)
+- [] Frontend Proof of Skills (link to source)
+- [] Basic Node.js: Express, REST APIs, async/await
+- [] Node.js Proof of Skills (link to source)
+- [] Basic SQL and/or NoSQL
+- [] Proof of Skills (link to source)
+
+**Cloud/AWS**
+- [] Understand what AWS is
+- [] Basics of EC2, S3
+- [] Use AWS CLI to interact with services
+- [] Show Proof of AWS skills
+  
+**Mindset / Soft Skills**
+- [] Learn how to ask good questions
+- [] Learn how to Search/debug
+- [] Communicate clearly in standups and PRs
+- [] Be reliable with small tasks
+
