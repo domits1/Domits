@@ -13,10 +13,12 @@ import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import BedOutlinedIcon from '@mui/icons-material/BedOutlined';
 import { getAccessToken } from "../../features/guestdashboard/utils/authUtils";
 import WishlistChoice from "../../features/guestdashboard/components/WishlistChoice";
+import { updateWishlistItem, isPropertyInAnyWishlist } from "../../features/guestdashboard/services/wishlistService"; 
 
 const AccommodationCard = ({ accommodation, onClick }) => {
   const [liked, setLiked] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+
   // Check if this accommodation is already liked
   useEffect(() => {
     const checkIfLiked = async () => {
@@ -26,22 +28,8 @@ const AccommodationCard = ({ accommodation, onClick }) => {
       const accommodationId = accommodation.property?.id;
 
       try {
-        const response = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-          method: "GET",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-            Origin: window.location.origin,
-          },
-        });
-
-        const result = await response.json();
-        const allWishlists = result.wishlists || {};
-        const likedIds = Object.values(allWishlists).flat();
-
-        if (likedIds.includes(accommodationId)) {
-          setLiked(true);
-        }
+        const isLiked = await isPropertyInAnyWishlist(accommodationId); 
+        setLiked(isLiked);
       } catch (err) {
         console.error("Wishlist ophalen mislukt:", err.message || err);
       }
@@ -61,23 +49,7 @@ const AccommodationCard = ({ accommodation, onClick }) => {
     const method = liked ? "DELETE" : "POST";
 
     try {
-      const response = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-        method,
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-          Origin: window.location.origin,
-        },
-        body: JSON.stringify({
-          propertyId: accommodationId,
-          wishlistName: "My next trip",
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to perform wishlist action`);
-      }
-
+      await updateWishlistItem(accommodationId, method);
       setLiked(!liked);
 
       //  Only show popup when liking (POST)
