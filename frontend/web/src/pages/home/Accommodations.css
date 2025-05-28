@@ -319,3 +319,82 @@
   display: block;
   width: 100%;
 }
+/* ===== Wishlist popup position fix ===== */
+.wishlist-popup {
+  position: absolute;
+  top: 55px;
+  right: 12px;
+  z-index: 99;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  width: 230px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.wishlist-popup-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wishlist-popup-inner p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.wishlist-popup-inner .change-btn {
+  background: none;
+  border: none;
+  color: #0071c2;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.wishlist-popup-inner .change-btn:hover {
+  text-decoration: underline;
+}
+
+.wishlist-popup-edit form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wishlist-popup-edit .wishlist-option {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+}
+
+.wishlist-popup-edit input[type="radio"] {
+  margin-bottom: 4px;
+}
+
+.wishlist-popup-edit .wishlist-new-input {
+  margin-top: 4px;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.wishlist-popup-edit .save-btn {
+  background-color: #0071c2;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.wishlist-popup-edit .save-btn:hover {
+  background-color: #005fa3;
+}
+
