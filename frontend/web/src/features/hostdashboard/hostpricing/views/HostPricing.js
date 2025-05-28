@@ -821,9 +821,9 @@ const HostPricing = () => {
 
                         <div className="pricing-column">
                           <p className="pricing-rate-input">
-                            <button className="dynamic-pricing-button" onClick={() => openModal(accommodation)}>
+                            {/* <button className="dynamic-pricing-button" onClick={() => openModal(accommodation)}>
                               <img src={dynamicPricing} alt="Dynamic Pricing" />
-                            </button>
+                            </button> */}
                             Rate:{" "}
                             {editMode ? (
                               <input
