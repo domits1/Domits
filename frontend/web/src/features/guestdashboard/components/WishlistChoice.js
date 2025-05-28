@@ -22,7 +22,7 @@ const WishlistChoice = ({ propertyId, activeList, show, onClose }) => {
     };
 
     if (show) {
-      loadWishlists();
+      getWishlists();
       setShowEdit(false);
     }
   }, [show]);
