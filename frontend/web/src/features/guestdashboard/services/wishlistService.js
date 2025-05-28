@@ -73,3 +73,86 @@ export const isPropertyInAnyWishlist = async (propertyId) => {
   const likedIds = Object.values(allWishlists).flat();
   return likedIds.includes(propertyId);
 };
+
+// Fetch real item count for a specific wishlist (POST)
+export const fetchWishlistItemCount = async (wishlistName) => {
+  const token = getAccessToken();
+
+  const res = await fetch(BASE_URL, {
+    method: "POST",
+    headers: {
+      Authorization: token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "getWishlist",
+      wishlistName,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to get item count for wishlist '${wishlistName}'`);
+  }
+
+  return res.json();
+};
+
+// Create a new wishlist (PUT)
+export const createWishlist = async (wishlistName) => {
+  const token = getAccessToken();
+
+  const res = await fetch(BASE_URL, {
+    method: "PUT",
+    headers: {
+      Authorization: token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ wishlistName }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to create wishlist");
+  }
+
+  return res.json();
+};
+
+// Rename a wishlist (PATCH)
+export const renameWishlist = async (oldName, newName) => {
+  const token = getAccessToken();
+
+  const res = await fetch(BASE_URL, {
+    method: "PATCH",
+    headers: {
+      Authorization: token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ oldName, newName }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to rename wishlist");
+  }
+
+  return res.json();
+};
+
+// Delete a wishlist (DELETE)
+export const deleteWishlist = async (wishlistName) => {
+  const token = getAccessToken();
+
+  const res = await fetch(BASE_URL, {
+    method: "DELETE",
+    headers: {
+      Authorization: token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ wishlistName }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to delete wishlist");
+  }
+
+  return res.json();
+};
