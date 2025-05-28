@@ -2,7 +2,7 @@ import { getAccessToken } from "../utils/authUtils";
 
 const BASE_URL = "https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist";
 
-// Fetch user's wishlists
+// Fetch user's wishlists (GET)
 export const fetchWishlists = async () => {
   const token = getAccessToken();
   const res = await fetch(BASE_URL, {
@@ -21,7 +21,7 @@ export const fetchWishlists = async () => {
   return res.json();
 };
 
-// Move accommodation to a different wishlist
+// Move accommodation to a different wishlist (PATCH)
 export const moveAccommodation = async (oldName, newName, propertyId) => {
   const token = getAccessToken();
 
@@ -40,4 +40,36 @@ export const moveAccommodation = async (oldName, newName, propertyId) => {
   }
 
   return res.json();
+};
+
+// Add or remove accommodation from a wishlist (POST / DELETE)
+export const updateWishlistItem = async (propertyId, method, wishlistName = "My next trip") => {
+  const token = getAccessToken();
+
+  const res = await fetch(BASE_URL, {
+    method,
+    headers: {
+      Authorization: token,
+      "Content-Type": "application/json",
+      Origin: window.location.origin,
+    },
+    body: JSON.stringify({
+      propertyId,
+      wishlistName,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to ${method === "POST" ? "add to" : "remove from"} wishlist`);
+  }
+
+  return res.json();
+};
+
+// Check if a property is in any wishlist
+export const isPropertyInAnyWishlist = async (propertyId) => {
+  const data = await fetchWishlists();
+  const allWishlists = data.wishlists || {};
+  const likedIds = Object.values(allWishlists).flat();
+  return likedIds.includes(propertyId);
 };
