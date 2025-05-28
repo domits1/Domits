@@ -5,13 +5,11 @@ import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss
 import EventIcon from "@mui/icons-material/Event";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import getReservationsFromToken from "./services/getReservationsFromToken";
+import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import BooleanToString from "./services/booleanToString.js";
 import { getAccessToken } from "../../services/getAccessToken.js";
-import pageSwitcherStyling from "../../utils/PageSwitcher.module.css";
-import { Auth } from "aws-amplify";
+// import pageSwitcherStyling from "../../utils/PageSwitcher.module.css"; left out for now, will be added later
 import spinner from "../../images/spinnner.gif";
-import ReservationItem from "../../utils/ReservationItem";
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -24,9 +22,8 @@ const HostReservations = () => {
     const fetchBookings = async () => {
       try {
         const bookings = await getReservationsFromToken(authToken);
-        console.log(bookings);
         if (bookings === "Data not found") {
-          toast.error("No reservations found for this user.");
+          toast.error("No reservations found for this user. Refresh the page to try again.");
           setUserHasReservations(false);
           return;
         } else {
@@ -38,6 +35,7 @@ const HostReservations = () => {
         console.error("Fetch Error:", error);
       } finally {
         setIsLoading(false);
+
       }
     };
 
@@ -48,7 +46,11 @@ const HostReservations = () => {
     let bookingArray = [];  
     bookings.forEach((property) => {
       property.items.forEach((item) => {
-        bookingArray.push(item);
+        bookingArray.push({
+            ...item,
+            title: property.title,
+            rate: property.rate
+        })
       });
     });
     if (type === null) {
@@ -139,7 +141,7 @@ const HostReservations = () => {
                       sortedBookings.map((booking) => (
                         <tr key={booking.id}>
                           <td className={styles.singleReservationRow}>{booking.id}</td>
-                          <td className={styles.singleReservationRow}>test</td>
+                          <td className={styles.singleReservationRow}>{booking.title}</td>
                           <td className={styles.singleReservationRow}>
                             {new Date(booking.arrivalDate).toLocaleDateString()} -{" "}
                             {new Date(booking.departureDate).toLocaleDateString()}
@@ -147,14 +149,15 @@ const HostReservations = () => {
                           <td className={styles.singleReservationRow}>
                             {new Date(booking.createdAt).toLocaleDateString()}
                           </td>
-                          <td className={styles.singleReservationRow}>wip</td>
-                          <td className={styles.singleReservationRow}>€200</td>
+                          <td className={styles.singleReservationRow}>{booking.guestId}</td>
+                          <td className={styles.singleReservationRow}>€{booking.rate}</td>
                           <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
                           <td className={styles.singleReservationRow}>{booking.status}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
+                        {sortBookings(null, bookings)}
                         <td className={styles.noData}>No reservations found.</td>
                       </tr>
                     )}
