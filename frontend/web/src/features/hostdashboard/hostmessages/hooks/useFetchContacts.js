@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const useFetchContacts = (userId) => {
+const useFetchContacts = (userId, role) => {
   const [contacts, setContacts] = useState([]);
   const [pendingContacts, setPendingContacts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -8,15 +8,23 @@ const useFetchContacts = (userId) => {
 
   useEffect(() => {
     if (userId) {
-      fetchHostContacts();
+      fetchContacts();
     }
   }, [userId]);
 
-  const fetchHostContacts = async () => {
+  const fetchContacts = async () => {
     setLoading(true);
     try {
-      const requestData = { hostID: userId };
-      const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts', {
+
+      const isHost = role === 'host';
+
+      const requestData = isHost ? { hostID: userId } : { userID: userId };
+      const endpoint = isHost
+        ? 'https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts'
+        : 'https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts_Guest';
+
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
@@ -29,21 +37,11 @@ const useFetchContacts = (userId) => {
       const responseData = await response.json();
       const JSONData = JSON.parse(responseData.body);
 
-      const fetchUserInfoForContacts = async (contacts) => {
-        const contactDetails = await Promise.all(contacts.map(async (contact) => {
-          const userInfo = await fetchUserInfo(contact.userId);
-          const latestMessage = await fetchLatestMessage(contact.userId);
-          return { ...contact, ...userInfo, latestMessage, recipientId: contact.userId, };
-        }));
-        return contactDetails;
-      };
-
       const fetchUserInfo = async (userId) => {
-        const requestData = { UserId: userId };
         const userResponse = await fetch('https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestData),
+          body: JSON.stringify({ UserId: userId }),
         });
 
         if (!userResponse.ok) {
@@ -52,6 +50,7 @@ const useFetchContacts = (userId) => {
 
         const userData = await userResponse.json();
         const parsedData = JSON.parse(userData.body)[0];
+
         const attributes = parsedData.Attributes.reduce((acc, attribute) => {
           acc[attribute.Name] = attribute.Value;
           return acc;
@@ -78,17 +77,37 @@ const useFetchContacts = (userId) => {
         const rawResponse = await response.text();
         const result = JSON.parse(rawResponse);
 
-        if (response.ok) {
-          return result;
-        }
-        return null;
+        return response.ok ? result : null;
+      };
+
+      const fetchUserInfoForContacts = async (contacts, idField) => {
+        return await Promise.all(
+          contacts.map(async (contact) => {
+            const recipientId = contact[idField];
+            const userInfo = await fetchUserInfo(recipientId);
+            const latestMessage = await fetchLatestMessage(recipientId);
+            return {
+              ...contact,
+              ...userInfo,
+              latestMessage,
+              recipientId,
+            };
+          })
+        );
       };
 
       const acceptedContacts = await fetchUserInfoForContacts(
-        JSONData.accepted
+        JSONData.accepted,
+        isHost ? 'userId' : 'hostId'
       );
+
+      const filteredPending = isHost
+        ? JSONData.pending.filter((contact) => contact.userId !== userId)
+        : JSONData.pending;
+
       const pendingContacts = await fetchUserInfoForContacts(
-        JSONData.pending.filter(contact => contact.userId !== userId)
+        filteredPending,
+        isHost ? 'userId' : 'hostId'
       );
 
       setContacts(acceptedContacts);

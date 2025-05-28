@@ -1,19 +1,10 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState} from "react";
 import { useUploadUrl } from "../hooks/useUploadURL";
+import { FaImages } from 'react-icons/fa';
 
-
-const ChatUploadAttachment = () => {
+const ChatUploadAttachment = ({ onUploadComplete }) => {
     const [files, setFiles] = useState([]);
-    const { uploadUrl, fileUrl, loading, error, getUploadUrl } = useUploadUrl();
-
-    useEffect(() => {
-        if (uploadUrl) {
-            console.log(uploadUrl)
-            console.log(fileUrl)
-            // delete when finished
-        }
-    }, [uploadUrl]);
-
+    const { getUploadUrl } = useUploadUrl();
 
     const handleAddAttachment = async () => {
         document.getElementById('fileInput').click();
@@ -36,21 +27,38 @@ const ChatUploadAttachment = () => {
 
     const handleAttachments = async (droppedFiles) => {
         const file = droppedFiles[0];
-        const { uploadUrl, fileUrl } = await getUploadUrl(file.type);
-    
-        await fetch(uploadUrl, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': file.type,
-          },
-          body: file,
+        const response = await getUploadUrl(file.type);
+
+        if (!response.uploadUrl || !response.fields) {
+            console.error("Failed to retrieve an upload URL");
+            return;
+        }
+
+        const formData = new FormData();
+        Object.entries(response.fields).forEach(([key, value]) => {
+            formData.append(key, value);
         });
-    
-        // if (onUploadComplete) {
-        //   onUploadComplete(fileUrl);
-        // }
-      };
-    
+        formData.append("file", file);
+
+        const uploadResponse = await fetch(response.uploadUrl, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+            console.error("Failed to upload file", await uploadResponse.text());
+        } else {
+            const uploadedFile = {
+                name: file.name,
+                type: file.type,
+                url: response.fileUrl,
+            };
+            setFiles((prev) => [...prev, uploadedFile]);
+            onUploadComplete(response.fileUrl);
+        }
+    };
+
+
 
     const handleFileInputChange = (e) => {
         const selectedFiles = e.target.files;
@@ -61,19 +69,18 @@ const ChatUploadAttachment = () => {
 
     const renderPreviews = () => {
         return files.map((file, index) => {
-            const fileUrl = URL.createObjectURL(file);
 
             if (file.type.startsWith("image")) {
                 return (
                     <div key={index} className="file-preview">
-                        <img src={fileUrl} alt={`Preview-${index}`} width="100" height="100" />
+                        <img src={file.url} alt={`Preview-${index}`} width="100" height="100" />
                     </div>
                 );
             } else if (file.type.startsWith("video")) {
                 return (
                     <div key={index} className="file-preview">
                         <video width="100" height="100" controls>
-                            <source src={fileUrl} type={file.type} />
+                            <source src={file.url} type={file.type} />
                             Your browser does not support the video tag.
                         </video>
                     </div>
@@ -81,7 +88,7 @@ const ChatUploadAttachment = () => {
             } else {
                 return (
                     <div key={index} className="file-preview">
-                        <p>{file.name}</p>
+                        <a href={file.url} target="_blank" rel="noopener noreferrer">{file.name}</a>
                     </div>
                 );
             }
@@ -95,9 +102,8 @@ const ChatUploadAttachment = () => {
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
                 className="add-file-button"
-                disabled
             >
-                Add files
+                <FaImages />
             </button>
 
             <input
