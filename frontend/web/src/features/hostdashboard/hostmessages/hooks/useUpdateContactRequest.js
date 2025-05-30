@@ -7,7 +7,6 @@ const useUpdateContactRequest = (setContacts) => {
     const updateContactRequest = async (id, status) => {
         setLoading(true);
         setError(null);
-        console.log('Sending to Lambda:', { Id: id, Status: status });
 
         try {
             const response = await fetch(
@@ -20,10 +19,8 @@ const useUpdateContactRequest = (setContacts) => {
             );
 
             const data = await response.json();
-            console.log('Response JSON:', data);
             setContacts((prevContacts) => {
                 const updatedContacts = prevContacts.filter(contact => contact.ID !== id);
-                console.log('Updated contacts:', updatedContacts);
                 return updatedContacts;
             });
 
