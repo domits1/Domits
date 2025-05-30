@@ -8,7 +8,6 @@ function HostMessages() {
         <div className="container">
             <h2>Dashboard</h2>
             <div className="dashboard">
-                <Pages />
                 <div className="contentContainer">
                     <div></div>
                 </div>

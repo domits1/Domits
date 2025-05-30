@@ -1,6 +1,10 @@
 import { useState } from "react";
 import Pages from "./Pages2";
-
+import HostDashboard from "./HostDashboard";
+import HostCalendar from "./HostCalendar";
+import HostMessages from "./HostMessages";
+import HostRevenues from "./HostRevenues";
+import HostPropertyCare from "./Housekeeping";
 
 function MainDashboardHost(){
     const [activeComponent, setActiveComponent] = useState("Dashboard");
@@ -8,17 +12,17 @@ function MainDashboardHost(){
     function renderComponent(){
         switch (activeComponent){
             case "Dashboard":
-                return
+                return <HostDashboard/>
             case "Calender":
-                return
+                return <HostCalendar/>
             case "Messages":
-                return
+                return <HostMessages/>
             case "Revenues":
-                return
+                return <HostRevenues/>
             case "Housekeeping":
-                return
+                return <HostPropertyCare/>
             case "Finance":
-                return
+                return 
             case "Pricing":
                 return
             case "Listing":

@@ -97,7 +97,6 @@ function HostDashboard() {
         <main className="page-body">
             <h2>Dashboard</h2>
             <div className={styles.dashboardHost}>
-                <Pages/>
                 <div>
                 <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)}/>
                 <div className={styles.dashboardContainer}>

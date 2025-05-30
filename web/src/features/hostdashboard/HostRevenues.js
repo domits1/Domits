@@ -133,7 +133,6 @@ const HostRevenues = () => {
             <section className="hr-host-revenues">
 
                 <div className="hr-pages">
-                    <Pages />
                 </div>
                 <div className="hr-content">
                     {loadingStates.user || revenueLoading ? (

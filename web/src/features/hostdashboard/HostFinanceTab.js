@@ -141,7 +141,6 @@ const HostFinanceTab = () => {
       <h2>Finance</h2>
       <div className="page-Host-content">
         <div className="sidebar">
-          <Pages />
         </div>
         <section className="host-pc-finance">
           <div className="finance-content">

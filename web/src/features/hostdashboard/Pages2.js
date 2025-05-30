@@ -1,8 +1,10 @@
 import { useState } from "react";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 
-function Pages() {
+
+function Pages({ onNavigate }) {
     const [isOpen, setIsOpen] = useState(false);
 
     const toggleSidebar = () => {
@@ -31,6 +33,12 @@ function Pages() {
                 </button>
                 <div className="menu-content">
                     <div className="dashboard-sections">
+                        <MenuItem icon={<DashboardIcon />} label="Dashboard" handleNavigation={() => onNavigate("Dashboard")} />
+                        <MenuItem icon={<DashboardIcon />} label="Calender" handleNavigation={() => onNavigate("Calender")} />
+                        <MenuItem icon={<DashboardIcon />} label="Messages" handleNavigation={() => onNavigate("Messages")} />
+                        <MenuItem icon={<DashboardIcon />} label="Revenues" handleNavigation={() => onNavigate("Revenues")} />
+                        <MenuItem icon={<DashboardIcon />} label="Housekeeping" handleNavigation={() => onNavigate("Housekeeping")} />
+                        <MenuItem icon={<DashboardIcon />} label="Finance" handleNavigation={() => onNavigate("Finance")} />
                     </div>
                 </div>
             </div>

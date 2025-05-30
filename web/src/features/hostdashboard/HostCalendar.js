@@ -165,7 +165,6 @@ function HostCalendar() {
     <div className="page-body">
       <h2>Calendar</h2>
       <div className={styles.dashboardHost}>
-        <Pages />
         {isLoading ? (
           <div className="loading-spinner-calender">
             <img src={spinner} />
