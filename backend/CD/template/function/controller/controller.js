@@ -3,6 +3,8 @@ import {AuthManager} from "../auth/authManager.js";
 import {UnauthorizedException} from "../util/exception/unauthorizedException.js";
 import {BadRequestException} from "../util/exception/badRequestException.js";
 
+import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
+
 export class Controller {
     service;
     authManager;
@@ -23,7 +25,8 @@ export class Controller {
             }
             return {
                 statusCode: 200,
-                body: JSON.stringify(await this.service.getUser(id))
+                body: JSON.stringify(await this.service.getUser(id)),
+                headers: responseHeaders
             };
         } catch (error) {
             console.error(error.message);
