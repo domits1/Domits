@@ -27,6 +27,6 @@ amplifytools.xcconfig
 .idea/*
 .idea/sonarlint/
 .vscode/
-app/.idea/
+frontend/app/.idea/
 
 /gource.log
