@@ -4,7 +4,7 @@ import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
-import responseHeaders from "../util/constant/responseHeader.json" assert { type: "json" };
+import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 export class PropertyController {
 
