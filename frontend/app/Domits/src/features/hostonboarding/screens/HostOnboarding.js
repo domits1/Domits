@@ -58,7 +58,7 @@ const HostOnboarding = () => {
 
     return (
         <ScrollView contentContainerStyle={{flex: 1}}>
-            <OnboardingHeader headerTitle={currentStep.title}/>
+            <OnboardingHeader headerTitle={currentStep.title} jumpToStep={jumpToStep} pageStatus={pageStatus}/>
 
             <View style={{flex: 1}}>
                 <CurrentComponent
@@ -77,16 +77,6 @@ const HostOnboarding = () => {
                 {currentStepIndex < steps.length - 1 && (
                     <Button title="Next" onPress={goToNext}/>
                 )}
-            </View>
-
-            <View style={{ marginTop: 20 }}>
-                {steps.map(step => (
-                    <Button
-                        key={step.key}
-                        title={`Go to ${step.title}`}
-                        onPress={() => jumpToStep(step.key)}
-                    />
-                ))}
             </View>
 
         </ScrollView>
