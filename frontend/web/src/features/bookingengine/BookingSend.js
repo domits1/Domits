@@ -9,18 +9,15 @@ const BookingSend = () => {
     const navigate = useNavigate();
     const [accommodationTitle, setAccommodationTitle] = useState("");
     const [error, setError] = useState(null);
+    const authToken = getAccessToken();
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
-        const authToken = getAccessToken();
 
         // The following values are currently not used for the payload: ownerId, price, cleaningFee,ServiceFee and
         // accommodationTitle. These will likely be removed but for now left incase needed for other operations.
-        const paymentID = queryParams.get("paymentID") || uuidv4(); 
-        const userId = queryParams.get("userId");
         const accommodationId = queryParams.get("accommodationId");
         const rawAccommodationTitle = queryParams.get("accommodationTitle");
-        const ownerId = queryParams.get("ownerId");
         const state = queryParams.get("State");
         const price = queryParams.get("price");
         const startDate = queryParams.get("startDate");
@@ -30,7 +27,7 @@ const BookingSend = () => {
         const taxes = queryParams.get("taxes");
         const ServiceFee = queryParams.get("ServiceFee");
 
-        if (!userId || !accommodationId || !ownerId || !state || !price) {
+        if (!accommodationId || !state || !price) {
             console.error("❌ Missing required booking fields!");
             setError("Missing required booking details.");
             return;
@@ -42,8 +39,6 @@ const BookingSend = () => {
             body: {
                 identifiers: {
                     property_Id: accommodationId,
-                    guest_Id: userId,
-                    payment_Id: paymentID,
                 },
                 general: {
                     guests: parseFloat(amountOfGuest),
@@ -52,11 +47,9 @@ const BookingSend = () => {
                     arrivalDate: parseFloat(startDate),
                     departureDate: parseFloat(endDate),
                 },
-                tax: {
-                    tourism: parseFloat(taxes),
-                }
             }
         };
+        console.log("Maar klopt de payload wel?", payload); 
             const storeBooking = async () => {
             try {
                 const response = await fetch(
@@ -70,8 +63,11 @@ const BookingSend = () => {
                     }
                 );
 
+
                 if (response.ok) {
-                    navigate(`/bookingconfirmationoverview?paymentID=${paymentID}`);
+                    const data = await response.json();
+                    const paymentId = data.response.paymentId;
+                    navigate(`/bookingconfirmationoverview?paymentID=${paymentId}`);
                 } else {
                     const errorMessage = await response.text();
                     console.error("Failed to store booking:", errorMessage);
