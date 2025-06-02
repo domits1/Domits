@@ -75,7 +75,6 @@ class BookingService {
 				await this.authManager.authenticateUser(event.Authorization);
 				return await this.reservationRepository.readByGuestId(event.event.guest_Id);
 			}
-
 			case "createdAt": {
 				return await this.reservationRepository.readByDate(event.event.createdAt, event.event.property_Id);
 			}

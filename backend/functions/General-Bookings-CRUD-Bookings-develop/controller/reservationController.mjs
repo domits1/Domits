@@ -71,7 +71,9 @@ class ReservationController {
             console.error(error)
             return {
                 statusCode: error.statusCode || 500,
-                message: error.message || "Something went wrong, please contact support."
+                message: error.message || "Something went wrong, please contact support.",
+                response: error.response || ""
+
             }
         }
     }
