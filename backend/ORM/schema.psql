@@ -1,0 +1,354 @@
+-- -----------------------------------------------------
+-- Schema main
+-- -----------------------------------------------------
+DROP SCHEMA IF EXISTS main CASCADE;
+
+CREATE SCHEMA IF NOT EXISTS main;
+
+-- -----------------------------------------------------
+-- Table main.amenities
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.amenities;
+
+CREATE TABLE IF NOT EXISTS main.amenities (
+  amenity VARCHAR(255) NOT NULL,
+  PRIMARY KEY (amenity)
+);
+CREATE UNIQUE INDEX ASYNC amenity_UNIQUE ON main.amenities (amenity);
+
+-- -----------------------------------------------------
+-- Table main.amenity_categories
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.amenity_categories;
+
+CREATE TABLE IF NOT EXISTS main.amenity_categories (
+  category VARCHAR(255) NOT NULL,
+  PRIMARY KEY (category)
+);
+CREATE UNIQUE INDEX ASYNC category_UNIQUE ON main.amenity_categories (category);
+
+-- -----------------------------------------------------
+-- Table main.amenity_and_category
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.amenity_and_category;
+
+CREATE TABLE IF NOT EXISTS main.amenity_and_category (
+  id VARCHAR(255) NOT NULL,
+  amenity VARCHAR(255) NOT NULL,
+  category VARCHAR(255) NOT NULL,
+  "eco-score" VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX ASYNC id_UNIQUE_amenity_and_category ON main.amenity_and_category (id);
+
+-- -----------------------------------------------------
+-- Table main.availability_restrictions
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.availability_restrictions;
+
+CREATE TABLE IF NOT EXISTS main.availability_restrictions (
+  restriction VARCHAR(255) NOT NULL,
+  PRIMARY KEY (restriction)
+);
+CREATE UNIQUE INDEX ASYNC restriction_UNIQUE ON main.availability_restrictions (restriction);
+
+-- -----------------------------------------------------
+-- Table main.payment
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.payment;
+
+CREATE TABLE IF NOT EXISTS main.payment (
+  stripePaymentId VARCHAR(255) NOT NULL,
+  stripeClientSecret VARCHAR(255) NOT NULL,
+  PRIMARY KEY (stripePaymentId)
+);
+CREATE UNIQUE INDEX ASYNC stripePaymentId_UNIQUE ON main.payment (stripePaymentId);
+CREATE UNIQUE INDEX ASYNC stripeClientSecret_UNIQUE ON main.payment (stripeClientSecret);
+
+-- -----------------------------------------------------
+-- Table main.property
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property;
+
+CREATE TABLE IF NOT EXISTS main.property (
+  id VARCHAR(255) NOT NULL,
+  updatedAt BIGINT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  subtitle VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  registrationNumber VARCHAR(255) NOT NULL,
+  hostId VARCHAR(255) NOT NULL,
+  status VARCHAR(255) NOT NULL,
+  createdAt BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX ASYNC idproperty_UNIQUE ON main.property (id);
+CREATE UNIQUE INDEX ASYNC registrationNumber_UNIQUE ON main.property (registrationNumber);
+
+-- -----------------------------------------------------
+-- Table main.booking
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.booking;
+
+CREATE TABLE IF NOT EXISTS main.booking (
+  id VARCHAR(255) NOT NULL,
+  arrivalDate BIGINT NOT NULL,
+  departureDate BIGINT NOT NULL,
+  createdAt BIGINT NOT NULL,
+  guestId VARCHAR(255) NOT NULL,
+  guests INTEGER NOT NULL,
+  hostId VARCHAR(255) NOT NULL,
+  latePayment BOOLEAN NOT NULL,
+  paymentId VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  status VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX ASYNC id_UNIQUE_booking ON main.booking (id);
+
+-- -----------------------------------------------------
+-- Table main.faq
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.faq;
+
+CREATE TABLE IF NOT EXISTS main.faq (
+  faq_id VARCHAR(255) NOT NULL,
+  answer TEXT NOT NULL,
+  question TEXT NOT NULL,
+  "user" VARCHAR(255) NOT NULL,
+  PRIMARY KEY (faq_id)
+);
+CREATE UNIQUE INDEX ASYNC faq_id_UNIQUE ON main.faq (faq_id);
+
+-- -----------------------------------------------------
+-- Table main.general_details
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.general_details;
+
+CREATE TABLE IF NOT EXISTS main.general_details (
+  detail VARCHAR(255) NOT NULL,
+  PRIMARY KEY (detail)
+);
+CREATE UNIQUE INDEX ASYNC detail_UNIQUE ON main.general_details (detail);
+
+-- -----------------------------------------------------
+-- Table main.guest_favorite
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.guest_favorite;
+
+CREATE TABLE IF NOT EXISTS main.guest_favorite (
+  guestId VARCHAR(255) NOT NULL,
+  wishlistKey VARCHAR(255) NOT NULL,
+  isPlaceholder BOOLEAN NOT NULL,
+  propertyId VARCHAR(255) NOT NULL,
+  wishlistName VARCHAR(255) NOT NULL,
+  PRIMARY KEY (guestId, wishlistKey)
+);
+CREATE INDEX ASYNC fk_guest_favorite_property_idx ON main.guest_favorite (propertyId);
+
+-- -----------------------------------------------------
+-- Table main.property_amenity
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_amenity;
+
+CREATE TABLE IF NOT EXISTS main.property_amenity (
+  id VARCHAR(255) NOT NULL,
+  amenityId VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX ASYNC id_UNIQUE_property_amenity ON main.property_amenity (id);
+CREATE INDEX ASYNC fk_property_amenity_amenity_and_category_idx ON main.property_amenity (amenityId);
+CREATE INDEX ASYNC fk_property_amenity_property_idx ON main.property_amenity (property_id);
+
+-- -----------------------------------------------------
+-- Table main.property_availability
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_availability;
+
+CREATE TABLE IF NOT EXISTS main.property_availability (
+  property_id VARCHAR(255) NOT NULL,
+  availableStartDate BIGINT NOT NULL,
+  availableEndDate BIGINT NOT NULL,
+  PRIMARY KEY (property_id)
+);
+CREATE UNIQUE INDEX ASYNC idproperty_availability_UNIQUE ON main.property_availability (property_id);
+
+-- -----------------------------------------------------
+-- Table main.property_availabilityrestriction
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_availabilityrestriction;
+
+CREATE TABLE IF NOT EXISTS main.property_availabilityrestriction (
+  id VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  restriction VARCHAR(255) NOT NULL,
+  value INTEGER NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX ASYNC id_UNIQUE_property_availabilityrestriction ON main.property_availabilityrestriction (id);
+CREATE INDEX ASYNC fk_property_availabilityrestriction_availability_restrictions_idx ON main.property_availabilityrestriction (restriction);
+CREATE INDEX ASYNC fk_property_availabilityrestriction_property_idx ON main.property_availabilityrestriction (property_id);
+
+-- -----------------------------------------------------
+-- Table main.property_checkin
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_checkin;
+
+CREATE TABLE IF NOT EXISTS main.property_checkin (
+  property_id VARCHAR(255) NOT NULL,
+  checkInFrom INTEGER NOT NULL,
+  checkInTill INTEGER NOT NULL,
+  checkOutFrom INTEGER NOT NULL,
+  checkOutTill INTEGER NOT NULL,
+  PRIMARY KEY (property_id)
+);
+CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_checkin ON main.property_checkin (property_id);
+
+-- -----------------------------------------------------
+-- Table main.property_generaldetail
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_generaldetail;
+
+CREATE TABLE IF NOT EXISTS main.property_generaldetail (
+  id VARCHAR(255) NOT NULL,
+  detail VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  value INTEGER NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX ASYNC id_UNIQUE_property_generaldetail ON main.property_generaldetail (id);
+CREATE INDEX ASYNC fk_property_generaldetail_general_details_idx ON main.property_generaldetail (detail);
+CREATE INDEX ASYNC fk_property_generaldetail_property_idx ON main.property_generaldetail (property_id);
+
+-- -----------------------------------------------------
+-- Table main.property_image
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_image;
+
+CREATE TABLE IF NOT EXISTS main.property_image (
+  property_id VARCHAR(255) NOT NULL,
+  "key" VARCHAR(255) NOT NULL,
+  PRIMARY KEY (property_id, "key")
+);
+CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_image ON main.property_image (property_id);
+CREATE UNIQUE INDEX ASYNC key_UNIQUE_property_image ON main.property_image ("key");
+
+-- -----------------------------------------------------
+-- Table main.property_location
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_location;
+
+CREATE TABLE IF NOT EXISTS main.property_location (
+  property_id VARCHAR(255) NOT NULL,
+  city VARCHAR(255) NOT NULL,
+  country VARCHAR(255) NOT NULL,
+  houseNumber INTEGER NOT NULL,
+  houseNumberExtension VARCHAR(45) NULL DEFAULT NULL,
+  postalCode VARCHAR(255) NOT NULL,
+  street VARCHAR(255) NOT NULL,
+  PRIMARY KEY (property_id)
+);
+CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_location ON main.property_location (property_id);
+
+-- -----------------------------------------------------
+-- Table main.property_pricing
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_pricing;
+
+CREATE TABLE IF NOT EXISTS main.property_pricing (
+  property_id VARCHAR(255) NOT NULL,
+  cleaning INTEGER NOT NULL,
+  roomRate INTEGER NOT NULL,
+  service INTEGER NOT NULL,
+  PRIMARY KEY (property_id)
+);
+CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_pricing ON main.property_pricing (property_id);
+
+-- -----------------------------------------------------
+-- Table main.rules
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.rules;
+
+CREATE TABLE IF NOT EXISTS main.rules (
+  rule VARCHAR(255) NOT NULL,
+  PRIMARY KEY (rule)
+);
+CREATE UNIQUE INDEX ASYNC rule_UNIQUE ON main.rules (rule);
+
+-- -----------------------------------------------------
+-- Table main.property_rule
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_rule;
+
+CREATE TABLE IF NOT EXISTS main.property_rule (
+  id VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  rule VARCHAR(255) NOT NULL,
+  value BOOLEAN NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX ASYNC id_UNIQUE_property_rule ON main.property_rule (id);
+CREATE INDEX ASYNC fk_property_rule_property_idx ON main.property_rule (property_id);
+CREATE INDEX ASYNC fk_property_rule_rules_idx ON main.property_rule (rule);
+
+-- -----------------------------------------------------
+-- Table main.property_technicaldetails
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_technicaldetails;
+
+CREATE TABLE IF NOT EXISTS main.property_technicaldetails (
+  property_id VARCHAR(255) NOT NULL,
+  fourWheelDrive BOOLEAN NOT NULL,
+  fuelConsumption INTEGER NOT NULL,
+  generalPeriodicInspection INTEGER NOT NULL,
+  height INTEGER NOT NULL,
+  length INTEGER NOT NULL,
+  renovationYear INTEGER NOT NULL,
+  speed INTEGER NOT NULL,
+  transmission VARCHAR(255) NOT NULL,
+  PRIMARY KEY (property_id)
+);
+CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_technicaldetails ON main.property_technicaldetails (property_id);
+
+-- -----------------------------------------------------
+-- Table main.property_types
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_types;
+
+CREATE TABLE IF NOT EXISTS main.property_types (
+  type VARCHAR(255) NOT NULL,
+  PRIMARY KEY (type)
+);
+CREATE UNIQUE INDEX ASYNC type_UNIQUE ON main.property_types (type);
+
+-- -----------------------------------------------------
+-- Table main.property_type
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_type;
+
+CREATE TABLE IF NOT EXISTS main.property_type (
+  property_id VARCHAR(255) NOT NULL,
+  spaceType VARCHAR(255) NOT NULL,
+  type VARCHAR(255) NOT NULL,
+  PRIMARY KEY (property_id)
+);
+CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_type ON main.property_type (property_id);
+
+-- -----------------------------------------------------
+-- Table main.stripe_connected_accounts
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.stripe_connected_accounts;
+
+CREATE TABLE IF NOT EXISTS main.stripe_connected_accounts (
+  id INTEGER NOT NULL,
+  account_id VARCHAR(255) NOT NULL,
+  created_at VARCHAR(255) NOT NULL,
+  updated_at VARCHAR(255) NOT NULL,
+  user_id VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX ASYNC id_UNIQUE_stripe_connected_accounts ON main.stripe_connected_accounts (id);
+CREATE UNIQUE INDEX ASYNC account_id_UNIQUE_stripe_connected_accounts ON main.stripe_connected_accounts (account_id);
+CREATE UNIQUE INDEX ASYNC user_id_UNIQUE_stripe_connected_accounts ON main.stripe_connected_accounts (user_id);
+
