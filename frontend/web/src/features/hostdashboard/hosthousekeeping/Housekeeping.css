@@ -6,7 +6,7 @@
 
 .property-content {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     padding: 15px;
     margin-left: 5vw;
     max-width: 800px; 
