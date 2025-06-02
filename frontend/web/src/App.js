@@ -42,7 +42,7 @@ import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSettings from "./features/hostdashboard/HostSettings";
 import HostSetup from "./features/hostdashboard/HostSetup";
-import HostHousekeeping from "./features/hostdashboard/Housekeeping.js";
+import HostHousekeeping from "./features/hostdashboard/hosthousekeeping/Housekeeping.js";
 
 import StepGuard from "./features/hostonboarding/hooks/StepGuard.js";
 import PropertyRateView from "./features/hostonboarding/views/10_PropertyRateView.js";
