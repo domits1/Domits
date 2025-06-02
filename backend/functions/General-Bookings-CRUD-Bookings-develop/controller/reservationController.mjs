@@ -68,7 +68,11 @@ class ReservationController {
                 response: returnInfo.response,
             }
         } catch (error) {
-            throw new Error(`Unable to get bookings! ${error}`);
+            console.error(error)
+            return {
+                statusCode: error.statusCode || 500,
+                message: error.message || "Something went wrong, please contact support."
+            }
         }
     }
 }
