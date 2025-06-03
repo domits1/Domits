@@ -1,33 +1,33 @@
 import {BadRequestException} from "../../util/exception/badRequestException.js";
 
 export class User {
-    _username;
-    _password;
+    username;
+    password;
 
     constructor(username, password) {
-        this.username = username;
-        this.password = password;
+        this._username = username;
+        this._password = password;
     }
 
-    set username(username) {
+    set _username(username) {
         if (!username) {
             throw new BadRequestException("No username provided.")
         }
-        this._username = username
+        this.username = username
     }
 
-    get username() {
-        return this._username
+    get _username() {
+        return this.username
     }
 
-    set password(password) {
+    set _password(password) {
         if (!password) {
             throw new BadRequestException("No password provided.")
         }
-        this._password = password
+        this.password = password
     }
 
-    get password() {
-        return this._password
+    get _password() {
+        return this.password
     }
 }

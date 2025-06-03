@@ -1,9 +1,10 @@
-import {DatabaseException} from "../../util/exception/databaseException.js";
-import {SystemManagerRepository} from "../systemManagerRepository.js";
+import {DatabaseException} from "./util/exception/databaseException.js";
+import {SystemManagerRepository} from "./data/systemManagerRepository.js";
 import {DsqlSigner} from "@aws-sdk/dsql-signer";
-import pg from "pg";
+import * as typeorm from "typeorm";
+import {getTables} from "./util/database/getTables.js";
 
-export class Database {
+export default class Database {
 
     static systemManager = null;
     static pool = null;
@@ -32,17 +33,20 @@ export class Database {
                 hostname: host,
                 region: region,
             });
-            Database.pool = new pg.Client({
+            Database.pool = new typeorm.DataSource({
+                type: "postgres",
                 host: host,
-                user: "admin",
+                port: 5432,
+                username: "admin",
                 password: await signer.getDbConnectAdminAuthToken(),
                 database: dbName,
-                port: 5432,
+                synchronize: false,
+                entities: await getTables(),
                 ssl: {
                     rejectUnauthorized: false
                 }
             });
-            await Database.pool.connect();
+            await Database.pool.initialize();
             await Database.pool.query(`SET search_path TO ${schema}`);
         } catch (error) {
             console.error(error);
