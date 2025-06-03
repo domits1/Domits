@@ -6,7 +6,7 @@ $background-color: #f9f9f9;
 $font-size-data: 14px;
 $font-size-big: 16px;
 $base-spacing: 1em;
-$button-padding: 0.2em 2.2em;
+$button-padding: 0.4em 3em;
 $border-color: #ddd;
 $border-outer: #ffffff;
 $button-size-large: 17px;
@@ -46,11 +46,12 @@ $border-radius: 8px;
     border: 1px solid #0000004a;
     border-radius: 8px;
     padding: $button-padding;
-    margin: 10px 0.5px;
-    box-shadow:
-      6px 6px 12px $border-color,
-      -6px -6px 12px $border-outer;
-    box-shadow: inset 0px 10px 10px rgba(0, 0, 0, 0.15);
+    margin: 10px 10px;
+    // box-shadow:
+    //   6px 6px 12px $border-color,
+    //   -6px -6px 12px $border-outer;
+    // box-shadow: inset 0px 10px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: inset 0 4px 6px rgba(0, 0, 0, 0.15);
     transition:
       background 0.2s ease,
       color 0.2s ease;

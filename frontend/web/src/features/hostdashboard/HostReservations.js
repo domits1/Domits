@@ -22,6 +22,7 @@ const HostReservations = () => {
     const fetchBookings = async () => {
       try {
         const bookings = await getReservationsFromToken(authToken);
+        console.log(bookings);
         if (bookings === "Data not found") {
           toast.error("No reservations found for this user. Refresh the page to try again.");
           setUserHasReservations(false);
@@ -80,6 +81,7 @@ const HostReservations = () => {
               <div className={styles.reservationButtons}>
                 <button onClick={() => sortBookings(null, bookings)}>All</button>
                 <button onClick={() => sortBookings("Paid", bookings)}>Paid</button>
+                <button onClick={() => sortBookings("Awaiting Payment", bookings)}>Awaiting Payment</button>
                 <button onClick={() => sortBookings("Cancelled", bookings)}>Cancelled</button>
               </div>
               <section className={styles.reservationData}>
