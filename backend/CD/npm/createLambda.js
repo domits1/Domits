@@ -97,9 +97,9 @@ class LambdaFactory {
     const folder = `functions/${name}`;
     const zipFileName = "function.zip";
 
-    console.log("copying node modules.")
+    console.log("\n\x1b[33m", "Copying node modules.")
     await this.copyDir('node_modules', `functions/${name}/node_modules`);
-    console.log("finished copying node modules.")
+    console.log("\n\x1b[32m%s\x1b[0m", "Finished copying node modules.")
 
     await zip.archiveFolder(folder, zipFileName);
     const zipBuffer = await fs.readFile(zipFileName);
