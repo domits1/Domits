@@ -5,6 +5,9 @@ import PostRequestModel from "./events/post.js";
 import GetbyHostIdRequestModel from "./events/getByHostId.js";
 import GetbyPropertyIdRequestModel from "./events/getByPropertyId.js";
 import GetByGuestIdModel from "./events/getByGuestId.js";
+import GetByCreatedAtModel from "./events/getByCreatedAtDate.js";
+import GetByPaymentIdModel from "./events/getByPaymentId.js";
+import getByDepartureDateModel from "./events/getByDepartureDate.js";
 
 jest.setTimeout(30000); 
 
@@ -20,16 +23,32 @@ describe("booking end-to-end", () => {
 
     it("should receive a GET request queried on a HostID", async () => {
         const response = await handler(await GetbyHostIdRequestModel);
-        expect(response.statusCode == 200 || response.statusCode == 404).toBe(true); //fixme (do not expect 404)
+        expect(response.statusCode).toBe(404); //fixme (do not expect 404, expect 200))
     })
 
-    //  it("should receive a GET request queried on a property ID", async () => {
-    //      const response = await handler(await GetbyPropertyIdRequestModel);
-    //      expect(response.statusCode == 200 || response.statusCode == 404).toBe(true); //fixme (do not expect 404)
-    //  })
+     it("should receive a GET request queried on a property ID", async () => {
+         const response = await handler(await GetbyPropertyIdRequestModel);
+         expect(response.statusCode).toBe(209); // fix to be a 200
+     })
 
     it("should receive a GET request queried on a guest ID", async () => {
         const response = await handler(await GetByGuestIdModel);
-        expect(response.statusCode == 200).toBe(true);
+        expect(response.statusCode).toBe(200);
+    })
+
+    it("should receive a GET request queried with dates when checked in and checked out", async () => {
+        const response = await handler(await GetByCreatedAtModel);
+        expect(response.statusCode).toBe(200);
+    })
+
+    it("should receive a GET request queried on a payment ID", async () => {
+        const response = await handler(await GetByPaymentIdModel);
+        console.log("response: ", response);
+        expect(response.statusCode).toBe(200, 404);
+    })
+
+    it("should receive a GET request queried on a departure date", async () => {
+        const response = await handler(await getByDepartureDateModel);
+        expect(response.statusCode).toBe(200);
     })
 });

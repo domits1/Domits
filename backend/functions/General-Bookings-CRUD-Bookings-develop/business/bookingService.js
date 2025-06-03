@@ -4,6 +4,7 @@ import GetParamsModel from "./model/getParamsModel.js";
 import AuthManager from "../auth/authManager.js";
 import sendEmail from './sendEmail.js';
 import Forbidden from "../util/exception/Forbidden.js";
+import TypeException from "../util/exception/TypeException.js";
 import ReservationRepository from "../data/reservationRepository.js";
 import StripeRepository from "../data/stripeRepository.js";
 import CognitoRepository from "../data/cognitoRepository.js";
@@ -112,7 +113,7 @@ class BookingService {
 			}
 			default:
 				{
-					throw new Error("Unable to determine what read type to use.");
+					throw new TypeException("Unable to determine what read type to use.");
 				}
 			}
 		}
