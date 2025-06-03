@@ -1,12 +1,16 @@
 import {UserMapping} from "../util/mapping/userMapping.js";
-import {Database} from "./database/connect.js";
+import Database from "database";
+import {User_Table} from "../../../../ORM/models/User_Table.js";
 
 export class Repository {
 
     async getUser() {
         const client = await Database.getInstance();
-        const response = await client.query("SELECT * FROM user_table;");
+        const response = await client
+            .getRepository(User_Table)
+            .createQueryBuilder()
+            .getMany();
 
-        return response.rows.map(user => UserMapping.mapGetUserCommandToUser(user));
+        return response.map(user => UserMapping.mapGetUserCommandToUser(user));
     }
 }
