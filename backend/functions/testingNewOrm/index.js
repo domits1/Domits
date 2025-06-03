@@ -1,12 +1,18 @@
-import {Controller} from "./controller/controller.js";
+import { Controller } from "./controller/controller.js";
+import Database from "database";
 
-let controller = new Controller();
+let controller = null;
+let pool = null;
 
 export const handler = async (event) => {
-    if (!controller) {
-        controller = new Controller();
-    }
     try {
+        if (!controller) {
+            controller = new Controller();
+        }
+        if (!pool) {
+            pool = await Database.getInstance();
+        }
+
         return await (async () => {
             switch (event.httpMethod) {
                 case "GET":

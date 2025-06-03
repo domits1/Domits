@@ -16,7 +16,7 @@ export class Controller {
         try {
             return {
                 statusCode: 200,
-                body: await this.service.getUser(),
+                body: JSON.stringify(await this.service.getUser()),
                 headers: responseHeaders
             };
         } catch (error) {
