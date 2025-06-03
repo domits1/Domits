@@ -1,4 +1,4 @@
-import NotFoundException from "../util/exception/NotFoundException.mjs"
+import NotFoundException from "../util/exception/NotFoundException.js"
 
 class LambdaRepository {
     async getPropertiesFromHostId(host_Id){

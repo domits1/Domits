@@ -1,9 +1,9 @@
 import { DynamoDBClient, PutItemCommand, QueryCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { randomUUID } from "crypto";
-import LambdaRepository from "./lambdaRepository.mjs"
-import CreateDate from "../business/model/createDate.mjs"
-import NotFoundException from "../util/exception/NotFoundException.mjs"
+import LambdaRepository from "./lambdaRepository.js"
+import CreateDate from "../business/model/createDate.js"
+import NotFoundException from "../util/exception/NotFoundException.js"
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
 
@@ -62,7 +62,7 @@ class ReservationRepository {
             return response;
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings.");
+            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
         }
     }
     // ---------
@@ -78,9 +78,11 @@ class ReservationRepository {
             KeyConditionExpression: "guestId = :partitionKey"
         }
 
+        console.log("Reading by guest_Id: ", guest_Id);
         try {
             const command = new QueryCommand(input);
             const response = await client.send(command);
+            console.log("response: ", response);
             return {
                 message: ("Received bookings: "),
                 response: response,
@@ -88,7 +90,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings.");
+            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
         }
     }
     // ---------
@@ -116,6 +118,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
+            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
         }
     }
     // ---------
@@ -143,7 +146,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings.");
+            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
         }
     }
 
@@ -178,7 +181,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings.");
+            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
         }
     }
 
@@ -216,7 +219,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings.");
+            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
         }
     }
 

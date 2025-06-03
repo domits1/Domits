@@ -1,4 +1,4 @@
-import stripeRepository from "../data/stripeRepository.mjs"
+import stripeRepository from "../data/stripeRepository.js"
 
 class PaymentService{
 

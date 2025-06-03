@@ -1,16 +1,20 @@
 import Stripe from 'stripe';
 import { DynamoDBClient, QueryCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
-import NotFoundException from "../util/exception/NotFoundException.mjs"
-import SystemManagerRepository from './systemManagerRepository.mjs';
+import NotFoundException from "../util/exception/NotFoundException.js"
+import SystemManagerRepository from './systemManagerRepository.js';
 
 const systemManagerRepository = new SystemManagerRepository();
+const stripePromise = systemManagerRepository
+  .getSystemManagerParameter("/stripe/keys/secret/test")
+  .then(secret => new Stripe(secret));
+
 const client = new DynamoDBClient({ region: "eu-north-1" });
 //console.log(await systemManagerRepository.getSystemManagerParameter("/stripe/keys/secret/test")); kept incase of deploying issues (check here first)
-const stripe = new Stripe(await systemManagerRepository.getSystemManagerParameter("/stripe/keys/secret/test"));
 
 class StripeRepository {
   async createPaymentIntent(account_id) {
+    const stripe = await stripePromise;
     const total = 50000;
     const paymentIntent = await stripe.paymentIntents.create({
       amount: total,
@@ -21,7 +25,6 @@ class StripeRepository {
         destination: account_id,
       },
     });
-    console.log(paymentIntent);
     return {
       stripePaymentId: paymentIntent.id,
       stripeClientSecret: paymentIntent.client_secret
@@ -33,6 +36,7 @@ class StripeRepository {
   // stripe account_id, and give it back.
   // --------
   async getStripeAccountId(userId) {
+    const stripe = await stripePromise;
     console.log("Querying user Stripe Account ID: ", userId);
     const input = {
       TableName: "stripe_connected_accounts",
@@ -63,7 +67,6 @@ class StripeRepository {
     })
     try {
       const response = await client.send(params);
-      console.log(response);
       return await createCheckoutSession();
     } catch (error) {
       console.error(error)
@@ -71,19 +74,21 @@ class StripeRepository {
     }
 
     async function createCheckoutSession() {
-      const session = await stripe.checkout.sessions.create({
-        success_url: 'https://example.com/success',
-        line_items: [
-          {
-            price: 500,
-            quantity: 2,
-          },
-        ],
-        mode: 'payment',
-      });
-      const response = await client.send(session);
-      console.log(response);
-      return response;
+      // const stripe = await stripePromise;
+      // const session = await stripe.checkout.sessions.create({
+      //   success_url: 'https://example.com/success',
+      //   line_items: [
+      //     {
+      //       price: "500",
+      //       quantity: 2,
+      //     },
+      //   ],
+      //   mode: 'payment',
+      // });
+      // const response = await client.send(session);
+      // console.log(response);
+      // return response;
+      return "https://example.com/success";
     }
   }
 

@@ -1,5 +1,5 @@
-import BookingService from "../business/bookingService.mjs"
-import PaymentService from "../business/paymentService.mjs"
+import BookingService from "../business/bookingService.js"
+import PaymentService from "../business/paymentService.js"
 
 import responsejson from "../util/const/responseheader.json" with { type: 'json' };
 const responseHeaderJSON = responsejson
@@ -73,7 +73,6 @@ class ReservationController {
                 statusCode: error.statusCode || 500,
                 message: error.message || "Something went wrong, please contact support.",
                 response: error.response || ""
-
             }
         }
     }
