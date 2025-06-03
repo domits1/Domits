@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import Slider from '@mui/material/Slider';
-import './FilterModal.css';
+import React, { useState, useEffect } from "react";
+import Slider from "@mui/material/Slider";
+import styles from "./FilterModal.module.scss";
 
 const FilterModal = ({ isOpen, onClose }) => {
   const [priceValues, setPriceValues] = useState([0, 400]);
@@ -24,16 +24,16 @@ const FilterModal = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
       document.body.style.paddingRight = `${scrollbarWidth}px`;
     } else {
-      document.body.style.overflow = 'auto';
-      document.body.style.paddingRight = '0';
+      document.body.style.overflow = "auto";
+      document.body.style.paddingRight = "0";
     }
 
     return () => {
-      document.body.style.overflow = 'auto';
-      document.body.style.paddingRight = '0';
+      document.body.style.overflow = "auto";
+      document.body.style.paddingRight = "0";
     };
   }, [isOpen]);
 
@@ -48,177 +48,75 @@ const FilterModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay-filter" onClick={onClose}>
-      <div className="modal-content-filter" onClick={(e) => e.stopPropagation()}>
-        <div style={{padding: '0px', height: '100%', boxSizing: 'border-box'}}>
-          {/* Header met titel en close button in één lijn */}
-          <div className="filter-modal-header">
-            <h2 className='filter-text'>Filter</h2>
-            <button
-              className="filter-modal-close-btn"
-              onClick={onClose}
-              aria-label="Close"
-            >
-              &times;
-            </button>
-          </div>
-          <hr/>
-
-          {/* filter voor het prijs slider */}
-          <div className="filter-section">
-            <h3>Price Range</h3>
-            <Slider
-              sx={{
-                '& .MuiSlider-thumb': {
-                  width: 30,
-                  height: 30,
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #d3d3d3',
-                },
-                '& .MuiSlider-rail': {
-                  backgroundColor: '#e6e6e6',
-                },
-                '& .MuiSlider-track': {
-                  backgroundColor: '#4caf50',
-                  border: '1px solid #4caf50',
-                },
-                '& .MuiSlider-thumb:hover': {
-                  backgroundColor: '#e2e2e2',
-                },
-              }}
-
-              value={priceValues}
-              onChange={(e, newValues) => setPriceValues(newValues)}
-              valueLabelDisplay="auto"
-              min={15}
-              max={400}
-              step={1}
-              valueLabelFormat={(value) => `€${value}`}
-              disableSwap
-            />
-            <div className="price-display">
-              <span>Min: €{priceValues[0]}</span>
-              <span>Max: €{priceValues[1]}</span>
+    <div className={styles["filter-modal-container"]}>
+      <div className={styles["modal-overlay-filter"]} onClick={onClose}>
+        <div className={styles["modal-content-filter"]} onClick={(e) => e.stopPropagation()}>
+          <div style={{ padding: "0px", height: "100%", boxSizing: "border-box" }}>
+            <div className={styles["filter-modal-header"]}>
+              <h2 className="filter-text">Filter</h2>
+              <button className={styles["filter-modal-close-btn"]} onClick={onClose} aria-label="Close">
+                &times;
+              </button>
             </div>
-          </div>
+            <hr />
 
-          {/* filter voor room facilities */}
-          <div className="filter-section">
-            <h3>Room Facilities</h3>
-            <div className="room-facilities-grid">
-              <label className="room-facility-option">
-                <input
-                  type="checkbox"
-                  name="tv"
-                  checked={roomFacilities.tv}
-                  onChange={handleRoomFacilityChange}
-                />
-                TV
-              </label>
-              <label className="room-facility-option">
-                <input
-                  type="checkbox"
-                  name="minibar"
-                  checked={roomFacilities.minibar}
-                  onChange={handleRoomFacilityChange}
-                />
-                Minibar
-              </label>
-              <label className="room-facility-option">
-                <input
-                  type="checkbox"
-                  name="balcony"
-                  checked={roomFacilities.balcony}
-                  onChange={handleRoomFacilityChange}
-                />
-                Balcony
-              </label>
-              <label className="room-facility-option">
-                <input
-                  type="checkbox"
-                  name="bathtub"
-                  checked={roomFacilities.bathtub}
-                  onChange={handleRoomFacilityChange}
-                />
-                Bathtub
-              </label>
-              <label className="room-facility-option">
-                <input
-                  type="checkbox"
-                  name="coffeeMaker"
-                  checked={roomFacilities.coffeeMaker}
-                  onChange={handleRoomFacilityChange}
-                />
-                Coffee Maker
-              </label>
-              <label className="room-facility-option">
-                <input
-                  type="checkbox"
-                  name="safe"
-                  checked={roomFacilities.safe}
-                  onChange={handleRoomFacilityChange}
-                />
-                Safe
-              </label>
-              <label className="room-facility-option">
-                <input
-                  type="checkbox"
-                  name="hairDryer"
-                  checked={roomFacilities.hairDryer}
-                  onChange={handleRoomFacilityChange}
-                />
-                Hair Dryer
-              </label>
-              <label className="room-facility-option">
-                <input
-                  type="checkbox"
-                  name="desk"
-                  checked={roomFacilities.desk}
-                  onChange={handleRoomFacilityChange}
-                />
-                Desk
-              </label>
+            <div className={styles["filter-section"]}>
+              <h3>Price Range</h3>
+              <Slider
+                sx={{
+                  "& .MuiSlider-thumb": {
+                    width: 27,
+                    height: 27,
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #d3d3d3",
+                  },
+                  "& .MuiSlider-rail": {
+                    backgroundColor: "#e6e6e6",
+                  },
+                  "& .MuiSlider-track": {
+                    backgroundColor: "#4caf50",
+                    border: "1px solid #4caf50",
+                  },
+                  "& .MuiSlider-thumb:hover": {
+                    backgroundColor: "#e2e2e2",
+                  },
+                }}
+                value={priceValues}
+                onChange={(e, newValues) => setPriceValues(newValues)}
+                valueLabelDisplay="auto"
+                min={15}
+                max={400}
+                step={1}
+                valueLabelFormat={(value) => `€${value}`}
+                disableSwap
+              />
+              <div className={styles["price-display"]}>
+                <span>Min: €{priceValues[0]}</span>
+                <span>Max: €{priceValues[1]}</span>
+              </div>
             </div>
-          </div>
 
-          <div className="filter-section">
-            <h3>Property Accessibility</h3>
-            <label className="accessibility-option">
-              <input
-                type="checkbox"
-                name="wheelchairAccessible"
-                checked={propertyAccessibility.wheelchairAccessible}
-                onChange={handlePropertyAccessibilityChange}
-              />
-              Wheelchair Accessible
-            </label>
-            <label className="accessibility-option">
-              <input
-                type="checkbox"
-                name="elevator"
-                checked={propertyAccessibility.elevator}
-                onChange={handlePropertyAccessibilityChange}
-              />
-              Elevator Available
-            </label>
-            <label className="accessibility-option">
-              <input
-                type="checkbox"
-                name="brailleSigns"
-                checked={propertyAccessibility.brailleSigns}
-                onChange={handlePropertyAccessibilityChange}
-              />
-              Braille Signs
-            </label>
-            <label className="accessibility-option">
-              <input
-                type="checkbox"
-                name="stepFreeAccess"
-                checked={propertyAccessibility.stepFreeAccess}
-                onChange={handlePropertyAccessibilityChange}
-              />
-              Step-Free Access
-            </label>
+            <div className={styles["filter-section"]}>
+              <h3>Room Facilities</h3>
+              <div className={styles["room-facilities-grid"]}>
+                {Object.entries(roomFacilities).map(([key, value]) => (
+                  <label key={key} className={styles["room-facility-option"]}>
+                    <input type="checkbox" name={key} checked={value} onChange={handleRoomFacilityChange} />
+                    {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1")}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles["filter-section"]}>
+              <h3>Property Accessibility</h3>
+              {Object.entries(propertyAccessibility).map(([key, value]) => (
+                <label key={key} className={styles["accessibility-option"]}>
+                  <input type="checkbox" name={key} checked={value} onChange={handlePropertyAccessibilityChange} />
+                  {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1")}
+                </label>
+              ))}
+            </div>
           </div>
         </div>
       </div>

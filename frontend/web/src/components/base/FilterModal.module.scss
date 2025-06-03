@@ -1,0 +1,135 @@
+.filter-modal-container {
+  .modal-overlay-filter {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 20px;
+    transform: translateY(-15%);
+  }
+
+  .modal-content-filter {
+    transform: translateX(-11%);
+    width: 90vw;
+    max-width: 500px;
+    height: auto;
+    max-height: 70vh;
+    padding: 20px;
+    background-color: white;
+    border-radius: 0.9rem;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+
+    h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+  }
+
+  .modal-footer-filter {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #f4f4f4;
+    border-top: 1px solid #ddd;
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+  }
+
+  .filter-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    padding: 0.5rem;
+
+    .filter-modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 2rem;
+      cursor: pointer;
+      z-index: 2;
+      line-height: 1;
+      padding: 0 0 0 1rem;
+    }
+  }
+
+  .filter-section {
+    margin: 20px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+
+    label {
+      display: block;
+      margin: 8px 0;
+      font-size: 14px;
+      color: #444;
+
+      input[type="checkbox"] {
+        margin-right: 8px;
+      }
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 0.5rem;
+      background-color: white;
+      cursor: pointer;
+    }
+  }
+
+  .price-display {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+
+    span {
+      font-size: 14px;
+      color: #333;
+    }
+  }
+
+  .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .room-facilities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .room-facility-option {
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition:
+      background 0.3s,
+      box-shadow 0.3s;
+    cursor: pointer;
+
+    &:hover {
+      background: #e6f7ff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    input[type="checkbox"] {
+      margin-right: 8px;
+    }
+  }
+}
