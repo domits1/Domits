@@ -13,6 +13,7 @@ import * as zip from "zip-lib";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
+import path from "path";
 
 const execAsync = promisify(exec);
 const readlineInterface = readline.createInterface({
@@ -40,15 +41,11 @@ class LambdaFactory {
 
         await this.prepareFunctionDirectories(name);
         if (!this.shouldCreateApi) {
-          console.log("\n\x1b[33m", `Cleaning up directories...`);
-          await fs.rm(`functions/${name}/package-lock.json`);
           console.log("\n\x1b[32m%s\x1b[0m", "All steps were completed successfully,");
           console.log("\n\x1b[32m%s\x1b[0m", "please familiarize yourself with the architecture and structure before starting to code.");
           readlineInterface.close();
           return;
         }
-
-        await this.installDependencies(name);
 
         const lambdaFunction = await this.createLambdaFunction(name);
 
@@ -83,28 +80,26 @@ class LambdaFactory {
   }
 
   async prepareFunctionDirectories(name) {
+    console.log("\n\x1b[33m", "Installing global dependencies...");
+    await execAsync("npm ci");
+    console.log("\n\x1b[32m%s\x1b[0m", `Global dependencies installed successfully.`);
     console.log("\n\x1b[33m", `Preparing directories for function: ${name}...`);
     const functionPath = `functions/${name}`;
     await fs.cp("CD/template/function", functionPath, { recursive: true });
     await fs.cp("CD/template/events", `events/${name}`, { recursive: true });
     await fs.cp("CD/template/test", `test/${name}`, { recursive: true });
-    await fs.copyFile("package.json", `${functionPath}/package.json`);
-    await fs.copyFile("package-lock.json", `${functionPath}/package-lock.json`);
     await fs.writeFile(`${functionPath}/metadata.json`, `{ "functionName": "${name}" }`);
     console.log("\n\x1b[32m%s\x1b[0m", `Directories created successfully.`);
-  }
-
-  async installDependencies(name) {
-    console.log("\n\x1b[33m", `Preparing lambda dependencies for function: ${name}...`);
-    await execAsync("npm ci", { cwd: `functions/${name}` });
-    await fs.rm(`functions/${name}/package-lock.json`);
-    console.log("\n\x1b[32m%s\x1b[0m", `Lambda dependencies created successfully.`);
   }
 
   async createLambdaFunction(name) {
     console.log("\n\x1b[33m", `Registering function: ${name}, to AWS Lambda...`);
     const folder = `functions/${name}`;
     const zipFileName = "function.zip";
+
+    console.log("copying node modules.")
+    await this.copyDir('node_modules', `functions/${name}/node_modules`);
+    console.log("finished copying node modules.")
 
     await zip.archiveFolder(folder, zipFileName);
     const zipBuffer = await fs.readFile(zipFileName);
@@ -186,6 +181,31 @@ class LambdaFactory {
     await fs.rm("function.zip", { recursive: true });
     console.log("\n\x1b[32m%s\x1b[0m", `Zip-file: function.zip, was removed successfully.`);
   }
+
+  async copyDir(src, dest) {
+    await fs.mkdir(dest, { recursive: true });
+    const entries = await fs.readdir(src, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      if (entry.isSymbolicLink()) {
+        const realPath = await fs.realpath(srcPath);
+        const stat = await fs.stat(realPath);
+        if (stat.isDirectory()) {
+          await this.copyDir(realPath, destPath);
+        } else {
+          await fs.copyFile(realPath, destPath);
+        }
+      } else if (entry.isDirectory()) {
+        await this.copyDir(srcPath, destPath);
+      } else {
+        await fs.copyFile(srcPath, destPath);
+      }
+    }
+  }
+
 }
 
 const shouldCreateApi = process.argv.pop();
