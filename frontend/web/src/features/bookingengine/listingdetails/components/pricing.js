@@ -13,7 +13,7 @@ const Pricing = ({ pricing, nights }) => {
       </div>
       <div className="pricing-description-and-price">
         <div className="pricing-description">Domits service fee</div>
-        <div className="pricing-price">${pricing.service}</div>
+        <div className="pricing-price">${pricing.roomRate * 0.15 * nights}</div>
       </div>
       <div className="pricing-description-and-price">
         <div className="pricing-description">
@@ -21,7 +21,7 @@ const Pricing = ({ pricing, nights }) => {
         </div>
         <div className="pricing-price">
           <h2>
-            ${nights * pricing.roomRate + pricing.cleaning + pricing.service}
+            ${nights * pricing.roomRate * 1.15 + pricing.cleaning}
           </h2>
         </div>
       </div>

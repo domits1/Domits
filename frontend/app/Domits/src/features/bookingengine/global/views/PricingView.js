@@ -25,12 +25,12 @@ const PricingView = ({guests, nights, pricing}) => {
                     <Spacer />
                     <View style={styles.priceContainer}>
                         <Text style={styles.textContent}><TranslatedText textToTranslate={"Domits service fee"} /></Text>
-                        <Text style={styles.textContent}>${pricing.service}</Text>
+                        <Text style={styles.textContent}>${pricing.roomRate * 0.15 * nights}</Text>
                     </View>
                     <LineDivider width={"95%"} />
                     <View style={styles.priceContainer}>
                         <Text style={[styles.textContent, {fontWeight: "700"}]}><TranslatedText textToTranslate={"Total (excl. tax)"} /></Text>
-                        <Text style={[styles.textContent, {fontWeight: "700"}]}>${(pricing.roomRate * nights) + pricing.cleaning + pricing.service}</Text>
+                        <Text style={[styles.textContent, {fontWeight: "700"}]}>${(pricing.roomRate * nights * 1.15) + pricing.cleaning}</Text>
                     </View>
                 </View>
             </View>
