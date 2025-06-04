@@ -1,14 +1,15 @@
-import GeneralModel from "./model/generalModel.mjs";
-import IdentifierModel from "./model/identifierModel.mjs";
-import GetParamsModel from "./model/getParamsModel.mjs";
-import AuthManager from "../auth/authManager.mjs";
-import sendEmail from './sendEmail.mjs';
-import Forbidden from "../util/exception/Forbidden.mjs";
-import ReservationRepository from "../data/reservationRepository.mjs";
-import StripeRepository from "../data/stripeRepository.mjs";
-import CognitoRepository from "../data/cognitoRepository.mjs";
-import PropertyRepository from "../data/propertyRepository.mjs";
-import getHostEmailById from './getHostEmailById.mjs';
+import GeneralModel from "./model/generalModel.js";
+import IdentifierModel from "./model/identifierModel.js";
+import GetParamsModel from "./model/getParamsModel.js";
+import AuthManager from "../auth/authManager.js";
+import sendEmail from './sendEmail.js';
+import Forbidden from "../util/exception/Forbidden.js";
+import TypeException from "../util/exception/TypeException.js";
+import ReservationRepository from "../data/reservationRepository.js";
+import StripeRepository from "../data/stripeRepository.js";
+import CognitoRepository from "../data/cognitoRepository.js";
+import PropertyRepository from "../data/propertyRepository.js";
+import getHostEmailById from './getHostEmailById.js';
 
 class BookingService {
 	constructor() {
@@ -112,7 +113,7 @@ class BookingService {
 			}
 			default:
 				{
-					throw new Error("Unable to determine what read type to use.");
+					throw new TypeException("Unable to determine what read type to use.");
 				}
 			}
 		}

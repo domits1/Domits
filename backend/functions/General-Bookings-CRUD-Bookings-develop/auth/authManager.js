@@ -1,4 +1,4 @@
-import CognitoRepository from "../data/cognitoRepository.mjs"
+import CognitoRepository from "../data/cognitoRepository.js"
 
 class AuthManager{
     
