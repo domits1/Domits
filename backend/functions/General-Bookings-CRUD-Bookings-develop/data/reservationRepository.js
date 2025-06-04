@@ -3,6 +3,7 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { randomUUID } from "crypto";
 import LambdaRepository from "./lambdaRepository.js"
 import CreateDate from "../business/model/createDate.js"
+import UnableToSearch from "../util/exception/UnableToSearch.js";
 import NotFoundException from "../util/exception/NotFoundException.js"
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
@@ -62,7 +63,7 @@ class ReservationRepository {
             return response;
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
+            throw new UnableToSearch();
         }
     }
     // ---------
@@ -89,7 +90,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
+            throw new UnableToSearch();
         }
     }
     // ---------
@@ -117,7 +118,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
+            throw new UnableToSearch();
         }
     }
     // ---------
@@ -145,7 +146,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
+            throw new UnableToSearch();
         }
     }
 
@@ -180,7 +181,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
+            throw new UnableToSearch();
         }
     }
 
@@ -218,7 +219,7 @@ class ReservationRepository {
             };
         } catch (error) {
             console.error(error)
-            throw new Error("Unable to search for bookings. Have you checked your query parameters?");
+            throw new UnableToSearch();
         }
     }
 
