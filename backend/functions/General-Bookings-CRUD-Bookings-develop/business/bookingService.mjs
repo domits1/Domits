@@ -27,9 +27,12 @@ class BookingService {
 	async create(event) {
 		//await this.verifyEventDataTypes(event);
 		const authenticatedUser = await this.authManager.authenticateUser(event.Authorization);
-		const userEmail = authenticatedUser.email
+		const userEmail = authenticatedUser.email;
+		const userFullname = authenticatedUser.given_name + ' ' + authenticatedUser.family_name;
 		const fetchedProperty = await this.propertyRepository.getPropertyById(event.identifiers.property_Id);
-		const hostEmail = await getHostEmailById(fetchedProperty.hostId);
+		const hostInfo = await getHostEmailById(fetchedProperty.hostId);
+		const hostEmail = hostInfo.hostEmail;
+		const hostFullname = hostInfo.fullName;
 
 		const bookingInfo = {
 			guests: event.general.guests,
@@ -40,7 +43,7 @@ class BookingService {
 
 		await sendEmail(userEmail, hostEmail, bookingInfo);
 
-		return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
+		return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId, userFullname, hostFullname);
 
 	}
 

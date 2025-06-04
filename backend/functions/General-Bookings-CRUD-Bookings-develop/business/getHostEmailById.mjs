@@ -18,13 +18,20 @@ const getHostEmailById = async (hostId) => {
 
         const resultBody = JSON.parse(result.body);
 
-        const hostEmail = resultBody[0].Attributes.find(attr => attr.Name === "email")?.Value
+        const hostEmail = resultBody[0].Attributes.find(attr => attr.Name === "email")?.Value;
+        const givenName = resultBody[0].Attributes.find(attr => attr.Name === "given_name")?.Value ?? "";
+        const familyName = resultBody[0].Attributes.find(attr => attr.Name === "family_name")?.Value ?? "";
+
+        const fullName = `${givenName} ${familyName}`.trim();
 
         if (result.statusCode !== 200) {
             throw new Error("Lambda returned non-200 status");
         }
 
-        return (hostEmail);
+        return ({
+            hostEmail,
+            fullName
+        });
     } catch (error) {
         console.error("Error calling getHostEmailById Lambda:", error);
         throw new Error("Failed to fetch host email.");

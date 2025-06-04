@@ -11,7 +11,7 @@ class ReservationRepository {
     // ---------
     // Booking Create (auth)
     // ---------
-    async addBookingToTable(requestBody, userId, hostId) {
+    async addBookingToTable(requestBody, userId, hostId, guestName, hostName) {
         const date = CreateDate.createUnixTime();
         const id = randomUUID()
         const params = new PutItemCommand({
@@ -23,6 +23,8 @@ class ReservationRepository {
                 departureDate: { N: new Date(requestBody.general.departureDate).getTime().toString() },
                 guestId: { S: userId },
                 hostId: { S: hostId },
+                guestName: { S: guestName},
+                hostName: { S: hostName},
                 guests: { N: requestBody.general.guests.toString() },
                 latePayment: { BOOL: false },
                 paymentId: { S: randomUUID() },
