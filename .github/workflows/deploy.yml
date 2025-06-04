@@ -116,9 +116,12 @@ jobs:
               # Copy node_modules (using root dependencies)
               cp -r ./backend/node_modules ./deploy_temp/
           
-              # Ensure the database module is copied into node_modules
-              cp -r ./backend/ORM ./deploy_temp/node_modules/database
+              # Remove existing symlinked "database" if it exists
+              rm -rf ./deploy_temp/node_modules/database
   
+              # Copy ORM into node_modules
+              cp -rL ./backend/ORM ./deploy_temp/node_modules/database
+              
               # Create the ZIP package from the temp directory (without extra nesting)
               cd deploy_temp
               zip -r ../$FUNC_NAME.zip . -x "*.git*" "node_modules/*/test/*" "node_modules/*/docs/*"
