@@ -14,8 +14,8 @@ async function post(){
         },
         "general": {
             "guests": 1,
-            "arrivalDate": 1747094400000,   
-            "departureDate": 1747180800000
+            "arrivalDate": 1748995200000,   
+            "departureDate": 1749513600000,
         }
         } 
     }));

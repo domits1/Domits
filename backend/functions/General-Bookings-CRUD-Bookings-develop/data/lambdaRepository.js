@@ -20,5 +20,17 @@ class LambdaRepository {
             rate : propertyRates,
         };
     }
+
+    async getPropertyPricingById(property_Id){
+        const response = await fetch(
+            `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${property_Id}`
+        );
+        
+        const receivedData = await response.json();
+        if (receivedData === "No property found."){
+            throw new NotFoundException("Property not found");
+        }
+        return receivedData.pricing;
+    }
 }
 export default LambdaRepository;

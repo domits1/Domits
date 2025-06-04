@@ -38,7 +38,12 @@ class ReservationRepository {
                 statusCode: 201,
                 response: response,
                 hostId: hostId,
-                bookingId: id
+                bookingId: id,
+                propertyId: requestBody.identifiers.property_Id,
+                dates: {
+                    arrivalDate: requestBody.general.arrivalDate,
+                    departureDate: requestBody.general.departureDate
+                }
             };
         } catch (error) {
             console.error(error)

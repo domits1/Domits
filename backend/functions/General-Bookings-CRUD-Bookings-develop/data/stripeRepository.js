@@ -3,6 +3,7 @@ import { DynamoDBClient, QueryCommand, PutItemCommand } from "@aws-sdk/client-dy
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import NotFoundException from "../util/exception/NotFoundException.js"
 import SystemManagerRepository from './systemManagerRepository.js';
+import CalculateTotalRate from '../util/calcuateTotalRate.js';
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
@@ -10,25 +11,30 @@ const stripePromise = systemManagerRepository
   .then(secret => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
-//console.log(await systemManagerRepository.getSystemManagerParameter("/stripe/keys/secret/test")); kept incase of deploying issues (check here first)
 
 class StripeRepository {
-  async createPaymentIntent(account_id) {
-    const stripe = await stripePromise;
-    const total = 50000;
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: total,
-      application_fee_amount: total * 0.15,
-      currency: 'eur',
-      payment_method_types: ["card", "ideal"],
-      transfer_data: {
-        destination: account_id,
-      },
-    });
-    return {
-      stripePaymentId: paymentIntent.id,
-      stripeClientSecret: paymentIntent.client_secret
-    };
+  async createPaymentIntent(account_id, propertyId, dates) {
+    try {
+      const stripe = await stripePromise;
+      const total = await CalculateTotalRate(propertyId, dates);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: total,
+        application_fee_amount: Math.round(total * 0.15),
+        currency: 'eur',
+        payment_method_types: ["card", "ideal"],
+        transfer_data: {
+          destination: account_id,
+        },
+      });
+      return {
+        stripePaymentId: paymentIntent.id,
+        stripeClientSecret: paymentIntent.client_secret
+      };
+    } catch (error) {
+      console.error("Error creating payment intent:", error);
+      throw new Error("Failed to create payment intent.");
+    }
+
   }
 
   // --------
