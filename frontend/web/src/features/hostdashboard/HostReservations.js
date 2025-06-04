@@ -151,7 +151,7 @@ const HostReservations = () => {
                           <td className={styles.singleReservationRow}>
                             {new Date(booking.createdAt).toLocaleDateString()}
                           </td>
-                          <td className={styles.singleReservationRow}>{booking.guestId}</td>
+                          <td className={styles.singleReservationRow}>{booking.guestName}</td>
                           <td className={styles.singleReservationRow}>€{booking.rate}</td>
                           <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
                           <td className={styles.singleReservationRow}>{booking.status}</td>
