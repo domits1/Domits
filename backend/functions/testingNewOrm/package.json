@@ -1,5 +1,5 @@
 {
-  "name": "database",
+  "name": "function",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
@@ -7,9 +7,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "exports": {
-    ".": "./index.js",
-    "./models/*": "./models/*.js"
-  }
+  "description": ""
 }

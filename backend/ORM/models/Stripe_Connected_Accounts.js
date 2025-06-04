@@ -1,8 +1,8 @@
 import {EntitySchema} from "typeorm";
 
 export const Stripe_Connected_Accounts = new EntitySchema({
-    name: "Stripe_Connected_Accounts",
-    tableName: "stripe_connected_accounts",
+    name: "Stripe_ConnectedAccounts",
+    tableName: "stripe_connectedaccounts",
     columns: {
         id: {
             primary: true,
