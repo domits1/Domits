@@ -34,8 +34,7 @@ export class PropertyPricing {
                 throw new TypeException("propertyPricing - Cleaning must be at least €0,-")
             }
             this.cleaning = value;
-        }
-        if (value !== null || value !== undefined) {
+        } else if (value !== null || value !== undefined) {
             throw new TypeException("propertyPricing - Cleaning must be a number, null or undefined")
         }
         this.cleaning = null;
