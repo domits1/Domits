@@ -24,7 +24,7 @@ export class Controller {
             return {
                 statusCode: error.statusCode || 500,
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            }
+            };
         }
     }
 
