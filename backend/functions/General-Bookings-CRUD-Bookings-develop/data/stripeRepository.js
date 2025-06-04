@@ -36,7 +36,6 @@ class StripeRepository {
   // stripe account_id, and give it back.
   // --------
   async getStripeAccountId(userId) {
-    const stripe = await stripePromise;
     console.log("Querying user Stripe Account ID: ", userId);
     const input = {
       TableName: "stripe_connected_accounts",
