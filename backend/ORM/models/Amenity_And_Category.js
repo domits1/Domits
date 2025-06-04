@@ -18,7 +18,7 @@ export const Amenity_And_Category = new EntitySchema({
             type: "varchar",
             nullable: false
         },
-        ecoScore: {
+        "eco-score": {
             type: "varchar",
             nullable: false
         }
