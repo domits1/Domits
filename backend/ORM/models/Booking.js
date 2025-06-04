@@ -62,5 +62,13 @@ export const Booking = new EntitySchema({
             type: "varchar",
             nullable: false
         },
+        guestName: {
+            type: "varchar",
+            nullable: false
+        },
+        hostName: {
+            type: "varchar",
+            nullable: false
+        }
     }
 })

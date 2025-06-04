@@ -6,8 +6,7 @@ export class PricingMapping {
         return new PropertyPricing(
             pricingEntry.property_id.S,
             parseFloat(pricingEntry.roomRate.N),
-            parseFloat(pricingEntry.cleaning.N),
-            parseFloat(pricingEntry.service.N)
+            typeof pricingEntry.cleaning.N === "string" ? parseFloat(pricingEntry.cleaning.N) : null,
         )
     }
 }
