@@ -56,7 +56,7 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
             try {
                 const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
                 if (!response || !response.success) {
-                    alert(`Fout bij verzenden: ${response.error || 'Probeer het later opnieuw.'}`);
+                    alert(`Error while sending: ${response.error || 'Please try again later.'}`);
                     return;
                 }
                 // only for UI
@@ -75,7 +75,7 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
                 setNewMessage('');
                 setUploadedFileUrls([]);
             } catch (error) {
-                console.error('Onverwachte fout bij verzenden:', error);
+                console.error('Unexpected error while sending:', error);
             }
         }
     };
