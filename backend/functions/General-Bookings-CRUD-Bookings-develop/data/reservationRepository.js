@@ -78,7 +78,6 @@ class ReservationRepository {
             KeyConditionExpression: "guestId = :partitionKey"
         }
 
-        console.log("Reading by guest_Id: ", guest_Id);
         try {
             const command = new QueryCommand(input);
             const response = await client.send(command);
