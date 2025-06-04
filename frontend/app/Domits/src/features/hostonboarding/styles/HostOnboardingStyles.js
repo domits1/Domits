@@ -2,22 +2,27 @@ import {StyleSheet} from "react-native";
 import {COLORS} from "../../../styles/COLORS";
 
 export const styles = StyleSheet.create({
-  button: {
-    backgroundColor: COLORS.domitsHostBlue,
-    borderRadius: 3,
-    padding: 10,
-    marginBottom: 10,
-    marginHorizontal: 10,
-  },
-  buttonText: {
-    color: "white",
-  },
   onboardingPageTitle: {
     fontSize: 32,
     textAlign: "center",
     marginTop: 10,
     marginBottom: 20,
     color: 'black'
+  },
+  // Main screen
+  navButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  navButton: {
+    backgroundColor: COLORS.domitsHostBlue,
+    borderRadius: 3,
+    padding: 10,
+    marginBottom: 10,
+    marginHorizontal: 10,
+  },
+  navButtonText: {
+    color: "white",
   },
   // Property type
   typeItemContainer: {

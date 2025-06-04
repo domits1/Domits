@@ -1,4 +1,4 @@
-import {Dimensions, FlatList, Image, SafeAreaView, Text, TouchableOpacity, View} from "react-native";
+import {FlatList, Image, SafeAreaView, Text, TouchableOpacity, View} from "react-native";
 import {useEffect, useState} from "react";
 import TranslatedText from "../../translation/components/TranslatedText";
 import {styles} from "../styles/HostOnboardingStyles";
@@ -9,10 +9,10 @@ import camperImg from '../store/typeicons/camper.png';
 import cottageImg from '../store/typeicons/cottage.png';
 import houseImg from '../store/typeicons/house.png';
 import villaImg from '../store/typeicons/villa.png';
-
+import useOrientation from "../../../hooks/useOrientation";
 
 const OnboardingType = ({updateFormData, reportValidity, markVisited}) => {
-  const screenWidth = Dimensions.get("window").width;
+  const {dimensions} = useOrientation();
 
   const propertyTypes = [
     {
@@ -70,7 +70,7 @@ const OnboardingType = ({updateFormData, reportValidity, markVisited}) => {
                       onPress={() => handleSelectedType(item)}
                       style={[
                         styles.typeItem,
-                        {width: screenWidth * 0.4},
+                        {width: dimensions.window.width * 0.4},
                         selectedType?.name === item.name && styles.selectedTypeItem
                       ]}>
                     <Image source={item.img} style={styles.typeImage}/>
