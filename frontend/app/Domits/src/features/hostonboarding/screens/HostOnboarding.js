@@ -33,8 +33,8 @@ const HostOnboarding = ({navigation}) => {
 
   const confirmQuitOnboarding = () => {
     return Alert.alert(
-        t("Quit onboarding"),
-        t("Are you sure you want to quit adding a property?"),
+        t("Are you sure you want to quit?"),
+        t("Entered property data will be lost."),
         [
           {
             text: t("Yes"),
@@ -72,12 +72,12 @@ const HostOnboarding = ({navigation}) => {
 
     if (hasInvalid) {
       Alert.alert(
-          t('Invalid fields.'),
-          t('Please ensure all fields have been correctly filled.'),
+          t('Invalid fields'),
+          t('Please check that all fields are filled in correctly.'),
       )
     } else {
       Alert.alert(
-          t('Finish onboarding?'),
+          t('Finish'),
           t('Are you sure you want to finish the onboarding process?'),
           [
             {
@@ -115,6 +115,7 @@ const HostOnboarding = ({navigation}) => {
 
         <View style={{flex: 1}}>
           <CurrentComponent
+              formData={formData}
               updateFormData={updateFormData}
               reportValidity={(isValid) =>
                   updatePageStatus(currentStep.key, {valid: isValid, visited: true})

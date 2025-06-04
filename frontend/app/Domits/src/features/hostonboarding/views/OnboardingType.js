@@ -11,7 +11,7 @@ import houseImg from '../store/typeicons/house.png';
 import villaImg from '../store/typeicons/villa.png';
 import useOrientation from "../../../hooks/useOrientation";
 
-const OnboardingType = ({updateFormData, reportValidity, markVisited}) => {
+const OnboardingType = ({formData, updateFormData, reportValidity, markVisited}) => {
   const {dimensions} = useOrientation();
 
   const propertyTypes = [
@@ -41,7 +41,7 @@ const OnboardingType = ({updateFormData, reportValidity, markVisited}) => {
     },
   ];
 
-  const [selectedType, setSelectedType] = useState();
+  const [selectedType, setSelectedType] = useState(formData.propertyType.property_type);
 
   function handleSelectedType(type) {
     setSelectedType(type);
