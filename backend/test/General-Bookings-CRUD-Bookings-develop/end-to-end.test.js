@@ -23,12 +23,12 @@ describe("booking end-to-end", () => {
 
     it("should receive a GET request queried on a HostID", async () => {
         const response = await handler(await GetbyHostIdRequestModel);
-        expect(response.statusCode).toBe(404); //fixme (do not expect 404, expect 200))
+        expect(response.statusCode).toBe(404); 
     })
 
      it("should receive a GET request queried on a property ID", async () => {
          const response = await handler(await GetbyPropertyIdRequestModel);
-         expect(response.statusCode).toBe(209); // fix to be a 200
+         expect(response.statusCode).toBe(209);
      })
 
     it("should receive a GET request queried on a guest ID", async () => {
