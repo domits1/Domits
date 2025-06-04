@@ -10,16 +10,6 @@
     "test": "cross-env TEST=true && jest",
     "createLambda": "node ./CD/npm/createLambda.js"
   },
-  "jest": {
-    "testMatch": [
-      "**/**/**.test.js",
-      "**/**/**.test.mjs"
-    ],
-    "moduleFileExtensions": [
-      "mjs",
-      "js"
-    ]
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
