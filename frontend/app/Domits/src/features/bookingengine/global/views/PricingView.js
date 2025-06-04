@@ -15,22 +15,24 @@ const PricingView = ({guests, nights, pricing}) => {
                     </Text>
                     <Spacer />
                     <View style={styles.priceContainer}>
-                        <Text style={styles.textContent}>${pricing.roomRate} <TranslatedText textToTranslate={"Per night"} /> x {nights}</Text>
-                        <Text style={styles.textContent}>${pricing.roomRate * nights}</Text>
+                        <Text style={styles.textContent}><TranslatedText textToTranslate={"Room rate"} /></Text>
+                        <Text style={styles.textContent}>€{pricing.roomRate} <TranslatedText textToTranslate={"Per night"} /> x {nights}</Text>
+                        <Text style={styles.textContent}>€{(pricing.roomRate * nights).toFixed(2)}</Text>
                     </View>
                     <View style={styles.priceContainer}>
                         <Text style={styles.textContent}><TranslatedText textToTranslate={"Cleaning fee"} /></Text>
-                        <Text style={styles.textContent}>${pricing.cleaning}</Text>
+                        <Text style={styles.textContent}>€{pricing.cleaning.toFixed(2)} <TranslatedText textToTranslate={"Per night"} /> x {nights}</Text>
+                        <Text style={styles.textContent}>€{(pricing.cleaning * nights).toFixed(2)}</Text>
                     </View>
-                    <Spacer />
                     <View style={styles.priceContainer}>
                         <Text style={styles.textContent}><TranslatedText textToTranslate={"Domits service fee"} /></Text>
-                        <Text style={styles.textContent}>${pricing.roomRate * 0.15 * nights}</Text>
+                        <Text style={styles.textContent}>€{(pricing.roomRate * 0.15).toFixed(2)} <TranslatedText textToTranslate={"Per night"} /> x {nights}</Text>
+                        <Text style={styles.textContent}>€{(pricing.roomRate * 0.15 * nights).toFixed(2)}</Text>
                     </View>
                     <LineDivider width={"95%"} />
                     <View style={styles.priceContainer}>
                         <Text style={[styles.textContent, {fontWeight: "700"}]}><TranslatedText textToTranslate={"Total (excl. tax)"} /></Text>
-                        <Text style={[styles.textContent, {fontWeight: "700"}]}>${(pricing.roomRate * nights * 1.15) + pricing.cleaning}</Text>
+                        <Text style={[styles.textContent, {fontWeight: "700"}]}>€{((pricing.roomRate * 1.15 + pricing.cleaning) * nights).toFixed(2)}</Text>
                     </View>
                 </View>
             </View>
