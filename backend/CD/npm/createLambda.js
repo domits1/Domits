@@ -40,6 +40,8 @@ class LambdaFactory {
 
         await this.prepareFunctionDirectories(name);
         if (!this.shouldCreateApi) {
+          console.log("\n\x1b[33m", `Cleaning up directories...`);
+          await fs.rm(`functions/${name}/package-lock.json`);
           console.log("\n\x1b[32m%s\x1b[0m", "All steps were completed successfully,");
           console.log("\n\x1b[32m%s\x1b[0m", "please familiarize yourself with the architecture and structure before starting to code.");
           readlineInterface.close();

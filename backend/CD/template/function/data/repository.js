@@ -1,32 +1,16 @@
 import {UserMapping} from "../util/mapping/userMapping.js";
+import Database from "database";
+import {User_Table} from "../../../../ORM/models/User_Table.js";
 
 export class Repository {
 
-    async getUser(id) {
-        const userFromCognito = {
-            Username: "SomeId",
-            UserAttributes: [
-                {
-                    Name: "custom:username",
-                    Value: "SomeUsername"
-                },
-                {
-                    Name: "email",
-                    Value: "SomeEmail"
-                },
-            ],
-            MFAOptions: [
-                {
-                    DeliveryMedium: "EMAIL",
-                    AttributeName: "SomeMFAAttribute"
-                }
-            ],
-            PreferredMfaSetting: "SomeMFASetting",
-            UserMFASettingList: [
-                "SomeUserMFASetting"
-            ]
-        }
+    async getUser() {
+        const client = await Database.getInstance();
+        const response = await client
+            .getRepository(User_Table)
+            .createQueryBuilder()
+            .getMany();
 
-        return UserMapping.mapGetUserCommandToUser(userFromCognito);
+        return response.map(user => UserMapping.mapGetUserCommandToUser(user));
     }
 }
