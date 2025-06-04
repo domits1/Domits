@@ -28,7 +28,7 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
     };
     const roomRate = accommodation?.pricing?.roomRate || 0;
     const cleaning = accommodation?.pricing?.cleaning || 0;
-    const service = accommodation?.pricing?.service || 0;
+    const service =  roomRate * bookingDetails?.Nights * 0.15
     const earnings = roomRate * bookingDetails?.Nights;
 
     return (
@@ -121,7 +121,7 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
                                     <p>${cleaning}</p>
                                 </div>
                                 <div className="service-fee">
-                                    <h4>Service fee</h4>
+                                    <h4>Service fee 15%</h4>
                                     <p>${service}</p>
                                 </div>
                                 <div className="total-earnings">
