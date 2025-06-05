@@ -6,7 +6,7 @@
 
 * Database ([AWS DynamoDB](https://aws.amazon.com/dynamodb/)) We are currently moving over to Aurora DSQL ([AWS Aurora DSQL](https://aws.amazon.com/rds/aurora/dsql/)) *
 * Build/test/deploy ([AWS Amplify](https://aws.amazon.com/amplify/))
-* User mgmt ([AWS Cognito](https://aws.amazon.com/cognito/))
+* User management ([AWS Cognito](https://aws.amazon.com/cognito/))
 * Secrets mgmt ([AWS Secrets Manager](https://aws.amazon.com/secrets-manager/))
 * Observability/ Monitoring ([AWS Cloudwatch](https://aws.amazon.com/cloudwatch/))
 * Cache cluster ([AWS Elasticache](https://aws.amazon.com/elasticache/))
