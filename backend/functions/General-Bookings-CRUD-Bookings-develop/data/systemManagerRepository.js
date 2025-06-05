@@ -10,6 +10,7 @@ class SystemManagerRepository {
             "WithDecryption": false
         });
         const result = await this.ssmClient.send(params);
+        console.log("SSM parameter retrieved:", result);
         return result.Parameter.Value;
     }
 }
