@@ -10,7 +10,7 @@ export class Controller {
     constructor() {
         this.service = new Service();
         this.authManager = new AuthManager();
-    }
+    };
 
     async getUser(event) {
         try {
