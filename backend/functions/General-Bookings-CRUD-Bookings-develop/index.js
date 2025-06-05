@@ -1,5 +1,5 @@
-import ReservationController from "./controller/reservationController.mjs";
-import ParseEvent from "./business/parseEvent.mjs"
+import ReservationController from "./controller/reservationController.js";
+import ParseEvent from "./business/parseEvent.js"
 
 const controller = new ReservationController();
 const eventparser = new ParseEvent();

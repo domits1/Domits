@@ -13,6 +13,7 @@ import spinner from "../../images/spinnner.gif";
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [userHasReservations, setUserHasReservations] = useState(false);
   const [bookings, setBooking] = useState(null);
   const [sortedBookings, setSortedBookings] = useState(null);
@@ -25,17 +26,18 @@ const HostReservations = () => {
         if (bookings === "Data not found") {
           toast.error("No reservations found for this user. Refresh the page to try again.");
           setUserHasReservations(false);
-          return;
         } else {
           setBooking(bookings);
-          setSortedBookings(sortBookings(null, bookings));
+          setSortedBookings(  );
           setUserHasReservations(true);
+          sortBookings(null, bookings);
         }
-      } catch (error) {
+       } catch (error) {
         console.error("Fetch Error:", error);
+        if (error.message.includes("Failed to fetch")) {
+        }
       } finally {
         setIsLoading(false);
-
       }
     };
 
@@ -43,6 +45,11 @@ const HostReservations = () => {
   }, []);
 
   const sortBookings = (type, bookings) => {
+    if (!bookings || bookings.length === 0) {
+      setSortedBookings([]);
+      return;
+    }
+    
     let bookingArray = [];  
     bookings.forEach((property) => {
       property.items.forEach((item) => {
@@ -157,8 +164,7 @@ const HostReservations = () => {
                       ))
                     ) : (
                       <tr>
-                        {sortBookings(null, bookings)}
-                        <td className={styles.noData}>No reservations found.</td>
+                        <td className={styles.noData} colSpan={8}>You currently have no reservations for your accommodation(s). Refresh the page to try again.</td>
                       </tr>
                     )}
                   </tbody>
