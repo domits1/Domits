@@ -8,15 +8,14 @@ const PricingView = ({property, nights}) => {
                 Nights: €{(property.pricing.roomRate * nights).toFixed(2)}
             </Text>
             <Text testID={"propertyDetailsCleaning"}>
-                Cleaning fee: €{property.pricing.cleaning.toFixed(2)}
+                Cleaning fee: €{(property.pricing.cleaning * nights).toFixed(2)}
             </Text>
             <Text testID={"propertyDetailsService"}>
-                Service fee: €{property.pricing.service.toFixed(2)}
+                Service fee: €{((property.pricing.roomRate * nights) * 0.15).toFixed(2)}
             </Text>
-            <Text testID={"propertyDetailsTotalCost"}>Total cost: {(
-                property.pricing.roomRate * nights +
-                property.pricing.cleaning +
-                property.pricing.service
+            <Text testID={"propertyDetailsTotalCost"}>Total cost: €{(
+                property.pricing.roomRate * nights * 1.15 +
+                property.pricing.cleaning * nights
             ).toFixed(2)}</Text>
         </View>
     )
