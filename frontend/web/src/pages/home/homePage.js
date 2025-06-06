@@ -8,75 +8,6 @@ import bill from "../../images/icons/bill.png";
 import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
-<<<<<<< HEAD:web/src/pages/home/homePage.js
-import { reviews } from "../home/store/constants";
-import { useCategories } from "../home/hooks/useCategories.js";
-import { img } from "../home/store/constants";
-import "swiper/css/pagination";
-import Header from "../../components/base/Header";
-import greece from "../../pages/home/Images/greece.webp";
-import netherlands from "../../pages/home/Images/netherlands.webp";
-import france from "../../pages/home/Images/france.webp";
-import spain from "../../pages/home/Images/spain.webp";
-import italy from "../../pages/home/Images/italy.webp";
-import belgium from "../../pages/home/Images/belgium.webp";
-import germany from "../../pages/home/Images/germany.webp";
-import uk from "../../pages/home/Images/unitedkingdom.webp";
-import portugal from "../../pages/home/Images/portugal.webp";
-import croatia from "../../pages/home/Images/croatia.webp";
-import poland from "../../pages/home/Images/poland.webp";
-import austria from "../../pages/home/Images/austria.webp";
-import czech from "../../pages/home/Images/czech.webp";
-import philippines from "../../pages/home/Images/philippines.webp";
-import thailand from "../../pages/home/Images/thailand.webp";
-import indonesia from "../../pages/home/Images/indonesia.webp";
-import india from "../../pages/home/Images/india.webp";
-import malaysia from "../../pages/home/Images/malaysia.webp";
-import vietnam from "../../pages/home/Images/vietnam.webp";
-import turkey from "../../pages/home/Images/turkey.webp";
-import singapore from "../../pages/home/Images/singapore.webp";
-import aruba from "../../pages/home/Images/aruba.webp";
-import bonaire from "../../pages/home/Images/bonaire.webp";
-import curacao from "../../pages/home/Images/curacao.webp";
-import saintBarthelemy from "../../pages/home/Images/saintbarthelemy.webp";
-import costaRica from "../../pages/home/Images/costarica.webp";
-import dominicanRepublic from "../../pages/home/Images/dominicanrepublic.webp";
-import puertroRico from "../../pages/home/Images/puertrorico.webp";
-import stMaarten from "../../pages/home/Images/stmaarten.webp";
-import frenchalps from "../../pages/home/Images/frenchalps.webp";
-import switzerland from "../../pages/home/Images/switzerland.webp";
-import chamonix from "../../pages/home/Images/Chamonix-Mont-Blanc.webp";
-import blackforest from "../../pages/home/Images/blackforest.webp";
-import italyTrentino from "../../pages/home/Images/italytretinio.webp";
-import spring from "../../pages/home/Images/spring.webp";
-import summer from "../../pages/home/Images/summer.webp";
-import fall from "../../pages/home/Images/fall.webp";
-import winter from "../../pages/home/Images/winter.webp";
-import luxury from "../../pages/home/Images/luxury.webp";
-import beach from "../../pages/home/Images/beach.webp";
-import lastMinute from "../../pages/home/Images/lastminute.webp";
-import wellness from "../../pages/home/Images/wellness.webp";
-import romantic from "../../pages/home/Images/romantic.webp";
-import adventure from "../../pages/home/Images/adventure.webp";
-import nature from "../../pages/home/Images/nature.webp";
-import culture from "../../pages/home/Images/culture.webp";
-import culinary from "../../pages/home/Images/culinary.webp";
-import waterman from "../../pages/home/Images/waterman.webp";
-import sleutelvrouw from "../../pages/home/Images/sleutelvrouw.webp";
-import { FetchAllPropertyTypes, FetchPropertyType } from "../home/services/fetchProperties";
-import { LanguageContext } from "../../context/LanguageContext.js";
-import en from "../../content/en.json";
-import nl from "../../content/nl.json";
-import de from "../../content/de.json";
-import es from "../../content/es.json";
-
-const contentByLanguage = {
-  en,
-  nl,
-  de,
-  es,
-};
-=======
 import { reviews } from "./store/constants";
 import { categories as groups } from "./store/constants";
 import { img } from "./store/constants";
@@ -132,7 +63,18 @@ import culinary from "./Images/culinary.webp";
 import waterman from "./Images/waterman.webp";
 import sleutelvrouw from "./Images/sleutelvrouw.webp";
 import { FetchAllPropertyTypes, FetchPropertyType } from "./services/fetchProperties";
->>>>>>> 0602b0e029e37f442e85b32aef5ce57abf71f279:frontend/web/src/pages/home/homePage.js
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+
+const contentByLanguage = {
+  en,
+  nl,
+  de,
+  es,
+};
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);

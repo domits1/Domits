@@ -1,4 +1,3 @@
-<<<<<<< HEAD:web/src/pages/contact/Contact.js
 import React, { useContext, useState } from "react";
 import "./contact.css";
 import {LanguageContext} from "../../context/LanguageContext.js";
@@ -13,9 +12,6 @@ const contentByLanguage = {
   de,
   es,
 };
-=======
-import React, { useState } from "react";
->>>>>>> 0602b0e029e37f442e85b32aef5ce57abf71f279:frontend/web/src/pages/contact/Contact.js
 
 function Contact() {
     const [sourceEmail, setSourceEmail] = useState("");
