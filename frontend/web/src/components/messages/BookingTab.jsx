@@ -33,7 +33,7 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
 
     return (
         <div className="booking-tab-container">
-            {bookingDetails && (
+            {bookingDetails && accommodation && (
                 <div className="booking-tab">
                     <div className="acco-image">
                         {accommodation?.property?.title && <h3>{accommodation?.property?.title}</h3>}
