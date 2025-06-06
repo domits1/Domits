@@ -1,286 +1,113 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image } from 'react-native';
-import { graphqlOperation } from '@aws-amplify/api-graphql';
-import { useRoute } from '@react-navigation/native';
-import { generateClient } from 'aws-amplify/api';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
-import * as subscriptions from '../subscriptions';
+import { v4 as uuidv4 } from 'uuid';
 
-const client = generateClient();
+import useFetchMessages from './Hooks/useFetchMessages';
+import { useSendMessage } from './Hooks/useSendMessage';
+import ChatMessage from './chatMessage';
+import { WebSocketContext } from './context/webSocketContext';
+import ChatUploadAttachment from './chatUploadAttachment';
 
-const ChatScreen = ({ }) => {
+
+const ChatScreen = ({ route }) => {
+    const { userId, recipientId, contactName } = route.params;
+    const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
+    const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     const [newMessage, setNewMessage] = useState('');
-    const [chatMessages, setChatMessages] = useState();
-    const [loading, setLoading] = useState(false);
-    const route = useRoute();
-    const flatListRef = useRef();
-    const [givenName, setGivenName] = useState(null);
-    const { userId, recipientId, } = route.params;
-    const navigation = useNavigation();
-    const [channelUUID, setChannelUUID] = useState(null);
-    const [showDate, setShowDate] = useState(false);
-    const [lastMessageDate, setLastMessageDate] = useState(null);
-
-
-    const generateChannelName = (userId, recipientId) => {
-        const sortedIds = [userId, recipientId].sort();
-        return sortedIds.join('_');
-    };
+    const socket = useContext(WebSocketContext);
+    const wsMessages = socket?.messages || [];
+    const addedMessageIds = useRef(new Set());
+    const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
 
     useEffect(() => {
-        const channelName = generateChannelName(recipientId, recipientId);
-        setChannelUUID(channelName);
-        fetchChats();
-    }, [userId, recipientId]);
+        if (recipientId) {
+            fetchMessages(recipientId);
+        }
+    }, [userId, recipientId, fetchMessages]);
 
     useEffect(() => {
+        wsMessages.forEach((msg) => {
+            const isRelevant =
+                (msg.userId === userId && msg.recipientId === recipientId) ||
+                (msg.userId === recipientId && msg.recipientId === userId);
+            const isNew = !addedMessageIds.current.has(msg.id);
 
-        const fetchUserInfo = async () => {
+            if (isRelevant && isNew) {
+                addNewMessage(msg);
+                addedMessageIds.current.add(msg.id);
+            }
+        });
+    }, [wsMessages, userId, recipientId]);
+
+    const handleSendMessage = async () => {
+        if ((newMessage.trim() || uploadedFileUrls.length > 0) && (uploadedFileUrls.length > 0 || newMessage.trim())) {
             try {
+                const response = await sendMessage(recipientId, newMessage, uploadedFileUrls);
 
-                const requestData = { OwnerId: recipientId };
-
-                const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestData),
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch user information');
+                if (!response || !response.success) {
+                    alert(`Fout bij verzenden: ${response.error || 'Probeer het later opnieuw.'}`);
+                    return;
                 }
-                const responseData = await response.json();
-                const parsedData = JSON.parse(responseData.body)[0];
-                const attributes = parsedData.Attributes.reduce((acc, attribute) => {
-                    acc[attribute.Name] = attribute.Value;
-                    return acc;
-                }, {});
+                // only for UI
+                const tempSentMessage = {
+                    id: uuidv4(),
+                    userId,
+                    recipientId: recipientId,
+                    text: newMessage,
+                    fileUrls: uploadedFileUrls,
+                    createdAt: new Date().toISOString(),
+                    isSent: true,
+                };
 
-                setGivenName(attributes['given_name']);
-
-            } catch (error) {
-                console.error('Error fetching guest info:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchUserInfo();
-    }, [recipientId]);
-
-    useEffect(() => {
-        if (flatListRef.current) {
-            flatListRef.current.scrollToEnd({ animated: true });
-        }
-    }, [chatMessages]);
-
-    useEffect(() => {
-        const subscription = client.graphql(
-            graphqlOperation(subscriptions.onCreateChat)
-        ).subscribe({
-            next: ({ }) => {
-                // fetchLatestChat(recipientId);
-                fetchChats(recipientId)
-            },
-            error: error => console.error("Subscription error:", error),
-        });
-        return () => subscription.unsubscribe();
-    }, []);
-
-    const fetchChats = async () => {
-        if (!recipientId || !userId) {
-            console.error('Missing userId or recipientId');
-            return;
-        }
-
-        const recipientIdToSend = recipientId;
-        try {
-            const response = await fetch('https://8pwu9lnge0.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-MessagesHistory', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    recipientId: recipientIdToSend,
-                }),
-            });
-
-            const rawResponse = await response.text();
-            const result = JSON.parse(rawResponse);
-
-            if (response.ok) {
-                const allChats = result;
-
-                allChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                setChatMessages(allChats);
-            } else {
-                console.error("Error fetching messages:", result.body);
-            }
-        } catch (error) {
-            console.error('Error fetching chats:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchLatestChat = async () => {
-        if (!recipientId || !userId) {
-            console.error('Missing userId or recipientId');
-            return;
-        }
-
-        const recipientIdToSend = recipientId;
-        try {
-            const response = await fetch('https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    recipientId: recipientIdToSend,
-                }),
-            });
-            const rawResponse = await response.text();
-            const result = JSON.parse(rawResponse);
-
-            if (response.ok) {
-                const latestChat = result;
-
-                setChatMessages((prevChats) => {
-                    const updatedChats = [latestChat, ...prevChats];
-                    updatedChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    return updatedChats;
-                });
-            } else {
-                console.error("Error fetching latest chat:", result.body);
-            }
-        } catch (error) {
-            console.error('Error fetching latest chat:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-
-    const sendMessage = async () => {
-        const recipientIdToSend = recipientId;
-        try {
-            const messageData = {
-                text: newMessage.trim(),
-                userId: userId,
-                recipientId: recipientIdToSend,
-                channelId: channelUUID,
-            };
-            const response = await fetch('https://qkptcbb445.execute-api.eu-north-1.amazonaws.com/ChatSendMessageFunction', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    text: newMessage.trim(),
-                    userId: userId,
-                    recipientId: recipientIdToSend,
-                    channelId: channelUUID,
-                }),
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
+                addNewMessage(tempSentMessage);
                 setNewMessage('');
-                setShowDate(true);
-                setLastMessageDate(new Date());
-
-                await fetchLatestChat(recipientIdToSend);
-            } else {
-                console.error("Error sending message:", result);
+                setUploadedFileUrls([]);
+            } catch (error) {
+                console.error('Onverwachte fout bij verzenden:', error);
             }
-
-        } catch (error) {
-            console.error("Error sending message:", error);
         }
-    };
-
-
-    const generateUUID = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random() * 16 | 0,
-                v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
     };
 
     const handleKeyUp = (e) => {
         if (e.nativeEvent.key === 'Enter') {
-            sendMessage();
+            handleSendMessage();
         }
     };
 
-
     return (
         <View style={styles.container}>
-            {/* Chat messages */}
             <FlatList
-                data={chatMessages}
+                data={messages}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                    <View
-                        style={[
-                            styles.messageContainer,
-                            item.isSent ? styles.messageRight : styles.messageLeft,
-                        ]}
-                    >
-                        {!item.isSent && (
-                            <View style={styles.messageContent}>
-
-                                <View style={styles.senderHeader}>
-                                    <Image
-                                        source={require('../pictures/domits-logo.jpg')}
-                                        style={styles.senderImage}
-                                    />
-                                    <Text style={styles.senderName}>{givenName}</Text>
-                                    <Text style={styles.senderMessageDate}>
-                                        {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}
-                                    </Text>
-                                </View>
-
-                                <Text style={styles.senderMessageText}>{item.text}</Text>
-                            </View>
-                        )}
-                        {item.isSent && (
-                            <View style={styles.messageContent}>
-                                <View style={styles.youHeader}>
-                                    <Text style={styles.youMessageDate}>
-                                        {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}
-                                    </Text>
-                                    <Text style={styles.youLabel}>YOU</Text>
-                                    <Image
-                                        source={require('../pictures/domits-logo.jpg')}
-                                        style={styles.youImage}
-                                    />
-                                </View>
-
-                                <Text style={styles.youMessageText}>{item.text}</Text>
-
-                            </View>
-                        )}
-                    </View>
+                    <ChatMessage
+                        key={item.id}
+                        message={item}
+                        userId={userId}
+                        contactName={contactName}
+                        dashboardType="host"
+                    />
                 )}
                 contentContainerStyle={styles.chatContainer}
-                inverted={true} // To ensure messages are displayed from the bottom
+                inverted={true}
             />
 
-            {/* Input field for new message */}
             <View style={styles.inputContainer}>
-                <Icon name="image" size={40} color="black" style={styles.icon} />
+                {/* <Icon name="image" size={40} color="black" style={styles.icon} /> */}
+
+                <ChatUploadAttachment
+                    onUploadComplete={(fileUrl) =>
+                        setUploadedFileUrls((prev) => [...prev, fileUrl])
+                    }
+                    iconStyle={styles.icon}
+                />
+
                 <TextInput
                     style={styles.input}
                     placeholder="Write a message..."
                     value={newMessage}
                     onChangeText={setNewMessage}
+                    onSubmitEditing={handleSendMessage}
                     onKeyPress={handleKeyUp}
                 />
                 {/* Uncomment to add a send button */}
