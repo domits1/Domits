@@ -62,6 +62,7 @@ function BottomTabNavigator() {
           component={MessagesStackNavigator}
           options={{
           headerShown: false,
+          unmountOnBlur: true,
           }}
         />
       )}
