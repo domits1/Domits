@@ -3,15 +3,17 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
 import Notifications from '../screens/message/notifications';
-import InboxHost from '../screens/message/chatInboxHost';
+import Inbox from '../screens/message/Inbox';
 import SupportHost from '../screens/message/supportHost';
 import SupportGuest from '../screens/message/supportGuest';
-import InboxGuest from '../screens/message/chatInboxGuest';
+
+import { WebSocketProvider } from '../screens/message/context/webSocketContext';
 
 const MessagesTab = () => {
     const [activeTab, setActiveTab] = useState('Notifications');
     const { user, userAttributes } = useAuth();
     const [userGroup, setUserGroup] = useState('');
+    const [userId] = useState(userAttributes?.sub || '');
 
     useEffect(() => {
         if (user) {
@@ -22,30 +24,33 @@ const MessagesTab = () => {
     }, [user, userAttributes]);
 
     return (
-        <View style={styles.tabAll}>
-            <View style={styles.tabBar}>
-                <TouchableOpacity onPress={() => setActiveTab('Notifications')}>
-                    <Text style={[styles.tabText, activeTab === 'Notifications' && styles.activeTabText]}>
-                        Notifications
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setActiveTab('Inbox')}>
-                    <Text style={[styles.tabText, activeTab === 'Inbox' && styles.activeTabText]}>
-                        Inbox
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setActiveTab('Support')}>
-                    <Text style={[styles.tabText, activeTab === 'Support' && styles.activeTabText]}>
-                        AI & Support
-                    </Text>
-                </TouchableOpacity>
+        <WebSocketProvider userId={userId}>
+            <View style={styles.tabAll}>
+                <View style={styles.tabBar}>
+                    <TouchableOpacity onPress={() => setActiveTab('Notifications')}>
+                        <Text style={[styles.tabText, activeTab === 'Notifications' && styles.activeTabText]}>
+                            Notifications
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setActiveTab('Inbox')}>
+                        <Text style={[styles.tabText, activeTab === 'Inbox' && styles.activeTabText]}>
+                            Inbox
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setActiveTab('Support')}>
+                        <Text style={[styles.tabText, activeTab === 'Support' && styles.activeTabText]}>
+                            AI & Support
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.screenContainer}>
+                    {activeTab === 'Notifications' && <Notifications userId={userId} />}
+                    {activeTab === 'Inbox' && <Inbox userId={userId} dashboardType={userGroup} />}
+
+                    {activeTab === 'Support' && (userGroup === 'Host' ? <SupportHost /> : <SupportGuest />)}
+                </View>
             </View>
-            <View style={styles.screenContainer}>
-                {activeTab === 'Notifications' && <Notifications />}
-                {activeTab === 'Inbox' && (userGroup === 'Host' ? <InboxHost /> : <InboxGuest />)}
-                {activeTab === 'Support' && (userGroup === 'Host' ? <SupportHost /> : <SupportGuest />)}
-            </View>
-        </View>
+        </WebSocketProvider>
     );
 };
 
