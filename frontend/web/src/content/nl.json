@@ -584,6 +584,152 @@
             "title": "©Auteursrecht",
             "description": "Alle rechten voorbehouden. Niets van deze website (informatie, afbeeldingen, foto’s) mag worden gekopieerd of opgeslagen in een database, in welke vorm dan ook of op welke wijze dan ook, hetzij elektronisch, digitaal, mechanisch, handmatig, fotografisch of op enige andere manier."
           }
+        },
+        "landing": {
+          "list": "Plaats uw",
+          "house": "Huis",
+          "camper": "Camper",
+          "boat": "Boot",
+          "forFree": "gratis met 0% boekingskosten",
+          "description": "Hobby of beroep, registreer vandaag nog uw accommodatie en begin uw verdienpotentieel, inkomsten, bezettingsgraad en gemiddelde dagtarief te verhogen.",
+          "startHosting": "Begin met hosten",
+          "secure": "Veilige betalingen",
+          "verified": "Geverifieerde gasten/hosts",
+          "quick": "Snelle telefonische ondersteuning",
+          "guarantee": "Domits kwaliteitsgarantie",
+          "hosting": {
+            "title": "Hosten met ",
+            "domits": "Domits",
+            "title2": "is nog nooit zo ",
+            "easier": "makkelijk",
+            "subtitle": "Het kost slechts 3 stappen",
+            "first": {
+              "one": "1.",
+              "title": "Plaats uw accommodatie",
+              "description": "Begin met verdienen door uw accommodatie gratis en zonder kosten in slechts enkele minuten te plaatsen"
+            },
+            "second": {
+              "two": "2.",
+              "title": "Word betaald",
+              "description": "Geniet van snelle, gemakkelijke en veilige betalingen."
+            },
+            "third": {
+              "three": "3.",
+              "title": "Ontvang uw gast",
+              "description": "Verwelkom uw gast met een warme en persoonlijke touch"
+            }
+          },
+          "why": {
+            "title": "Waarom zou ik hosten op",
+            "domits": "Domits",
+            "end": "?",
+            "description": "Bij Domits zijn we niet zomaar een platform, we bouwen een toekomstgerichte, duurzame community met onze Travel Innovation Labs. Onze innovatieve aanpak zorgt ervoor dat uw accommodatie zowel voor reizigers als voor het milieu een betekenisvolle waarde toevoegt. U krijgt ook onbeperkte ondersteuning en gepersonaliseerde, moderne dashboards die het beheer van uw aanbiedingen eenvoudiger maken dan ooit. Maar wat Domits echt onderscheidt, is onze toewijding aan u. U bent meer dan slechts een klant of data; we geven oprecht om uw succes en staan elke stap van de weg voor u klaar om u te helpen floreren. Hosten met Domits betekent het afstemmen op diepgewortelde waarden zoals gezondheid, veiligheid en duurzaamheid, en het creëren van een toekomstbestendig pad voor uw onderneming.",
+            "btnHosting": "Begin met hosten"
+          },
+          "register": {
+            "title": "Registreer uw accommodatie",
+            "simple": "eenvoudig",
+            "and": " en ",
+            "safe": "veilig",
+            "verified": {
+              "title": "Geverifieerde gasten",
+              "description": "We verifiëren gasten met hun e-mailadres, telefoonnummer, een persoonlijk bericht en betalingen via onze partner Stripe."
+            },
+            "rules": {
+              "title": "Uw eigen huisregels",
+              "description": "Laat uw potentiële gasten uw huisregels weten. Ze moeten hiermee akkoord gaan om te kunnen boeken."
+            },
+            "how": {
+              "title": "Kies hoe u uw boekingen wilt ontvangen",
+              "description": "U kunt uw gasten toestaan direct te boeken."
+            },
+            "payments": {
+              "title": "regelmatig en veilig betalingen ontvangen",
+              "description": "U bent verzekerd van betaling en kunt rekenen op fraudebescherming met onze betalingen."
+            },
+            "support": {
+              "title": "Toegewijde ondersteuning",
+              "description": "Ons verhuurexpertteam staat klaar om u te helpen met vragen of problemen, zodat u een soepele en zorgeloze ervaring heeft."
+            },
+            "renting": {
+              "title": "Internationaal verhuren",
+              "description": "U verhuurt uw vakantiehuis op een internationale markt. Dit vergroot de kans dat uw vakantiehuis verhuurd wordt."
+            }
+          },
+          "othersSay": {
+            "title": "Wat anderen zeggen over",
+            "domits": "Domits"
+          },
+          "rentingOut": {
+            "title": "Is uw accommodatie geschikt voor",
+            "rent": "verhuren",
+            "description": "Hier is de checklist met minimale vereisten voor het verhuren van accommodaties",
+            "general": {
+              "title": "Algemeen ✓",
+              "description": "De accommodatie is een volledig uitgeruste woonruimte die voldoet aan lokale verhuurreguleringen en technisch geschikt is om te verhuren."
+            },
+            "building": {
+              "title": "Gebouw ✓",
+              "description": "De buitenkant van het gebouw, ramen, deuren en gemeenschappelijke ruimtes worden goed onderhouden, en het verwarmingssysteem levert voldoende warmte en warm water."
+            },
+            "furnishing": {
+              "title": "Inrichting ✓",
+              "description": "De inrichting is in goede staat, met veilige stopcontacten, adequate verlichting en beschikbare schoonmaakmaterialen."
+            },
+            "bedroom": {
+              "title": "Slaapkamers ✓",
+              "description": "De slaapkamer is uitgerust met intacte bedden, schone matrassen en passend beddengoed."
+            },
+            "kitchen": {
+              "title": "Keuken ✓",
+              "description": "De keuken is volledig uitgerust met werkende apparatuur, kookgerei en schone servies."
+            },
+            "pool": {
+              "title": "Zwembad en jacuzzi ✓",
+              "description": "Het zwembad en de jacuzzi zijn professioneel geïnstalleerd en worden regelmatig onderhouden."
+            },
+            "surroundings": {
+              "title": "Omgeving ✓",
+              "description": "De buitenruimtes worden goed onderhouden, met paden en parkeerplaatsen die in de winter vrijgehouden worden."
+            },
+            "safety": {
+              "title": "Veiligheid ✓",
+              "description": "De accommodatie voldoet aan de veiligheidsnormen met functionerende rookmelders, beveiligde balkons, veilige speeltuinen en duidelijke toegangswegen."
+            }
+          },
+          "answerTo": {
+            "title": "Antwoorden op ",
+            "your": "uw",
+            "question": "vragen",
+            "host": {
+              "title": "Aan de slag als host",
+              "description": "Registreer u als host, maak verbinding met of maak uw Stripe-account aan en begin met het plaatsen van uw accommodatie."
+            },
+            "how": {
+              "title": "Hoe plaatst u uw vakantieverhuur?",
+              "description": "U kunt uw verhuur plaatsen door ",
+              "becomeHost": "een Domits-host te worden ",
+              "description2": "en het invullen van de vereiste informatie. Wij nemen kort na uw inzending contact met u op, zodat u kunt beginnen met verhuren en verdienen!"
+            },
+            "manage": {
+              "title": "Hoe maak en beheer ik mijn host-account?",
+              "description": "Het aanmaken van een host-account is eenvoudig. Klik op de knop 'Word host' rechtsboven en volg de instructies. Zodra uw account is aangemaakt, schakelt u over naar het Host Dashboard via het menu. Hier kunt u uw accommodatie toevoegen door details zoals type, locatie en voorzieningen op te geven. Na inzending wordt uw vermelding geverifieerd. Zodra deze is goedgekeurd, stelt u uw beschikbaarheid en prijzen in en uploadt u foto's. Om live te gaan, maakt u een Stripe-account aan voor betalingen. U kunt alles – beschikbaarheid, prijzen en details – direct beheren vanaf het Host Dashboard."
+            },
+            "payout": {
+              "title": "Hoe uitbetalingen en belastingen werken",
+              "description": "Om betalingen te ontvangen, dient u een Stripe Connect-account aan te maken en deze via de knop in uw dashboard aan Domits te koppelen. Alle betalingen worden via Stripe verwerkt, waarbij de benodigde kosten automatisch worden afgetrokken."
+            },
+            "calendar": {
+              "title": "Hoe beheert u uw agenda en boekingen",
+              "description": "Een komende functie stelt u in staat uw boekingen efficiënter te beheren, rechtstreeks via het dashboard. Houd de updates in de gaten."
+            }
+          },
+          "advice": {
+            "title": "Gratis persoonlijk advies van onze",
+            "subtitle": "Ons expertteam staat klaar voor ondersteuning!",
+            "team": "verhuurexpertteam",
+            "talk": "Spreek met een specialist"
+          }
         }
 }
   

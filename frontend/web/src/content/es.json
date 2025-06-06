@@ -583,6 +583,152 @@
             "title": "©Derechos de Autor",
             "description": "Todos los derechos reservados. Nada de este sitio web (información, imágenes, fotos) puede ser copiado ni almacenado en una base de datos, en ninguna forma ni por ningún medio, ya sea electrónico, digital, mecánico, manual, fotográfico o de cualquier otra manera."
           }
+        },
+        "landing": {
+          "list": "Publica tu",
+          "house": "Casa",
+          "camper": "Autocaravana",
+          "boat": "Barco",
+          "forFree": "gratis con 0% de comisión de reserva",
+          "description": "Hobby o profesión, registra tu propiedad hoy y empieza a aumentar tu potencial de ganancias, ingresos, ocupación y tarifa diaria promedio.",
+          "startHosting": "Empieza a ser anfitrión",
+          "secure": "Pagos seguros",
+          "verified": "Huéspedes/Anfitriones verificados",
+          "quick": "Soporte telefónico rápido",
+          "guarantee": "Garantía de calidad de Domits",
+          "hosting": {
+            "title": "Ser anfitrión con ",
+            "domits": "Domits",
+            "title2": "nunca ha sido tan ",
+            "easier": "fácil",
+            "subtitle": "Solo se necesitan 3 pasos",
+            "first": {
+              "one": "1.",
+              "title": "Publica tu propiedad",
+              "description": "Empieza a ganar dinero publicando tu propiedad de forma gratuita y sin comisión en solo unos minutos"
+            },
+            "second": {
+              "two": "2.",
+              "title": "Recibe pagos",
+              "description": "Disfruta de pagos rápidos, sencillos y seguros."
+            },
+            "third": {
+              "three": "3.",
+              "title": "Acoge a tu huésped",
+              "description": "Acoge a tu huésped con un toque cálido y personal"
+            }
+          },
+          "why": {
+            "title": "¿Por qué debería alojar en",
+            "domits": "Domits",
+            "end": "?",
+            "description": "En Domits, no somos simplemente otra plataforma; estamos construyendo una comunidad sostenible y enfocada en el futuro con nuestros Travel Innovation Labs. Nuestro enfoque innovador garantiza que tu propiedad aporte un valor significativo tanto a los viajeros como al medio ambiente. Además, disfrutarás de soporte ilimitado y paneles de control modernos y personalizados que hacen que gestionar tus anuncios sea más sencillo que nunca. Pero lo que realmente distingue a Domits es nuestro compromiso contigo. Eres más que un simple cliente o dato; nos importa genuinamente tu éxito, y estamos aquí en cada paso para ayudarte a prosperar. Alojar en Domits significa alinearse con valores profundamente arraigados de salud, seguridad y sostenibilidad, creando un camino a prueba de futuro para tu negocio.",
+            "btnHosting": "Empieza a ser anfitrión"
+          },
+          "register": {
+            "title": "Registra tu propiedad",
+            "simple": "simple",
+            "and": " y ",
+            "safe": "segura",
+            "verified": {
+              "title": "Huéspedes verificados",
+              "description": "Verificamos a los huéspedes mediante su dirección de correo electrónico, teléfono, un mensaje personal y pagos a través de nuestro socio Stripe."
+            },
+            "rules": {
+              "title": "Tus propias reglas de la casa",
+              "description": "Haz saber a tus potenciales huéspedes tus normas. Deben aceptarlas para poder reservar."
+            },
+            "how": {
+              "title": "Elige cómo deseas recibir tus reservas",
+              "description": "Puedes permitir que tus huéspedes reserven directamente."
+            },
+            "payments": {
+              "title": "recibe pagos de forma regular y segura",
+              "description": "Se te garantiza el pago y puedes confiar en la protección contra fraudes de nuestros métodos de pago."
+            },
+            "support": {
+              "title": "Soporte dedicado",
+              "description": "Nuestro equipo de expertos en alquiler está disponible para ayudarte con cualquier pregunta o problema, asegurando una experiencia sin contratiempos."
+            },
+            "renting": {
+              "title": "Alquiler internacional",
+              "description": "Alquila tu casa de vacaciones en un mercado internacional. Esto aumenta aún más las posibilidades de alquilarla."
+            }
+          },
+          "othersSay": {
+            "title": "Lo que otros dicen sobre",
+            "domits": "Domits"
+          },
+          "rentingOut": {
+            "title": "¿Es tu propiedad adecuada para",
+            "rent": "alquilarla",
+            "description": "Aquí tienes la lista de verificación de los requisitos mínimos para alquilar propiedades",
+            "general": {
+              "title": "General ✓",
+              "description": "La propiedad es una unidad habitacional completamente equipada que cumple con la normativa local de alquiler y es técnicamente apta para alquilar."
+            },
+            "building": {
+              "title": "Edificio ✓",
+              "description": "El exterior del edificio, las ventanas, puertas y zonas comunes están bien mantenidos, y el sistema de calefacción proporciona suficiente calor y agua caliente."
+            },
+            "furnishing": {
+              "title": "Mobiliario ✓",
+              "description": "El mobiliario se encuentra en buen estado, con enchufes seguros, iluminación adecuada y materiales de limpieza disponibles."
+            },
+            "bedroom": {
+              "title": "Dormitorios ✓",
+              "description": "El dormitorio está equipado con camas en buen estado, colchones limpios y ropa de cama de tamaño adecuado."
+            },
+            "kitchen": {
+              "title": "Cocina ✓",
+              "description": "La cocina está completamente equipada con electrodomésticos en funcionamiento, utensilios de cocina y vajilla limpia."
+            },
+            "pool": {
+              "title": "Piscina y Jacuzzi ✓",
+              "description": "La piscina y el jacuzzi están instalados profesionalmente y se mantienen regularmente."
+            },
+            "surroundings": {
+              "title": "Entorno ✓",
+              "description": "Las áreas exteriores están bien mantenidas, con caminos y estacionamientos despejados durante el invierno."
+            },
+            "safety": {
+              "title": "Seguridad ✓",
+              "description": "La propiedad cumple con los estándares de seguridad, contando con detectores de humo funcionales, balcones asegurados, áreas de juego seguras y accesos despejados."
+            }
+          },
+          "answerTo": {
+            "title": "Respuestas a ",
+            "your": "tus",
+            "question": "preguntas",
+            "host": {
+              "title": "Primeros pasos como anfitrión",
+              "description": "Regístrate como anfitrión, conecta o crea tu cuenta en Stripe y comienza a publicar tu alojamiento."
+            },
+            "how": {
+              "title": "¿Cómo publicar tu alquiler vacacional?",
+              "description": "Puedes publicar tu alquiler convirtiéndote en",
+              "becomeHost": "anfitrión de Domits",
+              "description2": "y completando la información requerida. Te contactaremos poco después de que envíes tu alquiler vacacional para que puedas empezar a alquilar y ganar dinero!"
+            },
+            "manage": {
+              "title": "¿Cómo creo y gestiono mi cuenta de anfitrión?",
+              "description": "Crear una cuenta de anfitrión es fácil. Haz clic en el botón 'Sé un anfitrión' en la esquina superior derecha y sigue las instrucciones. Una vez configurada tu cuenta, cambia al Panel de Anfitrión desde el menú. Allí, puedes agregar tu propiedad proporcionando detalles como tipo, ubicación y comodidades. Después de enviarla, tu anuncio será verificado. Una vez aprobado, establece tu disponibilidad, precios y sube fotos. Para hacerla visible, crea una cuenta en Stripe para los pagos. Puedes gestionar todo — disponibilidad, precios y detalles — directamente desde el Panel de Anfitrión."
+            },
+            "payout": {
+              "title": "Cómo funcionan los pagos y los impuestos",
+              "description": "Para recibir pagos, necesitas crear una cuenta en Stripe Connect y vincularla a Domits mediante el botón en tu panel. Todos los pagos se procesan a través de Stripe, donde se deducen automáticamente las tarifas correspondientes."
+            },
+            "calendar": {
+              "title": "Cómo gestionar tu calendario y reservas",
+              "description": "Una próxima función te permitirá gestionar tus reservas de manera más eficiente directamente desde el panel. ¡Mantente atento a las novedades!"
+            }
+          },
+          "advice": {
+            "title": "Asesoramiento personal gratuito de nuestro",
+            "subtitle": "¡Nuestro equipo de expertos en alquiler está listo para ayudarte!",
+            "team": "equipo de expertos en alquiler",
+            "talk": "Habla con un especialista"
+          }
         }
 }
   
