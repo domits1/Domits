@@ -1,5 +1,4 @@
-import {expect, it, jest, test} from '@jest/globals';
-import {handler} from "../../functions/General-Bookings-CRUD-Bookings-develop/index.js";
+import {expect, it} from '@jest/globals';
 
 describe("template test", () => {
     it("should say 1 + 1 = 2", () => {
