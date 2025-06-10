@@ -11,7 +11,6 @@ class CognitoRepository{
         try {
             const command = new GetUserCommand(input);
             const response = await client.send(command);
-            console.log("UserID from CognitoRepository.js", response.Username);
             return response;
         } catch (error) {
             console.error(error);

@@ -77,7 +77,6 @@ class ReservationRepository {
 
         const command = new QueryCommand(input);
         const response = await client.send(command);
-        console.log("response: ", response);
         return {
             message: ("Received bookings: "),
             response: response,

@@ -8,7 +8,7 @@ class LambdaRepository {
         
         const receivedData = await response.json();
         if (receivedData === "No property found."){
-            throw new NotFoundException("User has no properties available");
+            throw new NotFoundException("User has no active properties.");
         }
         const propertyIds = receivedData.map(item => item.property.id) 
         const propertyTitles = receivedData.map(item => item.property.title);
