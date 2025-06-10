@@ -1,5 +1,5 @@
-import BookingService from "../business/bookingService.mjs"
-import PaymentService from "../business/paymentService.mjs"
+import BookingService from "../business/bookingService.js"
+import PaymentService from "../business/paymentService.js"
 
 import responsejson from "../util/const/responseheader.json" with { type: 'json' };
 const responseHeaderJSON = responsejson
@@ -17,7 +17,7 @@ class ReservationController {
     async create(event){
         try{ 
            const returnInfo = await this.bookingService.create(event.event);
-           const paymentData = await this.paymentSerivce.create(returnInfo.hostId, returnInfo.bookingId);
+           const paymentData = await this.paymentSerivce.create(returnInfo.hostId, returnInfo.bookingId, returnInfo.propertyId, returnInfo.dates);
             return {
                 statusCode: returnInfo.statusCode,
                 headers: responseHeaderJSON,
@@ -68,7 +68,12 @@ class ReservationController {
                 response: returnInfo.response,
             }
         } catch (error) {
-            throw new Error(`Unable to get bookings! ${error}`);
+            console.error(error)
+            return {
+                statusCode: error.statusCode || 500,
+                message: error.message || "Something went wrong, please contact support.",
+                response: error.response || ""
+            }
         }
     }
 }

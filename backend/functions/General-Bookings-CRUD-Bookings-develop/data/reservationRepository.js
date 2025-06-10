@@ -1,9 +1,10 @@
 import { DynamoDBClient, PutItemCommand, QueryCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { randomUUID } from "crypto";
-import LambdaRepository from "./lambdaRepository.mjs"
-import CreateDate from "../business/model/createDate.mjs"
-import NotFoundException from "../util/exception/NotFoundException.mjs"
+import LambdaRepository from "./lambdaRepository.js"
+import CreateDate from "../business/model/createDate.js"
+import UnableToSearch from "../util/exception/UnableToSearch.js";
+import NotFoundException from "../util/exception/NotFoundException.js"
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
 
@@ -30,19 +31,20 @@ class ReservationRepository {
                 status: { S: "Awaiting Payment" }
             },
         })
-        try {
-            const response = await client.send(params);
-            return {
-                message: "Booking successfully added.",
-                statusCode: 201,
-                response: response,
-                hostId: hostId,
-                bookingId: id
-            };
-        } catch (error) {
-            console.error(error)
-            throw new Error("Failed to save reservation.");
-        }
+
+        const response = await client.send(params);
+        return {
+            message: "Booking successfully added.",
+            statusCode: 201,
+            response: response,
+            hostId: hostId,
+            bookingId: id,
+            propertyId: requestBody.identifiers.property_Id,
+            dates: {
+                arrivalDate: requestBody.general.arrivalDate,
+                departureDate: requestBody.general.departureDate
+            }
+        };
     }
     // ---------
     // Read bookings by propertyID (auth)
@@ -56,14 +58,9 @@ class ReservationRepository {
             IndexName: "property_id-index",
             KeyConditionExpression: "property_id = :partitionKey"
         }
-        try {
-            const command = new QueryCommand(input);
-            const response = await client.send(command);
-            return response;
-        } catch (error) {
-            console.error(error)
-            throw new Error("Unable to search for bookings.");
-        }
+        const command = new QueryCommand(input);
+        const response = await client.send(command);
+        return response;
     }
     // ---------
     // Read bookings by guest_ID (auth)
@@ -78,18 +75,13 @@ class ReservationRepository {
             KeyConditionExpression: "guestId = :partitionKey"
         }
 
-        try {
-            const command = new QueryCommand(input);
-            const response = await client.send(command);
-            return {
-                message: ("Received bookings: "),
-                response: response,
-                statusCode: 200
-            };
-        } catch (error) {
-            console.error(error)
-            throw new Error("Unable to search for bookings.");
-        }
+        const command = new QueryCommand(input);
+        const response = await client.send(command);
+        return {
+            message: ("Received bookings: "),
+            response: response,
+            statusCode: 200
+        };
     }
     // ---------
     // Read bookings by date created at + property_Id (auth-less)
@@ -106,17 +98,13 @@ class ReservationRepository {
                 ":sortKey": { N: createdAt.toString() }
             },
         }
-        try {
-            const command = new QueryCommand(input);
-            const response = await client.send(command);
-            return {
-                message: ("Received bookings: "),
-                response: response.Items,
-                statusCode: 200
-            };
-        } catch (error) {
-            console.error(error)
-        }
+        const command = new QueryCommand(input);
+        const response = await client.send(command);
+        return {
+            message: ("Received bookings: "),
+            response: response.Items,
+            statusCode: 200
+        };
     }
     // ---------
     // Read bookings by payment_Id (auth)
@@ -133,18 +121,13 @@ class ReservationRepository {
                 ":partitionKey": { S: paymentID }
             }
         };
-        try {
-            const command = new QueryCommand(input);
-            const response = await client.send(command);
-            return {
-                message: ("Booking returned: "),
-                response: response.Items,
-                statusCode: 200
-            };
-        } catch (error) {
-            console.error(error)
-            throw new Error("Unable to search for bookings.");
-        }
+        const command = new QueryCommand(input);
+        const response = await client.send(command);
+        return {
+            message: ("Booking returned: "),
+            response: response.Items,
+            statusCode: 200
+        };
     }
 
     // ---------
@@ -159,27 +142,22 @@ class ReservationRepository {
             title: propertiesOutput.title[i],
             rate: propertiesOutput.rate[i]
         }));
-        try {
-            const combined = await Promise.all(
-                properties.map(async (property) => {
-                    const result = await this.readByPropertyId(property.id.toString());
-                    let items = [];
-                    if (Array.isArray(result.Items)) {
-                        items = result.Items.map((rawItem) => unmarshall(rawItem));
-                    }
+        const combined = await Promise.all(
+            properties.map(async (property) => {
+                const result = await this.readByPropertyId(property.id.toString());
+                let items = [];
+                if (Array.isArray(result.Items)) {
+                    items = result.Items.map((rawItem) => unmarshall(rawItem));
+                }
 
-                    return { ...property, items };
-                })
-            )
-            return {
-                message: ("Booking returned: "),
-                response: combined,
-                statusCode: 200
-            };
-        } catch (error) {
-            console.error(error)
-            throw new Error("Unable to search for bookings.");
-        }
+                return { ...property, items };
+            })
+        )
+        return {
+            message: ("Booking returned: "),
+            response: combined,
+            statusCode: 200
+        };
     }
 
 
@@ -200,24 +178,20 @@ class ReservationRepository {
                 ":sortKey": { N: departConverted.toString() }
             },
         }
-        try {
-            const command = new QueryCommand(input);
-            const response = await client.send(command);
-            if (response.Items.length < 1) {
-                return {
-                    message: "No bookings found",
-                    statusCode: 204
-                }
-            }
+        const command = new QueryCommand(input);
+        const response = await client.send(command);
+        if (response.Items.length < 1) {
             return {
-                message: ("Booking returned: "),
-                response: response.Items.map(item => { return { arrivalDate: parseFloat(item.arrivalDate.N), departureDate: parseFloat(item.departureDate.N) } }),
-                statusCode: 200
-            };
-        } catch (error) {
-            console.error(error)
-            throw new Error("Unable to search for bookings.");
+                message: "No bookings found",
+                statusCode: 204
+            }
         }
+        return {
+            message: ("Booking returned: "),
+            response: response.Items.map(item => { return { arrivalDate: parseFloat(item.arrivalDate.N), departureDate: parseFloat(item.departureDate.N) } }),
+            statusCode: 200
+        };
+
     }
 
     async getBookingById(id) {
