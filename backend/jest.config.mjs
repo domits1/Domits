@@ -11,4 +11,5 @@ export default {
         'js',
         'mjs',
     ],
+    testTimeout: 10000
 };

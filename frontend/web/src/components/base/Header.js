@@ -9,6 +9,18 @@ import FlowContext from "../../services/FlowContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { SearchBar } from "./SearchBar";
 import { Auth } from "aws-amplify";
+import {LanguageContext} from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+
+const contentByLanguage = {
+  en,
+  nl,
+  de,
+  es,
+};
 
 
 function Header({ setSearchResults, setLoading }) {
@@ -25,6 +37,13 @@ function Header({ setSearchResults, setLoading }) {
     "/"
     // Add more paths here as needed
   ];
+  const {language, setLanguage} = useContext(LanguageContext);
+  const selectLanguage = (e) => {
+      setLanguage(e.target.value);
+      console.log(e.target.value);
+  };
+
+  const components = contentByLanguage[language]?.component;
 
 
   useEffect(() => {
@@ -157,33 +176,33 @@ function Header({ setSearchResults, setLoading }) {
     if (currentView === "host") {
       return (
         <>
-          <div className="helloUsername">Hello {username}!</div>
+          <div className="helloUsername">{components.user.hello} {username}!</div>
           <button
             onClick={navigateToHostDashboard}
             className="dropdownLoginButton"
           >
-            Dashboard
+            {components.user.dashboard}
           </button>
           <button
             onClick={() => navigate("/hostdashboard/calendar")}
             className="dropdownLoginButton"
           >
-            Calendar
+            {components.user.calendar}
           </button>
           <button
             onClick={() => navigate("/hostdashboard/reservations")}
             className="dropdownLoginButton"
           >
-            Reservations
+            {components.user.reservations}
           </button>
           <button
             onClick={() => navigate("/hostdashboard/chat")}
             className="dropdownLoginButton"
           >
-            Messages
+            {components.user.messages}
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out
+            {components.user.logout}
             <img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
@@ -191,27 +210,27 @@ function Header({ setSearchResults, setLoading }) {
     } else {
       return (
         <>
-          <div className="helloUsername">Hello {username}!</div>
+          <div className="helloUsername">{components.user.hello} {username}!</div>
           <button
             onClick={navigateToGuestDashboard}
             className="dropdownLoginButton"
           >
-            Profile
+            {components.user.profile}
           </button>
           <button onClick={navigateToMessages} className="dropdownLoginButton">
-            Messages
+            {components.user.messages}
           </button>
           <button onClick={navigateToPayments} className="dropdownLoginButton">
-            Payments
+            {components.user.payments}
           </button>
           {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
             Reviews
           </button> */}
           <button onClick={navigateToSettings} className="dropdownLoginButton">
-            Settings
+            {components.user.settings}
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out
+            {components.user.logout}
             <img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
@@ -247,13 +266,22 @@ function Header({ setSearchResults, setLoading }) {
           />
         )}
 
-        <div className="headerRight">
+        <div className="headerRight">  
+            <div class="language-toggle">
+              <i class="fas fa-globe"></i>
+              <select value={language} onChange={selectLanguage}>
+                <option value="en">English</option>
+                <option value="nl">Nederlands</option>
+                <option value="de">Deutsch</option>
+                <option value="es">Español</option>
+              </select>
+            </div>
           {!isLoggedIn ? (
             <button
               className="headerButtons headerHostButton"
               onClick={navigateToLanding}
             >
-              Become a Host
+              {components.user.becomeHost}
             </button>
           ) : group === "Host" ? (
             <button
@@ -261,15 +289,15 @@ function Header({ setSearchResults, setLoading }) {
               onClick={navigateToDashboard}
             >
               {currentView === "guest"
-                ? "Switch to Host"
-                : "Switch to Guest"}
+                ? `${components.user.switchToHost}`
+                : `${components.user.switchToGuest}`}
             </button>
           ) : (
             <button
               className="headerButtons headerHostButton"
               onClick={navigateToLanding}
             >
-              Become a Host
+              {components.user.becomeHost}
             </button>
           )}
           {isLoggedIn && group === "Traveler" && (
@@ -305,14 +333,14 @@ function Header({ setSearchResults, setLoading }) {
                     onClick={navigateToLogin}
                     className="dropdownLoginButton"
                   >
-                    Login
+                    {components.user.login}
                     <img src={loginArrow} alt="Login Arrow" />
                   </button>
                   <button
                     onClick={navigateToRegister}
                     className="dropdownRegisterButton"
                   >
-                    Register
+                    {components.user.register}
                   </button>
                 </>
               )}

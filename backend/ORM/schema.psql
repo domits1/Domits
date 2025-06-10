@@ -102,6 +102,8 @@ CREATE TABLE IF NOT EXISTS main.booking (
   paymentId VARCHAR(255) NOT NULL,
   property_id VARCHAR(255) NOT NULL,
   status VARCHAR(255) NOT NULL,
+  hostName VARCHAR(255) NOT NULL,
+  guestName VARCHAR(255) NOT NULL,
   PRIMARY KEY (id)
 );
 CREATE UNIQUE INDEX ASYNC id_UNIQUE_booking ON main.booking (id);
@@ -258,9 +260,8 @@ DROP TABLE IF EXISTS main.property_pricing;
 
 CREATE TABLE IF NOT EXISTS main.property_pricing (
   property_id VARCHAR(255) NOT NULL,
-  cleaning INTEGER NOT NULL,
+  cleaning INTEGER,
   roomRate INTEGER NOT NULL,
-  service INTEGER NOT NULL,
   PRIMARY KEY (property_id)
 );
 CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_pricing ON main.property_pricing (property_id);

@@ -9,7 +9,6 @@ import GetByCreatedAtModel from "./events/getByCreatedAtDate.js";
 import GetByPaymentIdModel from "./events/getByPaymentId.js";
 import getByDepartureDateModel from "./events/getByDepartureDate.js";
 
-jest.setTimeout(30000); 
 
 // This test tests the end-to-end functionality of the booking engine. It tests all possible
 // GET scenarios, including the POST request to create a booking.
@@ -43,7 +42,6 @@ describe("booking end-to-end", () => {
 
     it("should receive a GET request queried on a payment ID", async () => {
         const response = await handler(await GetByPaymentIdModel);
-        console.log("response: ", response);
         expect(response.statusCode).toBe(200, 404);
     })
 

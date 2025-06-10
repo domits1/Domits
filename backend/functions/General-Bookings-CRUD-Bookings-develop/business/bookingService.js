@@ -86,7 +86,6 @@ class BookingService {
 			}
 			case "hostId": { 
 				authToken = await this.authManager.authenticateUser(event.Authorization);
-				console.log("De hostId:", authToken.sub);
 				return await this.reservationRepository.readByHostId(authToken.sub);
 			}
 			case "departureDate":{
