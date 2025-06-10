@@ -73,7 +73,7 @@ class BookingModel {
         if (typeof paymentId !== "string"){
             throw new TypeException("BookingService - paymentId must be a string.")
         }
-        this.paymentId = this.paymentId;
+        this.paymentId = paymentId;
     }
 
     set _property_id(property_id) { //check if property_id is valid
@@ -83,7 +83,7 @@ class BookingModel {
         this.property_id = property_id;
     }
 
-    set status(receivedStatus) { //decided by Stripe
+    set _status(receivedStatus) { //decided by Stripe
         if (typeof status !== "string"){
             throw new TypeException("BookingService - status must be a string.")
         }
