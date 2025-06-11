@@ -49,7 +49,6 @@ const BookingSend = () => {
                 },
             }
         };
-        console.log("Maar klopt de payload wel?", payload); 
             const storeBooking = async () => {
             try {
                 const response = await fetch(
