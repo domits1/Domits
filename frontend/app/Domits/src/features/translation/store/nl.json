@@ -21,6 +21,7 @@
     "Dates": "Datums",
     "Cleaning fee": "Schoonmaak kosten",
     "Domits service fee": "Domits service kosten",
+    "Room rate": "Huur kosten",
     "Total (excl. tax)": "Totaal (excl. btw)",
     "Confirm & Pay": "Bevestigen & Betalen",
     "Pay": "Betaal",
@@ -55,6 +56,17 @@
     "At least 1 number": "Tenminste 1 nummer",
     "At least 1 special character": "Tenminste 1 speciaal karakter",
     "Email can't be empty.": "Email kan niet leeg zijn.",
-    "Does not follow the email format example@mail.com": "Volgt niet het email formaat example@mail.com"
+    "Does not follow the email format example@mail.com": "Volgt niet het email formaat example@mail.com",
+    "What best describes your property?": "Hoe kan uw accommodatie het best omschreven worden?",
+    "House": "Huis", "Villa": "Villa", "Cottage": "Hut", "Apartment": "Appartement", "Camper": "Camper", "Boat": "Boot",
+    "Yes": "Ja", "No": "Nee",
+    "Quit": "Stoppen", "Back": "Terug", "Next": "Volgende", "Finish": "Voltooien",
+    "Are you sure you want to quit?": "Weet u zeker dat u wilt stoppen?",
+    "Entered property data will be lost.": "Ingevulde accommodatie gegevens zullen verloren gaan.",
+    "Incomplete Input": "Incomplete invoer",
+    "Please fill in required fields before proceeding.": "Vul de verplichte velden in voordat u verdergaat.",
+    "Invalid fields": "Ongeldige velden",
+    "Please check that all fields are filled in correctly.": "Controleer of alle velden correct zijn ingevuld.",
+    "Are you sure you want to finish the onboarding process?": "Weet u zeker dat u het onboarding proces wilt voltooien?"
   }
 }

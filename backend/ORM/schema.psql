@@ -102,6 +102,8 @@ CREATE TABLE IF NOT EXISTS main.booking (
   paymentId VARCHAR(255) NOT NULL,
   property_id VARCHAR(255) NOT NULL,
   status VARCHAR(255) NOT NULL,
+  hostName VARCHAR(255) NOT NULL,
+  guestName VARCHAR(255) NOT NULL,
   PRIMARY KEY (id)
 );
 CREATE UNIQUE INDEX ASYNC id_UNIQUE_booking ON main.booking (id);
@@ -258,9 +260,8 @@ DROP TABLE IF EXISTS main.property_pricing;
 
 CREATE TABLE IF NOT EXISTS main.property_pricing (
   property_id VARCHAR(255) NOT NULL,
-  cleaning INTEGER NOT NULL,
+  cleaning INTEGER,
   roomRate INTEGER NOT NULL,
-  service INTEGER NOT NULL,
   PRIMARY KEY (property_id)
 );
 CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_pricing ON main.property_pricing (property_id);
@@ -336,11 +337,11 @@ CREATE TABLE IF NOT EXISTS main.property_type (
 CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_type ON main.property_type (property_id);
 
 -- -----------------------------------------------------
--- Table main.stripe_connected_accounts
+-- Table main.stripe_connectedaccounts
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS main.stripe_connected_accounts;
+DROP TABLE IF EXISTS main.stripe_connectedaccounts;
 
-CREATE TABLE IF NOT EXISTS main.stripe_connected_accounts (
+CREATE TABLE IF NOT EXISTS main.stripe_connectedaccounts (
   id INTEGER NOT NULL,
   account_id VARCHAR(255) NOT NULL,
   created_at VARCHAR(255) NOT NULL,
@@ -348,6 +349,6 @@ CREATE TABLE IF NOT EXISTS main.stripe_connected_accounts (
   user_id VARCHAR(255) NOT NULL,
   PRIMARY KEY (id)
 );
-CREATE UNIQUE INDEX ASYNC id_UNIQUE_stripe_connected_accounts ON main.stripe_connected_accounts (id);
-CREATE UNIQUE INDEX ASYNC account_id_UNIQUE_stripe_connected_accounts ON main.stripe_connected_accounts (account_id);
-CREATE UNIQUE INDEX ASYNC user_id_UNIQUE_stripe_connected_accounts ON main.stripe_connected_accounts (user_id);
+CREATE UNIQUE INDEX ASYNC id_UNIQUE_stripe_connected_accounts ON main.stripe_connectedaccounts (id);
+CREATE UNIQUE INDEX ASYNC account_id_UNIQUE_stripe_connected_accounts ON main.stripe_connectedaccounts (account_id);
+CREATE UNIQUE INDEX ASYNC user_id_UNIQUE_stripe_connected_accounts ON main.stripe_connectedaccounts (user_id);

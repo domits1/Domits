@@ -160,8 +160,7 @@ export class PropertyBuilder {
         this.propertyPricing = new PropertyPricing(
             this.property.id,
             params.roomRate,
-            params.cleaning,
-            params.roomRate * 0.15
+            params.cleaning
         );
         return this;
     }

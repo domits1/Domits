@@ -34,9 +34,6 @@ export class PropertyPricingRepository {
                 "roomRate": {
                     "N": `${pricing.roomRate}`
                 },
-                "service": {
-                    "N": `${pricing.service}`
-                }
             }
         })
         await this.dynamoDbClient.send(params);

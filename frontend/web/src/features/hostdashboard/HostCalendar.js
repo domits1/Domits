@@ -3,12 +3,12 @@ import Pages from "./Pages";
 import "./HostHomepage.scss";
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
-import CalendarComponent from "./CalendarComponent";
 import styles from "./HostDashboard.module.scss";
 import calenderStyles from "./HostCalendar.module.css";
 import { generateUUID } from "../../utils/generateUUID.js";
 import { formatDate, uploadICalToS3 } from "../../utils/iCalFormatHost";
 import { getAccessToken } from "../../services/getAccessToken.js";
+import CalendarComponent from "./hostcalendar/views/Calender.js";
 
 function HostCalendar() {
   const [accommodations, setAccommodations] = useState([]);

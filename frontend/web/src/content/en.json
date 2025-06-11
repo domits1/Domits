@@ -1,0 +1,735 @@
+{
+      "component": {
+        "user": {
+          "hello": "Hello",
+          "profile": "Profile",
+          "login": "Login",
+          "register": "Register",
+          "logout": "Log out",
+          "settings": "Settings",
+          "payments": "Payments",
+          "dashboard": "Dashboard",
+          "messages": "Messages",
+          "calendar": "Calendar",
+          "reservations": "Reservations",
+          "switchToGuest": "Switch to Guest",
+          "switchToHost": "Switch to Host",
+          "becomeHost": "Become a host"
+        },
+        "search": {
+          "destination": "Search Destination",
+          "accommodation": "Accommodation",
+          "checkInOut": "Check in • out",
+          "guests": "Guests",
+          "adults": "Adults",
+          "children": "Children",
+          "infants": "Infants",
+          "pets": "Pets",
+          "search": "Search",
+          "house": "House",
+          "boat": "Boat",
+          "camper": "Camper",
+          "ageGroups": {
+            "adults": "Ages 16 or above",
+            "children": "Ages 2–16",
+            "infants": "Ages 0–2",
+            "pets": "Normal sized pets"
+          }
+        },
+        "footer": {
+          "navigation" : {
+            "title": "Navigation",
+            "whyDomits": "Why Domits",
+            "howItWorks": "How it works",
+            "producUpdates": "Product Updates",
+            "about": "About us",
+            "security": "Security",
+            "performance": "Performance",
+            "careers": "Careers",
+            "contact": "Contact"
+          },
+          "guest": {
+            "title": "Guest",
+            "searchAndBook": "Search and book",
+            "helpDeskForGuests": "Helpdesk for guests",
+            "sustainability": "Sustainability"
+          },
+          "host": {
+            "title": "Hosts",
+            "becomeHost": "Become a host",
+            "helpdeskForHosts": "Helpdesk for hosts",
+            "sustainability": "Sustainability"
+          },
+          "network": {
+            "title": "Network",
+            "guests": "Guests",
+            "hosts": "Hosts",
+            "developers": "Developers",
+            "partners": "Partners",
+            "students": "Students",
+            "startups": "Startups"
+          },
+          "socials": {
+            "title": "Socials"
+          },
+          "office": {
+            "title": "Office"
+          },
+          "policy": {
+            "title": "Privacy policy"
+          },
+          "termsConditions": {
+            "title": "Terms and Conditions"
+          },
+          "disclaimer": {
+            "title": "Disclaimer"
+          },
+          "sitemap": {
+            "title": "Sitemap"
+          },
+          "rightsReserved": {
+            "title": "Rights reserved"
+          }
+        }
+      },
+  
+      "homepage": {
+        "hero": {
+          "title": "Book holiday homes, boats and campers..",
+          "searchPlaceholder": "Search Destination",
+          "searchTitle": "Accommodation",
+          "searchGuests": "Guests"
+        },
+        "features": {
+          "securePayments": "Secure payments",
+          "verifiedGuest": "Verified guests/hosts",
+          "quickPhone": "Quick phone support",
+          "qualityGuarantee": "Domits quality guarantee",
+          "bestPrice": "Best price guarantee",
+          "bookingGuarantee": "Accommodation booking guarantee",
+          "stayGuarantee": "Guarantee of stay at the accommodation"
+        },
+        "sections": {
+          "trending": "Trending accommodations this month",
+          "rentBoat": "Rent a boat for any occasion",
+          "discoverCampers": "Discover Beautiful Campers",
+          "becomeHost": {
+            "title": "Become a host",
+            "points": [
+              "List your property for free.",
+              "Manage everything centrally.",
+              "Increase your booking metrics."
+            ],
+            "button": "List your property"
+          },
+          "community": {
+            "title": "Need help? Join the community",
+            "description": "Domits has a travel community hosts, guests, and employees",
+            "button": "Search & Book"
+          }
+        },
+        "filters": {
+          "season": {
+            "title": "Favorites by Season",
+            "spring": "Spring",
+            "summer": "Summer",
+            "fall": "Fall",
+            "winter": "Winter"
+          },
+          "interest": {
+            "title": "Great picks by interest",
+            "luxury": "Luxury",
+            "beach": "Beach",
+            "lastMinute": "Last minute",
+            "wellness": "Wellness",
+            "romantic": "Romantic",
+            "adventure": "Adventure",
+            "nature": "Nature",
+            "culture": "Culture",
+            "culinary": "Culinary"
+          },
+          "groups": {
+            "title": "Accommodations by group",
+            "description": "Vacation houses and apartments",
+            "friends": "Friends",
+            "couples": "Couples",
+            "family": "Family & child friendly",
+            "solo": "Solo",
+            "senior": "Senior",
+            "petFriendly": "Pet Friendly"
+          }
+        },
+        "destinations": {
+          "europe": {
+            "title": "Countries in Europe",
+            "countries": {
+              "netherlands": "The Netherlands",
+              "france": "France",
+              "spain": "Spain",
+              "italy": "Italy",
+              "belgium": "Belgium",
+              "germany": "Germany",
+              "greece": "Greece",
+              "unitedKingdom": "United Kingdom",
+              "portugal": "Portugal",
+              "croatia": "Croatia",
+              "poland": "Poland",
+              "austria": "Austria",
+              "czech": "Czech"
+            }
+          },
+          "asia": {
+            "title": "Destinations in Asia",
+            "countries": {
+              "philippines": "Philippines",
+              "thailand": "Thailand",
+              "indonesia": "Indonesia",
+              "india": "India",
+              "malaysia": "Malaysia",
+              "vietnam": "Vietnam",
+              "turkey": "Turkey",
+              "singapore": "Singapore"
+            }
+          },
+          "caribbean": {
+            "title": "Islands in the Caribbean",
+            "locations": {
+              "aruba": "Aruba",
+              "bonaire": "Bonaire",
+              "curacao": "Curacao",
+              "saintBarthelemy": "Saint Barthelemy",
+              "costaRica": "Costa Rica",
+              "dominicanRepublic": "Dominican Republic",
+              "puertoRico": "Puerto Rico",
+              "stMaarten": "St. Maarten"
+            }
+          },
+          "ski": {
+            "title": "Popular ski destinations",
+            "locations": {
+              "austria": "Austria", 
+              "frenchAlps": "French Alps",
+              "switzerland": "Switzerland",
+              "chamonix": "Chamonix-Mont-Blanc",
+              "blackForest": "Black Forest",
+              "italyTrentino": "Italy Trentino"
+            }
+          }
+        }
+      },
+      "travelInnovationLabs": {
+          "title": "Travel Innovation Labs",
+          "description": "Sustainable Value Creation",
+          "groups" : {
+            "flyWheel": {
+              "title": "Travel Innovation Flywheel",
+              "description": "The mission of Domits is to simplify travel. For sustainable value creation, we have three innovation labs which come together in our flywheel. The labs are travel finance, travel business, and travel & daily life."
+            },
+            "finance": {
+              "title": "Travel Finance",
+              "description": "The core starts with simplifying travel finance. We focus on travel payments, travel capital, travel insurance, and travel investing."
+            },
+            "business": {
+              "title": "Travel Business",
+              "description": "To serve all travel stakeholders, we have four business divisions: #1 growth, #2 people, #3 cloud ICT, and #4 AI data."
+            },
+            "dailyLife": {
+              "title": "Travel & Daily Life",
+              "description": "The financial business flow provides opportunities to experience limitless freedom for travel & daily life, like accommodation services, mobility services, municipal services, local services, and many more..."
+            }
+          }
+        },
+        "about": {
+          "title": "About Domits",
+          "description": "Tailor-made travel partnerships",
+          "mission": {
+            "title": "Mission: Simplify travel.",
+            "description": "In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners. There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.",
+            "howItWorks": "how Domits works",
+            "whyDomits": "Why to choose Domits",
+            "readHere": "Read here more about ",
+            "and": " and "
+          },
+          "vision": {
+            "title": "Vision",
+            "subTitle": "A healthy, safe and future-proof travel world",
+            "description": "Our vision is a travel world that has less problems with health, safety and future-proofing. Now and in the future, that is what Domits has in mind. Everyone takes into account how people deal with these problems and their options. Together with partners, we work every day to simplify travel."
+          },
+          "whatWeDo": {
+            "title": "What we do",
+            "subTitle": "Together with partners we provide travel solutions",
+            "description": "We build our travel platform to list, search and book accommodations. Besides that we are providing traveltech development and consultancy for a select group of partners. \nWe are open to cooperate through ventures and our ",
+            "travelInnovation": "travel innovation labs"
+          },
+          "crew": {
+            "whoWeAre": "Who we are",
+            "weAreAll": "We are all conscious founders.",
+            "founder": "Founder",
+            "engineeringManager": "Engineering Manager",
+            "productOwner": "Product Owner",
+            "developer": "Developer",
+            "developerAI": "Developer AI Agents",
+            "developerRevenue": "Developer Revenue",
+            "developerDistribution": "Developer Distribution",
+            "security": "Security",
+            "marketing": "Marketing",
+            "growth": "Growth",
+            "canBeYou": "This can be you!",
+            "hiring": "We're  hiring!"
+          },
+          "footerText": {
+            "description" : " We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.",
+            "description2": "You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders."
+          }
+        },
+        "contact": {
+          "faq": "Frequently Asked Questions (FAQ)",
+          "holiday": {
+            "title": "Questions about a holiday home, boat or camper?",
+            "description": "Do you have a question about a holiday accommodation, booking, or payment? Check our Frequently Asked Questions (FAQ). Domits is an intermediary so you rent the holiday accommodation from the host."
+          },
+          "areYouHost": {
+            "title": "Are you a host, property owner, or manager?",
+            "description": "We're always open for new holiday homes, boats, and campers. See on our hosting page how you can start within a couple of minutes for free. Or check our FAQ for hosts."
+          },
+          "address" : {
+            "title": "Address",
+            "description": "Domits\nKinderhuissingel 6k\n2013 AS, Haarlem"
+          },
+          "opening": {
+            "title": "Opening hours",
+            "description": "Monday to Friday via mail, chat, and phone between 09:00 and 17:00"
+          },
+          "contact": {
+            "title": "Contact",
+            "description": "We are available to ensure optimal reachability across all time zones. The more specific you are in your reach out, the faster we can assist you! We always get back to you as soon as possible. Not received any response from us yet? Check your spam inbox.\nMail: teamdomits@gmail.com"
+          },
+          "form": {
+            "title": "Contact Form",
+            "description": "We are 24/7 available to ensure optimal reachability across all time zones. The more specific you are in your reach out, the faster we can assist you! We always get back to you within 24 hours of reaching out. Not received any response from us yet? Check your spam inbox."
+          },
+          "name": "Name",
+          "subject": "Subject",
+          "email": "Your Email",
+          "message": "Message",
+          "attachment": "Add attachments",
+          "send": "Send message",
+          "guest": "Guest",
+          "host": "Host"
+        },
+        "whyDomits": {
+          "head": {
+            "title": "Why Domits & how we win together",
+            "subtitle": "One of the fastest improving all-in-1 travel platforms.",
+            "description": "Start your journey as a Guest or Host within minutes. List, search and book holiday accommodations, campers and boats. 0% fee for property owners and managers. There are no hidden costs or percentage cuts. Save administrative time AI assistants and insights. Make use of our global secure payment methods. Enjoy our warmhearted customer centric approach and quick phone support.",
+            "landing": "Try it out for free",
+            "discover": ", discover more on ",
+            "howItworks": "how it works",
+            "readMore": " or read more ",
+            "aboutUs": "about us",
+            "ourMotto": "Our motto is 1% better every day in product development, integrations, security and intellectual travel leadership.",
+            "travelInnovation": "Travel Innovation Labs to create sustainable value. For hosts an AI-powered recommendations for growth, revenue, operations, and the guest experience to increase revenue, occupancy and rates. For guests an AI travel assistant with recommendations.",
+            "guest": "Guest",
+            "host": "Host",
+            "dev": "Dev, data, sec experts",
+            "growth": "Growth, rev and ops experts"
+          },
+          "forGuest": {
+            "title": "Why Domits for guest",
+            "accommodation": {
+              "title": "Unique Accommodations",
+              "description": "Unlike traditional hotels, Domits offers a variety of accommodation types, including apartments, houses, villas, campers and boats. This variety can cater to different tastes, needs, and experiences."
+            },
+            "experience": {
+              "title": "Local Experience",
+              "description": "Staying in a Domits accommodation often allows guests to immerse themselves more fully in local neighborhoods and cultures, giving them a more authentic experience than they might get from a hotel in a touristy area."
+            },
+            "amenities": {
+              "title": "Amenities",
+              "description": "Many Domits rentals come with fully equipped kitchens, laundry facilities, and more space than a typical hotel room. This is especially beneficial for families, long-term guests, or those wanting to cook their own meals."
+            },
+            "aiAssist": {
+              "title": "AI Travel Assistant",
+              "description": "Receive travel assistance for your next trip. Reduce time and cost with personalized recommendations for accommodations."
+            },
+            "costEffective": {
+              "title": "Cost-Effective",
+              "description": "Domits often provides more affordable options than hotels, especially for longer stays or for groups who can split the cost of larger properties. Guests can also find budget-friendly choices by renting a room in someone's home rather than an entire property."
+            },
+            "platform": {
+              "title": "24/7 Travel platform",
+              "description": "To run the platform 24/7 we ask guests to pay 15% service fees per booking."
+            }
+          },
+          "forHost": {
+            "title" : "Why Domits for host",
+            "fee": {
+              "title": "0% host fee:",
+              "description": "“Avoid paying platform fees and increase your revenue with our 0% host fee.”"
+            },
+            "income": {
+              "title": "Extra Income",
+              "description": "Many hosts rent out their homes, spare rooms, boats or campers as a way to earn additional income. This can be a great side hustle or even a full-time job in some cases."
+            },
+            "platform": {
+              "title": "All-In-1-Platform",
+              "description": "Centralized calendar, prices, reservations, messages, revenues, reviews, finance, channel management and property care."
+            },
+            "aiAssist": {
+              "title": "AI Assistant For Host",
+              "description": "Save time, cost and headaches with our AI assistant for hosts. Boost performance with personalized AI-powered recommendations for growth, revenue, operations and the guest experience."
+            },
+            "flexibility": {
+              "title": "Flexibility",
+              "description": "Hosting on Domits gives people the opportunity to meet guests from different countries and cultures, which can be an enriching and rewarding experience."
+            },
+            "control": {
+              "title": "Control Over Listing",
+              "description": "Hosts have control over the rules of their space, including check-in times, house rules, and guest preferences. Domits's platform also helps to screen guests through its review system, making hosting safer."
+            },
+            "meetPeople": {
+              "title": "Meet People from Around the World",
+              "description": "Domits allows hosts to choose when to rent out their space, whether it's seasonally, occasionally, or full-time. They can also set their own pricing."
+            }
+          },
+          "forDevs": {
+            "title": "Why Domits for dev, data and sec experts",
+            "technology": {
+              "title": "Cutting-Edge Technology and Scale",
+              "description": "Engineering Challenges: Domits intends to operate at a massive global scale with millions of users across different countries. Engineers get to work on large-scale, complex systems, optimizing for performance, reliability, and scalability.\nModern Tech Stack: Domits uses React (Native) and AWS cloud infrastructure.\nEmphasis on Innovation: The company encourages innovation, giving engineers the freedom to explore new tools, frameworks, and technologies.\nIoT Hub: Experimentation with self check-in, smart locks, smart cameras, smart thermometers, noise monitoring and other smart home amenities."
+            },
+            "focusSecurity": {
+              "title": "Focus on Security and Privacy",
+              "description": "Security Challenges: With the intent of attracting millions of users and transactions, security is paramount at Domits. Security experts have the opportunity to tackle a broad range of security challenges such as securing payments, protecting user data, and preventing fraud and abuse. Domits’s focus on international expansion and regulatory compliance (e.g., GDPR) adds complexity, making security roles more interesting.\nTrust and Safety: Domits prioritizes trust and safety within its community. Security experts work on identity verification, detection of fraudulent listings, and abuse prevention systems."
+            },
+            "dataDriven": {
+              "title": "Data-Driven Culture",
+              "description": "Data Engineering & Analytics: Domits intends to be a highly data-driven company. It relies heavily on data to drive decision-making, product development, and user experience improvements."
+            },
+            "collaborative": {
+              "title": "Collaborative and Open Work Environment",
+              "description": "Cross-functional: Engineers at Domits work closely with everyone. This cross-functional collaboration allows technical people to have a significant impact on product direction and company strategy.\nOpen Culture: Domits promotes an open and transparent work culture where employees are encouraged to share ideas and opinions."
+            }
+          },
+            "forGrowth": {
+              "title": "Why Domits for growth, rev and ops experts",
+              "fastGrow": {
+                "title": "Fast-Growing Travel Platform",
+                "description": "Massive Scale and Reach: Domits intends to operate in thousands of cities worldwide and being used by millions of hosts and guests. This scaling opportunity offers growth hackers and revenue experts unique opportunities to optimize user acquisition, engagement, and retention strategies."
+              },
+              "innovative": {
+                "title": "Innovative Marketing Strategies",
+                "description": "Growth Marketing: Domits intends to be known for its creative and viral marketing strategies. Growth hackers at Domits are empowered to experiment with bold ideas, leveraging data to drive customer acquisition through non-traditional and viral channels.\nLocal and Global Campaigns: Domits's marketing spans both global and hyper-local strategies. Growth hackers and revenue experts have the opportunity to work on campaigns that range from local community building to international brand awareness efforts, offering a broad and varied range of challenges."
+              },
+              "dataDriven": {
+                "title": "Data-Driven Growth Culture",
+                "description": "A/B Testing and Experimentation: Growth hackers can thrive at Domits because of its strong emphasis on experimentation and data-driven decision-making. The company runs A/B tests to continuously refine its platform, optimize conversion rates, and improve user engagement.\nAnalytics and Personalization: Revenue experts can leverage Domits's data analytics platform to fine-tune pricing strategies, optimize revenue management, and personalize user experiences. Domits's marketplace dynamics require constant optimization of demand and supply, which provides revenue experts with complex, impactful challenges."
+              },
+              "collaborative": {
+                "title": "Collaborative and Open Work Environment",
+                "description": "Cross-functional: Engineers at Domits work closely with everyone. This cross-functional collaboration allows technical people to have a significant impact on product direction and company strategy.\nOpen Culture: Domits promotes an open and transparent work culture where employees are encouraged to share ideas and opinions."
+              }
+            }
+        },
+        "sustainability": {
+          "title": "Sustainability",
+          "subtitle": "Why choose Domits for sustainability?",
+          "business": {
+            "title": "1. Sustainable **Business**",
+            "subtitle": "Recycling plan with bins",
+            "description": "Domits is starting out simple with making conscious decisions like choosing more energy-saving appliances and will continue to improve this 1% every day. With our food waste policy we don’t want to be to rigid and starting with a flexible recycling plan for glass, paper, plastic and organic. For biodiversity and ecosystems we’re aiming to eat more organic food, use Eco-friendly cleaning products and have paperless procedures."
+          },
+          "accommodations": {
+            "title": "2. Sustainable **Accommodations**",
+            "subtitle": "Certification",
+            "description": "Domits is actively focusing on onboarding hosts that are already sustainable. If they’re not yet, we’re supporting them step-by-step to increase awareness. At a certain point we want to give hosts certifications as a proof of sustainability with energy, waste, biodiversity, ecosystems, destinations and community."
+          },
+          "experience": {
+            "title": "3. Sustainable **Guest Experience**",
+            "description": "From the first touch point with Domits for guest we want to let them feel that they are traveling as sustainable as possible. Domits begins with having sustainability filters and a large overview of all eco-friendly amenities."
+          }
+        },
+        "howItWorksContent": {
+          "title": "How Domits Works",
+          "subtitle": "Discover how Domits makes it easy for both guests and hosts.",
+          "guest": {
+            "title": "Guests",
+            "destination": {
+              "title": "Search your destination",
+              "description": "Explore countless vacation rentals with Domits’ user-friendly search filters. Customize your search by location, date, and amenities to find your perfect match."
+            },
+            "holiday": {
+              "title": "Book your next holiday",
+              "description": "Secure your dream stay with Domits now! Choose your preferred accommodation and book in just a few clicks."
+            },
+            "experience": {
+              "title": "Experience Domits",
+              "description": "Unlimited support, personalized modern dashboard and messaging with your host for further details."
+            }
+          },
+          "host": {
+            "title": "Hosts",
+            "rental": {
+              "title": "List your property for rental",
+              "description": "List your property in a few simple steps. Add photos, describe your property, set your price and share availability."
+            },
+            "getPaid": {
+              "title": "Get paid easy, fast and safe",
+              "description": "Connect your details to our payment system and get paid. Oversee your occupancy, revenue management, reports and average daily rate."
+            },
+            "welcomeGuest": {
+              "title": "Welcome your guests",
+              "description": "Give your guests a warmhearted welcome. Manage your properties, calendars, reservations, messages and much more."
+            }
+          },
+          "feature": {
+            "title": "Feature overview for hosts",
+            "subtitle": "Increase revenue, reduce workload, deliver beautiful experiences",
+            "core": "#1: Core Feature.",
+            "bundles": "#2: Performance Bundles.",
+            "bundles2": " Digital Growth, Revenue, Operations, Guest Experience. ",
+            "support": "#3: Education & Support.",
+            "support2": " 9-5 mo-fr support, onboarding solutions, account team, Community.",
+            "pms": "Property Management System (PMS)",
+            "listing": "Listings",
+            "calendar": "Calendar",
+            "messages": "Messages",
+            "reservations":"Reservations",
+            "revenues": "Revenues",
+            "reviews": "Reviews",
+            "finance": "Finance",
+            "communication": "Communication",
+            "inbox": "Unified Inbox",
+            "hostdash": "Host Dashboard",
+            "guestdash": "Guest Dashboard",
+            "revManagement": "Revenue Management",
+            "overview": "Revenue overview",
+            "rates": "Occupancy rates",
+            "adr": "ADR (Avarage Daily Rate)",
+            "revPar": "RevPAR (Revenue per Available Room)",
+            "operations": "Operations",
+            "reservation": "Reservation management",
+            "pricing": "Pricing management",
+            "housekeeping": "Housekeeping",
+            "maintenance": "Maintenance management",
+            "clientSupport": "Client support",
+            "faq": "FAQ",
+            "email": "E-mail",
+            "phone": "Phone Support"
+          }
+        },
+        "policy": {
+          "title": "Domits Privacy Policy",
+          "privacy": {
+            "title": "Privacy Policy",
+            "description": "Last updated: November, 2024 \n\n\n We are aware that you place your trust in us. We therefore see it as our responsibility to protect your privacy.\n\n\nOn this page we let you know what data we collect when you use our website, why we collect this data and how we improve your user experience.\nThis way you understand exactly how we work.\n\n\nThis privacy policy applies to the services of Domits.\n\n\nYou should be aware that Domits is not responsible for the privacy policy of other sites and sources.\n\n\nBy using this website you agree to the privacy policy.\n\n\nDomits respects the privacy of all users of its site and ensures that the personal information you provide is treated confidentially."
+          },
+          "collectedData": {
+            "title": "Pur Use of Collected Data",
+            "service": {
+              "title": "Use our services",
+              "description": "When you register for one of our services, we ask you to provide personal data.\nThe purpose of the processing is to perform the service. The personal data that we initially process are: Name, telephone number and email address.\nThe data is stored on Domits's own secure servers or those of a third party. We will not combine this data with other personal data we have."
+            },
+            "communication": {
+              "title": "Communication",
+              "description": "When you send us an email or other messages, we may store those messages. Sometimes we ask you for your personal information that is relevant to the situation.\nThis makes it possible to process your questions and answer your requests. The data is stored on Domits's own secure servers or those of a third party.\nWe will not combine this data with other personal data we have."
+            }
+          },
+          "cookies": {
+            "title": "Cookies",
+            "description": "We collect data for research to gain a better understanding of our customers so that we can tailor our services accordingly.\n\n\nThis website uses “cookies” (text files placed on your computer) to help the website analyze how users use the site.\nThe information generated by the cookie about your use of the website can be transferred to Domits's own secure servers or those of a third party.\nWe use this information to keep track of how you use the website,\nto compile reports on website activity and to offer other services relating to website activity and internet usage."
+          },
+          "purpose": {
+            "title": "Purposes",
+            "description": "We do not collect or use information for purposes other than those described in this privacy policy unless we have obtained your permission in advance."
+          },
+          "parties": {
+            "title": "Third parties",
+            "description": "The people at Domits do their best to respect everyone's privacy, process as little personal data as possible and protect all personal data as best as possible.\nThe information is not shared with third parties. In some cases the information can be shared internally.\nOur employees are obliged to respect the confidentiality of your data."
+          },
+          "changes": {
+            "title": "Changes",
+            "description": "This privacy statement is tailored to the use of and the possibilities on this site. Any adjustments and/or changes to this site may lead to changes in this privacy statement.\nIt is therefore advisable to regularly consult this privacy statement."
+          },
+          "choices": {
+            "title": "Choices for personal data",
+            "description": "We offer all visitors the opportunity to view, change or delete all personal information that has been provided to us at the time."
+          },
+          "newsletter": {
+            "title": "Adjust/unsubscribe from the newsletter service",
+            "description": "At the bottom of every mailing you will find the option to change your details or unsubscribe."
+          },
+          "communication": {
+            "title": "Adjust/unsubscribe communication",
+            "description": "If you would like to change your data or have it removed from our files yourself, you can contact us. See contact details below."
+          },
+          "disable": {
+            "title": "Disable cookies",
+            "description": "Most browsers are set to accept cookies by default, but you can reset your browser to refuse all cookies or to indicate when a cookie is being sent. However,\nsome features and services - on our and other websites - may not function correctly if cookies are disabled in your browser."
+          },
+          "questions": {
+            "title": "Questions and feedback",
+            "description": "We regularly check whether we comply with this privacy policy. If you have any questions about this privacy policy, please contact us."
+          }
+        },
+        "disclaimer": {
+          "title": "Domits Disclaimer",
+          "subtitle": "Disclaimer",
+          "date": "Last updated: November, 2024",
+          "definitions": {
+            "title": "Interpretation and Definitions ",
+            "description": "No rights can be derived or claimed from the content of this website in any way. Although the greatest possible care has been taken in compiling the content of this website, it is possible that certain information may (over time) become outdated or no longer correct.\n\n\n\nDomits is not liable for any damage that could result from the use of data from the site created by Domits. Domits hereby disclaims all liability for damage resulting from the use of this data or data to which links on this site(s) refer. The information on this site is subject to change without notice.\n\n\n\n\nDomits gives no guarantees with regard to the nature and content of the information on the site and is not liable for the content of this information or for the consequences of its use. Any liability for any damage resulting from access to and use of the site is expressly rejected by Domits. Furthermore, no guarantee is offered for the error-free and uninterrupted functioning of the site. References or connections to other sites or sources that are not the property of Domits are only included for the information of the user of the site.\n\n\n\n\nDomits is not responsible for the availability of these sites or sources. Domits accepts no liability whatsoever for the content, advertising, products or other matters on such sites or resources or their availability. Domits is not liable for any form of damage or loss caused by or in connection with the use of or reliance on the content, goods or services offered on such sites or sources."
+          },
+          "copyright": {
+            "title": "©Copyright",
+            "description": "All rights reserved. Nothing from this website (information, images, images) may be copied or stored in a database, in any form or by any means, whether electronic, digital, mechanical, manual, photographic or any other way."
+          }
+        },
+        "landing": {
+          "list": "List your",
+          "house": "House",
+          "camper": "Camper",
+          "boat": "Boat",
+          "forFree": "for free with 0% booking fee",
+          "description": "Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.",
+          "startHosting": "Start hosting",
+          "secure": "Secure payments",
+          "verified": "Verified guests/hosts",
+          "quick": "Quick phone support",
+          "guarantee": "Domits quality guarantee",
+          "hosting": {
+            "title": "Hosting with ",
+            "domits": "Domits",
+            "title2": "has never been ",
+            "easier": "easier",
+            "subtitle": "It only takes 3 steps",
+            "first": {
+              "one": "1.",
+              "title": "List your property",
+              "description": "Start earning by listing your property for free with 0% fee in just minutes"
+            },
+            "second": {
+              "two": "2.",
+              "title": "Get paid",
+              "description": "Enjoy fast, easy and secure payments."
+            },
+            "third": {
+              "three": "3.",
+              "title": "Receive guest",
+              "description": "Welcome your guest with a warm and personal touch"
+            }
+          },
+          "why": {
+            "title": "Why should I host on",
+            "domits": "Domits",
+            "end": "?",
+            "description": "At Domits, we're not just another platform, we're building a future-focused, sustainable community with our Travel Innovation Labs. Our innovative approach ensures that your property adds meaningful value to both travelers and the environment. You'll also enjoy unlimited support and personalized, modern dashboards that make managing your listings easier than ever. But what truly sets Domits apart is our commitment to you. You're more than just a customer or data, we genuinely care about your success, and we're here every step on the way to help you thrive. Hosting with Domits means aligning with deeply embedded values of health, safety, and sustainability, creating a future-proof path for your business.",
+            "btnHosting": "Start hosting"
+          },
+          "register": {
+            "title": "Register your property",
+            "simple": "simple",
+            "and":" and ",
+            "safe": "safe",
+            "verified": {
+              "title": "Verified guests",
+              "description": "We verify guest with email address, phone, a personal message and payments with our partner Stripe."
+            },
+            "rules": {
+              "title": "Your own house rules",
+              "description": "Let your potential guests know your house rules. They must agree in order to book."
+            },
+            "how": {
+              "title": "Choose how you want to receive your bookings",
+              "description": "You can allow your guests to book directly."
+            },
+            "payments": {
+              "title": "receive payments regularly and securely",
+              "description": "You are guaranteed to be paid and can rely on fraud protection with our payments"
+            },
+            "support": {
+              "title": "Dedicated support",
+              "description": "Our rental expert team is available to assist you with any questions or issues, ensures a smooth hassle-free experience"
+            },
+            "renting": {
+              "title": "International renting",
+              "description": "You rent out your holiday home on an international market. This makes the chances of renting of out your holiday home even greater"
+            }
+          },
+          "othersSay": {
+            "title": "What others say about",
+            "domits": "Domits"
+          },
+          "rentingOut": {
+            "title": "Is your property suitable for",
+            "rent": "renting out",
+            "description": "Here is the minimal requirements checklist for renting out properties",
+            "general": {
+              "title": "General ✓",
+              "description": "The property is a fully equipped living unit that meets local rental regulations and is technically sound for renting."
+            },
+            "building": {
+              "title": "Building ✓",
+              "description": "The building's exterior, windows, doors, and common areas are well-maintained, and the heating system provides sufficient warmth and hot water."
+            },
+            "furnishing": {
+              "title": "Furnishing ✓",
+              "description": "The furnishing is in good condition, with safe electrical outlets, proper lighting, and available cleaning materials."
+            },
+            "bedroom": {
+              "title": "Bedrooms ✓",
+              "description": "The bedroom is equipped with intact beds, clean mattresses, and properly sized bedding."
+            },
+            "kitchen": {
+              "title": "Kitchen ✓",
+              "description": "The kitchen is fully equipped with functioning appliances, cooking tools, and clean dishware."
+            },
+            "pool": {
+              "title": "Pool and Jacuzzi ✓",
+              "description": "The pool and Jacuzzi are professionally installed and maintained regularly."
+            },
+            "surroundings": {
+              "title": "Surroundings ✓",
+              "description": "The outdoor areas are well-maintained, with paths and parking kept clear during winter."
+            },
+            "safety": {
+              "title": "Safety ✓",
+              "description": "The property meets safety standards with functional smoke detectors, secured balconies, safe playgrounds, and clear access paths."
+            }
+          },
+          "answerTo": {
+            "title": "Answes to ",
+            "your": "your",
+            "question": "questions",
+            "host": {
+              "title": "Getting started as a host",
+              "description": "Register as a host, connect or create your stripe account, start listing your accommodation."
+            },
+            "how": {
+              "title": "How to list your holiday rental?",
+              "description": "You can list your rental by ",
+              "becomeHost": "becoming a Domits host ",
+              "description2": "and filling in the required information. We will contact you shortly after you submit your holiday rental so you can start renting and earning!"
+            },
+            "manage": {
+              "title": "How do I create and manage my host account?",
+              "description": "Creating a Host account is easy. Click the 'Become a Host' button at the top right and follow the instructions. Once your account is set up, switch to the Host Dashboard from the menu. Here, you can add your property by providing details like type, location, and amenities. After submitting, your listing will be verified. Once approved, set your availability, pricing, and upload photos. To go live, create a Stripe account for payments. You can manage everything—availability, pricing, and details—directly from the Host Dashboard."
+            },
+            "payout": {
+              "title": "How payouts and taxes work",
+              "description": "To receive payments, you need to create a Stripe Connect account and link it to Domits via the button in your dashboard. All payments are processed through Stripe, where the necessary fees are automatically deducted."
+            },
+            "calendar": {
+              "title": "How to manage your calendar and bookings",
+              "description": "An upcoming feature will allow you to manage your bookings more efficiently directly through the dashboard. Stay tuned for updates."
+            }
+          },
+          "advice": {
+            "title": "Free personal advice from our",
+            "subtitle": "Our expert team is ready for support!",
+            "team": "rental expert team",
+            "talk": "Talk to a specialist"
+          }
+        }
+}
+  

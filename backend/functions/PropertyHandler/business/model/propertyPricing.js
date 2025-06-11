@@ -4,13 +4,11 @@ export class PropertyPricing {
     property_id;
     roomRate;
     cleaning;
-    service;
 
-    constructor(property_id, roomRate, cleaning, service) {
+    constructor(property_id, roomRate, cleaning) {
         this._property_id = property_id;
         this._roomRate = roomRate;
         this._cleaning = cleaning;
-        this._service = service;
     }
 
     set _property_id(id) {
@@ -31,19 +29,15 @@ export class PropertyPricing {
     }
 
     set _cleaning(value) {
-        if (typeof value !== "number") {
-            throw new TypeException("propertyPricing - Cleaning must be a number.")
+        if (typeof value === "number") {
+            if (value < 0) {
+                throw new TypeException("propertyPricing - Cleaning must be at least €0,-")
+            }
+            this.cleaning = value;
+            return;
+        } else if (value !== null || value !== undefined) {
+            throw new TypeException("propertyPricing - Cleaning must be a number, null or undefined")
         }
-        if (value < 0) {
-            throw new TypeException("propertyPricing - Cleaning must be at least €0,-")
-        }
-        this.cleaning = value;
-    }
-
-    set _service(value) {
-        if (typeof value !== "number") {
-            throw new TypeException("propertyPricing - Service must be a number.")
-        }
-        this.service = value;
+        this.cleaning = null;
     }
 }

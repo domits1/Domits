@@ -40,6 +40,7 @@ export default class Database {
                 username: "admin",
                 password: await signer.getDbConnectAdminAuthToken(),
                 database: dbName,
+                schema: schema,
                 synchronize: false,
                 entities: await getTables(),
                 ssl: {
@@ -47,7 +48,6 @@ export default class Database {
                 }
             });
             await Database.pool.initialize();
-            await Database.pool.query(`SET search_path TO ${schema}`);
         } catch (error) {
             console.error(error);
             throw new DatabaseException("Something went wrong while initializing database connection.");
