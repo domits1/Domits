@@ -5,7 +5,6 @@ import { randomUUID } from "crypto";
 
 import { DatabaseException } from "../../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../../util/exception/NotFoundException.js";
-import { TypeException } from "../../../util/exception/TypeException.js";
 
 export class WishlistService {
   constructor(dynamoDbClient = new DynamoDBClient({})) {
@@ -18,7 +17,7 @@ export class WishlistService {
       guestId,
       wishlistKey,
       wishlistName,
-      propertyId: "__placeholder__" // leeg item om wishlist aan te maken
+      propertyId: "__placeholder__" 
     });
     const result = await this.wishlistRepository.create(item);
     if (!result) {
@@ -32,7 +31,7 @@ export class WishlistService {
       guestId,
       wishlistKey,
       propertyId,
-      wishlistName: "__ignored__" // bij toevoegen niet nodig
+      wishlistName: "__ignored__"
     });
     const result = await this.wishlistRepository.create(item);
     if (!result) {

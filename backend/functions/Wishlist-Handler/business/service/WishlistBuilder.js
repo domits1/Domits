@@ -40,7 +40,6 @@ export class WishlistBuilder {
     }
 
     build() {
-        // Controle: zijn alle verplichte velden aanwezig?
         const requiredFields = ["guestId", "wishlistKey", "wishlistName", "propertyId"];
         for (const field of requiredFields) {
             if (!this.wishlistItem[field]) {
