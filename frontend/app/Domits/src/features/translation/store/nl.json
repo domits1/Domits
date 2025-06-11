@@ -66,6 +66,8 @@
     "Please fill in required fields before proceeding.": "Vul de verplichte velden in voordat u verdergaat.",
     "Invalid fields": "Ongeldige velden",
     "Please check that all fields are filled in correctly.": "Controleer of alle velden correct zijn ingevuld.",
-    "Are you sure you want to finish the onboarding process?": "Weet u zeker dat u het onboarding proces wilt voltooien?"
+    "Are you sure you want to finish the onboarding process?": "Weet u zeker dat u het onboarding proces wilt voltooien?",
+    "What type of boat do you own?": "Wat voor type boot heeft u?",
+    "Motorboat": "Motorboot", "Sailboat": "Zeilboot", "Rigid Inflatable Boat (RIB)": "RIB (Rigid Inflatable Boat)", "Catamaran": "Catamaran", "Yacht": "Jacht", "Barge": "Vrachtschip", "House boat": "Woonboot", "Jetski": "Jetski", "Electric boat": "Elektrische boot", "Boat without license": "Boot zonder vaarbewijs"
   }
 }

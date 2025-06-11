@@ -1,4 +1,4 @@
-import {FlatList, Image, SafeAreaView, Text, TouchableOpacity, View} from "react-native";
+import {Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import {useEffect, useState} from "react";
 import TranslatedText from "../../translation/components/TranslatedText";
 import {styles} from "../styles/HostOnboardingStyles";
@@ -12,7 +12,8 @@ import villaImg from '../store/typeicons/villa.png';
 import useOrientation from "../../../hooks/useOrientation";
 
 const OnboardingType = ({formData, updateFormData, reportValidity, markVisited}) => {
-  const {dimensions} = useOrientation();
+  const {isLandscape} = useOrientation();
+  const [selectedType, setSelectedType] = useState(formData.propertyType.property_type);
 
   const propertyTypes = [
     {
@@ -41,8 +42,6 @@ const OnboardingType = ({formData, updateFormData, reportValidity, markVisited})
     },
   ];
 
-  const [selectedType, setSelectedType] = useState(formData.propertyType.property_type);
-
   function handleSelectedType(type) {
     setSelectedType(type);
     updateFormData((draft) => {
@@ -56,31 +55,29 @@ const OnboardingType = ({formData, updateFormData, reportValidity, markVisited})
   }, []);
 
   return (
-      <SafeAreaView>
+      <SafeAreaView style={styles.safeAreaNavMargin}>
         <Text style={styles.onboardingPageTitle}>
           <TranslatedText textToTranslate={"What best describes your property?"}/>
         </Text>
-        <View style={styles.typeItemContainer}>
-          <FlatList
-              data={propertyTypes}
-              numColumns={2}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({item}) => (
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.gridItemContainer}>
+              {propertyTypes.map((item, index) => (
                   <TouchableOpacity
-                      onPress={() => handleSelectedType(item)}
+                      onPress={() => handleSelectedType(item.name)}
+                      key={index}
                       style={[
-                        styles.typeItem,
-                        {width: dimensions.window.width * 0.4},
-                        selectedType?.name === item.name && styles.selectedTypeItem
+                        styles.gridItem,
+                        isLandscape ? {width: `20%`} : {width: `40%`},
+                        selectedType === item.name && styles.selectedGridItem
                       ]}>
-                    <Image source={item.img} style={styles.typeImage}/>
-                    <Text style={styles.typeItemText}>
+                    <Image source={item.img} style={styles.gridItemImage}/>
+                    <Text style={styles.gridItemText}>
                       <TranslatedText textToTranslate={item.name}/>
                     </Text>
                   </TouchableOpacity>
-              )}
-          />
-        </View>
+              ))}
+            </View>
+          </ScrollView>
       </SafeAreaView>
   )
 }

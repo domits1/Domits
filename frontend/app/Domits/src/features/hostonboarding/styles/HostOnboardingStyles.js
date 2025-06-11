@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
     color: 'black'
   },
-  // Main screen
+  // Navigation
   navButtonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -24,30 +24,44 @@ export const styles = StyleSheet.create({
   navButtonText: {
     color: "white",
   },
-  // Property type
-  typeItemContainer: {
-    alignItems: "center",
+  // Page
+  safeAreaContainer: {
+    flex: 1,
   },
-  typeItem: {
-    aspectRatio: 1,
-    margin: 10,
-    padding: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.domitsHostBlue,
-    borderRadius: 5,
+  safeAreaNavMargin: {
+    marginBottom: 20,
   },
-  selectedTypeItem: {
-    backgroundColor: 'rgba(13,68,124,0.75)'
+  scrollContainer: {
+    paddingVertical: 10,
   },
-  typeImage: {
+  // Grid list
+  gridItemImage: {
     width: "80%",
     height: "80%",
     resizeMode: "contain",
     borderRadius: 3,
   },
-  typeItemText: {
-    fontSize: 20,
-    color: 'white'
-  }
+  gridItemContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    justifyContent: 'space-evenly',
+  },
+  gridItem: {
+    width: '30%',
+    aspectRatio: 1,
+    margin: 5,
+    padding: 10,
+    backgroundColor: COLORS.domitsHostBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
+  selectedGridItem: {
+    backgroundColor: 'rgba(13,68,124,0.75)'
+  },
+  gridItemText: {
+    color: 'white',
+    textAlign: 'center'
+  },
 })
