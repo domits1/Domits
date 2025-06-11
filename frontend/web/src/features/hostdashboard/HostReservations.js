@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import Pages from "./Pages.js";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import EventIcon from "@mui/icons-material/Event";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
@@ -8,7 +7,6 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import BooleanToString from "./services/booleanToString.js";
 import { getAccessToken } from "../../services/getAccessToken.js";
-// import pageSwitcherStyling from "../../utils/PageSwitcher.module.css"; left out for now, will be added later
 import spinner from "../../images/spinnner.gif";
 
 const HostReservations = () => {
@@ -75,7 +73,6 @@ const HostReservations = () => {
         <>
           <h2>Reservations</h2>
           <section className={styles.reservationContainer}>
-            <Pages />
             <section className={styles.reservationContent}>
               <div className={styles.reservationInfo}>
                 <h2>Manage Reservations</h2>
