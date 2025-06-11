@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-import ContactItem from './contactItem';
+import ContactItem from './components/contactItem';
 import useFetchContacts from './Hooks/useFetchContacts';
 import { WebSocketContext } from './context/webSocketContext';
 
+import { styles } from './styles/inboxStyles';
 
 const Inbox = ({ userId, onContactClick, message, dashboardType }) => {
-    
+
     const navigation = useNavigation();
     const {
         contacts: hostContacts,
@@ -61,7 +62,7 @@ const Inbox = ({ userId, onContactClick, message, dashboardType }) => {
     const handleClick = (userId, contactId, contactName) => {
         setSelectedContactId(contactId);
         onContactClick?.(contactId, contactName);
-        navigation.navigate('ChatScreen', { userId, recipientId: contactId, contactName });
+        navigation.navigate('CHAT_SCREEN', { userId, recipientId: contactId, contactName });
     };
 
     const renderItem = ({ item }) => (
@@ -101,23 +102,5 @@ const Inbox = ({ userId, onContactClick, message, dashboardType }) => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 10,
-    },
-    listItem: {
-        marginBottom: 10,
-    },
-    loadingText: {
-        textAlign: 'center',
-        marginTop: 20,
-    },
-    emptyText: {
-        textAlign: 'center',
-        marginTop: 20,
-    },
-});
 
 export default Inbox;

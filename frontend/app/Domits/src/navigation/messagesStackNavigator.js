@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MessagesTab from './messagesTabNavigator';
 import { useNavigation } from '@react-navigation/native';
-import ChatScreen from '../screens/message/chatScreen';
+import ChatScreen from '../screens/message/components/chatScreen';
 
 import { WebSocketProvider } from '../screens/message/context/webSocketContext';
 import { useAuth } from '../context/AuthContext';
@@ -63,14 +63,14 @@ const MessagesStackNavigator = () => {
         }}
       >
         <Stack.Screen
-          name="MessagesScreen"
+          name="MESSAGES_SCREEN"
           component={MessagesTab}
           options={{
             headerTitle: '',
           }}
         />
         <Stack.Screen
-          name="ChatScreen"
+          name="CHAT_SCREEN"
           component={ChatScreen}
           options={{
             header: () => (
