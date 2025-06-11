@@ -1,5 +1,5 @@
 import {GetParameterCommand, SSMClient} from "@aws-sdk/client-ssm";
-
+    
 class SystemManagerRepository {
 
     ssmClient = new SSMClient({region: "eu-north-1"})
