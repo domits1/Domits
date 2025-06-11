@@ -1,8 +1,19 @@
-import {FlatList, SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
+import {Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import TranslatedText from "../../../../translation/components/TranslatedText";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {styles} from "../../../styles/HostOnboardingStyles";
 import useOrientation from "../../../../../hooks/useOrientation";
+
+import barge from "../../../store/boaticons/barge.png";
+import boat_without_license from "../../../store/boaticons/boat_without_license.png";
+import catamaran from "../../../store/boaticons/catamaran.png";
+import electric_boat from "../../../store/boaticons/electric_boat.png";
+import house_boat from "../../../store/boaticons/house_boat.png";
+import jetski from "../../../store/boaticons/jetski.png";
+import motorboat from "../../../store/boaticons/motorboat.png";
+import rib from "../../../store/boaticons/rib.png";
+import sailboat from "../../../store/boaticons/sailboat.png";
+import yacht from "../../../store/boaticons/yacht.png";
 
 const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
   const {isLandscape} = useOrientation();
@@ -11,43 +22,43 @@ const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
   const boatSpaceTypes = [
     {
       name: 'Motorboat',
-      img: ''
+      img: motorboat
     },
     {
       name: 'Sailboat',
-      img: ''
+      img: sailboat
     },
     {
       name: 'Rigid Inflatable Boat (RIB)',
-      img: ''
+      img: rib
     },
     {
       name: 'Catamaran',
-      img: ''
+      img: catamaran
     },
     {
       name: 'Yacht',
-      img: ''
+      img: yacht
     },
     {
       name: 'Barge',
-      img: ''
+      img: barge
     },
     {
       name: 'House boat',
-      img: ''
+      img: house_boat
     },
     {
       name: 'Jetski',
-      img: ''
+      img: jetski
     },
     {
       name: 'Electric boat',
-      img: ''
+      img: electric_boat
     },
     {
       name: 'Boat without license',
-      img: ''
+      img: boat_without_license
     },
   ];
 
@@ -75,6 +86,7 @@ const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
                       isLandscape ? {width: `20%`} : {width: `30%`},
                       selectedSpace === item.name && styles.selectedGridItem
                     ]}>
+                  <Image source={item.img} style={styles.gridItemImage}/>
                   <Text style={styles.gridItemText}>
                     <TranslatedText textToTranslate={item.name}/>
                   </Text>
