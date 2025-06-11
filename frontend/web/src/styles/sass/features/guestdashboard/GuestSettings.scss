@@ -1,0 +1,135 @@
+// GuestDashboard.scss
+
+$page-padding: 20px;
+$box-padding: 12px;
+$border-radius: 6px;
+$color-bg: #f9f9f9;
+$color-border: #ddd;
+$color-primary: #007bff;
+$color-hover: darken($color-primary, 10%);
+$transition: 0.2s ease-in-out;
+
+.page-body {
+  padding: $page-padding;
+  h2 {
+    margin-bottom: 16px;
+    font-size: 1.75rem;
+    color: #333;
+  }
+
+  .dashboards {
+    .content {
+      background: #fff;
+      padding: $page-padding;
+      border: 1px solid $color-border;
+      border-radius: $border-radius;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      .personalInfoContent {
+        h3 {
+          margin-bottom: 12px;
+          font-size: 1.5rem;
+          color: #444;
+        }
+
+        .InfoBox {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: $color-bg;
+          border: 1px solid $color-border;
+          border-radius: $border-radius;
+          padding: $box-padding;
+          margin-bottom: 12px;
+
+          span {
+            flex: 0 0 80px;
+            font-weight: 600;
+            color: #555;
+          }
+
+          p,
+          .guest-edit-input {
+            flex: 1;
+            margin: 0;
+            padding: 6px 8px;
+            font-size: 1rem;
+            color: #333;
+          }
+
+          .guest-edit-input {
+            border: 1px solid $color-border;
+            border-radius: $border-radius;
+            transition: border-color $transition;
+
+            &:focus {
+              outline: none;
+              border-color: $color-primary;
+            }
+          }
+
+          .countryCodeDropdown {
+            flex: 0 0 200px;
+            padding: 6px;
+            font-size: 0.95rem;
+            border: 1px solid $color-border;
+            border-radius: $border-radius;
+            transition: border-color $transition;
+
+            &:focus {
+              outline: none;
+              border-color: $color-primary;
+            }
+          }
+
+          .edit-icon-background {
+            flex: 0 0 auto;
+            margin-left: 8px;
+            width: 32px;
+            height: 32px;
+            padding: 4px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            cursor: pointer;
+            transition: background $transition;
+
+            &:hover {
+              background: #ccc;
+            }
+
+            img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+          }
+
+          .guest-check-icon {
+            width: 20px;
+            height: 20px;
+          }
+
+          .guest-edit-icon {
+            width: 20px;
+            height: 20px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive tweaks
+@media (max-width: 600px) {
+  .InfoBox {
+    flex-direction: column;
+    align-items: stretch;
+    span {
+      margin-bottom: 8px;
+    }
+    .edit-icon-background {
+      margin-top: 8px;
+      align-self: flex-end;
+    }
+  }
+}

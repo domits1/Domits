@@ -41,6 +41,7 @@
 @use "features/guestdashboard/Pages";
 @use "features/guestdashboard/GuestBooking";
 @use "features/guestdashboard/mainDashboardGuest";
+@use "features/guestdashboard/GuestSettings";
 
 :root {
   --primary-color: #0D9813;
