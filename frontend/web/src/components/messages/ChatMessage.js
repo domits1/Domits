@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';
 
 const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
     const { userId: senderId, text, createdAt, isRead, isSent, fileUrls } = message;
@@ -14,7 +14,7 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
     const [modalImage, setModalImage] = useState(null);
 
     return (
-        <>
+        <div className={`${prefix}chat-message-container`}>
             <div className={`${prefix}chat-message ${isRead ? 'read' : 'unread'} ${isSent ? 'sent' : 'received'}`}>
                 <div className={`message-header`}>
                     <span className={`sender-name`}>
@@ -49,7 +49,7 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
                     <img src={modalImage} alt="Enlarged attachment" className="image-modal-content" />
                 </div>
             )}
-        </>
+        </div>
     );
 };
 
