@@ -62,8 +62,9 @@ class ReservationRepository {
         const response = await client.send(command);
         return response;
     }
+    
     // ---------
-    // Read bookings by guest_ID (auth)
+    // Read bookings by guest_ID (gets userid from auth token) 
     // ---------
     async readByGuestId(guest_Id) {
         const input = {

@@ -1,4 +1,5 @@
 import { getAuthToken } from "../../util/getAuthToken";
+import getAuthToken  from "../../util/getAuthToken";
 
 module.exports = (async () => {
     const authToken = await getAuthToken();
@@ -10,8 +11,7 @@ module.exports = (async () => {
             Authorization: authToken,
         },
         queryStringParameters: {
-            readType: "guest",
-            guest_Id: "6b37c21b-4372-495f-8ca0-ac4ba4a340fc"
+            readType: "guest"
         }
     };
 })();
