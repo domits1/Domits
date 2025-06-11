@@ -51,7 +51,7 @@ export const styles = StyleSheet.create({
     width: '30%',
     aspectRatio: 1,
     margin: 5,
-    padding: 10,
+    padding: 20,
     backgroundColor: COLORS.domitsHostBlue,
     alignItems: 'center',
     justifyContent: 'center',

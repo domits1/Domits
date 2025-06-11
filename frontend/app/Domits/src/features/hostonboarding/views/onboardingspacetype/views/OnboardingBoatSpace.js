@@ -17,7 +17,7 @@ import yacht from "../../../store/boaticons/yacht.png";
 
 const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
   const {isLandscape} = useOrientation();
-  const [selectedSpace, setSelectedSpace] = useState(formData.propertyType.propertySpace);
+  const [selectedBoatSpace, setSelectedBoatSpace] = useState(formData.propertyType.propertySpace);
 
   const boatSpaceTypes = [
     {
@@ -62,8 +62,8 @@ const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
     },
   ];
 
-  function handleSelectedSpace(space) {
-    setSelectedSpace(space);
+  function handleSelectedBoatSpace(space) {
+    setSelectedBoatSpace(space);
     updateFormData((draft) => {
       draft.propertyType.propertySpace = space;
     });
@@ -79,12 +79,12 @@ const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
           <View style={styles.gridItemContainer}>
             {boatSpaceTypes.map((item, index) => (
                 <TouchableOpacity
-                    onPress={() => handleSelectedSpace(item.name)}
+                    onPress={() => handleSelectedBoatSpace(item.name)}
                     key={index}
                     style={[
                       styles.gridItem,
                       isLandscape ? {width: `20%`} : {width: `30%`},
-                      selectedSpace === item.name && styles.selectedGridItem
+                      selectedBoatSpace === item.name && styles.selectedGridItem
                     ]}>
                   <Image source={item.img} style={styles.gridItemImage}/>
                   <Text style={styles.gridItemText}>
