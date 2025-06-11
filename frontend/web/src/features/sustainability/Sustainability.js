@@ -1,5 +1,4 @@
 import React, { useContext } from "react";
-import "./Sustainability.css";
 import {submitAccommodation} from "../hostonboarding/services/SubmitAccommodation";
 import {LanguageContext} from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
