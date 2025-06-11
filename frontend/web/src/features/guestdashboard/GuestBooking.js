@@ -3,14 +3,17 @@ import {Auth} from 'aws-amplify';
 import {useNavigate} from 'react-router-dom';
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import Pages from './Pages.js';
+import { getAccessToken } from "../../services/getAccessToken.js";
 
 const BookingGuestDashboard = () => {
     const navigate = useNavigate();
     const [bookings, setBookings] = useState([]);
+    const [newBookings, setnewBookings] = useState([]);
     const [guestID, setGuestID] = useState(null);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
     const [showBookingListPopup, setBookingListPopup] = useState(false);
+    const authToken = getAccessToken();
 
     useEffect(() => {
         const setUserIdAsync = async () => {
@@ -42,7 +45,8 @@ const BookingGuestDashboard = () => {
                 throw new Error('Failed to fetch bookings');
             }
             const data = await response.json();
-            console.log(data)
+            console.log(data);
+            console.log("Marijn", authToken);
             setBookings(data);
         } catch (error) {
             console.error('Error fetching bookings:', error);

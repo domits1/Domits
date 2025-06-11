@@ -11,7 +11,6 @@ module.exports = (async () => {
         },
         queryStringParameters: {
             readType: "guest",
-            guest_Id: "6b37c21b-4372-495f-8ca0-ac4ba4a340fc"
         }
     };
 })();
