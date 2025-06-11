@@ -76,24 +76,6 @@ class StripeRepository {
       console.error(error)
       throw new Error("Failed to save payment data.");
     }
-
-    async function createCheckoutSession() {
-      // const stripe = await stripePromise;
-      // const session = await stripe.checkout.sessions.create({
-      //   success_url: 'https://example.com/success',
-      //   line_items: [
-      //     {
-      //       price: "500",
-      //       quantity: 2,
-      //     },
-      //   ],
-      //   mode: 'payment',
-      // });
-      // const response = await client.send(session);
-      // console.log(response);
-      // return response;
-      return "https://example.com/success";
-    }
   }
 
   async getPaymentByBookingId(bookingId) {

@@ -14,13 +14,9 @@ class PaymentService{
 
         const paymentData = await this.stripeRepository.createPaymentIntent(account_Id, propertyId, dates);
         // console.log(paymentData);
-
-        const checkoutsession = await this.stripeRepository.addPaymentToTable(bookingId, paymentData);
-        // console.log(checkoutsession);
         return {
             stripeClientSecret: paymentData.stripeClientSecret,
             bookingId: bookingId,
-            stripeCheckoutSession: checkoutsession,
         }
     }
 }
