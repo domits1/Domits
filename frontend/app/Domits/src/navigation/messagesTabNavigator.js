@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
 import Notifications from '../screens/message/notifications';
 import Inbox from '../screens/message/Inbox';
-import SupportHost from '../screens/message/supportHost';
-import SupportGuest from '../screens/message/supportGuest';
+import Support from '../screens/message/support';
 
 import { WebSocketProvider } from '../screens/message/context/webSocketContext';
+import {styles} from './styles/messagesStackNavigatorStyles';
 
 const MessagesTab = () => {
     const [activeTab, setActiveTab] = useState('Notifications');
@@ -47,38 +47,11 @@ const MessagesTab = () => {
                     {activeTab === 'Notifications' && <Notifications userId={userId} />}
                     {activeTab === 'Inbox' && <Inbox userId={userId} dashboardType={userGroup} />}
 
-                    {activeTab === 'Support' && (userGroup === 'Host' ? <SupportHost /> : <SupportGuest />)}
+                    {activeTab === 'Support' && <Support />}
                 </View>
             </View>
         </WebSocketProvider>
     );
 };
-
-const styles = StyleSheet.create({
-    tabAll: {
-        flex: 1,
-        backgroundColor: 'white',
-    },
-    tabBar: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        backgroundColor: 'white',
-        paddingVertical: 10,
-        marginTop: 75,
-    },
-    tabText: {
-        fontSize: 16,
-        color: 'black',
-    },
-    activeTabText: {
-        color: '#0fa616',
-
-    },
-    screenContainer: {
-        flex: 1,
-        backgroundColor: 'white',
-        padding: 10,
-    },
-});
 
 export default MessagesTab;
