@@ -24,7 +24,6 @@ const MessagesTab = () => {
     }, [user, userAttributes]);
 
     return (
-        <WebSocketProvider userId={userId}>
             <View style={styles.tabAll}>
                 <View style={styles.tabBar}>
                     <TouchableOpacity onPress={() => setActiveTab('Notifications')}>
@@ -50,7 +49,6 @@ const MessagesTab = () => {
                     {activeTab === 'Support' && <Support />}
                 </View>
             </View>
-        </WebSocketProvider>
     );
 };
 

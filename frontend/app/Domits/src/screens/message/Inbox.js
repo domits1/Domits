@@ -6,6 +6,7 @@ import ContactItem from './components/contactItem';
 import useFetchContacts from './Hooks/useFetchContacts';
 import { WebSocketContext } from './context/webSocketContext';
 
+import { CHAT_SCREEN } from '../../navigation/utils/NavigationNameConstants';
 import { styles } from './styles/inboxStyles';
 
 const Inbox = ({ userId, onContactClick, message, dashboardType }) => {
@@ -62,7 +63,7 @@ const Inbox = ({ userId, onContactClick, message, dashboardType }) => {
     const handleClick = (userId, contactId, contactName) => {
         setSelectedContactId(contactId);
         onContactClick?.(contactId, contactName);
-        navigation.navigate('CHAT_SCREEN', { userId, recipientId: contactId, contactName });
+        navigation.navigate(CHAT_SCREEN, { userId, recipientId: contactId, contactName });
     };
 
     const renderItem = ({ item }) => (

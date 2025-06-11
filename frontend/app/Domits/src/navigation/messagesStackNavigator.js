@@ -8,6 +8,10 @@ import ChatScreen from '../screens/message/components/chatScreen';
 
 import { WebSocketProvider } from '../screens/message/context/webSocketContext';
 import { useAuth } from '../context/AuthContext';
+import {
+  MESSAGES_SCREEN,
+  CHAT_SCREEN,
+} from './utils/NavigationNameConstants';
 
 const Stack = createNativeStackNavigator();
 
@@ -63,14 +67,14 @@ const MessagesStackNavigator = () => {
         }}
       >
         <Stack.Screen
-          name="MESSAGES_SCREEN"
+          name={MESSAGES_SCREEN}
           component={MessagesTab}
           options={{
             headerTitle: '',
           }}
         />
         <Stack.Screen
-          name="CHAT_SCREEN"
+          name={CHAT_SCREEN}
           component={ChatScreen}
           options={{
             header: () => (
