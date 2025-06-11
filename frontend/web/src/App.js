@@ -79,7 +79,6 @@ import Homepage from "./pages/home/homePage.js";
 import Howitworks from "./pages/howitworks/Howitworks.js";
 import Landing from "./pages/landingpage/Landing";
 import Policy from "./pages/policy/Policy";
-import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
 import Terms from "./pages/terms/Terms";
 import Travelinnovation from "./pages/travelinnovationlab/travelinnovation";
@@ -161,7 +160,6 @@ function App() {
                 <Route path="/home" element={<Home searchResults={searchResults} />} />
                 <Route path="/" element={<Homepage />} />
                 <Route path="/about" element={<About />} />
-                <Route path="/releaseTwo" element={<ReleaseTwo />} />
                 <Route path="/data-safety" element={<Datasafety />} />
                 <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
                 <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />

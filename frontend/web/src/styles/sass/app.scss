@@ -16,6 +16,10 @@
 @use "features/auth/login";
 @use "features/auth/register";
 
+//sustainability
+@use "features/sustainability/sustainability";
+
+
 //pages
 //careers
 @use "pages/careers/careers";
@@ -24,6 +28,12 @@
 //contact
 @use "pages/contact/contact";
 
+//about
+@use "pages/about/about";
+
+
+//productupdates
+@use "pages/productupdates/release-Updates";
 
 
 //GuestDashboard
