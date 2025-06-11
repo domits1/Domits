@@ -1,14 +1,15 @@
-import GeneralModel from "./model/generalModel.mjs";
-import IdentifierModel from "./model/identifierModel.mjs";
-import GetParamsModel from "./model/getParamsModel.mjs";
-import AuthManager from "../auth/authManager.mjs";
-import sendEmail from './sendEmail.mjs';
-import Forbidden from "../util/exception/Forbidden.mjs";
-import ReservationRepository from "../data/reservationRepository.mjs";
-import StripeRepository from "../data/stripeRepository.mjs";
-import CognitoRepository from "../data/cognitoRepository.mjs";
-import PropertyRepository from "../data/propertyRepository.mjs";
-import getHostEmailById from './getHostEmailById.mjs';
+import GeneralModel from "./model/generalModel.js";
+import IdentifierModel from "./model/identifierModel.js";
+import GetParamsModel from "./model/getParamsModel.js";
+import AuthManager from "../auth/authManager.js";
+import sendEmail from './sendEmail.js';
+import Forbidden from "../util/exception/Forbidden.js";
+import TypeException from "../util/exception/TypeException.js";
+import ReservationRepository from "../data/reservationRepository.js";
+import StripeRepository from "../data/stripeRepository.js";
+import CognitoRepository from "../data/cognitoRepository.js";
+import PropertyRepository from "../data/propertyRepository.js";
+import getHostEmailById from './getHostEmailById.js';
 
 class BookingService {
 	constructor() {
@@ -27,12 +28,9 @@ class BookingService {
 	async create(event) {
 		//await this.verifyEventDataTypes(event);
 		const authenticatedUser = await this.authManager.authenticateUser(event.Authorization);
-		const userEmail = authenticatedUser.email;
-		const userFullname = authenticatedUser.given_name + ' ' + authenticatedUser.family_name;
+		const userEmail = authenticatedUser.email
 		const fetchedProperty = await this.propertyRepository.getPropertyById(event.identifiers.property_Id);
-		const hostInfo = await getHostEmailById(fetchedProperty.hostId);
-		const hostEmail = hostInfo.hostEmail;
-		const hostFullname = hostInfo.fullName;
+		const hostEmail = await getHostEmailById(fetchedProperty.hostId);
 
 		const bookingInfo = {
 			guests: event.general.guests,
@@ -43,7 +41,7 @@ class BookingService {
 
 		await sendEmail(userEmail, hostEmail, bookingInfo);
 
-		return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId, userFullname, hostFullname);
+		return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
 
 	}
 
@@ -75,8 +73,8 @@ class BookingService {
 				return await this.reservationRepository.readByPropertyId(event.event.property_Id);
 			}
 			case "guest": {
-				await this.authManager.authenticateUser(event.Authorization);
-				return await this.reservationRepository.readByGuestId(event.event.guest_Id);
+				authToken = await this.authManager.authenticateUser(event.Authorization);
+				return await this.reservationRepository.readByGuestId(authToken.sub);
 			}
 
 			case "createdAt": {
@@ -88,7 +86,6 @@ class BookingService {
 			}
 			case "hostId": { 
 				authToken = await this.authManager.authenticateUser(event.Authorization);
-				console.log("De hostId:", authToken.sub);
 				return await this.reservationRepository.readByHostId(authToken.sub);
 			}
 			case "departureDate":{
@@ -115,7 +112,7 @@ class BookingService {
 			}
 			default:
 				{
-					throw new Error("Unable to determine what read type to use.");
+					throw new TypeException("Unable to determine what read type to use.");
 				}
 			}
 		}
