@@ -31,7 +31,7 @@ const useFetchContacts = (userId, role) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch host contacts');
+        throw new Error('Failed to fetch contacts');
       }
 
       const responseData = await response.json();
@@ -113,7 +113,7 @@ const useFetchContacts = (userId, role) => {
       setContacts(acceptedContacts);
       setPendingContacts(pendingContacts);
     } catch (error) {
-      setError('Error fetching host contacts: ' + error.message);
+      setError('Error fetching contacts: ' + error.message);
     } finally {
       setLoading(false);
     }
