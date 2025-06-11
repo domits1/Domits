@@ -34,34 +34,66 @@ export const styles = StyleSheet.create({
   scrollContainer: {
     paddingVertical: 10,
   },
-  // Grid list
-  gridItemImage: {
-    width: "80%",
-    height: "80%",
-    resizeMode: "contain",
-    borderRadius: 3,
+  // List
+  listItemContainer: {
+    alignItems: 'center',
   },
+  listItem: {
+    borderWidth: 1,
+    borderColor: COLORS.domitsHostBlue,
+    borderRadius: 10,
+    marginHorizontal: 10,
+    marginVertical: 5,
+    padding: 10,
+    width: '90%',
+    maxWidth: 600
+  },
+  listItemTitle: {
+    fontSize: 30,
+    fontWeight: 600,
+    color: 'black',
+  },
+  listItemDescription: {
+    color: "rgba(70,70,70,0.7)",
+  },
+  selectedListItem: {
+    backgroundColor: COLORS.domitsHostBlue,
+  },
+  selectedItemText: {
+    color: 'white',
+  },
+  // Grid list
   gridItemContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'flex-start',
     justifyContent: 'space-evenly',
   },
+  gridItemImage: {
+    width: "80%",
+    height: "80%",
+    resizeMode: "contain",
+    borderRadius: 3,
+  },
   gridItem: {
     width: '30%',
     aspectRatio: 1,
     margin: 5,
     padding: 20,
-    backgroundColor: COLORS.domitsHostBlue,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 10,
-  },
-  selectedGridItem: {
-    backgroundColor: 'rgba(13,68,124,0.75)'
+    borderWidth: 1,
+    borderColor: COLORS.domitsHostBlue,
   },
   gridItemText: {
-    color: 'white',
-    textAlign: 'center'
+    textAlign: 'center',
+    color: 'black',
   },
+  selectedGridItem: {
+    backgroundColor: COLORS.domitsHostBlue,
+  },
+  selectedGridItemText: {
+    color: 'white',
+  }
 })

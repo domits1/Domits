@@ -71,7 +71,7 @@ const OnboardingType = ({formData, updateFormData, reportValidity, markVisited})
                         selectedType === item.name && styles.selectedGridItem
                       ]}>
                     <Image source={item.img} style={styles.gridItemImage}/>
-                    <Text style={styles.gridItemText}>
+                    <Text style={[styles.gridItemText, selectedType === item.name && styles.selectedGridItemText]}>
                       <TranslatedText textToTranslate={item.name}/>
                     </Text>
                   </TouchableOpacity>

@@ -87,7 +87,7 @@ const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
                       selectedBoatSpace === item.name && styles.selectedGridItem
                     ]}>
                   <Image source={item.img} style={styles.gridItemImage}/>
-                  <Text style={styles.gridItemText}>
+                  <Text style={[styles.gridItemText, selectedBoatSpace === item.name && styles.selectedItemText]}>
                     <TranslatedText textToTranslate={item.name}/>
                   </Text>
                 </TouchableOpacity>

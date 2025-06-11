@@ -72,7 +72,7 @@ const OnboardingCamperSpace = ({formData, updateFormData, reportValidity}) => {
                       selectedCamperSpace === item.name && styles.selectedGridItem
                     ]}>
                   <Image source={item.img} style={styles.gridItemImage}/>
-                  <Text style={styles.gridItemText}>
+                  <Text style={[styles.gridItemText, selectedCamperSpace === item.name && styles.selectedGridItemText]}>
                     <TranslatedText textToTranslate={item.name}/>
                   </Text>
                 </TouchableOpacity>

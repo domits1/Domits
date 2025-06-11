@@ -110,9 +110,15 @@ const HostOnboarding = ({navigation}) => {
     );
   }
 
+  /**
+   * Reset space type when different property type is selected.
+   */
   useEffect(() => {
     const step = steps.find(item => item.component === OnboardingSpace);
     updatePageStatus(step.key, {valid: false})
+    updateFormData((draft) => {
+      draft.propertyType.propertySpace = "";
+    });
   }, [formData.propertyType.property_type])
 
   return (
