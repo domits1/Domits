@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Alert } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useUploadUrl } from './Hooks/useUploadURL';
+import { useUploadUrl } from '../Hooks/useUploadURL';
 
 const ChatUploadAttachment = ({ onUploadComplete, iconSize = 40, iconColor = 'black', iconStyle }) => {
   const { getUploadUrl } = useUploadUrl();
@@ -42,7 +42,7 @@ const ChatUploadAttachment = ({ onUploadComplete, iconSize = 40, iconColor = 'bl
         return;
       }
 
-      onUploadComplete?.(response.fileUrl); // Notify parent
+      onUploadComplete?.(response.fileUrl);
     } catch (err) {
       if (!DocumentPicker.isCancel(err)) {
         console.error('Upload error:', err);
