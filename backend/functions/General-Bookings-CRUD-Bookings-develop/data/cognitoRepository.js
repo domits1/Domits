@@ -1,5 +1,5 @@
 import { CognitoIdentityProviderClient, GetUserCommand} from "@aws-sdk/client-cognito-identity-provider";
-import Unauthorized from "../util/exception/Unauthorized.mjs"
+import Unauthorized from "../util/exception/Unauthorized.js"
 const client = new CognitoIdentityProviderClient({ region: "eu-north-1" });
 
 class CognitoRepository{
@@ -11,7 +11,6 @@ class CognitoRepository{
         try {
             const command = new GetUserCommand(input);
             const response = await client.send(command);
-            console.log("UserID from CognitoRepository.mjs", response.Username);
             return response;
         } catch (error) {
             console.error(error);
