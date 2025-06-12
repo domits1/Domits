@@ -1,12 +1,13 @@
-import {Alert, Text, TouchableOpacity, View} from "react-native";
+import {Alert, SafeAreaView, Text, TouchableOpacity, View} from "react-native";
 import OnboardingHeader from "../components/OnboardingHeader";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import propertyFormData from "../utils/propertyFormData";
 import {produce} from "immer";
 import {steps} from "../utils/pageStepsConfig";
 import TranslatedText from "../../translation/components/TranslatedText";
 import {styles} from "../styles/HostOnboardingStyles";
 import {useTranslation} from "react-i18next";
+import OnboardingSpace from "../views/onboardingspacetype/screens/OnboardingSpace";
 
 const HostOnboarding = ({navigation}) => {
   const {t} = useTranslation();
@@ -109,11 +110,22 @@ const HostOnboarding = ({navigation}) => {
     );
   }
 
+  /**
+   * Reset space type when different property type is selected.
+   */
+  useEffect(() => {
+    const step = steps.find(item => item.component === OnboardingSpace);
+    updatePageStatus(step.key, {valid: false})
+    updateFormData((draft) => {
+      draft.propertyType.propertySpace = "";
+    });
+  }, [formData.propertyType.property_type])
+
   return (
       <View style={{flex: 1}}>
         <OnboardingHeader headerTitle={currentStep.title} jumpToStep={jumpToStep} pageStatus={pageStatus}/>
 
-        <View style={{flex: 1}}>
+        <SafeAreaView style={{flex: 1}}>
           <CurrentComponent
               formData={formData}
               updateFormData={updateFormData}
@@ -122,7 +134,7 @@ const HostOnboarding = ({navigation}) => {
               }
               markVisited={() => updatePageStatus(currentStep.key, {visited: true})}
           />
-        </View>
+        </SafeAreaView>
 
         <View style={styles.navButtonContainer}>
           {currentStepIndex === 0 && (

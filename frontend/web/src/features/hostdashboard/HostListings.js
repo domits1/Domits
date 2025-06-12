@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Pages from "./Pages";
 import styles from "./HostDashboard.module.scss";
 import add from "../../images/icons/host-add.png";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -188,7 +187,6 @@ function HostListings() {
     <div className="page-body">
       <h2>Listings</h2>
       <div className={styles.dashboardHost}>
-        <Pages />
         <div className={styles.hostListingContainer}>
           {isLoading ? (
             <div>
