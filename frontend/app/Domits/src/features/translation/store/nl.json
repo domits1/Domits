@@ -73,6 +73,11 @@
     "Entire house": "Gehele huis", "Room": "Kamer", "A shared room": "Een gedeelde kamer",
     "Guests have the entire space to themselves.": "Gasten hebben de hele ruimte voor zichzelf.",
     "Guests have their own room in a house and share other spaces.": "Gasten hebben een eigen kamer in een huis en delen andere ruimtes.",
-    "Guests sleep in a room or common area that they may share with you or others.": "Gasten slapen in een kamer of gemeenschappelijke ruimte die ze met u of anderen delen."
+    "Guests sleep in a room or common area that they may share with you or others.": "Gasten slapen in een kamer of gemeenschappelijke ruimte die ze met u of anderen delen.",
+    "Name your property": "Geef uw accommodatie een naam",
+    "Property Title": "Accommodatie Titel",
+    "Title is required.": "Titel is verplicht.",
+    "Special characters are not allowed.": "Speciale tekens zijn niet toegestaan.",
+    "A short title works best. Don't worry, you can always change it later.": "Een korte titel werkt het beste. Maak je geen zorgen, u kunt het later altijd nog wijzigen."
   }
 }
