@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Pages from "./Pages.js";
 import "./HostFinanceTab.css";
 import { useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
@@ -140,9 +139,6 @@ const HostFinanceTab = () => {
     <main className="page-Host">
       <h2>Finance</h2>
       <div className="page-Host-content">
-        <div className="sidebar">
-          <Pages />
-        </div>
         <section className="host-pc-finance">
           <div className="finance-content">
             <div className="finance-steps">

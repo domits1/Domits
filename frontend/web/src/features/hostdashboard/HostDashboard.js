@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Pages from "./Pages.js";
 import './HostHomepage.scss';
-import './PagesDropdown.css';
 import styles from './HostDashboard.module.scss'
 import StripeModal from './StripeModal.js';
 import { Auth } from 'aws-amplify';
@@ -100,7 +98,6 @@ function HostDashboard() {
         <main className="page-body">
             <h2>Dashboard</h2>
             <div className={styles.dashboardHost}>
-                <Pages/>
                 <div>
                 <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)}/>
                 <div className={styles.dashboardContainer}>

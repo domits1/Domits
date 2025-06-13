@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { UserProvider } from "../../features/hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
-import Pages from "../../features/hostdashboard/Pages";
 
 import ContactList from "./ContactList";
 import ChatScreen from "./ChatScreen";
@@ -25,7 +24,6 @@ const MessagesContent = ({ dashboardType }) => {
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [selectedContactName, setSelectedContactName] = useState(null);
     const [message, setMessage] = useState([]);
-    const [showPages, setShowPages] = useState(true);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
     const isMobile = screenWidth < 768;
     const isTablet = screenWidth >= 768 && screenWidth < 1440;
@@ -65,11 +63,6 @@ const MessagesContent = ({ dashboardType }) => {
             <WebSocketProvider userId={userId}>
                 {userId ? (
                     <div className={`${dashboardType}-chat-components`}>
-                        {showPages && dashboardType === 'host' && (
-                            <div className="chat-side">
-                                <Pages />
-                            </div>
-                        )}
                         {showContactList && (
                             <ContactList
                                 userId={userId}

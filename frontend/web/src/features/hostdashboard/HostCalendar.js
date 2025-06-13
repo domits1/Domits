@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Pages from "./Pages";
 import "./HostHomepage.scss";
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
@@ -161,7 +160,6 @@ function HostCalendar() {
     <div className="page-body">
       <h2>Calendar</h2>
       <div className={styles.dashboardHost}>
-        <Pages />
         {isLoading ? (
           <div className="loading-spinner-calender">
             <img src={spinner} />

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Pages from './Pages';
 import './HostReports.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -58,9 +57,6 @@ function HostReports() {
     return (
         <main className="page-body">
             <div className="dashboard">
-                <div className="tabsContainer">
-                    <Pages />
-                </div>
                 <div className="contentContainer">
                     {loading && <p>Loading data...</p>}
                     {error && <p>Error loading data: {error}</p>}
