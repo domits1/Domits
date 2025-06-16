@@ -4,7 +4,8 @@ import { Auth } from "aws-amplify";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-import CheckoutForm from "./views/CheckoutForm";
+import SetupForm from "./views/SetupForm.js";
+
 import { getAccessToken } from "../../services/getAccessToken";
 import Register from "../auth/Register";
 import FetchPropertyDetails from "./services/FetchPropertyDetails";
@@ -16,7 +17,6 @@ import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import Calender from "@mui/icons-material/CalendarTodayOutlined";
 import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
-import { create } from "@mui/material/styles/createTransitions";
 
 const stripePromise = loadStripe(
   "pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3" // Change to live key in production
@@ -29,12 +29,15 @@ const BookingOverview = () => {
   const [userData, setUserData] = useState({ username: "", email: "", phone_number: "" });
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [cognitoUserEmail, setCognitoUserEmail] = useState(null);
+  const [showCheckout, setShowCheckout] = useState(null);
+  const [hideButton, setHideButton] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pricingObject, setPricingObject] = useState(null);
   const [isProcessing, setIsProcessing] = useState(true);
   const [accommodation, setAccommodation] = useState(null);
+  const [stripeClientSecret, setStripeClientSecret] = useState(null);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const propertyId = searchParams.get("id");
@@ -43,22 +46,27 @@ const BookingOverview = () => {
   const guests = searchParams.get("guests");
   const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
   const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ""}`;
-
   const options = {
-    mode: "payment",
-    amount: 1099,
-    currency: "usd",
-    // Fully customizable with appearance API.
-    appearance: {
-      /*...*/
-    },
-  };
+  clientSecret: stripeClientSecret,
+  // Fully customizable with appearance API.
+  appearance: {
+    colorBackground: '#4caf50',
+    fontFamily: "Font Awesome 6 Free"
+  },
+};
+
   useEffect(() => {
     const fetchAccommodation = async () => {
       try {
+        if(!checkInDate && !checkOutDate && !propertyId && !guests ){
+          setError("Unable to retrieve property information from the URL. Please try again later.")
+          console.error("URL Query Parameters are missing from your request. Unable to load BookingOverview.")
+          throw new NotFoundException("checkInDate, checkOutDate, guests, or PropertyId missing from URL.");
+        }
+
         const retrievedPricingObject = await FetchPropertyDetails(propertyId, checkInDate, checkOutDate);
-        const retrievedBookingDetails = { accommodation: pricingObject, checkInDate, checkOutDate, guests };
         setPricingObject(retrievedPricingObject);
+        const retrievedBookingDetails = { accommodation: retrievedPricingObject, checkInDate, checkOutDate, guests };
         setBookingDetails(retrievedBookingDetails);
 
         console.log("Pricing Object:", retrievedPricingObject);
@@ -71,13 +79,12 @@ const BookingOverview = () => {
         }
       } catch (error) {
         console.error("Error fetching accommodation data:", error);
-        setError("Error fetching property data. Please try again later.");
+        setError("We couldn't load the property details. Check your internet or try again. If this continues, reach out to support.");
       }
     };
     fetchAccommodation();
   }, [propertyId, checkInDate, checkOutDate, guests]);
 
-    
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
@@ -119,15 +126,15 @@ const BookingOverview = () => {
 
   const createBooking = async () => {
     const event = {
-        identifiers: {
-          property_Id: propertyId,
-        },
-        general: {
-          guests: parseFloat(bookingDetails.guests),
-          latePayment: false,
-          arrivalDate: parseFloat(bookingDetails.checkInDate),
-          departureDate: parseFloat(bookingDetails.checkOutDate),
-        },
+      identifiers: {
+        property_Id: propertyId,
+      },
+      general: {
+        guests: parseFloat(bookingDetails.guests),
+        latePayment: false,
+        arrivalDate: parseFloat(bookingDetails.checkInDate),
+        departureDate: parseFloat(bookingDetails.checkOutDate),
+      },
     };
 
     try {
@@ -142,27 +149,43 @@ const BookingOverview = () => {
         body: JSON.stringify(event),
         headers: {
           Authorization: authToken,
-          "Content-type": "application/json; charset=UTF-8"
+          "Content-type": "application/json; charset=UTF-8",
         },
       });
-
-      console.log(request);
       const response = await request.json();
       if (!request.ok) {
-        throw new error(`HTTP error! Status: ${request.status}`);
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      console.log(response);
+
+      const retrievedStripeClientSecret = response.stripeClientSecret;
+
+      if(response.stripeClientSecret) {
+        setStripeClientSecret(response.stripeClientSecret);
+      } else {
+        console.error("Unable to get user's stripe client secret.");
+        throw new Error("stripeClientSecret is undefined or null.");
+      }
+      console.log(retrievedStripeClientSecret);
+      setShowCheckout(true);
     } catch (error) {
       console.error("Error creating booking:", error);
-      // setError("Unable to store booking, please contact the support team or try again later.", error);
+      setError("Unable to store booking, please contact the support team or try again later.", error);
     }
   };
 
-  const handleConfirmAndPay = () => {
-    setIsProcessing(false);
-    createBooking();
-    //initiateStripeCheckout();
+  const handleConfirmAndPay = async () => {
+    try {
+      setIsProcessing(true);
+      setLoading(true);
+      await createBooking();
+      setHideButton(true);
+    } catch (error) {
+      setLoading(false);
+      setError("Failed to initialize checkout page. Contact support or try again.", error);
+      console.error("Something went wrong during handling the confirm and pay button.", error);
+    }
   };
+
   return (
     <main className="booking-container" style={{ cursor: isProcessing ? "wait" : "default" }}>
       {error && <div className="error-message">{error}</div>}
@@ -203,13 +226,18 @@ const BookingOverview = () => {
               <Register />
             </div>
           ) : (
-            <button
-              type="submit"
-              className="confirm-pay-button"
-              onClick={handleConfirmAndPay}
-              disabled={loading}>
-              {loading ? "Loading..." : "Confirm & Pay"}
-            </button>
+            <>
+            {!hideButton && (
+              <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading}>
+                {loading ? "Loading..." : "Confirm & Pay"}
+              </button>
+            )}
+              {showCheckout && stripeClientSecret && (
+                <Elements stripe={stripePromise} options={options}>
+                  <SetupForm handleConfirmAndPay={handleConfirmAndPay} loading />
+                </Elements>
+              )}
+            </>
           )}
         </div>
 
