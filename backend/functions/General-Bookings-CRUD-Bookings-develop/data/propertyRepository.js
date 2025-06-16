@@ -1,19 +1,19 @@
-import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import Database from "database";
+import {Property} from "database/models/Property";
 
 class PropertyRepository {
-    constructor() {
-        this.dynamoDbClient = new DynamoDBClient({ region: "eu-north-1" });
-    }
+    constructor() {}
 
     async getPropertyById(id) {
-        const params = new GetItemCommand({
-            TableName: "property-develop",
-            Key: { id: { S: id } }
-        });
-        const result = await this.dynamoDbClient.send(params);
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property)
+            .createQueryBuilder("property")
+            .where("property.id = :id", { id: id })
+            .getOne();
         return {
-            hostId: result.Item.hostId.S,
-            title: result.Item.title.S
+            hostId: result.hostid,
+            title: result.title
         };
 
     }
