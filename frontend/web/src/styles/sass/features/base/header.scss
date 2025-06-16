@@ -40,6 +40,19 @@ $breakpoint-sm: 480px;
       }
     }
 
+    .language-toggle-mobile {
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+      
+      @media screen and (max-width: $breakpoint-lg) {
+        visibility: visible;
+        opacity: 1;
+        display: flex;
+        margin-left: 3vw;
+      }
+    }
+
     .headerRight {
       display: flex;
       align-items: center;
