@@ -22,7 +22,7 @@
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     padding: 1rem;
     transition: left 0.3s ease;
-    z-index: 999;
+    z-index: 9990000;
 
     &.open {
       left: 0; /* Slide in when open */
@@ -59,6 +59,7 @@
         flex-direction: column;
 
         .wijzer {
+          height: 20px;
           display: flex;
           align-items: center;
           padding: 10px;

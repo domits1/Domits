@@ -584,6 +584,152 @@
           "title": "©Urheberrecht",
           "description": "Alle Rechte vorbehalten. Nichts auf dieser Website (Informationen, Bilder, Fotos) darf in irgendeiner Form oder auf irgendeine Weise kopiert oder in einer Datenbank gespeichert werden, sei es elektronisch, digital, mechanisch, manuell, fotografisch oder auf andere Weise."
         }
+      },
+      "landing": {
+        "list": "Bieten Sie Ihr",
+        "house": "Haus",
+        "camper": "Wohnmobil",
+        "boat": "Boot",
+        "forFree": "kostenlos mit 0% Buchungsgebühr",
+        "description": "Hobby oder Beruf – registrieren Sie noch heute Ihr Objekt und steigern Sie Ihr Verdienstpotenzial, Ihre Einnahmen, die Belegung und den durchschnittlichen Tagespreis.",
+        "startHosting": "Beginnen Sie mit dem Hosting",
+        "secure": "Sichere Zahlungen",
+        "verified": "Verifizierte Gäste/Hosts",
+        "quick": "Schneller Telefonsupport",
+        "guarantee": "Domits Qualitätsgarantie",
+        "hosting": {
+          "title": "Hosting mit ",
+          "domits": "Domits",
+          "title2": "war noch nie so ",
+          "easier": "einfacher",
+          "subtitle": "Es sind nur 3 Schritte nötig",
+          "first": {
+            "one": "1.",
+            "title": "Bieten Sie Ihr Objekt an",
+            "description": "Beginnen Sie, Geld zu verdienen, indem Sie Ihr Objekt innerhalb weniger Minuten kostenlos und gebührenfrei inserieren."
+          },
+          "second": {
+            "two": "2.",
+            "title": "Erhalten Sie Zahlungen",
+            "description": "Genießen Sie schnelle, einfache und sichere Zahlungen."
+          },
+          "third": {
+            "three": "3.",
+            "title": "Empfangen Sie Ihren Gast",
+            "description": "Begrüßen Sie Ihren Gast mit einer warmen und persönlichen Note."
+          }
+        },
+        "why": {
+          "title": "Warum sollte ich auf",
+          "domits": "Domits",
+          "end": "?",
+          "description": "Bei Domits sind wir nicht einfach nur eine weitere Plattform – wir bauen mit unseren Travel Innovation Labs eine zukunftsorientierte, nachhaltige Community auf. Unsere innovative Herangehensweise stellt sicher, dass Ihr Objekt sowohl für Reisende als auch für die Umwelt einen echten Mehrwert bietet. Außerdem erhalten Sie unbegrenzten Support und personalisierte, moderne Dashboards, die die Verwaltung Ihrer Inserate einfacher denn je machen. Was Domits wirklich auszeichnet, ist unser Engagement für Sie. Sie sind mehr als nur ein Kunde oder eine Zahl – uns liegt Ihr Erfolg am Herzen, und wir begleiten Sie auf jedem Schritt Ihres Weges. Hosting mit Domits bedeutet, sich auf tief verwurzelte Werte wie Gesundheit, Sicherheit und Nachhaltigkeit zu stützen und einen zukunftssicheren Pfad für Ihr Unternehmen zu ebnen.",
+          "btnHosting": "Jetzt hosten"
+        },
+        "register": {
+          "title": "Registrieren Sie Ihr Objekt",
+          "simple": "einfach",
+          "and": " und ",
+          "safe": "sicher",
+          "verified": {
+            "title": "Verifizierte Gäste",
+            "description": "Wir verifizieren Gäste anhand ihrer E-Mail-Adresse, Telefonnummer, einer persönlichen Nachricht und Zahlungen über unseren Partner Stripe."
+          },
+          "rules": {
+            "title": "Ihre eigenen Hausregeln",
+            "description": "Informieren Sie Ihre potenziellen Gäste über Ihre Hausregeln. Diese müssen zugestimmt werden, um buchen zu können."
+          },
+          "how": {
+            "title": "Wählen Sie, wie Sie Ihre Buchungen erhalten möchten",
+            "description": "Sie können Ihren Gästen erlauben, direkt zu buchen."
+          },
+          "payments": {
+            "title": "regelmäßig und sicher Zahlungen erhalten",
+            "description": "Sie erhalten garantiert Ihre Zahlungen und können sich auf unseren Betrugsschutz verlassen."
+          },
+          "support": {
+            "title": "Engagierter Support",
+            "description": "Unser Vermietungsexpertenteam steht Ihnen bei Fragen oder Problemen zur Seite und sorgt für einen reibungslosen, stressfreien Ablauf."
+          },
+          "renting": {
+            "title": "Internationale Vermietung",
+            "description": "Sie vermieten Ihr Ferienhaus auf einem internationalen Markt. Dies erhöht die Wahrscheinlichkeit, dass Ihr Ferienhaus vermietet wird."
+          }
+        },
+        "othersSay": {
+          "title": "Was andere über",
+          "domits": "Domits"
+        },
+        "rentingOut": {
+          "title": "Ist Ihr Objekt geeignet für",
+          "rent": "Vermietung",
+          "description": "Hier finden Sie die Checkliste mit den Mindestanforderungen für die Vermietung von Objekten",
+          "general": {
+            "title": "Allgemein ✓",
+            "description": "Das Objekt ist eine voll ausgestattete Wohneinheit, die den lokalen Mietvorschriften entspricht und technisch für die Vermietung geeignet ist."
+          },
+          "building": {
+            "title": "Gebäude ✓",
+            "description": "Die Außenhülle des Gebäudes, Fenster, Türen und Gemeinschaftsbereiche sind gut gepflegt, und das Heizungssystem sorgt für ausreichende Wärme und Warmwasser."
+          },
+          "furnishing": {
+            "title": "Ausstattung ✓",
+            "description": "Die Einrichtung ist in gutem Zustand, mit sicheren Steckdosen, angemessener Beleuchtung und verfügbaren Reinigungsmaterialien."
+          },
+          "bedroom": {
+            "title": "Schlafzimmer ✓",
+            "description": "Das Schlafzimmer ist ausgestattet mit intakten Betten, sauberen Matratzen und passender Bettwäsche."
+          },
+          "kitchen": {
+            "title": "Küche ✓",
+            "description": "Die Küche ist vollständig ausgestattet mit funktionsfähigen Geräten, Kochutensilien und sauberem Geschirr."
+          },
+          "pool": {
+            "title": "Pool und Jacuzzi ✓",
+            "description": "Der Pool und der Jacuzzi sind professionell installiert und werden regelmäßig gewartet."
+          },
+          "surroundings": {
+            "title": "Umgebung ✓",
+            "description": "Die Außenbereiche sind gut gepflegt, wobei Wege und Parkplätze im Winter freigehalten werden."
+          },
+          "safety": {
+            "title": "Sicherheit ✓",
+            "description": "Das Objekt erfüllt die Sicherheitsstandards mit funktionierenden Rauchmeldern, gesicherten Balkonen, sicheren Spielplätzen und klaren Zugängen."
+          }
+        },
+        "answerTo": {
+          "title": "Antworten auf ",
+          "your": "Ihre",
+          "question": "Fragen",
+          "host": {
+            "title": "Erste Schritte als Gastgeber",
+            "description": "Registrieren Sie sich als Gastgeber, verbinden Sie Ihr Konto oder erstellen Sie ein Stripe-Konto und beginnen Sie, Ihre Unterkunft zu inserieren."
+          },
+          "how": {
+            "title": "Wie inseriere ich meine Ferienunterkunft?",
+            "description": "Sie können Ihre Unterkunft inserieren, indem Sie ",
+            "becomeHost": "ein Domits-Gastgeber werden ",
+            "description2": "und die erforderlichen Informationen ausfüllen. Wir werden Sie kurz nach der Einreichung Ihrer Ferienunterkunft kontaktieren, damit Sie mit dem Vermieten und Verdienen beginnen können!"
+          },
+          "manage": {
+            "title": "Wie erstelle und verwalte ich mein Gastgeberkonto?",
+            "description": "Die Erstellung eines Gastgeberkontos ist einfach. Klicken Sie auf den Button 'Gastgeber werden' oben rechts und folgen Sie den Anweisungen. Sobald Ihr Konto eingerichtet ist, wechseln Sie zum Host-Dashboard im Menü. Hier können Sie Ihr Objekt hinzufügen, indem Sie Angaben wie Typ, Standort und Ausstattung machen. Nach der Einreichung wird Ihr Inserat überprüft. Sobald es genehmigt wurde, legen Sie Ihre Verfügbarkeit und Preise fest und laden Fotos hoch. Um live zu gehen, erstellen Sie ein Stripe-Konto für Zahlungen. Alles – Verfügbarkeit, Preise und Details – können Sie direkt über das Host-Dashboard verwalten."
+          },
+          "payout": {
+            "title": "Wie Auszahlungen und Steuern funktionieren",
+            "description": "Um Zahlungen zu erhalten, müssen Sie ein Stripe Connect-Konto erstellen und es über den Button in Ihrem Dashboard mit Domits verbinden. Alle Zahlungen werden über Stripe abgewickelt, wobei die notwendigen Gebühren automatisch abgezogen werden."
+          },
+          "calendar": {
+            "title": "Wie Sie Ihren Kalender und Ihre Buchungen verwalten",
+            "description": "Eine kommende Funktion wird es Ihnen ermöglichen, Ihre Buchungen direkt über das Dashboard noch effizienter zu verwalten. Bleiben Sie gespannt auf Updates."
+          }
+        },
+        "advice": {
+          "title": "Kostenlose persönliche Beratung von unserem",
+          "subtitle": "Unser Expertenteam steht bereit zur Unterstützung!",
+          "team": "Vermietungsexpertenteam",
+          "talk": "Sprechen Sie mit einem Spezialisten"
+        }
       }
 }
   

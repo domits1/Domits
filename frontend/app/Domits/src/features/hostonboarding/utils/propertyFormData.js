@@ -1,32 +1,32 @@
 const propertyFormData = {
     property: {
-        id: "String",
-        hostId: "String",
-        title: "String",
-        subtitle: "String",
-        description: "String",
+        id: "",
+        hostId: "",
+        title: "",
+        subtitle: "",
+        description: "",
         guestCapacity: -1,
-        registrationNumber: "String",
-        status: "String",
+        registrationNumber: "",
+        status: "",
         createdAt: -1,
         updatedAt: -1
     },
     propertyAmenities: [
         {
-            id: "String",
-            property_id: "String",
-            amenityId: "String"
+            id: "",
+            property_id: "",
+            amenityId: ""
         }
     ],
     propertyAvailability: [
         {
-            property_id: "String",
+            property_id: "",
             availableStartDate: -1,
             availableEndDate: -1
         }
     ],
     propertyCheckIn: {
-        property_id: "String",
+        property_id: "",
         checkIn: {
             from: -1,
             till: -1
@@ -38,53 +38,53 @@ const propertyFormData = {
     },
     propertyGeneralDetails: [
         {
-            id: "String",
-            property_id: "String",
-            detail: "String",
+            id: "",
+            property_id: "",
+            detail: "",
             value: -1
         }
     ],
     propertyLocation: {
-        property_id: "String",
-        country: "String",
-        city: "String",
-        street: "String",
+        property_id: "",
+        country: "",
+        city: "",
+        street: "",
         houseNumber: -1,
-        houseNumberExtension: "String",
-        postalCode: "String"
+        houseNumberExtension: "",
+        postalCode: ""
     },
     propertyPricing: {
-        property_id: "String",
+        property_id: "",
         roomRate: -1,
         cleaning: -1,
     },
     propertyRules: [
         {
-            property_id: "String",
-            rule: "String",
+            property_id: "",
+            rule: "",
             value: null
         }
     ],
     propertyType: {
-        property_id: "String",
-        property_type: "String",
-        spaceType: "String"
+        property_id: "",
+        property_type: "",
+        spaceType: ""
     },
     propertyImages: [
         {
-            property_id: "String",
-            key: "String",
-            image: "String"
+            property_id: "",
+            key: "",
+            image: ""
         }
     ],
     propertyTechnicalDetails: {
-        property_id: "String",
+        property_id: "",
         length: -1,
         height: -1,
         fuelConsumption: -1,
         speed: -1,
         renovationYear: -1,
-        transmission: "String",
+        transmission: "",
         generalPeriodicInspection: -1,
         fourWheelDrive: null
     }

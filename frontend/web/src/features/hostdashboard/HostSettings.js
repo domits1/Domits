@@ -2,7 +2,6 @@ import React, {useEffect, useState} from "react";
 import editIcon from "../../images/icons/edit-05.png";
 import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
-import Pages from "./Pages.js";
 import {confirmEmailChange} from "../guestdashboard/emailSettings";
 import './settingshostdashboard.css';
 
@@ -352,7 +351,6 @@ const HostSettings = () => {
         <div className="page-body">
             <h2>Settings</h2>
             <div className="dashboards">
-                <Pages/>
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
