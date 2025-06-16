@@ -3,7 +3,7 @@ const getGuestReservationsFromToken = async (token) => {
         `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest`,
         {
             headers: {
-                "Authorization": token
+                "Authorization": token,
             }
         }
     );

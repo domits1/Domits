@@ -4,6 +4,7 @@ import {useNavigate} from 'react-router-dom';
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import Pages from './Pages.js';
 import { getAccessToken } from "../../services/getAccessToken.js";
+import getGuestReservationsFromToken from './services/getGuestReservationsFromToken.js';
 
 const BookingGuestDashboard = () => {
     const navigate = useNavigate();
@@ -31,13 +32,34 @@ const BookingGuestDashboard = () => {
         navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
     };
 
+      useEffect(() => {
+        const fetchBookings = async () => {
+          try {
+            const bookings = await getGuestReservationsFromToken(authToken);
+            console.log("dit moet je kijken", bookings);
+            if (bookings === "Data not found") {
+              toast.error("No reservations found for this user. Refresh the page to try again.");
+              setUserHasReservations(false);
+            } else {
+              setnewBookings(bookings);
+            }
+           } catch (error) {
+            console.error("Fetch Error:", error);
+            if (error.message.includes("Failed to fetch")) {
+            }
+          }
+        };
+    
+        fetchBookings();
+      }, []);
+
     const fetchBookings = async () => {
         setLoading(true);
         try {
             const response = await fetch('https://j1ids2iygi.execute-api.eu-north-1.amazonaws.com/default/FetchGuestPayments', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json', 
                 },
                 body: JSON.stringify({GuestID: guestID})
             });
