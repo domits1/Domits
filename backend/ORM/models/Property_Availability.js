@@ -10,7 +10,8 @@ export const Property_Availability = new EntitySchema({
             generated: false,
             nullable: false
         },
-        availableStartDate: {
+        availablestartdate: {
+            primary: true,
             type: "bigint",
             transformer: {
                 from: (value) => Number(value),
@@ -18,7 +19,7 @@ export const Property_Availability = new EntitySchema({
             },
             nullable: false
         },
-        availableEndDate: {
+        availableenddate: {
             type: "bigint",
             transformer: {
                 from: (value) => Number(value),

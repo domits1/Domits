@@ -1,63 +1,46 @@
-import { GetItemCommand, PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { AvailabilityMapping } from "../../util/mapping/availability.js";
+import Database from "database";
+import {Property_Availability} from "database/models/Property_Availability";
 
 export class PropertyAvailabilityRepository {
 
-    constructor(dynamoDbClient, systemManager) {
-        this.dynamoDbClient = dynamoDbClient;
+    constructor(systemManager) {
         this.systemManager = systemManager
     }
     
     async getAvailabilityByPropertyIdAndStartDate(id, availableStartDate) {
-        const params = new GetItemCommand({
-            "TableName": "property-availability-develop",
-            "Key": {
-                "property_id": {
-                    "S": id
-                },
-                "availableStartDate": {
-                    "N": `${availableStartDate}`
-                }
-            }
-        });
-        const result = await this.dynamoDbClient.send(params);
-        return result.Item ? result.Item : null;
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property_Availability)
+            .createQueryBuilder("property_availability")
+            .where("property_id = :id", { id: id })
+            .andWhere("availablestartdate = :availablestartdate", { availablestartdate: availableStartDate })
+            .getOne()
+        return result ? result : null;
     }
 
     async getAvailabilityByPropertyId(id) {
-        const params = new QueryCommand({
-            "TableName": "property-availability-develop",
-            "IndexName": "property_id-index",
-            "KeyConditionExpression": "#property_id = :property_id",
-            "ExpressionAttributeNames": {
-                "#property_id": "property_id"
-            },
-            "ExpressionAttributeValues": {
-                ":property_id": {
-                    "S": id
-                }
-            }
-        })
-        const result = await this.dynamoDbClient.send(params);
-        return result.Items ? result.Items.map(item => AvailabilityMapping.mapDatabaseEntryToAvailability(item)) : null;
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property_Availability)
+            .createQueryBuilder("property_availability")
+            .where("property_id = :id", { id: id })
+            .getOne();
+        return result ? AvailabilityMapping.mapDatabaseEntryToAvailability(result) : null;
     }
 
     async create(availability) {
-        const params = new PutItemCommand({
-            "TableName": "property-availability-develop",
-            "Item": {
-                "property_id": {
-                    "S": availability.property_id
-                },
-                "availableStartDate": {
-                    "N": `${availability.availableStartDate}`
-                },
-                "availableEndDate": {
-                    "N": `${availability.availableEndDate}`
-                }
-            }
-        })
-        await this.dynamoDbClient.send(params);
+        const client = await Database.getInstance();
+        await client
+            .createQueryBuilder()
+            .insert()
+            .into(Property_Availability)
+            .values({
+                property_id: availability.property_id,
+                availablestartdate: availability.availableStartDate,
+                availableenddate: availability.availableEndDate
+            })
+            .execute();
         const result = await this.getAvailabilityByPropertyIdAndStartDate(availability.property_id, availability.availableStartDate);
         return result ? result: null;
     }
