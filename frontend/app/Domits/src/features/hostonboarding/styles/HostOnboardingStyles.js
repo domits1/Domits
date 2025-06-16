@@ -6,10 +6,16 @@ export const styles = StyleSheet.create({
     fontSize: 32,
     textAlign: "center",
     marginTop: 10,
+    marginHorizontal: 20,
     marginBottom: 20,
     color: 'black'
   },
-  // Main screen
+  onboardingPageDescription: {
+    color: 'rgba(70,70,70,0.7)',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  // Navigation
   navButtonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -24,30 +30,96 @@ export const styles = StyleSheet.create({
   navButtonText: {
     color: "white",
   },
-  // Property type
-  typeItemContainer: {
-    alignItems: "center",
+  // Page
+  safeAreaContainer: {
+    flex: 1,
   },
-  typeItem: {
-    aspectRatio: 1,
-    margin: 10,
+  safeAreaNavMargin: {
+    marginBottom: 20,
+  },
+  scrollContainer: {
+    paddingVertical: 10,
+  },
+  // Error
+  errorText: {
+    color: 'red',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  // Input
+  inputContainer: {
+    marginHorizontal: 10,
+    width: '90%',
+    maxWidth: 600,
+    alignSelf: 'center',
+  },
+  inputField: {
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: COLORS.domitsHostBlue,
     padding: 10,
-    alignItems: "center",
-    justifyContent: "center",
+    marginVertical: 10,
+  },
+  // List
+  listItemContainer: {
+    alignItems: 'center',
+  },
+  listItem: {
+    borderWidth: 1,
+    borderColor: COLORS.domitsHostBlue,
+    borderRadius: 10,
+    marginHorizontal: 10,
+    marginVertical: 5,
+    padding: 10,
+    width: '90%',
+    maxWidth: 600
+  },
+  listItemTitle: {
+    fontSize: 30,
+    fontWeight: 600,
+    color: 'black',
+  },
+  listItemDescription: {
+    color: "rgba(70,70,70,0.7)",
+  },
+  selectedListItem: {
     backgroundColor: COLORS.domitsHostBlue,
-    borderRadius: 5,
   },
-  selectedTypeItem: {
-    backgroundColor: 'rgba(13,68,124,0.75)'
+  selectedItemText: {
+    color: 'white',
   },
-  typeImage: {
+  // Grid list
+  gridItemContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    justifyContent: 'space-evenly',
+  },
+  gridItemImage: {
     width: "80%",
     height: "80%",
     resizeMode: "contain",
     borderRadius: 3,
   },
-  typeItemText: {
-    fontSize: 20,
-    color: 'white'
+  gridItem: {
+    width: '30%',
+    aspectRatio: 1,
+    margin: 5,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.domitsHostBlue,
+  },
+  gridItemText: {
+    textAlign: 'center',
+    color: 'black',
+  },
+  selectedGridItem: {
+    backgroundColor: COLORS.domitsHostBlue,
+  },
+  selectedGridItemText: {
+    color: 'white',
   }
 })
