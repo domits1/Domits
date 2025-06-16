@@ -21,7 +21,7 @@ class StripeRepository {
         amount: total,
         application_fee_amount: Math.round(total * 0.15),
         currency: 'eur',
-        payment_method_types: ["card", "ideal"],
+        payment_method_types: ["card", "ideal", "klarna"],
         transfer_data: {
           destination: account_id,
         },
