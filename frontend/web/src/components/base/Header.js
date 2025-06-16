@@ -259,6 +259,14 @@ function Header({ setSearchResults, setLoading }) {
           </a>
         </div>
 
+        {!hiddenSearchPaths.includes(location.pathname) && (
+          <SearchBar
+            setSearchResults={setSearchResults}
+            setLoading={setLoading}
+            toggleBar={toggleSearchBar}
+          />
+        )}
+
         <div class="language-toggle-mobile">
           <i class="fas fa-globe"></i>
           <select value={language} onChange={selectLanguage}>
@@ -268,14 +276,6 @@ function Header({ setSearchResults, setLoading }) {
             <option value="es">Español</option>
           </select>
         </div>
-
-        {!hiddenSearchPaths.includes(location.pathname) && (
-          <SearchBar
-            setSearchResults={setSearchResults}
-            setLoading={setLoading}
-            toggleBar={toggleSearchBar}
-          />
-        )}
 
         <div className="headerRight">  
             <div class="language-toggle">
