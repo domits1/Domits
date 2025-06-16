@@ -258,6 +258,17 @@ function Header({ setSearchResults, setLoading }) {
             <img src={logo} width={150} alt="Logo" />
           </a>
         </div>
+
+        <div class="language-toggle-mobile">
+          <i class="fas fa-globe"></i>
+          <select value={language} onChange={selectLanguage}>
+            <option value="en">English</option>
+            <option value="nl">Nederlands</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+
         {!hiddenSearchPaths.includes(location.pathname) && (
           <SearchBar
             setSearchResults={setSearchResults}
