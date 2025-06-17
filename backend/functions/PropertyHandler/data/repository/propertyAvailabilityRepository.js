@@ -25,8 +25,8 @@ export class PropertyAvailabilityRepository {
             .getRepository(Property_Availability)
             .createQueryBuilder("property_availability")
             .where("property_id = :id", { id: id })
-            .getOne();
-        return result ? AvailabilityMapping.mapDatabaseEntryToAvailability(result) : null;
+            .getMany();
+        return result ? result.map(item => AvailabilityMapping.mapDatabaseEntryToAvailability(item)) : null;
     }
 
     async create(availability) {
