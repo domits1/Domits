@@ -38,6 +38,6 @@ export class PropertyPricing {
         } else if (typeof value == "boolean" || typeof value == "string") {
             throw new TypeException("propertyPricing - Cleaning must be a number, null or undefined")
         }
-        this.cleaning = null;
+        this.cleaning = 0;
     }
 }
