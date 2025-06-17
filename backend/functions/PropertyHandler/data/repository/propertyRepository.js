@@ -48,7 +48,7 @@ export class PropertyRepository {
             .createQueryBuilder("property")
             .innerJoin("property_type", "pt", "pt.property_id = property.id")
             .where("pt.type = :type", { type: type })
-            .andWhere("property.status = :status", { status: "test" })
+            .andWhere("property.status = :status", { status: "ACTIVE" })
             .limit(12)
             .getMany();
 
