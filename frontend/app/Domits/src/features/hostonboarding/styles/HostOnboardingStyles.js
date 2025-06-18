@@ -6,8 +6,14 @@ export const styles = StyleSheet.create({
     fontSize: 32,
     textAlign: "center",
     marginTop: 10,
+    marginHorizontal: 20,
     marginBottom: 20,
     color: 'black'
+  },
+  onboardingPageDescription: {
+    color: 'rgba(70,70,70,0.7)',
+    marginHorizontal: 20,
+    marginBottom: 20,
   },
   // Navigation
   navButtonContainer: {
@@ -33,6 +39,26 @@ export const styles = StyleSheet.create({
   },
   scrollContainer: {
     paddingVertical: 10,
+  },
+  // Error
+  errorText: {
+    color: 'red',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  // Input
+  inputContainer: {
+    marginHorizontal: 10,
+    width: '90%',
+    maxWidth: 600,
+    alignSelf: 'center',
+  },
+  inputField: {
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: COLORS.domitsHostBlue,
+    padding: 10,
+    marginVertical: 10,
   },
   // List
   listItemContainer: {

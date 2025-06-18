@@ -4,10 +4,10 @@ export class GeneralDetailMapping {
 
     static mapDatabaseEntryToGeneralDetail(generalDetailEntry) {
         return new PropertyGeneralDetail(
-            generalDetailEntry.id.S,
-            generalDetailEntry.property_id.S,
-            generalDetailEntry.detail.S,
-            parseFloat(generalDetailEntry.value.N)
+            generalDetailEntry.id,
+            generalDetailEntry.property_id,
+            generalDetailEntry.detail,
+            generalDetailEntry.value
         )
     }
 }

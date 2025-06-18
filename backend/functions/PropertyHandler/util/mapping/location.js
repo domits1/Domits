@@ -4,21 +4,21 @@ export class LocationMapping {
 
     static mapDatabaseEntryToLocation(locationEntry) {
         return {
-            property_id: locationEntry.property_id.S,
-            country: locationEntry.country.S,
-            city: locationEntry.city.S,
+            property_id: locationEntry.property_id,
+            country: locationEntry.country,
+            city: locationEntry.city,
         }
     }
 
     static mapDatabaseEntryToFullLocation(locationEntry) {
         return new PropertyLocation(
-            locationEntry.property_id.S,
-            locationEntry.country.S,
-            locationEntry.city.S,
-            locationEntry.street.S,
-            parseFloat(locationEntry.houseNumber.N),
-            locationEntry.houseNumberExtension.S,
-            locationEntry.postalCode.S
+            locationEntry.property_id,
+            locationEntry.country,
+            locationEntry.city,
+            locationEntry.street,
+            locationEntry.housenumber,
+            locationEntry.housenumberextension,
+            locationEntry.postalcode
         )
     }
 }

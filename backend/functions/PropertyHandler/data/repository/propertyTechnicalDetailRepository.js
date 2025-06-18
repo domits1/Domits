@@ -1,60 +1,41 @@
-import { GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { TechnicalDetailsMapping } from "../../util/mapping/technicalDetail.js";
+import Database from "database";
+import {Property_Technical_Details} from "database/models/Property_Technical_Details";
 
 export class PropertyTechnicalDetailRepository {
 
-    constructor(dynamoDbClient, systemManager) {
-        this.dynamoDbClient = dynamoDbClient;
+    constructor(systemManager) {
         this.systemManager = systemManager
     }
 
     async getTechnicalDetailsByPropertyId(id) {
-        const params = new GetItemCommand({
-            "TableName": "property-technical-details-develop",
-            "Key": {
-                "property_id": {
-                    "S": id
-                }
-            }
-        })
-        const result = await this.dynamoDbClient.send(params);
-        return result.Item ? TechnicalDetailsMapping.mapDatabaseEntryToTechnicalDetails(result.Item) : null;
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property_Technical_Details)
+            .createQueryBuilder("property_technicaldetails")
+            .where("property_id = :id", { id: id })
+            .getOne();
+        return result ? TechnicalDetailsMapping.mapDatabaseEntryToTechnicalDetails(result) : null;
     }
 
     async create(details) {
-        const params = new PutItemCommand({
-            "TableName": "property-technical-details-develop",
-            "Item": {
-                "property_id": {
-                    "S": details.property_id
-                },
-                "fourWheelDrive": {
-                    "BOOL": details.fourWheelDrive
-                },
-                "fuelConsumption": {
-                    "N": `${details.fuelConsumption}`
-                },
-                "generalPeriodicInspection": {
-                    "N": `${details.generalPeriodicInspection}`
-                },
-                "height": {
-                    "N": `${details.height}`
-                },
-                "length": {
-                    "N": `${details.length}`
-                },
-                "renovationYear": {
-                    "N": `${details.renovationYear}`
-                },
-                "speed": {
-                    "N": `${details.speed}`
-                },
-                "transmission": {
-                    "S": details.transmission
-                }
-            }
-        })
-        await this.dynamoDbClient.send(params);
+        const client = await Database.getInstance();
+        await client
+            .createQueryBuilder()
+            .insert()
+            .into(Property_Technical_Details)
+            .values({
+                property_id: details.property_id,
+                length: details.length,
+                height: details.height,
+                fuelconsumption: details.fuelConsumption,
+                speed: details.speed,
+                renovationyear: details.renovationYear,
+                transmission: details.transmission,
+                generalperiodicinspection: details.generalPeriodicInspection,
+                fourwheeldrive: details.fourWheelDrive
+            })
+            .execute();
         const result = await this.getTechnicalDetailsByPropertyId(details.property_id);
         return result ? result : null;
     }

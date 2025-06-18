@@ -10,7 +10,7 @@ export const Property_Amenity = new EntitySchema({
             generated: false,
             nullable: false
         },
-        amenityId: {
+        amenityid: {
             type: "varchar",
             nullable: false
         },
