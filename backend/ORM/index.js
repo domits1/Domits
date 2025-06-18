@@ -18,9 +18,23 @@ export default class Database {
   static twoMinutes = 2 * 60 * 1000;
   static tokenExpirationTime = 15 * 60 * 1000;
 
+  static initPromise = null;
+
   constructor() { }
 
   static async getInstance() {
+    if (!Database.initPromise) {
+      Database.initPromise = Database._getInstanceInternal();
+    }
+
+    try {
+      return await Database.initPromise;
+    } finally {
+      Database.initPromise = null;
+    }
+  }
+
+  static async _getInstanceInternal() {
     if (Database.systemManager == null) {
       Database.systemManager = new SystemManagerRepository();
     }
@@ -31,10 +45,33 @@ export default class Database {
     if (Database.pool == null) {
       await Database.initializeDatabase();
     } else if (isTokenExpired) {
+      if (Database.pool.isInitialized) {
+        await Database.pool.destroy();
+      }
+
       Database.tokenExpiration = Date.now() + Database.tokenExpirationTime;
       const signer = new DsqlSigner({ hostname: Database.host, region: Database.region });
-      const token = await signer.getDbConnectAdminAuthToken();
-      Database.pool.setOptions({ password: token });
+
+      Database.pool = new typeorm.DataSource({
+        type: "postgres",
+        host: Database.host,
+        port: 5432,
+        username: "admin",
+        password: await signer.getDbConnectAdminAuthToken(),
+        database: Database.dbName,
+        schema: process.env.TEST === "true" ? "test" : Database.schema,
+        synchronize: false,
+        entities: Tables,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      });
+
+      await Database.pool.initialize();
+    }
+
+    if (!Database.pool.isInitialized) {
+      await Database.pool.initialize();
     }
 
     return Database.pool;
@@ -51,6 +88,9 @@ export default class Database {
         hostname: Database.host,
         region: Database.region,
       });
+
+      Database.tokenExpiration = Date.now() + Database.tokenExpirationTime;
+
       Database.pool = new typeorm.DataSource({
         type: "postgres",
         host: Database.host,
@@ -65,11 +105,11 @@ export default class Database {
           rejectUnauthorized: false
         }
       });
+
       await Database.pool.initialize();
     } catch (error) {
       console.error(error);
       throw new DatabaseException("Something went wrong while initializing database connection.");
     }
   }
-
 }
