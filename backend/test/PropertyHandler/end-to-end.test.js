@@ -3,7 +3,7 @@ import { describe, it, expect } from "@jest/globals";
 
 describe("end-to-end tests", () => {
 
-  it("should handle get all", async () => {
+  it("should return 404, because no properties exist in test database.", async () => {
     const response = await handler({
       httpMethod: "GET",
       resource: "/property/bookingEngine/{subResource}",
