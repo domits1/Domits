@@ -2,7 +2,7 @@ import {DatabaseException} from "./util/exception/databaseException.js";
 import {SystemManagerRepository} from "./data/systemManagerRepository.js";
 import {DsqlSigner} from "@aws-sdk/dsql-signer";
 import * as typeorm from "typeorm";
-import {getTables} from "./util/database/getTables.js";
+import {Tables} from "./util/database/Tables.js";
 
 export default class Database {
 
@@ -42,7 +42,7 @@ export default class Database {
                 database: dbName,
                 schema: schema,
                 synchronize: false,
-                entities: await getTables(),
+                entities: Tables,
                 ssl: {
                     rejectUnauthorized: false
                 }

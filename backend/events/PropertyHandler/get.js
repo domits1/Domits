@@ -5,12 +5,15 @@ async function main() {
     httpMethod: "GET",
     resource: "/property/bookingEngine/{subResource}",
     pathParameters: {
-      subResource: "set",
+      subResource: "byType",
     },
     queryStringParameters: {
-      "properties": "606519ba-89a4-4e52-a940-3e4f79dabdd7"
+      type: "Boat",
+      bookingId: "9566261c-99d7-4b3a-af08-ad8bb9721d94"
     },
-    headers: {},
+    headers: {
+      Authorization: ""
+    },
   }));
 }
 

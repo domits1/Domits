@@ -22,11 +22,11 @@ export const Property = new EntitySchema({
             type: "text",
             nullable: false
         },
-        registrationNumber: {
+        registrationnumber: {
             type: "varchar",
             nullable: false
         },
-        hostId: {
+        hostid: {
             type: "varchar",
             nullable: false
         },
@@ -34,7 +34,7 @@ export const Property = new EntitySchema({
             type: "varchar",
             nullable: false
         },
-        createdAt: {
+        createdat: {
             type: "bigint",
             transformer: {
                 from: (value) => Number(value),
@@ -42,7 +42,7 @@ export const Property = new EntitySchema({
             },
             nullable: false
         },
-        updatedAt: {
+        updatedat: {
             type: "bigint",
             transformer: {
                 from: (value) => Number(value),

@@ -1,21 +1,29 @@
-import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import Database from "database";
+import {Property} from "database/models/Property";
+import NotFoundException from "../util/exception/NotFoundException.js"
 
 class PropertyRepository {
     constructor() {
-        this.dynamoDbClient = new DynamoDBClient({ region: "eu-north-1" });
     }
 
     async getPropertyById(id) {
-        const params = new GetItemCommand({
-            TableName: "property-develop",
-            Key: { id: { S: id } }
-        });
-        const result = await this.dynamoDbClient.send(params);
-        return {
-            hostId: result.Item.hostId.S,
-            title: result.Item.title.S
-        };
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property)
+            .createQueryBuilder("property")
+            .where("property.id = :id", {id: id})
+            .andWhere("property.status = :status", {status: "ACTIVE"})
+            .getOne();
+        if (result) {
+            return {
+                hostId: result.hostid,
+                title: result.title
+            }
+        } else {
+            throw new NotFoundException("Property is inactive or does not exist.")
+        }
 
     }
 }
+
 export default PropertyRepository;

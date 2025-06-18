@@ -24,32 +24,30 @@ import {Rules} from "../../models/Rules.js";
 import {Property_Type} from "../../models/Property_Type.js";
 import {Stripe_Connected_Accounts} from "../../models/Stripe_Connected_Accounts.js";
 
-export async function getTables() {
-    return [
-        Amenities,
-        Amenity_And_Category,
-        Amenity_Categories,
-        Availability_Restrictions,
-        Booking,
-        Faq,
-        General_Details,
-        Guest_Favorite,
-        Payment,
-        Property,
-        Property_Amenity,
-        Property_Availability,
-        Property_Availability_Restriction,
-        Property_Check_In,
-        Property_General_Detail,
-        Property_Image,
-        Property_Location,
-        Property_Pricing,
-        Property_Rule,
-        Property_Technical_Details,
-        Property_Type,
-        Property_Types,
-        Rules,
-        Stripe_Connected_Accounts,
-        User_Table
-    ]
-}
+export const Tables = [
+    Amenities,
+    Amenity_And_Category,
+    Amenity_Categories,
+    Availability_Restrictions,
+    Booking,
+    Faq,
+    General_Details,
+    Guest_Favorite,
+    Payment,
+    Property,
+    Property_Amenity,
+    Property_Availability,
+    Property_Availability_Restriction,
+    Property_Check_In,
+    Property_General_Detail,
+    Property_Image,
+    Property_Location,
+    Property_Pricing,
+    Property_Rule,
+    Property_Technical_Details,
+    Property_Type,
+    Property_Types,
+    Rules,
+    Stripe_Connected_Accounts,
+    User_Table
+]

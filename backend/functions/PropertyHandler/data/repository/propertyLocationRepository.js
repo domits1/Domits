@@ -1,135 +1,94 @@
-import { GetItemCommand, PutItemCommand, UpdateItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { LocationMapping } from "../../util/mapping/location.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
+import Database from "database";
+import {Property_Location} from "database/models/Property_Location";
+import {Property} from "database/models/Property";
 
 export class PropertyLocationRepository {
 
-    constructor(dynamoDbClient, systemManager) {
-        this.dynamoDbClient = dynamoDbClient;
+    constructor(systemManager) {
         this.systemManager = systemManager
     }
 
     async getPropertyLocationById(id) {
-        const params = new GetItemCommand({
-            "TableName": "property-location-develop",
-            "Key": {
-                "property_id": {
-                    "S": id
-                }
-            }
-        })
-        const result = await this.dynamoDbClient.send(params);
-        return result.Item ? LocationMapping.mapDatabaseEntryToLocation(result.Item) : null;
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property_Location)
+            .createQueryBuilder("property_location")
+            .where("property_id = :id", { id: id })
+            .getOne();
+        return result ? LocationMapping.mapDatabaseEntryToLocation(result) : null;
     }
 
     async getFullPropertyLocationById(id) {
-        const params = new GetItemCommand({
-            "TableName": "property-location-develop",
-            "Key": {
-                "property_id": {
-                    "S": id
-                }
-            }
-        })
-        const result = await this.dynamoDbClient.send(params);
-        return result.Item ? LocationMapping.mapDatabaseEntryToFullLocation(result.Item) : null;
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property_Location)
+            .createQueryBuilder("property_location")
+            .where("property_id = :id", { id: id })
+            .getOne();
+        return result ? LocationMapping.mapDatabaseEntryToFullLocation(result) : null;
     }
 
     async create(location) {
-        const params = new PutItemCommand({
-            "TableName": "property-location-develop",
-            "Item": {
-                "property_id": {
-                    "S": location.property_id
-                },
-                "city": {
-                    "S": location.city
-                },
-                "country": {
-                    "S": location.country
-                },
-                "houseNumber": {
-                    "N": `${location.houseNumber}`
-                },
-                "houseNumberExtension": {
-                    "S": location.houseNumberExtension
-                },
-                "postalCode": {
-                    "S": location.postalCode
-                },
-                "street": {
-                    "S": location.street
-                }
-            }
-        })
-        await this.dynamoDbClient.send(params);
+        const client = await Database.getInstance();
+        await client
+            .createQueryBuilder()
+            .insert()
+            .into(Property_Location)
+            .values({
+                property_id: location.property_id,
+                city: location.city,
+                country: location.country,
+                housenumber: location.houseNumber,
+                housenumberextension: location.houseNumberExtension,
+                postalcode: location.postalCode,
+                street: location.street
+            })
+            .execute();
         const result = await this.getPropertyLocationById(location.property_id);
         return result ? result : null;
     }
 
-    async activateProperty(propertyId, country) {
-        const params = new UpdateItemCommand({
-            "TableName": "property-location-develop",
-            "Key": {
-                "property_id": { "S": propertyId }
-            },
-            "ExpressionAttributeNames": {
-                "#statusCountry": "status-country"
-            },
-            "ExpressionAttributeValues": {
-                ":statusCountry": {
-                    "S": `ACTIVE-${country}`
-                }
-            },
-            "ReturnValues": "ALL_NEW",
-            "UpdateExpression": "SET #statusCountry = :statusCountry"
-        })
-        await this.dynamoDbClient.send(params);
-    }
-
     async getActivePropertiesByCountry(country, lastEvaluatedKey) {
-        
-        const params = new QueryCommand({
-            "TableName": "property-location-develop",
-            "IndexName": "status-country-city-index",
-            "KeyConditionExpression": "#statusCountry = :statusCountry",
-            "ExpressionAttributeNames": {
-                '#statusCountry': 'status-country',
-            },
-            "ExpressionAttributeValues": {
-                ":statusCountry": {
-                    "S": `ACTIVE-${country}`
+        const client = await Database.getInstance();
+        const query = await client
+            .getRepository(Property)
+            .createQueryBuilder("property")
+            .innerJoin("property_location", "pl", "pl.property_id = property.id")
+            .where("pl.country = :country", { country: country })
+            .andWhere("property.status = :status", { status: "ACTIVE" })
+            .orderBy("property.createdat", "DESC")
+            .addOrderBy("property.id", "DESC")
+            .limit(12);
+
+        if (lastEvaluatedKey?.createdAt && lastEvaluatedKey?.id) {
+            query.andWhere(
+                "(property.createdat < :createdAt OR (property.createdat = :createdAt AND property.id < :id))",
+                {
+                    createdAt: lastEvaluatedKey.createdAt,
+                    id: lastEvaluatedKey.id,
                 }
-            },
-            "ScanIndexForward": false,
-            "Limit": 12
-        });
-        if (lastEvaluatedKey?.id !== "null" && lastEvaluatedKey?.city !== "null" ) {
-            params.input.ExclusiveStartKey = {
-                "property_id": {
-                    "S": lastEvaluatedKey.id
-                },
-                "status-country": { 
-                    "S": `ACTIVE-${country}` 
-                },
-                "city": { 
-                    "S": lastEvaluatedKey.city
-                }
-            }
+            );
         }
-        const result = await this.dynamoDbClient.send(params);
-        if (result.Count < 1) {
+
+        const result = await query.getMany();
+
+        if (result.length < 1) {
             throw new NotFoundException(`No property found.`)
         } else {
-            const items = result.Items.map(item => item.property_id.S);
-            const lastEvaluatedKey = result.LastEvaluatedKey ? {
-                "id": result.LastEvaluatedKey.property_id.S,
-                "city": result.LastEvaluatedKey.city.S
-            } : null;
+            const items = result.map(item => item.property_id);
+
+            const lastItem = result[result.length - 1];
+            const lastEvaluatedKey = {
+                createdAt: lastItem.createdat,
+                id: lastItem.property_id,
+            }
+
             return {
                 identifiers: items,
-                lastEvaluatedKey: lastEvaluatedKey
-            }
+                lastEvaluatedKey: lastEvaluatedKey,
+            };
         }
     }
 

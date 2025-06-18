@@ -1,14 +1,14 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto"
-import { GetItemCommand, PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { ImageMapping } from "../../util/mapping/image.js";
+import Database from "database";
+import {Property_Image} from "database/models/Property_Image";
 
 export class PropertyImageRepository {
 
     s3Client = new S3Client({})
 
-    constructor(dynamoDbClient, systemManager) {
-        this.dynamoDbClient = dynamoDbClient;
+    constructor(systemManager) {
         this.systemManager = systemManager
     }
 
@@ -34,53 +34,38 @@ export class PropertyImageRepository {
     }
 
     async getImagesByPropertyId(id) {
-        const params = new QueryCommand({
-            "TableName": "property-image-develop",
-            "IndexName": "property_id-index",
-            "KeyConditionExpression": "#property_id = :id",
-            "ExpressionAttributeNames": {
-                "#property_id": "property_id"
-            },
-            "ExpressionAttributeValues": {
-                ":id": {
-                    "S": id
-                }
-            }
-        })
-        const result = await this.dynamoDbClient.send(params);
-        return result.Items ? result.Items.map(item => ImageMapping.mapDatabaseEntryToImage(item)) : null;
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property_Image)
+            .createQueryBuilder("property_image")
+            .where("property_id = :id", { id: id })
+            .getMany();
+        return result.length > 0 ? result.map(item => ImageMapping.mapDatabaseEntryToImage(item)) : null;
     }
 
     async getImageByPropertyIdAndKey(id, key) {
-        const params = new GetItemCommand({
-            "TableName": "property-image-develop",
-            "Key": {
-                "property_id": {
-                    "S": id
-                },
-                "key": {
-                    "S": key
-                }
-            }
-        })
-        const result = await this.dynamoDbClient.send(params);
-        return result.Item ? result.Item : null;
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property_Image)
+            .createQueryBuilder("property_image")
+            .where("property_id = :id", { id: id })
+            .andWhere("key = :key", { key: key })
+            .getOne();
+        return result ? result : null;
     }
 
     async create(image) {
+        const client = await Database.getInstance();
         image.key = await this.uploadImageToS3(image.image, image.property_id);
-        const params = new PutItemCommand({
-            "TableName": "property-image-develop",
-            "Item": {
-                "property_id": {
-                    "S": image.property_id
-                },
-                "key": {
-                    "S": image.key
-                }
-            }
-        })
-        await this.dynamoDbClient.send(params);
+        await client
+            .createQueryBuilder()
+            .insert()
+            .into(Property_Image)
+            .values({
+                property_id: image.property_id,
+                key: image.key
+            })
+            .execute();
         const result = await this.getImageByPropertyIdAndKey(image.property_id, image.key);
         return result ? result : null;
     }

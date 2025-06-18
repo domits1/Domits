@@ -18,15 +18,15 @@ export const Property_Location = new EntitySchema({
             type: "varchar",
             nullable: false
         },
-        houseNumber: {
+        housenumber: {
             type: "int",
             nullable: false
         },
-        houseNumberExtension: {
+        housenumberextension: {
             type: "varchar",
             nullable: true
         },
-        postalCode: {
+        postalcode: {
             type: "varchar",
             nullable: false
         },

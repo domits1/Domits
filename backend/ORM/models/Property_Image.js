@@ -11,7 +11,9 @@ export const Property_Image = new EntitySchema({
             nullable: false
         },
         property_id: {
+            primary: true,
             type: "varchar",
+            generated: false,
             nullable: false
         },
     }

@@ -14,7 +14,7 @@ export const Property_Pricing = new EntitySchema({
             type: "int",
             nullable: true
         },
-        roomRate: {
+        roomrate: {
             type: "int",
             nullable: false
         },
