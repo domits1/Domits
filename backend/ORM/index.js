@@ -15,6 +15,8 @@ export default class Database {
   static schema = null;
 
   static tokenExpiration = null;
+  static twoMinutes = 2 * 60 * 1000;
+  static tokenExpirationTime = 15 * 60 * 1000;
 
   constructor() { }
 
@@ -24,12 +26,12 @@ export default class Database {
     }
 
     const now = Date.now();
-    const isTokenExpired = !Database.tokenExpiration || now > Database.tokenExpiration - 2 * 60 * 1000;
+    const isTokenExpired = !Database.tokenExpiration || now > Database.tokenExpiration - Database.twoMinutes;
 
     if (Database.pool == null) {
       await Database.initializeDatabase();
     } else if (isTokenExpired) {
-      Database.tokenExpiration = Date.now() + 15 * 60 * 1000;
+      Database.tokenExpiration = Date.now() + Database.tokenExpirationTime;
       const signer = new DsqlSigner({ hostname: Database.host, region: Database.region });
       const token = await signer.getDbConnectAdminAuthToken();
       Database.pool.setOptions({ password: token });
