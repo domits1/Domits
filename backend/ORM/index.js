@@ -56,7 +56,7 @@ export default class Database {
         username: "admin",
         password: await signer.getDbConnectAdminAuthToken(),
         database: Database.dbName,
-        schema: Database.schema,
+        schema: process.env.TEST === "true" ? "test" : Database.schema,
         synchronize: false,
         entities: Tables,
         ssl: {
