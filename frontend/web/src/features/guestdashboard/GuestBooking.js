@@ -256,9 +256,6 @@ const BookingGuestDashboard = () => {
               </div>
               <div className={styles.reservationButtons}>
                 <button >All</button>
-                <button >Paid</button>
-                <button >Awaiting Payment</button>
-                <button >Cancelled</button>
               </div>
               <section className={styles.reservationData}>
                 <table className={styles.reservationTable}>
@@ -289,25 +286,13 @@ const BookingGuestDashboard = () => {
                         </span>
                       </th>
                       <th>
-                        Guest name
+                        Host name
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
                         Rate
-                        <span className={styles.reservationIcons}>
-                          <SwapVertIcon />
-                        </span>
-                      </th>
-                      <th>
-                        Payed
-                        <span className={styles.reservationIcons}>
-                          <SwapVertIcon />
-                        </span>
-                      </th>
-                      <th>
-                        Status
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
