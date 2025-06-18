@@ -10,7 +10,7 @@ export class PropertyAmenityRepository {
     }
     async getAmenitiesByPropertyId(id) {
         const client = await Database.getInstance();
-        const result = client
+        const result = await client
             .getRepository(Property_Amenity)
             .createQueryBuilder("property_amenity")
             .where("property_id = :property_id", { property_id: id })
@@ -20,7 +20,7 @@ export class PropertyAmenityRepository {
 
     async getAmenityAndCategoryById(id) {
         const client = await Database.getInstance();
-        const result = client
+        const result = await client
             .getRepository(Amenity_And_Category)
             .createQueryBuilder("amenity_and_category")
             .where("id = :id", { id: id })
@@ -30,7 +30,7 @@ export class PropertyAmenityRepository {
 
     async getPropertyAmenityById(id) {
         const client = await Database.getInstance();
-        const result = client
+        const result = await client
             .getRepository(Property_Amenity)
             .createQueryBuilder("property_amenity")
             .where("id = :id", { id: id })

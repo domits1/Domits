@@ -26,7 +26,7 @@ export class PropertyRuleRepository {
             .createQueryBuilder("property_rule")
             .where("property_id = :id", { id: id })
             .getMany();
-        return result > 0 ? result.map(item => RuleMapping.mapDatabaseEntryToRule(item)) : null;
+        return result.length > 0 ? result.map(item => RuleMapping.mapDatabaseEntryToRule(item)) : null;
     }
 
     async getRuleByPropertyIdAndRule(id, rule) {
