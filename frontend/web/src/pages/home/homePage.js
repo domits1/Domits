@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./homePage.css";
 import verifiedLogo from "../../images/icons/verify-icon.png";
@@ -63,6 +63,18 @@ import culinary from "./Images/culinary.webp";
 import waterman from "./Images/waterman.webp";
 import sleutelvrouw from "./Images/sleutelvrouw.webp";
 import { FetchAllPropertyTypes, FetchPropertyType } from "./services/fetchProperties";
+import { LanguageContext } from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+
+const contentByLanguage = {
+  en,
+  nl,
+  de,
+  es,
+};
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -82,6 +94,9 @@ const Homepage = () => {
 
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
+  // const groups = useCategories();
+  const {language} = useContext(LanguageContext);
+  const homePageContent = contentByLanguage[language]?.homepage;
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
@@ -126,252 +141,252 @@ const Homepage = () => {
 
   const countries = [
     {
-      name: "The Netherlands",
+      name: `${homePageContent.destinations.europe.countries.netherlands}`,
       img: netherlands,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "France",
+      name: `${homePageContent.destinations.europe.countries.france}`,
       img: france,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Spain",
+      name: `${homePageContent.destinations.europe.countries.spain}`,
       img: spain,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const smallCountries = [
     {
-      name: "Italy",
+      name: `${homePageContent.destinations.europe.countries.italy}`,
       img: italy,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Belgium",
+      name: `${homePageContent.destinations.europe.countries.belgium}`,
       img: belgium,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Germany",
+      name: `${homePageContent.destinations.europe.countries.germany}`,
       img: germany,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Greece",
+      name: `${homePageContent.destinations.europe.countries.greece}`,
       img: greece,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "United Kingdom",
+      name: `${homePageContent.destinations.europe.countries.unitedKingdom}`,
       img: uk,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Portugal",
+      name: `${homePageContent.destinations.europe.countries.portugal}`,
       img: portugal,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Croatia",
+      name: `${homePageContent.destinations.europe.countries.croatia}`,
       img: croatia,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Poland",
+      name: `${homePageContent.destinations.europe.countries.poland}`,
       img: poland,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Austria",
+      name: `${homePageContent.destinations.europe.countries.austria}`,
       img: austria,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Czech",
+      name: `${homePageContent.destinations.europe.countries.czech}`,
       img: czech,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const asiaCountries = [
     {
-      name: "Philippines",
+      name: `${homePageContent.destinations.asia.countries.philippines}`,
       img: philippines,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Thailand",
+      name: `${homePageContent.destinations.asia.countries.thailand}`,
       img: thailand,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Indonesia",
+      name: `${homePageContent.destinations.asia.countries.indonesia}`,
       img: indonesia,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const smallAsiaCountries = [
     {
-      name: "India",
+      name: `${homePageContent.destinations.asia.countries.india}`,
       img: india,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Malaysia",
+      name: `${homePageContent.destinations.asia.countries.malaysia}`,
       img: malaysia,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Vietnam",
+      name: `${homePageContent.destinations.asia.countries.vietnam}`,
       img: vietnam,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Turkey",
+      name: `${homePageContent.destinations.asia.countries.turkey}`,
       img: turkey,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Singapore",
+      name: `${homePageContent.destinations.asia.countries.singapore}`,
       img: singapore,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const caribbeanCountries = [
     {
-      name: "Aruba",
+      name: `${homePageContent.destinations.caribbean.locations.aruba}`,
       img: aruba,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Bonaire",
+      name: `${homePageContent.destinations.caribbean.locations.bonaire}`,
       img: bonaire,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Curacao",
+      name: `${homePageContent.destinations.caribbean.locations.curacao}`,
       img: curacao,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const smallCaribbeanCountries = [
     {
-      name: "Saint Barthelemy",
+      name: `${homePageContent.destinations.caribbean.locations.saintBarthelemy}`,
       img: saintBarthelemy,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Costa Rica",
+      name: `${homePageContent.destinations.caribbean.locations.costaRica}`,
       img: costaRica,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Dominican Republic",
+      name: `${homePageContent.destinations.caribbean.locations.dominicanRepublic}`,
       img: dominicanRepublic,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Puerto Rico",
+      name: `${homePageContent.destinations.caribbean.locations.puertoRico}`,
       img: puertroRico,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "St. Maarten",
+      name: `${homePageContent.destinations.caribbean.locations.stMaarten}`,
       img: stMaarten,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const skiCountries = [
     {
-      name: "Austria",
+      name: `${homePageContent.destinations.ski.locations.austria}`,
       img: austria,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "French Alps",
+      name: `${homePageContent.destinations.ski.locations.frenchAlps}`,
       img: frenchalps,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Switzerland",
+      name: `${homePageContent.destinations.ski.locations.switzerland}`,
       img: switzerland,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Chamonix-Mont-Blanc",
+      name: `${homePageContent.destinations.ski.locations.chamonix}`,
       img: chamonix,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Black Forest",
+      name: `${homePageContent.destinations.ski.locations.blackForest}`,
       img: blackforest,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Italy Trentino",
+      name: `${homePageContent.destinations.ski.locations.italyTrentino}`,
       img: italyTrentino,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
   const seasons = [
-    { name: "Spring", img: spring },
-    { name: "Summer", img: summer },
-    { name: "Fall", img: fall },
-    { name: "Winter", img: winter },
+    { name: `${homePageContent.filters.season.spring}`, img: spring },
+    { name: `${homePageContent.filters.season.summer}`, img: summer },
+    { name: `${homePageContent.filters.season.fall}`, img: fall },
+    { name: `${homePageContent.filters.season.winter}`, img: winter },
   ];
 
   const interests = [
     {
-      name: "Luxury",
+      name: `${homePageContent.filters.interest.luxury}`,
       img: luxury,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Beach",
+      name: `${homePageContent.filters.interest.beach}`,
       img: beach,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Last minute",
+      name: `${homePageContent.filters.interest.lastMinute}`,
       img: lastMinute,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Wellness",
+      name: `${homePageContent.filters.interest.wellness}`,
       img: wellness,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Romantic",
+      name: `${homePageContent.filters.interest.romantic}`,
       img: romantic,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Adventure",
+      name: `${homePageContent.filters.interest.adventure}`,
       img: adventure,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Nature",
+      name: `${homePageContent.filters.interest.nature}`,
       img: nature,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Culture",
+      name: `${homePageContent.filters.interest.culture}`,
       img: culture,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
     {
-      name: "Culinary",
+      name: `${homePageContent.filters.interest.culinary}`,
       img: culinary,
-      description: "Vacation Rentals and Apartments",
+      description: `${homePageContent.filters.groups.description}`,
     },
   ];
 
@@ -432,7 +447,7 @@ const Homepage = () => {
       <div className="domits-homepage">
         <div className="domits-searchContainer">
           <div className="domits-searchTextCon">
-            <h3 className="domits-searchText">Book holiday homes, boats and campers..</h3>
+            <h3 className="domits-searchText">{homePageContent.hero.title}</h3>
           </div>
           <div className="domits-searchbarCon">
             <SearchBar
@@ -448,42 +463,42 @@ const Homepage = () => {
           <div className="domits-iconsContainerText">
             <div className="domits-iconTextGroup">
               <img src={bill} alt="bill" />
-              <p>Secure payments</p>
+              <p>{homePageContent.features.securePayments}</p>
             </div>
             <div className="domits-iconTextGroup">
               <img src={verifiedLogo} alt="verified logo" />
-              <p>Verified guests/hosts</p>
+              <p>{homePageContent.features.verifiedGuest}</p>
             </div>
             <div className="domits-iconTextGroup">
               <img src={question} alt="question" />
-              <p>Quick phone support</p>
+              <p>{homePageContent.features.quickPhone}</p>
             </div>
             <div className="domits-iconTextGroup">
               <img src={checkMark} alt="checkMark" />
-              <p>Domits quality guarantee</p>
+              <p>{homePageContent.features.qualityGuarantee}</p>
             </div>
           </div>
         </div>
 
         <div className="domits-boatContainer">
           <div className="domits-boatText">
-            <h3 className="domits-subHead">Trending accommodations this month</h3>
+            <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
 
             <div className="domits-trendingContainer">
               {[
                 {
                   emoji: "🎖️",
-                  title: "Best price guarantee",
+                  title: `${homePageContent.features.bestPrice}`,
                   text: "We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.",
                 },
                 {
                   emoji: "✅",
-                  title: "Accommodation booking guarantee",
+                  title: `${homePageContent.features.bookingGuarantee}`,
                   text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.",
                 },
                 {
                   emoji: "🤝",
-                  title: "Guarantee of stay at the accommodation",
+                  title: `${homePageContent.features.stayGuarantee}`,
                   text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
                 },
               ].map((item, index) => (
@@ -513,7 +528,7 @@ const Homepage = () => {
 
         <div className="domits-boatContainer">
           <div className="domits-boatText">
-            <h3 className="domits-subHead">Rent a boat for any occasion</h3>
+            <h3 className="domits-subHead">{homePageContent.sections.rentBoat}</h3>
           </div>
           <div className="domits-accommodationGroup">
             {boatLoading === false ? (
@@ -533,7 +548,7 @@ const Homepage = () => {
         </div>
 
         <div className="domits-boatContainer">
-          <h3 className="domits-subHead">Discover Beautiful Campers</h3>
+          <h3 className="domits-subHead">{homePageContent.sections.discoverCampers}</h3>
           <div className="domits-accommodationGroup">
             {camperLoading === false ? (
               camperAccommodations.length > 0 ? (
@@ -553,13 +568,13 @@ const Homepage = () => {
 
         <div className="become-host-section">
           <div className="become-host-content">
-            <h1 className="BH">Become a host</h1>
+            <h1 className="BH">{homePageContent.sections.becomeHost.title}</h1>
             <ul>
-              <li>List your property for free.</li>
-              <li>Manage everything centrally.</li>
-              <li>Increase your booking metrics.</li>
+              <li>{homePageContent.sections.becomeHost.points[0]}</li>
+              <li>{homePageContent.sections.becomeHost.points[1]}</li>
+              <li>{homePageContent.sections.becomeHost.points[2]}</li>
             </ul>
-            <button className="list-property-button">List your property</button>
+            <button className="list-property-button">{homePageContent.sections.becomeHost.button}</button>
           </div>
           <div className="host-images">
             {hostImages.map((image, index) => (
@@ -568,7 +583,7 @@ const Homepage = () => {
           </div>
         </div>
 
-        <h1 className="Places-text">Countries in Europe</h1>
+        <h1 className="Places-text">{homePageContent.destinations.europe.title}</h1>
         <div className="countries-container">
           {countries.map((country, index) => (
             <div className="country-card" key={index}>
@@ -591,7 +606,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Destinations in Asia</h1>
+        <h1 className="Places-text">{homePageContent.destinations.asia.title}</h1>
         <div className="asia-countries-container">
           {asiaCountries.map((country, index) => (
             <div className="country-card asia-country-card" key={index}>
@@ -613,7 +628,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Islands in the Caribbean</h1>
+        <h1 className="Places-text">{homePageContent.destinations.caribbean.title}</h1>
         <div className="caribbean-countries-container">
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
@@ -635,7 +650,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Popular ski destinations</h1>
+        <h1 className="Places-text">{homePageContent.destinations.ski.title}</h1>
         <div className="ski-countries-container">
           {skiCountries.map((country, index) => (
             <div className="country-card ski-country-card" key={index}>
@@ -647,7 +662,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Favorites by Season</h1>
+        <h1 className="Places-text">{homePageContent.filters.season.title}</h1>
         <div className="seasons-container">
           {seasons.map((season, index) => (
             <div className="season-card" key={index}>
@@ -658,7 +673,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Great picks by interest</h1>
+        <h1 className="Places-text">{homePageContent.filters.interest.title}</h1>
         <div className="interests-container">
           {interests.map((interest, index) => (
             <div className="interest-card" key={index}>
@@ -670,7 +685,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1 className="Places-text">Accommodations by group</h1>
+        <h1 className="Places-text">{homePageContent.filters.groups.title}</h1>
         <div className="groups-container">
           {groups.map((group, index) => (
             <div className="group-card" key={index}>
@@ -704,14 +719,14 @@ const Homepage = () => {
         </button>
       </div>
       <div className="domits-communityContainer">
-        <h2 className="domits-communityHead">Need help? Join the community</h2>
-        <p className="domits-communityGroup">Domits has a travel community for hosts, guests, and employees</p>
+        <h2 className="domits-communityHead">{homePageContent.sections.community.title}</h2>
+        <p className="domits-communityGroup">{homePageContent.sections.community.description}</p>
         <div className="domits-communityButtons">
           <button className="domits-hostButton">
-            <a href="/landing">Become a host</a>
+            <a href="/landing">{homePageContent.sections.becomeHost.title}</a>
           </button>
           <button className="domits-SearchButton">
-            <a href="/home">Search & book</a>
+            <a href="/home">{homePageContent.sections.community.button}</a>
           </button>
         </div>
       </div>

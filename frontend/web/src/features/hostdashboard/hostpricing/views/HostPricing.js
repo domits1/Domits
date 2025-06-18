@@ -785,7 +785,6 @@ const HostPricing = () => {
       </div>
 
       <div className="hostdashboard-container">
-        <Pages />
 
         <div className="host-pricing-container">
           {isLoading ? (

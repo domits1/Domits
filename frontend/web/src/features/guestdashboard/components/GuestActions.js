@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { FiEdit2, FiTrash2, FiChevronDown } from "react-icons/fi";
 import "../../guestdashboard/styles/GuestActions.scss";
 import { getAccessToken } from "../utils/authUtils";
+import {
+  fetchWishlists,
+  fetchWishlistItemCount,
+  createWishlist,
+  renameWishlist,
+  deleteWishlist,
+} from "../services/wishlistService";
 
 const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
   const [lists, setLists] = useState([]);
@@ -19,33 +26,14 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
       if (!token) return;
 
       try {
-        const res = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-        });
-
-        const data = await res.json();
+        const data = await fetchWishlists();
         const wishlists = data?.wishlists || {};
 
         // Fetch the count of real items for each wishlist
         const structured = await Promise.all(
           Object.keys(wishlists).map(async (name) => {
             try {
-              const countRes = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-                method: "POST",
-                headers: {
-                  Authorization: token,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  action: "getWishlist",
-                  wishlistName: name,
-                }),
-              });
-
-              const countData = await countRes.json();
+              const countData = await fetchWishlistItemCount(name);
               const realItems = (countData.items || []).filter((item) => item.propertyId);
               return { id: name, name, count: realItems.length };
             } catch (err) {
@@ -74,14 +62,7 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
     if (!token || !newListName.trim()) return;
 
     try {
-      await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-        method: "PUT",
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ wishlistName: newListName }),
-      });
+      await createWishlist(newListName);
 
       const newList = { id: newListName, name: newListName, count: 0 };
       setLists([...lists, newList]);
@@ -104,14 +85,7 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
     if (!token) return;
 
     try {
-      await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-        method: "PATCH",
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ oldName, newName }),
-      });
+      await renameWishlist(oldName, newName);
 
       const updated = lists.map((list) => (list.name === oldName ? { ...list, name: newName, id: newName } : list));
       setLists(updated);
@@ -128,14 +102,7 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
     if (!window.confirm(`Delete wishlist "${name}"?`)) return;
 
     try {
-      await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-        method: "DELETE",
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ wishlistName: name }),
-      });
+      await deleteWishlist(name);
 
       const remaining = lists.filter((list) => list.name !== name);
       setLists(remaining);
@@ -185,17 +152,22 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
                     />
                   ) : (
                     <>
-                      <span onClick={() => {
-                        onListChange(list.name);
-                        setDropdownOpen(false);
-                      }}>
+                      <span
+                        onClick={() => {
+                          onListChange(list.name);
+                          setDropdownOpen(false);
+                        }}>
                         {list.name}
                       </span>
                       <span className="badge">{list.count}</span>
                       {list.name !== "My next trip" && (
                         <>
-                          <button onClick={() => setEditingId(list.id)}><FiEdit2 /></button>
-                          <button onClick={() => handleDelete(list.name)}><FiTrash2 /></button>
+                          <button onClick={() => setEditingId(list.id)}>
+                            <FiEdit2 />
+                          </button>
+                          <button onClick={() => handleDelete(list.name)}>
+                            <FiTrash2 />
+                          </button>
                         </>
                       )}
                     </>
@@ -207,19 +179,27 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
         )}
       </div>
 
-      <button className="actionBtn" onClick={onShare}>Share the list</button>
-      <button className="actionBtn" onClick={() => setCreatePopupOpen(true)}>Make a list</button>
+      <button className="actionBtn" onClick={onShare}>
+        Share the list
+      </button>
+      <button className="actionBtn" onClick={() => setCreatePopupOpen(true)}>
+        Make a list
+      </button>
 
       {createPopupOpen && (
         <div className="popup">
-          <p className="popupTitle">Make a list <span>*</span></p>
+          <p className="popupTitle">
+            Make a list <span>*</span>
+          </p>
           <input
             type="text"
             placeholder="Give your new list a name"
             value={newListName}
             onChange={(e) => setNewListName(e.target.value)}
           />
-          <button className="confirmBtn" onClick={handleCreate}>Create</button>
+          <button className="confirmBtn" onClick={handleCreate}>
+            Create
+          </button>
         </div>
       )}
     </div>

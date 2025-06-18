@@ -18,8 +18,22 @@ import PersonalAdvice from "../../images/personal-advice.png";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import {LanguageContext} from "../../context/LanguageContext.js";
+import en from "../../content/en.json";
+import nl from "../../content/nl.json";
+import de from "../../content/de.json";
+import es from "../../content/es.json";
+import ReactMarkDown from "react-markdown";
 
-const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
+const contentByLanguage = {
+  en,
+  nl,
+  de,
+  es,
+};
+
+
+const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {  
   const answerRef = useRef(null);
   const [height, setHeight] = useState(0);
 
@@ -58,70 +72,58 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
     </div>
   );
 };
-function Landing() {
+function Landing() {  
+  const {language} =  useContext(LanguageContext);
+  const landingContent = contentByLanguage[language]?.landing;
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [group, setGroup] = useState("");
   const navigate = useNavigate();
   const [faqs, setFaqs] = useState([
     {
-      question: "Getting started as a host",
+      question: `${landingContent.answerTo.host.title}`,
       answer: (
         <>
-          Register as a host, connect or create your stripe account, start
-          listing your accommodation.
+          {landingContent.answerTo.host.description}
         </>
       ),
       isOpen: false,
     },
     {
-      question: "How to list your holiday rental?",
+      question: `${landingContent.answerTo.how.title}`,
       answer: (
         <>
-          You can list your rental by{" "}
+          {landingContent.answerTo.host.description}{" "}
           <span onClick={!isAuthenticated ? () => navigate("/register") : ""}>
-            becoming a Domits host
+            {landingContent.answerTo.host.becomeHost}
           </span>{" "}
-          and filling in the required information. We will contact you shortly
-          after you submit your holiday rental so you can start renting and
-          earning!
+          {landingContent.answerTo.host.description2}
         </>
       ),
       isOpen: false,
     },
     {
-      question: "How do I create and manage my host account?",
+      question: `${landingContent.answerTo.manage.title}`,
       answer: (
         <>
-          Creating a Host account is easy. Click the 'Become a Host' button at
-          the top right and follow the instructions. Once your account is set
-          up, switch to the Host Dashboard from the menu. Here, you can add your
-          property by providing details like type, location, and amenities.
-          After submitting, your listing will be verified. Once approved, set
-          your availability, pricing, and upload photos. To go live, create a
-          Stripe account for payments. You can manage everything—availability,
-          pricing, and details—directly from the Host Dashboard.
+          {landingContent.answerTo.manage.description}
         </>
       ),
       isOpen: false,
     },
     {
-      question: "How payouts and taxes work",
+      question: `${landingContent.answerTo.payout.title}`,
       answer: (
         <>
-          To receive payments, you need to create a Stripe Connect account and
-          link it to Domits via the button in your dashboard. All payments are
-          processed through Stripe, where the necessary fees are automatically
-          deducted.
+          {landingContent.answerTo.payout.description}
         </>
       ),
       isOpen: false,
     },
     {
-      question: "How to manage your calendar and bookings",
+      question: `${landingContent.answerTo.calendar.title}`,
       answer: (
         <>
-          An upcoming feature will allow you to manage your bookings more
-          efficiently directly through the dashboard. Stay tuned for updates.
+          {landingContent.answerTo.calendar.description}
         </>
       ),
       isOpen: false,
@@ -231,21 +233,19 @@ function Landing() {
       <div className={styles.firstSection}>
         <div className={styles.MainText}>
           <h1 className="List_Names">
-            List your{" "}
+            {landingContent.list}{" "}
             <span className={styles.textContainer}>
               <div className={styles.textAnimated}>
-                <span>House</span>
-                <span>Camper</span>
-                <span>Boat</span>
+                <span>{landingContent.house}</span>
+                <span>{landingContent.camper}</span>
+                <span>{landingContent.boat}</span>
               </div>
             </span>
             <br />
-            for free with 0% booking fee
+            {landingContent.forFree}
           </h1>
           <p>
-            Hobby or profession, register your property today and start
-            increasing your earning potential, revenue, occupancy and average
-            daily rate.
+            {landingContent.description}
           </p>
 
           <button className={styles.nextregister}>
@@ -253,7 +253,7 @@ function Landing() {
               href="#Register"
               onClick={(e) => handleSmoothScroll(e, "Register")}
             >
-              Start hosting
+              {landingContent.startHosting}
             </a>
           </button>
         </div>
@@ -267,19 +267,19 @@ function Landing() {
         <div className={styles.iconsContainerText}>
           <div className={styles.iconTextGroup}>
             <img src={bill} alt="bill"></img>
-            <p>Secure payments</p>
+            <p>{landingContent.secure}</p>
           </div>
           <div className={styles.iconTextGroup}>
             <img src={verifiedLogo} alt="verified logo"></img>
-            <p>Verified guests/hosts</p>
+            <p>{landingContent.verified}</p>
           </div>
           <div className={styles.iconTextGroup}>
             <img src={question} alt="question"></img>
-            <p>Quick phone support</p>
+            <p>{landingContent.quick}</p>
           </div>
           <div className={styles.iconTextGroup}>
             <img src={checkMark} alt="checkMark"></img>
-            <p>Domits quality guarantee</p>
+            <p>{landingContent.guarantee}</p>
           </div>
         </div>
       </div>
@@ -288,37 +288,36 @@ function Landing() {
         <div className={styles.easyHosting_text}>
           <h1>
             {" "}
-            Hosting with <span className={styles.highlightText}>
-              Domits
+            {landingContent.hosting.title}<span className={styles.highlightText}>
+              {landingContent.hosting.domits}
             </span>{" "}
-            has never been <span className={styles.highlightText}>easier</span>.
+            {landingContent.hosting.title2}<span className={styles.highlightText}>{landingContent.hosting.easier}</span>.
           </h1>
-          <h3>It only takes 3 steps</h3>
+          <h3>{landingContent.hosting.subtitle}</h3>
         </div>
         <div className={styles.threeSteps}>
           <div className={styles.steps}>
             <h1>
-              <span className={styles.highlightText}>1.</span>
+              <span className={styles.highlightText}>{landingContent.hosting.first.one}</span>
             </h1>
-            <h2 className={styles.headerTwoText}>List your property</h2>
+            <h2 className={styles.headerTwoText}>{landingContent.hosting.first.title}</h2>
             <p>
-              Start earning by listing your property for free with 0% fee in
-              just minutes
+              {landingContent.hosting.first.description}
             </p>
           </div>
           <div className={styles.steps}>
             <h1>
-              <span className={styles.highlightText}>2.</span>
+              <span className={styles.highlightText}>{landingContent.hosting.second.two}</span>
             </h1>
-            <h2 className={styles.headerTwoText}>Get paid</h2>
-            <p>Enjoy fast, easy and secure payments.</p>
+            <h2 className={styles.headerTwoText}>{landingContent.hosting.second.title}</h2>
+            <p>{landingContent.hosting.second.description}</p>
           </div>
           <div className={styles.steps}>
             <h1>
-              <span className={styles.highlightText}>3.</span>
+              <span className={styles.highlightText}>{landingContent.hosting.third.three}</span>
             </h1>
-            <h2 className={styles.headerTwoText}>Receive guest</h2>
-            <p>Welcome your guest with a warm and personal touch</p>
+            <h2 className={styles.headerTwoText}>{landingContent.hosting.third.title}</h2>
+            <p>{landingContent.hosting.third.description}</p>
           </div>
         </div>
       </div>
@@ -329,28 +328,18 @@ function Landing() {
         </div>
         <div className={styles.whyHostText}>
           <h1>
-            Why should I host on{" "}
-            <span className={styles.highlightText}>Domits</span>?
+            {landingContent.why.title}{" "}
+            <span className={styles.highlightText}>{landingContent.why.domits}</span>?
           </h1>
           <p>
-            At Domits, we're not just another platform, we're building a
-            future-focused, sustainable community with our Travel Innovation
-            Labs. Our innovative approach ensures that your property adds
-            meaningful value to both travelers and the environment. You'll also
-            enjoy unlimited support and personalized, modern dashboards that
-            make managing your listings easier than ever. But what truly sets
-            Domits apart is our commitment to you. You're more than just a
-            customer or data, we genuinely care about your success, and we're
-            here every step on the way to help you thrive. Hosting with Domits
-            means aligning with deeply embedded values of health, safety, and
-            sustainability, creating a future-proof path for your business.
+            {landingContent.why.description}
           </p>
           <button onClick={updateUserGroup} className={styles.nexthost}>
             <a
               href="#Register"
               onClick={(e) => handleSmoothScroll(e, "Register")}
             >
-              Start hosting
+              {landingContent.why.btnHosting}
             </a>
           </button>
         </div>
@@ -359,37 +348,35 @@ function Landing() {
       <div className={styles.simpleSafe}>
         <div className={styles.simpleSafeAll}>
           <h1>
-            Register your property{" "}
-            <span className={styles.highlightText}>simple</span> and{" "}
-            <span className={styles.highlightText}>safe</span>
+            {landingContent.register.title}{" "}
+            <span className={styles.highlightText}>{landingContent.register.simple}</span>{landingContent.register.and}{" "}
+            <span className={styles.highlightText}>{landingContent.register.safe}</span>
           </h1>
           <div className={styles.SimpleSafeAllCards}>
             <div className={styles.cardFirstHalf}>
               <div className={styles.simpleSafeCards}>
                 <img src={verifiedLogo} alt="verified logo"></img>
                 <div className={styles.safeMiniText}>
-                  <h3>Verified guests</h3>
+                  <h3>{landingContent.register.verified.title}</h3>
                   <p>
-                    We verify guest with email address, phone, a personal
-                    message and payments with our partner Stripe.
+                    {landingContent.register.verified.description}
                   </p>
                 </div>
               </div>
               <div className={styles.simpleSafeCards}>
                 <img src={rulesLogo} alt="houserules logo"></img>
                 <div className={styles.safeMiniText}>
-                  <h3>Your own house rules</h3>
+                  <h3>{landingContent.register.rules.title}</h3>
                   <p>
-                    Let your potential guests know your house rules. They must
-                    agree in order to book.
+                      {landingContent.register.rules.description}
                   </p>
                 </div>
               </div>
               <div className={styles.simpleSafeCards}>
                 <img src={approveLogo} alt="approve logo"></img>
                 <div className={styles.safeMiniText}>
-                  <h3>Choose how you want to receive your bookings</h3>
-                  <p>You can allow your guests to book directly.</p>
+                  <h3>{landingContent.register.how.title}</h3>
+                  <p>{landingContent.register.how.description}</p>
                 </div>
               </div>
             </div>
@@ -397,31 +384,27 @@ function Landing() {
               <div className={styles.simpleSafeCards}>
                 <img src={banknoteLogo} alt="banknote"></img>
                 <div className={styles.safeMiniText}>
-                  <h3>receive payments regularly and securely</h3>
+                  <h3>{landingContent.register.payments.title}</h3>
                   <p>
-                    You are guaranteed to be paid and can rely on fraud
-                    protection with our payments
+                      {landingContent.register.payments.description}
                   </p>
                 </div>
               </div>
               <div className={styles.simpleSafeCards}>
                 <img src={supportLogo} alt="support logo"></img>
                 <div className={styles.safeMiniText}>
-                  <h3>Dedicated support</h3>
+                  <h3>{landingContent.register.support.title}</h3>
                   <p>
-                    Our rental expert team is available to assist you with any
-                    questions or issues, ensures a smooth hassle-free experience
+                      {landingContent.register.support.description}
                   </p>
                 </div>
               </div>
               <div className={styles.simpleSafeCards}>
                 <img src={internationalLogo} alt="internnational logo"></img>
                 <div className={styles.safeMiniText}>
-                  <h3>International renting</h3>
+                  <h3>{landingContent.register.renting.title}</h3>
                   <p>
-                    You rent out your holiday home on an international market.
-                    This makes the chances of renting of out your holiday home
-                    even greater
+                    {landingContent.register.renting.description}
                   </p>
                 </div>
               </div>
@@ -432,8 +415,8 @@ function Landing() {
 
       <div className={styles.clientReviewMobile}>
         <h1>
-          What others say about{" "}
-          <span className={styles.highlightText}>Domits</span>
+          {landingContent.othersSay.title}{" "}
+          <span className={styles.highlightText}>{landingContent.othersSay.domits}</span>
         </h1>
         <Slider
           dots={true}
@@ -472,8 +455,8 @@ function Landing() {
       <div className={styles.clientRevieuw}>
         <h1>
           {" "}
-          What others say about{" "}
-          <span className={styles.highlightText}>Domits</span>
+          {landingContent.othersSay.title}{" "}
+          <span className={styles.highlightText}>{landingContent.othersSay.domits}</span>
         </h1>
 
         <div className={styles.client_text}>
@@ -633,69 +616,59 @@ function Landing() {
 
       <div className={styles.checkList}>
         <h1>
-          Is your property suitable for{" "}
-          <span className={styles.highlightText}>renting out</span>?
+          {landingContent.rentingOut.title}{" "}
+          <span className={styles.highlightText}>{landingContent.rentingOut.rent}</span>?
         </h1>
         <h3 className={styles.subText}>
-          Here is the minimal requirements checklist for renting out properties
+          {landingContent.rentingOut.description}
         </h3>
         <div className={styles.checkListItems}>
           <div className={styles.checkListItem}>
-            <h3 className={styles.checkListItem__header}>General ✓</h3>
+            <h3 className={styles.checkListItem__header}>{landingContent.rentingOut.general.title}</h3>
             <span className={styles.checkListItem__text}>
-              The property is a fully equipped living unit that meets local
-              rental regulations and is technically sound for renting.
+                {landingContent.rentingOut.general.description}
             </span>
           </div>
           <div className={styles.checkListItem}>
-            <h3 className={styles.checkListItem__header}>Building ✓</h3>
+            <h3 className={styles.checkListItem__header}>{landingContent.rentingOut.building.title}</h3>
             <span className={styles.checkListItem__text}>
-              The building's exterior, windows, doors, and common areas are
-              well-maintained, and the heating system provides sufficient warmth
-              and hot water.
+              {landingContent.rentingOut.building.description}
             </span>
           </div>
           <div className={styles.checkListItem}>
-            <h3 className={styles.checkListItem__header}>Furnishing ✓</h3>
+            <h3 className={styles.checkListItem__header}>{landingContent.rentingOut.furnishing.title}</h3>
             <span className={styles.checkListItem__text}>
-              The furnishing is in good condition, with safe electrical outlets,
-              proper lighting, and available cleaning materials.
+                {landingContent.rentingOut.furnishing.description}
             </span>
           </div>
           <div className={styles.checkListItem}>
-            <h3 className={styles.checkListItem__header}>Bedrooms ✓</h3>
+            <h3 className={styles.checkListItem__header}>{landingContent.rentingOut.bedroom.title}</h3>
             <span className={styles.checkListItem__text}>
-              The bedroom is equipped with intact beds, clean mattresses, and
-              properly sized bedding.
+              {landingContent.rentingOut.bedroom.description}
             </span>
           </div>
           <div className={styles.checkListItem}>
-            <h3 className={styles.checkListItem__header}>Kitchen ✓</h3>
+            <h3 className={styles.checkListItem__header}>{landingContent.rentingOut.kitchen.title}</h3>
             <span className={styles.checkListItem__text}>
-              The kitchen is fully equipped with functioning appliances, cooking
-              tools, and clean dishware.
+                {landingContent.rentingOut.kitchen.description}
             </span>
           </div>
           <div className={styles.checkListItem}>
-            <h3 className={styles.checkListItem__header}>Pool and Jacuzzi ✓</h3>
+            <h3 className={styles.checkListItem__header}>{landingContent.rentingOut.pool.title}</h3>
             <span className={styles.checkListItem__text}>
-              The pool and Jacuzzi are professionally installed and maintained
-              regularly.
+              {landingContent.rentingOut.pool.description}
             </span>
           </div>
           <div className={styles.checkListItem}>
-            <h3 className={styles.checkListItem__header}>Surroundings ✓</h3>
+            <h3 className={styles.checkListItem__header}>{landingContent.rentingOut.surroundings.title}</h3>
             <span className={styles.checkListItem__text}>
-              The outdoor areas are well-maintained, with paths and parking kept
-              clear during winter.
+              {landingContent.rentingOut.surroundings.description}
             </span>
           </div>
           <div className={styles.checkListItem}>
-            <h3 className={styles.checkListItem__header}>Safety ✓</h3>
+            <h3 className={styles.checkListItem__header}>{landingContent.rentingOut.safety.title}</h3>
             <span className={styles.checkListItem__text}>
-              The property meets safety standards with functional smoke
-              detectors, secured balconies, safe playgrounds, and clear access
-              paths.
+              {landingContent.rentingOut.safety.description}
             </span>
           </div>
         </div>
@@ -705,8 +678,8 @@ function Landing() {
         <div className={styles.faq__header}>
           <img src={supportLogo} alt="support" />
           <h1>
-            Answers to <span className={styles.highlightText}>your</span>{" "}
-            questions
+            {landingContent.answerTo.title}<span className={styles.highlightText}>{landingContent.answerTo.your}</span>{" "}
+            {landingContent.answerTo.question}
           </h1>
         </div>
         <div className={styles.faq__list}>
@@ -725,13 +698,13 @@ function Landing() {
       <div className={styles.personal__advice}>
         <div className={styles.personal__advice__left}>
           <h1>
-            Free personal advice from our{" "}
-            <span className={styles.highlightText}>rental expert team</span>
+            {landingContent.advice.title}{" "}
+            <span className={styles.highlightText}>{landingContent.advice.team}</span>
           </h1>
-          <h3>Our expert team is ready for support!</h3>
+          <h3>{landingContent.advice.subtitle}</h3>
           <button className={styles.nextadvice}>
             {" "}
-            <a href="/contact">Talk to a specialist</a>
+            <a href="/contact">{landingContent.advice.talk}</a>
           </button>
         </div>
         <img src={PersonalAdvice} alt="personalAdvice" />

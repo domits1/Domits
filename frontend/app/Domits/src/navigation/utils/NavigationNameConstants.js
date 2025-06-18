@@ -54,3 +54,7 @@ export const CONFIRM_EMAIL_SCREEN = "confirm-email";
 
 // App Settings
 export const APP_SETTINGS_SCREEN = "app-settings";
+
+// Messages
+export const MESSAGES_SCREEN = "messages-screen";
+export const CHAT_SCREEN = "chat-screen"

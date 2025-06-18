@@ -63,14 +63,14 @@ const BookingOverview = () => {
                 const rawRoomRate = responseData.pricing.roomRate;
                 setRawRoomRate(rawRoomRate); // Used in booking details tab
                 setCleaningFee(responseData.pricing.cleaning); 
-                setServiceFee(responseData.pricing.service);  
+                setServiceFee(rawRoomRate * 0.15);
 
                 const numberOfDays = await calculateDaysBetweenDates(checkIn, checkOut);
                 setNumberOfDays(numberOfDays);
                 const totalRoomRate = rawRoomRate * numberOfDays;
                 setRoomRate(totalRoomRate);
 
-                const total = totalRoomRate + responseData.pricing.cleaning + responseData.pricing.service;
+                const total = totalRoomRate * 1.15 + responseData.pricing.cleaning;
                 setTotalPrice(total);
 
                 setBookingDetails({ accommodation: responseData, checkIn, checkOut, adults, kids, pets, amountOfGuest });  
@@ -338,6 +338,7 @@ const BookingOverview = () => {
 
                     <div className="detail-row">
                         <span className="detail-label">Service fee:</span>
+                        <span className="detail-value">€ {(rawRoomRate || 0).toFixed(2) * 0.15} x {numberOfDays}</span>
                         <span className="detail-value">€ {(ServiceFee || 0).toFixed(2)}</span>
                     </div>
 
