@@ -1,5 +1,5 @@
 // For explenation on how search works: https://github.com/domits1/Domits/wiki/Web-Search
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useContext } from 'react';
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker, { utils } from '@hassanmojab/react-modern-calendar-datepicker';
 import {
@@ -28,6 +28,8 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
   const [isMobile, setIsMobile] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [isBarActive, setIsBarActive] = useState(false);
+  const {language} = useContext(LanguageContext);
+  const searchContent = contentByLanguage[language]?.component.search;
 
   const handleButtonClick = (e) => {
     e.stopPropagation();
@@ -265,7 +267,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
               <div className="search-location">
                 <input
                   type="search"
-                  placeholder="Search Destination"
+                  placeholder={searchContent.destination}
                   value={address}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
@@ -277,13 +279,13 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
                   value={accommodation ? { label: accommodation, value: accommodation } : null}
                   onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
                   options={[
-                    { value: 'House', label: <><FaHome /> House</> },
-                    { value: 'Boat', label: <><FaShip /> Boat</> },
-                    { value: 'Camper', label: <><FaCaravan /> Camper</> },
+                    { value: 'House', label: <><FaHome /> {searchContent.house}</> },
+                    { value: 'Boat', label: <><FaShip /> {searchContent.boat}</> },
+                    { value: 'Camper', label: <><FaCaravan /> {searchContent.camper}</> },
                   ]}
                   isSearchable={false}
                   isClearable={true}
-                  placeholder={<span className="search-title-type">Accommodation</span>}
+                  placeholder={<span className="search-title-type">{searchContent.accommodation}</span>}
                   classNamePrefix="custom-select-dropdown-menu"
                   components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                 />
@@ -291,7 +293,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
 
               <div className={`search-guest-section ${showGuestDropdown ? 'active' : ''}`}
                 onClick={toggleGuestDropdown}>
-                <p className={`search-title-guest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests</p>
+                <p className={`search-title-guest ${totalGuests > 0 ? 'hidden' : ''}`}>{searchContent.guests}</p>
                 {totalGuests > 0 && (
                   <button className="search-clear-guests" onClick={resetGuests}>
                     <FaTimes />
@@ -314,29 +316,29 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
                   )}
 
                   <GuestCounter
-                    label={<><FaUser /> Adults</>}
-                    description="Ages 16 or above"
+                    label={<><FaUser /> {searchContent.adults}</>}
+                    description={searchContent.ageGroups.adults}
                     value={adults}
                     onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
                     onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
                   />
                   <GuestCounter
-                    label={<><FaChild /> Children</>}
-                    description="Ages 2–16"
+                    label={<><FaChild /> {searchContent.children}</>}
+                    description={searchContent.ageGroups.children}
                     value={children}
                     onIncrement={() => incrementGuests(children, setChildren)}
                     onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
                   />
                   <GuestCounter
-                    label={<><FaBaby /> Infants</>}
-                    description="Ages 0–2"
+                    label={<><FaBaby /> {searchContent.infants}</>}
+                    description={searchContent.ageGroups.infants}
                     value={infants}
                     onIncrement={() => incrementGuests(infants, setInfants)}
                     onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
                   />
                   <GuestCounter
-                    label={<><FaPaw /> Pets</>}
-                    description="Normal sized pets"
+                    label={<><FaPaw /> {searchContent.pets}</>}
+                    description={searchContent.ageGroups.pets}
                     value={pets}
                     onIncrement={() => incrementGuests(pets, setPets)}
                     onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
@@ -353,7 +355,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
                 />
                 {!startDate && !endDate && (
                   <span className='Calendar-placeholder'>
-                    Check in • out
+                    {searchContent.checkInOut}
                   </span>
                 )}
                 <DatePicker

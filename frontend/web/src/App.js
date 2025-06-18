@@ -24,11 +24,10 @@ import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
-import HostDashboard from "./features/hostdashboard/HostDashboard";
+import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
 import HostListings from "./features/hostdashboard/HostListings";
-import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 
@@ -80,7 +79,6 @@ import Homepage from "./pages/home/homePage.js";
 import Howitworks from "./pages/howitworks/Howitworks.js";
 import Landing from "./pages/landingpage/Landing";
 import Policy from "./pages/policy/Policy";
-import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
 import Terms from "./pages/terms/Terms";
 import Travelinnovation from "./pages/travelinnovationlab/travelinnovation";
@@ -93,6 +91,7 @@ import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
+import Messages from "./components/messages/Messages.js";
 
 
 Modal.setAppElement("#root");
@@ -161,7 +160,6 @@ function App() {
                 <Route path="/home" element={<Home searchResults={searchResults} />} />
                 <Route path="/" element={<Homepage />} />
                 <Route path="/about" element={<About />} />
-                <Route path="/releaseTwo" element={<ReleaseTwo />} />
                 <Route path="/data-safety" element={<Datasafety />} />
                 <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
                 <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
@@ -212,33 +210,7 @@ function App() {
                 <Route
                   path="/hostdashboard"
                   element={<HostProtectedRoute>
-                    <HostDashboard />
-                  </HostProtectedRoute>}
-                />
-                <Route
-                  path="/hostdashboard/*"
-                  element={<HostProtectedRoute>
-                    <Routes>
-                      <Route path="property" element={<HostProperty />} />
-                      <Route path="listings" element={<HostListings />} />
-                      <Route path="calendar" element={<HostCalendar />} />
-                      <Route path="messages" element={<HostMessages />} />
-                      <Route path="reporting" element={<HostPayments />} />
-                      <Route path="settings" element={<HostSettings />} />
-                      {/* <Route path="reviews" element={<HostReviews />} /> */}
-                      <Route path="chat" element={<HostMessages />} />
-                      <Route path="reservations" element={<HostReservations />} />
-                      <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
-                      <Route path="housekeeping" element={<HostHousekeeping />} />
-                      <Route path="iot-hub" element={<HostIoTHub />} />
-                      <Route path="pricing" element={<HostPricing />} />
-                      <Route path="distribution" element={<HostDistribution />} />
-                      <Route path="monitoring" element={<HostMonitoring />} />
-                      <Route path="screening" element={<HostScreening />} />
-                      <Route path="setup" element={<HostSetup />} />
-                      <Route path="promo-codes" element={<HostPromoCodes />} />
-                      <Route path="finance" element={<HostFinanceTab />} />
-                    </Routes>
+                    <MainDashboardHost />
                   </HostProtectedRoute>}
                 />
                 <Route path="/stripe/callback" element={<StripeCallback />} />

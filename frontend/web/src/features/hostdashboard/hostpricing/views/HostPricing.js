@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Pages from "../../Pages.js";
 import "../styles/HostPricing.css";
 import detailsIcon from "../../../../images/icons/content-view-detail-list-icon.svg";
 import tableIcon from "../../../../images/icons/content-view-table-list-icon.svg";
@@ -126,7 +125,6 @@ const HostPricing = () => {
       </div>
 
       <div className="hostdashboard-container">
-        <Pages />
 
         <div className="host-pricing-container">
           {isLoading ? (

@@ -13,7 +13,7 @@ buildscript {
     }
     dependencies {
         classpath "com.android.tools.build:gradle:8.1" // Use the appropriate version for your project
-        classpath "com.facebook.react:react-native-gradle-plugin:+"
+        classpath "com.facebook.react:react-native-gradle-plugin:0.74.0"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     }
 }

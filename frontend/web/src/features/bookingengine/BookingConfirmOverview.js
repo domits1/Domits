@@ -10,6 +10,7 @@ import People from '@mui/icons-material/PeopleAltOutlined';
 import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
+import CalculateDaysBetweenDates from "./utils/CalculateDifferenceInNights";
 
 const BookingConfirmationOverview = () => {
     const location = useLocation();
@@ -62,7 +63,10 @@ const BookingConfirmationOverview = () => {
         return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     };
 
+
     const extractBookingDetails = (bookingData, accommodationData) => {
+        const difference = CalculateDaysBetweenDates(bookingData.arrivalDate.N, bookingData.departureDate.N);
+        const totalPrice = accommodationData.pricing.roomRate * difference;
         return {
             StartDate: bookingData.arrivalDate.N,
             EndDate: bookingData.departureDate.N,
@@ -72,7 +76,7 @@ const BookingConfirmationOverview = () => {
             HostID: accommodationData.property.hostId,
             Status: bookingData.status.S,
             Title: accommodationData.property.title,
-            Price: accommodationData.pricing.roomRate,
+            Price: totalPrice,
             Taxes: 0,
             CleaningFee: accommodationData.pricing.cleaning,
             ServiceFee: accommodationData.pricing.service,
@@ -85,9 +89,9 @@ const BookingConfirmationOverview = () => {
         const taxes = parseFloat(bookingDetails?.Taxes) || 0;
         const cleaningFee = parseFloat(bookingDetails?.CleaningFee) || 0;
         const serviceFee = parseFloat(bookingDetails?.ServiceFee) || 0;
-
         return price + taxes + cleaningFee + serviceFee;
     };
+
     useEffect(() => {
         if (
             bookingDetails?.HostID &&

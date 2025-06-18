@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-import Pages from "./Pages";
 import "./HostHomepage.scss";
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
-import CalendarComponent from "./CalendarComponent";
 import styles from "./HostDashboard.module.scss";
 import calenderStyles from "./HostCalendar.module.css";
 import { generateUUID } from "../../utils/generateUUID.js";
 import { formatDate, uploadICalToS3 } from "../../utils/iCalFormatHost";
 import { getAccessToken } from "../../services/getAccessToken.js";
+import CalendarComponent from "./hostcalendar/views/Calender.js";
 
 function HostCalendar() {
   const [accommodations, setAccommodations] = useState([]);
@@ -161,7 +160,6 @@ function HostCalendar() {
     <div className="page-body">
       <h2>Calendar</h2>
       <div className={styles.dashboardHost}>
-        <Pages />
         {isLoading ? (
           <div className="loading-spinner-calender">
             <img src={spinner} />
