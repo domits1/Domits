@@ -8,6 +8,7 @@ import getGuestReservationsFromToken from './services/getGuestReservationsFromTo
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import EventIcon from "@mui/icons-material/Event";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import styles from "../../styles/sass/guestdashboard/guestbooking.module.scss";
 
 const BookingGuestDashboard = () => {
     const navigate = useNavigate();
@@ -244,70 +245,70 @@ const BookingGuestDashboard = () => {
         // </div>
         <>
           <h2>Reservations</h2>
-          <section >
-            <section >
-              <div >
+          <section className={styles.reservationContainer}>
+            <section className={styles.reservationContent}>
+              <div className={styles.reservationInfo}>
                 <h2>Manage Reservations</h2>
                 <p>
                   <EventIcon />
                   You can manage your reservations on your properties here.
                 </p>
               </div>
-              <div>
+              <div className={styles.reservationButtons}>
                 <button >All</button>
                 <button >Paid</button>
                 <button >Awaiting Payment</button>
                 <button >Cancelled</button>
               </div>
-              <section >
-                <table >
+              <section className={styles.reservationData}>
+                <table className={styles.reservationTable}>
                   <thead>
                     <tr>
                       <th>
                         Reservation Id
-                        <span >
+                        <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
                         Accommodation name
-                        <span >
+                        <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
                         Reserved dates
-                        <span >
+                        <span className={styles.reservationIcons}>
                           <FilterListIcon />
                         </span>
                       </th>
                       <th>
                         Requested on
-                        <span >
+                        <span className={styles.reservationIcons}>
                           <FilterListIcon />
                         </span>
                       </th>
                       <th>
                         Guest name
-                        <span >
+                        <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
                         Rate
-                        <span >
+                        <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
                         Payed
-                        <span >
+                        <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
                         Status
-                        <span >
+                        <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
@@ -317,24 +318,24 @@ const BookingGuestDashboard = () => {
                     {userHasReservations && sortedBookings && sortedBookings.length > 0 ? (
                       sortedBookings.map((booking) => (
                         <tr key={booking.id}>
-                          <td >{booking.id}</td>
-                          <td >{booking.title}</td>
-                          <td >
+                          <td className={styles.singleReservationRow}>{booking.id}</td>
+                          <td className={styles.singleReservationRow}>{booking.title}</td>
+                          <td className={styles.singleReservationRow}>
                             {new Date(booking.arrivalDate).toLocaleDateString()} -{" "}
                             {new Date(booking.departureDate).toLocaleDateString()}
                           </td>
-                          <td >
+                          <td className={styles.singleReservationRow}>
                             {new Date(booking.createdAt).toLocaleDateString()}
                           </td>
-                          <td >{booking.guestName}</td>
-                          <td >€{booking.rate}</td>
-                          <td >{BooleanToString(booking.latePayment)}</td>
-                          <td >{booking.status}</td>
+                          <td className={styles.singleReservationRow}>{booking.guestName}</td>
+                          <td className={styles.singleReservationRow}>€{booking.rate}</td>
+                          <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
+                          <td className={styles.singleReservationRow}>{booking.status}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td  colSpan={8}>You currently have no reservations for your accommodation(s). Refresh the page to try again.</td>
+                        <td className={styles.noData} colSpan={8}>You currently have no reservations for your accommodation(s). Refresh the page to try again.</td>
                       </tr>
                     )}
                   </tbody>
