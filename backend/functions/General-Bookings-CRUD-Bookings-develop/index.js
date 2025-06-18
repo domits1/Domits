@@ -22,12 +22,12 @@ export const handler = async (event) => {
       break;
     default:
       throw new Error("Unable to determine request type. Please contact the Admin.");
-  }  
-  const response = {
+  }
+
+  return {
     statusCode: returnedResponse?.statusCode || 200,
     headers: returnedResponse?.headers || null,
     body: JSON.stringify(returnedResponse?.response),
     //body: JSON.stringify(event), 
   };
-  return response;
 };  
