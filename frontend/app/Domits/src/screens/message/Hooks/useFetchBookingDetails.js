@@ -64,6 +64,10 @@ const useFetchBookingDetails = (hostId, guestId, {
                     }
                     const accoRaw = await accoRes.json();
 
+                    const accoData = typeof accoRaw.body === 'string'
+                        ? JSON.parse(accoRaw.body)
+                        : accoRaw.body;
+
                     setAccommodation(accoRaw);
                 }
 

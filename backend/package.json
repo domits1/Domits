@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "cross-env TEST=true && jest",
+    "test": "cross-env TEST=true jest",
     "createLambda": "node ./CD/npm/createLambda.js"
   },
   "keywords": [],

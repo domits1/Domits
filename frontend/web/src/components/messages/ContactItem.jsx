@@ -1,4 +1,3 @@
-import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
 import useUpdateContactRequest from '../../features/hostdashboard/hostmessages/hooks/useUpdateContactRequest';
 import profileImage from './domits-logo.jpg';
 
@@ -6,20 +5,8 @@ import profileImage from './domits-logo.jpg';
 const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashboardType }) => {
     const isGuest = dashboardType === 'guest';
     const { updateContactRequest } = useUpdateContactRequest(setContacts);
-    const { bookingDetails, accommodation } = useFetchBookingDetails(
-        contact.hostId,
-        isGuest ? userId : contact.recipientId,
-        {
-            accommodationEndpoint: isGuest
-                ? 'bookingEngine/listingDetails'
-                : 'hostDashboard/single',
-            withAuth: !isGuest,
-        }
-    );
-    const key = accommodation?.images?.[0]?.key;
-    const accoImage = key
-        ? `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`
-        : null;
+    const accoImage = contact.accoImage;
+    const bookingStatus = contact.bookingStatus;
 
     const handleAccept = async () => {
         try {
@@ -51,9 +38,9 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
 
                 {!isPending && (
                     <p className="contact-item-subtitle">
-                        {bookingDetails?.Status === "Accepted" && <p id='status'>Reservation approved</p>}
-                        {bookingDetails?.Status === "Pending" && <p id='status'>Inquiry sent</p>}
-                        {bookingDetails?.Status === "Failed" && <p id='status'>Reservation unsuccessful</p>}
+                        {bookingStatus === "Accepted" && <p id='status'>Reservation approved</p>}
+                        {bookingStatus === "Pending" && <p id='status'>Inquiry sent</p>}
+                        {bookingStatus === "Failed" && <p id='status'>Reservation unsuccessful</p>}
                         {contact.latestMessage?.text
                             ? contact.latestMessage.text
                             : contact.latestMessage?.fileUrls?.length === 1
