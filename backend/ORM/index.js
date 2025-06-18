@@ -14,27 +14,27 @@ export default class Database {
   static dbName = null;
   static schema = null;
 
+  static tokenExpiration = null;
+
   constructor() { }
 
   static async getInstance() {
     if (Database.systemManager == null) {
       Database.systemManager = new SystemManagerRepository();
     }
+
+    const now = Date.now();
+    const isTokenExpired = !Database.tokenExpiration || now > Database.tokenExpiration - 2 * 60 * 1000;
+
     if (Database.pool == null) {
       await Database.initializeDatabase();
-    } else {
-      const signer = new DsqlSigner({
-        hostname: Database.host,
-        region: Database.region,
-      });
-
+    } else if (isTokenExpired) {
+      Database.tokenExpiration = Date.now() + 15 * 60 * 1000;
+      const signer = new DsqlSigner({ hostname: Database.host, region: Database.region });
       const token = await signer.getDbConnectAdminAuthToken();
       Database.pool.setOptions({ password: token });
-
-      if (!Database.pool.isInitialized) {
-        await Database.pool.initialize();
-      }
     }
+
     return Database.pool;
   }
 
