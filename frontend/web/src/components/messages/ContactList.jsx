@@ -3,6 +3,8 @@ import { WebSocketContext } from '../../features/hostdashboard/hostmessages/cont
 import useFetchContacts from '../../features/hostdashboard/hostmessages/hooks/useFetchContacts';
 import ContactItem from './ContactItem';
 import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
+import { FaCog, FaSearch, FaBars } from 'react-icons/fa';
+import AutomatedSettings from './AutomatedSettings';
 
 const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId, dashboardType);
@@ -10,6 +12,10 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const [displayType, setDisplayType] = useState('contacts');
     const socket = useContext(WebSocketContext);
     const wsMessages = socket?.messages || [];
+    const isHost = dashboardType === 'host';
+    const [automatedSettings, setAutomatedSettings] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortAlphabetically, setSortAlphabetically] = useState(false);
 
     const labels = {
         contacts: 'Contacts',
@@ -48,7 +54,24 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
         });
     }, [message, setContacts]);
 
-    const contactList = displayType === 'contacts' ? contacts : pendingContacts;
+    let contactList = displayType === 'contacts' ? contacts : pendingContacts;
+
+    if (searchTerm) {
+        contactList = contactList.filter(contact =>
+            contact.givenName?.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    if (sortAlphabetically) {
+        contactList = [...contactList].sort((a, b) =>
+            (a.givenName || '').localeCompare(b.givenName || '')
+        );
+    } else {
+        contactList = [...contactList].sort((a, b) =>
+            new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
+        );
+    }
+
     const noContactsMessage = displayType === 'contacts' ? labels.noContacts : labels.noPending;
 
     const handleClick = (contactId, contactName) => {
@@ -68,6 +91,30 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                     <option value="contacts">{labels.contacts}</option>
                     <option value="pendingContacts">{labels.pending}</option>
                 </select>
+
+                <div className="contact-list-side-buttons">
+                    <input
+                        type="text"
+                        placeholder=""
+                        className="contact-search-input"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
+                    />
+                    <FaBars className={`contact-list-side-button`} onClick={() => setSortAlphabetically(prev => !prev)} />
+                    {isHost && (
+                        <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
+                    )}
+
+                </div>
+
+
+
+                {automatedSettings && (
+                    <AutomatedSettings
+                        setAutomatedSettings={setAutomatedSettings} />
+                )}
+
+
             </div>
 
             <ul className={`contact-list-list`}>
@@ -77,7 +124,6 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                     <p className={`contact-list-empty-text`}>{noContactsMessage}</p>
                 ) : (
                     contactList
-                        .sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0))
                         .map((contact) => (
                             <li
                                 key={contact.userId}

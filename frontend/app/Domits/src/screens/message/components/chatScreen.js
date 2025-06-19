@@ -112,10 +112,9 @@ const ChatScreen = ({ route }) => {
                     onSubmitEditing={handleSendMessage}
                     onKeyPress={handleKeyUp}
                 />
-                {/* Uncomment to add a send button */}
-                {/* <TouchableOpacity style={styles.sendButton}>
-            <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity> */}
+                <TouchableOpacity style={styles.sendButton}>
+                    <Text style={styles.sendButtonText}>Send</Text>
+                </TouchableOpacity>
             </View>
         </View>
 
