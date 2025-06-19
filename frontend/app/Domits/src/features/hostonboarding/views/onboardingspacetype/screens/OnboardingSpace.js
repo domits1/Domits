@@ -14,31 +14,29 @@ const OnboardingSpace = ({formData, updateFormData, reportValidity, markVisited}
 
   return (
       <SafeAreaView style={[styles.safeAreaNavMargin, styles.safeAreaContainer]}>
-        {selectedType === 'Boat' ? (
-            <SafeAreaView style={styles.safeAreaContainer}>
-              <OnboardingBoatSpace
-                  formData={formData}
-                  updateFormData={updateFormData}
-                  reportValidity={reportValidity}
-              />
-            </SafeAreaView>
-        ) : selectedType === 'Camper' ? (
-            <SafeAreaView style={styles.safeAreaContainer}>
-              <OnboardingCamperSpace
-                  formData={formData}
-                  updateFormData={updateFormData}
-                  reportValidity={reportValidity}
-              />
-            </SafeAreaView>
-        ) : (
-            <SafeAreaView style={styles.safeAreaContainer}>
-              <OnboardingAnySpace
-                  formData={formData}
-                  updateFormData={updateFormData}
-                  reportValidity={reportValidity}
-              />
-            </SafeAreaView>
-        )}
+        <SafeAreaView style={styles.safeAreaContainer}>
+          <View style={styles.contentContainer}>
+            {selectedType === 'Boat' ? (
+                <OnboardingBoatSpace
+                    formData={formData}
+                    updateFormData={updateFormData}
+                    reportValidity={reportValidity}
+                />
+            ) : selectedType === 'Camper' ? (
+                <OnboardingCamperSpace
+                    formData={formData}
+                    updateFormData={updateFormData}
+                    reportValidity={reportValidity}
+                />
+            ) : (
+                <OnboardingAnySpace
+                    formData={formData}
+                    updateFormData={updateFormData}
+                    reportValidity={reportValidity}
+                />
+            )}
+          </View>
+        </SafeAreaView>
       </SafeAreaView>
   )
 }

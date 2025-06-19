@@ -56,9 +56,10 @@ const OnboardingType = ({formData, updateFormData, reportValidity, markVisited})
 
   return (
       <SafeAreaView style={styles.safeAreaNavMargin}>
-        <Text style={styles.onboardingPageTitle}>
-          <TranslatedText textToTranslate={"What best describes your property?"}/>
-        </Text>
+        <View style={styles.contentContainer}>
+          <Text style={styles.onboardingPageTitle}>
+            <TranslatedText textToTranslate={"What best describes your property?"}/>
+          </Text>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.gridItemContainer}>
               {propertyTypes.map((item, index) => (
@@ -78,6 +79,7 @@ const OnboardingType = ({formData, updateFormData, reportValidity, markVisited})
               ))}
             </View>
           </ScrollView>
+        </View>
       </SafeAreaView>
   )
 }

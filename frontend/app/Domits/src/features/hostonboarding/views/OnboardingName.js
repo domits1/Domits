@@ -32,14 +32,14 @@ const OnboardingName = ({formData, updateFormData, reportValidity, markVisited})
   }, [title]);
 
   return (
-      <View>
+      <View style={styles.contentContainer}>
         <Text style={styles.onboardingPageTitle}>
           <TranslatedText textToTranslate={"Name your property"}/>:
         </Text>
         <Text style={styles.onboardingPageDescription}>
           <TranslatedText textToTranslate={"A short title works best. Don't worry, you can always change it later."}/>
         </Text>
-        <View style={styles.inputContainer}>
+        <View style={styles.inputContainerCenter}>
           <TextInput
               value={title}
               onChangeText={setTitle}
