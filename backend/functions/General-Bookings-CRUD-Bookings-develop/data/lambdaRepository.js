@@ -22,15 +22,21 @@ class LambdaRepository {
     }
 
     async getPropertyPricingById(property_Id){
-        const response = await fetch(
-            `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${property_Id}`
-        );
-        
-        const receivedData = await response.json();
-        if (receivedData === "No property found."){
-            throw new NotFoundException("Property not found");
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property)
+            .createQueryBuilder("property")
+            .where("property.id = :id", {id: id})
+            .getOne();
+
+        console.log(result);
+        if (result) {
+            return {
+                pricing: result.pricing,
+            }
+        } else {
+            throw new NotFoundException("Property is inactive or does not exist.")
         }
-        return receivedData.pricing;
     }
 }
 export default LambdaRepository;

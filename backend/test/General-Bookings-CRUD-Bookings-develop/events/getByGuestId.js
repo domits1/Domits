@@ -1,5 +1,4 @@
 import { getAuthToken } from "../../util/getAuthToken";
-import getAuthToken  from "../../util/getAuthToken";
 
 module.exports = (async () => {
     const authToken = await getAuthToken();
