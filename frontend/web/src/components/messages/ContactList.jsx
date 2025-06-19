@@ -92,22 +92,23 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                     <option value="pendingContacts">{labels.pending}</option>
                 </select>
 
-                {isHost && (
-                    <div className="contact-list-side-buttons">
-                        <input
-                            type="text"
-                            placeholder=""
-                            className="contact-search-input"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
-                        />
-                        <FaBars className={`contact-list-side-button`} onClick={() => setSortAlphabetically(prev => !prev)} />
+                <div className="contact-list-side-buttons">
+                    <input
+                        type="text"
+                        placeholder=""
+                        className="contact-search-input"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
+                    />
+                    <FaBars className={`contact-list-side-button`} onClick={() => setSortAlphabetically(prev => !prev)} />
+                    {isHost && (
                         <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
-                    </div>
+                    )}
+
+                </div>
 
 
 
-                )}
                 {automatedSettings && (
                     <AutomatedSettings
                         setAutomatedSettings={setAutomatedSettings} />
