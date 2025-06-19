@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { getAccessToken } from "./utils/authUtils";
 
 import "./styles/GuestWishlist.scss";
@@ -14,6 +15,7 @@ const GuestWishlist = () => {
   const [loading, setLoading] = useState(true);
   const [selectedList, setSelectedList] = useState("My next trip");
   const cardListRef = useRef(null);
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     const fetchWishlist = async () => {
@@ -23,8 +25,6 @@ const GuestWishlist = () => {
       setLoading(true);
 
       try {
-
-        //Fetch all wishlists of the user
         const res = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
           method: "POST",
           headers: {
@@ -47,7 +47,6 @@ const GuestWishlist = () => {
           return;
         }
 
-               // Fetch full property details for each ID
         const detailsRes = await fetch(
           `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/set?properties=${propertyIds.join(",")}`
         );
@@ -64,7 +63,6 @@ const GuestWishlist = () => {
     fetchWishlist();
   }, [selectedList]);
 
-  // Delete accommodation (UI en DB)
   const handleUnlike = async (accommodationId) => {
     setWishlist((prev) => prev.filter((item) => item.property.id !== accommodationId));
 
@@ -139,7 +137,7 @@ const GuestWishlist = () => {
               <div key={item.property?.id} className="wishlistCardWrapper">
                 <AccommodationCard
                   accommodation={item}
-                  onClick={() => console.log("Go to details of", item.property?.id)}
+                  onClick={(e, id) => navigate(`/listingdetails?ID=${id}`)}
                 />
                 <button className="DeleteButton" onClick={() => handleUnlike(item.property?.id)}>
                   Delete ❤️
