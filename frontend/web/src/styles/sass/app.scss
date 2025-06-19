@@ -35,12 +35,24 @@
 //productupdates
 @use "pages/productupdates/release-Updates";
 
+//home
+@use "pages/home/homePage";
+@use "pages/home/Accommodations";
+
 
 //GuestDashboard
 @use "features/guestdashboard/guestDashboard";
 @use "features/guestdashboard/Pages";
 @use "features/guestdashboard/GuestBooking";
 @use "features/guestdashboard/mainDashboardGuest";
+
+
+
+// Specifieke styling voor de swiper-navigatieknoppen (.swiper-button-prev en .swiper-button-next)
+// Deze pijlen verschijnen op de accocard en tonen navigatie tussen foto's
+@use '../../../node_modules/swiper/modules/navigation.scss';
+
+
 
 :root {
   --primary-color: #0D9813;
@@ -107,3 +119,6 @@
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
       monospace;
   }
+
+
+
