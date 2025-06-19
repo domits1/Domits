@@ -10,12 +10,13 @@ import {
   deleteWishlist,
 } from "../services/wishlistService";
 
-const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
+const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   const [lists, setLists] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [createPopupOpen, setCreatePopupOpen] = useState(false);
+  const [activePopup, setActivePopup] = useState(null); 
   const [newListName, setNewListName] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const wrapperRef = useRef(null);
 
@@ -69,7 +70,7 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
       onListChange(newListName);
       if (onCreate) onCreate(newListName);
       setNewListName("");
-      setCreatePopupOpen(false);
+      setActivePopup(null);
     } catch (err) {
       console.error("Error creating wishlist:", err.message);
     }
@@ -87,7 +88,9 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
     try {
       await renameWishlist(oldName, newName);
 
-      const updated = lists.map((list) => (list.name === oldName ? { ...list, name: newName, id: newName } : list));
+      const updated = lists.map((list) =>
+        list.name === oldName ? { ...list, name: newName, id: newName } : list
+      );
       setLists(updated);
       if (selectedList === oldName) onListChange(newName);
       setEditingId(null);
@@ -112,11 +115,27 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
     }
   };
 
+  const handleShare = () => {
+    const baseUrl = window.location.origin + "/guestdashboard";
+    const shareLink = `${baseUrl}?wl=${encodeURIComponent(selectedList)}`;
+    setShareUrl(shareLink);
+    setActivePopup("share");
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-        setCreatePopupOpen(false);
+        setActivePopup(null);
         setEditingId(null);
       }
     };
@@ -129,11 +148,16 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
       <label className="label">Select list:</label>
 
       <div className="dropdownWrapper">
-        <button className="dropdownToggle" onClick={() => setDropdownOpen(!dropdownOpen)}>
+        <button
+          className="dropdownToggle"
+          onClick={() =>
+            setActivePopup(activePopup === "dropdown" ? null : "dropdown")
+          }
+        >
           {selectedList} <FiChevronDown />
         </button>
 
-        {dropdownOpen && (
+        {activePopup === "dropdown" && (
           <div className="dropdownMenu">
             <ul>
               {lists.map((list) => (
@@ -155,8 +179,9 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
                       <span
                         onClick={() => {
                           onListChange(list.name);
-                          setDropdownOpen(false);
-                        }}>
+                          setActivePopup(null);
+                        }}
+                      >
                         {list.name}
                       </span>
                       <span className="badge">{list.count}</span>
@@ -179,14 +204,20 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
         )}
       </div>
 
-      <button className="actionBtn" onClick={onShare}>
+      <button className="actionBtn" onClick={handleShare}>
         Share the list
       </button>
-      <button className="actionBtn" onClick={() => setCreatePopupOpen(true)}>
+
+      <button
+        className="actionBtn"
+        onClick={() =>
+          setActivePopup(activePopup === "create" ? null : "create")
+        }
+      >
         Make a list
       </button>
 
-      {createPopupOpen && (
+      {activePopup === "create" && (
         <div className="popup">
           <p className="popupTitle">
             Make a list <span>*</span>
@@ -199,6 +230,16 @@ const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
           />
           <button className="confirmBtn" onClick={handleCreate}>
             Create
+          </button>
+        </div>
+      )}
+
+      {activePopup === "share" && shareUrl && (
+        <div className="popup">
+          <p className="popupTitle">Shareable link</p>
+          <input type="text" value={shareUrl} readOnly />
+          <button className="confirmBtn" onClick={handleCopy}>
+            {copySuccess ? "Copied!" : "Copy link"}
           </button>
         </div>
       )}
