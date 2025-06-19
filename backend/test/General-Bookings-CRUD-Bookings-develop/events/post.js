@@ -1,12 +1,13 @@
-import { getAuthToken } from "../../util/getAuthToken";
+import { getHostAuthToken } from "../../util/getHostAuthToken.js";
 
 module.exports = (async () => {
+    const authToken = await getHostAuthToken();
     return {
         resource: "/bookings",
         path: "/bookings",
         httpMethod: "POST",
         headers: {
-            Authorization: await getAuthToken(),
+            Authorization: authToken,
         },
         body: {
             identifiers: {
