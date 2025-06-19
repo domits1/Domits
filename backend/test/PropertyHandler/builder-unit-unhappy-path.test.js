@@ -1,11 +1,5 @@
 jest.mock("../../functions/PropertyHandler/data/repository/systemManagerRepository.js", () => ({
-    SystemManagerRepository: jest.fn().mockImplementation(() => ({
-        getPropertyTypeById: jest.fn().mockResolvedValue(null),
-        getAmenityAndCategoryById: jest.fn().mockResolvedValue(null),
-        getAvailabilityRestrictionById: jest.fn().mockResolvedValue(null),
-        getGeneralDetailById: jest.fn().mockResolvedValue(null),
-        getRuleById: jest.fn().mockResolvedValue(null),
-    }))
+    SystemManagerRepository: jest.fn().mockImplementation(() => ({}))
 }));
 
 import {describe, it, expect} from "@jest/globals";
