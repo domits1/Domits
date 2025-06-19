@@ -13,14 +13,13 @@ import {
 const GuestActions = ({ selectedList, onListChange, onCreate }) => {
   const [lists, setLists] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [activePopup, setActivePopup] = useState(null); 
+  const [activePopup, setActivePopup] = useState(null);
   const [newListName, setNewListName] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
 
   const wrapperRef = useRef(null);
 
-  //  Fetch all wishlists and their real item counts (excluding placeholders)
   useEffect(() => {
     const fetchLists = async () => {
       const token = getAccessToken();
@@ -30,12 +29,13 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         const data = await fetchWishlists();
         const wishlists = data?.wishlists || {};
 
-        // Fetch the count of real items for each wishlist
         const structured = await Promise.all(
           Object.keys(wishlists).map(async (name) => {
             try {
               const countData = await fetchWishlistItemCount(name);
-              const realItems = (countData.items || []).filter((item) => item.propertyId);
+              const realItems = (countData.items || []).filter(
+                (item) => item.propertyId
+              );
               return { id: name, name, count: realItems.length };
             } catch (err) {
               console.error(`Error fetching count for '${name}':`, err);
@@ -46,7 +46,6 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
 
         setLists(structured);
 
-        // Make sure the selected list exists otherwise fallback to default
         if (!structured.find((l) => l.name === selectedList)) {
           onListChange("My next trip");
         }
@@ -89,7 +88,9 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       await renameWishlist(oldName, newName);
 
       const updated = lists.map((list) =>
-        list.name === oldName ? { ...list, name: newName, id: newName } : list
+        list.name === oldName
+          ? { ...list, name: newName, id: newName }
+          : list
       );
       setLists(updated);
       if (selectedList === oldName) onListChange(newName);
@@ -167,7 +168,9 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
                       type="text"
                       defaultValue={list.name}
                       autoFocus
-                      onBlur={(e) => handleRename(list.name, e.target.value)}
+                      onBlur={(e) =>
+                        handleRename(list.name, e.target.value)
+                      }
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           handleRename(list.name, e.target.value);
@@ -184,17 +187,19 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
                       >
                         {list.name}
                       </span>
-                      <span className="badge">{list.count}</span>
-                      {list.name !== "My next trip" && (
-                        <>
-                          <button onClick={() => setEditingId(list.id)}>
-                            <FiEdit2 />
-                          </button>
-                          <button onClick={() => handleDelete(list.name)}>
-                            <FiTrash2 />
-                          </button>
-                        </>
-                      )}
+                      <div className="rightSide">
+                        <span className="badge">{list.count}</span>
+                        {list.name !== "My next trip" && (
+                          <>
+                            <button onClick={() => setEditingId(list.id)}>
+                              <FiEdit2 />
+                            </button>
+                            <button onClick={() => handleDelete(list.name)}>
+                              <FiTrash2 />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </>
                   )}
                 </li>
