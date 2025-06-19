@@ -52,6 +52,23 @@
         .contact-list-side-buttons {
             display: flex;
 
+            .contact-search-input {
+                max-width: 1.25rem;
+                transition: max-width 0.3s ease, padding 0.3s ease;
+                padding: 4px;
+                overflow: hidden;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-size: 14px;
+                background-color: white;
+                border-color: black;
+                box-shadow: 1px 3px 4px rgba(0, 0, 0, 0.3);
+                &:focus {
+                    max-width: 3.5rem;
+                    padding: 6px 8px;
+                }
+            }
+
             .contact-list-side-button {
                 border: 1px solid black;
                 border-radius: 0.25rem;

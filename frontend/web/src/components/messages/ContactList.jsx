@@ -14,6 +14,8 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const wsMessages = socket?.messages || [];
     const isHost = dashboardType === 'host';
     const [automatedSettings, setAutomatedSettings] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortAlphabetically, setSortAlphabetically] = useState(false);
 
     const labels = {
         contacts: 'Contacts',
@@ -52,7 +54,24 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
         });
     }, [message, setContacts]);
 
-    const contactList = displayType === 'contacts' ? contacts : pendingContacts;
+    let contactList = displayType === 'contacts' ? contacts : pendingContacts;
+
+    if (searchTerm) {
+        contactList = contactList.filter(contact =>
+            contact.givenName?.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    if (sortAlphabetically) {
+        contactList = [...contactList].sort((a, b) =>
+            (a.givenName || '').localeCompare(b.givenName || '')
+        );
+    } else {
+        contactList = [...contactList].sort((a, b) =>
+            new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
+        );
+    }
+
     const noContactsMessage = displayType === 'contacts' ? labels.noContacts : labels.noPending;
 
     const handleClick = (contactId, contactName) => {
@@ -75,8 +94,14 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
 
                 {isHost && (
                     <div className="contact-list-side-buttons">
-                        <FaSearch className={`contact-list-side-button`} />
-                        <FaBars className={`contact-list-side-button`} />
+                        <input
+                            type="text"
+                            placeholder=""
+                            className="contact-search-input"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
+                        />
+                        <FaBars className={`contact-list-side-button`} onClick={() => setSortAlphabetically(prev => !prev)} />
                         <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
                     </div>
 
@@ -84,8 +109,8 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
 
                 )}
                 {automatedSettings && (
-                    <AutomatedSettings 
-                        setAutomatedSettings={setAutomatedSettings}/>
+                    <AutomatedSettings
+                        setAutomatedSettings={setAutomatedSettings} />
                 )}
 
 
@@ -98,7 +123,6 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                     <p className={`contact-list-empty-text`}>{noContactsMessage}</p>
                 ) : (
                     contactList
-                        .sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0))
                         .map((contact) => (
                             <li
                                 key={contact.userId}
