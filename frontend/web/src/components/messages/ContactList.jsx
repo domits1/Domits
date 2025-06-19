@@ -3,6 +3,8 @@ import { WebSocketContext } from '../../features/hostdashboard/hostmessages/cont
 import useFetchContacts from '../../features/hostdashboard/hostmessages/hooks/useFetchContacts';
 import ContactItem from './ContactItem';
 import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
+import { FaCog, FaSearch, FaBars } from 'react-icons/fa';
+import AutomatedSettings from './AutomatedSettings';
 
 const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId, dashboardType);
@@ -10,6 +12,8 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const [displayType, setDisplayType] = useState('contacts');
     const socket = useContext(WebSocketContext);
     const wsMessages = socket?.messages || [];
+    const isHost = dashboardType === 'host';
+    const [automatedSettings, setAutomatedSettings] = useState(null);
 
     const labels = {
         contacts: 'Contacts',
@@ -68,6 +72,23 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                     <option value="contacts">{labels.contacts}</option>
                     <option value="pendingContacts">{labels.pending}</option>
                 </select>
+
+                {isHost && (
+                    <div className="contact-list-side-buttons">
+                        <FaSearch className={`contact-list-side-button`} />
+                        <FaBars className={`contact-list-side-button`} />
+                        <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
+                    </div>
+
+
+
+                )}
+                {automatedSettings && (
+                    <AutomatedSettings 
+                        setAutomatedSettings={setAutomatedSettings}/>
+                )}
+
+
             </div>
 
             <ul className={`contact-list-list`}>
