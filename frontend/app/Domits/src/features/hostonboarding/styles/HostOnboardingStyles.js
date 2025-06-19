@@ -47,6 +47,9 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
+  inputFieldError: {
+    backgroundColor: 'rgba(255,128,128,0.10)'
+  },
   // Input
   inputItem: {
     marginBottom: 10,
