@@ -1,11 +1,11 @@
 import { handler } from "../../functions/PropertyHandler/index.js";
 
 async function main() {
-  console.log(await handler({
+  const result = await handler({
     httpMethod: "GET",
     resource: "/property/bookingEngine/{subResource}",
     pathParameters: {
-      subResource: "byType",
+      subResource: "all",
     },
     queryStringParameters: {
       type: "Boat",
@@ -14,7 +14,8 @@ async function main() {
     headers: {
       Authorization: ""
     },
-  }));
+  });
+  console.log(JSON.parse(result.body).properties)
 }
 
 main();

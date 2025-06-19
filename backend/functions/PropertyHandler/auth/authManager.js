@@ -39,11 +39,9 @@ export class AuthManager {
         } catch (error) {
             throw new Unauthorized("You must be logged in.");
         }
-        let property;
-        try {
-            property = await this.propertyRepository.getPropertyById(id)
-        } catch (error) {
-            throw new NotFoundException("Property not found.");
+        const property = await this.propertyRepository.getPropertyById(id)
+        if (!property) {
+            throw new NotFoundException("Property not found.")
         }
         if (property.hostId !== user.Username) {
             throw new Forbidden("You must be the owner of the property to access it.")
