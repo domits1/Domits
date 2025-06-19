@@ -77,3 +77,52 @@
     }
   }
 }
+
+//Responsiveness
+
+@media (max-width: 600px) {
+  .pageContainer {
+    padding: 16px;
+
+    .wishlistTopBar {
+      gap: 12px;
+
+      .wishlistActionsRow {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+
+        button,
+        select {
+          width: 100%;
+        }
+      }
+
+      .wishlistHeader {
+        gap: 6px;
+
+        .wishlistSubRow {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 6px;
+        }
+      }
+    }
+
+    .cardList {
+      grid-template-columns: 1fr;
+      padding: 0;
+
+      .wishlistCardWrapper {
+        width: 100%;
+      }
+
+      .DeleteButton {
+        position: static;
+        margin-top: 10px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+  }
+}
