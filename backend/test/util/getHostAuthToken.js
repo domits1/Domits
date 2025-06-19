@@ -4,7 +4,7 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 
 // The hardcoded credentials below are for testing purposes only.
-export async function getAuthToken() {
+export async function getHostAuthToken() {
   try {
       const client = new CognitoIdentityProviderClient({ region: "eu-north-1" });
       const command = new AdminInitiateAuthCommand({
