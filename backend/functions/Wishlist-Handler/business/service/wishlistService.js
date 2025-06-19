@@ -1,10 +1,8 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { WishlistRepository } from "../../data/wishlistRepository.js";
 import { WishlistItem } from "../model/wishlistModel.js";
-import { randomUUID } from "crypto";
-
-import { DatabaseException } from "../../../util/exception/DatabaseException.js";
-import { NotFoundException } from "../../../util/exception/NotFoundException.js";
+import { DatabaseException } from "../../util/exception/DatabaseException.js";
+import { NotFoundException } from "../../util/exception/NotFoundException.js";
 
 export class WishlistService {
   constructor(dynamoDbClient = new DynamoDBClient({})) {
@@ -12,74 +10,114 @@ export class WishlistService {
   }
 
   async createWishlist({ guestId, wishlistName }) {
-    const wishlistKey = randomUUID();
+    if (!wishlistName) throw new DatabaseException("wishlistName is required");
+
+    const wishlistKey = `${wishlistName}#__placeholder__`;
+
     const item = new WishlistItem({
       guestId,
       wishlistKey,
       wishlistName,
-      propertyId: "__placeholder__" 
+      isPlaceholder: true,
     });
-    const result = await this.wishlistRepository.create(item);
-    if (!result) {
-      throw new DatabaseException("Failed to create wishlist.");
-    }
-    return wishlistKey;
+
+    const result = await this.wishlistRepository.put(item);
+    if (!result) throw new DatabaseException("Failed to create wishlist.");
+
+    return result;
   }
 
-  async addPropertyToWishlist({ guestId, wishlistKey, propertyId }) {
+  async addToWishlist({ guestId, propertyId, wishlistName }) {
+    if (!propertyId || !wishlistName) throw new DatabaseException("propertyId and wishlistName are required");
+
+    const wishlistKey = `${wishlistName}#${propertyId}`;
+
     const item = new WishlistItem({
       guestId,
       wishlistKey,
+      wishlistName,
       propertyId,
-      wishlistName: "__ignored__"
     });
-    const result = await this.wishlistRepository.create(item);
-    if (!result) {
-      throw new DatabaseException("Failed to add property to wishlist.");
-    }
+
+    const result = await this.wishlistRepository.put(item);
+    if (!result) throw new DatabaseException("Failed to add accommodation.");
+
     return result;
   }
 
-  async removePropertyFromWishlist({ guestId, wishlistKey, propertyId }) {
-    const result = await this.wishlistRepository.delete({ guestId, wishlistKey, propertyId });
-    if (!result) {
-      throw new NotFoundException("Wishlist item not found.");
-    }
+  async removeFromWishlist({ guestId, propertyId, wishlistName }) {
+    const wishlistKey = `${wishlistName}#${propertyId}`;
+    const result = await this.wishlistRepository.delete({ guestId, wishlistKey });
+
+    if (!result) throw new NotFoundException("Accommodation not found in wishlist.");
+
     return result;
   }
 
-  async deleteWishlist({ guestId, wishlistKey }) {
-    const result = await this.wishlistRepository.deleteAll({ guestId, wishlistKey });
-    if (!result) {
-      throw new DatabaseException("Failed to delete wishlist.");
+  async deleteEntireWishlist({ guestId, wishlistName }) {
+    const items = await this.wishlistRepository.queryByGuestId(guestId);
+    const toDelete = items.filter((item) => item.wishlistName === wishlistName);
+
+    for (const item of toDelete) {
+      await this.wishlistRepository.delete({ guestId: item.guestId, wishlistKey: item.wishlistKey });
     }
-    return result;
+
+    return { deletedCount: toDelete.length };
   }
 
-  async getWishlist({ guestId, wishlistKey }) {
-    const items = await this.wishlistRepository.getByKey({ guestId, wishlistKey });
-    if (!items || items.length === 0) {
-      throw new NotFoundException("Wishlist not found.");
-    }
-    return items;
+  async getWishlist({ guestId, wishlistName }) {
+    const items = await this.wishlistRepository.queryByGuestId(guestId);
+    const filtered = items.filter((item) => item.wishlistName === wishlistName);
+    return filtered;
   }
 
   async getAllWishlists(guestId) {
-    const items = await this.wishlistRepository.getAll(guestId);
+    const items = await this.wishlistRepository.queryByGuestId(guestId);
+
     return items.reduce((acc, item) => {
-      if (!acc[item.wishlistKey]) {
-        acc[item.wishlistKey] = [];
-      }
-      acc[item.wishlistKey].push(item);
+      const name = item.wishlistName || "My next trip";
+      if (!acc[name]) acc[name] = [];
+      acc[name].push(item.propertyId);
       return acc;
     }, {});
   }
 
-  async renameWishlist({ guestId, wishlistKey, newName }) {
-    const updated = await this.wishlistRepository.rename({ guestId, wishlistKey, newName });
-    if (!updated) {
-      throw new DatabaseException("Failed to rename wishlist.");
+  async renameWishlist({ guestId, oldName, newName }) {
+    const items = await this.wishlistRepository.queryByGuestId(guestId);
+    const toUpdate = items.filter((item) => item.wishlistName === oldName);
+
+    for (const item of toUpdate) {
+      const oldKey = item.wishlistKey;
+      const newKey = `${newName}#${item.propertyId}`;
+
+      await this.wishlistRepository.delete({ guestId: item.guestId, wishlistKey: oldKey });
+
+      await this.wishlistRepository.put({
+        guestId: item.guestId,
+        wishlistKey: newKey,
+        wishlistName: newName,
+        propertyId: item.propertyId,
+      });
     }
-    return updated;
+
+    return { renamed: toUpdate.length };
+  }
+
+  async moveAccommodation({ guestId, oldName, newName, propertyId }) {
+    const oldKey = `${oldName}#${propertyId}`;
+    const newKey = `${newName}#${propertyId}`;
+
+    await this.wishlistRepository.delete({ guestId, wishlistKey: oldKey });
+
+    const result = await this.wishlistRepository.put({
+      guestId,
+      wishlistKey: newKey,
+      wishlistName: newName,
+      propertyId,
+    });
+
+    if (!result) throw new DatabaseException("Failed to move accommodation.");
+
+    return result;
   }
 }
