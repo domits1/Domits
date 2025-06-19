@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import fetchBookingDetailsAndAccommodation from '../utils/FetchBookingDetails';
 
 const useFetchContacts = (userId, role) => {
   const [contacts, setContacts] = useState([]);
@@ -86,11 +87,35 @@ const useFetchContacts = (userId, role) => {
             const recipientId = contact[idField];
             const userInfo = await fetchUserInfo(recipientId);
             const latestMessage = await fetchLatestMessage(recipientId);
+
+            const hostId = role === 'host' ? userId : contact.hostId;
+            const guestId = role === 'host' ? contact.userId : userId;
+
+            let accoImage = null;
+            let bookingStatus = null;
+
+            try {
+              const bookingInfo = await fetchBookingDetailsAndAccommodation({
+                hostId,
+                guestId,
+                withAuth: role !== 'guest',
+                accommodationEndpoint: role === 'guest'
+                  ? 'bookingEngine/listingDetails'
+                  : 'hostDashboard/single',
+              });
+
+              accoImage = bookingInfo.accoImage;
+              bookingStatus = bookingInfo.bookingStatus;
+            } catch (error) {
+              console.warn('Failed to fetch booking or accommodation', error);
+            }
             return {
               ...contact,
               ...userInfo,
               latestMessage,
               recipientId,
+              accoImage,
+              bookingStatus,
             };
           })
         );
