@@ -1,10 +1,6 @@
 import React, {useState, useEffect} from "react";
 import {Swiper, SwiperSlide} from 'swiper/react';
-import './Accommodations.css';
-import 'swiper/css';
-import 'swiper/css/effect-fade';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
+import 'swiper/css';   
 import {EffectFade, Navigation, Pagination} from 'swiper/modules';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import FavoriteIcon from '@mui/icons-material/Favorite';
