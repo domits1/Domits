@@ -11,8 +11,54 @@ import {bookingEngineByHostIdEvent} from "./events/get/bookingEngine/byHostId";
 import {bookingEngineSetEvent} from "./events/get/bookingEngine/set";
 import {bookingEngineListingDetailsEvent} from "./events/get/bookingEngine/listingDetails";
 import {bookingEngineInvalidSetEvent} from "./events/get/bookingEngine/invalidSet";
+import {getHostAuthToken} from "../util/getHostAuthToken.js";
 
 describe("End-to-end tests", () => {
+
+    describe("Patch request", () => {
+        it("should throw a property not found exception", async () => {
+            const response = await handler({
+                httpMethod: "PATCH",
+                body: JSON.stringify({
+                    property: "SomeNonExistingProperty"
+                }),
+                headers: {
+                    Authorization: await getHostAuthToken()
+                }
+            });
+
+            expect(response.statusCode).toBe(404);
+        });
+
+        it("should throw a forbidden exception", async () => {
+            const response = await handler({
+                httpMethod: "PATCH",
+                body: JSON.stringify({
+                    property: "42a335b3-e72e-49ee-bc8d-ed61e9bd35e5"
+                }),
+                headers: {
+                    Authorization: await getGuestAuthToken()
+                }
+            });
+
+            expect(response.statusCode).toBe(403);
+        });
+
+        it("should throw a already active property exception", async () => {
+            const response = await handler({
+                httpMethod: "PATCH",
+                body: JSON.stringify({
+                    property: "42a335b3-e72e-49ee-bc8d-ed61e9bd35e5"
+                }),
+                headers: {
+                    Authorization: await getHostAuthToken()
+                }
+            });
+
+            expect(response.statusCode).toBe(500);
+            expect(JSON.parse(response.body)).toBe("This property is already active.");
+        });
+    });
 
     describe("Post request", () => {
         it("should throw an unauthorized exception", async () => {
@@ -24,7 +70,7 @@ describe("End-to-end tests", () => {
             });
 
             expect(response.statusCode).toBe(401);
-        })
+        });
 
         it("should throw a forbidden exception", async () => {
             const response = await handler({
@@ -35,7 +81,7 @@ describe("End-to-end tests", () => {
             });
 
             expect(response.statusCode).toBe(403);
-        })
+        });
 
         it("should handle a POST request", async () => {
           const response = await handler(await getPostEvent());
@@ -106,7 +152,7 @@ describe("End-to-end tests", () => {
         const data = JSON.parse(response.body);
 
         expect(response.statusCode).toBe(200);
-        expect(data.property.id).toBe("3763b443-6a49-476f-a7fa-5c39288cc21c");
+        expect(data.property.id).toBe("42a335b3-e72e-49ee-bc8d-ed61e9bd35e5");
       });
     });
 });

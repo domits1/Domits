@@ -5,7 +5,7 @@ export async function getHostDashboardSingleEvent() {
         httpMethod: "GET",
         resource: "/property/hostDashboard/{subResource}",
         pathParameters: {subResource: "single"},
-        queryStringParameters: {property: "3763b443-6a49-476f-a7fa-5c39288cc21c"},
+        queryStringParameters: {property: "42a335b3-e72e-49ee-bc8d-ed61e9bd35e5"},
         headers: {
             Authorization: await getHostAuthToken()
         }

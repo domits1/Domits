@@ -7,7 +7,7 @@ export async function getDeleteEvent() {
             Authorization: await getHostAuthToken()
         },
         body: JSON.stringify({
-            "property": "3763b443-6a49-476f-a7fa-5c39288cc21c"
+            "property": "42a335b3-e72e-49ee-bc8d-ed61e9bd35e5"
         })
     }
 }
