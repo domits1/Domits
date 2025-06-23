@@ -305,6 +305,10 @@ $secondary-color: var(--secondary-color);
             max-width: 350px;
             flex: 1;
 
+            .BH {
+                margin-left: 0px;
+            }
+
             h1 {
                 font-size: 1.75rem;
                 font-weight: bold;
