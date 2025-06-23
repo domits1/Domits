@@ -1,0 +1,1448 @@
+@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;700&display=swap");
+
+$primary-color: var(--primary-color);
+$secondary-color: var(--secondary-color);
+
+.homePage-container {
+    overflow: hidden;
+
+    .domits-homepage {
+        background-color: #f9f9f9;
+        position: relative;
+        z-index: auto;
+
+        .accocard-content {
+            background-color: #f9f9f9;
+        }
+
+
+        h1 {
+            color: rgb(0, 0, 0);
+            margin-left: 60px;
+            margin-bottom: 20px;
+
+            @media (max-width: 400px) {
+                color: rgb(0, 0, 0);
+                margin-left: 0px;
+                margin-bottom: 20px;
+            }
+        }
+
+        .domits-searchContainer {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), var(--villa-background);
+            background-size: cover;
+            background-position: 70% 100%;
+            background-repeat: no-repeat;
+            width: 100vw;
+            height: 87vh;
+
+            @media (max-width: 480px) {
+                height: 50vh;
+
+            }
+
+            .domits-searchTextCon {
+                padding-top: 32vh;
+                color: white;
+                text-align: center;
+                font-size: 4rem;
+                width: 100%;
+                font-weight: 100;
+
+                @media (max-width: 1024px) {
+                    font-size: 5em;
+                }
+
+                @media (max-width: 768px) {
+                    font-size: 2.5em;
+                    padding-top: 20vh;
+                }
+
+                @media (max-width: 480px) {
+                    height: 50vh;
+                    font-size: 2em;
+                }
+
+                .domits-searchText {
+                    font-size: 3rem;
+                    padding-bottom: 2vh;
+
+                    @media (max-width: 768px) {
+                        font-size: 1em;
+                    }
+
+                    @media (max-width: 480px) {
+                        font-size: 1em;
+                    }
+                }
+
+
+            }
+
+            .domits-searchbarCon {
+                padding-top: 1vw;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+
+                @media (max-width: 768px) {
+                    display: none;
+                }
+            }
+        }
+
+        .domits-iconsContainer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9f9f9;
+            flex-wrap: wrap;
+            height: 10vh;
+            padding: 0 4%;
+            margin-top: 20px;
+
+            @media (max-width: 1020px) {
+                margin-bottom: 130px;
+            }
+
+            @media (max-width: 768px) {
+                flex-direction: column;
+                gap: 15px;
+                height: auto;
+                padding: 10px 5vw;
+                margin-bottom: 50px;
+            }
+
+            @media (max-width: 569px) {
+                margin-bottom: 40px;
+            }
+
+            p {
+                @media (max-width: 768px) {
+                    font-size: 0.8rem;
+                }
+            }
+
+            .domits-iconsContainerText {
+                font-size: 1.2rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                text-align: center;
+                flex-wrap: wrap;
+                width: 100%;
+
+                img {
+                    width: 30px;
+                }
+
+                @media (max-width: 1024px) {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                }
+
+                @media (max-width: 480px) {
+                    font-size: 1rem;
+                }
+            }
+        }
+
+
+        .domits-boatContainer {
+            .domits-boatText {
+                h3 {
+                    font-size: 2.5rem;
+                    font-weight: bold;
+                    text-align: center;
+                    padding-left: 0;
+
+                    @media (max-width: 768px) {
+                        font-size: 2rem;
+                        margin-left: 2vw;
+                    }
+
+                    @media (max-width: 480px) {
+                        font-size: 1.5rem;
+                        margin: 20px auto;
+                    }
+                }
+
+                .domits-trendingContainer {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 25px;
+                    margin: 0 auto;
+                    padding-bottom: 2vh;
+                    flex-wrap: wrap;
+
+                    .popup-trigger {
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 260px;
+                        height: 110px;
+                        text-align: center;
+                        border: 1px solid #ddd;
+                        border-radius: 8px;
+                        padding: 10px;
+                        font-size: 14px;
+                        background-color: white;
+                        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+                    }
+
+                    @media (max-width: 768px) {
+                        flex-direction: column;
+                        gap: 15px;
+                        padding: 10px 0;
+                    }
+
+                    >div {
+                        width: 12vw;
+                        padding: 8px;
+                        border-radius: 4px;
+                        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        color: #555;
+                        font-size: 16px;
+                        margin: 0 2%;
+                        position: relative;
+
+                        @media (max-width: 768px) {
+                            width: 90%;
+                        }
+
+                        @media (max-width: 480px) {
+                            font-size: 14px;
+                        }
+
+                        &:hover::after {
+                            content: attr(data-popup-text);
+                            list-style: none;
+                            display: block;
+                            background: rgba(0, 0, 0, 0.8);
+                            color: white;
+                            padding: 5px 10px;
+                            border-radius: 5px;
+                            font-size: 15px;
+                            position: absolute;
+                            z-index: 10;
+                            width: 20%;
+                            transform: translateY(90%);
+                            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+
+                            @media (max-width: 480px) {
+                                width: 60%;
+                                transform: translateY(0%);
+                            }
+                        }
+
+                        @media (max-width: 400px) {
+                            width: 60%;
+                            transform: translateY(0%);
+                        }
+                    }
+                }
+            }
+
+            .domits-accommodationGroup {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 20px;
+
+
+                @media (max-width: 768px) {
+                    padding-left: 0vh;
+                    flex-direction: column;
+                    margin-left: 15px;
+                    margin-right: 15px;
+                }
+
+                .accocard {
+                    .accocard-share-button {
+                        svg {}
+                    }
+                }
+            }
+        }
+
+        .become-host-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 4.5rem;
+            border-radius: 1rem;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: auto;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+
+        @media (max-width: 1024px) {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            padding: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            padding: 1.5rem;
+        }
+
+        .become-host-content {
+            max-width: 350px;
+            flex: 1;
+
+            h1 {
+                font-size: 1.75rem;
+                font-weight: bold;
+                margin-bottom: 1rem;
+
+                @media (max-width: 768px) {
+                    font-size: 1.5rem;
+                }
+
+                @media (max-width: 480px) {
+                    font-size: 1.25rem;
+                }
+            }
+
+            ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                color: #555;
+
+                li {
+                    margin-bottom: 0.5rem;
+                }
+            }
+
+            button {
+                margin-top: 1rem;
+                padding: 0.5rem 1.5rem;
+                background-color: #1d4ed8;
+                color: white;
+                font-weight: 600;
+                border: none;
+                border-radius: 0.5rem;
+                cursor: pointer;
+                box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+                transition: background 0.3s;
+
+                &:hover {
+                    background-color: #1e40af;
+                }
+
+                @media (max-width: 768px) {
+                    font-size: 0.9rem;
+                    padding: 0.5rem 1rem;
+                }
+
+                @media (max-width: 480px) {
+                    font-size: 0.8rem;
+                    padding: 0.4rem 0.8rem;
+                }
+            }
+
+            @media (max-width: 1024px) {
+                max-width: 100%;
+            }
+        }
+
+        .host-images {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            width: 300px;
+            height: auto;
+
+            @media (max-width: 1024px) {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                gap: 1rem;
+                width: 100%;
+                flex-wrap: wrap;
+
+            }
+
+            @media (max-width: 768px) {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                gap: 1rem;
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            @media (max-width: 480px) {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                gap: 1rem;
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .host-image {
+                width: 180px;
+                border-radius: 0.75rem;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+
+                @media (max-width: 1024px) {
+                    width: 160px;
+                }
+
+                @media (max-width: 768px) {
+                    width: 140px;
+                }
+
+                @media (max-width: 480px) {
+                    width: 120px;
+                }
+
+                &:first-child {
+                    width: 220px;
+
+                    @media (max-width: 1024px) {
+                        width: 200px;
+                    }
+
+                    @media (max-width: 768px) {
+                        width: 180px;
+                    }
+
+                    @media (max-width: 480px) {
+                        width: 160px;
+                    }
+                }
+
+                &:last-child {
+                    width: 270px;
+
+                    @media (max-width: 1024px) {
+                        width: 250px;
+                    }
+
+                    @media (max-width: 768px) {
+                        width: 230px;
+                    }
+
+                    @media (max-width: 480px) {
+                        width: 200px;
+                    }
+                }
+            }
+        }
+
+
+
+        .countries-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+            @media (max-width: 767px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            @media (max-width: 400px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            > :nth-child(1) {
+                grid-column: span 2;
+            }
+
+            > :nth-child(2) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(3) {
+                grid-column: span 1;
+            }
+
+            .country-card {
+                overflow: hidden;
+                text-align: left;
+
+                a {
+                    img {
+                        width: 100%;
+                        height: 250px;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+
+                        @media (max-width: 400px) {
+                            width: 100%;
+                            height: 150px;
+                            object-fit: cover;
+                            border-radius: 15px;
+                            padding: 0;
+                        }
+                    }
+                }
+
+                h3 {
+                    margin: 1px;
+                    font-size: 1.2em;
+                    color: black;
+                    font-size: 25px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+                }
+
+                p {
+                    margin-left: 7px;
+                    margin: 1px;
+                    color: #494949;
+                    font-size: 15px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+                }
+            }
+        }
+
+
+        .small-countries-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+
+            @media (max-width: 767px) {
+                grid-template-columns: 1fr;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+            @media (max-width: 400px) {
+                grid-template-columns: 1fr;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+            .small-country-card {
+                a {
+                    img {
+                        height: 150px;
+                        width: 100%;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+
+                        @media (max-width: 400px) {
+                            img {
+                                height: 75px;
+                            }
+                        }
+                    }
+                }
+
+                h3 {
+                    font-size: 15px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 500;
+
+                }
+
+                p {
+                    display: none;
+                }
+
+            }
+        }
+
+        .asia-countries-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+            @media (max-width: 767px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            @media (max-width: 400px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+
+
+            > :nth-child(1) {
+                grid-column: span 2;
+            }
+
+            > :nth-child(2),
+            > :nth-child(3) {
+                grid-column: span 1;
+            }
+
+            .asia-country-card {
+                overflow: hidden;
+                text-align: left;
+
+                a {
+                    img {
+                        width: 100%;
+                        height: 250px;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+
+                        @media (max-width: 400px) {
+                            width: 100%;
+                            height: 150px;
+                            object-fit: cover;
+                            border-radius: 15px;
+                            padding: 0;
+                        }
+                    }
+                }
+
+                h3 {
+                    margin: 1px;
+                    font-size: 25px;
+                    color: black;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+                }
+
+                p {
+                    margin: 1px;
+                    color: #494949;
+                    font-size: 15px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+                }
+            }
+        }
+
+
+        .small-asia-countries-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+            @media (max-width: 767px) {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+            @media (max-width: 400px) {
+                grid-template-columns: 1fr;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+            .small-asia-country-card {
+                a {
+                    img {
+                        width: 100%;
+                        height: 250px;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+
+
+                        @media (max-width: 400px) {
+                            height: 75px;
+                        }
+                    }
+                }
+
+                h3 {
+                    font-size: 15px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 500;
+                }
+            }
+        }
+
+        .caribbean-countries-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+            @media (max-width: 767px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            @media (max-width: 400px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+
+            > :nth-child(1) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(2) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(3) {
+                grid-column: span 2;
+            }
+
+            .caribbean-country-card {
+                overflow: hidden;
+                text-align: left;
+
+                a {
+                    img {
+                        width: 100%;
+                        height: 250px;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+                    }
+                }
+
+                h3 {
+                    margin: 1px;
+                    font-size: 25px;
+                    color: black;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+                }
+
+                p {
+                    margin: 1px;
+                    color: #494949;
+                    font-size: 15px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+                }
+            }
+        }
+
+        .small-caribbean-countries-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+            @media (max-width: 767px) {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+
+            @media (max-width: 400px) {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+            .small-caribbean-country-card {
+                overflow: hidden;
+                text-align: left;
+
+                a {
+                    img {
+                        width: 100%;
+                        height: 150px;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+
+                        @media (max-width: 400px) {
+                            height: 75px;
+                        }
+                    }
+                }
+
+                h3 {
+                    font-size: 15px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 500;
+                }
+            }
+
+        }
+
+        .ski-countries-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+            @media (max-width: 767px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            @media (max-width: 400px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+
+            > :nth-child(1) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(2) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(3) {
+                grid-column: span 2;
+            }
+
+            > :nth-child(4) {
+                grid-column: span 2;
+            }
+
+            > :nth-child(5) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(6) {
+                grid-column: span 1;
+            }
+
+            .ski-country-card {
+                overflow: hidden;
+                text-align: left;
+
+                a {
+                    img {
+                        width: 100%;
+                        height: 250px;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+                    }
+                }
+
+                h3 {
+                    margin: 1px;
+                    font-size: 25px;
+                    color: black;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+                }
+
+                p {
+                    margin: 1px;
+                    color: #494949;
+                    font-size: 15px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+                }
+            }
+        }
+
+        .seasons-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+            @media (max-width: 767px) {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+
+            @media (max-width: 400px) {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+            .season-card {
+                overflow: hidden;
+
+                a {
+                    img {
+
+                        width: 100%;
+                        height: 250px;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+
+                        @media (max-width: 767px) {
+                            height: 150px;
+                        }
+
+                        @media (max-width: 400px) {
+                            height: 150px;
+                        }
+                    }
+                }
+
+                h3 {
+
+                    margin: 1px;
+                    font-size: 1.2em;
+                    color: black;
+                    font-size: 25px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+
+                    @media (max-width: 767px) {
+                        font-size: 18px;
+                    }
+
+
+                    @media (max-width: 400px) {
+                        font-size: 18px;
+                    }
+                }
+            }
+
+        }
+
+
+        .interests-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+
+            @media (max-width: 767px) {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+            @media (max-width: 400px) {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+
+            > :nth-child(1) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(2) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(3) {
+                grid-column: span 2;
+            }
+
+            > :nth-child(4) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(5) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(6) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(7) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(8) {
+                grid-column: span 2;
+            }
+
+            > :nth-child(9) {
+                grid-column: span 2;
+            }
+
+
+            &:nth-child(2) {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            &:nth-child(3) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .interest-card {
+                overflow: hidden;
+
+                @media (max-width: 400px) {
+                    height: 120px;
+                }
+
+                a {
+                    img {
+                        height: 200px;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+                        width: 100%;
+
+
+                        @media (max-width: 400px) {
+                            height: 120px;
+                        }
+                    }
+                }
+
+                h3 {
+                    margin: 1px;
+                    color: black;
+                    font-size: 25px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+
+                    @media (max-width: 767px) {
+                        font-size: 18px;
+                    }
+
+                    @media (max-width: 400px) {
+                        font-size: 16px;
+                    }
+                }
+
+                p {
+                    margin: 0;
+                    color: #494949;
+                    font-size: 15px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+
+                    @media (max-width: 767px) {
+                        font-size: 14px;
+                    }
+
+                    @media (max-width: 400px) {
+                        font-size: 13px;
+                    }
+                }
+            }
+        }
+
+        .groups-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 20px;
+
+            @media (max-width: 767px) {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+            @media (max-width: 400px) {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 20px;
+            }
+
+
+            > :nth-child(1),
+            > :nth-child(2),
+            > :nth-child(5),
+            > :nth-child(6) {
+                grid-column: span 1;
+            }
+
+            > :nth-child(3),
+            > :nth-child(4) {
+                grid-column: span 2;
+            }
+
+            .group-card {
+                overflow: hidden;
+                text-align: left;
+
+                a {
+                    img {
+                        width: 100%;
+                        height: 250px;
+                        object-fit: cover;
+                        border-radius: 15px;
+                        padding: 0;
+
+                        @media (max-width: 767px) {
+                            height: 150px;
+                        }
+
+                        @media (max-width: 400px) {
+                            height: 140px;
+                        }
+                    }
+                }
+
+                h3 {
+                    margin: 1px;
+                    font-size: 25px;
+                    color: black;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+
+                    @media (max-width: 767px),
+                    (max-width: 400px) {
+                        font-size: 18px;
+                    }
+                }
+
+                p {
+                    margin: 1px;
+                    color: #494949;
+                    font-size: 15px;
+                    font-family: "Kanit", sans-serif;
+                    font-weight: 400;
+
+                    @media (max-width: 400px) {
+                        font-size: 14px;
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    .review-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 40px;
+        margin-bottom: 40px;
+        padding: 15px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+        font-family: "Kanit", sans-serif;
+        font-weight: 400;
+
+        @media (max-width: 480px) {
+            padding: 10px;
+        }
+
+
+        button {
+            background-color: #D9D9D9;
+            color: black;
+            border: 0.1px solid black;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+
+            &:hover {
+                background-color: #b7b5b5;
+            }
+
+            &:first-of-type {
+                left: 15px;
+            }
+
+            &:last-of-type {
+                right: 15px;
+            }
+        }
+
+        .review-list {
+            display: flex;
+            gap: 20px;
+            overflow: hidden;
+            justify-content: center;
+            flex-wrap: nowrap;
+
+            .review-card {
+                background-color: #f9f9f9;
+                border-radius: 10px;
+                text-align: center;
+                flex-grow: 0;
+                flex-shrink: 0;
+                flex-basis: calc(33.33% - 20px);
+                margin-right: 20px;
+                box-sizing: border-box;
+                width: 350px;
+                height: 400px;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: center;
+                box-sizing: border-box;
+
+                @media (max-width: 1024px) {
+                    flex-basis: calc(50% - 20px);
+                    width: auto;
+                    height: 350px;
+
+                }
+
+
+
+                @media (max-width: 768px) {
+                    flex-basis: 100%;
+                    width: 100%;
+                    height: auto;
+                }
+
+
+                @media (max-width: 480px) {
+                    flex-basis: 100%;
+                    width: 100%;
+                    height: auto;
+                    margin-right: 0;
+
+                }
+
+                img {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    margin-bottom: 10px;
+
+
+                    @media (max-width: 1024px) {
+                        width: 50px;
+                        height: 50px;
+                    }
+
+                    @media (max-width: 768px) {
+                        width: 45px;
+                        height: 45px;
+                    }
+
+                    @media (max-width: 480px) {
+                        width: 40px;
+                        height: 40px;
+                    }
+
+
+
+
+                }
+            }
+        }
+
+        h3 {}
+
+        .review-location {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .review-stars {
+            color: #f5c518;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .review-text {
+            font-size: 0.8rem;
+            color: #333;
+            line-height: 1.5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+
+
+            @media (max-width: 1024px) {
+                font-size: 0.9rem;
+                -webkit-line-clamp: 4;
+            }
+
+            @media (max-width: 768px) {
+                font-size: 0.85rem;
+                -webkit-line-clamp: 3;
+            }
+
+            @media (max-width: 768px) {
+                font-size: 0.8rem;
+                -webkit-line-clamp: 2;
+            }
+        }
+
+    }
+
+
+    .domits-communityContainer {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 4vh;
+        padding-bottom: 8vh;
+
+        h2 {
+            font-size: 1.5rem;
+            font-size: 3vw;
+            font-weight: 450;
+
+            @media (max-width: 767px) {
+                font-size: 1.8rem;
+            }
+
+            @media (max-width: 480px) {
+                font-size: 1.5rem;
+            }
+
+
+
+        }
+
+        p {
+
+            font-size: 1.5vw;
+            font-weight: 300;
+            height: 15vh;
+            text-align: left;
+            padding-left: 27.2vw;
+
+            @media (max-width: 768px) {
+                font-size: 1rem;
+                width: 85%;
+                margin: 0 auto;
+                text-align: center;
+                padding-left: 6vw;
+                height: 5vh;
+            }
+
+
+        }
+
+        .domits-communityButtons {
+            display: flex;
+            align-items: center;
+            font-size: 1.5vw;
+            margin-top: 1.5rem;
+            gap: 8vw;
+            justify-content: center;
+
+            .domits-hostButton {
+                font-size: 0.8rem;
+                padding: 8px 15px;
+                border: none;
+                border-radius: 0.6em;
+                padding: 8px 4vw;
+                cursor: pointer;
+                font-size: 0.9vw;
+
+                background-color: $secondary-color;
+                color: white;
+
+                a {
+                    text-decoration: none;
+                    color: white;
+                }
+
+                @media (max-width: 767px) {
+                    font-size: 1rem;
+                    padding: 10px 20px;
+                    width: 80%;
+                    margin: 5px auto;
+                }
+
+
+                @media (max-width: 480px) {
+                    font-size: 0.8rem;
+                    padding: 8px 15px;
+                }
+
+            }
+
+            .domits-SearchButton {
+                font-size: 0.8rem;
+                padding: 8px 15px;
+                border: none;
+                border-radius: 0.6em;
+                padding: 8px 4vw;
+                cursor: pointer;
+                font-size: 0.9vw;
+
+                background-color: $primary-color;
+                color: white;
+
+                a {
+                    text-decoration: none;
+                    color: white;
+                }
+
+                @media (max-width: 767px) {
+                    font-size: 1rem;
+                    padding: 10px 20px;
+                    width: 80%;
+                    margin: 5px auto;
+                }
+
+
+                @media (max-width: 480px) {
+                    font-size: 0.8rem;
+                    padding: 8px 15px;
+                }
+
+            }
+
+            @media (max-width: 768px) {
+                flex-direction: column;
+                gap: 10px;
+                margin: 10px auto;
+                gap: 1rem;
+            }
+
+
+            @media (max-width: 1024px) {
+                padding: 2vh 5vw;
+            }
+
+
+            @media (max-width: 768px) {
+                padding: 2vh 3vw;
+            }
+
+            @media (max-width: 768px) {
+                font-size: 1.8rem;
+            }
+
+            @media (max-width: 480px) {
+                padding: 4vh 5vw;
+            }
+
+        }
+    }
+}
