@@ -6,10 +6,11 @@ export const styles = StyleSheet.create({
     fontSize: 32,
     textAlign: "center",
     marginTop: 10,
-    marginBottom: 20,
+    marginBottom: 10,
     color: 'black'
   },
   onboardingPageDescription: {
+    textAlign: "center",
     color: 'rgba(70,70,70,0.7)',
     marginBottom: 20,
   },
@@ -73,6 +74,9 @@ export const styles = StyleSheet.create({
     borderColor: COLORS.domitsHostBlue,
     padding: 10,
     marginVertical: 5,
+  },
+  lengthTrackerText: {
+    textAlign: 'right',
   },
   // List
   listItemContainer: {

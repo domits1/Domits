@@ -16,6 +16,9 @@ const OnboardingName = ({formData, updateFormData, reportValidity, markVisited})
 
   useEffect(() => {
     markVisited(true);
+  }, [])
+
+  useEffect(() => {
     if (title.trim() === '') {
       setError('Title is required.');
       reportValidity(false);
