@@ -8,7 +8,7 @@ import GuestSelector from "./components/GuestSelector";
 import GuestActions from "./components/GuestActions";
 
 import AccommodationCard from "../../pages/home/AccommodationCard";
-import "../../pages/home/Accommodations.css";
+// import "../../pages/home/Accommodations.css";
 
 const GuestWishlist = () => {
   const [wishlist, setWishlist] = useState([]);
