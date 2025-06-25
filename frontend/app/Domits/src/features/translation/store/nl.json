@@ -79,6 +79,13 @@
     "Property Title": "Accommodatie Titel",
     "Title is required.": "Titel is verplicht.",
     "Special characters are not allowed.": "Speciale tekens zijn niet toegestaan.",
-    "A short title works best. Don't worry, you can always change it later.": "Een korte titel werkt het beste. Maak je geen zorgen, u kunt het later altijd nog wijzigen."
+    "A short title works best. Don't worry, you can always change it later.": "Een korte titel werkt het beste. Maak je geen zorgen, u kunt het later altijd nog wijzigen.",
+    "Country": "Land", "City": "Stad", "Postal Code": "Postcode", "Street": "Straat", "House Number": "Huis nummer",
+    "Where can we find your accommodation?": "Waar kunnen we uw accommodatie vinden?",
+    "We only share your address with guests after they have booked.": "We delen alleen uw adres met gasten nadat zij geboekt hebben.",
+    "Property Description": "Accommodatie beschrijving",
+    "Provide a description": "Geef een beschrijving",
+    "Share what makes your space special.": "Deel wat uw accommodatie speciaal maakt.",
+    "A longer description is required.": "Een langere beschrijving is vereist."
   }
 }

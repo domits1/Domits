@@ -87,3 +87,54 @@
     }
   }
 }
+
+//Responsiveness
+
+@media (max-width: 600px) {
+  .guestSelector {
+    .selectorButton {
+      width: 100%;
+      text-align: center;
+      font-size: 15px;
+      padding: 10px 12px;
+    }
+
+    .dropdownPanel {
+      width: 100vw;
+      left: -16px;
+      padding: 16px;
+      border-radius: 0 0 12px 12px;
+      box-shadow: none;
+    }
+
+    .row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+
+      .counter {
+        justify-content: flex-start;
+        gap: 12px;
+
+        button {
+          width: 36px;
+          height: 36px;
+        }
+
+        span {
+          font-size: 16px;
+        }
+      }
+
+      span {
+        font-size: 16px;
+      }
+    }
+
+    .doneButton {
+      font-size: 16px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+  }
+}

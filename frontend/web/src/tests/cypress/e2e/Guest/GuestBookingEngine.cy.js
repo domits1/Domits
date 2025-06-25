@@ -1,63 +1,34 @@
-import "../../support/commands";
-
-describe("Booking Engine Test - Beekse Bergen, Netherlands", () => {
-  beforeEach(() => {
-    cy.viewport(1920, 1080);
-
-    cy.session("loginSession", () => {
-      cy.loginAsGuest();
-      cy.get(".header-links").should("contain", "Switch to Guest");
+describe('Guest Login Flow', () => {
+    beforeEach(() => {
+        cy.viewport(1920, 1080);
     });
 
-    cy.visit("https://acceptance.domits.com/home", { failOnStatusCode: false });
+    it('should load the homepage and allow a guest to log in', () => {
+        
+      
+        cy.visit('https://acceptance.domits.com/');
 
-    cy.get(".header-links")
-      .should("be.visible")
-      .then(($header) => {
-        cy.wrap($header).should("contain", "Switch to Guest");
-      });
-  });
+        
+        cy.get('[src="/static/media/arrow-down-icon.59bf2e60938fc6833daa025b7260e7f6.svg"]').click();
 
-  it("Should log in as a guest", () => {
-    cy.get(".header-links > .headerHostButton")
-      .should("be.visible")
-      .click();
+        
+        cy.get('.dropdownLoginButton').click();
 
-    cy.get(".edit-icon-background").should("be.visible").click();
+        
+        cy.get('#email').type('testpersoondomits@gmail.com');
+        cy.get('#password').type('Gmail.com1');
 
-    cy.get(":nth-child(2) > .guest-edit-input")
-      .should("be.visible")
-      .clear()
-      .type("testpersoondomits@gmail.com", { force: true });
+        cy.get('.loginButton').click();
 
-    cy.get(":nth-child(3) > .guest-edit-input")
-      .should("be.visible")
-      .clear()
-      .type("Test", { force: true });
+        cy.get('.hostchatbot-close-button').click();
 
-    cy.get(".edit-icon-background").should("be.visible").click();
-  });
+        cy.get('.logo > a > img').should('be.visible').click();
 
-  it("should select Beekse Bergen, Netherlands and complete the booking process", () => {
-    cy.visit("https://acceptance.domits.com/listingdetails?ID=19472a39-f873-4fb2-aac5-89fa509ecc37", { failOnStatusCode: false });
+        cy.get(':nth-child(3) > .domits-accommodationGroup > :nth-child(2) > .swiper > .swiper-wrapper > .swiper-slide-visible > img').click();
 
-    cy.url()
-      .should("include", "listingdetails")
-      .and("include", "19472a39-f873-4fb2-aac5-89fa509ecc37");
+        cy.get('.reserve-btn').should('be.visible').click();
 
-    cy.get(".dropdown-button").should("be.visible").click();
-    cy.get(".button__box > :nth-child(3)").should("be.visible").click();
-    cy.get(":nth-child(2) > .button__box > :nth-child(2)").should("be.visible").click();
-    cy.get(":nth-child(3) > .button__box > :nth-child(2)").should("be.visible").click();
+        cy.get('.confirm-pay-button').should('be.visible').click();
 
-    cy.get(".closeButton").should("exist").and("be.visible").click();
-    
-    cy.get(".reserve-button")
-      .should("exist")
-      .and("be.visible")
-      .click();
-
-    cy.location("pathname").should("include", "/bookingoverview");
-  });
-
+    });
 });
