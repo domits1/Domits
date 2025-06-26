@@ -16,7 +16,7 @@ const PropertyManagementView = ({userRole, roles}) => {
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionTitle}><TranslatedText
                         textToTranslate={"Property Management"}/></Text>
-                    {TabItem(HOST_ONBOARDING_SCREEN, 'List New Property')}
+                    {TabItem(HOST_ONBOARDING_SCREEN, 'List new property')}
                     {TabItem(HOST_PROPERTIES_SCREEN, 'Properties')}
                     {TabItem(HOST_CALENDAR_SCREEN, 'Calendar & Prices')}
                 </View>

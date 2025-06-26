@@ -1,5 +1,14 @@
 {
   "translation": {
+    "Welcome": "Welkom",
+    "Property Management": "Accommodatie beheer",
+    "List new property": "Voeg nieuwe accommodatie toe",
+    "Calendar & Prices": "Kalender & Prijzen",
+    "Financials & Pricing": "Financiën en prijzen",
+    "Payments": "Betalingen",
+    "Preferences": "Voorkeuren",
+    "Become a host": "Word een host",
+    "List your property": "Voeg uw accommodatie toe",
     "Beds": "Bed(den)",
     "Bathrooms": "Badkamer(s)",
     "Bedrooms": "Slaapkamer(s)",
@@ -7,6 +16,8 @@
     "Per night": "per nacht",
     "Nights": "Nachten",
     "Bookings": "Boekingen",
+    "Properties": "Accommodaties",
+    "Reservations": "Reserveringen",
     "Book": "Boek",
     "Logout": "Uitloggen",
     "Delete account": "Verwijder account",
