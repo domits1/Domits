@@ -4,6 +4,14 @@ export default function (props) {
   const [priceValues, setPriceValues] = useState([15, 400]);
   const { onFilterApplied } = props || {};
 
+  const [ecoScore, setEcoScore] = useState({
+    "Star 1": false,
+    "Star 2": false,
+    "Star 3": false,
+    "Star 4": false,
+    "Star 5": false,
+  });
+
   const [seasonFilter, setSeasonFilter] = useState({
     Spring: false,
     Summer: false,
@@ -122,6 +130,13 @@ export default function (props) {
     });
   };
 
+  const handleEcoChange = (event) => {
+    setEcoScore({
+      ...ecoScore,
+      [event.target.name]: event.target.checked,
+    })
+  }
+
   return {
     priceValues,
     setPriceValues,
@@ -143,5 +158,8 @@ export default function (props) {
     setSeasonFilter,
     showMoreSeasonTypes,
     setShowMoreSeasonTypes,
+    handleEcoChange,
+    ecoScore,
+    setEcoScore,
   };
 }
