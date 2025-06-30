@@ -110,16 +110,6 @@ class ReservationRepository {
       .where("booking.property_id = :property_id", { property_id: property_id })
       .andWhere("booking.createdat = :createdAt", { createdAt: createdAt })
       .getMany();
-    // const input = {
-    //     TableName: "booking-develop",
-    //     IndexName: "property_id-createdAt-index",
-    //     KeyConditionExpression: "property_id = :partitionKey AND createdAt = :sortKey",
-    //     ProjectionExpression: "arrivalDate, departureDate",
-    //     ExpressionAttributeValues: {
-    //         ":partitionKey": { S: property_id },
-    //         ":sortKey": { N: createdAt.toString() }
-    //     },
-    // }
     if (!query) {
       throw new UnableToSearch();
     } else if (query.length < 1) {
