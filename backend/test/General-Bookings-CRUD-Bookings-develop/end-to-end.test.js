@@ -13,7 +13,6 @@ import getByDepartureDateModel from "./events/getByDepartureDate.js";
 // This test tests the end-to-end functionality of the booking engine. It tests all possible
 // GET scenarios, including the POST request to create a booking.
 // A dummy account is used to test the booking engine, and has been given dummy data to work with.
-jest.setTimeout(100000);
 describe("booking end-to-end", () => {
     it("should receive a POST request to create a booking", async () => {
         const response = await handler(await PostRequestModel);
