@@ -67,7 +67,7 @@ const BookingOverview = () => {
         console.log("Pricing Object:", retrievedPricingObject);
         console.log("Booking Details:", retrievedBookingDetails);
 
-        if ((!retrievedBookingDetails, !retrievedBookingDetails)) {
+        if (!retrievedBookingDetails) {
           // fix setloading to display error user sided
           setError("Booking details or pricing object is not available.");
           throw new NotFoundException("Booking details or pricing object is not available.");

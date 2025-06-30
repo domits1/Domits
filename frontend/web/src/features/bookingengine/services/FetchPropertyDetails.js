@@ -1,3 +1,4 @@
+import NotFoundException from "../../../utils/exception/NotFoundException";
 import calculateDifferenceInNights from "../utils/CalculateDifferenceInNights";
 
 const FetchPropertyDetails = async (propertyId, checkInDate, checkOutDate) => {
@@ -23,7 +24,7 @@ const FetchPropertyDetails = async (propertyId, checkInDate, checkOutDate) => {
     }
   } catch (error) {
     console.error("Unable to fetch property data.", error);
-    
+    throw new NotFoundException("Tried to request property data, but failed. Please contact the devs.")
   }
 };
 

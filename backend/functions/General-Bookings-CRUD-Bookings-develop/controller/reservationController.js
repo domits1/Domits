@@ -17,12 +17,16 @@ class ReservationController {
     async create(event){
         try{ 
            const returnInfo = await this.bookingService.create(event.event);
-           const paymentData = await this.paymentSerivce.create(returnInfo.hostId, returnInfo.bookingId, returnInfo.propertyId, returnInfo.dates);
-            return {
-                statusCode: returnInfo.statusCode,
-                headers: responseHeaderJSON,
-                response: paymentData,
-            }
+           return {
+            statuscode: returnInfo.statusCode,
+            response: "Should go wrong here."
+           }
+        //    const paymentData = await this.paymentSerivce.create(returnInfo.hostId, returnInfo.bookingId, returnInfo.propertyId, returnInfo.dates);
+        //     return {
+        //         statusCode: returnInfo.statusCode,
+        //         headers: responseHeaderJSON,
+        //         response: paymentData,
+        //     }
         } catch (error) {
             console.error(error);
             return {
