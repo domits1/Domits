@@ -30,7 +30,8 @@ class LambdaRepository {
             .where("property_pricing.property_id = :id", {id: id})
             .getOne();
 
-        if (result.roomrate, result.cleaning) {
+        if (result.roomrate || result.cleaning) {
+            client.close();
             return {
                 pricing: result,
             }

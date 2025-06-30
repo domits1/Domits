@@ -46,7 +46,7 @@ class ReservationRepository {
             console.error(`During creation of the booking, verifying if the property exists failed. ${error}`);
             throw new NotFoundException("Failed to validate if booking exits.")
         }
-    
+        client.close();
       return {
         statusCode: 201,
         hostId: hostId,
@@ -74,6 +74,7 @@ class ReservationRepository {
     } else if (query.length < 1) {
       throw new NotFoundException("No booking found.");
     }
+    client.close();
     return {
       statusCode: 200,
       response: query,
@@ -96,7 +97,7 @@ class ReservationRepository {
     } else if (query.length < 1) {
       throw new NotFoundException("No booking found.");
     }
-
+    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -111,8 +112,8 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
-      .where("booking.property_id = :property_id", { id: property_id })
-      .andWhere("booking.createdat = :createdat", { createdat: createdAt })
+      .where("booking.property_id = :property_id", { property_id: property_id })
+      .andWhere("booking.createdat = :createdAt", { createdAt: createdAt })
       .getMany();
     // const input = {
     //     TableName: "booking-develop",
@@ -129,6 +130,7 @@ class ReservationRepository {
     } else if (query.length < 1) {
       throw new NotFoundException("No booking found.");
     }
+    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -151,6 +153,7 @@ class ReservationRepository {
     } else if (query.length < 1) {
       throw new NotFoundException("No booking found.");
     }
+    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -180,6 +183,7 @@ class ReservationRepository {
         return { ...property, items };
       })
     );
+    client.close();
     return {
       message: "Booking returned: ",
       response: combined,
@@ -213,12 +217,9 @@ class ReservationRepository {
     if (!query) {
       throw new UnableToSearch();
     } else if (query.length < 1) {
-      return {
-        message: "No bookings found",
-        statusCode: 204,
-      };
+      throw new NotFoundException("No booking found.");
     }
-
+    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -241,7 +242,7 @@ class ReservationRepository {
         statusCode: 204,
       };
     }
-
+    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -258,6 +259,7 @@ class ReservationRepository {
         statusCode: 204,
       };
     }
+    client.close();
     return {
       response: query,
       statusCode: 200,
