@@ -205,8 +205,6 @@ class ReservationRepository {
       .getOne();
 
     if (!query) {
-      throw new UnableToSearch();
-    } else if (query.length < 1) {
       return {
         message: "No bookings found",
         statusCode: 204,
