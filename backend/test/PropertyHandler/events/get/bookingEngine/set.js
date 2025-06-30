@@ -2,5 +2,5 @@ export const bookingEngineSetEvent = {
     httpMethod: "GET",
     resource: "/property/bookingEngine/{subResource}",
     pathParameters: {subResource: "set"},
-    queryStringParameters: {properties: "3763b443-6a49-476f-a7fa-5c39288cc21c,e133aeed-08d8-434a-8e94-99a36f990590"}
+    queryStringParameters: {properties: "42a335b3-e72e-49ee-bc8d-ed61e9bd35e5,42a335b3-e72e-49ee-bc8d-ed61e9bd35e5"}
 };
