@@ -1,75 +1,60 @@
-import '../../support/commands';
-
-describe('Landing Page Tests', () => {
+describe('Guest Login Flow', () => {
     beforeEach(() => {
         cy.viewport(1920, 1080);
     });
 
-    it('Should display the landing page and load key sections', () => {
-        cy.loginAsGuest();
-        cy.get('.header-links > .headerHostButton').click();
-        cy.get('.edit-icon-background').click();
-        cy.get(':nth-child(2) > .guest-edit-input')
-            .should('be.visible')
-            .clear()
-            .type('testpersoondomits@gmail.com', { force: true });
-        cy.wait(1000);
-        cy.get(':nth-child(3) > .guest-edit-input')
-            .clear()
-            .type('Test', { force: true });
-        cy.wait(2000);
-        cy.get('.edit-icon-background').click();
-        cy.wait(2000);
+    it('should load the homepage and allow a guest to log in', () => {
         
-        cy.intercept('GET', '**/currentUserInfo', {
-            statusCode: 200,
-            body: {
-                attributes: {
-                    email: 'testpersoondomits@gmail.com',
-                    given_name: '...long name...',
-                },
-            },
-        });
-    });
+      
+        cy.visit('https://acceptance.domits.com/');
 
-    describe('Guest Dashboard Initial Render', () => {
-        it('should fetch and display user data', () => {
-            cy.loginAsGuest();
-            cy.wait(2000);
-            cy.intercept('GET', '**/currentUserInfo', {
-                statusCode: 200,
-                body: {
-                    attributes: {
-                        email: 'testpersoondomits@gmail.com',
-                        given_name: 'Test',
-                    },
-                },
-            });
-            
-            cy.get('.header-links > .headerHostButton')
-                .should('be.visible')
-                .scrollIntoView()
-                .click({ force: true });
-            
-            cy.wait(5000);
+        
+        cy.get('[src="/static/media/arrow-down-icon.59bf2e60938fc6833daa025b7260e7f6.svg"]').click();
 
-            cy.contains('Email:').next().should('contain', 'testpersoondomits@gmail.com');
-            cy.contains('Name:').next().should('contain', 'Test');
-        });
-    });
+        
+        cy.get('.dropdownLoginButton').click();
 
-    describe('Edit Button Toggle', () => {
-        it('should toggle edit mode for email and name', () => {
-            cy.loginAsGuest();
-            cy.wait(2000);
-            
-            cy.get('.header-links > .headerHostButton')
-                .should('be.visible')
-                .scrollIntoView()
-                .click({ force: true });
-            
-            cy.wait(2000);
-            cy.get('.edit-icon-background').click();
-        });
+        
+        cy.get('#email').type('testpersoondomits@gmail.com');
+        cy.get('#password').type('Gmail.com1');
+
+        cy.get('.loginButton').click();
+
+        cy.get('.hostchatbot-close-button').click();
+        
+        cy.get('.hamburger-btn').click();
+        cy.get('.dashboard-sections > :nth-child(4)').should('be.visible').click();
+        cy.get('.close-sidebar-btn').should('be.visible').click();
+
+        cy.get('.hamburger-btn').click();
+        cy.get(':nth-child(5) > p').should('be.visible').click();
+        cy.get('.close-sidebar-btn').should('be.visible').click();
+
+        cy.get('.hamburger-btn').click();
+        cy.get('.dashboard-sections > :nth-child(6) > p').should('be.visible').click();
+        cy.get('.close-sidebar-btn').should('be.visible').click();
+
+        cy.get('.hamburger-btn').click();
+        cy.get('.dashboard-sections > :nth-child(7) > p').should('be.visible').click();
+        cy.get('.close-sidebar-btn').should('be.visible').click();
+
+        cy.get('.hamburger-btn').click();
+        cy.get('.dashboard-sections > :nth-child(8) > p').should('be.visible').click();
+        cy.get('.close-sidebar-btn').should('be.visible').click();
+
+        cy.get('.hamburger-btn').click();
+        cy.get('.dashboard-sections > :nth-child(9) > p').should('be.visible').click();
+        cy.get('.close-sidebar-btn').should('be.visible').click();
+
+        cy.get('.hamburger-btn').click();
+        cy.get('.dashboard-sections > :nth-child(10)').should('be.visible').click();
+        cy.get('.close-sidebar-btn').should('be.visible').click();
+
+        cy.get('.hamburger-btn').click();
+        cy.get(':nth-child(11) > p').should('be.visible').click();
+        cy.get('.close-sidebar-btn').should('be.visible').click();
+        
+
+
     });
 });

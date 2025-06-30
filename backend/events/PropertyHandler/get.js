@@ -1,17 +1,21 @@
 import { handler } from "../../functions/PropertyHandler/index.js";
 
 async function main() {
-  console.log(await handler({
+  const result = await handler({
     httpMethod: "GET",
     resource: "/property/bookingEngine/{subResource}",
     pathParameters: {
-      subResource: "set",
+      subResource: "all",
     },
     queryStringParameters: {
-      "properties": "606519ba-89a4-4e52-a940-3e4f79dabdd7"
+      type: "Boat",
+      bookingId: "9566261c-99d7-4b3a-af08-ad8bb9721d94"
     },
-    headers: {},
-  }));
+    headers: {
+      Authorization: ""
+    },
+  });
+  console.log(JSON.parse(result.body).properties)
 }
 
 main();

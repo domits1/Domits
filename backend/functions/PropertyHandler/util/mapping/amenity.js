@@ -4,9 +4,9 @@ export class AmenityMapping {
 
     static mapDatabaseEntryToAmenity(amenityEntry) {
         return new PropertyAmenity(
-            amenityEntry.id.S,
-            amenityEntry.property_id.S,
-            amenityEntry.amenityId.S
+            amenityEntry.id,
+            amenityEntry.property_id,
+            amenityEntry.amenityid
         )
     }
 }

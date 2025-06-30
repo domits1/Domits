@@ -4,18 +4,16 @@ export const Property_Rule = new EntitySchema({
     name: "Property_Rule",
     tableName: "property_rule",
     columns: {
-        id: {
+        property_id: {
             primary: true,
             type: "varchar",
             generated: false,
             nullable: false
         },
-        propertyId: {
-            type: "varchar",
-            nullable: false
-        },
         rule: {
+            primary: true,
             type: "varchar",
+            generated: false,
             nullable: false
         },
         value: {
