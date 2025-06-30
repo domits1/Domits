@@ -6,8 +6,6 @@ import CreateDate from "../business/model/createDate.js";
 import UnableToSearch from "../util/exception/UnableToSearch.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import { Booking } from "database/models/Booking";
-import { hostname } from "os";
-import { Not } from "typeorm";
 
 class ReservationRepository {
   // ---------
@@ -46,7 +44,6 @@ class ReservationRepository {
             console.error(`During creation of the booking, verifying if the property exists failed. ${error}`);
             throw new NotFoundException("Failed to validate if booking exits.")
         }
-        client.close();
       return {
         statusCode: 201,
         hostId: hostId,
@@ -74,7 +71,6 @@ class ReservationRepository {
     } else if (query.length < 1) {
       throw new NotFoundException("No booking found.");
     }
-    client.close();
     return {
       statusCode: 200,
       response: query,
@@ -97,7 +93,6 @@ class ReservationRepository {
     } else if (query.length < 1) {
       throw new NotFoundException("No booking found.");
     }
-    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -130,7 +125,6 @@ class ReservationRepository {
     } else if (query.length < 1) {
       throw new NotFoundException("No booking found.");
     }
-    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -153,7 +147,6 @@ class ReservationRepository {
     } else if (query.length < 1) {
       throw new NotFoundException("No booking found.");
     }
-    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -183,7 +176,6 @@ class ReservationRepository {
         return { ...property, items };
       })
     );
-    client.close();
     return {
       message: "Booking returned: ",
       response: combined,
@@ -219,7 +211,6 @@ class ReservationRepository {
     } else if (query.length < 1) {
       throw new NotFoundException("No booking found.");
     }
-    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -242,7 +233,6 @@ class ReservationRepository {
         statusCode: 204,
       };
     }
-    client.close();
     return {
       response: query,
       statusCode: 200,
@@ -259,7 +249,6 @@ class ReservationRepository {
         statusCode: 204,
       };
     }
-    client.close();
     return {
       response: query,
       statusCode: 200,
