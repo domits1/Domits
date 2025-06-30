@@ -30,6 +30,28 @@ $breakpoint-sm: 480px;
     align-items: center;
     margin: 20px;
 
+    & > :nth-child(1) {
+      flex: 0 1 auto; 
+      
+      @media screen and (max-width: $breakpoint-lg) {          
+        flex: 1; 
+      }
+    }
+
+    & > :nth-child(2) {
+      flex: 1; 
+      
+      @media screen and (max-width: $breakpoint-lg) {          
+        flex: 0 1 auto; 
+        margin-left: auto; 
+      }
+    }
+
+    & > :nth-child(3) {
+      flex: 0 1 auto; 
+      margin-left: auto; 
+    }
+
     .logo {
       @media screen and (max-width: $breakpoint-lg) {
         margin: 0 1vw 0 -4vw;
@@ -37,6 +59,23 @@ $breakpoint-sm: 480px;
 
       @media screen and (max-width: $breakpoint-md) {
         padding-top: 2vh;
+      }
+    }
+
+    .language-toggle-mobile {
+      visibility: hidden;
+      opacity: 0;
+      display: none;
+      transition: opacity 0.3s ease-in-out;
+      
+      @media screen and (max-width: $breakpoint-lg) {
+        visibility: visible;
+        opacity: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: auto;
+        margin: 0 auto;
       }
     }
 
