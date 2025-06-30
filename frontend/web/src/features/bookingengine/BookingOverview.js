@@ -53,7 +53,7 @@ const BookingOverview = () => {
   useEffect(() => {
     const fetchAccommodation = async () => {
       try {
-        if(!checkInDate && !checkOutDate && !propertyId && !guests ){
+        if(!checkInDate || !checkOutDate || !propertyId || !guests ){
           setError("Unable to retrieve property information from the URL. Please try again later.")
           console.error("URL Query Parameters are missing from your request. Unable to load BookingOverview.")
           throw new NotFoundException("checkInDate, checkOutDate, guests, or PropertyId missing from URL.");

@@ -33,7 +33,7 @@ const SetupForm = () => {
     <form onSubmit={handleSubmit}>
       <PaymentElement />
       <button className="confirm-pay-button" disabled={!stripe}>Submit</button>
-      {errorMessage && <div>errorMessage</div>}
+      {errorMessage && <div>{errorMessage}</div>}
     </form>
   );
 };
