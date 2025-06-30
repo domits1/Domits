@@ -188,17 +188,6 @@ class ReservationRepository {
   // ---------
   async readByDepartureDate(departureDate, property_Id) {
     const client = await Database.getInstance();
-    const departConverted = CreateDate.modifyUnixTime(departureDate);
-    // const input = {
-    //     TableName: "booking-develop",
-    //     IndexName: "property_id-departureDate-index",
-    //     KeyConditionExpression: "property_id = :partitionKey AND departureDate > :sortKey",
-    //     ProjectionExpression: "arrivalDate, departureDate",
-    //     ExpressionAttributeValues: {
-    //         ":partitionKey": { S: property_Id },
-    //         ":sortKey": { N: departConverted.toString() }
-    //     },
-    // }
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")

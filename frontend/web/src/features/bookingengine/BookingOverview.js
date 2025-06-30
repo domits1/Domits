@@ -3,16 +3,13 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-
 import SetupForm from "./views/SetupForm.js";
-
 import { getAccessToken } from "../../services/getAccessToken";
 import Register from "../auth/Register";
 import FetchPropertyDetails from "./services/FetchPropertyDetails";
 import NotFoundException from "../../utils/exception/NotFoundException";
 import Unauthorized from "../../utils/exception/Unauthorized";
 import spinner from "../../images/spinnner.gif";
-
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import Calender from "@mui/icons-material/CalendarTodayOutlined";
 import People from "@mui/icons-material/PeopleAltOutlined";
@@ -45,10 +42,8 @@ const BookingOverview = () => {
   const checkOutDate = searchParams.get("checkOutDate");
   const guests = searchParams.get("guests");
   const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-  const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ""}`;
   const options = {
   clientSecret: stripeClientSecret,
-  // Fully customizable with appearance API.
   appearance: {
     colorBackground: '#4caf50',
     fontFamily: "Font Awesome 6 Free"
@@ -121,7 +116,7 @@ const BookingOverview = () => {
   if (error) {
     return <div className="error-message">{error}</div>;
   } else if (!bookingDetails || !pricingObject) {
-    return <img src={spinner} className="centerObject"></img>;
+    return <img src={spinner} alt="Loading circle spinner" className="centerObject"></img>;
   }
 
   const createBooking = async () => {

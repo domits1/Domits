@@ -22,6 +22,7 @@ const SetupForm = () => {
         },
       });
       if (error) {
+        console.error(error);
       }
     } catch (error) {
       setErrorMessage(error.message);
