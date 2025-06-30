@@ -13,7 +13,6 @@ class PropertyRepository {
             .createQueryBuilder("property")
             .where("property.id = :id", {id: id})
             .getOne();
-        console.log(result)
         if (result) {
             return {
                 hostId: result.hostid,

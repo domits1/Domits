@@ -1,5 +1,6 @@
 import NotFoundException from "../util/exception/NotFoundException.js"
-
+import Database from "database";
+import { Property_Pricing } from "database/models/Property_Pricing";
 class LambdaRepository {
     async getPropertiesFromHostId(host_Id){
         const response = await fetch(
@@ -21,18 +22,17 @@ class LambdaRepository {
         };
     }
 
-    async getPropertyPricingById(property_Id){
+    async getPropertyPricingById(id){
         const client = await Database.getInstance();
         const result = await client
-            .getRepository(Property)
-            .createQueryBuilder("property")
-            .where("property.id = :id", {id: id})
+            .getRepository(Property_Pricing)
+            .createQueryBuilder("property_pricing")
+            .where("property_pricing.property_id = :id", {id: id})
             .getOne();
 
-        console.log(result);
-        if (result) {
+        if (result.roomrate, result.cleaning) {
             return {
-                pricing: result.pricing,
+                pricing: result,
             }
         } else {
             throw new NotFoundException("Property is inactive or does not exist.")
