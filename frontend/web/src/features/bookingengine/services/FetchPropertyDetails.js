@@ -8,7 +8,6 @@ const FetchPropertyDetails = async (propertyId, checkInDate, checkOutDate) => {
     );
     const accommodationData = await response.json();
 
-    console.log("Accommodation Data:", accommodationData);
     const differenceInDays = calculateDifferenceInNights(checkInDate, checkOutDate);
     const totalRate = Math.round((accommodationData.pricing.roomRate * 1.15 + accommodationData.pricing.cleaning) * differenceInDays * 100) / 100;
     return { 

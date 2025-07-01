@@ -16,7 +16,7 @@ import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
 
 const stripePromise = loadStripe(
-  "pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3" // Change to live key in production
+  "pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3" 
 );
 
 const BookingOverview = () => {
@@ -33,7 +33,6 @@ const BookingOverview = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pricingObject, setPricingObject] = useState(null);
   const [isProcessing, setIsProcessing] = useState(true);
-  const [accommodation, setAccommodation] = useState(null);
   const [stripeClientSecret, setStripeClientSecret] = useState(null);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -42,11 +41,11 @@ const BookingOverview = () => {
   const checkOutDate = searchParams.get("checkOutDate");
   const guests = searchParams.get("guests");
   const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+
   const options = {
   clientSecret: stripeClientSecret,
   appearance: {
-    colorBackground: '#4caf50',
-    fontFamily: "Font Awesome 6 Free"
+    //
   },
 };
 
@@ -64,11 +63,7 @@ const BookingOverview = () => {
         const retrievedBookingDetails = { accommodation: retrievedPricingObject, checkInDate, checkOutDate, guests };
         setBookingDetails(retrievedBookingDetails);
 
-        console.log("Pricing Object:", retrievedPricingObject);
-        console.log("Booking Details:", retrievedBookingDetails);
-
         if (!retrievedBookingDetails) {
-          // fix setloading to display error user sided
           setError("Booking details or pricing object is not available.");
           throw new NotFoundException("Booking details or pricing object is not available.");
         }
@@ -160,7 +155,6 @@ const BookingOverview = () => {
         console.error("Unable to get user's stripe client secret.");
         throw new Error("stripeClientSecret is undefined or null.");
       }
-      console.log(retrievedStripeClientSecret);
       setShowCheckout(true);
     } catch (error) {
       console.error("Error creating booking:", error);
