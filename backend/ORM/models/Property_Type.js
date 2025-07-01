@@ -14,7 +14,7 @@ export const Property_Type = new EntitySchema({
             type: "varchar",
             nullable: false
         },
-        spacetype: {
+        spaceType: {
             type: "varchar",
             nullable: false
         },

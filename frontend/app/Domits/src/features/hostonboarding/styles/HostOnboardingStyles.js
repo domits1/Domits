@@ -6,12 +6,13 @@ export const styles = StyleSheet.create({
     fontSize: 32,
     textAlign: "center",
     marginTop: 10,
-    marginBottom: 10,
+    marginHorizontal: 20,
+    marginBottom: 20,
     color: 'black'
   },
   onboardingPageDescription: {
-    textAlign: "center",
     color: 'rgba(70,70,70,0.7)',
+    marginHorizontal: 20,
     marginBottom: 20,
   },
   // Navigation
@@ -39,44 +40,25 @@ export const styles = StyleSheet.create({
   scrollContainer: {
     paddingVertical: 10,
   },
-  contentContainer: {
-    marginHorizontal: 20,
-  },
   // Error
   errorText: {
     color: 'red',
     fontWeight: '500',
     textAlign: 'center',
   },
-  inputFieldError: {
-    backgroundColor: 'rgba(255,128,128,0.10)'
-  },
   // Input
-  inputItem: {
-    marginBottom: 10,
-  },
-  inputTitle: {
-    color: 'black',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  inputContainerCenter: {
+  inputContainer: {
+    marginHorizontal: 10,
     width: '90%',
     maxWidth: 600,
     alignSelf: 'center',
-  },
-  inputContainer: {
-    maxWidth: 600,
   },
   inputField: {
     borderWidth: 1,
     borderRadius: 10,
     borderColor: COLORS.domitsHostBlue,
     padding: 10,
-    marginVertical: 5,
-  },
-  lengthTrackerText: {
-    textAlign: 'right',
+    marginVertical: 10,
   },
   // List
   listItemContainer: {

@@ -21,19 +21,32 @@ import { Forbidden } from "../../util/exception/Forbidden.js";
 
 export class PropertyService {
 
+  propertyRepository;
+  propertyAmenityRepository;
+  propertyAvailabilityRepository;
+  propertyAvailabilityRestrictionRepository;
+  propertyCheckInRepository;
+  propertyGeneralDetailRepository;
+  propertyLocationRepository;
+  propertyPricingRepository;
+  propertyRuleRepository;
+  propertyTypeRepository;
+  propertyImageRepository;
+  propertyTechnicalDetailRepository;
+
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
-    this.propertyRepository = new PropertyRepository(systemManagerRepository);
-    this.propertyAmenityRepository = new PropertyAmenityRepository(systemManagerRepository);
-    this.propertyAvailabilityRepository = new PropertyAvailabilityRepository(systemManagerRepository);
-    this.propertyAvailabilityRestrictionRepository = new PropertyAvailabilityRestrictionRepository(systemManagerRepository);
-    this.propertyCheckInRepository = new PropertyCheckInRepository(systemManagerRepository);
-    this.propertyGeneralDetailRepository = new PropertyGeneralDetailRepository(systemManagerRepository);
-    this.propertyLocationRepository = new PropertyLocationRepository(systemManagerRepository);
-    this.propertyPricingRepository = new PropertyPricingRepository(systemManagerRepository);
-    this.propertyRuleRepository = new PropertyRuleRepository(systemManagerRepository);
-    this.propertyTypeRepository = new PropertyTypeRepository(systemManagerRepository);
-    this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
-    this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
+    this.propertyRepository = new PropertyRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyAmenityRepository = new PropertyAmenityRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyAvailabilityRepository = new PropertyAvailabilityRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyAvailabilityRestrictionRepository = new PropertyAvailabilityRestrictionRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyCheckInRepository = new PropertyCheckInRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyGeneralDetailRepository = new PropertyGeneralDetailRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyLocationRepository = new PropertyLocationRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyPricingRepository = new PropertyPricingRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyRuleRepository = new PropertyRuleRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyTypeRepository = new PropertyTypeRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyImageRepository = new PropertyImageRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(dynamoDbClient, systemManagerRepository);
     this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
   }
 
@@ -61,10 +74,13 @@ export class PropertyService {
     if (property.status === "ACTIVE") {
       throw new DatabaseException("This property is already active.");
     }
-    await this.propertyRepository.activateProperty(propertyId, property);
+    await this.propertyRepository.activateProperty(propertyId, property.propertyType);
     const newProperty = await this.getBasePropertyInfo(propertyId);
 
-    if (property === newProperty) {
+    const location = await this.getLocation(propertyId);
+    await this.propertyLocationRepository.activateProperty(propertyId, location.country);
+    const newLocation = await this.getLocation(propertyId);
+    if (property === newProperty || location === newLocation) {
       throw new DatabaseException("Something went wrong while updating the activity status");
     }
   }
@@ -193,7 +209,7 @@ export class PropertyService {
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
     ]);
-    const technicalDetails = propertyType.property_type === "Boat" || propertyType.property_type === "Camper" ?
+    const technicalDetails = basePropertyInfo.propertyType === "Boat" || basePropertyInfo.propertyType === "Camper" ?
       await this.getTechnicalDetails(propertyId) : null;
     return {
       property: basePropertyInfo, amenities: amenities, availability: availability,
@@ -218,7 +234,7 @@ export class PropertyService {
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
     ]);
-    const technicalDetails = propertyType.property_type === "Boat" || propertyType.property_type === "Camper" ?
+    const technicalDetails = basePropertyInfo.propertyType === "Boat" || basePropertyInfo.propertyType === "Camper" ?
       await this.getTechnicalDetails(propertyId) : null;
     return {
       property: basePropertyInfo, amenities: amenities, availability: availability,

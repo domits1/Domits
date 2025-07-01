@@ -57,7 +57,6 @@ export const handler = async (event) => {
                                 body: "Path not found."
                             }
                     }
-                    // TODO add functionality
                 case "DELETE":
                     return await controller.delete(event);
                 default:

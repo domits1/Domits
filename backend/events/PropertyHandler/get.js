@@ -1,21 +1,27 @@
 import { handler } from "../../functions/PropertyHandler/index.js";
 
 async function main() {
-  const result = await handler({
+  console.log(await handler({
     httpMethod: "GET",
     resource: "/property/bookingEngine/{subResource}",
     pathParameters: {
-      subResource: "all",
+<<<<<<< HEAD
+      subResource: "byType",
+=======
+      subResource: "set",
+>>>>>>> parent of 8e985a83a (Merge branch 'acceptance' of https://github.com/domits1/domits into feature/multi-language-mobile)
     },
     queryStringParameters: {
-      type: "Boat",
-      bookingId: "9566261c-99d7-4b3a-af08-ad8bb9721d94"
+      "properties": "606519ba-89a4-4e52-a940-3e4f79dabdd7"
     },
+<<<<<<< HEAD
     headers: {
       Authorization: ""
     },
-  });
-  console.log(JSON.parse(result.body).properties)
+=======
+    headers: {},
+>>>>>>> parent of 8e985a83a (Merge branch 'acceptance' of https://github.com/domits1/domits into feature/multi-language-mobile)
+  }));
 }
 
 main();

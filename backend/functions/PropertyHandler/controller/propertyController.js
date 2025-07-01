@@ -5,7 +5,6 @@ import { SystemManagerRepository } from "../data/repository/systemManagerReposit
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
-import { NotFoundException } from "../util/exception/NotFoundException.js";
 
 export class PropertyController {
 
@@ -120,8 +119,6 @@ export class PropertyController {
             const type = event.queryStringParameters.type;
             if (type) {
                 await this.propertyService.validatePropertyType(type);
-            } else {
-                throw new NotFoundException("No property type found.")
             }
             const properties = await this.propertyService.getActivePropertyCardsByType(type);
             return {

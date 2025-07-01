@@ -1,55 +1,72 @@
+import { GetItemCommand, PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { AmenityMapping } from "../../util/mapping/amenity.js";
-import Database from "database";
-import {Property_Amenity} from "database/models/Property_Amenity";
-import {Amenity_And_Category} from "database/models/Amenity_And_Category";
 
 export class PropertyAmenityRepository {
 
-    constructor(systemManager) {
+    constructor(dynamoDbClient, systemManager) {
+        this.dynamoDbClient = dynamoDbClient;
         this.systemManager = systemManager
     }
     async getAmenitiesByPropertyId(id) {
-        const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Property_Amenity)
-            .createQueryBuilder("property_amenity")
-            .where("property_id = :property_id", { property_id: id })
-            .getMany();
-        return result.length > 0 ? result.map(item => AmenityMapping.mapDatabaseEntryToAmenity(item)) : null;
+        const params = new QueryCommand({
+            "TableName": "property-amenity-develop",
+            "IndexName": "property_id-index",
+            "KeyConditionExpression": "#property_id = :property_id",
+            "ExpressionAttributeNames": {
+                "#property_id": "property_id"
+            },
+            "ExpressionAttributeValues": {
+                ":property_id": {
+                    "S": id
+                }
+            }
+        })
+        const result = await this.dynamoDbClient.send(params);
+        return result.Items ? result.Items.map(item => AmenityMapping.mapDatabaseEntryToAmenity(item)) : null;
     }
 
     async getAmenityAndCategoryById(id) {
-        const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Amenity_And_Category)
-            .createQueryBuilder("amenity_and_category")
-            .where("id = :id", { id: id })
-            .getOne();
-        return result ? result : null;
+        const params = new GetItemCommand({
+            "TableName": "property-amenity-and-category-develop",
+            "Key": {
+                "id": {
+                    "S": id
+                }
+            }
+        });
+        const result = await this.dynamoDbClient.send(params);
+        return result.Item ? result.Item : null;
     }
 
     async getPropertyAmenityById(id) {
-        const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Property_Amenity)
-            .createQueryBuilder("property_amenity")
-            .where("id = :id", { id: id })
-            .getOne();
-        return result ? result : null;
+        const params = new GetItemCommand({
+            "TableName": "property-amenity-develop",
+            "Key": {
+                "id": {
+                    "S": id
+                }
+            }
+        });
+        const result = await this.dynamoDbClient.send(params);
+        return result.Item ? result.Item : null;
     }
 
     async create(amenity) {
-        const client = await Database.getInstance();
-        await client
-            .createQueryBuilder()
-            .insert()
-            .into(Property_Amenity)
-            .values({
-                id: amenity.id,
-                amenityid: amenity.amenityId,
-                property_id: amenity.property_id
-            })
-            .execute();
+        const params = new PutItemCommand({
+            "TableName": "property-amenity-develop",
+            "Item": {
+                "id": {
+                    "S": amenity.id
+                },
+                "amenityId": {
+                    "S": amenity.amenityId
+                },
+                "property_id": {
+                    "S": amenity.property_id
+                }
+            }
+        })
+        await this.dynamoDbClient.send(params);
         const result = await this.getPropertyAmenityById(amenity.id);
         return result ? result : null;
     }

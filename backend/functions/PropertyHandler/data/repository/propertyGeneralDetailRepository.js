@@ -1,59 +1,74 @@
+import { GetItemCommand, PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { GeneralDetailMapping } from "../../util/mapping/generalDetail.js";
-import Database from "database";
-import {General_Details} from "database/models/General_Details";
-import {Property_General_Detail} from "database/models/Property_General_Detail";
 
 export class PropertyGeneralDetailRepository {
 
-    constructor(systemManager) {
+    constructor(dynamoDbClient, systemManager) {
+        this.dynamoDbClient = dynamoDbClient;
         this.systemManager = systemManager
     }
 
     async getGeneralDetailById(id) {
-        const client = await Database.getInstance();
-        const result = await client
-            .getRepository(General_Details)
-            .createQueryBuilder("general_details")
-            .where("detail = :id", { id: id })
-            .getOne();
-        return result ? result : null;
+        const params = new GetItemCommand({
+            "TableName": "property-general-details-develop",
+            "Key": {"detail": {"S": id}}
+        });
+        const result = await this.dynamoDbClient.send(params);
+        return result.Item ? result.Item : null;
     }
 
     async getPropertyGeneralDetailById(id) {
-        const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Property_General_Detail)
-            .createQueryBuilder("property_generaldetail")
-            .where("id = :id", { id: id })
-            .getOne();
-        return result ? result : null
+        const params = new GetItemCommand({
+            "TableName": "property-general-detail-develop",
+            "Key": {
+                "id": {
+                    "S": id
+                }
+            }
+        })
+        const result = await this.dynamoDbClient.send(params);
+        return result.Item ? result.Item : null
     }
 
     async create(detail) {
-        const client = await Database.getInstance();
-        await client
-            .createQueryBuilder()
-            .insert()
-            .into(Property_General_Detail)
-            .values({
-                id: detail.id,
-                property_id: detail.property_id,
-                detail: detail.detail,
-                value: detail.value
-            })
-            .execute();
+        const params = new PutItemCommand({
+            "TableName": "property-general-detail-develop",
+            "Item": {
+                "id": {
+                    "S": detail.id
+                },
+                "property_id": {
+                    "S": detail.property_id
+                },
+                "detail": {
+                    "S": detail.detail
+                },
+                "value": {
+                    "N": `${detail.value}`
+                }
+            }
+        })
+        await this.dynamoDbClient.send(params);
         const result = await this.getPropertyGeneralDetailById(detail.id);
         return result ? result : null
     }
 
     async getPropertyGeneralDetailsByPropertyId(id) {
-        const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Property_General_Detail)
-            .createQueryBuilder("property_generaldetail")
-            .where("property_id = :id", { id: id })
-            .getMany();
-        return result.length > 0 ? result.map(item => GeneralDetailMapping.mapDatabaseEntryToGeneralDetail(item)) : null;
+        const params = new QueryCommand({
+            "TableName": "property-general-detail-develop",
+            "IndexName": "property_id-index",
+            "KeyConditionExpression": "#property_id = :property_id",
+            "ExpressionAttributeNames": {
+                "#property_id": "property_id"
+            },
+            "ExpressionAttributeValues": {
+                ":property_id": {
+                    "S": id
+                }
+            }
+        })
+        const result = await this.dynamoDbClient.send(params);
+        return result.Items ? result.Items.map(item => GeneralDetailMapping.mapDatabaseEntryToGeneralDetail(item)) : null;
     }
 
 }

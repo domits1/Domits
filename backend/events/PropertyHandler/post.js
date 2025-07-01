@@ -1,12 +1,12 @@
 import {handler} from "../../functions/PropertyHandler/index.js";
-import {getHostAuthToken} from "../../test/util/getHostAuthToken.js";
-import {image} from "../../test/PropertyHandler/events/approvedImage.js";
+import {getAuthToken} from "../../test/util/getAuthToken.js";
+import {image} from "./approvedImage.js";
 
 async function main() {
     console.log(await handler({
         httpMethod: "POST",
         headers: {
-            Authorization: await getHostAuthToken()
+            Authorization: await getAuthToken()
         },
         body: JSON.stringify({
             "property": {

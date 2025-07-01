@@ -60,29 +60,24 @@
             padding: 4px 6px;
           }
 
-          .rightSide {
-            display: flex;
-            gap: 6px;
-            align-items: center;
+          .badge {
+            background: #333;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 20px;
+            margin-right: 4px;
+          }
 
-            .badge {
-              background: #333;
-              color: white;
-              font-size: 12px;
-              padding: 2px 6px;
-              border-radius: 20px;
-            }
+          button {
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: #00c203;
+            cursor: pointer;
 
-            button {
-              background: none;
-              border: none;
-              font-size: 14px;
-              color: #00c203;
-              cursor: pointer;
-
-              &:hover {
-                color: #03ab05;
-              }
+            &:hover {
+              color: #03ab05;
             }
           }
         }
@@ -151,116 +146,3 @@
     }
   }
 }
-
-//RESPONSIVE 
-
-
-@media (max-width: 600px) {
-  .guestActions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-
-    .dropdownWrapper {
-      width: 100%;
-
-      .dropdownToggle {
-        width: 100%;
-        justify-content: space-between;
-        font-size: 15px;
-        padding: 10px 12px;
-      }
-
-      .dropdownMenu {
-        width: 100vw;
-        left: -16px;
-        padding: 16px;
-        border-radius: 0 0 12px 12px;
-        box-shadow: none;
-
-        ul li {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 6px;
-          padding: 10px 0;
-
-          span {
-            font-size: 16px;
-            width: 100%;
-          }
-
-          input {
-            width: 100%;
-            padding: 8px;
-            font-size: 15px;
-          }
-
-          .rightSide {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            width: 100%;
-
-            .badge {
-              font-size: 13px;
-              padding: 4px 8px;
-              background: #000;
-              border-radius: 20px;
-              color: white;
-              flex-shrink: 0;
-            }
-
-            button {
-              font-size: 16px;
-              padding: 6px 10px;
-              border-radius: 6px;
-              border: 1px solid #00c203;
-              color: #00c203;
-              background: white;
-              flex: 1;
-
-              &:hover {
-                background-color: #f2fff2;
-              }
-            }
-
-            button:nth-child(2),
-            button:nth-child(3) {
-              max-width: 48%;
-            }
-          }
-        }
-      }
-    }
-
-    .actionBtn {
-      width: 100%;
-      font-size: 15px;
-      padding: 12px;
-    }
-
-    .popup {
-      width: 100vw;
-      left: -16px;
-      right: auto;
-      margin-top: 12px;
-      padding: 16px;
-      border-radius: 0 0 12px 12px;
-
-      .popupTitle {
-        font-size: 16px;
-      }
-
-      input {
-        font-size: 15px;
-        padding: 10px;
-      }
-
-      .confirmBtn {
-        font-size: 15px;
-        padding: 12px;
-      }
-    }
-  }
-}
-

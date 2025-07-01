@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import "./homePage.css";
 import verifiedLogo from "../../images/icons/verify-icon.png";
 import checkMark from "../../images/icons/checkMark.png";
 import question from "../../images/icons/question.png";
@@ -10,9 +11,7 @@ import AccommodationCard from "./AccommodationCard";
 import { reviews } from "./store/constants";
 import { categories as groups } from "./store/constants";
 import { img } from "./store/constants";
-import 'swiper/css';                
-import 'swiper/css/pagination';    
-import 'swiper/css/effect-fade'; 
+import "swiper/css/pagination";
 import Header from "../../components/base/Header";
 import greece from "./Images/greece.webp";
 import netherlands from "./Images/netherlands.webp";
@@ -69,7 +68,6 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
-import villaBackground from "../../images/villaHomepage.jpg";
 
 const contentByLanguage = {
   en,
@@ -446,9 +444,8 @@ const Homepage = () => {
 
   return (
     <>
-    <div className="homePage-container">
       <div className="domits-homepage">
-        <div className="domits-searchContainer"  style={{ "--villa-background": `url(${villaBackground})` }}>
+        <div className="domits-searchContainer">
           <div className="domits-searchTextCon">
             <h3 className="domits-searchText">{homePageContent.hero.title}</h3>
           </div>
@@ -507,8 +504,7 @@ const Homepage = () => {
               ].map((item, index) => (
                 <div key={index} className="popup-trigger" onClick={() => handlePopupClick(item.text)}>
                   {item.emoji} {item.title}
-                  {activePopup === item.text && <div className="
-                  ">{item.text}</div>}
+                  {activePopup === item.text && <div className="popup-box">{item.text}</div>}
                 </div>
               ))}
             </div>
@@ -552,17 +548,15 @@ const Homepage = () => {
         </div>
 
         <div className="domits-boatContainer">
-           <div className="domits-boatText">
           <h3 className="domits-subHead">{homePageContent.sections.discoverCampers}</h3>
-          </div>
           <div className="domits-accommodationGroup">
-            {boatLoading === false ? (
-              boatAccommodations.length > 0 ? (
-                boatAccommodations.map((boat) => (
-                  <AccommodationCard key={boat.property.id} accommodation={boat} onClick={handleClick} />
-                ))
+            {camperLoading === false ? (
+              camperAccommodations.length > 0 ? (
+                camperAccommodations.map((camper) => {
+                  return <AccommodationCard key={camper.property.id} accommodation={camper} onClick={handleClick} />;
+                })
               ) : (
-                <div>No boats available.</div>
+                <div>No campers available.</div>
               )
             ) : (
               Array(3)
@@ -736,10 +730,8 @@ const Homepage = () => {
           </button>
         </div>
       </div>
-      </div>
     </>
   );
 };
-
 
 export default Homepage;

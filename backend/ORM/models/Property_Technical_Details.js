@@ -10,15 +10,15 @@ export const Property_Technical_Details = new EntitySchema({
             generated: false,
             nullable: false
         },
-        fourwheeldrive: {
+        fourWheelDrive: {
             type: "boolean",
             nullable: false
         },
-        fuelconsumption: {
+        fuelConsumption: {
             type: "int",
             nullable: false
         },
-        generalperiodicinspection: {
+        generalPeriodicInspection: {
             type: "int",
             nullable: false
         },
@@ -30,7 +30,7 @@ export const Property_Technical_Details = new EntitySchema({
             type: "int",
             nullable: false
         },
-        renovationyear: {
+        renovationYear: {
             type: "int",
             nullable: false
         },

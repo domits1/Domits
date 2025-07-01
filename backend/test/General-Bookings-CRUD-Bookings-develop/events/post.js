@@ -1,7 +1,7 @@
-import { getHostAuthToken } from "../../util/getHostAuthToken.js";
+import { getAuthToken } from "../../util/getAuthToken";
 
 module.exports = (async () => {
-    const authToken = await getHostAuthToken();
+    const authToken = await getAuthToken();
     console.log(authToken);
     return {
         resource: "/bookings",

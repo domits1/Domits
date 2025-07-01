@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { FaHome } from 'react-icons/fa';
 import useFetchBookingDetails from "../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails";
 import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBookingTab.scss';
@@ -9,7 +8,6 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
     const hostId = isGuest ? contactId : userId;
     const guestId = isGuest ? userId : contactId;
 
-    const [modalImage, setModalImage] = useState(null);
     const { bookingDetails, accommodation } = useFetchBookingDetails(
         hostId,
         guestId,
@@ -30,19 +28,18 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
     };
     const roomRate = accommodation?.pricing?.roomRate || 0;
     const cleaning = accommodation?.pricing?.cleaning || 0;
-    const service = roomRate * bookingDetails?.Nights * 0.15
+    const service =  roomRate * bookingDetails?.Nights * 0.15
     const earnings = roomRate * bookingDetails?.Nights;
 
     return (
         <div className="booking-tab-container">
-            {bookingDetails && accommodation && (
+            {bookingDetails && (
                 <div className="booking-tab">
                     <div className="acco-image">
                         {accommodation?.property?.title && <h3>{accommodation?.property?.title}</h3>}
                         {accommodation?.images?.[0]?.key && (
                             <img
                                 src={firstImage}
-                                onClick={() => setModalImage(firstImage)}
                                 alt="Accommodation"
                             />
                         )}
@@ -134,17 +131,8 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
                             </div>
                         </div>
                     )}
-                    {modalImage && (
-                        <div
-                            className="image-modal"
-                            onClick={() => setModalImage(null)}
-                        >
-                            <img src={modalImage} alt="Enlarged attachment" className="image-modal-content" />
-                        </div>
-                    )}
                 </div>
             )}
-
         </div>
     );
 };

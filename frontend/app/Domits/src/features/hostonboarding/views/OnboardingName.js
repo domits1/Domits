@@ -16,9 +16,6 @@ const OnboardingName = ({formData, updateFormData, reportValidity, markVisited})
 
   useEffect(() => {
     markVisited(true);
-  }, [])
-
-  useEffect(() => {
     if (title.trim() === '') {
       setError('Title is required.');
       reportValidity(false);
@@ -35,14 +32,14 @@ const OnboardingName = ({formData, updateFormData, reportValidity, markVisited})
   }, [title]);
 
   return (
-      <View style={styles.contentContainer}>
+      <View>
         <Text style={styles.onboardingPageTitle}>
           <TranslatedText textToTranslate={"Name your property"}/>:
         </Text>
         <Text style={styles.onboardingPageDescription}>
           <TranslatedText textToTranslate={"A short title works best. Don't worry, you can always change it later."}/>
         </Text>
-        <View style={styles.inputContainerCenter}>
+        <View style={styles.inputContainer}>
           <TextInput
               value={title}
               onChangeText={setTitle}

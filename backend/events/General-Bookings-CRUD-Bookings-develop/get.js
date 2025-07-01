@@ -1,5 +1,5 @@
 import { handler } from "../../functions/General-Bookings-CRUD-Bookings-develop/index.js"
-import { getHostAuthToken } from "../../test/util/getHostAuthToken.js";
+import { getAuthToken } from "../../test/util/getAuthToken.js";
 
 async function get(){
     console.log(await handler({
@@ -8,7 +8,7 @@ async function get(){
         resource: "/bookings",
         path: "/bookings",
         headers: {
-            Authorization: await getHostAuthToken(),
+            Authorization: await getAuthToken(),
         },
         queryStringParameters: {
             readType: "guest",

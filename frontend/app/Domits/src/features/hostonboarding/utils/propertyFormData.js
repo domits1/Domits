@@ -5,7 +5,7 @@ const propertyFormData = {
         title: "",
         subtitle: "",
         description: "",
-        guestCapacity: "", //Number
+        guestCapacity: -1,
         registrationNumber: "",
         status: "",
         createdAt: -1,
@@ -49,7 +49,7 @@ const propertyFormData = {
         country: "",
         city: "",
         street: "",
-        houseNumber: "", //Number
+        houseNumber: -1,
         houseNumberExtension: "",
         postalCode: ""
     },

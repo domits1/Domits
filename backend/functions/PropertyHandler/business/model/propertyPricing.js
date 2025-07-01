@@ -35,9 +35,9 @@ export class PropertyPricing {
             }
             this.cleaning = value;
             return;
-        } else if (typeof value == "boolean" || typeof value == "string") {
+        } else if (value !== null || value !== undefined) {
             throw new TypeException("propertyPricing - Cleaning must be a number, null or undefined")
         }
-        this.cleaning = 0;
+        this.cleaning = null;
     }
 }

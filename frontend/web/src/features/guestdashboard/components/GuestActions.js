@@ -10,16 +10,16 @@ import {
   deleteWishlist,
 } from "../services/wishlistService";
 
-const GuestActions = ({ selectedList, onListChange, onCreate }) => {
+const GuestActions = ({ selectedList, onListChange, onShare, onCreate }) => {
   const [lists, setLists] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [activePopup, setActivePopup] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [createPopupOpen, setCreatePopupOpen] = useState(false);
   const [newListName, setNewListName] = useState("");
-  const [shareUrl, setShareUrl] = useState("");
-  const [copySuccess, setCopySuccess] = useState(false);
 
   const wrapperRef = useRef(null);
 
+  //  Fetch all wishlists and their real item counts (excluding placeholders)
   useEffect(() => {
     const fetchLists = async () => {
       const token = getAccessToken();
@@ -29,13 +29,12 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         const data = await fetchWishlists();
         const wishlists = data?.wishlists || {};
 
+        // Fetch the count of real items for each wishlist
         const structured = await Promise.all(
           Object.keys(wishlists).map(async (name) => {
             try {
               const countData = await fetchWishlistItemCount(name);
-              const realItems = (countData.items || []).filter(
-                (item) => item.propertyId
-              );
+              const realItems = (countData.items || []).filter((item) => item.propertyId);
               return { id: name, name, count: realItems.length };
             } catch (err) {
               console.error(`Error fetching count for '${name}':`, err);
@@ -46,6 +45,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
 
         setLists(structured);
 
+        // Make sure the selected list exists otherwise fallback to default
         if (!structured.find((l) => l.name === selectedList)) {
           onListChange("My next trip");
         }
@@ -69,7 +69,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       onListChange(newListName);
       if (onCreate) onCreate(newListName);
       setNewListName("");
-      setActivePopup(null);
+      setCreatePopupOpen(false);
     } catch (err) {
       console.error("Error creating wishlist:", err.message);
     }
@@ -87,11 +87,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
     try {
       await renameWishlist(oldName, newName);
 
-      const updated = lists.map((list) =>
-        list.name === oldName
-          ? { ...list, name: newName, id: newName }
-          : list
-      );
+      const updated = lists.map((list) => (list.name === oldName ? { ...list, name: newName, id: newName } : list));
       setLists(updated);
       if (selectedList === oldName) onListChange(newName);
       setEditingId(null);
@@ -116,27 +112,11 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
     }
   };
 
-  const handleShare = () => {
-    const baseUrl = window.location.origin + "/guestdashboard";
-    const shareLink = `${baseUrl}?wl=${encodeURIComponent(selectedList)}`;
-    setShareUrl(shareLink);
-    setActivePopup("share");
-  };
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
-      console.error("Copy failed:", err);
-    }
-  };
-
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setActivePopup(null);
+        setDropdownOpen(false);
+        setCreatePopupOpen(false);
         setEditingId(null);
       }
     };
@@ -149,16 +129,11 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
       <label className="label">Select list:</label>
 
       <div className="dropdownWrapper">
-        <button
-          className="dropdownToggle"
-          onClick={() =>
-            setActivePopup(activePopup === "dropdown" ? null : "dropdown")
-          }
-        >
+        <button className="dropdownToggle" onClick={() => setDropdownOpen(!dropdownOpen)}>
           {selectedList} <FiChevronDown />
         </button>
 
-        {activePopup === "dropdown" && (
+        {dropdownOpen && (
           <div className="dropdownMenu">
             <ul>
               {lists.map((list) => (
@@ -168,9 +143,7 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
                       type="text"
                       defaultValue={list.name}
                       autoFocus
-                      onBlur={(e) =>
-                        handleRename(list.name, e.target.value)
-                      }
+                      onBlur={(e) => handleRename(list.name, e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           handleRename(list.name, e.target.value);
@@ -182,24 +155,21 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
                       <span
                         onClick={() => {
                           onListChange(list.name);
-                          setActivePopup(null);
-                        }}
-                      >
+                          setDropdownOpen(false);
+                        }}>
                         {list.name}
                       </span>
-                      <div className="rightSide">
-                        <span className="badge">{list.count}</span>
-                        {list.name !== "My next trip" && (
-                          <>
-                            <button onClick={() => setEditingId(list.id)}>
-                              <FiEdit2 />
-                            </button>
-                            <button onClick={() => handleDelete(list.name)}>
-                              <FiTrash2 />
-                            </button>
-                          </>
-                        )}
-                      </div>
+                      <span className="badge">{list.count}</span>
+                      {list.name !== "My next trip" && (
+                        <>
+                          <button onClick={() => setEditingId(list.id)}>
+                            <FiEdit2 />
+                          </button>
+                          <button onClick={() => handleDelete(list.name)}>
+                            <FiTrash2 />
+                          </button>
+                        </>
+                      )}
                     </>
                   )}
                 </li>
@@ -209,20 +179,14 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
         )}
       </div>
 
-      <button className="actionBtn" onClick={handleShare}>
+      <button className="actionBtn" onClick={onShare}>
         Share the list
       </button>
-
-      <button
-        className="actionBtn"
-        onClick={() =>
-          setActivePopup(activePopup === "create" ? null : "create")
-        }
-      >
+      <button className="actionBtn" onClick={() => setCreatePopupOpen(true)}>
         Make a list
       </button>
 
-      {activePopup === "create" && (
+      {createPopupOpen && (
         <div className="popup">
           <p className="popupTitle">
             Make a list <span>*</span>
@@ -235,16 +199,6 @@ const GuestActions = ({ selectedList, onListChange, onCreate }) => {
           />
           <button className="confirmBtn" onClick={handleCreate}>
             Create
-          </button>
-        </div>
-      )}
-
-      {activePopup === "share" && shareUrl && (
-        <div className="popup">
-          <p className="popupTitle">Shareable link</p>
-          <input type="text" value={shareUrl} readOnly />
-          <button className="confirmBtn" onClick={handleCopy}>
-            {copySuccess ? "Copied!" : "Copy link"}
           </button>
         </div>
       )}

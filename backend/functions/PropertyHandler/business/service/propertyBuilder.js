@@ -1,3 +1,4 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SystemManagerRepository } from "../../data/repository/systemManagerRepository.js";
 
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
@@ -26,12 +27,12 @@ import { PropertyImage } from "../model/propertyImage.js";
 
 export class PropertyBuilder {
 
-    constructor(systemManagerRepository = new SystemManagerRepository()) {
-        this.propertyAmenityRepository = new PropertyAmenityRepository(systemManagerRepository);
-        this.propertyAvailabilityRestrictionRepository = new PropertyAvailabilityRestrictionRepository(systemManagerRepository);
-        this.propertyGeneralDetailRepository = new PropertyGeneralDetailRepository(systemManagerRepository);
-        this.propertyRuleRepository = new PropertyRuleRepository(systemManagerRepository);
-        this.propertyTypeRepository = new PropertyTypeRepository(systemManagerRepository);
+    constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
+        this.propertyAmenityRepository = new PropertyAmenityRepository(dynamoDbClient, systemManagerRepository);
+        this.propertyAvailabilityRestrictionRepository = new PropertyAvailabilityRestrictionRepository(dynamoDbClient, systemManagerRepository);
+        this.propertyGeneralDetailRepository = new PropertyGeneralDetailRepository(dynamoDbClient, systemManagerRepository);
+        this.propertyRuleRepository = new PropertyRuleRepository(dynamoDbClient, systemManagerRepository);
+        this.propertyTypeRepository = new PropertyTypeRepository(dynamoDbClient, systemManagerRepository);
     }
 
     async addBasePropertyInfo(requestParams, propertyType, userId) {

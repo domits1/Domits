@@ -6,8 +6,10 @@ export class PropertyBaseDetails {
     title;
     subtitle;
     description;
+    guestCapacity;
     registrationNumber;
     status;
+    propertyType;
     createdAt;
     updatedAt;
 
@@ -17,8 +19,10 @@ export class PropertyBaseDetails {
         this._title = params.title;
         this._subtitle = params.subtitle;
         this._description = params.description;
+        this._guestCapacity = params.guestCapacity;
         this._registrationNumber = params.registrationNumber;
         this._status = params.status;
+        this._propertyType = params.propertyType;
         this._createdAt = params.createdAt;
         this._updatedAt = params.updatedAt;
     }
@@ -58,6 +62,13 @@ export class PropertyBaseDetails {
         this.description = value;
     }
 
+    set _guestCapacity(value) {
+        if (typeof value !== "number") {
+            throw new TypeException("propertyModel - Guest capacity must be a number.")
+        }
+        this.guestCapacity = value;
+    }
+
     set _registrationNumber(value) {
         if (typeof value !== "string") {
             throw new TypeException("propertyModel - Registration number must be a string.")
@@ -70,6 +81,13 @@ export class PropertyBaseDetails {
             throw new TypeException("propertyModel - Status must be a string.")
         }
         this.status = value;
+    }
+
+    set _propertyType(value) {
+        if (typeof value !== "string") {
+            throw new TypeException("propertyModel - Property type must be a string.")
+        }
+        this.propertyType = value;
     }
 
     set _createdAt(value) {

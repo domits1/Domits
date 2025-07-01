@@ -1,46 +1,55 @@
+import { GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { TypeMapping } from "../../util/mapping/type.js";
-import Database from "database";
-import {Property_Type} from "database/models/Property_Type";
-import {Property_Types} from "database/models/Property_Types";
 
 export class PropertyTypeRepository {
 
-    constructor(systemManager) {
+    constructor(dynamoDbClient, systemManager) {
+        this.dynamoDbClient = dynamoDbClient;
         this.systemManager = systemManager
     }
 
     async getPropertyTypeById(id) {
-        const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Property_Types)
-            .createQueryBuilder("property_types")
-            .where("type = :id", { id: id })
-            .getOne();
-        return result ? result : null;
+        const params = new GetItemCommand({
+            "TableName": "property-type-keys-develop",
+            "Key": {
+                "type": {
+                    "S": id
+                }
+            }
+        });
+        const result = await this.dynamoDbClient.send(params);
+        return result.Item ? result.Item : null;
     }
 
     async getPropertyTypeByPropertyId(id) {
-        const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Property_Type)
-            .createQueryBuilder("property_type")
-            .where("property_id = :id", { id: id })
-            .getOne();
-        return result ? TypeMapping.mapDatabaseEntryToType(result) : null;
+        const params = new GetItemCommand({
+            "TableName": "property-type-develop",
+            "Key": {
+                "property_id": {
+                    "S": id
+                }
+            }
+        })
+        const result = await this.dynamoDbClient.send(params);
+        return result.Item ? TypeMapping.mapDatabaseEntryToType(result.Item) : null;
     }
 
     async create(type) {
-        const client = await Database.getInstance();
-        await client
-            .createQueryBuilder()
-            .insert()
-            .into(Property_Type)
-            .values({
-                property_id: type.property_id,
-                spacetype: type.spaceType,
-                type: type.property_type
-            })
-            .execute();
+        const params = new PutItemCommand({
+            "TableName": "property-type-develop",
+            "Item": {
+                "property_id": {
+                    "S": type.property_id
+                },
+                "spaceType": {
+                    "S": type.spaceType
+                },
+                "type": {
+                    "S": type.property_type
+                }
+            }
+        })
+        await this.dynamoDbClient.send(params);
         const result = await this.getPropertyTypeByPropertyId(type.property_id);
         return result ? result : null;
     }

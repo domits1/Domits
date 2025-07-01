@@ -28,6 +28,7 @@ import {
     HOST_PROFILE_SCREEN,
     HOST_PROPERTIES_SCREEN,
     HOST_RESERVATIONS_SCREEN,
+    HOST_REVIEW_PROPERTY_CHANGES_SCREEN,
     HOST_REVIEWS_SCREEN,
     HOST_SETTINGS_SCREEN,
     LOGIN_SCREEN,
@@ -37,7 +38,8 @@ import AppSettingsTab from "../screens/accounthome/features/appsettings/screens/
 import GuestReviews from "../screens/guestdashboard/GuestReviewsTab";
 import GuestPaymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
 import HostOnboardingLanding from "../screens/Landing";
-import HostOnboarding from "../features/hostonboarding/screens/HostOnboarding";
+import HostOnboarding from "../screens/apphostonboarding/OnboardingHost";
+import HostReviewPropertyChanges from "../screens/oldHostonboarding/ReviewAndSubmitScreen";
 import HostDashboard from "../features/hostdashboard/screens/HostDashboardTab";
 import HostCalendar from "../features/hostdashboard/hostcalendar/screens/HostCalendarTab";
 import HostReviews from "../features/hostdashboard/hostreviews/screens/HostReviewsTab";
@@ -82,6 +84,7 @@ function AccountNavigationStack() {
             {/* Host Onboarding */}
             <Stack.Screen name={HOST_ONBOARDING_LANDING_SCREEN} component={HostOnboardingLanding}/>
             <Stack.Screen name={HOST_ONBOARDING_SCREEN} component={HostOnboarding}/>
+            <Stack.Screen name={HOST_REVIEW_PROPERTY_CHANGES_SCREEN} component={HostReviewPropertyChanges}/>
 
             {/* Guest */}
             <Stack.Screen name={GUEST_PROFILE_SCREEN} component={GuestProfileTab}/>

@@ -2,11 +2,7 @@ import {styles} from "../styles/AccountHomeStyles";
 import {Text, View} from "react-native";
 import TranslatedText from "../../../features/translation/components/TranslatedText";
 import TabItem from "../components/TabItem";
-import {
-    HOST_CALENDAR_SCREEN,
-    HOST_ONBOARDING_SCREEN,
-    HOST_PROPERTIES_SCREEN
-} from "../../../navigation/utils/NavigationNameConstants";
+import {HOST_CALENDAR_SCREEN, HOST_PROPERTIES_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 import React from "react";
 
 const PropertyManagementView = ({userRole, roles}) => {
@@ -16,7 +12,6 @@ const PropertyManagementView = ({userRole, roles}) => {
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionTitle}><TranslatedText
                         textToTranslate={"Property Management"}/></Text>
-                    {TabItem(HOST_ONBOARDING_SCREEN, 'List new property')}
                     {TabItem(HOST_PROPERTIES_SCREEN, 'Properties')}
                     {TabItem(HOST_CALENDAR_SCREEN, 'Calendar & Prices')}
                 </View>

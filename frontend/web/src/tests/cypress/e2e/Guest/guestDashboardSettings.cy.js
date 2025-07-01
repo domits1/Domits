@@ -1,32 +1,33 @@
-describe('Guest Login Flow', () => {
+import '../../support/commands';
+
+describe('Landing Page Tests', () => {
     beforeEach(() => {
         cy.viewport(1920, 1080);
+        cy.loginAsGuest();
     });
 
-    it('should load the homepage and allow a guest to log in', () => {
-        
-      
-        cy.visit('https://acceptance.domits.com/');
+    it('Should display the landing page and load key sections', () => {
+        cy.get('.header-links > .headerHostButton').click();
+        cy.wait(500);
+        cy.get('.edit-icon-background').click();
+        cy.get(':nth-child(2) > .guest-edit-input')
+            .should('be.visible')
+            .clear()
+            .type('ffkdjrvrrrrv grrrrrrrbfdkg fdkgdb@gmail.com');
 
-        
-        cy.get('[src="/static/media/arrow-down-icon.59bf2e60938fc6833daa025b7260e7f6.svg"]').click();
+        cy.get(':nth-child(3) > .guest-edit-input')
+            .clear()
+            .type('adaswrrwdadadsa', { force: true });
 
-        
-        cy.get('.dropdownLoginButton').click();
+        cy.wait(2000);
 
-        
-        cy.get('#email').type('testpersoondomits@gmail.com');
-        cy.get('#password').type('Gmail.com1');
+        cy.get('.edit-icon-background').click();
 
-        cy.get('.loginButton').click();
+        cy.wait(2000);
 
-        cy.get('.hostchatbot-close-button').click();
-        cy.get('.headerHostButton').click();
-
-        cy.get('.hamburger-btn').click();
-
-        cy.get(':nth-child(5) > p').should('be.visible').click();
-        cy.get('.close-sidebar-btn').should('be.visible').click();
-
+        cy.intercept('GET', '**/currentUserInfo', { statusCode: 200 });
+        cy.get('.edit-icon-background')
+            .scrollIntoView()
+            .should('be.visible');
     });
 });
