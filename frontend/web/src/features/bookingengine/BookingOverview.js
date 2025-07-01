@@ -147,9 +147,9 @@ const BookingOverview = () => {
           "Content-type": "application/json; charset=UTF-8",
         },
       });
-      const response = await request.json();
-      if (!request.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
       }
 
       const retrievedStripeClientSecret = response.stripeClientSecret;
