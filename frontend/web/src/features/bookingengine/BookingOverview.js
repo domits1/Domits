@@ -14,10 +14,9 @@ import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import Calender from "@mui/icons-material/CalendarTodayOutlined";
 import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
+import publicKeys from "../../utils/const/publicKeys.json"
 
-const stripePromise = loadStripe(
-  "pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3" 
-);
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 
 const BookingOverview = () => {
   const navigate = useNavigate();
