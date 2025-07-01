@@ -20,8 +20,7 @@ $breakpoint-sm: 480px;
   background: white;
   box-shadow: 0 2px 6px 0 $box-shadow-color;
   text-align: center;
-  height: 100%;
-  max-height: 90px;
+  height: 90px;
 
   .header-nav {
     display: flex;
@@ -176,7 +175,6 @@ $breakpoint-sm: 480px;
   }
 
   @media screen and (max-width: $breakpoint-lg) {
-
     .App,
     .header-nav {
       position: sticky;
@@ -189,4 +187,14 @@ $breakpoint-sm: 480px;
   @media screen and (max-width: $breakpoint-md) {
     padding: 0;
   }
+  .search-overlay-background {
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: white;
+    z-index: 999;
+  }
+  
 }
