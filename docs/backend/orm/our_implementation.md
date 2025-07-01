@@ -32,7 +32,7 @@ as this is not done automatically.
 ## util
 In the [util](../../../backend/ORM/util) directory, there are two subdirectories. The [exception](../../../backend/ORM/util/exception) directory contains custom exceptions which will be automatically
 integrated in your functions as long as you wrap everything in a try catch statement. This allows for easier debugging. The [database](../../../backend/ORM/util/database) directory
-contains a getTables function which simply retrieves all models *From the paragraph above*, this method is used in the index.js to initialize these models as repositories.
+contains a tables file which simply returns all models *From the paragraph above*, this method is used in the index.js to initialize these models as repositories.
 ---
 ## schema.psql
 The [schema.psql](../../../backend/ORM/schema.psql) file is a PostgreSQL script file that creates the database from scratch, be careful with pasting this in as it does also drop the schema and all it's tables.

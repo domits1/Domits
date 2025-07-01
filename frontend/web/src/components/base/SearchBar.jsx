@@ -9,11 +9,7 @@ import {
 import Select from 'react-select';
 import { useNavigate, useLocation } from 'react-router-dom';
 import FilterButton from './FilterButton';
-import {LanguageContext} from "../../context/LanguageContext.js";
-import en from "../../content/en.json";
-import nl from "../../content/nl.json";
-import de from "../../content/de.json";
-import es from "../../content/es.json";
+
 
 export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -295,7 +291,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
                 />
               </div>
 
-              <div className={`search-button-section ${showGuestDropdown ? 'active' : ''}`}
+              <div className={`search-guest-section ${showGuestDropdown ? 'active' : ''}`}
                 onClick={toggleGuestDropdown}>
                 <p className={`search-title-guest ${totalGuests > 0 ? 'hidden' : ''}`}>{searchContent.guests}</p>
                 {totalGuests > 0 && (

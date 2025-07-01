@@ -23,7 +23,6 @@ export const HOST_RESERVATIONS_SCREEN = "host-reservations";
 // Host Onboarding
 export const HOST_ONBOARDING_LANDING_SCREEN = "host-onboarding-landing";
 export const HOST_ONBOARDING_SCREEN = "host-onboarding";
-export const HOST_REVIEW_PROPERTY_CHANGES_SCREEN = "host-review-property-changes";
 
 // Guest
 export const GUEST_DASHBOARD_SCREEN = "guest-dashboard";
@@ -54,3 +53,7 @@ export const CONFIRM_EMAIL_SCREEN = "confirm-email";
 
 // App Settings
 export const APP_SETTINGS_SCREEN = "app-settings";
+
+// Messages
+export const MESSAGES_SCREEN = "messages-screen";
+export const CHAT_SCREEN = "chat-screen"

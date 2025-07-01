@@ -19,6 +19,8 @@ const HostOnboarding = ({navigation}) => {
     propertyType: {visited: false, valid: false},
     propertySpace: {visited: false, valid: false},
     propertyName: {visited: false, valid: false},
+    propertyLocation: {visited: false, valid: false},
+    propertyDescription: {visited: false, valid: false},
   });
 
   const updateFormData = (updaterFn) => {

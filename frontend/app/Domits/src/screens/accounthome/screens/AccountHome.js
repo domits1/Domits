@@ -13,6 +13,7 @@ import FinancialsAndPricingView from "../views/FinancialsAndPricingView";
 import PropertyManagementView from "../views/PropertyManagementView";
 import BookingsView from "../views/BookingsView";
 import DashboardView from "../views/DashboardView";
+import TranslatedText from "../../../features/translation/components/TranslatedText";
 
 const AccountHome = ({navigation}) => {
     const {isAuthenticated, user, userAttributes} = useAuth();
@@ -44,7 +45,9 @@ const AccountHome = ({navigation}) => {
             <SafeAreaView style={{flex: 1}}>
                 <ScrollView style={styles.container}>
                     <View style={styles.header}>
-                        <Text style={styles.welcomeText}>Welcome: {firstName}</Text>
+                        <Text style={styles.welcomeText}>
+                            <TranslatedText textToTranslate={'Welcome'}/>: {firstName}
+                        </Text>
                     </View>
 
                     <DashboardView userRole={userRole} roles={roles} setLoading={setLoading}/>

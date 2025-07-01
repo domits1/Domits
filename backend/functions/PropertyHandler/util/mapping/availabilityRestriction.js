@@ -4,10 +4,10 @@ export class AvailabilityRestrictionMapping {
 
     static mapDatabaseEntryToAvailabilityRestriction(availabilityRestrictionEntry) {
         return new PropertyAvailabilityRestriction(
-            availabilityRestrictionEntry.id.S,
-            availabilityRestrictionEntry.property_id.S,
-            availabilityRestrictionEntry.restriction.S,
-            parseFloat(availabilityRestrictionEntry.value.N),
+            availabilityRestrictionEntry.id,
+            availabilityRestrictionEntry.property_id,
+            availabilityRestrictionEntry.restriction,
+            availabilityRestrictionEntry.value
         )
     }
 }
