@@ -1,0 +1,6 @@
+{
+    "STRIPE_PUBLIC_KEYS": {
+        "TEST" : "pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3",
+        "LIVE" : "NaN (T.B.D)"
+    }
+}   

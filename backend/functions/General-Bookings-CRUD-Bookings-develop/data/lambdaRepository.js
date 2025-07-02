@@ -1,5 +1,6 @@
 import NotFoundException from "../util/exception/NotFoundException.js"
-
+import Database from "database";
+import { Property_Pricing } from "database/models/Property_Pricing";
 class LambdaRepository {
     async getPropertiesFromHostId(host_Id){
         const response = await fetch(
@@ -21,16 +22,22 @@ class LambdaRepository {
         };
     }
 
-    async getPropertyPricingById(property_Id){
-        const response = await fetch(
-            `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=${property_Id}`
-        );
-        
-        const receivedData = await response.json();
-        if (receivedData === "No property found."){
-            throw new NotFoundException("Property not found");
+    async getPropertyPricingById(id){
+        const client = await Database.getInstance();
+        const result = await client
+            .getRepository(Property_Pricing)
+            .createQueryBuilder("property_pricing")
+            .where("property_pricing.property_id = :id", {id: id})
+            .getOne();
+
+        if (result.roomrate || result.cleaning) {
+            client.close();
+            return {
+                pricing: result,
+            }
+        } else {
+            throw new NotFoundException("Property is inactive or does not exist.")
         }
-        return receivedData.pricing;
     }
 }
 export default LambdaRepository;

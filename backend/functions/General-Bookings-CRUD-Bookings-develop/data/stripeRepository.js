@@ -15,13 +15,20 @@ const client = new DynamoDBClient({ region: "eu-north-1" });
 class StripeRepository {
   async createPaymentIntent(account_id, propertyId, dates) {
     try {
+      if(!account_id || !propertyId || !dates)
+      {
+        console.error(`accountId ${account_id}, property_id, ${propertyId}, or dates ${dates} are NaN.`);
+        throw new NotFoundException("account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent.")
+      }
       const stripe = await stripePromise;
+
       const total = await CalculateTotalRate(propertyId, dates);
+
       const paymentIntent = await stripe.paymentIntents.create({
         amount: total,
         application_fee_amount: Math.round(total * 0.15),
         currency: 'eur',
-        payment_method_types: ["card", "ideal"],
+        payment_method_types: ["card", "ideal", "klarna"],
         transfer_data: {
           destination: account_id,
         },
@@ -75,24 +82,6 @@ class StripeRepository {
     } catch (error) {
       console.error(error)
       throw new Error("Failed to save payment data.");
-    }
-
-    async function createCheckoutSession() {
-      // const stripe = await stripePromise;
-      // const session = await stripe.checkout.sessions.create({
-      //   success_url: 'https://example.com/success',
-      //   line_items: [
-      //     {
-      //       price: "500",
-      //       quantity: 2,
-      //     },
-      //   ],
-      //   mode: 'payment',
-      // });
-      // const response = await client.send(session);
-      // console.log(response);
-      // return response;
-      return "https://example.com/success";
     }
   }
 

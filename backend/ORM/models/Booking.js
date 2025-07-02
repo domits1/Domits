@@ -10,7 +10,7 @@ export const Booking = new EntitySchema({
             generated: false,
             nullable: false
         },
-        arrivalDate: {
+        arrivaldate: {
             type: "bigint",
             transformer: {
                 from: (value) => Number(value),
@@ -18,7 +18,7 @@ export const Booking = new EntitySchema({
             },
             nullable: false,
         },
-        departureDate: {
+        departuredate: {
             type: "bigint",
             transformer: {
                 from: (value) => Number(value),
@@ -26,7 +26,7 @@ export const Booking = new EntitySchema({
             },
             nullable: false
         },
-        createdAt: {
+        createdat: {
             type: "bigint",
             transformer: {
                 from: (value) => Number(value),
@@ -34,7 +34,7 @@ export const Booking = new EntitySchema({
             },
             nullable: false
         },
-        guestId: {
+        guestid: {
             type: "varchar",
             nullable: false
         },
@@ -42,15 +42,15 @@ export const Booking = new EntitySchema({
             type: "int",
             nullable: false
         },
-        hostId: {
+        hostid: {
             type: "varchar",
             nullable: false
         },
-        latePayment: {
+        latepayment: {
             type: "boolean",
             nullable: false
         },
-        paymentId: {
+        paymentid: {
             type: "varchar",
             nullable: false
         },
@@ -62,11 +62,11 @@ export const Booking = new EntitySchema({
             type: "varchar",
             nullable: false
         },
-        guestName: {
+        guestname: {
             type: "varchar",
             nullable: false
         },
-        hostName: {
+        hostname: {
             type: "varchar",
             nullable: false
         }

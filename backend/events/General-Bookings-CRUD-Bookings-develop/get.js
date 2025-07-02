@@ -11,8 +11,9 @@ async function get(){
             Authorization: await getHostAuthToken(),
         },
         queryStringParameters: {
-            readType: "guest",
-            guest_Id: "6b37c21b-4372-495f-8ca0-ac4ba4a340fc"
+            readType: "departureDate",
+            departureDate: "1744848000000",
+            property_Id: "6637379f-efe4-4a13-b3ec-092f2dacee70"
         }
     }));
 }
