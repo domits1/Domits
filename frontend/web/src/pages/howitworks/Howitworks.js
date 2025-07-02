@@ -1,5 +1,4 @@
 import React, { useContext } from "react";
-import './howitworksrework.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faCalendarAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 import {LanguageContext} from "../../context/LanguageContext.js";

@@ -1,5 +1,4 @@
 import React, { useContext } from "react";
-import "./whydomits.css"; // Ensure this file contains the necessary CSS for your BEM classes.
 import FAQ from "../landingpage/Faq";
 import barchart from "../../images/icons/bar-chart.png";
 import chartbreakout from "../../images/icons/chart-breakout-circle.png";
