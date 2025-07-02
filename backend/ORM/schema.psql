@@ -297,12 +297,12 @@ DROP TABLE IF EXISTS main.property_technicaldetails;
 
 CREATE TABLE IF NOT EXISTS main.property_technicaldetails (
   property_id VARCHAR(255) NOT NULL,
-  fourWheelDrive BOOLEAN NOT NULL,
-  fuelConsumption INTEGER NOT NULL,
-  generalPeriodicInspection INTEGER NOT NULL,
-  height INTEGER NOT NULL,
+  fourwheeldrive BOOLEAN NOT NULL,
+  fuelconsumption INTEGER NOT NULL,
+  generalperiodicinspection INTEGER NOT NULL,
+  height INTEGER,
   length INTEGER NOT NULL,
-  renovationYear INTEGER NOT NULL,
+  renovationyear INTEGER NOT NULL,
   speed INTEGER NOT NULL,
   transmission VARCHAR(255) NOT NULL,
   PRIMARY KEY (property_id)

@@ -1,0 +1,235 @@
+[
+  {
+    "property": {
+      "id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+      "hostId": "ce93f377-9ac0-46c2-9d45-cf20d33dcc33",
+      "title": "Charming Windmill Stay on Historic Castle Grounds in Maurik",
+      "subtitle": "Relax in a Beautifully Renovated Windmill Surrounded by Nature – Perfect for Cycling, Hiking, and Exploring Nearby Cities",
+      "description": "Experience a unique stay in a historic windmill built on the remnants of a medieval castle, offering a perfect blend of old-world charm and modern comfort. Fully renovated in 2006, this stunning windmill features spacious living areas, two cozy bedrooms, and two modern bathrooms. Enjoy breathtaking garden views and unwind in the tranquil surroundings. Whether you're cycling, hiking, or just relaxing on your private patio, Maurik offers a peaceful retreat with easy access to Utrecht, Den Bosch, Arnhem, and Nijmegen. Ideal for families or small groups looking to explore the beauty of the Dutch countryside.",
+      "guestCapacity": 6,
+      "registrationNumber": "REG001",
+      "status": "ACTIVE",
+      "createdAt": 1704067200000,
+      "updatedAt": 1704067200000
+    },
+    "propertyAmenities": [
+      {
+        "id": "96757566-ef9a-46ea-9ac3-f05460f28555",
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "amenityId": "1"
+      }
+    ],
+    "propertyAvailability": [
+      {
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "availableStartDate": 1704067200000,
+        "availableEndDate": 1735689600000
+      }
+    ],
+    "propertyAvailabilityRestrictions": [
+      {
+        "id": "12345",
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "restriction": "MaximumNightsPerYear",
+        "value": 30
+      }
+    ],
+    "propertyCheckIn": {
+      "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+      "checkIn": {
+        "from": 15,
+        "till": 18
+      },
+      "checkOut": {
+        "from": 10,
+        "till": 11
+      }
+    },
+    "propertyGeneralDetails": [
+      {
+        "id": "fc06aa69-f6c1-438d-afc6-e5575385a973",
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "detail": "Beds",
+        "value": 3
+      },
+      {
+        "id": "6287fbe0-f657-4705-a0d5-2e81b61b7222",
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "detail": "Bathrooms",
+        "value": 2
+      },
+      {
+        "id": "509ae155-4cd9-4dbb-9f61-5c618e618327",
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "detail": "Bedrooms",
+        "value": 2
+      },
+      {
+        "id": "1a8d0093-72bb-4785-a65e-0b0b2aeca24d",
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "detail": "Guests",
+        "value": 6
+      }
+    ],
+    "propertyImages": [
+      {
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "key": "images/windmill/1.jpg"
+      },
+      {
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "key": "images/windmill/2.jpg"
+      }
+    ],
+    "propertyLocation": {
+      "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+      "country": "Netherlands",
+      "city": "Maurik",
+      "street": "Maurikkenstraat",
+      "houseNumber": 6,
+      "houseNumberExtension": "K",
+      "postalCode": "4021 AS"
+    },
+    "propertyPricing": {
+      "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+      "roomRate": 150,
+      "cleaning": 25
+    },
+    "propertyRules": [
+      {
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "rule": "PetsAllowed",
+        "value": false
+      },
+      {
+        "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+        "rule": "SmokingAllowed",
+        "value": false
+      }
+    ],
+    "propertyType": {
+      "property_id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
+      "property_type": "House",
+      "spaceType": "Full house"
+    }
+  },
+  {
+    "property": {
+      "id": "b12345ab-c678-90de-f123-456789abcdef",
+      "hostId": "ce93f377-9ac0-46c2-9d45-cf20d33dcc33",
+      "title": "Luxury Camper Adventure in Nature",
+      "subtitle": "Modern Fully-Equipped Camper for the Ultimate Road Trip Experience",
+      "description": "Explore the great outdoors in style with our luxury camper van. Fully equipped with modern amenities, comfortable sleeping arrangements, and everything you need for an unforgettable adventure. Perfect for couples or small families who want to experience the freedom of the road while enjoying comfort and convenience.",
+      "guestCapacity": 4,
+      "registrationNumber": "CAM001",
+      "status": "ACTIVE",
+      "createdAt": 1704153600000,
+      "updatedAt": 1704153600000
+    },
+    "propertyAmenities": [
+      {
+        "id": "cam-amenity-1",
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "amenityId": "1"
+      }
+    ],
+    "propertyAvailability": [
+      {
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "availableStartDate": 1704153600000,
+        "availableEndDate": 1735776000000
+      }
+    ],
+    "propertyAvailabilityRestrictions": [
+      {
+        "id": "cam-rest-1",
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "restriction": "MaximumNightsPerYear",
+        "value": 30
+      }
+    ],
+    "propertyCheckIn": {
+      "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+      "checkIn": {
+        "from": 14,
+        "till": 17
+      },
+      "checkOut": {
+        "from": 9,
+        "till": 12
+      }
+    },
+    "propertyGeneralDetails": [
+      {
+        "id": "cam-detail-1",
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "detail": "Beds",
+        "value": 2
+      },
+      {
+        "id": "cam-detail-2",
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "detail": "Bathrooms",
+        "value": 1
+      },
+      {
+        "id": "cam-detail-3",
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "detail": "Guests",
+        "value": 4
+      }
+    ],
+    "propertyImages": [
+      {
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "key": "images/camper/exterior.jpg"
+      },
+      {
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "key": "images/camper/interior.jpg"
+      }
+    ],
+    "propertyLocation": {
+      "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+      "country": "Netherlands",
+      "city": "Amsterdam",
+      "street": "Camperstraat",
+      "houseNumber": 12,
+      "houseNumberExtension": "",
+      "postalCode": "1012 AB"
+    },
+    "propertyPricing": {
+      "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+      "roomRate": 89,
+      "cleaning": 15
+    },
+    "propertyRules": [
+      {
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "rule": "PetsAllowed",
+        "value": true
+      },
+      {
+        "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+        "rule": "SmokingAllowed",
+        "value": false
+      }
+    ],
+    "propertyType": {
+      "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+      "property_type": "Camper",
+      "spaceType": "Full vehicle"
+    },
+    "propertyTechnicalDetails": {
+      "property_id": "b12345ab-c678-90de-f123-456789abcdef",
+      "length": 650,
+      "height": 280,
+      "fuelConsumption": 8,
+      "speed": 120,
+      "renovationYear": 2021,
+      "transmission": "Automatic",
+      "generalPeriodicInspection": 2023,
+      "fourWheelDrive": false
+    }
+  }
+]
