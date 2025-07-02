@@ -1,6 +1,7 @@
 import { handler } from "../../functions/General-Bookings-CRUD-Bookings-develop/index.js"
 import { getHostAuthToken } from "../../test/util/getHostAuthToken.js";
 async function post(){
+    console.log(await getHostAuthToken());
     console.log(await handler({
         resource: "/bookings",
         path: "/bookings",

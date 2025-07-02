@@ -17,7 +17,6 @@ class ReservationRepository {
       const arrivalDate = new Date(requestBody.general.arrivalDate).getTime();
       const departureDate = new Date(requestBody.general.departureDate).getTime();
       const client = await Database.getInstance();
-
       await client
         .createQueryBuilder()
         .insert()
