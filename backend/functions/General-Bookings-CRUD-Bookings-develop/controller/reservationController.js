@@ -24,6 +24,7 @@ class ReservationController {
                 response: paymentData,
             }
         } catch (error) {
+            console.error(error);
             return {
                 statusCode: error.statusCode || 500,
                 message: error.message || "Something went wrong, please contact support."

@@ -7,7 +7,6 @@ function CalculateDaysBetweenDates (startDate, endDate) {
     if (differenceInDays < 0) {
         throw new Error("End date must be after start date");
     }
-    
     return differenceInDays;
 };
 export default CalculateDaysBetweenDates;

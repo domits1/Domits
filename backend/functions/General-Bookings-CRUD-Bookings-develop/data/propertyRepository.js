@@ -12,7 +12,6 @@ class PropertyRepository {
             .getRepository(Property)
             .createQueryBuilder("property")
             .where("property.id = :id", {id: id})
-            .andWhere("property.status = :status", {status: "ACTIVE"})
             .getOne();
         if (result) {
             return {
@@ -22,8 +21,9 @@ class PropertyRepository {
         } else {
             throw new NotFoundException("Property is inactive or does not exist.")
         }
-
+    
     }
+    
 }
 
 export default PropertyRepository;
