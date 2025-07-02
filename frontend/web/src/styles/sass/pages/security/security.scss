@@ -1,0 +1,153 @@
+.security {
+  font-family: 'Arial', sans-serif;
+  color: #000;
+  line-height: 1.6;
+  margin: 20px auto;
+  padding: 0 20px;
+  max-width: 800px;
+ 
+
+  @media (max-width: 768px) {
+    padding: 0 10px;
+  }
+
+  .security__title-container {
+    .security__title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+      
+
+      @media (max-width: 768px) {
+        font-size: 1.5rem;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 1rem;
+      }
+    }
+
+    .security__fact-text {
+      font-size: 0.9rem;
+      color: #666;
+
+      @media (max-width: 480px) {
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  .security__text-container {
+    .security__subtitle {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #003366;
+      margin-bottom: 15px;
+
+      @media (max-width: 768px) {
+        font-size: 1.2rem;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 0.9rem;
+      }
+    }
+
+    .security__text {
+      font-size: 1rem;
+      margin-bottom: 15px;
+      color: #333;
+
+      @media (max-width: 768px) {
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 0.8rem;
+      }
+    }
+
+    .security__list {
+      list-style-type: disc;
+      margin: 15px 0 0 20px;
+      padding-left: 20px;
+      color: #000;
+
+      li {
+        margin-bottom: 10px;
+      }
+    }
+  }
+
+  .security__factsbox {
+    padding-top: 10px;
+    .security__fact {
+      box-sizing: border-box;
+      margin-bottom: 20px;
+
+      @media (max-width: 768px) {
+        flex: 1 1 100%;
+      }
+
+      .security__fact-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+      
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        
+      
+
+      .security__fact-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-right: 10px;
+
+        @media (max-width: 768px) {
+          margin-bottom: 5px;
+        }
+
+        @media (max-width: 480px) {
+          font-size: 1rem;
+        }
+      }
+
+        .security__fact-image {
+        width: 40px;
+        height: 40px;
+    
+
+        @media (max-width: 768px) {
+          width: 30px;
+          height: 30px;
+      
+        }
+      }
+
+    
+
+      .security__fact-subtitle {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+
+      .security__fact-text {
+        font-size: 0.9rem;
+        color: #666;
+
+        @media (max-width: 480px) {
+          font-size: 0.8rem;
+        }
+      }
+    }
+
+    
+    }
+  }
+}

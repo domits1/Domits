@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import './Faq.css';
 import Helpdesk from '../helpdesk/Helpdesk';
 import { useNavigate } from 'react-router-dom';
 

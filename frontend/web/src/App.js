@@ -83,6 +83,8 @@ import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
 import Terms from "./pages/terms/Terms";
 import Travelinnovation from "./pages/travelinnovationlab/travelinnovation";
 import Whydomits from "./pages/whydomits/Whydomitstwo.js";
+import Performance from "./pages/Performance/performance";
+import Security from "./pages/security/security";
 import FlowContext from "./services/FlowContext";
 import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
@@ -177,6 +179,9 @@ function App() {
                 <Route path="/bookingsend" element={<BookingSend />} />
                 <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                 <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
+                <Route path="/performance" element={<Performance />} />
+                <Route path="/security" element={<Security />} />
+
 
                 {/* Chat */}
                 {/*<Route path="/chat" element={<Chat/>}/>*/}

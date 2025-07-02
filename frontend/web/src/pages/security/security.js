@@ -1,7 +1,7 @@
 import React from "react";
-import "./security.css";
-import vision from "../../images/icons/vision.png";
-import whatwedo from "../../images/icons/route.png";
+
+import vision from "../../images/icons/vision-secondarycolor.png";
+import whatwedo from "../../images/icons/route-secondarycolor.png";
 
 function Security() {
   return (
