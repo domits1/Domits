@@ -1,10 +1,6 @@
 $primary-color: var(--primary-color);
 $secondary-color: var(--secondary-color);
 
-
-
-
-
 .howitworks__main {
   width: 100%;
   margin-left: auto;
@@ -41,8 +37,6 @@ $secondary-color: var(--secondary-color);
       font-size: 2.5rem;
       margin: 1rem;
       color: black;
- 
-   
 
       @media (max-width: 475px) {
         font-size: 1.9em;
@@ -60,7 +54,6 @@ $secondary-color: var(--secondary-color);
     margin-top: 1.4rem;
     margin-bottom: 0.6rem;
 
-
     @media (max-width: 1292px) {
       width: 80%;
       align-items: center;
@@ -75,7 +68,6 @@ $secondary-color: var(--secondary-color);
       margin: 0;
     }
   }
-
 
   .howitworks__info-block--guests {
     background: $primary-color;
@@ -109,7 +101,6 @@ $secondary-color: var(--secondary-color);
       margin-bottom: 7rem;
     }
 
-
     .borderright {
       border-right: 0.2rem solid white;
       width: 22.9em;
@@ -132,7 +123,8 @@ $secondary-color: var(--secondary-color);
         width: 26%;
       }
 
-      @media (max-width: 840px) {}
+      @media (max-width: 840px) {
+      }
 
       width: 30%;
     }
@@ -143,11 +135,11 @@ $secondary-color: var(--secondary-color);
     }
 
     @media (max-width: 840px) {
-      border-right: 0.0rem;
+      border-right: 0rem;
       padding: 0;
     }
 
-    >div {
+    > div {
       height: 3rem;
       width: 100%;
       display: flex;
@@ -163,12 +155,10 @@ $secondary-color: var(--secondary-color);
         font-size: 1.5rem;
         font-weight: 500;
 
-
         @media (max-width: 1292px) {
           padding-right: 1.5rem;
           font-size: 1.25em;
         }
-
 
         @media (max-width: 1090px) {
           padding-right: 0.5rem;
@@ -200,7 +190,7 @@ $secondary-color: var(--secondary-color);
       max-width: 19rem;
     }
 
-    >.howitworks__info-item {
+    > .howitworks__info-item {
       background: $primary-color;
       margin-top: 1rem;
       margin-bottom: 1rem;
@@ -221,7 +211,6 @@ $secondary-color: var(--secondary-color);
       }
     }
   }
-
 
   .howitworks__info-item--guests {
     width: 22.9em;
@@ -253,7 +242,7 @@ $secondary-color: var(--secondary-color);
       margin: 0.5rem auto;
     }
 
-    >div {
+    > div {
       height: 3rem;
       width: 100%;
       display: flex;
@@ -269,13 +258,10 @@ $secondary-color: var(--secondary-color);
         font-size: 1.5rem;
         font-weight: 500;
 
-
-
         @media (max-width: 1292px) {
           padding-right: 1.5rem;
           font-size: 1.25em;
         }
-
 
         @media (max-width: 1090px) {
           padding-right: 0.5rem;
@@ -285,7 +271,6 @@ $secondary-color: var(--secondary-color);
           padding-right: 1.5rem;
         }
       }
-
 
       @media (max-width: 1292px) {
         gap: 0rem;
@@ -343,11 +328,11 @@ $secondary-color: var(--secondary-color);
     }
 
     @media (max-width: 840px) {
-      border-left: 0.0rem solid white;
+      border-left: 0rem solid white;
       padding: 0;
     }
 
-    >div {
+    > div {
       height: 3rem;
       width: 100%;
       display: flex;
@@ -363,12 +348,10 @@ $secondary-color: var(--secondary-color);
         font-size: 1.5rem;
         font-weight: 500;
 
-
         @media (max-width: 1292px) {
           padding-right: 1.5rem;
           font-size: 1.25em;
         }
-
 
         @media (max-width: 1090px) {
           padding-right: 0.5rem;
@@ -433,7 +416,6 @@ $secondary-color: var(--secondary-color);
       margin-bottom: 7rem;
     }
 
-
     .borderright {
       border-right: 0.2rem solid white;
       width: 22.9em;
@@ -456,7 +438,8 @@ $secondary-color: var(--secondary-color);
         width: 26%;
       }
 
-      @media (max-width: 840px) {}
+      @media (max-width: 840px) {
+      }
 
       width: 30%;
     }
@@ -467,11 +450,11 @@ $secondary-color: var(--secondary-color);
     }
 
     @media (max-width: 840px) {
-      border-right: 0.0rem;
+      border-right: 0rem;
       padding: 0;
     }
 
-    >div {
+    > div {
       height: 3rem;
       width: 100%;
       display: flex;
@@ -487,12 +470,10 @@ $secondary-color: var(--secondary-color);
         font-size: 1.5rem;
         font-weight: 500;
 
-
         @media (max-width: 1292px) {
           padding-right: 1.5rem;
           font-size: 1.25em;
         }
-
 
         @media (max-width: 1090px) {
           padding-right: 0.5rem;
@@ -524,7 +505,7 @@ $secondary-color: var(--secondary-color);
       max-width: 19rem;
     }
 
-    >.howitworks__info-item {
+    > .howitworks__info-item {
       background: $secondary-color;
       margin-top: 1rem;
       margin-bottom: 1rem;
@@ -545,7 +526,6 @@ $secondary-color: var(--secondary-color);
       }
     }
   }
-
 
   .howitworks__info-item--hosts {
     width: 22.9em;
@@ -577,7 +557,7 @@ $secondary-color: var(--secondary-color);
       margin: 0.5rem auto;
     }
 
-    >div {
+    > div {
       height: 3rem;
       width: 100%;
       display: flex;
@@ -593,13 +573,10 @@ $secondary-color: var(--secondary-color);
         font-size: 1.5rem;
         font-weight: 500;
 
-
-
         @media (max-width: 1292px) {
           padding-right: 1.5rem;
           font-size: 1.25em;
         }
-
 
         @media (max-width: 1090px) {
           padding-right: 0.5rem;
@@ -609,7 +586,6 @@ $secondary-color: var(--secondary-color);
           padding-right: 1.5rem;
         }
       }
-
 
       @media (max-width: 1292px) {
         gap: 0rem;
@@ -667,11 +643,11 @@ $secondary-color: var(--secondary-color);
     }
 
     @media (max-width: 840px) {
-      border-left: 0.0rem solid white;
+      border-left: 0rem solid white;
       padding: 0;
     }
 
-    >div {
+    > div {
       height: 3rem;
       width: 100%;
       display: flex;
@@ -687,12 +663,10 @@ $secondary-color: var(--secondary-color);
         font-size: 1.5rem;
         font-weight: 500;
 
-
         @media (max-width: 1292px) {
           padding-right: 1.5rem;
           font-size: 1.25em;
         }
-
 
         @media (max-width: 1090px) {
           padding-right: 0.5rem;

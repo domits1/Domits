@@ -6,7 +6,7 @@ function Performance() {
     <div className="security">
       <div className="security__title-container">
         <h2 className="security__title">
-          <span className="highlightH2">Performance Bundles</span>
+          <span>Performance Bundles</span>
         </h2>
         <p className="security__text">
           Our performance team loves to help you start, grow and scale in your

@@ -1,5 +1,5 @@
 .security {
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   color: #000;
   line-height: 1.6;
   margin: 20px auto;
@@ -11,13 +11,11 @@
   }
 
   .security__title-container {
-    
     .security__title {
       font-size: 2rem;
       font-weight: bold;
       margin-bottom: 20px;
       text-align: center;
-    
 
       @media (max-width: 768px) {
         font-size: 1.5rem;
@@ -26,8 +24,6 @@
       @media (max-width: 480px) {
         font-size: 1rem;
       }
-
-      .highlightH2 {}
     }
   }
 
