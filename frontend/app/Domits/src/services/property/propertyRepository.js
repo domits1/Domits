@@ -1,4 +1,5 @@
 import retrieveAccessToken from '../../features/auth/RetrieveAccessToken';
+import RetrieveAccessToken from "../../features/auth/RetrieveAccessToken";
 
 class PropertyRepository {
   constructor() {}
@@ -68,6 +69,23 @@ class PropertyRepository {
       throw new Error('Something went wrong while fetching properties.');
     }
     return await response.json();
+  }
+
+  async createProperty(property) {
+    try {
+      const response = await fetch(
+          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property",
+          {
+        method: "POST",
+        headers: {
+          Authorization: await RetrieveAccessToken()
+        },
+        body: JSON.stringify({property})
+      })
+      return await response.json();
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
 
