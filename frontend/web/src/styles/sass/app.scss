@@ -39,7 +39,25 @@
 @use "pages/home/homePage";
 @use "pages/home/Accommodations";
 
+//whydomits
+@use "pages/whydomits/whydomits";
 
+//howitworks
+@use "pages/howitworks/howitworks.scss";
+
+//security
+@use "pages/security/security.scss";
+
+//performance
+@use "pages/performance/performance.scss";
+
+//helpdesk
+@use "pages/landingpage/faq";
+
+
+
+
+//features
 //GuestDashboard
 @use "features/guestdashboard/guestDashboard";
 @use "features/guestdashboard/Pages";
@@ -48,8 +66,10 @@
 
 
 
-// Specifieke styling voor de swiper-navigatieknoppen (.swiper-button-prev en .swiper-button-next)
-// Deze pijlen verschijnen op de accocard en tonen navigatie tussen foto's
+
+//node_modules
+// Specific styling for the Swiper navigation buttons (.swiper-button-prev and .swiper-button-next)
+// These arrows appear on the accocard and allow navigation between photos
 @use "node-modules/swiper/modules/navigation.scss";
 
 

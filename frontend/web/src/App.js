@@ -18,6 +18,7 @@ import { UserProvider } from "./features/auth/UserContext";
 import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
 import BookingOverview from "./features/bookingengine/BookingOverview";
 import BookingSend from "./features/bookingengine/BookingSend";
+import ValidatePayment from "./features/bookingengine/ValidatePayment";
 import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import Chatbot from "./features/guestaiagent/chatbot";
@@ -83,6 +84,8 @@ import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
 import Terms from "./pages/terms/Terms";
 import Travelinnovation from "./pages/travelinnovationlab/travelinnovation";
 import Whydomits from "./pages/whydomits/Whydomitstwo.js";
+import Performance from "./pages/Performance/performance";
+import Security from "./pages/security/security";
 import FlowContext from "./services/FlowContext";
 import PageNotFound from "./utils/error/404NotFound";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
@@ -119,7 +122,7 @@ function App() {
   const currentPath = window.location.pathname;
 
   const renderFooter = () => {
-    if (["/admin", "/bookingoverview", "/bookingpayment"].includes(currentPath) || currentPath.startsWith("/verify")) {
+    if (["/admin", "/bookingoverview", "/bookingpayment", "/validatepayment"].includes(currentPath) || currentPath.startsWith("/verify")) {
       return null;
     }
     return <Footer />;
@@ -177,6 +180,9 @@ function App() {
                 <Route path="/bookingsend" element={<BookingSend />} />
                 <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
                 <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
+                <Route path="/performance" element={<Performance />} />
+                <Route path="/security" element={<Security />} />
+
 
                 {/* Chat */}
                 {/*<Route path="/chat" element={<Chat/>}/>*/}
@@ -206,6 +212,7 @@ function App() {
                 <Route path="/verify" element={<HostVerificationView />} />
                 <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                 <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
+                <Route path="/validatepayment" element={<ValidatePayment />} />
 
                 <Route
                   path="/hostdashboard"

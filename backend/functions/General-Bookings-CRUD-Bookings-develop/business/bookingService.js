@@ -73,8 +73,8 @@ class BookingService {
 				return await this.reservationRepository.readByPropertyId(event.event.property_Id);
 			}
 			case "guest": {
-				await this.authManager.authenticateUser(event.Authorization);
-				return await this.reservationRepository.readByGuestId(event.event.guest_Id);
+				authToken = await this.authManager.authenticateUser(event.Authorization);
+				return await this.reservationRepository.readByGuestId(authToken.sub);
 			}
 
 			case "createdAt": {

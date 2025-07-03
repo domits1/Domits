@@ -250,14 +250,14 @@ function Header({ setSearchResults, setLoading }) {
   return (
     <header className="app-header">
       <nav
-        className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""
-          }`}
+        className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${isActiveSearchBar ? "no-scroll" : ""}`}
       >
         <div className="logo">
           <a href="/">
             <img src={logo} width={150} alt="Logo" />
           </a>
         </div>
+
         {!hiddenSearchPaths.includes(location.pathname) && (
           <SearchBar
             setSearchResults={setSearchResults}
@@ -265,6 +265,16 @@ function Header({ setSearchResults, setLoading }) {
             toggleBar={toggleSearchBar}
           />
         )}
+
+        <div class="language-toggle-mobile">
+          <i class="fas fa-globe"></i>
+          <select value={language} onChange={selectLanguage}>
+            <option value="en">English</option>
+            <option value="nl">Nederlands</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
 
         <div className="headerRight">  
             <div class="language-toggle">
@@ -348,6 +358,7 @@ function Header({ setSearchResults, setLoading }) {
           </div>
         </div>
       </nav>
+      {isActiveSearchBar && <div className="search-overlay-background" />}
     </header>
   );
 
