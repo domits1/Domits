@@ -335,7 +335,7 @@
             "growth": "Growth, rev and ops experts"
           },
           "forGuest": {
-            "title": "Why Domits for guest",
+            "title": "Why Domits for guests",
             "accommodation": {
               "title": "Unique Accommodations",
               "description": "Unlike traditional hotels, Domits offers a variety of accommodation types, including apartments, houses, villas, campers and boats. This variety can cater to different tastes, needs, and experiences."
@@ -362,7 +362,7 @@
             }
           },
           "forHost": {
-            "title" : "Why Domits for host",
+            "title" : "Why Domits for hosts",
             "fee": {
               "title": "0% host fee:",
               "description": "“Avoid paying platform fees and increase your revenue with our 0% host fee.”"
