@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 import "../../../styles/sass/features/booking-engine/bookingoverview.scss"
 
-const SetupForm = () => {
+const SetupForm = ({bookingId}) => {
   const stripe = useStripe();
   const elements = useElements();
-
   const [errorMessage, setErrorMessage] = useState(null);
+  console.log(bookingId);
 
   const handleSubmit = async (event) => {
     try {
@@ -18,7 +18,7 @@ const SetupForm = () => {
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/validatepayment`,
+          return_url: `${window.location.origin}/validatepayment?bookingId=${bookingId}`,
         },
       });
       if (error) {

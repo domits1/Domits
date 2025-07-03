@@ -95,6 +95,11 @@ import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 import Messages from "./components/messages/Messages.js";
+import publicKeys from "./utils/const/publicKeys.json"
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST)
 
 
 Modal.setAppElement("#root");
@@ -197,13 +202,13 @@ function App() {
 
                 {/* Guest Dashboard */}
                 <Route
-                    path="/guestdashboard/*"
-                    element={
-                      <GuestProtectedRoute>
-                        <MainDashboardGuest />
-                      </GuestProtectedRoute>
-                    }
-                  />
+                  path="/guestdashboard/*"
+                  element={
+                    <GuestProtectedRoute>
+                      <MainDashboardGuest />
+                    </GuestProtectedRoute>
+                  }
+                />
 
                 {/* Host Management */}
                 {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
@@ -212,7 +217,17 @@ function App() {
                 <Route path="/verify" element={<HostVerificationView />} />
                 <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                 <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
-                <Route path="/validatepayment" element={<ValidatePayment />} />
+
+                {/* Payment Logic */}
+                <Route path="/validatepayment"
+                  element={
+                    <Elements stripe={stripePromise}>
+                      <ValidatePayment />
+                    </Elements>
+                  }
+                >/
+                </Route>
+
 
                 <Route
                   path="/hostdashboard"
@@ -268,7 +283,7 @@ function App() {
             </div>
           </UserProvider>
         </AuthProvider>
-        <Navbar/>
+        <Navbar />
       </Router>
     </FlowContext.Provider>
   </ApolloProvider>);

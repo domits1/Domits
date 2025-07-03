@@ -47,6 +47,7 @@ class BookingService {
 	}
 
 	async confirmPayment(bookingId) {
+		console.log(bookingId);
 		const booking = await this.reservationRepository.getBookingById(bookingId);
 		if (booking.status === "Paid") {
 			return true;

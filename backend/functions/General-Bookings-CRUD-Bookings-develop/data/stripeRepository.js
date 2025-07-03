@@ -4,6 +4,8 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 import NotFoundException from "../util/exception/NotFoundException.js"
 import SystemManagerRepository from './systemManagerRepository.js';
 import CalculateTotalRate from '../util/calcuateTotalRate.js';
+import { Payment } from 'database/models/Payment';
+import Database from 'database';
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
@@ -65,43 +67,42 @@ class StripeRepository {
     }
   }
 
-  async addPaymentToTable(bookingId, paymentData) {
-    const params = new PutItemCommand({
-      "TableName": "payment-develop",
-      "Item": {
-        bookingId: { S: bookingId },
-        stripePaymentId: { S: paymentData.stripePaymentId.toString() },
-        stripeClientSecret: { S: paymentData.stripeClientSecret.toString() },
-      },
-    })
-    try {
-      const response = await client.send(params);
-      return await createCheckoutSession();
-    } catch (error) {
-      console.error(error)
-      throw new Error("Failed to save payment data.");
-    }
+  async addPaymentToTable(paymentData) {
+    console.log("values being send: ", paymentData);
+    const client = await Database.getInstance();
+    await client
+    .createQueryBuilder()
+    .insert()
+    .into(Payment)
+    .values({
+      stripepaymentid: paymentData.stripePaymentId,
+      stripeclientsecret: paymentData.stripeClientSecret
+      })
+      .execute();
+
+      try {
+        await this.getPaymentByPaymentId(paymentData.stripePaymentId)
+      } catch (error) {
+        console.error("Something unexpected happenend attempting to save the payment information.")
+        throw new NotFoundException(`Unable to save payment data in the table.
+        Attempted to query ${paymentData.stripePaymentId} but no results were returned.`);
+      }
+
+    throw new Error("HOLD IT!")
   }
 
-  async getPaymentByBookingId(bookingId) {
-    const params = new QueryCommand({
-      "TableName": "payment-develop",
-      "IndexName": "bookingId-stripePaymentId-index",
-      "KeyConditionExpression": "#bookingId = :bookingId",
-      "ExpressionAttributeNames": {
-        '#bookingId': 'bookingId',
-      },
-      "ExpressionAttributeValues": {
-        ":bookingId": {
-          "S": bookingId
-        }
-      }
-    });
-    const response = await client.send(params);
-    if (response.Count < 1) {
+  async getPaymentByPaymentId(stripePaymentId) {
+    const client = await Database.getInstance();
+    const query = await client
+      .getRepository(Payment)
+      .createQueryBuilder("payment")
+      .where("payment.stripepaymentid = :stripepaymentid", { stripePaymentid: stripePaymentId})
+      .getOne();
+
+    if (!query) {
       throw new NotFoundException("Payment not found.");
     } else {
-      return unmarshall(response.Items[0]);
+      return query;
     }
   }
 
