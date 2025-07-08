@@ -7,7 +7,6 @@ import villa from "../../images/icons/mansion.png";
 import { useNavigate } from 'react-router-dom';
 import FlowContext from '../../services/FlowContext';
 import { Auth } from 'aws-amplify';
-import styles from './landing.module.css';
 
 function WithNavigate(props) {
   let navigate = useNavigate();
