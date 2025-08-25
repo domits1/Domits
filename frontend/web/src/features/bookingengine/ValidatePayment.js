@@ -56,7 +56,7 @@ const elements = useElements();
   return (
     <>
         <h1>{message}</h1>
-        <p>Devnote: Do something with this bookingID: {bookingId}</p>
+        <p>Devnote: Do something with this bookingID: {bookingId}, dit is een test</p>
     </>
   )
 };
