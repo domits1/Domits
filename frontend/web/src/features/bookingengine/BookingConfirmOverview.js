@@ -36,15 +36,15 @@ const BookingConfirmationOverview = () => {
     useEffect(() => {
         const fetchBookingDetails = async () => {
             const queryParams = new URLSearchParams(location.search);
-            const paymentID = queryParams.get("paymentID");
-            if (!paymentID) {
+            const paymentId = queryParams.get("paymentId");
+            if (!paymentId) {
                 console.error("Missing Payment ID in URL");
                 setError("Payment ID is missing.");
                 setLoading(false);
                 return;
             }
             try {
-                const data = await BookingFetchData(paymentID);
+                const data = await BookingFetchData(paymentId);
                 const bookingInfo = extractBookingDetails(data.bookingData, data.accommodationData);
                 setBookingDetails(bookingInfo);
             } catch (error) {

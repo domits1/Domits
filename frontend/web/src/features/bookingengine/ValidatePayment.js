@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
+import { useNavigate } from "react-router-dom";
+import BookingGuestDashboard from "../guestdashboard/GuestBooking";
 
 const ValidatePayment = () => {
   const stripe = useStripe();
-const elements = useElements();
+  const elements = useElements();
+  const navigate = useNavigate();
   const [message, setMessage] = useState(null);
   const [bookingId, setBookingId] = useState(null);
 
@@ -16,11 +19,6 @@ const elements = useElements();
         `payment_intent_client_secret`
     );
 
-    setBookingId(new URLSearchParams(window.location.search).get(
-      'bookingId'
-    )
-) 
-    console.log(bookingId);
     stripe
     .retrievePaymentIntent(clientSecret)
     .then(({paymentIntent}) => {
@@ -31,10 +29,13 @@ const elements = useElements();
       // confirmation, while others will first enter a `processing` state.
       //
       // [0]: https://stripe.com/docs/payments/payment-methods#payment-notification
-      switch (paymentIntent.status) {
+      const bookingId = new URLSearchParams(window.location.search).get(
+        'id'
+      )
+        switch (paymentIntent.status) {
         case "succeeded":
           setMessage(`Success! Payment received.`);
-          //change paid bool to true
+          navigate(`/bookingconfirmationoverview?status=${paymentIntent.status}&id=${bookingId}&paymentId=${paymentIntent.id}`)
           break;
 
         case "processing":
@@ -56,7 +57,7 @@ const elements = useElements();
   return (
     <>
         <h1>{message}</h1>
-        <p>Devnote: Do something with this bookingID: {bookingId}, dit is een test</p>
+        <p>Devnote:Do something with this bookingID: {bookingId}, dit is een test</p>
     </>
   )
 };

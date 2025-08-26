@@ -4,13 +4,13 @@ export const Payment = new EntitySchema({
     name: "Payment",
     tableName: "payment",
     columns: {
-        stripePaymentId: {
+        stripepaymentid: {
             primary: true,
             type: "varchar",
             generated: false,
             nullable: false
         },
-        stripeClientSecret: {
+        stripeclientsecret: {
             type: "varchar",
             nullable: false
         },

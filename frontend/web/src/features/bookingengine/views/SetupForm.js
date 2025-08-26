@@ -6,7 +6,6 @@ const SetupForm = ({bookingId}) => {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState(null);
-  console.log(bookingId);
 
   const handleSubmit = async (event) => {
     try {
@@ -18,7 +17,7 @@ const SetupForm = ({bookingId}) => {
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/validatepayment?bookingId=${bookingId}`,
+          return_url: `${window.location.origin}/validatepayment?id=${bookingId}`,
         },
       });
       if (error) {

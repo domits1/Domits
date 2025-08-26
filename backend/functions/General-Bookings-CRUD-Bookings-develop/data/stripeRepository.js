@@ -68,7 +68,7 @@ class StripeRepository {
   }
 
   async addPaymentToTable(paymentData) {
-    console.log("values being send: ", paymentData);
+    console.log("values being send: ", paymentData.stripePaymentId);
     const client = await Database.getInstance();
     await client
     .createQueryBuilder()
@@ -87,8 +87,6 @@ class StripeRepository {
         throw new NotFoundException(`Unable to save payment data in the table.
         Attempted to query ${paymentData.stripePaymentId} but no results were returned.`);
       }
-
-    throw new Error("HOLD IT!")
   }
 
   async getPaymentByPaymentId(stripePaymentId) {
@@ -96,7 +94,7 @@ class StripeRepository {
     const query = await client
       .getRepository(Payment)
       .createQueryBuilder("payment")
-      .where("payment.stripepaymentid = :stripepaymentid", { stripePaymentid: stripePaymentId})
+      .where("payment.stripepaymentid = :stripepaymentid", { stripepaymentid: stripePaymentId})
       .getOne();
 
     if (!query) {
