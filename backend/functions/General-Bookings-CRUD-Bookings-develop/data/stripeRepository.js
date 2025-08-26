@@ -72,8 +72,8 @@ class StripeRepository {
       "TableName": "payment-develop",
       "Item": {
         bookingId: { S: bookingId },
-        stripePaymentId: { S: paymentData.stripePaymentId.toString() },
-        stripeClientSecret: { S: paymentData.stripeClientSecret.toString() },
+        stripepaymentid: { S: paymentData.stripePaymentId.toString() },
+        stripeclientsecret: { S: paymentData.stripeClientSecret.toString() },
       },
     })
     try {
