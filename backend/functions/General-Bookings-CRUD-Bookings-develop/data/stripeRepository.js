@@ -68,7 +68,6 @@ class StripeRepository {
   }
 
   async addPaymentToTable(paymentData) {
-    console.log("values being send: ", paymentData.stripePaymentId);
     const client = await Database.getInstance();
     await client
     .createQueryBuilder()
