@@ -4,6 +4,8 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 import NotFoundException from "../util/exception/NotFoundException.js"
 import SystemManagerRepository from './systemManagerRepository.js';
 import CalculateTotalRate from '../util/calcuateTotalRate.js';
+import { Payment } from 'database/models/Payment';
+import Database from 'database';
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
@@ -21,9 +23,7 @@ class StripeRepository {
         throw new NotFoundException("account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent.")
       }
       const stripe = await stripePromise;
-
       const total = await CalculateTotalRate(propertyId, dates);
-
       const paymentIntent = await stripe.paymentIntents.create({
         amount: total,
         application_fee_amount: Math.round(total * 0.15),
@@ -67,43 +67,40 @@ class StripeRepository {
     }
   }
 
-  async addPaymentToTable(bookingId, paymentData) {
-    const params = new PutItemCommand({
-      "TableName": "payment-develop",
-      "Item": {
-        bookingId: { S: bookingId },
-        stripepaymentid: { S: paymentData.stripePaymentId.toString() },
-        stripeclientsecret: { S: paymentData.stripeClientSecret.toString() },
-      },
-    })
-    try {
-      const response = await client.send(params);
-      return await createCheckoutSession();
-    } catch (error) {
-      console.error(error)
-      throw new Error("Failed to save payment data.");
-    }
+  async addPaymentToTable(paymentData) {
+    console.log("values being send: ", paymentData.stripePaymentId);
+    const client = await Database.getInstance();
+    await client
+    .createQueryBuilder()
+    .insert()
+    .into(Payment)
+    .values({
+      stripepaymentid: paymentData.stripePaymentId,
+      stripeclientsecret: paymentData.stripeClientSecret
+      })
+      .execute();
+
+      try {
+        await this.getPaymentByPaymentId(paymentData.stripePaymentId)
+      } catch (error) {
+        console.error("Something unexpected happenend attempting to save the payment information.")
+        throw new NotFoundException(`Unable to save payment data in the table.
+        Attempted to query ${paymentData.stripePaymentId} but no results were returned.`);
+      }
   }
 
-  async getPaymentByBookingId(bookingId) {
-    const params = new QueryCommand({
-      "TableName": "payment-develop",
-      "IndexName": "bookingId-stripePaymentId-index",
-      "KeyConditionExpression": "#bookingId = :bookingId",
-      "ExpressionAttributeNames": {
-        '#bookingId': 'bookingId',
-      },
-      "ExpressionAttributeValues": {
-        ":bookingId": {
-          "S": bookingId
-        }
-      }
-    });
-    const response = await client.send(params);
-    if (response.Count < 1) {
+  async getPaymentByPaymentId(stripePaymentId) {
+    const client = await Database.getInstance();
+    const query = await client
+      .getRepository(Payment)
+      .createQueryBuilder("payment")
+      .where("payment.stripepaymentid = :stripepaymentid", { stripepaymentid: stripePaymentId})
+      .getOne();
+
+    if (!query) {
       throw new NotFoundException("Payment not found.");
     } else {
-      return unmarshall(response.Items[0]);
+      return query;
     }
   }
 
