@@ -47,6 +47,7 @@ const BookingConfirmationOverview = () => {
                 const data = await BookingFetchData(paymentId);
                 const bookingInfo = extractBookingDetails(data.bookingData, data.accommodationData);
                 setBookingDetails(bookingInfo);
+                console.log("All data obtained!", data, bookingInfo)
             } catch (error) {
                 console.error("Fetch Error:", error);
                 setError("Failed to load booking details.");
@@ -65,16 +66,16 @@ const BookingConfirmationOverview = () => {
 
 
     const extractBookingDetails = (bookingData, accommodationData) => {
-        const difference = CalculateDaysBetweenDates(bookingData.arrivalDate.N, bookingData.departureDate.N);
+        const difference = CalculateDaysBetweenDates(bookingData.arrivalDate, bookingData.departureDate);
         const totalPrice = accommodationData.pricing.roomRate * difference;
         return {
-            StartDate: bookingData.arrivalDate.N,
-            EndDate: bookingData.departureDate.N,
-            Guests: bookingData.guests.N,
-            GuestID: bookingData.guestId.S,
-            AccoID: bookingData.property_id.S,
+            StartDate: bookingData.arrivalDate,
+            EndDate: bookingData.departureDate,
+            Guests: bookingData.guests,
+            GuestID: bookingData.guestId,
+            AccoID: bookingData.property_id,
             HostID: accommodationData.property.hostId,
-            Status: bookingData.status.S,
+            Status: bookingData.status,
             Title: accommodationData.property.title,
             Price: totalPrice,
             Taxes: 0,

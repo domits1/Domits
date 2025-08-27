@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 import { useNavigate } from "react-router-dom";
 import BookingGuestDashboard from "../guestdashboard/GuestBooking";
+import ActivateBooking from "./services/ActivateBooking";
 
 const ValidatePayment = () => {
   const stripe = useStripe();
@@ -35,6 +36,7 @@ const ValidatePayment = () => {
         switch (paymentIntent.status) {
         case "succeeded":
           setMessage(`Success! Payment received.`);
+          ActivateBookingFunction(paymentIntent.id);
           navigate(`/bookingconfirmationoverview?status=${paymentIntent.status}&id=${bookingId}&paymentId=${paymentIntent.id}`)
           break;
 
@@ -53,6 +55,10 @@ const ValidatePayment = () => {
       }
     });
   }, [stripe]);
+
+  const ActivateBookingFunction = async (paymentid) => {
+      await ActivateBooking(paymentid);
+  }
   
   return (
     <>
