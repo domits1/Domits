@@ -46,14 +46,19 @@ class BookingService {
 
 	}
 
-	async confirmPayment(bookingId) {
-		console.log(bookingId);
-		const booking = await this.reservationRepository.getBookingById(bookingId);
+	// -----------
+	// /bookings PATCH
+	// -----------
+
+	async confirmPayment(paymentid) {
+		console.log(paymentid);
+		const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
+		console.log(booking);
 		if (booking.status === "Paid") {
 			return true;
 		}
-		const payment = await this.stripeRepository.getPaymentByBookingId(booking.id);
-		const paymentIntent = await this.stripeRepository.getPaymentIntentByPaymentId(payment.stripePaymentId);
+		const paymentIntent = await this.stripeRepository.getPaymentIntentByPaymentId(paymentid);
+		console.log(paymentIntent.status);
 		if (paymentIntent.status === "succeeded") {
 			await this.reservationRepository.updateBookingStatus(booking.id, "Paid");
 			return true;
