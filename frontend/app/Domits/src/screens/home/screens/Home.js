@@ -1,9 +1,7 @@
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, FlatList, Text, ToastAndroid, View} from 'react-native';
-
 import PropertyCard from '../views/PropertyCard';
 import HomeTopBarTabs from '../../../header/homeTopBarTabs';
-
 import GetWishlist from "../../../services/wishlist/GetWishlist";
 import addToWishlist from "../../../services/wishlist/AddToWishlist";
 import RemoveFromWishlist from "../../../services/wishlist/RemoveFromWishlist";
@@ -40,9 +38,19 @@ const HomeScreen = () => {
     const [loading, setLoading] = useState(false);
     const [favoritesLoading, setFavoritesLoading] = useState(false);
     const [originalDataSetLoaded, setOriginalDataSetLoaded] = useState(false);
+    const lastFetchTimeRef = useRef(0);
+    const FETCH_INTERVAL = 1000; // 1 second
 
     const fetchProperties = useCallback(async () => {
         setLoading(true);
+
+        // Throttle
+        const now = Date.now();
+        if (now - lastFetchTimeRef.current < FETCH_INTERVAL) {
+            setLoading(false);
+            return;
+        }
+        lastFetchTimeRef.current = now;
 
         setPropertiesByCountry([])
         setByCountryLastEvaluatedKey({id: null, city: null})
