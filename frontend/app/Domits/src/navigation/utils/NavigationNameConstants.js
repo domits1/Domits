@@ -23,6 +23,7 @@ export const HOST_RESERVATIONS_SCREEN = "host-reservations";
 // Host Onboarding
 export const HOST_ONBOARDING_LANDING_SCREEN = "host-onboarding-landing";
 export const HOST_ONBOARDING_SCREEN = "host-onboarding";
+export const HOST_ONBOARDING_CHECK_SCREEN = "host-onboarding-check";
 
 // Guest
 export const GUEST_DASHBOARD_SCREEN = "guest-dashboard";

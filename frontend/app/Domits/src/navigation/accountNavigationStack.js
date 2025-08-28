@@ -10,34 +10,36 @@ import AccountDashboard from "../screens/accounthome/features/accountdashboard/s
 import AccountHome from "../screens/accounthome/screens/AccountHome";
 import Feedback from "../screens/accounthome/features/feedback/screens/FeedbackTab.js";
 import {
-    ACCOUNT_DASHBOARD_SCREEN,
-    ACCOUNT_HOME_SCREEN,
-    APP_SETTINGS_SCREEN,
-    CHANGE_ACCOUNT_SETTINGS_SCREEN,
-    CONFIRM_EMAIL_SCREEN,
-    FEEDBACK_SCREEN,
-    GUEST_PAYMENT_METHODS_SCREEN,
-    GUEST_PROFILE_SCREEN,
-    GUEST_REVIEWS_SCREEN,
-    HOST_CALENDAR_SCREEN,
-    HOST_DASHBOARD_SCREEN,
-    HOST_HELP_DESK_SCREEN,
-    HOST_ONBOARDING_LANDING_SCREEN,
-    HOST_ONBOARDING_SCREEN,
-    HOST_PAYMENTS_SCREEN,
-    HOST_PROFILE_SCREEN,
-    HOST_PROPERTIES_SCREEN,
-    HOST_RESERVATIONS_SCREEN,
-    HOST_REVIEWS_SCREEN,
-    HOST_SETTINGS_SCREEN,
-    LOGIN_SCREEN,
-    REGISTER_SCREEN
+  ACCOUNT_DASHBOARD_SCREEN,
+  ACCOUNT_HOME_SCREEN,
+  APP_SETTINGS_SCREEN,
+  CHANGE_ACCOUNT_SETTINGS_SCREEN,
+  CONFIRM_EMAIL_SCREEN,
+  FEEDBACK_SCREEN,
+  GUEST_PAYMENT_METHODS_SCREEN,
+  GUEST_PROFILE_SCREEN,
+  GUEST_REVIEWS_SCREEN,
+  HOST_CALENDAR_SCREEN,
+  HOST_DASHBOARD_SCREEN,
+  HOST_HELP_DESK_SCREEN,
+  HOST_ONBOARDING_CHECK_SCREEN,
+  HOST_ONBOARDING_LANDING_SCREEN,
+  HOST_ONBOARDING_SCREEN,
+  HOST_PAYMENTS_SCREEN,
+  HOST_PROFILE_SCREEN,
+  HOST_PROPERTIES_SCREEN,
+  HOST_RESERVATIONS_SCREEN,
+  HOST_REVIEWS_SCREEN,
+  HOST_SETTINGS_SCREEN,
+  LOGIN_SCREEN,
+  REGISTER_SCREEN
 } from './utils/NavigationNameConstants';
 import AppSettingsTab from "../screens/accounthome/features/appsettings/screens/AppSettingsTab";
 import GuestReviews from "../screens/guestdashboard/GuestReviewsTab";
 import GuestPaymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
 import HostOnboardingLanding from "../screens/Landing";
 import HostOnboarding from "../features/hostonboarding/screens/HostOnboarding";
+import HostOnboardingCheck from "../features/hostonboarding/views/OnboardingCheck.js";
 import HostDashboard from "../features/hostdashboard/screens/HostDashboardTab";
 import HostCalendar from "../features/hostdashboard/hostcalendar/screens/HostCalendarTab";
 import HostReviews from "../features/hostdashboard/hostreviews/screens/HostReviewsTab";
@@ -82,6 +84,7 @@ function AccountNavigationStack() {
             {/* Host Onboarding */}
             <Stack.Screen name={HOST_ONBOARDING_LANDING_SCREEN} component={HostOnboardingLanding}/>
             <Stack.Screen name={HOST_ONBOARDING_SCREEN} component={HostOnboarding}/>
+            <Stack.Screen name={HOST_ONBOARDING_CHECK_SCREEN} component={HostOnboardingCheck}/>
 
             {/* Guest */}
             <Stack.Screen name={GUEST_PROFILE_SCREEN} component={GuestProfileTab}/>
