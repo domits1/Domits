@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 import { useNavigate } from "react-router-dom";
-import BookingGuestDashboard from "../guestdashboard/GuestBooking";
 import ActivateBooking from "./services/ActivateBooking";
 
 const ValidatePayment = () => {
@@ -10,6 +9,7 @@ const ValidatePayment = () => {
   const navigate = useNavigate();
   const [message, setMessage] = useState(null);
   const [bookingId, setBookingId] = useState(null);
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!stripe) {
@@ -33,15 +33,17 @@ const ValidatePayment = () => {
       const bookingId = new URLSearchParams(window.location.search).get(
         'id'
       )
+      setLoading(false);
         switch (paymentIntent.status) {
         case "succeeded":
           setMessage(`Success! Payment received.`);
           ActivateBookingFunction(paymentIntent.id);
-          navigate(`/bookingconfirmationoverview?status=${paymentIntent.status}&id=${bookingId}&paymentId=${paymentIntent.id}`)
+          navigate(`/bookingconfirmationoverview?&id=${bookingId}&paymentId=${paymentIntent.id}`)
           break;
 
         case "processing":
           setMessage(`Payment processing. We'll update you when payment is received.`);
+          navigate(`/bookingconfirmationoverview?&id=${bookingId}&paymentId=${paymentIntent.id}`)
           //Add implementation, push message/email when payment is succeed/failed.
           break;
 
@@ -62,8 +64,14 @@ const ValidatePayment = () => {
   
   return (
     <>
-        <h1>{message}</h1>
-        <p>Devnote:Do something with this bookingID: {bookingId}, dit is een test</p>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <>
+          <h1>{message}</h1>
+          <p>Was this unexpected behaviour? Contact the support team.</p>
+        </>
+      )}
     </>
   )
 };

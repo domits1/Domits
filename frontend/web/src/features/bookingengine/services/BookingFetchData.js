@@ -16,13 +16,11 @@ const BookingFetchData = async (paymentID) => {
             throw new Error(`Error fetching booking details: ${response.statusText}`);
         }
         const data = await response.json();
-        console.log("Je hebt dit achtergelaten!", data);
 
 
     const bookingData = data[0];
     const id = bookingData.property_id;
 
-    console.log("IK HEB DE DATA!", id)
 
     // get accommodation data from accommodationID
     const accommodationId = await fetch(
@@ -34,11 +32,9 @@ const BookingFetchData = async (paymentID) => {
     }
     const accommodationData = await accommodationId.json();
 
-    console.log("DIT IS BOOKING DATA BTW: ", bookingData);
     if (!bookingData) {
         throw new Error("Booking details not found.");
     }
-    console.log(accommodationData);
     return {
         bookingData,
         accommodationData
