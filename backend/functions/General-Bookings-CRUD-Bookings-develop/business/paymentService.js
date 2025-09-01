@@ -13,6 +13,7 @@ class PaymentService{
         
         const paymentData = await this.stripeRepository.createPaymentIntent(account_Id, propertyId, dates);
 
+        await this.stripeRepository.addPaymentToTable(paymentData);
         return {
             stripeClientSecret: paymentData.stripeClientSecret,
             bookingId: bookingId,

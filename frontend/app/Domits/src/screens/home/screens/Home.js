@@ -1,9 +1,7 @@
-import {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, FlatList, Text, ToastAndroid, View} from 'react-native';
-
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {FlatList, Text, ToastAndroid, View} from 'react-native';
 import PropertyCard from '../views/PropertyCard';
 import HomeTopBarTabs from '../../../header/homeTopBarTabs';
-
 import GetWishlist from "../../../services/wishlist/GetWishlist";
 import addToWishlist from "../../../services/wishlist/AddToWishlist";
 import RemoveFromWishlist from "../../../services/wishlist/RemoveFromWishlist";
@@ -14,9 +12,16 @@ import styles from "../styles/Home";
 import ToastMessage from "../../../components/ToastMessage";
 import TranslatedText from "../../../features/translation/components/TranslatedText";
 import {useTranslation} from "react-i18next";
+import LoadingScreen from "../../loadingscreen/screens/LoadingScreen";
 
 const HomeScreen = () => {
     const {t} = useTranslation();
+
+    const lastFetchTimeRef = useRef(0);
+    const FETCH_INTERVAL = 1000; // 1 second
+
+    const propertyRepository =
+        process.env.REACT_APP_TESTING === "true" ? new TestPropertyRepository() : new PropertyRepository();
 
     const [properties, setProperties] = useState([]);
     const [lastEvaluatedKey, setLastEvaluatedKey] = useState({
@@ -24,25 +29,29 @@ const HomeScreen = () => {
         id: null,
     });
 
+    const [favorites, setFavorites] = useState([]);
+    const [favoritesLoading, setFavoritesLoading] = useState(false);
+
+    const [country, setCountry] = useState("");
     const [propertiesByCountry, setPropertiesByCountry] = useState([]);
     const [byCountryLastEvaluatedKey, setByCountryLastEvaluatedKey] = useState({
         id: null,
         city: null
     })
 
-    const [country, setCountry] = useState("");
-
-    const propertyRepository =
-        process.env.REACT_APP_TESTING === "true" ? new TestPropertyRepository() : new PropertyRepository();
-
-    const [favorites, setFavorites] = useState([]);
-
     const [loading, setLoading] = useState(false);
-    const [favoritesLoading, setFavoritesLoading] = useState(false);
     const [originalDataSetLoaded, setOriginalDataSetLoaded] = useState(false);
 
     const fetchProperties = useCallback(async () => {
         setLoading(true);
+
+        // Throttle
+        const now = Date.now();
+        if (now - lastFetchTimeRef.current < FETCH_INTERVAL) {
+            setLoading(false);
+            return;
+        }
+        lastFetchTimeRef.current = now;
 
         setPropertiesByCountry([])
         setByCountryLastEvaluatedKey({id: null, city: null})
@@ -65,72 +74,6 @@ const HomeScreen = () => {
 
         setLoading(false);
     }, [lastEvaluatedKey]);
-
-    const fetchFavorites = useCallback(async () => {
-        setFavoritesLoading(true);
-
-        const response = await GetWishlist();
-
-        setFavorites(response.AccommodationIDs);
-        setFavorites([])
-        setFavoritesLoading(false);
-    }, []);
-
-    const onFavoritePress = (id) => {
-        if (favorites.includes(id)) {
-            setFavorites(favorites.filter(item => item !== id));
-            RemoveFromWishlist(id)
-        } else {
-            setFavorites([...favorites, id]);
-            addToWishlist(id);
-        }
-    }
-
-    useEffect(() => {
-        fetchProperties();
-        // fetchFavorites();
-    }, []);
-
-    const fetchNextDataSet = () => {
-        if (propertiesByCountry.length > 0) {
-            if (byCountryLastEvaluatedKey.id) {
-                fetchPropertiesByCountry(country)
-            }
-        }
-        if (lastEvaluatedKey.createdAt && lastEvaluatedKey.id) {
-            fetchProperties();
-        }
-    };
-
-    const renderFlatListItem = ({item}) => {
-        return <PropertyCard
-            property={item}
-            isFavorite={favorites.includes(item.property.id)}
-            onFavoritePress={(id) => onFavoritePress(id)}
-        />;
-    };
-
-    const renderFooter = () => {
-        if (loading) {
-            return (
-                <View style={styles.indicators}>
-                    <ActivityIndicator size="large"/>
-                </View>
-            );
-        }
-
-        if (!lastEvaluatedKey.createdAt && !lastEvaluatedKey.id && !byCountryLastEvaluatedKey.id && !byCountryLastEvaluatedKey.city) {
-            return (
-                <View style={styles.indicators}>
-                    <Text style={styles.errors}>
-                        <TranslatedText textToTranslate={"No property found."} />
-                    </Text>
-                </View>
-            );
-        }
-
-        return null;
-    };
 
     const fetchPropertiesByCountry = useCallback(async (country) => {
         setLoading(true);
@@ -159,6 +102,70 @@ const HomeScreen = () => {
         setLoading(false);
     }, [byCountryLastEvaluatedKey]);
 
+    const fetchFavorites = useCallback(async () => {
+        setFavoritesLoading(true);
+
+        const response = await GetWishlist();
+
+        setFavorites(response.AccommodationIDs);
+        setFavorites([])
+        setFavoritesLoading(false);
+    }, []);
+
+    const onFavoritePress = (id) => {
+        if (favorites.includes(id)) {
+            setFavorites(favorites.filter(item => item !== id));
+            RemoveFromWishlist(id)
+        } else {
+            setFavorites([...favorites, id]);
+            addToWishlist(id);
+        }
+    }
+
+    const fetchNextDataSet = () => {
+        if (propertiesByCountry.length > 0) {
+            if (byCountryLastEvaluatedKey.id) {
+                fetchPropertiesByCountry(country)
+            }
+        }
+        if (lastEvaluatedKey.createdAt && lastEvaluatedKey.id) {
+            fetchProperties();
+        }
+    };
+
+    useEffect(() => {
+        fetchProperties();
+        // fetchFavorites();
+    }, []);
+
+    const renderFlatListItem = ({item}) => {
+        return <PropertyCard
+            property={item}
+            isFavorite={favorites.includes(item.property.id)}
+            onFavoritePress={(id) => onFavoritePress(id)}
+        />;
+    };
+
+    const renderFooter = () => {
+        if (loading) {
+            return (
+                <LoadingScreen/>
+            );
+        }
+
+        if (!lastEvaluatedKey.createdAt && !lastEvaluatedKey.id && !byCountryLastEvaluatedKey.id && !byCountryLastEvaluatedKey.city) {
+            return (
+                <View style={styles.indicators}>
+                    <Text style={styles.errors}>
+                        <TranslatedText textToTranslate={"No property found."} />
+                    </Text>
+                </View>
+            );
+        }
+
+        return null;
+    };
+
     return (
         <>
             <Header country={country} setCountry={setCountry} loading={loading}
@@ -166,15 +173,13 @@ const HomeScreen = () => {
                     onCancelButtonPress={fetchProperties}/>
             <HomeTopBarTabs/>
             {loading && originalDataSetLoaded || favoritesLoading ? (
-                <View style={styles.activityIndicatorContainer}>
-                    <ActivityIndicator size="small"/>
-                </View>
+                <LoadingScreen loadingName={'Properties'}/>
             ) : (
                 <FlatList
                     data={propertiesByCountry.length > 0 ? propertiesByCountry : properties}
                     renderItem={renderFlatListItem}
                     onEndReached={fetchNextDataSet}
-                    onEndReachedThreshold={0.7}
+                    onEndReachedThreshold={0.3}
                     ListFooterComponent={renderFooter}
                 />
             )}
