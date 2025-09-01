@@ -146,7 +146,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     maxWidth: 500,
-    padding: 30,
+    marginVertical: 20,
   },
   tableItem: {
     alignItems: 'center',
@@ -169,12 +169,10 @@ export const styles = StyleSheet.create({
   valueText: {
     fontSize: 16,
     color: 'rgb(110,110,110)',
-    textAlign: 'right',
   },
   // Check screen buttons
   goBackToEditContainer: {
     flexDirection: 'row',
-    margin: 5,
   },
   goBackToEditButton: {
     backgroundColor: COLORS.domitsHostBlue,
@@ -198,9 +196,19 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.domitsHostBlue,
     borderRadius: 10,
     padding: 10,
+    marginTop: 10,
+  },
+  completeButtonDisabled: {
+    backgroundColor: 'rgba(128,128,128,0.5)',
   },
   completeButtonText: {
     fontSize: 24,
     color: "white",
+  },
+  // Check screen checkboxes
+  checkboxContainer: {
+    flexDirection: 'row',
+    width: '95%',
+    marginBottom: 10,
   },
 })
