@@ -1,5 +1,4 @@
 import retrieveAccessToken from '../../features/auth/RetrieveAccessToken';
-import RetrieveAccessToken from "../../features/auth/RetrieveAccessToken";
 
 class PropertyRepository {
   constructor() {}
@@ -82,7 +81,7 @@ class PropertyRepository {
           {
         method: "POST",
         headers: {
-          Authorization: await RetrieveAccessToken()
+          Authorization: await retrieveAccessToken()
         },
         body: JSON.stringify({property})
       })
