@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   },
   labelText: {
     fontWeight: 'bold',
-    marginLeft: 1,
+    marginLeft: 8,
   },
   input: {
     height: 50,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     color: 'black',
     borderWidth: 1,
     marginBottom: 12,
-    borderRadius: 4,
+    borderRadius: 10,
     paddingHorizontal: 10,
     fontSize: 16,
   },

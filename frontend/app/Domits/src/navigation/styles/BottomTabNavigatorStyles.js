@@ -3,9 +3,10 @@ import {StyleSheet} from "react-native";
 export const styles = StyleSheet.create({
     // Tab bar
     bottomTabBar: {
-        backgroundColor: '#f0f0f0',
-        borderTopColor: 'transparent',
-        height: 60,
+        backgroundColor: 'white',
+        borderTopColor: 'black',
+        borderTopWidth: 0.5,
+        height: 80,
         paddingBottom: 10,
     },
     // Nav item

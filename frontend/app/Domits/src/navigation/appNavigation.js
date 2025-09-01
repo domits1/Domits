@@ -56,16 +56,14 @@ function BottomTabNavigator() {
           headerShown: false,
         }}
       />
-      {isAuthenticated && (
-        <Tab.Screen
-          name="Messages"
-          component={MessagesStackNavigator}
-          options={{
+      <Tab.Screen
+        name="Messages"
+        component={MessagesStackNavigator}
+        options={{
           headerShown: false,
           unmountOnBlur: true,
-          }}
-        />
-      )}
+        }}
+      />
       <Tab.Screen
         name="Account"
         component={AccountNavigationStack}
