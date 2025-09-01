@@ -139,5 +139,68 @@ export const styles = StyleSheet.create({
   },
   selectedGridItemText: {
     color: 'white',
-  }
+  },
+  // Check screen table
+  table: {
+    alignSelf: 'center',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 500,
+    padding: 30,
+  },
+  tableItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '100%',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(200,200,200,0.75)',
+  },
+  labelItem: {
+    flex: 1,
+  },
+  valueItem: {
+    flex: 2,
+  },
+  labelText: {
+    fontSize: 16,
+    color: 'rgb(65,65,65)',
+  },
+  valueText: {
+    fontSize: 16,
+    color: 'rgb(110,110,110)',
+    textAlign: 'right',
+  },
+  // Check screen buttons
+  goBackToEditContainer: {
+    flexDirection: 'row',
+    margin: 5,
+  },
+  goBackToEditButton: {
+    backgroundColor: COLORS.domitsHostBlue,
+    borderRadius: 5,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  goBackToEditIcon: {
+    color: 'white',
+  },
+  goBackToEditText: {
+    fontSize: 16,
+    color: 'white',
+    marginHorizontal: 5,
+  },
+  completeButtonContainer: {
+    alignItems: "center",
+  },
+  completeButton: {
+    backgroundColor: COLORS.domitsHostBlue,
+    borderRadius: 10,
+    padding: 10,
+  },
+  completeButtonText: {
+    fontSize: 24,
+    color: "white",
+  },
 })
