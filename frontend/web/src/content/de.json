@@ -729,6 +729,41 @@
           "subtitle": "Unser Expertenteam steht bereit zur Unterstützung!",
           "team": "Vermietungsexpertenteam",
           "talk": "Sprechen Sie mit einem Spezialisten"
+        },
+        "contactForm": {
+          "title": "Kontaktformular",
+          "description": "Wir sind 24/7 verfügbar, um optimale Erreichbarkeit in allen Zeitzonen zu gewährleisten. Je spezifischer Sie in Ihrer Kontaktaufnahme sind, desto schneller können wir Ihnen helfen! Wir melden uns immer innerhalb von 24 Stunden nach Ihrer Kontaktaufnahme. Noch keine Antwort von uns erhalten? Überprüfen Sie Ihren Spam-Ordner.",
+          "fields": {
+            "firstName": "Ihr Vorname",
+            "lastName": "Ihr Nachname",
+            "email": "E-Mail",
+            "phone": "Telefon",
+            "city": "Stadt / Region der Unterkunft",
+            "properties": "Anzahl der Unterkünfte",
+            "comments": "Kommentare"
+          },
+          "placeholders": {
+            "firstName": "Geben Sie Ihren Vornamen ein",
+            "lastName": "Geben Sie Ihren Nachnamen ein",
+            "email": "Geben Sie Ihre E-Mail ein",
+            "phone": "Geben Sie Ihre Telefonnummer ein",
+            "city": "Geben Sie Stadt oder Region ein",
+            "properties": "Geben Sie die Anzahl der Unterkünfte ein",
+            "comments": "Geben Sie Ihre Kommentare ein"
+          },
+          "submit": "Absenden",
+          "sending": "Wird gesendet...",
+          "success": "Nachricht erfolgreich gesendet! Wir melden uns innerhalb von 24 Stunden bei Ihnen.",
+          "errors": {
+            "firstName": "Vorname ist erforderlich",
+            "lastName": "Nachname ist erforderlich",
+            "email": "E-Mail ist erforderlich",
+            "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+            "phone": "Telefonnummer ist erforderlich",
+            "city": "Stadt/Region ist erforderlich",
+            "properties": "Anzahl der Unterkünfte ist erforderlich",
+            "comments": "Kommentare sind erforderlich"
+          }
         }
       }
 }

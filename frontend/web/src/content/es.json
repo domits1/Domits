@@ -728,6 +728,41 @@
             "subtitle": "¡Nuestro equipo de expertos en alquiler está listo para ayudarte!",
             "team": "equipo de expertos en alquiler",
             "talk": "Habla con un especialista"
+          },
+          "contactForm": {
+            "title": "Formulario de contacto",
+            "description": "Estamos disponibles 24/7 para garantizar una accesibilidad óptima en todas las zonas horarias. Cuanto más específico seas en tu contacto, ¡más rápido podremos ayudarte! Siempre te respondemos dentro de las 24 horas de tu contacto. ¿Aún no has recibido respuesta de nosotros? Revisa tu carpeta de spam.",
+            "fields": {
+              "firstName": "Tu nombre",
+              "lastName": "Tu apellido",
+              "email": "Correo electrónico",
+              "phone": "Teléfono",
+              "city": "Ciudad / Región de la propiedad",
+              "properties": "Número de propiedades",
+              "comments": "Comentarios"
+            },
+            "placeholders": {
+              "firstName": "Ingresa tu nombre",
+              "lastName": "Ingresa tu apellido",
+              "email": "Ingresa tu correo electrónico",
+              "phone": "Ingresa tu número de teléfono",
+              "city": "Ingresa ciudad o región",
+              "properties": "Ingresa el número de propiedades",
+              "comments": "Ingresa tus comentarios"
+            },
+            "submit": "Enviar",
+            "sending": "Enviando...",
+            "success": "¡Mensaje enviado exitosamente! Te responderemos dentro de las 24 horas.",
+            "errors": {
+              "firstName": "El nombre es obligatorio",
+              "lastName": "El apellido es obligatorio",
+              "email": "El correo electrónico es obligatorio",
+              "emailInvalid": "Por favor ingresa un correo electrónico válido",
+              "phone": "El número de teléfono es obligatorio",
+              "city": "La ciudad/región es obligatoria",
+              "properties": "El número de propiedades es obligatorio",
+              "comments": "Los comentarios son obligatorios"
+            }
           }
         }
 }

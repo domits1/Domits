@@ -729,6 +729,41 @@
             "subtitle": "Ons expertteam staat klaar voor ondersteuning!",
             "team": "verhuurexpertteam",
             "talk": "Spreek met een specialist"
+          },
+          "contactForm": {
+            "title": "Contactformulier",
+            "description": "Wij zijn 24/7 beschikbaar om optimale bereikbaarheid in alle tijdzones te garanderen. Hoe specifieker u bent in uw contact, hoe sneller wij u kunnen helpen! Wij nemen altijd binnen 24 uur na uw contact op. Nog geen reactie van ons ontvangen? Controleer uw spam-inbox.",
+            "fields": {
+              "firstName": "Uw voornaam",
+              "lastName": "Uw achternaam",
+              "email": "E-mail",
+              "phone": "Telefoon",
+              "city": "Stad / Regio van accommodatie",
+              "properties": "Aantal accommodaties",
+              "comments": "Opmerkingen"
+            },
+            "placeholders": {
+              "firstName": "Voer uw voornaam in",
+              "lastName": "Voer uw achternaam in",
+              "email": "Voer uw e-mail in",
+              "phone": "Voer uw telefoonnummer in",
+              "city": "Voer stad of regio in",
+              "properties": "Voer aantal accommodaties in",
+              "comments": "Voer uw opmerkingen in"
+            },
+            "submit": "Versturen",
+            "sending": "Versturen...",
+            "success": "Bericht succesvol verzonden! Wij nemen binnen 24 uur contact met u op.",
+            "errors": {
+              "firstName": "Voornaam is verplicht",
+              "lastName": "Achternaam is verplicht",
+              "email": "E-mail is verplicht",
+              "emailInvalid": "Voer een geldig e-mailadres in",
+              "phone": "Telefoonnummer is verplicht",
+              "city": "Stad/Regio is verplicht",
+              "properties": "Aantal accommodaties is verplicht",
+              "comments": "Opmerkingen zijn verplicht"
+            }
           }
         }
 }

@@ -729,6 +729,41 @@
             "subtitle": "Our expert team is ready for support!",
             "team": "rental expert team",
             "talk": "Talk to a specialist"
+          },
+          "contactForm": {
+            "title": "Contact Form",
+            "description": "We are 24/7 available to ensure optimal reachability across all time zones. The more specific you are in your reach out, the faster we can assist you! We always get back to you within 24 hours of reaching out. Not received any response from us yet? Check your spam inbox.",
+            "fields": {
+              "firstName": "Your First Name",
+              "lastName": "Your Last Name",
+              "email": "E-mail",
+              "phone": "Phone",
+              "city": "City / Region of property",
+              "properties": "Number of properties",
+              "comments": "Comments"
+            },
+            "placeholders": {
+              "firstName": "Enter your first name",
+              "lastName": "Enter your last name",
+              "email": "Enter your email",
+              "phone": "Enter your phone number",
+              "city": "Enter city or region",
+              "properties": "Enter number of properties",
+              "comments": "Enter your comments"
+            },
+            "submit": "Submit",
+            "sending": "Sending...",
+            "success": "Message sent successfully! We will get back to you within 24 hours.",
+            "errors": {
+              "firstName": "First name is required",
+              "lastName": "Last name is required",
+              "email": "Email is required",
+              "emailInvalid": "Please enter a valid email address",
+              "phone": "Phone number is required",
+              "city": "City/Region is required",
+              "properties": "Number of properties is required",
+              "comments": "Comments are required"
+            }
           }
         }
 }

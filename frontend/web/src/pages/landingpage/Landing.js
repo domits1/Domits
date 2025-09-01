@@ -113,6 +113,23 @@ function Landing() {
     },
   ]);
 
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    city: '',
+    properties: '',
+    comments: ''
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+
+  const API_BASE_URL = "https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail";
+
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const reviews = [
     {
       id: 1,
@@ -207,6 +224,112 @@ function Landing() {
     } else {
       console.error(`Target element with id "${targetId}" not found.`);
     }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    // Check for empty fields first (same as Contact.js)
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.phone.trim() || 
+        !formData.city.trim() || !formData.properties.trim() || !formData.comments.trim()) {
+      setFeedbackMessage("Please fill out all fields.");
+      return false;
+    }
+
+    // Check email separately for better user experience (same as Contact.js)
+    if (!formData.email.trim()) {
+      setFeedbackMessage("Please fill out all fields.");
+      return false;
+    }
+
+    if (!isValidEmail(formData.email)) {
+      setFeedbackMessage("Please enter a valid email address.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setFeedbackMessage("");
+
+    const payload = {
+      name: `${formData.firstName} ${formData.lastName}`,
+      subject: `Property Inquiry from ${formData.firstName} ${formData.lastName}`,
+      sourceEmail: formData.email,
+      message: `Contact Form Submission:
+        
+First Name: ${formData.firstName}
+Last Name: ${formData.lastName}
+Email: ${formData.email}
+Phone: ${formData.phone}
+City/Region: ${formData.city}
+Number of Properties: ${formData.properties}
+
+Comments:
+${formData.comments}`,
+      attachments: [],
+    };
+
+    sendRequest(payload);
+  };
+
+  const sendRequest = (payload) => {
+    fetch(API_BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          setFeedbackMessage("Message sent successfully!");
+          // Reset the form
+          setFormData({
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            city: '',
+            properties: '',
+            comments: ''
+          });
+        } else {
+          setFeedbackMessage(`Failed to send message: ${data.error || "Unknown error"}`);
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        setFeedbackMessage("Error sending message: " + error.message);
+      })
+      .finally(() => setIsSubmitting(false));
+  };
+
+  const isFormValid = () => {
+    return true; // Button is always clickable, validation happens on submit
   };
 
   return (
@@ -607,12 +730,138 @@ function Landing() {
           <h3>{landingContent.advice.subtitle}</h3>
           <button className="nextadvice">
             {" "}
-            <a href="/contact">{landingContent.advice.talk}</a>
+            <a href="#Contact" onClick={(e) => handleSmoothScroll(e, "Contact")}>
+              {landingContent.advice.talk}
+            </a>
           </button>
         </div>
         <img src={PersonalAdvice} alt="personalAdvice" />
       </div>
+
+      {/* contact form section */}
+      <div className="questionsContainer" id="Contact">
+        <h1>{landingContent.contactForm.title}</h1>
+        <p>{landingContent.contactForm.description}</p>
+
+        {feedbackMessage && (
+          <p className={`feedback ${feedbackMessage.includes("successfully") ? "success" : "error"}`}>
+            {feedbackMessage}
+          </p>
+        )}
+
+        <form className="contactform" onSubmit={handleContactSubmit}>
+          <div className="namemessage">
+            <label>
+              {landingContent.contactForm.fields.firstName}
+              <input 
+                type="text" 
+                name="firstName" 
+                value={formData.firstName}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.firstName} 
+                required 
+              />
+            </label>
+          </div>
+
+          <div className="namemessage">
+            <label>
+              {landingContent.contactForm.fields.lastName}
+              <input 
+                type="text" 
+                name="lastName" 
+                value={formData.lastName}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.lastName} 
+                required 
+              />
+            </label>
+          </div>
+
+          <div className="namemessage">
+            <label>
+              {landingContent.contactForm.fields.email}
+              <input 
+                type="email" 
+                name="email" 
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.email} 
+                required 
+              />
+            </label>
+          </div>
+
+          <div className="namemessage">
+            <label>
+              {landingContent.contactForm.fields.phone}
+              <input 
+                type="tel" 
+                name="phone" 
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.phone} 
+                required
+              />
+            </label>
+          </div>
+
+          <div className="namemessage">
+            <label>
+              {landingContent.contactForm.fields.city}
+              <input 
+                type="text" 
+                name="city" 
+                value={formData.city}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.city} 
+                required
+              />
+            </label>
+          </div>
+
+          <div className="namemessage">
+            <label>
+              {landingContent.contactForm.fields.properties}
+              <input 
+                type="number" 
+                name="properties" 
+                value={formData.properties}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.properties} 
+                min="1" 
+                required
+              />
+            </label>
+          </div>
+
+          <div className="biginput">
+            <label>
+              {landingContent.contactForm.fields.comments}
+              <textarea 
+                name="comments" 
+                value={formData.comments}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.comments}
+                required
+              ></textarea>
+            </label>
+          </div>
+
+          <div className="formbuttons">
+            <button 
+              id="sendbutton" 
+              type="submit" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? landingContent.contactForm.sending : landingContent.contactForm.submit}
+            </button>
+          </div>
+        </form>
+      </div>
     </main>
+
+    
   );
 }
 
