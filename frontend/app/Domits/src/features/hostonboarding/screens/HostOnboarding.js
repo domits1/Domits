@@ -8,6 +8,7 @@ import TranslatedText from "../../translation/components/TranslatedText";
 import {styles} from "../styles/HostOnboardingStyles";
 import {useTranslation} from "react-i18next";
 import OnboardingSpace from "../views/onboardingspacetype/screens/OnboardingSpace";
+import {HOST_ONBOARDING_CHECK_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 
 const HostOnboarding = ({navigation}) => {
   const {t} = useTranslation();
@@ -86,7 +87,7 @@ const HostOnboarding = ({navigation}) => {
             {
               text: t('Yes'),
               onPress: () => {
-                //todo navigation to overview screen with {formData}
+                navigation.navigate(HOST_ONBOARDING_CHECK_SCREEN, {formData});
               }
             },
             {text: t('No')},

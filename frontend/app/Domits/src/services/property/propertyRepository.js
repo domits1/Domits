@@ -73,6 +73,23 @@ class PropertyRepository {
     }
     return await response.json();
   }
+
+  async createProperty(property) {
+    try {
+      const response = await fetch(
+          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property",
+          {
+        method: "POST",
+        headers: {
+          Authorization: await retrieveAccessToken()
+        },
+        body: JSON.stringify({property})
+      })
+      return await response.json();
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }
 
 export default PropertyRepository;
