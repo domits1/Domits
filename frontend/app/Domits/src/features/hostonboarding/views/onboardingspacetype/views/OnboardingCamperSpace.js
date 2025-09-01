@@ -14,7 +14,7 @@ import other from "../../../store/campericons/camper_van.png";
 
 const OnboardingCamperSpace = ({formData, updateFormData, reportValidity}) => {
   const {isLandscape} = useOrientation();
-  const [selectedCamperSpace, setSelectedCamperSpace] = useState(formData.propertyType.propertySpace);
+  const [selectedCamperSpace, setSelectedCamperSpace] = useState(formData.propertyType.spaceType);
 
   const camperSpaceTypes = [
     {
@@ -50,7 +50,7 @@ const OnboardingCamperSpace = ({formData, updateFormData, reportValidity}) => {
   function handleSelectedCamperSpace(space) {
     setSelectedCamperSpace(space);
     updateFormData((draft) => {
-      draft.propertyType.propertySpace = space;
+      draft.propertyType.spaceType = space;
     });
     reportValidity(true);
   }

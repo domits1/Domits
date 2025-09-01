@@ -17,7 +17,7 @@ import yacht from "../../../store/boaticons/yacht.png";
 
 const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
   const {isLandscape} = useOrientation();
-  const [selectedBoatSpace, setSelectedBoatSpace] = useState(formData.propertyType.propertySpace);
+  const [selectedBoatSpace, setSelectedBoatSpace] = useState(formData.propertyType.spaceType);
 
   const boatSpaceTypes = [
     {
@@ -65,7 +65,7 @@ const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
   function handleSelectedBoatSpace(space) {
     setSelectedBoatSpace(space);
     updateFormData((draft) => {
-      draft.propertyType.propertySpace = space;
+      draft.propertyType.spaceType = space;
     });
     reportValidity(true);
   }
