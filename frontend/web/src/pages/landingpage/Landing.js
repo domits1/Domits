@@ -130,6 +130,14 @@ function Landing() {
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  // Phone input optimization 
+  const PHONE_CHAR_REGEX = /^[0-9+\s]$/;
+  const ALLOWED_KEYS = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+
+  const isValidPhoneKey = (key) => PHONE_CHAR_REGEX.test(key);
+  const isAllowedKey = (key) => ALLOWED_KEYS.includes(key);
+  const isValidPhonePaste = (text) => /^[0-9+\s]*$/.test(text);
+
   const reviews = [
     {
       id: 1,
@@ -233,12 +241,9 @@ function Landing() {
       [name]: value
     }));
     
-    // Clear error when user starts typing
-    if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+    // Clear feedback message when user starts typing
+    if (feedbackMessage) {
+      setFeedbackMessage("");
     }
   };
 
@@ -306,7 +311,7 @@ ${formData.comments}`,
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          setFeedbackMessage("Message sent successfully!");
+          setFeedbackMessage("Message sent successfully! Please check your inbox for a response.");
           // Reset the form
           setFormData({
             firstName: '',
@@ -329,7 +334,7 @@ ${formData.comments}`,
   };
 
   const isFormValid = () => {
-    return true; // Button is always clickable, validation happens on submit
+    return true; // Button is always clickable, validation happens when user clicks submit
   };
 
   return (
@@ -750,7 +755,7 @@ ${formData.comments}`,
         )}
 
         <form className="contactform" onSubmit={handleContactSubmit}>
-          <div className="namemessage">
+          <div className="inputContainer">
             <label>
               {landingContent.contactForm.fields.firstName}
               <input 
@@ -762,9 +767,7 @@ ${formData.comments}`,
                 required 
               />
             </label>
-          </div>
 
-          <div className="namemessage">
             <label>
               {landingContent.contactForm.fields.lastName}
               <input 
@@ -776,9 +779,7 @@ ${formData.comments}`,
                 required 
               />
             </label>
-          </div>
 
-          <div className="namemessage">
             <label>
               {landingContent.contactForm.fields.email}
               <input 
@@ -790,23 +791,30 @@ ${formData.comments}`,
                 required 
               />
             </label>
-          </div>
 
-          <div className="namemessage">
             <label>
               {landingContent.contactForm.fields.phone}
-              <input 
-                type="tel" 
-                name="phone" 
+              <input
+                type="tel"
+                name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                placeholder={landingContent.contactForm.placeholders.phone} 
+                onKeyPress={(e) => {
+                  if (!isValidPhoneKey(e.key) && !isAllowedKey(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                onPaste={(e) => {
+                  const paste = e.clipboardData.getData('text');
+                  if (!isValidPhonePaste(paste)) {
+                    e.preventDefault();
+                  }
+                }}
+                placeholder={landingContent.contactForm.placeholders.phone}
                 required
               />
             </label>
-          </div>
 
-          <div className="namemessage">
             <label>
               {landingContent.contactForm.fields.city}
               <input 
@@ -818,9 +826,7 @@ ${formData.comments}`,
                 required
               />
             </label>
-          </div>
 
-          <div className="namemessage">
             <label>
               {landingContent.contactForm.fields.properties}
               <input 
