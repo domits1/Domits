@@ -242,7 +242,7 @@ class ReservationRepository {
 
     if (query.length < 1) {
       return {
-        message: "Booking couldn't be updated. This is a unexpected problem, and you should contact the devs.",
+        message: "Booking couldn't be updated. This is an unexpected problem, and you should contact the devs.",
         statusCode: 204,
       };
     }
