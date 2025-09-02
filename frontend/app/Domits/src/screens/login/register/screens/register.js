@@ -6,9 +6,9 @@ import {getCurrentUser, signUp} from '@aws-amplify/auth';
 import CheckBox from '@react-native-community/checkbox';
 import {CONFIRM_EMAIL_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 import {styles} from "../styles/RegisterStyles";
-import PersonalDetailsView from "../views/PersonalDetailsView";
-import EmailView from "../views/EmailView";
-import PasswordView from "../views/PasswordView";
+import PersonalDetailsStep from "../views/PersonalDetailsStep";
+import AddressDetailsStep from "../views/AddressDetailsStep";
+import PasswordCreationStep from "../views/PasswordCreationStep";
 import TranslatedText from "../../../../features/translation/components/TranslatedText";
 import ChangeLanguageView from "../views/ChangeLanguageView";
 
@@ -24,25 +24,32 @@ const generateRandomUsername = () => {
 const Register = () => {
   const navigation = useNavigation();
   const {setAuthCredentials} = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
+    // Step 1: Personal Details
+    fullName: '',
     email: '',
+    phoneNumber: '',
+    dateOfBirth: '',
+    // Step 2: Address Details
+    address: '',
+    postcode: '',
+    country: '',
+    // Step 3: Password
     password: '',
+    confirmPassword: '',
+    // Additional fields
     username: generateRandomUsername(),
-    firstName: '',
-    lastName: '',
+    isHost: false,
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isHost, setIsHost] = useState(false);
-  const [validFormData, setValidFormData] = useState({
-    email: false,
-    password: false,
-    firstname: false,
-    lastname: false,
-  })
 
   const handleHostChange = () => {
-    setIsHost(!isHost);
+    setFormData(prevState => ({
+      ...prevState,
+      isHost: !prevState.isHost,
+    }));
   };
 
   const handleDataChange = (name, value) => {
@@ -52,35 +59,27 @@ const Register = () => {
     }));
   };
 
-  const handleValidFormChange = (name, boolean) => {
-    setValidFormData(prevState => ({
-      ...prevState,
-      [name]: boolean,
-    }))
-  }
+  const handleNext = () => {
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const handleBack = () => {
+    setCurrentStep(prev => prev - 1);
+  };
 
   const onSubmit = async () => {
-    const {username, email, password, firstName, lastName} = formData;
+    const {username, email, password, fullName, phoneNumber, dateOfBirth, address, postcode, country, isHost} = formData;
 
-    if (!validFormData.firstname) {
-      setErrorMessage("First name is not valid.");
-      return;
-    } else if (!validFormData.lastname) {
-      setErrorMessage("Last name is not valid.");
-      return;
-    } else if (!validFormData.email) {
-      setErrorMessage("Email is not valid.");
-      return;
-    } else if (!validFormData.password) {
-      setErrorMessage("Password must be stronger.");
-      return;
-    } else {
-      setErrorMessage("");
-    }
+    setErrorMessage("");
 
     try {
       const emailName = email.split('@')[0];
       const groupName = isHost ? 'Host' : 'Traveler';
+      
+      // Split full name into first and last name
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
 
       const {isSignUpComplete, userId, nextStep} = await signUp({
         username: email, // Email as username
@@ -89,6 +88,11 @@ const Register = () => {
           userAttributes: {
             'custom:group': groupName,
             'custom:username': username + emailName,
+            'custom:phone_number': phoneNumber,
+            'custom:date_of_birth': dateOfBirth,
+            'custom:address': address,
+            'custom:postcode': postcode,
+            'custom:country': country,
             email,
             given_name: firstName,
             family_name: lastName,
@@ -129,32 +133,80 @@ const Register = () => {
     checkAuth();
   }, []);
 
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <PersonalDetailsStep
+            formData={formData}
+            handleDataChange={handleDataChange}
+            onNext={handleNext}
+          />
+        );
+      case 2:
+        return (
+          <AddressDetailsStep
+            formData={formData}
+            handleDataChange={handleDataChange}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
+      case 3:
+        return (
+          <PasswordCreationStep
+            formData={formData}
+            handleDataChange={handleDataChange}
+            onBack={handleBack}
+            onSubmit={onSubmit}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
       <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.container}>
-            <ChangeLanguageView/>
+        <View style={styles.container}>
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.registerContainer}>
-              <Text style={styles.title}><TranslatedText textToTranslate={"Create an Account on Domits"}/></Text>
+              {/* Progress indicator */}
+              <View style={styles.progressContainer}>
+                {[1, 2, 3].map((step) => (
+                  <View
+                    key={step}
+                    style={[
+                      styles.progressStep,
+                      currentStep >= step ? styles.progressStepActive : styles.progressStepInactive
+                    ]}
+                  >
+                    <Text style={[
+                      styles.progressStepText,
+                      currentStep >= step ? styles.progressStepTextActive : styles.progressStepTextInactive
+                    ]}>
+                      {step}
+                    </Text>
+                  </View>
+                ))}
+              </View>
 
-              <PersonalDetailsView formData={formData} handleDataChange={handleDataChange} handleValidFormChange={handleValidFormChange}/>
-              <EmailView formData={formData} handleDataChange={handleDataChange} handleValidFormChange={handleValidFormChange}/>
-              <PasswordView formData={formData} setFormData={setFormData} handleValidFormChange={handleValidFormChange}/>
+              {renderStep()}
 
               {errorMessage && (
                   <Text style={styles.errorText}><TranslatedText textToTranslate={errorMessage}/></Text>
               )}
 
-              <View style={styles.asHostCheckBox}>
-                <CheckBox value={isHost} onValueChange={handleHostChange} />
-                <TranslatedText textToTranslate={"Sign up as a host"}/>
-              </View>
-              <TouchableOpacity style={styles.signUpButton} onPress={onSubmit}>
-                <Text style={styles.buttonText}><TranslatedText textToTranslate={"Sign up"}/></Text>
-              </TouchableOpacity>
+              {/* Host checkbox - only show on step 3 */}
+              {currentStep === 3 && (
+                <View style={styles.asHostCheckBox}>
+                  <CheckBox value={formData.isHost} onValueChange={handleHostChange} />
+                  <TranslatedText textToTranslate={"Sign up as a host"}/>
+                </View>
+              )}
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </SafeAreaView>
   );
 };

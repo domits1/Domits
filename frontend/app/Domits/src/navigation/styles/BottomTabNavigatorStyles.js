@@ -5,8 +5,8 @@ export const styles = StyleSheet.create({
     bottomTabBar: {
         backgroundColor: '#f0f0f0',
         borderTopColor: 'transparent',
-        height: 60,
-        paddingBottom: 10,
+        height: 80,
+        paddingBottom: 15,
     },
     // Nav item
     tabBarItem: {

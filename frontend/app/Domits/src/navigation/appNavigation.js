@@ -1,7 +1,7 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {View, Text} from 'react-native';
+import {View, Text, Image} from 'react-native';
 import MessagesStackNavigator from './messagesStackNavigator';
 import MainNavigationStack from './mainNavigationStack';
 import AccountNavigationStack from './accountNavigationStack';
@@ -35,14 +35,29 @@ function BottomTabNavigator() {
               iconName = 'circle';
           }
 
+          const tint = focused ? styles.navItemFocusedColor.color : styles.navItemDefaultColor.color;
+
+          if (route.name === 'Messages') {
+            // Use a custom PNG for the Messages tab. Replace the file with your own PNG if desired.
+            const messagesIcon = require('../images/icons/message.png');
+            return (
+              <View style={styles.navigationItem}>
+                <Image
+                  source={messagesIcon}
+                  style={{width: 26, height: 26, tintColor: tint}}
+                  resizeMode="contain"
+                />
+                <Text style={[styles.navigationItemText, {color: tint}]}>
+                  {route.name}
+                </Text>
+              </View>
+            );
+          }
+
           return (
             <View style={styles.navigationItem}>
-              <MaterialIcons
-                name={iconName}
-                size={30}
-                color={focused ? styles.navItemFocusedColor.color : styles.navItemDefaultColor.color}
-              />
-              <Text style={[styles.navigationItemText, {color: focused ? styles.navItemFocusedColor.color : styles.navItemDefaultColor.color}]}>
+              <MaterialIcons name={iconName} size={30} color={tint} />
+              <Text style={[styles.navigationItemText, {color: tint}]}>
                 {route.name}
               </Text>
             </View>
@@ -56,16 +71,14 @@ function BottomTabNavigator() {
           headerShown: false,
         }}
       />
-      {isAuthenticated && (
-        <Tab.Screen
-          name="Messages"
-          component={MessagesStackNavigator}
-          options={{
+      <Tab.Screen
+        name="Messages"
+        component={MessagesStackNavigator}
+        options={{
           headerShown: false,
           unmountOnBlur: true,
-          }}
-        />
-      )}
+        }}
+      />
       <Tab.Screen
         name="Account"
         component={AccountNavigationStack}
