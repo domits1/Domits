@@ -12,7 +12,7 @@ const ActivateBooking = async (paymentID) => {
     if (response.ok){
         return response
     } else {
-        console.error("A unexpected error occured attempting to activate the booking.", response);
+        console.error("A unexpected error occured attempting to activate the booking. ", response);
     }
 }
 

@@ -47,8 +47,6 @@ const BookingConfirmationOverview = () => {
                 const data = await BookingFetchData(paymentId);
                 const bookingInfo = extractBookingDetails(data.bookingData, data.accommodationData);
                 setBookingDetails(bookingInfo);
-                console.log(bookingInfo);
-                console.log("All data obtained!", data)
             } catch (error) {
                 console.error("Fetch Error:", error);
                 setError("Failed to load booking details.");
