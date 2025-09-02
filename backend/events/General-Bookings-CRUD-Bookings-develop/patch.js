@@ -6,7 +6,7 @@ async function patch(){
         path: "/bookings",
         httpMethod: "PATCH",
         body: JSON.stringify ({ 
-            "paymentid": "pi_3S0kBaGiInrsWMEc1pdEpeJU"
+            "paymentid": "pi_3S2qQhGiInrsWMEc1dFteX3I",
         })
     }));
 }

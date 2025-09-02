@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 import { useNavigate } from "react-router-dom";
 import ActivateBooking from "./services/ActivateBooking";
+import DeactivateBooking from "./services/DeactivateBooking";
 
 const ValidatePayment = () => {
   const stripe = useStripe();
@@ -48,6 +49,7 @@ const ValidatePayment = () => {
           break;
 
         case "requires_payment_method":
+          DeactivateBooking(paymentIntent.id);
           setMessage(`Payment failed. Please try another payment method. No charges have been made.`);
           break;
 

@@ -51,14 +51,11 @@ class BookingService {
 	// -----------
 
 	async confirmPayment(paymentid) {
-		console.log(paymentid);
 		const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
-		console.log(booking);
 		if (booking.status === "Paid") {
 			return true;
 		}
 		const paymentIntent = await this.stripeRepository.getPaymentIntentByPaymentId(paymentid);
-		console.log(paymentIntent.status);
 		if (paymentIntent.status === "succeeded") {
 			await this.reservationRepository.updateBookingStatus(booking.id, "Paid");
 			return true;
@@ -67,6 +64,13 @@ class BookingService {
 		}
 	}
 
+	async failPayment(paymentid) {
+		const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
+		if (booking.status === "Awaiting Payment") {
+			await this.reservationRepository.updateBookingStatus(booking.id, "Failed");
+			return true;
+		}
+	}
 	// -----------
 	// /bookings GET
 	// -----------
