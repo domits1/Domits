@@ -75,11 +75,11 @@ const PersonalDetailsStep = ({formData, handleDataChange, onNext}) => {
             setErrors(prev => ({...prev, dateOfBirth: "Date of birth can't be empty."}));
             return false;
         } else if (dateOfBirth.length < 10) {
-            setErrors(prev => ({...prev, dateOfBirth: "Please enter a complete date (MM/DD/YYYY)."}));
+            setErrors(prev => ({...prev, dateOfBirth: "Please enter a complete date (DD/MM/YYYY)."}));
             return false;
         } else {
-            // Parse MM/DD/YYYY format
-            const [month, day, year] = dateOfBirth.split('/').map(Number);
+            // Parse DD/MM/YYYY format
+            const [day, month, year] = dateOfBirth.split('/').map(Number);
             const birthDate = new Date(year, month - 1, day);
             const today = new Date();
             
@@ -110,7 +110,7 @@ const PersonalDetailsStep = ({formData, handleDataChange, onNext}) => {
         // Remove all non-numeric characters
         const numbers = value.replace(/\D/g, '');
         
-        // Format as MM/DD/YYYY
+        // Format as DD/MM/YYYY
         if (numbers.length <= 2) {
             return numbers;
         } else if (numbers.length <= 4) {
@@ -219,7 +219,7 @@ const PersonalDetailsStep = ({formData, handleDataChange, onNext}) => {
                     errors.dateOfBirth ? {borderColor: '#e53e3e'} : {},
                     formData.dateOfBirth ? styles.inputFocused : {}
                 ]}
-                placeholder={t("MM/DD/YYYY")}
+                placeholder={t("DD/MM/YYYY")}
                 placeholderTextColor="#a0aec0"
                 value={formData.dateOfBirth}
                 onChangeText={handleDateChange}
