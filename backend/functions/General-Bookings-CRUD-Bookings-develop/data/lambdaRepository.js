@@ -31,7 +31,7 @@ class LambdaRepository {
             .getMany();
 
         if (result) {
-            client.close()
+            client.close();
             return {
                 pricing: result,
             }
