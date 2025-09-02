@@ -10,7 +10,7 @@ const ValidatePayment = () => {
   const navigate = useNavigate();
   const [message, setMessage] = useState(null);
   const [bookingId, setBookingId] = useState(null);
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!stripe) {
