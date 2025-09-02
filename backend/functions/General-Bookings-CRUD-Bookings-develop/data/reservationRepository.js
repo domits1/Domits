@@ -216,7 +216,6 @@ class ReservationRepository {
   }
 
   async getBookingByPaymentId(paymentid) {
-    console.log(paymentid);
     const client = await Database.getInstance();
     const query = await client
       .getRepository(Booking)
