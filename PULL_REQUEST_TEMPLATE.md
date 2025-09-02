@@ -68,14 +68,13 @@ As the Pull Requester, **you are responsible for your own pull request.**
 ### Select two reviewers
 
 - [ ] Primary Reviewer: @_GitHub_username
-- Marijn (Styling, SCSS, JS)  
-- Sander (App, Backend)  
+- Stephanie (App, Backend)  
+- Raman (Web, Backend)
 
 - [ ] Secondary Reviewer: @_GitHub_username
 Preferably someone familiar with the part of code you're working on. For example:  
-- Ryan  
-- Kacper  
-- Raman  
+- Moncef
+- Ahasan
 
 ## Keep or delete my branch  
 - [x] Delete my branch after merge  
