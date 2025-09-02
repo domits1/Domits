@@ -69,7 +69,6 @@ const BookingConfirmationOverview = () => {
         const roomRate = accommodationData.pricing.roomRate * difference;
         const calculatedServiceFee = accommodationData.pricing.roomRate * 0.15;
         const totalPrice = accommodationData.pricing.roomRate * difference + accommodationData.pricing.cleaning + calculatedServiceFee;
-        console.log(totalPrice);
         return {
             arrivalDate: bookingData.arrivaldate,
             departureDate: bookingData.departuredate,
