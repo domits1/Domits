@@ -76,7 +76,7 @@ const AddressDetailsStep = ({formData, handleDataChange, onNext, onBack}) => {
             </Text>
             <TextInput
                 style={[
-                    styles.input, 
+                    styles.inputMultiline, 
                     errors.address ? {borderColor: '#e53e3e'} : {},
                     formData.address ? styles.inputFocused : {}
                 ]}
@@ -88,7 +88,7 @@ const AddressDetailsStep = ({formData, handleDataChange, onNext, onBack}) => {
                     validateAddress(value);
                 }}
                 multiline
-                numberOfLines={2}
+                numberOfLines={3}
             />
             {errors.address && (
                 <Text style={styles.errorText}>{errors.address}</Text>

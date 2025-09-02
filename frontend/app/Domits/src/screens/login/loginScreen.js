@@ -86,24 +86,19 @@ const LoginScreen = () => {
             }}>
             <Text style={styles.linkText}>Forgot your password?</Text>
           </TouchableOpacity>
-          {/*<TouchableOpacity*/}
-          {/*  onPress={() => {*/}
-          {/*    navigation.navigate('SignupScreen');*/}
-          {/*  }}>*/}
-          {/*  <Text style={styles.linkText}>Don't have an account? Sign up!</Text>*/}
-          {/*</TouchableOpacity>*/}
-          <View style={styles.buttonAlignment}>
-            {/* Log in button */}
-            <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
-              <Text style={styles.loginButtonText}>Log in</Text>
-            </TouchableOpacity>
-          </View>
 
           {/* Divider with "or" */}
           <View style={styles.dividerRow}>
             <View style={styles.divider} />
             <Text style={styles.orText}>or</Text>
             <View style={styles.divider} />
+          </View>
+
+          <View style={styles.buttonAlignment}>
+            {/* Google Sign-in button */}
+            <TouchableOpacity onPress={handleGoogleSignIn} style={styles.googleSignInButton}>
+              <Text style={styles.googleSignInText}>Sign in with Google</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.buttonAlignment}>
@@ -117,10 +112,12 @@ const LoginScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* <TouchableOpacity onPress={handleGoogleSignIn} style={styles.googleSignInButton}>
-        <Image source={require('./path-to-your-google-icon.png')} style={styles.googleIcon} />
-        <Text style={styles.googleSignInText}>Sign in with Google</Text>
-      </TouchableOpacity> */}
+          <View style={styles.buttonAlignment}>
+            {/* Log in button */}
+            <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
+              <Text style={styles.loginButtonText}>Log in</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -164,9 +161,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   linkText: {
-    color: 'blue',
+    color: '#0D9813',
     marginBottom: 20,
     fontSize: 16,
+    textDecorationLine: 'underline',
   },
   buttonAlignment: {
     flexDirection: 'column',
@@ -224,6 +222,31 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 10,
     textAlign: 'center',
+  },
+  googleSignInButton: {
+    backgroundColor: '#ffffff',
+    width: 200,
+    height: 47,
+    borderRadius: 8,
+    paddingVertical: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  googleSignInText: {
+    color: '#374151',
+    fontSize: 15,
+    fontWeight: '500',
   },
 });
 

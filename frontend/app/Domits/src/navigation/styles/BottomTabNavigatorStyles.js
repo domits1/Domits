@@ -3,7 +3,7 @@ import {StyleSheet} from "react-native";
 export const styles = StyleSheet.create({
     // Tab bar
     bottomTabBar: {
-        backgroundColor: '#f0f0f0',
+        backgroundColor: 'transparent',
         borderTopColor: 'transparent',
         height: 80,
         paddingBottom: 15,

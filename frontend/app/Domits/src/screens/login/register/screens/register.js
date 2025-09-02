@@ -169,6 +169,14 @@ const Register = () => {
   return (
       <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
         <View style={styles.container}>
+          {/* iOS Back Button */}
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()} 
+            style={styles.iosBackButton}
+          >
+            <Text style={styles.iosBackButtonText}>← Back</Text>
+          </TouchableOpacity>
+          
           <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.registerContainer}>
               {/* Progress indicator */}
