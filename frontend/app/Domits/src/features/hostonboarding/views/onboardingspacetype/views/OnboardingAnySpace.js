@@ -4,7 +4,7 @@ import {styles} from "../../../styles/HostOnboardingStyles";
 import TranslatedText from "../../../../translation/components/TranslatedText";
 
 const OnboardingAnySpace = ({formData, updateFormData, reportValidity}) => {
-  const [selectedSpace, setSelectedSpace] = useState(formData.propertyType.propertySpace);
+  const [selectedSpace, setSelectedSpace] = useState(formData.propertyType.spaceType);
 
   const propertySpaceTypes = [
     {
@@ -24,7 +24,7 @@ const OnboardingAnySpace = ({formData, updateFormData, reportValidity}) => {
   function handleSelectedSpace(space) {
     setSelectedSpace(space);
     updateFormData((draft) => {
-      draft.propertyType.propertySpace = space;
+      draft.propertyType.spaceType = space;
     });
     reportValidity(true);
   }

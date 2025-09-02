@@ -17,6 +17,10 @@ class PropertyRepository {
     const response = await fetch(
       `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/all?lastEvaluatedKeyCreatedAt=${lastEvaluatedKeyCreatedAt}&lastEvaluatedKeyId=${lastEvaluatedKeyId}`,
     );
+
+    if (response.status === 404) {
+      throw new Error("Sorry, we couldn't find any more properties.");
+    }
     if (!response.ok) {
       throw new Error('Something went wrong while fetching properties.');
     }
@@ -68,6 +72,23 @@ class PropertyRepository {
       throw new Error('Something went wrong while fetching properties.');
     }
     return await response.json();
+  }
+
+  async createProperty(property) {
+    try {
+      const response = await fetch(
+          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property",
+          {
+        method: "POST",
+        headers: {
+          Authorization: await retrieveAccessToken()
+        },
+        body: JSON.stringify({property})
+      })
+      return await response.json();
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
 
