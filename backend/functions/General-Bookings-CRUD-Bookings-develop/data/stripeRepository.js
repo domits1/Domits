@@ -106,10 +106,8 @@ class StripeRepository {
 
   async getPaymentIntentByPaymentId(paymentId) {
     try {
-      console.log("hello world!")
       const stripe = await stripePromise;
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentId);
-      console.log(paymentIntent)
       return paymentIntent ? paymentIntent : null;
     } catch (error) {
       console.error(error);

@@ -30,7 +30,6 @@ class BookingService {
 		//await this.verifyEventDataTypes(event);
 		const authenticatedUser = await this.authManager.authenticateUser(event.Authorization);
 		const userEmail = authenticatedUser.email
-		console.log(event.identifiers.property_Id);
 		const fetchedProperty = await this.propertyRepository.getPropertyById(event.identifiers.property_Id);
 		const hostEmail = await getHostEmailById(fetchedProperty.hostId)
 
