@@ -41,7 +41,6 @@ const ValidatePayment = () => {
         case "processing":
           setMessage(`Payment processing. We'll update you when payment is received.`);
           navigate(`/bookingconfirmationoverview?&id=${bookingId}&paymentId=${paymentIntent.id}`)
-          //Add implementation, push message/email when payment is succeed/failed.
           break;
 
         case "requires_payment_method":
