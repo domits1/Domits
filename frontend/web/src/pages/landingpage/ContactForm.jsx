@@ -1,6 +1,26 @@
 import React from "react";
 
 const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChange, onSubmit, onSmoothScroll }) => {
+  // Input constraints
+  const PHONE_CHAR_REGEX = /^[0-9+\s]$/;
+  const DIGIT_CHAR_REGEX = /^[0-9]$/;
+  const ALLOWED_KEYS = [
+    'Backspace',
+    'Delete',
+    'Tab',
+    'Escape',
+    'Enter',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown'
+  ];
+
+  const isAllowedKey = (key) => ALLOWED_KEYS.includes(key);
+  const isValidPhoneKey = (key) => PHONE_CHAR_REGEX.test(key);
+  const isValidPhonePaste = (text) => /^[0-9+\s]*$/.test(text);
+  const isValidDigitKey = (key) => DIGIT_CHAR_REGEX.test(key);
+  const isValidDigitPaste = (text) => /^[0-9]*$/.test(text);
   return (
     <div className="questionsContainer" id="Contact">
       <h1>{content.title}</h1>
@@ -57,6 +77,17 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
               name="phone"
               value={formData.phone}
               onChange={onChange}
+              onKeyPress={(e) => {
+                if (!isValidPhoneKey(e.key) && !isAllowedKey(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                const paste = e.clipboardData.getData('text');
+                if (!isValidPhonePaste(paste)) {
+                  e.preventDefault();
+                }
+              }}
               placeholder={content.placeholders.phone}
               required
             />
@@ -80,7 +111,24 @@ const ContactForm = ({ content, formData, isSubmitting, feedbackMessage, onChang
               type="number"
               name="properties"
               value={formData.properties}
-              onChange={onChange}
+              onChange={(e) => {
+                // Enforce numeric-only input via typing and paste
+                const { value } = e.target;
+                if (value === '' || /^[0-9]+$/.test(value)) {
+                  onChange(e);
+                }
+              }}
+              onKeyPress={(e) => {
+                if (!isValidDigitKey(e.key) && !isAllowedKey(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                const paste = e.clipboardData.getData('text');
+                if (!isValidDigitPaste(paste)) {
+                  e.preventDefault();
+                }
+              }}
               placeholder={content.placeholders.properties}
               min="1"
               required

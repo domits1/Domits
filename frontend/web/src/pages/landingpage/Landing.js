@@ -335,8 +335,8 @@ function Landing() {
             {landingContent.why.title} <span className="highlightText">{landingContent.why.domits}</span>?
           </h1>
           <p>{landingContent.why.description}</p>
-          <button onClick={updateUserGroup} className="nexthost">
-            <a href="#Register" onClick={(e) => handleSmoothScroll(e, "Register")}>
+          <button className="nexthost">
+            <a href="#Contact" onClick={(e) => handleSmoothScroll(e, "Contact")}>
               {landingContent.why.btnHosting}
             </a>
           </button>
