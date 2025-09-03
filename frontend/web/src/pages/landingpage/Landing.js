@@ -23,6 +23,7 @@ import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 import ReactMarkDown from "react-markdown";
+import { handleContactFormSubmission } from "../../services/contactService";
 
 const contentByLanguage = {
   en,
@@ -112,6 +113,27 @@ function Landing() {
       isOpen: false,
     },
   ]);
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    city: '',
+    properties: '',
+    comments: ''
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+
+  // Phone input optimization 
+  const PHONE_CHAR_REGEX = /^[0-9+\s]$/;
+  const ALLOWED_KEYS = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+
+  const isValidPhoneKey = (key) => PHONE_CHAR_REGEX.test(key);
+  const isAllowedKey = (key) => ALLOWED_KEYS.includes(key);
+  const isValidPhonePaste = (text) => /^[0-9+\s]*$/.test(text);
 
   const reviews = [
     {
@@ -207,6 +229,46 @@ function Landing() {
     } else {
       console.error(`Target element with id "${targetId}" not found.`);
     }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear feedback message when user starts typing
+    if (feedbackMessage) {
+      setFeedbackMessage("");
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      city: '',
+      properties: '',
+      comments: ''
+    });
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+
+    await handleContactFormSubmission(
+      formData,
+      setIsSubmitting,
+      setFeedbackMessage,
+      resetForm
+    );
+  };
+
+  const isFormValid = () => {
+    return true; // Button is always clickable, validation happens when user clicks submit
   };
 
   return (
@@ -607,12 +669,139 @@ function Landing() {
           <h3>{landingContent.advice.subtitle}</h3>
           <button className="nextadvice">
             {" "}
-            <a href="/contact">{landingContent.advice.talk}</a>
+            <a href="#Contact" onClick={(e) => handleSmoothScroll(e, "Contact")}>
+              {landingContent.advice.talk}
+            </a>
           </button>
         </div>
         <img src={PersonalAdvice} alt="personalAdvice" />
       </div>
+
+      {/* contact form section */}
+      <div className="questionsContainer" id="Contact">
+        <h1>{landingContent.contactForm.title}</h1>
+        <p>{landingContent.contactForm.description}</p>
+
+        {feedbackMessage && (
+          <p className={`feedback ${feedbackMessage.includes("successfully") ? "success" : "error"}`}>
+            {feedbackMessage}
+          </p>
+        )}
+
+        <form className="contactform" onSubmit={handleContactSubmit}>
+          <div className="inputContainer">
+            <label>
+              {landingContent.contactForm.fields.firstName}
+              <input 
+                type="text" 
+                name="firstName" 
+                value={formData.firstName}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.firstName} 
+                required 
+              />
+            </label>
+
+            <label>
+              {landingContent.contactForm.fields.lastName}
+              <input 
+                type="text" 
+                name="lastName" 
+                value={formData.lastName}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.lastName} 
+                required 
+              />
+            </label>
+
+            <label>
+              {landingContent.contactForm.fields.email}
+              <input 
+                type="email" 
+                name="email" 
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.email} 
+                required 
+              />
+            </label>
+
+            <label>
+              {landingContent.contactForm.fields.phone}
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                onKeyPress={(e) => {
+                  if (!isValidPhoneKey(e.key) && !isAllowedKey(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                onPaste={(e) => {
+                  const paste = e.clipboardData.getData('text');
+                  if (!isValidPhonePaste(paste)) {
+                    e.preventDefault();
+                  }
+                }}
+                placeholder={landingContent.contactForm.placeholders.phone}
+                required
+              />
+            </label>
+
+            <label>
+              {landingContent.contactForm.fields.city}
+              <input 
+                type="text" 
+                name="city" 
+                value={formData.city}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.city} 
+                required
+              />
+            </label>
+
+            <label>
+              {landingContent.contactForm.fields.properties}
+              <input 
+                type="number" 
+                name="properties" 
+                value={formData.properties}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.properties} 
+                min="1" 
+                required
+              />
+            </label>
+          </div>
+
+          <div className="biginput">
+            <label>
+              {landingContent.contactForm.fields.comments}
+              <textarea 
+                name="comments" 
+                value={formData.comments}
+                onChange={handleInputChange}
+                placeholder={landingContent.contactForm.placeholders.comments}
+                required
+              ></textarea>
+            </label>
+          </div>
+
+          <div className="formbuttons">
+            <button 
+              id="sendbutton" 
+              type="submit" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? landingContent.contactForm.sending : landingContent.contactForm.submit}
+            </button>
+          </div>
+        </form>
+      </div>
     </main>
+
+    
   );
 }
 
