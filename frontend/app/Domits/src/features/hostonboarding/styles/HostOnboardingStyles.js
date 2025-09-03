@@ -141,6 +141,12 @@ export const styles = StyleSheet.create({
     color: 'white',
   },
   // Counter
+  counterGroupContainer: {
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
+    marginBottom: 50,
+  },
   counterItemContainer: {
     alignItems: 'center',
     flexDirection: 'row',

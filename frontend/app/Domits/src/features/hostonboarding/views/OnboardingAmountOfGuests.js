@@ -113,10 +113,12 @@ const OnboardingAmountOfGuests = ({formData, updateFormData, reportValidity, mar
           </Text>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
 
+            <View style={styles.counterGroupContainer}>
             {counterItem('Guest(s)', 'Guests')}
             {counterItem('Bed(s)', 'Beds')}
             {counterItem('Bedroom(s)', 'Bedrooms')}
             {counterItem('Bathroom(s)', 'Bathrooms')}
+            </View>
 
           </ScrollView>
           {error ?
