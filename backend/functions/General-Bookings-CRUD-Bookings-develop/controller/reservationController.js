@@ -38,7 +38,7 @@ class ReservationController {
     async patch(event) {
         try {
             const body = JSON.parse(event.body);
-			let confirmed;
+            let confirmed;
             if (body?.failedpayment){
                 confirmed = await this.bookingService.failPayment(body.paymentid);
             }
