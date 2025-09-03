@@ -24,18 +24,14 @@ const ValidatePayment = () => {
     stripe
     .retrievePaymentIntent(clientSecret)
     .then(({paymentIntent}) => {
-      // Inspect the PaymentIntent `status` to indicate the status of the payment
-      // to your customer.
-      //
-      // Some payment methods will [immediately succeed or fail][0] upon
-      // confirmation, while others will first enter a `processing` state.
-      //
-      // [0]: https://stripe.com/docs/payments/payment-methods#payment-notification
+
       const bookingId = new URLSearchParams(window.location.search).get(
         'id'
       )
+
       setLoading(false);
-        switch (paymentIntent.status) {
+
+      switch (paymentIntent.status) {
         case "succeeded":
           setMessage(`Success! Payment received.`);
           ActivateBookingFunction(paymentIntent.id);
