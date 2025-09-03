@@ -745,7 +745,7 @@
           "placeholders": {
             "firstName": "John",
             "lastName": "Doe",
-            "email": "max@example.com",
+            "email": "john@example.com",
             "phone": "+49 160 1234567",
             "city": "Berlin",
             "properties": "1",
