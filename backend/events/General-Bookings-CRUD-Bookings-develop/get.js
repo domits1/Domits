@@ -8,12 +8,10 @@ async function get(){
         resource: "/bookings",
         path: "/bookings",
         headers: {
-            Authorization: await getHostAuthToken(),
+            Authorization: await getHostAuthToken()
         },
         queryStringParameters: {
-            readType: "departureDate",
-            departureDate: "1744848000000",
-            property_Id: "6637379f-efe4-4a13-b3ec-092f2dacee70"
+            readType: "hostId",
         }
     }));
 }
