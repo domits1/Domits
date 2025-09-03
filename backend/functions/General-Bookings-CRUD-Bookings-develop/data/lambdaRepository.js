@@ -28,15 +28,15 @@ class LambdaRepository {
             .getRepository(Property_Pricing)
             .createQueryBuilder("property_pricing")
             .where("property_pricing.property_id = :id", {id: id})
-            .getOne();
+            .getMany();
 
-        if (result.roomrate || result.cleaning) {
+        if (result) {
             client.close();
             return {
                 pricing: result,
             }
         } else {
-            throw new NotFoundException("Property is inactive or does not exist.")
+            throw new NotFoundException("Unable to fetch property pricing data from the property_pricing table.")
         }
     }
 }

@@ -38,8 +38,13 @@ class ReservationController {
     async patch(event) {
         try {
             const body = JSON.parse(event.body);
-            const bookingId = body.bookingId;
-            const confirmed = await this.bookingService.confirmPayment(bookingId)
+            let confirmed;
+            if (body?.failedpayment){
+                confirmed = await this.bookingService.failPayment(body.paymentid);
+            }
+            else {
+                confirmed = await this.bookingService.confirmPayment(body.paymentid);
+            }
             return {
                 statusCode: 200,
                 headers: responseHeaderJSON,
