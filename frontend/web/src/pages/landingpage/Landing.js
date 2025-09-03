@@ -23,6 +23,7 @@ import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 import ReactMarkDown from "react-markdown";
+import { handleContactFormSubmission } from "../../services/contactService";
 
 const contentByLanguage = {
   en,
@@ -125,10 +126,6 @@ function Landing() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState("");
-
-  const API_BASE_URL = "https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail";
-
-  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   // Phone input optimization 
   const PHONE_CHAR_REGEX = /^[0-9+\s]$/;
@@ -247,90 +244,27 @@ function Landing() {
     }
   };
 
-  const validateForm = () => {
-    // Check for empty fields first (same as Contact.js)
-    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.phone.trim() || 
-        !formData.city.trim() || !formData.properties.trim() || !formData.comments.trim()) {
-      setFeedbackMessage("Please fill out all fields.");
-      return false;
-    }
-
-    // Check email separately for better user experience (same as Contact.js)
-    if (!formData.email.trim()) {
-      setFeedbackMessage("Please fill out all fields.");
-      return false;
-    }
-
-    if (!isValidEmail(formData.email)) {
-      setFeedbackMessage("Please enter a valid email address.");
-      return false;
-    }
-
-    return true;
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      city: '',
+      properties: '',
+      comments: ''
+    });
   };
 
-  const handleContactSubmit = (e) => {
+  const handleContactSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setIsSubmitting(true);
-    setFeedbackMessage("");
 
-    const payload = {
-      name: `${formData.firstName} ${formData.lastName}`,
-      subject: `Property Inquiry from ${formData.firstName} ${formData.lastName}`,
-      sourceEmail: formData.email,
-      message: `Contact Form Submission:
-        
-First Name: ${formData.firstName}
-Last Name: ${formData.lastName}
-Email: ${formData.email}
-Phone: ${formData.phone}
-City/Region: ${formData.city}
-Number of Properties: ${formData.properties}
-
-Comments:
-${formData.comments}`,
-      attachments: [],
-    };
-
-    sendRequest(payload);
-  };
-
-  const sendRequest = (payload) => {
-    fetch(API_BASE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          setFeedbackMessage("Message sent successfully! Please check your inbox for a response.");
-          // Reset the form
-          setFormData({
-            firstName: '',
-            lastName: '',
-            email: '',
-            phone: '',
-            city: '',
-            properties: '',
-            comments: ''
-          });
-        } else {
-          setFeedbackMessage(`Failed to send message: ${data.error || "Unknown error"}`);
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        setFeedbackMessage("Error sending message: " + error.message);
-      })
-      .finally(() => setIsSubmitting(false));
+    await handleContactFormSubmission(
+      formData,
+      setIsSubmitting,
+      setFeedbackMessage,
+      resetForm
+    );
   };
 
   const isFormValid = () => {
