@@ -21,6 +21,7 @@ const HostReservations = () => {
     const fetchBookings = async () => {
       try {
         const bookings = await getReservationsFromToken(authToken);
+        console.log(booking);
         if (bookings === "Data not found") {
           toast.error("No reservations found for this user. Refresh the page to try again.");
           setUserHasReservations(false);

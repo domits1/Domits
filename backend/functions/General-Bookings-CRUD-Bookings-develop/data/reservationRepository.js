@@ -67,9 +67,7 @@ class ReservationRepository {
       .getMany();
 
     if (!query) {
-      throw new UnableToSearch();
-    } else if (query.length < 1) {
-      throw new NotFoundException("No booking found.");
+      throw new NotFoundException("No bookings found.");
     }
     return {
       statusCode: 200,
@@ -148,9 +146,8 @@ class ReservationRepository {
   // ---------
   async readByHostId(host_Id) {
     this.lambdaRepository = new LambdaRepository();
-    const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);
-
-    const properties = propertiesOutput.id.map((_, i) => ({
+    const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);  
+      const properties = propertiesOutput.id.map((_, i) => ({
       id: propertiesOutput.id[i],
       title: propertiesOutput.title[i],
       rate: propertiesOutput.rate[i],
