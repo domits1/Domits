@@ -116,7 +116,7 @@ class StripeRepository {
   }
 
 
-  async updatePaymentId(bookingId, stripePaymentId){
+  async updatePaymentId(bookingId, stripePaymentId) {
     const client = await Database.getInstance();
     await client
         .createQueryBuilder()
