@@ -729,6 +729,30 @@
             "subtitle": "Our expert team is ready for support!",
             "team": "rental expert team",
             "talk": "Talk to a specialist"
+          },
+          "contactForm": {
+            "title": "Host Contact Form",
+            "description": "We reply within 24 hours. Provide details so we can assist quickly.",
+            "fields": {
+              "firstName": "First name",
+              "lastName": "Last name",
+              "email": "Email",
+              "phone": "Phone",
+              "city": "City/Region",
+              "properties": "Number of properties",
+              "comments": "Comments"
+            },
+            "placeholders": {
+              "firstName": "John",
+              "lastName": "Doe",
+              "email": "john@example.com",
+              "phone": "+31 6 12345678",
+              "city": "Amsterdam",
+              "properties": "1",
+              "comments": "Tell us more about your property..."
+            },
+            "submit": "Send message",
+            "sending": "Sending..."
           }
         }
 }
