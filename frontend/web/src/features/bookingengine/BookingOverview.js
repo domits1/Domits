@@ -139,7 +139,7 @@ const BookingOverview = () => {
       });
       const response = await request.json();
       if (!request.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${request.status}`);
       }
 
       if (response.stripeClientSecret && response.bookingId) {
