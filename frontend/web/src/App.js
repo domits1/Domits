@@ -99,7 +99,7 @@ import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST)
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE)
 
 
 Modal.setAppElement("#root");
