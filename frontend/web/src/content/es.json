@@ -728,6 +728,30 @@
             "subtitle": "¡Nuestro equipo de expertos en alquiler está listo para ayudarte!",
             "team": "equipo de expertos en alquiler",
             "talk": "Habla con un especialista"
+          },
+          "contactForm": {
+            "title": "Formulario de contacto para anfitriones",
+            "description": "Respondemos en menos de 24 horas. Incluye detalles para ayudarte más rápido.",
+            "fields": {
+              "firstName": "Nombre",
+              "lastName": "Apellido",
+              "email": "Correo electrónico",
+              "phone": "Teléfono",
+              "city": "Ciudad/Región",
+              "properties": "Número de propiedades",
+              "comments": "Comentarios"
+            },
+            "placeholders": {
+              "firstName": "John",
+              "lastName": "Doe",
+              "email": "john@example.com",
+              "phone": "+34 612 345 678",
+              "city": "Madrid",
+              "properties": "1",
+              "comments": "Cuéntanos más sobre tu propiedad..."
+            },
+            "submit": "Enviar mensaje",
+            "sending": "Enviando..."
           }
         }
 }

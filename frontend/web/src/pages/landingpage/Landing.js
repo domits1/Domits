@@ -23,6 +23,9 @@ import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 import ReactMarkDown from "react-markdown";
+import { handleContactFormSubmission } from "../../services/contactService";
+import ContactForm from "./ContactForm.jsx";
+import FaqItem from "./FaqItem.jsx";
 
 const contentByLanguage = {
   en,
@@ -31,46 +34,7 @@ const contentByLanguage = {
   es,
 };
 
-const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
-  const answerRef = useRef(null);
-  const [height, setHeight] = useState(0);
-
-  useEffect(() => {
-    if (answerRef.current) {
-      setHeight(answerRef.current.scrollHeight);
-    }
-  }, [isOpen]);
-  useEffect(() => {
-    if (isOpen) {
-      console.log(answer);
-    }
-  }, [isOpen]);
-
-  // `MapsToMessages` is not used in FaqItem, but was in the original code.
-  // Keeping it as is, but it might be dead code if not called elsewhere.
-  // const navigateToMessages = () => {
-  //   if (currentView === "host") {
-  //     navigate("/hostdashboard/chat");
-  //   } else {
-  //     navigate("/guestdashboard/chat");
-  //   }
-  // };
-
-  return (
-    <div className="landing__faq" onClick={toggleOpen}>
-      <div className="landing__faq__body">
-        <span className="landing__faq__question">{question}</span>
-        <span className="landing__faq__arrow">{isOpen ? "▲" : "▼"}</span>
-      </div>
-      <div
-        className="landing__faq__answer"
-        style={{ maxHeight: isOpen ? `${height}px` : "0", overflow: "hidden" }}
-        ref={answerRef}>
-        {answer}
-      </div>
-    </div>
-  );
-};
+// FaqItem moved to its own component
 function Landing() {
   const { language } = useContext(LanguageContext);
   const landingContent = contentByLanguage[language]?.landing;
@@ -112,6 +76,27 @@ function Landing() {
       isOpen: false,
     },
   ]);
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    city: '',
+    properties: '',
+    comments: ''
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+
+  // Phone input optimization 
+  const PHONE_CHAR_REGEX = /^[0-9+\s]$/;
+  const ALLOWED_KEYS = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+
+  const isValidPhoneKey = (key) => PHONE_CHAR_REGEX.test(key);
+  const isAllowedKey = (key) => ALLOWED_KEYS.includes(key);
+  const isValidPhonePaste = (text) => /^[0-9+\s]*$/.test(text);
 
   const reviews = [
     {
@@ -209,6 +194,46 @@ function Landing() {
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear feedback message when user starts typing
+    if (feedbackMessage) {
+      setFeedbackMessage("");
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      city: '',
+      properties: '',
+      comments: ''
+    });
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+
+    await handleContactFormSubmission(
+      formData,
+      setIsSubmitting,
+      setFeedbackMessage,
+      resetForm
+    );
+  };
+
+  const isFormValid = () => {
+    return true; // Button is always clickable, validation happens when user clicks submit
+  };
+
   return (
     <main className="container">
       <div className="firstSection">
@@ -228,7 +253,7 @@ function Landing() {
           <p>{landingContent.description}</p>
 
           <button className="nextregister">
-            <a href="#Register" onClick={(e) => handleSmoothScroll(e, "Register")}>
+            <a href="#Contact" onClick={(e) => handleSmoothScroll(e, "Contact")}>
               {landingContent.startHosting}
             </a>
           </button>
@@ -607,12 +632,26 @@ function Landing() {
           <h3>{landingContent.advice.subtitle}</h3>
           <button className="nextadvice">
             {" "}
-            <a href="/contact">{landingContent.advice.talk}</a>
+            <a href="#Contact" onClick={(e) => handleSmoothScroll(e, "Contact")}>
+              {landingContent.advice.talk}
+            </a>
           </button>
         </div>
         <img src={PersonalAdvice} alt="personalAdvice" />
       </div>
+
+      {/* contact form section */}
+      <ContactForm
+        content={landingContent.contactForm}
+        formData={formData}
+        isSubmitting={isSubmitting}
+        feedbackMessage={feedbackMessage}
+        onChange={handleInputChange}
+        onSubmit={handleContactSubmit}
+      />
     </main>
+
+    
   );
 }
 

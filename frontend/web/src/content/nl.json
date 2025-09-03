@@ -729,6 +729,30 @@
             "subtitle": "Ons expertteam staat klaar voor ondersteuning!",
             "team": "verhuurexpertteam",
             "talk": "Spreek met een specialist"
+          },
+          "contactForm": {
+            "title": "Contactformulier voor hosts",
+            "description": "We reageren binnen 24 uur. Geef details zodat we snel kunnen helpen.",
+            "fields": {
+              "firstName": "Voornaam",
+              "lastName": "Achternaam",
+              "email": "E-mail",
+              "phone": "Telefoon",
+              "city": "Stad/Regio",
+              "properties": "Aantal accommodaties",
+              "comments": "Opmerkingen"
+            },
+            "placeholders": {
+              "firstName": "John",
+              "lastName": "Doe",
+              "email": "john@example.com",
+              "phone": "+31 6 12345678",
+              "city": "Amsterdam",
+              "properties": "1",
+              "comments": "Vertel ons meer over je accommodatie..."
+            },
+            "submit": "Bericht verzenden",
+            "sending": "Verzenden..."
           }
         }
 }
