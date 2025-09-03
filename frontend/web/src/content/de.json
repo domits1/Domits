@@ -743,8 +743,8 @@
             "comments": "Kommentare"
           },
           "placeholders": {
-            "firstName": "Max",
-            "lastName": "Mustermann",
+            "firstName": "John",
+            "lastName": "Doe",
             "email": "max@example.com",
             "phone": "+49 160 1234567",
             "city": "Berlin",

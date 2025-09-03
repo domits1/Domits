@@ -743,8 +743,8 @@
               "comments": "Opmerkingen"
             },
             "placeholders": {
-              "firstName": "Jan",
-              "lastName": "Jansen",
+              "firstName": "John",
+              "lastName": "Doe",
               "email": "jan@example.com",
               "phone": "+31 6 12345678",
               "city": "Amsterdam",
