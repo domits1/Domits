@@ -92,11 +92,6 @@ const BookingOverview = () => {
   }, []);
 
   useEffect(() => {
-    if (bookingId) {
-      console.log("BookingID changed", bookingId);
-    }
-  }, [bookingId]);
-  useEffect(() => {
     const checkAuthentication = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
