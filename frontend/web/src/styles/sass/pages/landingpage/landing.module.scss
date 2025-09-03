@@ -846,6 +846,7 @@
     }
   }
 
+  @import "components/faq";
   .faq {
     .faq__header {
       display: flex;
@@ -1168,6 +1169,7 @@
   }
 }
 
+@import "components/contactForm";
 .questionsContainer {
   width: 100%;
   margin-top: 50px;

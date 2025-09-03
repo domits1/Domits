@@ -24,6 +24,8 @@ import de from "../../content/de.json";
 import es from "../../content/es.json";
 import ReactMarkDown from "react-markdown";
 import { handleContactFormSubmission } from "../../services/contactService";
+import ContactForm from "./ContactForm.jsx";
+import FaqItem from "./FaqItem.jsx";
 
 const contentByLanguage = {
   en,
@@ -32,46 +34,7 @@ const contentByLanguage = {
   es,
 };
 
-const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
-  const answerRef = useRef(null);
-  const [height, setHeight] = useState(0);
-
-  useEffect(() => {
-    if (answerRef.current) {
-      setHeight(answerRef.current.scrollHeight);
-    }
-  }, [isOpen]);
-  useEffect(() => {
-    if (isOpen) {
-      console.log(answer);
-    }
-  }, [isOpen]);
-
-  // `MapsToMessages` is not used in FaqItem, but was in the original code.
-  // Keeping it as is, but it might be dead code if not called elsewhere.
-  // const navigateToMessages = () => {
-  //   if (currentView === "host") {
-  //     navigate("/hostdashboard/chat");
-  //   } else {
-  //     navigate("/guestdashboard/chat");
-  //   }
-  // };
-
-  return (
-    <div className="landing__faq" onClick={toggleOpen}>
-      <div className="landing__faq__body">
-        <span className="landing__faq__question">{question}</span>
-        <span className="landing__faq__arrow">{isOpen ? "▲" : "▼"}</span>
-      </div>
-      <div
-        className="landing__faq__answer"
-        style={{ maxHeight: isOpen ? `${height}px` : "0", overflow: "hidden" }}
-        ref={answerRef}>
-        {answer}
-      </div>
-    </div>
-  );
-};
+// FaqItem moved to its own component
 function Landing() {
   const { language } = useContext(LanguageContext);
   const landingContent = contentByLanguage[language]?.landing;
@@ -290,7 +253,7 @@ function Landing() {
           <p>{landingContent.description}</p>
 
           <button className="nextregister">
-            <a href="#Register" onClick={(e) => handleSmoothScroll(e, "Register")}>
+            <a href="#Contact" onClick={(e) => handleSmoothScroll(e, "Contact")}>
               {landingContent.startHosting}
             </a>
           </button>
@@ -678,127 +641,14 @@ function Landing() {
       </div>
 
       {/* contact form section */}
-      <div className="questionsContainer" id="Contact">
-        <h1>{landingContent.contactForm.title}</h1>
-        <p>{landingContent.contactForm.description}</p>
-
-        {feedbackMessage && (
-          <p className={`feedback ${feedbackMessage.includes("successfully") ? "success" : "error"}`}>
-            {feedbackMessage}
-          </p>
-        )}
-
-        <form className="contactform" onSubmit={handleContactSubmit}>
-          <div className="inputContainer">
-            <label>
-              {landingContent.contactForm.fields.firstName}
-              <input 
-                type="text" 
-                name="firstName" 
-                value={formData.firstName}
-                onChange={handleInputChange}
-                placeholder={landingContent.contactForm.placeholders.firstName} 
-                required 
-              />
-            </label>
-
-            <label>
-              {landingContent.contactForm.fields.lastName}
-              <input 
-                type="text" 
-                name="lastName" 
-                value={formData.lastName}
-                onChange={handleInputChange}
-                placeholder={landingContent.contactForm.placeholders.lastName} 
-                required 
-              />
-            </label>
-
-            <label>
-              {landingContent.contactForm.fields.email}
-              <input 
-                type="email" 
-                name="email" 
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder={landingContent.contactForm.placeholders.email} 
-                required 
-              />
-            </label>
-
-            <label>
-              {landingContent.contactForm.fields.phone}
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                onKeyPress={(e) => {
-                  if (!isValidPhoneKey(e.key) && !isAllowedKey(e.key)) {
-                    e.preventDefault();
-                  }
-                }}
-                onPaste={(e) => {
-                  const paste = e.clipboardData.getData('text');
-                  if (!isValidPhonePaste(paste)) {
-                    e.preventDefault();
-                  }
-                }}
-                placeholder={landingContent.contactForm.placeholders.phone}
-                required
-              />
-            </label>
-
-            <label>
-              {landingContent.contactForm.fields.city}
-              <input 
-                type="text" 
-                name="city" 
-                value={formData.city}
-                onChange={handleInputChange}
-                placeholder={landingContent.contactForm.placeholders.city} 
-                required
-              />
-            </label>
-
-            <label>
-              {landingContent.contactForm.fields.properties}
-              <input 
-                type="number" 
-                name="properties" 
-                value={formData.properties}
-                onChange={handleInputChange}
-                placeholder={landingContent.contactForm.placeholders.properties} 
-                min="1" 
-                required
-              />
-            </label>
-          </div>
-
-          <div className="biginput">
-            <label>
-              {landingContent.contactForm.fields.comments}
-              <textarea 
-                name="comments" 
-                value={formData.comments}
-                onChange={handleInputChange}
-                placeholder={landingContent.contactForm.placeholders.comments}
-                required
-              ></textarea>
-            </label>
-          </div>
-
-          <div className="formbuttons">
-            <button 
-              id="sendbutton" 
-              type="submit" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? landingContent.contactForm.sending : landingContent.contactForm.submit}
-            </button>
-          </div>
-        </form>
-      </div>
+      <ContactForm
+        content={landingContent.contactForm}
+        formData={formData}
+        isSubmitting={isSubmitting}
+        feedbackMessage={feedbackMessage}
+        onChange={handleInputChange}
+        onSubmit={handleContactSubmit}
+      />
     </main>
 
     
