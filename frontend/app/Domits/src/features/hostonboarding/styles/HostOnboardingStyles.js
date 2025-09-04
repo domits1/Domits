@@ -140,6 +140,40 @@ export const styles = StyleSheet.create({
   selectedGridItemText: {
     color: 'white',
   },
+  // Counter
+  counterGroupContainer: {
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
+    marginBottom: 50,
+  },
+  counterItemContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '100%',
+    marginVertical: 5,
+  },
+  counterLabel: {
+    flex: 1,
+  },
+  counterLabelText: {
+    fontSize: 20,
+  },
+  counterGroup: {
+    flex: 1,
+    alignItems: 'center',
+    flexDirection: 'row-reverse',
+  },
+  counterGroupItem: {
+    marginHorizontal: 5,
+  },
+  counterGroupText: {
+    fontSize: 20,
+  },
+  numericInput: {
+    fontSize: 20,
+    borderBottomWidth: 1,
+  },
   // Check screen table
   table: {
     alignSelf: 'center',

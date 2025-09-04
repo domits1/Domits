@@ -38,11 +38,21 @@ const propertyFormData = {
     },
     propertyGeneralDetails: [
         {
-            id: "",
-            property_id: "",
-            detail: "",
-            value: -1
-        }
+            detail: "Guests",
+            value: 0,
+        },
+        {
+            detail: "Beds",
+            value: 0,
+        },
+        {
+            detail: "Bedrooms",
+            value: 0,
+        },
+        {
+            detail: "Bathrooms",
+            value: 0,
+        },
     ],
     propertyLocation: {
         property_id: "",
