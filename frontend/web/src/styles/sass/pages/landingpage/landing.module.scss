@@ -847,6 +847,7 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
+      align-items: stretch;
     }
 
     .review-card {
@@ -856,6 +857,9 @@
       box-shadow: 0 6px 18px rgba(0,0,0,0.06);
       padding: 16px;
       text-align: left;
+      display: flex;
+      flex-direction: column;
+      min-height: 260px;
     }
 
     .review-card__stars {
@@ -870,8 +874,8 @@
       margin: 0 0 12px 0;
       line-height: 1.6;
       display: -webkit-box;
-      line-clamp: 6;
-      -webkit-line-clamp: 6;
+      line-clamp: 8;
+      -webkit-line-clamp: 8;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -880,6 +884,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      margin-top: auto;
     }
 
     .review-card__avatar {
