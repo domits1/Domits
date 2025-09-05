@@ -728,7 +728,7 @@
       grid-template-columns: 1.2fr 1fr;
       gap: 30px;
       align-items: start;
-      background: linear-gradient(135deg, #ffeef0 0%, #fff 40%);
+      background: #fff;
       border-radius: 16px;
       padding: 24px;
     }
@@ -823,6 +823,92 @@
         width: 95%;
         padding: 16px;
       }
+    }
+  }
+
+  // Simple three-card review layout with stars
+  .reviews-simple {
+    width: 100%;
+    padding: 40px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    &__title {
+      font-size: 2rem;
+      margin: 0 0 18px 0;
+      text-align: center;
+      span { color: #003366; }
+    }
+
+    &__grid {
+      width: 90%;
+      max-width: 1200px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .review-card {
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+      padding: 16px;
+      text-align: left;
+    }
+
+    .review-card__stars {
+      color: #ff5a7d; // pink stars
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .review-card__text {
+      color: #444;
+      margin: 0 0 12px 0;
+      line-height: 1.6;
+      display: -webkit-box;
+      line-clamp: 6;
+      -webkit-line-clamp: 6;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .review-card__footer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-card__avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .review-card__name { font-weight: 700; }
+    .review-card__role { color: #666; font-size: 0.9rem; }
+
+    &__actions {
+      margin-top: 16px;
+    }
+
+    &__button {
+      background: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      &:hover { background: #4c7cac; }
+    }
+
+    @media (max-width: 992px) {
+      &__grid { grid-template-columns: 1fr; width: 95%; }
     }
   }
 

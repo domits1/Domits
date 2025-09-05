@@ -411,30 +411,27 @@ function Landing() {
 
       
 
-      <section className="reviews">
-        <div className="reviews__inner">
-          <div className="reviews__left">
-            <h1>
-              {landingContent.othersSay.title} <span className="highlightText">{landingContent.othersSay.domits}</span>
-            </h1>
-            <p>{landingContent.description}</p>
-            <button className="reviews__cta" onClick={advanceReviews}>Next reviews</button>
-          </div>
-          <div className="reviews__right">
-            {([0,1,2].map((i) => reviews[(reviewStartIndex + i) % reviews.length])).map((review) => (
-              <div key={review.id} className="reviews__card">
-                <div className="reviews__card__avatar">
-                  <img src={review.img} alt={review.author} />
-                </div>
-                <div className="reviews__card__content">
-                  <div className="reviews__card__quote">“</div>
-                  <p className="reviews__card__text">{review.text}</p>
-                  <div className="reviews__card__author">— {review.author}</div>
-                  <div className="reviews__card__meta">{review.location}</div>
+      <section className="reviews-simple">
+        <h1 className="reviews-simple__title">
+          {landingContent.othersSay.title} <span className="highlightText">{landingContent.othersSay.domits}</span>
+        </h1>
+        <div className="reviews-simple__grid">
+          {([0, 1, 2].map((i) => reviews[(reviewStartIndex + i) % reviews.length])).map((review) => (
+            <article key={review.id} className="review-card">
+              <div className="review-card__stars" aria-label="5 star rating">★★★★★</div>
+              <p className="review-card__text">{review.text}</p>
+              <div className="review-card__footer">
+                <img className="review-card__avatar" src={review.img} alt={review.author} />
+                <div className="review-card__author">
+                  <div className="review-card__name">{review.author}</div>
+                  <div className="review-card__role">{review.location}</div>
                 </div>
               </div>
-            ))}
-          </div>
+            </article>
+          ))}
+        </div>
+        <div className="reviews-simple__actions">
+          <button className="reviews-simple__button" onClick={advanceReviews}>Next reviews</button>
         </div>
       </section>
 
