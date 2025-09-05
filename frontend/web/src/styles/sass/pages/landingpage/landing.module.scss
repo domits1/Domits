@@ -859,11 +859,11 @@
       text-align: left;
       display: flex;
       flex-direction: column;
-      min-height: 260px;
+      min-height: 380px;
     }
 
     .review-card__stars {
-      color: #ff5a7d; // pink stars
+      color: #0D9813; // green stars
       letter-spacing: 2px;
       margin-bottom: 8px;
       font-size: 16px;
@@ -874,8 +874,8 @@
       margin: 0 0 12px 0;
       line-height: 1.6;
       display: -webkit-box;
-      line-clamp: 8;
-      -webkit-line-clamp: 8;
+      line-clamp: 12;
+      -webkit-line-clamp: 12;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
