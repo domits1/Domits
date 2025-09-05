@@ -599,18 +599,19 @@
 
     .client_text {
       background: #fff;
-      border: 2px solid #003366;
+      border: 1px solid rgba(0, 51, 102, 0.2);
+      border-top: 4px solid #003366;
       border-radius: 12px;
-      padding: 1.25rem 1.25rem 1rem 1.25rem;
+      padding: 1.5rem 1.25rem 1.25rem 1.25rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
 
       &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
       }
 
       img {
@@ -621,20 +622,24 @@
 
       .highlightText {
         color: #003366;
-        font-size: 2rem;
+        font-size: 2.25rem;
         line-height: 1;
       }
 
       p {
-        font-size: 0.98rem;
-        color: #333;
-        margin: 0.5rem 0 0.75rem 0;
-        line-height: 1.6;
+        font-size: 1rem;
+        color: #2c2c2c;
+        margin: 0.5rem 0 1rem 0;
+        line-height: 1.7;
+        display: -webkit-box;
+        -webkit-line-clamp: 11;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
 
       h2 {
         align-self: flex-start;
-        font-size: 1.25rem;
+        font-size: 1.2rem;
         font-weight: 700;
         margin: 0;
       }
@@ -644,6 +649,10 @@
         align-items: center;
         gap: 12px;
         margin-top: 0.75rem;
+      }
+
+      &:nth-child(odd) {
+        background: #fbfdff;
       }
     }
 
