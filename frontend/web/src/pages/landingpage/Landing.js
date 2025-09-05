@@ -147,6 +147,11 @@ function Landing() {
     },
   ];
 
+  const [reviewStartIndex, setReviewStartIndex] = useState(0);
+  const advanceReviews = () => {
+    setReviewStartIndex((prev) => (prev + 3) % reviews.length);
+  };
+
   const toggleOpen = (index) => {
     const updatedFaqs = faqs.map((faq, i) => (i === index ? { ...faq, isOpen: !faq.isOpen } : faq));
     setFaqs(updatedFaqs);
@@ -406,26 +411,32 @@ function Landing() {
 
       
 
-      <div className="clientRevieuw">
-        <h1>
-          {" "}
-          {landingContent.othersSay.title} <span className="highlightText">{landingContent.othersSay.domits}</span>
-        </h1>
-        {reviews.map((review) => (
-          <div key={review.id} className="client_text">
-            <span className="highlightText">"</span>
-            <p className="clientText">{review.text}</p>
-            <span className="highlightText">"</span>
-            <div className="client_content">
-              <img src={review.img} alt={review.author} />
-              <div className="client_details">
-                <h2>{review.author}</h2>
-                <p>{review.location}</p>
-              </div>
-            </div>
+      <section className="reviews">
+        <div className="reviews__inner">
+          <div className="reviews__left">
+            <h1>
+              {landingContent.othersSay.title} <span className="highlightText">{landingContent.othersSay.domits}</span>
+            </h1>
+            <p>{landingContent.description}</p>
+            <button className="reviews__cta" onClick={advanceReviews}>Next reviews</button>
           </div>
-        ))}
-      </div>
+          <div className="reviews__right">
+            {([0,1,2].map((i) => reviews[(reviewStartIndex + i) % reviews.length])).map((review) => (
+              <div key={review.id} className="reviews__card">
+                <div className="reviews__card__avatar">
+                  <img src={review.img} alt={review.author} />
+                </div>
+                <div className="reviews__card__content">
+                  <div className="reviews__card__quote">“</div>
+                  <p className="reviews__card__text">{review.text}</p>
+                  <div className="reviews__card__author">— {review.author}</div>
+                  <div className="reviews__card__meta">{review.location}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <div className="checkList">
         <h1>

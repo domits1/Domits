@@ -632,6 +632,7 @@
         margin: 0.5rem 0 1rem 0;
         line-height: 1.7;
         display: -webkit-box;
+        line-clamp: 11;
         -webkit-line-clamp: 11;
         -webkit-box-orient: vertical;
         overflow: hidden;
@@ -709,6 +710,118 @@
           width: 44px;
           height: 44px;
         }
+      }
+    }
+  }
+
+  // New reviews section (two-column, with cards and next button)
+  .reviews {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+
+    .reviews__inner {
+      width: 90%;
+      max-width: 1200px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 30px;
+      align-items: start;
+      background: linear-gradient(135deg, #ffeef0 0%, #fff 40%);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .reviews__left {
+      text-align: left;
+
+      h1 {
+        font-size: 2.2rem;
+        margin: 0 0 10px 0;
+        .highlightText { color: #003366; }
+      }
+
+      p {
+        margin: 0 0 18px 0;
+        color: #444;
+      }
+
+      .reviews__cta {
+        background: #003366;
+        color: #fff;
+        border: none;
+        border-radius: 24px;
+        padding: 10px 16px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        &:hover { background: #4c7cac; }
+      }
+    }
+
+    .reviews__right {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .reviews__card {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 14px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+      padding: 14px 16px;
+      border: 1px solid rgba(0, 51, 102, 0.12);
+    }
+
+    .reviews__card__avatar img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .reviews__card__quote {
+      color: #ff5a7d;
+      font-size: 22px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .reviews__card__text {
+      color: #333;
+      margin: 0 0 8px 0;
+      line-height: 1.6;
+      display: -webkit-box;
+      line-clamp: 4;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .reviews__card__author {
+      color: #ff5a7d;
+      font-weight: 600;
+      margin: 0 0 2px 0;
+    }
+
+    .reviews__card__meta {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 992px) {
+      .reviews__inner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .reviews__inner {
+        width: 95%;
+        padding: 16px;
       }
     }
   }
