@@ -115,6 +115,7 @@ img, video {
     display: block;
 }
 
+/*Added media queries for responsiveness*/
 
 @media (max-width: 1200px) {
     .image-container { width: 85%; height: 500px; }
