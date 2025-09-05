@@ -859,7 +859,7 @@
       text-align: left;
       display: flex;
       flex-direction: column;
-      min-height: 380px;
+      min-height: 460px;
     }
 
     .review-card__stars {
@@ -874,8 +874,8 @@
       margin: 0 0 12px 0;
       line-height: 1.6;
       display: -webkit-box;
-      line-clamp: 12;
-      -webkit-line-clamp: 12;
+      line-clamp: 14;
+      -webkit-line-clamp: 14;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
