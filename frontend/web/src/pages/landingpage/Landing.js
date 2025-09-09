@@ -246,12 +246,6 @@ function Landing() {
         </div>
       </div>
 
-      <div className="hostForm">
-        <div className="hostForm_text">
-          <h1 className="hostForm_innerText">{"Calculate Your Rental Potential"}</h1>
-        </div>
-      </div>
-
       <div className="easyHosting">
         <div className="easyHosting_text">
           <h1>
