@@ -1,13 +1,12 @@
 ## Your name
-Name: @[GitHub username]
+Name: @_GitHub_username
 
-## Related Issue
-Related Issue: #[issue number] 
-Closes #[issue number] (only if it should close it)
+## close or relate the issue
+- Closes #_issue_number (only if it should close it)
+- Related Issue: #_issue_number (in the issue a reference will be added to this pr)
 
 ## Proposed Changes
 Description: [Please add detailed description of the changes here]
-
 
 ## Branch management
 - [ ] Merging into acceptance (not main)
@@ -66,18 +65,16 @@ As the Pull Requester, **you are responsible for your own pull request.**
 3. You are also responsible for resolving feedback and notifying the reviewer after updates.  
 (*Note: GitHub notifications are often muted – always follow up with a DM.*)  
 
-### Suggested Reviewers  
-- [ ] Expert Reviewer: @[GitHub username]  
-- Marijn (Styling, SCSS, JS)  
-- Sander (App, Backend)  
-<!-- Temporarily removed due to personal situation -->
-<!-- - Sebastiaan (Security, SCSS) -->  
+### Select two reviewers
 
-- [ ] Second Reviewer: @[GitHub username]  
+- [ ] Primary Reviewer: @_GitHub_username
+- Stephanie (App, Backend)  
+- Raman (Web, Backend)
+
+- [ ] Secondary Reviewer: @_GitHub_username
 Preferably someone familiar with the part of code you're working on. For example:  
-- Ryan  
-- Kacper  
-- Raman  
+- Moncef
+- Ahasan
 
 ## Keep or delete my branch  
 - [x] Delete my branch after merge  

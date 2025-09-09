@@ -1,0 +1,148 @@
+//features
+//Booking-engine
+@use "features/booking-engine/imagegallery";
+@use "features/booking-engine/listingDetails";
+@use "features/booking-engine/listing";
+@use "features/booking-engine/bookingoverview";
+@use "features/booking-engine/paymentConfirmPage";
+@use "features/booking-engine/overlay";
+//Base
+@use "features/base/header";
+@use "features/base/footer";
+@use "features/base/MenuBar";
+@use "features/base/navbar";
+@use "features/base/SearchBar";
+//Auth
+@use "features/auth/login";
+@use "features/auth/register";
+
+//sustainability
+@use "features/sustainability/sustainability";
+
+
+//pages
+//careers
+@use "pages/careers/careers";
+@use "pages/careers/jobDetails";
+
+//contact
+@use "pages/contact/contact";
+
+//about
+@use "pages/about/about";
+
+
+//productupdates
+@use "pages/productupdates/release-Updates";
+
+//home
+@use "pages/home/homePage";
+@use "pages/home/Accommodations";
+
+//whydomits
+@use "pages/whydomits/whydomits";
+
+//howitworks
+@use "pages/howitworks/howitworks.scss";
+
+//security
+@use "pages/security/security.scss";
+
+//performance
+@use "pages/performance/performance.scss";
+
+//helpdesk
+@use "pages/landingpage/faq";
+
+//landing
+@use "pages/landingpage/landing.module";
+
+
+
+
+
+//features
+//GuestDashboard
+@use "features/guestdashboard/guestDashboard";
+@use "features/guestdashboard/Pages";
+@use "features/guestdashboard/GuestBooking";
+@use "features/guestdashboard/mainDashboardGuest";
+
+
+
+
+//node_modules
+// Specific styling for the Swiper navigation buttons (.swiper-button-prev and .swiper-button-next)
+// These arrows appear on the accocard and allow navigation between photos
+@use "node-modules/swiper/modules/navigation.scss";
+
+
+
+:root {
+  --primary-color: #0D9813;
+  --secondary-color: #003366;
+  --domits-host-blue: #003366;
+}
+
+@font-face {
+    font-family: "Kanit";
+    src: local("KanitThin"),
+     url("../../fonts/kanit/Kanit-Thin.ttf") format("truetype");
+    font-weight: 200;
+   }
+
+  @font-face {
+    font-family: "Kanit";
+    src: local("KanitLight"),
+     url("../../fonts/kanit/Kanit-Light.ttf") format("truetype");
+    font-weight: 300;
+   }
+
+  @font-face {
+    font-family: "Kanit";
+    src: local("KanitRegular"),
+     url("../../fonts/kanit/Kanit-Regular.ttf") format("truetype");
+    font-weight: 400;
+   }
+
+   @font-face {
+    font-family: "Kanit";
+    src: local("KanitMedium"),
+     url("../../fonts/kanit/Kanit-Medium.ttf") format("truetype");
+    font-weight: 500;
+   }
+
+   @font-face {
+    font-family: "Kanit";
+    src: local("KanitSemiBold"),
+     url("../../fonts/kanit/Kanit-SemiBold.ttf") format("truetype");
+    font-weight: 600;
+   }
+
+   @font-face {
+    font-family: "Kanit";
+    src: local("KanitBold"),
+     url("../../fonts/kanit/Kanit-Bold.ttf") format("truetype");
+    font-weight: 700;
+   }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: auto;
+  }
+
+  html {
+    margin-top: 90px;
+  }
+  
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+      monospace;
+  }
+
+
+
