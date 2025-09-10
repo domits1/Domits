@@ -19,7 +19,7 @@ const MainDashboardGuest = () => {
       case "Bookings":
         return <GuestBooking />;
       case "Messages":
-        return <Messages dashboardType="guest" />;
+        return null;
       case "Payments":
         return <GuestPayments />;
       case "Reviews":

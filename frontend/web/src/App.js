@@ -94,8 +94,7 @@ import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
-import Messages from "./components/messages/Messages.js";
-import MessagingV2 from "./features/messagingv2/MessagingV2.jsx";
+// Messages removed
 import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
@@ -178,7 +177,7 @@ function App() {
                 <Route path="/travelinnovation" element={<Travelinnovation />} />
                 <Route path="/release" element={<ReleaseUpdates />} />
                 <Route path="/landing" element={<Landing />} />
-                <Route path="/messages-v2" element={<MessagingV2 role="guest" />} />
+                {/* messages v2 route removed */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/confirm-email" element={<ConfirmEmailView />} />

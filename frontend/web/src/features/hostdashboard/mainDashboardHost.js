@@ -25,7 +25,7 @@ function MainDashboardHost(){
             case "Reservations":
                 return <HostReservations/>
             case "Messages":
-                return <Messages dashboardType="host" /> 
+                return null 
             case "Revenues":
                 return <HostReports/>
             case "Housekeeping":
