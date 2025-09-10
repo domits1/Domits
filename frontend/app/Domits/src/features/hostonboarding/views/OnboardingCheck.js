@@ -11,6 +11,12 @@ const OnboardingCheck = ({route, navigation}) => {
   const [toggleTermsConditionsCheckBox, setToggleTermsConditionsCheckBox] = useState(false);
   const [areCheckboxesChecked, setAreCheckboxesChecked] = useState(false);
 
+  const propertyGeneralDetailsString = () => {
+    return formData.propertyGeneralDetails
+        .map(item => `${item.detail}: ${item.value}`)
+        .join('\n');
+  };
+
   useEffect(() => {
     setAreCheckboxesChecked(toggleComplianceCheckBox && toggleTermsConditionsCheckBox);
   }, [toggleComplianceCheckBox, toggleTermsConditionsCheckBox])
@@ -65,6 +71,7 @@ const OnboardingCheck = ({route, navigation}) => {
                   formData.propertyLocation.city + ',\n' +
                   formData.propertyLocation.country
               )}
+              {tableItem('General details', propertyGeneralDetailsString())}
             </View>
 
             <View>

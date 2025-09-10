@@ -22,6 +22,7 @@ const HostOnboarding = ({navigation}) => {
     propertyName: {visited: false, valid: false},
     propertyLocation: {visited: false, valid: false},
     propertyDescription: {visited: false, valid: false},
+    propertyAmountOfGuests: {visited: false, valid: false},
   });
 
   const updateFormData = (updaterFn) => {
