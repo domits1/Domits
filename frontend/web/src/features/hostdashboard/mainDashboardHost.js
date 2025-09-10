@@ -3,7 +3,7 @@ import Pages from "./Pages2";
 import HostDashboard from "./HostDashboard";
 import HostCalendar from "./HostCalendar";
 import HostReservations from "./HostReservations";
-import Messages from "../../components/messages/Messages";
+// Messages removed
 import HostReports from "./HostPayments";
 import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./HostFinanceTab";

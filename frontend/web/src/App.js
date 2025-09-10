@@ -93,6 +93,8 @@ import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
+import GuestMessages from "./features/messages/GuestMessages.jsx";
+import HostMessages from "./features/messages/HostMessages.jsx";
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 // Messages removed
 import publicKeys from "./utils/const/publicKeys.json"
@@ -177,6 +179,8 @@ function App() {
                 <Route path="/travelinnovation" element={<Travelinnovation />} />
                 <Route path="/release" element={<ReleaseUpdates />} />
                 <Route path="/landing" element={<Landing />} />
+                <Route path="/guest/messages" element={<GuestMessages />} />
+                <Route path="/host/messages" element={<HostMessages />} />
                 {/* messages v2 route removed */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />

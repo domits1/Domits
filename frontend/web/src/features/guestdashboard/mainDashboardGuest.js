@@ -6,7 +6,7 @@ import GuestPayments from "./GuestPayments";
 import GuestReviews from "./GuestReviews";
 import GuestSettings from "./GuestSettings";
 import GuestWishlist from "./GuestWishlist";
-import Messages from "../../components/messages/Messages";
+// Messages removed
 
 
 const MainDashboardGuest = () => {
