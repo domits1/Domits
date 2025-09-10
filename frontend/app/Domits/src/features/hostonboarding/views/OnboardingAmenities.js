@@ -9,28 +9,37 @@ const OnboardingAmenities = ({formData, updateFormData, reportValidity, markVisi
   const [selected, setSelected] = useState([]);
   const amenityNames = ['Wi-Fi', 'TV with cable/satellite', 'Heating', 'Hot water', 'Bed linens', 'Toilet paper', 'Air conditioning', 'Towels', 'Extra pillows and blankets', 'Soap and shampoo']
 
-  const displayedAmenities = amenityNames
-      .map(amenityUtils.getAmenityByName)
-      .filter(Boolean);
+  const toggleAmenity = (amenityId) => {
+    setSelected(prev => {
+      const isSelected = prev.includes(amenityId);
 
-  const toggleAmenity = (name) => {
-    setSelected(prev =>
-        prev.includes(name)
-            ? prev.filter(item => item !== name)
-            : [...prev, name]
-    );
+      // Update form data based on selection
+      updateFormData((draft) => {
+        if (isSelected) {
+          draft.propertyAmenities = draft.propertyAmenities.filter(item => item.amenityId !== amenityId);
+        } else {
+          draft.propertyAmenities.push({
+            amenityId: amenityId,
+          });
+        }
+      });
+
+      return isSelected
+          ? prev.filter(item => item !== amenityId)
+          : [...prev, amenityId];
+    });
   };
 
   const amenityCheckbox = (amenityName) => {
     const amenityItem = amenityUtils.getAmenityByName(amenityName);
-    const isSelected = selected.includes(amenityName);
+    const isSelected = selected.includes(amenityItem.id);
 
     return (
         <View style={styles.checkboxContainer}>
           <CheckBox
               disabled={false}
               value={isSelected}
-              onValueChange={() => toggleAmenity(amenityName)}
+              onValueChange={() => toggleAmenity(amenityItem.id)}
           />
           {amenityItem.icon}
           <Text>
@@ -46,6 +55,11 @@ const OnboardingAmenities = ({formData, updateFormData, reportValidity, markVisi
     reportValidity(true); // Checkboxes not mandatory
   }, [])
 
+  useEffect(() => {
+    // Set initial selected
+    setSelected(formData.propertyAmenities.map(item => item.amenityId));
+  }, [])
+
   return (
       <ScrollView style={{flex: 1}}>
         <View style={styles.contentContainer}>
@@ -57,7 +71,7 @@ const OnboardingAmenities = ({formData, updateFormData, reportValidity, markVisi
           </Text>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
 
-            {displayedAmenities.map(amenityName =>
+            {amenityNames.map(amenityName =>
                 amenityCheckbox(amenityName)
             )}
 
