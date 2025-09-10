@@ -239,10 +239,11 @@ export const styles = StyleSheet.create({
     fontSize: 24,
     color: "white",
   },
-  // Check screen checkboxes
+  // Checkboxes
   checkboxContainer: {
     flexDirection: 'row',
     width: '95%',
     marginBottom: 10,
+    alignItems: 'center'
   },
 })
