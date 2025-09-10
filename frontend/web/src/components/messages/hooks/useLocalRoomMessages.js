@@ -39,8 +39,20 @@ export const useLocalRoomMessages = (roomCode, userId) => {
         };
         channelRef.current = ch;
 
+        const onStorage = (e) => {
+            if (e.key !== storageKey) return;
+            try {
+                const parsed = JSON.parse(e.newValue);
+                if (Array.isArray(parsed)) {
+                    setMessages(parsed);
+                }
+            } catch {}
+        };
+        window.addEventListener('storage', onStorage);
+
         return () => {
             try { ch.close(); } catch {}
+            window.removeEventListener('storage', onStorage);
         };
     }, [roomCode, storageKey]);
 
