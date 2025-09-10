@@ -42,17 +42,48 @@ $shake-color: red;
     .registerInput {
       width: 98.5%;
       height: auto;
+      line-height: 25px;
+      margin: 5px 0 12px;
+      background: white;
+      box-shadow: none;
+      border-radius: $border-radius;
+      border: 1px solid #000000;
+      display: inline-flex;
+      justify-content: flex-start;
+      align-items: center;
+      color: #333;
+      
+    }
+
+    .phoneInput {
+  width: 98.5%;
+      height: auto;
       // padding: $input-padding;
       line-height: 25px;
       margin: 5px 0 12px;
       background: white;
       box-shadow: none;
       border-radius: $border-radius;
-      border: 1px solid #999;
+      border: 1px solid #000000;
       display: inline-flex;
       justify-content: flex-start;
       align-items: center;
+      color: #333;
     }
+
+    .PasswordContainer{
+      color: #000000;
+    }
+
+    .togglePasswordContainer{
+      position: relative;
+    }
+    
+    .errorMessage {
+      color: red;
+      padding-bottom: 0%;
+    }
+
 
     .registerButton {
       width: 100%;
@@ -172,9 +203,6 @@ $shake-color: red;
     background-color: white;
   }
 
-  .flag-dropdown {
-    border: 5px solid #cacaca;
-  }
 }
 
 .signOutDiv {
