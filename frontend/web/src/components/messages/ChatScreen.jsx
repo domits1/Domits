@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useContext } from 'react';
 
 import useFetchMessages from '../../features/hostdashboard/hostmessages/hooks/useFetchMessages';
+import useLocalRoomMessages from './hooks/useLocalRoomMessages';
 import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
 import { useSendMessage } from '../../features/hostdashboard/hostmessages/hooks/useSendMessage';
 
@@ -14,7 +15,15 @@ import profileImage from './domits-logo.jpg';
 
 
 const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, onBack, dashboardType}) => {
-    const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
+    const isPairRoom = typeof contactId === 'string' && contactId.startsWith('pair:');
+    const roomCode = isPairRoom ? contactId.replace('pair:', '') : null;
+    const local = useLocalRoomMessages(roomCode || 'default', userId);
+    const remote = useFetchMessages(userId);
+    const messages = isPairRoom ? local.messages : remote.messages;
+    const loading = isPairRoom ? local.loading : remote.loading;
+    const error = isPairRoom ? null : remote.error;
+    const fetchMessages = isPairRoom ? (() => {}) : remote.fetchMessages;
+    const addNewMessage = isPairRoom ? local.addNewMessage : remote.addNewMessage;
     const socket = useContext(WebSocketContext);
     const isHost = dashboardType === 'host';
     const { bookingDetails } = isHost
@@ -54,7 +63,9 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
     const handleSendMessage = async () => {
         if ((newMessage.trim() || uploadedFileUrls.length > 0) && (uploadedFileUrls.length > 0 || newMessage.trim())) {
             try {
-                const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
+                const response = isPairRoom
+                    ? local.sendLocalMessage(newMessage, uploadedFileUrls)
+                    : await sendMessage(contactId, newMessage, uploadedFileUrls);
                 if (!response || !response.success) {
                     alert(`Error while sending: ${response.error || 'Please try again later.'}`);
                     return;

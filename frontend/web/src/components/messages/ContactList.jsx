@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { WebSocketContext } from '../../features/hostdashboard/hostmessages/context/webSocketContext';
 import useFetchContacts from '../../features/hostdashboard/hostmessages/hooks/useFetchContacts';
 import ContactItem from './ContactItem';
@@ -18,6 +18,19 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const [sortAlphabetically, setSortAlphabetically] = useState(false);
     const [manualRecipientId, setManualRecipientId] = useState('');
     const [manualRecipientName, setManualRecipientName] = useState('');
+    const [pairCode, setPairCode] = useState('');
+
+    const localPairCode = useMemo(() => {
+        try {
+            const existing = window.localStorage.getItem('domits_pair_code');
+            if (existing) return existing;
+            const gen = Math.random().toString(36).substr(2, 6).toUpperCase();
+            window.localStorage.setItem('domits_pair_code', gen);
+            return gen;
+        } catch (e) {
+            return 'ABC123';
+        }
+    }, []);
 
     // Prefill helpers for local/test environments
     // Hard-wired defaults for local testing (host<->guest pair)
@@ -89,7 +102,6 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
             setSelectedContactId(manualRecipientId);
             onContactClick(manualRecipientId, manualRecipientName || (isHost ? HARD_GUEST_NAME : HARD_HOST_NAME));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [manualRecipientId]);
 
     let contactList = displayType === 'contacts' ? contacts : pendingContacts;
@@ -170,6 +182,35 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                             maxWidth: 360
                         }}>
                             <label style={{ fontWeight: 600 }}>Start a new chat</label>
+                            <div style={{ fontSize: 12, color: '#555' }}>Option A: Pairing code (local demo)</div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <input
+                                    value={pairCode}
+                                    onChange={(e) => setPairCode(e.target.value.toUpperCase())}
+                                    placeholder="Enter code (e.g., ABC123)"
+                                    className="contact-search-input"
+                                    style={{ flex: 1 }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        if (!pairCode) return;
+                                        handleClick(`pair:${pairCode}`, `Room ${pairCode}`);
+                                    }}
+                                    className="contact-list-side-button"
+                                    style={{ padding: '6px 12px', borderRadius: 6 }}
+                                >
+                                    Join
+                                </button>
+                            </div>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <span style={{ fontSize: 12, color: '#555' }}>Your code:</span>
+                                <code style={{ background: '#f6f6f6', padding: '2px 6px', borderRadius: 4 }}>{localPairCode}</code>
+                            </div>
+                            <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>
+                                Share this code with the other side on this device to chat locally.
+                            </div>
+                            <div style={{ height: 12 }} />
+                            <div style={{ fontSize: 12, color: '#555' }}>Option B: Direct user ID</div>
                             <input
                                 value={manualRecipientId}
                                 onChange={(e) => setManualRecipientId(e.target.value)}
