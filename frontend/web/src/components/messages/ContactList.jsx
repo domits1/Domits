@@ -66,7 +66,8 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
 
     // Auto prefill manual fields in dev/local when there are no contacts
     useEffect(() => {
-        if (contactList.length === 0 && !manualRecipientId) {
+        const currentListLength = (displayType === 'contacts' ? contacts.length : pendingContacts.length);
+        if (currentListLength === 0 && !manualRecipientId) {
             const lastRecipient = window.localStorage.getItem('domits_last_manual_recipient');
             const lastName = window.localStorage.getItem('domits_last_manual_recipient_name');
             if (lastRecipient) {
@@ -77,7 +78,7 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                 setManualRecipientName(testRecipientName);
             }
         }
-    }, [contactList.length]);
+    }, [displayType, contacts, pendingContacts, manualRecipientId, testRecipientId, testRecipientName]);
 
     let contactList = displayType === 'contacts' ? contacts : pendingContacts;
 
