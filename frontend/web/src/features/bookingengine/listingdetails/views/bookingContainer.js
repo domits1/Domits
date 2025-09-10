@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getAccessToken } from "../../../services/getAccessToken";
 import DateSelectionContainer from "./dateSelectionContainer";
 import GuestSelectionContainer from "./guestSelectionContainer";
 import Pricing from "../components/pricing";
@@ -16,6 +18,32 @@ const BookingContainer = ({ property }) => {
   const [kids, setKids] = useState(0);
 
   const handleReservePress = useHandleReservePress();
+  const navigate = useNavigate();
+
+  const handleAddToContacts = async () => {
+    try {
+      const token = getAccessToken();
+      const body = {
+        hostId: property?.property?.hostId,
+        userId: null,
+        propertyId: property?.property?.id,
+      };
+      const res = await fetch("https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/CreateContactRequest", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("Failed to send contact request");
+      alert("Contact request sent. You will be able to chat once accepted.");
+      navigate("/guestdashboard");
+    } catch (e) {
+      console.error(e);
+      alert("Could not send contact request. Please try again later.");
+    }
+  };
 
   return (
     <div className="booking-container">
@@ -51,6 +79,10 @@ const BookingContainer = ({ property }) => {
       <p className="note">*You won’t be charged yet</p>
       <hr />
       <Pricing pricing={property.pricing} nights={nights} />
+      <hr />
+      <button className="reserve-btn" onClick={handleAddToContacts}>
+        Add to contact list
+      </button>
     </div>
   );
 };
