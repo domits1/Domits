@@ -20,7 +20,18 @@ const Messages = ({ dashboardType }) => {
 
 
 const MessagesContent = ({ dashboardType }) => {
-    const { userId } = useAuth();
+    let { userId } = useAuth();
+    // Dev-only impersonation to view the other side locally
+    if (typeof window !== 'undefined' && window.location && window.location.hostname === 'localhost') {
+        const params = new URLSearchParams(window.location.search);
+        const devAs = params.get('devAs'); // 'host' | 'guest'
+        if (devAs === 'host' && process.env.REACT_APP_TEST_HOST_ID) {
+            userId = process.env.REACT_APP_TEST_HOST_ID;
+        }
+        if (devAs === 'guest' && process.env.REACT_APP_TEST_GUEST_ID) {
+            userId = process.env.REACT_APP_TEST_GUEST_ID;
+        }
+    }
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [selectedContactName, setSelectedContactName] = useState(null);
     const [message, setMessage] = useState([]);

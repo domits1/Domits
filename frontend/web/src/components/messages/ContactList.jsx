@@ -20,12 +20,14 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const [manualRecipientName, setManualRecipientName] = useState('');
 
     // Prefill helpers for local/test environments
-    const testRecipientId = isHost
-        ? (process.env.REACT_APP_TEST_GUEST_ID || '')
-        : (process.env.REACT_APP_TEST_HOST_ID || '');
-    const testRecipientName = isHost
-        ? (process.env.REACT_APP_TEST_GUEST_NAME || 'Test Guest')
-        : (process.env.REACT_APP_TEST_HOST_NAME || 'Test Host');
+    // Hard-wired defaults for local testing (host<->guest pair)
+    const HARD_HOST_ID = process.env.REACT_APP_TEST_HOST_ID || '00000000-0000-4000-8000-000000000001';
+    const HARD_GUEST_ID = process.env.REACT_APP_TEST_GUEST_ID || '00000000-0000-4000-8000-000000000002';
+    const HARD_HOST_NAME = process.env.REACT_APP_TEST_HOST_NAME || 'Test Host';
+    const HARD_GUEST_NAME = process.env.REACT_APP_TEST_GUEST_NAME || 'Test Guest';
+
+    const testRecipientId = isHost ? HARD_GUEST_ID : HARD_HOST_ID;
+    const testRecipientName = isHost ? HARD_GUEST_NAME : HARD_HOST_NAME;
 
     const labels = {
         contacts: 'Contacts',
@@ -79,6 +81,16 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
             }
         }
     }, [displayType, contacts, pendingContacts, manualRecipientId, testRecipientId, testRecipientName]);
+
+    // If we have a prefilled manual recipient and still no contacts, auto-open the chat
+    useEffect(() => {
+        const currentListLength = (displayType === 'contacts' ? contacts.length : pendingContacts.length);
+        if (currentListLength === 0 && manualRecipientId && onContactClick) {
+            setSelectedContactId(manualRecipientId);
+            onContactClick(manualRecipientId, manualRecipientName || (isHost ? HARD_GUEST_NAME : HARD_HOST_NAME));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [manualRecipientId]);
 
     let contactList = displayType === 'contacts' ? contacts : pendingContacts;
 
