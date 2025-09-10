@@ -16,6 +16,8 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const [automatedSettings, setAutomatedSettings] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortAlphabetically, setSortAlphabetically] = useState(false);
+    const [manualRecipientId, setManualRecipientId] = useState('');
+    const [manualRecipientName, setManualRecipientName] = useState('');
 
     const labels = {
         contacts: 'Contacts',
@@ -121,7 +123,41 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                 {loading ? (
                     <p className={`contact-list-loading-text`}>Loading contacts...</p>
                 ) : contactList.length === 0 ? (
-                    <p className={`contact-list-empty-text`}>{noContactsMessage}</p>
+                    <div>
+                        <p className={`contact-list-empty-text`}>{noContactsMessage}</p>
+                        <div style={{
+                            display: 'grid',
+                            gap: 8,
+                            padding: 8,
+                            border: '1px dashed #d9d9d9',
+                            borderRadius: 8,
+                            maxWidth: 360
+                        }}>
+                            <label style={{ fontWeight: 600 }}>Start a new chat</label>
+                            <input
+                                value={manualRecipientId}
+                                onChange={(e) => setManualRecipientId(e.target.value)}
+                                placeholder={isHost ? 'Guest user ID' : 'Host user ID'}
+                                className="contact-search-input"
+                            />
+                            <input
+                                value={manualRecipientName}
+                                onChange={(e) => setManualRecipientName(e.target.value)}
+                                placeholder="Display name"
+                                className="contact-search-input"
+                            />
+                            <button
+                                onClick={() => {
+                                    if (!manualRecipientId) return;
+                                    handleClick(manualRecipientId, manualRecipientName || 'Conversation');
+                                }}
+                                className="contact-list-side-button"
+                                style={{ justifySelf: 'start', padding: '6px 12px', borderRadius: 6 }}
+                            >
+                                Open chat
+                            </button>
+                        </div>
+                    </div>
                 ) : (
                     contactList
                         .map((contact) => (
