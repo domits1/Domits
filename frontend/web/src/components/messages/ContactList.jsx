@@ -19,6 +19,14 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const [manualRecipientId, setManualRecipientId] = useState('');
     const [manualRecipientName, setManualRecipientName] = useState('');
 
+    // Prefill helpers for local/test environments
+    const testRecipientId = isHost
+        ? (process.env.REACT_APP_TEST_GUEST_ID || '')
+        : (process.env.REACT_APP_TEST_HOST_ID || '');
+    const testRecipientName = isHost
+        ? (process.env.REACT_APP_TEST_GUEST_NAME || 'Test Guest')
+        : (process.env.REACT_APP_TEST_HOST_NAME || 'Test Host');
+
     const labels = {
         contacts: 'Contacts',
         pending: 'Sent requests',
@@ -55,6 +63,22 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
             return updatedContacts;
         });
     }, [message, setContacts]);
+
+    // Auto prefill manual fields in dev/local when there are no contacts
+    useEffect(() => {
+        if (contactList.length === 0 && !manualRecipientId) {
+            const lastRecipient = window.localStorage.getItem('domits_last_manual_recipient');
+            const lastName = window.localStorage.getItem('domits_last_manual_recipient_name');
+            if (lastRecipient) {
+                setManualRecipientId(lastRecipient);
+                if (lastName) setManualRecipientName(lastName);
+            } else if (window.location.hostname === 'localhost' && testRecipientId) {
+                setManualRecipientId(testRecipientId);
+                setManualRecipientName(testRecipientName);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contactList.length]);
 
     let contactList = displayType === 'contacts' ? contacts : pendingContacts;
 
@@ -149,6 +173,8 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                             <button
                                 onClick={() => {
                                     if (!manualRecipientId) return;
+                                    window.localStorage.setItem('domits_last_manual_recipient', manualRecipientId);
+                                    window.localStorage.setItem('domits_last_manual_recipient_name', manualRecipientName || 'Conversation');
                                     handleClick(manualRecipientId, manualRecipientName || 'Conversation');
                                 }}
                                 className="contact-list-side-button"
@@ -156,6 +182,18 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                             >
                                 Open chat
                             </button>
+                            {testRecipientId && (
+                                <button
+                                    onClick={() => {
+                                        setManualRecipientId(testRecipientId);
+                                        setManualRecipientName(testRecipientName);
+                                    }}
+                                    className="contact-list-side-button"
+                                    style={{ justifySelf: 'start', padding: '6px 12px', borderRadius: 6 }}
+                                >
+                                    Use test account
+                                </button>
+                            )}
                         </div>
                     </div>
                 ) : (
