@@ -77,7 +77,6 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                 setManualRecipientName(testRecipientName);
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [contactList.length]);
 
     let contactList = displayType === 'contacts' ? contacts : pendingContacts;
