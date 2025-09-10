@@ -10,7 +10,7 @@ import RevPARCard from './HostRevenueCards/RevPAR.jsx';
 import ADRCard from './HostRevenueCards/ADRCard.jsx';
 import { Auth } from 'aws-amplify';
 import ClipLoader from 'react-spinners/ClipLoader';
-//import BookingTrends from './HostDashboard/HostRevenueCards/BookingTrends.jsx';
+// import BookingTrends from './HostDashboard/HostRevenueCards/BookingTrends.jsx';
 import BookedNights from './HostRevenueCards/BookedNights.jsx';
 // import NightsAvailable from './HostRevenueCards/NightsAvailable.jsx';
 // import ALOSCard from './HostRevenueCards/ALOSCard.jsx';
@@ -35,7 +35,7 @@ const HostRevenues = () => {
         numberOfProperties: 0,
         vsLastMonth: 0,
     });
-    const [setBookedNights] = useState(null);
+    const [bookedNights, setBookedNights] = useState(null);
     const [loadingStates, setLoadingStates] = useState({
         user: true,
         occupancy: false,
@@ -128,6 +128,7 @@ const HostRevenues = () => {
     return (
         
         <main className="hr-page-body hr-container">
+            <h2>Revenues</h2>
             <h2>Revenues</h2>
 
             <section className="hr-host-revenues">
