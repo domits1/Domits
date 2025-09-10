@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAccessToken } from "../../../services/getAccessToken";
+import { getAccessToken } from "../../../../services/getAccessToken";
 import DateSelectionContainer from "./dateSelectionContainer";
 import GuestSelectionContainer from "./guestSelectionContainer";
 import Pricing from "../components/pricing";
