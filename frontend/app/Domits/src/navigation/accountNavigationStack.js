@@ -39,7 +39,7 @@ import GuestReviews from "../screens/guestdashboard/GuestReviewsTab";
 import GuestPaymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
 import HostOnboardingLanding from "../screens/Landing";
 import HostOnboarding from "../features/hostonboarding/screens/HostOnboarding";
-import HostOnboardingCheck from "../features/hostonboarding/views/OnboardingCheck.js";
+import HostOnboardingCheck from "../features/hostonboarding/screens/OnboardingCheck.js";
 import HostDashboard from "../features/hostdashboard/screens/HostDashboardTab";
 import HostCalendar from "../features/hostdashboard/hostcalendar/screens/HostCalendarTab";
 import HostReviews from "../features/hostdashboard/hostreviews/screens/HostReviewsTab";
