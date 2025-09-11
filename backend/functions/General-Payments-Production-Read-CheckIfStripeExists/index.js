@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import "dotenv/config";
 import Database from "database";
-import { stripe_connectedaccounts } from "database/models/User_Table";
+import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 
 
 const client = await Database.getInstance();
@@ -63,41 +63,23 @@ export const handler = async (event) => {
   let bankDetailsProvided = false;
 
   try {
-    // Query DynamoDB for the user's Stripe account
-    const stripeQueryParams = {
-      TableName: "stripe_connected_accounts",
-      IndexName: "UserIdIndex",
-      KeyConditionExpression: "user_id = :userId",
-      ExpressionAttributeValues: {
-        ":userId": userSub,
-      },
-    };
+    const repo = client.getRepository(Stripe_Connected_Accounts);
+    const record = await repo.findOne({ where: { user_id: userSub } });
 
-    const stripeQueryResult = await client.query(stripeQueryParams).promise();
-
-    // Check if the user has a Stripe account
-    hasStripeAccount = Array.isArray(stripeQueryResult.Items) && stripeQueryResult.Items.length > 0;
-
-    if (hasStripeAccount) {
-      accountId = stripeQueryResult.Items[0]?.account_id;
-
-      if (accountId) {
-        // Retrieve account details from Stripe
-        const account = await stripe.accounts.retrieve(accountId);
-
-        // Check if bank account details are provided
-        const requirements = account.requirements || {};
-        if (Array.isArray(requirements.currently_due) && requirements.currently_due.includes("external_account")) {
-          console.log("User needs to provide bank account details.");
-        } else {
-          bankDetailsProvided = true;
-        }
-
-        // Generate a login link for the Stripe account
-        const loginLink = await stripe.accounts.createLoginLink(accountId);
-        loginLinkUrl = loginLink.url;
-      }
+    if (!record) {
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          hasStripeAccount: false,
+          accountId: null,
+          loginLinkUrl: null,
+          bankDetailsProvided: false,
+        }),
+      };
     }
+
+    console.log("Account", record);
 
     // Return success response
     return {

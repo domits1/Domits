@@ -3,7 +3,7 @@ import { handler } from "../../functions/General-Payments-Production-Read-CheckI
 async function main() {
   const event = {
     httpMethod: "POST",
-    body: JSON.stringify({ sub: "TEST-COGNITO-SUB-123" }),
+    body: JSON.stringify({ sub: "f08999d3-697c-44a0-b388-a414178d4c5b" }),
   };
   const res = await handler(event);
   console.log(res);
