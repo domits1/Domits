@@ -66,6 +66,8 @@ export const handler = async (event) => {
     const repo = client.getRepository(Stripe_Connected_Accounts);
     const record = await repo.findOne({ where: { user_id: userSub } });
 
+    console.log("Account", record);
+
     if (!record) {
       return {
         statusCode: 200,
@@ -78,8 +80,6 @@ export const handler = async (event) => {
         }),
       };
     }
-
-    console.log("Account", record);
 
     // Return success response
     return {
