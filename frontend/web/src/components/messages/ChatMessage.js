@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
-    const { userId: senderId, text, createdAt, isRead, isSent, fileUrls } = message;
+    const { userId: senderId, text, createdAt, isRead, isSent, fileUrls, isAutomated, messageType } = message;
     const variant = dashboardType;
 
     const formatDate = (dateString) => {
@@ -13,16 +13,37 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
 
     const [modalImage, setModalImage] = useState(null);
 
+    // Automated message styling
+    const isAutomatedMessage = isAutomated === true;
+    const automatedIcon = isAutomatedMessage ? getAutomatedIcon(messageType) : null;
+
+    function getAutomatedIcon(type) {
+        switch (type) {
+            case 'booking_confirmation': return '🎉';
+            case 'checkin_instructions': return '📋';
+            case 'checkout_instructions': return '🚪';
+            case 'wifi_info': return '📶';
+            case 'feedback_request': return '⭐';
+            default: return '🤖';
+        }
+    }
+
     return (
-        <div className={`${prefix}chat-message-container`}>
-            <div className={`${prefix}chat-message ${isRead ? 'read' : 'unread'} ${isSent ? 'sent' : 'received'}`}>
-                <div className={`message-header`}>
+        <div className={`${prefix}chat-message-container ${isAutomatedMessage ? 'automated-message' : ''}`}>
+            <div className={`${prefix}chat-message ${isRead ? 'read' : 'unread'} ${isSent ? 'sent' : 'received'} ${isAutomatedMessage ? 'automated' : ''}`}>
+                <div className={`message-header ${isAutomatedMessage ? 'automated-header' : ''}`}>
                     <span className={`sender-name`}>
-                        {senderId === userId ? 'You' : contactName}
+                        {isAutomatedMessage ? (
+                            <span className="automated-sender">
+                                {automatedIcon} {senderId === userId ? 'You' : contactName} (Automated)
+                            </span>
+                        ) : (
+                            senderId === userId ? 'You' : contactName
+                        )}
                     </span>
-                    <span className={`message-time`}>{formatDate(createdAt)}</span>
+                    <span className={`message-time ${isAutomatedMessage ? 'automated-time' : ''}`}>{formatDate(createdAt)}</span>
                 </div>
-                <div className={`message-content`}>{text}</div>
+                <div className={`message-content ${isAutomatedMessage ? 'automated-content' : ''}`}>{text}</div>
 
                 {fileUrls?.length > 0 && (
                     <div className={`message-attachments`}>

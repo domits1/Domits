@@ -14,12 +14,12 @@ import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
 
 
-const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, onBack, dashboardType}) => {
+const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, onBack, dashboardType, testMessages = []}) => {
     const isPairRoom = typeof contactId === 'string' && contactId.startsWith('pair:');
     const roomCode = isPairRoom ? contactId.replace('pair:', '') : null;
     const local = useLocalRoomMessages(roomCode || 'default', userId);
     const remote = useFetchMessages(userId);
-    const messages = isPairRoom ? local.messages : remote.messages;
+    const messages = isPairRoom ? local.messages : [...remote.messages, ...testMessages];
     const loading = isPairRoom ? local.loading : remote.loading;
     const error = isPairRoom ? null : remote.error;
     const fetchMessages = isPairRoom ? (() => {}) : remote.fetchMessages;
@@ -54,8 +54,25 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
             const isNew = !addedMessageIds.current.has(msg.id);
 
             if (isRelevant && isNew) {
-                addNewMessage(msg);
+                // Add visual indicator for automated messages
+                const messageWithIndicator = {
+                    ...msg,
+                    isAutomated: msg.isAutomated || false,
+                    messageType: msg.messageType || 'regular'
+                };
+
+                addNewMessage(messageWithIndicator);
                 addedMessageIds.current.add(msg.id);
+
+                // Log automated messages for debugging
+                if (msg.isAutomated) {
+                    console.log('🤖 Automated message received:', {
+                        type: msg.messageType,
+                        from: msg.userId,
+                        to: msg.recipientId,
+                        text: msg.text?.substring(0, 50) + '...'
+                    });
+                }
             }
         });
     }, [wsMessages, userId, contactId]);

@@ -1,19 +1,19 @@
 .host-chat,
 .guest-chat {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    width: 100%;
 
     .chat-screen-container {
         background-color: #fff;
         display: flex;
         flex-direction: column;
         width: 100%;
-        min-width: 40rem;
-        max-width: 40rem;
-        height: 85vh;
+        height: 100%;
         justify-content: start;
-        border-left: 0.05rem rgb(150, 150, 150) solid;
-        border-right: 0.05rem rgb(150, 150, 150) solid;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
 
         .chat-header {
             display: flex;
@@ -346,4 +346,97 @@
         justify-content: center;
     }
 
+}
+
+// Automated Message Styles
+.automated-message {
+    .automated {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: 2px solid #4a5568;
+        border-radius: 12px;
+        position: relative;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid #4a5568;
+        }
+
+        .automated-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px 8px 0 0;
+            padding: 8px 12px;
+
+            .automated-sender {
+                color: #ffffff;
+                font-weight: 600;
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .automated-time {
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 0.75rem;
+            }
+        }
+
+        .automated-content {
+            background: rgba(255, 255, 255, 0.95);
+            color: #2d3748;
+            padding: 12px;
+            border-radius: 0 0 8px 8px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+    }
+}
+
+// For guest dashboard
+.guest-automated-message {
+    .automated {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        border: 2px solid #2f855a;
+        border-radius: 12px;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid #2f855a;
+        }
+
+        .automated-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px 8px 0 0;
+
+            .automated-sender {
+                color: #ffffff;
+                font-weight: 600;
+            }
+
+            .automated-time {
+                color: rgba(255, 255, 255, 0.8);
+            }
+        }
+
+        .automated-content {
+            background: rgba(255, 255, 255, 0.95);
+            color: #2d3748;
+            padding: 12px;
+            border-radius: 0 0 8px 8px;
+        }
+    }
 }

@@ -65,7 +65,7 @@ class BookingService {
 		try {
 			const bookingId = bookingResult.id || bookingResult.bookingId;
 
-			// Schedule check-in instructions (24 hours before arrival)
+			// Schedule check-in instructions (immediately for demo purposes)
 			this.schedulingService.scheduleCheckInInstructions(
 				bookingId,
 				fetchedProperty.hostId,
@@ -75,28 +75,17 @@ class BookingService {
 				bookingInfo
 			);
 
-			// Schedule check-out instructions (2 hours before departure)
+			// Schedule Wi-Fi information (immediately for demo purposes)
+			this.schedulingService.scheduleWifiInfo(
+				bookingId,
+				fetchedProperty.hostId,
+				authenticatedUser.sub,
+				event.identifiers.property_Id,
+				bookingInfo
+			);
+
+			// Schedule check-out instructions (immediately for demo purposes)
 			this.schedulingService.scheduleCheckOutInstructions(
-				bookingId,
-				fetchedProperty.hostId,
-				authenticatedUser.sub,
-				event.identifiers.property_Id,
-				event.general.departureDate,
-				bookingInfo
-			);
-
-			// Schedule reminder (1 week before check-in)
-			this.schedulingService.scheduleReminder(
-				bookingId,
-				fetchedProperty.hostId,
-				authenticatedUser.sub,
-				event.identifiers.property_Id,
-				event.general.arrivalDate,
-				bookingInfo
-			);
-
-			// Schedule feedback request (24 hours after check-out)
-			this.schedulingService.scheduleFeedbackRequest(
 				bookingId,
 				fetchedProperty.hostId,
 				authenticatedUser.sub,

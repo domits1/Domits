@@ -54,42 +54,30 @@ class SchedulingService {
         console.log(`Scheduled ${messageType} message for booking ${id} in ${delayMs}ms`);
     }
 
-    // Schedule check-in instructions (24 hours before arrival)
+    // Schedule check-in instructions (immediately for demo purposes)
     scheduleCheckInInstructions(bookingId, hostId, guestId, propertyId, checkInDate, bookingInfo) {
-        const checkInTime = new Date(checkInDate);
-        const twentyFourHoursBefore = new Date(checkInTime.getTime() - (24 * 60 * 60 * 1000));
-        const now = new Date();
-        const delay = twentyFourHoursBefore.getTime() - now.getTime();
-
-        if (delay > 0) {
-            this.scheduleMessage({
-                id: `${bookingId}_checkin`,
-                hostId,
-                guestId,
-                propertyId,
-                messageType: 'checkin_instructions',
-                bookingInfo
-            }, delay);
-        }
+        // Send immediately (delay of 2 seconds for demo purposes)
+        this.scheduleMessage({
+            id: `${bookingId}_checkin`,
+            hostId,
+            guestId,
+            propertyId,
+            messageType: 'checkin_instructions',
+            bookingInfo
+        }, 2000); // 2 second delay
     }
 
-    // Schedule check-out instructions (2 hours before departure)
+    // Schedule check-out instructions (immediately for demo purposes)
     scheduleCheckOutInstructions(bookingId, hostId, guestId, propertyId, checkOutDate, bookingInfo) {
-        const checkOutTime = new Date(checkOutDate);
-        const twoHoursBefore = new Date(checkOutTime.getTime() - (2 * 60 * 60 * 1000));
-        const now = new Date();
-        const delay = twoHoursBefore.getTime() - now.getTime();
-
-        if (delay > 0) {
-            this.scheduleMessage({
-                id: `${bookingId}_checkout`,
-                hostId,
-                guestId,
-                propertyId,
-                messageType: 'checkout_instructions',
-                bookingInfo
-            }, delay);
-        }
+        // Send immediately (delay of 3 seconds for demo purposes)
+        this.scheduleMessage({
+            id: `${bookingId}_checkout`,
+            hostId,
+            guestId,
+            propertyId,
+            messageType: 'checkout_instructions',
+            bookingInfo
+        }, 3000); // 3 second delay
     }
 
     // Schedule reminder (1 week before check-in)
@@ -109,6 +97,19 @@ class SchedulingService {
                 bookingInfo
             }, delay);
         }
+    }
+
+    // Schedule Wi-Fi information (immediately for demo)
+    scheduleWifiInfo(bookingId, hostId, guestId, propertyId, bookingInfo) {
+        // Send immediately (delay of 1 second for demo purposes)
+        this.scheduleMessage({
+            id: `${bookingId}_wifi`,
+            hostId,
+            guestId,
+            propertyId,
+            messageType: 'wifi_info',
+            bookingInfo
+        }, 1000); // 1 second delay
     }
 
     // Schedule feedback request (24 hours after check-out)
@@ -132,7 +133,7 @@ class SchedulingService {
 
     // Cancel all scheduled messages for a booking
     cancelBookingMessages(bookingId) {
-        const messageTypes = ['_checkin', '_checkout', '_reminder', '_feedback'];
+        const messageTypes = ['_checkin', '_checkout', '_reminder', '_feedback', '_wifi'];
         messageTypes.forEach(type => {
             const taskId = `${bookingId}${type}`;
             if (this.scheduledTasks.has(taskId)) {
