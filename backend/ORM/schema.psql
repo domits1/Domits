@@ -339,13 +339,15 @@ CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_type ON main.property_type
 DROP TABLE IF EXISTS main.stripe_connectedaccounts;
 
 CREATE TABLE IF NOT EXISTS main.stripe_connectedaccounts (
-  id INTEGER NOT NULL,
+  id VARCHAR(255) PRIMARY KEY,
   account_id VARCHAR(255) NOT NULL,
-  created_at VARCHAR(255) NOT NULL,
-  updated_at VARCHAR(255) NOT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
   user_id VARCHAR(255) NOT NULL,
-  PRIMARY KEY (id)
+  CONSTRAINT stripe_connectedaccounts_account_id_unique UNIQUE (account_id),
+  CONSTRAINT stripe_connectedaccounts_user_id_unique UNIQUE (user_id)
 );
+
 CREATE UNIQUE INDEX ASYNC id_UNIQUE_stripe_connected_accounts ON main.stripe_connectedaccounts (id);
 CREATE UNIQUE INDEX ASYNC account_id_UNIQUE_stripe_connected_accounts ON main.stripe_connectedaccounts (account_id);
 CREATE UNIQUE INDEX ASYNC user_id_UNIQUE_stripe_connected_accounts ON main.stripe_connectedaccounts (user_id);
