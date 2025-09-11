@@ -2,8 +2,10 @@ import Stripe from "stripe";
 import "dotenv/config";
 import Database from "database";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
-import { Booking } from "database/models/Booking";
 import { randomUUID } from "crypto";
+import responsejson from "./util/constant/responseheader.json" with { type: 'json' };
+
+const responseHeaderJSON = responsejson
 
 const client = await Database.getInstance();
 
@@ -49,11 +51,7 @@ export async function handler(event) {
       console.log("Account link created:", accountLink.url);
       return {
         statusCode: 200,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "OPTIONS, POST",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
+        headers: responseHeaderJSON,
         body: JSON.stringify({
           message: "Account already exists, redirecting to Stripe onboarding.",
           url: accountLink.url,
@@ -104,11 +102,7 @@ export async function handler(event) {
     console.log("Account link for new account created:", accountLink.url);
     return {
       statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "OPTIONS, POST",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
+      headers: responseHeaderJSON,
       body: JSON.stringify({
         message: "New account created, redirecting to Stripe onboarding.",
         url: accountLink.url,
@@ -118,11 +112,7 @@ export async function handler(event) {
     console.error("Error in handler:", error);
     return {
       statusCode: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "OPTIONS, POST",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
+      headers: responseHeaderJSON,
       body: JSON.stringify({
         message: "Error creating Stripe account or writing to DynamoDB",
         error: error.message,
