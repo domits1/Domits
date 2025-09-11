@@ -21,9 +21,7 @@ import BookingSend from "./features/bookingengine/BookingSend";
 import ValidatePayment from "./features/bookingengine/ValidatePayment";
 import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
-import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
-import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
@@ -197,10 +195,6 @@ function App() {
                 {/* Chat */}
                 {/*<Route path="/chat" element={<Chat/>}/>*/}
                 <Route path="/employeechat" element={<EmployeeChat />} />
-                <Route path="/chatbot" element={<Chatbot />} />
-
-                {/* Host Chatbot */}
-                <Route path="/hostchatbot" element={<Hostchatbot />} />
 
                 {/* Review */}
                 <Route path="/review" element={<ReviewPage />} />
@@ -284,7 +278,6 @@ function App() {
               {renderFooter()}
               {currentPath !== "/admin" && <MenuBar />}
               {renderChatWidget()}
-              <Hostchatbot />
             </div>
           </UserProvider>
         </AuthProvider>
