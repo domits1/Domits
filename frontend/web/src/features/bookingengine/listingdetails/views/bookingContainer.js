@@ -20,28 +20,54 @@ const BookingContainer = ({ property }) => {
   const handleReservePress = useHandleReservePress();
   const navigate = useNavigate();
 
+  const [isInitiatingContact, setIsInitiatingContact] = useState(false);
+
   const handleAddToContacts = async () => {
+    if (isInitiatingContact) return;
+
+    setIsInitiatingContact(true);
     try {
       const token = getAccessToken();
+      if (!token) {
+        alert("Please log in to contact the host.");
+        return;
+      }
+
       const body = {
         hostId: property?.property?.hostId,
         userId: null,
         propertyId: property?.property?.id,
       };
-      const res = await fetch("https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/CreateContactRequest", {
+
+      const res = await fetch("https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Create-WebSocketMessage", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : undefined,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          action: "initiateConversation",
+          hostId: property?.property?.hostId,
+          propertyId: property?.property?.id
+        }),
       });
-      if (!res.ok) throw new Error("Failed to send contact request");
-      alert("Contact request sent. You will be able to chat once accepted.");
-      navigate("/guestdashboard");
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to initiate chat");
+      }
+
+      // Show success message with property info
+      alert(`Chat initiated with host for "${property?.property?.title}". Opening messages.`);
+
+      // Navigate to messages
+      navigate("/guest/messages");
+
     } catch (e) {
-      console.error(e);
-      alert("Could not send contact request. Please try again later.");
+      console.error("Error initiating contact:", e);
+      alert(`Could not send contact request: ${e.message}. Please try again later.`);
+    } finally {
+      setIsInitiatingContact(false);
     }
   };
 
@@ -80,8 +106,12 @@ const BookingContainer = ({ property }) => {
       <hr />
       <Pricing pricing={property.pricing} nights={nights} />
       <hr />
-      <button className="reserve-btn" onClick={handleAddToContacts}>
-        Add to contact list
+      <button
+        className="reserve-btn"
+        onClick={handleAddToContacts}
+        disabled={isInitiatingContact}
+      >
+        {isInitiatingContact ? "Connecting..." : "Add to contact list"}
       </button>
     </div>
   );

@@ -11,6 +11,8 @@ import StripeRepository from "../data/stripeRepository.js";
 import CognitoRepository from "../data/cognitoRepository.js";
 import PropertyRepository from "../data/propertyRepository.js";
 import getHostEmailById from './getHostEmailById.js';
+import AutomatedMessageService from './automatedMessageService.js';
+import SchedulingService from './schedulingService.js';
 
 class BookingService {
 	constructor() {
@@ -20,6 +22,8 @@ class BookingService {
 		this.propertyRepository = new PropertyRepository();
 		this.authManager = new AuthManager();
 		this.getParamsModel = new GetParamsModel();
+		this.automatedMessageService = new AutomatedMessageService();
+		this.schedulingService = new SchedulingService();
 	}
 
 	// -----------
@@ -41,7 +45,73 @@ class BookingService {
 		};
 		await sendEmail(userEmail, hostEmail, bookingInfo);
 
-		return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
+		// Send automated booking confirmation message to host
+		try {
+			await this.automatedMessageService.sendBookingConfirmation(
+				fetchedProperty.hostId,
+				authenticatedUser.sub,
+				event.identifiers.property_Id,
+				bookingInfo
+			);
+			console.log('Automated booking confirmation sent to host');
+		} catch (error) {
+			console.error('Failed to send automated message:', error);
+			// Don't fail the booking if automated message fails
+		}
+
+		const bookingResult = await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
+
+		// Schedule automated messages for the booking
+		try {
+			const bookingId = bookingResult.id || bookingResult.bookingId;
+
+			// Schedule check-in instructions (24 hours before arrival)
+			this.schedulingService.scheduleCheckInInstructions(
+				bookingId,
+				fetchedProperty.hostId,
+				authenticatedUser.sub,
+				event.identifiers.property_Id,
+				event.general.arrivalDate,
+				bookingInfo
+			);
+
+			// Schedule check-out instructions (2 hours before departure)
+			this.schedulingService.scheduleCheckOutInstructions(
+				bookingId,
+				fetchedProperty.hostId,
+				authenticatedUser.sub,
+				event.identifiers.property_Id,
+				event.general.departureDate,
+				bookingInfo
+			);
+
+			// Schedule reminder (1 week before check-in)
+			this.schedulingService.scheduleReminder(
+				bookingId,
+				fetchedProperty.hostId,
+				authenticatedUser.sub,
+				event.identifiers.property_Id,
+				event.general.arrivalDate,
+				bookingInfo
+			);
+
+			// Schedule feedback request (24 hours after check-out)
+			this.schedulingService.scheduleFeedbackRequest(
+				bookingId,
+				fetchedProperty.hostId,
+				authenticatedUser.sub,
+				event.identifiers.property_Id,
+				event.general.departureDate,
+				bookingInfo
+			);
+
+			console.log('Automated messages scheduled for booking:', bookingId);
+		} catch (error) {
+			console.error('Failed to schedule automated messages:', error);
+			// Don't fail the booking if scheduling fails
+		}
+
+		return bookingResult;
 
 	}
 

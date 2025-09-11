@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Pages from "./Pages2";
+import { useNavigate } from "react-router-dom";
 import HostDashboard from "./HostDashboard";
 import HostCalendar from "./HostCalendar";
 import HostReservations from "./HostReservations";
@@ -13,6 +14,7 @@ import HostSettings from "./HostSettings";
 
 function MainDashboardHost(){
     const [activeComponent, setActiveComponent] = useState("Dashboard");
+    const navigate = useNavigate();
 
     function renderComponent(){
         switch (activeComponent){
@@ -42,6 +44,10 @@ function MainDashboardHost(){
     }
 
     const handleNavigation = (componentName) => {
+        if (componentName === "Messages") {
+            navigate('/host/messages');
+            return;
+        }
         setActiveComponent(componentName);
     };
 

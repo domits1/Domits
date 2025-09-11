@@ -111,9 +111,22 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
 
                 <div className="chat-screen">
                     {loading ? (
-                        <p>Loading messages...</p>
+                        <div className="loading-messages">
+                            <div className="loading-spinner"></div>
+                            <p>Loading messages...</p>
+                        </div>
                     ) : error ? (
-                        <p>{error}</p>
+                        <div className="error-message">
+                            <p>⚠️ {error}</p>
+                            <button onClick={() => fetchMessages(contactId)} className="retry-button">
+                                Retry
+                            </button>
+                        </div>
+                    ) : messages.length === 0 ? (
+                        <div className="empty-chat">
+                            <p>👋 Start a conversation with {contactName}</p>
+                            <p className="empty-chat-subtitle">Send your first message below</p>
+                        </div>
                     ) : (
                         messages.map((message) => (
                             <ChatMessage

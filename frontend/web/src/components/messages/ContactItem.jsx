@@ -37,18 +37,36 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
                 <p className="contact-item-full-name">{contact.givenName}</p>
 
                 {!isPending && (
-                    <p className="contact-item-subtitle">
-                        {bookingStatus === "Accepted" && <p id='status'>Reservation approved</p>}
-                        {bookingStatus === "Pending" && <p id='status'>Inquiry sent</p>}
-                        {bookingStatus === "Failed" && <p id='status'>Reservation unsuccessful</p>}
-                        {contact.latestMessage?.text
-                            ? contact.latestMessage.text
-                            : contact.latestMessage?.fileUrls?.length === 1
-                                ? `(${contact.latestMessage?.fileUrls?.length}) Image`
-                                : contact.latestMessage?.fileUrls?.length > 1
-                                    ? `(${contact.latestMessage?.fileUrls?.length}) Images`
-                                    : "No message history yet"}
-                    </p>
+                    <div className="contact-item-message-info">
+                        {bookingStatus && (
+                            <span className={`booking-status ${bookingStatus.toLowerCase()}`}>
+                                {bookingStatus === "Accepted" && "✓ Reservation approved"}
+                                {bookingStatus === "Pending" && "⏳ Inquiry sent"}
+                                {bookingStatus === "Failed" && "✗ Reservation unsuccessful"}
+                            </span>
+                        )}
+                        <div className="latest-message-preview">
+                            <span className="message-text">
+                                {contact.latestMessage?.text
+                                    ? (contact.latestMessage.text.length > 50
+                                        ? `${contact.latestMessage.text.substring(0, 50)}...`
+                                        : contact.latestMessage.text)
+                                    : contact.latestMessage?.fileUrls?.length === 1
+                                        ? "📷 Image"
+                                        : contact.latestMessage?.fileUrls?.length > 1
+                                            ? `📷 ${contact.latestMessage.fileUrls.length} Images`
+                                            : "💬 Start conversation"}
+                            </span>
+                            {contact.latestMessage?.createdAt && (
+                                <span className="message-time">
+                                    {new Date(contact.latestMessage.createdAt).toLocaleDateString()}
+                                </span>
+                            )}
+                        </div>
+                        {contact.unreadCount > 0 && (
+                            <span className="unread-badge">{contact.unreadCount}</span>
+                        )}
+                    </div>
                 )}
 
                 {isPending && setContacts && (

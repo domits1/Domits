@@ -11,6 +11,7 @@ import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
 import CalculateDaysBetweenDates from "./utils/CalculateDifferenceInNights";
+import { getAccessToken } from "../../services/getAccessToken";
 
 const BookingConfirmationOverview = () => {
     const location = useLocation();
@@ -103,6 +104,30 @@ const BookingConfirmationOverview = () => {
                 bookingDetails.AccoID
             );
             setContactAdded(true);
+
+            // Send automated message to guest thread notifying booking confirmed
+            try {
+                const token = getAccessToken();
+                fetch("https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Create-WebSocketMessage", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                    },
+                    body: JSON.stringify({
+                        action: "bookingConfirmed",
+                        hostId: bookingDetails.HostID,
+                        guestId: bookingDetails.GuestID,
+                        propertyId: bookingDetails.AccoID,
+                        checkIn: bookingDetails.arrivalDate,
+                        checkOut: bookingDetails.departureDate,
+                        title: bookingDetails.title
+                    })
+                });
+            } catch (e) {
+                // non-blocking
+                console.warn("Failed to trigger automated booking message");
+            }
         }
     }, [bookingDetails]);
     

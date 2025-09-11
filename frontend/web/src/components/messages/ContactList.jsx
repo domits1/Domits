@@ -6,7 +6,7 @@ import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostCo
 import { FaCog, FaSearch, FaBars } from 'react-icons/fa';
 import AutomatedSettings from './AutomatedSettings';
 
-const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
+const ContactList = ({ userId, onContactClick, message, dashboardType, showPending = true }) => {
     const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId, dashboardType);
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [displayType, setDisplayType] = useState('contacts');
@@ -18,7 +18,7 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const [sortAlphabetically, setSortAlphabetically] = useState(false);
     const [manualRecipientId, setManualRecipientId] = useState('');
     const [manualRecipientName, setManualRecipientName] = useState('');
-    const [pairCode, setPairCode] = useState('');
+    // pairing/direct UI removed per requirements
 
     const localPairCode = useMemo(() => {
         try {
@@ -132,6 +132,18 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     return (
         <div className={`${dashboardType}-contact-list-modal`}>
             <h3>Message dashboard</h3>
+            <div className="dashboard-stats">
+                <div className="stat-item">
+                    <span className="stat-number">{contacts.length}</span>
+                    <span className="stat-label">Active conversations</span>
+                </div>
+                {isHost && (
+                    <div className="stat-item">
+                        <span className="stat-number">{pendingContacts.length}</span>
+                        <span className="stat-label">Pending requests</span>
+                    </div>
+                )}
+            </div>
             <div className={`contact-list-toggle`}>
                 <select
                     value={displayType}
@@ -139,7 +151,7 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                     className="contact-dropdown"
                 >
                     <option value="contacts">{labels.contacts}</option>
-                    <option value="pendingContacts">{labels.pending}</option>
+                    {showPending && <option value="pendingContacts">{labels.pending}</option>}
                 </select>
 
                 <div className="contact-list-side-buttons">
@@ -167,84 +179,8 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
 
             </div>
 
-            {/* Always show quick start/join panel */}
-            <div style={{
-                display: 'grid',
-                gap: 8,
-                padding: 8,
-                border: '1px dashed #d9d9d9',
-                borderRadius: 8,
-                maxWidth: 360,
-                marginTop: 8,
-                marginBottom: 8
-            }}>
-                <label style={{ fontWeight: 600 }}>Start a new chat</label>
-                <div style={{ fontSize: 12, color: '#555' }}>Option A: Pairing code (local demo)</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                        value={pairCode}
-                        onChange={(e) => setPairCode(e.target.value.toUpperCase())}
-                        placeholder="Enter code (e.g., ABC123)"
-                        className="contact-search-input"
-                        style={{ flex: 1 }}
-                    />
-                    <button
-                        onClick={() => {
-                            if (!pairCode) return;
-                            handleClick(`pair:${pairCode}`, `Room ${pairCode}`);
-                        }}
-                        className="contact-list-side-button"
-                        style={{ padding: '6px 12px', borderRadius: 6 }}
-                    >
-                        Join
-                    </button>
-                </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: '#555' }}>Your code:</span>
-                    <code style={{ background: '#f6f6f6', padding: '2px 6px', borderRadius: 4 }}>{localPairCode}</code>
-                </div>
-                <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>
-                    Share this code with the other side on this device to chat locally.
-                </div>
-                <div style={{ height: 12 }} />
-                <div style={{ fontSize: 12, color: '#555' }}>Option B: Direct user ID</div>
-                <input
-                    value={manualRecipientId}
-                    onChange={(e) => setManualRecipientId(e.target.value)}
-                    placeholder={isHost ? 'Guest user ID' : 'Host user ID'}
-                    className="contact-search-input"
-                />
-                <input
-                    value={manualRecipientName}
-                    onChange={(e) => setManualRecipientName(e.target.value)}
-                    placeholder="Display name"
-                    className="contact-search-input"
-                />
-                <button
-                    onClick={() => {
-                        if (!manualRecipientId) return;
-                        window.localStorage.setItem('domits_last_manual_recipient', manualRecipientId);
-                        window.localStorage.setItem('domits_last_manual_recipient_name', manualRecipientName || 'Conversation');
-                        handleClick(manualRecipientId, manualRecipientName || 'Conversation');
-                    }}
-                    className="contact-list-side-button"
-                    style={{ justifySelf: 'start', padding: '6px 12px', borderRadius: 6 }}
-                >
-                    Open chat
-                </button>
-                {testRecipientId && (
-                    <button
-                        onClick={() => {
-                            setManualRecipientId(testRecipientId);
-                            setManualRecipientName(testRecipientName);
-                        }}
-                        className="contact-list-side-button"
-                        style={{ justifySelf: 'start', padding: '6px 12px', borderRadius: 6 }}
-                    >
-                        Use test account
-                    </button>
-                )}
-            </div>
+            {/* Optional quick start/join panel (hidden by default) */}
+            {/* Quick start removed per requirements */}
 
             <ul className={`contact-list-list`}>
                 {loading ? (
