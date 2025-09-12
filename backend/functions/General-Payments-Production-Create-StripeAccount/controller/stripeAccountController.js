@@ -24,7 +24,8 @@ class StripeAccountController {
                 headers: responseHeaderJSON,
                 response: {
                     message: response.message,
-                    url: response.url
+                    url: response.url,
+                    details: response.details
                 },
             };
         } catch (error) {
