@@ -5,7 +5,7 @@ import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Acco
 import { randomUUID } from "crypto";
 import responsejson from "./util/constant/responseheader.json" with { type: 'json' };
 
-const responseHeaderJSON = responsejson
+const responseHeaderJSON = responsejson;
 
 const client = await Database.getInstance();
 
@@ -13,8 +13,11 @@ const client = await Database.getInstance();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 async function getExistingStripeAccount(cognitoUserId) {
-  const repo = client.getRepository(Stripe_Connected_Accounts);
-  const record = await repo.findOne({ where: { user_id: cognitoUserId } });
+  const record = await client
+    .getRepository(Stripe_Connected_Accounts)
+    .createQueryBuilder("stripe_accounts")
+    .where("stripe_accounts.user_id = :user_id", { user_id: cognitoUserId })
+    .getOne();
 
   console.log("Checking for existing Stripe account for cognitoUserId:", cognitoUserId);
 
@@ -25,11 +28,9 @@ async function getExistingStripeAccount(cognitoUserId) {
 }
 
 export async function handler(event) {
-  console.log("Received event:", JSON.stringify(event, null, 2));
-  let body;
 
   try {
-    body = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
     console.log("Parsed Request Body:", body);
 
     const { userEmail, cognitoUserId } = body;
@@ -37,7 +38,7 @@ export async function handler(event) {
       throw new Error("Missing required fields: userEmail or cognitoUserId");
     }
 
-    let stripeAccount = await getExistingStripeAccount(cognitoUserId);
+    const stripeAccount = await getExistingStripeAccount(cognitoUserId);
 
     if (stripeAccount) {
       console.log("Stripe account exists. Creating account link...");
@@ -71,14 +72,6 @@ export async function handler(event) {
 
     const id = randomUUID();
     const currentTime = Date.now();
-    console.log("Inserting new Stripe account record with:", {
-      id,
-      account_id: account.id,
-      user_id: cognitoUserId,
-      created_at: currentTime,
-      updated_at: currentTime,
-    });
-    const client = await Database.getInstance();
     await client
       .createQueryBuilder()
       .insert()
