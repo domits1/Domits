@@ -1,115 +1,22 @@
-import Stripe from "stripe";
-import "dotenv/config";
-import Database from "database";
-import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
-import { randomUUID } from "crypto";
-import responsejson from "./util/constant/responseheader.json" with { type: 'json' };
+import StripeAccountController from "./controller/stripeAccountController.js";
 
-const responseHeaderJSON = responsejson;
+const controller = new StripeAccountController();
 
-const client = await Database.getInstance();
+export const handler = async (event) => {
+  let returnedResponse = {};
 
-// Initialize AWS SDK and Stripe client
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-async function getExistingStripeAccount(cognitoUserId) {
-  const record = await client
-    .getRepository(Stripe_Connected_Accounts)
-    .createQueryBuilder("stripe_accounts")
-    .where("stripe_accounts.user_id = :user_id", { user_id: cognitoUserId })
-    .getOne();
-
-  console.log("Checking for existing Stripe account for cognitoUserId:", cognitoUserId);
-
-  console.log("Existing Stripe account record:", record);
-
-  console.log("Query result:", JSON.stringify(record, null, 2));
-  return record || null;
-}
-
-export async function handler(event) {
-
-  try {
-    const body = JSON.parse(event.body);
-    console.log("Parsed Request Body:", body);
-
-    const { userEmail, cognitoUserId } = body;
-    if (!userEmail || !cognitoUserId) {
-      throw new Error("Missing required fields: userEmail or cognitoUserId");
-    }
-
-    const stripeAccount = await getExistingStripeAccount(cognitoUserId);
-
-    if (stripeAccount) {
-      console.log("Stripe account exists. Creating account link...");
-      const accountLink = await stripe.accountLinks.create({
-        account: stripeAccount.account_id,
-        refresh_url: body.refreshUrl || "https://domits.com/",
-        return_url: body.returnUrl || "https://domits.com/login",
-        type: "account_onboarding",
-      });
-
-      console.log("Account link created:", accountLink.url);
-      return {
-        statusCode: 200,
-        headers: responseHeaderJSON,
-        body: JSON.stringify({
-          message: "Account already exists, redirecting to Stripe onboarding.",
-          url: accountLink.url,
-        }),
-      };
-    }
-
-    console.log("Creating a new Stripe account...");
-    const account = await stripe.accounts.create({
-      type: "express",
-      email: userEmail,
-      capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
-      },
-    });
-
-    const id = randomUUID();
-    const currentTime = Date.now();
-    await client
-      .createQueryBuilder()
-      .insert()
-      .into(Stripe_Connected_Accounts)
-      .values({
-        id: id,
-        account_id: account.id,
-        user_id: cognitoUserId,
-        updated_at: currentTime,
-        created_at: currentTime
-      })
-      .execute();
-
-    const accountLink = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url: body.refreshUrl || "https://domits.com/",
-      return_url: body.returnUrl || "https://domits.com/login",
-      type: "account_onboarding",
-    });
-
-    console.log("Account link for new account created:", accountLink.url);
-    return {
-      statusCode: 200,
-      headers: responseHeaderJSON,
-      body: JSON.stringify({
-        message: "New account created, redirecting to Stripe onboarding.",
-        url: accountLink.url,
-      }),
-    };
-  } catch (error) {
-    console.error("Error in handler:", error);
-    return {
-      statusCode: 500,
-      headers: responseHeaderJSON,
-      body: JSON.stringify({
-        message: "Error creating Stripe account or writing to DynamoDB",
-        error: error.message,
-      }),
-    };
+  // We’re passing the raw event directly to the controller
+  switch (event.httpMethod) {
+    case "POST":
+      returnedResponse = await controller.create(event);
+      break;
+    default:
+      throw new Error("Unable to determine request type. Please contact the Admin.");
   }
-}
+
+  return {
+    statusCode: returnedResponse?.statusCode || 200,
+    headers: returnedResponse?.headers || {},
+    body: JSON.stringify(returnedResponse?.response),
+  };
+};
