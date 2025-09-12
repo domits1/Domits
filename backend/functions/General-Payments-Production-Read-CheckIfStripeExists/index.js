@@ -2,33 +2,18 @@ import Stripe from "stripe";
 import "dotenv/config";
 import Database from "database";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
+import responsejson from "./util/constant/responseheader.json" with { type: 'json' };
+const responseHeaderJSON = responsejson
+
 
 const client = await Database.getInstance();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const handler = async (event) => {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "OPTIONS,POST",
-    "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-    "Access-Control-Allow-Credentials": true,
-  };
 
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ message: "CORS preflight response" }) };
-  }
-
-  // Parse body
-  let requestBody;
-  try {
-    requestBody = event.body ? (typeof event.body === "string" ? JSON.parse(event.body) : event.body) : {};
-  } catch {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: "Invalid request body" }) };
-  }
-
-  const userSub = requestBody.sub || event.sub;
+  const userSub = JSON.parse(event.body).sub;
   if (!userSub) {
-    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: "User sub is required" }) };
+    return { statusCode: 400, headers: responseHeaderJSON, body: JSON.stringify({ error: "User sub is required" }) };
   }
 
   try {
@@ -36,32 +21,34 @@ export const handler = async (event) => {
     const record = await repo.findOne({ where: { user_id: userSub } });
     console.log("Account", record);
 
-    // Niks gevonden in DB
     if (!record) {
       return {
         statusCode: 200,
-        headers: corsHeaders,
+        headers: responseHeaderJSON,
         body: JSON.stringify({
           hasStripeAccount: false,
           accountId: null,
+          onboardingUrl: null,
           loginLinkUrl: null,
           bankDetailsProvided: false,
           onboardingComplete: false,
           chargesEnabled: false,
           payoutsEnabled: false,
+          readyForPayments: false,
         }),
       };
     }
 
-    // Wel gevonden in DB → flags invullen
+    // Record bestaat
     const accountId = record.account_id;
-    let loginLinkUrl = null;
+
     let onboardingComplete = false;
     let chargesEnabled = false;
     let payoutsEnabled = false;
     let bankDetailsProvided = false;
+    let loginLinkUrl = null;
+    let onboardingUrl = null;
 
-    // Haal actuele status op bij Stripe
     try {
       const acct = await stripe.accounts.retrieve(accountId);
       onboardingComplete = acct.details_submitted === true;
@@ -69,13 +56,23 @@ export const handler = async (event) => {
       payoutsEnabled = acct.payouts_enabled === true;
       bankDetailsProvided = (acct.external_accounts?.data?.length || 0) > 0;
 
-      // Login link werkt voor Express/Custom accounts
-      try {
-        const login = await stripe.accounts.createLoginLink(accountId);
-        loginLinkUrl = login.url;
-      } catch (e) {
-        // kan mislukken als geen Express, is niet fataal
-        console.warn("Could not create login link:", e.message);
+      if (!onboardingComplete) {
+        // Belangrijk: zolang onboarding niet af is, geef een verse onboarding link terug
+        const link = await stripe.accountLinks.create({
+          account: accountId,
+          refresh_url: process.env.STRIPE_REFRESH_URL || "https://domits.com/",
+          return_url: process.env.STRIPE_RETURN_URL || "https://domits.com/login",
+          type: "account_onboarding",
+        });
+        onboardingUrl = link.url;
+      } else {
+        // Pas na onboarding: login link
+        try {
+          const login = await stripe.accounts.createLoginLink(accountId);
+          loginLinkUrl = login.url;
+        } catch (e) {
+          console.warn("Could not create login link:", e.message);
+        }
       }
     } catch (e) {
       console.warn("Could not retrieve Stripe account:", e.message);
@@ -83,15 +80,17 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: corsHeaders,
+      headers: responseHeaderJSON,
       body: JSON.stringify({
         hasStripeAccount: true,
         accountId,
+        onboardingUrl,
         loginLinkUrl,
         bankDetailsProvided,
         onboardingComplete,
         chargesEnabled,
         payoutsEnabled,
+        readyForPayments: chargesEnabled && payoutsEnabled,
       }),
     };
   } catch (error) {
