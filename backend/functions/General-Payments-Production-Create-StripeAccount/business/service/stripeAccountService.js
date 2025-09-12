@@ -9,31 +9,27 @@ class StripeAccountService {
   }
 
   async createStripeAccount(event) {
-    const userEmail = event.userEmail;
-    const cognitoUserId = event.cognitoUserId;
+    const { userEmail, cognitoUserId } = event;
     const refreshUrl = event.refreshUrl || "https://domits.com/";
     const returnUrl = event.returnUrl || "https://domits.com/login";
 
     if (!userEmail || !cognitoUserId) {
-      throw new Error("Missing required fields: userEmail or cognitoUserId");
+      return { statusCode: 400, message: "Missing required fields: userEmail or cognitoUserId" };
     }
 
     try {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+      console.log("Existing account:", stripeAccount);
 
-      if (stripeAccount) {
-        console.log("Stripe account exists. Creating account link...");
-        const accountLink = await this.stripe.accountLinks.create({
-          account: stripeAccount.account_id,
-          refresh_url: refreshUrl,
-          return_url: returnUrl,
-          type: "account_onboarding",
-        });
-        console.log("Account link created:", accountLink.url);
+      if (stripeAccount?.account_id) {
+        const status = await this._checkStripeAccountExists(stripeAccount.account_id, refreshUrl, returnUrl);
+
         return {
           statusCode: 200,
-          message: "Account already exists, redirecting to Stripe onboarding.",
-          url: accountLink.url,
+          message: status.onboardingComplete
+            ? "Account onboarded. Redirecting to Stripe Express Dashboard."
+            : "Onboarding not complete. Redirecting to Stripe onboarding.",
+          details: status,
         };
       }
 
@@ -63,7 +59,7 @@ class StripeAccountService {
       return {
         statusCode: 200,
         message: "New account created, redirecting to Stripe onboarding.",
-        url: accountLink.url,
+        details: { accountId: account.id, onboardingUrl: accountLink.url, onboardingComplete: false },
       };
     } catch (error) {
       console.error("Error in createStripeAccount:", error);
@@ -73,6 +69,62 @@ class StripeAccountService {
         error: error.message,
       };
     }
+  }
+
+  async _checkStripeAccountExists(accountId, refreshUrl, returnUrl) {
+    let onboardingComplete = false;
+    let chargesEnabled = false;
+    let payoutsEnabled = false;
+    let bankDetailsProvided = false;
+    let loginLinkUrl = null;
+    let onboardingUrl = null;
+
+    try {
+      const acct = await this.stripe.accounts.retrieve(accountId);
+      onboardingComplete = acct.details_submitted === true;
+      chargesEnabled = acct.charges_enabled === true;
+      payoutsEnabled = acct.payouts_enabled === true;
+      bankDetailsProvided = (acct.external_accounts?.data?.length || 0) > 0;
+
+      if (!onboardingComplete) {
+        const link = await this.stripe.accountLinks.create({
+          account: accountId,
+          refresh_url: refreshUrl,
+          return_url: returnUrl,
+          type: "account_onboarding",
+        });
+        onboardingUrl = link.url;
+      } else {
+        try {
+          const login = await this.stripe.accounts.createLoginLink(accountId);
+          loginLinkUrl = login.url;
+        } catch (e) {
+          console.warn("Could not create login link:", e.message);
+          // optional fallback: create onboarding link again
+          const link = await this.stripe.accountLinks.create({
+            account: accountId,
+            refresh_url: refreshUrl,
+            return_url: returnUrl,
+            type: "account_onboarding",
+          });
+          onboardingUrl = link.url;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not retrieve Stripe account:", e.message);
+    }
+
+    return {
+      hasStripeAccount: true,
+      accountId,
+      onboardingUrl,
+      loginLinkUrl,
+      bankDetailsProvided,
+      onboardingComplete,
+      chargesEnabled,
+      payoutsEnabled,
+      readyForPayments: chargesEnabled && payoutsEnabled && bankDetailsProvided,
+    };
   }
 }
 
