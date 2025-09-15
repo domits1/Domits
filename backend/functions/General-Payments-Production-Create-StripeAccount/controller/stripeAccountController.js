@@ -26,7 +26,6 @@ class StripeAccountController {
         },
       };
     } catch (error) {
-      console.error(error);
       return {
         statusCode: 500,
         headers: responseHeaderJSON,
@@ -51,7 +50,6 @@ class StripeAccountController {
         },
       };
     } catch (error) {
-      console.error(error);
       return {
         statusCode: error.statusCode || 500,
         headers: responseHeaderJSON,
