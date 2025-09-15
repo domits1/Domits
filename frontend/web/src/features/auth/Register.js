@@ -395,3 +395,4 @@ try {
 };
 
 export default Register;
+ 
