@@ -1,6 +1,6 @@
 import { handler } from "../../functions/General-Payments-Production-Create-StripeAccount/index.js";
 
-async function main() {
+async function get() {
   const event = {
     httpMethod: "GET",
     headers: {
@@ -12,4 +12,4 @@ async function main() {
   console.log(res);
 }
 
-main();
+get();
