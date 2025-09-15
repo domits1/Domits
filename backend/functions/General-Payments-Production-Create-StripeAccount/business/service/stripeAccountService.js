@@ -3,7 +3,10 @@ import Stripe from "stripe";
 import { randomUUID } from "crypto";
 import AuthManager from "../../auth/authManager.js";
 
-const getAuth = (event) => { return event.headers.Authorization; };
+const getAuth = (event) => {
+  return event.headers.Authorization;
+};
+const unixNow = () => Math.floor(Date.now() / 1000);
 
 export default class StripeAccountService {
   constructor() {
@@ -44,16 +47,16 @@ export default class StripeAccountService {
       const account = await this.stripe.accounts.create({
         type: "express",
         email: userEmail,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
+        capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
       });
 
-      const id = randomUUID();
-      const currentTime = Math.floor(Date.now() / 1000);
-
-      await this.stripeAccountRepository.insertStripeAccount(id, account.id, cognitoUserId, currentTime, currentTime);
+      await this.stripeAccountRepository.insertStripeAccount(
+        randomUUID(),
+        account.id,
+        cognitoUserId,
+        unixNow(),
+        unixNow()
+      );
 
       const accountLink = await this.stripe.accountLinks.create({
         account: account.id,
@@ -88,7 +91,7 @@ export default class StripeAccountService {
 
   async getStatusOfStripeAccount(event) {
     const token = getAuth(event);
-    const {sub: cognitoUserId} = await this.authManager.authenticateUser(token);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
 
     if (!cognitoUserId) {
       return { statusCode: 400, message: "Missing required field: cognitoUserId" };
@@ -97,7 +100,6 @@ export default class StripeAccountService {
     try {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
-      console.log("Stripe account found:", stripeAccount);
       if (!stripeAccount?.account_id) {
         return {
           statusCode: 404,
@@ -157,7 +159,6 @@ export default class StripeAccountService {
           const login = await this.stripe.accounts.createLoginLink(accountId);
           loginLinkUrl = login.url;
         } catch (error) {
-          console.error("Could not create login link:", error.message);
           const link = await this.stripe.accountLinks.create({
             account: accountId,
             refresh_url: refreshUrl,
