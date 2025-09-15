@@ -59,7 +59,7 @@ export default class StripeAccountService {
         unixNow()
       );
 
-      const accountLink = await this.stripe.accountLinks.create({
+      const onboarding = await this.stripe.accountLinks.create({
         account: account.id,
         refresh_url: this.refreshUrl,
         return_url: this.returnUrl,
@@ -72,7 +72,7 @@ export default class StripeAccountService {
         details: {
           hasStripeAccount: true,
           accountId: account.id,
-          onboardingUrl: accountLink.url,
+          onboardingUrl: onboarding.url,
           loginLinkUrl: null,
           bankDetailsProvided: false,
           onboardingComplete: false,
