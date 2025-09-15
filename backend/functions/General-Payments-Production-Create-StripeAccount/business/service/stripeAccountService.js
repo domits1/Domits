@@ -1,6 +1,7 @@
-import stripeAccountRepository from "../../data/stripeAccountRepository.js";
 import Stripe from "stripe";
 import { randomUUID } from "crypto";
+
+import stripeAccountRepository from "../../data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
 
 const getAuth = (event) => {
