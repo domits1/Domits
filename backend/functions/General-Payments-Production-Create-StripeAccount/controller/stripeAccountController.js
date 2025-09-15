@@ -36,22 +36,11 @@ class StripeAccountController {
   }
 
   // -----------
-  // GET/POST /status (read-only status)
+  // GET 
   // -----------
   async read(event) {
     try {
-      const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body || {};
-      const cognitoUserId = body.cognitoUserId || body.sub || event.sub;
-
-      if (!cognitoUserId) {
-        return {
-          statusCode: 400,
-          headers: responseHeaderJSON,
-          response: { message: "Missing required field: cognitoUserId (or sub)" },
-        };
-      }
-
-      const response = await this.stripeAccountService.getStatusOfStripeAccount(cognitoUserId);
+      const response = await this.stripeAccountService.getStatusOfStripeAccount(event);
 
       return {
         statusCode: response.statusCode || 200,

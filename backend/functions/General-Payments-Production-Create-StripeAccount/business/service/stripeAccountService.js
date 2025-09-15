@@ -83,7 +83,12 @@ class StripeAccountService {
     }
   }
 
-  async getStatusOfStripeAccount(cognitoUserId) {
+  async getStatusOfStripeAccount(event) {
+
+    const authorization = event.headers.Authorization;
+
+    const authenticatedUser = await this.authManager.authenticateUser(authorization);
+    const cognitoUserId = authenticatedUser.sub;
 
     try {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
