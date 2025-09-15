@@ -1,6 +1,7 @@
 import stripeAccountRepository from "../../data/stripeAccountRepository.js";
 import Stripe from "stripe";
 import { randomUUID } from "crypto";
+import AuthManager from "../../auth/authManager.js";
 
 class StripeAccountService {
   constructor() {
@@ -8,10 +9,15 @@ class StripeAccountService {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     this.refreshUrl = process.env.REFRESH_URL;
     this.returnUrl = process.env.RETURN_URL;
+    this.authManager = new AuthManager();
   }
 
   async createStripeAccount(event) {
-    const { userEmail, cognitoUserId } = event;
+    const authorization = event.headers.Authorization;
+
+    const authenticatedUser = await this.authManager.authenticateUser(authorization);
+    const userEmail = authenticatedUser.email;
+    const cognitoUserId = authenticatedUser.sub;
 
     if (!userEmail || !cognitoUserId) {
       return { statusCode: 400, message: "Missing required fields: userEmail or cognitoUserId" };

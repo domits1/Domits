@@ -1,10 +1,12 @@
 import responsejson from "../util/constant/responseheader.json" with { type: 'json' };
 import StripeAccountService from "../business/service/stripeAccountService.js";
 const responseHeaderJSON = responsejson;
+import AuthManager from "../auth/authManager.js";
 
 class StripeAccountController {
   constructor() {
     this.stripeAccountService = new StripeAccountService();
+    this.authManager = new AuthManager();
   }
 
   // -----------
@@ -13,9 +15,7 @@ class StripeAccountController {
 
   async create(event) {
     try {
-      const body = JSON.parse(event.body);
-      const response = await this.stripeAccountService.createStripeAccount(body);
-
+      const response = await this.stripeAccountService.createStripeAccount(event);
       return {
         statusCode: response.statusCode || 200,
         headers: responseHeaderJSON,

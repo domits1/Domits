@@ -1,15 +1,14 @@
 import { handler } from "../../functions/General-Payments-Production-Create-StripeAccount/index.js";
+import { getHostAuthToken } from "../../test/util/getHostAuthToken.js";
 
-async function main() {
-  const event = {
+async function post() {
+  console.log(await handler({
     httpMethod: "POST",
-    body: JSON.stringify({
-      userEmail: "Singhgurpreet14082002@gmail.com",
-      cognitoUserId: "f08999d3-697c-44a0-b388-a414178d4c5b",
-    }),
-  };
-  const res = await handler(event);
-  console.log(res);
+    headers: {
+      Authorization: await getHostAuthToken(), // Replace with your actual token.
+    },
+    body: JSON.stringify({}),
+  }));
 }
 
-main();
+post();
