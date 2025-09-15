@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { randomUUID } from "crypto";
 
-import stripeAccountRepository from "../../data/stripeAccountRepository.js";
+import StripeAccountRepository from "../../data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
 
 const getAuth = (event) => {
@@ -11,11 +11,11 @@ const unixNow = () => Math.floor(Date.now() / 1000);
 
 export default class StripeAccountService {
   constructor() {
-    this.stripeAccountRepository = new stripeAccountRepository();
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     this.refreshUrl = process.env.REFRESH_URL;
     this.returnUrl = process.env.RETURN_URL;
     this.authManager = new AuthManager();
+    this.stripeAccountRepository = new StripeAccountRepository();
   }
 
   async createStripeAccount(event) {
