@@ -27,7 +27,11 @@ class StripeAccountService {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
       if (stripeAccount?.account_id) {
-        const status = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
+        const status = await this.buildStatusForStripeAccount(
+          stripeAccount.account_id,
+          this.refreshUrl,
+          this.returnUrl
+        );
 
         return {
           statusCode: 200,
@@ -84,7 +88,6 @@ class StripeAccountService {
   }
 
   async getStatusOfStripeAccount(event) {
-
     const authorization = event.headers.Authorization;
 
     const authenticatedUser = await this.authManager.authenticateUser(authorization);
@@ -137,7 +140,7 @@ class StripeAccountService {
 
     try {
       const account = await this.stripe.accounts.retrieve(accountId);
-      
+
       onboardingComplete = account.details_submitted === true;
       chargesEnabled = account.charges_enabled === true;
       payoutsEnabled = account.payouts_enabled === true;
