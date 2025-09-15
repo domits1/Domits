@@ -90,6 +90,10 @@ class StripeAccountService {
     const authenticatedUser = await this.authManager.authenticateUser(authorization);
     const cognitoUserId = authenticatedUser.sub;
 
+    if (!cognitoUserId) {
+      return { statusCode: 400, message: "Missing required field: cognitoUserId" };
+    }
+
     try {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
