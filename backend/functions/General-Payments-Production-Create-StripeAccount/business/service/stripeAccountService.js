@@ -32,7 +32,6 @@ class StripeAccountService {
         };
       }
 
-      console.log("Creating a new Stripe account...");
       const account = await this.stripe.accounts.create({
         type: "express",
         email: userEmail,
@@ -54,8 +53,6 @@ class StripeAccountService {
         type: "account_onboarding",
       });
 
-      console.log("New Stripe account", account);
-
       return {
         statusCode: 200,
         message: "New account created, redirecting to Stripe onboarding.",
@@ -72,7 +69,6 @@ class StripeAccountService {
         },
       };
     } catch (error) {
-      console.error("Error in createStripeAccount:", error);
       return {
         statusCode: 500,
         message: "Error creating Stripe account or writing to database",
@@ -112,7 +108,6 @@ class StripeAccountService {
 
       return { statusCode: 200, message, details };
     } catch (error) {
-      console.error("Error in readStripeAccount:", error);
       return { statusCode: 500, message: "Error reading Stripe account status", error: error.message };
     }
   }
