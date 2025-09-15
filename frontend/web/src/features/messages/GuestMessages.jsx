@@ -6,7 +6,7 @@ import { useAuth } from '../hostdashboard/hostmessages/hooks/useAuth';
 import ContactList from '../../components/messages/ContactList';
 import ChatScreen from '../../components/messages/ChatScreen';
 import BookingTab from '../../components/messages/BookingTab';
-import TestAutomatedMessages from '../../components/messages/TestAutomatedMessages';
+import '../hostdashboard/hostmessages/styles/sass/hostMessages.scss';
 
 const GuestMessagesInner = () => {
   const { userId } = useAuth();
@@ -15,7 +15,6 @@ const GuestMessagesInner = () => {
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [testMessages, setTestMessages] = useState([]);
   const isMobile = screenWidth < 768;
-  const isTablet = screenWidth >= 768 && screenWidth < 1440;
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -53,52 +52,53 @@ const GuestMessagesInner = () => {
     }
   };
 
-  const showContactList = isMobile ? !selectedContactId : isTablet ? !selectedContactId : true;
-  const showChatScreen = isMobile ? !!selectedContactId : isTablet ? !!selectedContactId : true;
+  const showContactList = isMobile ? !selectedContactId : true;
+  const showChatScreen = isMobile ? !!selectedContactId : !!selectedContactId;
 
   if (!userId) return <div>Loading user info...</div>;
 
   return (
     <WebSocketProvider userId={userId}>
-      {/* TEMPORARY TEST COMPONENT - Remove after testing */}
-      <TestAutomatedMessages onSendTestMessage={handleTestMessage} />
-
       <div className={`guest-chat-components`}>
         {showContactList && (
-          <ContactList
-            userId={userId}
-            onContactClick={handleContactClick}
-            dashboardType={'guest'}
-            showPending={false}
-            showQuickStart={false}
-          />
+          <div className={`guest-contact-panel`}>
+            <ContactList
+              userId={userId}
+              onContactClick={handleContactClick}
+              dashboardType={'guest'}
+              showPending={false}
+              showQuickStart={false}
+            />
+          </div>
         )}
         {isMobile && selectedContactId && (
           <button onClick={handleBackToContacts} className="ContactsBack-button">
             ← Back to contacts
           </button>
         )}
-        {showChatScreen && (
-          <ChatScreen
-            userId={userId}
-            contactId={selectedContactId}
-            contactName={selectedContactName}
-            onBack={isTablet ? handleBackToContacts : null}
-            dashboardType={'guest'}
-            handleContactListMessage={() => {}}
-            testMessages={testMessages}
-          />
-        )}
-        {showChatScreen && (
-          <div className={`guest-booking-tab-overlay`}>
-            <BookingTab
-              userId={userId}
-              contactId={selectedContactId}
-              contactName={selectedContactName}
-              dashboardType={'guest'}
-            />
-          </div>
-        )}
+        <div className={`guest-chat-panel`}>
+          {showChatScreen && (
+            <>
+              <ChatScreen
+                userId={userId}
+                contactId={selectedContactId}
+                contactName={selectedContactName}
+                onBack={isMobile ? handleBackToContacts : null}
+                dashboardType={'guest'}
+                handleContactListMessage={() => {}}
+                testMessages={testMessages}
+              />
+              <div className={`guest-booking-tab-overlay`}>
+                <BookingTab
+                  userId={userId}
+                  contactId={selectedContactId}
+                  contactName={selectedContactName}
+                  dashboardType={'guest'}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </WebSocketProvider>
   );

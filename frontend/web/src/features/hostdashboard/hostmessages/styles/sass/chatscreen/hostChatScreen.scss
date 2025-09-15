@@ -1,19 +1,19 @@
 .host-chat,
 .guest-chat {
     display: flex;
-    flex-direction: column;
-    width: 100%;
+    flex-direction: row;
 
     .chat-screen-container {
         background-color: #fff;
         display: flex;
         flex-direction: column;
         width: 100%;
-        height: 100%;
+        min-width: 40rem;
+        max-width: 40rem;
+        height: 85vh;
         justify-content: start;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        overflow: hidden;
+        border-left: 0.05rem rgb(150, 150, 150) solid;
+        border-right: 0.05rem rgb(150, 150, 150) solid;
 
         .chat-header {
             display: flex;
