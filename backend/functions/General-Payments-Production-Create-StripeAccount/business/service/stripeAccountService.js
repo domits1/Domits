@@ -6,12 +6,12 @@ class StripeAccountService {
   constructor() {
     this.stripeAccountRepository = new stripeAccountRepository();
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    this.refreshUrl = process.env.REFRESH_URL;
+    this.returnUrl = process.env.RETURN_URL;
   }
 
   async createStripeAccount(event) {
     const { userEmail, cognitoUserId } = event;
-    const refreshUrl = event.refreshUrl || "https://domits.com/";
-    const returnUrl = event.returnUrl || "https://domits.com/login";
 
     if (!userEmail || !cognitoUserId) {
       return { statusCode: 400, message: "Missing required fields: userEmail or cognitoUserId" };
@@ -19,10 +19,9 @@ class StripeAccountService {
 
     try {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
-      console.log("Existing account:", stripeAccount);
 
       if (stripeAccount?.account_id) {
-        const status = await this.buildStatusForStripeAccount(stripeAccount.account_id, refreshUrl, returnUrl);
+        const status = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
 
         return {
           statusCode: 200,
@@ -50,15 +49,16 @@ class StripeAccountService {
 
       const accountLink = await this.stripe.accountLinks.create({
         account: account.id,
-        refresh_url: refreshUrl,
-        return_url: returnUrl,
+        refresh_url: this.refreshUrl,
+        return_url: this.returnUrl,
         type: "account_onboarding",
       });
+
+      console.log("New Stripe account", account);
 
       return {
         statusCode: 200,
         message: "New account created, redirecting to Stripe onboarding.",
-        stripeAccount: account,
         details: {
           hasStripeAccount: true,
           accountId: account.id,
@@ -82,8 +82,6 @@ class StripeAccountService {
   }
 
   async getStatusOfStripeAccount(cognitoUserId) {
-    const refreshUrl = "https://domits.com/";
-    const returnUrl = "https://domits.com/login";
 
     try {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
@@ -107,7 +105,7 @@ class StripeAccountService {
         };
       }
 
-      const details = await this.buildStatusForStripeAccount(stripeAccount.account_id, refreshUrl, returnUrl);
+      const details = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
       const message = details.onboardingComplete
         ? "Account onboarded. Redirecting to Stripe Express Dashboard."
         : "Onboarding not complete. Redirecting to Stripe onboarding.";
@@ -128,11 +126,12 @@ class StripeAccountService {
     let onboardingUrl = null;
 
     try {
-      const acct = await this.stripe.accounts.retrieve(accountId);
-      onboardingComplete = acct.details_submitted === true;
-      chargesEnabled = acct.charges_enabled === true;
-      payoutsEnabled = acct.payouts_enabled === true;
-      bankDetailsProvided = (acct.external_accounts?.data?.length || 0) > 0;
+      const account = await this.stripe.accounts.retrieve(accountId);
+      
+      onboardingComplete = account.details_submitted === true;
+      chargesEnabled = account.charges_enabled === true;
+      payoutsEnabled = account.payouts_enabled === true;
+      bankDetailsProvided = (account.external_accounts?.data?.length || 0) > 0;
 
       if (!onboardingComplete) {
         const link = await this.stripe.accountLinks.create({
