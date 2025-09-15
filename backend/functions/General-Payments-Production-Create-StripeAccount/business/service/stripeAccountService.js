@@ -52,7 +52,7 @@ class StripeAccountService {
       });
 
       const id = randomUUID();
-      const currentTime = Date.now();
+      const currentTime = Math.floor(Date.now() / 1000);
 
       await this.stripeAccountRepository.insertStripeAccount(id, account.id, cognitoUserId, currentTime, currentTime);
 
@@ -100,6 +100,7 @@ class StripeAccountService {
     try {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
+      console.log("Stripe account found:", stripeAccount);
       if (!stripeAccount?.account_id) {
         return {
           statusCode: 404,
@@ -158,8 +159,8 @@ class StripeAccountService {
         try {
           const login = await this.stripe.accounts.createLoginLink(accountId);
           loginLinkUrl = login.url;
-        } catch (e) {
-          console.error("Could not create login link:", e.message);
+        } catch (error) {
+          console.error("Could not create login link:", error.message);
           const link = await this.stripe.accountLinks.create({
             account: accountId,
             refresh_url: refreshUrl,
@@ -169,8 +170,8 @@ class StripeAccountService {
           onboardingUrl = link.url;
         }
       }
-    } catch (e) {
-      console.error("Could not retrieve Stripe account:", e.message);
+    } catch (error) {
+      return { statusCode: 500, message: "Could not retrieve Stripe account:", error: error.message };
     }
 
     return {
