@@ -10,6 +10,9 @@ export const handler = async (event) => {
     case "POST":
       returnedResponse = await controller.create(event);
       break;
+    case "GET":
+      returnedResponse = await controller.read(event);
+      break;
     default:
       throw new Error("Unable to determine request type. Please contact the Admin.");
   }

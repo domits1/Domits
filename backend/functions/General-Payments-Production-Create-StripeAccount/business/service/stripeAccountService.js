@@ -22,7 +22,7 @@ class StripeAccountService {
       console.log("Existing account:", stripeAccount);
 
       if (stripeAccount?.account_id) {
-        const status = await this._checkStripeAccountExists(stripeAccount.account_id, refreshUrl, returnUrl);
+        const status = await this.buildStatusForStripeAccount(stripeAccount.account_id, refreshUrl, returnUrl);
 
         return {
           statusCode: 200,
@@ -55,11 +55,21 @@ class StripeAccountService {
         type: "account_onboarding",
       });
 
-      console.log("Account link for new account created:", accountLink.url);
       return {
         statusCode: 200,
         message: "New account created, redirecting to Stripe onboarding.",
-        details: { accountId: account.id, onboardingUrl: accountLink.url, onboardingComplete: false },
+        stripeAccount: account,
+        details: {
+          hasStripeAccount: true,
+          accountId: account.id,
+          onboardingUrl: accountLink.url,
+          loginLinkUrl: null,
+          bankDetailsProvided: false,
+          onboardingComplete: false,
+          chargesEnabled: false,
+          payoutsEnabled: false,
+          readyForPayments: false,
+        },
       };
     } catch (error) {
       console.error("Error in createStripeAccount:", error);
@@ -71,7 +81,45 @@ class StripeAccountService {
     }
   }
 
-  async _checkStripeAccountExists(accountId, refreshUrl, returnUrl) {
+  async getStatusOfStripeAccount(cognitoUserId) {
+    const refreshUrl = "https://domits.com/";
+    const returnUrl = "https://domits.com/login";
+
+    try {
+      const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+
+      if (!stripeAccount?.account_id) {
+        return {
+          statusCode: 404,
+          message: "No Stripe account has been found, please create one",
+          stripeAccount: stripeAccount,
+          details: {
+            hasStripeAccount: false,
+            accountId: null,
+            onboardingUrl: null,
+            loginLinkUrl: null,
+            bankDetailsProvided: false,
+            onboardingComplete: false,
+            chargesEnabled: false,
+            payoutsEnabled: false,
+            readyForPayments: false,
+          },
+        };
+      }
+
+      const details = await this.buildStatusForStripeAccount(stripeAccount.account_id, refreshUrl, returnUrl);
+      const message = details.onboardingComplete
+        ? "Account onboarded. Redirecting to Stripe Express Dashboard."
+        : "Onboarding not complete. Redirecting to Stripe onboarding.";
+
+      return { statusCode: 200, message, details };
+    } catch (error) {
+      console.error("Error in readStripeAccount:", error);
+      return { statusCode: 500, message: "Error reading Stripe account status", error: error.message };
+    }
+  }
+
+  async buildStatusForStripeAccount(accountId, refreshUrl, returnUrl) {
     let onboardingComplete = false;
     let chargesEnabled = false;
     let payoutsEnabled = false;
@@ -99,8 +147,7 @@ class StripeAccountService {
           const login = await this.stripe.accounts.createLoginLink(accountId);
           loginLinkUrl = login.url;
         } catch (e) {
-          console.warn("Could not create login link:", e.message);
-          // optional fallback: create onboarding link again
+          console.error("Could not create login link:", e.message);
           const link = await this.stripe.accountLinks.create({
             account: accountId,
             refresh_url: refreshUrl,
@@ -111,7 +158,7 @@ class StripeAccountService {
         }
       }
     } catch (e) {
-      console.warn("Could not retrieve Stripe account:", e.message);
+      console.error("Could not retrieve Stripe account:", e.message);
     }
 
     return {
