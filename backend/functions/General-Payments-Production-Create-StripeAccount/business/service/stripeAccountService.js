@@ -85,8 +85,7 @@ export default class StripeAccountService {
     } catch (error) {
       return {
         statusCode: 500,
-        message: "Error creating Stripe account or writing to database",
-        error: error.message,
+        message: error.message || "Error creating Stripe account or writing to database",
       };
     }
   }
@@ -99,18 +98,18 @@ export default class StripeAccountService {
       throw new BadRequestException("Missing required field: cognitoUserId");
     }
 
-      const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
-      if (!stripeAccount?.account_id) {
-        throw new NotFoundException("No Stripe account has been found, please create one first.");
-      }
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account has been found, please create one first.");
+    }
 
-      const details = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
-      const message = details.onboardingComplete
-        ? "Account onboarded. Redirecting to Stripe Express Dashboard."
-        : "Onboarding not complete. Redirecting to Stripe onboarding.";
+    const details = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
+    const message = details.onboardingComplete
+      ? "Account onboarded. Redirecting to Stripe Express Dashboard."
+      : "Onboarding not complete. Redirecting to Stripe onboarding.";
 
-      return { statusCode: 200, message, details };
+    return { statusCode: 200, message, details };
   }
 
   async buildStatusForStripeAccount(accountId, refreshUrl, returnUrl) {
