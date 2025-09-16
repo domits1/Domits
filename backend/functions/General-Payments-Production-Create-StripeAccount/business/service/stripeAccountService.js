@@ -29,70 +29,55 @@ export default class StripeAccountService {
       throw new BadRequestException("Missing required fields: userEmail or cognitoUserId");
     }
 
-    try {
-      const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
-      if (stripeAccount?.account_id) {
-        const status = await this.buildStatusForStripeAccount(
-          stripeAccount.account_id,
-          this.refreshUrl,
-          this.returnUrl
-        );
-
-        return {
-          statusCode: 200,
-          message: status.onboardingComplete
-            ? "Account onboarded. Redirecting to Stripe Express Dashboard."
-            : "Onboarding not complete. Redirecting to Stripe onboarding.",
-          details: status,
-        };
-      }
-
-      const account = await this.stripe.accounts.create({
-        type: "express",
-        email: userEmail,
-        capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
-      });
-
-      const result = await this.stripeAccountRepository.insertStripeAccount(
-        randomUUID(),
-        account.id,
-        cognitoUserId,
-        unixNow(),
-        unixNow()
-      );
-
-      if (!result) {
-        throw new DatabaseException("Failed to insert new Stripe account record into the database.");
-      }
-
-      const onboarding = await this.stripe.accountLinks.create({
-        account: account.id,
-        refresh_url: this.refreshUrl,
-        return_url: this.returnUrl,
-        type: "account_onboarding",
-      });
+    if (stripeAccount?.account_id) {
+      const status = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
 
       return {
-        statusCode: 202,
-        message: "New account created, redirecting to Stripe onboarding.",
-        details: {
-          hasStripeAccount: true,
-          accountId: account.id,
-          onboardingUrl: onboarding.url,
-          loginLinkUrl: null,
-          bankDetailsProvided: false,
-          onboardingComplete: false,
-          chargesEnabled: false,
-          payoutsEnabled: false,
-        },
-      };
-    } catch (error) {
-      return {
-        statusCode: 500,
-        message: error.message || "Error creating Stripe account or writing to database",
+        statusCode: 200,
+        message: status.onboardingComplete
+          ? "Account onboarded. Redirecting to Stripe Express Dashboard."
+          : "Onboarding not complete. Redirecting to Stripe onboarding.",
+        details: status,
       };
     }
+
+    const account = await this.stripe.accounts.create({
+      type: "express",
+      email: userEmail,
+      capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
+    });
+
+    await this.stripeAccountRepository.insertStripeAccount(
+      randomUUID(),
+      account.id,
+      cognitoUserId,
+      unixNow(),
+      unixNow()
+    );
+
+    const onboarding = await this.stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: this.refreshUrl,
+      return_url: this.returnUrl,
+      type: "account_onboarding",
+    });
+
+    return {
+      statusCode: 202,
+      message: "New account created, redirecting to Stripe onboarding.",
+      details: {
+        hasStripeAccount: true,
+        accountId: account.id,
+        onboardingUrl: onboarding.url,
+        loginLinkUrl: null,
+        bankDetailsProvided: false,
+        onboardingComplete: false,
+        chargesEnabled: false,
+        payoutsEnabled: false,
+      },
+    };
   }
 
   async getStatusOfStripeAccount(event) {
