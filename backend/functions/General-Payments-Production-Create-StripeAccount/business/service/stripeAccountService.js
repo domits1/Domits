@@ -6,9 +6,7 @@ import AuthManager from "../../auth/authManager.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 
-const getAuth = (event) => {
-  return event.headers.Authorization;
-};
+const getAuth = (event) =>  event.headers.Authorization;
 const unixNow = () => Math.floor(Date.now() / 1000);
 
 export default class StripeAccountService {
