@@ -5,6 +5,7 @@ import StripeAccountRepository from "../../data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { DatabaseException } from "../../../PropertyHandler/util/exception/DatabaseException.js";
 
 const getAuth = (event) => {
   return event.headers.Authorization;
@@ -53,13 +54,17 @@ export default class StripeAccountService {
         capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
       });
 
-      await this.stripeAccountRepository.insertStripeAccount(
+      const result = await this.stripeAccountRepository.insertStripeAccount(
         randomUUID(),
         account.id,
         cognitoUserId,
         unixNow(),
         unixNow()
       );
+
+      if (!result) {
+        throw new DatabaseException("Failed to insert new Stripe account record into the database.");
+      }
 
       const onboarding = await this.stripe.accountLinks.create({
         account: account.id,
