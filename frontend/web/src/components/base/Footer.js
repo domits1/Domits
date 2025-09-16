@@ -185,16 +185,7 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="footer-links"
                 >
-                  2013 AS, Haarlem
-                </a>
-              </li>
-              <li className="footer-links">
-                <a
-                  href="https://maps.google.com/?q=2013+AS+Haarlem+Kinderhuissingel+6-K"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="footer-links"
-                >
+                  2013 AS, Haarlem <br />
                   Kinderhuissingel 6-K
                 </a>
               </li>

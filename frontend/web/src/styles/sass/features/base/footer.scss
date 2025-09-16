@@ -2,7 +2,7 @@
 $primary-color: var(--primary-color);
 $footer-bg: #f8f8f8;
 $footer-text-color: #000;
-$footer-link-size: 1rem;
+$footer-link-size: clamp(0.9rem, 0.85rem + 0.2vw, 1rem);
 $footer-icon-size: 2.5rem;
 $footer-icon-radius: 0.5rem;
 $footer-padding: 15px;
@@ -17,7 +17,7 @@ $breakpoint-sm: 480px;
 .main-footer {
   background-color: $footer-bg;
   position: relative;
-  z-index: 1000;
+  z-index: 950;
 
   .footer-content {
     margin: auto;
@@ -54,17 +54,42 @@ $breakpoint-sm: 480px;
     overflow: visible;
     white-space: normal;
   }
+  // .footer-links {
+  //     color: $footer-text-color;
+  //     font-size: $footer-link-size;
+  //     font-weight: $footer-font-light;
+  //     line-height: $footer-line-height;
 
-  .footer-links {
-    color: $footer-text-color;
-    font-size: $footer-link-size;
-    font-weight: $footer-font-light;
-    line-height: $footer-line-height;
-
-    > a {
+  //     /* apply base link styles */
+    a.footer-links,
+    .footer-links a,
+    .footer-links {
+      color: $footer-text-color;
+      font-size: $footer-link-size;
+      font-weight: $footer-font-light;
+      line-height: $footer-line-height;
       text-decoration: none;
-      margin-left: 3px;
+      padding: auto; // remove if you don't want it on every case
     }
+
+    /* visited and interactive states */
+    a.footer-links:visited,
+    .footer-links a:visited {
+      color: $footer-text-color;
+    }
+
+    a.footer-links:hover,
+    .footer-links a:hover,
+    a.footer-links:focus-visible,
+    .footer-links a:focus-visible {
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
+      text-decoration-color: lightgreen;
+      text-decoration-thickness: 2px;
+    }
+
+  // }
+
 
     @media screen and (max-width: $breakpoint-sm) {
       font-size: 0.9rem;
@@ -113,10 +138,11 @@ $breakpoint-sm: 480px;
     a {
       display: inline;
       margin-left: 20px;
-      text-decoration-line: underline;
+      text-decoration: none;
 
       &:hover {
         text-decoration: underline;
+        //color: lightgreen;
       }
 
       @media screen and (max-width: $breakpoint-sm) {
@@ -151,4 +177,3 @@ $breakpoint-sm: 480px;
       }
     }
   }
-}
