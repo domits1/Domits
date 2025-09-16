@@ -20,6 +20,16 @@ export default class StripeAccountService {
     this.stripeAccountRepository = new StripeAccountRepository();
   }
 
+  async createOnboardingLink(accountId) {
+    const link = await this.stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: this.refreshUrl,
+      return_url: this.returnUrl,
+      type: "account_onboarding",
+    });
+    return link.url;
+  }
+
   async createStripeAccount(event) {
     const token = getAuth(event);
     const { email: userEmail, sub: cognitoUserId } = await this.authManager.authenticateUser(token);
@@ -31,7 +41,7 @@ export default class StripeAccountService {
     const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
     if (stripeAccount?.account_id) {
-      const status = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
+      const status = await this.buildStatusForStripeAccount(stripeAccount.account_id);
 
       return {
         statusCode: 200,
@@ -56,12 +66,7 @@ export default class StripeAccountService {
       unixNow()
     );
 
-    const onboarding = await this.stripe.accountLinks.create({
-      account: account.id,
-      refresh_url: this.refreshUrl,
-      return_url: this.returnUrl,
-      type: "account_onboarding",
-    });
+    const onboardingUrl = await this.createOnboardingLink(account.id);
 
     return {
       statusCode: 202,
@@ -69,7 +74,7 @@ export default class StripeAccountService {
       details: {
         hasStripeAccount: true,
         accountId: account.id,
-        onboardingUrl: onboarding.url,
+        onboardingUrl: onboardingUrl,
         loginLinkUrl: null,
         bankDetailsProvided: false,
         onboardingComplete: false,
@@ -77,6 +82,16 @@ export default class StripeAccountService {
         payoutsEnabled: false,
       },
     };
+  }
+
+  async createLoginLinkOrOnboarding(accountId) {
+    try {
+      const login = await this.stripe.accounts.createLoginLink(accountId);
+      return { loginLinkUrl: login.url, onboardingUrl: null };
+    } catch {
+      const onboardingUrl = await this.createOnboardingLink(accountId);
+      return { loginLinkUrl: null, onboardingUrl };
+    }
   }
 
   async getStatusOfStripeAccount(event) {
@@ -93,7 +108,7 @@ export default class StripeAccountService {
       throw new NotFoundException("No Stripe account has been found, please create one first.");
     }
 
-    const details = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
+    const details = await this.buildStatusForStripeAccount(stripeAccount.account_id);
     const message = details.onboardingComplete
       ? "Account onboarded. Redirecting to Stripe Express Dashboard."
       : "Onboarding not complete. Redirecting to Stripe onboarding.";
@@ -101,7 +116,7 @@ export default class StripeAccountService {
     return { statusCode: 200, message, details };
   }
 
-  async buildStatusForStripeAccount(accountId, refreshUrl, returnUrl) {
+  async buildStatusForStripeAccount(accountId) {
     let onboardingComplete = false;
     let chargesEnabled = false;
     let payoutsEnabled = false;
@@ -118,29 +133,14 @@ export default class StripeAccountService {
       bankDetailsProvided = (account.external_accounts?.data?.length || 0) > 0;
 
       if (!onboardingComplete) {
-        const link = await this.stripe.accountLinks.create({
-          account: accountId,
-          refresh_url: refreshUrl,
-          return_url: returnUrl,
-          type: "account_onboarding",
-        });
-        onboardingUrl = link.url;
+        onboardingUrl = await this.createOnboardingLink(accountId);
       } else {
-        try {
-          const login = await this.stripe.accounts.createLoginLink(accountId);
-          loginLinkUrl = login.url;
-        } catch (error) {
-          const link = await this.stripe.accountLinks.create({
-            account: accountId,
-            refresh_url: refreshUrl,
-            return_url: returnUrl,
-            type: "account_onboarding",
-          });
-          onboardingUrl = link.url;
-        }
+        const links = await this.createLoginLinkOrOnboarding(accountId);
+        loginLinkUrl = links.loginLinkUrl;
+        onboardingUrl = links.onboardingUrl;
       }
     } catch (error) {
-      return { statusCode: 500, message: error.message || "Could not retrieve Stripe account:"};
+      throw new NotFoundException("Stripe account could not be retrieved, please contact support.");
     }
 
     return {
