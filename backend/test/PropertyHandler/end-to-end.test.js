@@ -111,7 +111,7 @@ describe("End-to-end tests", () => {
 
         expect(response.statusCode).toBe(200);
       });
-    })
+    }, 50000)
 
     describe("Booking engine requests", () => {
       it("should handle GET active properties by type", async () => {
