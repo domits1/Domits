@@ -5,7 +5,6 @@ import StripeAccountRepository from "../../data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
-import { DatabaseException } from "../../../PropertyHandler/util/exception/DatabaseException.js";
 
 const getAuth = (event) => {
   return event.headers.Authorization;
@@ -141,7 +140,7 @@ export default class StripeAccountService {
         }
       }
     } catch (error) {
-      return { statusCode: 500, message: "Could not retrieve Stripe account:", error: error.message };
+      return { statusCode: 500, message: error.message || "Could not retrieve Stripe account:"};
     }
 
     return {
