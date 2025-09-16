@@ -1,15 +1,17 @@
 import { handler } from "../../functions/General-Payments-Production-Create-StripeAccount/index.js";
+import { getHostAuthToken } from "../../test/util/getHostAuthToken.js";
 
 async function get() {
-  const event = {
-    httpMethod: "GET",
-    headers: {
-      Authorization: await getAccessToken(), // Replace with your actual token.
-    },
-    body: JSON.stringify({}),
-  };
-  const res = await handler(event);
-  console.log(res);
+  console.log(
+    await handler({
+      httpMethod: "GET",
+      path: "/retrieve-stripe-account",
+      resource: "/retrieve-stripe-account",
+      headers: {
+        Authorization: getHostAuthToken(),
+      },
+    })
+  );
 }
 
 get();
