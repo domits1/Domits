@@ -8,7 +8,7 @@ async function post() {
       path: "/create-stripe-account",
       resource: "/create-stripe-account",
       headers: {
-        Authorization: getHostAuthToken(),
+        Authorization: await getHostAuthToken(),
       },
     })
   );
