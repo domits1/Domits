@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import StripeAccountRepository from "../../data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
+import { BadRequestException } from "../../util/exception/badRequestException.js";
 
 const getAuth = (event) => {
   return event.headers.Authorization;
@@ -24,7 +25,7 @@ export default class StripeAccountService {
     const { email: userEmail, sub: cognitoUserId } = await this.authManager.authenticateUser(token);
 
     if (!userEmail || !cognitoUserId) {
-      return { statusCode: 400, message: "Missing required fields: userEmail or cognitoUserId" };
+      throw new NotFoundException("Missing required fields: userEmail or cognitoUserId");
     }
 
     try {
@@ -95,7 +96,7 @@ export default class StripeAccountService {
     const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
 
     if (!cognitoUserId) {
-      throw new NotFoundException("Missing required field: cognitoUserId");
+      throw new BadRequestException("Missing required field: cognitoUserId");
     }
 
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
