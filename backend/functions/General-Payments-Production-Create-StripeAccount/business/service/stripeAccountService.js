@@ -102,20 +102,7 @@ export default class StripeAccountService {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
       if (!stripeAccount?.account_id) {
-        return {
-          statusCode: 404,
-          message: "No Stripe account has been found, please create one",
-          details: {
-            hasStripeAccount: false,
-            accountId: null,
-            onboardingUrl: null,
-            loginLinkUrl: null,
-            bankDetailsProvided: false,
-            onboardingComplete: false,
-            chargesEnabled: false,
-            payoutsEnabled: false,
-          },
-        };
+        return new NotFoundException("No Stripe account has been found, please create one first.");
       }
 
       const details = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
