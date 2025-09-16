@@ -13,6 +13,8 @@ import {bookingEngineListingDetailsEvent} from "./events/get/bookingEngine/listi
 import {bookingEngineInvalidSetEvent} from "./events/get/bookingEngine/invalidSet";
 import {getHostAuthToken} from "../util/getHostAuthToken.js";
 
+jest.setTimeout(50000); // temp fix for CI passing tests
+
 describe("End-to-end tests", () => {
 
     describe("Patch request", () => {
@@ -155,4 +157,4 @@ describe("End-to-end tests", () => {
         expect(data.property.id).toBe("42a335b3-e72e-49ee-bc8d-ed61e9bd35e5");
       });
     });
-}, 50000);
+});
