@@ -28,7 +28,9 @@ class StripeAccountController {
       return {
         statusCode: error.statusCode || 500,
         headers: responseHeaderJSON,
-        message: error.message || "Something went wrong, please contact support.",
+        response: {
+          message: error.message || "Something went wrong, please contact support.",
+        }
       };
     }
   }
