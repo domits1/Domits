@@ -140,8 +140,6 @@ export default class StripeAccountService {
     try {
       const account = await this.stripe.accounts.retrieve(accountId);
 
-      console.log("Stripe Account Details:", account);
-
       onboardingComplete = account.details_submitted === true;
       chargesEnabled = account.charges_enabled === true;
       payoutsEnabled = account.payouts_enabled === true;
