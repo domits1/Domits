@@ -2,7 +2,7 @@ import Database from "database";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 import "dotenv/config";
   
-class StripeAccountRepository {
+export default class StripeAccountRepository {
   constructor() {}
 
   async getExistingStripeAccount(cognitoUserId) {
@@ -12,11 +12,11 @@ class StripeAccountRepository {
       .createQueryBuilder("stripe_accounts")
       .where("stripe_accounts.user_id = :user_id", { user_id: cognitoUserId })
       .getOne();
-      
+
     return record;
   }
 
-  async insertStripeAccount(id, accountId, cognitoUserId, currentTime, updatedAt) {
+  async insertStripeAccount(id, accountId, cognitoUserId, createdAt, updatedAt) {
     const client = await Database.getInstance();
     await client
       .createQueryBuilder()
@@ -26,11 +26,9 @@ class StripeAccountRepository {
         id: id,
         account_id: accountId,
         user_id: cognitoUserId,
-        created_at: currentTime,
-        updated_at: updatedAt
+        created_at: createdAt,
+        updated_at: updatedAt,
       })
       .execute();
   }
 }
-
-export default StripeAccountRepository;
