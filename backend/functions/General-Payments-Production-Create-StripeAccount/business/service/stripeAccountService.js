@@ -72,14 +72,8 @@ export default class StripeAccountService {
       statusCode: 202,
       message: "New account created, redirecting to Stripe onboarding.",
       details: {
-        hasStripeAccount: true,
         accountId: account.id,
         onboardingUrl: onboardingUrl,
-        loginLinkUrl: null,
-        bankDetailsProvided: false,
-        onboardingComplete: false,
-        chargesEnabled: false,
-        payoutsEnabled: false,
       },
     };
   }
@@ -127,9 +121,9 @@ export default class StripeAccountService {
     try {
       const account = await this.stripe.accounts.retrieve(accountId);
 
-      onboardingComplete = account.details_submitted === true;
-      chargesEnabled = account.charges_enabled === true;
-      payoutsEnabled = account.payouts_enabled === true;
+      onboardingComplete = account.details_submitted;
+      chargesEnabled = account.charges_enabled;
+      payoutsEnabled = account.payouts_enabled;
       bankDetailsProvided = (account.external_accounts?.data?.length || 0) > 0;
 
       if (!onboardingComplete) {
@@ -144,7 +138,6 @@ export default class StripeAccountService {
     }
 
     return {
-      hasStripeAccount: true,
       accountId,
       onboardingUrl,
       loginLinkUrl,
