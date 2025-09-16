@@ -7,6 +7,8 @@ import ContactList from '../../components/messages/ContactList';
 import ChatScreen from '../../components/messages/ChatScreen';
 import BookingTab from '../../components/messages/BookingTab';
 import '../hostdashboard/hostmessages/styles/sass/hostMessages.scss';
+import Navbar from '../../components/base/navbar';
+import Pages from '../guestdashboard/Pages';
 
 const GuestMessagesInner = () => {
   const { userId } = useAuth();
@@ -14,6 +16,7 @@ const GuestMessagesInner = () => {
   const [selectedContactName, setSelectedContactName] = useState(null);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [testMessages, setTestMessages] = useState([]);
+  const [selectedContactAvatar, setSelectedContactAvatar] = useState(null);
   const isMobile = screenWidth < 768;
 
   useEffect(() => {
@@ -22,9 +25,10 @@ const GuestMessagesInner = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleContactClick = (contactId, contactName) => {
+  const handleContactClick = (contactId, contactName, profileImage) => {
     setSelectedContactId(contactId);
     setSelectedContactName(contactName);
+    setSelectedContactAvatar(profileImage || null);
   };
 
   const handleBackToContacts = () => {
@@ -52,6 +56,36 @@ const GuestMessagesInner = () => {
     }
   };
 
+  const handleSendAutomatedTestMessages = () => {
+    if (!selectedContactId) {
+      alert('Select a conversation first.');
+      return;
+    }
+
+    const automated = [
+      {
+        text: `👋 Welcome! Thanks for booking. I'm here to help with anything you need.`,
+        createdAt: new Date().toISOString(),
+        isAutomated: true,
+        messageType: 'host_property_welcome'
+      },
+      {
+        text: `📍 Check-in is flexible. Share your ETA and I’ll prepare accordingly.`,
+        createdAt: new Date(Date.now() + 500).toISOString(),
+        isAutomated: true,
+        messageType: 'checkin_instructions'
+      },
+      {
+        text: `📶 Wi‑Fi details will be in the guidebook on arrival.`,
+        createdAt: new Date(Date.now() + 1000).toISOString(),
+        isAutomated: true,
+        messageType: 'wifi_info'
+      }
+    ];
+
+    automated.forEach((m) => handleTestMessage(m));
+  };
+
   const showContactList = isMobile ? !selectedContactId : true;
   const showChatScreen = isMobile ? !!selectedContactId : !!selectedContactId;
 
@@ -62,6 +96,12 @@ const GuestMessagesInner = () => {
       <div className={`guest-chat-components`}>
         {showContactList && (
           <div className={`guest-contact-panel`}>
+            {/* Left navigation menu */}
+            <div style={{ width: '15rem' }}>
+              <Pages onNavigate={() => {}} />
+            </div>
+
+            {/* Contact list */}
             <ContactList
               userId={userId}
               onContactClick={handleContactClick}
@@ -76,6 +116,13 @@ const GuestMessagesInner = () => {
             ← Back to contacts
           </button>
         )}
+        {selectedContactId && (
+          <div style={{ padding: '6px 10px' }}>
+            <button onClick={handleSendAutomatedTestMessages} className="ContactsBack-button">
+              🤖 Send automated test messages
+            </button>
+          </div>
+        )}
         <div className={`guest-chat-panel`}>
           {showChatScreen && (
             <>
@@ -83,6 +130,7 @@ const GuestMessagesInner = () => {
                 userId={userId}
                 contactId={selectedContactId}
                 contactName={selectedContactName}
+                contactAvatar={selectedContactAvatar}
                 onBack={isMobile ? handleBackToContacts : null}
                 dashboardType={'guest'}
                 handleContactListMessage={() => {}}
@@ -100,6 +148,7 @@ const GuestMessagesInner = () => {
           )}
         </div>
       </div>
+      <Navbar isLoggedIn={!!userId} />
     </WebSocketProvider>
   );
 };

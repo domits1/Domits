@@ -3,7 +3,7 @@ import { WebSocketContext } from '../../features/hostdashboard/hostmessages/cont
 import useFetchContacts from '../../features/hostdashboard/hostmessages/hooks/useFetchContacts';
 import ContactItem from './ContactItem';
 import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
-import { FaCog, FaSearch, FaBars } from 'react-icons/fa';
+import { FaCog, FaSearch, FaBars, FaPlus } from 'react-icons/fa';
 import AutomatedSettings from './AutomatedSettings';
 
 const ContactList = ({ userId, onContactClick, message, dashboardType, showPending = true }) => {
@@ -18,6 +18,9 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
     const [sortAlphabetically, setSortAlphabetically] = useState(false);
     const [manualRecipientId, setManualRecipientId] = useState('');
     const [manualRecipientName, setManualRecipientName] = useState('');
+    const [showCreateTest, setShowCreateTest] = useState(false);
+    const [testName, setTestName] = useState('Test Host');
+    const [testAvatarDataUrl, setTestAvatarDataUrl] = useState('');
     // pairing/direct UI removed per requirements
 
     const localPairCode = useMemo(() => {
@@ -124,9 +127,9 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
 
     const noContactsMessage = displayType === 'contacts' ? labels.noContacts : labels.noPending;
 
-    const handleClick = (contactId, contactName) => {
+    const handleClick = (contactId, contactName, profileImage) => {
         setSelectedContactId(contactId);
-        onContactClick?.(contactId, contactName);
+        onContactClick?.(contactId, contactName, profileImage);
     };
 
     return (
@@ -166,6 +169,7 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
                     {isHost && (
                         <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
                     )}
+                    <FaPlus className={`contact-list-side-button`} title="Create test contact" onClick={() => setShowCreateTest(true)} />
 
                 </div>
 
@@ -174,6 +178,54 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
                 {automatedSettings && (
                     <AutomatedSettings
                         setAutomatedSettings={setAutomatedSettings} />
+                )}
+
+                {showCreateTest && (
+                    <div className="automated-settings-modal">
+                        <div className="top-bar">
+                            <h2>Create test contact</h2>
+                            <button onClick={() => setShowCreateTest(false)}>Close</button>
+                        </div>
+                        <div className="settings-body" style={{ display: 'block', padding: '1rem' }}>
+                            <div style={{ marginBottom: '0.5rem' }}>
+                                <label>Name</label>
+                                <input type="text" value={testName} onChange={(e) => setTestName(e.target.value)} style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '8px' }} />
+                            </div>
+                            <div style={{ marginBottom: '0.75rem' }}>
+                                <label>Profile image (optional)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files && e.target.files[0];
+                                        if (!file) { setTestAvatarDataUrl(''); return; }
+                                        const reader = new FileReader();
+                                        reader.onload = () => setTestAvatarDataUrl(reader.result);
+                                        reader.readAsDataURL(file);
+                                    }}
+                                    style={{ display: 'block', marginTop: '6px' }}
+                                />
+                                {testAvatarDataUrl && (
+                                    <img src={testAvatarDataUrl} alt="Preview" style={{ marginTop: '8px', width: '64px', height: '64px', objectFit: 'cover', borderRadius: '50%', border: '1px solid #e5e7eb' }} />
+                                )}
+                            </div>
+                            <button onClick={() => {
+                                const id = `test-${Date.now()}`;
+                                const newContact = {
+                                    userId: id,
+                                    recipientId: id,
+                                    givenName: testName || 'Test Contact',
+                                    accoImage: null,
+                                    profileImage: testAvatarDataUrl || null,
+                                    latestMessage: { text: 'Test contact created', createdAt: new Date().toISOString() },
+                                };
+                                setContacts(prev => [newContact, ...prev]);
+                                setShowCreateTest(false);
+                                setTestName('Test Host');
+                                setTestAvatarDataUrl('');
+                            }} className="dropdownLoginButton">Create</button>
+                        </div>
+                    </div>
                 )}
 
 
@@ -193,7 +245,7 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
                             <li
                                 key={contact.userId}
                                 className={`contact-list-list-item ${displayType === 'pendingContacts' ? 'disabled' : ''}`}
-                                onClick={() => displayType !== 'pendingContacts' && handleClick(contact.recipientId, contact.givenName)}
+                                onClick={() => displayType !== 'pendingContacts' && handleClick(contact.recipientId, contact.givenName, contact.profileImage)}
                             >
                                 <ContactItem
                                     contact={contact}

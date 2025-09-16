@@ -11,6 +11,11 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
 
     const prefix = variant === 'guest' ? 'guest-' : '';
 
+    // Determine direction: prefer actual sender vs current user, fall back to legacy isSent flag
+    const isOutgoingBySender = senderId ? senderId === userId : null;
+    const isOutgoing = (isOutgoingBySender !== null) ? isOutgoingBySender : !!isSent;
+    const directionClass = isOutgoing ? 'sent' : 'received';
+
     const [modalImage, setModalImage] = useState(null);
 
     // Automated message styling
@@ -30,7 +35,7 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
 
     return (
         <div className={`${prefix}chat-message-container ${isAutomatedMessage ? 'automated-message' : ''}`}>
-            <div className={`${prefix}chat-message ${isRead ? 'read' : 'unread'} ${isSent ? 'sent' : 'received'} ${isAutomatedMessage ? 'automated' : ''}`}>
+            <div className={`${prefix}chat-message ${isRead ? 'read' : 'unread'} ${directionClass} ${isAutomatedMessage ? 'automated' : ''}`}>
                 <div className={`message-header ${isAutomatedMessage ? 'automated-header' : ''}`}>
                     <span className={`sender-name`}>
                         {isAutomatedMessage ? (

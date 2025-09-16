@@ -4,7 +4,7 @@
     flex-direction: row;
 
     .chat-screen-container {
-        background-color: #fff;
+        background: linear-gradient(180deg, #f7fafc 0%, #ffffff 60%);
         display: flex;
         flex-direction: column;
         width: 100%;
@@ -14,6 +14,7 @@
         justify-content: start;
         border-left: 0.05rem rgb(150, 150, 150) solid;
         border-right: 0.05rem rgb(150, 150, 150) solid;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
 
         .chat-header {
             display: flex;
@@ -21,6 +22,7 @@
             margin: 0 auto;
             margin-top: 1rem;
             border-bottom: 0.05rem solid rgb(150, 150, 150);
+            align-items: center;
 
             .back-to-contacts-button {
                 background: none;
@@ -60,6 +62,32 @@
                 margin: 0;
                 padding: 0;
             }
+
+            .chat-header-actions {
+                margin-left: auto;
+                margin-right: 1rem;
+            }
+
+            .automated-test-button {
+                background: #1f8f2b;
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                padding: 6px 10px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: transform 0.05s ease, box-shadow 0.2s ease;
+                box-shadow: 0 2px 8px rgba(31, 143, 43, 0.25);
+
+                &:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(31, 143, 43, 0.3);
+                }
+
+                &:active {
+                    transform: translateY(0);
+                }
+            }
         }
 
         .chat-screen {
@@ -67,6 +95,8 @@
             flex-direction: column-reverse;
             height: 100%;
             overflow-y: auto;
+            position: relative;
+            background: #f7fafc; // clean, pattern-free background
 
             .chat-message.received {
                 margin-bottom: 1rem;
@@ -81,14 +111,16 @@
                 }
 
                 .message-content {
-                    background-color: rgb(196, 230, 197);
-                    color: black;
+                    background-color: #f8fafc; // light gray/near white
+                    color: #111827; // gray-900
                     display: inline-block;
-                    border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
+                    border-radius: 1.125rem; // ~18px
+                    padding: 0.5rem 0.9rem;
                     margin-right: auto;
                     max-width: 70%;
                     word-wrap: break-word;
+                    border: 1px solid #e5e7eb;
+                    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
                 }
 
                 .message-attachments {
@@ -109,14 +141,16 @@
                 }
 
                 .message-content {
-                    background-color: rgb(91, 126, 158);
-                    color: black;
+                    background-color: #f8fafc; // light gray/near white
+                    color: #111827; // gray-900
                     display: inline-block;
-                    border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
+                    border-radius: 1.125rem;
+                    padding: 0.5rem 0.9rem;
                     margin-right: auto;
                     max-width: 70%;
                     word-wrap: break-word;
+                    border: 1px solid #e5e7eb;
+                    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
                 }
 
                 .message-attachments {
@@ -141,15 +175,16 @@
 
                 .message-content {
                     display: inline-block;
-                    background-color: rgb(91, 126, 158);
-
-                    color: black;
-                    border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
+                    background-color: #e0f2fe; // softer light blue
+                    color: #0b1320; // dark text for contrast
+                    border: 1px solid #bae6fd; // subtle blue border
+                    border-radius: 1.125rem;
+                    padding: 0.6rem 1rem;
                     text-align: right;
                     margin-left: auto;
                     max-width: 70%;
                     word-wrap: break-word;
+                    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
                 }
 
                 .message-attachments {
@@ -174,14 +209,16 @@
 
                 .message-content {
                     display: inline-block;
-                    background-color: rgb(196, 230, 197);
-                    color: black;
-                    border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
+                    background-color: #e0f2fe;
+                    color: #0b1320;
+                    border: 1px solid #bae6fd;
+                    border-radius: 1.125rem;
+                    padding: 0.6rem 1rem;
                     text-align: right;
                     margin-left: auto;
                     max-width: 70%;
                     word-wrap: break-word;
+                    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
                 }
 
                 .message-attachments {
@@ -265,13 +302,13 @@
         }
 
         .sender-name {
-            font-size: 0.9rem;
-            color: grey;
+            font-size: 0.8rem;
+            color: #6b7280; // gray-500
         }
 
         .message-time {
-            font-size: 0.9rem;
-            color: grey;
+            font-size: 0.75rem;
+            color: #94a3b8; // slate-400
         }
 
         .message-attachments {
@@ -351,30 +388,22 @@
 // Automated Message Styles
 .automated-message {
     .automated {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: 2px solid #4a5568;
-        border-radius: 12px;
-        position: relative;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        position: static;
 
         &::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: 20px;
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-bottom: 8px solid #4a5568;
+            display: none;
         }
 
         .automated-header {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px 8px 0 0;
+            background: transparent;
+            border-radius: 0;
             padding: 8px 12px;
 
             .automated-sender {
-                color: #ffffff;
+                color: #374151; // gray-700
                 font-weight: 600;
                 font-size: 0.9rem;
                 display: flex;
@@ -383,18 +412,18 @@
             }
 
             .automated-time {
-                color: rgba(255, 255, 255, 0.8);
+                color: #6b7280; // gray-500
                 font-size: 0.75rem;
             }
         }
 
         .automated-content {
-            background: rgba(255, 255, 255, 0.95);
-            color: #2d3748;
+            background: #e5e7eb; // gray bubble to match received style
+            color: #111827;
             padding: 12px;
-            border-radius: 0 0 8px 8px;
+            border-radius: 12px;
             line-height: 1.5;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
     }
 }
@@ -402,41 +431,25 @@
 // For guest dashboard
 .guest-automated-message {
     .automated {
-        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-        border: 2px solid #2f855a;
-        border-radius: 12px;
+        background: transparent;
+        border: none;
+        border-radius: 0;
 
-        &::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: 20px;
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-bottom: 8px solid #2f855a;
-        }
+        &::before { display: none; }
 
         .automated-header {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px 8px 0 0;
+            background: transparent;
+            border-radius: 0;
 
-            .automated-sender {
-                color: #ffffff;
-                font-weight: 600;
-            }
-
-            .automated-time {
-                color: rgba(255, 255, 255, 0.8);
-            }
+            .automated-sender { color: #374151; font-weight: 600; }
+            .automated-time { color: #6b7280; }
         }
 
         .automated-content {
-            background: rgba(255, 255, 255, 0.95);
-            color: #2d3748;
+            background: #e5e7eb;
+            color: #111827;
             padding: 12px;
-            border-radius: 0 0 8px 8px;
+            border-radius: 12px;
         }
     }
 }

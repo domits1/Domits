@@ -1,5 +1,5 @@
 import useUpdateContactRequest from '../../features/hostdashboard/hostmessages/hooks/useUpdateContactRequest';
-import profileImage from './domits-logo.jpg';
+import fallbackProfileImage from './domits-logo.jpg';
 
 
 const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashboardType }) => {
@@ -7,6 +7,7 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
     const { updateContactRequest } = useUpdateContactRequest(setContacts);
     const accoImage = contact.accoImage;
     const bookingStatus = contact.bookingStatus;
+    const profileSrc = contact.profileImage || fallbackProfileImage;
 
     const handleAccept = async () => {
         try {
@@ -30,7 +31,7 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
                 {accoImage && (
                     <img src={accoImage} alt="Accommodation" className="contact-item-accommodation-image" />
                 )}
-                <img src={profileImage} alt="Profile" className="contact-item-profile-image" />
+                <img src={profileSrc} alt="Profile" className="contact-item-profile-image" />
             </div>
 
             <div className="contact-item-text-container">

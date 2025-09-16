@@ -14,7 +14,7 @@ import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
 
 
-const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, onBack, dashboardType, testMessages = []}) => {
+const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleContactListMessage, onBack, dashboardType, testMessages = []}) => {
     const isPairRoom = typeof contactId === 'string' && contactId.startsWith('pair:');
     const roomCode = isPairRoom ? contactId.replace('pair:', '') : null;
     const local = useLocalRoomMessages(roomCode || 'default', userId);
@@ -44,6 +44,45 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
             fetchMessages(contactId);
         }
     }, [userId, contactId, fetchMessages]);
+
+    const handleSendAutomatedTestMessages = () => {
+        if (!contactId) return;
+
+        const automated = [
+            {
+                id: uuidv4(),
+                userId: contactId, // from other side
+                recipientId: userId, // to me
+                text: `👋 Welcome! Thanks for booking. I'm here to help with anything you need.`,
+                createdAt: new Date().toISOString(),
+                isSent: false,
+                isAutomated: true,
+                messageType: 'host_property_welcome',
+            },
+            {
+                id: uuidv4(),
+                userId: contactId, // from other side
+                recipientId: userId, // to me
+                text: `📍 Check-in is flexible. Share your ETA and I’ll prepare accordingly.`,
+                createdAt: new Date(Date.now() + 500).toISOString(),
+                isSent: false,
+                isAutomated: true,
+                messageType: 'checkin_instructions',
+            },
+            {
+                id: uuidv4(),
+                userId: contactId, // from other side
+                recipientId: userId, // to me
+                text: `📶 Wi‑Fi details will be in the guidebook on arrival.`,
+                createdAt: new Date(Date.now() + 1000).toISOString(),
+                isSent: false,
+                isAutomated: true,
+                messageType: 'wifi_info',
+            },
+        ];
+
+        automated.forEach((m) => addNewMessage(m));
+    };
 
     useEffect(() => {
         wsMessages.forEach((msg) => {
@@ -119,10 +158,20 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
                             <FaArrowLeft />
                         </button>
                     )}
-                    <img src={profileImage} alt={contactName} className="profile-img" />
+                    <img src={contactAvatar || profileImage} alt={contactName} className="profile-img" />
                     <div className="chat-header-info">
                         <h3>{contactName}</h3>
                         <p>Translation on</p>
+                    </div>
+                    <div className="chat-header-actions">
+                        <button
+                            type="button"
+                            className="automated-test-button"
+                            onClick={handleSendAutomatedTestMessages}
+                            title="Send automated test messages"
+                        >
+                            🤖 Test messages
+                        </button>
                     </div>
                 </div>
 
