@@ -12,11 +12,7 @@ const propertyFormData = {
         updatedAt: -1
     },
     propertyAmenities: [
-        {
-            id: "",
-            property_id: "",
-            amenityId: ""
-        }
+
     ],
     propertyAvailability: [
         {
