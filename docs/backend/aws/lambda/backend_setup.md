@@ -3,23 +3,26 @@
 ## Overview
 
 **AWS Architecture for Domits V2:**
+
 ![Screenshot 2024-10-01 at 14 11 21](https://github.com/user-attachments/assets/9c9bc39d-46d9-4daa-9d5d-0faa7926b3cb)
 
-Lamba functions are a vital part of our infrastructure within Domits. It allows us to write code without thinking of servers, aka: Serverless code.
+Lamba functions are a vital part of our infrastructure within Domits. It allows us to write code without thinking of servers, serverless code.
 
-That is why Domits makes use of AWS Lambda. Previously, we used to deploy code within our browser on the AWS Console. This has changed, to ensure quality control, avoid breaking production code, by writing and testing Lambda code in your IDE. In this doc you will be walked through the process of:
+That is why Domits makes use of AWS Lambda. Previously, we used to deploy code within our browser on the AWS Console. This has changed, to ensure quality control, avoid breaking production code, by writing and testing Lambda code in your IDE. 
+
+In this doc you will be walked through the process of:
 
 ## Table of contents
 
 <!--ts-->
-   * [Prerequisites](#Prerequisites) - Pre-setup before continuing.
-   * [Create a Lambda Function](#1) - How to deploy a new function or connect a existing one.
-     * [Create a new Lambda Function](#1) - With a NPM package + template
-     * [Add/Migrate a existing Lambda Function](#1) - Using a already existing function from AWS Console.
-   * [Coding your Function](#1) - Best way to understand the structure and code your function.
-   * [Running your Function](#1) - Using Node.js to run your function
-   * [Writing Tests for your function](#1) - Using Jest's framework to test your functions and guarantee stability in your code.
-   * [Tips to use while programming](#1) - General tips from the contributors of this doc.
+   * [Prerequisites](#prerequisites) - Pre-setup before continuing.
+   * [Create a Lambda Function](#create-a-lambda-function) - How to deploy a new function or connect a existing one.
+     * [Create a new Lambda Function](#create-a-new-lambda-function) - With a NPM package + template
+     * [Add/Migrate a existing Lambda Function](#addmigrate-a-existing-lambda-function) - Using a already existing function from AWS Console.
+   * [Coding your Function](#coding-your-function) - Best way to understand the structure and code your function.
+   * [Running your Function](#running-your-function) - Using Node.js to run your function
+   * [Writing Tests for your function](#writing-tests-for-your-function) - Using Jest's framework to test your functions and guarantee stability in your code.
+   * [Tips to use while programming](#tips-to-use-while-programming) - General tips from the contributors of this doc.
 <!--te-->
 
 
@@ -42,7 +45,7 @@ Before continuing, ensure your machine has done those steps. If not, what are yo
       6.  Keep Step 3 open. Now open your Terminal
 
 4. In the awscli terminal, enter `aws configure`. Fill in the following:
-```PS
+```bash
 AWS Access Key ID [Enter the Access Key from Step 3 on your browser]:
 AWS Secret Access Key [Enter the Secret Key from Step 3 on your browser]:
 Default region name [eu-north-1]:
@@ -169,8 +172,18 @@ However, this import has a invalid location and will strike a [ERR_MODULE_NOT_FO
 > Now is a good idea to know how HTTP Status codes work. These are vital for your function to communicate as a API towards the frontend. [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status) documents this very well.
 
 # Writing Tests for your function
-When your function is made, it will automatically create a folder in /backend/test. Here, a template test is used.
-## What kind of tests are there? 
+When your function is made, it will automatically create a folder in /backend/test. Here, a template test is created.
+
+There are different types of way to test a code. To dive into the most used ones:
+
+* End-To-End Testing - Tests the entire flow from request to response.
+* Unit Tests - Tests individual functions or modules in isolation.
+* Intregration Tests - Tests how multiple parts work together (Invoke lambda, write to S3, verify existance.)
+
+Those are the most used ones. There are way more, but I believe that this is sufficient enough.
+
+To write tests, I recommend taking a look at [Jest's Documentation](https://jestjs.io/docs/api) and take the current examples of existing functions
+(Property-Handler, General-Bookings-CRUD-Bookings-develop).
 
 # Tips to use while programming
 
