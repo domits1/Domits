@@ -1,4 +1,7 @@
+**Main issue: [#501](https://github.com/domits1/Domits/issues/501)**
+
 # Core information
+
 For naming concerns, we refer to reservations in the front-end and booking in the back-end. In the lambda function, both keywords booking and reservations are used, but that has to be one name to ensure naming consistency. This is planned to be changed to that.
 
 Also, remember that the Class Diagram and Sequence Diagram design and is not 100% accurate to what exists currently. This is bound to be updated soon.
@@ -6,36 +9,32 @@ Also, remember that the Class Diagram and Sequence Diagram design and is not 100
 The host for a booking needs to have their account connected with Stripe.
 The total calculation for an booking is as followed: `const total = totalRoomRate + responseData.pricing.cleaning + responseData.pricing.service`
 
-## Main issue: [#501](https://github.com/domits1/Domits/issues/501)
-
 # Core functionality
+
 The CRUD is responsible for 4 tasks, which are:
 1. Make bookings and put them in the database 
-2. Read bookings for host dashboard
-3. Read bookings for guest dashboard
-4. Remove bookings for host dashboard
+2. Read bookings for host dashboard and guest dashboard
+3. Edit bookings for the create process
+4. Remove bookings (probably won't be done.)
 
 All API requests will go through this lambda function (General-Bookings-CRUD-Bookings-develop), and that will determine which function is suited for which task.
 
-...
-
 # Security
-Authorization will use your access_token. 
+
+Authorization will use your access_token.
+
 *How to grab your access token?*
 
-1. Head to domits.com
+1. Head to domits.com, acceptance.domits.com or if you're running localhost, localhost
 2. Open the Dev console (CTRL+SHIFT+I)
 3. Click the application tab, copy the token from **CognitoIdentityServiceProvider**.xxxxxxxxxxxxxxxx...**accessToken**
 4. Copy and paste this into your request as header (If you're using Postman or any API application to invoke the request, be aware that the accessToken resets every hour.)
 
-...
-
-# Architectural pattern
-...
 
 # API Information
 The API used is an REST api called: Booking-API-Develop
-...
+
+You can check it out [Here](https://eu-north-1.console.aws.amazon.com/apigateway/main/apis/92a7z9y2m5/resources?api=92a7z9y2m5&region=eu-north-1&routes=jwqjok3).
 
 # Class diagram
 ![ReservationsCRUD drawio](https://github.com/user-attachments/assets/a2d0b969-836d-4ee3-8931-6aedc80742be)
