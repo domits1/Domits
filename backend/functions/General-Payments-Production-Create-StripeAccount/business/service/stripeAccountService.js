@@ -67,7 +67,7 @@ export default class StripeAccountService {
       });
 
       return {
-        statusCode: 200,
+        statusCode: 202,
         message: "New account created, redirecting to Stripe onboarding.",
         details: {
           hasStripeAccount: true,
