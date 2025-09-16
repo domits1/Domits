@@ -95,14 +95,13 @@ export default class StripeAccountService {
     const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
 
     if (!cognitoUserId) {
-      return { statusCode: 400, message: "Missing required field: cognitoUserId" };
+      throw new NotFoundException("Missing required field: cognitoUserId");
     }
 
-    try {
       const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
       if (!stripeAccount?.account_id) {
-        return new NotFoundException("No Stripe account has been found, please create one first.");
+        throw new NotFoundException("No Stripe account has been found, please create one first.");
       }
 
       const details = await this.buildStatusForStripeAccount(stripeAccount.account_id, this.refreshUrl, this.returnUrl);
@@ -111,9 +110,6 @@ export default class StripeAccountService {
         : "Onboarding not complete. Redirecting to Stripe onboarding.";
 
       return { statusCode: 200, message, details };
-    } catch (error) {
-      return { statusCode: 500, message: "Error reading Stripe account status", error: error.message };
-    }
   }
 
   async buildStatusForStripeAccount(accountId, refreshUrl, returnUrl) {
