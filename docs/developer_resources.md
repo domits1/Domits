@@ -1,5 +1,5 @@
 
-This page serves as a shared hub of resources and references found useful by developers at Domits, offering value for both project work and individual developer growth.
+# This page serves as a shared hub of resources and references found useful by developers at Domits, offering value for both project work and individual developer growth.
 
 ## Git
 
@@ -19,7 +19,7 @@ Version control is the backbone of teamwork and solo projects. These resources h
 ## Documentation
 
 Documentation is your **survival manual**. These resources make it easier to find reliable references and cheat sheets fast.
-
+* [Official React Website](https://react.dev/) – Direct from the React team; the most accurate source.
 * [MDN Web Docs](https://developer.mozilla.org/en-US/) – Gold-standard docs for HTML, CSS, and JavaScript.
 * [Schema and naming](https://schema.org/docs/schemas.html) - Structured information on how to name
 * [Javascript.info](https://javascript.info/) – A modern deep-dive tutorial, from basics to advanced OOP.
