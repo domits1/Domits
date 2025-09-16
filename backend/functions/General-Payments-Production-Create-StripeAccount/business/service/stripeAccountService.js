@@ -78,7 +78,6 @@ export default class StripeAccountService {
           onboardingComplete: false,
           chargesEnabled: false,
           payoutsEnabled: false,
-          readyForPayments: false,
         },
       };
     } catch (error) {
@@ -115,7 +114,6 @@ export default class StripeAccountService {
             onboardingComplete: false,
             chargesEnabled: false,
             payoutsEnabled: false,
-            readyForPayments: false,
           },
         };
       }
@@ -141,6 +139,8 @@ export default class StripeAccountService {
 
     try {
       const account = await this.stripe.accounts.retrieve(accountId);
+
+      console.log("Stripe Account Details:", account);
 
       onboardingComplete = account.details_submitted === true;
       chargesEnabled = account.charges_enabled === true;
@@ -182,7 +182,6 @@ export default class StripeAccountService {
       onboardingComplete,
       chargesEnabled,
       payoutsEnabled,
-      readyForPayments: chargesEnabled && payoutsEnabled && bankDetailsProvided,
     };
   }
 }
