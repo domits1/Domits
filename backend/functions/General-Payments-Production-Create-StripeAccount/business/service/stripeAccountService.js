@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 
 import StripeAccountRepository from "../../data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
+import { NotFoundException } from "../../util/exception/NotFoundException.js";
 
 const getAuth = (event) => {
   return event.headers.Authorization;
@@ -104,7 +105,6 @@ export default class StripeAccountService {
         return {
           statusCode: 404,
           message: "No Stripe account has been found, please create one",
-          stripeAccount: stripeAccount,
           details: {
             hasStripeAccount: false,
             accountId: null,
