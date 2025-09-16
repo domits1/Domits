@@ -8,7 +8,7 @@ async function get() {
       path: "/retrieve-stripe-account",
       resource: "/retrieve-stripe-account",
       headers: {
-        Authorization: getHostAuthToken(),
+        Authorization: await getHostAuthToken(),
       },
     })
   );
