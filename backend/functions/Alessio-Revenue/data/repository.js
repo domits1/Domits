@@ -1,16 +1,18 @@
-import {UserMapping} from "../util/mapping/userMapping.js";
 import Database from "database";
-import {User_Table} from "database/models/User_Table";
-import {Property} from "database/models/Property.js";
+import { Booking } from "database/models/Booking";
+
 export class Repository {
+  async getRevenue() {
+    const client = await Database.getInstance();
+    const response = await client
 
-    async getUser() {
-        const client = await Database.getInstance();
-        const response = await client
-            .getRepository(User_Table)
-            .createQueryBuilder()
-            .getMany();
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .innerJoin("property", "pt", "pt.id = booking.property_id")
+      .innerJoin("payment", "py", "py.stripepaymentid = booking.paymentid")
+      .where("booking.hostId = :hostId", { hostId: "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3" })
+      .getMany();
 
-        return response.map(user => UserMapping.mapGetUserCommandToUser(user));
-    }
+    return response;
+  }
 }

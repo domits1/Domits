@@ -1,11 +1,21 @@
-import BookingController from "../controller/controller.js";
+import Controller from "./controller/controller.js";
 
+const controller = new Controller();
 
 export const handler = async (event) => {
-    switch (event.httpMethod) {
-        case "GET":
-            return await BookingController(event);
-        default:
-            return { statusCode: 405, body: "Method Not Allowed" };
-    }
+  let returnedResponse = {};
+
+  switch (event.httpMethod) {
+    case "GET":
+      returnedResponse = await controller.getBookingByHostId(event);
+      break;
+    default:
+      throw new Error("Unable to determine request type. Please contact the Admin.");
+  }
+
+  return {
+    statusCode: returnedResponse?.statusCode || 200,
+    headers: returnedResponse?.headers || {},
+    body: JSON.stringify(returnedResponse?.response),
+  };
 };

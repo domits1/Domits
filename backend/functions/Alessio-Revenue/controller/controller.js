@@ -1,22 +1,22 @@
 import {Service} from "../business/service/service.js";
-import {AuthManager} from "../auth/authManager.js";
-
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
-export class Controller {
+export default class Controller {
     service;
     authManager;
 
     constructor() {
         this.service = new Service();
-        this.authManager = new AuthManager();
     }
 
     async getBookingByHostId(event) {
         try {
+            const revenue = await this.service.getRevenue(event)
             return {
                 statusCode: 200,
-                body: JSON.stringify(await this.service.getUser()),
+                response: {
+                    revenue
+                },
                 headers: responseHeaders
             };
         } catch (error) {
