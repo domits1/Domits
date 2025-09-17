@@ -8,11 +8,11 @@
     justify-content: center;
     align-items: center;
     background-repeat: no-repeat;
-    background-size: cover;
+    background-size: contain;
     background-position: center;
 }
 
-.image-container h1, 
+.image-container h1,
 .image-container h3 {
     color: white;
     text-shadow: 1px 1px 2px black;
@@ -33,7 +33,6 @@
     width: 100%;
     padding: 0 10vw;
     gap: 15%;
-    
 }
 
 .header-text {
@@ -51,9 +50,14 @@
 }
 
 .travel-image {
-    width: 30%;
+    width: 70%;
+    max-width: 70%;
     height: auto;
-    margin-left: 5%;
+    margin-left: 0;
+    margin-right: 0;
+    align-self: center;
+    object-fit: contain;
+    display: block;
 }
 
 .travel-container {
@@ -90,4 +94,62 @@
     font-size: 2rem;
     margin-bottom: 12px;
     text-align: left;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Responsiveness */
+
+@media (max-width: 1200px) {
+    .image-container { width: 85%; height: 500px; }
+    .header-two { padding: 0 6vw; gap: 8%; }
+    .header-text { width: 45%; }
+    .travel-container { width: 90%; }
+}
+
+@media (max-width: 992px) {
+    .image-container { width: 95%; height: 420px; }
+    .header-two { gap: 6%; }
+    .header-text { width: 55%; }
+    .travel-container { flex-wrap: wrap; gap: 1.5rem; }
+    .travel-item { width: 48%; }
+}
+
+@media (max-width: 768px) {
+    .image-container { height: 40vh; border-radius: 20px; }
+    .header-two { flex-direction: column; gap: 1.25rem; padding: 0 6vw; }
+    .header-text { width: 100%; }
+    .travel-image { width: 100%; max-width: 100%; }
+    .travel-container { flex-direction: column; width: 92%; gap: 1.25rem; }
+    .travel-item { width: 100%; }
+}
+
+@media (max-width: 576px) {
+    .image-container { height: 32vh; width: 100%; margin: 12px 0; border-radius: 16px; }
+    .text-h2 { font-size: 1.5rem; }
+    .travel-subtitle { font-size: 1.25rem; }
+    .travel-item p, .text-description { font-size: 0.95rem; line-height: 1.55; }
+    .header-two { padding: 0 4vw; }
+}
+
+@media (max-width: 400px) {
+    .image-container { height: 28vh; }
+    .header-text h2 { font-size: 1.4rem; }
+    .header-text p { font-size: 0.95rem; }
 }
