@@ -24,7 +24,6 @@ import ChatWidget from "./features/chatwidget/ChatWidget";
 import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
-import HostCalendar from "./features/hostdashboard/HostCalendar";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
@@ -35,6 +34,7 @@ import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
+import HostCalendar from "./features/hostdashboard/hostcalen/HostCalendar";
 
 import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
 import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
@@ -235,6 +235,15 @@ function App() {
                     <MainDashboardHost />
                   </HostProtectedRoute>}
                 />
+
+                <Route
+                   path="/hostdashboard/calendar"
+                   element={
+                   <HostProtectedRoute>
+                  <HostCalendar />
+                  </HostProtectedRoute>
+                  }
+                 />
                 <Route path="/stripe/callback" element={<StripeCallback />} />
 
                 {/* Career, Policies, and Terms */}
