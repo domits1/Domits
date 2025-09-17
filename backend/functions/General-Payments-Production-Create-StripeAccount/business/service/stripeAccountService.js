@@ -5,6 +5,7 @@ import StripeAccountRepository from "../../data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { ConflictException } from "../../util/exception/conflictException.js";
 
 const getAuth = (event) =>  event.headers.Authorization;
 const unixNow = () => Math.floor(Date.now() / 1000);
@@ -39,15 +40,7 @@ export default class StripeAccountService {
     const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
     if (stripeAccount?.account_id) {
-      const status = await this.buildStatusForStripeAccount(stripeAccount.account_id);
-
-      return {
-        statusCode: 200,
-        message: status.onboardingComplete
-          ? "Account onboarded. Redirecting to Stripe Express Dashboard."
-          : "Onboarding not complete. Redirecting to Stripe onboarding.",
-        details: status,
-      };
+      throw new ConflictException("Stripe account already exists", { accountId: stripeAccount.account_id });
     }
 
     const account = await this.stripe.accounts.create({
