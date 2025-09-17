@@ -31,7 +31,10 @@ export default class StripeAccountService {
 
   async createStripeAccount(event) {
     const token = getAuth(event);
-    const { email: userEmail, sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+    const { 
+      email: userEmail,
+       sub: cognitoUserId 
+      } = await this.authManager.authenticateUser(token);
 
     if (!userEmail || !cognitoUserId) {
       throw new BadRequestException("Missing required fields: userEmail or cognitoUserId");
