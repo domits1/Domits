@@ -1,7 +1,8 @@
 import responsejson from "../util/constant/responseheader.json" with { type: 'json' };
 import StripeAccountService from "../business/service/stripeAccountService.js";
-const responseHeaderJSON = responsejson;
 import AuthManager from "../auth/authManager.js";
+
+const responseHeaderJSON = responsejson;
 
 class StripeAccountController {
   constructor() {
@@ -55,7 +56,8 @@ class StripeAccountController {
         statusCode: error.statusCode || 500,
         headers: responseHeaderJSON,
         response: { 
-          message: error.message || "Something went wrong, please contact support." },
+          message: error.message || "Something went wrong, please contact support." 
+        },
       };
     }
   }
