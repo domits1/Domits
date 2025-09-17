@@ -198,10 +198,10 @@ DROP TABLE IF EXISTS main.property_checkin;
 
 CREATE TABLE IF NOT EXISTS main.property_checkin (
   property_id VARCHAR(255) NOT NULL,
-  checkInFrom INTEGER NOT NULL,
-  checkInTill INTEGER NOT NULL,
-  checkOutFrom INTEGER NOT NULL,
-  checkOutTill INTEGER NOT NULL,
+  checkInFrom TIME NOT NULL,
+  checkInTill TIME NOT NULL,
+  checkOutFrom TIME NOT NULL,
+  checkOutTill TIME NOT NULL,
   PRIMARY KEY (property_id)
 );
 CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_checkin ON main.property_checkin (property_id);
