@@ -12,44 +12,54 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
   const [allowPets, setAllowPets] = useState(false);
   const [allowParties, setAllowParties] = useState(false);
 
-  const [checkinFromTime, setCheckinFromTime] = useState(new Date());
-  const [checkinTillTime, setCheckinTillTime] = useState(new Date());
-  const [checkoutTillTime, setCheckoutTillTime] = useState(new Date());
-  const [checkoutFromTime, setCheckoutFromTime] = useState(new Date());
-
-  const handleTimeChange = (field, value, subField = null) => {
-    if (subField) {
-      updateFormData(prevData => ({
-        ...prevData,
-        [field]: {
-          ...prevData[field],
-          [subField]: value,
-        },
-      }));
-    } else {
-      updateFormData(prevData => ({
-        ...prevData,
-        [field]: value,
-      }));
-    }
+  const timeStringToDate = (timeStr) => {
+    // From HH:mm
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+    return date;
   };
 
-  // const handleChange = (event, selectedTime) => {
-  //   setShowTimeModal(false);
-  //   if (selectedTime) {
-  //     onTimeChange(selectedTime);
-  //   }
-  // };
+  const dateToTimeString = (date) => {
+    // To HH:mm
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
 
-  const showTimePicker = (label, time, onTimeChange) => {
+  const handleTimeChange = (event, selectedDate, field, subField) => {
+    if (event.type === 'set' && selectedDate) {
+      const timeStr = dateToTimeString(selectedDate);
+
+      updateFormData(prevData => ({
+        ...prevData,
+        propertyCheckIn: {
+          ...prevData.propertyCheckIn,
+          [field]: {
+            ...prevData.propertyCheckIn[field],
+            [subField]: timeStr,
+          }
+        }
+      }));
+
+      setShowTimeModal(false);
+    }
+  }
+
+  const timePickerModal = (timeString, field, subfield) => {
+    const dateTime = timeStringToDate(timeString);
+
     return (
         <View>
-          <TranslatedText textToTranslate={label}/>
           <RNDateTimePicker
-          value={time}
-          mode={"time"}
-          is24Hour={true}
-          onChange={onTimeChange}
+              value={dateTime}
+              mode={"time"}
+              display={"spinner"}
+              is24Hour={true}
+              onChange={(event, date) => handleTimeChange(event, date, field, subfield)}
           />
         </View>
     )
@@ -82,12 +92,15 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
               <TranslatedText textToTranslate={"Check-in/-out"}/>
             </Text>
 
-            <TouchableOpacity onPress={}>
-              <TranslatedText textToTranslate={"from"}/>
+            <TouchableOpacity onPress={() => setShowTimeModal(!showTimeModal)}>
               <Text>
-                00:00
+                from: {formData.propertyCheckIn.checkIn.from}
               </Text>
             </TouchableOpacity>
+
+            {showTimeModal &&
+                timePickerModal(formData.propertyCheckIn.checkIn.from, "checkIn", "from")
+            }
 
             <Text style={styles.onboardingPageDescription}>
               <TranslatedText textToTranslate={"General rules"}/>

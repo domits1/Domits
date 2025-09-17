@@ -24,12 +24,12 @@ const propertyFormData = {
     propertyCheckIn: {
         property_id: "",
         checkIn: {
-            from: 0,
-            till: 0,
+            from: "00:00",
+            till: "00:00",
         },
         checkOut: {
-            from: 0,
-            till: 0,
+            from: "00:00",
+            till: "00:00",
         }
     },
     propertyGeneralDetails: [
