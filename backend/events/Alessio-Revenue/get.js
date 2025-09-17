@@ -1,11 +1,14 @@
 // TODO Create your own get event to your handler function.
 
-import {handler} from "../function/index.js";
+import {handler} from "../../functions/Alessio-Revenue/index.js";
 
 async function main() {
     console.log(await handler({
-        httpMethod: "GET"
-        
+        httpMethod: "GET",
+        headers: {
+            Authorization: "eyJraWQiOiJYdkVKWjI2RlYxVngxSktIVFo4R1k1MlZlTzBnNGJCMFdiS1BRUGg3alRFPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJmMDg5OTlkMy02OTdjLTQ0YTAtYjM4OC1hNDE0MTc4ZDRjNWIiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtbm9ydGgtMS5hbWF6b25hd3MuY29tXC9ldS1ub3J0aC0xX21QeE5odlNGWCIsImNsaWVudF9pZCI6Ijc4amZyZmhwZGVkNm1lZXZsbHBmbW83M21vIiwib3JpZ2luX2p0aSI6IjgxZmQ3OGVjLTIwNDMtNDYxZC05ZWI2LTM3ZDA2YTYzZjIzNiIsImV2ZW50X2lkIjoiNTI2OTM2NDktNzlhYi00MmQxLWFmNDYtZDQzZDhlNGExNjVkIiwidG9rZW5fdXNlIjoiYWNjZXNzIiwic2NvcGUiOiJhd3MuY29nbml0by5zaWduaW4udXNlci5hZG1pbiIsImF1dGhfdGltZSI6MTc1ODEwMjMwNiwiZXhwIjoxNzU4MTIyNzc2LCJpYXQiOjE3NTgxMTkxNzYsImp0aSI6ImJmMWY0ZmNjLWZmMDgtNDI4NC04NmZhLTI4ZjFmYmYyNTZkNyIsInVzZXJuYW1lIjoiZjA4OTk5ZDMtNjk3Yy00NGEwLWIzODgtYTQxNDE3OGQ0YzViIn0.DgsH7tvNpiCQbnOSOtdO1WempNCLed2_tvFyPnzjqjnORTr8vRNe4mAMR0er2mMiji8H8qqQNwVrtGc40Ox21eUURnVRiPvMw1Z-FFwwkdY77jk-sDQ2TTQpKJdMAQ2YSv9OfNqjq2-t7BnGCNnCVm2z8tK6GGL4tmetoCSH7980xxYGcZeit2WsIfdpMte2N6U3usV48SS_yUMqYdJZakdRwapgj_gfEsVGYhqCtMxQX6zjdU7jM7cwv-PRgc-WV8W6C48B-2gSltx21xZ9UfgeactcUEynukIOUDBJP6dZzlp_RjwBFjO_07XYCvmijTfdb6jRqCrgDKd0XQIKEw",
+        },
+
     }));
 }
 
