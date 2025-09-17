@@ -145,17 +145,15 @@
             margin-bottom: 8px;
             width: 300px;
             display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
+            -webkit-line-clamp: 2;   // max 2 regels
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
-            height: 3em;
-
+          
             @media (max-width: 480px) {
-                width: 100%;
+              width: 100%;
             }
-        }
+          }
 
         .accocard-specs {
             display: flex;
