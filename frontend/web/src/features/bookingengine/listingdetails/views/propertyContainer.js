@@ -17,6 +17,8 @@ const PropertyContainer = ({ property }) => {
       <hr />
       <AmenitiesContainer amenityIds={property.amenities} />
       <hr />
+     {/* 2 months price calendar show here */}
+       <hr />
       <RulesContainer rules={property.rules} checkIn={property.checkIn} />
     </div>
   );

@@ -47,9 +47,11 @@ const ListingDetails2 = () => {
                 <Header title={property.property.title} />
                 <div className="container">
                     <PropertyContainer property={property} />
+                   
                     <BookingContainer property={property} />
                 </div>
             </div>
+            
         );
     }
 };
