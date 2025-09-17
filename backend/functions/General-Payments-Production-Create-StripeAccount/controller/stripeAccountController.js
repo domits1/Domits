@@ -4,7 +4,7 @@ import AuthManager from "../auth/authManager.js";
 
 const responseHeaderJSON = responsejson;
 
-class StripeAccountController {
+export default class StripeAccountController {
   constructor() {
     this.stripeAccountService = new StripeAccountService();
     this.authManager = new AuthManager();
@@ -62,4 +62,3 @@ class StripeAccountController {
     }
   }
 }
-export default StripeAccountController;
