@@ -1,14 +1,5 @@
-import {handler} from "../../functions/PropertyHandler/index.js";
-import {getHostAuthToken} from "../../test/util/getHostAuthToken.js";
-import {image} from "../../test/PropertyHandler/events/approvedImage.js";
-
-async function main() {
-    console.log(await handler({
-        httpMethod: "POST",
-        headers: {
-            Authorization: await getHostAuthToken()
-        },
-        body: JSON.stringify({
+```json
+{
             "property": {
                 "id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
                 "hostId": "ce93f377-9ac0-46c2-9d45-cf20d33dcc33",
@@ -58,12 +49,12 @@ async function main() {
             "propertyCheckIn": {
                 "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
                 "checkIn": {
-                    "from": "10:00",
-                    "till": "17:00"
+                    "from": 1,
+                    "till": 2
                 },
                 "checkOut": {
-                    "from": "08:00",
-                    "till": "12:00"
+                    "from": 1,
+                    "till": 2
                 }
             },
             "propertyGeneralDetails": [
@@ -156,8 +147,5 @@ async function main() {
                 "generalPeriodicInspection": 2020,
                 "fourWheelDrive": true
             }
-        })
-    }));
 }
-
-main();
+```
