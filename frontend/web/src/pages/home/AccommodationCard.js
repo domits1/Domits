@@ -18,6 +18,7 @@ const AccommodationCard = ({ accommodation, onClick }) => {
   const [liked, setLiked] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
 
+  // Check if this accommodation is already liked
   useEffect(() => {
     const checkIfLiked = async () => {
       const token = getAccessToken();
@@ -33,6 +34,7 @@ const AccommodationCard = ({ accommodation, onClick }) => {
     checkIfLiked();
   }, [accommodation]);
 
+  // Like/unlike functionality
   const handleLike = async (e) => {
     e.stopPropagation();
     const token = getAccessToken();
@@ -42,6 +44,7 @@ const AccommodationCard = ({ accommodation, onClick }) => {
     try {
       await updateWishlistItem(accommodationId, method);
       setLiked(!liked);
+      //  Only show popup when liking (POST) 
       if (method === "POST") {
         setShowPopup(true);
       }
@@ -84,6 +87,8 @@ const AccommodationCard = ({ accommodation, onClick }) => {
           <FavoriteBorderOutlinedIcon />
         )}
       </button>
+
+{/* Wishlist popup appears over the card */} 
       {showPopup && (
         <WishlistChoice
           propertyId={accommodation.property?.id}
