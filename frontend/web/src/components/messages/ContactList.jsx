@@ -128,6 +128,19 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
     const noContactsMessage = displayType === 'contacts' ? labels.noContacts : labels.noPending;
 
     const handleClick = (contactId, contactName, profileImage) => {
+        // If there is a locally stored override for this contact (e.g., custom avatar), apply it
+        try {
+            const raw = window.localStorage.getItem('domits_manual_contacts');
+            if (raw) {
+                const saved = JSON.parse(raw);
+                if (Array.isArray(saved)) {
+                    const found = saved.find((c) => c.recipientId === contactId);
+                    if (found && found.profileImage) {
+                        profileImage = found.profileImage;
+                    }
+                }
+            }
+        } catch {}
         setSelectedContactId(contactId);
         onContactClick?.(contactId, contactName, profileImage);
     };
@@ -209,21 +222,35 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
                                     <img src={testAvatarDataUrl} alt="Preview" style={{ marginTop: '8px', width: '64px', height: '64px', objectFit: 'cover', borderRadius: '50%', border: '1px solid #e5e7eb' }} />
                                 )}
                             </div>
-                            <button onClick={() => {
-                                const id = `test-${Date.now()}`;
-                                const newContact = {
-                                    userId: id,
-                                    recipientId: id,
-                                    givenName: testName || 'Test Contact',
-                                    accoImage: null,
-                                    profileImage: testAvatarDataUrl || null,
-                                    latestMessage: { text: 'Test contact created', createdAt: new Date().toISOString() },
-                                };
-                                setContacts(prev => [newContact, ...prev]);
-                                setShowCreateTest(false);
-                                setTestName('Test Host');
-                                setTestAvatarDataUrl('');
-                            }} className="dropdownLoginButton">Create</button>
+                             <button onClick={() => {
+                                 const id = `test-${Date.now()}`;
+                                 const newContact = {
+                                     userId: id,
+                                     recipientId: id,
+                                     givenName: testName || 'Test Contact',
+                                     accoImage: null,
+                                     profileImage: testAvatarDataUrl || null,
+                                     latestMessage: { text: 'Test contact created', createdAt: new Date().toISOString() },
+                                 };
+                                 setContacts(prev => {
+                                     const next = [newContact, ...prev.filter(c => c.recipientId !== id)];
+                                     try {
+                                         const raw = window.localStorage.getItem('domits_manual_contacts');
+                                         const arr = raw ? JSON.parse(raw) : [];
+                                         const list = Array.isArray(arr) ? arr : [];
+                                         const idx = list.findIndex((c) => c.recipientId === id);
+                                         if (idx >= 0) list[idx] = { ...list[idx], ...newContact };
+                                         else list.unshift(newContact);
+                                         window.localStorage.setItem('domits_manual_contacts', JSON.stringify(list));
+                                         window.localStorage.setItem('domits_last_manual_recipient', id);
+                                         window.localStorage.setItem('domits_last_manual_recipient_name', newContact.givenName || '');
+                                     } catch {}
+                                     return next;
+                                 });
+                                 setShowCreateTest(false);
+                                 setTestName('Test Host');
+                                 setTestAvatarDataUrl('');
+                             }} className="dropdownLoginButton">Create</button>
                         </div>
                     </div>
                 )}

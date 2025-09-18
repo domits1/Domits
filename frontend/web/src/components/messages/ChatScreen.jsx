@@ -158,7 +158,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                             <FaArrowLeft />
                         </button>
                     )}
-                    <img src={contactAvatar || profileImage} alt={contactName} className="profile-img" />
+                    <img src={contactAvatar || profileImage} alt={contactName} className="profile-img" onError={(e) => { e.currentTarget.src = profileImage; }} />
                     <div className="chat-header-info">
                         <h3>{contactName}</h3>
                         <p>Translation on</p>
