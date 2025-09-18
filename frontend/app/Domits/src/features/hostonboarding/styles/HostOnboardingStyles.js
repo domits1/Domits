@@ -14,6 +14,11 @@ export const styles = StyleSheet.create({
     color: 'rgba(70,70,70,0.7)',
     marginBottom: 20,
   },
+  onboardingPageHeading1: {
+    fontSize: 24,
+    marginTop: 10,
+    color: 'rgb(75,75,75)',
+  },
   // Navigation
   navButtonContainer: {
     flexDirection: "row",
@@ -245,5 +250,20 @@ export const styles = StyleSheet.create({
     width: '95%',
     marginBottom: 10,
     alignItems: 'center'
+  },
+  // Time
+  timeSlotItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    padding: 3,
+    marginVertical: 5,
+    display: 'flex',
+    alignSelf: 'flex-start',
+  },
+  timeItem: {
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: 'rgba(128,128,128,0.5)',
+    padding: 3,
   },
 })
