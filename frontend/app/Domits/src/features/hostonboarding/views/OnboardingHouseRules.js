@@ -1,12 +1,16 @@
 import {styles} from "../styles/HostOnboardingStyles";
 import {ScrollView, Text, TouchableOpacity, View} from "react-native";
 import TranslatedText from "../../translation/components/TranslatedText";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import CheckBox from "@react-native-community/checkbox";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
 const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVisited}) => {
-  const [showTimeModal, setShowTimeModal] = useState(false);
+  const [showCheckinFromModal, setShowCheckinFromModal] = useState(false);
+  const [showCheckinTillModal, setShowCheckinTillModal] = useState(false);
+  const [showCheckoutFromModal, setShowCheckoutFromModal] = useState(false);
+  const [showCheckoutTillModal, setShowCheckoutTillModal] = useState(false);
 
   const [allowSmoking, setAllowSmoking] = useState(false);
   const [allowPets, setAllowPets] = useState(false);
@@ -30,7 +34,7 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
     return `${hours}:${minutes}`;
   };
 
-  const handleTimeChange = (event, selectedDate, field, subField) => {
+  const handleTimeChange = ((event, selectedDate, field, subField, setModalVisible) => {
     if (event.type === 'set' && selectedDate) {
       const timeStr = dateToTimeString(selectedDate);
 
@@ -45,11 +49,11 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
         }
       }));
 
-      setShowTimeModal(false);
+      setModalVisible(false);
     }
-  }
+  });
 
-  const timePickerModal = (timeString, field, subfield) => {
+  const timePickerModal = (timeString, field, subfield, setModalVisible) => {
     const dateTime = timeStringToDate(timeString);
 
     return (
@@ -59,27 +63,43 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
               mode={"time"}
               display={"spinner"}
               is24Hour={true}
-              onChange={(event, date) => handleTimeChange(event, date, field, subfield)}
+              onChange={(event, date) => handleTimeChange(event, date, field, subfield, setModalVisible)}
           />
         </View>
     )
   }
 
-  const AllowCheckBox = (changeFunction, checkedValue, text) => {
-    return (
-        <View style={styles.checkboxContainer}>
-          <CheckBox
-              disabled={false}
-              value={checkedValue}
-              onValueChange={() => changeFunction(!checkedValue)}
-          />
-          <Text>
-            <TranslatedText
-                textToTranslate={text}/>
-          </Text>
-        </View>
-    )
-  }
+  const TimePickerButton = (label, value, modalVisible, setModalVisible, field, subField) => (
+      <View>
+        <TouchableOpacity style={styles.timeSlotItem} onPress={() => setModalVisible(!modalVisible)}>
+          <TranslatedText textToTranslate={label}/>
+          <Text>{": "}</Text>
+          <View style={styles.timeItem}>
+            <Text>{value}</Text>
+          </View>
+          <MaterialCommunityIcons name="pencil" size={24}/>
+        </TouchableOpacity>
+        {modalVisible && timePickerModal(value, field, subField, setModalVisible)}
+      </View>
+  );
+
+  const AllowCheckBox = ({changeFunction, checkedValue, text}) => (
+      <View style={styles.checkboxContainer}>
+        <CheckBox
+            disabled={false}
+            value={checkedValue}
+            onValueChange={() => changeFunction(!checkedValue)}
+        />
+        <Text>
+          <TranslatedText
+              textToTranslate={text}/>
+        </Text>
+      </View>
+  );
+
+  useEffect(() => {
+    markVisited(true);
+  }, [])
 
   return (
       <ScrollView style={{flex: 1}}>
@@ -88,34 +108,45 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
             <TranslatedText textToTranslate={"Set your house rules."}/>
           </Text>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <Text style={styles.onboardingPageDescription}>
-              <TranslatedText textToTranslate={"Check-in/-out"}/>
+
+            <Text style={styles.onboardingPageHeading1}>
+              <TranslatedText textToTranslate={"Check-in times"}/>
             </Text>
 
-            <TouchableOpacity onPress={() => setShowTimeModal(!showTimeModal)}>
-              <Text>
-                from: {formData.propertyCheckIn.checkIn.from}
-              </Text>
-            </TouchableOpacity>
+            {TimePickerButton("From", formData.propertyCheckIn.checkIn.from, showCheckinFromModal, setShowCheckinFromModal, "checkIn", "from")}
+            {TimePickerButton("Till", formData.propertyCheckIn.checkIn.till, showCheckinTillModal, setShowCheckinTillModal, "checkIn", "till")}
 
-            {showTimeModal &&
-                timePickerModal(formData.propertyCheckIn.checkIn.from, "checkIn", "from")
-            }
+            <Text style={styles.onboardingPageHeading1}>
+              <TranslatedText textToTranslate={"Check-out times"}/>
+            </Text>
 
-            <Text style={styles.onboardingPageDescription}>
+            {TimePickerButton("From", formData.propertyCheckIn.checkOut.from, showCheckoutFromModal, setShowCheckoutFromModal, "checkOut", "from")}
+            {TimePickerButton("Till", formData.propertyCheckIn.checkOut.till, showCheckoutTillModal, setShowCheckoutTillModal, "checkOut", "till")}
+
+            <Text style={styles.onboardingPageHeading1}>
               <TranslatedText textToTranslate={"General rules"}/>
             </Text>
 
-            {AllowCheckBox(setAllowSmoking, allowSmoking, "Allow smoking")}
-            {AllowCheckBox(setAllowPets, allowPets, "Allow pets")}
-            {AllowCheckBox(setAllowParties, allowParties, "Allow parties")}
+            <AllowCheckBox
+                changeFunction={setAllowSmoking}
+                checkedValue={allowSmoking}
+                text="Allow smoking"
+            />
+            <AllowCheckBox
+                changeFunction={setAllowPets}
+                checkedValue={allowPets}
+                text="Allow pets"
+            />
+            <AllowCheckBox
+                changeFunction={setAllowParties}
+                checkedValue={allowParties}
+                text="Allow parties"
+            />
 
           </ScrollView>
         </View>
       </ScrollView>
-
   )
-
 }
 
 export default OnboardingHouseRules;
