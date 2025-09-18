@@ -17,6 +17,8 @@ const fetchBookingDetailsAndAccommodation = async ({
   const bookingStatus = bookingData.status || null;
 
   let accoImage = null;
+  let propertyTitle = null;
+  const propertyId = bookingData.property_id || null;
 
   if (bookingData.property_id && accommodationEndpoint) {
     const accoRes = await fetch(
@@ -37,6 +39,9 @@ const fetchBookingDetailsAndAccommodation = async ({
     if (key) {
       accoImage = `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`;
     }
+
+    // Try to resolve a human readable property title from the accommodation payload
+    propertyTitle = accoRaw?.property?.title || accoRaw?.property?.name || null;
   }
 
   return {
@@ -44,6 +49,8 @@ const fetchBookingDetailsAndAccommodation = async ({
     bookingStatus,
     arrivalDate,
     departureDate,
+    propertyId,
+    propertyTitle,
   };
 };
 

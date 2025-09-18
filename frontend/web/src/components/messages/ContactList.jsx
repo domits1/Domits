@@ -16,6 +16,8 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const [automatedSettings, setAutomatedSettings] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortAlphabetically, setSortAlphabetically] = useState(false);
+    const [selectedHostId, setSelectedHostId] = useState('');
+    const [selectedPropertyId, setSelectedPropertyId] = useState('');
 
     const labels = {
         contacts: 'Contacts',
@@ -54,12 +56,34 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
         });
     }, [message, setContacts]);
 
-    let contactList = displayType === 'contacts' ? contacts : pendingContacts;
+    const baseList = displayType === 'contacts' ? contacts : pendingContacts;
+
+    // Build filter sources
+    const hostOptions = Array.from(
+        new Map(baseList.map(c => [c.recipientId, { id: c.recipientId, name: c.givenName || 'Unknown' }])).values()
+    );
+    const propertyOptions = Array.from(
+        new Map(baseList.filter(c => c.propertyId).map(c => [c.propertyId, { id: c.propertyId, name: c.propertyTitle || c.propertyId }])).values()
+    );
+
+    let contactList = baseList;
 
     if (searchTerm) {
-        contactList = contactList.filter(contact =>
-            contact.givenName?.toLowerCase().includes(searchTerm)
-        );
+        contactList = contactList.filter(contact => {
+            const nameHit = contact.givenName?.toLowerCase().includes(searchTerm);
+            const msgText = contact.latestMessage?.text?.toLowerCase() || '';
+            const messageHit = msgText.includes(searchTerm);
+            const propertyHit = (contact.propertyTitle || '').toLowerCase().includes(searchTerm);
+            return nameHit || messageHit || propertyHit;
+        });
+    }
+
+    if (selectedHostId) {
+        contactList = contactList.filter(c => c.recipientId === selectedHostId);
+    }
+
+    if (selectedPropertyId) {
+        contactList = contactList.filter(c => c.propertyId === selectedPropertyId);
     }
 
     if (sortAlphabetically) {
@@ -95,11 +119,33 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                 <div className="contact-list-side-buttons">
                     <input
                         type="text"
-                        placeholder=""
+                        placeholder="Search by name, message, property"
                         className="contact-search-input"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
                     />
+                    <select
+                        className="contact-filter-select"
+                        value={selectedHostId}
+                        onChange={(e) => setSelectedHostId(e.target.value)}
+                        title={isHost ? 'Filter by guest' : 'Filter by host'}
+                    >
+                        <option value="">{isHost ? 'All guests' : 'All hosts'}</option>
+                        {hostOptions.map(opt => (
+                            <option key={opt.id} value={opt.id}>{opt.name}</option>
+                        ))}
+                    </select>
+                    <select
+                        className="contact-filter-select"
+                        value={selectedPropertyId}
+                        onChange={(e) => setSelectedPropertyId(e.target.value)}
+                        title="Filter by property"
+                    >
+                        <option value="">All properties</option>
+                        {propertyOptions.map(opt => (
+                            <option key={opt.id} value={opt.id}>{opt.name}</option>
+                        ))}
+                    </select>
                     <FaBars className={`contact-list-side-button`} onClick={() => setSortAlphabetically(prev => !prev)} />
                     {isHost && (
                         <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
