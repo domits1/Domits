@@ -1,4 +1,4 @@
-import responsejson from "../util/constant/responseheader.json" with { type: 'json' };
+import responsejson from "../util/constant/responseHeader.json" with { type: 'json' };
 import StripeAccountService from "../business/service/stripeAccountService.js";
 import AuthManager from "../auth/authManager.js";
 
