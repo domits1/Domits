@@ -33,19 +33,16 @@ const HostFinanceTab = () => {
         setUserEmail(userInfo.attributes.email);
         setCognitoUserId(userInfo.attributes.sub);
 
-        const response = await fetch(
-          `https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`,
-          {
-            method: "POST",
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Methods": "OPTIONS,POST",
-              "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-              "Access-Control-Allow-Credentials": true,
-            },
-            body: JSON.stringify({ sub: userInfo.attributes.sub }),
-          }
-        );
+        const response = await fetch(`https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments/retrieve-stripe-account`, {
+          method: "GET",
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "OPTIONS,POST, GET",
+            "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Credentials": true,
+          },
+          body: JSON.stringify({ sub: userInfo.attributes.sub }),
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
