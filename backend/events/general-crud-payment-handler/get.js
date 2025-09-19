@@ -1,4 +1,4 @@
-import { handler } from "../../functions/General-Payments-Production-Create-StripeAccount/index.js";
+import { handler } from "../../functions/general-crud-payment-handler/index.js";
 import { getHostAuthToken } from "../../test/util/getHostAuthToken.js";
 
 async function get() {
