@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./HostFinanceTab.css";
 import { useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
+import { getAccessToken } from "../../services/getAccessToken";
 
 const HostFinanceTab = () => {
   const navigate = useNavigate();
@@ -26,27 +27,15 @@ const HostFinanceTab = () => {
     setPayoutFrequency(event.target.value);
   };
 
-  const getJwt = async () => {
-    const session = await Auth.currentSession();
-    return session.getIdToken().getJwtToken();
-  };
-
   useEffect(() => {
     const  getUserInfo = async () => {
       try {
-
-        const token = await getJwt();
-
-        console.log("token", await getJwt());
-
+        const authToken = await getAccessToken();
+        
         const response = await fetch("https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments", {
           method: "GET",
           headers: {
-            Authorization: token,
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            "Content-Type": "application/json",
+            Authorization: authToken,
           },
         });
 
