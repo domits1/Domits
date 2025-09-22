@@ -14,6 +14,7 @@ class ReservationRepository {
   async addBookingToTable(requestBody, userId, hostId) {
     const date = CreateDate.createUnixTime();
     const id = randomUUID();
+    const tempPaymentId = randomUUID();
     const arrivalDate = new Date(requestBody.general.arrivalDate).getTime();
     const departureDate = new Date(requestBody.general.departureDate).getTime();
     const client = await Database.getInstance();
@@ -32,7 +33,7 @@ class ReservationRepository {
         guests: requestBody.general.guests.toString(),
         guestname: "WIP-Guest",
         latepayment: false,
-        paymentid: "Stripe Process Failed",
+        paymentid: "FAILED: ", tempPaymentId,
         property_id: requestBody.identifiers.property_Id,
         status: "Awaiting Payment",
       })
@@ -104,6 +105,7 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
+      .select(["booking.arrivaldate", "booking.departuredate"])
       .where("booking.property_id = :property_id", { property_id: property_id })
       .andWhere("booking.createdat = :createdAt", { createdAt: createdAt })
       .getMany();
@@ -177,6 +179,7 @@ class ReservationRepository {
     const query = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
+      .select(["booking.arrivaldate", "booking.departuredate"])
       .where("booking.property_id = :property_id", { property_id: property_Id })
       .andWhere("booking.departuredate = :departuredate", { departuredate: departureDate })
       .getMany();
