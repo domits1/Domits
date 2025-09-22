@@ -26,26 +26,29 @@ const HostFinanceTab = () => {
     setPayoutFrequency(event.target.value);
   };
 
-  useEffect(() => {
-    const setUserEmailAsync = async () => {
-      try {
-        const userInfo = await Auth.currentUserInfo();
-        setUserEmail(userInfo.attributes.email);
-        setCognitoUserId(userInfo.attributes.sub);
+  const getJwt = async () => {
+    const session = await Auth.currentSession();
+    return session.getIdToken().getJwtToken();
+  };
 
-        const response = await fetch(
-          `https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`,
-          {
-            method: "POST",
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Methods": "OPTIONS,POST",
-              "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-              "Access-Control-Allow-Credentials": true,
-            },
-            body: JSON.stringify({ sub: userInfo.attributes.sub }),
-          }
-        );
+  useEffect(() => {
+    const  getUserInfo = async () => {
+      try {
+
+        const token = await getJwt();
+
+        console.log("token", await getJwt());
+
+        const response = await fetch("https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments", {
+          method: "GET",
+          headers: {
+            Authorization: token,
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Content-Type": "application/json",
+          },
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -55,7 +58,7 @@ const HostFinanceTab = () => {
 
         const parsedBody = JSON.parse(data.body);
 
-        if (parsedBody.hasStripeAccount) {
+        if (data.hasStripeAccount) {
           setStripeLoginUrl(parsedBody.loginLinkUrl);
           setBankDetailsProvided(parsedBody.bankDetailsProvided);
           setAccountId(parsedBody.accountId);
@@ -66,38 +69,38 @@ const HostFinanceTab = () => {
         setLoading(false);
       }
     };
-    setUserEmailAsync();
+    getUserInfo();
   }, []);
 
-  useEffect(() => {
-    const fetchPayouts = async () => {
-      if (!accountId) return;
+  // useEffect(() => {
+  //   const fetchPayouts = async () => {
+  //     if (!accountId) return;
 
-      try {
-        const response = await fetch(
-          "https://ayoe94cs72.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-CRUD-fetchHostPayout",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ userId: accountId }),
-          }
-        );
+  //     try {
+  //       const response = await fetch(
+  //         "https://ayoe94cs72.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-CRUD-fetchHostPayout",
+  //         {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify({ userId: accountId }),
+  //         }
+  //       );
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+  //       if (!response.ok) {
+  //         throw new Error(`HTTP error! Status: ${response.status}`);
+  //       }
 
-        const data = await response.json();
-        setPayouts(data.payoutDetails || []);
-      } catch (error) {
-        console.error("Error fetching payouts:", error);
-      }
-    };
+  //       const data = await response.json();
+  //       setPayouts(data.payoutDetails || []);
+  //     } catch (error) {
+  //       console.error("Error fetching payouts:", error);
+  //     }
+  //   };
 
-    fetchPayouts();
-  }, [accountId]);
+  //   fetchPayouts();
+  // }, [accountId]);
 
   async function handleStripeAction() {
     if (userEmail && cognitoUserId) {
@@ -149,10 +152,7 @@ const HostFinanceTab = () => {
               <ul>
                 <li>
                   <strong>Step 1: </strong>{" "}
-                  <span
-                    className="finance-span"
-                    onClick={handleEnlistNavigation}
-                  >
+                  <span className="finance-span" onClick={handleEnlistNavigation}>
                     List your property.
                   </span>
                 </li>
@@ -161,30 +161,21 @@ const HostFinanceTab = () => {
                   {stripeLoginUrl ? (
                     bankDetailsProvided ? (
                       <>
-                        ✔ <strong>Step 2: </strong> You are connected to
-                        Stripe!
+                        ✔ <strong>Step 2: </strong> You are connected to Stripe!
                       </>
                     ) : (
                       <>
-                        <strong>Step 2: </strong> Connect your bank details with
-                        our payment partner{" "}
-                        <span
-                          className="finance-span"
-                          onClick={handleStripeAction}
-                        >
+                        <strong>Step 2: </strong> Connect your bank details with our payment partner{" "}
+                        <span className="finance-span" onClick={handleStripeAction}>
                           Stripe.
                         </span>
                       </>
                     )
                   ) : (
                     <>
-                      <strong>Step 2: </strong> Once your accommodation is
-                      created, you can create a Stripe account to receive
-                      payments:{" "}
-                      <span
-                        className="finance-span"
-                        onClick={handleStripeAction}
-                      >
+                      <strong>Step 2: </strong> Once your accommodation is created, you can create a Stripe account to
+                      receive payments:{" "}
+                      <span className="finance-span" onClick={handleStripeAction}>
                         Domits Stripe
                       </span>
                     </>
@@ -193,10 +184,7 @@ const HostFinanceTab = () => {
 
                 <li>
                   <strong>Step 3: </strong> Set your property live{" "}
-                  <span
-                    className="finance-span"
-                    onClick={() => handleNavigation("/hostdashboard/listings")}
-                  >
+                  <span className="finance-span" onClick={() => handleNavigation("/hostdashboard/listings")}>
                     here
                   </span>{" "}
                   to receive payouts.
@@ -223,9 +211,7 @@ const HostFinanceTab = () => {
                         <td>{(payout.amount / 100).toFixed(2)}</td>
                         <td className={payout.status}>{payout.status}</td>
                         <td>{payout.arrivalDate}</td>
-                        <td>
-                          {payout.type === "instant" ? "Instant" : "Standard"}
-                        </td>
+                        <td>{payout.type === "instant" ? "Instant" : "Standard"}</td>
                         <td>{payout.method}</td>
                       </tr>
                     ))}
@@ -238,10 +224,7 @@ const HostFinanceTab = () => {
 
             <div className="payout-frequency">
               <h3>Payout Frequency</h3>
-              <select
-                value={payoutFrequency}
-                onChange={handlePayoutFrequencyChange}
-              >
+              <select value={payoutFrequency} onChange={handlePayoutFrequencyChange}>
                 <option value="daily">Daily (24h after check-out)</option>
                 <option value="weekly">Weekly (Every Monday)</option>
                 <option value="monthly">Monthly (First of the month)</option>
@@ -250,30 +233,21 @@ const HostFinanceTab = () => {
 
             <div className="payout-status">
               <h3>Payout Status:</h3>
-              {payouts.length > 0 &&
-              payouts.some((payout) => payout.status === "paid") ? (
-                <p className="status-active">
-                  ✅ Your payouts are active. Last payout:{" "}
-                  {payouts[0].arrivalDate}.
-                </p>
-              ) : payouts.length > 0 &&
-                payouts.some((payout) => payout.status === "pending") ? (
+              {payouts.length > 0 && payouts.some((payout) => payout.status === "paid") ? (
+                <p className="status-active">✅ Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
+              ) : payouts.length > 0 && payouts.some((payout) => payout.status === "pending") ? (
                 <p className="status-pending">
-                  ⌛ Your payouts are scheduled. Next payout:{" "}
-                  {payouts.find((p) => p.status === "pending")?.arrivalDate}.
+                  ⌛ Your payouts are scheduled. Next payout: {payouts.find((p) => p.status === "pending")?.arrivalDate}
+                  .
                 </p>
-              ) : payouts.length > 0 &&
-                payouts.every((payout) => payout.status !== "paid") ? (
+              ) : payouts.length > 0 && payouts.every((payout) => payout.status !== "paid") ? (
                 <p className="status-error">
                   🚨 There was an issue with your payouts:{" "}
-                  {payouts.find((p) => p.failureMessage)?.failureMessage ||
-                    "Unknown issue"}
-                  .
+                  {payouts.find((p) => p.failureMessage)?.failureMessage || "Unknown issue"}.
                 </p>
               ) : (
                 <p className="status-none">
-                  ℹ️ No payouts found. Once you start receiving bookings, your
-                  payouts will appear here.
+                  ℹ️ No payouts found. Once you start receiving bookings, your payouts will appear here.
                 </p>
               )}
             </div>
