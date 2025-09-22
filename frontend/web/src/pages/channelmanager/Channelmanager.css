@@ -49,7 +49,7 @@ body {
   .channel-header {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 20px;
   }
   
@@ -62,8 +62,8 @@ body {
   .channel-bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    justify-content: flex-start;
+    gap: 40px;
     flex-wrap: wrap;
   }
   
@@ -91,9 +91,10 @@ body {
   }
   
   .channel-actions {
+    margin-left: 230px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
   }
   
   .channel-region {
@@ -112,7 +113,7 @@ body {
     font-weight: 700;
     cursor: pointer;
     line-height: 1;
-    min-width: 140px;
+    min-width: 120px;
     position: relative;
   }
   
@@ -166,7 +167,6 @@ body {
   
   .channel-search {
     position: relative;
-    margin-right: 55px;
     width: 260px;
     max-width: 28vw;
   }
@@ -186,7 +186,7 @@ body {
   
   .channel-search-icon {
     position: absolute;
-    left: 275px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
@@ -204,6 +204,17 @@ body {
     }
   }
   
+  @media (max-width: 900px) {
+    .channel-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+    .channel-search {
+      width: 100%;
+      max-width: none;
+    }
+  }
+  
   @media (max-width: 740px) {
     .channel-layout {
       grid-template-columns: 1fr;
@@ -215,13 +226,6 @@ body {
     }
     .channel-grid {
       grid-template-columns: 1fr;
-    }
-    .channel-tabs {
-      margin-left: 0;
-    }
-    .channel-search {
-      width: 100%;
-      max-width: none;
     }
   }
   
