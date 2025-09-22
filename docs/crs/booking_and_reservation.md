@@ -52,9 +52,9 @@ Flow of the Create booking [(Code)](https://raw.githubusercontent.com/Bambaclad1
 ## Running requests
 Requests can be run through various ways, the ones listed are the common methods used:
 1. In Node. You can configure a post in your events folder. 
-    This is by far the best way, because it does not require changing a auth token. You can find it here: `backend\events\General-Bookings-CRUD-Bookings-develop\` and eventually run `node ./post.js`
+    This is by far the best way, because it does not require changing an auth token. You can find it here: `backend\events\General-Bookings-CRUD-Bookings-develop\` and eventually run `node ./post.js`
 > [!warning]
-> Using the Node function does not ask you for a authorization and uses a dummy account to handle bookings. This can result in many errors where your web environment's data does not match the backend data. To fix this, input your own auth token.
+> Using the Node function does not ask you for an authorization and uses a dummy account to handle bookings. This can result in many errors where your web environment's data does not match the backend data. To fix this, input your own auth token.
 
 2. In Postman. Ensure to add your auth token in the headers page. See the GIF below how that works. Do bare in mind that Postman does not generate CORS errors, incase you get them. Rather, localhost gets CORS errors.
 
