@@ -38,7 +38,10 @@ const HostFinanceTab = () => {
           {
             method: "POST",
             headers: {
-              "Content-type": "application/json; charset=UTF-8",
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Methods": "OPTIONS,POST",
+              "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Credentials": true,
             },
             body: JSON.stringify({ sub: userInfo.attributes.sub }),
           }

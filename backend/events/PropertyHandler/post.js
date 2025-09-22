@@ -58,12 +58,12 @@ async function main() {
             "propertyCheckIn": {
                 "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
                 "checkIn": {
-                    "from": 1,
-                    "till": 2
+                    "from": "10:00",
+                    "till": "17:00"
                 },
                 "checkOut": {
-                    "from": 1,
-                    "till": 2
+                    "from": "08:00",
+                    "till": "12:00"
                 }
             },
             "propertyGeneralDetails": [

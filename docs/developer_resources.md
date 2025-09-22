@@ -21,19 +21,18 @@ Version control is the backbone of teamwork and solo projects. These resources h
 Documentation is your **survival manual**. These resources make it easier to find reliable references and cheat sheets fast.
 * [Official React Website](https://react.dev/) – Direct from the React team; the most accurate source.
 * [MDN Web Docs](https://developer.mozilla.org/en-US/) – Gold-standard docs for HTML, CSS, and JavaScript.
-* [Schema and naming](https://schema.org/docs/schemas.html) - Structured information on how to name
-* [Javascript.info](https://javascript.info/) – A modern deep-dive tutorial, from basics to advanced OOP.
-* [Official React Website](https://react.dev/) – Direct from the React team; the most accurate source.
+* [W3Schools](https://www.w3schools.com/) – Beginner-friendly explanations and examples.
 * [CSS-Tricks](https://css-tricks.com/) – Articles, guides, and tricks for mastering CSS.
 * [OverAPI](https://overapi.com/) – Massive collection of programming cheat sheets.
 * [DevDocs](https://devdocs.io/) – Blazing fast, offline-capable docs for most programming languages and frameworks.
 * [DevHints](https://devhints.io/) – TL;DR-style cheat sheets, like notes from a senior dev.
 * [Read the Docs](https://about.readthedocs.com/?ref=app.readthedocs.org) – Browse open-source project docs all in one place.
+* [Javascript.info](https://javascript.info/) – A modern deep-dive tutorial, from basics to advanced OOP.
 * [The Bash Guide](https://guide.bash.academy/) – Structured learning for shell scripting.
 * [zsh Manual](https://zsh.sourceforge.io/Doc/Release/index.html) – For when you want to fully master Zsh.
 * [TypeScript Documentation](https://www.typescriptlang.org/) – Official TS reference, always up to date.
 * [ECMAScript® Spec](https://tc39.es/ecma262/) – The official JavaScript standard. For the nerds who want to know how the language *really* works.
-* [W3Schools](https://www.w3schools.com/) – Beginner-friendly explanations and examples.
+
 ---
 
 ## Courses & Learning
@@ -41,11 +40,11 @@ Documentation is your **survival manual**. These resources make it easier to fin
 Structured paths and project-based learning that go beyond tutorials.
 
 * [The Odin Project](https://www.theodinproject.com/) – Full-stack curriculum, completely free.
-* [Exercism](https://exercism.org/) – Practice with real mentor feedback.
 * [FreeCodeCamp](https://www.freecodecamp.org/) – Certifications and thousands of projects/challenges.
 * [CS50 (Harvard)](https://cs50.harvard.edu/x/) – Legendary computer science intro.
 * [roadmap.sh](https://roadmap.sh) – Visual roadmaps for every dev role (frontend, backend, DevOps, etc.).
 * [Launch School – Command Line](https://launchschool.com/books/command_line) – Beginner’s command-line guide.
+* [Exercism](https://exercism.org/) – Practice with real mentor feedback.
 * [Build Your Own X](https://build-your-own-x.vercel.app/) – Guides for building your own tools (AI, Docker, DBs, etc.).
 * [Frontend Mentor](https://www.frontendmentor.io/) – Real-world frontend projects for your portfolio.
 * [Giraffe Academy](https://www.giraffeacademy.com/) – Simple, beginner-friendly video tutorials.
@@ -68,12 +67,12 @@ Where the magic (and bugs) happen.
 
 Little things that save hours.
 
-* [ohmyzsh](https://github.com/ohmyzsh/ohmyzsh) – Popular framework for customizing Zsh.
+* [TypeForm](https://www.typeform.com/) – Beautiful user-friendly forms/surveys.
 * [Postman](https://www.postman.com/) – Gold standard for API testing and collaboration.
 * [Insomnia](https://insomnia.rest/) – Cleaner, simpler API client alternative.
-* [TypeForm](https://www.typeform.com/) – Beautiful user-friendly forms/surveys.
 * [Regex101](https://regex101.com/) – Interactive regex testing with explanations.
 * [JSON Formatter](https://jsonformatter.curiousconcept.com/) – Pretty-print or validate JSON instantly.
+* [ohmyzsh](https://github.com/ohmyzsh/ohmyzsh) – Popular framework for customizing Zsh.
 * [musicForProgramming();](https://musicforprogramming.net/latest/) – Ambient tracks curated for deep work.
 * [Refactoring.Guru](https://refactoring.guru/) – Learn refactoring techniques and design patterns.
 * [Can I use…](https://caniuse.com/) – Browser compatibility tables for web features.
@@ -120,7 +119,6 @@ Small libraries that save you from reinventing the wheel.
 
 Stay organized, plan smarter, and keep focus.
 
-* [PasswordPush](https://eu.pwpush.com/) – Send passwords securely, never in plain text.
 * [Notion](https://www.notion.so/) – Notes, docs, databases, task tracking in one.
 * [Trello](https://trello.com/) – Simple Kanban boards for projects.
 * [Excalidraw](https://excalidraw.com/) – Whiteboarding that feels like paper, but collaborative.
@@ -128,7 +126,7 @@ Stay organized, plan smarter, and keep focus.
 * [Miro](https://miro.com/) – Diagrams, mind maps, and real-time collaboration.
 * [Todoist](https://todoist.com/) – Task manager that’s powerful but simple.
 * [Pomofocus](https://pomofocus.io/) – Pomodoro timer to manage focus sessions.
-
+* [PassPush](https://eu.pwpush.com/) – Send passwords securely, never in plain text.
 
 ---
 
@@ -136,11 +134,11 @@ Stay organized, plan smarter, and keep focus.
 
 Sharpen your coding and problem-solving.
 
-* [Exercism](https://exercism.org/) – Hands-on practice with real feedback.
-* [Codewars](https://www.codewars.com/) – Gamified challenges to level up your skills.
 * [LeetCode](https://leetcode.com/) – Top interview prep platform with coding problems.
 * [HackerRank](https://www.hackerrank.com/) – Competitive programming & skill tests.
 * [Big O Cheat Sheet](https://www.bigocheatsheet.com/) – Quick reference for algorithms’ time/space complexity.
+* [Exercism](https://exercism.org/) – Hands-on practice with real feedback.
+* [Codewars](https://www.codewars.com/) – Gamified challenges to level up your skills.
 
 ---
 
@@ -148,11 +146,11 @@ Sharpen your coding and problem-solving.
 
 Learn from others and share your work.
 
-* [Reddit r/programming](https://www.reddit.com/r/programming/) – News and discussions from the dev world.
 * [Stack Overflow](https://stackoverflow.com/) – Ask/answer coding questions.
 * [Dev.to](https://dev.to/) – Blogs and insights from the developer community.
 * [Hashnode](https://hashnode.com/) – Blogging platform built for developers.
 * [CodePen](https://codepen.io/) – Frontend playground for HTML, CSS, and JS.
+* [Reddit r/programming](https://www.reddit.com/r/programming/) – News and discussions from the dev world.
 * [opensource.guide](https://opensource.guide/) – Learn how to contribute and maintain open source.
 
 ---

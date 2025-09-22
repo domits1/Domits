@@ -184,7 +184,7 @@ $secondary-color: var(--secondary-color);
                         align-items: center;
                         justify-content: center;
                         width: 260px;
-                        height: 110px;
+                        height: auto;
                         text-align: center;
                         border: 1px solid #ddd;
                         border-radius: 8px;
@@ -222,7 +222,6 @@ $secondary-color: var(--secondary-color);
                         }
 
                         &:hover::after {
-                            content: attr(data-popup-text);
                             list-style: none;
                             display: block;
                             background: rgba(0, 0, 0, 0.8);
