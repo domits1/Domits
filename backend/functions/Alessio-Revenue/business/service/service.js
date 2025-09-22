@@ -1,8 +1,7 @@
-import {Repository} from "../../data/repository.js";
+import { Repository } from "../../data/repository.js";
 import AuthManager from "../../auth/authManager.js";
 
 export class Service {
-
     constructor() {
         this.repository = new Repository();
         this.authManager = new AuthManager();
@@ -13,8 +12,11 @@ export class Service {
         if (!token) {
             throw new Error("Authorization token is missing");
         }
-        
-        const {sub: cognitoUserId} = await this.authManager.authenticateUser(event.headers.Authorization);
-        return await this.repository.getRevenue();
+
+        // Authenticate the token to get the Cognito user ID (sub)
+        const { sub: cognitoUserId } = await this.authManager.authenticateUser(event.headers.Authorization);
+
+        // Pass the Cognito user ID to the repository
+        return await this.repository.getRevenue(cognitoUserId);
     }
 }
