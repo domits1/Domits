@@ -34,7 +34,7 @@ Authorization will use your access_token.
 # API Information
 The API used is an REST api called: Booking-API-Develop
 
-You can check it out [Here](https://eu-north-1.console.aws.amazon.com/apigateway/main/apis/92a7z9y2m5/resources?api=92a7z9y2m5&region=eu-north-1&routes=jwqjok3).
+You can check it out [here](https://eu-north-1.console.aws.amazon.com/apigateway/main/apis/92a7z9y2m5/resources?api=92a7z9y2m5&region=eu-north-1&routes=jwqjok3).
 
 # Class diagram
 ![ReservationsCRUD drawio](https://github.com/user-attachments/assets/a2d0b969-836d-4ee3-8931-6aedc80742be)
@@ -48,7 +48,39 @@ Flow of the Create booking [(Code)](https://raw.githubusercontent.com/Bambaclad1
 ![mermaid-flow-1x](https://github.com/user-attachments/assets/9e65e49b-c9d5-49e2-90a3-d461a162e092)
 ...
 # Request formats
-POST Request example: (Updated, 23-4)
+
+## Running requests
+Requests can be run through various ways, the ones listed are the common methods used:
+1. In Node. You can configure a post in your events folder. 
+    This is by far the best way, because it does not require changing a auth token. You can find it here: `backend\events\General-Bookings-CRUD-Bookings-develop\` and eventually run `node ./post.js`
+> [!warning]
+> Using the Node function does not ask you for a authorization and uses a dummy account to handle bookings. This can result in many errors where your web environment's data does not match the backend data. To fix this, input your own auth token.
+
+2. In Postman. Ensure to add your auth token in the headers page. See the GIF below how that works. Do bare in mind that Postman does not generate CORS errors, incase you get them. Rather, localhost gets CORS errors.
+
+![sendarequestpostman](https://github.com/user-attachments/assets/3d2241a1-a591-44f4-93c6-0cce1cca4ea2)
+
+3. Using a `await fetch` (or any other fetch packages) to send a request from the front-end. This is the way users will interact with Domits. So make sure that this one is the most polished one. For functions that require authorization, use `frontend\web\src\services\getAccessToken.js`. Eventually you'd run `const getAccessToken();`
+```js
+import { getAccessToken } from "frontend\web\src\services\getAccessToken.js"; // always use "../../src/services", never a direct path. This is just a example.
+
+    const token = await getAccessToken();
+
+    const response = await fetch(
+        `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?paymentid=${paymentID}`, {
+            method: "PATCH",
+            headers: {
+                Authorization: token
+            }
+            body: JSON.stringify(body),
+        }
+    );
+```
+
+---
+
+### POST Request Format:
+
 ```
 {
     "httpMethod" : "POST",
@@ -57,41 +89,76 @@ POST Request example: (Updated, 23-4)
     },
     "body": {
         "identifiers": {
-            "property_Id": "606519ba-89a4-4e52-a940-3e4f79dabdd7",
-            "guest_Id": "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3",
-            "payment_Id": "223cea5a-41d3-48cd-8578-184f14e6b47c"
+            "property_Id": "606519ba-89a4-4e52-a940-3e4f79dabdd7"
         },
         "general": {
             "guests": 1,
-            "latePayment": false,
-            "status": "Accepted",
-            "arrivalDate": 1744934400000,
+            "arrivalDate": 1744934400000,   
             "departureDate": 1745020800000
         },
-        "tax": {
-            "tourism": 1.09
-        }
     }
 }
 ```
-GET Request example:
-> [!NOTE]
-> The readType has six known values, `property`, `guest`, `createdAt`, `paymentId`, `hostId` and `departureDate` It runs querys based on GSI's.
+---
+### GET Request Format:
 
-### get by PropertyID [Token Needed]
+**The first thing you need to configure in your request is a readType. This tells every read type apart and the function knows what to get based on which readType is requested.**
 
-***Usecase: Get bookings based on Property ID.***
-***Returns: Every item in a table***
-https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?property_Id=606519ba-89a4-4e52-a940-3e4f79dabdd7&readType=property
+**Current developed `readtype`'s:**
+* `createdAt`
+* `departureDate`
+* `guest`
+* `hostId`
+* `paymentId`
+* `property`
 
-### get by GuestID [token Needed]
+### get by `createdAt` 
+Uses token: No
 
-***Usecase: Get bookings based on GuestID.***
-***Returns: Every item in a table***
-https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest&guest_Id=0f5cc159-c8b2-48f3-bf75-114a10a1d6b3
+Use Case: Getting bookings from a date where the reservation was created
 
-### get by createdAt
-to be updated...
+Retuns: Dates from the date which a reservation was created and the corrosponding property_id.
+
+Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=createdAt&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&createdAt=1756857600000`
+
+### get by `departureDate`
+Uses token: No
+
+Use Case: Getting bookings from a departureDate
+
+Returns: Dates from the data which a reservation's departureDate is over with the corrosponding property_id
+
+Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=departureDate&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&departureDat=1749513600000`
+
+### get by `guest`
+Uses token: Yes 
+
+Use case: Getting bookings which the guest has booked.
+
+Returns: Full booking information.
+
+Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest`
+
+### get by `hostId` (Currently broken, and pending fix.)
+Uses token: Yes
+
+Use case: Getting bookings for a host who owns the properties.
+
+Returns: Full booking information.
+
+Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=hostId`
+
+### get by `paymentId` 
+Uses token: Yes
+
+Use case: Gets bookings on the unique payment_id
+
+Returns: Full booking information.
+
+Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=paymentId&paymentID=pi_3S5nsgGiInrsWMEc0djWC2YZ`
+
+### get by `property`
+This is pending refactoring. This function returns nothing at the moment because of a security flaw.
 
 ## Todo Wiki:
 - [ ] Update sequence/class diagram to current code for create/read

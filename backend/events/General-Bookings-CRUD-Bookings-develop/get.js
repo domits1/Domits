@@ -11,7 +11,8 @@ async function get(){
             Authorization: await getHostAuthToken()
         },
         queryStringParameters: {
-            readType: "hostId",
+            readType: "property",
+            property_Id: "c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8", 
         }
     }));
 }
