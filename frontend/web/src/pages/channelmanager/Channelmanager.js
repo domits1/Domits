@@ -23,56 +23,54 @@ export default function ChannelManager() {
       <main className="channel-main">
         <div className="channel-header">
           <h1 className="channel-title">Marketplace for integrations</h1>
-
-          <div className="channel-tabs">
-            {["Accommodations", "Boats", "Camping", "Car Rentals"].map(tab => (
-              <button
-                key={tab}
-                className={`channel-tab ${activeTab === tab ? "channel-tab-active" : ""}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          <div className="channel-actions">
-            <div className={`channel-region ${regionOpen ? "channel-region-open" : ""}`}>
-              <button
-                className="channel-region-trigger"
-                onClick={() => setRegionOpen(!regionOpen)}
-              >
-                {region}
-              </button>
-              <div className="channel-region-menu">
-                {["All", "Europe", "Netherlands"].map(opt => (
-                  <div
-                    key={opt}
-                    className="channel-region-item"
-                    aria-selected={region === opt}
-                    onClick={() => {
-                      setRegion(opt);
-                      setRegionOpen(false);
-                    }}
-                  >
-                    {opt}
-                  </div>
-                ))}
-              </div>
+          <div className="channel-bar">
+            <div className="channel-tabs">
+              {["Accommodations", "Boats", "Camping", "Car Rentals"].map(tab => (
+                <button
+                  key={tab}
+                  className={`channel-tab ${activeTab === tab ? "channel-tab-active" : ""}`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
-
-            <div className="channel-search">
-              <input
-                className="channel-search-input"
-                placeholder="Search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <span className="channel-search-icon">🔍</span>
+            <div className="channel-actions">
+              <div className={`channel-region ${regionOpen ? "channel-region-open" : ""}`}>
+                <button
+                  className="channel-region-trigger"
+                  onClick={() => setRegionOpen(!regionOpen)}
+                >
+                  {region}
+                </button>
+                <div className="channel-region-menu">
+                  {["All", "Europe", "Netherlands"].map(opt => (
+                    <div
+                      key={opt}
+                      className="channel-region-item"
+                      aria-selected={region === opt}
+                      onClick={() => {
+                        setRegion(opt);
+                        setRegionOpen(false);
+                      }}
+                    >
+                      {opt}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="channel-search">
+                <input
+                  className="channel-search-input"
+                  placeholder="Search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <span className="channel-search-icon">🔍</span>
+              </div>
             </div>
           </div>
         </div>
-
         <section className="channel-grid">
           {shown.map(item => (
             <ChannelManagerCard
