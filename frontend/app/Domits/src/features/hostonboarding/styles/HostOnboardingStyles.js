@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
   },
   onboardingPageHeading1: {
     fontSize: 24,
-    marginTop: 10,
+    marginTop: 20,
     color: 'rgb(75,75,75)',
   },
   // Navigation
@@ -250,6 +250,15 @@ export const styles = StyleSheet.create({
     width: '95%',
     marginBottom: 10,
     alignItems: 'center'
+  },
+  // Switch
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(128,128,128,0.25)',
   },
   // Time
   timeSlotItem: {
