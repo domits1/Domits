@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import "./HostFinanceTab.css";
 import { useNavigate } from "react-router-dom";
 import { getAccessToken } from "../../services/getAccessToken";
 
-const HostFinanceTab = () => {
+export default function HostFinanceTab() {
   const navigate = useNavigate();
   const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -92,6 +92,10 @@ const HostFinanceTab = () => {
         details = data.details;
       }
 
+      setBankDetailsProvided(details.bankDetailsProvided);
+      setAccountId(details.accountId);
+      setOnboardingComplete(details.onboardingComplete);
+
       const urlToOpen = details.onboardingComplete ? details.loginLinkUrl : details.onboardingUrl;
       if (!urlToOpen) {
         throw new Error("No URL returned from server");
@@ -125,7 +129,7 @@ const HostFinanceTab = () => {
               <h2>Receive payouts in 3 steps</h2>
               <ul>
                 <li>
-                  <strong>Step 1: </strong>{" "}
+                  ℹ️ <strong>Step 1: </strong>{" "}
                   <span className="finance-span" onClick={handleEnlistNavigation}>
                     List your property.
                   </span>
@@ -134,8 +138,8 @@ const HostFinanceTab = () => {
                 <li>
                   {!accountId ? (
                     <>
-                      <strong>Step 2: </strong> Once your accommodation is created, you can create a Stripe account to
-                      receive payments:{" "}
+                      ℹ️ <strong>Step 2: </strong> Once your accommodation is created, you can create a Stripe account
+                      to receive payments:{" "}
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
                         onClick={!isProcessing ? handleStripeAction : undefined}>
@@ -144,7 +148,7 @@ const HostFinanceTab = () => {
                     </>
                   ) : !onboardingComplete ? (
                     <>
-                      <strong>Step 2: </strong> Finish your Stripe onboarding to start receiving payouts:{" "}
+                      🚨 <strong>Step 2: </strong> Finish your Stripe onboarding to start receiving payouts:{" "}
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
                         onClick={!isProcessing ? handleStripeAction : undefined}>
@@ -153,7 +157,7 @@ const HostFinanceTab = () => {
                     </>
                   ) : (
                     <>
-                      ✔ <strong>Step 2: </strong> You’re connected to Stripe. Well done! Now{" "}
+                      ✅ <strong>Step 2: </strong> You’re connected to Stripe. Well done! Now{" "}
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
                         onClick={!isProcessing ? handleStripeAction : undefined}>
@@ -164,7 +168,7 @@ const HostFinanceTab = () => {
                 </li>
 
                 <li>
-                  <strong>Step 3: </strong> Set your property live{" "}
+                  ℹ️ <strong>Step 3: </strong> Set your property live{" "}
                   <span className="finance-span" onClick={() => handleNavigation("/hostdashboard/listings")}>
                     here
                   </span>{" "}
@@ -237,6 +241,4 @@ const HostFinanceTab = () => {
       </div>
     </main>
   );
-};
-
-export default HostFinanceTab;
+}
