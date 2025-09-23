@@ -4,12 +4,6 @@
     flex-direction: row;
 }
 
-.finance-span{
-    color: blue;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
 .host-pc-finance {
     flex: 1;
     margin-left: 15vw;
