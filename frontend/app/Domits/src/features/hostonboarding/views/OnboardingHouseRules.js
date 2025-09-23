@@ -1,20 +1,24 @@
 import {styles} from "../styles/HostOnboardingStyles";
-import {ScrollView, Text, TouchableOpacity, View} from "react-native";
+import {ScrollView, Switch, Text, TouchableOpacity, View} from "react-native";
 import TranslatedText from "../../translation/components/TranslatedText";
 import React, {useEffect, useState} from "react";
-import CheckBox from "@react-native-community/checkbox";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
 const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVisited}) => {
+  const [errorCheckin, setErrorCheckin] = useState("");
+  const [errorCheckout, setErrorCheckout] = useState("");
+
   const [showCheckinFromModal, setShowCheckinFromModal] = useState(false);
   const [showCheckinTillModal, setShowCheckinTillModal] = useState(false);
   const [showCheckoutFromModal, setShowCheckoutFromModal] = useState(false);
   const [showCheckoutTillModal, setShowCheckoutTillModal] = useState(false);
 
-  const [allowSmoking, setAllowSmoking] = useState(false);
-  const [allowPets, setAllowPets] = useState(false);
-  const [allowParties, setAllowParties] = useState(false);
+  const ruleOptions = [
+    {key: 'allowSmoking', label: 'Allow smoking'},
+    {key: 'allowPets', label: 'Allow pets'},
+    {key: 'allowParties', label: 'Allow parties'},
+  ];
 
   const timeStringToDate = (timeStr) => {
     // From HH:mm
@@ -32,6 +36,25 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`;
+  };
+
+  const toggleRule = (ruleName) => {
+    updateFormData((draft) => {
+      const existingRule = draft.propertyRules.find(r => r.rule === ruleName);
+      if (existingRule) {
+        existingRule.value = !existingRule.value;
+      } else {
+        draft.propertyRules.push({
+          rule: ruleName,
+          value: true,
+        });
+      }
+    });
+  };
+
+  const getRuleValue = (ruleName) => {
+    const rule = formData.propertyRules.find(r => r.rule === ruleName);
+    return rule?.value ?? false;
   };
 
   const handleTimeChange = ((event, selectedDate, field, subField, setModalVisible) => {
@@ -83,23 +106,36 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
       </View>
   );
 
-  const AllowCheckBox = ({changeFunction, checkedValue, text}) => (
-      <View style={styles.checkboxContainer}>
-        <CheckBox
-            disabled={false}
-            value={checkedValue}
-            onValueChange={() => changeFunction(!checkedValue)}
-        />
+  const AllowSwitch = ({ruleName, value, onToggle, label}) => (
+      <View style={styles.switchContainer}>
         <Text>
-          <TranslatedText
-              textToTranslate={text}/>
+          <TranslatedText textToTranslate={label}/>
         </Text>
+        <Switch
+            value={value}
+            onValueChange={() => onToggle(ruleName)}
+        />
       </View>
   );
 
   useEffect(() => {
     markVisited(true);
   }, [])
+
+  useEffect(() => {
+    const checkinFromTime = timeStringToDate(formData.propertyCheckIn.checkIn.from);
+    const checkinTillTime = timeStringToDate(formData.propertyCheckIn.checkIn.till);
+    const checkoutFromTime = timeStringToDate(formData.propertyCheckIn.checkOut.from);
+    const checkoutTillTime = timeStringToDate(formData.propertyCheckIn.checkOut.till);
+
+    const checkinValid = checkinTillTime >= checkinFromTime;
+    const checkoutValid = checkoutTillTime >= checkoutFromTime;
+
+    setErrorCheckin(checkinValid ? '' : "'till' time must be after 'from' time.");
+    setErrorCheckout(checkoutValid ? '' : "'till' time must be after 'from' time.");
+
+    reportValidity(checkinValid && checkoutValid);
+  }, [formData.propertyCheckIn.checkIn, formData.propertyCheckIn.checkOut]);
 
   return (
       <ScrollView style={{flex: 1}}>
@@ -116,6 +152,13 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
             {TimePickerButton("From", formData.propertyCheckIn.checkIn.from, showCheckinFromModal, setShowCheckinFromModal, "checkIn", "from")}
             {TimePickerButton("Till", formData.propertyCheckIn.checkIn.till, showCheckinTillModal, setShowCheckinTillModal, "checkIn", "till")}
 
+            {errorCheckin ?
+                <Text style={styles.errorText}>
+                  <TranslatedText textToTranslate={errorCheckin}/>
+                </Text>
+                : null
+            }
+
             <Text style={styles.onboardingPageHeading1}>
               <TranslatedText textToTranslate={"Check-out times"}/>
             </Text>
@@ -123,25 +166,26 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
             {TimePickerButton("From", formData.propertyCheckIn.checkOut.from, showCheckoutFromModal, setShowCheckoutFromModal, "checkOut", "from")}
             {TimePickerButton("Till", formData.propertyCheckIn.checkOut.till, showCheckoutTillModal, setShowCheckoutTillModal, "checkOut", "till")}
 
+            {errorCheckout ?
+                <Text style={styles.errorText}>
+                  <TranslatedText textToTranslate={errorCheckout}/>
+                </Text>
+                : null
+            }
+
             <Text style={styles.onboardingPageHeading1}>
               <TranslatedText textToTranslate={"General rules"}/>
             </Text>
 
-            <AllowCheckBox
-                changeFunction={setAllowSmoking}
-                checkedValue={allowSmoking}
-                text="Allow smoking"
-            />
-            <AllowCheckBox
-                changeFunction={setAllowPets}
-                checkedValue={allowPets}
-                text="Allow pets"
-            />
-            <AllowCheckBox
-                changeFunction={setAllowParties}
-                checkedValue={allowParties}
-                text="Allow parties"
-            />
+            {ruleOptions.map(({key, label}) => (
+                <AllowSwitch
+                    key={key}
+                    ruleName={key}
+                    value={getRuleValue(key)}
+                    onToggle={toggleRule}
+                    label={label}
+                />
+            ))}
 
           </ScrollView>
         </View>

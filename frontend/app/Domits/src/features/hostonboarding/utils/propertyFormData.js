@@ -65,11 +65,9 @@ const propertyFormData = {
         cleaning: -1,
     },
     propertyRules: [
-        {
-            property_id: "",
-            rule: "",
-            value: null
-        }
+        {rule: "allowSmoking", value: false},
+        {rule: "allowParties", value: false},
+        {rule: "allowPets", value: false},
     ],
     propertyType: {
         property_id: "",
