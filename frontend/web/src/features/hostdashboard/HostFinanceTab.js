@@ -56,7 +56,6 @@ export default function HostFinanceTab() {
       setOnboardingComplete(details.onboardingComplete);
 
       const urlToOpen = details.onboardingComplete ? details.loginLinkUrl : details.onboardingUrl;
-      if (!urlToOpen) throw new Error("No URL returned from server");
 
       setProcessingStep("opening");
       setTimeout(() => window.location.replace(urlToOpen), 200);
