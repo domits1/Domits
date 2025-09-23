@@ -1,7 +1,9 @@
+// src/pages/HostFinanceTab/HostFinanceTab.jsx
 import React, { useEffect, useState } from "react";
 import "./HostFinanceTab.css";
 import { useNavigate } from "react-router-dom";
-import { getAccessToken } from "../../services/getAccessToken";
+import { getStripeAccountDetails, createStripeAccount } from "./services/stripeAccountService";
+// ^ pas het pad aan als jouw service elders staat
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
@@ -14,39 +16,15 @@ export default function HostFinanceTab() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
 
-  const handleEnlistNavigation = () => {
-    navigate("/hostonboarding");
-  };
-
-  const handleNavigation = (value) => {
-    navigate(value);
-  };
-
-  const handlePayoutFrequencyChange = (event) => {
-    setPayoutFrequency(event.target.value);
-  };
+  const handleEnlistNavigation = () => navigate("/hostonboarding");
+  const handleNavigation = (value) => navigate(value);
+  const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
   useEffect(() => {
-    const getUserInfo = async () => {
+    (async () => {
       try {
-        const authToken = await getAccessToken();
-
-        const response = await fetch("https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments", {
-          method: "GET",
-          headers: { Authorization: authToken },
-        });
-
-        if (response.status === 404) {
-          return;
-        }
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const details = data.details;
-        console.log("Fetched user data and Stripe status:", details);
-
+        const details = await getStripeAccountDetails();
+        if (!details) return;
         setBankDetailsProvided(details.bankDetailsProvided);
         setAccountId(details.accountId);
         setOnboardingComplete(details.onboardingComplete);
@@ -55,8 +33,7 @@ export default function HostFinanceTab() {
       } finally {
         setLoading(false);
       }
-    };
-    getUserInfo();
+    })();
   }, []);
 
   async function handleStripeAction() {
@@ -65,31 +42,13 @@ export default function HostFinanceTab() {
       setIsProcessing(true);
       setProcessingStep("working");
 
-      const authToken = await getAccessToken();
-
       let details;
       if (!accountId) {
-        const createRes = await fetch("https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments", {
-          method: "POST",
-          headers: { Authorization: authToken },
-        });
-        if (!createRes.ok) {
-          throw new Error(`HTTP error! Status: ${createRes.status}`);
-        }
-        const createData = await createRes.json();
-        details = createData.details;
+        details = await createStripeAccount();
         if (details.accountId) setAccountId(details.accountId);
         setOnboardingComplete(false);
       } else {
-        const res = await fetch("https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments", {
-          method: "GET",
-          headers: { Authorization: authToken },
-        });
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        const data = await res.json();
-        details = data.details;
+        details = await getStripeAccountDetails();
       }
 
       setBankDetailsProvided(details.bankDetailsProvided);
@@ -97,14 +56,10 @@ export default function HostFinanceTab() {
       setOnboardingComplete(details.onboardingComplete);
 
       const urlToOpen = details.onboardingComplete ? details.loginLinkUrl : details.onboardingUrl;
-      if (!urlToOpen) {
-        throw new Error("No URL returned from server");
-      }
+      if (!urlToOpen) throw new Error("No URL returned from server");
 
       setProcessingStep("opening");
-      setTimeout(() => {
-        window.location.replace(urlToOpen);
-      }, 100);
+      setTimeout(() => window.location.replace(urlToOpen), 200);
     } catch (error) {
       console.error("Error during Stripe action:", error);
       setProcessingStep(null);
@@ -112,9 +67,7 @@ export default function HostFinanceTab() {
     }
   }
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
 
   const renderCtaLabel = (idleText) =>
     isProcessing ? (processingStep === "opening" ? "Opening link…" : "Working on it…") : idleText;
