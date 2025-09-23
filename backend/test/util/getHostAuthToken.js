@@ -12,8 +12,8 @@ export async function getHostAuthToken() {
       ClientId: "3mbk6j5phshnmnc8nljued41qt",
       AuthFlow: "ADMIN_NO_SRP_AUTH",
       AuthParameters: {
-          USERNAME: "aitofo_itofo@hotmail.com",
-          PASSWORD: "Gur@14082002",
+          USERNAME: "xasici5246@cigidea.com",
+          PASSWORD: "Test.123",
       },
       });
 
