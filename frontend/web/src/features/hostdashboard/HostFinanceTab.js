@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./HostFinanceTab.css";
 import { useNavigate } from "react-router-dom";
-import { Auth } from "aws-amplify";
 import { getAccessToken } from "../../services/getAccessToken";
 
 const HostFinanceTab = () => {
   const navigate = useNavigate();
-  const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
   const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
   const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState([]);
   const [accountId, setAccountId] = useState(null);
   const [payoutFrequency, setPayoutFrequency] = useState("weekly");
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState(null);
 
   const handleEnlistNavigation = () => {
     navigate("/hostonboarding");
@@ -32,28 +33,23 @@ const HostFinanceTab = () => {
 
         const response = await fetch("https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments", {
           method: "GET",
-          headers: {
-            Authorization: authToken,
-          },
+          headers: { Authorization: authToken },
         });
 
         if (response.status === 404) {
-          setStripeLoginUrl(null);
-          setBankDetailsProvided(null);
-          setAccountId(null);
-        } else {
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-          const data = await response.json();
-
-          const details = data.details;
-          console.log("Fetched user data and Stripe status:", details);
-
-          setStripeLoginUrl(details.loginLinkUrl ?? null);
-          setBankDetailsProvided(details.bankDetailsProvided ?? null);
-          setAccountId(details.accountId ?? null);
+          return;
         }
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const details = data.details;
+        console.log("Fetched user data and Stripe status:", details);
+
+        setBankDetailsProvided(details.bankDetailsProvided);
+        setAccountId(details.accountId);
+        setOnboardingComplete(details.onboardingComplete);
       } catch (error) {
         console.error("Error fetching user data or Stripe status:", error);
       } finally {
@@ -63,77 +59,52 @@ const HostFinanceTab = () => {
     getUserInfo();
   }, []);
 
-  // useEffect(() => {
-  //   const fetchPayouts = async () => {
-  //     if (!accountId) return;
-
-  //     try {
-  //       const response = await fetch(
-  //         "https://ayoe94cs72.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-CRUD-fetchHostPayout",
-  //         {
-  //           method: "POST",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //           },
-  //           body: JSON.stringify({ userId: accountId }),
-  //         }
-  //       );
-
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! Status: ${response.status}`);
-  //       }
-
-  //       const data = await response.json();
-  //       setPayouts(data.payoutDetails || []);
-  //     } catch (error) {
-  //       console.error("Error fetching payouts:", error);
-  //     }
-  //   };
-
-  //   fetchPayouts();
-  // }, [accountId]);
-
   async function handleStripeAction() {
     try {
+      if (isProcessing) return;
+      setIsProcessing(true);
+      setProcessingStep("working");
+
       const authToken = await getAccessToken();
 
       let details;
-      let res = await fetch("https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments", {
-        method: "GET",
-        headers: { Authorization: authToken },
-      });
-
-      if (res.status === 404) {
-        // 2) Geen account → eerst POST om aan te maken
+      if (!accountId) {
         const createRes = await fetch("https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments", {
           method: "POST",
           headers: { Authorization: authToken },
         });
         if (!createRes.ok) {
-          await createRes.json();
           throw new Error(`HTTP error! Status: ${createRes.status}`);
         }
         const createData = await createRes.json();
-        details = createData?.response?.details ?? createData?.details ?? {};
+        details = createData.details;
+        if (details.accountId) setAccountId(details.accountId);
+        setOnboardingComplete(false);
       } else {
+        const res = await fetch("https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments", {
+          method: "GET",
+          headers: { Authorization: authToken },
+        });
         if (!res.ok) {
-          await res.json();
           throw new Error(`HTTP error! Status: ${res.status}`);
         }
         const data = await res.json();
         details = data.details;
       }
 
-      // 3) Bepaal de **verse** URL: onboarding zolang niet compleet; anders login
       const urlToOpen = details.onboardingComplete ? details.loginLinkUrl : details.onboardingUrl;
-
       if (!urlToOpen) {
-        throw new Error("Geen geldige Stripe-link ontvangen (onboardingUrl/loginLinkUrl ontbreekt).");
+        throw new Error("No URL returned from server");
       }
 
-      window.location.replace(urlToOpen);
+      setProcessingStep("opening");
+      setTimeout(() => {
+        window.location.replace(urlToOpen);
+      }, 100);
     } catch (error) {
       console.error("Error during Stripe action:", error);
+      setProcessingStep(null);
+      setIsProcessing(false);
     }
   }
 
@@ -141,9 +112,8 @@ const HostFinanceTab = () => {
     return <div>Loading...</div>;
   }
 
-  console.log("Stripe Login URL:", stripeLoginUrl);
-  console.log("Bank Details Provided:", bankDetailsProvided);
-  console.log("Account id:", accountId);
+  const renderCtaLabel = (idleText) =>
+    isProcessing ? (processingStep === "opening" ? "Opening link…" : "Working on it…") : idleText;
 
   return (
     <main className="page-Host">
@@ -162,25 +132,32 @@ const HostFinanceTab = () => {
                 </li>
 
                 <li>
-                  {stripeLoginUrl ? (
-                    bankDetailsProvided ? (
-                      <>
-                        ✔ <strong>Step 2: </strong> You are connected to Stripe!
-                      </>
-                    ) : (
-                      <>
-                        <strong>Step 2: </strong> Connect your bank details with our payment partner{" "}
-                        <span className="finance-span" onClick={handleStripeAction}>
-                          Stripe.
-                        </span>
-                      </>
-                    )
-                  ) : (
+                  {!accountId ? (
                     <>
                       <strong>Step 2: </strong> Once your accommodation is created, you can create a Stripe account to
                       receive payments:{" "}
-                      <span className="finance-span" onClick={handleStripeAction}>
-                        Domits Stripe
+                      <span
+                        className={`finance-span ${isProcessing ? "disabled" : ""}`}
+                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        {renderCtaLabel("Create Stripe account")}
+                      </span>
+                    </>
+                  ) : !onboardingComplete ? (
+                    <>
+                      <strong>Step 2: </strong> Finish your Stripe onboarding to start receiving payouts:{" "}
+                      <span
+                        className={`finance-span ${isProcessing ? "disabled" : ""}`}
+                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        {renderCtaLabel("Continue Stripe onboarding")}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      ✔ <strong>Step 2: </strong> You’re connected to Stripe. Well done! Now{" "}
+                      <span
+                        className={`finance-span ${isProcessing ? "disabled" : ""}`}
+                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        {renderCtaLabel("Open Stripe Dashboard")}
                       </span>
                     </>
                   )}
