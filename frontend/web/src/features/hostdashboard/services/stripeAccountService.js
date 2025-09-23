@@ -1,9 +1,9 @@
 import { getAccessToken } from "../../../services/getAccessToken";
 
-const token = await getAccessToken();
 const API = "https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments";
 
 export default async function getStripeAccountDetails() {
+    const token = await getAccessToken();
     const response = await fetch(API, {
         method: "GET",
         headers: { Authorization: token },
@@ -22,6 +22,7 @@ export default async function getStripeAccountDetails() {
 }
 
 export async function createStripeAccount() {
+    const token = await getAccessToken();
     const response = await fetch(API, {
         method: "POST",
         headers: { Authorization: token },
