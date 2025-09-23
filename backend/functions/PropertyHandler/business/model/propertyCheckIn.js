@@ -1,5 +1,9 @@
 import { TypeException } from "../../util/exception/TypeException.js";
 
+const isValidTimeString = (value) => {
+    return typeof value === "string" && /^([0-9]|[01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/.test(value);
+};
+
 export class PropertyCheckIn {
     property_id;
     checkIn;
@@ -22,11 +26,11 @@ export class PropertyCheckIn {
         if (typeof value !== "object") {
             throw new TypeException("propertyCheckIn - Check in must be an object.")
         }
-        if (typeof value.from !== "number") {
-            throw new TypeException("propertyCheckIn - Check in 'from' must be a number.")
+        if (!isValidTimeString(value.from)) {
+            throw new TypeException("propertyCheckIn - Check in 'from' must be a valid time string (HH:MM).")
         }
-        if (typeof value.till !== "number") {
-            throw new TypeException("propertyCheckIn - Check in 'till' must be a number.")
+        if (!isValidTimeString(value.till)) {
+            throw new TypeException("propertyCheckIn - Check in 'till' must be a valid time string (HH:MM).")
         }
         this.checkIn = value;
     }
@@ -35,11 +39,11 @@ export class PropertyCheckIn {
         if (typeof value !== "object") {
             throw new TypeException("propertyCheckIn - Check out must be an object.")
         }
-        if (typeof value.from !== "number") {
-            throw new TypeException("propertyCheckIn - Check out 'from' must be a number.")
+        if (!isValidTimeString(value.from)) {
+            throw new TypeException("propertyCheckIn - Check out 'from' must be a valid time string (HH:MM).")
         }
-        if (typeof value.till !== "number") {
-            throw new TypeException("propertyCheckIn - Check out 'till' must be a number.")
+        if (!isValidTimeString(value.till)) {
+            throw new TypeException("propertyCheckIn - Check out 'till' must be a valid time string (HH:MM).")
         }
         this.checkOut = value;
     }
