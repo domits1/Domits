@@ -10,7 +10,7 @@ import { Booking } from 'database/models/Booking';
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
-  .getSystemManagerParameter("/stripe/keys/secret/test")
+  .getSystemManagerParameter("/stripe/keys/secret/live")
   .then(secret => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
