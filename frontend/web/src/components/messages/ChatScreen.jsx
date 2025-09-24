@@ -34,6 +34,8 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
     const wsMessages = socket?.messages || [];
     const addedMessageIds = useRef(new Set());
+    const optimisticSignaturesRef = useRef(new Set());
+    const chatContainerRef = useRef(null);
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
@@ -45,42 +47,49 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
         }
     }, [userId, contactId, fetchMessages]);
 
+    // Scroll to bottom on new messages or when conversation changes
+    useEffect(() => {
+        try {
+            const el = chatContainerRef.current;
+            if (el) el.scrollTop = el.scrollHeight;
+        } catch {}
+    }, [messages, contactId]);
+
     const handleSendAutomatedTestMessages = () => {
         if (!contactId) return;
-
+        const baseTime = Date.now();
         const automated = [
             {
-                id: uuidv4(),
-                userId: contactId, // from other side
-                recipientId: userId, // to me
+                id: `auto-${uuidv4()}`,
+                userId: contactId,
+                recipientId: userId,
                 text: `👋 Welcome! Thanks for booking. I'm here to help with anything you need.`,
-                createdAt: new Date().toISOString(),
+                createdAt: new Date(baseTime).toISOString(),
                 isSent: false,
                 isAutomated: true,
                 messageType: 'host_property_welcome',
             },
             {
-                id: uuidv4(),
-                userId: contactId, // from other side
-                recipientId: userId, // to me
+                id: `auto-${uuidv4()}`,
+                userId: contactId,
+                recipientId: userId,
                 text: `📍 Check-in is flexible. Share your ETA and I’ll prepare accordingly.`,
-                createdAt: new Date(Date.now() + 500).toISOString(),
+                createdAt: new Date(baseTime + 500).toISOString(),
                 isSent: false,
                 isAutomated: true,
                 messageType: 'checkin_instructions',
             },
             {
-                id: uuidv4(),
-                userId: contactId, // from other side
-                recipientId: userId, // to me
+                id: `auto-${uuidv4()}`,
+                userId: contactId,
+                recipientId: userId,
                 text: `📶 Wi‑Fi details will be in the guidebook on arrival.`,
-                createdAt: new Date(Date.now() + 1000).toISOString(),
+                createdAt: new Date(baseTime + 1000).toISOString(),
                 isSent: false,
                 isAutomated: true,
                 messageType: 'wifi_info',
             },
         ];
-
         automated.forEach((m) => addNewMessage(m));
     };
 
@@ -90,45 +99,61 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                 (msg.userId === userId && msg.recipientId === contactId) ||
                 (msg.userId === contactId && msg.recipientId === userId);
 
-            const isNew = !addedMessageIds.current.has(msg.id);
+            if (!isRelevant) return;
 
-            if (isRelevant && isNew) {
-                // Add visual indicator for automated messages
-                const messageWithIndicator = {
-                    ...msg,
-                    isAutomated: msg.isAutomated || false,
-                    messageType: msg.messageType || 'regular'
-                };
+            // Skip if we've already added this id
+            if (msg.id && addedMessageIds.current.has(msg.id)) return;
 
-                addNewMessage(messageWithIndicator);
-                addedMessageIds.current.add(msg.id);
+            // Skip if this matches an optimistic message we already rendered
+            const incomingSig = `${msg.userId}|${msg.recipientId}|${(msg.text || '').trim()}|${(msg.fileUrls || []).join(',')}`;
+            if (optimisticSignaturesRef.current.has(incomingSig)) {
+                optimisticSignaturesRef.current.delete(incomingSig);
+                return;
+            }
 
-                // Log automated messages for debugging
-                if (msg.isAutomated) {
-                    console.log('🤖 Automated message received:', {
-                        type: msg.messageType,
-                        from: msg.userId,
-                        to: msg.recipientId,
-                        text: msg.text?.substring(0, 50) + '...'
-                    });
-                }
+            const messageWithDefaults = {
+                ...msg,
+                isAutomated: msg.isAutomated || false,
+                messageType: msg.messageType || 'regular'
+            };
+
+            addNewMessage(messageWithDefaults);
+            if (msg.id) addedMessageIds.current.add(msg.id);
+
+            if (msg.isAutomated) {
+                console.log('🤖 Automated message received:', {
+                    type: msg.messageType,
+                    from: msg.userId,
+                    to: msg.recipientId,
+                    text: msg.text?.substring(0, 50) + '...'
+                });
             }
         });
-    }, [wsMessages, userId, contactId]);
+    }, [wsMessages, userId, contactId, addNewMessage]);
+
+    const makeSignature = (m) => `${m.userId}|${m.recipientId}|${(m.text || '').trim()}|${(m.fileUrls || []).join(',')}`;
 
     const handleSendMessage = async () => {
-        if ((newMessage.trim() || uploadedFileUrls.length > 0) && (uploadedFileUrls.length > 0 || newMessage.trim())) {
-            try {
-                const response = isPairRoom
-                    ? local.sendLocalMessage(newMessage, uploadedFileUrls)
-                    : await sendMessage(contactId, newMessage, uploadedFileUrls);
+        const hasContent = (newMessage.trim() || uploadedFileUrls.length > 0);
+        if (!hasContent) return;
+        try {
+            if (isPairRoom) {
+                // Local rooms: we handle rendering ourselves and broadcast via BroadcastChannel
+                const response = local.sendLocalMessage(newMessage, uploadedFileUrls);
+                if (!response || !response.success) {
+                    alert(`Error while sending: ${response?.error || 'Please try again later.'}`);
+                    return;
+                }
+            } else {
+                // Remote rooms: send and optimistically render; dedupe when echo arrives
+                const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
                 if (!response || !response.success) {
                     alert(`Error while sending: ${response.error || 'Please try again later.'}`);
                     return;
                 }
-                // only for UI
+
                 const tempSentMessage = {
-                    id: uuidv4(),
+                    id: `temp-${uuidv4()}`,
                     userId,
                     recipientId: contactId,
                     text: newMessage,
@@ -136,14 +161,19 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                     createdAt: new Date().toISOString(),
                     isSent: true,
                 };
-
-                handleContactListMessage(tempSentMessage);
+                optimisticSignaturesRef.current.add(makeSignature(tempSentMessage));
                 addNewMessage(tempSentMessage);
-                setNewMessage('');
-                setUploadedFileUrls([]);
-            } catch (error) {
-                console.error('Unexpected error while sending:', error);
+                handleContactListMessage?.(tempSentMessage);
             }
+            setNewMessage('');
+            setUploadedFileUrls([]);
+            // Auto-scroll to bottom after sending
+            try {
+                const el = chatContainerRef.current;
+                if (el) el.scrollTop = el.scrollHeight;
+            } catch {}
+        } catch (error) {
+            console.error('Unexpected error while sending:', error);
         }
     };
 
@@ -158,7 +188,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                             <FaArrowLeft />
                         </button>
                     )}
-                    <img src={contactAvatar || profileImage} alt={contactName} className="profile-img" onError={(e) => { e.currentTarget.src = profileImage; }} />
+                    <img src={contactAvatar || profileImage} alt={contactName} className="profile-img" />
                     <div className="chat-header-info">
                         <h3>{contactName}</h3>
                         <p>Translation on</p>
@@ -175,7 +205,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                     </div>
                 </div>
 
-                <div className="chat-screen">
+                <div className="chat-screen" ref={chatContainerRef}>
                     {loading ? (
                         <div className="loading-messages">
                             <div className="loading-spinner"></div>

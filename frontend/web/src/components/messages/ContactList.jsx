@@ -1,12 +1,13 @@
-import { useState, useEffect, useContext, useMemo } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { WebSocketContext } from '../../features/hostdashboard/hostmessages/context/webSocketContext';
 import useFetchContacts from '../../features/hostdashboard/hostmessages/hooks/useFetchContacts';
 import ContactItem from './ContactItem';
 import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
-import { FaCog, FaSearch, FaBars, FaPlus } from 'react-icons/fa';
+import { FaCog, FaBars, FaPlus, FaSearch } from 'react-icons/fa';
 import AutomatedSettings from './AutomatedSettings';
+import NewContactModal from './NewContactModal';
 
-const ContactList = ({ userId, onContactClick, message, dashboardType, showPending = true }) => {
+const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId, dashboardType);
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [displayType, setDisplayType] = useState('contacts');
@@ -16,34 +17,7 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
     const [automatedSettings, setAutomatedSettings] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortAlphabetically, setSortAlphabetically] = useState(false);
-    const [manualRecipientId, setManualRecipientId] = useState('');
-    const [manualRecipientName, setManualRecipientName] = useState('');
-    const [showCreateTest, setShowCreateTest] = useState(false);
-    const [testName, setTestName] = useState('Test Host');
-    const [testAvatarDataUrl, setTestAvatarDataUrl] = useState('');
-    // pairing/direct UI removed per requirements
-
-    const localPairCode = useMemo(() => {
-        try {
-            const existing = window.localStorage.getItem('domits_pair_code');
-            if (existing) return existing;
-            const gen = Math.random().toString(36).substr(2, 6).toUpperCase();
-            window.localStorage.setItem('domits_pair_code', gen);
-            return gen;
-        } catch (e) {
-            return 'ABC123';
-        }
-    }, []);
-
-    // Prefill helpers for local/test environments
-    // Hard-wired defaults for local testing (host<->guest pair)
-    const HARD_HOST_ID = process.env.REACT_APP_TEST_HOST_ID || '00000000-0000-4000-8000-000000000001';
-    const HARD_GUEST_ID = process.env.REACT_APP_TEST_GUEST_ID || '00000000-0000-4000-8000-000000000002';
-    const HARD_HOST_NAME = process.env.REACT_APP_TEST_HOST_NAME || 'Test Host';
-    const HARD_GUEST_NAME = process.env.REACT_APP_TEST_GUEST_NAME || 'Test Guest';
-
-    const testRecipientId = isHost ? HARD_GUEST_ID : HARD_HOST_ID;
-    const testRecipientName = isHost ? HARD_GUEST_NAME : HARD_HOST_NAME;
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const labels = {
         contacts: 'Contacts',
@@ -82,30 +56,27 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
         });
     }, [message, setContacts]);
 
-    // Auto prefill manual fields in dev/local when there are no contacts
+    // Merge locally created contacts from localStorage once on mount
     useEffect(() => {
-        const currentListLength = (displayType === 'contacts' ? contacts.length : pendingContacts.length);
-        if (currentListLength === 0 && !manualRecipientId) {
-            const lastRecipient = window.localStorage.getItem('domits_last_manual_recipient');
-            const lastName = window.localStorage.getItem('domits_last_manual_recipient_name');
-            if (lastRecipient) {
-                setManualRecipientId(lastRecipient);
-                if (lastName) setManualRecipientName(lastName);
-            } else if (window.location.hostname === 'localhost' && testRecipientId) {
-                setManualRecipientId(testRecipientId);
-                setManualRecipientName(testRecipientName);
-            }
+        const storageKey = `domits_local_contacts_${userId}_${dashboardType}`;
+        try {
+            const raw = localStorage.getItem(storageKey);
+            if (!raw) return;
+            const localContacts = JSON.parse(raw);
+            if (!Array.isArray(localContacts)) return;
+            setContacts(prev => {
+                const existingIds = new Set(prev.map(c => c.recipientId || c.userId || c.id));
+                const merged = [
+                    ...prev,
+                    ...localContacts.filter(c => !existingIds.has(c.recipientId || c.userId || c.id))
+                ];
+                return merged;
+            });
+        } catch (e) {
+            console.error('Failed to parse local contacts', e);
         }
-    }, [displayType, contacts, pendingContacts, manualRecipientId, testRecipientId, testRecipientName]);
-
-    // If we have a prefilled manual recipient and still no contacts, auto-open the chat
-    useEffect(() => {
-        const currentListLength = (displayType === 'contacts' ? contacts.length : pendingContacts.length);
-        if (currentListLength === 0 && manualRecipientId && onContactClick) {
-            setSelectedContactId(manualRecipientId);
-            onContactClick(manualRecipientId, manualRecipientName || (isHost ? HARD_GUEST_NAME : HARD_HOST_NAME));
-        }
-    }, [manualRecipientId]);
+        // eslint-disable-next-line
+    }, []);
 
     let contactList = displayType === 'contacts' ? contacts : pendingContacts;
 
@@ -127,38 +98,36 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
 
     const noContactsMessage = displayType === 'contacts' ? labels.noContacts : labels.noPending;
 
-    const handleClick = (contactId, contactName, profileImage) => {
-        // If there is a locally stored override for this contact (e.g., custom avatar), apply it
-        try {
-            const raw = window.localStorage.getItem('domits_manual_contacts');
-            if (raw) {
-                const saved = JSON.parse(raw);
-                if (Array.isArray(saved)) {
-                    const found = saved.find((c) => c.recipientId === contactId);
-                    if (found && found.profileImage) {
-                        profileImage = found.profileImage;
-                    }
-                }
-            }
-        } catch {}
+    const handleClick = (contact) => {
+        const contactId = contact.recipientId;
         setSelectedContactId(contactId);
-        onContactClick?.(contactId, contactName, profileImage);
+        onContactClick?.(contactId, contact.givenName, contact.profileImage || null);
+    };
+
+    const handleCreateContact = (newContact) => {
+        const storageKey = `domits_local_contacts_${userId}_${dashboardType}`;
+        setContacts(prev => [newContact, ...prev]);
+        try {
+            const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const updated = [newContact, ...existing];
+            localStorage.setItem(storageKey, JSON.stringify(updated));
+        } catch (e) {
+            console.error('Failed to store local contact', e);
+        }
     };
 
     return (
         <div className={`${dashboardType}-contact-list-modal`}>
             <h3>Message dashboard</h3>
-            <div className="dashboard-stats">
-                <div className="stat-item">
-                    <span className="stat-number">{contacts.length}</span>
-                    <span className="stat-label">Active conversations</span>
-                </div>
-                {isHost && (
-                    <div className="stat-item">
-                        <span className="stat-number">{pendingContacts.length}</span>
-                        <span className="stat-label">Pending requests</span>
-                    </div>
-                )}
+            <div className="contact-search-bar">
+                <FaSearch className="contact-search-icon" />
+                <input
+                    type="text"
+                    placeholder="Search contacts"
+                    className="contact-search-input-wide"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
+                />
             </div>
             <div className={`contact-list-toggle`}>
                 <select
@@ -167,22 +136,17 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
                     className="contact-dropdown"
                 >
                     <option value="contacts">{labels.contacts}</option>
-                    {showPending && <option value="pendingContacts">{labels.pending}</option>}
+                    <option value="pendingContacts">{labels.pending}</option>
                 </select>
 
                 <div className="contact-list-side-buttons">
-                    <input
-                        type="text"
-                        placeholder=""
-                        className="contact-search-input"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
-                    />
+                    <button className="new-contact-button" onClick={() => setShowCreateModal(true)} title="Create new contact">
+                        <FaPlus />
+                    </button>
                     <FaBars className={`contact-list-side-button`} onClick={() => setSortAlphabetically(prev => !prev)} />
                     {isHost && (
                         <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
                     )}
-                    <FaPlus className={`contact-list-side-button`} title="Create test contact" onClick={() => setShowCreateTest(true)} />
 
                 </div>
 
@@ -193,86 +157,21 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
                         setAutomatedSettings={setAutomatedSettings} />
                 )}
 
-                {showCreateTest && (
-                    <div className="automated-settings-modal">
-                        <div className="top-bar">
-                            <h2>Create test contact</h2>
-                            <button onClick={() => setShowCreateTest(false)}>Close</button>
-                        </div>
-                        <div className="settings-body" style={{ display: 'block', padding: '1rem' }}>
-                            <div style={{ marginBottom: '0.5rem' }}>
-                                <label>Name</label>
-                                <input type="text" value={testName} onChange={(e) => setTestName(e.target.value)} style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '8px' }} />
-                            </div>
-                            <div style={{ marginBottom: '0.75rem' }}>
-                                <label>Profile image (optional)</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        const file = e.target.files && e.target.files[0];
-                                        if (!file) { setTestAvatarDataUrl(''); return; }
-                                        const reader = new FileReader();
-                                        reader.onload = () => setTestAvatarDataUrl(reader.result);
-                                        reader.readAsDataURL(file);
-                                    }}
-                                    style={{ display: 'block', marginTop: '6px' }}
-                                />
-                                {testAvatarDataUrl && (
-                                    <img src={testAvatarDataUrl} alt="Preview" style={{ marginTop: '8px', width: '64px', height: '64px', objectFit: 'cover', borderRadius: '50%', border: '1px solid #e5e7eb' }} />
-                                )}
-                            </div>
-                             <button onClick={() => {
-                                 const id = `test-${Date.now()}`;
-                                 const newContact = {
-                                     userId: id,
-                                     recipientId: id,
-                                     givenName: testName || 'Test Contact',
-                                     accoImage: null,
-                                     profileImage: testAvatarDataUrl || null,
-                                     latestMessage: { text: 'Test contact created', createdAt: new Date().toISOString() },
-                                 };
-                                 setContacts(prev => {
-                                     const next = [newContact, ...prev.filter(c => c.recipientId !== id)];
-                                     try {
-                                         const raw = window.localStorage.getItem('domits_manual_contacts');
-                                         const arr = raw ? JSON.parse(raw) : [];
-                                         const list = Array.isArray(arr) ? arr : [];
-                                         const idx = list.findIndex((c) => c.recipientId === id);
-                                         if (idx >= 0) list[idx] = { ...list[idx], ...newContact };
-                                         else list.unshift(newContact);
-                                         window.localStorage.setItem('domits_manual_contacts', JSON.stringify(list));
-                                         window.localStorage.setItem('domits_last_manual_recipient', id);
-                                         window.localStorage.setItem('domits_last_manual_recipient_name', newContact.givenName || '');
-                                     } catch {}
-                                     return next;
-                                 });
-                                 setShowCreateTest(false);
-                                 setTestName('Test Host');
-                                 setTestAvatarDataUrl('');
-                             }} className="dropdownLoginButton">Create</button>
-                        </div>
-                    </div>
-                )}
-
 
             </div>
-
-            {/* Optional quick start/join panel (hidden by default) */}
-            {/* Quick start removed per requirements */}
 
             <ul className={`contact-list-list`}>
                 {loading ? (
                     <p className={`contact-list-loading-text`}>Loading contacts...</p>
                 ) : contactList.length === 0 ? (
-                    <div><p className={`contact-list-empty-text`}>{noContactsMessage}</p></div>
+                    <p className={`contact-list-empty-text`}>{noContactsMessage}</p>
                 ) : (
                     contactList
                         .map((contact) => (
                             <li
-                                key={contact.userId}
+                                key={contact.recipientId || contact.userId || contact.id}
                                 className={`contact-list-list-item ${displayType === 'pendingContacts' ? 'disabled' : ''}`}
-                                onClick={() => displayType !== 'pendingContacts' && handleClick(contact.recipientId, contact.givenName, contact.profileImage)}
+                                onClick={() => displayType !== 'pendingContacts' && handleClick(contact)}
                             >
                                 <ContactItem
                                     contact={contact}
@@ -286,6 +185,13 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, showPendi
                         ))
                 )}
             </ul>
+            <NewContactModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onCreate={handleCreateContact}
+                userId={userId}
+                dashboardType={dashboardType}
+            />
         </div>
     );
 };

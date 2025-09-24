@@ -11,6 +11,7 @@ const HostMessagesInner = () => {
   const { userId } = useAuth();
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [selectedContactName, setSelectedContactName] = useState(null);
+  const [selectedContactAvatar, setSelectedContactAvatar] = useState(null);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const isMobile = screenWidth < 768;
   const isTablet = screenWidth >= 768 && screenWidth < 1440;
@@ -21,9 +22,10 @@ const HostMessagesInner = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleContactClick = (contactId, contactName) => {
+  const handleContactClick = (contactId, contactName, profileImage) => {
     setSelectedContactId(contactId);
     setSelectedContactName(contactName);
+    setSelectedContactAvatar(profileImage || null);
   };
 
   const handleBackToContacts = () => {
@@ -58,6 +60,7 @@ const HostMessagesInner = () => {
             userId={userId}
             contactId={selectedContactId}
             contactName={selectedContactName}
+            contactAvatar={selectedContactAvatar}
             onBack={isTablet ? handleBackToContacts : null}
             dashboardType={'host'}
             handleContactListMessage={() => {}}

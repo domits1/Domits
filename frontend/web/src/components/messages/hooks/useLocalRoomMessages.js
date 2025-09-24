@@ -32,6 +32,7 @@ export const useLocalRoomMessages = (roomCode, userId) => {
             setMessages((prev) => {
                 const exists = prev.some((m) => m.id === incoming.id);
                 if (exists) return prev;
+                // Append to end so newest at bottom
                 const next = [...prev, incoming];
                 try { window.localStorage.setItem(storageKey, JSON.stringify(next)); } catch {}
                 return next;
