@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./HostFinanceTab.css";
+import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount } from "./services/stripeAccountService";
 
