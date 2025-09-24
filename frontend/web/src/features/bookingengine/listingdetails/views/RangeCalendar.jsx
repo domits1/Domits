@@ -112,9 +112,9 @@ export default function RangeCalendar({
 
   return (
    
-  
-    <div className="container">
-      <p className="title">Booking Availability Calendar</p>
+  <>
+    <p className="title">Booking Availability Calendar</p>
+    <div className="rc-con">
       <div className="rc">
         <div className="rc-header">
           <div className="rc-tabs" role="tablist">
@@ -125,14 +125,6 @@ export default function RangeCalendar({
               onClick={() => setActiveTab("calendar")}
             >
               Calendar
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === "flex"}
-              className={"rc-tab" + (activeTab === "flex" ? " is-active" : "")}
-              onClick={() => setActiveTab("flex")}
-            >
-              {"I'm flexible"}
             </button>
           </div>
 
@@ -170,8 +162,8 @@ export default function RangeCalendar({
           </button>
         </div>
       </div>
-
     </div>
+  </>
     
  
 
