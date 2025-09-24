@@ -17,8 +17,6 @@ const ValidatePayment = () => {
       return;
     }
 
-    const intent = stripe.retrievePaymentIntent(clientSecret);
-
     const clientSecret = new URLSearchParams(window.location.search).get(`payment_intent_client_secret`);
     if (!clientSecret) {
       setMessage("Missing Client Secret in URL. Please contact support.");
