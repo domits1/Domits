@@ -26,7 +26,7 @@ class StripeRepository {
       const stripe = await stripePromise;
       const total = await CalculateTotalRate(propertyId, dates);
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: total,
+        amount: 50,
         application_fee_amount: Math.round(total * 0.15),
         currency: 'eur',
         payment_method_types: ["card", "ideal", "klarna"],
