@@ -30,7 +30,6 @@ const ValidatePayment = () => {
           console.error("No PaymentIntent received!!");
           return;
         }
-        console.log(paymentIntent);
         setLoading(false);
         switch (paymentIntent.status) {
           case "succeeded":
