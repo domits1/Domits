@@ -69,12 +69,12 @@ export default function HostFinanceTab() {
 
   return (
     <main className="page-Host">
-      <h2>Finance</h2>
+      <p className="page-Host-title">Finance</p>
       <div className="page-Host-content">
         <section className="host-pc-finance">
           <div className="finance-content">
             <div className="finance-steps">
-              <h2>Receive payouts in 3 steps</h2>
+              <p className="finance-steps-title">Receive your payouts in 3 easy steps</p>
               <ul>
                 <li>
                   ℹ️ <strong>Step 1: </strong>{" "}
