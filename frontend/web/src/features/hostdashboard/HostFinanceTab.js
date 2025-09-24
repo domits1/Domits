@@ -1,9 +1,7 @@
-// src/pages/HostFinanceTab/HostFinanceTab.jsx
 import React, { useEffect, useState } from "react";
 import "./HostFinanceTab.css";
 import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount } from "./services/stripeAccountService";
-// ^ pas het pad aan als jouw service elders staat
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
