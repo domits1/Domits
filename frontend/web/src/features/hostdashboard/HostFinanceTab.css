@@ -1,4 +1,3 @@
-
 .page-Host-content {
     display: flex;
     flex-direction: row;
@@ -7,6 +6,19 @@
 .host-pc-finance {
     flex: 1;
     margin-left: 15vw;
+}
+
+.page-Host-title {
+    display: flex;
+    justify-content: center;
+    font-family: 'Kanit';
+    font-size: 30px;
+}
+
+.finance-steps-title {
+    text-align: center;
+    font-family: 'Kanit';
+    font-size: 30px;
 }
 
 .finance-content {
