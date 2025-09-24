@@ -1020,6 +1020,7 @@ const ListingDetails = () => {
                                     )}
                                 </section>
                             </div>
+                            
                         </div>
                     )}
                 </section>

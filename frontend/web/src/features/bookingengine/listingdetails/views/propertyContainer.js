@@ -6,6 +6,7 @@ import GeneralDetails from "../components/generalDetails";
 import AmenitiesContainer from "./amenitiesContainer";
 import Description from "../components/description";
 import RulesContainer from "./rulesContainer";
+import RangeCalendar from "./RangeCalendar";
 
 const PropertyContainer = ({ property }) => {
   return (
@@ -17,7 +18,7 @@ const PropertyContainer = ({ property }) => {
       <hr />
       <AmenitiesContainer amenityIds={property.amenities} />
       <hr />
-     {/* 2 months price calendar show here */}
+      <RangeCalendar />
        <hr />
       <RulesContainer rules={property.rules} checkIn={property.checkIn} />
     </div>
