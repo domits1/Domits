@@ -11,7 +11,7 @@ async function post(){
         },
         body:{
         "identifiers": {
-            "property_Id": "3763b443-6a49-476f-a7fa-5c39288cc21c"
+            "property_Id": "42a335b3-e72e-49ee-bc8d-ed61e9bd35e5"
         },
         "general": {
             "guests": 1,
