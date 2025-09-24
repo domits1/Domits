@@ -51,10 +51,6 @@ export default function HostFinanceTab() {
         details = await getStripeAccountDetails();
       }
 
-      setBankDetailsProvided(details.bankDetailsProvided);
-      setAccountId(details.accountId);
-      setOnboardingComplete(details.onboardingComplete);
-
       const urlToOpen = details.onboardingComplete ? details.loginLinkUrl : details.onboardingUrl;
 
       setProcessingStep("opening");
