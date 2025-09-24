@@ -123,7 +123,7 @@ const HostOnboarding = ({navigation}) => {
     const step = steps.find(item => item.component === OnboardingSpace);
     updatePageStatus(step.key, {valid: false})
     updateFormData((draft) => {
-      draft.propertyType.propertySpace = "";
+      draft.propertyType.spaceType = "";
     });
   }, [formData.propertyType.property_type])
 
