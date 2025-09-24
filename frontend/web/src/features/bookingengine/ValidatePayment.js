@@ -17,59 +17,54 @@ const ValidatePayment = () => {
       return;
     }
 
-    const intent = stripe.retrievePaymentIntent(clientSecret)
+    const intent = stripe.retrievePaymentIntent(clientSecret);
 
-    const clientSecret = new URLSearchParams(window.location.search).get(
-      `payment_intent_client_secret`
-    );
+    const clientSecret = new URLSearchParams(window.location.search).get(`payment_intent_client_secret`);
     if (!clientSecret) {
-      setMessage("Missing Client Secret in URL. Please contact support.")
+      setMessage("Missing Client Secret in URL. Please contact support.");
     }
 
     const checkPayment = async () => {
-      stripe
-        .retrievePaymentIntent(clientSecret)
-        .then(({ paymentIntent }) => {
+      stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+        const bookingId = new URLSearchParams(window.location.search).get("id");
 
-          const bookingId = new URLSearchParams(window.location.search).get(
-            'id'
-          )
+        if (!paymentIntent) {
+          console.error("No PaymentIntent received!!");
+          return;
+        }
+        console.log(paymentIntent);
+        setLoading(false);
+        switch (paymentIntent.status) {
+          case "succeeded":
+            setMessage(`Success! Payment received.`);
+            ActivateBookingFunction(paymentIntent.id);
+            navigate(`/bookingconfirmationoverview?&id=${bookingId}&paymentId=${paymentIntent.id}`);
+            break;
 
-          if (!paymentIntent) {
-            console.error("No PaymentIntent received!!")
-            return;
-          }
-          console.log(paymentIntent)
-          setLoading(false);
-          switch (paymentIntent.status) {
-            case "succeeded":
-              setMessage(`Success! Payment received.`);
-              ActivateBookingFunction(paymentIntent.id);
-              navigate(`/bookingconfirmationoverview?&id=${bookingId}&paymentId=${paymentIntent.id}`)
-              break;
+          case "processing":
+            setMessage(
+              `Payment is still processing. Checking again... (If this occurs for a longer time, please contact dev)`
+            );
+            setTimeout(checkPayment, 2000);
+            break;
 
-            case "processing":
-              setMessage(`Payment is still processing. Checking again... (If this occurs for a longer time, please contact dev)`);
-              setTimeout(checkPayment, 2000);
-              break;
+          case "requires_payment_method":
+            DeactivateBooking(paymentIntent.id);
+            setMessage(`Payment failed. Please try another payment method. No charges have been made.`);
+            break;
 
-            case "requires_payment_method":
-              DeactivateBooking(paymentIntent.id);
-              setMessage(`Payment failed. Please try another payment method. No charges have been made.`);
-              break;
-
-            default:
-              setMessage(`Something went wrong. Please contact support with error ${paymentIntent.status}.`);
-              break;
-          }
-        });
-    }
+          default:
+            setMessage(`Something went wrong. Please contact support with error ${paymentIntent.status}.`);
+            break;
+        }
+      });
+    };
     checkPayment();
   }, [stripe]);
 
   const ActivateBookingFunction = async (paymentid) => {
     await ActivateBooking(paymentid);
-  }
+  };
 
   return (
     <>
@@ -82,7 +77,7 @@ const ValidatePayment = () => {
         </>
       )}
     </>
-  )
+  );
 };
 
 export default ValidatePayment;
