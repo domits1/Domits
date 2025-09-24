@@ -24,6 +24,7 @@ const HostOnboarding = ({navigation}) => {
     propertyDescription: {visited: false, valid: false},
     propertyAmountOfGuests: {visited: false, valid: false},
     propertyAmenities: {visited: false, valid: false},
+    propertyHouseRules: {visited: false, valid: false},
   });
 
   const updateFormData = (updaterFn) => {
