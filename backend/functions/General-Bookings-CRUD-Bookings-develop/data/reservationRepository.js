@@ -1,12 +1,10 @@
 import Database from "database";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { randomUUID } from "crypto";
 import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
 import UnableToSearch from "../util/exception/UnableToSearch.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import { Booking } from "database/models/Booking";
-import { Not } from "typeorm";
 
 class ReservationRepository {
   // ---------
