@@ -6,6 +6,7 @@ import CreateDate from "../business/model/createDate.js";
 import UnableToSearch from "../util/exception/UnableToSearch.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import { Booking } from "database/models/Booking";
+import { Not } from "typeorm";
 
 class ReservationRepository {
   // ---------
@@ -33,7 +34,8 @@ class ReservationRepository {
         guests: requestBody.general.guests.toString(),
         guestname: "WIP-Guest",
         latepayment: false,
-        paymentid: "FAILED: ", tempPaymentId,
+        paymentid: "FAILED: ",
+        tempPaymentId,
         property_id: requestBody.identifiers.property_Id,
         status: "Awaiting Payment",
       })
@@ -56,7 +58,7 @@ class ReservationRepository {
     };
   }
   // ---------
-  // Read bookings by propertyID (auth)
+  // Read bookings by propertyID
   // ---------
   async readByPropertyId(property_Id) {
     const client = await Database.getInstance();
@@ -143,30 +145,36 @@ class ReservationRepository {
   }
 
   // ---------
-  // Read bookings by HostID (auth, depends on property-crud lambdax/)
+  // Read bookings by HostID
   // ---------
   async readByHostId(host_Id) {
+    // Fetches user's property first, throws error if not found
     this.lambdaRepository = new LambdaRepository();
-    const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);  
-      const properties = propertiesOutput.id.map((_, i) => ({
+    const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);
+    const properties = propertiesOutput.id.map((_, i) => ({
       id: propertiesOutput.id[i],
       title: propertiesOutput.title[i],
       rate: propertiesOutput.rate[i],
     }));
-    const combined = await Promise.all(
+
+    // Proceeds to send a request for every id returning their respective data
+    const results = await Promise.all(
       properties.map(async (property) => {
-        const result = await this.readByPropertyId(property.id.toString());
-        let items = [];
-        if (Array.isArray(result.Items)) {
-          items = result.Items.map((rawItem) => unmarshall(rawItem));
+        const res = await this.readByPropertyId(property.id);
+
+        if (!res) {
+          throw new NotFoundException("User has no reservations on their property.");
         }
 
-        return { ...property, items };
+        return {
+          ...property,
+          res,
+        };
       })
     );
+
     return {
-      message: "Booking returned: ",
-      response: combined,
+      response: results,
       statusCode: 200,
     };
   }
