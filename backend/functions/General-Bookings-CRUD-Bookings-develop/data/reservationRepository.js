@@ -159,11 +159,7 @@ class ReservationRepository {
     const results = await Promise.all(
       properties.map(async (property) => {
         const res = await this.readByPropertyId(property.id);
-
-        if (!res) {
-          throw new NotFoundException("User has no reservations on their property.");
-        }
-
+        
         return {
           ...property,
           res,
