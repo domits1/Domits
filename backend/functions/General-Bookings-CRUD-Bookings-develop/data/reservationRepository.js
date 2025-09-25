@@ -66,11 +66,11 @@ class ReservationRepository {
       .where("booking.property_id = :property_id", { property_id: property_Id })
       .getMany();
 
-    if (!query) {
-      throw new NotFoundException("No bookings found.");
+    if (query < 1) {
+      console.error("No bookings found for property ", property_Id);
+      return { response: null }
     }
     return {
-      statusCode: 200,
       response: query,
     };
   }
@@ -170,7 +170,6 @@ class ReservationRepository {
         };
       })
     );
-
     return {
       response: results,
       statusCode: 200,
