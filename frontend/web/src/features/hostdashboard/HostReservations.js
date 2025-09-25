@@ -21,6 +21,7 @@ const HostReservations = () => {
     const fetchBookings = async () => {
       try {
         const bookings = await getReservationsFromToken(authToken);
+        console.log(bookings);
         if (bookings === "Data not found") {
           toast.error("No reservations found for this user. Refresh the page to try again.");
           setUserHasReservations(false);
@@ -31,9 +32,8 @@ const HostReservations = () => {
           sortBookings(null, bookings);
         }
        } catch (error) {
-        console.error("Fetch Error:", error);
-        if (error.message.includes("Failed to fetch")) {
-        }
+        console.error("Error fetching properties:", error);
+        toast.error("Something unexpected happenend. You possibly don't have any reservations. Please refresh the page to try again.")
       } finally {
         setIsLoading(false);
       }
@@ -48,16 +48,21 @@ const HostReservations = () => {
       return;
     }
     
-    let bookingArray = [];  
+    let bookingArray = [];
+
     bookings.forEach((property) => {
-      property.items.forEach((item) => {
+
+      const reservations = Array.isArray(property.res) ? property.res : [];
+
+      reservations.forEach((item) =>{
         bookingArray.push({
-            ...item,
-            title: property.title,
-            rate: property.rate
+          title: property.title,
+          rate: property.rate,
+          id: property.id,
+          ...item
         })
-      });
-    });
+      })
+    })
     if (type === null) {
       setSortedBookings(bookingArray);
     } else {
@@ -84,7 +89,8 @@ const HostReservations = () => {
               <div className={styles.reservationButtons}>
                 <button onClick={() => sortBookings(null, bookings)}>All</button>
                 <button onClick={() => sortBookings("Paid", bookings)}>Paid</button>
-                <button onClick={() => sortBookings("Cancelled", bookings)}>Cancelled</button>
+                <button onClick={() => sortBookings("Awaiting Payment", bookings)}>Awaiting Payment</button>
+                <button onClick={() => sortBookings("Failed", bookings)}>Failed</button>
               </div>
               <section className={styles.reservationData}>
                 <table className={styles.reservationTable}>
@@ -147,13 +153,13 @@ const HostReservations = () => {
                           <td className={styles.singleReservationRow}>{booking.id}</td>
                           <td className={styles.singleReservationRow}>{booking.title}</td>
                           <td className={styles.singleReservationRow}>
-                            {new Date(booking.arrivalDate).toLocaleDateString()} -{" "}
-                            {new Date(booking.departureDate).toLocaleDateString()}
+                            {new Date(booking.arrivaldate).toLocaleDateString()} -{" "}
+                            {new Date(booking.departuredate).toLocaleDateString()}
                           </td>
                           <td className={styles.singleReservationRow}>
-                            {new Date(booking.createdAt).toLocaleDateString()}
+                            {new Date(booking.createdat).toLocaleDateString()}
                           </td>
-                          <td className={styles.singleReservationRow}>{booking.guestId}</td>
+                          <td className={styles.singleReservationRow}>{booking.guestname}</td>
                           <td className={styles.singleReservationRow}>€{booking.rate}</td>
                           <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
                           <td className={styles.singleReservationRow}>{booking.status}</td>
