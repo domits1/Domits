@@ -1,4 +1,4 @@
-const propertyFormData = {
+const propertyFormDataTemplate = {
     property: {
         id: "",
         hostId: "",
@@ -94,4 +94,4 @@ const propertyFormData = {
     }
 };
 
-export default propertyFormData;
+export default propertyFormDataTemplate;

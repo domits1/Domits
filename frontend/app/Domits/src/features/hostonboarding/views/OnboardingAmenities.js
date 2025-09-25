@@ -6,31 +6,34 @@ import amenityUtils from "../../../hooks/AmenityUtils";
 import CheckBox from "@react-native-community/checkbox";
 
 const OnboardingAmenities = ({formData, updateFormData, reportValidity, markVisited}) => {
-  const [selected, setSelected] = useState([]);
+  const [selected, setSelected] = useState(formData.propertyAmenities.map(item => item.amenityId));
   const amenityNames = ['Wi-Fi', 'TV with cable/satellite', 'Heating', 'Hot water', 'Bed linens', 'Toilet paper', 'Air conditioning', 'Towels', 'Extra pillows and blankets', 'Soap and shampoo']
 
   const toggleAmenity = (amenityId) => {
-    setSelected(prev => {
-      const isSelected = prev.includes(amenityId);
+    const isSelected = formData.propertyAmenities.some(
+        (item) => item.amenityId === amenityId
+    );
 
-      // Update form data based on selection
-      updateFormData((draft) => {
-        if (isSelected) {
-          draft.propertyAmenities = draft.propertyAmenities.filter(item => item.amenityId !== amenityId);
-        } else {
-          draft.propertyAmenities.push({
-            amenityId: amenityId,
-          });
-        }
-      });
-
-      return isSelected
-          ? prev.filter(item => item !== amenityId)
-          : [...prev, amenityId];
+    // Update form data based on selection
+    updateFormData((draft) => {
+      if (isSelected) {
+        draft.propertyAmenities = draft.propertyAmenities.filter(
+            (item) => item.amenityId !== amenityId
+        );
+      } else {
+        draft.propertyAmenities.push({ amenityId });
+      }
     });
+
+    // Update local state to reflect the change
+    setSelected((prev) =>
+        isSelected
+            ? prev.filter((id) => id !== amenityId)
+            : [...prev, amenityId]
+    );
   };
 
-  const amenityCheckbox = (amenityName) => {
+  const AmenityCheckbox = ({ amenityName }) => {
     const amenityItem = amenityUtils.getAmenityByName(amenityName);
     const isSelected = selected.includes(amenityItem.id);
 
@@ -55,11 +58,6 @@ const OnboardingAmenities = ({formData, updateFormData, reportValidity, markVisi
     reportValidity(true); // Checkboxes not mandatory
   }, [])
 
-  useEffect(() => {
-    // Set initial selected
-    setSelected(formData.propertyAmenities.map(item => item.amenityId));
-  }, [])
-
   return (
       <ScrollView style={{flex: 1}}>
         <View style={styles.contentContainer}>
@@ -71,9 +69,9 @@ const OnboardingAmenities = ({formData, updateFormData, reportValidity, markVisi
           </Text>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
 
-            {amenityNames.map(amenityName =>
-                amenityCheckbox(amenityName)
-            )}
+            {amenityNames.map(name => (
+                <AmenityCheckbox key={name} amenityName={name} />
+            ))}
 
           </ScrollView>
         </View>
