@@ -1,6 +1,5 @@
 import {Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import useOrientation from "../../../../../hooks/useOrientation";
-import {useState} from "react";
 import {styles} from "../../../styles/HostOnboardingStyles";
 import TranslatedText from "../../../../translation/components/TranslatedText";
 
@@ -14,7 +13,6 @@ import other from "../../../store/campericons/camper_van.png";
 
 const OnboardingCamperSpace = ({formData, updateFormData, reportValidity}) => {
   const {isLandscape} = useOrientation();
-  const [selectedCamperSpace, setSelectedCamperSpace] = useState(formData.propertyType.spaceType);
 
   const camperSpaceTypes = [
     {
@@ -48,7 +46,6 @@ const OnboardingCamperSpace = ({formData, updateFormData, reportValidity}) => {
   ];
 
   function handleSelectedCamperSpace(space) {
-    setSelectedCamperSpace(space);
     updateFormData((draft) => {
       draft.propertyType.spaceType = space;
     });
@@ -69,10 +66,11 @@ const OnboardingCamperSpace = ({formData, updateFormData, reportValidity}) => {
                     style={[
                       styles.gridItem,
                       isLandscape ? {width: `20%`} : {width: `35%`},
-                      selectedCamperSpace === item.name && styles.selectedGridItem
+                      formData.propertyType.spaceType === item.name && styles.selectedGridItem
                     ]}>
                   <Image source={item.img} style={styles.gridItemImage}/>
-                  <Text style={[styles.gridItemText, selectedCamperSpace === item.name && styles.selectedGridItemText]}>
+                  <Text
+                      style={[styles.gridItemText, formData.propertyType.spaceType === item.name && styles.selectedGridItemText]}>
                     <TranslatedText textToTranslate={item.name}/>
                   </Text>
                 </TouchableOpacity>
