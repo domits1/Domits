@@ -1,18 +1,41 @@
 import Stripe from "stripe";
 import "dotenv/config";
-import { Controller } from "./controller/controller.js";
+import StripeAccountRepository from "./data/stripeAccountRepository.js";
+import AuthManager from "./auth/authManager.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const authManager = new AuthManager();
+const stripeAccountRepository = new StripeAccountRepository();
 
-const controller = new Controller();
 
 export const handler = async (event) => {
-  const { userId } = 15;
 
   try {
+
+    const token = event.headers.Authorization;
+
+    const {sub: cognitoUserId } = await authManager.authenticateUser(token);
+
+    if (!cognitoUserId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Missing required field: cognitoUserId" }),
+      };
+    }
+
+    const stripeAccount = await stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+
+    if (!stripeAccount?.account_id) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: "No Stripe account found for this user." }),
+      };
+    }
+
+    // const testAccount = "";
+
     const payouts = await stripe.payouts.list({
-      limit: 5,
-      stripeAccount: userId,
+      stripeAccount: stripeAccount.account_id,
     });
 
     const payoutDetails = payouts.data.map((payout) => ({
