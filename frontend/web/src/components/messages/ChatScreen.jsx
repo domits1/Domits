@@ -10,7 +10,7 @@ import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/comp
 import { WebSocketContext } from '../../features/hostdashboard/hostmessages/context/webSocketContext';
 import '../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss';
 import { v4 as uuidv4 } from 'uuid';
-import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
+import { FaPaperPlane, FaArrowLeft, FaSearch, FaTimes, FaPaperclip, FaMicrophone } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
 
 
@@ -33,12 +33,22 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
     const [newMessage, setNewMessage] = useState('');
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
     const wsMessages = socket?.messages || [];
+    const [messageSearch, setMessageSearch] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const searchInputRef = useRef(null);
     const addedMessageIds = useRef(new Set());
     const optimisticSignaturesRef = useRef(new Set());
     const chatContainerRef = useRef(null);
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
+    };
+
+    const handleOpenAttachmentPicker = () => {
+        try {
+            const input = document.getElementById('fileInput');
+            input?.click();
+        } catch {}
     };
 
     useEffect(() => {
@@ -54,6 +64,14 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
             if (el) el.scrollTop = el.scrollHeight;
         } catch {}
     }, [messages, contactId]);
+
+    useEffect(() => {
+        if (isSearchOpen) {
+            try {
+                searchInputRef.current?.focus();
+            } catch {}
+        }
+    }, [isSearchOpen]);
 
     const handleSendAutomatedTestMessages = () => {
         if (!contactId) return;
@@ -179,6 +197,16 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
 
     if (!contactId) return null;
 
+    // Filter messages client-side by keyword (text or file url)
+    const visibleMessages = messageSearch
+        ? messages.filter(m => {
+            const text = (m.text || '').toLowerCase();
+            const urls = (m.fileUrls || []).join(' ').toLowerCase();
+            const term = messageSearch.toLowerCase();
+            return text.includes(term) || urls.includes(term);
+        })
+        : messages;
+
     return (
         <div className={`${dashboardType}-chat`}>
             <div className="chat-screen-container">
@@ -188,12 +216,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                             <FaArrowLeft />
                         </button>
                     )}
-                    <img src={contactAvatar || profileImage} alt={contactName} className="profile-img" />
-                    <div className="chat-header-info">
-                        <h3>{contactName}</h3>
-                        <p>Translation on</p>
-                    </div>
-                    <div className="chat-header-actions">
+                    <div className="chat-header-left-actions">
                         <button
                             type="button"
                             className="automated-test-button"
@@ -203,7 +226,48 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                             🤖 Test messages
                         </button>
                     </div>
+                    <img src={contactAvatar || profileImage} alt={contactName} className="profile-img" />
+                    <div className="chat-header-info">
+                        <h3>{contactName}</h3>
+                        <p>Translation on</p>
+                    </div>
+                    <div className="chat-header-actions">
+                        <div className="chat-header-search">
+                            {!isSearchOpen ? (
+                                <button
+                                    type="button"
+                                    className="chat-header-search-toggle"
+                                    onClick={() => setIsSearchOpen(true)}
+                                    title="Search messages"
+                                    aria-label="Search messages"
+                                >
+                                    <FaSearch />
+                                </button>
+                            ) : (
+                                <div className="chat-header-search-expanded">
+                                    <FaSearch className="chat-header-search-icon" />
+                                    <input
+                                        ref={searchInputRef}
+                                        type="text"
+                                        placeholder="Search messages"
+                                        value={messageSearch}
+                                        onChange={(e) => setMessageSearch(e.target.value)}
+                                        className="chat-header-search-input"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="chat-header-search-close"
+                                        onClick={() => { setIsSearchOpen(false); setMessageSearch(''); }}
+                                        title="Close search"
+                                    >
+                                        <FaTimes />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
+
 
                 <div className="chat-screen" ref={chatContainerRef}>
                     {loading ? (
@@ -218,13 +282,22 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                                 Retry
                             </button>
                         </div>
-                    ) : messages.length === 0 ? (
+                    ) : visibleMessages.length === 0 ? (
                         <div className="empty-chat">
-                            <p>👋 Start a conversation with {contactName}</p>
-                            <p className="empty-chat-subtitle">Send your first message below</p>
+                            {messageSearch ? (
+                                <>
+                                    <p>No messages match your search.</p>
+                                    <p className="empty-chat-subtitle">Try different keywords</p>
+                                </>
+                            ) : (
+                                <>
+                                    <p>👋 Start a conversation with {contactName}</p>
+                                    <p className="empty-chat-subtitle">Send your first message below</p>
+                                </>
+                            )}
                         </div>
                     ) : (
-                        messages.map((message) => (
+                        visibleMessages.map((message) => (
                             <ChatMessage
                                 key={message.id}
                                 message={message}
@@ -237,23 +310,34 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                 </div>
 
                 <div className='chat-input'>
-                    <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
-                    <textarea
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                        className='message-input-textarea'
-                        onKeyUp={(e) => {
-                            if (e.key === 'Enter') handleSendMessage();
-                        }}
-                    />
+                    {/* Hidden uploader kept for functionality */}
+                    <div style={{ display: 'none' }}>
+                        <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+                    </div>
+
+                    <button className='whats-action whats-clip' title='Attach' onClick={handleOpenAttachmentPicker}>
+                        <FaPaperclip />
+                    </button>
+
+                    <div className='whats-input'>
+                        <textarea
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Message"
+                            className='whats-textarea'
+                            onKeyUp={(e) => {
+                                if (e.key === 'Enter') handleSendMessage();
+                            }}
+                        />
+                    </div>
+
                     <button
-                        onClick={handleSendMessage}
-                        className='message-input-send-button'
+                        className='whats-action whats-mic'
+                        title={newMessage.trim() ? 'Send' : 'Voice'}
+                        onClick={() => { if (newMessage.trim()) { handleSendMessage(); } }}
                         disabled={sending}
-                        title="Send"
                     >
-                        {sending ? 'Sending...' : <FaPaperPlane />}
+                        {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
                     </button>
                 </div>
 

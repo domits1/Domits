@@ -37,18 +37,18 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
         <div className={`${prefix}chat-message-container ${isAutomatedMessage ? 'automated-message' : ''}`}>
             <div className={`${prefix}chat-message ${isRead ? 'read' : 'unread'} ${directionClass} ${isAutomatedMessage ? 'automated' : ''}`}>
                 <div className={`message-header ${isAutomatedMessage ? 'automated-header' : ''}`}>
-                    <span className={`sender-name`}>
-                        {isAutomatedMessage ? (
+                    {isAutomatedMessage && (
+                        <span className={`sender-name`}>
                             <span className="automated-sender">
                                 {automatedIcon} {senderId === userId ? 'You' : contactName} (Automated)
                             </span>
-                        ) : (
-                            senderId === userId ? 'You' : contactName
-                        )}
-                    </span>
+                        </span>
+                    )}
                     <span className={`message-time ${isAutomatedMessage ? 'automated-time' : ''}`}>{formatDate(createdAt)}</span>
                 </div>
-                <div className={`message-content ${isAutomatedMessage ? 'automated-content' : ''}`}>{text}</div>
+                <div className={`message-content ${isAutomatedMessage ? 'automated-content' : ''}`}>
+                    <span className="message-text">{text}</span>
+                </div>
 
                 {fileUrls?.length > 0 && (
                     <div className={`message-attachments`}>

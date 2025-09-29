@@ -3,7 +3,7 @@ import { WebSocketContext } from '../../features/hostdashboard/hostmessages/cont
 import useFetchContacts from '../../features/hostdashboard/hostmessages/hooks/useFetchContacts';
 import ContactItem from './ContactItem';
 import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
-import { FaCog, FaBars, FaPlus, FaSearch } from 'react-icons/fa';
+import { FaCog, FaPlus, FaSearch } from 'react-icons/fa';
 import AutomatedSettings from './AutomatedSettings';
 import NewContactModal from './NewContactModal';
 
@@ -16,7 +16,7 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const isHost = dashboardType === 'host';
     const [automatedSettings, setAutomatedSettings] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortAlphabetically, setSortAlphabetically] = useState(false);
+    const [sortAlphabetically] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     const labels = {
@@ -80,11 +80,33 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
 
     let contactList = displayType === 'contacts' ? contacts : pendingContacts;
 
+
+    // Search by keyword across guest name, property title, latest message, and booking dates
     if (searchTerm) {
-        contactList = contactList.filter(contact =>
-            contact.givenName?.toLowerCase().includes(searchTerm)
-        );
+        const term = searchTerm.toLowerCase();
+        contactList = contactList.filter(contact => {
+            const nameMatch = (contact.givenName || '').toLowerCase().includes(term);
+            const propertyMatch = (contact.propertyTitle || '').toLowerCase().includes(term);
+            const latestText = contact.latestMessage?.text || '';
+            const messageMatch = latestText.toLowerCase().includes(term);
+            // Allow searching by formatted dates
+            const arrival = contact.arrivalDate ? new Date(contact.arrivalDate) : null;
+            const departure = contact.departureDate ? new Date(contact.departureDate) : null;
+            const dateTokens = [];
+            if (arrival) {
+                dateTokens.push(arrival.toLocaleDateString().toLowerCase());
+                dateTokens.push(arrival.toISOString().slice(0, 10));
+            }
+            if (departure) {
+                dateTokens.push(departure.toLocaleDateString().toLowerCase());
+                dateTokens.push(departure.toISOString().slice(0, 10));
+            }
+            const dateMatch = dateTokens.some(d => d.includes(term));
+            return nameMatch || propertyMatch || messageMatch || dateMatch;
+        });
     }
+
+    // Removed property/guest/date filters for a simpler sidebar
 
     if (sortAlphabetically) {
         contactList = [...contactList].sort((a, b) =>
@@ -143,7 +165,6 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                     <button className="new-contact-button" onClick={() => setShowCreateModal(true)} title="Create new contact">
                         <FaPlus />
                     </button>
-                    <FaBars className={`contact-list-side-button`} onClick={() => setSortAlphabetically(prev => !prev)} />
                     {isHost && (
                         <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
                     )}
