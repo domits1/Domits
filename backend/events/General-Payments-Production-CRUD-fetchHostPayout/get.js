@@ -5,8 +5,8 @@ async function get() {
   console.log(
     await handler({
       httpMethod: "GET",
-      path: "/retrieve-suser-payout",
-      resource: "/retrieve-suser-payout",
+      path: "/retrieve-user-payouts",
+      resource: "/retrieve-user-payouts",
       headers: {
         Authorization: await getHostAuthToken(),
       },
