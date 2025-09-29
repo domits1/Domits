@@ -1,67 +1,21 @@
-import Stripe from "stripe";
-import "dotenv/config";
-import StripeAccountRepository from "./data/stripeAccountRepository.js";
-import AuthManager from "./auth/authManager.js";
+import StripePayoutsController from "./controller/stripePayoutsController.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const authManager = new AuthManager();
-const stripeAccountRepository = new StripeAccountRepository();
-
+const controller = new StripePayoutsController();
 
 export const handler = async (event) => {
+  let returnedResponse = {};
 
-  try {
-
-    const token = event.headers.Authorization;
-
-    const {sub: cognitoUserId } = await authManager.authenticateUser(token);
-
-    if (!cognitoUserId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Missing required field: cognitoUserId" }),
-      };
-    }
-
-    const stripeAccount = await stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
-
-    if (!stripeAccount?.account_id) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: "No Stripe account found for this user." }),
-      };
-    }
-
-    // const testAccount = "";
-
-    const payouts = await stripe.payouts.list({
-      stripeAccount: stripeAccount.account_id,
-    });
-
-    const payoutDetails = payouts.data.map((payout) => ({
-      id: payout.id,
-      amount: payout.amount / 100,
-      currency: payout.currency.toUpperCase(),
-      status: payout.status,
-      arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString(),
-      createdDate: new Date(payout.created * 1000).toLocaleDateString(),
-      method: payout.method,
-      type: payout.type,
-      destination: payout.destination,
-      failureMessage: payout.failure_message || null,
-      balanceTransactionId: payout.balance_transaction || null,
-      automatic: payout.automatic,
-    }));
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ payoutDetails }),
-    };
-  } catch (error) {
-    console.error("Error fetching payouts:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Failed to retrieve payout information." }),
-    };
+  switch (event.httpMethod) {
+    case "GET":
+      returnedResponse = await controller.read(event);
+      break;
+    default:
+      throw new Error("Unable to determine request type. Please contact the Admin.");
   }
+
+  return {
+    statusCode: returnedResponse?.statusCode || 200,
+    headers: returnedResponse?.headers || {},
+    body: JSON.stringify(returnedResponse?.response),
+  };
 };
