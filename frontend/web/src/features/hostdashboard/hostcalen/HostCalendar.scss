@@ -92,7 +92,7 @@ $cyan: #06b6d4;      // seasonal price
 .hc-grid-head {
   display: grid; grid-template-columns: repeat(7, 1fr); background: #131722; border-bottom: 1px solid $line;
 }
-.hc-grid-head-cell { text-align: right; padding: 10px 12px; color: $muted; font-size: 12px; }
+.hc-grid-head-cell { text-align: left; padding: 10px 12px; color: #fff; font-size: 12px; }
 
 .hc-grid-body { display: grid; grid-template-rows: repeat(6, 1fr); }
 .hc-grid-row { display: grid; grid-template-columns: repeat(7, 1fr); min-height: 84px; }
@@ -112,7 +112,7 @@ $cyan: #06b6d4;      // seasonal price
   display: flex; align-items: baseline; justify-content: space-between; gap: 6px;
 }
 .hc-date { font-size: 18px; color: $muted; }
-.hc-price { font-size: 12px; padding: 2px 6px; border-radius: 999px; background: #0d1017; border: 1px solid $line; }
+.hc-price { font-size: 12px; padding: 2px 12px; border-radius: 999px; background: #fff; border: 1px solid $line; font-weight: 800 }
 
 /* Stats */
 .hc-stats { margin-top: 12px; }
