@@ -30,7 +30,7 @@ export default class StripePayoutsService {
 
     const connectedAccount = "acct_1QxTbi2eKtSPvnOL";
 
-    const charges = await this.stripe.charges.list({ limit: 10 }, { stripeAccount: connectedAccount });
+    const charges = await this.stripe.charges.list({}, { stripeAccount: connectedAccount });
 
     const chargeDetails = await Promise.all(
       charges.data.map(async (charge) => {
@@ -41,20 +41,20 @@ export default class StripePayoutsService {
         console.log("charge", charge);
         console.log("balanceTx", balanceTx);
 
-            const charges = await this.stripe.paymentIntents.retrieve("pi_3SCzugGiInrsWMEc0d9hoLLs");
+        const paymentIntent = await this.stripe.accounts.retrieve(charge.source.id);
 
-            console.log("testing ", charges);
-
-
-        // const paymentIntent = await this.stripe.accounts.retrieve(charge.source.id);
-
-        // console.log("betaald door ", paymentIntent);
-
-        // console.log("who payed ", charge.source.id);
+        console.log("betaald door ", paymentIntent);
 
         const appFee = await this.stripe.applicationFees.retrieve(charge.application_fee);
 
         console.log("appFee", appFee);
+
+        const charges = await this.stripe.charges.retrieve(appFee.originating_transaction);
+
+        const pi = await this.stripe.paymentIntents.retrieve(charges.payment_intent, {
+          expand: ["payment_method"],
+        });
+        console.log("pi", pi);
 
         return {
           id: charge.id,
@@ -66,6 +66,7 @@ export default class StripePayoutsService {
           createdDate: new Date(charge.created * 1000).toLocaleDateString(),
           customer: charge.customer,
           application_fee: appFee.amount / 100,
+          customer_name: pi.payment_method.billing_details.name,
         };
       })
     );
