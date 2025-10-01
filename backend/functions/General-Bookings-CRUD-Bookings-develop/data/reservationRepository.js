@@ -1,5 +1,4 @@
 import Database from "database";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { randomUUID } from "crypto";
 import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
@@ -33,7 +32,8 @@ class ReservationRepository {
         guests: requestBody.general.guests.toString(),
         guestname: "WIP-Guest",
         latepayment: false,
-        paymentid: "FAILED: ", tempPaymentId,
+        paymentid: "FAILED: ",
+        tempPaymentId,
         property_id: requestBody.identifiers.property_Id,
         status: "Awaiting Payment",
       })
@@ -56,7 +56,7 @@ class ReservationRepository {
     };
   }
   // ---------
-  // Read bookings by propertyID (auth)
+  // Read bookings by propertyID
   // ---------
   async readByPropertyId(property_Id) {
     const client = await Database.getInstance();
@@ -66,11 +66,11 @@ class ReservationRepository {
       .where("booking.property_id = :property_id", { property_id: property_Id })
       .getMany();
 
-    if (!query) {
-      throw new NotFoundException("No bookings found.");
+    if (query < 1) {
+      console.error("No bookings found for property ", property_Id);
+      return { response: null }
     }
     return {
-      statusCode: 200,
       response: query,
     };
   }
@@ -143,30 +143,31 @@ class ReservationRepository {
   }
 
   // ---------
-  // Read bookings by HostID (auth, depends on property-crud lambdax/)
+  // Read bookings by HostID
   // ---------
   async readByHostId(host_Id) {
+    // Fetches user's property first, throws error if not found
     this.lambdaRepository = new LambdaRepository();
-    const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);  
-      const properties = propertiesOutput.id.map((_, i) => ({
+    const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);
+    const properties = propertiesOutput.id.map((_, i) => ({
       id: propertiesOutput.id[i],
       title: propertiesOutput.title[i],
       rate: propertiesOutput.rate[i],
     }));
-    const combined = await Promise.all(
-      properties.map(async (property) => {
-        const result = await this.readByPropertyId(property.id.toString());
-        let items = [];
-        if (Array.isArray(result.Items)) {
-          items = result.Items.map((rawItem) => unmarshall(rawItem));
-        }
 
-        return { ...property, items };
+    // Proceeds to send a request for every id returning their respective data
+    const results = await Promise.all(
+      properties.map(async (property) => {
+        const res = await this.readByPropertyId(property.id);
+        
+        return {
+          ...property,
+          res,
+        };
       })
     );
     return {
-      message: "Booking returned: ",
-      response: combined,
+      response: results,
       statusCode: 200,
     };
   }

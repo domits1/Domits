@@ -1,202 +1,121 @@
 import React, { useEffect, useState } from "react";
 import "./HostFinanceTab.css";
 import { useNavigate } from "react-router-dom";
-import { Auth } from "aws-amplify";
+import { getStripeAccountDetails, createStripeAccount } from "./services/stripeAccountService";
 
-const HostFinanceTab = () => {
+export default function HostFinanceTab() {
   const navigate = useNavigate();
-  const [userEmail, setUserEmail] = useState(null);
-  const [cognitoUserId, setCognitoUserId] = useState(null);
-  const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
   const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
   const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState([]);
   const [accountId, setAccountId] = useState(null);
   const [payoutFrequency, setPayoutFrequency] = useState("weekly");
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState(null);
 
-  const handleEnlistNavigation = () => {
-    navigate("/hostonboarding");
-  };
-
-  const handleNavigation = (value) => {
-    navigate(value);
-  };
-
-  const handlePayoutFrequencyChange = (event) => {
-    setPayoutFrequency(event.target.value);
-  };
+  const handleEnlistNavigation = () => navigate("/hostonboarding");
+  const handleNavigation = (value) => navigate(value);
+  const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
   useEffect(() => {
-    const setUserEmailAsync = async () => {
+    (async () => {
       try {
-        const userInfo = await Auth.currentUserInfo();
-        setUserEmail(userInfo.attributes.email);
-        setCognitoUserId(userInfo.attributes.sub);
-
-        const response = await fetch(
-          `https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`,
-          {
-            method: "POST",
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Methods": "OPTIONS,POST",
-              "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-              "Access-Control-Allow-Credentials": true,
-            },
-            body: JSON.stringify({ sub: userInfo.attributes.sub }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        const parsedBody = JSON.parse(data.body);
-
-        if (parsedBody.hasStripeAccount) {
-          setStripeLoginUrl(parsedBody.loginLinkUrl);
-          setBankDetailsProvided(parsedBody.bankDetailsProvided);
-          setAccountId(parsedBody.accountId);
-        }
+        const details = await getStripeAccountDetails();
+        if (!details) return;
+        setBankDetailsProvided(details.bankDetailsProvided);
+        setAccountId(details.accountId);
+        setOnboardingComplete(details.onboardingComplete);
       } catch (error) {
         console.error("Error fetching user data or Stripe status:", error);
       } finally {
         setLoading(false);
       }
-    };
-    setUserEmailAsync();
+    })();
   }, []);
 
-  useEffect(() => {
-    const fetchPayouts = async () => {
-      if (!accountId) return;
-
-      try {
-        const response = await fetch(
-          "https://ayoe94cs72.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-CRUD-fetchHostPayout",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ userId: accountId }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setPayouts(data.payoutDetails || []);
-      } catch (error) {
-        console.error("Error fetching payouts:", error);
-      }
-    };
-
-    fetchPayouts();
-  }, [accountId]);
-
   async function handleStripeAction() {
-    if (userEmail && cognitoUserId) {
-      const options = {
-        userEmail: userEmail,
-        cognitoUserId: cognitoUserId,
-      };
-      try {
-        const response = await fetch(
-          "https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount",
-          {
-            method: "POST",
-            body: JSON.stringify(options),
-            headers: {
-              "Content-type": "application/json; charset=UTF-8",
-            },
-          }
-        );
+    try {
+      if (isProcessing) return;
+      setIsProcessing(true);
+      setProcessingStep("working");
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        window.location.replace(data.url);
-      } catch (error) {
-        console.error("Error during Stripe action:", error);
+      let details;
+      if (!accountId) {
+        details = await createStripeAccount();
+        if (details.accountId) setAccountId(details.accountId);
+        setOnboardingComplete(false);
+      } else {
+        details = await getStripeAccountDetails();
       }
-    } else {
-      console.error("User email or cognitoUserId is not defined.");
+
+      const urlToOpen = details.onboardingComplete ? details.loginLinkUrl : details.onboardingUrl;
+
+      setProcessingStep("opening");
+      setTimeout(() => window.location.replace(urlToOpen), 200);
+    } catch (error) {
+      console.error("Error during Stripe action:", error);
+      setProcessingStep(null);
+      setIsProcessing(false);
     }
   }
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
 
-  console.log("Stripe Login URL:", stripeLoginUrl);
-  console.log("Bank Details Provided:", bankDetailsProvided);
+  const renderCtaLabel = (idleText) =>
+    isProcessing ? (processingStep === "opening" ? "Opening link…" : "Working on it…") : idleText;
 
   return (
     <main className="page-Host">
-      <h2>Finance</h2>
+      <p className="page-Host-title">Finance</p>
       <div className="page-Host-content">
         <section className="host-pc-finance">
           <div className="finance-content">
             <div className="finance-steps">
-              <h2>Receive payouts in 3 steps</h2>
+              <p className="finance-steps-title">Receive your payouts in 3 easy steps</p>
               <ul>
                 <li>
-                  <strong>Step 1: </strong>{" "}
-                  <span
-                    className="finance-span"
-                    onClick={handleEnlistNavigation}
-                  >
+                  ℹ️ <strong>Step 1: </strong>{" "}
+                  <span className="finance-span" onClick={handleEnlistNavigation}>
                     List your property.
                   </span>
                 </li>
 
                 <li>
-                  {stripeLoginUrl ? (
-                    bankDetailsProvided ? (
-                      <>
-                        ✔ <strong>Step 2: </strong> You are connected to
-                        Stripe!
-                      </>
-                    ) : (
-                      <>
-                        <strong>Step 2: </strong> Connect your bank details with
-                        our payment partner{" "}
-                        <span
-                          className="finance-span"
-                          onClick={handleStripeAction}
-                        >
-                          Stripe.
-                        </span>
-                      </>
-                    )
+                  {!accountId ? (
+                    <>
+                      ℹ️ <strong>Step 2: </strong> Once your accommodation is created, you can create a Stripe account
+                      to receive payments:{" "}
+                      <span
+                        className={`finance-span ${isProcessing ? "disabled" : ""}`}
+                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        {renderCtaLabel("Create Stripe account")}
+                      </span>
+                    </>
+                  ) : !onboardingComplete ? (
+                    <>
+                      🚨 <strong>Step 2: </strong> Finish your Stripe onboarding to start receiving payouts:{" "}
+                      <span
+                        className={`finance-span ${isProcessing ? "disabled" : ""}`}
+                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        {renderCtaLabel("Continue Stripe onboarding")}
+                      </span>
+                    </>
                   ) : (
                     <>
-                      <strong>Step 2: </strong> Once your accommodation is
-                      created, you can create a Stripe account to receive
-                      payments:{" "}
+                      ✅ <strong>Step 2: </strong> You’re connected to Stripe. Well done! Now{" "}
                       <span
-                        className="finance-span"
-                        onClick={handleStripeAction}
-                      >
-                        Domits Stripe
+                        className={`finance-span ${isProcessing ? "disabled" : ""}`}
+                        onClick={!isProcessing ? handleStripeAction : undefined}>
+                        {renderCtaLabel("Open Stripe Dashboard")}
                       </span>
                     </>
                   )}
                 </li>
 
                 <li>
-                  <strong>Step 3: </strong> Set your property live{" "}
-                  <span
-                    className="finance-span"
-                    onClick={() => handleNavigation("/hostdashboard/listings")}
-                  >
+                  ℹ️ <strong>Step 3: </strong> Set your property live{" "}
+                  <span className="finance-span" onClick={() => handleNavigation("/hostdashboard/listings")}>
                     here
                   </span>{" "}
                   to receive payouts.
@@ -223,9 +142,7 @@ const HostFinanceTab = () => {
                         <td>{(payout.amount / 100).toFixed(2)}</td>
                         <td className={payout.status}>{payout.status}</td>
                         <td>{payout.arrivalDate}</td>
-                        <td>
-                          {payout.type === "instant" ? "Instant" : "Standard"}
-                        </td>
+                        <td>{payout.type === "instant" ? "Instant" : "Standard"}</td>
                         <td>{payout.method}</td>
                       </tr>
                     ))}
@@ -238,10 +155,7 @@ const HostFinanceTab = () => {
 
             <div className="payout-frequency">
               <h3>Payout Frequency</h3>
-              <select
-                value={payoutFrequency}
-                onChange={handlePayoutFrequencyChange}
-              >
+              <select value={payoutFrequency} onChange={handlePayoutFrequencyChange}>
                 <option value="daily">Daily (24h after check-out)</option>
                 <option value="weekly">Weekly (Every Monday)</option>
                 <option value="monthly">Monthly (First of the month)</option>
@@ -250,30 +164,21 @@ const HostFinanceTab = () => {
 
             <div className="payout-status">
               <h3>Payout Status:</h3>
-              {payouts.length > 0 &&
-              payouts.some((payout) => payout.status === "paid") ? (
-                <p className="status-active">
-                  ✅ Your payouts are active. Last payout:{" "}
-                  {payouts[0].arrivalDate}.
-                </p>
-              ) : payouts.length > 0 &&
-                payouts.some((payout) => payout.status === "pending") ? (
+              {payouts.length > 0 && payouts.some((payout) => payout.status === "paid") ? (
+                <p className="status-active">✅ Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
+              ) : payouts.length > 0 && payouts.some((payout) => payout.status === "pending") ? (
                 <p className="status-pending">
-                  ⌛ Your payouts are scheduled. Next payout:{" "}
-                  {payouts.find((p) => p.status === "pending")?.arrivalDate}.
+                  ⌛ Your payouts are scheduled. Next payout: {payouts.find((p) => p.status === "pending")?.arrivalDate}
+                  .
                 </p>
-              ) : payouts.length > 0 &&
-                payouts.every((payout) => payout.status !== "paid") ? (
+              ) : payouts.length > 0 && payouts.every((payout) => payout.status !== "paid") ? (
                 <p className="status-error">
                   🚨 There was an issue with your payouts:{" "}
-                  {payouts.find((p) => p.failureMessage)?.failureMessage ||
-                    "Unknown issue"}
-                  .
+                  {payouts.find((p) => p.failureMessage)?.failureMessage || "Unknown issue"}.
                 </p>
               ) : (
                 <p className="status-none">
-                  ℹ️ No payouts found. Once you start receiving bookings, your
-                  payouts will appear here.
+                  ℹ️ No payouts found. Once you start receiving bookings, your payouts will appear here.
                 </p>
               )}
             </div>
@@ -282,6 +187,4 @@ const HostFinanceTab = () => {
       </div>
     </main>
   );
-};
-
-export default HostFinanceTab;
+}
