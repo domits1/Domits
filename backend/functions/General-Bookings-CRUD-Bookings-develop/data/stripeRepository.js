@@ -24,9 +24,11 @@ class StripeRepository {
         throw new NotFoundException("account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent.")
       }
       const stripe = await stripePromise;
-      const total = await CalculateTotalRate(propertyId, dates);
+      const roomRate = await CalculateTotalRate(propertyId, dates);
+      const feePercentage = 0.10; // Word later uitgebreidt!
+      const total = roomRate + feePercentage;
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: 50,
+        amount: total,
         application_fee_amount: Math.round(total * 0.15),
         currency: 'eur',
         payment_method_types: ["card", "ideal", "klarna"],
