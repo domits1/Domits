@@ -12,7 +12,7 @@ async function main() {
         hostId: "",
       },
       queryStringParameters: {
-        metric: "revenue",
+        metric: "",
       },
     })
   );
