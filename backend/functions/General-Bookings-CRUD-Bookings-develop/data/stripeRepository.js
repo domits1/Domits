@@ -10,7 +10,7 @@ import { Booking } from 'database/models/Booking';
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
-  .getSystemManagerParameter("/stripe/keys/secret/test")
+  .getSystemManagerParameter("/stripe/keys/secret/live")
   .then(secret => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
@@ -26,7 +26,7 @@ class StripeRepository {
       const stripe = await stripePromise;
       const total = await CalculateTotalRate(propertyId, dates);
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: total,
+        amount: 50,
         application_fee_amount: Math.round(total * 0.15),
         currency: 'eur',
         payment_method_types: ["card", "ideal", "klarna"],

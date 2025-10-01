@@ -12,12 +12,20 @@ const ImageGallery = ({ images }) => {
     setShowOverlay(false); // Hide the overlay
   };
 
+  const toSrc = (key) => {
+    if (!key) return '';
+    if (typeof key === 'string' && (key.startsWith('http://') || key.startsWith('https://'))) {
+      return key;
+    }
+    return `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`;
+  };
+
   return (
     <section className="image-section">
       <div className="image-gallery">
         <img
           className="main-image"
-          src={`https://accommodation.s3.eu-north-1.amazonaws.com/${images[0].key}`}
+          src={toSrc(images[0].key)}
           alt="Main"
           onClick={handleMainImageClick} // Show overlay on click
         />
@@ -28,7 +36,7 @@ const ImageGallery = ({ images }) => {
                 <img
                   key={image.key}
                   className="small-image"
-                  src={`https://accommodation.s3.eu-north-1.amazonaws.com/${image.key}`}
+                  src={toSrc(image.key)}
                   alt={`Extra ${images.indexOf(image)}`}
                 />
               );
@@ -50,7 +58,7 @@ const ImageGallery = ({ images }) => {
               <img
                 key={image.key}
                 className="overlay-thumbnail"
-                src={`https://accommodation.s3.eu-north-1.amazonaws.com/${image.key}`}
+                src={toSrc(image.key)}
                 alt={`Overlay ${index}`}
               />
             ))}

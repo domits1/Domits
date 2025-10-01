@@ -6,7 +6,6 @@ import {useTranslation} from "react-i18next";
 
 const OnboardingName = ({formData, updateFormData, reportValidity, markVisited}) => {
   const {t} = useTranslation();
-  const [title, setTitle] = useState(formData.property.title);
   const [error, setError] = useState('');
 
   function isTitleValid(title) {
@@ -14,13 +13,12 @@ const OnboardingName = ({formData, updateFormData, reportValidity, markVisited})
     return regex.test(title);
   }
 
-  useEffect(() => {
-    markVisited(true);
-  }, [])
-
-  useEffect(() => {
+  const handleTitleChange = (title) => {
     if (title.trim() === '') {
       setError('Title is required.');
+      updateFormData((draft) => {
+        draft.property.title = title;
+      })
       reportValidity(false);
     } else if (!isTitleValid(title)) {
       setError('Special characters are not allowed.');
@@ -32,7 +30,11 @@ const OnboardingName = ({formData, updateFormData, reportValidity, markVisited})
       })
       reportValidity(true);
     }
-  }, [title]);
+  }
+
+  useEffect(() => {
+    markVisited(true);
+  }, [])
 
   return (
       <View style={styles.contentContainer}>
@@ -44,8 +46,8 @@ const OnboardingName = ({formData, updateFormData, reportValidity, markVisited})
         </Text>
         <View style={styles.inputContainerCenter}>
           <TextInput
-              value={title}
-              onChangeText={setTitle}
+              value={formData.property.title}
+              onChangeText={handleTitleChange}
               placeholder={t("Property Title")}
               style={styles.inputField}
               maxLength={100}
