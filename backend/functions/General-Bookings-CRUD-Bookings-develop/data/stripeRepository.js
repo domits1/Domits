@@ -10,7 +10,7 @@ import { Booking } from 'database/models/Booking';
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
-  .getSystemManagerParameter("/stripe/keys/secret/test")
+  .getSystemManagerParameter("/stripe/keys/secret/live")
   .then(secret => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
@@ -24,7 +24,9 @@ class StripeRepository {
         throw new NotFoundException("account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent.")
       }
       const stripe = await stripePromise;
-      const total = await CalculateTotalRate(propertyId, dates);
+      const roomRate = await CalculateTotalRate(propertyId, dates);
+      const feePercentage = 0.10; // Word later uitgebreidt!
+      const total = roomRate + feePercentage;
       const paymentIntent = await stripe.paymentIntents.create({
         amount: total,
         application_fee_amount: Math.round(total * 0.15),

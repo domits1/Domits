@@ -1,11 +1,8 @@
 import {SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
-import {useState} from "react";
 import {styles} from "../../../styles/HostOnboardingStyles";
 import TranslatedText from "../../../../translation/components/TranslatedText";
 
 const OnboardingAnySpace = ({formData, updateFormData, reportValidity}) => {
-  const [selectedSpace, setSelectedSpace] = useState(formData.propertyType.spaceType);
-
   const propertySpaceTypes = [
     {
       name: 'Entire house',
@@ -22,7 +19,6 @@ const OnboardingAnySpace = ({formData, updateFormData, reportValidity}) => {
   ];
 
   function handleSelectedSpace(space) {
-    setSelectedSpace(space);
     updateFormData((draft) => {
       draft.propertyType.spaceType = space;
     });
@@ -44,12 +40,14 @@ const OnboardingAnySpace = ({formData, updateFormData, reportValidity}) => {
                     key={index}
                     style={[
                       styles.listItem,
-                      selectedSpace === item.name && styles.selectedListItem
+                      formData.propertyType.spaceType === item.name && styles.selectedListItem
                     ]}>
-                  <Text style={[styles.listItemTitle, selectedSpace === item.name && styles.selectedItemText]}>
+                  <Text
+                      style={[styles.listItemTitle, formData.propertyType.spaceType === item.name && styles.selectedItemText]}>
                     <TranslatedText textToTranslate={item.name}/>
                   </Text>
-                  <Text style={[styles.listItemDescription, selectedSpace === item.name && styles.selectedItemText]}>
+                  <Text
+                      style={[styles.listItemDescription, formData.propertyType.spaceType === item.name && styles.selectedItemText]}>
                     <TranslatedText textToTranslate={item.description}/>
                   </Text>
                 </TouchableOpacity>
