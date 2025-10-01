@@ -98,6 +98,8 @@ import Messages from "./components/messages/Messages.js";
 import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import ChannelManager from "./pages/channelmanager/Channelmanager.js";
+
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE)
 
@@ -244,6 +246,7 @@ function App() {
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/disclaimers" element={<Disclaimers />} />
                 <Route path="/Sustainability" element={<Sustainability />} />
+                <Route path="/channelmanager" element={<ChannelManager />} />
 
                 {/* Error*/}
                 <Route path="/*" element={<PageNotFound />} />

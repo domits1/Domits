@@ -18,6 +18,7 @@ frontend/app/.idea/
 /gource.log
 
 #amplify-do-not-edit-begin
+
 amplify/
 amplify/\#current-cloud-backend
 amplify/.config/local-*
@@ -38,4 +39,10 @@ amplify-gradle-config.json
 amplifytools.xcconfig
 .secret-*
 **.sample
+src/ui-components/index.js
+src/ui-components/Property1Opened.d.ts
+src/ui-components/Property1Opened.jsx
+src/ui-components/studioTheme.js
+src/ui-components/studioTheme.js.d.ts
+src/ui-components/utils.js
 #amplify-do-not-edit-end
