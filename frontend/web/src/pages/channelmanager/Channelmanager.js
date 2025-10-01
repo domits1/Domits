@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import SideDashboard from "./SideDashboard";
 import ChannelManagerCard from "./ChannelManagerCard";
-import "./channelmanager.css";
+import "./channelmanager.scss";
 
 export default function ChannelManager() {
   const [search, setSearch] = useState("");
