@@ -41,6 +41,17 @@ export default class StripePayoutsService {
         console.log("charge", charge);
         console.log("balanceTx", balanceTx);
 
+            const charges = await this.stripe.paymentIntents.retrieve("pi_3SCzugGiInrsWMEc0d9hoLLs");
+
+            console.log("testing ", charges);
+
+
+        // const paymentIntent = await this.stripe.accounts.retrieve(charge.source.id);
+
+        // console.log("betaald door ", paymentIntent);
+
+        // console.log("who payed ", charge.source.id);
+
         const appFee = await this.stripe.applicationFees.retrieve(charge.application_fee);
 
         console.log("appFee", appFee);
