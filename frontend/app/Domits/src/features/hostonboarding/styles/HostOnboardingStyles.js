@@ -275,4 +275,17 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(128,128,128,0.5)',
     padding: 3,
   },
+  // Image
+  addImageButton: {
+    alignItems: 'center',
+  },
+  addImageButtonText: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 5,
+  },
+  image: {
+    height: 200,
+    width: 200,
+  },
 })
