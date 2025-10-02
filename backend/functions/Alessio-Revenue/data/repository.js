@@ -71,4 +71,5 @@ export class Repository {
 
     return { propertyCount: count };
   }
+
 }
