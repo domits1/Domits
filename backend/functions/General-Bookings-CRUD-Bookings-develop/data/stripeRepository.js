@@ -7,6 +7,8 @@ import CalculateTotalRate from "../util/calcuateTotalRate.js";
 import { Payment } from "database/models/Payment";
 import Database from "database";
 import { Booking } from "database/models/Booking";
+import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
+import "dotenv/config";
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
@@ -16,30 +18,71 @@ const stripePromise = systemManagerRepository
 const client = new DynamoDBClient({ region: "eu-north-1" });
 
 class StripeRepository {
-  async createPaymentIntent(account_id, propertyId, dates) {
+
+    async getExistingStripeAccount(cognitoUserId) {
+      const client = await Database.getInstance();
+      const record = await client
+        .getRepository(Stripe_Connected_Accounts)
+        .createQueryBuilder("stripe_accounts")
+        .where("stripe_accounts.user_id = :user_id", { user_id: cognitoUserId })
+        .getOne();
+  
+      return record;
+    }
+
+  async createPaymentIntent(account_id, propertyId, dates, region = 'EER') {
     try {
       if (!account_id || !propertyId || !dates) {
-        console.error(`accountId ${account_id}, property_id, ${propertyId}, or dates ${dates} are NaN.`);
-        throw new NotFoundException(
-          "account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent."
-        );
+        console.error(`accountId ${account_id}, property_id ${propertyId}, or dates ${dates} are NaN.`);
+        throw new NotFoundException("account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent.");
       }
+
       const stripe = await stripePromise;
-      const roomRate = await CalculateTotalRate(propertyId, dates);
-      const feePercentage = 0.1; // Word later uitgebreidt!
-      const total = roomRate + feePercentage;
+
+      // Host proce (net voor host)
+      const hostAmount = await CalculateTotalRate(propertyId, dates); // change this to minimum 3 eu to test 
+
+      // Platform fee (10% above the host price)
+      const platformFee = hostAmount * 0.10;
+
+      // Totaal bedrag dat de klant betaalt
+      const totalAmount = hostAmount + platformFee;
+
+      // Stripe fees based on reion
+      let stripePercentage = 0.015; // 1,5% EER
+      let stripeFixedFee = 0.25;    // €0,25
+
+      if (region === 'Non-EER') {
+        stripePercentage = 0.025; // 2,5% VK for example 
+        stripeFixedFee = 0.25;
+      }
+
+      // Calculate Stripe fees that comes from our 10%
+      const stripeFee = totalAmount * stripePercentage + stripeFixedFee;
+
+      // Net platform fee = our 10% - stripe fees
+      const yourNetPlatformFee = platformFee - stripeFee;
+
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: 50,
-        application_fee_amount: Math.round(total * 0.15),
-        currency: "eur",
+        amount: Math.round(totalAmount * 100), // client pays 110%
+        currency: 'eur',
         payment_method_types: ["card", "ideal", "klarna"],
+        application_fee_amount: Math.round(platformFee * 100), // claim bruto 10%
         transfer_data: {
           destination: account_id,
         },
       });
+
       return {
         stripePaymentId: paymentIntent.id,
         stripeClientSecret: paymentIntent.client_secret,
+        breakdown: {
+          customerPays: totalAmount,
+          hostReceives: hostAmount,       
+          platformFeeGross: platformFee,  
+          stripeFee: stripeFee,           
+          platformFeeNet: yourNetPlatformFee 
+        }
       };
     } catch (error) {
       console.error("Error creating payment intent:", error);
