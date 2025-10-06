@@ -349,7 +349,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
         },
         {
           question: "Is Domits 100% free for hosts?",
-          answer: "Hosts can list their accommodations on Domits free of charge. However, Domits applies a 15% service fee to each booking, which is deducted from the rent.",
+          answer: "Hosts can list their accommodations on Domits free of charge. To run the platform 24/7 we ask hosts to pay 10% service fees per booking.",
           isOpen: false
         },
         {
