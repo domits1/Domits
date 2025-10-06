@@ -15,7 +15,7 @@ export default class StripePayoutsService {
     this.stripeAccountRepository = new StripeAccountRepository();
   }
 
-  async getHostPayouts(event) {
+  async getHostCharges(event) {
     const token = getAuth(event);
     const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
     if (!cognitoUserId) {
@@ -30,7 +30,7 @@ export default class StripePayoutsService {
 
     const connectedAccount = "acct_1QxTbi2eKtSPvnOL";
 
-    const charges = await this.stripe.charges.list({}, { stripeAccount: connectedAccount });
+    const charges = await this.stripe.charges.list({ stripeAccount: connectedAccount });
 
     const chargeDetails = await Promise.all(
       charges.data.map(async (charge) => {
@@ -38,23 +38,25 @@ export default class StripePayoutsService {
           stripeAccount: connectedAccount,
         });
 
-        console.log("charge", charge);
-        console.log("balanceTx", balanceTx);
+        // console.log("charge", charge);
+        // console.log("balanceTx", balanceTx);
 
-        const paymentIntent = await this.stripe.accounts.retrieve(charge.source.id);
+        // const paymentIntent = await this.stripe.accounts.retrieve(charge.source.id);
 
-        console.log("betaald door ", paymentIntent);
+        // console.log("betaald door ", paymentIntent.country);
 
         const appFee = await this.stripe.applicationFees.retrieve(charge.application_fee);
 
-        console.log("appFee", appFee);
+        // console.log("appFee", appFee);
 
         const charges = await this.stripe.charges.retrieve(appFee.originating_transaction);
 
-        const pi = await this.stripe.paymentIntents.retrieve(charges.payment_intent, {
-          expand: ["payment_method"],
-        });
-        console.log("pi", pi);
+        // console.log("charges", charges);
+
+        // const pi = await this.stripe.paymentIntents.retrieve(charges.payment_intent, {
+        //   expand: ["payment_method"],
+        // });
+        // console.log("pi", pi);
 
         return {
           id: charge.id,
@@ -66,7 +68,7 @@ export default class StripePayoutsService {
           createdDate: new Date(charge.created * 1000).toLocaleDateString(),
           customer: charge.customer,
           application_fee: appFee.amount / 100,
-          customer_name: pi.payment_method.billing_details.name,
+          customer_name: charges.billing_details.name,
         };
       })
     );
@@ -76,6 +78,42 @@ export default class StripePayoutsService {
       message: "Charges fetched successfully",
       details: {
         charges: chargeDetails,
+      },
+    };
+  }
+
+  async getHostPayouts(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required fields: cognitoUserId");
+    }
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
+
+    const connectedAccount = "acct_1OAG6OGiInrsWMEc";
+
+    const payouts = await this.stripe.payouts.list({ stripeAccount: connectedAccount });
+
+    const payoutDetails = payouts.data.map((payout) => ({
+      id: payout.id,
+      amount: payout.amount / 100,
+      currency: payout.currency.toUpperCase(),
+      arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString(),
+      status: payout.status,
+      method: payout.method,
+    }));
+
+    return {
+      statusCode: 200,
+      message: "Payouts fetched successfully",
+      details: {
+        payouts: payoutDetails,
       },
     };
   }
