@@ -10,7 +10,7 @@ function About() {
                 <h2>Why choose for Domits</h2>
             </div>
             <div>
-                <h3>One of the fastest improving travel platforms.</h3>
+                <h3>A fast improving hospitality & travel platforms</h3>
             </div>
 
             <div className="underbigtext">

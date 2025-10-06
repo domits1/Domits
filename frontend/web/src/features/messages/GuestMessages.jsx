@@ -116,14 +116,7 @@ const GuestMessagesInner = () => {
             ← Back to contacts
           </button>
         )}
-        {selectedContactId && (
-          <div style={{ padding: '6px 10px' }}>
-            <button onClick={handleSendAutomatedTestMessages} className="ContactsBack-button">
-              🤖 Send automated test messages
-            </button>
-          </div>
-        )}
-        <div className={`guest-chat-panel`}>
+        <div className={`guest-chat-panel`} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {showChatScreen && (
             <>
               <ChatScreen
@@ -136,14 +129,12 @@ const GuestMessagesInner = () => {
                 handleContactListMessage={() => {}}
                 testMessages={testMessages}
               />
-              <div className={`guest-booking-tab-overlay`}>
-                <BookingTab
-                  userId={userId}
-                  contactId={selectedContactId}
-                  contactName={selectedContactName}
-                  dashboardType={'guest'}
-                />
-              </div>
+              <BookingTab
+                userId={userId}
+                contactId={selectedContactId}
+                contactName={selectedContactName}
+                dashboardType={'guest'}
+              />
             </>
           )}
         </div>
