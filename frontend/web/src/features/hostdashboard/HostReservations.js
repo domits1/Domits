@@ -52,9 +52,10 @@ const HostReservations = () => {
 
     bookings.forEach((property) => {
 
-      const reservations = Array.isArray(property.res) ? property.res : [];
+      const reservations = Array.isArray(property.res?.response) ? property.res.response : [];
 
       reservations.forEach((item) =>{
+        console.log(property.title);
         bookingArray.push({
           title: property.title,
           rate: property.rate,
@@ -62,6 +63,7 @@ const HostReservations = () => {
           ...item
         })
       })
+
     })
     if (type === null) {
       setSortedBookings(bookingArray);
