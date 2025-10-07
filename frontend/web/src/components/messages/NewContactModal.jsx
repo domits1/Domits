@@ -25,7 +25,6 @@ const NewContactModal = ({ isOpen, onClose, onCreate, userId, dashboardType }) =
         if (!trimmed) return;
         const roomCode = uuidv4();
         const newContact = {
-            // local-only identifiers
             id: `local-${roomCode}`,
             userId: `local-${userId}`,
             recipientId: `pair:${roomCode}`,

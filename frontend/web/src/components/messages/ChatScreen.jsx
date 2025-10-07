@@ -138,14 +138,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
             addNewMessage(messageWithDefaults);
             if (msg.id) addedMessageIds.current.add(msg.id);
 
-            if (msg.isAutomated) {
-                console.log('🤖 Automated message received:', {
-                    type: msg.messageType,
-                    from: msg.userId,
-                    to: msg.recipientId,
-                    text: msg.text?.substring(0, 50) + '...'
-                });
-            }
+            // Consider surfacing automated message events in UI/analytics later
         });
     }, [wsMessages, userId, contactId, addNewMessage]);
 

@@ -75,7 +75,6 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
         } catch (e) {
             console.error('Failed to parse local contacts', e);
         }
-        // eslint-disable-next-line
     }, []);
 
     let contactList = displayType === 'contacts' ? contacts : pendingContacts;

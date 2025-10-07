@@ -94,7 +94,6 @@ import Navbar from './components/base/navbar';
 import GuestMessages from "./features/messages/GuestMessages.jsx";
 import HostMessages from "./features/messages/HostMessages.jsx";
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
-// Messages removed
 import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
@@ -179,7 +178,6 @@ function App() {
                 <Route path="/landing" element={<Landing />} />
                 <Route path="/guest/messages" element={<GuestMessages />} />
                 <Route path="/host/messages" element={<HostMessages />} />
-                {/* messages v2 route removed */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/confirm-email" element={<ConfirmEmailView />} />
