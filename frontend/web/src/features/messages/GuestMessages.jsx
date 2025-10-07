@@ -16,6 +16,7 @@ const GuestMessagesInner = () => {
   const [selectedContactName, setSelectedContactName] = useState(null);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [testMessages, setTestMessages] = useState([]);
+  const [latestContactListMessage, setLatestContactListMessage] = useState(null);
   const [selectedContactAvatar, setSelectedContactAvatar] = useState(null);
   const isMobile = screenWidth < 768;
 
@@ -37,7 +38,6 @@ const GuestMessagesInner = () => {
   };
 
   const handleTestMessage = (messageData) => {
-    // Add the test message to our state so it appears in the chat
     const testMessage = {
       id: `test-${Date.now()}-${Math.random()}`,
       userId: 'demo-host', // Simulating host sending the message
@@ -48,12 +48,7 @@ const GuestMessagesInner = () => {
     };
 
     setTestMessages(prev => [...prev, testMessage]);
-
-    // Also simulate adding it to the contact list message
-    if (selectedContactId) {
-      // This would normally update the contact's latest message
-      console.log('🤖 Test automated message added to chat:', testMessage);
-    }
+    if (selectedContactId) setLatestContactListMessage(testMessage);
   };
 
   const handleSendAutomatedTestMessages = () => {
@@ -105,6 +100,7 @@ const GuestMessagesInner = () => {
             <ContactList
               userId={userId}
               onContactClick={handleContactClick}
+            message={latestContactListMessage}
               dashboardType={'guest'}
               showPending={false}
               showQuickStart={false}
@@ -133,7 +129,7 @@ const GuestMessagesInner = () => {
                 contactAvatar={selectedContactAvatar}
                 onBack={isMobile ? handleBackToContacts : null}
                 dashboardType={'guest'}
-                handleContactListMessage={() => {}}
+              handleContactListMessage={(msg) => setLatestContactListMessage(msg)}
                 testMessages={testMessages}
               />
               <div className={`guest-booking-tab-overlay`}>
