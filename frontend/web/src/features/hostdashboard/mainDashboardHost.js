@@ -1,9 +1,10 @@
 import { useState } from "react";
 import Pages from "./Pages2";
+import { useNavigate } from "react-router-dom";
 import HostDashboard from "./HostDashboard";
 import HostCalendar from "./HostCalendar";
 import HostReservations from "./HostReservations";
-import Messages from "../../components/messages/Messages";
+// Messages removed
 import HostReports from "./HostPayments";
 import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./HostFinanceTab";
@@ -13,6 +14,7 @@ import HostSettings from "./HostSettings";
 
 function MainDashboardHost(){
     const [activeComponent, setActiveComponent] = useState("Dashboard");
+    const navigate = useNavigate();
 
     function renderComponent(){
         switch (activeComponent){
@@ -25,7 +27,7 @@ function MainDashboardHost(){
             case "Reservations":
                 return <HostReservations/>
             case "Messages":
-                return <Messages dashboardType="host" /> 
+                return null 
             case "Revenues":
                 return <HostReports/>
             case "Housekeeping":
@@ -42,6 +44,10 @@ function MainDashboardHost(){
     }
 
     const handleNavigation = (componentName) => {
+        if (componentName === "Messages") {
+            navigate('/host/messages');
+            return;
+        }
         setActiveComponent(componentName);
     };
 

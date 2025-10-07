@@ -44,7 +44,8 @@ const ImageGallery = ({ images }) => {
           })}
         </div>
       </div>
-      {/* Rating and host label removed per request */}
+      <Rating />
+      <div className="host-name">Hosted by Huub Homer</div>
 
       {/* Overlay */}
       {showOverlay && (
