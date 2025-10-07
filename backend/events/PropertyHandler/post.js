@@ -6,17 +6,17 @@ async function main() {
     console.log(await handler({
         httpMethod: "POST",
         headers: {
-            Authorization:  await getHostAuthToken(),
+            Authorization: "eyJraWQiOiJYdkVKWjI2RlYxVngxSktIVFo4R1k1MlZlTzBnNGJCMFdiS1BRUGg3alRFPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJjOWY4MzY1OC0yZGYzLTQ5Y2UtYmQwNS05MjgyNzFhYmIyYmEiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtbm9ydGgtMS5hbWF6b25hd3MuY29tXC9ldS1ub3J0aC0xX21QeE5odlNGWCIsImNsaWVudF9pZCI6Ijc4amZyZmhwZGVkNm1lZXZsbHBmbW83M21vIiwib3JpZ2luX2p0aSI6ImU1ZWQwZGFmLTczODktNGMyMS1hNjExLWExY2Q2OGE5ZWNhMSIsImV2ZW50X2lkIjoiOTBlZGI1YWMtMDI1Mi00YzM0LTllNWEtOTM2MmRiN2NlMWU2IiwidG9rZW5fdXNlIjoiYWNjZXNzIiwic2NvcGUiOiJhd3MuY29nbml0by5zaWduaW4udXNlci5hZG1pbiIsImF1dGhfdGltZSI6MTc1NzQ4Nzg2NCwiZXhwIjoxNzU3NTEzMjkzLCJpYXQiOjE3NTc1MDk2OTMsImp0aSI6IjBlMTFmMzQyLTA2MWItNDFmMC05NGRiLTgxMWFiZTdmOTc3ZSIsInVzZXJuYW1lIjoiYzlmODM2NTgtMmRmMy00OWNlLWJkMDUtOTI4MjcxYWJiMmJhIn0.H0rNJTRqL1zj9FERkQFKnb13vVGagvqWAolABXyPIqbEHHJ-PfAXGiO8rWFcmyw1URwutKqRQahkYTJA--BKwFKX-FmE3jqHwzywVAxJjHhWi2Gvsg9iN5SKG3WGelTGrJan5UYjwFANYjO5d8E0PTGId-tflptqBKYq498mOQHPiQ9Q9HsxcrppFHzGAq-0D_oEcEyvTxEfc1XlCCNBhxg4Qhgp0Ic_agt0d8uH4M5TdazymB6Bn_BX3LoQdSYa43Na4yya3otYIewmYjr3p3cBS8H-sRx2Up-lF_PczR0smXBRFoiR-V_nfv979kVsg_VU5FCvXylVNQbb_vfWtQ"
         },
         body: JSON.stringify({
             "property": {
                 "id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
-                "hostId": "f08999d3-697c-44a0-b388-a414178d4c5b",
-                "title": "KaasBaas",
-                "subtitle": "Relaxing way to eat",
-                "description": "a historic windmill built on the remnants of a medieval castle, offering a perfect blend of old-world charm and modern comfort. Fully renovated in 2006, this stunning windmill features spacious living areas, two cozy bedrooms, and two modern bathrooms. Enjoy breathtaking garden views and unwind in the tranquil surroundings. Whether you're cycling, hiking, or just relaxing on your private patio, Maurik offers a peaceful retreat with easy access to Utrecht, Den Bosch, Arnhem, and Nijmegen. Ideal for families or small groups looking to explore the beauty of the Dutch countryside.",
+                "hostId": "ce93f377-9ac0-46c2-9d45-cf20d33dcc33",
+                "title": "Charming Windmill Stay on Historic Castle Grounds in Maurik",
+                "subtitle": "Relax in a Beautifully Renovated Windmill Surrounded by Nature – Perfect for Cycling, Hiking, and Exploring Nearby Cities",
+                "description": "Experience a unique stay in a historic windmill built on the remnants of a medieval castle, offering a perfect blend of old-world charm and modern comfort. Fully renovated in 2006, this stunning windmill features spacious living areas, two cozy bedrooms, and two modern bathrooms. Enjoy breathtaking garden views and unwind in the tranquil surroundings. Whether you're cycling, hiking, or just relaxing on your private patio, Maurik offers a peaceful retreat with easy access to Utrecht, Den Bosch, Arnhem, and Nijmegen. Ideal for families or small groups looking to explore the beauty of the Dutch countryside.",
                 "guestCapacity": 6,
-                "registrationNumber": "232323233233232239",
+                "registrationNumber": "7685677457",
                 "status": "ACTIVE",
                 "propertyType": "House",
                 "createdAt": Date.now() + 100000,
@@ -58,12 +58,12 @@ async function main() {
             "propertyCheckIn": {
                 "property_id": "bf3ecb5f-2106-45e6-a054-c28f3dd91638",
                 "checkIn": {
-                    "from": "10:00",
-                    "till": "17:00"
+                    "from": 1,
+                    "till": 2
                 },
                 "checkOut": {
-                    "from": "08:00",
-                    "till": "12:00"
+                    "from": 1,
+                    "till": 2
                 }
             },
             "propertyGeneralDetails": [
