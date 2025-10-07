@@ -38,10 +38,12 @@ function Header({ setSearchResults, setLoading }) {
     // Add more paths here as needed
   ];
   const {language, setLanguage} = useContext(LanguageContext);
-  const selectLanguage = (e) => {
-      setLanguage(e.target.value);
-      console.log(e.target.value);
-  };
+  const languages = [
+    { code: "en", label: "English", emoji: "\uD83C\uDDEC\uD83C\uDDE7" },
+    { code: "nl", label: "Nederlands", emoji: "\uD83C\uDDF3\uD83C\uDDF1" },
+    { code: "de", label: "Deutsch", emoji: "\uD83C\uDDE9\uD83C\uDDEA" },
+    { code: "es", label: "Español", emoji: "\uD83C\uDDEA\uD83C\uDDF8" },
+  ];
 
   const components = contentByLanguage[language]?.component;
 
@@ -266,25 +268,35 @@ function Header({ setSearchResults, setLoading }) {
           />
         )}
 
-        <div class="language-toggle-mobile">
-          <i class="fas fa-globe"></i>
-          <select value={language} onChange={selectLanguage}>
-            <option value="en">English</option>
-            <option value="nl">Nederlands</option>
-            <option value="de">Deutsch</option>
-            <option value="es">Español</option>
-          </select>
+        <div className="language-flags-mobile">
+          {languages.map((lng) => (
+            <button
+              key={lng.code}
+              type="button"
+              aria-label={lng.label}
+              title={lng.label}
+              className={`lang-flag ${language === lng.code ? "active" : ""}`}
+              onClick={() => setLanguage(lng.code)}
+            >
+              {lng.emoji}
+            </button>
+          ))}
         </div>
 
         <div className="headerRight">  
-            <div class="language-toggle">
-              <i class="fas fa-globe"></i>
-              <select value={language} onChange={selectLanguage}>
-                <option value="en">English</option>
-                <option value="nl">Nederlands</option>
-                <option value="de">Deutsch</option>
-                <option value="es">Español</option>
-              </select>
+            <div className="language-flags">
+              {languages.map((lng) => (
+                <button
+                  key={lng.code}
+                  type="button"
+                  aria-label={lng.label}
+                  title={lng.label}
+                  className={`lang-flag ${language === lng.code ? "active" : ""}`}
+                  onClick={() => setLanguage(lng.code)}
+                >
+                  {lng.emoji}
+                </button>
+              ))}
             </div>
           {!isLoggedIn ? (
             <button
