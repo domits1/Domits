@@ -3,8 +3,9 @@ import { WebSocketContext } from '../../features/hostdashboard/hostmessages/cont
 import useFetchContacts from '../../features/hostdashboard/hostmessages/hooks/useFetchContacts';
 import ContactItem from './ContactItem';
 import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
-import { FaCog, FaSearch, FaBars } from 'react-icons/fa';
+import { FaCog, FaPlus, FaSearch } from 'react-icons/fa';
 import AutomatedSettings from './AutomatedSettings';
+import NewContactModal from './NewContactModal';
 
 const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId, dashboardType);
@@ -15,7 +16,8 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     const isHost = dashboardType === 'host';
     const [automatedSettings, setAutomatedSettings] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortAlphabetically, setSortAlphabetically] = useState(false);
+    const [sortAlphabetically] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const labels = {
         contacts: 'Contacts',
@@ -54,13 +56,57 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
         });
     }, [message, setContacts]);
 
+    // Merge locally created contacts from localStorage once on mount
+    useEffect(() => {
+        const storageKey = `domits_local_contacts_${userId}_${dashboardType}`;
+        try {
+            const raw = localStorage.getItem(storageKey);
+            if (!raw) return;
+            const localContacts = JSON.parse(raw);
+            if (!Array.isArray(localContacts)) return;
+            setContacts(prev => {
+                const existingIds = new Set(prev.map(c => c.recipientId || c.userId || c.id));
+                const merged = [
+                    ...prev,
+                    ...localContacts.filter(c => !existingIds.has(c.recipientId || c.userId || c.id))
+                ];
+                return merged;
+            });
+        } catch (e) {
+            console.error('Failed to parse local contacts', e);
+        }
+        // eslint-disable-next-line
+    }, []);
+
     let contactList = displayType === 'contacts' ? contacts : pendingContacts;
 
+
+    // Search by keyword across guest name, property title, latest message, and booking dates
     if (searchTerm) {
-        contactList = contactList.filter(contact =>
-            contact.givenName?.toLowerCase().includes(searchTerm)
-        );
+        const term = searchTerm.toLowerCase();
+        contactList = contactList.filter(contact => {
+            const nameMatch = (contact.givenName || '').toLowerCase().includes(term);
+            const propertyMatch = (contact.propertyTitle || '').toLowerCase().includes(term);
+            const latestText = contact.latestMessage?.text || '';
+            const messageMatch = latestText.toLowerCase().includes(term);
+            // Allow searching by formatted dates
+            const arrival = contact.arrivalDate ? new Date(contact.arrivalDate) : null;
+            const departure = contact.departureDate ? new Date(contact.departureDate) : null;
+            const dateTokens = [];
+            if (arrival) {
+                dateTokens.push(arrival.toLocaleDateString().toLowerCase());
+                dateTokens.push(arrival.toISOString().slice(0, 10));
+            }
+            if (departure) {
+                dateTokens.push(departure.toLocaleDateString().toLowerCase());
+                dateTokens.push(departure.toISOString().slice(0, 10));
+            }
+            const dateMatch = dateTokens.some(d => d.includes(term));
+            return nameMatch || propertyMatch || messageMatch || dateMatch;
+        });
     }
+
+    // Removed property/guest/date filters for a simpler sidebar
 
     if (sortAlphabetically) {
         contactList = [...contactList].sort((a, b) =>
@@ -74,14 +120,37 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
 
     const noContactsMessage = displayType === 'contacts' ? labels.noContacts : labels.noPending;
 
-    const handleClick = (contactId, contactName) => {
+    const handleClick = (contact) => {
+        const contactId = contact.recipientId;
         setSelectedContactId(contactId);
-        onContactClick?.(contactId, contactName);
+        onContactClick?.(contactId, contact.givenName, contact.profileImage || null);
+    };
+
+    const handleCreateContact = (newContact) => {
+        const storageKey = `domits_local_contacts_${userId}_${dashboardType}`;
+        setContacts(prev => [newContact, ...prev]);
+        try {
+            const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const updated = [newContact, ...existing];
+            localStorage.setItem(storageKey, JSON.stringify(updated));
+        } catch (e) {
+            console.error('Failed to store local contact', e);
+        }
     };
 
     return (
         <div className={`${dashboardType}-contact-list-modal`}>
             <h3>Message dashboard</h3>
+            <div className="contact-search-bar">
+                <FaSearch className="contact-search-icon" />
+                <input
+                    type="text"
+                    placeholder="Search contacts"
+                    className="contact-search-input-wide"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
+                />
+            </div>
             <div className={`contact-list-toggle`}>
                 <select
                     value={displayType}
@@ -93,14 +162,9 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                 </select>
 
                 <div className="contact-list-side-buttons">
-                    <input
-                        type="text"
-                        placeholder=""
-                        className="contact-search-input"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
-                    />
-                    <FaBars className={`contact-list-side-button`} onClick={() => setSortAlphabetically(prev => !prev)} />
+                    <button className="new-contact-button" onClick={() => setShowCreateModal(true)} title="Create new contact">
+                        <FaPlus />
+                    </button>
                     {isHost && (
                         <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
                     )}
@@ -126,9 +190,9 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                     contactList
                         .map((contact) => (
                             <li
-                                key={contact.userId}
+                                key={contact.recipientId || contact.userId || contact.id}
                                 className={`contact-list-list-item ${displayType === 'pendingContacts' ? 'disabled' : ''}`}
-                                onClick={() => displayType !== 'pendingContacts' && handleClick(contact.recipientId, contact.givenName)}
+                                onClick={() => displayType !== 'pendingContacts' && handleClick(contact)}
                             >
                                 <ContactItem
                                     contact={contact}
@@ -142,6 +206,13 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                         ))
                 )}
             </ul>
+            <NewContactModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onCreate={handleCreateContact}
+                userId={userId}
+                dashboardType={dashboardType}
+            />
         </div>
     );
 };
