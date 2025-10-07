@@ -15,12 +15,15 @@ const fetchBookingDetailsAndAccommodation = async ({
   const arrivalDate = new Date(bookingData.arrivalDate);
   const departureDate = new Date(bookingData.departureDate);
   const bookingStatus = bookingData.status || null;
+  const propertyId = bookingData.property_id || null;
 
   let accoImage = null;
 
-  if (bookingData.property_id && accommodationEndpoint) {
+  let propertyTitle = null;
+
+  if (propertyId && accommodationEndpoint) {
     const accoRes = await fetch(
-      `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/${accommodationEndpoint}?property=${bookingData.property_id}`,
+      `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/${accommodationEndpoint}?property=${propertyId}`,
       {
         method: 'GET',
         headers: {
@@ -33,6 +36,7 @@ const fetchBookingDetailsAndAccommodation = async ({
 
     const accoRaw = await accoRes.json();
     const key = accoRaw?.images?.[0]?.key;
+    propertyTitle = accoRaw?.title || accoRaw?.name || null;
 
     if (key) {
       accoImage = `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`;
@@ -44,6 +48,8 @@ const fetchBookingDetailsAndAccommodation = async ({
     bookingStatus,
     arrivalDate,
     departureDate,
+    propertyId,
+    propertyTitle,
   };
 };
 
