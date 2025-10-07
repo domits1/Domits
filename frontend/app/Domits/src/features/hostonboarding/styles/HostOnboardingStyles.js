@@ -284,6 +284,9 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 5,
   },
+  imageSlider: {
+    marginVertical: 10,
+  },
   image: {
     height: 200,
     width: 200,
