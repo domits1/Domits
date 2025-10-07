@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import HostDashboard from "./HostDashboard";
 import HostCalendar from "./HostCalendar";
 import HostReservations from "./HostReservations";
-// Messages removed
 import HostReports from "./HostPayments";
 import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./HostFinanceTab";
@@ -26,8 +25,7 @@ function MainDashboardHost(){
                 return <HostCalendar/>
             case "Reservations":
                 return <HostReservations/>
-            case "Messages":
-                return null 
+            
             case "Revenues":
                 return <HostReports/>
             case "Housekeeping":
