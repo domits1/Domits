@@ -2,10 +2,11 @@ import {launchImageLibrary} from 'react-native-image-picker';
 import {styles} from "../styles/HostOnboardingStyles";
 import {Image, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import TranslatedText from "../../translation/components/TranslatedText";
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 
 const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited}) => {
-  const [images, setImages] = useState(null);
+  const MAX_AMOUNT_IMAGES = 5;
+  const [images, setImages] = useState([]);
 
   const onAddImage = () => {
     const options = {
@@ -24,35 +25,43 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
           } else if (res.errorCode) {
             console.error('ImagePicker Error: ', res.errorMessage);
           } else {
-            setImages(res)
+            setImages(prevImages => [...prevImages, res]);
           }
         }
     )
   }
 
-  useEffect(() => {
-    if (images != null) {
-      console.log(images.uri)
-    }
-  }, [images])
+  const onRemoveImage = (targetImage) => {
+    setImages(prevImages =>
+        prevImages.filter(img => img.uri !== targetImage.uri)
+    );
+  };
 
   return (
       <ScrollView style={{flex: 1}}>
         <View style={styles.contentContainer}>
           <Text style={styles.onboardingPageTitle}>
-            <TranslatedText textToTranslate={"Add photos of your property/"}/>
+            <TranslatedText textToTranslate={"Add photos of your property"}/>
+          </Text>
+          <Text style={styles.onboardingPageDescription}>
+            <TranslatedText textToTranslate={"Max 5 photos. Click a photo to remove it."}/>
           </Text>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
 
-            <View>
-              {images != null &&
-                  <Image
-                      resizeMode="contain"
-                      resizeMethod="scale"
-                      style={styles.image}
-                      source={{uri: images.uri}}/>
+            <ScrollView horizontal={true} contentContainerStyle={styles.imageSlider}>
+              {images.map((image) => (
+                  <TouchableOpacity key={image.uri} onPress={() => {
+                    onRemoveImage(image)
+                  }}>
+                    <Image
+                        resizeMode="contain"
+                        resizeMethod="scale"
+                        style={styles.image}
+                        source={{uri: image.uri}}/>
+                  </TouchableOpacity>
+              ))
               }
-            </View>
+            </ScrollView>
 
             <TouchableOpacity style={styles.addImageButton} onPress={onAddImage}>
               <Text style={styles.addImageButtonText}>
