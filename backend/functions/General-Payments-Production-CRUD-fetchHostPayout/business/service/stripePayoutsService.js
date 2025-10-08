@@ -22,13 +22,13 @@ export default class StripePayoutsService {
       throw new BadRequestException("Missing required fields: cognitoUserId");
     }
 
-    // const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
-    // if (!stripeAccount?.account_id) {
-    //   throw new NotFoundException("No Stripe account found for this user.");
-    // }
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
 
-    const connectedAccount = "acct_1QxTbi2eKtSPvnOL";
+    const connectedAccount = "acct_1QxTbi2eKtSPvnOL"; // testing account
 
     const charges = await this.stripe.charges.list({ stripeAccount: connectedAccount });
 
@@ -38,25 +38,9 @@ export default class StripePayoutsService {
           stripeAccount: connectedAccount,
         });
 
-        // console.log("charge", charge);
-        // console.log("balanceTx", balanceTx);
-
-        // const paymentIntent = await this.stripe.accounts.retrieve(charge.source.id);
-
-        // console.log("betaald door ", paymentIntent.country);
-
         const appFee = await this.stripe.applicationFees.retrieve(charge.application_fee);
 
-        // console.log("appFee", appFee);
-
         const charges = await this.stripe.charges.retrieve(appFee.originating_transaction);
-
-        // console.log("charges", charges);
-
-        // const pi = await this.stripe.paymentIntents.retrieve(charges.payment_intent, {
-        //   expand: ["payment_method"],
-        // });
-        // console.log("pi", pi);
 
         return {
           id: charge.id,
@@ -90,13 +74,13 @@ export default class StripePayoutsService {
       throw new BadRequestException("Missing required fields: cognitoUserId");
     }
 
-    // const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
-    // if (!stripeAccount?.account_id) {
-    //   throw new NotFoundException("No Stripe account found for this user.");
-    // }
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
 
-    const connectedAccount = "acct_1OAG6OGiInrsWMEc";
+    const connectedAccount = "acct_1OAG6OGiInrsWMEc"; // testing account
 
     const payouts = await this.stripe.payouts.list({ stripeAccount: connectedAccount });
 
