@@ -62,7 +62,7 @@ class StripeRepository {
       const stripeFee = totalAmount * stripePercentage + stripeFixedFee;
 
       // Net platform fee = our 10% - stripe fees
-      const yourNetPlatformFee = platformFee - stripeFee; // Still need find a way show the net platform fee in the dashboard
+      const yourNetPlatformFee = platformFee - stripeFee; // Still need find a way show the netto platform fee
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(totalAmount * 100), // client pays 110%
@@ -75,7 +75,7 @@ class StripeRepository {
         metadata: {
           propertyId,
           dates: JSON.stringify(dates),
-          netPlatFormfee: Math.round(yourNetPlatformFee * 100), // show the net platform fee in the metadata
+          netPlatFormfee: Math.round(yourNetPlatformFee * 100), 
         },
       });
 
