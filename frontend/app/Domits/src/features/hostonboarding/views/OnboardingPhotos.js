@@ -57,10 +57,6 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
   }, [images])
 
   useEffect(() => {
-    console.log(formData.localImages)
-  }, [formData])
-
-  useEffect(() => {
     markVisited(true);
   }, [])
 
