@@ -2,11 +2,14 @@ import {launchImageLibrary} from 'react-native-image-picker';
 import {styles} from "../styles/HostOnboardingStyles";
 import {Image, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import TranslatedText from "../../translation/components/TranslatedText";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 
 const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited}) => {
-  const MAX_AMOUNT_IMAGES = 5;
-  const [images, setImages] = useState([]);
+  const MIN_AMOUNT_IMAGES = 5;
+  const MAX_AMOUNT_IMAGES = 10;
+  const [images, setImages] = useState(formData.localImages || []);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [canAddImage, setCanAddImage] = useState(images.length < MAX_AMOUNT_IMAGES);
 
   const onAddImage = () => {
     const options = {
@@ -20,12 +23,12 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
 
     launchImageLibrary(options,
         (res) => {
-          if (res.didCancel) {
-            console.log('User cancelled image picker');
-          } else if (res.errorCode) {
+          if (res.errorCode) {
             console.error('ImagePicker Error: ', res.errorMessage);
           } else {
-            setImages(prevImages => [...prevImages, res]);
+            if (images.length < MAX_AMOUNT_IMAGES) {
+              setImages(prevImages => [...prevImages, res]);
+            }
           }
         }
     )
@@ -37,6 +40,30 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
     );
   };
 
+  useEffect(() => {
+    images.length === MAX_AMOUNT_IMAGES ? setCanAddImage(false) : setCanAddImage(true);
+
+    if (images.length < MIN_AMOUNT_IMAGES) {
+      reportValidity(false);
+      setErrorMessage("You must have at least 5 photos of your property");
+    } else {
+      reportValidity(true);
+      setErrorMessage("");
+    }
+
+    updateFormData((draft) => {
+      draft.localImages = images;
+    })
+  }, [images])
+
+  useEffect(() => {
+    console.log(formData.localImages)
+  }, [formData])
+
+  useEffect(() => {
+    markVisited(true);
+  }, [])
+
   return (
       <ScrollView style={{flex: 1}}>
         <View style={styles.contentContainer}>
@@ -44,7 +71,7 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
             <TranslatedText textToTranslate={"Add photos of your property"}/>
           </Text>
           <Text style={styles.onboardingPageDescription}>
-            <TranslatedText textToTranslate={"Max 5 photos. Click a photo to remove it."}/>
+            <TranslatedText textToTranslate={"A minimum of 5 photos (max. 10 photos). \nClick a photo to remove it."}/>
           </Text>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
 
@@ -63,11 +90,18 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
               }
             </ScrollView>
 
-            <TouchableOpacity style={styles.addImageButton} onPress={onAddImage}>
-              <Text style={styles.addImageButtonText}>
+            <TouchableOpacity style={styles.addImageButton} disabled={!canAddImage} onPress={onAddImage}>
+              <Text style={[styles.addImageButtonText, !canAddImage && styles.addImageButtonTextDisabled]}>
                 <TranslatedText textToTranslate={'Add photo'}/>
               </Text>
             </TouchableOpacity>
+
+            {errorMessage ?
+                <Text style={styles.errorText}>
+                  <TranslatedText textToTranslate={errorMessage}/>
+                </Text>
+                : null
+            }
 
           </ScrollView>
         </View>

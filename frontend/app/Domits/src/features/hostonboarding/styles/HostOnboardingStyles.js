@@ -278,11 +278,18 @@ export const styles = StyleSheet.create({
   // Image
   addImageButton: {
     alignItems: 'center',
+    marginVertical: 10,
   },
   addImageButtonText: {
     borderWidth: 1,
     borderRadius: 10,
     padding: 5,
+    backgroundColor: COLORS.domitsHostBlue,
+    color: 'white',
+  },
+  addImageButtonTextDisabled: {
+    backgroundColor: 'rgba(0,50,101,0.5)',
+    borderWidth: 0,
   },
   imageSlider: {
     marginVertical: 10,
@@ -290,5 +297,6 @@ export const styles = StyleSheet.create({
   image: {
     height: 200,
     width: 200,
+    marginHorizontal: 5,
   },
 })
