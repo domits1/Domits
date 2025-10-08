@@ -45,20 +45,19 @@
             "about": "About us",
             "security": "Security",
             "performance": "Performance",
+            "sustainability": "Sustainability",
             "careers": "Careers",
             "contact": "Contact"
           },
           "guest": {
             "title": "Guest",
             "searchAndBook": "Search and book",
-            "helpDeskForGuests": "Helpdesk for guests",
-            "sustainability": "Sustainability"
+            "helpDeskForGuests": "Helpdesk for guests"
           },
           "host": {
             "title": "Hosts",
             "becomeHost": "Become a host",
-            "helpdeskForHosts": "Helpdesk for hosts",
-            "sustainability": "Sustainability"
+            "helpdeskForHosts": "Helpdesk for hosts"
           },
           "network": {
             "title": "Network",
@@ -320,8 +319,8 @@
         "whyDomits": {
           "head": {
             "title": "Why Domits & how we win together",
-            "subtitle": "One of the fastest improving all-in-1 travel platforms.",
-            "description": "Start your journey as a Guest or Host within minutes. List, search and book holiday accommodations, campers and boats. 0% fee for property owners and managers. There are no hidden costs or percentage cuts. Save administrative time AI assistants and insights. Make use of our global secure payment methods. Enjoy our warmhearted customer centric approach and quick phone support.",
+            "subtitle": "A fast improving hospitality & travel platforms ",
+            "description": "Start your journey as a Guest or Host within minutes. List, search and book holiday accommodations, campers and boats. A low 10% fee per booking for property owners to keep the platform 24/7 running. There are no hidden costs or percentage cuts. Save administrative time AI assistants and insights. Make use of our global secure payment methods. Enjoy our warmhearted customer centric approach and quick phone support.",
             "landing": "Try it out for free",
             "discover": ", discover more on ",
             "howItworks": "how it works",
@@ -358,14 +357,14 @@
             },
             "platform": {
               "title": "24/7 Travel platform",
-              "description": "To run the platform 24/7 we ask guests to pay 15% service fees per booking."
+            "description": "We keep the platform 24/7 running while having 0% service fees per booking for guests."
             }
           },
           "forHost": {
             "title" : "Why Domits for hosts",
             "fee": {
-              "title": "0% host fee:",
-              "description": "“Avoid paying platform fees and increase your revenue with our 0% host fee.”"
+              "title": "Low 10% all-in host fee",
+              "description": "Avoid paying high platform fees at competitors and increase your revenue with our low host fee."
             },
             "income": {
               "title": "Extra Income",
@@ -606,7 +605,7 @@
             "first": {
               "one": "1.",
               "title": "List your property",
-              "description": "Start earning by listing your property for free with 0% fee in just minutes"
+              "description": "Start earning by listing your property with a low 10% fee in just minutes"
             },
             "second": {
               "two": "2.",
