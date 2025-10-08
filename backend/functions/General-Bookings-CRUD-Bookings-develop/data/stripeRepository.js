@@ -46,7 +46,7 @@ class StripeRepository {
       // Platform fee (10% above the host price)
       const platformFee = hostAmount * 0.1;
 
-      // Totaal bedrag dat de klant betaalt
+      // Total amount of money that the client pays (host price + platform fee)
       const totalAmount = hostAmount + platformFee;
 
       // Stripe fees based on reion
@@ -75,6 +75,7 @@ class StripeRepository {
         metadata: {
           propertyId,
           dates: JSON.stringify(dates),
+          netPlatFormfee: Math.round(yourNetPlatformFee * 100), // show the net platform fee in the metadata
         },
       });
 
