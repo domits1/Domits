@@ -21,9 +21,7 @@ import BookingSend from "./features/bookingengine/BookingSend";
 import ValidatePayment from "./features/bookingengine/ValidatePayment";
 import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
-import Chatbot from "./features/guestaiagent/chatbot";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
-import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
@@ -95,6 +93,13 @@ import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 import Messages from "./components/messages/Messages.js";
+import publicKeys from "./utils/const/publicKeys.json"
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import ChannelManager from "./pages/channelmanager/Channelmanager.js";
+
+
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE)
 
 
 Modal.setAppElement("#root");
@@ -187,23 +192,20 @@ function App() {
                 {/* Chat */}
                 {/*<Route path="/chat" element={<Chat/>}/>*/}
                 <Route path="/employeechat" element={<EmployeeChat />} />
-                <Route path="/chatbot" element={<Chatbot />} />
 
-                {/* Host Chatbot */}
-                <Route path="/hostchatbot" element={<Hostchatbot />} />
 
                 {/* Review */}
                 <Route path="/review" element={<ReviewPage />} />
 
                 {/* Guest Dashboard */}
                 <Route
-                    path="/guestdashboard/*"
-                    element={
-                      <GuestProtectedRoute>
-                        <MainDashboardGuest />
-                      </GuestProtectedRoute>
-                    }
-                  />
+                  path="/guestdashboard/*"
+                  element={
+                    <GuestProtectedRoute>
+                      <MainDashboardGuest />
+                    </GuestProtectedRoute>
+                  }
+                />
 
                 {/* Host Management */}
                 {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
@@ -212,7 +214,17 @@ function App() {
                 <Route path="/verify" element={<HostVerificationView />} />
                 <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                 <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
-                <Route path="/validatepayment" element={<ValidatePayment />} />
+
+                {/* Payment Logic */}
+                <Route path="/validatepayment"
+                  element={
+                    <Elements stripe={stripePromise}>
+                      <ValidatePayment />
+                    </Elements>
+                  }
+                >/
+                </Route>
+
 
                 <Route
                   path="/hostdashboard"
@@ -229,6 +241,7 @@ function App() {
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/disclaimers" element={<Disclaimers />} />
                 <Route path="/Sustainability" element={<Sustainability />} />
+                <Route path="/channelmanager" element={<ChannelManager />} />
 
                 {/* Error*/}
                 <Route path="/*" element={<PageNotFound />} />
@@ -264,11 +277,10 @@ function App() {
               {renderFooter()}
               {currentPath !== "/admin" && <MenuBar />}
               {renderChatWidget()}
-              <Hostchatbot />
             </div>
           </UserProvider>
         </AuthProvider>
-        <Navbar/>
+        <Navbar />
       </Router>
     </FlowContext.Provider>
   </ApolloProvider>);

@@ -729,6 +729,30 @@
           "subtitle": "Unser Expertenteam steht bereit zur Unterstützung!",
           "team": "Vermietungsexpertenteam",
           "talk": "Sprechen Sie mit einem Spezialisten"
+        },
+        "contactForm": {
+          "title": "Kontaktformular für Gastgeber",
+          "description": "Wir antworten innerhalb von 24 Stunden. Bitte gib Details an, damit wir schnell helfen können.",
+          "fields": {
+            "firstName": "Vorname",
+            "lastName": "Nachname",
+            "email": "E-Mail",
+            "phone": "Telefon",
+            "city": "Stadt/Region",
+            "properties": "Anzahl der Objekte",
+            "comments": "Kommentare"
+          },
+          "placeholders": {
+            "firstName": "John",
+            "lastName": "Doe",
+            "email": "john@example.com",
+            "phone": "+49 160 1234567",
+            "city": "Berlin",
+            "properties": "1",
+            "comments": "Erzähl uns mehr über deine Unterkunft..."
+          },
+          "submit": "Nachricht senden",
+          "sending": "Senden..."
         }
       }
 }

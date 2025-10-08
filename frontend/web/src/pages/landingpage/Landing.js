@@ -14,15 +14,17 @@ import supportLogo from "../../images/icons/question-mark-round-icon.png";
 import internationalLogo from "../../images/icons/world-globe-line-icon.png";
 import rulesLogo from "../../images/icons/result-pass-icon.png";
 import PersonalAdvice from "../../images/personal-advice.png";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+ 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 import ReactMarkDown from "react-markdown";
+import { reviews } from "./store/reviews";
+import { handleContactFormSubmission } from "../../services/contactService";
+import ContactForm from "./ContactForm.jsx";
+import FaqItem from "./FaqItem.jsx";
 
 const contentByLanguage = {
   en,
@@ -31,46 +33,7 @@ const contentByLanguage = {
   es,
 };
 
-const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
-  const answerRef = useRef(null);
-  const [height, setHeight] = useState(0);
-
-  useEffect(() => {
-    if (answerRef.current) {
-      setHeight(answerRef.current.scrollHeight);
-    }
-  }, [isOpen]);
-  useEffect(() => {
-    if (isOpen) {
-      console.log(answer);
-    }
-  }, [isOpen]);
-
-  // `MapsToMessages` is not used in FaqItem, but was in the original code.
-  // Keeping it as is, but it might be dead code if not called elsewhere.
-  // const navigateToMessages = () => {
-  //   if (currentView === "host") {
-  //     navigate("/hostdashboard/chat");
-  //   } else {
-  //     navigate("/guestdashboard/chat");
-  //   }
-  // };
-
-  return (
-    <div className="landing__faq" onClick={toggleOpen}>
-      <div className="landing__faq__body">
-        <span className="landing__faq__question">{question}</span>
-        <span className="landing__faq__arrow">{isOpen ? "▲" : "▼"}</span>
-      </div>
-      <div
-        className="landing__faq__answer"
-        style={{ maxHeight: isOpen ? `${height}px` : "0", overflow: "hidden" }}
-        ref={answerRef}>
-        {answer}
-      </div>
-    </div>
-  );
-};
+// FaqItem moved to its own component
 function Landing() {
   const { language } = useContext(LanguageContext);
   const landingContent = contentByLanguage[language]?.landing;
@@ -113,50 +76,33 @@ function Landing() {
     },
   ]);
 
-  const reviews = [
-    {
-      id: 1,
-      text: "Renting out my home through this website has been a wonderful experience. The user-friendly interface and the reliable platform make it easy for me to list my property. The booking system works flawlessly, and I always receive timely notifications when a reservation is made. Communication with guests is smooth, allowing me to offer a personal and hassle-free service. Thanks to this website, I am confident that my home is in good hands, and the positive feedback from my guests reaffirms this every time!",
-      author: "Rick Terp",
-      location: "Host from the Netherlands",
-      img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096",
-    },
-    {
-      id: 2,
-      text: "Renting out my boat through this platform was a fantastic experience. Everything went smoothly and professionally, from the booking to the communication with renters. Perfect for boat owners!",
-      author: "Melissa Steenberk",
-      location: "Host from the Netherlands",
-      img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096",
-    },
-    {
-      id: 3,
-      text: "As the owner of a luxury yacht company, this platform offers us the perfect opportunity to rent out our fleet easily and efficiently. From the user-friendly system to the excellent customer support, everything is flawlessly organized. Our clients appreciate the quality and luxury of our yachts, and thanks to the platform, we can provide them with a hassle-free booking experience. The team behind the platform ensures that our yachts receive optimal visibility for potential renters, resulting in frequent and reliable bookings. A valuable asset for our business!",
-      author: "James Heck",
-      location: "Owner of a luxury yacht company",
-      img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096",
-    },
-    {
-      id: 4,
-      text: "I recently hosted my website with Domits in the UK, and the experience has been exceptional. The platform is user-friendly, allowing for quick setup and seamless integration. Speed and reliability are top-notch, with minimal downtime, ensuring my site is always accessible. The customer support team is also extremely helpful, addressing any issues promptly and professionally. If you're looking for a solid hosting solution in the UK, this service offers great performance, security, and value for money. Highly recommended for anyone serious about a stable online presence!",
-      author: "Jaimee Becker",
-      location: "Host from UK",
-      img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096",
-    },
-    {
-      id: 5,
-      text: "Reliable and Efficient Hosting from Germany I recently switched to a hosting provider based in Germany, and it’s been an excellent decision. The platform is fast and stable, offering great performance with little to no downtime. The setup process was straightforward, and the service provides excellent security features, which is especially important for websites dealing with sensitive data. The German-based servers have shown impressive speed for both local and international visitors, making it a fantastic choice for businesses or personal websites looking for reliability and performance. Highly recommended for those seeking a strong hosting solution from Germany!",
-      author: "Maurice von Dorn",
-      location: "Host from Germany",
-      img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096",
-    },
-    {
-      id: 6,
-      text: "As the owner of Amode, I’ve had the opportunity to host several websites on various platforms, and the service we provide has consistently exceeded expectations. Our hosting solutions are designed to offer a seamless, high-performance experience with reliable uptime, top-notch security features, and a user-friendly interface. Whether you're running a small business or a larger operation, our infrastructure is built to scale efficiently and ensure your site is always performing at its best. At Amode, we prioritize customer satisfaction, and our support team is available around the clock to help with any issues that may arise. We take pride in offering hosting that’s as robust as it is reliable, making us a trusted choice for clients worldwide.",
-      author: "Laisa Feldt",
-      location: "Owner at Amode",
-      img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096",
-    },
-  ];
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    city: '',
+    properties: '',
+    comments: ''
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+
+  // Phone input optimization 
+  const PHONE_CHAR_REGEX = /^[0-9+\s]$/;
+  const ALLOWED_KEYS = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+
+  const isValidPhoneKey = (key) => PHONE_CHAR_REGEX.test(key);
+  const isAllowedKey = (key) => ALLOWED_KEYS.includes(key);
+  const isValidPhonePaste = (text) => /^[0-9+\s]*$/.test(text);
+
+  
+
+  const [reviewStartIndex, setReviewStartIndex] = useState(0);
+  const advanceReviews = () => {
+    setReviewStartIndex((prev) => (prev + 3) % reviews.length);
+  };
 
   const toggleOpen = (index) => {
     const updatedFaqs = faqs.map((faq, i) => (i === index ? { ...faq, isOpen: !faq.isOpen } : faq));
@@ -209,6 +155,46 @@ function Landing() {
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear feedback message when user starts typing
+    if (feedbackMessage) {
+      setFeedbackMessage("");
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      city: '',
+      properties: '',
+      comments: ''
+    });
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+
+    await handleContactFormSubmission(
+      formData,
+      setIsSubmitting,
+      setFeedbackMessage,
+      resetForm
+    );
+  };
+
+  const isFormValid = () => {
+    return true; // Button is always clickable, validation happens when user clicks submit
+  };
+
   return (
     <main className="container">
       <div className="firstSection">
@@ -222,13 +208,12 @@ function Landing() {
                 <span>{landingContent.boat}</span>
               </div>
             </span>
-            <br />
-            {landingContent.forFree}
+            
           </h1>
           <p>{landingContent.description}</p>
 
           <button className="nextregister">
-            <a href="#Register" onClick={(e) => handleSmoothScroll(e, "Register")}>
+            <a href="#Contact" onClick={(e) => handleSmoothScroll(e, "Contact")}>
               {landingContent.startHosting}
             </a>
           </button>
@@ -257,12 +242,6 @@ function Landing() {
             <img src={checkMark} alt="checkMark"></img>
             <p>{landingContent.guarantee}</p>
           </div>
-        </div>
-      </div>
-
-      <div className="hostForm">
-        <div className="hostForm_text">
-          <h1 className="hostForm_innerText">{"Calculate Your Rental Potential"}</h1>
         </div>
       </div>
 
@@ -310,8 +289,8 @@ function Landing() {
             {landingContent.why.title} <span className="highlightText">{landingContent.why.domits}</span>?
           </h1>
           <p>{landingContent.why.description}</p>
-          <button onClick={updateUserGroup} className="nexthost">
-            <a href="#Register" onClick={(e) => handleSmoothScroll(e, "Register")}>
+          <button className="nexthost">
+            <a href="#Contact" onClick={(e) => handleSmoothScroll(e, "Contact")}>
               {landingContent.why.btnHosting}
             </a>
           </button>
@@ -375,167 +354,33 @@ function Landing() {
         </div>
       </div>
 
-      <div className="clientReviewMobile">
-        <h1>
+      
+
+      <section className="reviews-simple">
+        <h1 className="reviews-simple__title">
           {landingContent.othersSay.title} <span className="highlightText">{landingContent.othersSay.domits}</span>
         </h1>
-        <Slider
-          dots={true}
-          infinite={true}
-          speed={500}
-          slidesToShow={1}
-          slidesToScroll={1}
-          autoplay={true}
-          autoplaySpeed={30000}
-          prevArrow={
-            <button type="button" className="slick-prev">
-              Previous
-            </button>
-          }
-          nextArrow={
-            <button type="button" className="slick-next">
-              Next
-            </button>
-          }>
-          {reviews.map((review) => (
-            <div key={review.id} className="reviewSlide">
-              <p className="reviewText">"{review.text}"</p>
-              <div className="clientDetails">
-                <img src={review.img} alt={review.author} />
-                <div className="clientInfo">
-                  <h2>{review.author}</h2>
-                  <p>{review.location}</p>
+        <div className="reviews-simple__grid">
+          {([0, 1, 2].map((i) => reviews[(reviewStartIndex + i) % reviews.length])).map((review) => (
+            <article key={review.id} className="review-card">
+              <div className="review-card__stars" aria-label="5 star rating">★★★★★</div>
+              <p className="review-card__text">{review.text}</p>
+              <div className="review-card__footer">
+                {review.img && (
+                  <img className="review-card__avatar" src={review.img} alt={review.author} />
+                )}
+                <div className="review-card__author">
+                  <div className="review-card__name">{review.author}</div>
+                  <div className="review-card__role">{review.location}</div>
                 </div>
               </div>
-            </div>
+            </article>
           ))}
-        </Slider>
-      </div>
-
-      <div className="clientRevieuw">
-        <h1>
-          {" "}
-          {landingContent.othersSay.title} <span className="highlightText">{landingContent.othersSay.domits}</span>
-        </h1>
-
-        <div className="client_text">
-          <span className="highlightText">"</span>
-          <p className="clientText">
-            Renting out my home through this website has been a wonderful experience. The user-friendly interface and
-            the reliable platform make it easy for me to list my property. The booking system works flawlessly, and I
-            always receive timely notifications when a reservation is made. Communication with guests is smooth,
-            allowing me to offer a personal and hassle-free service. Thanks to this website, I am confident that my home
-            is in good hands, and the positive feedback from my guests reaffirms this every time!
-          </p>
-          <span className="highlightText">"</span>
-          <div className="client_content">
-            <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Rick Terp" />
-            <div className="client_details">
-              <h2>Rick Terp</h2>
-              <p>Host from the Netherlands</p>
-            </div>
-          </div>
         </div>
-
-        <div className="client_text">
-          <span className="highlightText">"</span>
-          <p className="clientText">
-            Renting out my boat through this platform was a fantastic experience. Everything went smoothly and
-            professionally, from the booking to the communication with renters. Perfect for boat owners!
-          </p>
-          <span className="highlightText">"</span>
-          <div className="client_content">
-            <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Melissa Steenberk" />
-            <div className="client_details">
-              <h2>Melissa Steenberk</h2>
-              <p>Host from the Netherlands</p>
-            </div>
-          </div>
+        <div className="reviews-simple__actions">
+          <button className="reviews-simple__button" onClick={advanceReviews}>Next reviews</button>
         </div>
-
-        <div className="client_text">
-          <span className="highlightText">"</span>
-          <p className="clientText">
-            As the owner of a luxury yacht company, this platform offers us the perfect opportunity to rent out our
-            fleet easily and efficiently. From the user-friendly system to the excellent customer support, everything is
-            flawlessly organized. Our clients appreciate the quality and luxury of our yachts, and thanks to the
-            platform, we can provide them with a hassle-free booking experience. The team behind the platform ensures
-            that our yachts receive optimal visibility for potential renters, resulting in frequent and reliable
-            bookings. A valuable asset for our business!
-          </p>
-          <span className="highlightText">"</span>
-          <div className="client_content">
-            <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="James Heck" />
-            <div className="client_details">
-              <h2>James Heck</h2>
-              <p>Owner of a luxury yacht company</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="client_text">
-          <span className="highlightText">"</span>
-          <p className="clientText">
-            I recently hosted my website with Domits in the UK, and the experience has been exceptional. The platform is
-            user-friendly, allowing for quick setup and seamless integration. Speed and reliability are top-notch, with
-            minimal downtime, ensuring my site is always accessible. The customer support team is also extremely
-            helpful, addressing any issues promptly and professionally. If you're looking for a solid hosting solution
-            in the UK, this service offers great performance, security, and value for money. Highly recommended for
-            anyone serious about a stable online presence!
-          </p>
-          <span className="highlightText">"</span>
-          <div className="client_content">
-            <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Melissa Steenberk" />
-            <div className="client_details">
-              <h2>Jaimee Becker</h2>
-              <p>Host from UK</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="client_text">
-          <span className="highlightText">"</span>
-          <p className="clientText">
-            Reliable and Efficient Hosting from Germany I recently switched to a hosting provider based in Germany, and
-            it’s been an excellent decision. The platform is fast and stable, offering great performance with little to
-            no downtime. The setup process was straightforward, and the service provides excellent security features,
-            which is especially important for websites dealing with sensitive data. The German-based servers have shown
-            impressive speed for both local and international visitors, making it a fantastic choice for businesses or
-            personal websites looking for reliability and performance. Highly recommended for those seeking a strong
-            hosting solution from Germany!
-          </p>
-          <span className="highlightText">"</span>
-          <div className="client_content">
-            <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Melissa Steenberk" />
-            <div className="client_details">
-              <h2>Maurice von Dorn</h2>
-              <p>Host from Germany</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="client_text">
-          <span className="highlightText">"</span>
-          <p className="clientText">
-            As the owner of Amode, I’ve had the opportunity to host several websites on various platforms, and the
-            service we provide has consistently exceeded expectations. Our hosting solutions are designed to offer a
-            seamless, high-performance experience with reliable uptime, top-notch security features, and a user-friendly
-            interface. Whether you're running a small business or a larger operation, our infrastructure is built to
-            scale efficiently and ensure your site is always performing at its best. At Amode, we prioritize customer
-            satisfaction, and our support team is available around the clock to help with any issues that may arise. We
-            take pride in offering hosting that’s as robust as it is reliable, making us a trusted choice for clients
-            worldwide.
-          </p>
-          <span className="highlightText">"</span>
-          <div className="client_content">
-            <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Melissa Steenberk" />
-            <div className="client_details">
-              <h2>Laisa Feldt</h2>
-              <p>Owner at Amode</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      </section>
 
       <div className="checkList">
         <h1>
@@ -607,12 +452,26 @@ function Landing() {
           <h3>{landingContent.advice.subtitle}</h3>
           <button className="nextadvice">
             {" "}
-            <a href="/contact">{landingContent.advice.talk}</a>
+            <a href="#Contact" onClick={(e) => handleSmoothScroll(e, "Contact")}>
+              {landingContent.advice.talk}
+            </a>
           </button>
         </div>
         <img src={PersonalAdvice} alt="personalAdvice" />
       </div>
+
+      {/* contact form section */}
+      <ContactForm
+        content={landingContent.contactForm}
+        formData={formData}
+        isSubmitting={isSubmitting}
+        feedbackMessage={feedbackMessage}
+        onChange={handleInputChange}
+        onSubmit={handleContactSubmit}
+      />
     </main>
+
+    
   );
 }
 

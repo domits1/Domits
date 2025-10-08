@@ -14,7 +14,7 @@ import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import Calender from "@mui/icons-material/CalendarTodayOutlined";
 import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
-import publicKeys from "../../utils/const/publicKeys.json"
+import publicKeys from "../../utils/const/publicKeys.json";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 
@@ -30,6 +30,7 @@ const BookingOverview = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [bookingId, setBookingId] = useState(null);
   const [pricingObject, setPricingObject] = useState(null);
   const [isProcessing, setIsProcessing] = useState(true);
   const [stripeClientSecret, setStripeClientSecret] = useState(null);
@@ -41,19 +42,12 @@ const BookingOverview = () => {
   const guests = searchParams.get("guests");
   const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 
-  const options = {
-  clientSecret: stripeClientSecret,
-  appearance: {
-    //
-  },
-};
-
   useEffect(() => {
     const fetchAccommodation = async () => {
       try {
-        if(!checkInDate || !checkOutDate || !propertyId || !guests ){
-          setError("Unable to retrieve property information from the URL. Please try again later.")
-          console.error("URL Query Parameters are missing from your request. Unable to load BookingOverview.")
+        if (!checkInDate || !checkOutDate || !propertyId || !guests) {
+          setError("Unable to retrieve property information from the URL. Please try again later.");
+          console.error("URL Query Parameters are missing from your request. Unable to load BookingOverview.");
           throw new NotFoundException("checkInDate, checkOutDate, guests, or PropertyId missing from URL.");
         }
 
@@ -68,7 +62,9 @@ const BookingOverview = () => {
         }
       } catch (error) {
         console.error("Error fetching accommodation data:", error);
-        setError("We couldn't load the property details. Check your internet or try again. If this continues, reach out to support.");
+        setError(
+          "We couldn't load the property details. Check your internet or try again. If this continues, reach out to support."
+        );
       }
     };
     fetchAccommodation();
@@ -141,18 +137,19 @@ const BookingOverview = () => {
           "Content-type": "application/json; charset=UTF-8",
         },
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}`);
+      const response = await request.json();
+      if (!request.ok) {
+        throw new Error(`HTTP error! Status: ${request.status}`);
       }
 
-      const retrievedStripeClientSecret = response.stripeClientSecret;
-
-      if(response.stripeClientSecret) {
+      if (response.stripeClientSecret && response.bookingId) {
+        setBookingId(response.bookingId);
         setStripeClientSecret(response.stripeClientSecret);
       } else {
-        console.error("Unable to get user's stripe client secret.");
-        throw new Error("stripeClientSecret is undefined or null.");
+        console.error("Failed to save booking. Please contact support.");
+        throw new NotFoundException(
+          "POST request towards backend failed. Check the Network tab to debug the request. Booking process failed."
+        );
       }
       setShowCheckout(true);
     } catch (error) {
@@ -215,14 +212,19 @@ const BookingOverview = () => {
             </div>
           ) : (
             <>
-            {!hideButton && (
-              <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading}>
-                {loading ? "Loading..." : "Confirm & Pay"}
-              </button>
-            )}
-              {showCheckout && stripeClientSecret && (
-                <Elements stripe={stripePromise} options={options}>
-                  <SetupForm handleConfirmAndPay={handleConfirmAndPay} loading />
+              {!hideButton && (
+                <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading}>
+                  {loading ? "Loading..." : "Confirm & Pay"}
+                </button>
+              )}
+              {showCheckout && stripeClientSecret && bookingId && (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret: stripeClientSecret,
+                    appearance: {},
+                  }}>
+                  <SetupForm handleConfirmAndPay={handleConfirmAndPay} bookingId={bookingId} loading />
                 </Elements>
               )}
             </>

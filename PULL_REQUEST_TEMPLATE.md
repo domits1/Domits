@@ -14,7 +14,6 @@ Description: [Please add detailed description of the changes here]
 ## Change size
 _Please indicate the size of this change._  
   _Please clarify in the description which parts are moved/unchanged code, so the reviewer doesn’t review old logic._
-
 - [ ] Huge change (1000+ lines, mostly refactored/moved code — explain in description to avoid reviewing old logic)
 - [ ] Big change (+-max 1000)
 - [ ] Small change (less than 300)
@@ -53,7 +52,9 @@ _6. “Merge” your branch to the master branch_
 - [ ] Jest tests are passing  
 - [ ] Pull request has an assigned reviewer  
 - [ ] PR title is descriptive and includes issue number  
+- [ ] PR is ideally under 500 lines and defintely below 1000 (unless files have been refactored, then fill it in [here](#refactoring))
 - [ ] Code tested locally  
+- [ ] No config files have been added (Amplify config, cache files)
 - [ ] No hardcoded sensitive data (e.g., API-keys/passwords)  
 
 _All boxes must be checked before merging._  
@@ -68,14 +69,13 @@ As the Pull Requester, **you are responsible for your own pull request.**
 ### Select two reviewers
 
 - [ ] Primary Reviewer: @_GitHub_username
-- Marijn (Styling, SCSS, JS)  
-- Sander (App, Backend)  
+- Stephanie (App, Backend)  
+- Raman (Web, Backend)
 
 - [ ] Secondary Reviewer: @_GitHub_username
 Preferably someone familiar with the part of code you're working on. For example:  
-- Ryan  
-- Kacper  
-- Raman  
+- Moncef
+- Ahasan
 
 ## Keep or delete my branch  
 - [x] Delete my branch after merge  

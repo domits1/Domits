@@ -6,10 +6,11 @@ import SystemManagerRepository from './systemManagerRepository.js';
 import CalculateTotalRate from '../util/calcuateTotalRate.js';
 import { Payment } from 'database/models/Payment';
 import Database from 'database';
+import { Booking } from 'database/models/Booking';
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
-  .getSystemManagerParameter("/stripe/keys/secret/test")
+  .getSystemManagerParameter("/stripe/keys/secret/live")
   .then(secret => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
@@ -25,7 +26,7 @@ class StripeRepository {
       const stripe = await stripePromise;
       const total = await CalculateTotalRate(propertyId, dates);
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: total,
+        amount: 50,
         application_fee_amount: Math.round(total * 0.15),
         currency: 'eur',
         payment_method_types: ["card", "ideal", "klarna"],
@@ -83,7 +84,7 @@ class StripeRepository {
         await this.getPaymentByPaymentId(paymentData.stripePaymentId)
       } catch (error) {
         console.error("Something unexpected happenend attempting to save the payment information.")
-        throw new NotFoundException(`Unable to save payment data in the table.
+        throw new NotFoundException(`Unable to save payment data in the table. 
         Attempted to query ${paymentData.stripePaymentId} but no results were returned.`);
       }
   }
@@ -103,13 +104,26 @@ class StripeRepository {
     }
   }
 
-  async getPaymentIntentByPaymentId(id) {
+  async getPaymentIntentByPaymentId(paymentId) {
     try {
-      const paymentIntent = await stripe.paymentIntents.retrieve(id);
+      const stripe = await stripePromise;
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentId);
       return paymentIntent ? paymentIntent : null;
     } catch (error) {
+      console.error(error);
       throw new NotFoundException("PaymentIntentNotFound.");
     }
+  }
+
+
+  async updatePaymentId(bookingId, stripePaymentId) {
+    const client = await Database.getInstance();
+    await client
+        .createQueryBuilder()
+        .update(Booking)
+        .set({ paymentid: stripePaymentId })
+        .where("id = :id", { id: bookingId})
+        .execute();
   }
 }
 export default StripeRepository;

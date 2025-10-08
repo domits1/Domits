@@ -14,6 +14,11 @@ export const styles = StyleSheet.create({
     color: 'rgba(70,70,70,0.7)',
     marginBottom: 20,
   },
+  onboardingPageHeading1: {
+    fontSize: 24,
+    marginTop: 20,
+    color: 'rgb(75,75,75)',
+  },
   // Navigation
   navButtonContainer: {
     flexDirection: "row",
@@ -140,6 +145,40 @@ export const styles = StyleSheet.create({
   selectedGridItemText: {
     color: 'white',
   },
+  // Counter
+  counterGroupContainer: {
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
+    marginBottom: 50,
+  },
+  counterItemContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '100%',
+    marginVertical: 5,
+  },
+  counterLabel: {
+    flex: 1,
+  },
+  counterLabelText: {
+    fontSize: 20,
+  },
+  counterGroup: {
+    flex: 1,
+    alignItems: 'center',
+    flexDirection: 'row-reverse',
+  },
+  counterGroupItem: {
+    marginHorizontal: 5,
+  },
+  counterGroupText: {
+    fontSize: 20,
+  },
+  numericInput: {
+    fontSize: 20,
+    borderBottomWidth: 1,
+  },
   // Check screen table
   table: {
     alignSelf: 'center',
@@ -205,10 +244,35 @@ export const styles = StyleSheet.create({
     fontSize: 24,
     color: "white",
   },
-  // Check screen checkboxes
+  // Checkboxes
   checkboxContainer: {
     flexDirection: 'row',
     width: '95%',
     marginBottom: 10,
+    alignItems: 'center'
+  },
+  // Switch
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(128,128,128,0.25)',
+  },
+  // Time
+  timeSlotItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    padding: 3,
+    marginVertical: 5,
+    display: 'flex',
+    alignSelf: 'flex-start',
+  },
+  timeItem: {
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: 'rgba(128,128,128,0.5)',
+    padding: 3,
   },
 })

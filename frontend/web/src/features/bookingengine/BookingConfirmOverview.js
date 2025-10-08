@@ -36,15 +36,15 @@ const BookingConfirmationOverview = () => {
     useEffect(() => {
         const fetchBookingDetails = async () => {
             const queryParams = new URLSearchParams(location.search);
-            const paymentID = queryParams.get("paymentID");
-            if (!paymentID) {
+            const paymentId = queryParams.get("paymentId");
+            if (!paymentId) {
                 console.error("Missing Payment ID in URL");
                 setError("Payment ID is missing.");
                 setLoading(false);
                 return;
             }
             try {
-                const data = await BookingFetchData(paymentID);
+                const data = await BookingFetchData(paymentId);
                 const bookingInfo = extractBookingDetails(data.bookingData, data.accommodationData);
                 setBookingDetails(bookingInfo);
             } catch (error) {
@@ -65,32 +65,27 @@ const BookingConfirmationOverview = () => {
 
 
     const extractBookingDetails = (bookingData, accommodationData) => {
-        const difference = CalculateDaysBetweenDates(bookingData.arrivalDate.N, bookingData.departureDate.N);
-        const totalPrice = accommodationData.pricing.roomRate * difference;
+        const difference = CalculateDaysBetweenDates(bookingData.arrivaldate, bookingData.departuredate);
+        const roomRate = accommodationData.pricing.roomRate * difference;
+        const calculatedServiceFee = accommodationData.pricing.roomRate * 0.15;
+        const totalPrice = accommodationData.pricing.roomRate * difference + accommodationData.pricing.cleaning + calculatedServiceFee;
         return {
-            StartDate: bookingData.arrivalDate.N,
-            EndDate: bookingData.departureDate.N,
-            Guests: bookingData.guests.N,
-            GuestID: bookingData.guestId.S,
-            AccoID: bookingData.property_id.S,
-            HostID: accommodationData.property.hostId,
-            Status: bookingData.status.S,
-            Title: accommodationData.property.title,
-            Price: totalPrice,
-            Taxes: 0,
-            CleaningFee: accommodationData.pricing.cleaning,
-            ServiceFee: accommodationData.pricing.service,
-            Images: accommodationData.images,
+            arrivalDate: bookingData.arrivaldate,
+            departureDate: bookingData.departuredate,
+            guests: bookingData.guests,
+            guestId: bookingData.guestid,
+            id: bookingData.property_id,
+            hostId: accommodationData.property.hostId,
+            status: bookingData.status,
+            title: accommodationData.property.title,
+            price: roomRate,
+            totalPrice: totalPrice,
+            tax: 0,
+            cleaningFee: accommodationData.pricing.cleaning,
+            serviceFee: calculatedServiceFee,
+            images: accommodationData.images,
         }
     }
-
-    const calculateTotalPrice = (bookingDetails) => {
-        const price = parseFloat(bookingDetails?.Price) || 0;
-        const taxes = parseFloat(bookingDetails?.Taxes) || 0;
-        const cleaningFee = parseFloat(bookingDetails?.CleaningFee) || 0;
-        const serviceFee = parseFloat(bookingDetails?.ServiceFee) || 0;
-        return price + taxes + cleaningFee + serviceFee;
-    };
 
     useEffect(() => {
         if (
@@ -120,8 +115,8 @@ const BookingConfirmationOverview = () => {
             {/* Conditionally render the left element */}
             {!isMobileView && (
                 <div className="left">
-                    {bookingDetails?.Images && bookingDetails.Images.length > 0 ?(
-                        <ImageGallery images={bookingDetails.Images.map(img => `${S3_URL}${img.key}`)} />
+                    {bookingDetails?.images && bookingDetails.images.length > 0 ?(
+                        <ImageGallery images={bookingDetails.images.map(img => `${S3_URL}${img.key}`)} />
                     ) : (
                         <p>No images available for this accommodation.</p>
                     )}
@@ -130,11 +125,11 @@ const BookingConfirmationOverview = () => {
 
             <div className="right-panel">
                 <h1>Payment Confirmation</h1>
-                {bookingDetails && <h3>{bookingDetails.Title}</h3>}
+                {bookingDetails && <h3>{bookingDetails.title}</h3>}
                 {isMobileView && (
                     <div className="left mobile-left">
-                    {bookingDetails?.Images && bookingDetails.Images.length > 0 ?(
-                        <ImageGallery images={bookingDetails.Images.map(img => `${S3_URL}${img.key}`)} />
+                    {bookingDetails?.images && bookingDetails.images.length > 0 ?(
+                        <ImageGallery images={bookingDetails.images.map(img => `${S3_URL}${img.key}`)} />
                     ) : (
                             <p>No images available for this accommodation.</p>
                         )}
@@ -144,22 +139,22 @@ const BookingConfirmationOverview = () => {
                     <div>
                         <h3>
                             Booking{" "}
-                            {bookingDetails.Status === "Accepted"
+                            {bookingDetails.status === "Paid"
                                 ? "Confirmed"
-                                : bookingDetails.Status === "Failed"
+                                : bookingDetails.status === "Awaiting Payment"
                                     ? "Failed"
                                     : "Pending"}
                         </h3>
                         <p>
                             <strong>Check-in:</strong>{" "}
-                            {bookingDetails?.StartDate
-                                ? new Date(Number(bookingDetails.StartDate)).toLocaleDateString()
+                            {bookingDetails?.arrivalDate
+                                ? new Date(Number(bookingDetails.arrivalDate)).toLocaleDateString()
                                 : "N/A"}
                         </p>
                         <p>
                             <strong>Check-out:</strong>{" "}
-                            {bookingDetails?.EndDate
-                                ? new Date(Number(bookingDetails.EndDate)).toLocaleDateString()
+                            {bookingDetails?.departureDate
+                                ? new Date(Number(bookingDetails.departureDate)).toLocaleDateString()
                                 : "N/A"}
                         </p>
                     </div>
@@ -175,13 +170,13 @@ const BookingConfirmationOverview = () => {
                         <div className="row">
                             <p><People />Guests:</p>
                             
-                            <p>{bookingDetails?.Guests}</p>
+                            <p>{bookingDetails?.guests}</p>
                         </div>
 
                         <div className="row">
                             <p><Calender />Date</p>
                             <p>
-                                {formatDate(Number(bookingDetails?.StartDate))} - {formatDate(Number(bookingDetails?.EndDate))}
+                                {formatDate(Number(bookingDetails?.arrivalDate))} - {formatDate(Number(bookingDetails?.departureDate))}
                             </p>
                         </div>
                     </div>
@@ -189,26 +184,26 @@ const BookingConfirmationOverview = () => {
                     <div className="price-breakdown">
                         <div className="row">
                             <p><AttachMoneyIcon />Price</p>
-                            <p>€ {bookingDetails?.Price}</p>
+                            <p>€ {bookingDetails?.price}</p>
                         </div>
                         <div className="row">
                             <p><AttachMoneyIcon />Taxes</p>
-                            <p>€ {bookingDetails?.Taxes}</p>
+                            <p>€ {bookingDetails?.tax}</p>
                         </div>
                         <div className="row">
                             <p><Cleaning />Cleaning fee</p>
-                            <p>€ {bookingDetails?.CleaningFee}</p>
+                            <p>€ {bookingDetails?.cleaningFee}</p>
                         </div>
 
                         <div className="row">
                             <p><RoomServiceIcon />Domits service fee:</p>
-                            <p>€ {bookingDetails?.ServiceFee}</p>
+                            <p>€ {bookingDetails?.serviceFee}</p>
                         </div>
                     </div>
 
                     <div className="total-price">
                         <strong>Total:</strong>
-                        <strong>€ {calculateTotalPrice(bookingDetails)}</strong>
+                        <strong>€ {bookingDetails?.totalPrice}</strong>
                     </div>
                 </div>
 
