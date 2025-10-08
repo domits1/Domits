@@ -49,7 +49,7 @@ class StripeRepository {
       // Total amount of money that the client pays (host price + platform fee)
       const totalAmount = hostAmount + platformFee;
 
-      // Stripe fees based on reion
+      // Stripe fees based on region
       let stripePercentage = 0.015; // 1,5% EER
       let stripeFixedFee = 0.25; // €0,25
 
