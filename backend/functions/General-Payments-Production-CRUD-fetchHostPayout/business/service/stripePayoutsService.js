@@ -22,11 +22,11 @@ export default class StripePayoutsService {
       throw new BadRequestException("Missing required fields: cognitoUserId");
     }
 
-    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    // const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
-    if (!stripeAccount?.account_id) {
-      throw new NotFoundException("No Stripe account found for this user.");
-    }
+    // if (!stripeAccount?.account_id) {
+    //   throw new NotFoundException("No Stripe account found for this user.");
+    // }
 
     const connectedAccount = "acct_1QxTbi2eKtSPvnOL";
 
@@ -90,11 +90,11 @@ export default class StripePayoutsService {
       throw new BadRequestException("Missing required fields: cognitoUserId");
     }
 
-    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    // const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
-    if (!stripeAccount?.account_id) {
-      throw new NotFoundException("No Stripe account found for this user.");
-    }
+    // if (!stripeAccount?.account_id) {
+    //   throw new NotFoundException("No Stripe account found for this user.");
+    // }
 
     const connectedAccount = "acct_1OAG6OGiInrsWMEc";
 
