@@ -1,5 +1,5 @@
 import React from "react";
-import "./channelmanager.css";
+import "./channelmanager.scss";
 
 export default function SideDashboard() {
   const items = [
