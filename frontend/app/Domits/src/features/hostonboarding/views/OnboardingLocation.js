@@ -33,19 +33,21 @@ const OnboardingLocation = ({formData, updateFormData, reportValidity, markVisit
     houseNumber: /^([1-9][0-9]*)([a-zA-Z]*)$/,
   };
 
-  const [country, setCountry] = useState(formData.propertyLocation.country);
-  const [city, setCity] = useState(formData.propertyLocation.city);
-  const [postalCode, setPostalCode] = useState(formData.propertyLocation.postalCode);
-  const [street, setStreet] = useState(formData.propertyLocation.street);
-  const [fullHouseNumber, setFullHouseNumber] = useState(formData.propertyLocation.houseNumber + formData.propertyLocation.houseNumberExtension);
-
   const [inputValidity, setInputValidity] = useState({
-    country: false,
-    city: false,
-    postalCode: false,
-    street: false,
-    fullHouseNumber: false,
+    country: validators.string.test(formData.propertyLocation.country),
+    city: validators.string.test(formData.propertyLocation.city),
+    postalCode: validators.postalCode.test(formData.propertyLocation.postalCode),
+    street: validators.string.test(formData.propertyLocation.street),
+    fullHouseNumber: validators.houseNumber.test(formData.propertyLocation.houseNumber + formData.propertyLocation.houseNumberExtension),
   })
+
+  const locationOptions = [
+    {key: "country", label: "Country", maxLength: 100, value: formData.propertyLocation.country},
+    {key: "city", label: "City", maxLength: 60, value: formData.propertyLocation.city},
+    {key: "postalCode", label: "Postal Code", maxLength: 30, value: formData.propertyLocation.postalCode},
+    {key: "street", label: "Street", maxLength: 80, value: formData.propertyLocation.street},
+    {key: "fullHouseNumber", label: "House number", maxLength: 10, value: formData.propertyLocation.houseNumber + formData.propertyLocation.houseNumberExtension}
+  ];
 
   const updateInputStatus = (key, isValid) => {
     setInputValidity((prev) => ({
@@ -54,12 +56,36 @@ const OnboardingLocation = ({formData, updateFormData, reportValidity, markVisit
     }));
   };
 
-  const validateAndUpdate = (key, value, validator) => {
-    const isValid = validator.test(value);
-    if (isValid) {
-      updateFormData((draft) => {
-        draft.propertyLocation[key] = value;
-      });
+  const validateAndUpdate = (key, value) => {
+    const isEmpty = value.trim() === '';
+    let isValid = false;
+
+    if (key === 'fullHouseNumber') {
+      if (isEmpty) {
+        updateFormData((draft) => {
+          draft.propertyLocation.houseNumber = '';
+          draft.propertyLocation.houseNumberExtension = '';
+        })
+      } else {
+        const match = validators.houseNumber.exec(value.trim());
+        if (match) {
+          const numberPart = parseInt(match[1], 10);
+          const letterPart = match[2];
+          updateFormData((draft) => {
+            draft.propertyLocation.houseNumber = numberPart;
+            draft.propertyLocation.houseNumberExtension = letterPart;
+          })
+          isValid = true;
+        }
+      }
+    } else {
+      const validator = key === 'postalCode' ? validators.postalCode : validators.string;
+      isValid = !isEmpty && validator.test(value);
+      if (isEmpty || isValid) {
+        updateFormData((draft) => {
+          draft.propertyLocation[key] = isEmpty ? '' : value;
+        });
+      }
     }
     updateInputStatus(key, isValid);
   };
@@ -75,37 +101,16 @@ const OnboardingLocation = ({formData, updateFormData, reportValidity, markVisit
   }, [inputValidity])
 
   useEffect(() => {
-    validateAndUpdate('country', country, validators.string);
-  }, [country]);
-
-  useEffect(() => {
-    validateAndUpdate('city', city, validators.string);
-  }, [city]);
-
-  useEffect(() => {
-    validateAndUpdate('postalCode', postalCode, validators.postalCode);
-  }, [postalCode]);
-
-  useEffect(() => {
-    validateAndUpdate('street', street, validators.string);
-  }, [street]);
-
-  useEffect(() => {
-    if (validators.houseNumber.test(fullHouseNumber)) {
-      const match = validators.houseNumber.exec(fullHouseNumber.trim());
-      if (match) {
-        const numberPart = parseInt(match[1], 10);
-        const letterPart = match[2];
-        updateFormData((draft) => {
-          draft.propertyLocation.houseNumber = numberPart;
-          draft.propertyLocation.houseNumberExtension = letterPart;
-        })
-      }
-      updateInputStatus('fullHouseNumber', true)
-    } else {
-      updateInputStatus('fullHouseNumber', false)
-    }
-  }, [fullHouseNumber])
+    setInputValidity({
+      country: validators.string.test(formData.propertyLocation.country),
+      city: validators.string.test(formData.propertyLocation.city),
+      postalCode: validators.postalCode.test(formData.propertyLocation.postalCode),
+      street: validators.string.test(formData.propertyLocation.street),
+      fullHouseNumber: validators.houseNumber.test(
+          formData.propertyLocation.houseNumber + formData.propertyLocation.houseNumberExtension
+      ),
+    });
+  }, [formData.propertyLocation]);
 
   return (
       <ScrollView style={{flex: 1}}>
@@ -116,44 +121,18 @@ const OnboardingLocation = ({formData, updateFormData, reportValidity, markVisit
           <Text style={styles.onboardingPageDescription}>
             <TranslatedText textToTranslate={"We only share your address with guests after they have booked."}/>
           </Text>
-          <InputField
-              label="Country"
-              value={country}
-              onChangeText={setCountry}
-              isValid={inputValidity.country}
-              maxLength={100}
-          />
-          <InputField
-              label="City"
-              value={city}
-              onChangeText={setCity}
-              isValid={inputValidity.city}
-              maxLength={60}
-          />
-          <InputField
-              label="Postal Code"
-              value={postalCode}
-              onChangeText={setPostalCode}
-              isValid={inputValidity.postalCode}
-              maxLength={30}
-          />
-          <InputField
-              label="Street"
-              value={street}
-              onChangeText={setStreet}
-              isValid={inputValidity.street}
-              maxLength={80}
-          />
-          <InputField
-              label="House number"
-              value={fullHouseNumber}
-              onChangeText={setFullHouseNumber}
-              isValid={inputValidity.fullHouseNumber}
-              maxLength={10}
-          />
+          {locationOptions.map((item) => (
+              <InputField
+                  key={item.key}
+                  label={item.label}
+                  value={item.value}
+                  onChangeText={input => validateAndUpdate(item.key, input)}
+                  isValid={inputValidity[item.key]}
+                  maxLength={item.maxLength}
+              />
+          ))}
         </View>
       </ScrollView>
-
   )
 }
 

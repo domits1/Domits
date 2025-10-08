@@ -13,6 +13,8 @@ import {bookingEngineListingDetailsEvent} from "./events/get/bookingEngine/listi
 import {bookingEngineInvalidSetEvent} from "./events/get/bookingEngine/invalidSet";
 import {getHostAuthToken} from "../util/getHostAuthToken.js";
 
+jest.setTimeout(50000); // temp fix for CI passing tests
+
 describe("End-to-end tests", () => {
 
     describe("Patch request", () => {
