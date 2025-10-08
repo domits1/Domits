@@ -47,9 +47,10 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>NSCameraUsageDescription</key>
-<string>Access to the camera is needed to scan QR codes.</string>
-  <key>NSPhotoLibraryUsageDescription</key>
-<string>Access to the photo library is needed to select or save images.</string>	<key>NSMicrophoneUsageDescription</key>
+    <string>Access to the camera is needed to scan QR codes.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Access to the photo library is needed to select or save images.</string>
+    <key>NSMicrophoneUsageDescription</key>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Test</string>
 	<key>UILaunchStoryboardName</key>
