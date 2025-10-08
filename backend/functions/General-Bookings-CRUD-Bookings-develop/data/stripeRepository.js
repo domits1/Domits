@@ -55,8 +55,12 @@ class StripeRepository {
           stripePercentage = 0.015;
           stripeFixedFee = 0.25;
           break;
-        case "Non-EER":
+        case "UK":
           stripePercentage = 0.025;
+          stripeFixedFee = 0.25;
+          break;
+        case "Non-EER":
+          stripePercentage = 0.0325;
           stripeFixedFee = 0.25;
           break;
         default:
