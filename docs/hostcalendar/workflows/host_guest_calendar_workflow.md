@@ -41,5 +41,3 @@ Returns: Full booking information.
 From host calendar view host will update the prices for upcoming months, spical date & events. Also can block dates that how the guest will not be able to book the proporty on those days.
 
 
-### Controller
-The controller has to receive the request from your index.js file (this is where you route requests to the correct methods) and parse the contents you need from it (think of a POST request where you have to parse the request body). We also perform our authorization here, in most backend frameworks, you write middleware functions which you can implement in the routing of a method. But because we use plain javascript, this is not as simple. For this reason, we call our authorization methods from the top level of our controller method. After parsing and authorizing the request, the controller method should give the needed data (for this method) to the business layer.

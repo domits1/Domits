@@ -2,19 +2,15 @@ import React, { useEffect, useState } from "react";
 import { formatYearMonth } from "../utils/date";
 import { Auth } from "aws-amplify";
 import { getAccessToken } from "../utils/getAccessToken";
-
 export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState(null);
-
-
   useEffect(() => {
     (async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
-        const hostId =
-          user?.attributes?.["custom:hostId"] || user?.attributes?.sub || null;
+        const hostId = user?.attributes?.["custom:hostId"] || user?.attributes?.sub || null;
         setUserId(hostId);
       } catch (err) {
         console.error("Auth error fetching user id:", err);
@@ -31,16 +27,14 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
         const url = new URL(
           "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byHostId"
         );
-        url.searchParams.set("hostId", userId); 
-
+        url.searchParams.set("hostId", userId);
         const token = getAccessToken();
         const res = await fetch(url.toString(), {
           method: "GET",
           headers: {
-            Authorization: token ?? "",
+            Authorization: token,
           },
         });
-
         if (!res.ok) throw new Error(`Failed to fetch (${res.status})`);
         const data = await res.json();
         setAccommodations(Array.isArray(data) ? data : []);
@@ -62,36 +56,31 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
             <path d="M15 6l-6 6 6 6" stroke="currentColor" fill="none" strokeWidth="2" />
           </svg>
         </button>
-          <select
-            className="hc-select"
-            value={view}
-            onChange={(e) => setView(e.target.value)}
-          >
-            <option value="month">Month</option>
-          </select>
+        <select className="hc-select" value={view} onChange={(e) => setView(e.target.value)}>
+          <option value="month">Month</option>
+        </select>
 
-          <div className="hc-toolbar-center">
-            <div className="hc-month-pill">{formatYearMonth(cursor)}</div>
-          </div>
-       
+        <div className="hc-toolbar-center">
+          <div className="hc-month-pill">{formatYearMonth(cursor)}</div>
+        </div>
+
         <button className="hc-icon-btn" onClick={onNext} aria-label="Next">
           <svg width="18" height="18" viewBox="0 0 24 24">
             <path d="M9 6l6 6-6 6" stroke="currentColor" fill="none" strokeWidth="2" />
           </svg>
         </button>
-
       </div>
       <div className="hc-toolbar-right">
-          <span>Select your property</span>
-          <select className="hc-select" disabled={isLoading}>
-            {isLoading && <option>Loading…</option>}
-            {!isLoading &&
-              accommodations.map((a) => (
-                <option key={a?.property?.id} value={a?.property?.id}>
-                  {a?.property?.title ?? a?.property?.id}
-                </option>
-              ))}
-          </select>
+        <span>Select your property</span>
+        <select className="hc-select" disabled={isLoading}>
+          {isLoading && <option>Loading…</option>}
+          {!isLoading &&
+            accommodations.map((a) => (
+              <option key={a?.property?.id} value={a?.property?.id}>
+                {a?.property?.title ?? a?.property?.id}
+              </option>
+            ))}
+        </select>
       </div>
     </div>
   );

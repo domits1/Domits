@@ -98,14 +98,9 @@ import Messages from "./components/messages/Messages.js";
 import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
-import ChannelManager from "./pages/channelmanager/Channelmanager.js";
-import AdminProperty from "./pages/adminproperty/AdminProperty.js";
-
 
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE)
-
-
 Modal.setAppElement("#root");
 
 function App() {

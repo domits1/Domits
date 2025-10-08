@@ -18,11 +18,9 @@ const weekdayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const monthLabel = (d) =>
   d.toLocaleString(undefined, { month: "long", year: "numeric" });
 
-/* ---------------- MonthGrid ---------------- */
 function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
   const y = viewMonth.getFullYear();
   const m = viewMonth.getMonth();
-
   const cells = useMemo(() => {
     const start = startOfCalendar(y, m);
     const arr = [];
@@ -43,7 +41,6 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
   return (
     <div className="rc-month">
       <div className="rc-month__label">{monthLabel(viewMonth)}</div>
-
       <div className="rc-grid rc-grid--head">
         {weekdayLabels.map((w) => (
           <div key={w} className="rc-cell rc-cell--head">
@@ -51,7 +48,6 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
           </div>
         ))}
       </div>
-
       <div className="rc-grid rc-grid--body">
         {cells.map((c) => (
           <button
@@ -77,11 +73,13 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
   );
 }
 
-/* ---------------- RangeCalendar (default export) ---------------- */
 export default function RangeCalendar({
-  initialMonth = new Date(2025, 8, 1), // Sep 2025 (0-based)
-  initialStart = new Date(2025, 8, 24),
-  initialEnd = new Date(2025, 8, 28),
+  const now = new Date();
+  const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const initialStart = new Date(now);
+  initialStart.setDate(now.getDate() - 2);
+  const initialEnd = new Date(now);
+  initialEnd.setDate(now.getDate() + 2);
   onChange,
 }) {
   const [activeTab, setActiveTab] = useState("calendar");
@@ -89,10 +87,8 @@ export default function RangeCalendar({
   const [start, setStart] = useState(initialStart);
   const [end, setEnd] = useState(initialEnd);
   const [draftStart, setDraftStart] = useState(null);
-
   const next = () => setView((v) => addMonths(v, 1));
   const prev = () => setView((v) => addMonths(v, -1));
-
   const rightMonth = useMemo(() => addMonths(view, 1), [view]);
 
   const handlePick = (d) => {
@@ -104,14 +100,12 @@ export default function RangeCalendar({
     }
     const a = draftStart <= d ? draftStart : d;
     const b = draftStart <= d ? d : draftStart;
-    setStart(a);
-    setEnd(b);
-    setDraftStart(null);
+      setStart(a);
+      setEnd(b);
+      setDraftStart(null);
     onChange && onChange({ start: a, end: b });
   };
-
-  return (
-   
+  return ( 
   <>
     <p className="title">Booking Availability Calendar</p>
     <div className="rc-con">
@@ -127,7 +121,6 @@ export default function RangeCalendar({
               Calendar
             </button>
           </div>
-
           <div className="rc-nav">
             <button className="rc-nav__btn" aria-label="Previous month" onClick={prev}>
               <span className="rc-chevron rc-chevron--left" />
@@ -137,7 +130,6 @@ export default function RangeCalendar({
             </button>
           </div>
         </div>
-
         {activeTab === "calendar" ? (
           <div className="rc-panels">
             <MonthGrid viewMonth={view} rangeStart={start} rangeEnd={end} onPick={handlePick} />
@@ -148,7 +140,6 @@ export default function RangeCalendar({
             <p>Select a time window and we'll suggest dates.</p>
           </div>
         )}
-
         <div className="rc-footer">
           <div className="rc-range">
             <span>Start:</span>
@@ -164,9 +155,5 @@ export default function RangeCalendar({
       </div>
     </div>
   </>
-    
- 
-
-   
   );
 }
