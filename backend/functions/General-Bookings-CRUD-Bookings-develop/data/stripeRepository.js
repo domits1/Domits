@@ -9,6 +9,7 @@ import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 import "dotenv/config";
+import { BadRequestException } from "../../general-crud-payment-handler/util/exception/badRequestException.js";
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
@@ -46,12 +47,20 @@ class StripeRepository {
 
       const totalAmount = hostAmount + platformFee;
 
-      let stripePercentage = 0.015;
-      let stripeFixedFee = 0.25;
+      let stripePercentage = null;
+      let stripeFixedFee = null;
 
-      if (region === "Non-EER") {
-        stripePercentage = 0.025;
-        stripeFixedFee = 0.25;
+      switch (region) {
+        case "EER":
+          stripePercentage = 0.015;
+          stripeFixedFee = 0.25;
+          break;
+        case "Non-EER":
+          stripePercentage = 0.025;
+          stripeFixedFee = 0.25;
+          break;
+        default:
+          throw new BadRequestException(`Unrecognized region: ${region}`);
       }
 
       const stripeFee = totalAmount * stripePercentage + stripeFixedFee;
