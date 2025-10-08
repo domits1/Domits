@@ -16,9 +16,9 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
       selectionLimit: 5,
       mediaType: 'photo',
       includeBase64: false,
-      maxWidth: 1200,
-      maxHeight: 1200,
-      quality: 0.7,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      quality: 0.85,
     }
 
     launchImageLibrary(options,
