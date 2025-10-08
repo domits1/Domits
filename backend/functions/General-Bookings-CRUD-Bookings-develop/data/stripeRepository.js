@@ -40,35 +40,29 @@ class StripeRepository {
 
       const stripe = await stripePromise;
 
-      // Host proce (net voor host)
-      const hostAmount = await CalculateTotalRate(propertyId, dates); // change this to minimum 3 eu to test
+      const hostAmount = await CalculateTotalRate(propertyId, dates);
 
-      // Platform fee (10% above the host price)
       const platformFee = hostAmount * 0.1;
 
-      // Total amount of money that the client pays (host price + platform fee)
       const totalAmount = hostAmount + platformFee;
 
-      // Stripe fees based on region
-      let stripePercentage = 0.015; // 1,5% EER
-      let stripeFixedFee = 0.25; // €0,25
+      let stripePercentage = 0.015;
+      let stripeFixedFee = 0.25;
 
       if (region === "Non-EER") {
-        stripePercentage = 0.025; // 2,5% VK for example
+        stripePercentage = 0.025;
         stripeFixedFee = 0.25;
       }
 
-      // Calculate Stripe fees that comes from our 10%
       const stripeFee = totalAmount * stripePercentage + stripeFixedFee;
 
-      // Net platform fee = our 10% - stripe fees
-      const yourNetPlatformFee = platformFee - stripeFee; // Still need find a way show the netto platform fee
+      const yourNetPlatformFee = platformFee - stripeFee;
 
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(totalAmount * 100), // client pays 110%
+        amount: Math.round(totalAmount * 100),
         currency: "eur",
         payment_method_types: ["card", "ideal", "klarna"],
-        application_fee_amount: Math.round(platformFee * 100), // claim bruto 10%
+        application_fee_amount: Math.round(platformFee * 100),
         transfer_data: {
           destination: account_id,
         },
