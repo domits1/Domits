@@ -1,5 +1,5 @@
 import React from "react";
-import "./channelmanager.css";
+import "./channelmanager.scss";
 
 export default function ChannelManagerCard({ name, subtitle, logoText, status }) {
   return (
