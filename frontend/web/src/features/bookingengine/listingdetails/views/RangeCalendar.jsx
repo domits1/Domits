@@ -21,6 +21,7 @@ const monthLabel = (d) =>
 function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
   const y = viewMonth.getFullYear();
   const m = viewMonth.getMonth();
+
   const cells = useMemo(() => {
     const start = startOfCalendar(y, m);
     const arr = [];
@@ -73,22 +74,24 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
   );
 }
 
-export default function RangeCalendar({
+export default function RangeCalendar({ onChange }) {
+  // Now declaring the consts inside the function body:
   const now = new Date();
   const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const initialStart = new Date(now);
   initialStart.setDate(now.getDate() - 2);
   const initialEnd = new Date(now);
   initialEnd.setDate(now.getDate() + 2);
-  onChange,
-}) {
+
   const [activeTab, setActiveTab] = useState("calendar");
   const [view, setView] = useState(initialMonth);
   const [start, setStart] = useState(initialStart);
   const [end, setEnd] = useState(initialEnd);
   const [draftStart, setDraftStart] = useState(null);
+  
   const next = () => setView((v) => addMonths(v, 1));
   const prev = () => setView((v) => addMonths(v, -1));
+  
   const rightMonth = useMemo(() => addMonths(view, 1), [view]);
 
   const handlePick = (d) => {
@@ -100,60 +103,79 @@ export default function RangeCalendar({
     }
     const a = draftStart <= d ? draftStart : d;
     const b = draftStart <= d ? d : draftStart;
-      setStart(a);
-      setEnd(b);
-      setDraftStart(null);
+    setStart(a);
+    setEnd(b);
+    setDraftStart(null);
     onChange && onChange({ start: a, end: b });
   };
-  return ( 
-  <>
-    <p className="title">Booking Availability Calendar</p>
-    <div className="rc-con">
-      <div className="rc">
-        <div className="rc-header">
-          <div className="rc-tabs" role="tablist">
-            <button
-              role="tab"
-              aria-selected={activeTab === "calendar"}
-              className={"rc-tab" + (activeTab === "calendar" ? " is-active" : "")}
-              onClick={() => setActiveTab("calendar")}
-            >
-              Calendar
+
+  return (
+    <>
+      <p className="title">Booking Availability Calendar</p>
+      <div className="rc-con">
+        <div className="rc">
+          <div className="rc-header">
+            <div className="rc-tabs" role="tablist">
+              <button
+                role="tab"
+                aria-selected={activeTab === "calendar"}
+                className={"rc-tab" + (activeTab === "calendar" ? " is-active" : "")}
+                onClick={() => setActiveTab("calendar")}
+              >
+                Calendar
+              </button>
+            </div>
+            <div className="rc-nav">
+              <button
+                className="rc-nav__btn"
+                aria-label="Previous month"
+                onClick={prev}
+              >
+                <span className="rc-chevron rc-chevron--left" />
+              </button>
+              <button
+                className="rc-nav__btn"
+                aria-label="Next month"
+                onClick={next}
+              >
+                <span className="rc-chevron rc-chevron--right" />
+              </button>
+            </div>
+          </div>
+          {activeTab === "calendar" ? (
+            <div className="rc-panels">
+              <MonthGrid
+                viewMonth={view}
+                rangeStart={start}
+                rangeEnd={end}
+                onPick={handlePick}
+              />
+              <MonthGrid
+                viewMonth={rightMonth}
+                rangeStart={start}
+                rangeEnd={end}
+                onPick={handlePick}
+              />
+            </div>
+          ) : (
+            <div className="rc-flexible">
+              <p>Select a time window and we'll suggest dates.</p>
+            </div>
+          )}
+          <div className="rc-footer">
+            <div className="rc-range">
+              <span>Start:</span>
+              <strong>{start ? start.toLocaleDateString() : "—"}</strong>
+              <span className="rc-range__sep">•</span>
+              <span>End:</span>
+              <strong>{end ? end.toLocaleDateString() : "—"}</strong>
+            </div>
+            <button className="rc-cta" type="button">
+              Apply
             </button>
           </div>
-          <div className="rc-nav">
-            <button className="rc-nav__btn" aria-label="Previous month" onClick={prev}>
-              <span className="rc-chevron rc-chevron--left" />
-            </button>
-            <button className="rc-nav__btn" aria-label="Next month" onClick={next}>
-              <span className="rc-chevron rc-chevron--right" />
-            </button>
-          </div>
-        </div>
-        {activeTab === "calendar" ? (
-          <div className="rc-panels">
-            <MonthGrid viewMonth={view} rangeStart={start} rangeEnd={end} onPick={handlePick} />
-            <MonthGrid viewMonth={rightMonth} rangeStart={start} rangeEnd={end} onPick={handlePick} />
-          </div>
-        ) : (
-          <div className="rc-flexible">
-            <p>Select a time window and we'll suggest dates.</p>
-          </div>
-        )}
-        <div className="rc-footer">
-          <div className="rc-range">
-            <span>Start:</span>
-            <strong>{start ? start.toLocaleDateString() : "—"}</strong>
-            <span className="rc-range__sep">•</span>
-            <span>End:</span>
-            <strong>{end ? end.toLocaleDateString() : "—"}</strong>
-          </div>
-          <button className="rc-cta" type="button">
-            Apply
-          </button>
         </div>
       </div>
-    </div>
-  </>
+    </>
   );
 }
