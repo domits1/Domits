@@ -5,7 +5,7 @@ async function get() {
   console.log(
     await handler({
       httpMethod: "GET",
-      path: "/retrieve-user-charges",
+      path: "/retrieve-user-charges", // Change to "/retrieve-user-payouts" to test payouts
       resource: "/retrieve-user-payouts",
       headers: {
         Authorization:
