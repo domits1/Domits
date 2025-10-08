@@ -21,7 +21,6 @@ const HostReservations = () => {
     const fetchBookings = async () => {
       try {
         const bookings = await getReservationsFromToken(authToken);
-        console.log(bookings);
         if (bookings === "Data not found") {
           toast.error("No reservations found for this user. Refresh the page to try again.");
           setUserHasReservations(false);
@@ -55,7 +54,6 @@ const HostReservations = () => {
       const reservations = Array.isArray(property.res?.response) ? property.res.response : [];
 
       reservations.forEach((item) =>{
-        console.log(property.title);
         bookingArray.push({
           title: property.title,
           rate: property.rate,
