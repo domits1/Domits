@@ -9,7 +9,30 @@ export default class StripePayoutsController {
   }
 
   // ----------- GET -----------
-  async read(event) {
+  async getHostCharges(event) {
+    try {
+      const response = await this.stripePayoutService.getHostCharges(event);
+
+      return {
+        statusCode: response.statusCode || 200,
+        headers: responseHeaderJSON,
+        response: {
+          message: response.message,
+          details: response.details,
+        },
+      };
+    } catch (error) {
+      return {
+        statusCode: error.statusCode || 500,
+        headers: responseHeaderJSON,
+        response: { 
+          message: error.message || "Something went wrong, please contact support." 
+        },
+      };
+    }
+  }
+
+    async getHostPayouts(event) {
     try {
       const response = await this.stripePayoutService.getHostPayouts(event);
 
