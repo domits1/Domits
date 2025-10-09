@@ -73,7 +73,6 @@ export default function CalendarGrid({
                       <span className="hc-price">€{prices[key]}</span>
                     )}
                   </div>
-                  {/* cell content area */}
                 </div>
               );
             })}
