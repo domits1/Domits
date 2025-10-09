@@ -6,14 +6,12 @@ import { confirmEmailChange } from "./emailSettings";
 import roomImg from "../../images/4-Bed-Kona-Homes.jpeg";
 
 
-/* =========================
-   Helpers
-   ========================= */
+
 const isE164 = (v) => /^\+[1-9]\d{7,14}$/.test(v || "");
 const clamp = (n, min = 0, max = 20) => Math.min(max, Math.max(min, n));
 
 const parseFamily = (s = "") => {
-  // accepts "2 adults - 2 kids" (case/spacing tolerant)
+  
   const m = String(s).match(/(\d+)\s*adult[s]?\s*-\s*(\d+)\s*kid[s]?/i);
   if (!m) return { adults: 0, kids: 0 };
   return { adults: Number(m[1] || 0), kids: Number(m[2] || 0) };
@@ -22,9 +20,7 @@ const parseFamily = (s = "") => {
 const formatFamily = ({ adults = 0, kids = 0 }) =>
   `${adults} adult${adults === 1 ? "" : "s"} - ${kids} kid${kids === 1 ? "" : "s"}`;
 
-/* =========================
-   Component
-   ========================= */
+
 const GuestDashboard = () => {
   const [user, setUser] = useState({
     email: "",
@@ -48,17 +44,17 @@ const GuestDashboard = () => {
     family: false,
   });
 
-  // email verification
+  
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
 
-  // phone verify UI flag
+ 
   const [askPhoneVerify, setAskPhoneVerify] = useState(false);
 
-  // Family counters
+  
   const [familyCounts, setFamilyCounts] = useState({ adults: 2, kids: 2 });
 
-  // Optional: current booking host from backend (keep simple placeholder)
+  
   const [hostName, setHostName] = useState("Jhon");
   const [loadingHost, setLoadingHost] = useState(false);
 
@@ -196,7 +192,7 @@ const GuestDashboard = () => {
         try {
           await Auth.verifyCurrentUserAttribute("phone_number");
         } catch {
-          /* optional */
+          
         }
         cancelEdit("phone");
       } else {
@@ -213,12 +209,12 @@ const GuestDashboard = () => {
     try {
       const payload = formatFamily(familyCounts);
 
-      // Try to save to Cognito custom attribute (create `custom:family` in User Pool first)
+      
       try {
         const u = await Auth.currentAuthenticatedUser();
         await Auth.updateUserAttributes(u, { "custom:family": payload });
       } catch (e) {
-        // If not configured/writable, keep UI-only (or replace with your API call here)
+        
         console.warn("custom:family not writable/defined; keeping local only.", e);
       }
 
@@ -237,7 +233,7 @@ const GuestDashboard = () => {
         const u = await Auth.currentAuthenticatedUser();
         const a = u.attributes || {};
 
-        // address may be JSON string or plain text
+        
         let addr = a.address || "";
         try {
           const parsed = JSON.parse(a.address);
@@ -246,10 +242,10 @@ const GuestDashboard = () => {
             parsed.street_address ||
             `${parsed.street_address || ""} ${parsed.postal_code || ""} ${parsed.locality || ""} ${parsed.country || ""}`.trim();
         } catch {
-          /* not JSON; keep as is */
+          
         }
 
-        // family: prefer Cognito custom attribute if present
+        
         const famAttr = a["custom:family"] || a["family"] || "2 adults - 2 kids";
         const famParsed = parseFamily(famAttr);
 
@@ -478,21 +474,21 @@ const GuestDashboard = () => {
     );
   };
 
-  /* ---------- Render ---------- */
+
   return (
     <div className="guest-dashboard-page-body">
       <h2>{user.name ? `${user.name} Dashboard` : "Dashboard"}</h2>
 
       <div className="guest-dashboard-dashboards">
         <div className="guest-dashboard-content">
-          {/* LEFT COLUMN */}
+        
           <div className="guest-dashboard-accomodation-side">
            
               <a className="guest-dashboard-viewAllBooking" href="/GuestBooking">
                 View all bookings
               </a>
 
-            {/* Current booking card — image left, info right */}
+            
             <article className="booking-details">
               <div className="booking-details__media">
                 <img
@@ -509,7 +505,7 @@ const GuestDashboard = () => {
                   Host name: {loadingHost ? "Loading…" : hostName || "—"}
                 </div>
 
-                {/* Example inline fields */}
+                
                 <div className="booking-details__pi">
                   <div className="booking-details__row">
                     <div className="booking-details__label">Check-in</div>
@@ -564,7 +560,7 @@ const GuestDashboard = () => {
             </section>
           </div>
 
-          {/* RIGHT COLUMN */}
+          {/* Personal information */}
           <aside className="guest-dashboard-personalInfoContent">
             <div className="pi-card">
               <div className="pi-header">
