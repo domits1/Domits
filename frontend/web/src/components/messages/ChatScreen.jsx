@@ -138,7 +138,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
             addNewMessage(messageWithDefaults);
             if (msg.id) addedMessageIds.current.add(msg.id);
 
-            // Consider surfacing automated message events in UI/analytics later
+            // Consider surfacing automated message events in UI later
         });
     }, [wsMessages, userId, contactId, addNewMessage]);
 

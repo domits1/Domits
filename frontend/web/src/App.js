@@ -91,12 +91,12 @@ import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
-import GuestMessages from "./features/messages/GuestMessages.jsx";
-import HostMessages from "./features/messages/HostMessages.jsx";
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import ChannelManager from "./pages/channelmanager/Channelmanager.js";
+
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE)
 
@@ -176,8 +176,6 @@ function App() {
                 <Route path="/travelinnovation" element={<Travelinnovation />} />
                 <Route path="/release" element={<ReleaseUpdates />} />
                 <Route path="/landing" element={<Landing />} />
-                <Route path="/guest/messages" element={<GuestMessages />} />
-                <Route path="/host/messages" element={<HostMessages />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/confirm-email" element={<ConfirmEmailView />} />
@@ -193,6 +191,8 @@ function App() {
                 {/* Chat */}
                 {/*<Route path="/chat" element={<Chat/>}/>*/}
                 <Route path="/employeechat" element={<EmployeeChat />} />
+
+                
 
                 {/* Review */}
                 <Route path="/review" element={<ReviewPage />} />
@@ -241,6 +241,7 @@ function App() {
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/disclaimers" element={<Disclaimers />} />
                 <Route path="/Sustainability" element={<Sustainability />} />
+                <Route path="/channelmanager" element={<ChannelManager />} />
 
                 {/* Error*/}
                 <Route path="/*" element={<PageNotFound />} />
@@ -276,6 +277,7 @@ function App() {
               {renderFooter()}
               {currentPath !== "/admin" && <MenuBar />}
               {renderChatWidget()}
+              
             </div>
           </UserProvider>
         </AuthProvider>

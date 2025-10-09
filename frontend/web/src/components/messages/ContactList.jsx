@@ -105,8 +105,6 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
         });
     }
 
-    // Removed property/guest/date filters for a simpler sidebar
-
     if (sortAlphabetically) {
         contactList = [...contactList].sort((a, b) =>
             (a.givenName || '').localeCompare(b.givenName || '')
