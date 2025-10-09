@@ -17,7 +17,7 @@ class ReservationController {
     async create(event){
         try{ 
            const returnInfo = await this.bookingService.create(event.event);
-           const paymentData = await this.paymentSerivce.create(event , returnInfo.hostId, returnInfo.bookingId, returnInfo.propertyId, returnInfo.dates);
+           const paymentData = await this.paymentSerivce.create(returnInfo.hostId, returnInfo.bookingId, returnInfo.propertyId, returnInfo.dates);
             return {
                 statusCode: returnInfo.statusCode,
                 headers: responseHeaderJSON,
