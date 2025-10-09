@@ -1,4 +1,4 @@
-// Variables
+
 $primary-color: var(--primary-color);
 $footer-bg: #f8f8f8;
 $footer-text-color: #000;
@@ -13,7 +13,7 @@ $footer-line-height: 150%;
 $breakpoint-md: 830px;
 $breakpoint-sm: 480px;
 
-// Footer Styling
+
 .main-footer {
   background-color: $footer-bg;
   position: relative;
@@ -54,13 +54,7 @@ $breakpoint-sm: 480px;
     overflow: visible;
     white-space: normal;
   }
-  // .footer-links {
-  //     color: $footer-text-color;
-  //     font-size: $footer-link-size;
-  //     font-weight: $footer-font-light;
-  //     line-height: $footer-line-height;
 
-  //     /* apply base link styles */
     a.footer-links,
     .footer-links a,
     .footer-links {
@@ -69,10 +63,10 @@ $breakpoint-sm: 480px;
       font-weight: $footer-font-light;
       line-height: $footer-line-height;
       text-decoration: none;
-      padding: auto; // remove if you don't want it on every case
+      padding: auto; 
     }
 
-    /* visited and interactive states */
+   
     a.footer-links:visited,
     .footer-links a:visited {
       color: $footer-text-color;
@@ -87,8 +81,6 @@ $breakpoint-sm: 480px;
       text-decoration-color: lightgreen;
       text-decoration-thickness: 2px;
     }
-
-  // }
 
 
     @media screen and (max-width: $breakpoint-sm) {
@@ -142,7 +134,7 @@ $breakpoint-sm: 480px;
 
       &:hover {
         text-decoration: underline;
-        //color: lightgreen;
+
       }
 
       @media screen and (max-width: $breakpoint-sm) {

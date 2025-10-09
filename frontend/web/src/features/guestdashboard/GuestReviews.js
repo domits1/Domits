@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import Pages from "./Pages.js"; // not used here
 import spinner from "../../images/spinnner.gif";
 import deleteIcon from "../../images/icons/cross.png";
 import { Auth } from "aws-amplify";
@@ -29,7 +28,7 @@ function GuestReviews() {
     })();
   }, [navigate]);
 
-  // Fetch my reviews (written by me)
+  
   useEffect(() => {
     if (!userId) return;
 
@@ -37,12 +36,7 @@ function GuestReviews() {
       setIsLoading(true);
       try {
         const res = await fetch(
-          "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviews",
-          {
-            method: "POST",
-            body: JSON.stringify({ userIdFrom: userId }),
-            headers: { "Content-type": "application/json; charset=UTF-8" },
-          }
+          "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviews",  
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -58,7 +52,7 @@ function GuestReviews() {
     retrieveReviews();
   }, [userId]);
 
-  // Fetch reviews I received
+  
   useEffect(() => {
     if (!userId) return;
 
@@ -67,11 +61,6 @@ function GuestReviews() {
       try {
         const res = await fetch(
           "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReceivedReviews",
-          {
-            method: "POST",
-            body: JSON.stringify({ itemIdTo: userId }),
-            headers: { "Content-type": "application/json; charset=UTF-8" },
-          }
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -87,21 +76,16 @@ function GuestReviews() {
     retrieveReceivedReviews();
   }, [userId]);
 
-  // Delete a review I wrote
+ 
   const asyncDeleteReview = async (review) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
 
-    // NOTE: backend uses "reviewId " with a trailing space
+    
     const reviewId = review["reviewId "];
 
     try {
       const res = await fetch(
         "https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/DeleteReview",
-        {
-          method: "DELETE",
-          body: JSON.stringify({ "reviewId ": reviewId }),
-          headers: { "Content-type": "application/json; charset=UTF-8" },
-        }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -117,9 +101,9 @@ function GuestReviews() {
 
       <div className="reviewGrid">
         <div className="contentContainer">
-          {/* Left column */}
+          
           <div className="reviewColumn">
-            {/* My reviews */}
+            
             <div className="reviewBox">
               <p className="boxText">My reviews ({reviews.length})</p>
 

@@ -118,10 +118,9 @@ function Pages({ onNavigate }) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [isOpen, isDesktop]);
 
-  // Auto-focus first menu item when opening on mobile
+ 
   useEffect(() => {
     if (isOpen && !isDesktop) {
-      // delay to ensure DOM is painted
       const id = requestAnimationFrame(() => {
         firstItemRef.current?.focus();
       });
@@ -134,7 +133,7 @@ function Pages({ onNavigate }) {
     if (!isDesktop) closeMenu();
   };
 
-  // Prebuild menu items for keyboard accessibility (roving tabindex)
+ 
   const menuItems = useMemo(() => {
     return NAV.map((item, idx) => {
       const isFirst = idx === 0;
@@ -148,7 +147,6 @@ function Pages({ onNavigate }) {
             type="button"
             className="menu-item"
             onClick={() => handleNav(item.key)}
-            // keyboard nav
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
                 e.preventDefault();
@@ -202,7 +200,6 @@ function Pages({ onNavigate }) {
         ref={sidebarRef}
         className={`sidebar ${isOpen ? "open" : ""}`}
         aria-label="Guest navigation"
-        // role="dialog" can be used for off-canvas, but nav is acceptable here.
         id="guest-menu"
       >
         <div className="menu-content">

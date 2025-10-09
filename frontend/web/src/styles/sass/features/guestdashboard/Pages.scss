@@ -13,7 +13,7 @@
 
 }
 
-/* If you wrap layout as: <div class="gd-shell"><Pages/><main class="gd-main">… */
+
 .gd-shell {
   display: grid;
   grid-template-columns: 1fr; /* mobile */
@@ -75,9 +75,8 @@
   /* desktop: pinned left column inside .gd-shell */
   @media (min-width: 1024px) {
     position: sticky;
-    top: 24px;                         /* adjust if header is fixed/taller */
-    height: calc(100vh - 48px);
-    transform: none;                   /* always visible */
+    top: 24px;                         
+    transform: none;                  
     box-shadow: none;
   }
 }
