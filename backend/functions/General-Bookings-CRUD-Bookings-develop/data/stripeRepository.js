@@ -28,8 +28,8 @@ class StripeRepository {
       const feePercentage = 0.10; // Word later uitgebreidt!
       const total = roomRate + feePercentage;
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: total,
-        application_fee_amount: Math.round(total * 0.15),
+        amount: 500,
+        application_fee_amount: 500,
         currency: 'eur',
         payment_method_types: ["card", "ideal", "klarna"],
         transfer_data: {
