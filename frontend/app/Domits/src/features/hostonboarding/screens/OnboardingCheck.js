@@ -4,6 +4,9 @@ import TranslatedText from "../../translation/components/TranslatedText";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import React, {useEffect, useState} from "react";
 import CheckBox from "@react-native-community/checkbox";
+import CheckTextModal from "../views/onboardingcheck/CheckTextModal";
+import CheckPhotosModal from "../views/onboardingcheck/CheckPhotosModal";
+import CheckAmenitiesModal from "../views/onboardingcheck/CheckAmenitiesModal";
 
 const OnboardingCheck = ({route, navigation}) => {
   const {formData} = route.params;
@@ -21,7 +24,10 @@ const OnboardingCheck = ({route, navigation}) => {
     setAreCheckboxesChecked(toggleComplianceCheckBox && toggleTermsConditionsCheckBox);
   }, [toggleComplianceCheckBox, toggleTermsConditionsCheckBox])
 
-  const tableItem = (label, value) => {
+  const tableItem = (label, value, modalComponent = null) => {
+    const [showModal, setShowModal] = useState(false);
+    const Modal = modalComponent;
+
     return (
         <View style={styles.tableItem}>
           <View style={styles.labelItem}>
@@ -29,11 +35,20 @@ const OnboardingCheck = ({route, navigation}) => {
               <TranslatedText textToTranslate={label}/>
             </Text>
           </View>
-          <View style={styles.valueItem}>
-            <Text style={styles.valueText} numberOfLines={4}>
-              <TranslatedText textToTranslate={value}/>
-            </Text>
-          </View>
+          <TouchableOpacity disabled={modalComponent == null} style={styles.valueItem} onPress={() => setShowModal(!showModal)}>
+              <Text style={styles.valueText} numberOfLines={4}>
+                <TranslatedText textToTranslate={value}/>
+              </Text>
+          </TouchableOpacity>
+
+          {showModal && modalComponent && (
+              <Modal
+                  label={label}
+                  value={value}
+                  formData={formData}
+                  onClose={() => setShowModal(false)}
+              />
+          )}
         </View>
     )
   }
@@ -64,14 +79,16 @@ const OnboardingCheck = ({route, navigation}) => {
               {tableItem('Space', formData.propertyType.property_type)}
               {tableItem('Space type', formData.propertyType.spaceType)}
               {tableItem('Name', formData.property.title)}
-              {tableItem('Description', formData.property.description)}
               {tableItem('Location',
                   formData.propertyLocation.street + ' ' + formData.propertyLocation.houseNumber + formData.propertyLocation.houseNumberExtension + ',\n' +
                   formData.propertyLocation.postalCode + ',\n' +
                   formData.propertyLocation.city + ',\n' +
                   formData.propertyLocation.country
               )}
+              {tableItem('Description', formData.property.description, CheckTextModal)}
               {tableItem('General details', propertyGeneralDetailsString())}
+              {tableItem('Amenities', 'Tap to see amenities', CheckAmenitiesModal)}
+              {tableItem('Photos', 'Tap to see images', CheckPhotosModal)}
             </View>
 
             <View>
