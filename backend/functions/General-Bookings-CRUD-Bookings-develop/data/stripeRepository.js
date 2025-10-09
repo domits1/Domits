@@ -9,7 +9,7 @@ import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 import "dotenv/config";
-import { BadRequestException } from "../../general-crud-payment-handler/util/exception/badRequestException.js";
+import { BadRequestException } from "../util/exception/badRequestException.js";
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
@@ -19,89 +19,98 @@ const stripePromise = systemManagerRepository
 const client = new DynamoDBClient({ region: "eu-north-1" });
 
 class StripeRepository {
-  async getExistingStripeAccount(cognitoUserId) {
-    const client = await Database.getInstance();
-    const record = await client
-      .getRepository(Stripe_Connected_Accounts)
-      .createQueryBuilder("stripe_accounts")
-      .where("stripe_accounts.user_id = :user_id", { user_id: cognitoUserId })
-      .getOne();
 
-    return record;
-  }
+    async createPaymentIntent(account_id, propertyId, dates) {
+      try {
+        if (!account_id || !propertyId || !dates) {
+          console.error(`accountId ${account_id}, property_id ${propertyId}, or dates ${dates} are NaN.`);
+          throw new NotFoundException(
+            "account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent."
+          );
+        }
 
-  async createPaymentIntent(account_id, propertyId, dates, region = "EER") {
-    try {
-      if (!account_id || !propertyId || !dates) {
-        console.error(`accountId ${account_id}, property_id ${propertyId}, or dates ${dates} are NaN.`);
-        throw new NotFoundException(
-          "account_id, propertyId, or dates is missing. This information is needed to create a PaymentIntent."
-        );
+        const stripe = await stripePromise;
+
+        const { totalWithoutCleaningfee, totalWithCleaningfee } = await CalculateTotalRate(propertyId, dates);
+
+        console.log("Host amount (in euros): ", totalWithoutCleaningfee);
+        console.log("Host amount (in euros): ", totalWithCleaningfee);
+
+
+        const platformFee = (totalWithoutCleaningfee / 1.1) * 0.1;
+
+        console.log("Platform fee (in euros): ", platformFee);
+
+        const totalAmount = totalWithCleaningfee;
+
+        let region = null;
+
+        const payer = await stripe.accounts.retrieve(account_id);
+
+        if (payer.country === "NL") {
+          region = "EER";
+        } else {
+          region = "Non-EER";
+        }
+
+        let stripePercentage = null;
+        let stripeFixedFee = null;
+
+        switch (region) {
+          case "EER":
+            stripePercentage = 0.015;
+            stripeFixedFee = 0.25;
+            break;
+          case "UK":
+            stripePercentage = 0.025;
+            stripeFixedFee = 0.25;
+            break;
+          case "Non-EER":
+            stripePercentage = 0.0325;
+            stripeFixedFee = 0.25;
+            break;
+          default:
+            throw new BadRequestException(`Unrecognized region: ${region}`);
+        }
+
+        const stripeFee = totalAmount * stripePercentage + stripeFixedFee;
+
+        console.log("Stripe fee (in euros): ", stripeFee);
+
+        const yourNetPlatformFee = platformFee - stripeFee;
+        console.log("Your net platform fee (in euros): ", yourNetPlatformFee);
+
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: Math.round(totalWithCleaningfee),
+          currency: "eur",
+          payment_method_types: ["card", "ideal", "klarna"],
+          application_fee_amount: Math.round(platformFee),
+          transfer_data: {
+            destination: account_id,
+          },
+          metadata: {
+            propertyId,
+            dates: JSON.stringify(dates),
+            netPlatFormfee: Math.round(yourNetPlatformFee * 100),
+          },
+        });
+
+        return {
+          stripePaymentId: paymentIntent.id,
+          stripeClientSecret: paymentIntent.client_secret,
+          breakdown: {
+            customerPays: totalAmount,
+            hostReceives: totalWithCleaningfee,
+            platformFeeGross: platformFee,
+            stripeFee: stripeFee,
+            platformFeeNet: yourNetPlatformFee,
+          },
+        };
+      } catch (error) {
+        console.error("Error creating payment intent:", error);
+        throw new Error("Failed to create payment intent.");
       }
-
-      const stripe = await stripePromise;
-
-      const hostAmount = await CalculateTotalRate(propertyId, dates);
-
-      const platformFee = hostAmount * 0.1;
-
-      const totalAmount = hostAmount + platformFee;
-
-      let stripePercentage = null;
-      let stripeFixedFee = null;
-
-      switch (region) {
-        case "EER":
-          stripePercentage = 0.015;
-          stripeFixedFee = 0.25;
-          break;
-        case "UK":
-          stripePercentage = 0.025;
-          stripeFixedFee = 0.25;
-          break;
-        case "Non-EER":
-          stripePercentage = 0.0325;
-          stripeFixedFee = 0.25;
-          break;
-        default:
-          throw new BadRequestException(`Unrecognized region: ${region}`);
-      }
-
-      const stripeFee = totalAmount * stripePercentage + stripeFixedFee;
-
-      const yourNetPlatformFee = platformFee - stripeFee;
-
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(totalAmount * 100),
-        currency: "eur",
-        payment_method_types: ["card", "ideal", "klarna"],
-        application_fee_amount: Math.round(platformFee * 100),
-        transfer_data: {
-          destination: account_id,
-        },
-        metadata: {
-          propertyId,
-          dates: JSON.stringify(dates),
-          netPlatFormfee: Math.round(yourNetPlatformFee * 100), 
-        },
-      });
-
-      return {
-        stripePaymentId: paymentIntent.id,
-        stripeClientSecret: paymentIntent.client_secret,
-        breakdown: {
-          customerPays: totalAmount,
-          hostReceives: hostAmount,
-          platformFeeGross: platformFee,
-          stripeFee: stripeFee,
-          platformFeeNet: yourNetPlatformFee,
-        },
-      };
-    } catch (error) {
-      console.error("Error creating payment intent:", error);
-      throw new Error("Failed to create payment intent.");
     }
-  }
 
   // --------
   // Query table "stripe-connected-accounts" and find their respective
