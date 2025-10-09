@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
-import "../../../styles/sass/features/booking-engine/bookingoverview.scss"
+import "../../../styles/sass/features/booking-engine/bookingoverview.scss";
 
 const SetupForm = ({bookingId}) => {
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState(null);
+  const [selectedMethod, setSelectedMethod] = useState("card");
 
   const handleSubmit = async (event) => {
     try {
@@ -14,6 +15,9 @@ const SetupForm = ({bookingId}) => {
         console.error(`Stripe/Elements not loaded yet. Refresh the page and try again.`);
         return;
       }
+
+      console.log("[Payment method selected]:", selectedMethod);
+
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -30,8 +34,16 @@ const SetupForm = ({bookingId}) => {
   };
   return (
     <form onSubmit={handleSubmit}>
-      <PaymentElement />
-      <button className="confirm-pay-button" disabled={!stripe}>Submit</button>
+      <PaymentElement
+        onChange={(e) => {
+          const type = e?.value?.type || "card";
+          setSelectedMethod(type);
+          console.log("[Payment method changed]:", type);
+        }}
+      />
+      <button className="confirm-pay-button" disabled={!stripe}>
+        Submit
+      </button>
       {errorMessage && <div>{errorMessage}</div>}
     </form>
   );
