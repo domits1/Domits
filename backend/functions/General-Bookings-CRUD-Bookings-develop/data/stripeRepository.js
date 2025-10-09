@@ -33,13 +33,9 @@ class StripeRepository {
 
         const { totalWithoutCleaningfee, totalWithCleaningfee } = await CalculateTotalRate(propertyId, dates);
 
-        console.log("Host amount (in euros): ", totalWithoutCleaningfee);
-        console.log("Host amount (in euros): ", totalWithCleaningfee);
-
 
         const platformFee = (totalWithoutCleaningfee / 1.1) * 0.1;
 
-        console.log("Platform fee (in euros): ", platformFee);
 
         const totalAmount = totalWithCleaningfee;
 
@@ -75,10 +71,8 @@ class StripeRepository {
 
         const stripeFee = totalAmount * stripePercentage + stripeFixedFee;
 
-        console.log("Stripe fee (in euros): ", stripeFee);
 
         const yourNetPlatformFee = platformFee - stripeFee;
-        console.log("Your net platform fee (in euros): ", yourNetPlatformFee);
 
         const paymentIntent = await stripe.paymentIntents.create({
           amount: Math.round(totalWithCleaningfee),
