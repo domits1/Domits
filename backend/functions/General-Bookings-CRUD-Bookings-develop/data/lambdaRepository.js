@@ -34,7 +34,9 @@ class LambdaRepository {
             throw new NotFoundException("Unable to fetch property pricing data from the property_pricing table")
         }
 
-        return result;
+        return {
+            pricing: result
+        };
     }
 }
 export default LambdaRepository;
