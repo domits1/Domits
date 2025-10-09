@@ -75,25 +75,20 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
 }
 
 export default function RangeCalendar({ onChange }) {
-  // Now declaring the consts inside the function body:
   const now = new Date();
   const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const initialStart = new Date(now);
   initialStart.setDate(now.getDate() - 2);
   const initialEnd = new Date(now);
   initialEnd.setDate(now.getDate() + 2);
-
   const [activeTab, setActiveTab] = useState("calendar");
   const [view, setView] = useState(initialMonth);
   const [start, setStart] = useState(initialStart);
   const [end, setEnd] = useState(initialEnd);
   const [draftStart, setDraftStart] = useState(null);
-  
   const next = () => setView((v) => addMonths(v, 1));
   const prev = () => setView((v) => addMonths(v, -1));
-  
   const rightMonth = useMemo(() => addMonths(view, 1), [view]);
-
   const handlePick = (d) => {
     if (!draftStart) {
       setDraftStart(d);
@@ -108,7 +103,6 @@ export default function RangeCalendar({ onChange }) {
     setDraftStart(null);
     onChange && onChange({ start: a, end: b });
   };
-
   return (
     <>
       <p className="title">Booking Availability Calendar</p>
