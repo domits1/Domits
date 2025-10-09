@@ -176,6 +176,9 @@ class ReservationRepository {
   // Read bookings by HostID (single property) - Used for the Calender as of now.
   // ---------
   async readByHostIdSingleProperty(host_id, property_Id) {
+    const lambdaRepository = new LambdaRepository();
+    const pricing = await lambdaRepository.getPropertyPricingById(property_Id);
+
     const client = await Database.getInstance();
     const query = await client
       .getRepository(Booking)
@@ -184,12 +187,16 @@ class ReservationRepository {
       .andWhere("booking.property_id = :property_id", {property_id: property_Id})
       .getMany();
 
+    
       if (query.length < 1){
         throw new NotFoundException("No bookings found with given property_id and hostid.")
       }
-
+      
       return {
-        response: query,
+        response: {
+          query,
+          pricing
+        },
         statusCode: 200
       };
   }
