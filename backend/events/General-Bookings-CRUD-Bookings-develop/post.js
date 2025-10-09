@@ -10,18 +10,17 @@ async function post(){
         headers: {
           Authorization: await getHostAuthToken(),
         },
-        body: {
-          identifiers: {
-            property_Id: "599c1c7a-b046-4469-9899-65359dba9ec0",
-          },
-          general: {
-            guests: 1,
-            arrivalDate: 1748995200000,
-            departureDate: 1749513600000,
-          },
+        body:{
+        "identifiers": {
+            "property_Id": "f61278a9-7808-4189-af2a-b339fe277403"
         },
-      })
-    );
+        "general": {
+            "guests": 1,
+            "arrivalDate": 1748995200000,   
+            "departureDate": 1749513600000,
+        }
+        } 
+    }));
 }
 
 post();

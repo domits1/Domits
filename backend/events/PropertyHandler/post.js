@@ -12,11 +12,11 @@ async function main() {
             "property": {
                 "id": "e65ceab8-f77e-4d6f-b1f3-198f41b47f3e",
                 "hostId": "f08999d3-697c-44a0-b388-a414178d4c5b",
-                "title": "KaasBaas",
+                "title": "Grote Test Property",
                 "subtitle": "Relaxing way to eat",
                 "description": "a historic windmill built on the remnants of a medieval castle, offering a perfect blend of old-world charm and modern comfort. Fully renovated in 2006, this stunning windmill features spacious living areas, two cozy bedrooms, and two modern bathrooms. Enjoy breathtaking garden views and unwind in the tranquil surroundings. Whether you're cycling, hiking, or just relaxing on your private patio, Maurik offers a peaceful retreat with easy access to Utrecht, Den Bosch, Arnhem, and Nijmegen. Ideal for families or small groups looking to explore the beauty of the Dutch countryside.",
                 "guestCapacity": 6,
-                "registrationNumber": "232323233233232239",
+                "registrationNumber": "99999",
                 "status": "ACTIVE",
                 "propertyType": "House",
                 "createdAt": Date.now() + 100000,

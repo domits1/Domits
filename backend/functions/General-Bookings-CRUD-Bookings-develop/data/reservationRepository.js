@@ -173,6 +173,27 @@ class ReservationRepository {
   }
 
   // ---------
+  // Read bookings by HostID (single property) - Used for the Calender as of now.
+  // ---------
+  async readByHostIdSingleProperty(host_id, property_Id) {
+    const client = await Database.getInstance();
+    const query = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.hostid = :hostid", { hostid: host_id})
+      .andWhere("booking.property_id = :property_id", {property_id: property_Id})
+      .getMany();
+
+      if (query.length < 1){
+        throw new NotFoundException("No bookings found with given property_id and hostid.")
+      }
+
+      return {
+        response: query,
+        statusCode: 200
+      };
+  }
+  // ---------
   // Read bookings by departureDate + property_Id (auth-less) (this is for the guests)
   // ---------
   async readByDepartureDate(departureDate, property_Id) {
