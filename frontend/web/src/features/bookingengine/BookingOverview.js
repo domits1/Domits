@@ -278,9 +278,9 @@ const BookingOverview = () => {
             <div className="detail-row">
               <span className="detail-label">Service fee:</span>
               <span className="detail-value">
-                € {(pricingObject.roomRate || 0).toFixed(2) * 0.15} x {pricingObject.differenceInDays} nights
+                € {(pricingObject.roomRate || 0).toFixed(2) * 0.10} x {pricingObject.differenceInDays} nights
               </span>
-              <span className="detail-value">€ {(pricingObject.roomRate * 0.15 || 0).toFixed(2)}</span>
+              <span className="detail-value">€ {(pricingObject.roomRate * 0.10 || 0).toFixed(2)}</span>
             </div>
 
             <div className="detail-row total-price">
