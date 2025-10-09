@@ -1,3 +1,6 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPen } from '@fortawesome/free-solid-svg-icons';
+
 const placeholderOptions = [
     { label: 'Booking Confirmation', enabled: true },
     { label: 'Check-in Instructions', enabled: false },
@@ -15,7 +18,9 @@ const EventsAndTriggers = () => {
                     <div className="placeholder-left">
                         <span className="placeholder-text">{item.label}</span>
                     </div>
-                    <span className="placeholder-icon">✎</span>
+                    <span className="placeholder-icon" aria-label="Edit">
+                        <FontAwesomeIcon icon={faPen} />
+                    </span>
                     <input type="checkbox" checked={item.enabled} readOnly />
                 </div>
             ))}

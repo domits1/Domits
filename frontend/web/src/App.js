@@ -94,7 +94,6 @@ import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
-import Messages from "./components/messages/Messages.js";
 import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
