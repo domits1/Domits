@@ -1,14 +1,14 @@
-import {Repository} from "../../data/repository.js";
-import {DatabaseException} from "../../util/exception/databaseException.js";
+import { Repository } from "../../data/repository.js";
 
 export class Service {
-    repository;
+  repository;
 
-    constructor() {
-        this.repository = new Repository();
-    }
+  constructor() {
+    this.repository = new Repository();
+  }
 
-    async getUser() {
-        return await this.repository.getUser();
-    }
+  async createProperty(row) {
+    console.log("service create", row.id, row.registrationnumber, row.hostid);
+    return await this.repository.createProperty(row);
+  }
 }

@@ -1,33 +1,17 @@
 import { Controller } from "./controller/controller.js";
 import Database from "database";
+import responseHeaders from "./util/constant/responseHeader.json" with { type: "json" };
 
 let controller = null;
 let pool = null;
 
 export const handler = async (event) => {
-    try {
-        if (!controller) {
-            controller = new Controller();
-        }
-        if (!pool) {
-            pool = await Database.getInstance();
-        }
+  if (!controller) controller = new Controller();
+  if (!pool) pool = await Database.getInstance();
 
-        return await (async () => {
-            switch (event.httpMethod) {
-                case "GET":
-                    return controller.getUser(event)
-                default:
-                    return {
-                        statusCode: 404,
-                        body: "HTTP method not found."
-                    }
-            }
-        })();
-    } catch (error) {
-        return {
-            statusCode: 500,
-            body: "Something went wrong, please contact support."
-        }
-    }
-}
+  const method = (event.httpMethod || "").toUpperCase();
+  if (method === "OPTIONS") return { statusCode: 204, headers: responseHeaders };
+  if (method === "POST") return await controller.createProperty(event);
+
+  return { statusCode: 404, headers: responseHeaders, body: "HTTP method not found." };
+};
