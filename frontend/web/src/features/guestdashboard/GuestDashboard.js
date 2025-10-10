@@ -6,12 +6,10 @@ import { confirmEmailChange } from "./emailSettings";
 import roomImg from "../../images/4-Bed-Kona-Homes.jpeg";
 
 
-
 const isE164 = (v) => /^\+[1-9]\d{7,14}$/.test(v || "");
 const clamp = (n, min = 0, max = 20) => Math.min(max, Math.max(min, n));
 
 const parseFamily = (s = "") => {
-  
   const m = String(s).match(/(\d+)\s*adult[s]?\s*-\s*(\d+)\s*kid[s]?/i);
   if (!m) return { adults: 0, kids: 0 };
   return { adults: Number(m[1] || 0), kids: Number(m[2] || 0) };
@@ -19,7 +17,6 @@ const parseFamily = (s = "") => {
 
 const formatFamily = ({ adults = 0, kids = 0 }) =>
   `${adults} adult${adults === 1 ? "" : "s"} - ${kids} kid${kids === 1 ? "" : "s"}`;
-
 
 const GuestDashboard = () => {
   const [user, setUser] = useState({
@@ -44,17 +41,13 @@ const GuestDashboard = () => {
     family: false,
   });
 
-  
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
 
- 
   const [askPhoneVerify, setAskPhoneVerify] = useState(false);
 
-  
   const [familyCounts, setFamilyCounts] = useState({ adults: 2, kids: 2 });
 
-  
   const [hostName, setHostName] = useState("Jhon");
   const [loadingHost, setLoadingHost] = useState(false);
 
@@ -209,7 +202,6 @@ const GuestDashboard = () => {
     try {
       const payload = formatFamily(familyCounts);
 
-      
       try {
         const u = await Auth.currentAuthenticatedUser();
         await Auth.updateUserAttributes(u, { "custom:family": payload });
@@ -233,7 +225,6 @@ const GuestDashboard = () => {
         const u = await Auth.currentAuthenticatedUser();
         const a = u.attributes || {};
 
-        
         let addr = a.address || "";
         try {
           const parsed = JSON.parse(a.address);
@@ -245,7 +236,6 @@ const GuestDashboard = () => {
           
         }
 
-        
         const famAttr = a["custom:family"] || a["family"] || "2 adults - 2 kids";
         const famParsed = parseFamily(famAttr);
 
@@ -474,7 +464,6 @@ const GuestDashboard = () => {
     );
   };
 
-
   return (
     <div className="guest-dashboard-page-body">
       <h2>{user.name ? `${user.name} Dashboard` : "Dashboard"}</h2>
@@ -488,7 +477,6 @@ const GuestDashboard = () => {
                 View all bookings
               </a>
 
-            
             <article className="booking-details">
               <div className="booking-details__media">
                 <img
@@ -504,7 +492,6 @@ const GuestDashboard = () => {
                 <div className="booking-details__host">
                   Host name: {loadingHost ? "Loading…" : hostName || "—"}
                 </div>
-
                 
                 <div className="booking-details__pi">
                   <div className="booking-details__row">
