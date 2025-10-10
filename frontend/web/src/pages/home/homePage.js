@@ -450,7 +450,7 @@ const Homepage = () => {
       <div className="domits-homepage">
         <div className="domits-searchContainer"  style={{ "--villa-background": `url(${villaBackground})` }}>
           <div className="domits-searchTextCon">
-            <h3 className="domits-searchText">{homePageContent.hero.title}</h3>
+            <h3 data-test= "domits-searchtText-test"className="domits-searchText">{homePageContent.hero.title}</h3>
           </div>
           <div className="domits-searchbarCon">
             <SearchBar
