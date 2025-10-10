@@ -29,26 +29,18 @@ class StripeRepository {
 
         const stripe = await stripePromise;
 
-        const { totalWithoutCleaningfee, totalWithCleaningfee } = await CalculateTotalRate(propertyId, dates);
+        const { hostCents, platformCents, totalCents } = await CalculateTotalRate(propertyId, dates);
 
-        const platformFee = (totalWithoutCleaningfee / 1.1) * 0.1;
-
-        console.log("platformfee is", platformFee);
-        console.log("total with cleaning fee is what host gets ", totalWithCleaningfee);
-
-
-        const totalAmount = totalWithCleaningfee + platformFee;
-
-        console.log("total amount customer pays is ", totalAmount);
+        console.log("hostCents:", hostCents, "platformCents:", platformCents, "totalCents:", totalCents);
 
         const paymentIntent = await stripe.paymentIntents.create({
-          amount: totalAmount,
+          amount: totalCents,
           currency: "eur",
           payment_method_types: ["card", "ideal", "klarna"],
           transfer_data: {
             destination: account_id,
           },
-          application_fee_amount: Math.round(platformFee),
+          application_fee_amount: Math.round(platformCents),
           metadata: {
             propertyId,
             dates: JSON.stringify(dates),
@@ -59,9 +51,9 @@ class StripeRepository {
           stripePaymentId: paymentIntent.id,
           stripeClientSecret: paymentIntent.client_secret,
           breakdown: {
-            customerPays: totalAmount,
-            hostReceives: totalWithCleaningfee,
-            platformFeeGross: platformFee,
+            customerPays: totalCents,
+            hostReceives: hostCents,
+            platformFeeGross: platformCents,
           },
         };
       } catch (error) {
