@@ -31,8 +31,6 @@ class StripeRepository {
 
         const { hostCents, platformCents, totalCents } = await CalculateTotalRate(propertyId, dates);
 
-        console.log("hostCents:", hostCents, "platformCents:", platformCents, "totalCents:", totalCents);
-
         const paymentIntent = await stripe.paymentIntents.create({
           amount: totalCents,
           currency: "eur",
