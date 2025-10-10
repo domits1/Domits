@@ -11,13 +11,24 @@ const RulesContainer = ({ rules, checkIn }) => {
     });
 
     const attributes = parts.join(" and ");
-
     return `${attributes} ${allowedText}`;
   };
 
-  const formatHour = (hour) => {
-    const padded = hour.toString().padStart(2, "0");
-    return `${padded}:00`;
+  
+  const formatHour = (timeString) => {
+    if (!timeString) return "N/A";
+
+    const cleanTime = timeString.replace(/\.\d+Z?$/, "");
+
+    
+    const timePart = cleanTime.includes("T")
+      ? cleanTime.split("T")[1]
+      : cleanTime;
+
+    
+    const [hours, minutes] = timePart.split(":");
+
+    return `${hours}:${minutes}`;
   };
 
   return (
@@ -27,8 +38,14 @@ const RulesContainer = ({ rules, checkIn }) => {
         {rules.map((rule) => formatRule(rule)).join(" - ")}
       </p>
       <div className="rules-check-in-check-out-container">
-        <p>Check-in from: {formatHour(checkIn.checkIn.from)} till: {formatHour(checkIn.checkIn.till)}</p>
-        <p>Check-out from: {formatHour(checkIn.checkOut.from)} till: {formatHour(checkIn.checkOut.till)}</p>
+        <p>
+          Check-in from: {formatHour(checkIn.checkIn.from)} till:{" "}
+          {formatHour(checkIn.checkIn.till)}
+        </p>
+        <p>
+          Check-out from: {formatHour(checkIn.checkOut.from)} till:{" "}
+          {formatHour(checkIn.checkOut.till)}
+        </p>
       </div>
     </div>
   );
