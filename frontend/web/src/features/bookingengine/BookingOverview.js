@@ -266,12 +266,10 @@ const BookingOverview = () => {
             </div>
 
             <div className="detail-row">
-              <span className="detail-label">Taxes:</span>
-              <span className="detail-value">€ {(0).toFixed(2)}</span>
-            </div>
-
-            <div className="detail-row">
               <span className="detail-label">Cleaning fee:</span>
+              <span className="detail-value">
+                € {(pricingObject.cleaning || 0)} x {pricingObject.differenceInDays} nights
+              </span>
               <span className="detail-value">
                 € {(pricingObject.cleaning * pricingObject.differenceInDays || 0).toFixed(2)}
               </span>
@@ -282,7 +280,9 @@ const BookingOverview = () => {
               <span className="detail-value">
                 € {(pricingObject.roomRate || 0).toFixed(2) * 0.1} x {pricingObject.differenceInDays} nights
               </span>
-              <span className="detail-value">€ {(pricingObject.roomRate * 0.1 * pricingObject.differenceInDays || 0).toFixed(2)}</span>
+              <span className="detail-value">
+                € {(pricingObject.roomRate * 0.1 * pricingObject.differenceInDays || 0).toFixed(2)}
+              </span>
             </div>
 
             <div className="detail-row total-price">
