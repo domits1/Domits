@@ -27,11 +27,9 @@ export default class StripePayoutsService {
     if (!stripeAccount?.account_id) {
       throw new NotFoundException("No Stripe account found for this user.");
     }
-    
-    const connectedAccount = "acct_1QxTbi2eKtSPvnOL";
 
     const transfers = await this.stripe.transfers.list({
-      destination: connectedAccount,
+      destination: stripeAccount.account_id,
       expand: [
         "data.source_transaction",
         "data.source_transaction.balance_transaction",
