@@ -7,6 +7,7 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 
 const getAuth = (event) => event.headers.Authorization;
+const toAmount = (cents) => cents / 100;
 
 export default class StripePayoutsService {
   constructor() {
@@ -36,8 +37,6 @@ export default class StripePayoutsService {
         "data.source_transaction.application_fee",
       ],
     });
-
-    const toAmount = (cents) => cents / 100;
 
     const chargeDetails = transfers.data.map((tr) => {
       const charge = tr.source_transaction;
@@ -89,7 +88,7 @@ export default class StripePayoutsService {
 
     const payoutDetails = payouts.data.map((payout) => ({
       id: payout.id,
-      amount: payout.amount / 100,
+      amount: toAmount(payout.amount),
       currency: payout.currency.toUpperCase(),
       arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString(),
       status: payout.status,
