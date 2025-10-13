@@ -8,7 +8,6 @@ export class Service {
   }
 
   async createProperty(row) {
-    console.log("service create", row.id, row.registrationnumber, row.hostid);
     return await this.repository.createProperty(row);
   }
 }

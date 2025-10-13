@@ -56,13 +56,8 @@ export class Controller {
         updatedat: 0
       };
 
-      console.log("create payload", row);
-      const created = await this.service.createProperty(row);
-      console.log("insert result", created?.id || created);
-
       return { statusCode: 200, headers: responseHeaders, body: row.id };
     } catch (error) {
-      console.log("create error", error);
       return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ error: "create failed" }) };
     }
   }
