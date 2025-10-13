@@ -53,8 +53,6 @@ export default class StripePayoutsService {
       const hostReceives = customerPaid - platformFeeGross;
 
       return {
-        chargeId: charge.id,
-        transferId: tr.id,
         customerPaid: toAmount(customerPaid),
         stripeProcessingFees: toAmount(stripeProcessingFees),
         platformFeeGross: toAmount(platformFeeGross),
