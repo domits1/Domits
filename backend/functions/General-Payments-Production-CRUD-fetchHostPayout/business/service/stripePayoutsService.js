@@ -85,9 +85,7 @@ export default class StripePayoutsService {
       throw new NotFoundException("No Stripe account found for this user.");
     }
 
-    const connectedAccount = "acct_1OAG6OGiInrsWMEc"; // testing account
-
-    const payouts = await this.stripe.payouts.list({ stripeAccount: connectedAccount });
+    const payouts = await this.stripe.payouts.list({ stripeAccount: stripeAccount.account_id });
 
     const payoutDetails = payouts.data.map((payout) => ({
       id: payout.id,
