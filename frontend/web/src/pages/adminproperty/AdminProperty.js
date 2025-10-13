@@ -1,15 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import "./adminproperty.scss";
 
 export default function AdminProperty() {
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
-
     const data = {
       email: e.target.email.value,
       name: e.target.name.value,
@@ -17,30 +11,7 @@ export default function AdminProperty() {
       segment: e.target.segment.value,
       restaurantOrCasino: e.target.restaurantOrCasino?.value || "",
     };
-
-    try {
-      const res = await fetch(
-        "https://jkjpre7t86.execute-api.eu-north-1.amazonaws.com/default/adminCreateProperty",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: localStorage.getItem("idToken") || "",
-          },
-          body: JSON.stringify(data),
-        }
-      );
-
-      const text = await res.text();
-      console.log("API status:", res.status, "body:", text);
-
-      setMessage(`✅ Created property ID: ${text}`);
-    } catch (err) {
-      console.error("Request error:", err);
-      setMessage("❌ Failed to create property");
-    } finally {
-      setLoading(false);
-    }
+    console.log("Form submitted:", data);
   };
 
   return (
@@ -106,11 +77,9 @@ export default function AdminProperty() {
         </div>
       </div>
 
-      <button type="submit" className="adminproperty-submit" disabled={loading}>
-        {loading ? "Submitting..." : "Submit"}
+      <button type="submit" className="adminproperty-submit">
+        Submit
       </button>
-
-      {message && <p className="adminproperty-message">{message}</p>}
     </form>
   );
 }
