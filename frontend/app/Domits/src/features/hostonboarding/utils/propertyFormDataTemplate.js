@@ -1,4 +1,4 @@
-const propertyFormData = {
+const propertyFormDataTemplate = {
     property: {
         id: "",
         hostId: "",
@@ -24,12 +24,12 @@ const propertyFormData = {
     propertyCheckIn: {
         property_id: "",
         checkIn: {
-            from: -1,
-            till: -1
+            from: "00:00",
+            till: "00:00",
         },
         checkOut: {
-            from: -1,
-            till: -1
+            from: "00:00",
+            till: "00:00",
         }
     },
     propertyGeneralDetails: [
@@ -65,11 +65,9 @@ const propertyFormData = {
         cleaning: -1,
     },
     propertyRules: [
-        {
-            property_id: "",
-            rule: "",
-            value: null
-        }
+        {rule: "allowSmoking", value: false},
+        {rule: "allowParties", value: false},
+        {rule: "allowPets", value: false},
     ],
     propertyType: {
         property_id: "",
@@ -96,4 +94,4 @@ const propertyFormData = {
     }
 };
 
-export default propertyFormData;
+export default propertyFormDataTemplate;

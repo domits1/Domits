@@ -859,7 +859,7 @@
       text-align: left;
       display: flex;
       flex-direction: column;
-      min-height: 460px;
+      min-height: 320px;
     }
 
     .review-card__stars {
@@ -874,11 +874,13 @@
       margin: 0 0 12px 0;
       line-height: 1.6;
       display: -webkit-box;
-      line-clamp: 14;
-      -webkit-line-clamp: 14;
+      line-clamp: 8;
+      -webkit-line-clamp: 8;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+
+    // removed large image; using small avatar instead
 
     .review-card__footer {
       display: flex;
