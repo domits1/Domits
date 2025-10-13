@@ -27,42 +27,51 @@ export default class StripePayoutsService {
     if (!stripeAccount?.account_id) {
       throw new NotFoundException("No Stripe account found for this user.");
     }
+    
+    const connectedAccount = "acct_1QxTbi2eKtSPvnOL";
 
-    const connectedAccount = "acct_1QxTbi2eKtSPvnOL"; // testing account
+    const transfers = await this.stripe.transfers.list({
+      destination: connectedAccount,
+      expand: [
+        "data.source_transaction",
+        "data.source_transaction.balance_transaction",
+        "data.source_transaction.application_fee",
+      ],
+    });
 
-    const charges = await this.stripe.charges.list({ stripeAccount: connectedAccount });
+    const toAmount = (cents) => cents / 100;
 
-    const chargeDetails = await Promise.all(
-      charges.data.map(async (charge) => {
-        const balanceTx = await this.stripe.balanceTransactions.retrieve(charge.balance_transaction, {
-          stripeAccount: connectedAccount,
-        });
+    const chargeDetails = transfers.data.map((tr) => {
+      const charge = tr.source_transaction;
+      const bt = charge.balance_transaction;
+      const appFee = charge.application_fee;
 
-        const appFee = await this.stripe.applicationFees.retrieve(charge.application_fee);
+      const customerPaid = charge.amount;
+      const stripeProcessingFees = bt.fee;
+      const platformFeeGross = appFee.amount;
+      const platformFeeNet = platformFeeGross - stripeProcessingFees;
+      const hostReceives = customerPaid - platformFeeGross;
 
-        const charges = await this.stripe.charges.retrieve(appFee.originating_transaction);
-
-        return {
-          id: charge.id,
-          bruto: balanceTx.amount / 100,
-          stripe_fees: balanceTx.fee / 100,
-          netto: balanceTx.net / 100,
-          currency: balanceTx.currency.toUpperCase(),
-          status: charge.status,
-          createdDate: new Date(charge.created * 1000).toLocaleDateString(),
-          customer: charge.customer,
-          application_fee: appFee.amount / 100,
-          customer_name: charges.billing_details.name,
-        };
-      })
-    );
+      return {
+        chargeId: charge.id,
+        transferId: tr.id,
+        customerPaid: toAmount(customerPaid),
+        stripeProcessingFees: toAmount(stripeProcessingFees),
+        platformFeeGross: toAmount(platformFeeGross),
+        platformFeeNet: toAmount(platformFeeNet),
+        hostReceives: toAmount(hostReceives),
+        currency: (bt.currency).toUpperCase(),
+        status: charge.status,
+        createdDate: new Date((charge.created) * 1000).toLocaleDateString(),
+        customerName: charge.billing_details.name,
+        paymentMethod: charge.payment_method_details.type,
+      };
+    });
 
     return {
       statusCode: 200,
       message: "Charges fetched successfully",
-      details: {
-        charges: chargeDetails,
-      },
+      details: { charges: chargeDetails },
     };
   }
 
