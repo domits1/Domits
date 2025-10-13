@@ -9,9 +9,9 @@
         display: flex;
         flex-direction: column;
         width: 100%;
-        flex: 1 1 auto; // fill remaining width next to sidebar
-        min-width: 0; // allow it to shrink on smaller screens
-        height: 90vh; // align with message dashboard height
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 90vh;
         justify-content: start;
         border-left: 0.05rem rgb(150, 150, 150) solid;
         border-right: 0.05rem rgb(150, 150, 150) solid;
@@ -152,7 +152,7 @@
             height: 100%;
             overflow-y: auto;
             position: relative;
-            background: #f7fafc; // clean, pattern-free background
+            background: #f7fafc;
 
             // Collapsible message search bar
             .chat-message-search {
@@ -231,12 +231,12 @@
                 }
 
                 .message-content {
-                    background-color: #ffffff; // WhatsApp received bubble
+                    background-color: #ffffff;
                     color: #111827;
                     display: inline-flex;
                     align-items: flex-end;
                     gap: 8px;
-                    border-radius: 16px 16px 16px 6px; // asymmetric like WhatsApp
+                    border-radius: 16px 16px 16px 6px;
                     padding: 8px 10px;
                     margin-right: auto;
                     max-width: 75%;
@@ -302,10 +302,10 @@
                     display: inline-flex;
                     align-items: flex-end;
                     gap: 8px;
-                    background-color: #d9fdd3; // WhatsApp sent bubble light green
+                    background-color: #d9fdd3;
                     color: #111827;
                     border: 1px solid #c3e9bd;
-                    border-radius: 16px 16px 6px 16px; // asymmetric like WhatsApp (tail side)
+                    border-radius: 16px 16px 6px 16px;
                     padding: 8px 10px;
                     text-align: left;
                     margin-left: auto;
