@@ -11,7 +11,7 @@ import "dotenv/config";
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
-  .getSystemManagerParameter("/stripe/keys/secret/live")
+  .getSystemManagerParameter("/stripe/keys/secret/test")
   .then((secret) => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
