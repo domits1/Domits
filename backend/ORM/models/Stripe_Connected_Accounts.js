@@ -7,24 +7,20 @@ export const Stripe_Connected_Accounts = new EntitySchema({
         id: {
             primary: true,
             type: "int",
-            generated: true,
-            nullable: false
         },
         account_id: {
             type: "varchar",
-            nullable: false
         },
         created_at: {
-            type: "varchar",
-            nullable: false
+            type: "timestamp",
+            createDate: true
         },
         updated_at: {
-            type: "varchar",
-            nullable: false
+            type: "timestamp",
+            updateDate: true
         },
         user_id: {
             type: "varchar",
-            nullable: false
         },
     }
 })

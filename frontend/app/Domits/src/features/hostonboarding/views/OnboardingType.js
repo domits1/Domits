@@ -1,5 +1,5 @@
 import {Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
-import {useEffect, useState} from "react";
+import {useEffect} from "react";
 import TranslatedText from "../../translation/components/TranslatedText";
 import {styles} from "../styles/HostOnboardingStyles";
 
@@ -13,7 +13,6 @@ import useOrientation from "../../../hooks/useOrientation";
 
 const OnboardingType = ({formData, updateFormData, reportValidity, markVisited}) => {
   const {isLandscape} = useOrientation();
-  const [selectedType, setSelectedType] = useState(formData.propertyType.property_type);
 
   const propertyTypes = [
     {
@@ -42,8 +41,7 @@ const OnboardingType = ({formData, updateFormData, reportValidity, markVisited})
     },
   ];
 
-  function handleSelectedType(type) {
-    setSelectedType(type);
+  const handleSelectedType = (type) => {
     updateFormData((draft) => {
       draft.propertyType.property_type = type;
     });
@@ -69,10 +67,11 @@ const OnboardingType = ({formData, updateFormData, reportValidity, markVisited})
                       style={[
                         styles.gridItem,
                         isLandscape ? {width: `20%`} : {width: `40%`},
-                        selectedType === item.name && styles.selectedGridItem
+                        formData.propertyType.property_type === item.name && styles.selectedGridItem
                       ]}>
                     <Image source={item.img} style={styles.gridItemImage}/>
-                    <Text style={[styles.gridItemText, selectedType === item.name && styles.selectedGridItemText]}>
+                    <Text
+                        style={[styles.gridItemText, formData.propertyType.property_type === item.name && styles.selectedGridItemText]}>
                       <TranslatedText textToTranslate={item.name}/>
                     </Text>
                   </TouchableOpacity>

@@ -40,12 +40,12 @@ export function getPropertyObject() {
         "propertyCheckIn": {
             "property_id": "test",
             "checkIn": {
-                "from": 1,
-                "till": 2
+                "from": "10:00",
+                "till": "17:00"
             },
             "checkOut": {
-                "from": 1,
-                "till": 2
+                "from": "08:00",
+                "till": "12:00"
             }
         },
         "propertyGeneralDetails": [
