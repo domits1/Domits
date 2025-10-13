@@ -20,10 +20,14 @@ function numericRegistration(len = 18) {
 
 export class Repository {
   async createProperty(body, hostId) {
+    console.log("🔵 Repository.createProperty START");
     const client = await Database.getInstance();
+    console.log("✅ Database client ready");
+
     const id = newId();
     const now = Date.now();
     const registrationnumber = numericRegistration(18);
+
     const row = {
       id,
       title: body.name || "New Property",
@@ -40,22 +44,22 @@ export class Repository {
       createdat: now,
       updatedat: 0
     };
-    await client
-      .createQueryBuilder()
-      .insert()
-      .into(Property)
-      .values({
-        id: row.id,
-        title: row.title,
-        subtitle: row.subtitle,
-        description: row.description,
-        registrationnumber: row.registrationnumber,
-        hostid: row.hostid,
-        status: row.status,
-        createdat: row.createdat,
-        updatedat: row.updatedat
-      })
-      .execute();
-    return { id: row.id };
+
+    console.log("📝 Row to insert:", row);
+
+    try {
+      await client
+        .createQueryBuilder()
+        .insert()
+        .into(Property)
+        .values(row)
+        .execute();
+
+      console.log("✅ Insert succeeded for:", { id, registrationnumber });
+      return { id, registrationnumber };
+    } catch (err) {
+      console.error("❌ Insert failed:", err);
+      throw err;
+    }
   }
 }
