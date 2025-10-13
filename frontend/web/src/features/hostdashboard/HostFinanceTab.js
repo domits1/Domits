@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./HostFinanceTab.css";
+import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount } from "./services/stripeAccountService";
 
@@ -75,7 +75,8 @@ export default function HostFinanceTab() {
               <p className="finance-steps-title">Receive your payouts in 3 easy steps</p>
               <ul>
                 <li>
-                  ℹ️ <strong>Step 1: </strong>{" "}
+                  <strong>Step 1: </strong>
+                  &nbsp;
                   <span className="finance-span" onClick={handleEnlistNavigation}>
                     List your property.
                   </span>
@@ -84,8 +85,8 @@ export default function HostFinanceTab() {
                 <li>
                   {!accountId ? (
                     <>
-                      ℹ️ <strong>Step 2: </strong> Once your accommodation is created, you can create a Stripe account
-                      to receive payments:{" "}
+                      <strong>Step 2: </strong> &nbsp; Once your accommodation is created, you can create a Stripe
+                      account to receive payments: &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
                         onClick={!isProcessing ? handleStripeAction : undefined}>
@@ -94,7 +95,7 @@ export default function HostFinanceTab() {
                     </>
                   ) : !onboardingComplete ? (
                     <>
-                      🚨 <strong>Step 2: </strong> Finish your Stripe onboarding to start receiving payouts:{" "}
+                      <strong>Step 2: </strong> &nbsp; Finish your Stripe onboarding to start receiving payouts: &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
                         onClick={!isProcessing ? handleStripeAction : undefined}>
@@ -103,7 +104,7 @@ export default function HostFinanceTab() {
                     </>
                   ) : (
                     <>
-                      ✅ <strong>Step 2: </strong> You’re connected to Stripe. Well done! Now{" "}
+                      <strong>Step 2: </strong> &nbsp; You’re connected to Stripe. Well done!
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
                         onClick={!isProcessing ? handleStripeAction : undefined}>
@@ -114,11 +115,11 @@ export default function HostFinanceTab() {
                 </li>
 
                 <li>
-                  ℹ️ <strong>Step 3: </strong> Set your property live{" "}
+                  <strong>Step 3: </strong> &nbsp; Set your property live &nbsp;
                   <span className="finance-span" onClick={() => handleNavigation("/hostdashboard/listings")}>
                     here
-                  </span>{" "}
-                  to receive payouts.
+                  </span>
+                  &nbsp; to receive payouts.
                 </li>
               </ul>
             </div>
@@ -168,17 +169,16 @@ export default function HostFinanceTab() {
                 <p className="status-active">✅ Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
               ) : payouts.length > 0 && payouts.some((payout) => payout.status === "pending") ? (
                 <p className="status-pending">
-                  ⌛ Your payouts are scheduled. Next payout: {payouts.find((p) => p.status === "pending")?.arrivalDate}
-                  .
+                  Your payouts are scheduled. Next payout: {payouts.find((p) => p.status === "pending")?.arrivalDate}.
                 </p>
               ) : payouts.length > 0 && payouts.every((payout) => payout.status !== "paid") ? (
                 <p className="status-error">
-                  🚨 There was an issue with your payouts:{" "}
+                  There was an issue with your payouts:{" "}
                   {payouts.find((p) => p.failureMessage)?.failureMessage || "Unknown issue"}.
                 </p>
               ) : (
                 <p className="status-none">
-                  ℹ️ No payouts found. Once you start receiving bookings, your payouts will appear here.
+                  No payouts found. Once you start receiving bookings, your payouts will appear here.
                 </p>
               )}
             </div>

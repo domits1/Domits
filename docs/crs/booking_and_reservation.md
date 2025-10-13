@@ -139,14 +139,20 @@ Returns: Full booking information.
 
 Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest`
 
-### get by `hostId` (Currently broken, and pending fix.)
+### get by `hostId` 
 Uses token: Yes
 
-Use case: Getting bookings for a host who owns the properties.
+Use case: Getting all bookings for all the properties a host owns.
 
 Returns: Full booking information.
 
 Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=hostId`
+
+> [!TIP]
+> Add property_Id in your request to sort with only one property_id.
+> 
+> Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=hostId&property_Id=a7a438d5-528d-4578-85ef-d3282ce92e6e`
+
 
 ### get by `paymentId` 
 Uses token: Yes

@@ -14,6 +14,7 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import Hostchat from "../../features/hostdashboard/Hostchat.js";
 
 const contentByLanguage = {
   en,
@@ -146,7 +147,7 @@ function Header({ setSearchResults, setLoading }) {
   };
   const navigateToMessages = () => {
     if (currentView === "host") {
-      navigate("/hostdashboard/chat");
+      navigate("/hostdashboard");
     } else {
       navigate("/guestdashboard/chat");
     }
@@ -198,9 +199,10 @@ function Header({ setSearchResults, setLoading }) {
             {components.user.reservations}
           </button>
           <button
-            onClick={() => navigate("/hostdashboard/chat")}
+            onClick={() => navigate("/hostdashboard/")}
             className="dropdownLoginButton"
           >
+                        {Hostchat}
             {components.user.messages}
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
