@@ -2,24 +2,26 @@ import { handler } from "../../functions/General-Bookings-CRUD-Bookings-develop/
 import { getHostAuthToken } from "../../test/util/getHostAuthToken.js";
 
 async function post(){
-    console.log(await handler({
+    console.log(
+      await handler({
         resource: "/bookings",
         path: "/bookings",
         httpMethod: "POST",
         headers: {
-            Authorization: await getHostAuthToken(),
+          Authorization: await getHostAuthToken(),
         },
-        body:{
-        "identifiers": {
-            "property_Id": "23c5e802-1487-4c59-a0a8-47fd5cba8110"
+        body: {
+          identifiers: {
+            property_Id: "599c1c7a-b046-4469-9899-65359dba9ec0",
+          },
+          general: {
+            guests: 1,
+            arrivalDate: 1748995200000,
+            departureDate: 1749513600000,
+          },
         },
-        "general": {
-            "guests": 1,
-            "arrivalDate": 1748995200000,   
-            "departureDate": 1749513600000,
-        }
-        } 
-    }));
+      })
+    );
 }
 
 post();
