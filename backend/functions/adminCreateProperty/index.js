@@ -24,11 +24,13 @@ export const handler = async (event) => {
     }
   }
 
-  const method = (event.httpMethod || "").toUpperCase();
+  // FIX: fallback voor direct test-event
+  const method = (event.httpMethod || event.requestContext?.http?.method || "POST").toUpperCase();
   console.log("HTTP method:", method);
 
-  if (method === "OPTIONS")
+  if (method === "OPTIONS") {
     return { statusCode: 204, headers: responseHeaders };
+  }
 
   if (method === "POST") {
     try {
