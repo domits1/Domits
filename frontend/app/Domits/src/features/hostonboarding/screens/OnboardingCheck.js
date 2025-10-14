@@ -20,6 +20,12 @@ const OnboardingCheck = ({route, navigation}) => {
         .join('\n');
   };
 
+  const propertyHouseRulesString = () => {
+    return formData.propertyRules
+        .map(item => `${item.rule.replace('allow', '')}: ${item.value ? '✔' : '✖'}`)
+        .join('\n')
+  };
+
   useEffect(() => {
     setAreCheckboxesChecked(toggleComplianceCheckBox && toggleTermsConditionsCheckBox);
   }, [toggleComplianceCheckBox, toggleTermsConditionsCheckBox])
@@ -56,7 +62,7 @@ const OnboardingCheck = ({route, navigation}) => {
   return (
       <SafeAreaView style={styles.safeAreaNavMargin}>
         <View style={styles.contentContainer}>
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <ScrollView persistentScrollbar={true} contentContainerStyle={styles.scrollContainer}>
 
             <View>
               <View style={styles.goBackToEditContainer}>
@@ -88,6 +94,9 @@ const OnboardingCheck = ({route, navigation}) => {
               {tableItem('Description', formData.property.description, CheckTextModal)}
               {tableItem('General details', propertyGeneralDetailsString())}
               {tableItem('Amenities', 'Tap to see amenities', CheckAmenitiesModal)}
+              {tableItem('Check-in', formData.propertyCheckIn.checkIn.from + " - " + formData.propertyCheckIn.checkIn.till)}
+              {tableItem('Check-out', formData.propertyCheckIn.checkOut.from + " - " + formData.propertyCheckIn.checkOut.till)}
+              {tableItem('House Rules', propertyHouseRulesString())}
               {tableItem('Photos', 'Tap to see images', CheckPhotosModal)}
             </View>
 
