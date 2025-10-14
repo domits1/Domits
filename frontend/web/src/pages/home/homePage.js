@@ -580,7 +580,7 @@ const Homepage = () => {
               <li>{homePageContent.sections.becomeHost.points[1]}</li>
               <li>{homePageContent.sections.becomeHost.points[2]}</li>
             </ul>
-            <button className="list-property-button">{homePageContent.sections.becomeHost.button}</button>
+            <button className="list-property-button" onClick={() => navigate('/landing')}>{homePageContent.sections.becomeHost.button}</button>
           </div>
           <div className="host-images">
             {hostImages.map((image, index) => (
