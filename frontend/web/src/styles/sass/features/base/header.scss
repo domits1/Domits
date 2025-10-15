@@ -61,20 +61,37 @@ $breakpoint-sm: 480px;
       }
     }
 
-    .language-toggle-mobile {
+    // Mobile flag language picker (hidden on desktop)
+    .language-flags-mobile {
       visibility: hidden;
       opacity: 0;
       display: none;
       transition: opacity 0.3s ease-in-out;
-      
+
       @media screen and (max-width: $breakpoint-lg) {
         visibility: visible;
         opacity: 1;
         display: flex;
+        gap: 8px;
         justify-content: center;
         align-items: center;
         width: auto;
         margin: 0 auto;
+      }
+
+      .lang-flag {
+        background: transparent;
+        border: 1px solid #d0d5dd;
+        border-radius: 8px;
+        padding: 6px 8px;
+        font-size: 18px; // emoji size
+        line-height: 1;
+        cursor: pointer;
+
+        &.active {
+          outline: 2px solid #3fb366;
+          outline-offset: 1px;
+        }
       }
     }
 
@@ -102,6 +119,27 @@ $breakpoint-sm: 480px;
       @media screen and (max-width: $breakpoint-sm) {
         flex-direction: column;
         align-items: center;
+      }
+    }
+
+    // Desktop flag language picker
+    .language-flags {
+      display: flex;
+      gap: 8px;
+
+      .lang-flag {
+        background: transparent;
+        border: 1px solid #d0d5dd;
+        border-radius: 8px;
+        padding: 6px 8px;
+        font-size: 18px; // emoji size
+        line-height: 1;
+        cursor: pointer;
+
+        &.active {
+          outline: 2px solid #3fb366;
+          outline-offset: 1px;
+        }
       }
     }
 
