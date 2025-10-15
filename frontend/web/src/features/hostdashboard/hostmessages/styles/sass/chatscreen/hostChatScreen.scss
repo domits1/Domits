@@ -2,6 +2,8 @@
 .guest-chat {
     display: flex;
     flex-direction: row;
+    width: 100%;
+    height: 70vh;
 
     .chat-screen-container {
         background-color: #fff;
@@ -10,7 +12,7 @@
         width: 100%;
         min-width: 40rem;
         max-width: 40rem;
-        height: 85vh;
+        height: 70vh;
         justify-content: start;
         border-left: 0.05rem rgb(150, 150, 150) solid;
         border-right: 0.05rem rgb(150, 150, 150) solid;
@@ -67,6 +69,7 @@
             flex-direction: column-reverse;
             height: 100%;
             overflow-y: auto;
+            padding-bottom: 1rem;
 
             .chat-message.received {
                 margin-bottom: 1rem;
@@ -260,8 +263,8 @@
                 &:hover {
                     color: grey;
                 }
-
             }
+
         }
 
         .sender-name {

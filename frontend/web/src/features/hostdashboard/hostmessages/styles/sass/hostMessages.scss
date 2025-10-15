@@ -1,6 +1,15 @@
+.page-body {
+    width: 100%;
+    height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
 .host-chat-components, .guest-chat-components {
     display: flex;
     flex-direction: row;
+    width: 100%;
+    height: 70vh;
 
     .ContactsBack-button {
         display: block;
