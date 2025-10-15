@@ -3,16 +3,15 @@
     display: flex;
     flex-direction: row;
     width: 100%;
-    height: 70vh;
+    height: 85vh;
 
     .chat-screen-container {
         background-color: #fff;
         display: flex;
         flex-direction: column;
-        width: 100%;
-        min-width: 40rem;
-        max-width: 40rem;
-        height: 70vh;
+        flex: 1; /* fill remaining space next to sidebar */
+        min-width: 0; /* allow flex item to shrink */
+        height: 85vh;
         justify-content: start;
         border-left: 0.05rem rgb(150, 150, 150) solid;
         border-right: 0.05rem rgb(150, 150, 150) solid;
@@ -198,11 +197,14 @@
             display: flex;
             justify-self: flex-end;
             flex-direction: row;
-            justify-content: space-around;
             align-items: center;
+            gap: 0.5rem;
             width: 100%;
-            height: 10.5%;
+            padding: 0.75rem 1rem;
+            height: auto;
             position: relative;
+            border-top: 1px solid #eee;
+            background: #fafafa;
 
             .add-attachment {
                 display: flex;
@@ -233,24 +235,38 @@
 
             }
 
+            .message-input-wrapper {
+                position: relative;
+                flex: 1;
+                max-width: 800px; /* limit overall width */
+            }
+
             .message-input-textarea {
-                background-color: rgb(217, 217, 217);
-                height: 30%;
-                width: 80%;
+                background-color: #fff;
+                min-height: 44px;
+                max-height: 120px;
+                width: 100%;
                 resize: none;
-                border-radius: 1rem;
-                border-color: black;
-                padding: 0.5rem 2.5rem 0.5rem 1rem;
+                border-radius: 24px;
+                border: 1px solid #ddd;
+                padding: 10px 48px 10px 14px;
                 overflow-y: auto;
+                transition: box-shadow 0.2s ease, border-color 0.2s ease;
 
                 &::placeholder {
-                    color: black;
-                    font-weight: 600;
+                    color: #666;
+                    font-weight: 500;
                     opacity: 1;
                 }
 
                 &::-webkit-scrollbar {
                     display: none;
+                }
+
+                &:focus {
+                    outline: none;
+                    border-color: #bbb;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
                 }
             }
 
@@ -258,10 +274,14 @@
                 position: absolute;
                 background: none;
                 border: none;
-                right: 1rem;
+                right: 1.25rem;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #0D9813;
+                cursor: pointer;
 
                 &:hover {
-                    color: grey;
+                    color: #08730e;
                 }
             }
 
@@ -328,13 +348,13 @@
 
 
         @media (max-width: 875px) {
-            min-width: 28rem;
+            min-width: 0;
             min-height: 30rem;
             max-height: 30rem;
         }
 
         @media (max-width: 600px) {
-            width: 70%;
+            width: 100%;
         }
     }
 

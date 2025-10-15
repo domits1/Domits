@@ -9,7 +9,7 @@ import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/comp
 import { WebSocketContext } from '../../features/hostdashboard/hostmessages/context/webSocketContext';
 import '../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss';
 import { v4 as uuidv4 } from 'uuid';
-import { FaPaperPlane, FaArrowLeft, FaPaperclip } from 'react-icons/fa';
+import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
 
 
@@ -24,21 +24,12 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
     const [newMessage, setNewMessage] = useState('');
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
     const [messageSearch, setMessageSearch] = useState('');
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const wsMessages = socket?.messages || [];
     const addedMessageIds = useRef(new Set());
-    const searchInputRef = useRef(null);
-    const isPairRoom = false; // This would typically be determined by the room type
-    const local = null; // This would typically be a local message handler
+    const chatContainerRef = useRef(null);
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
-    };
-
-    const handleOpenAttachmentPicker = () => {
-        // This would typically open a file picker
-        // For now, we'll just log that it was clicked
-        console.log('Open attachment picker clicked');
     };
 
     useEffect(() => {
@@ -54,13 +45,7 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
         } catch {}
     }, [messages, contactId]);
 
-    useEffect(() => {
-        if (isSearchOpen) {
-            try {
-                searchInputRef.current?.focus();
-            } catch {}
-        }
-    }, [isSearchOpen]);
+    // No search UI in this simplified version
 
     const handleSendAutomatedTestMessages = () => {
         if (!contactId) return;
@@ -106,53 +91,39 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
                 (msg.userId === userId && msg.recipientId === contactId) ||
                 (msg.userId === contactId && msg.recipientId === userId);
 
-            if (msg.id && addedMessageIds.current.has(msg.id)) return;
+            if (!isRelevant || !msg?.id) return;
+            if (addedMessageIds.current.has(msg.id)) return;
 
-            const incomingSig = `${msg.userId}|${msg.recipientId}|${(msg.text || '').trim()}|${(msg.fileUrls || []).join(',')}`;
-            if (optimisticSignaturesRef.current.has(incomingSig)) {
-                optimisticSignaturesRef.current.delete(incomingSig);
-                return;
-            }
-
-            if (isRelevant) {
-                addNewMessage(msg);
-                addedMessageIds.current.add(msg.id);
-            }
+            addNewMessage(msg);
+            addedMessageIds.current.add(msg.id);
         });
-    }, [wsMessages, userId, contactId]);
+    }, [wsMessages, userId, contactId, addNewMessage]);
 
     const handleSendMessage = async () => {
         const hasContent = (newMessage.trim() || uploadedFileUrls.length > 0);
         if (!hasContent) return;
         try {
-            if (isPairRoom) {
-                const response = local.sendLocalMessage(newMessage, uploadedFileUrls);
-                if (!response || !response.success) {
-                    alert(`Error while sending: ${response?.error || 'Please try again later.'}`);
-                    return;
-                }
-            } else {
-                const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
-                if (!response || !response.success) {
-                    alert(`Error while sending: ${response.error || 'Please try again later.'}`);
-                    return;
-                }
-                // only for UI
-                const tempSentMessage = {
-                    id: uuidv4(),
-                    userId,
-                    recipientId: contactId,
-                    text: newMessage,
-                    fileUrls: uploadedFileUrls,
-                    createdAt: new Date().toISOString(),
-                    isSent: true,
-                };
-
-                handleContactListMessage(tempSentMessage);
-                addNewMessage(tempSentMessage);
+            const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
+            if (!response || !response.success) {
+                alert(`Error while sending: ${response?.error || 'Please try again later.'}`);
+                return;
             }
+
+            const tempSentMessage = {
+                id: uuidv4(),
+                userId,
+                recipientId: contactId,
+                text: newMessage,
+                fileUrls: uploadedFileUrls,
+                createdAt: new Date().toISOString(),
+                isSent: true,
+            };
+
+            addNewMessage(tempSentMessage);
+            handleContactListMessage?.(tempSentMessage);
             setNewMessage('');
             setUploadedFileUrls([]);
+
             try {
                 const el = chatContainerRef.current;
                 if (el) el.scrollTop = el.scrollHeight;
@@ -165,14 +136,13 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
     if (!contactId) return null;
 
     const visibleMessages = messageSearch
-        ? messages.filter(m => {
+        ? messages.filter((m) => {
             const text = (m.text || '').toLowerCase();
             const urls = (m.fileUrls || []).join(' ').toLowerCase();
             const term = messageSearch.toLowerCase();
             return text.includes(term) || urls.includes(term);
         })
         : messages;
-
     return (
         <div className={`${dashboardType}-chat`}>
             <div className="chat-screen-container">
@@ -187,15 +157,42 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
                         <h3>{contactName}</h3>
                         <p>Translation on</p>
                     </div>
+                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingRight: '1rem' }}>
+                        <input
+                            type="text"
+                            value={messageSearch}
+                            onChange={(e) => setMessageSearch(e.target.value)}
+                            placeholder="Search messages"
+                            style={{
+                                border: '1px solid #ccc',
+                                background: '#fff',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                minWidth: '180px'
+                            }}
+                        />
+                        <button
+                            onClick={handleSendAutomatedTestMessages}
+                            style={{
+                                border: '1px solid #ccc',
+                                background: '#f3f3f3',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Test messages
+                        </button>
+                    </div>
                 </div>
 
-                <div className="chat-screen">
+                <div className="chat-screen" ref={chatContainerRef}>
                     {loading ? (
                         <p>Loading messages...</p>
                     ) : error ? (
                         <p>{error}</p>
                     ) : (
-                        messages.map((message) => (
+                        visibleMessages.map((message) => (
                             <ChatMessage
                                 key={message.id}
                                 message={message}
@@ -208,34 +205,26 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
                 </div>
 
                 <div className='chat-input'>
-                    <div style={{ display: 'none' }}>
-                        <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
-                    </div>
-
-                    <button className='whats-action whats-clip' title='Attach' onClick={handleOpenAttachmentPicker}>
-                        <FaPaperclip />
-                    </button>
-
-                    <div className='whats-input'>
+                    <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+                    <div className='message-input-wrapper'>
                         <textarea
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder="Message"
-                            className='whats-textarea'
+                            placeholder="Type a message..."
+                            className='message-input-textarea'
                             onKeyUp={(e) => {
                                 if (e.key === 'Enter') handleSendMessage();
                             }}
                         />
+                        <button
+                            onClick={handleSendMessage}
+                            className='message-input-send-button'
+                            disabled={sending}
+                            title="Send"
+                        >
+                            <FaPaperPlane />
+                        </button>
                     </div>
-
-                    <button
-                        className='whats-action whats-send'
-                        title='Send'
-                        onClick={() => { if (newMessage.trim()) { handleSendMessage(); } }}
-                        disabled={sending}
-                    >
-                        <FaPaperPlane />
-                    </button>
                 </div>
 
                 {sendError && <p className="error-message">{sendError.message}</p>}

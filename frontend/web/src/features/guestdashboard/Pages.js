@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import BookingIcon from "@mui/icons-material/LanguageOutlined";
 import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
@@ -9,6 +10,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 function Pages({ onNavigate }) {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
@@ -28,7 +30,7 @@ function Pages({ onNavigate }) {
           <div className="dashboard-sections">
             <MenuItem icon={<DashboardIcon />} label="Dashboard" handleNavigation={() => onNavigate("Dashboard")} />
             <MenuItem icon={<BookingIcon />} label="Bookings" handleNavigation={() => onNavigate("Bookings")} />
-            <MenuItem icon={<MessageIcon />} label="Messages" handleNavigation={() => onNavigate("Messages")} />
+            <MenuItem icon={<MessageIcon />} label="Messages" handleNavigation={() => { onNavigate("Messages"); navigate("/guestdashboard/messages"); }} />
             <MenuItem icon={<WishlistIcon />} label="Wishlist" handleNavigation={() => onNavigate("Wishlist")} />
             <MenuItem icon={<Settings />} label="Settings" handleNavigation={() => onNavigate("Settings")} />
           </div>

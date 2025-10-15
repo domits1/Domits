@@ -192,6 +192,14 @@ function App() {
 
                 {/* Guest Dashboard */}
                 <Route
+                  path="/guestdashboard/messages"
+                  element={
+                    <GuestProtectedRoute>
+                      <MainDashboardGuest />
+                    </GuestProtectedRoute>
+                  }
+                />
+                <Route
                   path="/guestdashboard/*"
                   element={
                     <GuestProtectedRoute>
@@ -221,6 +229,13 @@ function App() {
 
                 <Route
                   path="/hostdashboard"
+                  element={<HostProtectedRoute>
+                    <MainDashboardHost />
+                  </HostProtectedRoute>}
+                />
+
+                <Route
+                  path="/hostdashboard/messages"
                   element={<HostProtectedRoute>
                     <MainDashboardHost />
                   </HostProtectedRoute>}
