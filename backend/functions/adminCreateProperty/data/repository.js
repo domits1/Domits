@@ -18,7 +18,6 @@ function numericRegistration(len = 18) {
 }
 
 function parseCapacity(text = "") {
-<<<<<<< HEAD
   const t = String(text || "").trim();
   if (!t) return {};
   if (/^\d+$/.test(t)) return { Guests: parseInt(t, 10) };
@@ -50,135 +49,22 @@ function hhmmToPgTimeOrNull(s) {
   return `${hh}:${mm}:00`;
 }
 
-function norm(s) {
-  return String(s || "").trim();
-}
-
-async function upsertAmenity(client, amenityLabel) {
-  const a = norm(amenityLabel);
-  if (!a) return null;
-  const sel = await client.query(
-    `SELECT amenity FROM main.amenities
-     WHERE regexp_replace(lower(amenity),'[^a-z0-9]+','','g')
-           = regexp_replace(lower($1),'[^a-z0-9]+','','g')
-     LIMIT 1`,
-    [a]
-  );
-  if (sel?.rows?.[0]?.amenity) return sel.rows[0].amenity;
-  await client.query(`INSERT INTO main.amenities (amenity) VALUES ($1) ON CONFLICT DO NOTHING`, [a]);
-  const check = await client.query(
-    `SELECT amenity FROM main.amenities
-     WHERE regexp_replace(lower(amenity),'[^a-z0-9]+','','g')
-           = regexp_replace(lower($1),'[^a-z0-9]+','','g')
-     LIMIT 1`,
-    [a]
-  );
-  return check?.rows?.[0]?.amenity || null;
-}
-
-async function upsertCategory(client, categoryLabel) {
-  const c = norm(categoryLabel);
-  if (!c) return null;
-  const sel = await client.query(
-    `SELECT category FROM main.amenity_categories
-     WHERE regexp_replace(lower(category),'[^a-z0-9]+','','g')
-           = regexp_replace(lower($1),'[^a-z0-9]+','','g')
-     LIMIT 1`,
-    [c]
-  );
-  if (sel?.rows?.[0]?.category) return sel.rows[0].category;
-  await client.query(`INSERT INTO main.amenity_categories (category) VALUES ($1) ON CONFLICT DO NOTHING`, [c]);
-  const check = await client.query(
-    `SELECT category FROM main.amenity_categories
-     WHERE regexp_replace(lower(category),'[^a-z0-9]+','','g')
-           = regexp_replace(lower($1),'[^a-z0-9]+','','g')
-     LIMIT 1`,
-    [c]
-  );
-  return check?.rows?.[0]?.category || null;
-}
-
-async function findAmenityCategoryId(client, amenity, category) {
-  if (amenity && category) {
-    const r = await client.query(
-      `SELECT id FROM main.amenity_and_category
-       WHERE regexp_replace(lower(amenity),'[^a-z0-9]+','','g')
-             = regexp_replace(lower($1),'[^a-z0-9]+','','g')
-         AND regexp_replace(lower(category),'[^a-z0-9]+','','g')
-             = regexp_replace(lower($2),'[^a-z0-9]+','','g')
-       LIMIT 1`,
-      [amenity, category]
-    );
+async function resolveAmenityId(client, amenityLabel, categoryLabel) {
+  if (!amenityLabel) return null;
+  const a = String(amenityLabel).trim();
+  const c = categoryLabel ? String(categoryLabel).trim() : null;
+  if (c) {
+    const r = await client.query('SELECT id FROM main.amenity_and_category WHERE LOWER(amenity)=LOWER($1) AND LOWER(category)=LOWER($2) LIMIT 1', [a, c]);
     if (r?.rows?.[0]?.id) return r.rows[0].id;
   }
-  if (amenity) {
-    const r2 = await client.query(
-      `SELECT id FROM main.amenity_and_category
-       WHERE regexp_replace(lower(amenity),'[^a-z0-9]+','','g')
-             = regexp_replace(lower($1),'[^a-z0-9]+','','g')
-       LIMIT 1`,
-      [amenity]
-    );
-    if (r2?.rows?.[0]?.id) return r2.rows[0].id;
-=======
-  const n = (rx) => {
-    const m = text.match(new RegExp("(\\d+)\\s*" + rx, "i"));
-    return m ? parseInt(m[1], 10) : null;
-  };
-  return {
-    Guests: n("guest|guests"),
-    Bedrooms: n("bedroom|bedrooms"),
-    Beds: n("bed|beds"),
-    Bathrooms: n("bathroom|bathrooms")
-  };
-}
-
-async function resolveAmenityId(client, label) {
-  try {
-    const r1 = await client.query(
-      'SELECT id FROM main.amenities WHERE LOWER(name) = LOWER($1) LIMIT 1',
-      [label]
-    );
-    if (r1?.rows?.[0]?.id) return r1.rows[0].id;
-  } catch (e) {
-    console.log("amenities lookup failed", e?.message);
-  }
-  try {
-    const r2 = await client.query(
-      'SELECT id FROM main.amenity_and_category WHERE LOWER(name) = LOWER($1) OR LOWER(amenity) = LOWER($1) LIMIT 1',
-      [label]
-    );
-    if (r2?.rows?.[0]?.id) return r2.rows[0].id;
-  } catch (e) {
-    console.log("amenity_and_category lookup failed", e?.message);
->>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
-  }
-  return null;
-}
-
-<<<<<<< HEAD
-async function ensureAmenityAndCategoryId(client, amenityLabel, categoryLabel) {
-  const a = await upsertAmenity(client, amenityLabel);
-  const c = await upsertCategory(client, categoryLabel);
-  if (!a || !c) return null;
-  const existing = await findAmenityCategoryId(client, a, c);
-  if (existing) return existing;
-  const id = newId();
-  await client.query(
-    `INSERT INTO main.amenity_and_category (id, amenity, category, "eco-score")
-     VALUES ($1, $2, $3, $4)`,
-    [id, a, c, "0"]
-  );
-  return id;
+  const r2 = await client.query('SELECT id FROM main.amenity_and_category WHERE LOWER(amenity)=LOWER($1) LIMIT 1', [a]);
+  if (r2?.rows?.[0]?.id) return r2.rows[0].id;
+  const r3 = await client.query('SELECT amenity AS id FROM main.amenities WHERE LOWER(amenity)=LOWER($1) LIMIT 1', [a]);
+  return r3?.rows?.[0]?.id ?? null;
 }
 
 export class Repository {
   async createFullProperty(body, hostId) {
-=======
-export class Repository {
-  async createFullProperty(body, hostId) {
-    console.log("🔵 Repository.createFullProperty START");
->>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
     const client = await Database.getInstance();
 
     const id = newId();
@@ -197,10 +83,6 @@ export class Repository {
       updatedat: now
     };
 
-<<<<<<< HEAD
-=======
-    console.log("📝 property:", propertyRow);
->>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
     await client.createQueryBuilder().insert().into("main.property").values(propertyRow).execute();
 
     const cap = parseCapacity(body.capacity || "");
@@ -209,24 +91,14 @@ export class Repository {
     if (Number.isInteger(cap.Bedrooms)) generalRows.push({ id: newId(), detail: "Bedrooms", property_id: id, value: cap.Bedrooms });
     if (Number.isInteger(cap.Beds)) generalRows.push({ id: newId(), detail: "Beds", property_id: id, value: cap.Beds });
     if (Number.isInteger(cap.Bathrooms)) generalRows.push({ id: newId(), detail: "Bathrooms", property_id: id, value: cap.Bathrooms });
-<<<<<<< HEAD
     if (generalRows.length > 0) {
       await client.createQueryBuilder().insert().into("main.property_generaldetail").values(generalRows).execute();
-=======
-
-    if (generalRows.length > 0) {
-      console.log("📝 property_generaldetail rows:", generalRows);
-      await client.createQueryBuilder().insert().into("main.property_generaldetail").values(generalRows).execute();
-    } else {
-      console.log("ℹ️ No parsable capacity values; skipping property_generaldetail");
->>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
     }
 
     if (body.rules) {
       const rules = Array.isArray(body.rules) ? body.rules : [body.rules];
-<<<<<<< HEAD
       for (const rule of rules) {
-        await client.createQueryBuilder().insert().into("main.property_rule").values({ id: newId(), property_id: id, rule, value: true }).execute();
+        await client.createQueryBuilder().insert().into("main.property_rule").values({ property_id: id, rule, value: true }).execute();
       }
     }
 
@@ -240,19 +112,18 @@ export class Repository {
       } else if (typeof item === "string") {
         amenityName = item;
       }
-      const amenityid = await ensureAmenityAndCategoryId(client, amenityName, categoryName);
-      if (!amenityid) continue;
+      const amenityId = await resolveAmenityId(client, amenityName, categoryName);
+      if (!amenityId) continue;
       await client.createQueryBuilder().insert().into("main.property_amenity").values({
         id: newId(),
         property_id: id,
-        amenityid
+        amenityid: amenityId
       }).execute();
     }
 
     const roomrate = parseMoneyToInt(body.rate);
     if (roomrate !== null) {
       await client.createQueryBuilder().insert().into("main.property_pricing").values({
-        id: newId(),
         property_id: id,
         roomrate,
         cleaning: null
@@ -261,7 +132,7 @@ export class Repository {
 
     const provided = Array.isArray(body.images) ? body.images : [];
     if (provided.length > 0) {
-      const rows = provided.map(x => ({ id: newId(), property_id: id, key: x.key || String(x) }));
+      const rows = provided.map(x => ({ property_id: id, key: x.key || String(x) }));
       await client.createQueryBuilder().insert().into("main.property_image").values(rows).execute();
     } else {
       const placeholders = [
@@ -270,7 +141,7 @@ export class Repository {
         "images/placeholders/Picture3.jpg",
         "images/placeholders/Picture4.jpg",
         "images/placeholders/Picture5.jpg"
-      ].map(k => ({ id: newId(), property_id: id, key: k }));
+      ].map(k => ({ property_id: id, key: k }));
       await client.createQueryBuilder().insert().into("main.property_image").values(placeholders).execute();
     }
 
@@ -281,7 +152,6 @@ export class Repository {
     const city = body.city || "";
     const country = body.country || "";
     await client.createQueryBuilder().insert().into("main.property_location").values({
-      id: newId(),
       property_id: id,
       city,
       country,
@@ -294,7 +164,6 @@ export class Repository {
     const spacetype = body.spaceType || "Entire Space";
     const type = body.segment || "Holiday Homes, Boats & Campers";
     await client.createQueryBuilder().insert().into("main.property_type").values({
-      id: newId(),
       property_id: id,
       spacetype,
       type
@@ -307,7 +176,6 @@ export class Repository {
     const checkoutfrom = co || "07:00:00";
     const checkouttill = co || "11:00:00";
     await client.createQueryBuilder().insert().into("main.property_checkin").values({
-      id: newId(),
       property_id: id,
       checkinfrom,
       checkintill,
@@ -318,49 +186,11 @@ export class Repository {
     const availablestartdate = now;
     const availableenddate = 4102444800000;
     await client.createQueryBuilder().insert().into("main.property_availability").values({
-      id: newId(),
       property_id: id,
       availablestartdate,
       availableenddate
     }).execute();
 
-=======
-      const ruleRows = rules.map(rule => ({
-        property_id: id,
-        rule,
-        value: true
-      }));
-      console.log("📝 property_rule rows:", ruleRows);
-      for (const row of ruleRows) {
-        await client.createQueryBuilder().insert().into("main.property_rule").values(row).execute();
-      }
-      console.log("✅ property_rule inserted");
-    }
-
-    if (body.amenities) {
-      const amenities = Array.isArray(body.amenities) ? body.amenities : [body.amenities];
-      for (const label of amenities) {
-        const amenityId = await resolveAmenityId(client, label);
-        if (!amenityId) {
-          console.log("⛔ amenity not found, skipping:", label);
-          continue;
-        }
-        await client
-          .createQueryBuilder()
-          .insert()
-          .into("main.property_amenity")
-          .values({
-            id: newId(),
-            property_id: id,
-            amenityid: amenityId
-          })
-          .execute();
-      }
-      console.log("✅ property_amenity inserted (resolved ids)");
-    }
-
-    console.log("✅ Property fully created in all tables");
->>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
     return { id, registrationnumber };
   }
 }

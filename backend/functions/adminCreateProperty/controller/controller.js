@@ -12,22 +12,12 @@ export class Controller {
   }
 
   async createProperty(event) {
-    console.log("🟡 Controller.createProperty START");
-
     try {
       const token = event.headers?.Authorization || event.headers?.authorization || "";
-      console.log("Token received:", token ? "✅ Yes" : "❌ No");
-
       const hostId = await this.authManager.authorizeGroupRequest(token, "Host");
-      console.log("Authorized hostId:", hostId);
-
       const raw = event.body || "{}";
       const body = typeof raw === "string" ? JSON.parse(raw) : raw;
-      console.log("Parsed body:", body);
-
-            const created = await this.repository.createProperty(body, hostId);
-            console.log("✅ Property created successfully:", created);
-
+      const created = await this.repository.createFullProperty(body, hostId);
       return {
         statusCode: 200,
         headers: responseHeaders,
@@ -39,11 +29,10 @@ export class Controller {
         })
       };
     } catch (error) {
-      console.error("❌ Controller.createProperty ERROR:", error);
       return {
-        statusCode: 500,
+        statusCode: error.statusCode || 500,
         headers: responseHeaders,
-        body: JSON.stringify({ error: error.message, stack: error.stack })
+        body: JSON.stringify({ error: error.message || "Internal error" })
       };
     }
   }
