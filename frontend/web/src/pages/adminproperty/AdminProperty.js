@@ -1,16 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import "./adminproperty.scss";
 
 export default function AdminProperty() {
+  const [showDetails, setShowDetails] = useState(false);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const data = {
-      email: e.target.email.value,
-      name: e.target.name.value,
-      phone: e.target.phone.value,
-      segment: e.target.segment.value,
-      restaurantOrCasino: e.target.restaurantOrCasino?.value || "",
-    };
+    const data = Object.fromEntries(new FormData(e.target).entries());
     console.log("Form submitted:", data);
   };
 
@@ -35,47 +31,110 @@ export default function AdminProperty() {
 
       <div className="adminproperty-group">
         <label>List your property or join the hospitality ecosystem</label>
-        <div className="adminproperty-options">
-          <label className="adminproperty-radio">
-            <input type="radio" name="segment" value="Holiday Homes, Boats & Campers" required />
-            Holiday Homes, Boats & Campers
-          </label>
-          <label className="adminproperty-radio">
-            <input type="radio" name="segment" value="Resorts & Hotels" required />
-            Resorts & Hotels
-          </label>
-          <label className="adminproperty-radio">
-            <input type="radio" name="segment" value="Restaurants & Casinos" required />
-            Restaurants & Casinos
-          </label>
-          <label className="adminproperty-radio">
-            <input type="radio" name="segment" value="Hospitality Startups & Companies" required />
-            Hospitality Startups & Companies
-          </label>
-          <label className="adminproperty-radio">
-            <input type="radio" name="segment" value="Hospitality Student & Professionals" required />
-            Hospitality Student & Professionals
-          </label>
-          <label className="adminproperty-radio">
-            <input type="radio" name="segment" value="Hospitality Mentors & Investors" required />
-            Hospitality Mentors & Investors
-          </label>
-        </div>
+        <label className="adminproperty-radio">
+          <input
+            type="radio"
+            name="segment"
+            value="Holiday Homes, Boats & Campers"
+            onChange={() => setShowDetails(true)}
+            required
+          />
+          Holiday Homes, Boats & Campers
+        </label>
       </div>
 
-      <div className="adminproperty-group">
-        <label>Are you a restaurant or a casino?</label>
-        <div className="adminproperty-options">
-          <label className="adminproperty-radio">
-            <input type="radio" name="restaurantOrCasino" value="Restaurant" />
-            Restaurant
-          </label>
-          <label className="adminproperty-radio">
-            <input type="radio" name="restaurantOrCasino" value="Casino" />
-            Casino
-          </label>
-        </div>
-      </div>
+      {showDetails && (
+        <>
+          <div className="adminproperty-group">
+            <label>What kind of space do your guests have access to?</label>
+            <div className="adminproperty-options">
+              <label><input type="radio" name="spaceType" value="Entire Space" required /> Entire Space</label>
+              <label><input type="radio" name="spaceType" value="Room" /> Room</label>
+              <label><input type="radio" name="spaceType" value="Shared Room" /> Shared Room</label>
+            </div>
+          </div>
+
+          <div className="adminproperty-group">
+            <label>Name your home</label>
+            <input type="text" name="homeName" required />
+          </div>
+
+          <div className="adminproperty-group">
+            <label>Where can we find your accommodation? (Address)</label>
+            <input type="text" name="address" required />
+          </div>
+
+          <div className="adminproperty-group">
+            <label>Provide a description</label>
+            <textarea name="description" rows="4" required />
+          </div>
+
+          <div className="adminproperty-group">
+            <label>How many people can stay here? (Guests, bedrooms, beds, bathrooms)</label>
+            <input type="text" name="capacity" required />
+          </div>
+
+          <div className="adminproperty-group">
+            <label>Let guests know what your space has to offer</label>
+            <div className="adminproperty-options">
+              {[
+                "Essentials",
+                "Kitchen",
+                "Bathroom",
+                "Bedroom",
+                "Living area",
+                "Technology",
+                "Safety",
+                "Outdoor",
+                "Family friendly",
+                "Laundry",
+                "Convenience",
+                "Accessibility",
+                "Extra services",
+                "Sustainable eco-friendly"
+              ].map((item, idx) => (
+                <label key={idx}>
+                  <input type="checkbox" name="amenities" value={item} /> {item}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="adminproperty-group">
+            <label>House rules</label>
+            <label><input type="checkbox" name="rules" value="Smoking" /> Smoking</label>
+            <label><input type="checkbox" name="rules" value="Pets" /> Pets</label>
+            <label><input type="checkbox" name="rules" value="Parties/Events" /> Parties/Events</label>
+          </div>
+
+          <div className="adminproperty-group">
+            <label>Do you want to use a channel manager?</label>
+            <label><input type="radio" name="channelManager" value="No, thanks" required /> No, thanks</label>
+            <label><input type="radio" name="channelManager" value="Yes, list on platforms" /> Yes, list on Booking, Airbnb, Expedia, etc.</label>
+          </div>
+
+          <div className="adminproperty-group">
+            <label>How many photos do you have?</label>
+            <input type="number" name="photoCount" min="0" required />
+          </div>
+
+          <div className="adminproperty-group">
+            <label>Set your rate</label>
+            <input type="text" name="rate" required />
+          </div>
+
+          <div className="adminproperty-group">
+            <label>Share your first availability</label>
+            <label><input type="radio" name="availability" value="As soon as possible" required /> As soon as possible</label>
+            <label><input type="radio" name="availability" value="Starting later" /> Starting at a specific date which I share later</label>
+          </div>
+
+          <div className="adminproperty-group">
+            <label>Add your registration number (optional)</label>
+            <input type="text" name="registrationNumber" />
+          </div>
+        </>
+      )}
 
       <button type="submit" className="adminproperty-submit">
         Submit
