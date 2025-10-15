@@ -18,8 +18,16 @@ function numericRegistration(len = 18) {
 }
 
 function parseCapacity(text = "") {
+  const t = String(text || "").trim();
+  if (!t) return {};
+  if (/^\d+$/.test(t)) return { Guests: parseInt(t, 10) };
+  const csv = t.split(",").map(s => s.trim()).filter(Boolean);
+  if (csv.length && csv.every(s => /^\d+$/.test(s))) {
+    const nums = csv.map(n => parseInt(n, 10));
+    return { Guests: nums[0] ?? null, Bedrooms: nums[1] ?? null, Beds: nums[2] ?? null, Bathrooms: nums[3] ?? null };
+  }
   const n = (rx) => {
-    const m = text.match(new RegExp("(\\d+)\\s*" + rx, "i"));
+    const m = t.match(new RegExp("(\\d+)\\s*" + rx, "i"));
     return m ? parseInt(m[1], 10) : null;
   };
   return {
@@ -30,31 +38,35 @@ function parseCapacity(text = "") {
   };
 }
 
+function parseMoneyToInt(str) {
+  if (!str) return null;
+  const digits = String(str).replace(/[^\d]/g, "");
+  if (!digits) return null;
+  return parseInt(digits, 10);
+}
+
+function hhmmToPgTimeOrNull(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{2}):(\d{2})/);
+  if (!m) return null;
+  const hh = m[1].padStart(2, "0");
+  const mm = m[2].padStart(2, "0");
+  return `${hh}:${mm}:00`;
+}
+
 async function resolveAmenityId(client, label) {
-  try {
-    const r1 = await client.query(
-      'SELECT id FROM main.amenities WHERE LOWER(name) = LOWER($1) LIMIT 1',
-      [label]
-    );
-    if (r1?.rows?.[0]?.id) return r1.rows[0].id;
-  } catch (e) {
-    console.log("amenities lookup failed", e?.message);
-  }
   try {
     const r2 = await client.query(
       'SELECT id FROM main.amenity_and_category WHERE LOWER(name) = LOWER($1) OR LOWER(amenity) = LOWER($1) LIMIT 1',
       [label]
     );
     if (r2?.rows?.[0]?.id) return r2.rows[0].id;
-  } catch (e) {
-    console.log("amenity_and_category lookup failed", e?.message);
-  }
+  } catch {}
   return null;
 }
 
 export class Repository {
   async createFullProperty(body, hostId) {
-    console.log("🔵 Repository.createFullProperty START");
     const client = await Database.getInstance();
 
     const id = newId();
@@ -68,12 +80,11 @@ export class Repository {
       description: body.description || "",
       registrationnumber,
       hostid: hostId,
-      status: "DRAFT",
+      status: "ACTIVE",
       createdat: now,
       updatedat: now
     };
 
-    console.log("📝 property:", propertyRow);
     await client.createQueryBuilder().insert().into("main.property").values(propertyRow).execute();
 
     const cap = parseCapacity(body.capacity || "");
@@ -82,51 +93,100 @@ export class Repository {
     if (Number.isInteger(cap.Bedrooms)) generalRows.push({ id: newId(), detail: "Bedrooms", property_id: id, value: cap.Bedrooms });
     if (Number.isInteger(cap.Beds)) generalRows.push({ id: newId(), detail: "Beds", property_id: id, value: cap.Beds });
     if (Number.isInteger(cap.Bathrooms)) generalRows.push({ id: newId(), detail: "Bathrooms", property_id: id, value: cap.Bathrooms });
-
     if (generalRows.length > 0) {
-      console.log("📝 property_generaldetail rows:", generalRows);
       await client.createQueryBuilder().insert().into("main.property_generaldetail").values(generalRows).execute();
-    } else {
-      console.log("ℹ️ No parsable capacity values; skipping property_generaldetail");
     }
 
     if (body.rules) {
       const rules = Array.isArray(body.rules) ? body.rules : [body.rules];
-      const ruleRows = rules.map(rule => ({
-        property_id: id,
-        rule,
-        value: true
-      }));
-      console.log("📝 property_rule rows:", ruleRows);
-      for (const row of ruleRows) {
-        await client.createQueryBuilder().insert().into("main.property_rule").values(row).execute();
+      for (const rule of rules) {
+        await client.createQueryBuilder().insert().into("main.property_rule").values({ property_id: id, rule, value: true }).execute();
       }
-      console.log("✅ property_rule inserted");
     }
 
     if (body.amenities) {
-      const amenities = Array.isArray(body.amenities) ? body.amenities : [body.amenities];
-      for (const label of amenities) {
+      const labels = Array.isArray(body.amenities) ? body.amenities : [body.amenities];
+      for (const label of labels) {
         const amenityId = await resolveAmenityId(client, label);
-        if (!amenityId) {
-          console.log("⛔ amenity not found, skipping:", label);
-          continue;
-        }
-        await client
-          .createQueryBuilder()
-          .insert()
-          .into("main.property_amenity")
-          .values({
-            id: newId(),
-            property_id: id,
-            amenityid: amenityId
-          })
-          .execute();
+        if (!amenityId) continue;
+        await client.createQueryBuilder().insert().into("main.property_amenity").values({
+          id: newId(),
+          property_id: id,
+          amenityid: amenityId
+        }).execute();
       }
-      console.log("✅ property_amenity inserted (resolved ids)");
     }
 
-    console.log("✅ Property fully created in all tables");
+    const roomrate = parseMoneyToInt(body.rate);
+    if (roomrate !== null) {
+      await client.createQueryBuilder().insert().into("main.property_pricing").values({
+        property_id: id,
+        roomrate,
+        cleaning: null
+      }).execute();
+    }
+
+    const provided = Array.isArray(body.images) ? body.images : [];
+    if (provided.length > 0) {
+      const rows = provided.map(x => ({ property_id: id, key: x.key || String(x) }));
+      await client.createQueryBuilder().insert().into("main.property_image").values(rows).execute();
+    } else {
+      const placeholders = [
+        "images/placeholders/Picture1.jpg",
+        "images/placeholders/Picture2.jpg",
+        "images/placeholders/Picture3.jpg",
+        "images/placeholders/Picture4.jpg",
+        "images/placeholders/Picture5.jpg"
+      ].map(k => ({ property_id: id, key: k }));
+      await client.createQueryBuilder().insert().into("main.property_image").values(placeholders).execute();
+    }
+
+    const street = body.street || "";
+    const housenumber = parseInt(body.houseNumber || "0", 10) || 0;
+    const housenumberextension = "";
+    const postalcode = body.postalCode || "";
+    const city = body.city || "";
+    const country = body.country || "";
+    await client.createQueryBuilder().insert().into("main.property_location").values({
+      property_id: id,
+      city,
+      country,
+      housenumber,
+      housenumberextension,
+      postalcode,
+      street
+    }).execute();
+
+    const spacetype = body.spaceType || "Entire Space";
+    const type = body.segment || "Holiday Homes, Boats & Campers";
+    await client.createQueryBuilder().insert().into("main.property_type").values({
+      property_id: id,
+      spacetype,
+      type
+    }).execute();
+
+    const ci = hhmmToPgTimeOrNull(body.checkIn);
+    const co = hhmmToPgTimeOrNull(body.checkOut);
+    const checkinfrom = ci || "15:00:00";
+    const checkintill = ci || "22:00:00";
+    const checkoutfrom = co || "07:00:00";
+    const checkouttill = co || "11:00:00";
+    await client.createQueryBuilder().insert().into("main.property_checkin").values({
+      property_id: id,
+      checkinfrom,
+      checkintill,
+      checkoutfrom,
+      checkouttill
+    }).execute();
+
+    const availablestartdate = now;
+    const availableenddate = 4102444800000; // 2100-01-01 UTC
+    await client.createQueryBuilder().insert().into("main.property_availability").values({
+      property_id: id,
+      availablestartdate,
+      availableenddate
+    }).execute();
+
     return { id, registrationnumber };
   }
 }
