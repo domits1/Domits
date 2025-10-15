@@ -1,13 +1,76 @@
 import React, { useState } from "react";
 import "./adminproperty.scss";
 
+const API_URL = "https://jkjpre7t86.execute-api.eu-north-1.amazonaws.com/default";
+
 export default function AdminProperty() {
   const [showDetails, setShowDetails] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const amenitiesCatalog = [
+    { category: "Essentials", details: "Wi-Fi, air conditioning, heating, TV with cable/satellite, hot water, towels, bed linens, extra pillows and blankets, toilet paper, soap and shampoo." },
+    { category: "Kitchen", details: "Refrigerator, microwave, oven, stove, dishwasher, coffee maker, toaster, basic cooking essentials (pots, pans, oil, salt, pepper), dishes and silverware, glasses and mugs, cutting board and knives, blender and kettle." },
+    { category: "Bathroom", details: "Hair dryer, shower gel, conditioner, body lotion and first aid kit" },
+    { category: "Bedroom", details: "Hangers, iron and ironing board, closet/drawers and alarm clock" },
+    { category: "Living area", details: "Sofa/sofa bed, armchairs, coffee table, books and magazines and board games" },
+    { category: "Technology", details: "Smart TV, streaming services (Netflix, Amazon Prime), bluetooth speaker, universal chargers, work desk and chair" },
+    { category: "Safety", details: "Smoke detector, carbon monoxide detector, fire extinguisher and lock on bedroom door" },
+    { category: "Outdoor", details: "Patio or balcony, outdoor furniture, grill, fire pit, pool, hot tub, garden or backyard and bicycle" },
+    { category: "Family friendly", details: "High chair, crib, children’s books and toys, baby safety gates, baby bath and baby monitor" },
+    { category: "Laundry", details: "Washer and dryer, laundry detergent and clothes drying rack" },
+    { category: "Convenience", details: "Keyless entry, self-check-in, local maps and guides, luggage drop-off allowed, parking space and EV charger." },
+    { category: "Accessibility", details: "Step-free access, wide doorways, accessible-height bed, accessible-height toilet and shower chair" },
+    { category: "Extra services", details: "Housekeeping service [add service fee], concierge service, grocery delivery, airport shuttle, private chef, personal trainer or massage therapist" },
+    { category: "Sustainable eco-friendly", details: "Energy, waste, biodiversity & ecosystems, destinations & community" }
+  ];
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target).entries());
-    console.log("Form submitted:", data);
+    if (submitting) return;
+    setSubmitting(true);
+
+    const fd = new FormData(e.target);
+    const body = {
+      email: fd.get("email") || "",
+      name: fd.get("name") || "",
+      phone: fd.get("phone") || "",
+      segment: fd.get("segment") || "",
+      spaceType: fd.get("spaceType") || "",
+      homeName: fd.get("homeName") || "",
+      address: fd.get("address") || "",
+      description: fd.get("description") || "",
+      capacity: fd.get("capacity") || "",
+      amenities: fd.getAll("amenities"),
+      rules: fd.getAll("rules"),
+      channelManager: fd.get("channelManager") || "",
+      photoCount: fd.get("photoCount") ? Number(fd.get("photoCount")) : 0,
+      rate: fd.get("rate") || "",
+      availability: fd.get("availability") || "",
+      registrationNumber: fd.get("registrationNumber") || ""
+    };
+
+    const token = localStorage.getItem("idToken") || localStorage.getItem("authToken") || "test-token-123";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: token },
+        body: JSON.stringify(body)
+      });
+      const text = await res.text();
+      if (res.ok) {
+        alert("Property created successfully.");
+        window.location.reload();
+      } else {
+        console.log("POST failed", res.status, text);
+        alert("Failed to create property. Check console/network.");
+        setSubmitting(false);
+      }
+    } catch (err) {
+      console.log("Network/CORS error", err);
+      alert("Failed to create property. Network or CORS error.");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -66,7 +129,7 @@ export default function AdminProperty() {
 
           <div className="adminproperty-group">
             <label>Provide a description</label>
-            <textarea name="description" rows="4" required />
+            <textarea name="description" rows={4} required />
           </div>
 
           <div className="adminproperty-group">
@@ -77,34 +140,22 @@ export default function AdminProperty() {
           <div className="adminproperty-group">
             <label>Let guests know what your space has to offer</label>
             <div className="adminproperty-options">
-              {[
-                "Essentials",
-                "Kitchen",
-                "Bathroom",
-                "Bedroom",
-                "Living area",
-                "Technology",
-                "Safety",
-                "Outdoor",
-                "Family friendly",
-                "Laundry",
-                "Convenience",
-                "Accessibility",
-                "Extra services",
-                "Sustainable eco-friendly"
-              ].map((item, idx) => (
-                <label key={idx}>
-                  <input type="checkbox" name="amenities" value={item} /> {item}
-                </label>
+              {amenitiesCatalog.map((item, idx) => (
+                <div key={idx} className="amenity-item">
+                  <label>
+                    <input type="checkbox" name="amenities" value={item.category} /> {item.category}
+                  </label>
+                  <p className="amenity-description">{item.details}</p>
+                </div>
               ))}
             </div>
           </div>
 
           <div className="adminproperty-group">
             <label>House rules</label>
-            <label><input type="checkbox" name="rules" value="Smoking" /> Smoking</label>
-            <label><input type="checkbox" name="rules" value="Pets" /> Pets</label>
-            <label><input type="checkbox" name="rules" value="Parties/Events" /> Parties/Events</label>
+            <label><input type="checkbox" name="rules" value="No smoking" /> No smoking</label>
+            <label><input type="checkbox" name="rules" value="No parties/events" /> No parties/events</label>
+            <label><input type="checkbox" name="rules" value="Pets allowed" /> Pets allowed</label>
           </div>
 
           <div className="adminproperty-group">
@@ -136,8 +187,8 @@ export default function AdminProperty() {
         </>
       )}
 
-      <button type="submit" className="adminproperty-submit">
-        Submit
+      <button type="submit" className="adminproperty-submit" disabled={submitting}>
+        {submitting ? "Submitting..." : "Submit"}
       </button>
     </form>
   );
