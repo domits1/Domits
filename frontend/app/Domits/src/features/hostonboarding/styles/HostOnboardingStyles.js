@@ -275,4 +275,28 @@ export const styles = StyleSheet.create({
     borderColor: 'rgba(128,128,128,0.5)',
     padding: 3,
   },
+  // Image
+  addImageButton: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  addImageButtonText: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 5,
+    backgroundColor: COLORS.domitsHostBlue,
+    color: 'white',
+  },
+  addImageButtonTextDisabled: {
+    backgroundColor: 'rgba(0,50,101,0.5)',
+    borderWidth: 0,
+  },
+  imageSlider: {
+    marginVertical: 10,
+  },
+  image: {
+    height: 200,
+    width: 200,
+    marginHorizontal: 5,
+  },
 })
