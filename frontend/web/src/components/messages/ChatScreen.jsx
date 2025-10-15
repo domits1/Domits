@@ -13,7 +13,7 @@ import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
 
 
-const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, onBack, dashboardType}) => {
+const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, dashboardType}) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const socket = useContext(WebSocketContext);
     const isHost = dashboardType === 'host';
@@ -152,7 +152,7 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
                             <FaArrowLeft />
                         </button>
                     )}
-                    <img src={profileImage} alt={contactName} className="profile-img" />
+                    <img src={contactImage || profileImage} alt={contactName} className="profile-img" />
                     <div className="chat-header-info">
                         <h3>{contactName}</h3>
                         <p>Translation on</p>

@@ -23,6 +23,7 @@ const MessagesContent = ({ dashboardType }) => {
     const { userId } = useAuth();
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [selectedContactName, setSelectedContactName] = useState(null);
+    const [selectedContactImage, setSelectedContactImage] = useState(null);
     const [message, setMessage] = useState([]);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
     const isMobile = screenWidth < 768;
@@ -35,9 +36,10 @@ const MessagesContent = ({ dashboardType }) => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    const handleContactClick = (contactId, contactName) => {
+    const handleContactClick = (contactId, contactName, contactImage) => {
         setSelectedContactId(contactId);
         setSelectedContactName(contactName);
+        setSelectedContactImage(contactImage || null);
     };
 
     const handleBackToContacts = () => {
@@ -82,6 +84,7 @@ const MessagesContent = ({ dashboardType }) => {
                                 handleContactListMessage={handleContactListMessage}
                                 contactId={selectedContactId}
                                 contactName={selectedContactName}
+                                contactImage={selectedContactImage}
                                 onBack={isTablet ? handleBackToContacts : null}
                                 dashboardType={dashboardType}
 

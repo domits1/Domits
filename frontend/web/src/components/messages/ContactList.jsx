@@ -25,14 +25,69 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
     }
 
     const handleCreateTestContact = () => {
-        const id = `test-${Date.now()}`;
-        const newContact = {
-            userId: id,
-            recipientId: id,
-            givenName: `Test User ${new Date().toLocaleTimeString()}`,
-            latestMessage: { text: 'Hello from test contact', createdAt: new Date().toISOString() },
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.background = 'rgba(0,0,0,0.5)';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.zIndex = '10000';
+
+        const modal = document.createElement('div');
+        modal.style.background = '#fff';
+        modal.style.padding = '16px';
+        modal.style.borderRadius = '8px';
+        modal.style.width = '420px';
+        modal.style.maxWidth = '90vw';
+        modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+
+        modal.innerHTML = `
+            <h3 style="margin:0 0 12px 0;">Add contact</h3>
+            <label style="display:block;margin-bottom:6px;">Name</label>
+            <input id="new-contact-name" type="text" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;margin-bottom:12px;" placeholder="Contact name"/>
+            <label style="display:block;margin-bottom:6px;">Profile image (PNG/JPG)</label>
+            <input id="new-contact-file" type="file" accept="image/png, image/jpeg" style="width:100%;margin-bottom:12px;"/>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                <button id="cancel-add-contact" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;background:#f6f6f6;">Cancel</button>
+                <button id="save-add-contact" style="padding:6px 10px;border:1px solid #0D9813;border-radius:6px;background:#0D9813;color:#fff;">Add</button>
+            </div>
+        `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        const removeModal = () => document.body.removeChild(overlay);
+
+        modal.querySelector('#cancel-add-contact').onclick = removeModal;
+        modal.querySelector('#save-add-contact').onclick = async () => {
+            const nameInput = modal.querySelector('#new-contact-name');
+            const fileInput = modal.querySelector('#new-contact-file');
+            const name = (nameInput.value || '').trim();
+            if (!name) { alert('Please enter a name'); return; }
+
+            let profileImageUrl;
+            const file = fileInput.files && fileInput.files[0];
+            if (file) {
+                // Read file as data URL so it immediately renders in the UI
+                profileImageUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            const id = `test-${Date.now()}`;
+            const newContact = {
+                userId: id,
+                recipientId: id,
+                givenName: name,
+                profileImage: profileImageUrl,
+                latestMessage: { text: 'Hello from test contact', createdAt: new Date().toISOString() },
+            };
+            setContacts(prev => [newContact, ...prev]);
+            removeModal();
         };
-        setContacts(prev => [newContact, ...prev]);
     };
 
     useEffect(() => {
@@ -85,14 +140,25 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
 
     const noContactsMessage = displayType === 'contacts' ? labels.noContacts : labels.noPending;
 
-    const handleClick = (contactId, contactName) => {
+    const handleClick = (contactId, contactName, contactImage) => {
         setSelectedContactId(contactId);
-        onContactClick?.(contactId, contactName);
+        onContactClick?.(contactId, contactName, contactImage);
     };
 
     return (
         <div className={`${dashboardType}-contact-list-modal`}>
             <h3>Message dashboard</h3>
+            <div style={{ marginTop: '-0.25rem' }}>
+                <input
+                    type="text"
+                    placeholder="Search contacts"
+                    className="contact-search-input contact-search-under-title"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
+                    style={{ width: '100%', maxWidth: '100%' }}
+                />
+            </div>
+
             <div className={`contact-list-toggle`}>
                 <select
                     value={displayType}
@@ -104,13 +170,6 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                 </select>
 
                 <div className="contact-list-side-buttons">
-                    <input
-                        type="text"
-                        placeholder="Search contacts"
-                        className="contact-search-input"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
-                    />
                     <FaBars className={`contact-list-side-button`} onClick={() => setSortAlphabetically(prev => !prev)} />
                     {isHost && (
                         <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
@@ -142,7 +201,7 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                             <li
                                 key={contact.userId}
                                 className={`contact-list-list-item ${displayType === 'pendingContacts' ? 'disabled' : ''}`}
-                                onClick={() => displayType !== 'pendingContacts' && handleClick(contact.recipientId, contact.givenName)}
+                                onClick={() => displayType !== 'pendingContacts' && handleClick(contact.recipientId, contact.givenName, contact.profileImage)}
                             >
                                 <ContactItem
                                     contact={contact}
