@@ -22,7 +22,6 @@ import ValidatePayment from "./features/bookingengine/ValidatePayment";
 import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
-import HostCalendar from "./features/hostdashboard/HostCalendar";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
