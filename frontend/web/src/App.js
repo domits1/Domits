@@ -29,11 +29,10 @@ import HostIoTHub from "./features/hostdashboard/HostIoTHub";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostPayments from "./features/hostdashboard/HostPayments";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
-
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
-
+import HostCalendar from "./features/hostdashboard/hostcalen/HostCalendar";
 import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
 import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostMonitoring from "./features/hostdashboard/HostMonitoring";
@@ -41,12 +40,10 @@ import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSettings from "./features/hostdashboard/HostSettings";
 import HostSetup from "./features/hostdashboard/HostSetup";
 import HostHousekeeping from "./features/hostdashboard/Housekeeping.js";
-
 import StepGuard from "./features/hostonboarding/hooks/StepGuard.js";
 import PropertyRateView from "./features/hostonboarding/views/10_PropertyRateView.js";
 import PropertyAvailabilityView from "./features/hostonboarding/views/11_PropertyAvailabilityView.js";
 import SummaryViewAndSubmit from "./features/hostonboarding/views/12_SummarySubmitView.js";
-
 import AccommodationTypeView from "./features/hostonboarding/views/1_AccommodationTypeView.js";
 import BoatTypeView from "./features/hostonboarding/views/1b_BoatTypeView.js";
 import CamperTypeView from "./features/hostonboarding/views/1c_CamperTypeView.js";
@@ -60,7 +57,6 @@ import PropertyTitleView from "./features/hostonboarding/views/8_PropertyTitleVi
 import PropertyDescriptionView from "./features/hostonboarding/views/9_PropertyDescriptionView.js";
 import ReviewPage from "./features/review/ReviewPage";
 import StripeCallback from "./features/stripe/StripeCallback";
-
 import Sustainability from "./features/sustainability/Sustainability";
 import HostVerificationView from "./features/verification/hostverification/HostVerification.js";
 import PhoneNumberView from "./features/verification/hostverification/HostVerifyPhoneNumber.js";
@@ -96,11 +92,9 @@ import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
-
+import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE)
-
-
 Modal.setAppElement("#root");
 
 function App() {
@@ -192,7 +186,6 @@ function App() {
                 {/*<Route path="/chat" element={<Chat/>}/>*/}
                 <Route path="/employeechat" element={<EmployeeChat />} />
 
-                
 
                 {/* Review */}
                 <Route path="/review" element={<ReviewPage />} />
@@ -231,6 +224,15 @@ function App() {
                     <MainDashboardHost />
                   </HostProtectedRoute>}
                 />
+
+                <Route
+                   path="/hostdashboard/calendar"
+                   element={
+                   <HostProtectedRoute>
+                  <HostCalendar />
+                  </HostProtectedRoute>
+                  }
+                 />
                 <Route path="/stripe/callback" element={<StripeCallback />} />
 
                 {/* Career, Policies, and Terms */}
@@ -241,6 +243,7 @@ function App() {
                 <Route path="/disclaimers" element={<Disclaimers />} />
                 <Route path="/Sustainability" element={<Sustainability />} />
                 <Route path="/channelmanager" element={<ChannelManager />} />
+                <Route path="/admin/property" element={<AdminProperty />} />
 
                 {/* Error*/}
                 <Route path="/*" element={<PageNotFound />} />
@@ -275,7 +278,6 @@ function App() {
               {renderFooter()}
               {currentPath !== "/admin" && <MenuBar />}
               {renderChatWidget()}
-              
             </div>
           </UserProvider>
         </AuthProvider>
