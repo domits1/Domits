@@ -199,6 +199,14 @@ function App() {
 
                 {/* Guest Dashboard */}
                 <Route
+                  path="/guestdashboard/messages"
+                  element={
+                    <GuestProtectedRoute>
+                      <MainDashboardGuest />
+                    </GuestProtectedRoute>
+                  }
+                />
+                <Route
                   path="/guestdashboard/*"
                   element={
                     <GuestProtectedRoute>
@@ -245,6 +253,18 @@ function App() {
                     <MainDashboardHost />
                   </HostProtectedRoute>}
                 />
+<<<<<<< Updated upstream
+=======
+
+                <Route
+                   path="/hostdashboard/calendar"
+                   element={
+                   <HostProtectedRoute>
+                  <HostCalendar />
+                  </HostProtectedRoute>
+                  }
+                 />
+>>>>>>> Stashed changes
                 <Route path="/stripe/callback" element={<StripeCallback />} />
 
                 {/* Career, Policies, and Terms */}

@@ -14,6 +14,7 @@ const MainDashboardGuest = () => {
   const [activeComponent, setActiveComponent] = useState("Dashboard");
   const location = useLocation();
 
+<<<<<<< Updated upstream
   // Handle URL-based routing
   useEffect(() => {
     const path = location.pathname;
@@ -22,6 +23,13 @@ const MainDashboardGuest = () => {
     }
   }, [location.pathname]);
 
+=======
+  useEffect(() => {
+    if (location.pathname === "/guestdashboard/messages") {
+      setActiveComponent("Messages");
+    }
+  }, [location.pathname]);
+>>>>>>> Stashed changes
   const renderComponent = () => {
     switch (activeComponent) {
       case "Dashboard":
