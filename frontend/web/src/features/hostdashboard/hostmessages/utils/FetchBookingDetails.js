@@ -1,4 +1,5 @@
 import { getAccessToken } from '../../../../services/getAccessToken';
+import { getGuestBookingDetails, getAccommodationByPropertyId } from '../services/messagingService';
 
 const fetchBookingDetailsAndAccommodation = async ({
   hostId,
@@ -8,10 +9,7 @@ const fetchBookingDetailsAndAccommodation = async ({
 }) => {
   const token = withAuth ? getAccessToken(hostId) : getAccessToken(guestId);
 
-  const bookingRes = await fetch(`https://912b02rvk4.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-GuestBookingDetails?hostId=${hostId}&guestId=${guestId}`);
-  if (!bookingRes.ok) throw new Error('Failed to fetch booking details');
-
-  const bookingData = await bookingRes.json();
+  const bookingData = await getGuestBookingDetails(hostId, guestId);
   const arrivalDate = new Date(bookingData.arrivalDate);
   const departureDate = new Date(bookingData.departureDate);
   const bookingStatus = bookingData.status || null;
@@ -19,19 +17,7 @@ const fetchBookingDetailsAndAccommodation = async ({
   let accoImage = null;
 
   if (bookingData.property_id && accommodationEndpoint) {
-    const accoRes = await fetch(
-      `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/${accommodationEndpoint}?property=${bookingData.property_id}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: token,
-        },
-      }
-    );
-
-    if (!accoRes.ok) throw new Error('Failed to fetch accommodation');
-
-    const accoRaw = await accoRes.json();
+    const accoRaw = await getAccommodationByPropertyId(accommodationEndpoint, bookingData.property_id, token);
     const key = accoRaw?.images?.[0]?.key;
 
     if (key) {

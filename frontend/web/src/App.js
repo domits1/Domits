@@ -22,6 +22,7 @@ import ValidatePayment from "./features/bookingengine/ValidatePayment";
 import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
+import HostCalendar from "./features/hostdashboard/HostCalendar";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
@@ -87,7 +88,6 @@ import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
-import Messages from "./components/messages/Messages.js";
 import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
@@ -215,8 +215,7 @@ function App() {
                       <ValidatePayment />
                     </Elements>
                   }
-                >/
-                </Route>
+                />
 
 
                 <Route
@@ -275,7 +274,6 @@ function App() {
                     </BuilderProvider>
                   }
                 />
-                <Route path="/*" element={<Home />} />
               </Routes>
               {renderFooter()}
               {currentPath !== "/admin" && <MenuBar />}
