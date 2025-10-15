@@ -14,32 +14,24 @@ export class Service {
     const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
     if (!cognitoUserId) throw new Error("User ID is missing");
 
-    const userId = "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3";
+    const userId = cognitoUserId;
 
     const { filterType, startDate, endDate } = event.queryStringParameters || event.body || {};
-    const { startDate: start, endDate: end } = this.getDateRange(filterType || "month", startDate, endDate);
+    const { startDate: start, endDate: end } = this.getDateRange(filterType, startDate, endDate);
 
-    // Pass the date range into repository methods
     const totalRevenue = await this.repository.getTotalRevenue(userId, start, end);
     const bookedNights = await this.repository.getBookedNights(userId, start, end);
     const availableNights = await this.repository.getAvailableNights(userId, start, end);
     const propertyCount = await this.repository.getProperties(userId, start, end);
     const averageLengthOfStay = await this.repository.getAverageLengthOfStay(userId, start, end);
 
-    // Derived metrics
-    const averageDailyRate =
-      bookedNights.bookedNights > 0
-        ? totalRevenue.totalRevenue / bookedNights.bookedNights
-        : 0;
+    const averageDailyRate = bookedNights.bookedNights > 0 ? totalRevenue.totalRevenue / bookedNights.bookedNights : 0;
 
     const occupancyRate =
-      availableNights.availableNights > 0
-        ? (bookedNights.bookedNights / availableNights.availableNights) * 100
-        : 0;
+      availableNights.availableNights > 0 ? (bookedNights.bookedNights / availableNights.availableNights) * 100 : 0;
 
     const revenuePerAvailableRoom = averageDailyRate * (occupancyRate / 100);
 
-    // Return based on selected metric
     switch (kpiMetric) {
       case "revenue":
         return totalRevenue;
@@ -63,9 +55,10 @@ export class Service {
   }
 
   getDateRange(filterType, startDate, endDate) {
+    if (!filterType) return { startDate: null, endDate: null };
+
     const now = new Date();
-    let start;
-    let end;
+    let start, end;
 
     switch (filterType) {
       case "weekly":
