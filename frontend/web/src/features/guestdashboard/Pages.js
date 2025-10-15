@@ -19,9 +19,6 @@ const NAV = [
 
 const MOBILE_BP = 1024;
 
-/*
- * Safe matchMedia that works with SSR.
- */
 function useMediaQuery(query) {
   const getMatch = () =>
     typeof window !== "undefined" && typeof window.matchMedia !== "undefined"
@@ -34,9 +31,9 @@ function useMediaQuery(query) {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const mql = window.matchMedia(query);
     const listener = (e) => setMatches(e.matches);
-    // new API
+    
     if (mql.addEventListener) mql.addEventListener("change", listener);
-    else mql.addListener(listener); // fallback
+    else mql.addListener(listener); 
     setMatches(mql.matches);
     return () => {
       if (mql.removeEventListener) mql.removeEventListener("change", listener);
@@ -56,12 +53,10 @@ function Pages({ onNavigate }) {
   const firstItemRef = useRef(null);
   const lastItemRef = useRef(null);
 
-  // Close drawer helper
   const closeMenu = () => setIsOpen(false);
   const openMenu = () => setIsOpen(true);
   const toggleMenu = () => setIsOpen((s) => !s);
 
-  // Lock body scroll when drawer is open on mobile/tablet
   useEffect(() => {
     if (!isOpen || isDesktop) return;
     const { overflow } = document.body.style;
@@ -70,13 +65,11 @@ function Pages({ onNavigate }) {
       document.body.style.overflow = overflow;
     };
   }, [isOpen, isDesktop]);
-
-  // Close when resizing to desktop
+  
   useEffect(() => {
     if (isDesktop) setIsOpen(false);
   }, [isDesktop]);
 
-  // ESC to close
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => {
@@ -85,7 +78,7 @@ function Pages({ onNavigate }) {
         closeMenu();
         btnRef.current?.focus();
       }
-      // Simple focus trap: keep tab focus inside when open on mobile
+
       if (!isDesktop && e.key === "Tab") {
         const focusable = sidebarRef.current?.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -106,7 +99,6 @@ function Pages({ onNavigate }) {
     return () => window.removeEventListener("keydown", onKey, true);
   }, [isOpen, isDesktop]);
 
-  // Click outside to close (only when open on mobile/tablet)
   useEffect(() => {
     if (!isOpen || isDesktop) return;
     const onDown = (e) => {
@@ -118,7 +110,6 @@ function Pages({ onNavigate }) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [isOpen, isDesktop]);
 
- 
   useEffect(() => {
     if (isOpen && !isDesktop) {
       const id = requestAnimationFrame(() => {
@@ -133,7 +124,6 @@ function Pages({ onNavigate }) {
     if (!isDesktop) closeMenu();
   };
 
- 
   const menuItems = useMemo(() => {
     return NAV.map((item, idx) => {
       const isFirst = idx === 0;
@@ -175,7 +165,6 @@ function Pages({ onNavigate }) {
 
   return (
     <>
-      {/* Hamburger (hidden on desktop via CSS) */}
       <button
         ref={btnRef}
         type="button"
@@ -188,14 +177,14 @@ function Pages({ onNavigate }) {
         {isOpen ? <CloseIcon /> : <MenuIcon />}
       </button>
 
-      {/* Overlay (mobile/tablet) */}
+      
       <div
         className={`sidebar-overlay ${isOpen ? "open" : ""}`}
         aria-hidden="true"
         onClick={closeMenu}
       />
 
-      {/* Sidebar / Drawer */}
+    
       <nav
         ref={sidebarRef}
         className={`sidebar ${isOpen ? "open" : ""}`}
