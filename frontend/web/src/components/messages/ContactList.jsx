@@ -3,7 +3,7 @@ import { WebSocketContext } from '../../features/hostdashboard/hostmessages/cont
 import useFetchContacts from '../../features/hostdashboard/hostmessages/hooks/useFetchContacts';
 import ContactItem from './ContactItem';
 import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss';
-import { FaCog, FaSearch, FaBars } from 'react-icons/fa';
+import { FaCog, FaSearch, FaBars, FaPlus } from 'react-icons/fa';
 import AutomatedSettings from './AutomatedSettings';
 
 const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
@@ -23,6 +23,17 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
         noContacts: 'No contacts found.',
         noPending: 'No requests sent.'
     }
+
+    const handleCreateTestContact = () => {
+        const id = `test-${Date.now()}`;
+        const newContact = {
+            userId: id,
+            recipientId: id,
+            givenName: `Test User ${new Date().toLocaleTimeString()}`,
+            latestMessage: { text: 'Hello from test contact', createdAt: new Date().toISOString() },
+        };
+        setContacts(prev => [newContact, ...prev]);
+    };
 
     useEffect(() => {
         if (wsMessages?.length === 0) return;
@@ -95,7 +106,7 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                 <div className="contact-list-side-buttons">
                     <input
                         type="text"
-                        placeholder=""
+                        placeholder="Search contacts"
                         className="contact-search-input"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
@@ -104,6 +115,9 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                     {isHost && (
                         <FaCog className={`contact-list-side-button`} onClick={() => setAutomatedSettings(true)} />
                     )}
+                    <button className={`contact-list-side-button`} onClick={handleCreateTestContact} title="Create test contact">
+                        <FaPlus />
+                    </button>
 
                 </div>
 
