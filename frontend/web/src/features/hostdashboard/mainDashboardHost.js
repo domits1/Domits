@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Pages from "./Pages2";
 import HostDashboard from "./HostDashboard";
 import HostCalendar from "./HostCalendar";
@@ -13,6 +14,15 @@ import HostSettings from "./HostSettings";
 
 function MainDashboardHost(){
     const [activeComponent, setActiveComponent] = useState("Dashboard");
+    const location = useLocation();
+
+    // Handle URL-based routing
+    useEffect(() => {
+        const path = location.pathname;
+        if (path.includes('/messages')) {
+            setActiveComponent("Messages");
+        }
+    }, [location.pathname]);
 
     function renderComponent(){
         switch (activeComponent){

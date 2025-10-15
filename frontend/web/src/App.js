@@ -206,6 +206,14 @@ function App() {
                     </GuestProtectedRoute>
                   }
                 />
+                <Route
+                  path="/guestdashboard/messages"
+                  element={
+                    <GuestProtectedRoute>
+                      <MainDashboardGuest />
+                    </GuestProtectedRoute>
+                  }
+                />
 
                 {/* Host Management */}
                 {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
@@ -227,6 +235,12 @@ function App() {
 
                 <Route
                   path="/hostdashboard"
+                  element={<HostProtectedRoute>
+                    <MainDashboardHost />
+                  </HostProtectedRoute>}
+                />
+                <Route
+                  path="/hostdashboard/messages"
                   element={<HostProtectedRoute>
                     <MainDashboardHost />
                   </HostProtectedRoute>}
