@@ -9,7 +9,7 @@ import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/comp
 import { WebSocketContext } from '../../features/hostdashboard/hostmessages/context/webSocketContext';
 import '../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss';
 import { v4 as uuidv4 } from 'uuid';
-import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
+import { FaPaperPlane, FaArrowLeft, FaPaperclip } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
 
 
@@ -23,11 +23,22 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     const [newMessage, setNewMessage] = useState('');
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
+    const [messageSearch, setMessageSearch] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const wsMessages = socket?.messages || [];
     const addedMessageIds = useRef(new Set());
+    const searchInputRef = useRef(null);
+    const isPairRoom = false; // This would typically be determined by the room type
+    const local = null; // This would typically be a local message handler
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
+    };
+
+    const handleOpenAttachmentPicker = () => {
+        // This would typically open a file picker
+        // For now, we'll just log that it was clicked
+        console.log('Open attachment picker clicked');
     };
 
     useEffect(() => {
@@ -95,55 +106,32 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
                 (msg.userId === userId && msg.recipientId === contactId) ||
                 (msg.userId === contactId && msg.recipientId === userId);
 
-            const isNew = !addedMessageIds.current.has(msg.id);
-
-<<<<<<< Updated upstream
-            if (isRelevant && isNew) {
-                addNewMessage(msg);
-                addedMessageIds.current.add(msg.id);
-=======
-<<<<<<< Updated upstream
-            // Skip if we've already added this id
             if (msg.id && addedMessageIds.current.has(msg.id)) return;
 
-            // Skip if this matches an optimistic message we already rendered
-=======
-            if (msg.id && addedMessageIds.current.has(msg.id)) return;
-
->>>>>>> Stashed changes
             const incomingSig = `${msg.userId}|${msg.recipientId}|${(msg.text || '').trim()}|${(msg.fileUrls || []).join(',')}`;
             if (optimisticSignaturesRef.current.has(incomingSig)) {
                 optimisticSignaturesRef.current.delete(incomingSig);
                 return;
->>>>>>> Stashed changes
+            }
+
+            if (isRelevant) {
+                addNewMessage(msg);
+                addedMessageIds.current.add(msg.id);
             }
         });
     }, [wsMessages, userId, contactId]);
 
     const handleSendMessage = async () => {
-<<<<<<< Updated upstream
-        if ((newMessage.trim() || uploadedFileUrls.length > 0) && (uploadedFileUrls.length > 0 || newMessage.trim())) {
-            try {
-=======
         const hasContent = (newMessage.trim() || uploadedFileUrls.length > 0);
         if (!hasContent) return;
         try {
             if (isPairRoom) {
-<<<<<<< Updated upstream
-                // Local rooms: we handle rendering ourselves and broadcast via BroadcastChannel
-=======
->>>>>>> Stashed changes
                 const response = local.sendLocalMessage(newMessage, uploadedFileUrls);
                 if (!response || !response.success) {
                     alert(`Error while sending: ${response?.error || 'Please try again later.'}`);
                     return;
                 }
             } else {
-<<<<<<< Updated upstream
-                // Remote rooms: send and optimistically render; dedupe when echo arrives
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes
                 const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
                 if (!response || !response.success) {
                     alert(`Error while sending: ${response.error || 'Please try again later.'}`);
@@ -162,37 +150,20 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
 
                 handleContactListMessage(tempSentMessage);
                 addNewMessage(tempSentMessage);
-                setNewMessage('');
-                setUploadedFileUrls([]);
-            } catch (error) {
-                console.error('Unexpected error while sending:', error);
             }
-<<<<<<< Updated upstream
-=======
             setNewMessage('');
             setUploadedFileUrls([]);
-<<<<<<< Updated upstream
-            // Auto-scroll to bottom after sending
-=======
->>>>>>> Stashed changes
             try {
                 const el = chatContainerRef.current;
                 if (el) el.scrollTop = el.scrollHeight;
             } catch {}
         } catch (error) {
             console.error('Unexpected error while sending:', error);
->>>>>>> Stashed changes
         }
     };
 
     if (!contactId) return null;
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-    // Filter messages client-side by keyword (text or file url)
-=======
->>>>>>> Stashed changes
     const visibleMessages = messageSearch
         ? messages.filter(m => {
             const text = (m.text || '').toLowerCase();
@@ -202,7 +173,6 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
         })
         : messages;
 
->>>>>>> Stashed changes
     return (
         <div className={`${dashboardType}-chat`}>
             <div className="chat-screen-container">
@@ -238,25 +208,6 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
                 </div>
 
                 <div className='chat-input'>
-<<<<<<< Updated upstream
-                    <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
-                    <textarea
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                        className='message-input-textarea'
-                        onKeyUp={(e) => {
-                            if (e.key === 'Enter') handleSendMessage();
-                        }}
-                    />
-                    <button
-                        onClick={handleSendMessage}
-                        className='message-input-send-button'
-=======
-<<<<<<< Updated upstream
-                    {/* Hidden uploader kept for functionality */}
-=======
->>>>>>> Stashed changes
                     <div style={{ display: 'none' }}>
                         <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
                     </div>
@@ -278,27 +229,12 @@ const ChatScreen = ({ userId, contactId, contactName, handleContactListMessage, 
                     </div>
 
                     <button
-<<<<<<< Updated upstream
-                        className='whats-action whats-mic'
-                        title={newMessage.trim() ? 'Send' : 'Voice'}
-                        onClick={() => { if (newMessage.trim()) { handleSendMessage(); } }}
->>>>>>> Stashed changes
-                        disabled={sending}
-                        title="Send"
-                    >
-<<<<<<< Updated upstream
-                        {sending ? 'Sending...' : <FaPaperPlane />}
-=======
-                        {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
-=======
                         className='whats-action whats-send'
                         title='Send'
                         onClick={() => { if (newMessage.trim()) { handleSendMessage(); } }}
                         disabled={sending}
                     >
                         <FaPaperPlane />
->>>>>>> Stashed changes
->>>>>>> Stashed changes
                     </button>
                 </div>
 
