@@ -22,6 +22,7 @@ import ValidatePayment from "./features/bookingengine/ValidatePayment";
 import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
+import HostCalendar from "./features/hostdashboard/HostCalendar";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
@@ -87,13 +88,13 @@ import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
-import Messages from "./components/messages/Messages.js";
 import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
+import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST)
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE)
 Modal.setAppElement("#root");
 
 function App() {
@@ -214,8 +215,7 @@ function App() {
                       <ValidatePayment />
                     </Elements>
                   }
-                >/
-                </Route>
+                />
 
 
                 <Route
@@ -243,6 +243,7 @@ function App() {
                 <Route path="/disclaimers" element={<Disclaimers />} />
                 <Route path="/Sustainability" element={<Sustainability />} />
                 <Route path="/channelmanager" element={<ChannelManager />} />
+                <Route path="/admin/property" element={<AdminProperty />} />
 
                 {/* Error*/}
                 <Route path="/*" element={<PageNotFound />} />
@@ -273,7 +274,6 @@ function App() {
                     </BuilderProvider>
                   }
                 />
-                <Route path="/*" element={<Home />} />
               </Routes>
               {renderFooter()}
               {currentPath !== "/admin" && <MenuBar />}

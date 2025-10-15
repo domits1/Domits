@@ -33,7 +33,6 @@ function Pages({ onNavigate }) {
                 </button>
                 <div className="menu-content">
                     <div className="dashboard-sections">
-                        <MenuItem icon={<DashboardIcon />} label="List your property" handleNavigation={() => onNavigate("List")} />
                         <MenuItem icon={<DashboardIcon />} label="Dashboard" handleNavigation={() => onNavigate("Dashboard")} />
                         <MenuItem icon={<DashboardIcon />} label="Calender" handleNavigation={() => onNavigate("Calender")} />
                         <MenuItem icon={<DashboardIcon />} label="Reservations" handleNavigation={() => onNavigate("Reservations")} />
