@@ -31,7 +31,7 @@ import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
-import HostCalendar from "./features/hostdashboard/hostcalen/HostCalendar";
+import HostCalendar from "./features/hostdashboard/hostcalendar/HostCalendar";
 import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
 import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostMonitoring from "./features/hostdashboard/HostMonitoring";

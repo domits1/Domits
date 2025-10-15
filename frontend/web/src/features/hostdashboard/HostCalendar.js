@@ -7,7 +7,7 @@ import calenderStyles from "./HostCalendar.module.css";
 import { generateUUID } from "../../utils/generateUUID.js";
 import { formatDate, uploadICalToS3 } from "../../utils/iCalFormatHost";
 import { getAccessToken } from "../../services/getAccessToken.js";
-import CalendarComponent from "./hostcalendar/views/Calender.js";
+//import CalendarComponent from "./hostcalendar/views/Calender.js";
 
 function HostCalendar() {
   const [accommodations, setAccommodations] = useState([]);
@@ -200,12 +200,7 @@ function HostCalendar() {
                     {" " + selectedAccommodation.Title}
                   </p>
                   <div className={calenderStyles.locationBox}>
-                    <CalendarComponent
-                      passedProp={selectedAccommodation}
-                      isNew={false}
-                      updateDates={updateDates}
-                      componentView={true}
-                    />
+                   
                   </div>
                 </div>
               ) : (
