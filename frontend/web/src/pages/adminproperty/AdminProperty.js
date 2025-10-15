@@ -3,49 +3,90 @@ import "./adminproperty.scss";
 
 const API_URL = "https://jkjpre7t86.execute-api.eu-north-1.amazonaws.com/default";
 
+const AMENITIES = {
+  Essentials: ["Wi-Fi", "Air conditioning", "Heating", "TV with cable/satellite", "Hot water", "Towels", "Bed linens", "Extra pillows and blankets", "Toilet paper", "Soap", "Shampoo"],
+  Kitchen: ["Refrigerator", "Microwave", "Oven", "Stove", "Dishwasher", "Coffee maker", "Toaster", "Pots and pans", "Oil", "Salt", "Pepper", "Dishes and silverware", "Glasses and mugs", "Cutting board", "Knives", "Blender", "Kettle"],
+  Bathroom: ["Hair dryer", "Shower gel", "Conditioner", "Body lotion", "First aid kit"],
+  Bedroom: ["Hangers", "Iron", "Ironing board", "Closet/Drawers", "Alarm clock"],
+  "Living area": ["Sofa/sofa bed", "Armchairs", "Coffee table", "Books and magazines", "Board games"],
+  Technology: ["Smart TV", "Streaming services", "Bluetooth speaker", "Universal chargers", "Work desk", "Work chair"],
+  Safety: ["Smoke detector", "Carbon monoxide detector", "Fire extinguisher", "Lock on bedroom door"],
+  Outdoor: ["Patio or balcony", "Outdoor furniture", "Grill", "Fire pit", "Pool", "Hot tub", "Garden or backyard", "Bicycle"],
+  "Family friendly": ["High chair", "Crib", "Children’s books and toys", "Baby safety gates", "Baby bath", "Baby monitor"],
+  Laundry: ["Washer", "Dryer", "Laundry detergent", "Clothes drying rack"],
+  Convenience: ["Keyless entry", "Self-check-in", "Local maps and guides", "Luggage drop-off allowed", "Parking space", "EV charger"],
+  Accessibility: ["Step-free access", "Wide doorways", "Accessible-height bed", "Accessible-height toilet", "Shower chair"],
+  "Extra services": ["Housekeeping service", "Concierge service", "Grocery delivery", "Airport shuttle", "Private chef", "Personal trainer", "Massage therapist"],
+  "Sustainable eco-friendly": ["Energy", "Waste", "Biodiversity & ecosystems", "Destinations & community"]
+};
+
 export default function AdminProperty() {
   const [showDetails, setShowDetails] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [files, setFiles] = useState([]);
+  const MIN_IMAGES = 5;
+  const MAX_IMAGES = 10;
 
-  const amenitiesCatalog = [
-    { category: "Essentials", details: "Wi-Fi, air conditioning, heating, TV with cable/satellite, hot water, towels, bed linens, extra pillows and blankets, toilet paper, soap and shampoo." },
-    { category: "Kitchen", details: "Refrigerator, microwave, oven, stove, dishwasher, coffee maker, toaster, basic cooking essentials (pots, pans, oil, salt, pepper), dishes and silverware, glasses and mugs, cutting board and knives, blender and kettle." },
-    { category: "Bathroom", details: "Hair dryer, shower gel, conditioner, body lotion and first aid kit" },
-    { category: "Bedroom", details: "Hangers, iron and ironing board, closet/drawers and alarm clock" },
-    { category: "Living area", details: "Sofa/sofa bed, armchairs, coffee table, books and magazines and board games" },
-    { category: "Technology", details: "Smart TV, streaming services (Netflix, Amazon Prime), bluetooth speaker, universal chargers, work desk and chair" },
-    { category: "Safety", details: "Smoke detector, carbon monoxide detector, fire extinguisher and lock on bedroom door" },
-    { category: "Outdoor", details: "Patio or balcony, outdoor furniture, grill, fire pit, pool, hot tub, garden or backyard and bicycle" },
-    { category: "Family friendly", details: "High chair, crib, children’s books and toys, baby safety gates, baby bath and baby monitor" },
-    { category: "Laundry", details: "Washer and dryer, laundry detergent and clothes drying rack" },
-    { category: "Convenience", details: "Keyless entry, self-check-in, local maps and guides, luggage drop-off allowed, parking space and EV charger." },
-    { category: "Accessibility", details: "Step-free access, wide doorways, accessible-height bed, accessible-height toilet and shower chair" },
-    { category: "Extra services", details: "Housekeeping service [add service fee], concierge service, grocery delivery, airport shuttle, private chef, personal trainer or massage therapist" },
-    { category: "Sustainable eco-friendly", details: "Energy, waste, biodiversity & ecosystems, destinations & community" }
-  ];
+  const onPickFiles = (e) => {
+    const selected = Array.from(e.target.files || []);
+    const merged = [...files, ...selected].slice(0, MAX_IMAGES);
+    setFiles(merged);
+  };
+
+  const removeFile = (idx) => {
+    setFiles(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
+
+    if (files.length > 0 && files.length < MIN_IMAGES) {
+      alert(`Please add at least ${MIN_IMAGES} photos (you have ${files.length}).`);
+      return;
+    }
+
     setSubmitting(true);
 
     const fd = new FormData(e.target);
+
+    const guests = Number(fd.get("guests") || 0);
+    const bedrooms = Number(fd.get("bedrooms") || 0);
+    const beds = Number(fd.get("beds") || 0);
+    const bathrooms = Number(fd.get("bathrooms") || 0);
+    const capacityString = `${guests} guests, ${bedrooms} bedrooms, ${beds} beds, ${bathrooms} bathrooms`;
+
+    const images = files.map((f, i) => {
+      const ext = (f.name?.split(".").pop() || "jpg").toLowerCase();
+      return { key: `uploads/${Date.now()}-${i}.${ext}` };
+    });
+
+    const allAmenityValues = fd.getAll("amenityItem");
+
+    const rules = [];
+    if (fd.get("ruleSmoking")) rules.push("No smoking");
+    if (fd.get("ruleParties")) rules.push("No parties/events");
+    if (fd.get("rulePets")) rules.push("Pets allowed");
+
     const body = {
       email: fd.get("email") || "",
       name: fd.get("name") || "",
       phone: fd.get("phone") || "",
-      segment: fd.get("segment") || "",
+      segment: "Holiday Homes, Boats & Campers",
       spaceType: fd.get("spaceType") || "",
       homeName: fd.get("homeName") || "",
-      address: fd.get("address") || "",
+      address: `${fd.get("street") || ""} ${fd.get("houseNumber") || ""}, ${fd.get("postalCode") || ""} ${fd.get("city") || ""}, ${fd.get("country") || ""}`,
       description: fd.get("description") || "",
-      capacity: fd.get("capacity") || "",
-      amenities: fd.getAll("amenities"),
-      rules: fd.getAll("rules"),
-      channelManager: fd.get("channelManager") || "",
-      photoCount: fd.get("photoCount") ? Number(fd.get("photoCount")) : 0,
+      capacity: capacityString,
+      amenities: allAmenityValues,
+      rules,
+      checkIn: fd.get("checkIn") || "",
+      checkOut: fd.get("checkOut") || "",
+      channelManager: "No, thanks",
+      photoCount: files.length || 0,
+      images,
       rate: fd.get("rate") || "",
-      availability: fd.get("availability") || "",
+      availability: "As soon as possible",
       registrationNumber: fd.get("registrationNumber") || ""
     };
 
@@ -123,8 +164,16 @@ export default function AdminProperty() {
           </div>
 
           <div className="adminproperty-group">
-            <label>Where can we find your accommodation? (Address)</label>
-            <input type="text" name="address" required />
+            <label>Address</label>
+            <div className="grid-2">
+              <input type="text" name="street" placeholder="Street" required />
+              <input type="text" name="houseNumber" placeholder="No." required />
+            </div>
+            <div className="grid-3">
+              <input type="text" name="postalCode" placeholder="Postal code" required />
+              <input type="text" name="city" placeholder="City" required />
+              <input type="text" name="country" placeholder="Country" required />
+            </div>
           </div>
 
           <div className="adminproperty-group">
@@ -133,19 +182,28 @@ export default function AdminProperty() {
           </div>
 
           <div className="adminproperty-group">
-            <label>How many people can stay here? (Guests, bedrooms, beds, bathrooms)</label>
-            <input type="text" name="capacity" required />
+            <label>How many people can stay here?</label>
+            <div className="grid-4">
+              <input type="number" name="guests" placeholder="Guests" min="0" required />
+              <input type="number" name="bedrooms" placeholder="Bedrooms" min="0" required />
+              <input type="number" name="beds" placeholder="Beds" min="0" required />
+              <input type="number" name="bathrooms" placeholder="Bathrooms" min="0" required />
+            </div>
           </div>
 
           <div className="adminproperty-group">
             <label>Let guests know what your space has to offer</label>
-            <div className="adminproperty-options">
-              {amenitiesCatalog.map((item, idx) => (
-                <div key={idx} className="amenity-item">
-                  <label>
-                    <input type="checkbox" name="amenities" value={item.category} /> {item.category}
-                  </label>
-                  <p className="amenity-description">{item.details}</p>
+            <div className="amenities-grid">
+              {Object.entries(AMENITIES).map(([cat, items]) => (
+                <div key={cat} className="amenity-block">
+                  <div className="amenity-title">{cat}</div>
+                  <div className="amenity-items">
+                    {items.map((it) => (
+                      <label key={it} className="amenity-check">
+                        <input type="checkbox" name="amenityItem" value={it} /> {it}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
@@ -153,31 +211,37 @@ export default function AdminProperty() {
 
           <div className="adminproperty-group">
             <label>House rules</label>
-            <label><input type="checkbox" name="rules" value="No smoking" /> No smoking</label>
-            <label><input type="checkbox" name="rules" value="No parties/events" /> No parties/events</label>
-            <label><input type="checkbox" name="rules" value="Pets allowed" /> Pets allowed</label>
+            <div className="grid-2">
+              <label>Check-in time<input type="time" name="checkIn" /></label>
+              <label>Check-out time<input type="time" name="checkOut" /></label>
+            </div>
+            <div className="adminproperty-options">
+              <label><input type="checkbox" name="ruleSmoking" /> No smoking</label>
+              <label><input type="checkbox" name="ruleParties" /> No parties/events</label>
+              <label><input type="checkbox" name="rulePets" /> Pets allowed</label>
+            </div>
           </div>
 
-          <div className="adminproperty-group">
-            <label>Do you want to use a channel manager?</label>
-            <label><input type="radio" name="channelManager" value="No, thanks" required /> No, thanks</label>
-            <label><input type="radio" name="channelManager" value="Yes, list on platforms" /> Yes, list on Booking, Airbnb, Expedia, etc.</label>
-          </div>
+          <input type="hidden" name="availability" value="As soon as possible" />
 
           <div className="adminproperty-group">
-            <label>How many photos do you have?</label>
-            <input type="number" name="photoCount" min="0" required />
+            <label>Add photos (min 5, max 10)</label>
+            <input type="file" accept="image/*" multiple onChange={onPickFiles} />
+            {files.length > 0 && (
+              <div className="thumbs">
+                {files.map((f, i) => (
+                  <div key={`${f.name}-${i}`} className="thumb">
+                    <img src={URL.createObjectURL(f)} alt={`img-${i}`} />
+                    <button type="button" onClick={() => removeFile(i)}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="adminproperty-group">
             <label>Set your rate</label>
-            <input type="text" name="rate" required />
-          </div>
-
-          <div className="adminproperty-group">
-            <label>Share your first availability</label>
-            <label><input type="radio" name="availability" value="As soon as possible" required /> As soon as possible</label>
-            <label><input type="radio" name="availability" value="Starting later" /> Starting at a specific date which I share later</label>
+            <input type="number" name="rate" min="0" step="1" required />
           </div>
 
           <div className="adminproperty-group">
