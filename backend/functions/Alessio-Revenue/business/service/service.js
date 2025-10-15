@@ -1,5 +1,6 @@
 import { Repository } from "../../data/repository.js";
 import AuthManager from "../../auth/authManager.js";
+
 export class Service {
   constructor() {
     this.repository = new Repository();
@@ -13,38 +14,104 @@ export class Service {
     const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
     if (!cognitoUserId) throw new Error("User ID is missing");
 
-    const test = "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3";
+    const userId = "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3";
 
-    const test1 = await this.repository.getTotalRevenue(test);
+    const { filterType, startDate, endDate } = event.queryStringParameters || event.body || {};
+    const { startDate: start, endDate: end } = this.getDateRange(filterType || "month", startDate, endDate);
 
-    const test2 = await this.repository.getBookedNights(test);
+    // Pass the date range into repository methods
+    const totalRevenue = await this.repository.getTotalRevenue(userId, start, end);
+    const bookedNights = await this.repository.getBookedNights(userId, start, end);
+    const availableNights = await this.repository.getAvailableNights(userId, start, end);
+    const propertyCount = await this.repository.getProperties(userId, start, end);
+    const averageLengthOfStay = await this.repository.getAverageLengthOfStay(userId, start, end);
 
-    const result = test1.totalRevenue / test2.bookedNights; // ADR
+    // Derived metrics
+    const averageDailyRate =
+      bookedNights.bookedNights > 0
+        ? totalRevenue.totalRevenue / bookedNights.bookedNights
+        : 0;
 
-    const test3 = await this.repository.getAvailableNights(test);
+    const occupancyRate =
+      availableNights.availableNights > 0
+        ? (bookedNights.bookedNights / availableNights.availableNights) * 100
+        : 0;
 
-    const result1 = (test2.bookedNights / test3.availableNights) * 100; // Occupancy Rate
+    const revenuePerAvailableRoom = averageDailyRate * (occupancyRate / 100);
 
-    const result2 = result * result1; // RevPAR
-
+    // Return based on selected metric
     switch (kpiMetric) {
       case "revenue":
-        return await this.repository.getTotalRevenue(test);
+        return totalRevenue;
       case "bookedNights":
-        return await this.repository.getBookedNights(test);
+        return bookedNights;
       case "availableNights":
-        return await this.repository.getAvailableNights(test);
+        return availableNights;
       case "propertyCount":
-        return await this.repository.getProperties(test);
+        return propertyCount;
       case "averageDailyRate":
-        return result.toFixed(2);
+        return averageDailyRate.toFixed(2);
       case "revenuePerAvailableRoom":
-        console.log(`${result} is ${result1}`);
-        return result2.toFixed(2);
+        return revenuePerAvailableRoom.toFixed(2);
       case "occupancyRate":
-        return result1.toFixed(2);
+        return occupancyRate.toFixed(2);
+      case "averageLengthOfStay":
+        return averageLengthOfStay;
       default:
         throw new Error(`Unknown metric: ${kpiMetric}`);
     }
+  }
+
+  getDateRange(filterType, startDate, endDate) {
+    const now = new Date();
+    let start;
+    let end;
+
+    switch (filterType) {
+      case "weekly":
+        const day = now.getDay();
+        const diffToMonday = (day === 0 ? -6 : 1) - day;
+        start = new Date(now);
+        start.setDate(now.getDate() + diffToMonday);
+        start.setHours(0, 0, 0, 0);
+
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        break;
+
+      case "monthly":
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+
+      case "custom":
+        if (!startDate || !endDate) {
+          throw new Error("Custom filter requires startDate and endDate");
+        }
+
+        const parseDate = (str) => {
+          const [day, month, year] = str.split("-").map(Number);
+          if (!day || !month || !year) throw new Error(`Invalid date format: ${str}`);
+          return new Date(year, month - 1, day);
+        };
+
+        start = parseDate(startDate);
+        end = parseDate(endDate);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          throw new Error("Invalid date(s) provided");
+        }
+
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+
+      default:
+        throw new Error(`Invalid filter type: ${filterType}`);
+    }
+
+    return { startDate: start, endDate: end };
   }
 }

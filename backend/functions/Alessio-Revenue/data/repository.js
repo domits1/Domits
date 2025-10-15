@@ -4,64 +4,64 @@ import { Property } from "database/models/Property";
 import { Property_Availability } from "database/models/Property_Availability";
 
 export class Repository {
-  async getTotalRevenue(cognitoUserId) {
+  async getTotalRevenue(cognitoUserId, startDate, endDate) {
     const client = await Database.getInstance();
     const result = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .innerJoin("property_pricing", "pp", "pp.property_id = booking.property_id")
       .where("booking.hostId = :hostId", { hostId: cognitoUserId })
-      .select(
-        `
+      .andWhere("to_timestamp(booking.arrivaldate / 1000) >= :startDate", { startDate })
+      .andWhere("to_timestamp(booking.departuredate / 1000) <= :endDate", { endDate })
+      .select(`
         SUM(
           (DATE_PART('day', to_timestamp(booking."departuredate" / 1000) - to_timestamp(booking."arrivaldate" / 1000)) * pp.roomRate)
           + pp.cleaning
         ) AS "totalRevenue"
-      `
-      )
+      `)
       .getRawOne();
 
     return { totalRevenue: Number(result?.totalRevenue ?? 0) };
   }
 
-  async getBookedNights(cognitoUserId) {
+  async getBookedNights(cognitoUserId, startDate, endDate) {
     const client = await Database.getInstance();
     const result = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.hostId = :hostId", { hostId: cognitoUserId })
-      .select(
-        `
+      .andWhere("to_timestamp(booking.arrivaldate / 1000) >= :startDate", { startDate })
+      .andWhere("to_timestamp(booking.departuredate / 1000) <= :endDate", { endDate })
+      .select(`
         SUM(DATE_PART('day',
           to_timestamp(booking."departuredate" / 1000) - to_timestamp(booking."arrivaldate" / 1000)
         )) AS "bookedNights"
-      `
-      )
+      `)
       .getRawOne();
 
     return { bookedNights: Number(result?.bookedNights ?? 0) };
   }
 
-  async getAvailableNights(cognitoUserId) {
+  async getAvailableNights(cognitoUserId, startDate, endDate) {
     const client = await Database.getInstance();
     const result = await client
       .getRepository(Property_Availability)
       .createQueryBuilder("pa")
       .innerJoin("property", "p", "p.id = pa.property_id")
       .where("p.hostId = :hostId", { hostId: cognitoUserId })
-      .select(
-        `
+      .andWhere("to_timestamp(pa.availablestartdate / 1000) <= :endDate", { endDate })
+      .andWhere("to_timestamp(pa.availableenddate / 1000) >= :startDate", { startDate })
+      .select(`
         SUM(DATE_PART('day',
           to_timestamp(pa."availableenddate" / 1000) - to_timestamp(pa."availablestartdate" / 1000)
         )) AS "availableNights"
-      `
-      )
+      `)
       .getRawOne();
 
     return { availableNights: Number(result?.availableNights ?? 0) };
   }
 
-  async getProperties(cognitoUserId) {
+  async getProperties(cognitoUserId, startDate, endDate) {
     const client = await Database.getInstance();
     const count = await client
       .getRepository(Property)
@@ -72,4 +72,21 @@ export class Repository {
     return { propertyCount: count };
   }
 
+  async getAverageLengthOfStay(cognitoUserId, startDate, endDate) {
+    const client = await Database.getInstance();
+    const result = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.hostId = :hostId", { hostId: cognitoUserId })
+      .andWhere("to_timestamp(booking.arrivaldate / 1000) >= :startDate", { startDate })
+      .andWhere("to_timestamp(booking.departuredate / 1000) <= :endDate", { endDate })
+      .select(`
+        AVG(DATE_PART('day',
+          to_timestamp(booking."departuredate" / 1000) - to_timestamp(booking."arrivaldate" / 1000)
+        )) AS "averageLengthOfStay"
+      `)
+      .getRawOne();
+
+    return { averageLengthOfStay: Number(result?.averageLengthOfStay ?? 0) };
+  }
 }
