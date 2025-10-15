@@ -222,8 +222,7 @@ function App() {
                       <ValidatePayment />
                     </Elements>
                   }
-                >/
-                </Route>
+                />
 
 
                 <Route
@@ -272,7 +271,6 @@ function App() {
                     </BuilderProvider>
                   }
                 />
-                <Route path="/*" element={<Home />} />
               </Routes>
               {renderFooter()}
               {currentPath !== "/admin" && <MenuBar />}
