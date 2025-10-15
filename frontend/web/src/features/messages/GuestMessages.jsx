@@ -18,7 +18,7 @@ const GuestMessagesInner = () => {
   const [testMessages, setTestMessages] = useState([]);
   const [latestContactListMessage, setLatestContactListMessage] = useState(null);
   const [selectedContactAvatar, setSelectedContactAvatar] = useState(null);
-  const isMobile = screenWidth < 768;
+  const isMobile = screenWidth < 768; // Max mobile screen width
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
