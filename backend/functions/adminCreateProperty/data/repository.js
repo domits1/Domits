@@ -18,6 +18,7 @@ function numericRegistration(len = 18) {
 }
 
 function parseCapacity(text = "") {
+<<<<<<< HEAD
   const t = String(text || "").trim();
   if (!t) return {};
   if (/^\d+$/.test(t)) return { Guests: parseInt(t, 10) };
@@ -119,10 +120,43 @@ async function findAmenityCategoryId(client, amenity, category) {
       [amenity]
     );
     if (r2?.rows?.[0]?.id) return r2.rows[0].id;
+=======
+  const n = (rx) => {
+    const m = text.match(new RegExp("(\\d+)\\s*" + rx, "i"));
+    return m ? parseInt(m[1], 10) : null;
+  };
+  return {
+    Guests: n("guest|guests"),
+    Bedrooms: n("bedroom|bedrooms"),
+    Beds: n("bed|beds"),
+    Bathrooms: n("bathroom|bathrooms")
+  };
+}
+
+async function resolveAmenityId(client, label) {
+  try {
+    const r1 = await client.query(
+      'SELECT id FROM main.amenities WHERE LOWER(name) = LOWER($1) LIMIT 1',
+      [label]
+    );
+    if (r1?.rows?.[0]?.id) return r1.rows[0].id;
+  } catch (e) {
+    console.log("amenities lookup failed", e?.message);
+  }
+  try {
+    const r2 = await client.query(
+      'SELECT id FROM main.amenity_and_category WHERE LOWER(name) = LOWER($1) OR LOWER(amenity) = LOWER($1) LIMIT 1',
+      [label]
+    );
+    if (r2?.rows?.[0]?.id) return r2.rows[0].id;
+  } catch (e) {
+    console.log("amenity_and_category lookup failed", e?.message);
+>>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
   }
   return null;
 }
 
+<<<<<<< HEAD
 async function ensureAmenityAndCategoryId(client, amenityLabel, categoryLabel) {
   const a = await upsertAmenity(client, amenityLabel);
   const c = await upsertCategory(client, categoryLabel);
@@ -140,6 +174,11 @@ async function ensureAmenityAndCategoryId(client, amenityLabel, categoryLabel) {
 
 export class Repository {
   async createFullProperty(body, hostId) {
+=======
+export class Repository {
+  async createFullProperty(body, hostId) {
+    console.log("🔵 Repository.createFullProperty START");
+>>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
     const client = await Database.getInstance();
 
     const id = newId();
@@ -158,6 +197,10 @@ export class Repository {
       updatedat: now
     };
 
+<<<<<<< HEAD
+=======
+    console.log("📝 property:", propertyRow);
+>>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
     await client.createQueryBuilder().insert().into("main.property").values(propertyRow).execute();
 
     const cap = parseCapacity(body.capacity || "");
@@ -166,12 +209,22 @@ export class Repository {
     if (Number.isInteger(cap.Bedrooms)) generalRows.push({ id: newId(), detail: "Bedrooms", property_id: id, value: cap.Bedrooms });
     if (Number.isInteger(cap.Beds)) generalRows.push({ id: newId(), detail: "Beds", property_id: id, value: cap.Beds });
     if (Number.isInteger(cap.Bathrooms)) generalRows.push({ id: newId(), detail: "Bathrooms", property_id: id, value: cap.Bathrooms });
+<<<<<<< HEAD
     if (generalRows.length > 0) {
       await client.createQueryBuilder().insert().into("main.property_generaldetail").values(generalRows).execute();
+=======
+
+    if (generalRows.length > 0) {
+      console.log("📝 property_generaldetail rows:", generalRows);
+      await client.createQueryBuilder().insert().into("main.property_generaldetail").values(generalRows).execute();
+    } else {
+      console.log("ℹ️ No parsable capacity values; skipping property_generaldetail");
+>>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
     }
 
     if (body.rules) {
       const rules = Array.isArray(body.rules) ? body.rules : [body.rules];
+<<<<<<< HEAD
       for (const rule of rules) {
         await client.createQueryBuilder().insert().into("main.property_rule").values({ id: newId(), property_id: id, rule, value: true }).execute();
       }
@@ -271,6 +324,43 @@ export class Repository {
       availableenddate
     }).execute();
 
+=======
+      const ruleRows = rules.map(rule => ({
+        property_id: id,
+        rule,
+        value: true
+      }));
+      console.log("📝 property_rule rows:", ruleRows);
+      for (const row of ruleRows) {
+        await client.createQueryBuilder().insert().into("main.property_rule").values(row).execute();
+      }
+      console.log("✅ property_rule inserted");
+    }
+
+    if (body.amenities) {
+      const amenities = Array.isArray(body.amenities) ? body.amenities : [body.amenities];
+      for (const label of amenities) {
+        const amenityId = await resolveAmenityId(client, label);
+        if (!amenityId) {
+          console.log("⛔ amenity not found, skipping:", label);
+          continue;
+        }
+        await client
+          .createQueryBuilder()
+          .insert()
+          .into("main.property_amenity")
+          .values({
+            id: newId(),
+            property_id: id,
+            amenityid: amenityId
+          })
+          .execute();
+      }
+      console.log("✅ property_amenity inserted (resolved ids)");
+    }
+
+    console.log("✅ Property fully created in all tables");
+>>>>>>> a90b4b3e5 (updated controller and repository for admin form.)
     return { id, registrationnumber };
   }
 }

@@ -3,13 +3,13 @@ import { Repository } from "../data/repository.js";
 import responseHeaders from "../utils/constant/responseHeader.json" with { type: "json" };
 
 export class Controller {
-    authManager;
-    repository;
+  authManager;
+  repository;
 
-    constructor() {
-        this.authManager = new AuthManager();
-        this.repository = new Repository();
-    }
+  constructor() {
+    this.authManager = new AuthManager();
+    this.repository = new Repository();
+  }
 
   async createProperty(event) {
     console.log("🟡 Controller.createProperty START");
@@ -25,8 +25,8 @@ export class Controller {
       const body = typeof raw === "string" ? JSON.parse(raw) : raw;
       console.log("Parsed body:", body);
 
-      const created = await this.repository.createProperty(body, hostId);
-      console.log("✅ Property created successfully:", created);
+            const created = await this.repository.createProperty(body, hostId);
+            console.log("✅ Property created successfully:", created);
 
       return {
         statusCode: 200,
