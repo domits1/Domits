@@ -1,4 +1,13 @@
 import React, { useState } from 'react';
+import Icon from '@mdi/react';
+import {
+    mdiPartyPopper,
+    mdiClipboardTextOutline, 
+    mdiDoor, 
+    mdiWifi, 
+    mdiStarOutline, 
+    mdiRobotOutline 
+} from '@mdi/js';
 
 const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
     const { userId: senderId, text, createdAt, isRead, isSent, fileUrls, isAutomated, messageType } = message;
@@ -24,12 +33,12 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
 
     function getAutomatedIcon(type) {
         switch (type) {
-            case 'booking_confirmation': return '🎉';
-            case 'checkin_instructions': return '📋';
-            case 'checkout_instructions': return '🚪';
-            case 'wifi_info': return '📶';
-            case 'feedback_request': return '⭐';
-            default: return '🤖';
+            case 'booking_confirmation': return mdiPartyPopper;
+            case 'checkin_instructions': return mdiClipboardTextOutline;
+            case 'checkout_instructions': return mdiDoor;
+            case 'wifi_info': return mdiWifi;
+            case 'feedback_request': return mdiStarOutline;
+            default: return mdiRobotOutline;
         }
     }
 
@@ -39,8 +48,8 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
                 <div className={`message-header ${isAutomatedMessage ? 'automated-header' : ''}`}>
                     {isAutomatedMessage && (
                         <span className={`sender-name`}>
-                            <span className="automated-sender">
-                                {automatedIcon} {senderId === userId ? 'You' : contactName} (Automated)
+                            <span className="automated-sender" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <Icon path={automatedIcon} size={0.8} aria-label="automated-icon" /> {senderId === userId ? 'You' : contactName} (Automated)
                             </span>
                         </span>
                     )}
