@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 
 import StripeAccountRepository from "../../data/stripeAccountRepository.js";
+import PropertyRepository from "../../data/propertyRepository.js";
 import AuthManager from "../../auth/authManager.js";
 
 import { BadRequestException } from "../../util/exception/badRequestException.js";
@@ -14,6 +15,7 @@ export default class StripePayoutsService {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     this.authManager = new AuthManager();
     this.stripeAccountRepository = new StripeAccountRepository();
+    this.propertyRepository = new PropertyRepository();
   }
 
   async getHostCharges(event) {
@@ -39,7 +41,7 @@ export default class StripePayoutsService {
       ],
     });
 
-    const chargeDetails = transfers.data.map((tr) => {
+    const chargeDetails = transfers.data.map(async (tr) => {
       const charge = tr.source_transaction;
       const bt = charge.balance_transaction;
       const appFee = charge.application_fee;
@@ -50,7 +52,10 @@ export default class StripePayoutsService {
       const platformFeeNet = platformFeeGross - stripeProcessingFees;
       const hostReceives = customerPaid - platformFeeGross;
 
-      const propertyId = charge.metadata.propertyId ;
+      const propertyId = charge.metadata.propertyId;
+
+      const property = await this.propertyRepository.getProperty(propertyId);
+      console.log("Property fetched:", property);
 
       return {
         customerPaid: toAmount(customerPaid),
