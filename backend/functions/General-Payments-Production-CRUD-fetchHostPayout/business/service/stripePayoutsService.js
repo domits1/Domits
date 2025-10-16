@@ -70,6 +70,7 @@ export default class StripePayoutsService {
           customerName: charge.billing_details.name,
           paymentMethod: charge.payment_method_details.type,
           propertyTitle: property.title,
+          propertyImage: property.key,
         };
       })
     );

@@ -14,16 +14,8 @@ export default class PropertyRepository {
     .leftJoin("property_image", "image", "image.property_id = property.id")
     .where("property.id = :id", { id: property_id })
     .select([
-        "property.id",
-        "property.updatedat",
-        "property.title",
-        "property.subtitle",
-        "property.description",
-        "property.registrationnumber",
-        "property.hostid",
-        "property.status",
-        "property.createdat",
-        "image.key",
+        "title",
+        "key",
     ])
     .getRawOne();
 
