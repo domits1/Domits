@@ -55,7 +55,6 @@ export default class StripePayoutsService {
       const propertyId = charge.metadata.propertyId;
 
       const property = await this.propertyRepository.getProperty(propertyId);
-      console.log("Property fetched:", property);
 
       return {
         customerPaid: toAmount(customerPaid),
@@ -68,7 +67,7 @@ export default class StripePayoutsService {
         createdDate: new Date((charge.created) * 1000).toLocaleDateString(),
         customerName: charge.billing_details.name,
         paymentMethod: charge.payment_method_details.type,
-        propertyId: propertyId,
+        propertyTitle: property.title,
       };
     });
 
