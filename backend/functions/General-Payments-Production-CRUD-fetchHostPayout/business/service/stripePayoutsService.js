@@ -41,35 +41,37 @@ export default class StripePayoutsService {
       ],
     });
 
-    const chargeDetails = transfers.data.map(async (tr) => {
-      const charge = tr.source_transaction;
-      const bt = charge.balance_transaction;
-      const appFee = charge.application_fee;
+    const chargeDetails = await Promise.all(
+      transfers.data.map(async (tr) => {
+        const charge = tr.source_transaction;
+        const bt = charge.balance_transaction;
+        const appFee = charge.application_fee;
 
-      const customerPaid = charge.amount;
-      const stripeProcessingFees = bt.fee;
-      const platformFeeGross = appFee.amount;
-      const platformFeeNet = platformFeeGross - stripeProcessingFees;
-      const hostReceives = customerPaid - platformFeeGross;
+        const customerPaid = charge.amount;
+        const stripeProcessingFees = bt.fee;
+        const platformFeeGross = appFee.amount;
+        const platformFeeNet = platformFeeGross - stripeProcessingFees;
+        const hostReceives = customerPaid - platformFeeGross;
 
-      const propertyId = charge.metadata.propertyId;
+        const propertyId = charge.metadata.propertyId;
 
-      const property = await this.propertyRepository.getProperty(propertyId);
+        const property = await this.propertyRepository.getProperty(propertyId);
 
-      return {
-        customerPaid: toAmount(customerPaid),
-        stripeProcessingFees: toAmount(stripeProcessingFees),
-        platformFeeGross: toAmount(platformFeeGross),
-        platformFeeNet: toAmount(platformFeeNet),
-        hostReceives: toAmount(hostReceives),
-        currency: (bt.currency).toUpperCase(),
-        status: charge.status,
-        createdDate: new Date((charge.created) * 1000).toLocaleDateString(),
-        customerName: charge.billing_details.name,
-        paymentMethod: charge.payment_method_details.type,
-        propertyTitle: property.title,
-      };
-    });
+        return {
+          customerPaid: toAmount(customerPaid),
+          stripeProcessingFees: toAmount(stripeProcessingFees),
+          platformFeeGross: toAmount(platformFeeGross),
+          platformFeeNet: toAmount(platformFeeNet),
+          hostReceives: toAmount(hostReceives),
+          currency: bt.currency.toUpperCase(),
+          status: charge.status,
+          createdDate: new Date(charge.created * 1000).toLocaleDateString(),
+          customerName: charge.billing_details.name,
+          paymentMethod: charge.payment_method_details.type,
+          propertyTitle: property.title,
+        };
+      })
+    );
 
     return {
       statusCode: 200,
