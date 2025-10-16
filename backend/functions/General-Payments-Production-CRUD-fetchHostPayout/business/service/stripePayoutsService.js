@@ -35,6 +35,7 @@ export default class StripePayoutsService {
         "data.source_transaction",
         "data.source_transaction.balance_transaction",
         "data.source_transaction.application_fee",
+        "data.source_transaction.payment_intent",
       ],
     });
 
@@ -49,6 +50,8 @@ export default class StripePayoutsService {
       const platformFeeNet = platformFeeGross - stripeProcessingFees;
       const hostReceives = customerPaid - platformFeeGross;
 
+      const propertyId = charge.metadata.propertyId ;
+
       return {
         customerPaid: toAmount(customerPaid),
         stripeProcessingFees: toAmount(stripeProcessingFees),
@@ -60,6 +63,7 @@ export default class StripePayoutsService {
         createdDate: new Date((charge.created) * 1000).toLocaleDateString(),
         customerName: charge.billing_details.name,
         paymentMethod: charge.payment_method_details.type,
+        propertyId: propertyId,
       };
     });
 
