@@ -219,7 +219,7 @@ function App() {
 
 
                 <Route
-                  path="/hostdashboard"
+                  path="/hostdashboard/*"
                   element={<HostProtectedRoute>
                     <MainDashboardHost />
                   </HostProtectedRoute>}
