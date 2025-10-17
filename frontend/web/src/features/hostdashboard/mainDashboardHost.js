@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+
 import Pages from "./Pages2";
 import HostDashboard from "./HostDashboard";
 import HostCalendar from "./HostCalendar";
@@ -11,50 +12,32 @@ import HostPricing from "./hostpricing/views/HostPricing";
 import HostListings from "./HostListings";
 import HostSettings from "./HostSettings";
 
-function MainDashboardHost(){
-    const [activeComponent, setActiveComponent] = useState("Dashboard");
+function MainDashboardHost() {
+  return (
+    <div className="main-dashboard-guest">
+      <div className="main-dashboard-sidebar">
+        <Pages />
+      </div>
 
-    function renderComponent(){
-        switch (activeComponent){
-            case "List":
-                return
-            case "Dashboard":
-                return <HostDashboard/>
-            case "Calender":
-                return <HostCalendar/>
-            case "Reservations":
-                return <HostReservations/>
-            case "Messages":
-                return <Messages dashboardType="host" /> 
-            case "Revenues":
-                return <HostReports/>
-            case "Housekeeping":
-                return <HostPropertyCare/>
-            case "Finance":
-                return <HostFinanceTab/>
-            case "Pricing":
-                return <HostPricing/>
-            case "Listing":
-                return <HostListings/>
-            case "Settings":
-                return <HostSettings/>
-        }
-    }
+      <div className="main-dashboard-content">
+        <Routes>
+          <Route index element={<HostDashboard />} />
 
-    const handleNavigation = (componentName) => {
-        setActiveComponent(componentName);
-    };
+          <Route path="calendar" element={<HostCalendar />} />
+          <Route path="reservations" element={<HostReservations />} />
+          <Route path="messages" element={<Messages dashboardType="host" />} />
+          <Route path="revenues" element={<HostReports />} />
+          <Route path="housekeeping" element={<HostPropertyCare />} />
+          <Route path="finance" element={<HostFinanceTab />} />
+          <Route path="pricing" element={<HostPricing />} />
+          <Route path="listings" element={<HostListings />} />
+          <Route path="settings" element={<HostSettings />} />
 
-    return (
-        <div className="main-dashboard-guest">
-            <div className="main-dashboard-sidebar">
-                <Pages onNavigate={handleNavigation} />
-            </div>
-            <div className="main-dashboard-content">
-                {renderComponent()}
-            </div>
-        </div>
-    );
+          <Route path="*" element={<Navigate to="." replace />} />
+        </Routes>
+      </div>
+    </div>
+  );
 }
 
-export default MainDashboardHost
+export default MainDashboardHost;
