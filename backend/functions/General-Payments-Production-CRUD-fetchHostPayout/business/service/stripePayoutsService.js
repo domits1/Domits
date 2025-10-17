@@ -56,7 +56,6 @@ export default class StripePayoutsService {
         const propertyId = charge.metadata.propertyId;
 
         const property = await this.propertyRepository.getProperty(propertyId);
-        console.log(property);
 
         return {
           customerPaid: toAmount(customerPaid),
