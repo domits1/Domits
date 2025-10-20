@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Pages from "./Pages2";
@@ -12,6 +14,15 @@ import HostPricing from "./hostpricing/views/HostPricing";
 import HostListings from "./HostListings";
 import HostSettings from "./HostSettings";
 
+function MainDashboardHost(){
+    const [activeComponent, setActiveComponent] = useState("Dashboard");
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.pathname === "/hostdashboard/messages") {
+            setActiveComponent("Messages");
+        }
+    }, [location.pathname]);
 function MainDashboardHost() {
   return (
     <div className="main-dashboard-guest">
