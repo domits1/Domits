@@ -8,6 +8,7 @@ import GetByGuestIdModel from "./events/getByGuestId.js";
 import GetByCreatedAtModel from "./events/getByCreatedAtDate.js";
 import GetByPaymentIdModel from "./events/getByPaymentId.js";
 import getByDepartureDateModel from "./events/getByDepartureDate.js";
+import GetbyHostIdSinglePropertyRequestModel from "./events/GetbyHostIdSingleProperty.js";
 
 jest.setTimeout(20000);
 
@@ -24,6 +25,11 @@ describe("booking end-to-end", () => {
         const response = await handler(await GetbyHostIdRequestModel);
         expect([200, 404]).toContain(response.statusCode);
 
+    })
+
+    it("should receive a GET request queried on a HostID, and return one property", async () => {
+        const response = await handler(await GetbyHostIdSinglePropertyRequestModel);
+        expect([200, 404]).toContain(response.statusCode);
     })
 
     it("should receive a GET request queried on a property ID", async () => {

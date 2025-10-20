@@ -74,6 +74,18 @@ After installing all packages, press the shift key two times to open a search po
 
 Press ctrl + f and lookup: "ViewPropTypes", it will show you a console.error. Comment out the entire getter. (You will have to do this step everytime you run "npm install")
 
+### IOException fix in RN image picker node module
+search for the Utils.java file in the react-native-image-picker node module:
+`node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/Utils.java`
+
+replace `m.release();` inside the `getDuration` function with the following:
+```java
+try {
+    m.release();
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
 
 ## Testing environment setup
 In order to setup your project environment to testing add an .env file in frontend/app/Domits with the following lines:

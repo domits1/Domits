@@ -43,10 +43,30 @@ function Pages({ onNavigate }) {
                         <MenuItem icon={<DashboardIcon />} label="Listing" handleNavigation={() => onNavigate("Listing")} />
                         <MenuItem icon={<DashboardIcon />} label="Settings" handleNavigation={() => onNavigate("Settings")} />
                     </div>
-                </div>
-            </div>
+                    <p>{label}</p>
+                  </button>
+                );
+              }
+
+              return (
+                <NavLink
+                  key={label}
+                  to={to}
+                  end={to === "."}
+                  className={({ isActive }) => `wijzer ${isActive ? "active" : ""}`}
+                  onClick={() => setIsOpen(false)}>
+                  <div className="icon">
+                    <DashboardIcon />
+                  </div>
+                  <p>{label}</p>
+                </NavLink>
+              );
+            })}
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
 
 export default Pages;

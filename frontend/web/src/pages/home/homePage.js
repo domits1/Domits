@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import verifiedLogo from "../../images/icons/verify-icon.png";
 import checkMark from "../../images/icons/checkMark.png";
 import question from "../../images/icons/question.png";
@@ -593,9 +593,9 @@ const Homepage = () => {
         <div className="countries-container">
           {countries.map((country, index) => (
             <div className="country-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={country.img} alt={country.name} />
-              </a>
+              </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
             </div>
@@ -604,9 +604,9 @@ const Homepage = () => {
         <div className="small-countries-container">
           {smallCountries.map((country, index) => (
             <div className="country-card small-country-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={country.img} alt={country.name} />
-              </a>
+              </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
             </div>
@@ -616,9 +616,9 @@ const Homepage = () => {
         <div className="asia-countries-container">
           {asiaCountries.map((country, index) => (
             <div className="country-card asia-country-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={country.img} alt={country.name} />
-              </a>
+              </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
             </div>
@@ -627,9 +627,9 @@ const Homepage = () => {
         <div className="small-asia-countries-container">
           {smallAsiaCountries.map((country, index) => (
             <div className="country-card small-asia-country-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={country.img} alt={country.name} />
-              </a>
+              </Link>
               <h3>{country.name}</h3>
             </div>
           ))}
@@ -638,9 +638,9 @@ const Homepage = () => {
         <div className="caribbean-countries-container">
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={country.img} alt={country.name} />
-              </a>
+              </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
             </div>
@@ -649,9 +649,9 @@ const Homepage = () => {
         <div className="small-caribbean-countries-container">
           {smallCaribbeanCountries.map((country, index) => (
             <div className="country-card small-caribbean-country-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={country.img} alt={country.name} />
-              </a>
+              </Link>
               <h3>{country.name}</h3>
             </div>
           ))}
@@ -660,9 +660,9 @@ const Homepage = () => {
         <div className="ski-countries-container">
           {skiCountries.map((country, index) => (
             <div className="country-card ski-country-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={country.img} alt={country.name} />
-              </a>
+              </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
             </div>
@@ -672,9 +672,9 @@ const Homepage = () => {
         <div className="seasons-container">
           {seasons.map((season, index) => (
             <div className="season-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={season.img} alt={season.name} />
-              </a>
+              </Link>
               <h3>{season.name}</h3>
             </div>
           ))}
@@ -683,9 +683,9 @@ const Homepage = () => {
         <div className="interests-container">
           {interests.map((interest, index) => (
             <div className="interest-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={interest.img} alt={interest.name} />
-              </a>
+              </Link>
               <h3>{interest.name}</h3>
               <p>{interest.description}</p>
             </div>
@@ -695,9 +695,9 @@ const Homepage = () => {
         <div className="groups-container">
           {groups.map((group, index) => (
             <div className="group-card" key={index}>
-              <a href="https://www.domits.com/home/" target="_blank" rel="noopener noreferrer">
+              <Link to="/home">
                 <img src={group.img} alt={group.name} />
-              </a>
+              </Link>
               <h3>{group.name}</h3>
               <p>{group.description}</p>
             </div>

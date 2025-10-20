@@ -8,8 +8,6 @@ import GuestReviews from "./GuestReviews";
 import GuestSettings from "./GuestSettings";
 import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
-
-
 const MainDashboardGuest = () => {
   const [activeComponent, setActiveComponent] = useState("Dashboard");
   const location = useLocation();
@@ -43,7 +41,6 @@ const MainDashboardGuest = () => {
   const handleNavigation = (componentName) => {
     setActiveComponent(componentName);
   };
-
   return (
     <div className="main-dashboard-guest">
       <div className="main-dashboard-sidebar">
