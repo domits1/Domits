@@ -13,6 +13,7 @@ async function main() {
       },
       queryStringParameters: {
         metric: "",
+        filterType: "",
       },
     })
   );

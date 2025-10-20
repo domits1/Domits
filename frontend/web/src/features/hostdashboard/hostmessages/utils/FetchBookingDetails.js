@@ -17,10 +17,8 @@ const fetchBookingDetailsAndAccommodation = async ({
 
   let accoImage = null;
 
-  let propertyTitle = null;
-
-  if (propertyId && accommodationEndpoint) {
-    const accoRaw = await getAccommodationByPropertyId(accommodationEndpoint, propertyId, token);
+  if (bookingData.property_id && accommodationEndpoint) {
+    const accoRaw = await getAccommodationByPropertyId(accommodationEndpoint, bookingData.property_id, token);
     const key = accoRaw?.images?.[0]?.key;
     propertyTitle = accoRaw?.title || accoRaw?.name || null;
 
