@@ -253,9 +253,6 @@ function App() {
                     <MainDashboardHost />
                   </HostProtectedRoute>}
                 />
-<<<<<<< Updated upstream
-=======
-
                 <Route
                    path="/hostdashboard/calendar"
                    element={
@@ -264,7 +261,6 @@ function App() {
                   </HostProtectedRoute>
                   }
                  />
->>>>>>> Stashed changes
                 <Route path="/stripe/callback" element={<StripeCallback />} />
 
                 {/* Career, Policies, and Terms */}

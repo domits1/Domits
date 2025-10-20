@@ -16,15 +16,8 @@ function MainDashboardHost(){
     const [activeComponent, setActiveComponent] = useState("Dashboard");
     const location = useLocation();
 
-<<<<<<< Updated upstream
-    // Handle URL-based routing
-    useEffect(() => {
-        const path = location.pathname;
-        if (path.includes('/messages')) {
-=======
     useEffect(() => {
         if (location.pathname === "/hostdashboard/messages") {
->>>>>>> Stashed changes
             setActiveComponent("Messages");
         }
     }, [location.pathname]);
