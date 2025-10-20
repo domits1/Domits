@@ -1,122 +1,127 @@
-import React, { useState, useEffect } from 'react';
-import { Auth } from 'aws-amplify';
-import './NightsAvailable.scss';
+import React, { useState, useEffect } from "react";
+import { Auth } from "aws-amplify";
+import "./NightsAvailable.scss";
+
+const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
 const NightsAvailable = () => {
   const [availableNights, setAvailableNights] = useState(0);
   const [totalProperties, setTotalProperties] = useState(0);
+  const [periodType, setPeriodType] = useState("monthly");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cognitoUserId, setCognitoUserId] = useState(null);
 
-  const getDateRange = () => {
-    const today = new Date();
-    const endDate = new Date(today);
-    endDate.setDate(endDate.getDate() + 10);
-
-    const format = (date) => date.toISOString().split('T')[0];
-
-    return {
-      startDate: format(today),
-      endDate: format(endDate),
+  // Get Cognito User ID
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const userInfo = await Auth.currentUserInfo();
+        setCognitoUserId(userInfo.attributes.sub);
+      } catch (err) {
+        console.error("Error fetching Cognito user ID:", err);
+        setError("User not logged in.");
+      }
     };
+    fetchUserId();
+  }, []);
+
+  // Fetch Available Nights
+  const fetchAvailableNightsData = async () => {
+    if (!cognitoUserId) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const session = await Auth.currentSession();
+      const token = session.getAccessToken().getJwtToken();
+
+      // Build API URL with metric
+      let url = `${BASE_URL}?hostId=${cognitoUserId}&metric=availableNights`;
+      if (periodType === "custom" && startDate && endDate) {
+        url += `&startDate=${startDate}&endDate=${endDate}`;
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: token },
+      });
+
+      let data = await response.json();
+      if (data.body) {
+        data = JSON.parse(data.body);
+      }
+
+      // Flatten response
+      let nights = 0;
+      if (data.availableNights) {
+        if (typeof data.availableNights === "number") {
+          nights = data.availableNights;
+        } else if ("availableNights" in data.availableNights) {
+          nights = data.availableNights.availableNights;
+        } else if ("value" in data.availableNights) {
+          nights = data.availableNights.value;
+        }
+      }
+
+      setAvailableNights(nights);
+
+      // Optional: property count if returned
+      let properties = 0;
+      if (data.propertyCount) {
+        if (typeof data.propertyCount === "number") properties = data.propertyCount;
+        else if ("value" in data.propertyCount) properties = data.propertyCount.value;
+      }
+      setTotalProperties(properties);
+    } catch (err) {
+      console.error("Error fetching available nights:", err);
+      setError(err.message || "Failed to fetch available nights.");
+      setAvailableNights(0);
+      setTotalProperties(0);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const userInfo = await Auth.currentUserInfo();
-        const userId = userInfo?.attributes?.sub;
-        if (!userId) throw new Error('User ID not found');
-
-        const session = await Auth.currentSession();
-        const idToken = session.getIdToken().getJwtToken();
-
-        const accommodationsResponse = await fetch(
-          'https://sw2zadbsx8.execute-api.eu-north-1.amazonaws.com/default/Host-Revenues-Production-Read-NightsAvailable',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': idToken,
-            },
-            body: JSON.stringify({ UserId: userId })
-          }
-        );
-
-        if (!accommodationsResponse.ok) {
-          const errorText = await accommodationsResponse.text();
-          console.error('Accommodations API error:', errorText);
-          throw new Error(`Accommodations request failed: ${accommodationsResponse.status}`);
-        }
-
-        const accommodationsData = await accommodationsResponse.json();
-        if (!accommodationsData.body) throw new Error('No data received from Accommodations API');
-
-        let accommodations;
-        try {
-          accommodations = JSON.parse(accommodationsData.body);
-        } catch (e) {
-          throw new Error('Invalid accommodations data format');
-        }
-
-        if (!Array.isArray(accommodations)) throw new Error('Accommodations data is not an array');
-
-        const activeProperties = accommodations.filter((acc) => !acc.Drafted?.BOOL);
-        setTotalProperties(activeProperties.length);
-
-        const { startDate, endDate } = getDateRange();
-
-        const nightsResponse = await fetch(
-          'https://sw2zadbsx8.execute-api.eu-north-1.amazonaws.com/default/Host-Revenues-Production-Read-NightsAvailable',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': idToken,
-            },
-            body: JSON.stringify({
-              periodType: 'custom',
-              startDate,
-              endDate,
-              hostId: userId,
-            }),
-          }
-        );
-
-        if (!nightsResponse.ok) {
-          const errorText = await nightsResponse.text();
-          console.error('Nights API error:', errorText);
-          throw new Error(`Available Nights request failed: ${nightsResponse.status}`);
-        }
-
-        const nightsData = await nightsResponse.json();
-        if (nightsData.error) throw new Error(nightsData.error);
-
-        if (typeof nightsData.availableNights === 'number') {
-          setAvailableNights(nightsData.availableNights);
-        } else {
-          throw new Error('No "availableNights" in response');
-        }
-      } catch (err) {
-        console.error('Detailed error:', err);
-        setError(err.message || 'Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+    if (cognitoUserId) {
+      fetchAvailableNightsData();
+    }
+  }, [periodType, startDate, endDate, cognitoUserId]);
 
   return (
     <div className="nights-available-card">
       <div className="nights-available-header">
         <h3>Available Nights</h3>
       </div>
+
+      <div className="time-filter">
+        <label htmlFor="periodType">Time Filter:</label>
+        <select
+          id="periodType"
+          value={periodType}
+          onChange={(e) => setPeriodType(e.target.value)}
+        >
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      {periodType === "custom" && (
+        <div className="custom-date-filter">
+          <div>
+            <label>Start Date : </label>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </div>
+          <div>
+            <label>End Date : </label>
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          </div>
+        </div>
+      )}
 
       <div className="nights-available-content">
         {loading ? (
@@ -125,9 +130,7 @@ const NightsAvailable = () => {
           <div className="error-message">{error}</div>
         ) : (
           <div className="nights-available-details">
-            <p className="available-nights-number">
-              {availableNights.toLocaleString()}
-            </p>
+            <p className="available-nights-number">{availableNights}</p>
             <p>Active Properties: {totalProperties}</p>
           </div>
         )}

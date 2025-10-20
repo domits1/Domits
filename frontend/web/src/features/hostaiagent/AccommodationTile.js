@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Slider from 'react-slick';
 
 const AccommodationTile = ({ accommodation }) => {
@@ -21,10 +22,8 @@ const AccommodationTile = ({ accommodation }) => {
     return (
         <div className="hostchatbot-accommodation-tile">
             {/* Stop event bubbling */}
-            <a
-                href={accommodationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+            <Link
+                to={accommodationUrl}
                 onClick={(e) => e.stopPropagation()} // Prevent interference from parent events
             >
                 <Slider {...sliderSettings}>
@@ -39,7 +38,7 @@ const AccommodationTile = ({ accommodation }) => {
                         </div>
                     ))}
                 </Slider>
-            </a>
+            </Link>
             <div className="hostchatbot-accommodation-details">
                 <h3>{accommodation.title || 'Accommodation'}</h3>
                 <p><strong>City:</strong> {accommodation.city}</p>

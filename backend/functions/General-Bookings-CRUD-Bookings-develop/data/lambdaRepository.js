@@ -27,17 +27,16 @@ class LambdaRepository {
         const result = await client
             .getRepository(Property_Pricing)
             .createQueryBuilder("property_pricing")
-            .where("property_pricing.property_id = :id", {id: id})
+            .where("property_pricing.property_id = :property_id", {property_id: id})
             .getMany();
 
-        if (result) {
-            client.close();
-            return {
-                pricing: result,
-            }
-        } else {
-            throw new NotFoundException("Unable to fetch property pricing data from the property_pricing table.")
+        if (result.length === 0 ){
+            throw new NotFoundException("Unable to fetch property pricing data from the property_pricing table")
         }
+
+        return {
+            pricing: result
+        };
     }
 }
 export default LambdaRepository;

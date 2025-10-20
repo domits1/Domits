@@ -57,6 +57,7 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation project(":react-native-splash-screen")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.activity:activity:1.9.+")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-engine:+")
