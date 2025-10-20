@@ -104,7 +104,7 @@ export default function HostFinanceTab() {
                     </>
                   ) : (
                     <>
-                      <strong>Step 2: </strong> &nbsp; You’re connected to Stripe. Well done!
+                      <strong>Step 2: </strong> &nbsp; You’re connected to Stripe. Well done! &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
                         onClick={!isProcessing ? handleStripeAction : undefined}>

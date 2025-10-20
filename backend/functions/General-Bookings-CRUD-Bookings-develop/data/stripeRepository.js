@@ -7,9 +7,7 @@ import CalculateTotalRate from "../util/calcuateTotalRate.js";
 import { Payment } from "database/models/Payment";
 import Database from "database";
 import { Booking } from "database/models/Booking";
-import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 import "dotenv/config";
-import { BadRequestException } from "../util/exception/badRequestException.js";
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
@@ -31,61 +29,19 @@ class StripeRepository {
 
         const stripe = await stripePromise;
 
-        const { totalWithoutCleaningfee, totalWithCleaningfee } = await CalculateTotalRate(propertyId, dates);
-
-
-        const platformFee = (totalWithoutCleaningfee / 1.1) * 0.1;
-
-
-        const totalAmount = totalWithCleaningfee;
-
-        let region = null;
-
-        const payer = await stripe.accounts.retrieve(account_id);
-
-        if (payer.country === "NL") {
-          region = "EER";
-        } else {
-          region = "Non-EER";
-        }
-
-        let stripePercentage = null;
-        let stripeFixedFee = null;
-
-        switch (region) {
-          case "EER":
-            stripePercentage = 0.015;
-            stripeFixedFee = 0.25;
-            break;
-          case "UK":
-            stripePercentage = 0.025;
-            stripeFixedFee = 0.25;
-            break;
-          case "Non-EER":
-            stripePercentage = 0.0325;
-            stripeFixedFee = 0.25;
-            break;
-          default:
-            throw new BadRequestException(`Unrecognized region: ${region}`);
-        }
-
-        const stripeFee = totalAmount * stripePercentage + stripeFixedFee;
-
-
-        const yourNetPlatformFee = platformFee - stripeFee;
+        const { hostCents, platformCents, totalCents } = await CalculateTotalRate(propertyId, dates);
 
         const paymentIntent = await stripe.paymentIntents.create({
-          amount: Math.round(totalWithCleaningfee),
+          amount: totalCents,
           currency: "eur",
           payment_method_types: ["card", "ideal", "klarna"],
-          application_fee_amount: Math.round(platformFee),
           transfer_data: {
             destination: account_id,
           },
+          application_fee_amount: Math.round(platformCents),
           metadata: {
             propertyId,
             dates: JSON.stringify(dates),
-            netPlatFormfee: Math.round(yourNetPlatformFee * 100),
           },
         });
 
@@ -93,11 +49,9 @@ class StripeRepository {
           stripePaymentId: paymentIntent.id,
           stripeClientSecret: paymentIntent.client_secret,
           breakdown: {
-            customerPays: totalAmount,
-            hostReceives: totalWithCleaningfee,
-            platformFeeGross: platformFee,
-            stripeFee: stripeFee,
-            platformFeeNet: yourNetPlatformFee,
+            customerPays: totalCents,
+            hostReceives: hostCents,
+            platformFeeGross: platformCents,
           },
         };
       } catch (error) {

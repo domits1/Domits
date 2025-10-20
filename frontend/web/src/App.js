@@ -22,7 +22,6 @@ import ValidatePayment from "./features/bookingengine/ValidatePayment";
 import BookingConfirmationOverview from "./features/bookingengine/BookingConfirmOverview";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
-import HostCalendar from "./features/hostdashboard/HostCalendar";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
@@ -32,7 +31,6 @@ import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
-import HostCalendar from "./features/hostdashboard/hostcalen/HostCalendar";
 import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
 import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostMonitoring from "./features/hostdashboard/HostMonitoring";
@@ -94,7 +92,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE)
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST)
 Modal.setAppElement("#root");
 
 function App() {
@@ -219,20 +217,12 @@ function App() {
 
 
                 <Route
-                  path="/hostdashboard"
+                  path="/hostdashboard/*"
                   element={<HostProtectedRoute>
                     <MainDashboardHost />
                   </HostProtectedRoute>}
                 />
 
-                <Route
-                   path="/hostdashboard/calendar"
-                   element={
-                   <HostProtectedRoute>
-                  <HostCalendar />
-                  </HostProtectedRoute>
-                  }
-                 />
                 <Route path="/stripe/callback" element={<StripeCallback />} />
 
                 {/* Career, Policies, and Terms */}
