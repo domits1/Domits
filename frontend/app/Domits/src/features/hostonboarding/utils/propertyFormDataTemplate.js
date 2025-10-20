@@ -66,8 +66,8 @@ const propertyFormDataTemplate = {
     },
     propertyRules: [
         {rule: "allowSmoking", value: false},
-        {rule: "allowParties", value: false},
         {rule: "allowPets", value: false},
+        {rule: "allowParties", value: false},
     ],
     propertyType: {
         property_id: "",
