@@ -9,11 +9,11 @@ import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/comp
 import { WebSocketContext } from '../../features/hostdashboard/hostmessages/context/webSocketContext';
 import '../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss';
 import { v4 as uuidv4 } from 'uuid';
-import { FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
+import { FaPaperPlane, FaArrowLeft, FaTimes } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
 
 
-const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, dashboardType}) => {
+const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, onClose, dashboardType}) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const socket = useContext(WebSocketContext);
     const isHost = dashboardType === 'host';
@@ -150,6 +150,31 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                     {onBack && (
                         <button className="back-to-contacts-button" onClick={onBack}>
                             <FaArrowLeft />
+                        </button>
+                    )}
+                    {onClose && (
+                        <button 
+                            className="close-chat-button" 
+                            onClick={onClose}
+                            title="Close chat"
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '16px',
+                                color: '#666',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                marginRight: '8px',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.color = '#333';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.color = '#666';
+                            }}
+                        >
+                            <FaTimes />
                         </button>
                     )}
                     <img src={contactImage || profileImage} alt={contactName} className="profile-img" />

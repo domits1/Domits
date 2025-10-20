@@ -21,6 +21,32 @@
         font-size: 1.75em;
     }
 
+    .contact-search-under-title {
+        border-radius: 20px !important;
+        padding: 12px 16px !important;
+        border: 1px solid #ddd !important;
+        background-color: #fff !important;
+        font-size: 14px !important;
+        outline: none !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.2s ease !important;
+        
+        &:focus {
+            border-color: #0D9813 !important;
+            box-shadow: 0 4px 8px rgba(13, 152, 19, 0.2) !important;
+        }
+        
+        &:hover {
+            border-color: #bbb !important;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        &.chat-open {
+            width: 80% !important;
+            max-width: 80% !important;
+        }
+    }
+
     &::-webkit-scrollbar {
         width: 6px;
         opacity: 0;

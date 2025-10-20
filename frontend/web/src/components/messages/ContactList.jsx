@@ -6,7 +6,7 @@ import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostCo
 import { FaCog, FaSearch, FaBars, FaPlus } from 'react-icons/fa';
 import AutomatedSettings from './AutomatedSettings';
 
-const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
+const ContactList = ({ userId, onContactClick, message, dashboardType, isChatOpen = false }) => {
     const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId, dashboardType);
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [displayType, setDisplayType] = useState('contacts');
@@ -152,10 +152,29 @@ const ContactList = ({ userId, onContactClick, message, dashboardType }) => {
                 <input
                     type="text"
                     placeholder="Search contacts"
-                    className="contact-search-input contact-search-under-title"
+                    className={`contact-search-input contact-search-under-title ${isChatOpen ? 'chat-open' : ''}`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
-                    style={{ width: '100%', maxWidth: '100%' }}
+                    style={{ 
+                        width: isChatOpen ? '80%' : '100%', 
+                        maxWidth: isChatOpen ? '80%' : '100%',
+                        borderRadius: '20px',
+                        padding: '12px 16px',
+                        border: '1px solid #ddd',
+                        backgroundColor: '#fff',
+                        fontSize: '14px',
+                        outline: 'none',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onFocus={(e) => {
+                        e.target.style.borderColor = '#0D9813';
+                        e.target.style.boxShadow = '0 4px 8px rgba(13, 152, 19, 0.2)';
+                    }}
+                    onBlur={(e) => {
+                        e.target.style.borderColor = '#ddd';
+                        e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                    }}
                 />
             </div>
 

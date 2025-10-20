@@ -47,6 +47,11 @@ const MessagesContent = ({ dashboardType }) => {
         setSelectedContactName(null);
     };
 
+    const handleCloseChat = () => {
+        setSelectedContactId(null);
+        setSelectedContactName(null);
+    };
+
     const handleContactListMessage = (sentMessage) => {
         setMessage(sentMessage);
     };
@@ -71,6 +76,7 @@ const MessagesContent = ({ dashboardType }) => {
                                 onContactClick={handleContactClick}
                                 message={message}
                                 dashboardType={dashboardType}
+                                isChatOpen={!!selectedContactId}
                             />
                         )}
                         {isMobile && selectedContactId && (
@@ -86,6 +92,7 @@ const MessagesContent = ({ dashboardType }) => {
                                 contactName={selectedContactName}
                                 contactImage={selectedContactImage}
                                 onBack={isTablet ? handleBackToContacts : null}
+                                onClose={handleCloseChat}
                                 dashboardType={dashboardType}
 
                             />
