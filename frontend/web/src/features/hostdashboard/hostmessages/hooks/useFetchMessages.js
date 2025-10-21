@@ -34,7 +34,8 @@ export const useFetchMessages = (userId) => {
             const result = JSON.parse(rawResponse);
 
             if (Array.isArray(result)) {
-                const allChats = result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                // Sort oldest -> newest so messages render top-to-bottom with latest at the bottom
+                const allChats = result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
                 setMessages(allChats);
             } else {
                 console.error("Unexpected response format:", result);
@@ -51,10 +52,10 @@ export const useFetchMessages = (userId) => {
     const addNewMessage = useCallback((newMessage) => {
         setMessages((prevMessages) => {
             const messageExists = prevMessages.some((msg) => msg.id === newMessage.id);
-            if (!messageExists) {
-                return [newMessage, ...prevMessages];
-            }
-            return prevMessages;
+            if (messageExists) return prevMessages;
+            // Append to end so newest is at the bottom
+            const next = [...prevMessages, newMessage];
+            return next;
         });
     }, []);
 
