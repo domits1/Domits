@@ -36,10 +36,32 @@ export async function createStripeAccount() {
   return data.details;
 }
 
-export async function test() {
+export async function getCharges() {
   const token = await getAccessToken();
   const response = await fetch(
     "https://4ac2ngbvlb.execute-api.eu-north-1.amazonaws.com/deployment/payments/retrieve-user-charges",
+    {
+      method: "GET",
+      headers: { Authorization: token },
+    }
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.details;
+}
+
+export async function getPayouts() {
+  const token = await getAccessToken();
+  const response = await fetch(
+    "https://4ac2ngbvlb.execute-api.eu-north-1.amazonaws.com/deployment/payments/retrieve-user-payouts",
     {
       method: "GET",
       headers: { Authorization: token },
