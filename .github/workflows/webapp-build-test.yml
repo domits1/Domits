@@ -25,9 +25,11 @@ jobs:
     - name: Install dependencies
       run: |
         cd frontend/web
+        echo "DEBUGGING START --"
         ls
         pwd
-        npm ci
+        echo "DEBUGGING END --"
+        npm install
 
     - name: Run Tests
       run: |
