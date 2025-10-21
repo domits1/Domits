@@ -14,27 +14,28 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+    - uses: actions/checkout@4
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v6.0.0
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        cache-dependency-path: './frontend/web/package-lock.json'
+        node-version: 22
+        cache-dependency-path: frontend/web/package-lock.json
 
-        
-    - run: npm ci
-      working-directory: frontend/web
+    - name: Install dependencies
+      run: |
+        cd frontend/web
+        npm ci
+
+    - name: Run Tests
+      run: |
+        cd frontend/web
+        npm test
       
-    - run: npm run build --if-present
-      working-directory: frontend/web
+    - name: Build release
+      run: |
+        cd frontend/web
+        npm run build
+
       
-    - run: npm test
-      working-directory: frontend/web
 
