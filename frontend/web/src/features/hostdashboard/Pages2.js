@@ -34,7 +34,7 @@ function Pages({ onNavigate, activeLabel }) {
         </button>
         <div className="menu-content">
           <div className="dashboard-sections">
-            <MenuItem icon={<AddIcon />} label="List your property" active={activeLabel === "List"} onClick={() => onNavigate("List")} />
+            <MenuItem icon={<AddIcon />} label="List your property" active={activeLabel === "List"} onClick={() => { navigate("/hostonboarding"); }} />
             <MenuItem icon={<DashboardIcon />} label="Dashboard" active={activeLabel === "Dashboard"} onClick={() => onNavigate("Dashboard")} />
             <MenuItem icon={<CalendarIcon />} label="Calendar" active={activeLabel === "Calender"} onClick={() => onNavigate("Calender")} />
             <MenuItem icon={<EventIcon />} label="Reservations" active={activeLabel === "Reservations"} onClick={() => onNavigate("Reservations")} />

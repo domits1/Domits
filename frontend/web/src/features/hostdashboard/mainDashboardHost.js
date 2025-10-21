@@ -24,8 +24,6 @@ function MainDashboardHost(){
 
     function renderComponent(){
         switch (activeComponent){
-            case "List":
-                return
             case "Dashboard":
                 return <HostDashboard/>
             case "Calender":
