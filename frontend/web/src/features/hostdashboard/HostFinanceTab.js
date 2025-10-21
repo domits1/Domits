@@ -3,6 +3,8 @@ import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
+import { Height } from "@mui/icons-material";
+import { set } from "date-fns";
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
@@ -14,6 +16,8 @@ export default function HostFinanceTab() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
+
+  const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 
   const [loadingStates, setLoadingStates] = useState({
     account: true,
@@ -49,6 +53,7 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("charges", true);
         const details = await getCharges();
+        setCharges(details.charges);
         console.log("Charge details:", details);
       } catch (error) {
         console.error("Error fetching charges:", error);
@@ -64,6 +69,7 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
+        setPayouts(details.payouts);
         console.log("Payout details:", details);
       } catch (error) {
         console.error("Error fetching payouts:", error);
@@ -174,6 +180,59 @@ export default function HostFinanceTab() {
             </div>
 
             <div className="payouts-section">
+              <h3>Recent Charges</h3>
+
+              {loadingStates.charges ? (
+                <div style={{ padding: 12 }}>
+                  <ClipLoader size={28} loading />
+                </div>
+              ) : charges.length > 0 ? (
+                <div className="table-wrap">
+                  <table className="payout-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Property image</th>
+                        <th>Property</th>
+                        <th>Paid</th>
+                        <th>Fees (Stripe)</th>
+                        <th>Platform Fee</th>
+                        <th>Host Receives</th>
+                        <th>Status</th>
+                        <th>Method</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {charges.map((charge) => (
+                        <tr>
+                          <td>{charge.createdDate}</td>
+                          <td>{charge.customerName}</td>
+                          <td>
+                            <img src={`${S3_URL}${charge.propertyImage}`} alt={charge.propertyImage} style={{height: 100}}/>
+                          </td>
+                          <td title={charge.propertyTitle}>{charge.propertyTitle}</td>
+                          <td>
+                            {charge.customerPaid.toFixed(2)} {charge.currency}
+                          </td>
+                          <td>{charge.stripeProcessingFees.toFixed(2)}</td>
+                          <td>{charge.platformFeeNet.toFixed(2)}</td>
+                          <td>
+                            {charge.hostReceives.toFixed(2)} {charge.currency}
+                          </td>
+                          <td className={charge.status}>{charge.status}</td>
+                          <td>{charge.paymentMethod}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p>No charges found.</p>
+              )}
+            </div>
+
+            <div className="payouts-section">
               <h3>Recent Payouts</h3>
               {loadingStates.payouts ? (
                 <div style={{ padding: 12 }}>
@@ -186,17 +245,15 @@ export default function HostFinanceTab() {
                       <th>Amount</th>
                       <th>Status</th>
                       <th>Arrival Date</th>
-                      <th>Type</th>
                       <th>Method</th>
                     </tr>
                   </thead>
                   <tbody>
                     {payouts.map((payout) => (
-                      <tr key={payout.id}>
-                        <td>{(payout.amount / 100).toFixed(2)}</td>
+                      <tr>
+                        <td>{(payout.amount).toFixed(2)}</td>
                         <td className={payout.status}>{payout.status}</td>
                         <td>{payout.arrivalDate}</td>
-                        <td>{payout.type === "instant" ? "Instant" : "Standard"}</td>
                         <td>{payout.method}</td>
                       </tr>
                     ))}
