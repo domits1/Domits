@@ -238,20 +238,6 @@ function App() {
                     <MainDashboardHost />
                   </HostProtectedRoute>}
                 />
-                <Route
-                  path="/hostdashboard/messages"
-                  element={<HostProtectedRoute>
-                    <MainDashboardHost />
-                  </HostProtectedRoute>}
-                />
-                <Route
-                   path="/hostdashboard/calendar"
-                   element={
-                   <HostProtectedRoute>
-                  <HostCalendar />
-                  </HostProtectedRoute>
-                  }
-                 />
 
                 <Route path="/stripe/callback" element={<StripeCallback />} />
 
