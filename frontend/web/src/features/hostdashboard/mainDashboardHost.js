@@ -25,7 +25,7 @@ function MainDashboardHost() {
 
           <Route path="calendar" element={<HostCalendar />} />
           <Route path="reservations" element={<HostReservations />} />
-          <Route path="messages" element={<Messages />} />
+          <Route path="messages" element={<Messages dashboardType="host" />} />
           <Route path="revenues" element={<HostReports />} />
           <Route path="housekeeping" element={<HostPropertyCare />} />
           <Route path="finance" element={<HostFinanceTab />} />
