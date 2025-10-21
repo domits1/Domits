@@ -25,6 +25,8 @@ jobs:
     - name: Install dependencies
       run: |
         cd frontend/web
+        ls
+        pwd
         npm ci
 
     - name: Run Tests
