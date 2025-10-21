@@ -104,8 +104,10 @@ export default function HostFinanceTab() {
   const showLoader = loading || Object.values(loadingStates).some(Boolean);
   if (showLoader) {
     return (
-      <div className="hr-revenue-spinner-container" style={{ display: "grid", placeItems: "center", minHeight: 240 }}>
-        <ClipLoader size={100} loading />
+      <div
+        className="hr-revenue-spinner-container"
+        style={{ display: "grid", placeItems: "center", minHeight: 240 }}>
+        <ClipLoader size={100} color="#0D9813" loading />
       </div>
     );
   }
