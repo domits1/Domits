@@ -101,16 +101,16 @@ export default function HostFinanceTab() {
     }
   }
 
-  const showLoader = loading || Object.values(loadingStates).some(Boolean);
-  if (showLoader) {
-    return (
-      <div
-        className="hr-revenue-spinner-container"
-        style={{ display: "grid", placeItems: "center", minHeight: 240 }}>
+const showLoader = loading || Object.values(loadingStates).some(Boolean);
+if (showLoader) {
+  return (
+    <main className="page-Host page-Host--loading">
+      <div className="page-Host__loader">
         <ClipLoader size={100} color="#0D9813" loading />
       </div>
-    );
-  }
+    </main>
+  );
+}
 
   const renderCtaLabel = (idleText) =>
     isProcessing ? (processingStep === "opening" ? "Opening link…" : "Working on it…") : idleText;

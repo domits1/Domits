@@ -11,6 +11,21 @@ $bp-xl: 1280px;
 
 @mixin up($w) { @media (min-width: $w) { @content; } }
 
+.page-Host--loading {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.6);
+  z-index: 999;
+}
+
+.page-Host__loader {
+  display: grid;
+  place-items: center;
+}
+
+
 .page-Host {
   &-title {
     text-align: center;
