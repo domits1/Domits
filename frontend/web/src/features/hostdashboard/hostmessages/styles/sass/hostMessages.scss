@@ -2,6 +2,27 @@
     display: flex;
     flex-direction: row;
 
+    .guest-contact-panel {
+        width: 100%;
+        max-width: 22rem;
+        min-width: 18rem;
+        border-right: 0.05rem rgb(150, 150, 150) solid;
+        height: 90vh;
+        overflow-y: auto;
+        background: #fff;
+    }
+
+    .guest-chat-panel {
+        flex: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        height: 90vh;
+        overflow: hidden;
+        background: #f8f8f8;
+        position: relative;
+    }
+
     .ContactsBack-button {
         display: block;
         width: 100%;
@@ -25,6 +46,19 @@
         justify-content: center;
         align-items: center;
         gap: 1rem;
+        
+        .guest-contact-panel {
+            width: 90%;
+            max-width: none;
+            min-width: 0;
+            height: auto;
+            border-right: none;
+        }
+
+        .guest-chat-panel {
+            width: 100%;
+            height: auto;
+        }
     }
 }
 

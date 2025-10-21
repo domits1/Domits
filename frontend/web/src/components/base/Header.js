@@ -147,9 +147,9 @@ function Header({ setSearchResults, setLoading }) {
   };
   const navigateToMessages = () => {
     if (currentView === "host") {
-      navigate("/hostdashboard");
+      navigate("/hostdashboard/messages");
     } else {
-      navigate("/guestdashboard/chat");
+      navigate("/guestdashboard/messages");
     }
   };
   const navigateToPayments = () => {

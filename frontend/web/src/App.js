@@ -190,7 +190,23 @@ function App() {
 
                 {/* Guest Dashboard */}
                 <Route
+                  path="/guestdashboard/messages"
+                  element={
+                    <GuestProtectedRoute>
+                      <MainDashboardGuest />
+                    </GuestProtectedRoute>
+                  }
+                />
+                <Route
                   path="/guestdashboard/*"
+                  element={
+                    <GuestProtectedRoute>
+                      <MainDashboardGuest />
+                    </GuestProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/guestdashboard/messages"
                   element={
                     <GuestProtectedRoute>
                       <MainDashboardGuest />
