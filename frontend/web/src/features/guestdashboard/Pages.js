@@ -45,6 +45,7 @@ function useMediaQuery(query) {
 }
 
 function Pages({ onNavigate }) {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const isDesktop = useMediaQuery(`(min-width:${MOBILE_BP}px)`);
 
