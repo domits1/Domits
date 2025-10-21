@@ -31,7 +31,6 @@ import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
-import HostCalendar from "./features/hostdashboard/hostcalen/HostCalendar";
 import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
 import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostMonitoring from "./features/hostdashboard/HostMonitoring";
@@ -87,11 +86,11 @@ import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
-import Messages from "./components/messages/Messages.js";
 import publicKeys from "./utils/const/publicKeys.json"
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
+import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST)
 Modal.setAppElement("#root");
@@ -191,7 +190,23 @@ function App() {
 
                 {/* Guest Dashboard */}
                 <Route
+                  path="/guestdashboard/messages"
+                  element={
+                    <GuestProtectedRoute>
+                      <MainDashboardGuest />
+                    </GuestProtectedRoute>
+                  }
+                />
+                <Route
                   path="/guestdashboard/*"
+                  element={
+                    <GuestProtectedRoute>
+                      <MainDashboardGuest />
+                    </GuestProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/guestdashboard/messages"
                   element={
                     <GuestProtectedRoute>
                       <MainDashboardGuest />
@@ -214,17 +229,21 @@ function App() {
                       <ValidatePayment />
                     </Elements>
                   }
-                >/
-                </Route>
+                />
 
 
                 <Route
-                  path="/hostdashboard"
+                  path="/hostdashboard/*"
                   element={<HostProtectedRoute>
                     <MainDashboardHost />
                   </HostProtectedRoute>}
                 />
-
+                <Route
+                  path="/hostdashboard/messages"
+                  element={<HostProtectedRoute>
+                    <MainDashboardHost />
+                  </HostProtectedRoute>}
+                />
                 <Route
                    path="/hostdashboard/calendar"
                    element={
@@ -233,6 +252,7 @@ function App() {
                   </HostProtectedRoute>
                   }
                  />
+
                 <Route path="/stripe/callback" element={<StripeCallback />} />
 
                 {/* Career, Policies, and Terms */}
@@ -243,6 +263,7 @@ function App() {
                 <Route path="/disclaimers" element={<Disclaimers />} />
                 <Route path="/Sustainability" element={<Sustainability />} />
                 <Route path="/channelmanager" element={<ChannelManager />} />
+                <Route path="/admin/property" element={<AdminProperty />} />
 
                 {/* Error*/}
                 <Route path="/*" element={<PageNotFound />} />
@@ -273,7 +294,6 @@ function App() {
                     </BuilderProvider>
                   }
                 />
-                <Route path="/*" element={<Home />} />
               </Routes>
               {renderFooter()}
               {currentPath !== "/admin" && <MenuBar />}

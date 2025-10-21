@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAccessToken } from '../../../../services/getAccessToken';
+import { getGuestBookingDetails, getAccommodationByPropertyId } from '../services/messagingService';
 
 const useFetchBookingDetails = (hostId, guestId, {
     withAuth = false,
@@ -21,12 +22,7 @@ const useFetchBookingDetails = (hostId, guestId, {
             setError(null);
             try {
 
-                const bookingRes = await fetch(`https://912b02rvk4.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-GuestBookingDetails?hostId=${hostId}&guestId=${guestId}`);
-                if (!bookingRes.ok) {
-                    throw new Error('Failed to fetch booking details');
-                }
-
-                const bookingData = await bookingRes.json();
+                const bookingData = await getGuestBookingDetails(hostId, guestId);
                 if (bookingData?.arrivalDate) {
                     bookingData.arrivalDate = new Date(bookingData.arrivalDate).toLocaleDateString('en-GB').replace(/\//g, '-');
                 }
@@ -50,20 +46,7 @@ const useFetchBookingDetails = (hostId, guestId, {
                 setBookingDetails({ ...bookingData, Nights });
 
                 if (bookingData.property_id && accommodationEndpoint) {
-                    const accoRes = await fetch(
-                        `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/${accommodationEndpoint}?property=${bookingData.property_id}`,
-                        {
-                            method: 'GET',
-                            headers: {
-                                Authorization: token,
-                            }
-                        }
-                    );
-                    if (!accoRes.ok) {
-                        throw new Error('Failed to fetch accommodation');
-                    }
-                    const accoRaw = await accoRes.json();
-
+                    const accoRaw = await getAccommodationByPropertyId(accommodationEndpoint, bookingData.property_id, token);
                     setAccommodation(accoRaw);
                 }
 
