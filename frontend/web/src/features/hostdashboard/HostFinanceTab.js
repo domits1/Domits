@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
-import { getStripeAccountDetails, createStripeAccount, test } from "./services/stripeAccountService";
+import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ export default function HostFinanceTab() {
     useEffect(() => {
       (async () => {
         try {
-          const details = await test();
+          const details = await getCharges();
           console.log("Payout details:", details);
         } catch (error) {
           console.error("Error fetching user data or Stripe status:", error);
@@ -46,6 +46,19 @@ export default function HostFinanceTab() {
         }
       })();
     }, []);
+
+        useEffect(() => {
+          (async () => {
+            try {
+              const details = await getPayouts();
+              console.log("Payout details:", details);
+            } catch (error) {
+              console.error("Error fetching user data or Stripe status:", error);
+            } finally {
+              setLoading(false);
+            }
+          })();
+        }, []);
 
   async function handleStripeAction() {
     try {
