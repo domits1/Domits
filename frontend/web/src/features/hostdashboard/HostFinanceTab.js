@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
-import ClipLoader from "react-spinners/ClipLoader"; 
+import ClipLoader from "react-spinners/ClipLoader";
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
@@ -101,16 +101,16 @@ export default function HostFinanceTab() {
     }
   }
 
-const showLoader = loading || Object.values(loadingStates).some(Boolean);
-if (showLoader) {
-  return (
-    <main className="page-Host page-Host--loading">
-      <div className="page-Host__loader">
-        <ClipLoader size={100} color="#0D9813" loading />
-      </div>
-    </main>
-  );
-}
+  const showLoader = loading || Object.values(loadingStates).some(Boolean);
+  if (showLoader) {
+    return (
+      <main className="page-Host page-Host--loading">
+        <div className="page-Host__loader">
+          <ClipLoader size={100} color="#0D9813" loading />
+        </div>
+      </main>
+    );
+  }
 
   const renderCtaLabel = (idleText) =>
     isProcessing ? (processingStep === "opening" ? "Opening link…" : "Working on it…") : idleText;
