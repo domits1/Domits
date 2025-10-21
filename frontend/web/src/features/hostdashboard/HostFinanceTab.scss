@@ -11,7 +11,7 @@ $bp-xl: 1280px;
 
 @mixin up($w) { @media (min-width: $w) { @content; } }
 
-.main-dashboard-guest:has(.page-Host) { flex-direction: column; }
+/* Removed problematic flex-direction rule that was causing sidebar to move to top */
 
 .page-Host {
   &-title {
