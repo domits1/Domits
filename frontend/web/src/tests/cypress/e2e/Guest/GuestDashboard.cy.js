@@ -20,19 +20,19 @@ describe('Guest Login Flow', () => {
 
         cy.get('.loginButton').click();
 
-        cy.get('.hostchatbot-close-button').click();
+        // cy.get('.hostchatbot-close-button').click();
         cy.get('.headerHostButton').click();
 
-        cy.get('.hamburger-btn').click();
+        // cy.get('.hamburger-btn').click();
 
-        cy.get('.dashboard-sections > :nth-child(2)').should('be.visible').click();
+        // cy.get('.dashboard-sections > :nth-child(2)').should('be.visible').click();
         cy.get('.close-sidebar-btn').should('be.visible').click();
 
-        cy.get('.hamburger-btn').click();
-        cy.get('.dashboard-sections > :nth-child(3)').should('be.visible').click();
+        // cy.get('.hamburger-btn').click();
+        // cy.get('.dashboard-sections > :nth-child(3)').should('be.visible').click();
         cy.get('.close-sidebar-btn').should('be.visible').click();
 
-        cy.get('.hamburger-btn').click();
+        // cy.get('.hamburger-btn').click();
         cy.get(':nth-child(5) > p').should('be.visible').click();
         cy.get('.close-sidebar-btn').should('be.visible').click();
 

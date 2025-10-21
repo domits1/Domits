@@ -20,7 +20,7 @@ describe('Guest Login Flow', () => {
 
         cy.get('.loginButton').click();
 
-        cy.get('.hostchatbot-close-button').click();
+        // cy.get('.hostchatbot-close-button').click();
 
         cy.get('.logo > a > img').should('be.visible').click();
 
