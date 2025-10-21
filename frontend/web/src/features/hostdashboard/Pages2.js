@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./Sidebar.scss";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import CalendarIcon from "@mui/icons-material/CalendarToday";
 import EventIcon from "@mui/icons-material/Event";

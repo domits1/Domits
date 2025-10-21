@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import "./Sidebar.scss";
 import Pages from "./Pages2";
 import HostDashboard from "./HostDashboard";
 import HostCalendar from "./HostCalendar";
