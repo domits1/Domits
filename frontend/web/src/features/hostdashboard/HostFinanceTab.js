@@ -6,9 +6,9 @@ import ClipLoader from "react-spinners/ClipLoader";
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
-  const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
   const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState([]);
+  const [charges, setCharges] = useState([]);
   const [accountId, setAccountId] = useState(null);
   const [payoutFrequency, setPayoutFrequency] = useState("weekly");
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -33,7 +33,6 @@ export default function HostFinanceTab() {
         updateLoadingState("account", true);
         const details = await getStripeAccountDetails();
         if (!details) return;
-        setBankDetailsProvided(details.bankDetailsProvided);
         setAccountId(details.accountId);
         setOnboardingComplete(details.onboardingComplete);
       } catch (error) {
