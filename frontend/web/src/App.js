@@ -85,6 +85,7 @@ import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
+import OnboardingLayout from "./features/hostonboarding/OnboardingLayout";
 import Navbar from './components/base/navbar';
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 import Messages from "./components/messages/Messages.js";
@@ -268,8 +269,9 @@ function App() {
                 <Route
                   path="/hostonboarding/*"
                   element={
-                    <BuilderProvider>
-                      <Routes>
+                    <OnboardingLayout>
+                      <BuilderProvider>
+                        <Routes>
                         <Route path="" element={<AccommodationTypeView />} />
                         <Route path="accommodation" element={<StepGuard step="type"><HouseTypeView /></StepGuard>} />
                         <Route path="boat" element={<StepGuard step="type"><BoatTypeView /></StepGuard>} />
@@ -288,6 +290,7 @@ function App() {
                         <Route path="summary" element={<SummaryViewAndSubmit />} />
                       </Routes>
                     </BuilderProvider>
+                    </OnboardingLayout>
                   }
                 />
                 <Route path="/*" element={<Home />} />
