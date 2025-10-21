@@ -66,7 +66,7 @@ const MessagesContent = ({ dashboardType }) => {
             isTablet ? !!selectedContactId :
                 true;
     return (
-        <main className="page-body">
+        <div className={`${dashboardType}-dashboard-page-body`}>
             <WebSocketProvider userId={userId}>
                 {userId ? (
                     <div className={`${dashboardType}-chat-components`}>
@@ -113,7 +113,7 @@ const MessagesContent = ({ dashboardType }) => {
                     <div>Loading user info...</div>
                 )}
             </WebSocketProvider>
-        </main>
+        </div>
     );
 };
 

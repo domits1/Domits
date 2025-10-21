@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
-import { getStripeAccountDetails, createStripeAccount } from "./services/stripeAccountService";
+import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
@@ -33,6 +33,32 @@ export default function HostFinanceTab() {
       }
     })();
   }, []);
+
+    useEffect(() => {
+      (async () => {
+        try {
+          const details = await getCharges();
+          console.log("Payout details:", details);
+        } catch (error) {
+          console.error("Error fetching user data or Stripe status:", error);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, []);
+
+        useEffect(() => {
+          (async () => {
+            try {
+              const details = await getPayouts();
+              console.log("Payout details:", details);
+            } catch (error) {
+              console.error("Error fetching user data or Stripe status:", error);
+            } finally {
+              setLoading(false);
+            }
+          })();
+        }, []);
 
   async function handleStripeAction() {
     try {
@@ -104,7 +130,7 @@ export default function HostFinanceTab() {
                     </>
                   ) : (
                     <>
-                      <strong>Step 2: </strong> &nbsp; You’re connected to Stripe. Well done!
+                      <strong>Step 2: </strong> &nbsp; You’re connected to Stripe. Well done! &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
                         onClick={!isProcessing ? handleStripeAction : undefined}>
