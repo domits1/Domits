@@ -126,7 +126,7 @@ export default function HostFinanceTab() {
               <ul>
                 <li>
                   <strong>Step 1: </strong>
-                  &nbsp;
+                  &nbsp;&nbsp;
                   <span className="finance-span" onClick={handleEnlistNavigation}>
                     List your property.
                   </span>
