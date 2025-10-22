@@ -14,7 +14,7 @@ export class Service {
     const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
     if (!cognitoUserId) throw new Error("User ID is missing");
 
-    const userId = cognitoUserId;
+    const userId = "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3";
 
     const { filterType, startDate, endDate } = event.queryStringParameters || event.body || {};
     const { startDate: start, endDate: end } = this.getDateRange(filterType, startDate, endDate);

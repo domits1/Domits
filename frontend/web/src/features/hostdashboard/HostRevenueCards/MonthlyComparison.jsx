@@ -9,7 +9,7 @@ function MonthlyComparison({ data }) {
                 width={820}
                 height={350}
                 data={data}
-                margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+                margin={{ top: 20, right: 30, left: 0`12    q   `, bottom: 0 }}
             >
                 <CartesianGrid strokeDasharray="3 3" />
 
