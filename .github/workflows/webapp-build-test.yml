@@ -29,6 +29,9 @@ jobs:
         echo -e "\033[31mBe aware that testing times will take longer.\033[0m"
         npm install
 
+    - name: Retieve aws-exports
+      run: echo "$AWS_EXPORTS" > frontend/web/src/aws-exports.jw
+      
     - name: Run Tests
       run: |
         cd frontend/web
