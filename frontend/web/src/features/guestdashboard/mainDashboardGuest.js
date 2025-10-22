@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Pages from "./Pages";
 import GuestDashboard from "./GuestDashboard";
 import GuestBooking from "./GuestBooking";
@@ -9,6 +10,13 @@ import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
 const MainDashboardGuest = () => {
   const [activeComponent, setActiveComponent] = useState("Dashboard");
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === "/guestdashboard/messages") {
+      setActiveComponent("Messages");
+    }
+  }, [location.pathname]);
   const renderComponent = () => {
     switch (activeComponent) {
       case "Dashboard":
@@ -36,7 +44,7 @@ const MainDashboardGuest = () => {
   return (
     <div className="main-dashboard-guest">
       <div className="main-dashboard-sidebar">
-        <Pages onNavigate={handleNavigation} />
+        <Pages onNavigate={handleNavigation} activeLabel={activeComponent} />
       </div>
       <div className="main-dashboard-content">{renderComponent()}</div>
     </div>

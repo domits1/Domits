@@ -11,7 +11,17 @@ $bp-xl: 1280px;
 
 @mixin up($w) { @media (min-width: $w) { @content; } }
 
-.main-dashboard-guest:has(.page-Host) { flex-direction: column; }
+.page-Host--loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.page-Host__loader {
+  display: grid;
+  place-items: center;
+}
+
 
 .page-Host {
   &-title {

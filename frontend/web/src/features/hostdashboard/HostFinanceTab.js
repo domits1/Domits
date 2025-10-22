@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
-import { getStripeAccountDetails, createStripeAccount } from "./services/stripeAccountService";
+import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
+import ClipLoader from "react-spinners/ClipLoader";
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
@@ -14,6 +15,14 @@ export default function HostFinanceTab() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
 
+  const [loadingStates, setLoadingStates] = useState({
+    account: true,
+    charges: false,
+    payouts: false,
+  });
+
+  const updateLoadingState = (key, value) => setLoadingStates((prev) => ({ ...prev, [key]: value }));
+
   const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
   const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
@@ -21,6 +30,7 @@ export default function HostFinanceTab() {
   useEffect(() => {
     (async () => {
       try {
+        updateLoadingState("account", true);
         const details = await getStripeAccountDetails();
         if (!details) return;
         setBankDetailsProvided(details.bankDetailsProvided);
@@ -30,6 +40,37 @@ export default function HostFinanceTab() {
         console.error("Error fetching user data or Stripe status:", error);
       } finally {
         setLoading(false);
+        updateLoadingState("account", false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        updateLoadingState("charges", true);
+        const details = await getCharges();
+        console.log("Charge details:", details);
+      } catch (error) {
+        console.error("Error fetching charges:", error);
+      } finally {
+        setLoading(false);
+        updateLoadingState("charges", false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        updateLoadingState("payouts", true);
+        const details = await getPayouts();
+        console.log("Payout details:", details);
+      } catch (error) {
+        console.error("Error fetching payouts:", error);
+      } finally {
+        setLoading(false);
+        updateLoadingState("payouts", false);
       }
     })();
   }, []);
@@ -60,7 +101,16 @@ export default function HostFinanceTab() {
     }
   }
 
-  if (loading) return <div>Loading...</div>;
+  const showLoader = loading || Object.values(loadingStates).some(Boolean);
+  if (showLoader) {
+    return (
+      <main className="page-Host page-Host--loading">
+        <div className="page-Host__loader">
+          <ClipLoader size={100} color="#0D9813" loading />
+        </div>
+      </main>
+    );
+  }
 
   const renderCtaLabel = (idleText) =>
     isProcessing ? (processingStep === "opening" ? "Opening link…" : "Working on it…") : idleText;
@@ -104,7 +154,7 @@ export default function HostFinanceTab() {
                     </>
                   ) : (
                     <>
-                      <strong>Step 2: </strong> &nbsp; You’re connected to Stripe. Well done!
+                      <strong>Step 2: </strong> &nbsp; You’re connected to Stripe. Well done! &nbsp;
                       <span
                         className={`finance-span ${isProcessing ? "disabled" : ""}`}
                         onClick={!isProcessing ? handleStripeAction : undefined}>
@@ -126,7 +176,11 @@ export default function HostFinanceTab() {
 
             <div className="payouts-section">
               <h3>Recent Payouts</h3>
-              {payouts.length > 0 ? (
+              {loadingStates.payouts ? (
+                <div style={{ padding: 12 }}>
+                  <ClipLoader size={28} loading />
+                </div>
+              ) : payouts.length > 0 ? (
                 <table className="payout-table">
                   <thead>
                     <tr>

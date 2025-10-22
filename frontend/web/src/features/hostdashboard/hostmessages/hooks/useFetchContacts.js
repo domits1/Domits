@@ -93,6 +93,10 @@ const useFetchContacts = (userId, role) => {
 
             let accoImage = null;
             let bookingStatus = null;
+            let arrivalDate = null;
+            let departureDate = null;
+            let propertyId = null;
+            let propertyTitle = null;
 
             try {
               const bookingInfo = await fetchBookingDetailsAndAccommodation({
@@ -106,6 +110,10 @@ const useFetchContacts = (userId, role) => {
 
               accoImage = bookingInfo.accoImage;
               bookingStatus = bookingInfo.bookingStatus;
+              arrivalDate = bookingInfo.arrivalDate || null;
+              departureDate = bookingInfo.departureDate || null;
+              propertyId = bookingInfo.propertyId || null;
+              propertyTitle = bookingInfo.propertyTitle || null;
             } catch (error) {
               console.warn('Failed to fetch booking or accommodation', error);
             }
@@ -116,6 +124,10 @@ const useFetchContacts = (userId, role) => {
               recipientId,
               accoImage,
               bookingStatus,
+              arrivalDate,
+              departureDate,
+              propertyId,
+              propertyTitle,
             };
           })
         );

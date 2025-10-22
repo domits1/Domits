@@ -7,10 +7,10 @@ export const handler = async (event) => {
   let returnedResponse = {};
 
   switch (true) {
-    case httpMethod === "GET" && path === "/retrieve-user-payouts":
+    case httpMethod === "GET" && path.endsWith("/retrieve-user-payouts"):
       returnedResponse = await controller.getHostPayouts(event);
       break;
-      case httpMethod === "GET" && path === "/retrieve-user-charges":
+    case httpMethod === "GET" && path.endsWith("/retrieve-user-charges"):
       returnedResponse = await controller.getHostCharges(event);
       break;
     default:
