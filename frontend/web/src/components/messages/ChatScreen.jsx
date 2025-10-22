@@ -24,6 +24,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
     const [newMessage, setNewMessage] = useState('');
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
     const [messageSearch, setMessageSearch] = useState('');
+    const [showPreviewPopover, setShowPreviewPopover] = useState(false);
     const wsMessages = socket?.messages || [];
     const addedMessageIds = useRef(new Set());
     const chatContainerRef = useRef(null);
@@ -230,7 +231,21 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                 </div>
 
                 <div className='chat-input'>
-                    <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+                    <div className='attachment-area'>
+                        <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+                        {uploadedFileUrls.length > 0 && (
+                            <button
+                                className='inline-upload-preview'
+                                onClick={() => setShowPreviewPopover((s) => !s)}
+                                title={uploadedFileUrls.length > 1 ? 'View all previews' : 'View preview'}
+                            >
+                                <img src={uploadedFileUrls[0]} alt='First attachment preview' />
+                                {uploadedFileUrls.length > 1 && (
+                                    <span className='more-badge'>+{uploadedFileUrls.length - 1}</span>
+                                )}
+                            </button>
+                        )}
+                    </div>
                     <div className='message-input-wrapper'>
                         <textarea
                             value={newMessage}
@@ -250,6 +265,31 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                             <FaPaperPlane />
                         </button>
                     </div>
+
+                    {showPreviewPopover && uploadedFileUrls.length > 0 && (
+                        <div className='preview-popover' role='dialog' aria-label='Attachment previews'>
+                            <div className='preview-popover-header'>
+                                <span>Attachments</span>
+                                <button className='close-popover' onClick={() => setShowPreviewPopover(false)} title='Close'>
+                                    <FaTimes />
+                                </button>
+                            </div>
+                            <div className='preview-grid'>
+                                {uploadedFileUrls.map((url, index) => (
+                                    <div className='preview-item' key={`${url}-${index}`}>
+                                        <img src={url} alt={`Attachment-${index}`} />
+                                        <button
+                                            className='remove-thumb'
+                                            title='Remove'
+                                            onClick={() => setUploadedFileUrls((prev) => prev.filter((u) => u !== url))}
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {sendError && <p className="error-message">{sendError.message}</p>}
