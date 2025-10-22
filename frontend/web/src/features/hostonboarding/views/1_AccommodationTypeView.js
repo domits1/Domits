@@ -31,6 +31,10 @@ export default function AccommodationTypeView() {
           onSelectType={setAccommodationType}
         />
         <nav className="onboarding-button-box">
+          <OnboardingButton
+            routePath="/hostdashboard"
+            btnText="Go to dashboard"
+          />
           <OnboardingButton onClick={handleProceed} btnText="Proceed" />
         </nav>
       </main>
