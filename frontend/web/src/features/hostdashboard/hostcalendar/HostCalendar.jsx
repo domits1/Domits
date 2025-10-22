@@ -205,7 +205,7 @@ export default function HostCalendar() {
   const applySavedCalendarData = useCallback((savedData) => {
     console.log("📥 Applying saved calendar data:", savedData);
     setSelections((prev) => {
-      const next = { ...prev };s
+      const next = { ...prev };
       if (savedData.blocked && Array.isArray(savedData.blocked)) {
         savedData.blocked.forEach((dateStr) => {
           next.blocked.add(dateStr);
@@ -517,7 +517,6 @@ export default function HostCalendar() {
           />
 
           <StatsPanel selections={selections} />
-
           {hasPendingChanges && (
             <div style={{ marginTop: "16px", textAlign: "center" }}>
               <button
