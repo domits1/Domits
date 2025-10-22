@@ -187,5 +187,4 @@ function HostDashboard() {
     </main>
   );
 }
-
 export default HostDashboard;
