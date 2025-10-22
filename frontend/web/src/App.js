@@ -84,6 +84,7 @@ import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import { initializeUserAttributes } from "./utils/userAttributes";
 import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
+import OnboardingLayout from "./features/hostonboarding/OnboardingLayout";
 import Navbar from "./components/base/navbar";
 import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 import publicKeys from "./utils/const/publicKeys.json";
@@ -265,12 +266,12 @@ function App() {
                     element={
                       <BuilderProvider>
                         <Routes>
-                          <Route path="" element={<AccommodationTypeView />} />
+                          <Route path="" element={<OnboardingLayout><AccommodationTypeView /></OnboardingLayout>} />
                           <Route
                             path="accommodation"
                             element={
                               <StepGuard step="type">
-                                <HouseTypeView />
+                                <OnboardingLayout><HouseTypeView /></OnboardingLayout>
                               </StepGuard>
                             }
                           />
@@ -278,7 +279,7 @@ function App() {
                             path="boat"
                             element={
                               <StepGuard step="type">
-                                <BoatTypeView />
+                                <OnboardingLayout><BoatTypeView /></OnboardingLayout>
                               </StepGuard>
                             }
                           />
@@ -286,22 +287,22 @@ function App() {
                             path="camper"
                             element={
                               <StepGuard step="type">
-                                <CamperTypeView />
+                                <OnboardingLayout><CamperTypeView /></OnboardingLayout>
                               </StepGuard>
                             }
                           />
-                          <Route path=":type/address" element={<AddressInputView />} />
-                          <Route path=":type/capacity" element={<CapacityView />} />
-                          <Route path=":type/capacity" element={<PropertyGuestAmountView />} />
-                          <Route path=":type/amenities" element={<AmenitiesView />} />
-                          <Route path=":type/rules" element={<PropertyHouseRulesView />} />
-                          <Route path=":type/photos" element={<PhotosView />} />
-                          <Route path=":type/title" element={<PropertyTitleView />} />
-                          <Route path=":type/description" element={<PropertyDescriptionView />} />
-                          <Route path=":type/pricing" element={<PropertyRateView />} />
-                          <Route path=":type/availability" element={<PropertyAvailabilityView />} />
-                          <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
-                          <Route path="summary" element={<SummaryViewAndSubmit />} />
+                          <Route path=":type/address" element={<OnboardingLayout><AddressInputView /></OnboardingLayout>} />
+                          <Route path=":type/capacity" element={<OnboardingLayout><CapacityView /></OnboardingLayout>} />
+                          <Route path=":type/capacity" element={<OnboardingLayout><PropertyGuestAmountView /></OnboardingLayout>} />
+                          <Route path=":type/amenities" element={<OnboardingLayout><AmenitiesView /></OnboardingLayout>} />
+                          <Route path=":type/rules" element={<OnboardingLayout><PropertyHouseRulesView /></OnboardingLayout>} />
+                          <Route path=":type/photos" element={<OnboardingLayout><PhotosView /></OnboardingLayout>} />
+                          <Route path=":type/title" element={<OnboardingLayout><PropertyTitleView /></OnboardingLayout>} />
+                          <Route path=":type/description" element={<OnboardingLayout><PropertyDescriptionView /></OnboardingLayout>} />
+                          <Route path=":type/pricing" element={<OnboardingLayout><PropertyRateView /></OnboardingLayout>} />
+                          <Route path=":type/availability" element={<OnboardingLayout><PropertyAvailabilityView /></OnboardingLayout>} />
+                          <Route path="legal/registrationnumber" element={<OnboardingLayout><RegistrationNumberView /></OnboardingLayout>} />
+                          <Route path="summary" element={<OnboardingLayout><SummaryViewAndSubmit /></OnboardingLayout>} />
                         </Routes>
                       </BuilderProvider>
                     }
