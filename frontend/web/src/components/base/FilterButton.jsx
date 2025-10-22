@@ -21,6 +21,7 @@ const FilterButton = () => {
     <FilterModal isOpen={isModalOpen} onClose={closeModal} />
   </div>
 );
+} // website breaking bug, oh no this will be pushed to acceptance but im not aware!
 
 };
 
