@@ -203,7 +203,7 @@ const Footer = () => {
             {footerContent.disclaimer.title}
           </Link>
         <a
-          href=""
+          href="/sitemap.xml"
           target="_blank"
           rel="noopener noreferrer"
           className="footer-links"
