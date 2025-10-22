@@ -497,7 +497,7 @@ export default function HostCalendar() {
 
       let message = saveSuccess
         ? "✅ Calendar data saved successfully!\n\n"
-        : "⚠️ Calendar data saved to localStorage (fallback)\n\n";
+        : "⚠️ Calendar data saved (fallback)\n\n";
 
       message += "Summary of changes:\n";
       if (blockedCount > 0) message += `  • ${blockedCount} blocked date${blockedCount > 1 ? 's' : ''}\n`;

@@ -66,7 +66,7 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
           </div>
 
           <div className="info-box">
-            <p><strong>ℹ️ Note:</strong> This maintenance note will be saved and can be viewed later. The selected dates will be marked as unavailable for booking.</p>
+            <p><strong>ℹ️ Note:</strong> This maintenance date will be saved and can be viewed later. The selected dates will be marked as unavailable for booking.</p>
           </div>
         </div>
 
