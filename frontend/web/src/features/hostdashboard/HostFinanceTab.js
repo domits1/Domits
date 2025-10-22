@@ -192,36 +192,39 @@ export default function HostFinanceTab() {
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>Customer</th>
                         <th>Property image</th>
                         <th>Property</th>
+                        <th>Guest</th>
                         <th>Paid</th>
-                        <th>Fees (Stripe)</th>
-                        <th>Platform Fee</th>
-                        <th>Host Receives</th>
-                        <th>Status</th>
-                        <th>Method</th>
+                        <th>Payment</th>
                       </tr>
                     </thead>
                     <tbody>
                       {charges.map((charge) => (
                         <tr>
                           <td>{charge.createdDate}</td>
+                          <td>
+                            <img
+                              src={`${S3_URL}${charge.propertyImage}`}
+                              alt={charge.propertyImage}
+                              style={{ height: 70 }}
+                            />
+                          </td>
+                          <td
+                            title={charge.propertyTitle}
+                            style={{
+                              maxWidth: 150,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}>
+                            {charge.propertyTitle}
+                          </td>
                           <td>{charge.customerName}</td>
-                          <td>
-                            <img src={`${S3_URL}${charge.propertyImage}`} alt={charge.propertyImage} style={{height: 100}}/>
-                          </td>
-                          <td title={charge.propertyTitle}>{charge.propertyTitle}</td>
-                          <td>
-                            {charge.customerPaid.toFixed(2)} {charge.currency}
-                          </td>
-                          <td>{charge.stripeProcessingFees.toFixed(2)}</td>
-                          <td>{charge.platformFeeNet.toFixed(2)}</td>
                           <td>
                             {charge.hostReceives.toFixed(2)} {charge.currency}
                           </td>
                           <td className={charge.status}>{charge.status}</td>
-                          <td>{charge.paymentMethod}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -251,7 +254,7 @@ export default function HostFinanceTab() {
                   <tbody>
                     {payouts.map((payout) => (
                       <tr>
-                        <td>{(payout.amount).toFixed(2)}</td>
+                        <td>{payout.amount.toFixed(2)}</td>
                         <td className={payout.status}>{payout.status}</td>
                         <td>{payout.arrivalDate}</td>
                         <td>{payout.method}</td>
@@ -276,7 +279,7 @@ export default function HostFinanceTab() {
             <div className="payout-status">
               <h3>Payout Status:</h3>
               {payouts.length > 0 && payouts.some((payout) => payout.status === "paid") ? (
-                <p className="status-active">✅ Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
+                <p className="status-active">Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
               ) : payouts.length > 0 && payouts.some((payout) => payout.status === "pending") ? (
                 <p className="status-pending">
                   Your payouts are scheduled. Next payout: {payouts.find((p) => p.status === "pending")?.arrivalDate}.
