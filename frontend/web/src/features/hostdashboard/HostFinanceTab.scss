@@ -12,16 +12,15 @@ $bp-xl: 1280px;
 @mixin up($w) { @media (min-width: $w) { @content; } }
 
 .page-Host--loading {
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
   display: grid;
-  place-items: center;
 }
 
 .page-Host__loader {
   display: grid;
   place-items: center;
 }
-
 
 .page-Host {
   &-title {
