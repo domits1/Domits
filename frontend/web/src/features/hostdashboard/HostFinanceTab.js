@@ -3,17 +3,21 @@ import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
+import { Height } from "@mui/icons-material";
+import { set } from "date-fns";
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
-  const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
   const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState([]);
+  const [charges, setCharges] = useState([]);
   const [accountId, setAccountId] = useState(null);
   const [payoutFrequency, setPayoutFrequency] = useState("weekly");
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
+
+  const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 
   const [loadingStates, setLoadingStates] = useState({
     account: true,
@@ -33,7 +37,6 @@ export default function HostFinanceTab() {
         updateLoadingState("account", true);
         const details = await getStripeAccountDetails();
         if (!details) return;
-        setBankDetailsProvided(details.bankDetailsProvided);
         setAccountId(details.accountId);
         setOnboardingComplete(details.onboardingComplete);
       } catch (error) {
@@ -50,6 +53,7 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("charges", true);
         const details = await getCharges();
+        setCharges(details.charges);
         console.log("Charge details:", details);
       } catch (error) {
         console.error("Error fetching charges:", error);
@@ -65,6 +69,7 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
+        setPayouts(details.payouts);
         console.log("Payout details:", details);
       } catch (error) {
         console.error("Error fetching payouts:", error);
@@ -126,7 +131,7 @@ export default function HostFinanceTab() {
               <ul>
                 <li>
                   <strong>Step 1: </strong>
-                  &nbsp;
+                  &nbsp;&nbsp;
                   <span className="finance-span" onClick={handleEnlistNavigation}>
                     List your property.
                   </span>
@@ -175,6 +180,62 @@ export default function HostFinanceTab() {
             </div>
 
             <div className="payouts-section">
+              <h3>Recent Charges</h3>
+
+              {loadingStates.charges ? (
+                <div style={{ padding: 12 }}>
+                  <ClipLoader size={28} loading />
+                </div>
+              ) : charges.length > 0 ? (
+                <div className="table-wrap">
+                  <table className="payout-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Property image</th>
+                        <th>Property</th>
+                        <th>Guest</th>
+                        <th>Paid</th>
+                        <th>Payment</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {charges.map((charge) => (
+                        <tr>
+                          <td>{charge.createdDate}</td>
+                          <td>
+                            <img
+                              src={`${S3_URL}${charge.propertyImage}`}
+                              alt={charge.propertyImage}
+                              style={{ height: 70 }}
+                            />
+                          </td>
+                          <td
+                            title={charge.propertyTitle}
+                            style={{
+                              maxWidth: 150,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}>
+                            {charge.propertyTitle}
+                          </td>
+                          <td>{charge.customerName}</td>
+                          <td>
+                            {charge.hostReceives.toFixed(2)} {charge.currency}
+                          </td>
+                          <td className={charge.status}>{charge.status}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p>No charges found.</p>
+              )}
+            </div>
+
+            <div className="payouts-section">
               <h3>Recent Payouts</h3>
               {loadingStates.payouts ? (
                 <div style={{ padding: 12 }}>
@@ -187,17 +248,15 @@ export default function HostFinanceTab() {
                       <th>Amount</th>
                       <th>Status</th>
                       <th>Arrival Date</th>
-                      <th>Type</th>
                       <th>Method</th>
                     </tr>
                   </thead>
                   <tbody>
                     {payouts.map((payout) => (
-                      <tr key={payout.id}>
-                        <td>{(payout.amount / 100).toFixed(2)}</td>
+                      <tr>
+                        <td>{payout.amount.toFixed(2)}</td>
                         <td className={payout.status}>{payout.status}</td>
                         <td>{payout.arrivalDate}</td>
-                        <td>{payout.type === "instant" ? "Instant" : "Standard"}</td>
                         <td>{payout.method}</td>
                       </tr>
                     ))}
@@ -220,7 +279,7 @@ export default function HostFinanceTab() {
             <div className="payout-status">
               <h3>Payout Status:</h3>
               {payouts.length > 0 && payouts.some((payout) => payout.status === "paid") ? (
-                <p className="status-active">✅ Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
+                <p className="status-active">Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
               ) : payouts.length > 0 && payouts.some((payout) => payout.status === "pending") ? (
                 <p className="status-pending">
                   Your payouts are scheduled. Next payout: {payouts.find((p) => p.status === "pending")?.arrivalDate}.

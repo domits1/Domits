@@ -4,6 +4,9 @@ import checkIcon from "../../images/icons/checkPng.png";
 import { Auth } from "aws-amplify";
 import { confirmEmailChange } from "./emailSettings";
 import roomImg from "../../images/4-Bed-Kona-Homes.jpeg";
+import { Link } from "react-router-dom";
+
+//const navigate = useNavigate();
 
 
 const isE164 = (v) => /^\+[1-9]\d{7,14}$/.test(v || "");
@@ -473,9 +476,12 @@ const GuestDashboard = () => {
         
           <div className="guest-dashboard-accomodation-side">
            
-              <a className="guest-dashboard-viewAllBooking" href="/GuestBooking">
+              {/* <a className="guest-dashboard-viewAllBooking" href={onClick={navigate("/Booking")}}>
                 View all bookings
-              </a>
+              </a> */}
+              <Link to="/Bookings" className="guest-dashboard-viewAllBooking">
+                View all bookings
+              </Link>
 
             <article className="booking-details">
               <div className="booking-details__media">
@@ -578,6 +584,7 @@ const GuestDashboard = () => {
         </div>
       </div>
     </div>
+    
   );
 };
 
