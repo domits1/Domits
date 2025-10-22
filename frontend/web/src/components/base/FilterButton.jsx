@@ -21,5 +21,6 @@ const FilterButton = () => {
     <FilterModal isOpen={isModalOpen} onClose={closeModal} />
   </div>
 );
+} 
 
 export default FilterButton;
