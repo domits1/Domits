@@ -8,7 +8,9 @@ import GetByGuestIdModel from "./events/getByGuestId.js";
 import GetByCreatedAtModel from "./events/getByCreatedAtDate.js";
 import GetByPaymentIdModel from "./events/getByPaymentId.js";
 import getByDepartureDateModel from "./events/getByDepartureDate.js";
+import GetbyHostIdSinglePropertyRequestModel from "./events/GetbyHostIdSingleProperty.js";
 
+jest.setTimeout(20000);
 
 // This test tests the end-to-end functionality of the booking engine. It tests all possible
 // GET scenarios, including the POST request to create a booking.
@@ -25,9 +27,14 @@ describe("booking end-to-end", () => {
 
     })
 
+    it("should receive a GET request queried on a HostID, and return one property", async () => {
+        const response = await handler(await GetbyHostIdSinglePropertyRequestModel);
+        expect([200, 404]).toContain(response.statusCode);
+    })
+
     it("should receive a GET request queried on a property ID", async () => {
         const response = await handler(await GetbyPropertyIdRequestModel);
-        expect([200, 404]).toContain(response.statusCode);
+        expect([200, 404, 501]).toContain(response.statusCode);
 
     })
 

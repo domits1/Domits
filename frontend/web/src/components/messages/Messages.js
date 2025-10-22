@@ -23,6 +23,7 @@ const MessagesContent = ({ dashboardType }) => {
     const { userId } = useAuth();
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [selectedContactName, setSelectedContactName] = useState(null);
+    const [selectedContactImage, setSelectedContactImage] = useState(null);
     const [message, setMessage] = useState([]);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
     const isMobile = screenWidth < 768;
@@ -35,12 +36,18 @@ const MessagesContent = ({ dashboardType }) => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    const handleContactClick = (contactId, contactName) => {
+    const handleContactClick = (contactId, contactName, contactImage) => {
         setSelectedContactId(contactId);
         setSelectedContactName(contactName);
+        setSelectedContactImage(contactImage || null);
     };
 
     const handleBackToContacts = () => {
+        setSelectedContactId(null);
+        setSelectedContactName(null);
+    };
+
+    const handleCloseChat = () => {
         setSelectedContactId(null);
         setSelectedContactName(null);
     };
@@ -59,7 +66,7 @@ const MessagesContent = ({ dashboardType }) => {
             isTablet ? !!selectedContactId :
                 true;
     return (
-        <main className="page-body">
+        <div className={`${dashboardType}-dashboard-page-body`}>
             <WebSocketProvider userId={userId}>
                 {userId ? (
                     <div className={`${dashboardType}-chat-components`}>
@@ -69,6 +76,7 @@ const MessagesContent = ({ dashboardType }) => {
                                 onContactClick={handleContactClick}
                                 message={message}
                                 dashboardType={dashboardType}
+                                isChatOpen={!!selectedContactId}
                             />
                         )}
                         {isMobile && selectedContactId && (
@@ -82,7 +90,9 @@ const MessagesContent = ({ dashboardType }) => {
                                 handleContactListMessage={handleContactListMessage}
                                 contactId={selectedContactId}
                                 contactName={selectedContactName}
+                                contactImage={selectedContactImage}
                                 onBack={isTablet ? handleBackToContacts : null}
+                                onClose={handleCloseChat}
                                 dashboardType={dashboardType}
 
                             />
@@ -103,7 +113,7 @@ const MessagesContent = ({ dashboardType }) => {
                     <div>Loading user info...</div>
                 )}
             </WebSocketProvider>
-        </main>
+        </div>
     );
 };
 

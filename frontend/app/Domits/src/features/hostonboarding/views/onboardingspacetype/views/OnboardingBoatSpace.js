@@ -1,6 +1,5 @@
 import {Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import TranslatedText from "../../../../translation/components/TranslatedText";
-import {useState} from "react";
 import {styles} from "../../../styles/HostOnboardingStyles";
 import useOrientation from "../../../../../hooks/useOrientation";
 
@@ -17,7 +16,6 @@ import yacht from "../../../store/boaticons/yacht.png";
 
 const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
   const {isLandscape} = useOrientation();
-  const [selectedBoatSpace, setSelectedBoatSpace] = useState(formData.propertyType.spaceType);
 
   const boatSpaceTypes = [
     {
@@ -62,8 +60,7 @@ const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
     },
   ];
 
-  function handleSelectedBoatSpace(space) {
-    setSelectedBoatSpace(space);
+  const handleSelectedBoatSpace = (space) => {
     updateFormData((draft) => {
       draft.propertyType.spaceType = space;
     });
@@ -84,10 +81,10 @@ const OnboardingBoatSpace = ({formData, updateFormData, reportValidity}) => {
                     style={[
                       styles.gridItem,
                       isLandscape ? {width: `20%`} : {width: `30%`},
-                      selectedBoatSpace === item.name && styles.selectedGridItem
+                      formData.propertyType.spaceType === item.name && styles.selectedGridItem
                     ]}>
                   <Image source={item.img} style={styles.gridItemImage}/>
-                  <Text style={[styles.gridItemText, selectedBoatSpace === item.name && styles.selectedItemText]}>
+                  <Text style={[styles.gridItemText, formData.propertyType.spaceType === item.name && styles.selectedItemText]}>
                     <TranslatedText textToTranslate={item.name}/>
                   </Text>
                 </TouchableOpacity>
