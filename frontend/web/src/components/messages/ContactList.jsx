@@ -97,7 +97,16 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, isChatOpe
             wsMessages.forEach((msg) => {
                 const contact = updatedContacts.find(c => c.recipientId === msg.userId || c.recipientId === msg.recipientId);
                 if (contact) {
-                    contact.latestMessage = msg;
+                    // Determine the display text based on message content
+                    let displayText = msg.text;
+                    if (msg.fileUrls && msg.fileUrls.length > 0) {
+                        displayText = "attachment sent";
+                    }
+                    
+                    contact.latestMessage = {
+                        ...msg,
+                        text: displayText
+                    };
                 }
             });
             return updatedContacts;
@@ -110,9 +119,19 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, isChatOpe
             const updatedContacts = [...prevContacts];
             const index = updatedContacts.findIndex(c => c.recipientId === message.recipientId);
             if (index !== -1) {
+                // Determine the display text based on message content
+                let displayText = message.text;
+                if (message.fileUrls && message.fileUrls.length > 0) {
+                    displayText = "attachment sent";
+                }
+                
                 updatedContacts[index] = {
                     ...updatedContacts[index],
-                    latestMessage: { text: message.text, createdAt: message.createdAt }
+                    latestMessage: { 
+                        text: displayText, 
+                        createdAt: message.createdAt,
+                        fileUrls: message.fileUrls 
+                    }
                 };
             }
             updatedContacts.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
