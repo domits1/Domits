@@ -5,12 +5,10 @@ export const useFetchMessages = (userId) => {
     // Map of recipientId -> messages[]
     const [messagesByRecipient, setMessagesByRecipient] = useState({});
     const [activeRecipientId, setActiveRecipientId] = useState(null);
-    const [hasMoreByRecipient, setHasMoreByRecipient] = useState({});
-    const [nextCursorByRecipient, setNextCursorByRecipient] = useState({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const fetchMessages = useCallback(async (recipientId, options) => {
+    const fetchMessages = useCallback(async (recipientId) => {
         if (!recipientId) {
             console.error('Recipient ID is undefined');
             return;
@@ -19,11 +17,12 @@ export const useFetchMessages = (userId) => {
         setActiveRecipientId(recipientId);
         setError(null);
 
-        // If we already have messages for this conversation, don't refetch unless forced
+        // If we already have messages for this conversation, don't refetch unnecessarily
         const cached = messagesByRecipient[recipientId];
-        const force = options && options.force === true;
-        if (!force && Array.isArray(cached) && cached.length > 0) {
-            return; // keep existing cached messages
+        if (Array.isArray(cached) && cached.length > 0) {
+            // Ensure UI is not stuck in loading state when switching to cached chat
+            setLoading(false);
+            return;
         }
 
         setLoading(true);
@@ -36,8 +35,6 @@ export const useFetchMessages = (userId) => {
                 body: JSON.stringify({
                     userId: userId,
                     recipientId: recipientId,
-                    // Optional server support for pagination; server may ignore
-                    limit: 50,
                 }),
             });
 
@@ -48,18 +45,12 @@ export const useFetchMessages = (userId) => {
             const rawResponse = await response.text();
             const result = JSON.parse(rawResponse);
 
-            // Support two possible shapes: array or {items, nextCursor}
-            const items = Array.isArray(result) ? result : Array.isArray(result?.items) ? result.items : [];
-            const serverCursor = !Array.isArray(result) ? result?.nextCursor : null;
-
-            if (Array.isArray(items)) {
-                const sorted = items.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            if (Array.isArray(result)) {
+                const sorted = result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
                 setMessagesByRecipient((prev) => ({
                     ...prev,
                     [recipientId]: sorted,
                 }));
-                setNextCursorByRecipient((prev) => ({ ...prev, [recipientId]: serverCursor || null }));
-                setHasMoreByRecipient((prev) => ({ ...prev, [recipientId]: !!serverCursor }));
             } else {
                 console.error('Unexpected response format:', result);
                 setError('Unexpected response format');
@@ -89,46 +80,6 @@ export const useFetchMessages = (userId) => {
 
     // Expose the messages for the active conversation so existing components keep working
     const messages = messagesByRecipient[activeRecipientId] || [];
-    const hasMore = hasMoreByRecipient[activeRecipientId] || false;
-    const nextCursor = nextCursorByRecipient[activeRecipientId] || null;
-
-    // Load older messages (prepend) for the active conversation
-    const loadOlder = useCallback(async () => {
-        const recipientId = activeRecipientId;
-        if (!recipientId) return;
-        const cursor = nextCursorByRecipient[recipientId];
-        if (!cursor) return; // nothing more to load
-
-        setLoading(true);
-        try {
-            const response = await fetch('https://8pwu9lnge0.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-MessagesHistory', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, recipientId, cursor, limit: 50 }),
-            });
-
-            if (!response.ok) throw new Error('Failed to fetch older messages');
-            const raw = await response.text();
-            const result = JSON.parse(raw);
-
-            const items = Array.isArray(result) ? result : Array.isArray(result?.items) ? result.items : [];
-            const serverCursor = !Array.isArray(result) ? result?.nextCursor : null;
-
-            const sorted = items.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-            setMessagesByRecipient((prev) => {
-                const current = prev[recipientId] || [];
-                // Prepend older items
-                const merged = [...sorted, ...current];
-                return { ...prev, [recipientId]: merged };
-            });
-            setNextCursorByRecipient((prev) => ({ ...prev, [recipientId]: serverCursor || null }));
-            setHasMoreByRecipient((prev) => ({ ...prev, [recipientId]: !!serverCursor }));
-        } catch (err) {
-            console.error('Error fetching older messages:', err);
-        } finally {
-            setLoading(false);
-        }
-    }, [activeRecipientId, userId, nextCursorByRecipient]);
 
     return {
         messages,
@@ -136,8 +87,6 @@ export const useFetchMessages = (userId) => {
         error,
         fetchMessages,
         addNewMessage,
-        hasMore,
-        loadOlder,
     };
 };
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { sendMessage as sendOverWebSocket } from '../services/websocket';
+import { sendMessage } from '../services/websocket';
 import { getAccessToken } from '../../../../services/getAccessToken';
 
 export const useSendMessage = (userId) => {
@@ -25,26 +25,11 @@ export const useSendMessage = (userId) => {
             channelId: channelID,
         };
         
+
         setSending(true);
 
         try {
-            // Persist via REST endpoint which stores and dispatches the message server-side
-            const response = await fetch('https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Create-WebSocketMessage', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(message),
-            });
-
-            if (!response.ok) {
-                const body = await response.text().catch(() => '');
-                throw new Error(`Failed to persist message: ${response.status} ${body}`);
-            }
-
-            // Best-effort: also publish over open WebSocket for immediate peer delivery if connected
-            try { sendOverWebSocket(message); } catch {}
-
+            sendMessage(message); 
             return { success: true };
         } catch (err) {
             console.error("⚠️ Error sending message:", err);
