@@ -18,7 +18,7 @@ const NAV = [
   { key: "Settings",  label: "Settings",  icon: <Settings /> },
 ];
 
-const MOBILE_BP = 1024;
+const MOBILE_BP = 1024; // Breakpoint for mobile/desktop layout switch
 
 function useMediaQuery(query) {
   const getMatch = () =>
