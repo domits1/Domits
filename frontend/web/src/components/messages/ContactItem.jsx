@@ -30,7 +30,7 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
                 {accoImage && (
                     <img src={accoImage} alt="Accommodation" className="contact-item-accommodation-image" />
                 )}
-                <img src={profileImage} alt="Profile" className="contact-item-profile-image" />
+                <img src={contact.profileImage || profileImage} alt="Profile" className="contact-item-profile-image" />
             </div>
 
             <div className="contact-item-text-container">
