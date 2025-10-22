@@ -23,6 +23,4 @@ const FilterButton = () => {
 );
 } // website breaking bug, oh no this will be pushed to acceptance but im not aware!
 
-};
-
 export default FilterButton;
