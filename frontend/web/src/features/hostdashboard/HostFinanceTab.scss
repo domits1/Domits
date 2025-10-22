@@ -35,13 +35,14 @@ $bp-xl: 1280px;
   }
 }
 
+
 .host-pc-finance {
   background: #fff;
   border-radius: $radius;
   box-shadow: $shadow;
   padding: 16px;
   max-width: 960px;
-  margin: 0 auto;
+  width: 100%;
 
   @include up($bp-md) { padding: 24px; }
   @include up($bp-lg) { padding: 32px; }
