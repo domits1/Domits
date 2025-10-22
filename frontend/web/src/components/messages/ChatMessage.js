@@ -42,6 +42,8 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
         }
     }
 
+    const hasText = typeof text === 'string' && text.trim().length > 0;
+
     return (
         <div className={`${prefix}chat-message-container ${isAutomatedMessage ? 'automated-message' : ''}`}>
             <div className={`${prefix}chat-message ${isRead ? 'read' : 'unread'} ${directionClass} ${isAutomatedMessage ? 'automated' : ''}`}>
@@ -55,9 +57,11 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
                     )}
                     <span className={`message-time ${isAutomatedMessage ? 'automated-time' : ''}`}>{formatDate(createdAt)}</span>
                 </div>
-                <div className={`message-content ${isAutomatedMessage ? 'automated-content' : ''}`}>
-                    <span className="message-text">{text}</span>
-                </div>
+                {hasText && (
+                    <div className={`message-content ${isAutomatedMessage ? 'automated-content' : ''}`}>
+                        <span className="message-text">{text}</span>
+                    </div>
+                )}
 
                 {fileUrls?.length > 0 && (
                     <div className={`message-attachments`}>
