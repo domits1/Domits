@@ -43,11 +43,7 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
                         {bookingStatus === "Failed" && <p id='status'>Reservation unsuccessful</p>}
                         {contact.latestMessage?.text
                             ? contact.latestMessage.text
-                            : contact.latestMessage?.fileUrls?.length === 1
-                                ? `(${contact.latestMessage?.fileUrls?.length}) Image`
-                                : contact.latestMessage?.fileUrls?.length > 1
-                                    ? `(${contact.latestMessage?.fileUrls?.length}) Images`
-                                    : "No message history yet"}
+                            : "No message history yet"}
                     </p>
                 )}
 
