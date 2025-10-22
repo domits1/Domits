@@ -1,0 +1,1 @@
+docs for the booking API
