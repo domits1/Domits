@@ -45,6 +45,7 @@ export class Repository {
       );
     }
 
+    
     const result = await query
       .select(`
         SUM(
@@ -55,6 +56,28 @@ export class Repository {
 
     return { bookedNights: Number(result?.bookedNights ?? 0) };
   }
+
+ async getBaseRate(cognitoUserId) {
+  const client = await Database.getInstance();
+  
+  const result = await client
+    .getRepository(Property)
+    .createQueryBuilder("p")
+    .innerJoin("property_pricing", "pp", "pp.property_id = p.id")
+    .where("p.hostId = :hostId", { hostId: cognitoUserId })
+    .select(`
+      p.id AS "propertyId",
+      pp.roomRate AS "baseRate"
+    `)
+    .getRawMany();
+
+  return result.map((row) => ({
+    propertyId: row.propertyId,
+    baseRate: Number(row.baseRate),
+  }));
+}
+
+
 
   async getAvailableNights(cognitoUserId, startDate = null, endDate = null) {
     const client = await Database.getInstance();

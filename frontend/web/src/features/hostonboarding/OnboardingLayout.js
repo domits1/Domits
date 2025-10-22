@@ -73,7 +73,7 @@ function OnboardingLayout({ children }) {
                   onClick={() => handleNavigation("/hostdashboard/messages")} 
                 />
                 <MenuItem 
-                  icon={<ShowChartIcon />} 
+                  icon={<ShowChartIcon />}
                   label="Revenues" 
                   active={false} 
                   onClick={() => handleNavigation("/hostdashboard/revenues")} 

@@ -49,6 +49,8 @@ export class Service {
         return occupancyRate.toFixed(2);
       case "averageLengthOfStay":
         return averageLengthOfStay;
+        case "ratesApi":
+        return this.repository.getBaseRate(userId);
       default:
         throw new Error(`Unknown metric: ${kpiMetric}`);
     }
