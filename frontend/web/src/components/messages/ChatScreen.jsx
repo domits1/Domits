@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef, useContext } from 'react';
 
 import useFetchMessages from '../../features/hostdashboard/hostmessages/hooks/useFetchMessages';
-import useLocalRoomMessages from './hooks/useLocalRoomMessages';
 import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
 import { useSendMessage } from '../../features/hostdashboard/hostmessages/hooks/useSendMessage';
 
@@ -10,20 +9,12 @@ import ChatUploadAttachment from '../../features/hostdashboard/hostmessages/comp
 import { WebSocketContext } from '../../features/hostdashboard/hostmessages/context/webSocketContext';
 import '../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss';
 import { v4 as uuidv4 } from 'uuid';
-import { FaPaperPlane, FaArrowLeft, FaSearch, FaTimes, FaPaperclip, FaMicrophone } from 'react-icons/fa';
+import { FaPaperPlane, FaArrowLeft, FaTimes } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
 
 
-const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleContactListMessage, onBack, dashboardType, testMessages = []}) => {
-    const isPairRoom = typeof contactId === 'string' && contactId.startsWith('pair:');
-    const roomCode = isPairRoom ? contactId.replace('pair:', '') : null;
-    const local = useLocalRoomMessages(roomCode || 'default', userId);
-    const remote = useFetchMessages(userId);
-    const messages = isPairRoom ? local.messages : [...remote.messages, ...testMessages];
-    const loading = isPairRoom ? local.loading : remote.loading;
-    const error = isPairRoom ? null : remote.error;
-    const fetchMessages = isPairRoom ? (() => {}) : remote.fetchMessages;
-    const addNewMessage = isPairRoom ? local.addNewMessage : remote.addNewMessage;
+const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, onClose, dashboardType}) => {
+    const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const socket = useContext(WebSocketContext);
     const isHost = dashboardType === 'host';
     const { bookingDetails } = isHost
@@ -32,23 +23,14 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     const [newMessage, setNewMessage] = useState('');
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
-    const wsMessages = socket?.messages || [];
     const [messageSearch, setMessageSearch] = useState('');
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const searchInputRef = useRef(null);
+    const [showPreviewPopover, setShowPreviewPopover] = useState(false);
+    const wsMessages = socket?.messages || [];
     const addedMessageIds = useRef(new Set());
-    const optimisticSignaturesRef = useRef(new Set());
     const chatContainerRef = useRef(null);
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
-    };
-
-    const handleOpenAttachmentPicker = () => {
-        try {
-            const input = document.getElementById('fileInput');
-            input?.click();
-        } catch {}
     };
 
     useEffect(() => {
@@ -57,7 +39,6 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
         }
     }, [userId, contactId, fetchMessages]);
 
-    // Scroll to bottom on new messages or when conversation changes
     useEffect(() => {
         try {
             const el = chatContainerRef.current;
@@ -65,13 +46,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
         } catch {}
     }, [messages, contactId]);
 
-    useEffect(() => {
-        if (isSearchOpen) {
-            try {
-                searchInputRef.current?.focus();
-            } catch {}
-        }
-    }, [isSearchOpen]);
+    // No search UI in this simplified version
 
     const handleSendAutomatedTestMessages = () => {
         if (!contactId) return;
@@ -117,67 +92,39 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                 (msg.userId === userId && msg.recipientId === contactId) ||
                 (msg.userId === contactId && msg.recipientId === userId);
 
-            if (!isRelevant) return;
+            if (!isRelevant || !msg?.id) return;
+            if (addedMessageIds.current.has(msg.id)) return;
 
-            // Skip if we've already added this id
-            if (msg.id && addedMessageIds.current.has(msg.id)) return;
-
-            // Skip if this matches an optimistic message we already rendered
-            const incomingSig = `${msg.userId}|${msg.recipientId}|${(msg.text || '').trim()}|${(msg.fileUrls || []).join(',')}`;
-            if (optimisticSignaturesRef.current.has(incomingSig)) {
-                optimisticSignaturesRef.current.delete(incomingSig);
-                return;
-            }
-
-            const messageWithDefaults = {
-                ...msg,
-                isAutomated: msg.isAutomated || false,
-                messageType: msg.messageType || 'regular'
-            };
-
-            addNewMessage(messageWithDefaults);
-            if (msg.id) addedMessageIds.current.add(msg.id);
-
+            addNewMessage(msg);
+            addedMessageIds.current.add(msg.id);
         });
     }, [wsMessages, userId, contactId, addNewMessage]);
-
-    const makeSignature = (m) => `${m.userId}|${m.recipientId}|${(m.text || '').trim()}|${(m.fileUrls || []).join(',')}`;
 
     const handleSendMessage = async () => {
         const hasContent = (newMessage.trim() || uploadedFileUrls.length > 0);
         if (!hasContent) return;
         try {
-            if (isPairRoom) {
-                // Local rooms: we handle rendering ourselves and broadcast via BroadcastChannel
-                const response = local.sendLocalMessage(newMessage, uploadedFileUrls);
-                if (!response || !response.success) {
-                    alert(`Error while sending: ${response?.error || 'Please try again later.'}`);
-                    return;
-                }
-            } else {
-                // Remote rooms: send and optimistically render; dedupe when echo arrives
-                const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
-                if (!response || !response.success) {
-                    alert(`Error while sending: ${response.error || 'Please try again later.'}`);
-                    return;
-                }
-
-                const tempSentMessage = {
-                    id: `temp-${uuidv4()}`,
-                    userId,
-                    recipientId: contactId,
-                    text: newMessage,
-                    fileUrls: uploadedFileUrls,
-                    createdAt: new Date().toISOString(),
-                    isSent: true,
-                };
-                optimisticSignaturesRef.current.add(makeSignature(tempSentMessage));
-                addNewMessage(tempSentMessage);
-                handleContactListMessage?.(tempSentMessage);
+            const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
+            if (!response || !response.success) {
+                alert(`Error while sending: ${response?.error || 'Please try again later.'}`);
+                return;
             }
+
+            const tempSentMessage = {
+                id: uuidv4(),
+                userId,
+                recipientId: contactId,
+                text: newMessage,
+                fileUrls: uploadedFileUrls,
+                createdAt: new Date().toISOString(),
+                isSent: true,
+            };
+
+            addNewMessage(tempSentMessage);
+            handleContactListMessage?.(tempSentMessage);
             setNewMessage('');
             setUploadedFileUrls([]);
-            // Auto-scroll to bottom after sending
+
             try {
                 const el = chatContainerRef.current;
                 if (el) el.scrollTop = el.scrollHeight;
@@ -189,16 +136,14 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
 
     if (!contactId) return null;
 
-    // Filter messages client-side by keyword (text or file url)
     const visibleMessages = messageSearch
-        ? messages.filter(m => {
+        ? messages.filter((m) => {
             const text = (m.text || '').toLowerCase();
             const urls = (m.fileUrls || []).join(' ').toLowerCase();
             const term = messageSearch.toLowerCase();
             return text.includes(term) || urls.includes(term);
         })
         : messages;
-
     return (
         <div className={`${dashboardType}-chat`}>
             <div className="chat-screen-container">
@@ -208,86 +153,70 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                             <FaArrowLeft />
                         </button>
                     )}
-                    <div className="chat-header-left-actions">
-                        <button
-                            type="button"
-                            className="automated-test-button"
-                            onClick={handleSendAutomatedTestMessages}
-                            title="Send automated test messages"
+                    {onClose && (
+                        <button 
+                            className="close-chat-button" 
+                            onClick={onClose}
+                            title="Close chat"
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '16px',
+                                color: '#666',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                marginRight: '8px',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.color = '#333';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.color = '#666';
+                            }}
                         >
-                            🤖 Test messages
+                            <FaTimes />
                         </button>
-                    </div>
-                    <img src={contactAvatar || profileImage} alt={contactName} className="profile-img" />
+                    )}
+                    <img src={contactImage || profileImage} alt={contactName} className="profile-img" />
                     <div className="chat-header-info">
                         <h3>{contactName}</h3>
                         <p>Translation on</p>
                     </div>
-                    <div className="chat-header-actions">
-                        <div className="chat-header-search">
-                            {!isSearchOpen ? (
-                                <button
-                                    type="button"
-                                    className="chat-header-search-toggle"
-                                    onClick={() => setIsSearchOpen(true)}
-                                    title="Search messages"
-                                    aria-label="Search messages"
-                                >
-                                    <FaSearch />
-                                </button>
-                            ) : (
-                                <div className="chat-header-search-expanded">
-                                    <FaSearch className="chat-header-search-icon" />
-                                    <input
-                                        ref={searchInputRef}
-                                        type="text"
-                                        placeholder="Search messages"
-                                        value={messageSearch}
-                                        onChange={(e) => setMessageSearch(e.target.value)}
-                                        className="chat-header-search-input"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="chat-header-search-close"
-                                        onClick={() => { setIsSearchOpen(false); setMessageSearch(''); }}
-                                        title="Close search"
-                                    >
-                                        <FaTimes />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingRight: '1rem' }}>
+                        <input
+                            type="text"
+                            value={messageSearch}
+                            onChange={(e) => setMessageSearch(e.target.value)}
+                            placeholder="Search messages"
+                            style={{
+                                border: '1px solid #ccc',
+                                background: '#fff',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                minWidth: '180px'
+                            }}
+                        />
+                        <button
+                            onClick={handleSendAutomatedTestMessages}
+                            style={{
+                                border: '1px solid #ccc',
+                                background: '#f3f3f3',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Test messages
+                        </button>
                     </div>
                 </div>
 
-
                 <div className="chat-screen" ref={chatContainerRef}>
                     {loading ? (
-                        <div className="loading-messages">
-                            <div className="loading-spinner"></div>
-                            <p>Loading messages...</p>
-                        </div>
+                        <p>Loading messages...</p>
                     ) : error ? (
-                        <div className="error-message">
-                            <p>⚠️ {error}</p>
-                            <button onClick={() => fetchMessages(contactId)} className="retry-button">
-                                Retry
-                            </button>
-                        </div>
-                    ) : visibleMessages.length === 0 ? (
-                        <div className="empty-chat">
-                            {messageSearch ? (
-                                <>
-                                    <p>No messages match your search.</p>
-                                    <p className="empty-chat-subtitle">Try different keywords</p>
-                                </>
-                            ) : (
-                                <>
-                                    <p>👋 Start a conversation with {contactName}</p>
-                                    <p className="empty-chat-subtitle">Send your first message below</p>
-                                </>
-                            )}
-                        </div>
+                        <p>{error}</p>
                     ) : (
                         visibleMessages.map((message) => (
                             <ChatMessage
@@ -302,35 +231,65 @@ const ChatScreen = ({ userId, contactId, contactName, contactAvatar, handleConta
                 </div>
 
                 <div className='chat-input'>
-                    {/* Hidden uploader kept for functionality */}
-                    <div style={{ display: 'none' }}>
+                    <div className='attachment-area'>
                         <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+                        {uploadedFileUrls.length > 0 && (
+                            <button
+                                className='inline-upload-preview'
+                                onClick={() => setShowPreviewPopover((s) => !s)}
+                                title={uploadedFileUrls.length > 1 ? 'View all previews' : 'View preview'}
+                            >
+                                <img src={uploadedFileUrls[0]} alt='First attachment preview' />
+                                {uploadedFileUrls.length > 1 && (
+                                    <span className='more-badge'>+{uploadedFileUrls.length - 1}</span>
+                                )}
+                            </button>
+                        )}
                     </div>
-
-                    <button className='whats-action whats-clip' title='Attach' onClick={handleOpenAttachmentPicker}>
-                        <FaPaperclip />
-                    </button>
-
-                    <div className='whats-input'>
+                    <div className='message-input-wrapper'>
                         <textarea
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder="Message"
-                            className='whats-textarea'
+                            placeholder="Type a message..."
+                            className='message-input-textarea'
                             onKeyUp={(e) => {
                                 if (e.key === 'Enter') handleSendMessage();
                             }}
                         />
+                        <button
+                            onClick={handleSendMessage}
+                            className='message-input-send-button'
+                            disabled={sending}
+                            title="Send"
+                        >
+                            <FaPaperPlane />
+                        </button>
                     </div>
 
-                    <button
-                        className='whats-action whats-mic'
-                        title={newMessage.trim() ? 'Send' : 'Voice'}
-                        onClick={() => { if (newMessage.trim()) { handleSendMessage(); } }}
-                        disabled={sending}
-                    >
-                        {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
-                    </button>
+                    {showPreviewPopover && uploadedFileUrls.length > 0 && (
+                        <div className='preview-popover' role='dialog' aria-label='Attachment previews'>
+                            <div className='preview-popover-header'>
+                                <span>Attachments</span>
+                                <button className='close-popover' onClick={() => setShowPreviewPopover(false)} title='Close'>
+                                    <FaTimes />
+                                </button>
+                            </div>
+                            <div className='preview-grid'>
+                                {uploadedFileUrls.map((url, index) => (
+                                    <div className='preview-item' key={`${url}-${index}`}>
+                                        <img src={url} alt={`Attachment-${index}`} />
+                                        <button
+                                            className='remove-thumb'
+                                            title='Remove'
+                                            onClick={() => setUploadedFileUrls((prev) => prev.filter((u) => u !== url))}
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {sendError && <p className="error-message">{sendError.message}</p>}
