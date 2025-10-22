@@ -10,8 +10,7 @@ import { Auth } from "aws-amplify";
 import ClipLoader from "react-spinners/ClipLoader";
 import BookedNights from "./HostRevenueCards/BookedNights.jsx";
 
-const BASE_URL =
-  "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
+const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
 const HostRevenues = () => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
@@ -37,11 +36,10 @@ const HostRevenues = () => {
     setLoadingStates((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 🔑 Generic Fetcher (Fixed Parsing)
   const fetchMetricData = async (metric, setStateCallback, loadingKey) => {
-    if (!cognitoUserId) return console.error("Cognito User ID is missing.");
-    updateLoadingState(loadingKey, true);
+    if (!cognitoUserId) return;
 
+    updateLoadingState(loadingKey, true);
     try {
       const session = await Auth.currentSession();
       const token = session.getAccessToken().getJwtToken();
@@ -52,14 +50,11 @@ const HostRevenues = () => {
         headers: { Authorization: token },
       });
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
       let data = await response.json();
       if (data?.body) data = JSON.parse(data.body);
 
-      console.log(`✅ [${metric}] API response:`, data);
+      console.log(`api (${metric}):`, data);
 
-      // 🧩 Normalize metric values safely
       switch (metric) {
         case "revenue":
           setStateCallback(Number(data?.revenue?.totalRevenue ?? 0));
@@ -74,88 +69,58 @@ const HostRevenues = () => {
           setStateCallback(Number(data?.propertyCount?.propertyCount ?? 0));
           break;
         case "monthlyComparison":
-          setStateCallback(data?.monthlyComparison ?? []);
+          if (Array.isArray(data)) setStateCallback(data);
+          else if (Array.isArray(data?.monthlyComparison)) setStateCallback(data.monthlyComparison);
+          else setStateCallback([]); // Show empty chart if no data
           break;
         default:
           break;
       }
     } catch (error) {
-      console.error(`❌ Error fetching ${metric}:`, error);
+      console.error(` ${metric}:`, error);
     } finally {
       updateLoadingState(loadingKey, false);
     }
   };
 
-  // ---- Metric Fetchers ----
-  const fetchRevenueData = () =>
-    fetchMetricData("revenue", setTotalRevenue, "revenue");
+  const fetchRevenueData = () => fetchMetricData("revenue", setTotalRevenue, "revenue");
+  const fetchBookedNightsData = () => fetchMetricData("bookedNights", setBookedNights, "bookedNights");
+  const fetchAvailableNightsData = () => fetchMetricData("availableNights", setAvailableNights, "availableNights");
+  const fetchPropertyCountData = () => fetchMetricData("propertyCount", setPropertyCount, "propertyCount");
+  const fetchMonthlyRevenueData = () => fetchMetricData("monthlyComparison", setMonthlyRevenueData, "monthlyRevenue");
 
-  const fetchBookedNights = () =>
-    fetchMetricData("bookedNights", setBookedNights, "bookedNights");
-
-  const fetchAvailableNights = () =>
-    fetchMetricData("availableNights", setAvailableNights, "availableNights");
-
-  const fetchPropertyCount = () =>
-    fetchMetricData("propertyCount", setPropertyCount, "propertyCount");
-
-  const fetchMonthlyRevenueData = () =>
-    fetchMetricData("monthlyComparison", setMonthlyRevenueData, "monthlyRevenue");
-
-  // ---- User + Stripe Setup ----
   useEffect(() => {
     const fetchUserInfo = async () => {
       updateLoadingState("user", true);
       try {
         const userInfo = await Auth.currentUserInfo();
-        if (!userInfo?.attributes?.sub)
-          throw new Error("Invalid Cognito User Info");
+        if (!userInfo?.attributes?.sub) throw new Error("Invalid Cognito User Info");
 
         setCognitoUserId(userInfo.attributes.sub);
-
-        const response = await axios.post(
-          "https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists",
-          { sub: userInfo.attributes.sub },
-          { headers: { "Content-Type": "application/json" } }
-        );
-
-        const parsedBody = JSON.parse(response.data.body);
-        if (parsedBody.hasStripeAccount) {
-          setStripeLoginUrl(parsedBody.loginLinkUrl);
-          setStripeStatus(
-            parsedBody.bankDetailsProvided ? "complete" : "incomplete"
-          );
-        } else {
-          setStripeStatus("none");
-        }
       } catch (error) {
         console.error("Error fetching user info:", error);
       } finally {
         updateLoadingState("user", false);
       }
     };
-
     fetchUserInfo();
   }, []);
 
-  // ---- Load Metrics When Cognito User Ready ----
   useEffect(() => {
     if (cognitoUserId) {
       fetchRevenueData();
-      fetchBookedNights();
-      fetchAvailableNights();
-      fetchPropertyCount();
-      fetchMonthlyRevenueData(); // ✅ Added back
+      fetchBookedNightsData();
+      fetchAvailableNightsData();
+      fetchPropertyCountData();
+      fetchMonthlyRevenueData();
     }
   }, [cognitoUserId]);
 
-  const occupancyRate =
-    availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
+  const occupancyRate = availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
 
   return (
     <main className="hr-page-body hr-container">
       <h2>Revenues</h2>
-
       <section className="hr-host-revenues">
         <div className="hr-content">
           {loadingStates.user ? (
@@ -164,53 +129,25 @@ const HostRevenues = () => {
             </div>
           ) : (
             <>
-              {stripeStatus === "none" && (
-                <div>
-                  <h3>No Stripe Account Found</h3>
-                  <button onClick={() => window.open(stripeLoginUrl, "_blank")}>
-                    Connect Stripe
-                  </button>
-                </div>
-              )}
+              <div className="hr-revenue-overview">
+                <RevenueOverview title="Total Revenue" value={`$${totalRevenue.toLocaleString()}`} />
+                <RevenueOverview title="Booked Nights" value={bookedNights} />
+                <RevenueOverview title="Available Nights" value={availableNights} />
+                <RevenueOverview title="Total Properties" value={propertyCount} />
+              </div>
 
-              {stripeStatus === "complete" && (
-                <>
-                  <div className="hr-revenue-overview">
-                    <h3>Revenue Overview</h3>
-                    <RevenueOverview
-                      title="Total Revenue"
-                      value={`$${totalRevenue.toLocaleString()}`}
-                    />
-                    <RevenueOverview title="Booked Nights" value={bookedNights} />
-                    <RevenueOverview
-                      title="Available Nights"
-                      value={availableNights}
-                    />
-                    <RevenueOverview
-                      title="Total Properties"
-                      value={propertyCount}
-                    />
-                  </div>
+            
+              <div className="hr-monthly-comparison">
+                <h3>Monthly Comparison</h3>
+                <MonthlyComparison data={monthlyRevenueData} />
+              </div>
 
-                  {monthlyRevenueData.length > 0 && (
-                    <div className="hr-monthly-comparison">
-                      <h3>Monthly Comparison</h3>
-                      <MonthlyComparison data={monthlyRevenueData} />
-                    </div>
-                  )}
-
-                  <div className="hr-cards">
-                    <OccupancyRateCard
-                      occupancyRate={occupancyRate.toFixed(2)}
-                      numberOfProperties={propertyCount}
-                      vsLastMonth={0}
-                    />
-                    <ADRCard hostId={cognitoUserId} />
-                    <RevPARCard />
-                    <BookedNights nights={bookedNights} />
-                  </div>
-                </>
-              )}
+              <div className="hr-cards">
+                <OccupancyRateCard occupancyRate={occupancyRate.toFixed(2)} numberOfProperties={propertyCount} />
+                <ADRCard hostId={cognitoUserId} />
+                <RevPARCard />
+                <BookedNights nights={bookedNights} />
+              </div>
             </>
           )}
         </div>
