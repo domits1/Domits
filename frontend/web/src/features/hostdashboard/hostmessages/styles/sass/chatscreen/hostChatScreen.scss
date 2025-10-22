@@ -251,11 +251,13 @@
             position: relative;
             border-top: 1px solid #eee;
             background: #fafafa;
+            box-sizing: border-box; /* Ensure padding is included in width calculation */
 
             .attachment-area {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
+                flex-shrink: 0; /* Prevent attachment area from shrinking */
             }
 
             .inline-upload-preview {
@@ -322,8 +324,9 @@
             .message-input-wrapper {
                 position: relative;
                 flex: 1;
-                max-width: 900px; /* slight increase */
-                margin: 0 auto; /* center wrapper */
+                min-width: 0; /* Allow flex item to shrink below content size */
+                max-width: none; /* Remove max-width constraint */
+                margin: 0; /* Remove centering margin */
             }
 
             .message-input-textarea {
@@ -338,6 +341,7 @@
                 overflow-y: auto;
                 transition: box-shadow 0.2s ease, border-color 0.2s ease;
                 text-align: center; /* placeholder centered */
+                box-sizing: border-box; /* Include padding in width calculation */
 
                 &::placeholder {
                     color: #666;
@@ -502,14 +506,43 @@
         }
 
 
+        @media (max-width: 1024px) {
+            .chat-input {
+                .message-input-wrapper {
+                    max-width: none; /* Ensure full width on smaller screens */
+                }
+            }
+        }
+
         @media (max-width: 875px) {
             min-width: 0;
             min-height: 30rem;
             max-height: 30rem;
+            
+            .chat-input {
+                padding: 0.5rem 0.75rem; /* Reduce padding on smaller screens */
+                
+                .message-input-wrapper {
+                    max-width: none;
+                }
+            }
         }
 
         @media (max-width: 600px) {
             width: 100%;
+            
+            .chat-input {
+                padding: 0.5rem; /* Further reduce padding on mobile */
+                gap: 0.5rem;
+                
+                .message-input-textarea {
+                    padding: 10px 40px 10px 12px; /* Adjust padding for mobile */
+                }
+                
+                .message-input-send-button {
+                    right: 1rem; /* Adjust send button position */
+                }
+            }
         }
     }
 
