@@ -14,7 +14,7 @@ import profileImage from './domits-logo.jpg';
 
 
 const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, onClose, dashboardType}) => {
-    const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
+    const { messages, loading, error, fetchMessages, addNewMessage, hasMore, loadOlder } = useFetchMessages(userId);
     const socket = useContext(WebSocketContext);
     const isHost = dashboardType === 'host';
     const { bookingDetails } = isHost
@@ -34,7 +34,8 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
 
     useEffect(() => {
         if (contactId) {
-            fetchMessages(contactId);
+            // Force a quick refresh when entering a chat to sync cache with backend
+            fetchMessages(contactId, { force: true });
         }
     }, [userId, contactId, fetchMessages]);
 
@@ -44,6 +45,18 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
             if (el) el.scrollTop = el.scrollHeight;
         } catch {}
     }, [messages, contactId]);
+
+    useEffect(() => {
+        const el = chatContainerRef.current;
+        if (!el) return;
+        const onScroll = () => {
+            if (el.scrollTop <= 0 && hasMore) {
+                loadOlder();
+            }
+        };
+        el.addEventListener('scroll', onScroll);
+        return () => el.removeEventListener('scroll', onScroll);
+    }, [hasMore, loadOlder]);
 
     // No search UI in this simplified version
 
