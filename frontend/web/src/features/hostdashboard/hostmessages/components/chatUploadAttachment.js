@@ -86,7 +86,6 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
                 style={{ display: "none" }}
                 onChange={handleFileInputChange}
             />
-            {/* previews displayed in parent */}
         </div>
 
 
