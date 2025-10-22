@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 // Persists messages per conversation so switching contacts does not wipe history
 export const useFetchMessages = (userId) => {
     // Map of recipientId -> messages[]
     const [messagesByRecipient, setMessagesByRecipient] = useState({});
+    const cacheRef = useRef({});
     const [activeRecipientId, setActiveRecipientId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -18,7 +19,7 @@ export const useFetchMessages = (userId) => {
         setError(null);
 
         // If we already have messages for this conversation, don't refetch unnecessarily
-        const cached = messagesByRecipient[recipientId];
+        const cached = cacheRef.current[recipientId];
         if (Array.isArray(cached) && cached.length > 0) {
             // Ensure UI is not stuck in loading state when switching to cached chat
             setLoading(false);
@@ -27,6 +28,9 @@ export const useFetchMessages = (userId) => {
 
         setLoading(true);
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
             const response = await fetch('https://8pwu9lnge0.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-MessagesHistory', {
                 method: 'POST',
                 headers: {
@@ -36,7 +40,10 @@ export const useFetchMessages = (userId) => {
                     userId: userId,
                     recipientId: recipientId,
                 }),
+                signal: controller.signal,
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch messages');
@@ -51,6 +58,7 @@ export const useFetchMessages = (userId) => {
                     ...prev,
                     [recipientId]: sorted,
                 }));
+                cacheRef.current[recipientId] = sorted;
             } else {
                 console.error('Unexpected response format:', result);
                 setError('Unexpected response format');
@@ -58,10 +66,13 @@ export const useFetchMessages = (userId) => {
         } catch (err) {
             console.error('Error fetching messages:', err);
             setError(err);
+            // Ensure cache holds at least an empty array so UI can render empty state
+            setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: prev[recipientId] || [] }));
+            cacheRef.current[recipientId] = cacheRef.current[recipientId] || [];
         } finally {
             setLoading(false);
         }
-    }, [userId, messagesByRecipient]);
+    }, [userId]);
 
     const addNewMessage = useCallback((newMessage) => {
         // Determine the other participant to decide which conversation to place this in
@@ -74,7 +85,9 @@ export const useFetchMessages = (userId) => {
             if (exists) return prev;
 
             const nextForPartner = [...current, newMessage];
-            return { ...prev, [partnerId]: nextForPartner };
+            const next = { ...prev, [partnerId]: nextForPartner };
+            cacheRef.current[partnerId] = nextForPartner;
+            return next;
         });
     }, [userId]);
 

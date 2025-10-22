@@ -27,6 +27,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
     const wsMessages = socket?.messages || [];
     const addedMessageIds = useRef(new Set());
     const chatContainerRef = useRef(null);
+    const [forceStopLoading, setForceStopLoading] = useState(false);
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
@@ -37,6 +38,16 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
             fetchMessages(contactId);
         }
     }, [userId, contactId, fetchMessages]);
+
+    // Safety: if loading persists too long (e.g., network hang), clear after 12s
+    useEffect(() => {
+        if (!loading) {
+            setForceStopLoading(false);
+            return;
+        }
+        const t = setTimeout(() => setForceStopLoading(true), 12000);
+        return () => clearTimeout(t);
+    }, [loading, contactId]);
 
     useEffect(() => {
         try {
@@ -212,10 +223,12 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                 </div>
 
                 <div className="chat-screen" ref={chatContainerRef}>
-                    {loading ? (
+                    {loading && !forceStopLoading ? (
                         <p>Loading messages...</p>
                     ) : error ? (
-                        <p>{error}</p>
+                        <p>{String(error)}</p>
+                    ) : visibleMessages.length === 0 ? (
+                        <p>No messages yet. Say hello 👋</p>
                     ) : (
                         visibleMessages.map((message) => (
                             <ChatMessage
