@@ -258,21 +258,30 @@ $off-white: #f0f0f0;
   .onboarding-button-box {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: center;
+    margin-top: 20px;
   }
 
   .onboarding-button {
     background-color: $domits-host-blue;
     border: none;
     color: white;
-    padding: 12px 24px;
+    padding: 8px 20px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    margin-top: 20px;
     cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    &:hover {
+      background-color: darken($domits-host-blue, 10%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
   }
 
   .onboarding-button-disabled {
