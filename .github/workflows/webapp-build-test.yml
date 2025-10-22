@@ -29,7 +29,7 @@ jobs:
         ls
         pwd
         echo "DEBUGGING END --"
-        npm install
+        npm ci
 
     - name: Run Tests
       run: |
