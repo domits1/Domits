@@ -2,12 +2,10 @@ import React, { useEffect, useState } from "react";
 import { formatYearMonth } from "../utils/date";
 import { Auth } from "aws-amplify";
 import { getAccessToken } from "../utils/getAccessToken";
-
 export default function Toolbar({ view, setView, cursor, onPrev, onNext, selectedPropertyId, onPropertySelect }) {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState(null);
-
   useEffect(() => {
     (async () => {
       try {
