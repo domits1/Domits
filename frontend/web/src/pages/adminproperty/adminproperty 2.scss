@@ -1,0 +1,93 @@
+// Variables
+$primary-color: #0d9813;
+$secondary-color: #333;
+$background-color: #fff;
+$border-radius: 10px;
+$field-radius: 6px;
+$font-size-title: 1.4rem;
+$font-size-label: 0.95rem;
+$font-size-input: 1rem;
+$spacing-form: 1.5rem;
+$spacing-group: 1rem;
+$spacing-radio: 0.4rem;
+$button-padding: 0.8rem;
+
+
+.adminproperty-form {
+  max-width: 500px;
+  margin: 5vh auto;
+  padding: $spacing-form;
+  background: $background-color;
+  border: 1px solid $primary-color;
+  border-radius: $border-radius;
+  font-family: Arial, sans-serif;
+
+  .adminproperty-title {
+    font-size: $font-size-title;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    text-align: center;
+    color: $primary-color;
+  }
+
+  .adminproperty-group {
+    margin-bottom: $spacing-group;
+    display: flex;
+    flex-direction: column;
+
+    label {
+      margin-bottom: $spacing-radio;
+      font-size: $font-size-label;
+      color: $secondary-color;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"] {
+      padding: 0.6rem;
+      border: 1px solid $primary-color;
+      border-radius: $field-radius;
+      font-size: $font-size-input;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+      }
+    }
+  }
+
+  .adminproperty-options {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-radio;
+  }
+
+  .adminproperty-radio {
+    display: flex;
+    align-items: center;
+    gap: $spacing-radio;
+    font-size: $font-size-label;
+    color: $secondary-color;
+
+    input[type="radio"] {
+      accent-color: $primary-color;
+    }
+  }
+
+  .adminproperty-submit {
+    margin-top: $spacing-group;
+    width: 100%;
+    padding: $button-padding;
+    background: $primary-color;
+    color: #fff;
+    font-size: $font-size-input;
+    font-weight: 600;
+    border: none;
+    border-radius: $field-radius;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}
