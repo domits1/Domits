@@ -30,7 +30,7 @@ jobs:
         npm install
 
     - name: Retieve aws-exports
-      run: echo "$AWS_EXPORTS" > frontend/web/src/aws-exports.jw
+      run: echo "$AWS_EXPORTS" > frontend/web/src/aws-exports.js
       
     - name: Run Tests
       run: |
