@@ -38,7 +38,8 @@ const BookedNights = () => {
       const session = await Auth.currentSession();
       const token = session.getAccessToken().getJwtToken();
 
-      let url = `${BASE_URL}?hostId=${cognitoUserId}&metric=bookedNights`;
+      // Build URL
+      let url = `${BASE_URL}?hostId=${cognitoUserId}&metric=bookedNights&filterType=${periodType}`;
       if (periodType === "custom" && startDate && endDate) {
         url += `&startDate=${startDate}&endDate=${endDate}`;
       }
@@ -49,20 +50,14 @@ const BookedNights = () => {
       });
 
       let data = await response.json();
-      if (data.body) {
-        data = JSON.parse(data.body);
-      }
+      if (data?.body) data = JSON.parse(data.body);
 
-      // Flatten object to number
+      // Flatten the response
       let nights = 0;
-      if (data.bookedNights) {
-        if (typeof data.bookedNights === "number") {
-          nights = data.bookedNights;
-        } else if ("bookedNights" in data.bookedNights) {
-          nights = data.bookedNights.bookedNights;
-        } else if ("value" in data.bookedNights) {
-          nights = data.bookedNights.value;
-        }
+      if (data?.bookedNights) {
+        if (typeof data.bookedNights === "number") nights = data.bookedNights;
+        else if ("bookedNights" in data.bookedNights) nights = data.bookedNights.bookedNights;
+        else if ("value" in data.bookedNights) nights = data.bookedNights.value;
       }
 
       setBookedNights(nights);
@@ -75,10 +70,9 @@ const BookedNights = () => {
     }
   };
 
+  // Fetch whenever periodType, dates, or userId changes
   useEffect(() => {
-    if (cognitoUserId) {
-      fetchBookedNightsData();
-    }
+    if (cognitoUserId) fetchBookedNightsData();
   }, [periodType, startDate, endDate, cognitoUserId]);
 
   return (
@@ -121,14 +115,14 @@ const BookedNights = () => {
           </div>
         )}
 
-   =
+        {/* Display */}
         <div className="booked-nights-details">
           {loading ? (
             <p>Loading...</p>
           ) : error ? (
             <p style={{ color: "red" }}>Error: {error}</p>
           ) : (
-            <p className="hr-card-value">{bookedNights}</p>
+            <p className="hr-card-value">{bookedNights.toLocaleString()}</p>
           )}
         </div>
       </div>

@@ -10,7 +10,8 @@ import { Auth } from "aws-amplify";
 import ClipLoader from "react-spinners/ClipLoader";
 import BookedNights from "./HostRevenueCards/BookedNights.jsx";
 
-const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
+const BASE_URL =
+  "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
 const HostRevenues = () => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
@@ -18,12 +19,6 @@ const HostRevenues = () => {
   const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
 
   const [monthlyRevenueData, setMonthlyRevenueData] = useState([]);
-  const [occupancyData] = useState({
-    occupancyRate: 0,
-    numberOfProperties: 0,
-    vsLastMonth: 0,
-  });
-
   const [bookedNights, setBookedNights] = useState(0);
   const [availableNights, setAvailableNights] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -32,9 +27,9 @@ const HostRevenues = () => {
   const [loadingStates, setLoadingStates] = useState({
     user: true,
     revenue: false,
-    occupancy: false,
     bookedNights: false,
     availableNights: false,
+    propertyCount: false,
     monthlyRevenue: false,
   });
 
@@ -42,7 +37,7 @@ const HostRevenues = () => {
     setLoadingStates((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 🔑 Generic Fetcher
+  // 🔑 Generic Fetcher (Fixed Parsing)
   const fetchMetricData = async (metric, setStateCallback, loadingKey) => {
     if (!cognitoUserId) return console.error("Cognito User ID is missing.");
     updateLoadingState(loadingKey, true);
@@ -50,21 +45,42 @@ const HostRevenues = () => {
     try {
       const session = await Auth.currentSession();
       const token = session.getAccessToken().getJwtToken();
+      const url = `${BASE_URL}?hostId=${cognitoUserId}&metric=${metric}&filterType=monthly`;
 
-      const response = await fetch(
-        `${BASE_URL}?hostId=${cognitoUserId}&metric=${metric}`,
-        {
-          method: "GET",
-          headers: { Authorization: token },
-        }
-      );
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: token },
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       let data = await response.json();
-      if (data.body) data = JSON.parse(data.body);
+      if (data?.body) data = JSON.parse(data.body);
 
-      setStateCallback(data);
+      console.log(`✅ [${metric}] API response:`, data);
+
+      // 🧩 Normalize metric values safely
+      switch (metric) {
+        case "revenue":
+          setStateCallback(Number(data?.revenue?.totalRevenue ?? 0));
+          break;
+        case "bookedNights":
+          setStateCallback(Number(data?.bookedNights?.bookedNights ?? 0));
+          break;
+        case "availableNights":
+          setStateCallback(Number(data?.availableNights?.availableNights ?? 0));
+          break;
+        case "propertyCount":
+          setStateCallback(Number(data?.propertyCount?.propertyCount ?? 0));
+          break;
+        case "monthlyComparison":
+          setStateCallback(data?.monthlyComparison ?? []);
+          break;
+        default:
+          break;
+      }
     } catch (error) {
-      console.error(`Error fetching ${metric}:`, error);
+      console.error(`❌ Error fetching ${metric}:`, error);
     } finally {
       updateLoadingState(loadingKey, false);
     }
@@ -72,62 +88,19 @@ const HostRevenues = () => {
 
   // ---- Metric Fetchers ----
   const fetchRevenueData = () =>
-    fetchMetricData(
-      "revenue",
-      (data) => setTotalRevenue(data.revenue?.totalRevenue || 0),
-      "revenue"
-    );
+    fetchMetricData("revenue", setTotalRevenue, "revenue");
 
   const fetchBookedNights = () =>
-    fetchMetricData(
-      "bookedNights",
-      (data) => {
-        let nights = 0;
-        if (data.bookedNights) {
-          if (typeof data.bookedNights === "number") nights = data.bookedNights;
-          else if ("value" in data.bookedNights) nights = data.bookedNights.value;
-          else if ("bookedNights" in data.bookedNights) nights = data.bookedNights.bookedNights;
-        }
-        setBookedNights(nights);
-      },
-      "bookedNights"
-    );
+    fetchMetricData("bookedNights", setBookedNights, "bookedNights");
 
   const fetchAvailableNights = () =>
-    fetchMetricData(
-      "availableNights",
-      (data) => {
-        let nights = 0;
-        if (data.availableNights) {
-          if (typeof data.availableNights === "number") nights = data.availableNights;
-          else if ("value" in data.availableNights) nights = data.availableNights.value;
-          else if ("availableNights" in data.availableNights) nights = data.availableNights.availableNights;
-        }
-        setAvailableNights(nights);
-      },
-      "availableNights"
-    );
+    fetchMetricData("availableNights", setAvailableNights, "availableNights");
 
   const fetchPropertyCount = () =>
-    fetchMetricData(
-      "propertyCount",
-      (data) => {
-        let count = 0;
-        if (data.propertyCount) {
-          if (typeof data.propertyCount === "number") count = data.propertyCount;
-          else if ("value" in data.propertyCount) count = data.propertyCount.value;
-        }
-        setPropertyCount(count);
-      },
-      "propertyCount"
-    );
+    fetchMetricData("propertyCount", setPropertyCount, "propertyCount");
 
   const fetchMonthlyRevenueData = () =>
-    fetchMetricData(
-      "monthlyComparison",
-      (data) => setMonthlyRevenueData(data.monthlyComparison || []),
-      "monthlyRevenue"
-    );
+    fetchMetricData("monthlyComparison", setMonthlyRevenueData, "monthlyRevenue");
 
   // ---- User + Stripe Setup ----
   useEffect(() => {
@@ -149,7 +122,9 @@ const HostRevenues = () => {
         const parsedBody = JSON.parse(response.data.body);
         if (parsedBody.hasStripeAccount) {
           setStripeLoginUrl(parsedBody.loginLinkUrl);
-          setStripeStatus(parsedBody.bankDetailsProvided ? "complete" : "incomplete");
+          setStripeStatus(
+            parsedBody.bankDetailsProvided ? "complete" : "incomplete"
+          );
         } else {
           setStripeStatus("none");
         }
@@ -169,10 +144,13 @@ const HostRevenues = () => {
       fetchRevenueData();
       fetchBookedNights();
       fetchAvailableNights();
-      fetchMonthlyRevenueData();
       fetchPropertyCount();
+      fetchMonthlyRevenueData(); // ✅ Added back
     }
   }, [cognitoUserId]);
+
+  const occupancyRate =
+    availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
 
   return (
     <main className="hr-page-body hr-container">
@@ -194,18 +172,16 @@ const HostRevenues = () => {
                   </button>
                 </div>
               )}
+
               {stripeStatus === "complete" && (
                 <>
                   <div className="hr-revenue-overview">
                     <h3>Revenue Overview</h3>
                     <RevenueOverview
                       title="Total Revenue"
-                      value={`$${totalRevenue || 0}`}
+                      value={`$${totalRevenue.toLocaleString()}`}
                     />
-                    <RevenueOverview
-                      title="Booked Nights"
-                      value={bookedNights}
-                    />
+                    <RevenueOverview title="Booked Nights" value={bookedNights} />
                     <RevenueOverview
                       title="Available Nights"
                       value={availableNights}
@@ -215,12 +191,20 @@ const HostRevenues = () => {
                       value={propertyCount}
                     />
                   </div>
-                  <div className="hr-monthly-comparison">
-                    <h3>Monthly Comparison</h3>
-                    <MonthlyComparison data={monthlyRevenueData} />
-                  </div>
+
+                  {monthlyRevenueData.length > 0 && (
+                    <div className="hr-monthly-comparison">
+                      <h3>Monthly Comparison</h3>
+                      <MonthlyComparison data={monthlyRevenueData} />
+                    </div>
+                  )}
+
                   <div className="hr-cards">
-                    <OccupancyRateCard {...occupancyData} />
+                    <OccupancyRateCard
+                      occupancyRate={occupancyRate.toFixed(2)}
+                      numberOfProperties={propertyCount}
+                      vsLastMonth={0}
+                    />
                     <ADRCard hostId={cognitoUserId} />
                     <RevPARCard />
                     <BookedNights nights={bookedNights} />

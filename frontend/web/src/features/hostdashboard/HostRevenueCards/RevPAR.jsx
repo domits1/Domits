@@ -1,125 +1,184 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
-import "./RevPAR.scss";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
+import "./ADRCard.scss"; // reuse ADRCard styling
+
+const BASE_URL =
+  "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
 const RevPARCard = () => {
-    const [ownerId, setOwnerId] = useState(null); // Owner ID from Cognito
-    const [revPAR, setRevPAR] = useState(0); // RevPAR value
-    const [totalRevenue, setTotalRevenue] = useState(0); // Total Revenue
-    const [roomNights, setRoomNights] = useState(0); // Total Room Nights
-    const [timeFilter, setTimeFilter] = useState("weekly"); // Selected filter
-    const [startDate, setStartDate] = useState(""); // Custom start date
-    const [endDate, setEndDate] = useState(""); // Custom end date
-    const [loading, setLoading] = useState(false); // Loading state
+  const [cognitoUserId, setCognitoUserId] = useState(null);
+  const [revPAR, setRevPAR] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [availableNights, setAvailableNights] = useState(0);
+  const [chartData, setChartData] = useState([]);
+  const [timeFilter, setTimeFilter] = useState("monthly");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    // Fetch Owner ID on component mount
-    useEffect(() => {
-        const fetchOwnerId = async () => {
-            try {
-                const user = await Auth.currentUserInfo();
-                if (user?.attributes?.sub) {
-                    setOwnerId(user.attributes.sub);
-                } else {
-                    throw new Error("Cognito User ID not found");
-                }
-            } catch (error) {
-                console.error("Error fetching Owner ID:", error);
-            }
-        };
+  // Convert yyyy-mm-dd -> dd-mm-yyyy
+  const formatDate = (isoDate) => {
+    if (!isoDate) return "";
+    const [y, m, d] = isoDate.split("-");
+    return `${d}-${m}-${y}`;
+  };
 
-        fetchOwnerId();
-    }, []);
-
-    // Fetch RevPAR Data
-    useEffect(() => {
-        if (ownerId && (timeFilter !== "custom" || (startDate && endDate))) {
-            fetchRevPARData();
-        }
-    }, [ownerId, timeFilter, startDate, endDate]);
-
-    const fetchRevPARData = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch("https://81juiz8m4f.execute-api.eu-north-1.amazonaws.com/prod/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    OwnerID: ownerId,
-                    rangeType: timeFilter,
-                    StartDate: timeFilter === "custom" ? startDate : null,
-                    EndDate: timeFilter === "custom" ? endDate : null,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            setRevPAR(data.RevPAR || 0);
-            setTotalRevenue(data.totalRevenue || 0);
-            setRoomNights(data.totalRoomNights || 0);
-        } catch (error) {
-            console.error("Error fetching RevPAR data:", error);
-        } finally {
-            setLoading(false);
-        }
+  // Get Cognito User ID
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userInfo = await Auth.currentUserInfo();
+        if (!userInfo?.attributes?.sub)
+          throw new Error("Cognito User ID not found");
+        setCognitoUserId(userInfo.attributes.sub);
+      } catch (err) {
+        console.error("Error fetching Cognito User ID:", err);
+        setError(err.message);
+      }
     };
+    fetchUser();
+  }, []);
 
-    return (
-        <div className="rp-revpar-card">
-            <h3>RevPAR</h3>
-            {/* Time Filter Dropdown */}
-            <div className="time-filter">
-                <label htmlFor="timeFilter">Time Filter:</label>
-                <select
-                    id="timeFilter"
-                    value={timeFilter}
-                    className="timeFilter"
-                    onChange={(e) => setTimeFilter(e.target.value)}
-                >
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
+  const fetchMetrics = async () => {
+    if (!cognitoUserId) return;
+    setLoading(true);
+    setError(null);
 
-            {/* Custom Date Range Picker */}
-            {timeFilter === "custom" && (
-                <div className="rp-custom-dates">
-                    <div>
-                        <label>Start Date : </label>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label>End Date : </label>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                        />
-                    </div>
-                </div>
-            )}
+    try {
+      const session = await Auth.currentSession();
+      const token = session.getAccessToken().getJwtToken();
 
-            {/* Loading or Data Display */}
-            {loading ? (
-                <p>Loading...</p>
-            ) : (
-                <div className="rp-revpar-details">
-                    <p>Total Revenue: ${totalRevenue}</p>
-                    <p>Total Room Nights: {roomNights}</p>
-                    <p>RevPAR: ${revPAR}</p>
-                </div>
-            )}
+      const metrics = ["revenuePerAvailableRoom", "revenue", "availableNights"];
+      const results = {};
+
+      for (const metric of metrics) {
+        let url = `${BASE_URL}?hostId=${cognitoUserId}&metric=${metric}&filterType=${timeFilter}`;
+        if (timeFilter === "custom" && startDate && endDate) {
+          url += `&startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`;
+        }
+
+        const response = await fetch(url, { headers: { Authorization: token } });
+        let data = await response.json();
+        if (data.body) data = JSON.parse(data.body);
+
+        // Safely parse backend values
+        if (metric === "revenuePerAvailableRoom") {
+          if (typeof data === "number") results.revPAR = data;
+          else if (data.revenuePerAvailableRoom != null)
+            results.revPAR = Number(data.revenuePerAvailableRoom);
+          else if (data.value != null) results.revPAR = Number(data.value);
+          else results.revPAR = 0;
+        }
+
+        if (metric === "revenue") {
+          results.totalRevenue = Number(data?.revenue?.totalRevenue ?? 0);
+        }
+
+        if (metric === "availableNights") {
+          if (typeof data.availableNights === "number") results.availableNights = data.availableNights;
+          else if (data.availableNights?.availableNights != null)
+            results.availableNights = data.availableNights.availableNights;
+          else if (data.value != null) results.availableNights = data.value;
+          else results.availableNights = 0;
+        }
+
+        // Optional: fetch daily metrics for chart if backend provides
+        if (metric === "revenuePerAvailableRoom" && data.dailyMetrics?.length) {
+          results.dailyMetrics = data.dailyMetrics.map((item) => ({
+            date: item.date,
+            revPAR: Number(item.revPAR),
+          }));
+        }
+      }
+
+      setRevPAR(results.revPAR);
+      setTotalRevenue(results.totalRevenue);
+      setAvailableNights(results.availableNights);
+      setChartData(results.dailyMetrics || []);
+    } catch (err) {
+      console.error("Error fetching RevPAR metrics:", err);
+      setError(err.message || "Failed to fetch RevPAR metrics");
+      setRevPAR(0);
+      setTotalRevenue(0);
+      setAvailableNights(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (cognitoUserId && (timeFilter !== "custom" || (startDate && endDate))) {
+      fetchMetrics();
+    }
+  }, [cognitoUserId, timeFilter, startDate, endDate]);
+
+  return (
+    <div className="adr-card-container">
+      <div className="adr-card">
+        <h3>RevPAR</h3>
+        <div className="time-filter">
+          <label>Time Filter:</label>
+          <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="custom">Custom</option>
+          </select>
         </div>
-    );
+
+        {timeFilter === "custom" && (
+          <div className="custom-date-filter">
+            <div>
+              <label>Start Date:</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div>
+              <label>End Date:</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </div>
+          </div>
+        )}
+
+        <div className="adr-details">
+          {loading ? (
+            <p>Loading...</p>
+          ) : error ? (
+            <p style={{ color: "red" }}>Error: {error}</p>
+          ) : (
+            <>
+              <p><strong>Total Revenue:</strong> ${totalRevenue}</p>
+              <p><strong>Available Nights:</strong> {availableNights}</p>
+              <p><strong>RevPAR:</strong> ${revPAR}</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {chartData.length > 0 && (
+        <div className="adr-graph">
+          <h3>RevPAR Trend</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="revPAR" stroke="#8884d8" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default RevPARCard;
