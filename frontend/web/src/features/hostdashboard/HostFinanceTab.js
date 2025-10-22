@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
-import { Height } from "@mui/icons-material";
-import { set } from "date-fns";
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
@@ -12,7 +10,6 @@ export default function HostFinanceTab() {
   const [payouts, setPayouts] = useState([]);
   const [charges, setCharges] = useState([]);
   const [accountId, setAccountId] = useState(null);
-  const [payoutFrequency, setPayoutFrequency] = useState("weekly");
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
@@ -29,7 +26,6 @@ export default function HostFinanceTab() {
 
   const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
-  const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
   useEffect(() => {
     (async () => {
@@ -265,15 +261,6 @@ export default function HostFinanceTab() {
               ) : (
                 <p>No payouts found.</p>
               )}
-            </div>
-
-            <div className="payout-frequency">
-              <h3>Payout Frequency</h3>
-              <select value={payoutFrequency} onChange={handlePayoutFrequencyChange}>
-                <option value="daily">Daily (24h after check-out)</option>
-                <option value="weekly">Weekly (Every Monday)</option>
-                <option value="monthly">Monthly (First of the month)</option>
-              </select>
             </div>
 
             <div className="payout-status">
