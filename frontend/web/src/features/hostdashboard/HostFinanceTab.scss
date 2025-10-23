@@ -85,7 +85,6 @@ $bp-xl: 1280px;
   &.disabled { opacity: .6; pointer-events: none; }
 }
 
-/* --- Payouts + W3 table styling --- */
 .payouts-section {
   background: $muted;
   padding: 16px;
@@ -147,10 +146,20 @@ $bp-xl: 1280px;
     .property-meta { min-width: 0; }
 
     .property-title {
+      font-weight: 600;
+      line-height: 1.3;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 300px;
+    }
+
+    .property-sub {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }

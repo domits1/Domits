@@ -224,6 +224,7 @@ export default function HostFinanceTab() {
                               <div className="property-title" title={charge.propertyTitle}>
                                 {charge.propertyTitle}
                               </div>
+                              <div className="property-sub">Booking nr: &nbsp; 834738</div>
                             </div>
                           </td>
 
