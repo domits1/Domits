@@ -140,9 +140,11 @@ export default function HostFinanceTab() {
       case "pending":
         return { label: "Pending", tone: "is-pending" };
       case "failed":
-      case "canceled":
-      case "cancelled":
         return { label: "Failed", tone: "is-danger" };
+      case "canceled":
+        return { label: "Canceled", tone: "is-danger" };
+      case "cancelled":
+        return { label: "Cancelled", tone: "is-danger" };
       default:
         return { label: status || "Unknown", tone: "is-muted" };
     }
