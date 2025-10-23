@@ -55,6 +55,7 @@ export default class StripePayoutsService {
         const hostReceives = customerPaid - platformFeeGross;
 
         const propertyId = charge.metadata.propertyId;
+        const bookingId = charge.metadata.bookingId;
 
         const property = await this.propertyRepository.getProperty(propertyId);
 
@@ -71,6 +72,7 @@ export default class StripePayoutsService {
           paymentMethod: charge.payment_method_details.type,
           propertyTitle: property.title,
           propertyImage: property.key,
+          bookingId: bookingId,
         };
       })
     );
