@@ -13,7 +13,7 @@ const AMENITIES = {
   Technology: ["Smart TV", "Streaming services", "Bluetooth speaker", "Universal chargers", "Work desk", "Work chair"],
   Safety: ["Smoke detector", "Carbon monoxide detector", "Fire extinguisher", "Lock on bedroom door"],
   Outdoor: ["Patio or balcony", "Outdoor furniture", "Grill", "Fire pit", "Pool", "Hot tub", "Garden or backyard", "Bicycle"],
-  "Family friendly": ["High chair", "Crib", "Children’s books and toys", "Baby safety gates", "Baby bath", "Baby monitor"],
+  "Family friendly": ["High chair", "Crib", "Children's books and toys", "Baby safety gates", "Baby bath", "Baby monitor"],
   Laundry: ["Washer", "Dryer", "Laundry detergent", "Clothes drying rack"],
   Convenience: ["Keyless entry", "Self-check-in", "Local maps and guides", "Luggage drop-off allowed", "Parking space", "EV charger"],
   Accessibility: ["Step-free access", "Wide doorways", "Accessible-height bed", "Accessible-height toilet", "Shower chair"],
@@ -35,13 +35,140 @@ function getAccessToken() {
 
 function findAmenityIdByName(name) {
   try {
-    if (!AmenitiesStore || !Array.isArray(AmenitiesStore)) return null;
-    const hit = AmenitiesStore.find(a => (a.name || a.label) === name || a.slug === name);
+    console.log("Looking for amenity:", name);
+    console.log("AmenitiesStore:", AmenitiesStore);
+    
+    if (!AmenitiesStore) {
+      console.log("AmenitiesStore is undefined");
+      return null;
+    }
+    
+    let hit = null;
+    
+    if (Array.isArray(AmenitiesStore)) {
+      hit = AmenitiesStore.find(a => 
+        a.name === name || 
+        a.label === name || 
+        a.slug === name ||
+        a.amenity === name
+      );
+    } 
+
+    else if (typeof AmenitiesStore === 'object') {
+      
+      for (const category of Object.values(AmenitiesStore)) {
+        if (Array.isArray(category)) {
+          hit = category.find(a => 
+            (a.name === name || a.label === name || a.slug === name || a.amenity === name)
+          );
+          if (hit) break;
+        }
+      }
+    }
+    
+    console.log("Found amenity:", hit);
     return hit ? hit.id : null;
-  } catch {
+  } catch (error) {
+    console.error("Error finding amenity:", error);
     return null;
   }
 }
+
+const HARDCODED_AMENITY_IDS = {
+  "Wi-Fi": "1",
+  "Air conditioning": "2", 
+  "Heating": "3",
+  "TV with cable/satellite": "4",
+  "Hot water": "5",
+  "Towels": "6",
+  "Bed linens": "7",
+  "Extra pillows and blankets": "8",
+  "Toilet paper": "9",
+  "Soap": "10",
+  "Shampoo": "11",
+  "Refrigerator": "12",
+  "Microwave": "13",
+  "Oven": "14",
+  "Stove": "15",
+  "Dishwasher": "16",
+  "Coffee maker": "17",
+  "Toaster": "18",
+  "Pots and pans": "19",
+  "Oil": "20",
+  "Salt": "21", 
+  "Pepper": "22",
+  "Dishes and silverware": "23",
+  "Glasses and mugs": "24",
+  "Cutting board": "25",
+  "Knives": "26",
+  "Blender": "27",
+  "Kettle": "28",
+  "Hair dryer": "29",
+  "Shower gel": "30",
+  "Conditioner": "31",
+  "Body lotion": "32",
+  "First aid kit": "33",
+  "Hangers": "34",
+  "Iron": "35",
+  "Ironing board": "36",
+  "Closet/Drawers": "37",
+  "Alarm clock": "38",
+  "Sofa/sofa bed": "39",
+  "Armchairs": "40",
+  "Coffee table": "41",
+  "Books and magazines": "42",
+  "Board games": "43",
+  "Smart TV": "44",
+  "Streaming services": "45",
+  "Bluetooth speaker": "46",
+  "Universal chargers": "47",
+  "Work desk": "48",
+  "Work chair": "49",
+  "Smoke detector": "50",
+  "Carbon monoxide detector": "51",
+  "Fire extinguisher": "52",
+  "Lock on bedroom door": "53",
+  "Patio or balcony": "54",
+  "Outdoor furniture": "55",
+  "Grill": "56",
+  "Fire pit": "57",
+  "Pool": "58",
+  "Hot tub": "59",
+  "Garden or backyard": "60",
+  "Bicycle": "61",
+  "High chair": "62",
+  "Crib": "63",
+  "Children's books and toys": "64",
+  "Baby safety gates": "65",
+  "Baby bath": "66",
+  "Baby monitor": "67",
+  "Washer": "68",
+  "Dryer": "69",
+  "Laundry detergent": "70",
+  "Clothes drying rack": "71",
+  "Keyless entry": "72",
+  "Self-check-in": "73",
+  "Local maps and guides": "74",
+  "Luggage drop-off allowed": "75",
+  "Parking space": "76",
+  "EV charger": "77",
+  "Step-free access": "78",
+  "Wide doorways": "79",
+  "Accessible-height bed": "80",
+  "Accessible-height toilet": "81",
+  "Shower chair": "82",
+  "Housekeeping service": "83",
+  "Concierge service": "84",
+  "Grocery delivery": "85",
+  "Airport shuttle": "86",
+  "Private chef": "87",
+  "Personal trainer": "88",
+  "Massage therapist": "89",
+  "Energy": "90",
+  "Waste": "91",
+  "Biodiversity & ecosystems": "92",
+  "Destinations & community": "93"
+};
 
 function mapSpaceTypeLabel(v) {
   if (v === "Entire Space") return "Full house";
@@ -127,7 +254,30 @@ export default function AdminProperty() {
     const rulePets = !!fd.get("rulePets");
 
     const pickedAmenityNames = allAmenityNames.filter(n => amenityChecks[n]);
-    const propertyAmenities = pickedAmenityNames.map(n => findAmenityIdByName(n)).filter(Boolean).map(id => ({ amenityId: id }));
+    
+    // Debug: log geselecteerde amenities
+    console.log("Selected amenity names:", pickedAmenityNames);
+    
+    // Probeer eerst via AmenitiesStore, anders gebruik hardcoded mapping
+    let amenities = [];
+    
+    for (const amenityName of pickedAmenityNames) {
+      let amenityId = findAmenityIdByName(amenityName);
+      
+      // Als niet gevonden via AmenitiesStore, probeer hardcoded mapping
+      if (!amenityId && HARDCODED_AMENITY_IDS[amenityName]) {
+        amenityId = HARDCODED_AMENITY_IDS[amenityName];
+        console.log(`Found ${amenityName} via hardcoded mapping: ${amenityId}`);
+      }
+      
+      if (amenityId) {
+        amenities.push({ amenityId: amenityId });
+      } else {
+        console.warn(`Could not find ID for amenity: ${amenityName}`);
+      }
+    }
+    
+    console.log("Final amenities to send:", amenities);
 
     const propertyImages = await filesToImagePayload(files);
 
@@ -164,7 +314,7 @@ export default function AdminProperty() {
       { rule: RULE_ID.NO_SMOKING, value: ruleSmoking },
       { rule: RULE_ID.NO_PARTIES, value: ruleParties },
       { rule: RULE_ID.PETS_ALLOWED, value: rulePets }
-    ].filter(r => r.value === true || r.rule === RULE_ID.PETS_ALLOWED); 
+    ].filter(r => r.value === true || r.rule === RULE_ID.PETS_ALLOWED);
 
     const propertyGeneralDetails = [
       { detail: "Guests", value: guests },
@@ -183,7 +333,7 @@ export default function AdminProperty() {
 
     const payload = {
       property,
-      propertyAmenities,
+      propertyAmenities: amenities,
       propertyImages,
       propertyLocation,
       propertyPricing,
@@ -193,6 +343,8 @@ export default function AdminProperty() {
       propertyAvailability,
       propertyType
     };
+
+    console.log("Full payload being sent:", JSON.stringify(payload, null, 2));
 
     const token = getAccessToken();
     if (!token) {
@@ -209,6 +361,8 @@ export default function AdminProperty() {
       setAmenityChecks({});
     } catch (err) {
       const msg = String(err.message || err);
+      console.error("Error details:", msg);
+      
       if (msg.includes("Rule not found")) {
         try {
           const retry = { ...payload, propertyRules: [] };
