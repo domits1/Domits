@@ -239,8 +239,8 @@ export default function HostFinanceTab() {
                       </tr>
                     </thead>
                     <tbody>
-                      {charges.map((charge, idx) => (
-                        <tr key={`${charge.createdDate}-${idx}-${charge.propertyTitle}`}>
+                      {charges.map((charge) => (
+                        <tr key={`${charge.createdDate}-${charge.propertyTitle}`}>
                           <td>{charge.createdDate}</td>
 
                           <td className="property-cell">
@@ -282,23 +282,25 @@ export default function HostFinanceTab() {
                 <table className="payout-table">
                   <thead>
                     <tr>
-                      <th>Amount</th>
+                      <th>Arrival date</th>
+                      <th>Amount paid out</th>
                       <th>Status</th>
-                      <th>Arrival Date</th>
-                      <th>Method</th>
+                      <th>Payout ID</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {payouts.map((payout, i) => (
-                      <tr key={`payout-${i}-${payout.arrivalDate}`}>
-                        <td>{formatMoney(payout.amount, payout.currency)}</td>
-                        <td>
-                          <StatusBadge status={payout.status} />
-                        </td>
-                        <td>{payout.arrivalDate}</td>
-                        <td>{payout.method}</td>
-                      </tr>
-                    ))}
+                    {payouts.map((payout) => {
+                      return (
+                        <tr key={payout.id || `${payout.arrivalDate}-${payout.amount}`}>
+                          <td>{payout.arrivalDate}</td>
+                          <td>{formatMoney(payout.amount, payout.currency)}</td>
+                          <td>
+                            <StatusBadge status={payout.status} />
+                          </td>
+                          <td title={payout.id || ""}>{payout.id}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               ) : (
