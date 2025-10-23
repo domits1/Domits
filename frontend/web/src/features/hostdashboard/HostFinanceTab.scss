@@ -2,7 +2,7 @@ $font-title: "Kanit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-se
 $radius: 12px;
 $shadow: 0 6px 20px rgba(0,0,0,.08);
 $muted: #f6f7f9;
-$green: #0d9813;
+$green: #0d9813; // W3-like header green
 
 $bp-sm: 576px;
 $bp-md: 768px;
@@ -11,16 +11,8 @@ $bp-xl: 1280px;
 
 @mixin up($w) { @media (min-width: $w) { @content; } }
 
-.page-Host--loading {
-  position: fixed;
-  inset: 0;
-  display: grid;
-}
-
-.page-Host__loader {
-  display: grid;
-  place-items: center;
-}
+.page-Host--loading { position: fixed; inset: 0; display: grid; }
+.page-Host__loader { display: grid; place-items: center; }
 
 .page-Host {
   &-title {
@@ -29,12 +21,8 @@ $bp-xl: 1280px;
     font-size: clamp(1.25rem, 1rem + 1.2vw, 2rem);
     margin: 0 0 0.75rem;
   }
-
-  &-content {
-    padding: 16px;
-  }
+  &-content { padding: 16px; }
 }
-
 
 .host-pc-finance {
   background: #fff;
@@ -43,7 +31,6 @@ $bp-xl: 1280px;
   padding: 16px;
   max-width: 960px;
   width: 100%;
-
   @include up($bp-md) { padding: 24px; }
   @include up($bp-lg) { padding: 32px; }
 }
@@ -51,7 +38,6 @@ $bp-xl: 1280px;
 .finance-content {
   display: grid;
   gap: 16px;
-
   @include up($bp-sm) { gap: 20px; }
   @include up($bp-md) { gap: 24px; }
 }
@@ -60,7 +46,6 @@ $bp-xl: 1280px;
   background: $muted;
   padding: 16px;
   border-radius: $radius;
-
   @include up($bp-md) { padding: 20px; }
 
   h2 {
@@ -74,7 +59,6 @@ $bp-xl: 1280px;
     padding: 0; margin: 0;
     display: grid;
     gap: 12px;
-
     @include up($bp-md) { gap: 14px; }
   }
 
@@ -97,16 +81,15 @@ $bp-xl: 1280px;
   text-decoration: underline;
   cursor: pointer;
   font-weight: 600;
-
   &:hover { text-decoration: none; }
   &.disabled { opacity: .6; pointer-events: none; }
 }
 
+/* --- Payouts + W3 table styling --- */
 .payouts-section {
   background: $muted;
   padding: 16px;
   border-radius: $radius;
-
   @include up($bp-md) { padding: 20px; }
 
   h3 {
@@ -131,14 +114,7 @@ $bp-xl: 1280px;
     th, td {
       padding: 8px;
       text-align: left;
-      white-space: normal;
-    }
-
-    td {
-      max-width: 150px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      vertical-align: middle;
     }
 
     thead th {
@@ -150,12 +126,31 @@ $bp-xl: 1280px;
       position: static;
     }
 
-    tbody tr:nth-child(even) {
-      background-color: #f2f2f2;
+    tbody tr:nth-child(even) { background-color: #f2f2f2; }
+    tbody tr:hover { background-color: #ddd; }
+
+    .property-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 240px;
     }
 
-    tbody tr:hover {
-      background-color: #ddd;
+    .property-thumb {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 8px;
+      flex: 0 0 64px;
+    }
+
+    .property-meta { min-width: 0; }
+
+    .property-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
     }
   }
 }
@@ -164,7 +159,6 @@ $bp-xl: 1280px;
   background: $muted;
   padding: 16px;
   border-radius: $radius;
-
   @include up($bp-md) { padding: 20px; }
 
   h3 { margin: 0 0 10px; font-size: 1.05rem; }
@@ -183,7 +177,6 @@ $bp-xl: 1280px;
   background: $muted;
   padding: 16px;
   border-radius: $radius;
-
   @include up($bp-md) { padding: 20px; }
 }
 

@@ -190,28 +190,31 @@ export default function HostFinanceTab() {
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>Property image</th>
                         <th>Property</th>
                         <th>Guest</th>
-                        <th>Paid</th>
-                        <th>Payment</th>
+                        <th>Amount received</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {charges.map((charge) => (
-                        <tr>
+                      {charges.map((charge, idx) => (
+                        <tr key={`${charge.createdDate}-${idx}-${charge.propertyTitle}`}>
                           <td>{charge.createdDate}</td>
-                          <td>
+
+                          <td className="property-cell">
                             <img
+                              className="property-thumb"
                               src={`${S3_URL}${charge.propertyImage}`}
-                              alt={charge.propertyImage}
-                              style={{ height: 70 }}
+                              alt={charge.propertyTitle}
                             />
+                            <div className="property-meta">
+                              <div className="property-title" title={charge.propertyTitle}>
+                                {charge.propertyTitle}
+                              </div>
+                             
+                            </div>
                           </td>
-                          <td
-                            title={charge.propertyTitle}>
-                            {charge.propertyTitle}
-                          </td>
+
                           <td>{charge.customerName}</td>
                           <td>
                             {charge.hostReceives.toFixed(2)} {charge.currency}
@@ -244,8 +247,8 @@ export default function HostFinanceTab() {
                     </tr>
                   </thead>
                   <tbody>
-                    {payouts.map((payout) => (
-                      <tr>
+                    {payouts.map((payout, i) => (
+                      <tr key={`payout-${i}-${payout.arrivalDate}`}>
                         <td>{payout.amount.toFixed(2)}</td>
                         <td className={payout.status}>{payout.status}</td>
                         <td>{payout.arrivalDate}</td>
@@ -259,7 +262,7 @@ export default function HostFinanceTab() {
               )}
             </div>
 
-            {/* Payout Frequency will be removed but im just gonna leave it here for now */}
+            {/* Payout Frequency (kept for now) */}
             <div className="payout-frequency">
               <h3>Payout Frequency</h3>
               <select value={payoutFrequency} onChange={handlePayoutFrequencyChange}>
@@ -271,13 +274,13 @@ export default function HostFinanceTab() {
 
             <div className="payout-status">
               <h3>Payout Status:</h3>
-              {payouts.length > 0 && payouts.some((payout) => payout.status === "paid") ? (
+              {payouts.length > 0 && payouts.some((p) => p.status === "paid") ? (
                 <p className="status-active">Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
-              ) : payouts.length > 0 && payouts.some((payout) => payout.status === "pending") ? (
+              ) : payouts.length > 0 && payouts.some((p) => p.status === "pending") ? (
                 <p className="status-pending">
                   Your payouts are scheduled. Next payout: {payouts.find((p) => p.status === "pending")?.arrivalDate}.
                 </p>
-              ) : payouts.length > 0 && payouts.every((payout) => payout.status !== "paid") ? (
+              ) : payouts.length > 0 && payouts.every((p) => p.status !== "paid") ? (
                 <p className="status-error">
                   There was an issue with your payouts:{" "}
                   {payouts.find((p) => p.failureMessage)?.failureMessage || "Unknown issue"}.
@@ -294,4 +297,3 @@ export default function HostFinanceTab() {
     </main>
   );
 }
- 
