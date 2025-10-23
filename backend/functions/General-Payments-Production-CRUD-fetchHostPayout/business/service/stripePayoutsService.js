@@ -56,6 +56,7 @@ export default class StripePayoutsService {
 
         const propertyId = charge.metadata.propertyId;
         const bookingId = charge.metadata.bookingId;
+        const paymentId = charge.payment_intent.id;
 
         const property = await this.propertyRepository.getProperty(propertyId);
 
@@ -73,6 +74,7 @@ export default class StripePayoutsService {
           propertyTitle: property.title,
           propertyImage: property.key,
           bookingId: bookingId,
+          paymentId: paymentId,
         };
       })
     );
