@@ -209,13 +209,7 @@ export default function HostFinanceTab() {
                             />
                           </td>
                           <td
-                            title={charge.propertyTitle}
-                            style={{
-                              maxWidth: 150,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}>
+                            title={charge.propertyTitle}>
                             {charge.propertyTitle}
                           </td>
                           <td>{charge.customerName}</td>

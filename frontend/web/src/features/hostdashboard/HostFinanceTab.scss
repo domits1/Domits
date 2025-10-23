@@ -2,7 +2,7 @@ $font-title: "Kanit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-se
 $radius: 12px;
 $shadow: 0 6px 20px rgba(0,0,0,.08);
 $muted: #f6f7f9;
-$link: #0d9813;
+$green: #0d9813;
 
 $bp-sm: 576px;
 $bp-md: 768px;
@@ -93,7 +93,7 @@ $bp-xl: 1280px;
 }
 
 .finance-span {
-  color: $link;
+  color: $green;
   text-decoration: underline;
   cursor: pointer;
   font-weight: 600;
@@ -125,20 +125,38 @@ $bp-xl: 1280px;
     width: 100%;
     min-width: 560px;
     border-collapse: collapse;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: .95rem;
 
     th, td {
-      padding: .75rem;
-      border-bottom: 1px solid #e6e8eb;
+      padding: 8px;
+      border: 1px solid #ddd;
       text-align: left;
+      white-space: normal;
+    }
+
+    td {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    th {
-      background: #f0f2f5;
-      font-weight: 600;
-      position: sticky;
-      top: 0;
+    thead th {
+      background-color: $green;
+      color: #fff;
+      padding-top: 12px;
+      padding-bottom: 12px;
+      font-weight: 700;
+      position: static;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    tbody tr:hover {
+      background-color: #ddd;
     }
   }
 }
