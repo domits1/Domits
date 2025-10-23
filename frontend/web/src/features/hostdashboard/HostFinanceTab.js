@@ -29,6 +29,37 @@ export default function HostFinanceTab() {
   const handleNavigation = (value) => navigate(value);
   const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
+  const PAGE_SIZE = 5;
+  const [chargesPage, setChargesPage] = useState(1);
+  const [payoutsPage, setPayoutsPage] = useState(1);
+
+  const pageSlice = (list, page, size = PAGE_SIZE) => list.slice((page - 1) * size, page * size);
+  const chargesTotalPages = Math.max(1, Math.ceil(charges.length / PAGE_SIZE));
+  const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / PAGE_SIZE));
+  useEffect(() => {
+    setChargesPage(1);
+  }, [charges]);
+  useEffect(() => {
+    setPayoutsPage(1);
+  }, [payouts]);
+
+  const TablePager = ({ page, setPage, totalPages }) => {
+    if (totalPages <= 1) return null;
+    return (
+      <div className="table-pager">
+        <button className="pager-btn" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+          Previous
+        </button>
+        <span className="pager-info">
+          Page {page} of {totalPages}
+        </span>
+        <button className="pager-btn" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
+          Next
+        </button>
+      </div>
+    );
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -227,46 +258,48 @@ export default function HostFinanceTab() {
                   <ClipLoader loading />
                 </div>
               ) : charges.length > 0 ? (
-                <div className="table-wrap">
-                  <table className="payout-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Property</th>
-                        <th>Guest</th>
-                        <th>Amount received</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {charges.map((charge, idx) => (
-                        <tr key={`${charge.createdDate}-${idx}-${charge.propertyTitle}`}>
-                          <td>{charge.createdDate}</td>
-
-                          <td className="property-cell">
-                            <img
-                              className="property-thumb"
-                              src={`${S3_URL}${charge.propertyImage}`}
-                              alt={charge.propertyTitle}
-                            />
-                            <div className="property-meta">
-                              <div className="property-title" title={charge.propertyTitle}>
-                                {charge.propertyTitle}
-                              </div>
-                              <div className="property-sub">Booking nr: &nbsp; 834738</div>
-                            </div>
-                          </td>
-
-                          <td>{charge.customerName}</td>
-                          <td>{formatMoney(charge.hostReceives, charge.currency)}</td>
-                          <td>
-                            <StatusBadge status={charge.status} />
-                          </td>
+                <>
+                  <div className="table-wrap">
+                    <table className="payout-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Property</th>
+                          <th>Guest</th>
+                          <th>Amount received</th>
+                          <th>Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {pageSlice(charges, chargesPage).map((charge, idx) => (
+                          <tr key={`${charge.createdDate}-${idx}-${charge.propertyTitle}`}>
+                            <td>{charge.createdDate}</td>
+                            <td className="property-cell">
+                              <img
+                                className="property-thumb"
+                                src={`${S3_URL}${charge.propertyImage}`}
+                                alt={charge.propertyTitle}
+                              />
+                              <div className="property-meta">
+                                <div className="property-title" title={charge.propertyTitle}>
+                                  {charge.propertyTitle}
+                                </div>
+                                <div className="property-sub">Booking nr:&nbsp;834738</div>
+                              </div>
+                            </td>
+                            <td>{charge.customerName}</td>
+                            <td>{formatMoney(charge.hostReceives, charge.currency)}</td>
+                            <td>
+                              <StatusBadge status={charge.status} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <TablePager page={chargesPage} setPage={setChargesPage} totalPages={chargesTotalPages} />
+                </>
               ) : (
                 <p>No charges found.</p>
               )}
@@ -279,30 +312,34 @@ export default function HostFinanceTab() {
                   <ClipLoader size={28} loading />
                 </div>
               ) : payouts.length > 0 ? (
-                <table className="payout-table">
-                  <thead>
-                    <tr>
-                      <th>Arrival date</th>
-                      <th>Amount paid out</th>
-                      <th>Status</th>
-                      <th>Payout ID</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payouts.map((payout) => {
-                      return (
-                        <tr key={payout.id || `${payout.arrivalDate}-${payout.amount}`}>
-                          <td>{payout.arrivalDate}</td>
-                          <td>{formatMoney(payout.amount, payout.currency)}</td>
-                          <td>
-                            <StatusBadge status={payout.status} />
-                          </td>
-                          <td title={payout.id || ""}>{payout.id}</td>
+                <>
+                  <div className="table-wrap">
+                    <table className="payout-table">
+                      <thead>
+                        <tr>
+                          <th>Arrival date</th>
+                          <th>Amount paid out</th>
+                          <th>Status</th>
+                          <th>Payout ID</th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {pageSlice(payouts, payoutsPage).map((payout) => (
+                          <tr key={payout.id || `${payout.arrivalDate}-${payout.amount}`}>
+                            <td>{payout.arrivalDate}</td>
+                            <td>{formatMoney(payout.amount, payout.currency)}</td>
+                            <td>
+                              <StatusBadge status={payout.status} />
+                            </td>
+                            <td title={payout.id || ""}>{payout.id}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <TablePager page={payoutsPage} setPage={setPayoutsPage} totalPages={payoutsTotalPages} />
+                </>
               ) : (
                 <p>No payouts found.</p>
               )}
