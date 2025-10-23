@@ -33,6 +33,7 @@ export default class StripePayoutsService {
 
     const transfers = await this.stripe.transfers.list({
       destination: stripeAccount.account_id,
+      limit: 100,
       expand: [
         "data.source_transaction",
         "data.source_transaction.balance_transaction",
