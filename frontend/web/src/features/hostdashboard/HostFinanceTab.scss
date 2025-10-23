@@ -164,11 +164,10 @@ $bp-xl: 1280px;
   }
 }
 
-/* Status badge (pill) */
-$success: #16a34a; // groen
-$pending: #f59e0b; // oranje
-$danger:  #dc2626; // rood
-$mutedc:  #6b7280; // grijs
+$success: #16a34a;
+$pending: #f59e0b;
+$danger:  #dc2626;
+$mutedc:  #6b7280;
 
 .status-badge {
   display: inline-flex;
