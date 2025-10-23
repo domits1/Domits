@@ -283,6 +283,7 @@ export default function HostFinanceTab() {
                                   {charge.propertyTitle}
                                 </div>
                                 <div className="property-sub">Booking nr:&nbsp;{charge.bookingId}</div>
+                                <div className="property-sub">Payment id:&nbsp;{charge.paymentId}</div>
                               </div>
                             </td>
                             <td>{charge.customerName}</td>
