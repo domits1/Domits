@@ -239,8 +239,8 @@ export default function HostFinanceTab() {
                       </tr>
                     </thead>
                     <tbody>
-                      {charges.map((charge) => (
-                        <tr key={`${charge.createdDate}-${charge.propertyTitle}`}>
+                      {charges.map((charge, idx) => (
+                        <tr key={`${charge.createdDate}-${idx}-${charge.propertyTitle}`}>
                           <td>{charge.createdDate}</td>
 
                           <td className="property-cell">
