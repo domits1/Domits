@@ -10,6 +10,7 @@ export default function HostFinanceTab() {
   const [payouts, setPayouts] = useState([]);
   const [charges, setCharges] = useState([]);
   const [accountId, setAccountId] = useState(null);
+  const [payoutFrequency, setPayoutFrequency] = useState("weekly");
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
@@ -26,6 +27,7 @@ export default function HostFinanceTab() {
 
   const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
+  const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
   useEffect(() => {
     (async () => {
@@ -263,6 +265,16 @@ export default function HostFinanceTab() {
               )}
             </div>
 
+            {/* Payout Frequency will be removed but im just gonna leave it here for now */}
+            <div className="payout-frequency">
+              <h3>Payout Frequency</h3>
+              <select value={payoutFrequency} onChange={handlePayoutFrequencyChange}>
+                <option value="daily">Daily (24h after check-out)</option>
+                <option value="weekly">Weekly (Every Monday)</option>
+                <option value="monthly">Monthly (First of the month)</option>
+              </select>
+            </div>
+
             <div className="payout-status">
               <h3>Payout Status:</h3>
               {payouts.length > 0 && payouts.some((payout) => payout.status === "paid") ? (
@@ -288,3 +300,4 @@ export default function HostFinanceTab() {
     </main>
   );
 }
+ 
