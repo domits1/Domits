@@ -104,6 +104,19 @@ export default function HostFinanceTab() {
     }
   }
 
+  const formatMoney = (amount, currency, locale = navigator.language || "en-US") => {
+    try {
+      return new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency,
+        currencyDisplay: "symbol",
+      }).format(amount);
+    } catch {
+      return `${amount?.toFixed?.(2)} ${currency}`;
+    }
+  };
+
+
   const showLoader = loading || Object.values(loadingStates).some(Boolean);
   if (showLoader) {
     return (
@@ -211,14 +224,11 @@ export default function HostFinanceTab() {
                               <div className="property-title" title={charge.propertyTitle}>
                                 {charge.propertyTitle}
                               </div>
-                             
                             </div>
                           </td>
 
                           <td>{charge.customerName}</td>
-                          <td>
-                            {charge.hostReceives.toFixed(2)} {charge.currency}
-                          </td>
+                          <td>{formatMoney(charge.hostReceives, charge.currency)}</td>
                           <td className={charge.status}>{charge.status}</td>
                         </tr>
                       ))}
@@ -249,7 +259,7 @@ export default function HostFinanceTab() {
                   <tbody>
                     {payouts.map((payout, i) => (
                       <tr key={`payout-${i}-${payout.arrivalDate}`}>
-                        <td>{payout.amount.toFixed(2)}</td>
+                        <td>{formatMoney(payout.amount, payout.currency)}</td>
                         <td className={payout.status}>{payout.status}</td>
                         <td>{payout.arrivalDate}</td>
                         <td>{payout.method}</td>
