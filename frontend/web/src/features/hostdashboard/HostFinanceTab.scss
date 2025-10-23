@@ -164,6 +164,49 @@ $bp-xl: 1280px;
   }
 }
 
+/* Status badge (pill) */
+$success: #16a34a; // groen
+$pending: #f59e0b; // oranje
+$danger:  #dc2626; // rood
+$mutedc:  #6b7280; // grijs
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: 0 0 8px;
+  }
+
+  &.is-success {
+    color: $success;
+    background: rgba($success, .12);
+  }
+  &.is-pending {
+    color: $pending;
+    background: rgba($pending, .16);
+  }
+  &.is-danger {
+    color: $danger;
+    background: rgba($danger, .12);
+  }
+  &.is-muted {
+    color: $mutedc;
+    background: rgba(107, 114, 128, .12);
+  }
+}
+
+
 .payout-frequency {
   background: $muted;
   padding: 16px;

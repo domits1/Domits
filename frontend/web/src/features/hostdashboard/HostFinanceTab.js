@@ -116,7 +116,6 @@ export default function HostFinanceTab() {
     }
   };
 
-
   const showLoader = loading || Object.values(loadingStates).some(Boolean);
   if (showLoader) {
     return (
@@ -130,6 +129,34 @@ export default function HostFinanceTab() {
 
   const renderCtaLabel = (idleText) =>
     isProcessing ? (processingStep === "opening" ? "Opening link…" : "Working on it…") : idleText;
+
+  const getStatusMeta = (status) => {
+    const s = String(status).toLowerCase();
+    switch (s) {
+      case "succeeded":
+        return { label: "Succeeded", tone: "is-success" };
+      case "paid":
+        return { label: "Paid", tone: "is-success" };
+      case "pending":
+        return { label: "Pending", tone: "is-pending" };
+      case "failed":
+      case "canceled":
+      case "cancelled":
+        return { label: "Failed", tone: "is-danger" };
+      default:
+        return { label: status || "Unknown", tone: "is-muted" };
+    }
+  };
+
+  const StatusBadge = ({ status }) => {
+    const meta = getStatusMeta(status);
+    return (
+      <span className={`status-badge ${meta.tone}`}>
+        <span className="status-dot" />
+        {meta.label}
+      </span>
+    );
+  };
 
   return (
     <main className="page-Host">
@@ -230,7 +257,9 @@ export default function HostFinanceTab() {
 
                           <td>{charge.customerName}</td>
                           <td>{formatMoney(charge.hostReceives, charge.currency)}</td>
-                          <td className={charge.status}>{charge.status}</td>
+                          <td>
+                            <StatusBadge status={charge.status} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -261,7 +290,9 @@ export default function HostFinanceTab() {
                     {payouts.map((payout, i) => (
                       <tr key={`payout-${i}-${payout.arrivalDate}`}>
                         <td>{formatMoney(payout.amount, payout.currency)}</td>
-                        <td className={payout.status}>{payout.status}</td>
+                        <td>
+                          <StatusBadge status={payout.status} />
+                        </td>
                         <td>{payout.arrivalDate}</td>
                         <td>{payout.method}</td>
                       </tr>
