@@ -194,8 +194,8 @@ export default function HostFinanceTab() {
               <h3>Recent Charges</h3>
 
               {loadingStates.charges ? (
-                <div style={{ padding: 12 }}>
-                  <ClipLoader size={28} loading />
+                <div>
+                  <ClipLoader loading />
                 </div>
               ) : charges.length > 0 ? (
                 <div className="table-wrap">
