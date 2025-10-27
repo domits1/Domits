@@ -98,20 +98,8 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
-        const { payouts, upcomingPayouts } = details;
 
-        const merged = [
-          ...upcomingPayouts.map((x) => ({
-            arrivalDate: x.availableOn,
-            amount: x.amount,
-            currency: x.currency,
-            status: "pending",
-            id: null,
-          })),
-          ...payouts,
-        ];
-
-        setPayouts(merged);
+        setPayouts(details.payouts);
 
       } catch (error) {
         console.error("Error fetching payouts:", error);
