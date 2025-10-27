@@ -199,7 +199,8 @@ export default class StripePayoutsService {
             year: "numeric",
           });
 
-          groups[date] = groups[date] || {currency: txn.currency.toUpperCase(),
+          groups[date] = groups[date] || {
+            currency: txn.currency.toUpperCase(),
             amount: 0,
             availableOn: date,
             availableOnTs: txn.available_on,
