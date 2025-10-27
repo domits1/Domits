@@ -332,7 +332,7 @@ export default function HostFinanceTab() {
                       <thead>
                         <tr>
                           <th>Arrival date</th>
-                          <th>Amount paid out</th>
+                          <th>Amount</th>
                           <th>Status</th>
                           <th>Payout ID</th>
                         </tr>
