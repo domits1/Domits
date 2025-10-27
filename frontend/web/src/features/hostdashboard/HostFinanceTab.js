@@ -359,26 +359,6 @@ export default function HostFinanceTab() {
               )}
             </div>
 
-            <div className="payout-status">
-              <h3>Payout Status:</h3>
-              {payouts.length > 0 && payouts.some((p) => p.status === "paid") ? (
-                <p className="status-active">Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
-              ) : payouts.length > 0 && payouts.some((p) => p.status === "pending") ? (
-                <p className="status-pending">
-                  Your payouts are scheduled. Next payout: {payouts.find((p) => p.status === "pending")?.arrivalDate}.
-                </p>
-              ) : payouts.length > 0 && payouts.every((p) => p.status !== "paid") ? (
-                <p className="status-error">
-                  There was an issue with your payouts:{" "}
-                  {payouts.find((p) => p.failureMessage)?.failureMessage || "Unknown issue"}.
-                </p>
-              ) : (
-                <p className="status-none">
-                  No payouts found. Once you start receiving bookings, your payouts will appear here.
-                </p>
-              )}
-            </div>
-
             <div className="payout-frequency">
               <h3>Payout Frequency</h3>
               <select value={payoutFrequency} onChange={handlePayoutFrequencyChange}>

@@ -246,21 +246,8 @@ $mutedc:  #6b7280;
   }
 }
 
-.payout-status {
-  background: $muted;
-  padding: 16px;
-  border-radius: $radius;
-  @include up($bp-md) { padding: 20px; }
-}
-
-.status-active  { color: #28a745; font-weight: 600; }
-.status-pending { color: #ffc107; font-weight: 600; }
-.status-error   { color: #dc3545; font-weight: 600; }
-.status-none    { color: #6c757d;  }
-
 @include up($bp-lg) {
   .finance-steps,
   .payouts-section,
-  .payout-frequency,
-  .payout-status { margin-bottom: 0; }
+  .payout-frequency { margin-bottom: 0; }
 }
