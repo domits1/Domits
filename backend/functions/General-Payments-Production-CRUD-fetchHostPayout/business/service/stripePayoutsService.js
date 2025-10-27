@@ -68,7 +68,11 @@ export default class StripePayoutsService {
           hostReceives: toAmount(hostReceives),
           currency: bt.currency.toUpperCase(),
           status: charge.status,
-          createdDate: new Date(charge.created * 1000).toLocaleDateString(),
+          createdDate: new Date(charge.created * 1000).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
           customerName: charge.billing_details.name,
           paymentMethod: charge.payment_method_details.type,
           propertyTitle: property.title,
@@ -106,7 +110,11 @@ export default class StripePayoutsService {
       id: payout.id,
       amount: toAmount(payout.amount),
       currency: payout.currency.toUpperCase(),
-      arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString(),
+      arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
       status: payout.status,
       method: payout.method,
     }));
