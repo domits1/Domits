@@ -227,6 +227,25 @@ $mutedc:  #6b7280;
   }
 }
 
+.payout-frequency {
+  background: $muted;
+  padding: 16px;
+  border-radius: $radius;
+
+  @include up($bp-md) { padding: 20px; }
+
+  h3 { margin: 0 0 10px; font-size: 1.05rem; }
+
+  select {
+    width: 100%;
+    padding: .7rem .9rem;
+    border-radius: 10px;
+    border: 1px solid #d6d9de;
+    background: #fff;
+    font-size: 1rem;
+  }
+}
+
 .payout-status {
   background: $muted;
   padding: 16px;

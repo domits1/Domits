@@ -13,6 +13,7 @@ export default function HostFinanceTab() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
+    const [payoutFrequency, setPayoutFrequency] = useState("weekly");
 
   const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 
@@ -26,6 +27,7 @@ export default function HostFinanceTab() {
 
   const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
+    const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
   const PAGE_SIZE = 5;
   const [chargesPage, setChargesPage] = useState(1);
@@ -363,6 +365,16 @@ export default function HostFinanceTab() {
                 </p>
               )}
             </div>
+
+            <div className="payout-frequency">
+              <h3>Payout Frequency</h3>
+              <select value={payoutFrequency} onChange={handlePayoutFrequencyChange}>
+                <option value="daily">Daily (24h after check-out)</option>
+                <option value="weekly">Weekly (Every Monday)</option>
+                <option value="monthly">Monthly (First of the month)</option>
+              </select>
+            </div>
+            
           </div>
         </section>
       </div>
