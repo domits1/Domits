@@ -98,8 +98,21 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
-        setPayouts(details.payouts);
-        console.log("Payout details:", details);
+        const { payouts, upcomingPayouts } = details;
+
+        const merged = [
+          ...upcomingPayouts.map((x) => ({
+            arrivalDate: x.availableOn,
+            amount: x.amount,
+            currency: x.currency,
+            status: "pending",
+            id: null,
+          })),
+          ...payouts,
+        ];
+
+        setPayouts(merged);
+
       } catch (error) {
         console.error("Error fetching payouts:", error);
       } finally {
@@ -332,7 +345,7 @@ export default function HostFinanceTab() {
                             <td>
                               <StatusBadge status={payout.status} />
                             </td>
-                            <td title={payout.id || ""}>{payout.id}</td>
+                            <td title={payout.id || ""}>{payout.id || " - "}</td>
                           </tr>
                         ))}
                       </tbody>
