@@ -122,12 +122,22 @@ export default class StripePayoutsService {
     const txns = await this.getHostPendingAmount(event);
     const upcomingPayouts = txns.details.upcomingByDate;
 
+    const merged = [
+      ...upcomingPayouts.map((x) => ({
+        arrivalDate: x.availableOn,
+        amount: x.amount,
+        currency: x.currency,
+        status: "pending",
+        id: null,
+      })),
+      ...payoutDetails,
+    ];
+
     return {
       statusCode: 200,
       message: "Payouts fetched successfully",
       details: {
-        payouts: payoutDetails,
-        upcomingPayouts: upcomingPayouts,
+        payouts: merged,
       },
     };
   }
