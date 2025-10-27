@@ -162,4 +162,50 @@ export default class StripePayoutsService {
       details: { available, pending },
     };
   }
+
+  async getHostPendingAmount(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required fields: cognitoUserId");
+    }
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
+
+    const txns = await this.stripe.balanceTransactions.list(
+      {
+        limit: 100,
+        available_on: { gte: Math.floor(Date.now() / 1000) },
+      },
+      { stripeAccount: stripeAccount.account_id }
+    );
+
+    const upcomingByDate = Object.values(
+      txns.data
+        .filter((txn) => txn.status === "pending")
+        .reduce((groups, txn) => {
+          const date = new Date(txn.available_on * 1000).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          });
+
+          groups[date] = groups[date] || { currency: txn.currency.toUpperCase(), amount: 0, availableOn: date };
+          groups[date].amount += toAmount(txn.net);
+
+          return groups;
+        }, {})
+    );
+
+    return {
+      statusCode: 200,
+      message: "Upcoming balance transactions fetched successfully",
+      details: { upcomingByDate },
+    };
+  }
 }
