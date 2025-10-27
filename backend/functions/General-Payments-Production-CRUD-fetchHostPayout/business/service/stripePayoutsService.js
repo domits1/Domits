@@ -195,7 +195,7 @@ export default class StripePayoutsService {
             year: "numeric",
           });
 
-          groups[date] = groups[date] || { currency: txn.currency.toUpperCase(), amount: 0, availableOn: date };
+          groups[date] = groups[date] || { currency: txn.currency.toUpperCase(), amount: 0, availableOn: date, status: txn.status };
           groups[date].amount += toAmount(txn.net);
 
           return groups;
