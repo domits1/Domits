@@ -119,11 +119,15 @@ export default class StripePayoutsService {
       method: payout.method,
     }));
 
+    const txns = await this.getHostPendingAmount(event);
+    const upcomingPayouts = txns.details.upcomingByDate;
+
     return {
       statusCode: 200,
       message: "Payouts fetched successfully",
       details: {
         payouts: payoutDetails,
+        upcomingPayouts: upcomingPayouts,
       },
     };
   }
@@ -195,12 +199,16 @@ export default class StripePayoutsService {
             year: "numeric",
           });
 
-          groups[date] = groups[date] || { currency: txn.currency.toUpperCase(), amount: 0, availableOn: date, status: txn.status };
+          groups[date] = groups[date] || {currency: txn.currency.toUpperCase(),
+            amount: 0,
+            availableOn: date,
+            availableOnTs: txn.available_on,
+          };
           groups[date].amount += toAmount(txn.net);
 
           return groups;
         }, {})
-    );
+    ).sort((a, b) => a.availableOnTs - b.availableOnTs);
 
     return {
       statusCode: 200,
