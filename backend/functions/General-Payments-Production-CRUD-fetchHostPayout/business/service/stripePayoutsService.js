@@ -119,4 +119,39 @@ export default class StripePayoutsService {
       },
     };
   }
+
+  async getHostBalance(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required fields: cognitoUserId");
+    }
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
+
+    const balance = await this.stripe.balance.retrieve({
+      stripeAccount: stripeAccount.account_id,
+    });
+
+    const available = balance.available.map((balance) => ({
+      currency: balance.currency.toUpperCase(),
+      amount: toAmount(balance.amount),
+    }));
+
+    const pending = balance.pending.map((balance) => ({
+      currency: balance.currency.toUpperCase(),
+      amount: toAmount(balance.amount),
+    }));
+
+    return {
+      statusCode: 200,
+      message: "Balance fetched successfully",
+      details: { available, pending },
+    };
+  }
 }
