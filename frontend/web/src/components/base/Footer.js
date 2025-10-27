@@ -64,6 +64,11 @@ const Footer = () => {
               </Link>
             </li>
             <li>
+              <Link to="/Sustainability" className="footer-links">
+                {footerContent.navigation.sustainability}
+              </Link>
+            </li>
+            <li>
               <Link to="/career" className="footer-links">
                 {footerContent.navigation.careers}
               </Link>
@@ -91,11 +96,6 @@ const Footer = () => {
                 {footerContent.guest.helpDeskForGuests}
               </Link>
             </li>
-            <li>
-              <Link to="/sustainability" className="footer-links">
-                {footerContent.guest.sustainability}
-              </Link>
-            </li>
           </ul>
         </div>
 
@@ -111,11 +111,6 @@ const Footer = () => {
             <li>
               <Link to="/helpdesk-host" className="footer-links">
                 {footerContent.host.helpDeskForHosts}
-              </Link>
-            </li>
-            <li>
-              <Link to="/sustainability" className="footer-links">
-                {footerContent.host.sustainability}
               </Link>
             </li>
           </ul>
@@ -185,16 +180,7 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="footer-links"
                 >
-                  2013 AS, Haarlem
-                </a>
-              </li>
-              <li className="footer-links">
-                <a
-                  href="https://maps.google.com/?q=2013+AS+Haarlem+Kinderhuissingel+6-K"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="footer-links"
-                >
+                  2013 AS, Haarlem <br />
                   Kinderhuissingel 6-K
                 </a>
               </li>

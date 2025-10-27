@@ -208,8 +208,7 @@ function Landing() {
                 <span>{landingContent.boat}</span>
               </div>
             </span>
-            <br />
-            {landingContent.forFree}
+            
           </h1>
           <p>{landingContent.description}</p>
 
@@ -367,7 +366,9 @@ function Landing() {
               <div className="review-card__stars" aria-label="5 star rating">★★★★★</div>
               <p className="review-card__text">{review.text}</p>
               <div className="review-card__footer">
-                <img className="review-card__avatar" src={review.img} alt={review.author} />
+                {review.img && (
+                  <img className="review-card__avatar" src={review.img} alt={review.author} />
+                )}
                 <div className="review-card__author">
                   <div className="review-card__name">{review.author}</div>
                   <div className="review-card__role">{review.location}</div>

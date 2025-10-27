@@ -11,19 +11,19 @@ export const Property_Check_In = new EntitySchema({
             nullable: false
         },
         checkinfrom: {
-            type: "int",
+            type: "time",
             nullable: false
         },
         checkintill: {
-            type: "int",
+            type: "time",
             nullable: false
         },
         checkoutfrom: {
-            type: "int",
+            type: "time",
             nullable: false
         },
         checkouttill: {
-            type: "int",
+            type: "time",
             nullable: false
         },
     }

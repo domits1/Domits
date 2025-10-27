@@ -1,163 +1,238 @@
-import React, { useState, useEffect } from 'react';
-import './HostReports.css';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import React, { useState, useEffect } from "react";
+import "./HostRevenueStyle.scss";
+import RevenueOverview from "./HostRevenueCards/RevenueOverview.jsx";
+import axios from "axios";
+import MonthlyComparison from "./HostRevenueCards/MonthlyComparison.jsx";
+import OccupancyRateCard from "./HostRevenueCards/OccupancyRate.jsx";
+import RevPARCard from "./HostRevenueCards/RevPAR.jsx";
+import ADRCard from "./HostRevenueCards/ADRCard.jsx";
+import { Auth } from "aws-amplify";
+import ClipLoader from "react-spinners/ClipLoader";
+import BookedNights from "./HostRevenueCards/BookedNights.jsx";
 
-function HostReports() {
-    const [revenueData, setRevenueData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selectedDates, setSelectedDates] = useState({
-        journalEntries: new Date(),
-        balanceSheets: new Date(),
-        incomeStatements: new Date(),
-        waterfallCharts: new Date(),
-        arAgeingReports: new Date(),
-    });
+const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
-    useEffect(() => {
-        const fetchRevenueData = async () => {
-            try {
-                const data = {
-                    available: [{ amount: 5000 }],
-                    pending: [{ amount: 3000 }],
-                };
-                const formattedData = {
-                    recognized_revenue: data.available[0].amount,
-                    deferred_revenue: data.pending[0].amount,
-                    waterfall: [
-                        { month: 'May 2023', total: 10000, recognized: 5000, remaining: 5000 },
-                        { month: 'Jun 2023', total: 15000, recognized: 7000, remaining: 8000 },
-                    ],
-                };
-                setRevenueData(formattedData);
-                setLoading(false);
-            } catch (error) {
-                setError(error.message);
-                setLoading(false);
-            }
-        };
+const HostRevenues = () => {
+  const [cognitoUserId, setCognitoUserId] = useState(null);
+  const [stripeStatus, setStripeStatus] = useState("");
+  const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
 
-        fetchRevenueData();
-    }, []);
+  const [monthlyRevenueData, setMonthlyRevenueData] = useState([]);
+  const [occupancyData] = useState({
+    occupancyRate: 0,
+    numberOfProperties: 0,
+    vsLastMonth: 0,
+  });
 
-    const handleDateChange = (reportType, date) => {
-        setSelectedDates(prevDates => ({
-            ...prevDates,
-            [reportType]: date,
-        }));
-    };
+  const [bookedNights, setBookedNights] = useState(0);
+  const [availableNights, setAvailableNights] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [propertyCount, setPropertyCount] = useState(0);
 
-    const handleExport = (reportType) => {
-        const month = selectedDates[reportType].toLocaleString('default', { month: 'long' });
-        const year = selectedDates[reportType].getFullYear();
-        alert(`Exporting ${reportType} data for ${month} ${year}`);
-    };
+  const [loadingStates, setLoadingStates] = useState({
+    user: true,
+    revenue: false,
+    occupancy: false,
+    bookedNights: false,
+    availableNights: false,
+    monthlyRevenue: false,
+  });
 
-    return (
-        <main className="page-body">
-            <div className="dashboard">
-                <div className="contentContainer">
-                    {loading && <p>Loading data...</p>}
-                    {error && <p>Error loading data: {error}</p>}
-                    {revenueData && (
-                        <div className="reportsSection">
-                            <h2>Reports</h2>
-                            <div className="overview">
-                                <h3>Revenue Overview</h3>
-                                <div className="chart">
-                                    <p>Recognized revenue and deferred revenue over time</p>
-                                </div>
-                                <div className="summary">
-                                    <h4>May Summary</h4>
-                                    <p>Recognized revenue: ${revenueData.recognized_revenue / 100}</p>
-                                    <p>Deferred revenue: ${revenueData.deferred_revenue / 100}</p>
-                                </div>
-                            </div>
-                            <div className="waterfall">
-                                <h3>Revenue Waterfall</h3>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Month</th>
-                                            <th>Total</th>
-                                            <th>Recognized</th>
-                                            <th>Remaining</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {revenueData.waterfall.map((row, index) => (
-                                            <tr key={index}>
-                                                <td>{row.month}</td>
-                                                <td>${row.total}</td>
-                                                <td>${row.recognized}</td>
-                                                <td>${row.remaining}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Debits and Credits Journal Entries</h4>
-                                <p>Export detailed journal entries for all debits and credits...</p>
-                                <DatePicker
-                                    selected={selectedDates.journalEntries}
-                                    onChange={(date) => handleDateChange('journalEntries', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('journalEntries')}>Export</button>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Balance Sheets</h4>
-                                <p>Get comprehensive balance sheets for your business...</p>
-                                <DatePicker
-                                    selected={selectedDates.balanceSheets}
-                                    onChange={(date) => handleDateChange('balanceSheets', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('balanceSheets')}>Export</button>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Income Statements</h4>
-                                <p>Generate detailed income statements...</p>
-                                <DatePicker
-                                    selected={selectedDates.incomeStatements}
-                                    onChange={(date) => handleDateChange('incomeStatements', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('incomeStatements')}>Export</button>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Revenue Waterfall Charts</h4>
-                                <p>Visualize your revenue with waterfall charts...</p>
-                                <DatePicker
-                                    selected={selectedDates.waterfallCharts}
-                                    onChange={(date) => handleDateChange('waterfallCharts', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('waterfallCharts')}>Export</button>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Accounts Receivable Ageing Reports</h4>
-                                <p>Access ageing reports for accounts receivable...</p>
-                                <DatePicker
-                                    selected={selectedDates.arAgeingReports}
-                                    onChange={(date) => handleDateChange('arAgeingReports', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('arAgeingReports')}>Export</button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </main>
+  const updateLoadingState = (key, value) => {
+    setLoadingStates((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // 🔑 Generic Fetcher
+  const fetchMetricData = async (metric, setStateCallback, loadingKey) => {
+    if (!cognitoUserId) return console.error("Cognito User ID is missing.");
+    updateLoadingState(loadingKey, true);
+
+    try {
+      const session = await Auth.currentSession();
+      const token = session.getAccessToken().getJwtToken();
+
+      const response = await fetch(
+        `${BASE_URL}?hostId=${cognitoUserId}&metric=${metric}`,
+        {
+          method: "GET",
+          headers: { Authorization: token },
+        }
+      );
+
+      let data = await response.json();
+      if (data.body) data = JSON.parse(data.body);
+
+      setStateCallback(data);
+    } catch (error) {
+      console.error(`Error fetching ${metric}:`, error);
+    } finally {
+      updateLoadingState(loadingKey, false);
+    }
+  };
+
+  // ---- Metric Fetchers ----
+  const fetchRevenueData = () =>
+    fetchMetricData(
+      "revenue",
+      (data) => setTotalRevenue(data.revenue?.totalRevenue || 0),
+      "revenue"
     );
-}
 
-export default HostReports;
+  const fetchBookedNights = () =>
+    fetchMetricData(
+      "bookedNights",
+      (data) => {
+        let nights = 0;
+        if (data.bookedNights) {
+          if (typeof data.bookedNights === "number") nights = data.bookedNights;
+          else if ("value" in data.bookedNights) nights = data.bookedNights.value;
+          else if ("bookedNights" in data.bookedNights) nights = data.bookedNights.bookedNights;
+        }
+        setBookedNights(nights);
+      },
+      "bookedNights"
+    );
+
+  const fetchAvailableNights = () =>
+    fetchMetricData(
+      "availableNights",
+      (data) => {
+        let nights = 0;
+        if (data.availableNights) {
+          if (typeof data.availableNights === "number") nights = data.availableNights;
+          else if ("value" in data.availableNights) nights = data.availableNights.value;
+          else if ("availableNights" in data.availableNights) nights = data.availableNights.availableNights;
+        }
+        setAvailableNights(nights);
+      },
+      "availableNights"
+    );
+
+  const fetchPropertyCount = () =>
+    fetchMetricData(
+      "propertyCount",
+      (data) => {
+        let count = 0;
+        if (data.propertyCount) {
+          if (typeof data.propertyCount === "number") count = data.propertyCount;
+          else if ("value" in data.propertyCount) count = data.propertyCount.value;
+        }
+        setPropertyCount(count);
+      },
+      "propertyCount"
+    );
+
+  const fetchMonthlyRevenueData = () =>
+    fetchMetricData(
+      "monthlyComparison",
+      (data) => setMonthlyRevenueData(data.monthlyComparison || []),
+      "monthlyRevenue"
+    );
+
+  // ---- User + Stripe Setup ----
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      updateLoadingState("user", true);
+      try {
+        const userInfo = await Auth.currentUserInfo();
+        if (!userInfo?.attributes?.sub)
+          throw new Error("Invalid Cognito User Info");
+
+        setCognitoUserId(userInfo.attributes.sub);
+
+        const response = await axios.post(
+          "https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists",
+          { sub: userInfo.attributes.sub },
+          { headers: { "Content-Type": "application/json" } }
+        );
+
+        const parsedBody = JSON.parse(response.data.body);
+        if (parsedBody.hasStripeAccount) {
+          setStripeLoginUrl(parsedBody.loginLinkUrl);
+          setStripeStatus(parsedBody.bankDetailsProvided ? "complete" : "incomplete");
+        } else {
+          setStripeStatus("none");
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      } finally {
+        updateLoadingState("user", false);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  // ---- Load Metrics When Cognito User Ready ----
+  useEffect(() => {
+    if (cognitoUserId) {
+      fetchRevenueData();
+      fetchBookedNights();
+      fetchAvailableNights();
+      fetchMonthlyRevenueData();
+      fetchPropertyCount();
+    }
+  }, [cognitoUserId]);
+
+  return (
+    <main className="hr-page-body hr-container">
+      <h2>Revenues</h2>
+
+      <section className="hr-host-revenues">
+        <div className="hr-content">
+          {loadingStates.user ? (
+            <div className="hr-revenue-spinner-container">
+              <ClipLoader size={100} color="#3498db" loading={true} />
+            </div>
+          ) : (
+            <>
+              {stripeStatus === "none" && (
+                <div>
+                  <h3>No Stripe Account Found</h3>
+                  <button onClick={() => window.open(stripeLoginUrl, "_blank")}>
+                    Connect Stripe
+                  </button>
+                </div>
+              )}
+              {stripeStatus === "complete" && (
+                <>
+                  <div className="hr-revenue-overview">
+                    <h3>Revenue Overview</h3>
+                    <RevenueOverview
+                      title="Total Revenue"
+                      value={`$${totalRevenue || 0}`}
+                    />
+                    <RevenueOverview
+                      title="Booked Nights"
+                      value={bookedNights}
+                    />
+                    <RevenueOverview
+                      title="Available Nights"
+                      value={availableNights}
+                    />
+                    <RevenueOverview
+                      title="Total Properties"
+                      value={propertyCount}
+                    />
+                  </div>
+                  <div className="hr-monthly-comparison">
+                    <h3>Monthly Comparison</h3>
+                    <MonthlyComparison data={monthlyRevenueData} />
+                  </div>
+                  <div className="hr-cards">
+                    <OccupancyRateCard {...occupancyData} />
+                    <ADRCard hostId={cognitoUserId} />
+                    <RevPARCard />
+                    <BookedNights nights={bookedNights} />
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+};
+
+export default HostRevenues;

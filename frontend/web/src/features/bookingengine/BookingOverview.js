@@ -16,7 +16,7 @@ import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
 import publicKeys from "../../utils/const/publicKeys.json";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST);
 
 const BookingOverview = () => {
   const navigate = useNavigate();
@@ -257,30 +257,23 @@ const BookingOverview = () => {
             </div>
 
             <div className="detail-row">
-              <span className="detail-label">
-                € {(pricingObject.roomRate || 0).toFixed(2)} x {pricingObject.differenceInDays} nights{" "}
-              </span>
+              <span className="detail-label">Host price:</span>
               <span className="detail-value">
-                € {(pricingObject.roomRate * pricingObject.differenceInDays || 0).toFixed(2)}
+                €{" "}
+                {(
+                  (pricingObject.roomRate * pricingObject.differenceInDays || 0) + (pricingObject.platformFee || 0)
+                ).toFixed(2)}
               </span>
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">Taxes:</span>
-              <span className="detail-value">€ {(0).toFixed(2)}</span>
             </div>
 
             <div className="detail-row">
               <span className="detail-label">Cleaning fee:</span>
-              <span className="detail-value">€ {(pricingObject.cleaning || 0).toFixed(2)}</span>
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">Service fee:</span>
               <span className="detail-value">
-                € {(pricingObject.roomRate || 0).toFixed(2) * 0.15} x {pricingObject.differenceInDays} nights
+                € {pricingObject.cleaning || 0} x {pricingObject.differenceInDays} nights
               </span>
-              <span className="detail-value">€ {(pricingObject.roomRate * 0.15 || 0).toFixed(2)}</span>
+              <span className="detail-value">
+                € {(pricingObject.cleaning * pricingObject.differenceInDays || 0).toFixed(2)}
+              </span>
             </div>
 
             <div className="detail-row total-price">
