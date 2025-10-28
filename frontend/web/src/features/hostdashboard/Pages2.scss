@@ -1,93 +1,33 @@
-/* Pages.module.scss */
-/* Kleine themavariabelen */
 $sidebar-width: 280px;
-$backdrop: rgba(0, 0, 0, 0.35);
 $brand: #0a7cff;
+$nav-h: 64px;
 
 .guestPages {
-  position: relative;
-}
-
-/* Hamburger */
-.hamburgerBtn {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 1001;
-  border: none;
-  background: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.12);
   display: grid;
-  place-items: center;
-  cursor: pointer;
+  grid-template-columns: $sidebar-width 1fr;
+  gap: 16px;
+  align-items: start;
 }
 
-/* Sidebar + backdrop wrapper (fixed zodat hij boven content staat) */
 .sidebar {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1000;
+  position: sticky;
+  top: calc($nav-h + 16px);
+  height: calc(100dvh - $nav-h - 16px);
 
-  /* backdrop */
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: transparent;
-    transition: background .2s ease;
-  }
-
-  /* panel */
-  & > .panel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: $sidebar-width;
+  > .panel {
     height: 100%;
     background: #fff;
-    box-shadow: 0 10px 30px rgba(0,0,0,.12);
-    transform: translateX(-100%);
-    transition: transform .2s ease;
+    border: 1px solid #eef0f3;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.06);
     display: flex;
     flex-direction: column;
-  }
-
-  /* open state */
-  &.open {
-    pointer-events: auto;
-
-    &::before {
-      background: $backdrop;
-    }
-
-    & > .panel {
-      transform: translateX(0%);
-    }
+    overflow: auto;
   }
 }
 
-/* Close button binnen panel */
-.closeSidebarBtn {
-  align-self: flex-end;
-  margin: 10px;
-  border: none;
-  background: #f6f7f9;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-/* Inhoud */
 .menuContent {
   padding: 10px 12px 18px;
-  overflow: auto;
 }
 
 .dashboardSections {
@@ -95,7 +35,6 @@ $brand: #0a7cff;
   gap: 6px;
 }
 
-/* Link/knop-tegel */
 .wijzer {
   display: grid;
   grid-template-columns: 40px 1fr;
@@ -108,15 +47,21 @@ $brand: #0a7cff;
   text-decoration: none;
   color: #1b2430;
   cursor: pointer;
+  transition: background-color .2s ease, box-shadow .2s ease, border-color .2s ease, color .2s ease;
 
   &:hover {
     background: #f8fafc;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    border-color: #e5e7eb;
+    color: $brand;
   }
 
-  /* <a> en <button> delen dezelfde basisstijl */
+  &:focus-visible { outline: 2px solid rgba($brand, .25); outline-offset: 2px; }
+  
   &:where(button) {
     width: 100%;
     text-align: left;
+    background: #fff;
   }
 }
 
@@ -129,26 +74,3 @@ $brand: #0a7cff;
   background: #f1f5ff;
 }
 
-/* Desktop: sidebar altijd open, zonder backdrop */
-@media (min-width: 1024px) {
-  .hamburgerBtn {
-    display: none;
-  }
-
-  .sidebar {
-    position: sticky;
-    inset: unset;
-    top: 0;
-    height: 100dvh;
-    pointer-events: auto;
-
-    &::before { display: none; }
-
-    & > .panel {
-      transform: translateX(0);
-      position: sticky;
-    }
-
-    &.open { /* niets extra nodig */ }
-  }
-}
