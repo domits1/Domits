@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
-import "./ALOSCard.scss";
-import { HostRevenueService } from "../services/HostRevenueService";
+import { ALOSService } from "./ALOSCardService.js";
 
 const ALOSCard = () => {
   const [alos, setAlos] = useState(0);
@@ -16,8 +15,7 @@ const ALOSCard = () => {
     const fetchUserId = async () => {
       try {
         const userInfo = await Auth.currentUserInfo();
-        if (!userInfo?.attributes?.sub)
-          throw new Error("Cognito user ID not found");
+        if (!userInfo?.attributes?.sub) throw new Error("Cognito user ID not found");
         setCognitoUserId(userInfo.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
@@ -33,23 +31,8 @@ const ALOSCard = () => {
     setError(null);
 
     try {
-      const data = await HostRevenueService.fetchMetricData(
-        "averageLengthOfStay",
-        cognitoUserId,
-        filterType,
-        startDate,
-        endDate
-      );
-
-      let value = 0;
-      if (typeof data === "number") value = data;
-      else if (data?.averageLengthOfStay?.averageLengthOfStay != null)
-        value = Number(data.averageLengthOfStay.averageLengthOfStay);
-      else if (data?.averageLengthOfStay != null)
-        value = Number(data.averageLengthOfStay);
-      else if (data?.value != null) value = Number(data.value);
-
-      setAlos(Number(value.toFixed(2)));
+      const value = await ALOSService.fetchALOS(cognitoUserId, filterType, startDate, endDate);
+      setAlos(value);
     } catch (err) {
       console.error("Error fetching ALOS:", err);
       setError(err.message || "Failed to fetch ALOS");
@@ -72,10 +55,7 @@ const ALOSCard = () => {
 
         <div className="time-filter">
           <label>Time Filter:</label>
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
             <option value="custom">Custom</option>
@@ -86,19 +66,11 @@ const ALOSCard = () => {
           <div className="custom-date-filter">
             <div>
               <label>Start Date:</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
               <label>End Date:</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
         )}
@@ -107,7 +79,7 @@ const ALOSCard = () => {
           {loading ? (
             <p>Loading...</p>
           ) : error ? (
-            <p>Error: {error}</p>
+            <p style={{ color: "red" }}>Error: {error}</p>
           ) : (
             <p>
               <strong>{alos}</strong> nights

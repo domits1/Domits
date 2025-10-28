@@ -1,6 +1,3 @@
-// Updated MonthlyComparison component and integration into HostRevenues
-
-// MonthlyComparison.jsx
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import './MonthlyComparison.scss';

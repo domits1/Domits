@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
 import "./BookedNights.scss";
-
-const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
+import { BookedNightsService } from "../services/BookedNightService.js";
 
 const BookedNights = () => {
   const [bookedNights, setBookedNights] = useState(0);
@@ -13,11 +12,11 @@ const BookedNights = () => {
   const [error, setError] = useState(null);
   const [cognitoUserId, setCognitoUserId] = useState(null);
 
-  // Get Cognito User ID
   useEffect(() => {
     const fetchUserId = async () => {
       try {
         const userInfo = await Auth.currentUserInfo();
+        if (!userInfo?.attributes?.sub) throw new Error("Cognito user not found");
         setCognitoUserId(userInfo.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito user ID:", err);
@@ -27,39 +26,18 @@ const BookedNights = () => {
     fetchUserId();
   }, []);
 
-  // Fetch Booked Nights
-  const fetchBookedNightsData = async () => {
+  const fetchBookedNights = async () => {
     if (!cognitoUserId) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      const session = await Auth.currentSession();
-      const token = session.getAccessToken().getJwtToken();
-
-      // Build URL
-      let url = `${BASE_URL}?hostId=${cognitoUserId}&metric=bookedNights&filterType=${periodType}`;
-      if (periodType === "custom" && startDate && endDate) {
-        url += `&startDate=${startDate}&endDate=${endDate}`;
-      }
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { Authorization: token },
-      });
-
-      let data = await response.json();
-      if (data?.body) data = JSON.parse(data.body);
-
-      // Flatten the response
-      let nights = 0;
-      if (data?.bookedNights) {
-        if (typeof data.bookedNights === "number") nights = data.bookedNights;
-        else if ("bookedNights" in data.bookedNights) nights = data.bookedNights.bookedNights;
-        else if ("value" in data.bookedNights) nights = data.bookedNights.value;
-      }
-
+      const nights = await BookedNightsService.fetchBookedNights(
+        cognitoUserId,
+        periodType,
+        startDate,
+        endDate
+      );
       setBookedNights(nights);
     } catch (err) {
       console.error("Error fetching booked nights:", err);
@@ -70,9 +48,8 @@ const BookedNights = () => {
     }
   };
 
-  // Fetch whenever periodType, dates, or userId changes
   useEffect(() => {
-    if (cognitoUserId) fetchBookedNightsData();
+    if (cognitoUserId) fetchBookedNights();
   }, [periodType, startDate, endDate, cognitoUserId]);
 
   return (
@@ -80,7 +57,6 @@ const BookedNights = () => {
       <div className="booked-nights-card">
         <h3>Booked Nights</h3>
 
-        {/* Filter */}
         <div className="time-filter">
           <label htmlFor="periodType">Time Filter:</label>
           <select
@@ -93,11 +69,10 @@ const BookedNights = () => {
           </select>
         </div>
 
-        {/* Custom Dates */}
         {periodType === "custom" && (
           <div className="custom-date-filter">
             <div>
-              <label>Start Date : </label>
+              <label>Start Date:</label>
               <input
                 type="date"
                 value={startDate}
@@ -105,7 +80,7 @@ const BookedNights = () => {
               />
             </div>
             <div>
-              <label>End Date : </label>
+              <label>End Date:</label>
               <input
                 type="date"
                 value={endDate}
@@ -115,7 +90,6 @@ const BookedNights = () => {
           </div>
         )}
 
-        {/* Display */}
         <div className="booked-nights-details">
           {loading ? (
             <p>Loading...</p>

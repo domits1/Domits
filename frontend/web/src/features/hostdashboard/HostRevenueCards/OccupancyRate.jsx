@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
-import "./OccupancyRate.scss"; // keep styling consistent
-
-const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
+import "./OccupancyRate.scss";
+import { OccupancyRateService } from "../services/OccupancyRateService.js";
 
 const OccupancyRate = () => {
   const [occupancyRate, setOccupancyRate] = useState(0);
@@ -13,19 +12,13 @@ const OccupancyRate = () => {
   const [error, setError] = useState(null);
   const [cognitoUserId, setCognitoUserId] = useState(null);
 
-  // convert yyyy-mm-dd -> dd-mm-yyyy for backend
-  const formatForBackend = (isoDate) => {
-    if (!isoDate) return "";
-    const [y, m, d] = isoDate.split("-");
-    return `${d}-${m}-${y}`;
-  };
-
-  // Get Cognito user ID
+ 
   useEffect(() => {
     const fetchUserId = async () => {
       try {
         const userInfo = await Auth.currentUserInfo();
-        console.log("Fetched Cognito User ID:", userInfo.attributes.sub);
+        if (!userInfo?.attributes?.sub)
+          throw new Error("Cognito User ID not found");
         setCognitoUserId(userInfo.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
@@ -35,55 +28,22 @@ const OccupancyRate = () => {
     fetchUserId();
   }, []);
 
-  // Fetch Occupancy Rate from backend
-  const fetchOccupancyRateData = async () => {
+  const fetchOccupancyRate = async () => {
     if (!cognitoUserId) return;
+    if (periodType === "custom" && (!startDate || !endDate)) return;
 
     setLoading(true);
     setError(null);
-    console.log("Fetching occupancy rate with:", {
-      periodType,
-      startDate,
-      endDate,
-      cognitoUserId,
-    });
 
     try {
-      const session = await Auth.currentSession();
-      const token = session.getAccessToken().getJwtToken();
+      const rate = await OccupancyRateService.fetchOccupancyRate(
+        cognitoUserId,
+        periodType,
+        startDate,
+        endDate
+      );
 
-      let url = `${BASE_URL}?hostId=${cognitoUserId}&metric=occupancyRate&filterType=${periodType}`;
-      if (periodType === "custom" && startDate && endDate) {
-        url += `&startDate=${formatForBackend(startDate)}&endDate=${formatForBackend(endDate)}`;
-      }
-
-      console.log("Request URL:", url);
-
-      const resp = await fetch(url, {
-        method: "GET",
-        headers: { Authorization: token },
-      });
-
-      let data = await resp.json();
-      console.log("Raw response:", data);
-
-      // unwrap body if returned as string
-      if (data?.body && typeof data.body === "string") {
-        data = JSON.parse(data.body);
-        console.log("Parsed body:", data);
-      }
-
-      // normalize occupancyRate value
-      let rate = 0;
-      if (typeof data === "number") rate = data;
-      else if (data?.occupancyRate) rate = parseFloat(data.occupancyRate);
-      else if (data?.occupancy_rate) rate = parseFloat(data.occupancy_rate);
-      else if (data?.value) rate = parseFloat(data.value);
-
-      if (!Number.isFinite(rate)) rate = 0;
-
-      console.log("Final occupancy rate:", rate);
-      setOccupancyRate(Number(rate.toFixed(2)));
+      setOccupancyRate(rate);
     } catch (err) {
       console.error("Error fetching occupancy rate:", err);
       setError(err.message || "Failed to fetch occupancy rate.");
@@ -94,10 +54,8 @@ const OccupancyRate = () => {
   };
 
   useEffect(() => {
-    if (!cognitoUserId) return;
-    if (periodType === "custom" && (!startDate || !endDate)) return;
-    fetchOccupancyRateData();
-  }, [periodType, startDate, endDate, cognitoUserId]);
+    fetchOccupancyRate();
+  }, [cognitoUserId, periodType, startDate, endDate]);
 
   return (
     <div className="booked-nights-card-container">
@@ -120,12 +78,20 @@ const OccupancyRate = () => {
         {periodType === "custom" && (
           <div className="custom-date-filter">
             <div>
-              <label>Start Date : </label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <label>Start Date:</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
             <div>
-              <label>End Date : </label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <label>End Date:</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
             </div>
           </div>
         )}
