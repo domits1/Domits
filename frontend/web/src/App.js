@@ -291,18 +291,26 @@ function App() {
                               </StepGuard>
                             }
                           />
-                          <Route path=":type/address" element={<OnboardingLayout><AddressInputView /></OnboardingLayout>} />
-                          <Route path=":type/capacity" element={<OnboardingLayout><CapacityView /></OnboardingLayout>} />
-                          <Route path=":type/capacity" element={<OnboardingLayout><PropertyGuestAmountView /></OnboardingLayout>} />
-                          <Route path=":type/amenities" element={<OnboardingLayout><AmenitiesView /></OnboardingLayout>} />
-                          <Route path=":type/rules" element={<OnboardingLayout><PropertyHouseRulesView /></OnboardingLayout>} />
-                          <Route path=":type/photos" element={<OnboardingLayout><PhotosView /></OnboardingLayout>} />
-                          <Route path=":type/title" element={<OnboardingLayout><PropertyTitleView /></OnboardingLayout>} />
-                          <Route path=":type/description" element={<OnboardingLayout><PropertyDescriptionView /></OnboardingLayout>} />
-                          <Route path=":type/pricing" element={<OnboardingLayout><PropertyRateView /></OnboardingLayout>} />
-                          <Route path=":type/availability" element={<OnboardingLayout><PropertyAvailabilityView /></OnboardingLayout>} />
-                          <Route path="legal/registrationnumber" element={<OnboardingLayout><RegistrationNumberView /></OnboardingLayout>} />
-                          <Route path="summary" element={<OnboardingLayout><SummaryViewAndSubmit /></OnboardingLayout>} />
+                          {/* Dynamic onboarding steps */}
+                          {[
+                            { path: ":type/address", element: <AddressInputView /> },
+                            { path: ":type/capacity", element: <CapacityView /> },
+                            { path: ":type/amenities", element: <AmenitiesView /> },
+                            { path: ":type/rules", element: <PropertyHouseRulesView /> },
+                            { path: ":type/photos", element: <PhotosView /> },
+                            { path: ":type/title", element: <PropertyTitleView /> },
+                            { path: ":type/description", element: <PropertyDescriptionView /> },
+                            { path: ":type/pricing", element: <PropertyRateView /> },
+                            { path: ":type/availability", element: <PropertyAvailabilityView /> },
+                            { path: "legal/registrationnumber", element: <RegistrationNumberView /> },
+                            { path: "summary", element: <SummaryViewAndSubmit /> },
+                          ].map((step, index) => (
+                            <Route
+                              key={index}
+                              path={step.path}
+                              element={<OnboardingLayout>{step.element}</OnboardingLayout>}
+                            />
+                          ))}
                         </Routes>
                       </BuilderProvider>
                     }
