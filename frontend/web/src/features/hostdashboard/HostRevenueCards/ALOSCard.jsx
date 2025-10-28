@@ -34,13 +34,16 @@ const ALOSCard = () => {
 
     try {
       const data = await HostRevenueService.fetchMetricData(
-        "averageLengthOfStay",
         cognitoUserId,
+        "averageLengthOfStay",
         filterType,
         startDate,
         endDate
       );
 
+      console.log("ALOS raw response:", data);
+
+     
       let value = 0;
       if (typeof data === "number") value = data;
       else if (data?.averageLengthOfStay?.averageLengthOfStay != null)
