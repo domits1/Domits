@@ -9,8 +9,8 @@
         background-color: #fff;
         display: flex;
         flex-direction: column;
-        flex: 1; /* fill remaining space next to sidebar */
-        min-width: 0; /* allow flex item to shrink */
+        flex: 1; 
+        min-width: 0;
         height: 93vh;
         justify-content: start;
         border-left: 0.05rem rgb(150, 150, 150) solid;
@@ -251,13 +251,13 @@
             position: relative;
             border-top: 1px solid #eee;
             background: #fafafa;
-            box-sizing: border-box; /* Ensure padding is included in width calculation */
+            box-sizing: border-box; 
 
             .attachment-area {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
-                flex-shrink: 0; /* Prevent attachment area from shrinking */
+                flex-shrink: 0; 
             }
 
             .inline-upload-preview {
@@ -305,7 +305,7 @@
                     justify-content: center;
                     height: 36px;
                     width: 36px;
-                    font-size: 1.25rem; /* size of + */
+                    font-size: 1.25rem; 
                     border-radius: 0.3rem;
                     background-color: white;
                     color: black;
@@ -324,10 +324,9 @@
             .message-input-wrapper {
                 position: relative;
                 flex: 1;
-                min-width: 0; /* Allow flex item to shrink below content size */
-                max-width: none; /* Remove max-width constraint */
-                margin: 0; /* Remove centering margin */
-            }
+                min-width: 0; 
+                max-width: none; 
+                margin: 0; 
 
             .message-input-textarea {
                 background-color: #fff;
@@ -340,8 +339,8 @@
                 padding: 12px 48px 12px 14px;
                 overflow-y: auto;
                 transition: box-shadow 0.2s ease, border-color 0.2s ease;
-                text-align: center; /* placeholder centered */
-                box-sizing: border-box; /* Include padding in width calculation */
+                text-align: center; 
+                box-sizing: border-box; 
 
                 &::placeholder {
                     color: #666;
@@ -532,15 +531,15 @@
             width: 100%;
             
             .chat-input {
-                padding: 0.5rem; /* Further reduce padding on mobile */
+                padding: 0.5rem; 
                 gap: 0.5rem;
                 
                 .message-input-textarea {
-                    padding: 10px 40px 10px 12px; /* Adjust padding for mobile */
+                    padding: 10px 40px 10px 12px; 
                 }
                 
                 .message-input-send-button {
-                    right: 1rem; /* Adjust send button position */
+                    right: 1rem; 
                 }
             }
         }
@@ -557,4 +556,4 @@
         justify-content: center;
     }
 
-}
+}}
