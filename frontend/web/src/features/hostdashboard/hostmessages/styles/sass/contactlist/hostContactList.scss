@@ -21,6 +21,32 @@
         font-size: 1.75em;
     }
 
+    .contact-search-under-title {
+        border-radius: 20px !important;
+        padding: 12px 16px !important;
+        border: 1px solid #ddd !important;
+        background-color: #fff !important;
+        font-size: 14px !important;
+        outline: none !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.2s ease !important;
+        
+        &:focus {
+            border-color: #0D9813 !important;
+            box-shadow: 0 4px 8px rgba(13, 152, 19, 0.2) !important;
+        }
+        
+        &:hover {
+            border-color: #bbb !important;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        &.chat-open {
+            width: 80% !important;
+            max-width: 80% !important;
+        }
+    }
+
     &::-webkit-scrollbar {
         width: 6px;
         opacity: 0;
@@ -32,20 +58,20 @@
         justify-content: space-between;
 
         .contact-dropdown {
-            padding: 0.4rem 0.6rem;
-            font-size: 1rem;
-            border-radius: 1rem;
-            border: 1px solid black;
-            background-color: rgb(215, 215, 215);
+            padding: 0.25rem 0.5rem;
+            font-size: 0.85rem;
+            border-radius: 0.75rem;
+            border: 1px solid #ccc;
+            background-color: #f3f3f3;
             color: #333;
             cursor: pointer;
-            box-shadow: -2px 3px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
             box-sizing: border-box;
-            transition: border-color 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
             &:focus {
                 outline: none;
-                box-shadow: 0 0 0 1px black, -2px 1px 3px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 0 0 1px #bbb, 0 2px 6px rgba(0,0,0,0.08);
             }
         }
 
@@ -53,36 +79,43 @@
             display: flex;
 
             .contact-search-input {
-                max-width: 1.25rem;
-                transition: max-width 0.3s ease, padding 0.3s ease;
-                padding: 4px;
-                overflow: hidden;
+                max-width: 8rem;
+                transition: max-width 0.2s ease, padding 0.2s ease;
+                padding: 6px 8px;
                 border: 1px solid #ccc;
-                border-radius: 4px;
+                border-radius: 16px;
                 font-size: 14px;
                 background-color: white;
-                border-color: black;
-                box-shadow: 1px 3px 4px rgba(0, 0, 0, 0.3);
+                border-color: #ccc;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
                 &:focus {
-                    max-width: 3.5rem;
-                    padding: 6px 8px;
+                    max-width: 12rem;
+                    outline: none;
+                    border-color: #bbb;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
                 }
             }
 
             .contact-list-side-button {
-                border: 1px solid black;
-                border-radius: 0.25rem;
+                display: inline-flex;
                 align-items: center;
-                padding: 0.25rem;
-                margin-left: 0.15rem;
-                box-shadow: 1px 3px 4px rgba(0, 0, 0, 0.3);
+                justify-content: center;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                padding: 6px;
+                margin-left: 0.25rem;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
                 cursor: pointer;
+                background: #fff;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
-                transition: border-color 0.2s ease;
+                &:hover {
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                }
 
                 &:focus {
                     outline: none;
-                    box-shadow: 0 0 0 1px black, -2px 1px 3px rgba(0, 0, 0, 0.1);
+                    box-shadow: 0 0 0 1px #bbb, 0 2px 6px rgba(0, 0, 0, 0.08);
                 }
             }
         }
@@ -268,6 +301,7 @@
 
                             input[type="range"] {
                                 -webkit-appearance: none;
+                                appearance: none;
                                 width: 100%;
                                 height: 6px;
                                 background: transparent;

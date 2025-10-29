@@ -1,20 +1,36 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
+// Persists messages per conversation so switching contacts does not wipe history
 export const useFetchMessages = (userId) => {
-    const [messages, setMessages] = useState([]);
+    // Map of recipientId -> messages[]
+    const [messagesByRecipient, setMessagesByRecipient] = useState({});
+    const cacheRef = useRef({});
+    const [activeRecipientId, setActiveRecipientId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     const fetchMessages = useCallback(async (recipientId) => {
         if (!recipientId) {
-            console.error("Recipient ID is undefined");
+            console.error('Recipient ID is undefined');
+            return;
+        }
+
+        setActiveRecipientId(recipientId);
+        setError(null);
+
+        // If we already have messages for this conversation, don't refetch unnecessarily
+        const cached = cacheRef.current[recipientId];
+        if (Array.isArray(cached) && cached.length > 0) {
+            // Ensure UI is not stuck in loading state when switching to cached chat
+            setLoading(false);
             return;
         }
 
         setLoading(true);
-        setError(null);
-
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
             const response = await fetch('https://8pwu9lnge0.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-MessagesHistory', {
                 method: 'POST',
                 headers: {
@@ -22,9 +38,12 @@ export const useFetchMessages = (userId) => {
                 },
                 body: JSON.stringify({
                     userId: userId,
-                    recipientId: recipientId
-                })
+                    recipientId: recipientId,
+                }),
+                signal: controller.signal,
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch messages');
@@ -34,29 +53,46 @@ export const useFetchMessages = (userId) => {
             const result = JSON.parse(rawResponse);
 
             if (Array.isArray(result)) {
-                const allChats = result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                setMessages(allChats);
+                const sorted = result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                setMessagesByRecipient((prev) => ({
+                    ...prev,
+                    [recipientId]: sorted,
+                }));
+                cacheRef.current[recipientId] = sorted;
             } else {
-                console.error("Unexpected response format:", result);
-                setError("Unexpected response format");
+                console.error('Unexpected response format:', result);
+                setError('Unexpected response format');
             }
-        } catch (error) {
-            console.error("Error fetching messages:", error);
-            setError(error);
+        } catch (err) {
+            console.error('Error fetching messages:', err);
+            setError(err);
+            // Ensure cache holds at least an empty array so UI can render empty state
+            setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: prev[recipientId] || [] }));
+            cacheRef.current[recipientId] = cacheRef.current[recipientId] || [];
         } finally {
             setLoading(false);
         }
     }, [userId]);
 
     const addNewMessage = useCallback((newMessage) => {
-        setMessages((prevMessages) => {
-            const messageExists = prevMessages.some((msg) => msg.id === newMessage.id);
-            if (!messageExists) {
-                return [newMessage, ...prevMessages];
-            }
-            return prevMessages;
+        // Determine the other participant to decide which conversation to place this in
+        const partnerId = newMessage.userId === userId ? newMessage.recipientId : newMessage.userId;
+        if (!partnerId) return;
+
+        setMessagesByRecipient((prev) => {
+            const current = prev[partnerId] || [];
+            const exists = current.some((m) => m.id === newMessage.id);
+            if (exists) return prev;
+
+            const nextForPartner = [...current, newMessage];
+            const next = { ...prev, [partnerId]: nextForPartner };
+            cacheRef.current[partnerId] = nextForPartner;
+            return next;
         });
-    }, []);
+    }, [userId]);
+
+    // Expose the messages for the active conversation so existing components keep working
+    const messages = messagesByRecipient[activeRecipientId] || [];
 
     return {
         messages,
