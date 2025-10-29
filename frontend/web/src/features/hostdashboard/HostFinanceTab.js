@@ -13,7 +13,7 @@ export default function HostFinanceTab() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
-    const [payoutFrequency, setPayoutFrequency] = useState("weekly");
+  const [payoutFrequency, setPayoutFrequency] = useState("weekly");
 
   const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 
