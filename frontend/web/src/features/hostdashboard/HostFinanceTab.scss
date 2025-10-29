@@ -9,6 +9,11 @@ $bp-md: 768px;
 $bp-lg: 1024px;
 $bp-xl: 1280px;
 
+$color-success: #16a34a;
+$color-pending: #f59e0b;
+$color-danger:  #dc2626;
+$color-muted:  #6b7280;
+
 @mixin up($w) { @media (min-width: $w) { @content; } }
 
 .page-Host--loading { position: fixed; inset: 0; display: grid; }
@@ -164,11 +169,6 @@ $bp-xl: 1280px;
   }
 }
 
-$success: #16a34a;
-$pending: #f59e0b;
-$danger:  #dc2626;
-$mutedc:  #6b7280;
-
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -188,19 +188,19 @@ $mutedc:  #6b7280;
   }
 
   &.is-success {
-    color: $success;
-    background: rgba($success, .12);
+    color: $color-success;
+    background: rgba($color-success, .12);
   }
   &.is-pending {
-    color: $pending;
-    background: rgba($pending, .16);
+    color: $color-pending;
+    background: rgba($color-pending, .16);
   }
   &.is-danger {
-    color: $danger;
-    background: rgba($danger, .12);
+    color: $color-danger;
+    background: rgba($color-danger, .12);
   }
   &.is-muted {
-    color: $mutedc;
+    color: $color-muted;
     background: rgba(107, 114, 128, .12);
   }
 }
