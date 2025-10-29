@@ -10,14 +10,6 @@ export default function AdminProperty() {
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState([]);
   const [imageData, setImageData] = useState([]);
-  const [amenityChecks, setAmenityChecks] = useState({});
-
-
-  const SPACE_TYPE_MAP = {
-    "Entire Space": "Full house",
-    Room: "Room",
-    "Shared Room": "Shared room",
-    };
 
   const AMENITIES = useMemo(
     () =>
@@ -29,27 +21,35 @@ export default function AdminProperty() {
     []
   );
 
+  const [amenityChecks, setAmenityChecks] = useState({});
   const onAmenityToggle = (id, checked) => {
     setAmenityChecks((prev) => ({ ...prev, [id]: checked }));
   };
 
+  const readAsDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+
   const onPickFiles = async (ev) => {
     const picked = Array.from(ev.target.files || []);
     if (!picked.length) return;
+
     const newFiles = [...files, ...picked].slice(0, 10);
-    const added = newFiles.slice(files.length);
+    const addedFiles = newFiles.slice(files.length);
     setFiles(newFiles);
 
-    const readAsDataUrl = (file) =>
-      new Promise((resolve, reject) => {
-        const fr = new FileReader();
-        fr.onload = () => resolve(fr.result);
-        fr.onerror = reject;
-        fr.readAsDataURL(file);
-      });
+    const enc = await Promise.all(addedFiles.map(readAsDataUrl));
+    const stamped = enc.map((dataUrl, i) => {
+      const f = addedFiles[i];
+      const safeName = (f?.name || `img-${Date.now()}-${i}`).replace(/\s+/g, "_");
+      return { key: safeName, image: dataUrl };
+    });
 
-    const enc = await Promise.all(added.map(readAsDataUrl));
-    setImageData((prev) => [...prev, ...enc]);
+    setImageData((prev) => [...prev, ...stamped]);
   };
 
   const removeFile = (i) => {
@@ -66,6 +66,7 @@ export default function AdminProperty() {
     const [hh, mm] = t.split(":").map((n) => Number(n) || 0);
     return hh * 60 + mm;
   };
+
   const minutesToHHMM = (m) => {
     const n = Number(m) || 0;
     const hh = Math.floor(n / 60);
@@ -73,9 +74,15 @@ export default function AdminProperty() {
     return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
   };
 
+  const SPACE_TYPE_MAP = {
+    "Entire Space": "Full house",
+    Room: "Room",
+    "Shared Room": "Shared room",
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (files.length < 5) {
+    if (imageData.length < 5) {
       alert("Add at least 5 photos.");
       return;
     }
@@ -108,8 +115,7 @@ export default function AdminProperty() {
     const rulePets = !!fd.get("rulePets");
 
     const rate = Number(fd.get("rate") || 0);
-    const registrationNumber =
-      fd.get("registrationNumber")?.toString()?.trim() || "";
+    const registrationNumber = fd.get("registrationNumber")?.toString()?.trim() || "";
 
     const subtitleFromLocation = [city, country].filter(Boolean).join(", ");
     const subtitle = subtitleFromLocation || homeName;
@@ -158,7 +164,6 @@ export default function AdminProperty() {
       })
       .addPricing({ roomRate: rate, cleaning: 0, service: 0 })
       .addAmenities(selectedAmenityIds.map((id) => ({ id })))
-      .addImages(imageData)
       .addAvailability([{ availableStartDate: start, availableEndDate: end }])
       .addAvailabilityRestrictions([]);
 
@@ -167,6 +172,12 @@ export default function AdminProperty() {
     if (ruleParties) rules.push({ rule: "Parties/EventsAllowed", value: false });
     if (rulePets) rules.push({ rule: "PetsAllowed", value: true });
     if (rules.length > 0) builder.addRules(rules);
+
+    builder.propertyImages = imageData.map((img) => ({
+      property_id: "",
+      key: img.key,
+      image: img.image,
+    }));
 
     builder.propertyCheckIn = {
       property_id: "",
@@ -193,15 +204,9 @@ export default function AdminProperty() {
       <div className="adminproperty-group">
         <label>What kind of space do your guests have access to?</label>
         <div className="adminproperty-options">
-          <label>
-            <input type="radio" name="spaceType" value="Entire Space" required /> Entire Space
-          </label>
-          <label>
-            <input type="radio" name="spaceType" value="Room" /> Room
-          </label>
-          <label>
-            <input type="radio" name="spaceType" value="Shared Room" /> Shared Room
-          </label>
+          <label><input type="radio" name="spaceType" value="Entire Space" required /> Entire Space</label>
+          <label><input type="radio" name="spaceType" value="Room" /> Room</label>
+          <label><input type="radio" name="spaceType" value="Shared Room" /> Shared Room</label>
         </div>
       </div>
 
@@ -253,8 +258,7 @@ export default function AdminProperty() {
                       value={it.id}
                       checked={!!amenityChecks[it.id]}
                       onChange={(ev) => onAmenityToggle(it.id, ev.target.checked)}
-                    />{" "}
-                    {it.label}
+                    /> {it.label}
                   </label>
                 ))}
               </div>
@@ -266,14 +270,8 @@ export default function AdminProperty() {
       <div className="adminproperty-group">
         <label>House rules</label>
         <div className="grid-2">
-          <label>
-            Check-in time
-            <input type="time" name="checkIn" />
-          </label>
-          <label>
-            Check-out time
-            <input type="time" name="checkOut" />
-          </label>
+          <label>Check-in time<input type="time" name="checkIn" /></label>
+          <label>Check-out time<input type="time" name="checkOut" /></label>
         </div>
         <div className="adminproperty-options">
           <label><input type="checkbox" name="ruleSmoking" /> No smoking</label>
