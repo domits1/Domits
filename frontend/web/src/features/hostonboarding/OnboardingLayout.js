@@ -6,7 +6,6 @@ function OnboardingLayout() {
 
   return (
     <div className="main-dashboard-guest">
-      {/* Content */}
       <div className="main-dashboard-content">
         <Outlet />
       </div>
