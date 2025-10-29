@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
 
+  const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+  const PAGE_SIZE = 5;
+
 export default function HostFinanceTab() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -14,9 +17,6 @@ export default function HostFinanceTab() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
   const [payoutFrequency, setPayoutFrequency] = useState("weekly");
-
-  const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-
   const [loadingStates, setLoadingStates] = useState({
     account: true,
     charges: false,
@@ -27,9 +27,8 @@ export default function HostFinanceTab() {
 
   const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
-    const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
+  const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
-  const PAGE_SIZE = 5;
   const [chargesPage, setChargesPage] = useState(1);
   const [payoutsPage, setPayoutsPage] = useState(1);
 
