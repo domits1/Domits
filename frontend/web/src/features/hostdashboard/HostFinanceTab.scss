@@ -2,7 +2,7 @@ $font-title: "Kanit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-se
 $radius: 12px;
 $shadow: 0 6px 20px rgba(0,0,0,.08);
 $muted: #f6f7f9;
-$link: #0d9813;
+$green: #0d9813;
 
 $bp-sm: 576px;
 $bp-md: 768px;
@@ -11,7 +11,8 @@ $bp-xl: 1280px;
 
 @mixin up($w) { @media (min-width: $w) { @content; } }
 
-.main-dashboard-guest:has(.page-Host) { flex-direction: column; }
+.page-Host--loading { position: fixed; inset: 0; display: grid; }
+.page-Host__loader { display: grid; place-items: center; }
 
 .page-Host {
   &-title {
@@ -20,10 +21,7 @@ $bp-xl: 1280px;
     font-size: clamp(1.25rem, 1rem + 1.2vw, 2rem);
     margin: 0 0 0.75rem;
   }
-
-  &-content {
-    padding: 16px;
-  }
+  &-content { padding: 16px; }
 }
 
 .host-pc-finance {
@@ -32,8 +30,7 @@ $bp-xl: 1280px;
   box-shadow: $shadow;
   padding: 16px;
   max-width: 960px;
-  margin: 0 auto;
-
+  width: 100%;
   @include up($bp-md) { padding: 24px; }
   @include up($bp-lg) { padding: 32px; }
 }
@@ -41,7 +38,6 @@ $bp-xl: 1280px;
 .finance-content {
   display: grid;
   gap: 16px;
-
   @include up($bp-sm) { gap: 20px; }
   @include up($bp-md) { gap: 24px; }
 }
@@ -50,7 +46,6 @@ $bp-xl: 1280px;
   background: $muted;
   padding: 16px;
   border-radius: $radius;
-
   @include up($bp-md) { padding: 20px; }
 
   h2 {
@@ -64,7 +59,6 @@ $bp-xl: 1280px;
     padding: 0; margin: 0;
     display: grid;
     gap: 12px;
-
     @include up($bp-md) { gap: 14px; }
   }
 
@@ -83,11 +77,10 @@ $bp-xl: 1280px;
 }
 
 .finance-span {
-  color: $link;
+  color: $green;
   text-decoration: underline;
   cursor: pointer;
   font-weight: 600;
-
   &:hover { text-decoration: none; }
   &.disabled { opacity: .6; pointer-events: none; }
 }
@@ -96,7 +89,6 @@ $bp-xl: 1280px;
   background: $muted;
   padding: 16px;
   border-radius: $radius;
-
   @include up($bp-md) { padding: 20px; }
 
   h3 {
@@ -115,21 +107,123 @@ $bp-xl: 1280px;
     width: 100%;
     min-width: 560px;
     border-collapse: collapse;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: .95rem;
 
     th, td {
-      padding: .75rem;
-      border-bottom: 1px solid #e6e8eb;
+      padding: 8px;
       text-align: left;
-      white-space: nowrap;
+      vertical-align: middle;
     }
 
-    th {
-      background: #f0f2f5;
-      font-weight: 600;
-      position: sticky;
-      top: 0;
+    thead th {
+      background-color: $green;
+      color: #fff;
+      padding-top: 12px;
+      padding-bottom: 12px;
+      font-weight: 700;
+      position: static;
     }
+
+    tbody tr:nth-child(even) { background-color: #f2f2f2; }
+    tbody tr:hover { background-color: #ddd; }
+
+    .property-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 240px;
+    }
+
+    .property-thumb {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 8px;
+      flex: 0 0 64px;
+    }
+
+    .property-meta { min-width: 0; }
+
+    .property-title {
+      font-weight: 600;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
+    }
+
+    .property-sub {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+$success: #16a34a;
+$pending: #f59e0b;
+$danger:  #dc2626;
+$mutedc:  #6b7280;
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: 0 0 8px;
+  }
+
+  &.is-success {
+    color: $success;
+    background: rgba($success, .12);
+  }
+  &.is-pending {
+    color: $pending;
+    background: rgba($pending, .16);
+  }
+  &.is-danger {
+    color: $danger;
+    background: rgba($danger, .12);
+  }
+  &.is-muted {
+    color: $mutedc;
+    background: rgba(107, 114, 128, .12);
+  }
+}
+
+.table-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 8px 0 0;
+
+  .pager-info { font-weight: 600; }
+
+  .pager-btn {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid #d6d9de;
+    background: #fff;
+    cursor: pointer;
+  }
+  .pager-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
   }
 }
 
@@ -152,22 +246,8 @@ $bp-xl: 1280px;
   }
 }
 
-.payout-status {
-  background: $muted;
-  padding: 16px;
-  border-radius: $radius;
-
-  @include up($bp-md) { padding: 20px; }
-}
-
-.status-active  { color: #28a745; font-weight: 600; }
-.status-pending { color: #ffc107; font-weight: 600; }
-.status-error   { color: #dc3545; font-weight: 600; }
-.status-none    { color: #6c757d;  }
-
 @include up($bp-lg) {
   .finance-steps,
   .payouts-section,
-  .payout-frequency,
-  .payout-status { margin-bottom: 0; }
+  .payout-frequency { margin-bottom: 0; }
 }

@@ -13,7 +13,7 @@ class PaymentService {
 
     const account_Id = await this.stripeRepository.getStripeAccountId(hostId);
 
-    const paymentData = await this.stripeRepository.createPaymentIntent(account_Id, propertyId, dates);
+    const paymentData = await this.stripeRepository.createPaymentIntent(account_Id, propertyId, dates, bookingId);
 
     await this.stripeRepository.updatePaymentId(bookingId, paymentData.stripePaymentId);
 

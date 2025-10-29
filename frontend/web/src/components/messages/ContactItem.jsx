@@ -1,5 +1,5 @@
 import useUpdateContactRequest from '../../features/hostdashboard/hostmessages/hooks/useUpdateContactRequest';
-import fallbackProfileImage from './domits-logo.jpg';
+import profileImage from './domits-logo.jpg';
 
 
 const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashboardType }) => {
@@ -7,7 +7,6 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
     const { updateContactRequest } = useUpdateContactRequest(setContacts);
     const accoImage = contact.accoImage;
     const bookingStatus = contact.bookingStatus;
-    const profileSrc = contact.profileImage || fallbackProfileImage;
 
     const handleAccept = async () => {
         try {
@@ -31,43 +30,21 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
                 {accoImage && (
                     <img src={accoImage} alt="Accommodation" className="contact-item-accommodation-image" />
                 )}
-                <img src={profileSrc} alt="Profile" className="contact-item-profile-image" />
+                <img src={contact.profileImage || profileImage} alt="Profile" className="contact-item-profile-image" />
             </div>
 
             <div className="contact-item-text-container">
                 <p className="contact-item-full-name">{contact.givenName}</p>
 
                 {!isPending && (
-                    <div className="contact-item-message-info">
-                        {bookingStatus && (
-                            <span className={`booking-status ${bookingStatus.toLowerCase()}`}>
-                                {bookingStatus === "Accepted" && "✓ Reservation approved"}
-                                {bookingStatus === "Pending" && "⏳ Inquiry sent"}
-                                {bookingStatus === "Failed" && "✗ Reservation unsuccessful"}
-                            </span>
-                        )}
-                        <div className="latest-message-preview">
-                            <span className="message-text">
-                                {contact.latestMessage?.text
-                                    ? (contact.latestMessage.text.length > 50
-                                        ? `${contact.latestMessage.text.substring(0, 50)}...`
-                                        : contact.latestMessage.text)
-                                    : contact.latestMessage?.fileUrls?.length === 1
-                                        ? "📷 Image"
-                                        : contact.latestMessage?.fileUrls?.length > 1
-                                            ? `📷 ${contact.latestMessage.fileUrls.length} Images`
-                                            : "💬 Start conversation"}
-                            </span>
-                            {contact.latestMessage?.createdAt && (
-                                <span className="message-time">
-                                    {new Date(contact.latestMessage.createdAt).toLocaleDateString()}
-                                </span>
-                            )}
-                        </div>
-                        {contact.unreadCount > 0 && (
-                            <span className="unread-badge">{contact.unreadCount}</span>
-                        )}
-                    </div>
+                    <p className="contact-item-subtitle">
+                        {bookingStatus === "Accepted" && <p id='status'>Reservation approved</p>}
+                        {bookingStatus === "Pending" && <p id='status'>Inquiry sent</p>}
+                        {bookingStatus === "Failed" && <p id='status'>Reservation unsuccessful</p>}
+                        {contact.latestMessage?.text
+                            ? contact.latestMessage.text
+                            : "No message history yet"}
+                    </p>
                 )}
 
                 {isPending && setContacts && (
