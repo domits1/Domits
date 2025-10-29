@@ -37,6 +37,37 @@ const StatusBadge = ({ status }) => {
   );
 };
 
+const formatMoney = (amount, currency, locale = navigator.language || "en-US") => {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      currencyDisplay: "symbol",
+    }).format(amount);
+  } catch {
+    return `${amount?.toFixed?.(2)} ${currency}`;
+  }
+};
+
+const pageSlice = (list, page, size = PAGE_SIZE) => list.slice((page - 1) * size, page * size);
+
+const TablePager = ({ page, setPage, totalPages }) => {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="table-pager">
+      <button className="pager-btn" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+        Previous
+      </button>
+      <span className="pager-info">
+        Page {page} of {totalPages}
+      </span>
+      <button className="pager-btn" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
+        Next
+      </button>
+    </div>
+  );
+};
+
 export default function HostFinanceTab() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -62,7 +93,6 @@ export default function HostFinanceTab() {
   const [chargesPage, setChargesPage] = useState(1);
   const [payoutsPage, setPayoutsPage] = useState(1);
 
-  const pageSlice = (list, page, size = PAGE_SIZE) => list.slice((page - 1) * size, page * size);
   const chargesTotalPages = Math.max(1, Math.ceil(charges.length / PAGE_SIZE));
   const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / PAGE_SIZE));
   useEffect(() => {
@@ -71,23 +101,6 @@ export default function HostFinanceTab() {
   useEffect(() => {
     setPayoutsPage(1);
   }, [payouts]);
-
-  const TablePager = ({ page, setPage, totalPages }) => {
-    if (totalPages <= 1) return null;
-    return (
-      <div className="table-pager">
-        <button className="pager-btn" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-          Previous
-        </button>
-        <span className="pager-info">
-          Page {page} of {totalPages}
-        </span>
-        <button className="pager-btn" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
-          Next
-        </button>
-      </div>
-    );
-  };
 
   useEffect(() => {
     (async () => {
@@ -161,18 +174,6 @@ export default function HostFinanceTab() {
       setIsProcessing(false);
     }
   }
-
-  const formatMoney = (amount, currency, locale = navigator.language || "en-US") => {
-    try {
-      return new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency,
-        currencyDisplay: "symbol",
-      }).format(amount);
-    } catch {
-      return `${amount?.toFixed?.(2)} ${currency}`;
-    }
-  };
 
   const showLoader = loading || Object.values(loadingStates).some(Boolean);
   if (showLoader) {
