@@ -4,8 +4,38 @@ import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
 
-  const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-  const PAGE_SIZE = 5;
+const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+const PAGE_SIZE = 5;
+
+const getStatusMeta = (status) => {
+  const s = String(status).toLowerCase();
+  switch (s) {
+    case "succeeded":
+      return { label: "Succeeded", tone: "is-success" };
+    case "paid":
+      return { label: "Paid", tone: "is-success" };
+    case "pending":
+      return { label: "Pending", tone: "is-pending" };
+    case "failed":
+      return { label: "Failed", tone: "is-danger" };
+    case "canceled":
+      return { label: "Canceled", tone: "is-danger" };
+    case "cancelled":
+      return { label: "Cancelled", tone: "is-danger" };
+    default:
+      return { label: status || "Unknown", tone: "is-muted" };
+  }
+};
+
+const StatusBadge = ({ status }) => {
+  const meta = getStatusMeta(status);
+  return (
+    <span className={`status-badge ${meta.tone}`}>
+      <span className="status-dot" />
+      {meta.label}
+    </span>
+  );
+};
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
@@ -157,36 +187,6 @@ export default function HostFinanceTab() {
 
   const renderCtaLabel = (idleText) =>
     isProcessing ? (processingStep === "opening" ? "Opening link…" : "Working on it…") : idleText;
-
-  const getStatusMeta = (status) => {
-    const s = String(status).toLowerCase();
-    switch (s) {
-      case "succeeded":
-        return { label: "Succeeded", tone: "is-success" };
-      case "paid":
-        return { label: "Paid", tone: "is-success" };
-      case "pending":
-        return { label: "Pending", tone: "is-pending" };
-      case "failed":
-        return { label: "Failed", tone: "is-danger" };
-      case "canceled":
-        return { label: "Canceled", tone: "is-danger" };
-      case "cancelled":
-        return { label: "Cancelled", tone: "is-danger" };
-      default:
-        return { label: status || "Unknown", tone: "is-muted" };
-    }
-  };
-
-  const StatusBadge = ({ status }) => {
-    const meta = getStatusMeta(status);
-    return (
-      <span className={`status-badge ${meta.tone}`}>
-        <span className="status-dot" />
-        {meta.label}
-      </span>
-    );
-  };
 
   return (
     <main className="page-Host">
@@ -351,7 +351,6 @@ export default function HostFinanceTab() {
                 <option value="monthly">Monthly (First of the month)</option>
               </select>
             </div>
-            
           </div>
         </section>
       </div>
