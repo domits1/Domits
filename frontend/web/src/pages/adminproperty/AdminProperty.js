@@ -10,6 +10,7 @@ export default function AdminProperty() {
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState([]);
   const [imageData, setImageData] = useState([]);
+  const [amenityChecks, setAmenityChecks] = useState({});
 
   const AMENITIES = useMemo(
     () =>
@@ -21,7 +22,12 @@ export default function AdminProperty() {
     []
   );
 
-  const [amenityChecks, setAmenityChecks] = useState({});
+  const SPACE_TYPE_MAP = {
+    "Entire Space": "Full house",
+    Room: "Room",
+    "Shared Room": "Shared room",
+  };
+
   const onAmenityToggle = (id, checked) => {
     setAmenityChecks((prev) => ({ ...prev, [id]: checked }));
   };
@@ -72,12 +78,6 @@ export default function AdminProperty() {
     const hh = Math.floor(n / 60);
     const mm = n % 60;
     return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
-  };
-
-  const SPACE_TYPE_MAP = {
-    "Entire Space": "Full house",
-    Room: "Room",
-    "Shared Room": "Shared room",
   };
 
   const onSubmit = async (e) => {
