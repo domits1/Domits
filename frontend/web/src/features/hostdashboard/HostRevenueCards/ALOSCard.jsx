@@ -41,7 +41,6 @@ const ALOSCard = ({ hostId }) => {
         endDate
       );
 
-
       let value = 0;
       if (typeof data === "number") value = data;
       else if (data?.averageLengthOfStay?.averageLengthOfStay != null)
@@ -77,7 +76,6 @@ const ALOSCard = ({ hostId }) => {
 
         <div className="time-filter">
           <label>Time Filter:</label>
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
