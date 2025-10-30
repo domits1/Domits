@@ -60,40 +60,51 @@ Domits is a hospitality-management platform designed to help hosts and guest man
   - debugging/ # Issue template for debugging
   - frontend/
   - onboarding/app # Android/IOS onboarding setup documentation
-  - private-API 
-  - public
-  - security
+  - private-API # API Documentation for Developers
+  - public # Documentation for extern developers/partners (Channel Management)
+    - public_API # Public API documentation for people outside Domits
+    - public_overview # Public over
+  - security # Security related documentation
+  - templates # Templates to follow writing documentation
 - frontend/ # React/React-Natve Frontend Files
   - app/ # Domits App Development files (React Native)
   - web/ # Domits Web Development files (React)
-
-- web/ # Web-specific configuration and public files
+    - public/ # public
     - src/
-        - features/ # base folder (unless global or otherwise)
-            - hostonboarding
-                - pages/ # Page-level components (e.g., routes)
-                - components/ # Reusable components (within this feature)
-                - context/ # context for global state management
-                - hooks/ # custom hooks
-                - navigation/ # navigation setup or router
-                - services/ # global API calls and business logic
-                - store/ # state management
-                - styles/
-                - tests/
-                - utils/ # Helper functions or utilities
-                    - contants/ # Constant attributes
-                    - api.js # API calls
-                    - formatters.js # Formatting helpers
-                - views/ # feature-level pages?
-    - public/ # Static files for the web app
-- src # Shared files
-- app/ # App-specific configuration and public files
-
-    - domits/
-        - android/ # Android-specific native files
-        - ios/ # Ios specific files
-        - amplify/ # Amplify specific files
-        - features/
+      - components/ # Re-usable react components
+      - content/ # Translation files
+      - context/ # Context for global state management
+      - features/ # Base folder (unless global or otherwise)
+        - guestdashboard/ # Example folder chosen to show structure. Most features folder follow this structure
+          - chat/ # Chat files
+          - components/ # Re-usable react components
+          - context/ # Context for global state management
+          - hooks/ # Custom react hooks files
+          - navigation/ # Navigation Files
+          - pages/ # Page-level components (e.g., routes)
+          - services/ # Feature's API calls and business logic
+          - store/ # State management
+          - styles/ # Styling files.,, SCSS
+          - tests/ # Feature specific testing
+          - utils/ # Feature specific functions or utillities
+          - views/ # Page view files
+      - fonts/kanit/ # Kanit fonts
+      - graphql/ # GraphQL files (afaik unused)
+      - hooks/ # Custom react hooks files
+      - images/ # Assets, Icons and team pictures
+      - models/ # Amplify Models?
+      - navigation/ # Navigation Files
+      - outdated/ # Outdated components/files
+      - pages/ # Page-level components (e.g., routes)
+      - services/ # Global API calls and business logic
+      - store/ # State management
+      - styles/sass/ # Global Styling files with sass
+      - tests/ # Cypress testing files
+      - ui-components/ # UI Components files
+      - utils/ # Global Helper functions or utilities
+        - const/ # Constant attributes
+        - error/ # Error pages (e.g., 404)
+        - exception/ # Custom exceptions (e.g., Unauthorized)
 ```
 # Intro Sprint
 
