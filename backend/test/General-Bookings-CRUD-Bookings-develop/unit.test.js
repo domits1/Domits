@@ -27,4 +27,22 @@ describe("BookingEngine (General-Bookings-CRUD-Bookings-develop) function testin
         expect(handler({httpMethod: "PATCH"}))
             .rejects;
     })
+    it("should throw error at empty DELETE", async () => {
+        const response = await handler({
+            httpMethod: "DELETE",
+            headers: {},
+            body: JSON.stringify({})
+        });
+        expect(response.statusCode).toBeGreaterThanOrEqual(400);
+    })
+    it("should require bookingId in DELETE request body", async () => {
+        const response = await handler({
+            httpMethod: "DELETE",
+            headers: {
+                Authorization: "test-token"
+            },
+            body: JSON.stringify({})
+        });
+        expect(response.statusCode).toBe(400);
+    })
 })

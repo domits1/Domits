@@ -82,5 +82,42 @@ class ReservationController {
             }
         }
     }
+
+    // -----------
+    // DELETE    
+    // -----------
+
+    async delete(event) {
+        try {
+            const authToken = event.headers.Authorization;
+            const body = JSON.parse(event.body);
+            const bookingId = body.bookingId;
+
+            if (!bookingId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaderJSON,
+                    response: {
+                        message: "bookingId is required in request body"
+                    }
+                }
+            }
+
+            await this.bookingService.delete(bookingId, authToken);
+            return {
+                statusCode: 204,
+                headers: responseHeaderJSON
+            }
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaderJSON,
+                response: {
+                    message: error.message || "Something went wrong, please contact support."
+                }
+            }
+        }
+    }
 }
 export default ReservationController;
