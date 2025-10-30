@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo } from "react";
 
 export const usePagination = (items, itemsPerPage) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,6 +46,6 @@ export const usePagination = (items, itemsPerPage) => {
     pageRange,
     goToPage,
     goToNextPage,
-    goToPreviousPage
+    goToPreviousPage,
   };
-}; 
+};
