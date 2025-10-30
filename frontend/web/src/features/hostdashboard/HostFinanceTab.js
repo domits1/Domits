@@ -340,53 +340,66 @@ export default function HostFinanceTab() {
 
             <div className="payouts-section balance-section">
               <h3>Balance overview</h3>
-              <div
-                className="balance-meter"
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={balanceView.pctAvailable}>
-                <div
-                  className="bm-seg bm-seg--available"
-                  style={{ width: `${balanceView.pctAvailable}%` }}
-                  data-label="Available"
-                  data-value={formatMoney(balanceView.availableTotal, balanceView.currency)}
-                />
-                <div
-                  className="bm-seg bm-seg--incoming"
-                  style={{
-                    width: `${Math.min(100, Math.max(0, (balanceView.incomingTotal / (balanceView.total || 1)) * 100))}%`,
-                  }}
-                  data-label="Incoming"
-                  data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
-                />
-              </div>
 
-              <div className="balance-list">
-                <div className="balance-header">
-                  <span>Payment type</span>
-                  <span>Amount</span>
+              {loadingStates.hostBalance ? (
+                <div>
+                  <ClipLoader size={28} color="#0D9813" loading />
                 </div>
-                <div className="balance-divider" />
-
-                <div className="balance-item">
-                  <div className="balance-left">
-                    <span className="balance-dot balance-dot--incoming" />
-                    <span className="balance-label">Incoming</span>
+              ) : (
+                <>
+                  <div
+                    className="balance-meter"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={balanceView.pctAvailable}>
+                    <div
+                      className="bm-seg bm-seg--available"
+                      style={{ width: `${balanceView.pctAvailable}%` }}
+                      data-label="Available"
+                      data-value={formatMoney(balanceView.availableTotal, balanceView.currency)}
+                    />
+                    <div
+                      className="bm-seg bm-seg--incoming"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, (balanceView.incomingTotal / balanceView.total) * 100))}%`,
+                      }}
+                      data-label="Incoming"
+                      data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                    />
                   </div>
-                  <div className="balance-amount">{formatMoney(balanceView.incomingTotal, balanceView.currency)}</div>
-                </div>
-                <div className="balance-divider" />
 
-                <div className="balance-item">
-                  <div className="balance-left">
-                    <span className="balance-dot balance-dot--available" />
-                    <span className="balance-label">Available</span>
+                  <div className="balance-list">
+                    <div className="balance-header">
+                      <span>Payment type</span>
+                      <span>Amount</span>
+                    </div>
+                    <div className="balance-divider" />
+
+                    <div className="balance-item">
+                      <div className="balance-left">
+                        <span className="balance-dot balance-dot--incoming" />
+                        <span className="balance-label">Incoming</span>
+                      </div>
+                      <div className="balance-amount">
+                        {formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                      </div>
+                    </div>
+                    <div className="balance-divider" />
+
+                    <div className="balance-item">
+                      <div className="balance-left">
+                        <span className="balance-dot balance-dot--available" />
+                        <span className="balance-label">Available</span>
+                      </div>
+                      <div className="balance-amount">
+                        {formatMoney(balanceView.availableTotal, balanceView.currency)}
+                      </div>
+                    </div>
+                    <div className="balance-divider" />
                   </div>
-                  <div className="balance-amount">{formatMoney(balanceView.availableTotal, balanceView.currency)}</div>
-                </div>
-                <div className="balance-divider" />
-              </div>
+                </>
+              )}
             </div>
 
             <div className="payouts-section">
