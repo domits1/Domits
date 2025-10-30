@@ -297,7 +297,7 @@ $color-muted: #6b7280;
     }
     &--available {
       background: $green;
-    } 
+    }
 
     &::after {
       content: attr(data-label) "\A" attr(data-value);
