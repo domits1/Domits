@@ -54,7 +54,6 @@ export default function HostFinanceTab() {
         updateLoadingState("charges", true);
         const details = await getCharges();
         setCharges(details.charges);
-        console.log("Charge details:", details);
       } catch (error) {
         console.error("Error fetching charges:", error);
       } finally {
@@ -70,7 +69,6 @@ export default function HostFinanceTab() {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
         setPayouts(details.payouts);
-        console.log("Payout details:", details);
       } catch (error) {
         console.error("Error fetching payouts:", error);
       } finally {

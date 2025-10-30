@@ -16,8 +16,7 @@ const ALOSCard = () => {
     const fetchUserId = async () => {
       try {
         const userInfo = await Auth.currentUserInfo();
-        if (!userInfo?.attributes?.sub)
-          throw new Error("Cognito user ID not found");
+        if (!userInfo?.attributes?.sub) throw new Error("Cognito user ID not found");
         setCognitoUserId(userInfo.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
@@ -41,15 +40,11 @@ const ALOSCard = () => {
         endDate
       );
 
-      console.log("ALOS raw response:", data);
-
-     
       let value = 0;
       if (typeof data === "number") value = data;
       else if (data?.averageLengthOfStay?.averageLengthOfStay != null)
         value = Number(data.averageLengthOfStay.averageLengthOfStay);
-      else if (data?.averageLengthOfStay != null)
-        value = Number(data.averageLengthOfStay);
+      else if (data?.averageLengthOfStay != null) value = Number(data.averageLengthOfStay);
       else if (data?.value != null) value = Number(data.value);
 
       setAlos(Number(value.toFixed(2)));
@@ -75,10 +70,7 @@ const ALOSCard = () => {
 
         <div className="time-filter">
           <label>Time Filter:</label>
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
             <option value="custom">Custom</option>
@@ -89,19 +81,11 @@ const ALOSCard = () => {
           <div className="custom-date-filter">
             <div>
               <label>Start Date:</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
               <label>End Date:</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
         )}
