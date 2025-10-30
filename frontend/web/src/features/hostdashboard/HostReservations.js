@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import EventIcon from "@mui/icons-material/Event";
@@ -83,6 +83,14 @@ const HostReservations = () => {
     goToPage(1);
   };
 
+  const shouldShowPagination = userHasReservations && sortedBookings && sortedBookings.length > 0;
+  
+  const pageNumbers = useMemo(() => {
+    if (!shouldShowPagination) return [];
+    const count = pageRange.endPage - pageRange.startPage + 1;
+    return Array.from({ length: count }, (_, i) => pageRange.startPage + i);
+  }, [shouldShowPagination, pageRange]);
+
   return (
     <main className="page-body">
       {isLoading ? (
@@ -160,7 +168,7 @@ const HostReservations = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {userHasReservations && sortedBookings && sortedBookings.length > 0 ? (
+                    {shouldShowPagination ? (
                       paginatedItems.map((booking) => (
                         <tr key={booking.id}>
                           <td className={styles.singleReservationRow}>{booking.id}</td>
@@ -186,7 +194,7 @@ const HostReservations = () => {
                   </tbody>
                 </table>
               </section>
-              {userHasReservations && sortedBookings && sortedBookings.length > 0 && (
+              {shouldShowPagination && (
                 <div className={styles.paginationControls}>
                   <button
                     className={styles.paginationButton}
@@ -196,19 +204,16 @@ const HostReservations = () => {
                   >
                     Previous
                   </button>
-                  {[...Array(pageRange.endPage - pageRange.startPage + 1)].map((_, index) => {
-                    const pageIndex = pageRange.startPage + index;
-                    return (
-                      <button
-                        key={pageIndex}
-                        className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ''}`}
-                        onClick={() => goToPage(pageIndex)}
-                        aria-label={`Go to page ${pageIndex}`}
-                      >
-                        {pageIndex}
-                      </button>
-                    );
-                  })}
+                  {pageNumbers.map((pageIndex) => (
+                    <button
+                      key={pageIndex}
+                      className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ''}`}
+                      onClick={() => goToPage(pageIndex)}
+                      aria-label={`Go to page ${pageIndex}`}
+                    >
+                      {pageIndex}
+                    </button>
+                  ))}
                   <button
                     className={styles.paginationButton}
                     onClick={goToNextPage}
