@@ -345,10 +345,21 @@ export default function HostFinanceTab() {
                     <div
                       className="balance-meter"
                       role="progressbar"
-                      aria-valuenow={pctAvailable}
                       aria-valuemin={0}
-                      aria-valuemax={100}>
-                      <div className="balance-meter__fill" style={{ width: `${pctAvailable}%` }} />
+                      aria-valuemax={100}
+                      aria-valuenow={pctAvailable}>
+                      <div
+                        className="bm-seg bm-seg--available"
+                        style={{ width: `${pctAvailable}%` }}
+                        data-label="Available"
+                        data-value={formatMoney(availableTotal, currency, "nl-NL")}
+                      />
+                      <div
+                        className="bm-seg bm-seg--incoming"
+                        style={{ width: `${Math.min(100, Math.max(0, (incomingTotal / (total || 1)) * 100))}%` }}
+                        data-label="Incoming"
+                        data-value={formatMoney(incomingTotal, currency, "nl-NL")}
+                      />
                     </div>
 
                     <div className="balance-list">
