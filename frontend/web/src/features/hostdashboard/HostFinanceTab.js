@@ -147,7 +147,7 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("hostBalance", true);
         const details = await getHostBalance();
-        setHostBalance(details);
+        setHostBalance(details ?? { available: [], pending: [] });
       } catch (error) {
         console.error("Error fetching host balance:", error);
       } finally {
@@ -158,10 +158,19 @@ export default function HostFinanceTab() {
   }, []);
 
   const balanceView = useMemo(() => {
-    const currency = hostBalance.available[0]?.currency || hostBalance.pending[0]?.currency || "EUR";
+    if (!hostBalance || !hostBalance.available || !hostBalance.pending) {
+      return {
+        currency: "EUR",
+        availableTotal: 0,
+        incomingTotal: 0,
+        pctAvailable: 0,
+        total: 0,
+      };
+    }
 
-    const availableTotal = (hostBalance.available).reduce((sum, { amount }) => sum + amount, 0);
-    const incomingTotal = (hostBalance.pending).reduce((sum, { amount }) => sum + amount, 0);
+    const currency = hostBalance.available[0]?.currency || hostBalance.pending[0]?.currency || "EUR";
+    const availableTotal = hostBalance.available.reduce((sum, { amount }) => sum + amount, 0);
+    const incomingTotal = hostBalance.pending.reduce((sum, { amount }) => sum + amount, 0);
     const total = availableTotal + incomingTotal;
     const pctAvailable = total ? Math.round((availableTotal / total) * 100) : 0;
 
