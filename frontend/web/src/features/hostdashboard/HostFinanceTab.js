@@ -4,6 +4,70 @@ import { useNavigate } from "react-router-dom";
 import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
 
+const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+const MAX_ITEMS_PER_PAGE = 5;
+
+const getStatusMeta = (status) => {
+  const s = String(status).toLowerCase();
+  switch (s) {
+    case "succeeded":
+      return { label: "Succeeded", tone: "is-success" };
+    case "paid":
+      return { label: "Paid", tone: "is-success" };
+    case "pending":
+      return { label: "Pending", tone: "is-pending" };
+    case "failed":
+      return { label: "Failed", tone: "is-danger" };
+    case "canceled":
+      return { label: "Canceled", tone: "is-danger" };
+    case "cancelled":
+      return { label: "Cancelled", tone: "is-danger" };
+    default:
+      return { label: status || "Unknown", tone: "is-muted" };
+  }
+};
+
+const StatusBadge = ({ status }) => {
+  const meta = getStatusMeta(status);
+  return (
+    <span className={`status-badge ${meta.tone}`}>
+      <span className="status-dot" />
+      {meta.label}
+    </span>
+  );
+};
+
+const formatMoney = (amount, currency, locale = navigator.language || "en-US") => {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      currencyDisplay: "symbol",
+    }).format(amount);
+  } catch {
+    return `${amount?.toFixed?.(2)} ${currency}`;
+  }
+};
+
+const pageSlice = (list, page, size = MAX_ITEMS_PER_PAGE) => list.slice((page - 1) * size, page * size);
+
+const TablePager = ({ page, setPage, totalPages }) => {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="table-pager">
+      <button className="pager-btn" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+        Previous
+      </button>
+      <span className="pager-info">
+        Page {page} of {totalPages}
+      </span>
+      <button className="pager-btn" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
+        Next
+      </button>
+    </div>
+  );
+};
+
 export default function HostFinanceTab() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -13,10 +77,7 @@ export default function HostFinanceTab() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
-    const [payoutFrequency, setPayoutFrequency] = useState("weekly");
-
-  const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-
+  const [payoutFrequency, setPayoutFrequency] = useState("weekly");
   const [loadingStates, setLoadingStates] = useState({
     account: true,
     charges: false,
@@ -27,38 +88,19 @@ export default function HostFinanceTab() {
 
   const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
-    const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
+  const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
-  const PAGE_SIZE = 5;
   const [chargesPage, setChargesPage] = useState(1);
   const [payoutsPage, setPayoutsPage] = useState(1);
 
-  const pageSlice = (list, page, size = PAGE_SIZE) => list.slice((page - 1) * size, page * size);
-  const chargesTotalPages = Math.max(1, Math.ceil(charges.length / PAGE_SIZE));
-  const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / PAGE_SIZE));
+  const chargesTotalPages = Math.max(1, Math.ceil(charges.length / MAX_ITEMS_PER_PAGE));
+  const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / MAX_ITEMS_PER_PAGE));
   useEffect(() => {
     setChargesPage(1);
   }, [charges]);
   useEffect(() => {
     setPayoutsPage(1);
   }, [payouts]);
-
-  const TablePager = ({ page, setPage, totalPages }) => {
-    if (totalPages <= 1) return null;
-    return (
-      <div className="table-pager">
-        <button className="pager-btn" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-          Previous
-        </button>
-        <span className="pager-info">
-          Page {page} of {totalPages}
-        </span>
-        <button className="pager-btn" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
-          Next
-        </button>
-      </div>
-    );
-  };
 
   useEffect(() => {
     (async () => {
@@ -83,7 +125,6 @@ export default function HostFinanceTab() {
         updateLoadingState("charges", true);
         const details = await getCharges();
         setCharges(details.charges);
-        console.log("Charge details:", details);
       } catch (error) {
         console.error("Error fetching charges:", error);
       } finally {
@@ -98,9 +139,7 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
-
         setPayouts(details.payouts);
-
       } catch (error) {
         console.error("Error fetching payouts:", error);
       } finally {
@@ -136,18 +175,6 @@ export default function HostFinanceTab() {
     }
   }
 
-  const formatMoney = (amount, currency, locale = navigator.language || "en-US") => {
-    try {
-      return new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency,
-        currencyDisplay: "symbol",
-      }).format(amount);
-    } catch {
-      return `${amount?.toFixed?.(2)} ${currency}`;
-    }
-  };
-
   const showLoader = loading || Object.values(loadingStates).some(Boolean);
   if (showLoader) {
     return (
@@ -161,36 +188,6 @@ export default function HostFinanceTab() {
 
   const renderCtaLabel = (idleText) =>
     isProcessing ? (processingStep === "opening" ? "Opening link…" : "Working on it…") : idleText;
-
-  const getStatusMeta = (status) => {
-    const s = String(status).toLowerCase();
-    switch (s) {
-      case "succeeded":
-        return { label: "Succeeded", tone: "is-success" };
-      case "paid":
-        return { label: "Paid", tone: "is-success" };
-      case "pending":
-        return { label: "Pending", tone: "is-pending" };
-      case "failed":
-        return { label: "Failed", tone: "is-danger" };
-      case "canceled":
-        return { label: "Canceled", tone: "is-danger" };
-      case "cancelled":
-        return { label: "Cancelled", tone: "is-danger" };
-      default:
-        return { label: status || "Unknown", tone: "is-muted" };
-    }
-  };
-
-  const StatusBadge = ({ status }) => {
-    const meta = getStatusMeta(status);
-    return (
-      <span className={`status-badge ${meta.tone}`}>
-        <span className="status-dot" />
-        {meta.label}
-      </span>
-    );
-  };
 
   return (
     <main className="page-Host">
@@ -355,7 +352,6 @@ export default function HostFinanceTab() {
                 <option value="monthly">Monthly (First of the month)</option>
               </select>
             </div>
-            
           </div>
         </section>
       </div>
