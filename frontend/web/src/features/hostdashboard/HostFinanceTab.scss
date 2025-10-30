@@ -227,6 +227,55 @@ $color-muted:  #6b7280;
   }
 }
 
+.balance-section {
+  .balance-meter {
+    height: 12px; border-radius: 999px; background: #cbd5e1; overflow: hidden;
+    margin-bottom: 10px;
+    &__fill { height: 100%; background: $green; width: 0%; transition: width .35s ease; }
+  }
+
+  .balance-header {
+    display: grid; grid-template-columns: 1fr auto;
+    color: $color-muted; font-weight: 600; padding: 6px 2px;
+  }
+
+  .balance-divider {
+    height: 1px; background: #e5e7eb; margin: 6px 0;
+  }
+
+  .balance-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: 8px 2px;
+    border-radius: 5px;
+    transition: background-color .15s ease;
+
+    &:hover {
+      background-color: #ddd;
+    }
+
+    &:focus-within {
+      background-color: #ddd;
+      outline: 0;
+    }
+  }
+
+  .balance-left {
+    display: inline-flex; align-items: center; gap: 10px; font-weight: 600;
+  }
+
+  .balance-amount {
+    font-weight: 700; text-align: right; white-space: nowrap;
+  }
+
+  .balance-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    &--incoming  { background: #9aa3af; }
+    &--available { background: $green; }
+  }
+}
+
 .payout-frequency {
   background: $muted;
   padding: 16px;
