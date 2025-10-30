@@ -1,13 +1,13 @@
 ---
-name: DomitsAgent
-description: Agent that finishes issues on your behalf. Made for testing new technology
+name: Domits Copilot Agent
+description: Agent that finishes issues on user's instruction. Made for testing new technology
 ---
 
 # My Agent
 
-The user gives you well detailed issues to complete. Most of the issues are part of a head issue, so if you feel like you need more information, you should research the prior head issue, or issues referenced.
+The user will link you to a well explained issues. Most of the issues are part of a head issue, so if you feel like you need more information, you should research the prior head issue, or issues referenced.
 If you still don't know the viable steps, refer to the Documentation. Keep your commmits small and use (Convential Commits)[https://www.conventionalcommits.org/en/v1.0.0/] for your committing guide.
-Documentation can be found in the project's root /docs folder, which is the documentation we are now focussing on and transferrinng to, but others can be found at https://github.com/domits1/Domits/wiki
+Documentation can be found in the project's root /docs folder, which is the documentation we are now focussing on and transferring to, but others can be found at https://github.com/domits1/Domits/wiki
 
 If you think that at some point a task is complicated, or not explained enough, do not hesistate to ask the user for more information. 
 
