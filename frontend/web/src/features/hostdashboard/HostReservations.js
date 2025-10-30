@@ -36,7 +36,7 @@ const HostReservations = () => {
       } catch (error) {
         console.error("Error fetching properties:", error);
         toast.error(
-          "Something unexpected happenend. You possibly don't have any reservations. Please refresh the page to try again."
+          "Something unexpected happened. You possibly don't have any reservations. Please refresh the page to try again."
         );
       } finally {
         setIsLoading(false);
@@ -74,26 +74,13 @@ const HostReservations = () => {
     goToPage(1);
   };
 
-  const calculateNights = (arrival, departure) => {
-    try {
-      const msPerDay = 1000 * 60 * 60 * 24;
-      const arrivalMs = Number(arrival);
-      const departureMs = Number(departure);
-      if (Number.isNaN(arrivalMs) || Number.isNaN(departureMs)) return 1;
-      const diff = departureMs - arrivalMs;
-      const nights = Math.max(1, Math.round(diff / msPerDay));
+  const shouldShowPagination = userHasReservations && sortedBookings && sortedBookings.length > 0;
 
-      return nights;
-    } catch (e) {
-      return 1;
-    }
-  };
-
-  const calculateTotalPayment = (rate, arrival, departure) => {
-    const nights = calculateNights(arrival, departure);
-    const numericRate = Number(rate) || 0;
-    return numericRate * nights;
-  };
+  const pageNumbers = useMemo(() => {
+    if (!shouldShowPagination) return [];
+    const count = pageRange.endPage - pageRange.startPage + 1;
+    return Array.from({ length: count }, (_, i) => pageRange.startPage + i);
+  }, [shouldShowPagination, pageRange]);
 
   return (
     <main className="page-body">
@@ -229,13 +216,16 @@ const HostReservations = () => {
                     onClick={goToPreviousPage}
                     disabled={currentPage === 1}
                     aria-label="Previous page">
+                    aria-label="Previous page">
                     Previous
                   </button>
                   {pageNumbers.map((pageIndex) => (
                     <button
                       key={pageIndex}
                       className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ""}`}
+                      className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ""}`}
                       onClick={() => goToPage(pageIndex)}
+                      aria-label={`Go to page ${pageIndex}`}>
                       aria-label={`Go to page ${pageIndex}`}>
                       {pageIndex}
                     </button>
