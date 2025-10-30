@@ -25,7 +25,7 @@ Install the Amplify CLI globally with the following command (In your code editor
 After installing the CLI, running `amplify -v` will return the version number. Use this to check if the install went well. Example of an output from a successful install: 12.10.1
 Depending on whether you're working on the web app or the mobile app, navigate to the corresponding folder using **cd frontend\web**.
 
-### Hint: Before running the upcoming command, ask for the login credentials to the Domits AWS account.
+>**Hint**: Before running the upcoming command, ask for the login credentials to the Domits AWS account.
 
 Ask for the login details to the Domits AWS account. Once you have the credentials, install the Amplify backend configuration using the following command: 
 
