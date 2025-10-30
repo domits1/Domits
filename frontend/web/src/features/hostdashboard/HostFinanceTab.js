@@ -428,7 +428,7 @@ export default function HostFinanceTab() {
                             <td>
                               <StatusBadge status={payout.status} />
                             </td>
-                            <td title={payout.id}>{payout.id || " - "}</td>
+                            <td title={payout.id || ""}>{payout.id || " - "}</td>
                           </tr>
                         ))}
                       </tbody>
