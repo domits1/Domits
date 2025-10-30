@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
-import { ALOSService } from "./ALOSCardService.js";
 
 const ALOSCard = () => {
   const [alos, setAlos] = useState(0);
