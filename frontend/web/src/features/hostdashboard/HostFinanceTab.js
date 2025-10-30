@@ -5,7 +5,7 @@ import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } 
 import ClipLoader from "react-spinners/ClipLoader";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-const PAGE_SIZE = 5;
+const MAX_ITEMS_PER_PAGE = 5;
 
 const getStatusMeta = (status) => {
   const s = String(status).toLowerCase();
@@ -49,7 +49,7 @@ const formatMoney = (amount, currency, locale = navigator.language || "en-US") =
   }
 };
 
-const pageSlice = (list, page, size = PAGE_SIZE) => list.slice((page - 1) * size, page * size);
+const pageSlice = (list, page, size = MAX_ITEMS_PER_PAGE) => list.slice((page - 1) * size, page * size);
 
 const TablePager = ({ page, setPage, totalPages }) => {
   if (totalPages <= 1) return null;
@@ -93,8 +93,8 @@ export default function HostFinanceTab() {
   const [chargesPage, setChargesPage] = useState(1);
   const [payoutsPage, setPayoutsPage] = useState(1);
 
-  const chargesTotalPages = Math.max(1, Math.ceil(charges.length / PAGE_SIZE));
-  const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / PAGE_SIZE));
+  const chargesTotalPages = Math.max(1, Math.ceil(charges.length / MAX_ITEMS_PER_PAGE));
+  const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / MAX_ITEMS_PER_PAGE));
   useEffect(() => {
     setChargesPage(1);
   }, [charges]);
