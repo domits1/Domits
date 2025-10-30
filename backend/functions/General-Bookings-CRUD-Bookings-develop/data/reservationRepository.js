@@ -279,6 +279,26 @@ class ReservationRepository {
       statusCode: 200,
     };
   }
+
+  // ---------
+  // Delete booking by ID
+  // ---------
+  async deleteBookingById(id) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .delete()
+      .from(Booking)
+      .where("id = :id", { id: id })
+      .execute();
+
+    if (!result.affected || result.affected < 1) {
+      throw new NotFoundException("Booking not found or already deleted.");
+    }
+    return {
+      statusCode: 204,
+    };
+  }
 }
 
 export default ReservationRepository;

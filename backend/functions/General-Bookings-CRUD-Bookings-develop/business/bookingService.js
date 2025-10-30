@@ -158,6 +158,26 @@ class BookingService {
 			throw new Forbidden("Unable to verify data! Check your request or contact support!");
 		}
 	}
+
+	// -----------
+	// /bookings DELETE
+	// -----------
+
+	async delete(bookingId, authToken) {
+		const authenticatedUser = await this.authManager.authenticateUser(authToken);
+		const booking = await this.reservationRepository.getBookingById(bookingId);
+		
+		if (!booking.response) {
+			throw new NotFoundException("Booking not found.");
+		}
+
+		// Verify that the user is either the guest or the host of this booking
+		if (booking.response.guestid !== authenticatedUser.sub && booking.response.hostid !== authenticatedUser.sub) {
+			throw new Forbidden("You are not authorized to delete this booking.");
+		}
+
+		return await this.reservationRepository.deleteBookingById(bookingId);
+	}
 }
 
 
