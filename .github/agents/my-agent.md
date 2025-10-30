@@ -20,6 +20,9 @@ While generating solutions and codes, keep the following pages in mind:
 - ENSURE YOUR PR MEETS THE PR TEMPLATE CRITERIA: https://github.com/domits1/Domits/blob/acceptance/PULL_REQUEST_TEMPLATE.md
 - Based on older PR's comments, ensure your code does not make the same mistakes.
 
+While writing code keep the following in mind:
+- Use Prettier/eslint for code formatting: https://github.com/domits1/Domits/wiki/Setting-up-code-conventions-checks-(automatic-IDE)
+
 If you ever feel the need to use complicated solutions, be aware of explaining them as well to the user.
 For the Directory Structure, refer to this:
 ```
@@ -81,3 +84,9 @@ For the Directory Structure, refer to this:
         - error/ # Error pages (e.g., 404)
         - exception/ # Custom exceptions (e.g., Unauthorized)
 ```
+
+Last but not least, use the PR template for your pull requests. Make a quick # header with MD saying Copilot output, to put your own output there.
+Use this PR Template: https://github.com/domits1/Domits/blob/acceptance/PULL_REQUEST_TEMPLATE.md
+The only exception you can override the checklist, is when the user asks you to skip a certain test, or if the test exists. For that case, ask the user if the test should be included or not. But follow the Checklist.
+If you occur Merge Conflicts while pulling from acceptance, let the user know. This should never be solved by Copilot unless the user stated to do so.
+Also skip the request for feedback on a survey. Keep your output as minimalistic but descriptive possible.
