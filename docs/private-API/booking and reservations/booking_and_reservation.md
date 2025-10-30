@@ -15,7 +15,7 @@ The CRUD is responsible for 4 tasks, which are:
 1. Make bookings and put them in the database 
 2. Read bookings for host dashboard and guest dashboard
 3. Edit bookings for the create process
-4. Remove bookings (probably won't be done.)
+4. Remove bookings (implemented)
 
 All API requests will go through this lambda function (General-Bookings-CRUD-Bookings-develop), and that will determine which function is suited for which task.
 
@@ -166,7 +166,68 @@ Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/boo
 ### get by `property`
 This is pending refactoring. This function returns nothing at the moment because of a security flaw.
 
+---
+
+### DELETE Request Format:
+
+Uses token: Yes
+
+Use case: Delete a booking from the database. Only the guest or host of the booking can delete it.
+
+Returns: 204 No Content on success, with a success message.
+
+Authorization: Requires valid access token in headers.
+
+**Request Body:**
+```json
+{
+    "bookingId": "your-booking-id-here"
+}
+```
+
+**Example using fetch:**
+```js
+const response = await fetch(
+    `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings`, {
+        method: "DELETE",
+        headers: {
+            Authorization: token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            bookingId: "abc123-def456-ghi789"
+        })
+    }
+);
+```
+
+**Example event format:**
+```json
+{
+    "httpMethod": "DELETE",
+    "headers": {
+        "Authorization": "your-access-token"
+    },
+    "body": "{\"bookingId\": \"abc123-def456-ghi789\"}"
+}
+```
+
+**Response codes:**
+- `204`: Booking successfully deleted
+- `400`: bookingId is required in request body
+- `403`: User is not authorized to delete this booking (not the guest or host)
+- `404`: Booking not found
+- `500`: Server error
+
+**Security:**
+- User must be authenticated with a valid access token
+- User must be either the guest or the host of the booking to delete it
+- Attempting to delete another user's booking will result in a 403 Forbidden error
+
+---
+
 ## Todo Wiki:
 - [ ] Update sequence/class diagram to current code for create/read
 - [ ] Show proper flow for creating a booking (flowchart) in Domits
+- [x] Implement DELETE functionality for bookings
 - [ ] ...
