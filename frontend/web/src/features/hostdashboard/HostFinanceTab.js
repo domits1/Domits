@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
-import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
+import {
+  getStripeAccountDetails,
+  createStripeAccount,
+  getCharges,
+  getPayouts,
+  getHostBalance,
+} from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
@@ -73,6 +79,7 @@ export default function HostFinanceTab() {
   const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState([]);
   const [charges, setCharges] = useState([]);
+  const [hostBalance, setHostBalance] = useState({ available: [], pending: [] });
   const [accountId, setAccountId] = useState(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -82,6 +89,7 @@ export default function HostFinanceTab() {
     account: true,
     charges: false,
     payouts: false,
+    hostBalance: false,
   });
 
   const updateLoadingState = (key, value) => setLoadingStates((prev) => ({ ...prev, [key]: value }));
@@ -130,6 +138,23 @@ export default function HostFinanceTab() {
       } finally {
         setLoading(false);
         updateLoadingState("charges", false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        updateLoadingState("hostBalance", true);
+        const details = await getHostBalance();
+        setHostBalance(details);
+        console.log("Host available amaount details:", hostBalance.available);
+        console.log("Host pending amount details:", hostBalance.pending);
+      } catch (error) {
+        console.error("Error fetching host balance:", error);
+      } finally {
+        setLoading(false);
+        updateLoadingState("hostBalance", false);
       }
     })();
   }, []);
