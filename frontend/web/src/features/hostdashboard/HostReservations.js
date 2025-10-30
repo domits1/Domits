@@ -17,17 +17,9 @@ const HostReservations = () => {
   const [bookings, setBooking] = useState(null);
   const [sortedBookings, setSortedBookings] = useState(null);
   const authToken = getAccessToken();
-
   const itemsPerPage = 10;
-  const {
-    currentPage,
-    totalPages,
-    paginatedItems,
-    pageRange,
-    goToPage,
-    goToNextPage,
-    goToPreviousPage
-  } = usePagination(sortedBookings || [], itemsPerPage);
+  const { currentPage, totalPages, paginatedItems, pageRange, goToPage, goToNextPage, goToPreviousPage } =
+    usePagination(sortedBookings || [], itemsPerPage);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -38,13 +30,15 @@ const HostReservations = () => {
           setUserHasReservations(false);
         } else {
           setBooking(bookings);
-          setSortedBookings(  );
+          setSortedBookings();
           setUserHasReservations(true);
           sortBookings(null, bookings);
         }
-       } catch (error) {
+      } catch (error) {
         console.error("Error fetching properties:", error);
-        toast.error("Something unexpected happened. You possibly don't have any reservations. Please refresh the page to try again.")
+        toast.error(
+          "Something unexpected happened. You possibly don't have any reservations. Please refresh the page to try again."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -58,23 +52,21 @@ const HostReservations = () => {
       setSortedBookings([]);
       return;
     }
-    
+
     let bookingArray = [];
 
     bookings.forEach((property) => {
-
       const reservations = Array.isArray(property.res?.response) ? property.res.response : [];
 
-      reservations.forEach((item) =>{
+      reservations.forEach((item) => {
         bookingArray.push({
           title: property.title,
           rate: property.rate,
           id: property.id,
-          ...item
-        })
-      })
-
-    })
+          ...item,
+        });
+      });
+    });
     if (type === null) {
       setSortedBookings(bookingArray);
     } else {
@@ -84,7 +76,7 @@ const HostReservations = () => {
   };
 
   const shouldShowPagination = userHasReservations && sortedBookings && sortedBookings.length > 0;
-  
+
   const pageNumbers = useMemo(() => {
     if (!shouldShowPagination) return [];
     const count = pageRange.endPage - pageRange.startPage + 1;
@@ -188,7 +180,9 @@ const HostReservations = () => {
                       ))
                     ) : (
                       <tr>
-                        <td className={styles.noData} colSpan={8}>You currently have no reservations for your accommodation(s). Refresh the page to try again.</td>
+                        <td className={styles.noData} colSpan={8}>
+                          You currently have no reservations for your accommodation(s). Refresh the page to try again.
+                        </td>
                       </tr>
                     )}
                   </tbody>
@@ -200,17 +194,15 @@ const HostReservations = () => {
                     className={styles.paginationButton}
                     onClick={goToPreviousPage}
                     disabled={currentPage === 1}
-                    aria-label="Previous page"
-                  >
+                    aria-label="Previous page">
                     Previous
                   </button>
                   {pageNumbers.map((pageIndex) => (
                     <button
                       key={pageIndex}
-                      className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ''}`}
+                      className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ""}`}
                       onClick={() => goToPage(pageIndex)}
-                      aria-label={`Go to page ${pageIndex}`}
-                    >
+                      aria-label={`Go to page ${pageIndex}`}>
                       {pageIndex}
                     </button>
                   ))}
@@ -218,8 +210,7 @@ const HostReservations = () => {
                     className={styles.paginationButton}
                     onClick={goToNextPage}
                     disabled={currentPage === totalPages}
-                    aria-label="Next page"
-                  >
+                    aria-label="Next page">
                     Next
                   </button>
                 </div>
