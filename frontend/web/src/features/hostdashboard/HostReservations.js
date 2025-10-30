@@ -8,6 +8,7 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import BooleanToString from "./services/booleanToString.js";
 import { getAccessToken } from "../../services/getAccessToken.js";
 import spinner from "../../images/spinnner.gif";
+import { usePagination } from "./hooks/usePagination.js";
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -16,6 +17,17 @@ const HostReservations = () => {
   const [bookings, setBooking] = useState(null);
   const [sortedBookings, setSortedBookings] = useState(null);
   const authToken = getAccessToken();
+
+  const itemsPerPage = 10;
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    pageRange,
+    goToPage,
+    goToNextPage,
+    goToPreviousPage
+  } = usePagination(sortedBookings || [], itemsPerPage);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -68,6 +80,7 @@ const HostReservations = () => {
     } else {
       setSortedBookings(bookingArray.filter((booking) => booking.status === type));
     }
+    goToPage(1);
   };
 
   return (
@@ -148,7 +161,7 @@ const HostReservations = () => {
                   </thead>
                   <tbody>
                     {userHasReservations && sortedBookings && sortedBookings.length > 0 ? (
-                      sortedBookings.map((booking) => (
+                      paginatedItems.map((booking) => (
                         <tr key={booking.id}>
                           <td className={styles.singleReservationRow}>{booking.id}</td>
                           <td className={styles.singleReservationRow}>{booking.title}</td>
@@ -173,6 +186,39 @@ const HostReservations = () => {
                   </tbody>
                 </table>
               </section>
+              {userHasReservations && sortedBookings && sortedBookings.length > 0 && (
+                <div className={styles.paginationControls}>
+                  <button
+                    className={styles.paginationButton}
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    aria-label="Previous page"
+                  >
+                    Previous
+                  </button>
+                  {[...Array(pageRange.endPage - pageRange.startPage + 1)].map((_, index) => {
+                    const pageIndex = pageRange.startPage + index;
+                    return (
+                      <button
+                        key={pageIndex}
+                        className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ''}`}
+                        onClick={() => goToPage(pageIndex)}
+                        aria-label={`Go to page ${pageIndex}`}
+                      >
+                        {pageIndex}
+                      </button>
+                    );
+                  })}
+                  <button
+                    className={styles.paginationButton}
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    aria-label="Next page"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </section>
           </section>
         </>
