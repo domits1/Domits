@@ -158,10 +158,10 @@ export default function HostFinanceTab() {
   }, []);
 
   const balanceView = useMemo(() => {
-    const currency = hostBalance.available[0].currency || hostBalance.pending[0].currency;
+    const currency = hostBalance.available[0]?.currency || hostBalance.pending[0]?.currency;
 
-    const availableTotal = (hostBalance.available).reduce((s, x) => s + (x.amount), 0);
-    const incomingTotal = (hostBalance.pending).reduce((s, x) => s + (x.amount), 0);
+    const availableTotal = (hostBalance.available).reduce((sum, { amount }) => sum + amount, 0);
+    const incomingTotal = (hostBalance.pending).reduce((sum, { amount }) => sum + amount, 0);
     const total = availableTotal + incomingTotal;
     const pctAvailable = Math.round((availableTotal / total) * 100);
 
