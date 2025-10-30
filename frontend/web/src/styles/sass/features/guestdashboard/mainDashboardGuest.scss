@@ -1,22 +1,4 @@
 .main-dashboard-guest {
     display: flex;
     min-height: 500px;
-    width: 100%;
-    height: 100vh;
-
-    .main-dashboard-sidebar {
-        flex: 0 0 200px;
-        background: none;
-        box-shadow: none;
-        padding: 0;
-        overflow-y: auto;
-        position: relative;
-    }
-
-    .main-dashboard-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
 }
