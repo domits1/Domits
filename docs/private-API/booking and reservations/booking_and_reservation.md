@@ -15,7 +15,7 @@ The CRUD is responsible for 4 tasks, which are:
 1. Make bookings and put them in the database 
 2. Read bookings for host dashboard and guest dashboard
 3. Edit bookings for the create process
-4. Remove bookings (implemented)
+4. Delete bookings (implemented)
 
 All API requests will go through this lambda function (General-Bookings-CRUD-Bookings-develop), and that will determine which function is suited for which task.
 
@@ -174,7 +174,7 @@ Uses token: Yes
 
 Use case: Delete a booking from the database. Only the guest or host of the booking can delete it.
 
-Returns: 204 No Content on success, with a success message.
+Returns: 204 No Content on success (no response body).
 
 Authorization: Requires valid access token in headers.
 

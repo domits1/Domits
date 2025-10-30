@@ -103,13 +103,10 @@ class ReservationController {
                 }
             }
 
-            const result = await this.bookingService.delete(bookingId, authToken);
+            await this.bookingService.delete(bookingId, authToken);
             return {
-                statusCode: result.statusCode || 204,
-                headers: responseHeaderJSON,
-                response: {
-                    message: "Booking deleted successfully"
-                }
+                statusCode: 204,
+                headers: responseHeaderJSON
             }
         } catch (error) {
             console.error(error);
