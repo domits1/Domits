@@ -6,8 +6,6 @@ import { confirmEmailChange } from "./emailSettings";
 import roomImg from "../../images/4-Bed-Kona-Homes.jpeg";
 import { Link } from "react-router-dom";
 
-//const navigate = useNavigate();
-
 
 const isE164 = (v) => /^\+[1-9]\d{7,14}$/.test(v || "");
 const clamp = (n, min = 0, max = 20) => Math.min(max, Math.max(min, n));
@@ -77,7 +75,6 @@ const GuestDashboard = () => {
     setTemp((t) => ({ ...t, [field]: value }));
   };
 
-  /* ---------- EMAIL ---------- */
   const saveEmail = async () => {
     try {
       if (isVerifying) {
@@ -127,7 +124,6 @@ const GuestDashboard = () => {
     }
   };
 
-  /* ---------- NAME ---------- */
   const saveName = async () => {
     try {
       const userInfo = await Auth.currentAuthenticatedUser();
@@ -154,7 +150,6 @@ const GuestDashboard = () => {
     }
   };
 
-  /* ---------- ADDRESS ---------- */
   const saveAddress = async () => {
     try {
       const u = await Auth.currentAuthenticatedUser();
@@ -172,7 +167,6 @@ const GuestDashboard = () => {
     }
   };
 
-  /* ---------- PHONE (E.164) ---------- */
   const savePhone = async () => {
     try {
       const newPhone = (temp.phone || "").replace(/\s/g, "");
@@ -200,7 +194,6 @@ const GuestDashboard = () => {
     }
   };
 
-  /* ---------- FAMILY (Adults/Kids ±) ---------- */
   const saveFamily = async () => {
     try {
       const payload = formatFamily(familyCounts);
@@ -221,7 +214,6 @@ const GuestDashboard = () => {
     }
   };
 
-  /* ---------- initial load ---------- */
   useEffect(() => {
     (async () => {
       try {
@@ -270,7 +262,6 @@ const GuestDashboard = () => {
     })();
   }, []);
 
-  /* ---------- UI Rows ---------- */
   const Row = ({ label, field, type = "text", value, onSave }) => {
     const isEdit = editing[field];
     return (
@@ -355,7 +346,6 @@ const GuestDashboard = () => {
 
           {isEdit && (
             <div className="booking-details__pi" style={{ display: "grid", gap: 8 }}>
-              {/* Adults */}
               <div className="booking-details__row" style={{ gridTemplateColumns: "140px auto" }}>
                 <div className="booking-details__label">Adults</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -390,7 +380,6 @@ const GuestDashboard = () => {
                 </div>
               </div>
 
-              {/* Kids */}
               <div className="booking-details__row" style={{ gridTemplateColumns: "140px auto" }}>
                 <div className="booking-details__label">Kids</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -425,7 +414,6 @@ const GuestDashboard = () => {
                 </div>
               </div>
 
-              {/* Preview */}
               <div className="booking-details__row" style={{ gridTemplateColumns: "140px auto" }}>
                 <div className="booking-details__label">Preview</div>
                 <div className="booking-details__value">{formatFamily(familyCounts)}</div>
@@ -476,9 +464,6 @@ const GuestDashboard = () => {
         
           <div className="guest-dashboard-accomodation-side">
            
-              {/* <a className="guest-dashboard-viewAllBooking" href={onClick={navigate("/Booking")}}>
-                View all bookings
-              </a> */}
               <Link to="/Bookings" className="guest-dashboard-viewAllBooking">
                 View all bookings
               </Link>
@@ -525,7 +510,6 @@ const GuestDashboard = () => {
               </div>
             </article>
 
-            {/* Messages */}
             <section className="messages-section">
               <div className="messages-section__header">
                 <span className="messages-section__title">Messages</span>
@@ -553,7 +537,6 @@ const GuestDashboard = () => {
             </section>
           </div>
 
-          {/* Personal information */}
           <aside className="guest-dashboard-personalInfoContent">
             <div className="pi-card">
               <div className="pi-header">

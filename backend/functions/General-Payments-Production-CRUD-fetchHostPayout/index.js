@@ -13,6 +13,12 @@ export const handler = async (event) => {
     case httpMethod === "GET" && path.endsWith("/retrieve-user-charges"):
       returnedResponse = await controller.getHostCharges(event);
       break;
+    case httpMethod === "GET" && path.endsWith("/retrieve-user-balance"):
+      returnedResponse = await controller.getHostBalance(event);
+      break;
+    case httpMethod === "GET" && path.endsWith("/retrieve-user-pending-amount"):
+      returnedResponse = await controller.getHostPendingAmount(event);
+      break;
     default:
       throw new Error("Unable to determine request type. Please contact the Admin.");
   }
