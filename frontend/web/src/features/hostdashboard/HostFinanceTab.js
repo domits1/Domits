@@ -165,7 +165,7 @@ export default function HostFinanceTab() {
     const total = availableTotal + incomingTotal;
     const pctAvailable = total ? Math.round((availableTotal / total) * 100) : 0;
 
-    return { currency, availableTotal, incomingTotal, pctAvailable, incomingTotal, total };
+    return { currency, availableTotal, incomingTotal, pctAvailable, total };
   }, [hostBalance]);
 
   useEffect(() => {
