@@ -414,7 +414,7 @@ export default function HostFinanceTab() {
                     <table className="payout-table">
                       <thead>
                         <tr>
-                          <th>Arrival date</th>
+                          <th>Payout date</th>
                           <th>Amount</th>
                           <th>Status</th>
                           <th>Payout ID</th>
