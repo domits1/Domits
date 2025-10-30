@@ -117,4 +117,40 @@ $border-radius: 8px;
       }
     }
   }
+
+  //////////
+  // Pagination styling
+  //////////
+  .paginationControls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    gap: 5px;
+  }
+
+  .paginationButton {
+    padding: 8px 12px;
+    margin: 0 3px;
+    border: none;
+    background-color: #f4f4f4;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background-color: #e6e6e6;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.activePage {
+      background-color: $highlight-color;
+      color: #ffffff;
+    }
+  }
 }
