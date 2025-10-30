@@ -117,7 +117,7 @@ Domits is a hospitality-management platform designed to help hosts and guest man
 # Core modules and APIs
 
 # Code Conventions
-
+Global styling goes in web/src/styles/sass and feature-specific styling goes into web/src/feature/INSERTFEATUREHERE/styles   
 # Recommended Docs
 
 # Contribution guidelines
