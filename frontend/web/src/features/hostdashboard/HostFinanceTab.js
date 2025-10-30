@@ -329,6 +329,58 @@ export default function HostFinanceTab() {
               )}
             </div>
 
+            <div className="payouts-section balance-section">
+              <h3>Balance overview</h3>
+
+              {(() => {
+                const currency = hostBalance.available[0]?.currency || hostBalance.pending[0]?.currency || "EUR";
+
+                const availableTotal = (hostBalance.available || []).reduce((s, x) => s + (x.amount || 0), 0);
+                const incomingTotal = (hostBalance.pending || []).reduce((s, x) => s + (x.amount || 0), 0);
+                const total = availableTotal + incomingTotal;
+                const pctAvailable = total ? Math.round((availableTotal / total) * 100) : 0;
+
+                return (
+                  <>
+                    <div
+                      className="balance-meter"
+                      role="progressbar"
+                      aria-valuenow={pctAvailable}
+                      aria-valuemin={0}
+                      aria-valuemax={100}>
+                      <div className="balance-meter__fill" style={{ width: `${pctAvailable}%` }} />
+                    </div>
+
+                    <div className="balance-list">
+                      <div className="balance-header">
+                        <span>Payment type</span>
+                        <span>Amount</span>
+                      </div>
+                      <div className="balance-divider" />
+
+                      <div className="balance-item">
+                        <div className="balance-left">
+                          <span className="balance-dot balance-dot--incoming" />
+                          <span className="balance-label">Incoming</span>
+                        </div>
+                        <div className="balance-amount">{formatMoney(incomingTotal, currency)}</div>
+                      </div>
+                      <div className="balance-divider" />
+
+                      <div className="balance-item">
+                        <div className="balance-left">
+                          <span className="balance-dot balance-dot--available" />
+                          <span className="balance-label">Available</span>
+                        </div>
+                        <div className="balance-amount">{formatMoney(availableTotal, currency)}</div>
+                      </div>
+                      <div className="balance-divider" />
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
             <div className="payouts-section">
               <h3>Recent Payouts</h3>
               {loadingStates.payouts ? (
