@@ -7,6 +7,9 @@ export const handler = async (event) => {
   let returnedResponse = {};
 
   switch (true) {
+    case httpMethod === "POST" && path.endsWith("/set-payout-schedule"):
+      returnedResponse = await controller.setPayoutSchedule(event);
+      break;
     case httpMethod === "GET" && path.endsWith("/retrieve-user-payouts"):
       returnedResponse = await controller.getHostPayouts(event);
       break;
