@@ -15,6 +15,7 @@ function HostListings() {
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
+
   useEffect(() => {
     const setUserIdAsync = async () => {
       try {
@@ -27,6 +28,7 @@ function HostListings() {
 
     setUserIdAsync();
   }, []);
+
   useEffect(() => {
     const checkHostStripeAcc = async (hostID) => {
       try {
@@ -58,6 +60,7 @@ function HostListings() {
       fetchAccommodations().catch(console.error);
     }
   }, [userId]);
+
   const fetchAccommodations = async () => {
     setIsLoading(true);
     if (!userId) {
@@ -184,143 +187,167 @@ function HostListings() {
   };
 
   return (
-    <div className="page-body">
-      <h2>Listings</h2>
-      <div className={styles.dashboardHost}>
-        <div className={styles.hostListingContainer}>
-          {isLoading ? (
-            <div>
-              <img src={spinner} />
-            </div>
-          ) : (
-            <div className={styles.listingBody}>
-              <div className={styles.buttonBox}>
-                <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>
-                  Add new accommodation
-                </button>
-                <button className={styles.greenBtn} onClick={fetchAccommodations}>
-                  Refresh
-                </button>
-              </div>
-              <section className={styles.listingsDisplay}>
-                <p className={styles.header}>Listed listings</p>
+    <main className="page-Host">
+      <p className="page-Host-title">Listings</p>
 
-                {isLoading ? (
-                  <div className={styles.loader}>
-                    <img src={spinner} alt="Loading…" />
+      <div className="page-Host-content">
+        <section className="host-pc-dashboard">
+          <div className={styles.dashboardHost}>
+            <div className={styles.hostListingContainer}>
+              {isLoading ? (
+                <div>
+                  <img src={spinner} alt="Loading..." />
+                </div>
+              ) : (
+                <div className={styles.listingBody}>
+                  <div className={styles.buttonBox}>
+                    <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>
+                      Add new accommodation
+                    </button>
+                    <button className={styles.greenBtn} onClick={fetchAccommodations}>
+                      Refresh
+                    </button>
                   </div>
-                ) : accommodations.length > 0 ? (
-                  accommodations
-                    .filter((accommodation) => accommodation.property.status === "ACTIVE")
-                    .map((accommodation, index) => (
-                      <div
-                        key={accommodation.property.id || index}
-                        className={styles.dashboardCard}
-                        onClick={() => {
-                          if (accommodation.property.status !== "ACTIVE") {
-                            toast.warning("This listing is still in draft mode. Please publish it to make it live.");
-                          } else {
-                            navigate(`/listingdetails?ID=${accommodation.property.id}`);
-                          }
-                        }}>
-                        {accommodation.images?.length > 0 ? (
-                          <img
-                            src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`}
-                            alt="No image available"
-                            className="img-listed-dashboard"
-                          />
-                        ) : (
-                          <img src={placeholderImage} alt="No image available" />
-                        )}
 
-                        <div className={styles.accommodationText}>
-                          <p className={styles.accommodationTitle}>{accommodation.property.title}</p>
-                          <p className={styles.accommodationLocation}>{accommodation.location.city}</p>
-                        </div>
+                  <section className={styles.listingsDisplay}>
+                    <p className={styles.header}>Listed listings</p>
 
-                        <div className={styles.accommodationDetails}>
-                          <span className={accommodation.property.status ? styles.status : styles.isLive}>
-                            {accommodation.property.status === "ACTIVE" ? "Live" : "Drafted"}
-                          </span>
-                          <span> on: {DateFormatterDD_MM_YYYY(accommodation.property.createdAt)}</span>
-                        </div>
-                        <div className={styles.buttonBox}>
-                          <button
-                            className={styles.greenBtn}>
-                            Details
-                          </button>
-                        </div>
+                    {isLoading ? (
+                      <div className={styles.loader}>
+                        <img src={spinner} alt="Loading…" />
                       </div>
-                    ))
-                ) : (
-                  <div className={styles.emptyState}>
-                    <p>You havent placed any accommodation yet.</p>
-                  </div>
-                )}
-              </section>
-              <section className={styles.listingsDisplay}>
-                <p className={styles.header}>Drafted listings</p>
-                {isLoading ? (
-                  <div className={styles.loader}>
-                    <img src={spinner} alt="Loading…" />
-                  </div>
-                ) : accommodations.length > 0 ? (
-                  accommodations
-                    .filter((accommodation) => accommodation.property.status === "INACTIVE")
-                    .map((accommodation, index) => (
-                      <div
-                        key={accommodation.property.id || index}
-                        className={styles.dashboardCard}
-                        onClick={() => {
-                          if (accommodation.property.status !== "ACTIVE") {
-                            toast.warning("This listing is still in draft mode. Please publish it to make it live.");
-                          } else {
-                            navigate(`/listingdetails?ID=${accommodation.property.id}`);
-                          }
-                        }}>
-                        {accommodation.images?.length > 0 ? (
-                          <img
-                            src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`}
-                            alt="No image available"
-                            className="img-listed-dashboard"
-                          />
-                        ) : (
-                          <img src={placeholderImage} alt="No image available" />
-                        )}
+                    ) : accommodations.length > 0 ? (
+                      <div className={styles.cardsGrid}>
+                        {accommodations
+                          .filter((accommodation) => accommodation.property.status === "ACTIVE")
+                          .map((accommodation, index) => (
+                            <div
+                              key={accommodation.property.id || index}
+                              className={styles.dashboardCard}
+                              onClick={() => {
+                                if (accommodation.property.status !== "ACTIVE") {
+                                  toast.warning(
+                                    "This listing is still in draft mode. Please publish it to make it live."
+                                  );
+                                } else {
+                                  navigate(`/listingdetails?ID=${accommodation.property.id}`);
+                                }
+                              }}>
+                              {accommodation.images?.length > 0 ? (
+                                <img
+                                  src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`}
+                                  alt="No image available"
+                                  className={styles.imgListedDashboard}
+                                />
+                              ) : (
+                                <img
+                                  src={placeholderImage}
+                                  alt="No image available"
+                                  className={styles.imgListedDashboard}
+                                />
+                              )}
 
-                        <div className={styles.accommodationText}>
-                          <p className={styles.accommodationTitle}>{accommodation.property.title}</p>
-                          <p className={styles.accommodationLocation}>{accommodation.location.city}</p>
-                        </div>
+                              <div className={styles.accommodationText}>
+                                <p className={styles.accommodationTitle}>{accommodation.property.title}</p>
+                                <p className={styles.accommodationLocation}>{accommodation.location.city}</p>
+                              </div>
 
-                        <div className={styles.accommodationDetails}>
-                          <span className={accommodation.property.status ? styles.status : styles.isLive}>
-                            {accommodation.property.status ? "Drafted" : "Live"}
-                          </span>
-                          <span> on: {DateFormatterDD_MM_YYYY(accommodation.property.createdAt)}</span>
-                        </div>
-                        <div className={styles.buttonBox}>
-                          <button
-                            className={styles.greenBtn}
-                            onClick={() =>
-                              asyncChangeAccommodationStatus(accommodation.property.id, accommodation.property.status)
-                            }>
-                            Set as live
-                          </button>
-                        </div>
+                              <div className={styles.accommodationDetails}>
+                                <span className={accommodation.property.status ? styles.status : styles.isLive}>
+                                  {accommodation.property.status === "ACTIVE" ? "Live" : "Drafted"}
+                                </span>
+                                <span> on: {DateFormatterDD_MM_YYYY(accommodation.property.createdAt)}</span>
+                              </div>
+                              <div className={styles.buttonBox}>
+                                <button className={styles.greenBtn}>Details</button>
+                              </div>
+                            </div>
+                          ))}
                       </div>
-                    ))
-                ) : (
-                  <div className={styles.emptyState}>
-                    <p>You havent placed any accommodation yet.</p>
-                  </div>
-                )}
-              </section>
+                    ) : (
+                      <div className={styles.emptyState}>
+                        <p>You havent placed any accommodation yet.</p>
+                      </div>
+                    )}
+                  </section>
+
+                  <section className={styles.listingsDisplay}>
+                    <p className={styles.header}>Drafted listings</p>
+                    {isLoading ? (
+                      <div className={styles.loader}>
+                        <img src={spinner} alt="Loading…" />
+                      </div>
+                    ) : accommodations.length > 0 ? (
+                      <div className={styles.cardsGrid}>
+                        {accommodations
+                          .filter((accommodation) => accommodation.property.status === "INACTIVE")
+                          .map((accommodation, index) => (
+                            <div
+                              key={accommodation.property.id || index}
+                              className={styles.dashboardCard}
+                              onClick={() => {
+                                if (accommodation.property.status !== "ACTIVE") {
+                                  toast.warning(
+                                    "This listing is still in draft mode. Please publish it to make it live."
+                                  );
+                                } else {
+                                  navigate(`/listingdetails?ID=${accommodation.property.id}`);
+                                }
+                              }}>
+                              {accommodation.images?.length > 0 ? (
+                                <img
+                                  src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`}
+                                  alt="No image available"
+                                  className={styles.imgListedDashboard}
+                                />
+                              ) : (
+                                <img
+                                  src={placeholderImage}
+                                  alt="No image available"
+                                  className={styles.imgListedDashboard}
+                                />
+                              )}
+
+                              <div className={styles.accommodationText}>
+                                <p className={styles.accommodationTitle}>{accommodation.property.title}</p>
+                                <p className={styles.accommodationLocation}>{accommodation.location.city}</p>
+                              </div>
+
+                              <div className={styles.accommodationDetails}>
+                                <span className={accommodation.property.status ? styles.status : styles.isLive}>
+                                  {accommodation.property.status ? "Drafted" : "Live"}
+                                </span>
+                                <span> on: {DateFormatterDD_MM_YYYY(accommodation.property.createdAt)}</span>
+                              </div>
+                              <div className={styles.buttonBox}>
+                                <button
+                                  className={styles.greenBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    asyncChangeAccommodationStatus(
+                                      accommodation.property.id,
+                                      accommodation.property.status
+                                    );
+                                  }}>
+                                  Set as live
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    ) : (
+                      <div className={styles.emptyState}>
+                        <p>You havent placed any accommodation yet.</p>
+                      </div>
+                    )}
+                  </section>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 
