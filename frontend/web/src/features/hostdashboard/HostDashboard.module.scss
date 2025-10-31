@@ -11,19 +11,41 @@
     opacity: 90%;
   }
 }
+
+.topRow {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 360px);
+  gap: 24px;
+  align-items: start;
+  margin-bottom: 1rem;
+
+  .leftHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
 .dashboardCard {
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  width: 17vw;
-  margin: 2rem 1rem;
+  margin: 0;
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   background-color: #f5f5f5;
   cursor: pointer;
-  padding: 40px 10px 20px 10px;
 
   &:hover {
     transform: translateY(-6px);
@@ -37,7 +59,7 @@
     border-radius: 10px;
   }
 
-  button{
+  button {
     border-radius: 10px;
     border: 0;
     background-color: var(--domits-host-blue);
@@ -51,9 +73,17 @@
     &:hover {
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
     }
-
   }
 }
+
+.imgListedDashboard {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
+}
+
 .dashboardHeader {
   display: flex;
   flex-direction: column;
@@ -82,51 +112,60 @@
   .dashboardLeft {
     display: flex;
     flex-direction: column;
-    gap: 2em;
+    gap: 1.25em;
     animation: fade-up 2s;
-  }
-
-  .dashboardRight {
-    animation: fade-up 4s;
+    width: 100%;
   }
 
   .personalInfoContent {
     display: flex;
     flex-direction: column;
-    margin-left: 1px;
     width: 100%;
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 16px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+
+    h3 {
+      margin: 0 0 8px 0;
+    }
 
     .personalInfoBox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       background-color: #fff;
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-      margin-bottom: 10px;
-      width: auto;
-      font-size: 0.9em;
+      border-radius: 10px;
+      padding: 10px 0;
+      box-shadow: none;
+      margin-bottom: 6px;
+      width: 100%;
+      font-size: 0.95em;
 
       span {
         margin-right: auto;
+        font-weight: 600;
       }
-    }
-
-    .buttonBox {
-      display: flex;
-      flex-direction: row;
-      justify-content: start;
-      gap: 5%;
-      border-radius: 1rem;
+      img {
+        width: 18px;
+        height: 18px;
+      }
     }
   }
 
+  .buttonBox {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
   .accommodationText {
-    top: 0;
-    left: 0;
     width: 100%;
     padding: 0.75rem 1rem;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     gap: 0.25rem;
     color: black;
   }
@@ -161,7 +200,7 @@
     font-weight: 500;
   }
 
-  .isLive{
+  .isLive {
     color: green;
   }
 
@@ -177,19 +216,6 @@
     align-self: center;
     width: 100%;
     height: 70%;
-  }
-
-  .greenBtn {
-    color: white;
-    background-color: var(--domits-host-blue);
-    border: none;
-    padding: 10px 25px;
-    border-radius: 10px;
-    cursor: pointer;
-
-    &:hover {
-      opacity: 90%;
-    }
   }
 
   .infoBox {
@@ -278,6 +304,15 @@
     max-height: 25vh;
   }
 
+  @media only screen and (max-width: 1024px) {
+    .cardsGrid {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+    .topRow {
+      grid-template-columns: 1fr 320px;
+    }
+  }
+
   @media only screen and (max-width: 768px) {
     .dashboardHeader {
       flex-direction: column;
@@ -293,16 +328,13 @@
       flex-direction: column;
       gap: 2em;
     }
-
-    .dashboardLeft,
-    .dashboardRight {
+    .dashboardLeft {
       width: 100%;
       gap: 1em;
     }
 
-    .dashboardCard {
-      height: auto;
-      width: 80vw;
+    .topRow {
+      grid-template-columns: 1fr;
     }
 
     .accommodationText {
@@ -316,7 +348,7 @@
     .buttonBox {
       flex-direction: column;
       gap: 1rem;
-      padding: 1rem;
+      padding: 0;
     }
 
     .greenBtn {
@@ -350,17 +382,16 @@
     }
 
     .accommodationText {
-      font-size: 0.65em;
+      font-size: 0.85em;
     }
 
     .personalInfoContent {
-      margin-left: 0.5px;
-      width: 90vw;
+      width: 100%;
     }
 
     .accommodationTitle,
     .accommodationLocation {
-      font-size: 0.6em;
+      font-size: 0.9em;
     }
 
     .dashboardContainer {
@@ -368,7 +399,7 @@
     }
 
     .welcomeMsg {
-      font-size: 0.8rem;
+      font-size: 1rem;
     }
 
     .alertMessage {
