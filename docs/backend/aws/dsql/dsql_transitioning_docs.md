@@ -100,6 +100,3 @@ If it doesn't, add a role to your Lambda function that gives `dsql:DbConnectAdmi
 
 ## Removing data in your table using the QueryBuilder
 ...
-
-
-

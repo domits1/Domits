@@ -1,24 +1,97 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
-import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
+import {
+  getStripeAccountDetails,
+  createStripeAccount,
+  getCharges,
+  getPayouts,
+  getHostBalance,
+} from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
+
+const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+const MAX_ITEMS_PER_PAGE = 5;
+
+const getStatusMeta = (status) => {
+  const s = String(status).toLowerCase();
+  switch (s) {
+    case "succeeded":
+      return { label: "Succeeded", tone: "is-success" };
+    case "paid":
+      return { label: "Paid", tone: "is-success" };
+    case "pending":
+      return { label: "Pending", tone: "is-pending" };
+    case "incoming charge - pending":
+      return { label: "Pending", tone: "is-pending" };
+    case "failed":
+      return { label: "Failed", tone: "is-danger" };
+    case "canceled":
+      return { label: "Canceled", tone: "is-danger" };
+    case "cancelled":
+      return { label: "Cancelled", tone: "is-danger" };
+    default:
+      return { label: status || "Unknown", tone: "is-muted" };
+  }
+};
+
+const StatusBadge = ({ status }) => {
+  const meta = getStatusMeta(status);
+  return (
+    <span className={`status-badge ${meta.tone}`}>
+      <span className="status-dot" />
+      {meta.label}
+    </span>
+  );
+};
+
+const formatMoney = (amount, currency, locale = navigator.language || "en-US") => {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      currencyDisplay: "symbol",
+    }).format(amount);
+  } catch {
+    return `${amount?.toFixed?.(2)} ${currency}`;
+  }
+};
+
+const pageSlice = (list, page, size = MAX_ITEMS_PER_PAGE) => list.slice((page - 1) * size, page * size);
+
+const TablePager = ({ page, setPage, totalPages }) => {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="table-pager">
+      <button className="pager-btn" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+        Previous
+      </button>
+      <span className="pager-info">
+        Page {page} of {totalPages}
+      </span>
+      <button className="pager-btn" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
+        Next
+      </button>
+    </div>
+  );
+};
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
-  const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
   const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState([]);
+  const [charges, setCharges] = useState([]);
+  const [hostBalance, setHostBalance] = useState({ available: [], pending: [] });
   const [accountId, setAccountId] = useState(null);
-  const [payoutFrequency, setPayoutFrequency] = useState("weekly");
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
-
+  const [payoutFrequency, setPayoutFrequency] = useState("weekly");
   const [loadingStates, setLoadingStates] = useState({
     account: true,
     charges: false,
     payouts: false,
+    hostBalance: false,
   });
 
   const updateLoadingState = (key, value) => setLoadingStates((prev) => ({ ...prev, [key]: value }));
@@ -27,13 +100,24 @@ export default function HostFinanceTab() {
   const handleNavigation = (value) => navigate(value);
   const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
+  const [chargesPage, setChargesPage] = useState(1);
+  const [payoutsPage, setPayoutsPage] = useState(1);
+
+  const chargesTotalPages = Math.max(1, Math.ceil(charges.length / MAX_ITEMS_PER_PAGE));
+  const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / MAX_ITEMS_PER_PAGE));
+  useEffect(() => {
+    setChargesPage(1);
+  }, [charges]);
+  useEffect(() => {
+    setPayoutsPage(1);
+  }, [payouts]);
+
   useEffect(() => {
     (async () => {
       try {
         updateLoadingState("account", true);
         const details = await getStripeAccountDetails();
         if (!details) return;
-        setBankDetailsProvided(details.bankDetailsProvided);
         setAccountId(details.accountId);
         setOnboardingComplete(details.onboardingComplete);
       } catch (error) {
@@ -50,7 +134,7 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("charges", true);
         const details = await getCharges();
-        console.log("Charge details:", details);
+        setCharges(details.charges);
       } catch (error) {
         console.error("Error fetching charges:", error);
       } finally {
@@ -63,9 +147,44 @@ export default function HostFinanceTab() {
   useEffect(() => {
     (async () => {
       try {
+        updateLoadingState("hostBalance", true);
+        const details = await getHostBalance();
+        setHostBalance(details ?? { available: [], pending: [] });
+      } catch (error) {
+        console.error("Error fetching host balance:", error);
+      } finally {
+        setLoading(false);
+        updateLoadingState("hostBalance", false);
+      }
+    })();
+  }, []);
+
+  const balanceView = useMemo(() => {
+    if (!hostBalance || !hostBalance.available || !hostBalance.pending) {
+      return {
+        currency: "EUR",
+        availableTotal: 0,
+        incomingTotal: 0,
+        pctAvailable: 0,
+        total: 0,
+      };
+    }
+
+    const currency = hostBalance.available[0]?.currency || hostBalance.pending[0]?.currency || "EUR";
+    const availableTotal = hostBalance.available.reduce((sum, { amount }) => sum + amount, 0);
+    const incomingTotal = hostBalance.pending.reduce((sum, { amount }) => sum + amount, 0);
+    const total = availableTotal + incomingTotal;
+    const pctAvailable = total ? Math.round((availableTotal / total) * 100) : 0;
+
+    return { currency, availableTotal, incomingTotal, pctAvailable, total };
+  }, [hostBalance]);
+
+  useEffect(() => {
+    (async () => {
+      try {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
-        console.log("Payout details:", details);
+        setPayouts(details.payouts);
       } catch (error) {
         console.error("Error fetching payouts:", error);
       } finally {
@@ -126,7 +245,7 @@ export default function HostFinanceTab() {
               <ul>
                 <li>
                   <strong>Step 1: </strong>
-                  &nbsp;
+                  &nbsp;&nbsp;
                   <span className="finance-span" onClick={handleEnlistNavigation}>
                     List your property.
                   </span>
@@ -175,34 +294,160 @@ export default function HostFinanceTab() {
             </div>
 
             <div className="payouts-section">
+              <h3>Recent Charges</h3>
+
+              {loadingStates.charges ? (
+                <div>
+                  <ClipLoader loading />
+                </div>
+              ) : charges.length > 0 ? (
+                <>
+                  <div className="table-wrap">
+                    <table className="payout-table">
+                      <thead>
+                        <tr>
+                          <th>Payment date</th>
+                          <th>Property</th>
+                          <th>Guest</th>
+                          <th>Amount received</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pageSlice(charges, chargesPage).map((charge, idx) => (
+                          <tr key={`${charge.createdDate}-${idx}-${charge.propertyTitle}`}>
+                            <td>{charge.createdDate}</td>
+                            <td className="property-cell">
+                              <img
+                                className="property-thumb"
+                                src={`${S3_URL}${charge.propertyImage}`}
+                                alt={charge.propertyTitle}
+                              />
+                              <div className="property-meta">
+                                <div className="property-title" title={charge.propertyTitle}>
+                                  {charge.propertyTitle}
+                                </div>
+                                <div className="property-sub">Booking nr:&nbsp;{charge.bookingId}</div>
+                                <div className="property-sub">Payment id:&nbsp;{charge.paymentId}</div>
+                              </div>
+                            </td>
+                            <td>{charge.customerName}</td>
+                            <td>{formatMoney(charge.hostReceives, charge.currency)}</td>
+                            <td>
+                              <StatusBadge status={charge.status} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <TablePager page={chargesPage} setPage={setChargesPage} totalPages={chargesTotalPages} />
+                </>
+              ) : (
+                <p>No charges found.</p>
+              )}
+            </div>
+
+            <div className="payouts-section balance-section">
+              <h3>Balance overview</h3>
+
+              {loadingStates.hostBalance ? (
+                <div>
+                  <ClipLoader size={28} color="#0D9813" loading />
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="balance-meter"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={balanceView.pctAvailable}>
+                    <div
+                      className="bm-seg bm-seg--available"
+                      style={{ width: `${balanceView.pctAvailable}%` }}
+                      data-label="Available"
+                      data-value={formatMoney(balanceView.availableTotal, balanceView.currency)}
+                    />
+                    <div
+                      className="bm-seg bm-seg--incoming"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, (balanceView.incomingTotal / balanceView.total) * 100))}%`,
+                      }}
+                      data-label="Incoming"
+                      data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                    />
+                  </div>
+
+                  <div className="balance-list">
+                    <div className="balance-header">
+                      <span>Payment type</span>
+                      <span>Amount</span>
+                    </div>
+                    <div className="balance-divider" />
+
+                    <div className="balance-item">
+                      <div className="balance-left">
+                        <span className="balance-dot balance-dot--incoming" />
+                        <span className="balance-label">Incoming</span>
+                      </div>
+                      <div className="balance-amount">
+                        {formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                      </div>
+                    </div>
+                    <div className="balance-divider" />
+
+                    <div className="balance-item">
+                      <div className="balance-left">
+                        <span className="balance-dot balance-dot--available" />
+                        <span className="balance-label">Available</span>
+                      </div>
+                      <div className="balance-amount">
+                        {formatMoney(balanceView.availableTotal, balanceView.currency)}
+                      </div>
+                    </div>
+                    <div className="balance-divider" />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="payouts-section">
               <h3>Recent Payouts</h3>
               {loadingStates.payouts ? (
                 <div style={{ padding: 12 }}>
                   <ClipLoader size={28} loading />
                 </div>
               ) : payouts.length > 0 ? (
-                <table className="payout-table">
-                  <thead>
-                    <tr>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Arrival Date</th>
-                      <th>Type</th>
-                      <th>Method</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payouts.map((payout) => (
-                      <tr key={payout.id}>
-                        <td>{(payout.amount / 100).toFixed(2)}</td>
-                        <td className={payout.status}>{payout.status}</td>
-                        <td>{payout.arrivalDate}</td>
-                        <td>{payout.type === "instant" ? "Instant" : "Standard"}</td>
-                        <td>{payout.method}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <>
+                  <div className="table-wrap">
+                    <table className="payout-table">
+                      <thead>
+                        <tr>
+                          <th>Payout date</th>
+                          <th>Amount</th>
+                          <th>Status</th>
+                          <th>Payout ID</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pageSlice(payouts, payoutsPage).map((payout) => (
+                          <tr key={payout.id || `${payout.arrivalDate}-${payout.amount}`}>
+                            <td>{payout.arrivalDate}</td>
+                            <td>{formatMoney(payout.amount, payout.currency)}</td>
+                            <td>
+                              <StatusBadge status={payout.status} />
+                            </td>
+                            <td title={payout.id || ""}>{payout.id || " - "}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <TablePager page={payoutsPage} setPage={setPayoutsPage} totalPages={payoutsTotalPages} />
+                </>
               ) : (
                 <p>No payouts found.</p>
               )}
@@ -215,26 +460,6 @@ export default function HostFinanceTab() {
                 <option value="weekly">Weekly (Every Monday)</option>
                 <option value="monthly">Monthly (First of the month)</option>
               </select>
-            </div>
-
-            <div className="payout-status">
-              <h3>Payout Status:</h3>
-              {payouts.length > 0 && payouts.some((payout) => payout.status === "paid") ? (
-                <p className="status-active">✅ Your payouts are active. Last payout: {payouts[0].arrivalDate}.</p>
-              ) : payouts.length > 0 && payouts.some((payout) => payout.status === "pending") ? (
-                <p className="status-pending">
-                  Your payouts are scheduled. Next payout: {payouts.find((p) => p.status === "pending")?.arrivalDate}.
-                </p>
-              ) : payouts.length > 0 && payouts.every((payout) => payout.status !== "paid") ? (
-                <p className="status-error">
-                  There was an issue with your payouts:{" "}
-                  {payouts.find((p) => p.failureMessage)?.failureMessage || "Unknown issue"}.
-                </p>
-              ) : (
-                <p className="status-none">
-                  No payouts found. Once you start receiving bookings, your payouts will appear here.
-                </p>
-              )}
             </div>
           </div>
         </section>

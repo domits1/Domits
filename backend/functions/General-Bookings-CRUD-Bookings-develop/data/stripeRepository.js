@@ -18,7 +18,7 @@ const client = new DynamoDBClient({ region: "eu-north-1" });
 
 class StripeRepository {
 
-    async createPaymentIntent(account_id, propertyId, dates) {
+    async createPaymentIntent(account_id, propertyId, dates, bookingId) {
       try {
         if (!account_id || !propertyId || !dates) {
           console.error(`accountId ${account_id}, property_id ${propertyId}, or dates ${dates} are NaN.`);
@@ -42,6 +42,7 @@ class StripeRepository {
           metadata: {
             propertyId,
             dates: JSON.stringify(dates),
+            bookingId,
           },
         });
 
