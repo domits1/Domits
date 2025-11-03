@@ -22,6 +22,8 @@ const getStatusMeta = (status) => {
       return { label: "Paid", tone: "is-success" };
     case "pending":
       return { label: "Pending", tone: "is-pending" };
+    case "incoming charge - pending":
+      return { label: "Pending", tone: "is-pending" };
     case "failed":
       return { label: "Failed", tone: "is-danger" };
     case "canceled":
@@ -304,7 +306,7 @@ export default function HostFinanceTab() {
                     <table className="payout-table">
                       <thead>
                         <tr>
-                          <th>Date</th>
+                          <th>Payment date</th>
                           <th>Property</th>
                           <th>Guest</th>
                           <th>Amount received</th>
