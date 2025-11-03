@@ -60,23 +60,6 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
 
     // No search UI in this simplified version
 
-    // Compute the latest incoming (from contact) message text for header subtitle
-    const latestIncomingText = (() => {
-        try {
-            if (!Array.isArray(messages) || !contactId) return '';
-            const incoming = messages
-                .filter((m) => m && m.userId === contactId)
-                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            if (incoming.length === 0) return '';
-            const last = incoming[0];
-            if (last && typeof last.text === 'string' && last.text.trim()) return last.text.trim();
-            if (Array.isArray(last?.fileUrls) && last.fileUrls.length > 0) return '📎 Attachment';
-            return '';
-        } catch {
-            return '';
-        }
-    })();
-
     const handleSendAutomatedTestMessages = () => {
         if (!contactId) return;
         const baseTime = Date.now();
@@ -221,9 +204,6 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                     <img src={contactImage || profileImage} alt={contactName} className="profile-img" />
                     <div className="chat-header-info">
                         <h3>{contactName}</h3>
-                        {latestIncomingText && (
-                            <p style={{ color: '#111', marginTop: '2px' }}>{latestIncomingText}</p>
-                        )}
                     </div>
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingRight: '1rem' }}>
                         <input
