@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./HostHomepage.scss"; // blijft hetzelfde
+import "./HostHomepage.scss";
 import styles from "./HostDashboard.module.scss";
 import StripeModal from "./StripeModal.js";
 import { Auth } from "aws-amplify";
