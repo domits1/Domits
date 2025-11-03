@@ -337,7 +337,7 @@ function HostListings() {
                       </div>
                     ) : (
                       <div className={styles.emptyState}>
-                        <p>You havent placed any accommodation yet.</p>
+                        <p>You haven't placed any accommodation yet.</p>
                       </div>
                     )}
                   </section>
