@@ -492,7 +492,7 @@ export default function HostFinanceTab() {
               <div className="pf-grid">
                 <div className="pf-row">
                   <label className="pf-label" htmlFor="pf-interval">
-                    Interval
+                    Payout frequency
                   </label>
                   <select
                     id="pf-interval"
@@ -505,7 +505,7 @@ export default function HostFinanceTab() {
                       if (v !== "monthly") setMonthlyAnchor(null);
                     }}>
                     <option value="" disabled>
-                      Select interval…
+                      Select payout frequency
                     </option>
                     <option value="daily">Daily (24h after check-out)</option>
                     <option value="weekly">Weekly</option>
