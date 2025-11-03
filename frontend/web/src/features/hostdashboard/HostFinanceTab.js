@@ -507,7 +507,7 @@ export default function HostFinanceTab() {
                     <option value="" disabled>
                       Select payout frequency
                     </option>
-                    <option value="daily">Daily (24h after check-out)</option>
+                    <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
                   </select>
