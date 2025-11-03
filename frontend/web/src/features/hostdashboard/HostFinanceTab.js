@@ -489,67 +489,74 @@ export default function HostFinanceTab() {
             <div className="payout-frequency">
               <h3>Payout Frequency</h3>
 
-              <label className="pf-label" htmlFor="pf-interval">
-                Interval
-              </label>
-              <select
-                id="pf-interval"
-                value={interval ?? ""}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setInterval(v);
-                  if (v !== "weekly") setWeeklyAnchor(null);
-                  if (v !== "monthly") setMonthlyAnchor(null);
-                }}>
-                <option value="" disabled>
-                  Select interval…
-                </option>
-                <option value="daily">Daily (24h after check-out)</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-
-              {interval === "weekly" && (
+              <div className="pf-grid">
                 <div className="pf-row">
-                  <label className="pf-label" htmlFor="pf-weekday">
-                    Weekly anchor
+                  <label className="pf-label" htmlFor="pf-interval">
+                    Interval
                   </label>
                   <select
-                    id="pf-weekday"
-                    value={weekly_anchor ?? ""}
-                    onChange={(e) => setWeeklyAnchor(e.target.value.toLowerCase())}>
+                    id="pf-interval"
+                    className="pf-select"
+                    value={interval ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setInterval(v);
+                      if (v !== "weekly") setWeeklyAnchor(null);
+                      if (v !== "monthly") setMonthlyAnchor(null);
+                    }}>
                     <option value="" disabled>
-                      Select weekday…
+                      Select interval…
                     </option>
-                    {WEEKDAYS.map((d) => (
-                      <option key={d} value={d}>
-                        {d.charAt(0).toUpperCase() + d.slice(1)}
-                      </option>
-                    ))}
+                    <option value="daily">Daily (24h after check-out)</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
                   </select>
                 </div>
-              )}
 
-              {interval === "monthly" && (
-                <div className="pf-row">
-                  <label className="pf-label" htmlFor="pf-monthday">
-                    Monthly anchor (day)
-                  </label>
-                  <select
-                    id="pf-monthday"
-                    value={monthly_anchor ?? ""}
-                    onChange={(e) => setMonthlyAnchor(Number(e.target.value))}>
-                    <option value="" disabled>
-                      Select day…
-                    </option>
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                      <option key={d} value={d} disabled={d > daysInThisMonth}>
-                        {d}
+                {interval === "weekly" && (
+                  <div className="pf-row">
+                    <label className="pf-label" htmlFor="pf-weekday">
+                      Weekly anchor
+                    </label>
+                    <select
+                      id="pf-weekday"
+                      className="pf-select"
+                      value={weekly_anchor ?? ""}
+                      onChange={(e) => setWeeklyAnchor(e.target.value.toLowerCase())}>
+                      <option value="" disabled>
+                        Select weekday…
                       </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+                      {WEEKDAYS.map((d) => (
+                        <option key={d} value={d}>
+                          {d.charAt(0).toUpperCase() + d.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {interval === "monthly" && (
+                  <div className="pf-row">
+                    <label className="pf-label" htmlFor="pf-monthday">
+                      Monthly anchor (day)
+                    </label>
+                    <select
+                      id="pf-monthday"
+                      className="pf-select"
+                      value={monthly_anchor ?? ""}
+                      onChange={(e) => setMonthlyAnchor(Number(e.target.value))}>
+                      <option value="" disabled>
+                        Select day…
+                      </option>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                        <option key={d} value={d} disabled={d > daysInThisMonth}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
 
               <small className="pf-note">
                 If your scheduled payout date falls on a weekend, a holiday, or a day that doesn't exist in that month,
@@ -559,7 +566,9 @@ export default function HostFinanceTab() {
               {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
 
               <div className="pf-actions">
-                <button onClick={handlePayoutSchedule}>Save payout schedule</button>
+                <button className="btn btn-primary" onClick={handlePayoutSchedule}>
+                  Save payout schedule
+                </button>
               </div>
             </div>
           </div>
