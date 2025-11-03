@@ -10,6 +10,8 @@ import { NotFoundException } from "../../util/exception/NotFoundException.js";
 const getAuth = (event) => event.headers.Authorization;
 const toAmount = (cents) => cents / 100;
 
+const WEEKDAYS = Object.freeze(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
+
 export default class StripePayoutsService {
   constructor() {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -122,7 +124,7 @@ export default class StripePayoutsService {
       }));
 
     const txns = await this.getHostPendingAmount(event);
-    const upcomingPayouts = txns.details.upcomingByDate; 
+    const upcomingPayouts = txns.details.upcomingByDate;
 
     const { forecast, cutoffTs } = await this.getForecastFromBalance(event);
 
@@ -174,7 +176,7 @@ export default class StripePayoutsService {
 
     const balance = await this.stripe.balance.retrieve(
       {},
-      {stripeAccount: stripeAccount.account_id,}
+      { stripeAccount: stripeAccount.account_id }
     );
 
     const available = balance.available.map((balance) => ({
@@ -267,8 +269,7 @@ export default class StripePayoutsService {
       nextDate = new Date(nowDate);
       nextDate.setDate(nowDate.getDate() + 1);
     } else if (schedule.interval === "weekly" && schedule.weekly_anchor) {
-      const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-      const target = weekdays.indexOf(schedule.weekly_anchor.toLowerCase());
+      const target = WEEKDAYS.indexOf(String(schedule.weekly_anchor).toLowerCase());
       const diff = (target - mondayIndex(nowDate) + 7) % 7 || 7;
       nextDate = new Date(nowDate);
       nextDate.setDate(nowDate.getDate() + diff);
@@ -349,13 +350,12 @@ export default class StripePayoutsService {
     }
 
     if (typeof weekly_anchor === "string") weekly_anchor = weekly_anchor.toLowerCase();
-    const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
     const schedule = { interval };
 
     if (interval === "weekly") {
-      if (!weekly_anchor || !weekdays.includes(weekly_anchor)) {
-        throw new BadRequestException(`weekly_anchor must be one of: ${weekdays.join(", ")}`);
+      if (!weekly_anchor || !WEEKDAYS.includes(weekly_anchor)) {
+        throw new BadRequestException(`weekly_anchor must be one of: ${WEEKDAYS.join(", ")}`);
       }
       schedule.weekly_anchor = weekly_anchor;
     }
