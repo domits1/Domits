@@ -173,10 +173,7 @@ export default class StripePayoutsService {
       throw new NotFoundException("No Stripe account found for this user.");
     }
 
-    const balance = await this.stripe.balance.retrieve(
-      {},
-      { stripeAccount: stripeAccount.account_id }
-    );
+    const balance = await this.stripe.balance.retrieve({}, { stripeAccount: stripeAccount.account_id });
 
     const available = balance.available.map((balance) => ({
       currency: balance.currency.toUpperCase(),
@@ -279,7 +276,11 @@ export default class StripePayoutsService {
     }
 
     if (!nextDate) return { forecast: null, cutoffTs: null };
-    const cutoffTs = Math.floor(nextDate.getTime() / 1000);
+
+    const cutoffEndOfDay = new Date(nextDate);
+    cutoffEndOfDay.setUTCHours(23, 59, 59, 999);
+    const cutoffTs = Math.floor(cutoffEndOfDay.getTime() / 1000);
+
     const nowTs = Math.floor(Date.now() / 1000);
 
     const balance = await this.stripe.balance.retrieve({}, { stripeAccount: stripeAccount.account_id });
