@@ -9,7 +9,7 @@ async function get() {
       resource: "/retrieve-user-payouts",
       headers: {
         Authorization:
-          await getHostAuthToken,
+          await getHostAuthToken(),
       },
     })
   );

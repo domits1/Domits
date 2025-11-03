@@ -1,7 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
-import { getStripeAccountDetails, createStripeAccount, getCharges, getPayouts } from "./services/stripeAccountService";
+import {
+  getStripeAccountDetails,
+  createStripeAccount,
+  getCharges,
+  getPayouts,
+  getHostBalance,
+} from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
@@ -15,6 +21,8 @@ const getStatusMeta = (status) => {
     case "paid":
       return { label: "Paid", tone: "is-success" };
     case "pending":
+      return { label: "Pending", tone: "is-pending" };
+    case "incoming charge - pending":
       return { label: "Pending", tone: "is-pending" };
     case "failed":
       return { label: "Failed", tone: "is-danger" };
@@ -73,6 +81,7 @@ export default function HostFinanceTab() {
   const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState([]);
   const [charges, setCharges] = useState([]);
+  const [hostBalance, setHostBalance] = useState({ available: [], pending: [] });
   const [accountId, setAccountId] = useState(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -82,6 +91,7 @@ export default function HostFinanceTab() {
     account: true,
     charges: false,
     payouts: false,
+    hostBalance: false,
   });
 
   const updateLoadingState = (key, value) => setLoadingStates((prev) => ({ ...prev, [key]: value }));
@@ -133,6 +143,41 @@ export default function HostFinanceTab() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        updateLoadingState("hostBalance", true);
+        const details = await getHostBalance();
+        setHostBalance(details ?? { available: [], pending: [] });
+      } catch (error) {
+        console.error("Error fetching host balance:", error);
+      } finally {
+        setLoading(false);
+        updateLoadingState("hostBalance", false);
+      }
+    })();
+  }, []);
+
+  const balanceView = useMemo(() => {
+    if (!hostBalance || !hostBalance.available || !hostBalance.pending) {
+      return {
+        currency: "EUR",
+        availableTotal: 0,
+        incomingTotal: 0,
+        pctAvailable: 0,
+        total: 0,
+      };
+    }
+
+    const currency = hostBalance.available[0]?.currency || hostBalance.pending[0]?.currency || "EUR";
+    const availableTotal = hostBalance.available.reduce((sum, { amount }) => sum + amount, 0);
+    const incomingTotal = hostBalance.pending.reduce((sum, { amount }) => sum + amount, 0);
+    const total = availableTotal + incomingTotal;
+    const pctAvailable = total ? Math.round((availableTotal / total) * 100) : 0;
+
+    return { currency, availableTotal, incomingTotal, pctAvailable, total };
+  }, [hostBalance]);
 
   useEffect(() => {
     (async () => {
@@ -261,7 +306,7 @@ export default function HostFinanceTab() {
                     <table className="payout-table">
                       <thead>
                         <tr>
-                          <th>Date</th>
+                          <th>Payment date</th>
                           <th>Property</th>
                           <th>Guest</th>
                           <th>Amount received</th>
@@ -304,6 +349,70 @@ export default function HostFinanceTab() {
               )}
             </div>
 
+            <div className="payouts-section balance-section">
+              <h3>Balance overview</h3>
+
+              {loadingStates.hostBalance ? (
+                <div>
+                  <ClipLoader size={28} color="#0D9813" loading />
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="balance-meter"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={balanceView.pctAvailable}>
+                    <div
+                      className="bm-seg bm-seg--available"
+                      style={{ width: `${balanceView.pctAvailable}%` }}
+                      data-label="Available"
+                      data-value={formatMoney(balanceView.availableTotal, balanceView.currency)}
+                    />
+                    <div
+                      className="bm-seg bm-seg--incoming"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, (balanceView.incomingTotal / balanceView.total) * 100))}%`,
+                      }}
+                      data-label="Incoming"
+                      data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                    />
+                  </div>
+
+                  <div className="balance-list">
+                    <div className="balance-header">
+                      <span>Payment type</span>
+                      <span>Amount</span>
+                    </div>
+                    <div className="balance-divider" />
+
+                    <div className="balance-item">
+                      <div className="balance-left">
+                        <span className="balance-dot balance-dot--incoming" />
+                        <span className="balance-label">Incoming</span>
+                      </div>
+                      <div className="balance-amount">
+                        {formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                      </div>
+                    </div>
+                    <div className="balance-divider" />
+
+                    <div className="balance-item">
+                      <div className="balance-left">
+                        <span className="balance-dot balance-dot--available" />
+                        <span className="balance-label">Available</span>
+                      </div>
+                      <div className="balance-amount">
+                        {formatMoney(balanceView.availableTotal, balanceView.currency)}
+                      </div>
+                    </div>
+                    <div className="balance-divider" />
+                  </div>
+                </>
+              )}
+            </div>
+
             <div className="payouts-section">
               <h3>Recent Payouts</h3>
               {loadingStates.payouts ? (
@@ -316,7 +425,7 @@ export default function HostFinanceTab() {
                     <table className="payout-table">
                       <thead>
                         <tr>
-                          <th>Arrival date</th>
+                          <th>Payout date</th>
                           <th>Amount</th>
                           <th>Status</th>
                           <th>Payout ID</th>
