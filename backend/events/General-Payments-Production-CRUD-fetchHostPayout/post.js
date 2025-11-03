@@ -9,7 +9,7 @@ async function post() {
       resource: "/set-payout-schedule",
       headers: {
         Authorization:
-            await getHostAuthToken,
+            await getHostAuthToken(),
       },
       body: JSON.stringify({
         interval: "monthly",
