@@ -172,9 +172,10 @@ export default class StripePayoutsService {
       throw new NotFoundException("No Stripe account found for this user.");
     }
 
-    const balance = await this.stripe.balance.retrieve({
-      stripeAccount: stripeAccount.account_id,
-    });
+    const balance = await this.stripe.balance.retrieve(
+      {},
+      {stripeAccount: stripeAccount.account_id,}
+    );
 
     const available = balance.available.map((balance) => ({
       currency: balance.currency.toUpperCase(),
