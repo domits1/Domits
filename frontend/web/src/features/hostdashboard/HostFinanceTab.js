@@ -13,6 +13,7 @@ import ClipLoader from "react-spinners/ClipLoader";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const MAX_ITEMS_PER_PAGE = 5;
+const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
 const getStatusMeta = (status) => {
   const s = String(status).toLowerCase();
@@ -87,9 +88,12 @@ export default function HostFinanceTab() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
+  const [chargesPage, setChargesPage] = useState(1);
+  const [payoutsPage, setPayoutsPage] = useState(1);
   const [interval, setInterval] = useState(null);
   const [weekly_anchor, setWeeklyAnchor] = useState(null);
   const [monthly_anchor, setMonthlyAnchor] = useState(null);
+  const [toast, setToast] = useState(null);
   const [loadingStates, setLoadingStates] = useState({
     account: true,
     charges: false,
@@ -102,29 +106,28 @@ export default function HostFinanceTab() {
   const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
 
-  const [chargesPage, setChargesPage] = useState(1);
-  const [payoutsPage, setPayoutsPage] = useState(1);
-
   const chargesTotalPages = Math.max(1, Math.ceil(charges.length / MAX_ITEMS_PER_PAGE));
   const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / MAX_ITEMS_PER_PAGE));
+
   useEffect(() => {
     setChargesPage(1);
   }, [charges]);
+
   useEffect(() => {
     setPayoutsPage(1);
   }, [payouts]);
 
-  // bovenin je component (buiten return), helpers:
-  const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
-
   function getDaysInMonth(date = new Date()) {
-    // aantal dagen in de huidige kalendermaand
     const y = date.getFullYear();
-    const m = date.getMonth(); // 0..11
+    const m = date.getMonth();
     return new Date(y, m + 1, 0).getDate();
   }
 
   const daysInThisMonth = getDaysInMonth();
+
+  function showToast(message, type = "success") {
+    setToast({ message, type });
+  }
 
   useEffect(() => {
     (async () => {
@@ -241,9 +244,12 @@ export default function HostFinanceTab() {
       if (v === "weekly" && weekly_anchor) payload.weekly_anchor = weekly_anchor.toLowerCase();
       if (v === "monthly" && typeof monthly_anchor === "number") payload.monthly_anchor = monthly_anchor;
 
+      showToast("Payout schedule updated");
+
       await setPayoutSchedule(payload);
     } catch (error) {
       console.error("Error setting payout schedule:", error);
+      showToast("Something went wrong, please contact support.", "error");
     }
   }
 
@@ -479,7 +485,7 @@ export default function HostFinanceTab() {
                 <p>No payouts found.</p>
               )}
             </div>
-            
+
             <div className="payout-frequency">
               <h3>Payout Frequency</h3>
 
@@ -549,6 +555,8 @@ export default function HostFinanceTab() {
                 If your scheduled payout date falls on a weekend, a holiday, or a day that doesn't exist in that month,
                 your payout will begin the next business day.
               </small>
+
+              {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
 
               <div className="pf-actions">
                 <button onClick={handlePayoutSchedule}>Save payout schedule</button>
