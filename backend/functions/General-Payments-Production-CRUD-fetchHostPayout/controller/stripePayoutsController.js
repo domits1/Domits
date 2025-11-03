@@ -123,4 +123,27 @@ export default class StripePayoutsController {
       };
     }
   }
+
+  async getPayoutSchedule(event) {
+    try {
+      const response = await this.stripePayoutService.getPayoutSchedule(event);
+
+      return {
+        statusCode: response.statusCode || 200,
+        headers: responseHeaderJSON,
+        response: {
+          message: response.message,
+          details: response.details,
+        },
+      };
+    } catch (error) {
+      return {
+        statusCode: error.statusCode || 500,
+        headers: responseHeaderJSON,
+        response: { 
+          message: error.message || "Something went wrong, please contact support." 
+        },
+      };
+    }
+  }
 }
