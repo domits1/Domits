@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './ChatPage.module.css';
 import spinner from "../../../images/spinnner.gif";
 import ContactItem from "./ContactItem_Guest";
+import { toast } from 'react-toastify';
 
 const Chat = ({ user }) => {
     const [chats, setChats] = useState([]);
@@ -63,6 +64,10 @@ const Chat = ({ user }) => {
                     updatedChats.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
                     return updatedChats;
                 });
+                if (newChat && newChat.recipientId === userId && newChat.userId !== userId) {
+                    const text = newChat.text && newChat.text.trim() !== '' ? newChat.text : 'You have a new message';
+                    toast.info(text);
+                }
             },
             error: error => console.error("Subscription error:", error)
         });
@@ -344,6 +349,7 @@ const Chat = ({ user }) => {
             });
 
             console.log("Message sent successfully:", result);
+            toast.success('Message sent');
 
             setNewMessage('');
             setShowDate(true);
@@ -353,6 +359,7 @@ const Chat = ({ user }) => {
             await fetchChatUsers();
         } catch (error) {
             console.error("Error sending message:", error);
+            toast.error('Failed to send message');
         }
     };
 

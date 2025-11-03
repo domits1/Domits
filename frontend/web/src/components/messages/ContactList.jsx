@@ -130,7 +130,9 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, isChatOpe
                     latestMessage: { 
                         text: displayText, 
                         createdAt: message.createdAt,
-                        fileUrls: message.fileUrls 
+                        fileUrls: message.fileUrls,
+                        userId: message.userId,
+                        recipientId: message.recipientId
                     }
                 };
             }
