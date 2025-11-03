@@ -127,7 +127,7 @@ export default class StripePayoutsService {
         arrivalDate: x.availableOn,
         amount: x.amount,
         currency: x.currency,
-        status: "pending",
+        status: "incoming charge - pending",
         id: null,
       })),
       ...payoutDetails,
