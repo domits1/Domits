@@ -106,7 +106,6 @@ export default class StripePayoutsService {
 
     const payouts = await this.stripe.payouts.list({ stripeAccount: stripeAccount.account_id });
 
-    // 👉 Sorteer payouts op nieuwste eerst vóór het mappen
     const payoutDetails = payouts.data
       .sort((a, b) => (b.arrival_date || 0) - (a.arrival_date || 0))
       .map((payout) => ({
