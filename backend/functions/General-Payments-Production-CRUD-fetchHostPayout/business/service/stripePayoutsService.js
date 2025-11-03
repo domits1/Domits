@@ -7,11 +7,10 @@ import AuthManager from "../../auth/authManager.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 
+const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
 const getAuth = (event) => event.headers.Authorization;
 const toAmount = (cents) => cents / 100;
-
-const WEEKDAYS = Object.freeze(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
-
 export default class StripePayoutsService {
   constructor() {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
