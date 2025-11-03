@@ -101,3 +101,22 @@ export async function getHostBalance() {
   const data = await response.json();
   return data.details;
 }
+
+export async function setPayoutSchedule(event) {
+  const token = await getAccessToken();
+  const response = await fetch(
+    "https://4ac2ngbvlb.execute-api.eu-north-1.amazonaws.com/deployment/payments/set-payout-schedule",
+    {
+      method: "POST",
+      headers: { Authorization: token },
+      body: JSON.stringify(event),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.details;
+}
