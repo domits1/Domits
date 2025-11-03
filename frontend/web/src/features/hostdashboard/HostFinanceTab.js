@@ -23,7 +23,7 @@ const getStatusMeta = (status) => {
     case "pending":
       return { label: "Pending", tone: "is-pending" };
     case "incoming charge - pending":
-      return { label: "Pending", tone: "is-pending" };
+      return { label: "incoming charge - pending", tone: "is-pending" };
     case "failed":
       return { label: "Failed", tone: "is-danger" };
     case "canceled":
