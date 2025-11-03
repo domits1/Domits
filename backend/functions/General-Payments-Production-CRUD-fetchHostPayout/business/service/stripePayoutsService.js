@@ -382,4 +382,33 @@ export default class StripePayoutsService {
       },
     };
   }
+
+  async getPayoutSchedule(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required fields: cognitoUserId");
+    }
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
+
+    const account = await this.stripe.accounts.retrieve(stripeAccount.account_id);
+
+    const schedule = account?.settings?.payouts?.schedule || {};
+    const details = {
+      accountId: account.id,
+      interval: schedule.interval ?? null,
+      weekly_anchor: schedule.weekly_anchor ?? null,
+      monthly_anchor: schedule.monthly_anchor ?? null,
+    };
+
+    return {
+      statusCode: 200,
+      message: "Payout schedule fetched",
+      details,
+    };
+  }
 }
