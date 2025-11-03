@@ -7,6 +7,7 @@ import {
   getCharges,
   getPayouts,
   getHostBalance,
+  setPayoutSchedule,
 } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
 
@@ -86,7 +87,9 @@ export default function HostFinanceTab() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(null);
-  const [payoutFrequency, setPayoutFrequency] = useState("weekly");
+  const [interval, setInterval] = useState(null);
+  const [weekly_anchor, setWeeklyAnchor] = useState(null);
+  const [monthly_anchor, setMonthlyAnchor] = useState(null);
   const [loadingStates, setLoadingStates] = useState({
     account: true,
     charges: false,
@@ -98,7 +101,6 @@ export default function HostFinanceTab() {
 
   const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
-  const handlePayoutFrequencyChange = (e) => setPayoutFrequency(e.target.value);
 
   const [chargesPage, setChargesPage] = useState(1);
   const [payoutsPage, setPayoutsPage] = useState(1);
@@ -111,6 +113,18 @@ export default function HostFinanceTab() {
   useEffect(() => {
     setPayoutsPage(1);
   }, [payouts]);
+
+  // bovenin je component (buiten return), helpers:
+  const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+
+  function getDaysInMonth(date = new Date()) {
+    // aantal dagen in de huidige kalendermaand
+    const y = date.getFullYear();
+    const m = date.getMonth(); // 0..11
+    return new Date(y, m + 1, 0).getDate();
+  }
+
+  const daysInThisMonth = getDaysInMonth();
 
   useEffect(() => {
     (async () => {
@@ -217,6 +231,19 @@ export default function HostFinanceTab() {
       console.error("Error during Stripe action:", error);
       setProcessingStep(null);
       setIsProcessing(false);
+    }
+  }
+
+  async function handlePayoutSchedule() {
+    try {
+      const v = String(interval || "").toLowerCase();
+      const payload = { interval: v };
+      if (v === "weekly" && weekly_anchor) payload.weekly_anchor = weekly_anchor.toLowerCase();
+      if (v === "monthly" && typeof monthly_anchor === "number") payload.monthly_anchor = monthly_anchor;
+
+      await setPayoutSchedule(payload);
+    } catch (error) {
+      console.error("Error setting payout schedule:", error);
     }
   }
 
@@ -452,14 +479,80 @@ export default function HostFinanceTab() {
                 <p>No payouts found.</p>
               )}
             </div>
-
+            
             <div className="payout-frequency">
               <h3>Payout Frequency</h3>
-              <select value={payoutFrequency} onChange={handlePayoutFrequencyChange}>
+
+              <label className="pf-label" htmlFor="pf-interval">
+                Interval
+              </label>
+              <select
+                id="pf-interval"
+                value={interval ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setInterval(v);
+                  if (v !== "weekly") setWeeklyAnchor(null);
+                  if (v !== "monthly") setMonthlyAnchor(null);
+                }}>
+                <option value="" disabled>
+                  Select interval…
+                </option>
                 <option value="daily">Daily (24h after check-out)</option>
-                <option value="weekly">Weekly (Every Monday)</option>
-                <option value="monthly">Monthly (First of the month)</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
               </select>
+
+              {interval === "weekly" && (
+                <div className="pf-row">
+                  <label className="pf-label" htmlFor="pf-weekday">
+                    Weekly anchor
+                  </label>
+                  <select
+                    id="pf-weekday"
+                    value={weekly_anchor ?? ""}
+                    onChange={(e) => setWeeklyAnchor(e.target.value.toLowerCase())}>
+                    <option value="" disabled>
+                      Select weekday…
+                    </option>
+                    {WEEKDAYS.map((d) => (
+                      <option key={d} value={d}>
+                        {d.charAt(0).toUpperCase() + d.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {interval === "monthly" && (
+                <div className="pf-row">
+                  <label className="pf-label" htmlFor="pf-monthday">
+                    Monthly anchor (day)
+                  </label>
+                  <select
+                    id="pf-monthday"
+                    value={monthly_anchor ?? ""}
+                    onChange={(e) => setMonthlyAnchor(Number(e.target.value))}>
+                    <option value="" disabled>
+                      Select day…
+                    </option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={d} disabled={d > daysInThisMonth}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <small className="pf-note">
+                If your scheduled payout date falls on a weekend, a holiday, or a day that doesn't exist in that month,
+                your payout will begin the next business day.
+              </small>
+
+              <div className="pf-actions">
+                <button onClick={handlePayoutSchedule}>Save payout schedule</button>
+              </div>
             </div>
           </div>
         </section>
