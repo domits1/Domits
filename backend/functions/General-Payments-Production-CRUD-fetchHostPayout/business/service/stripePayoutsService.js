@@ -106,32 +106,42 @@ export default class StripePayoutsService {
 
     const payouts = await this.stripe.payouts.list({ stripeAccount: stripeAccount.account_id });
 
-    const payoutDetails = payouts.data.map((payout) => ({
-      id: payout.id,
-      amount: toAmount(payout.amount),
-      currency: payout.currency.toUpperCase(),
-      arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-      status: payout.status,
-      method: payout.method,
-    }));
+    // 👉 Sorteer payouts op nieuwste eerst vóór het mappen
+    const payoutDetails = payouts.data
+      .sort((a, b) => (b.arrival_date || 0) - (a.arrival_date || 0))
+      .map((payout) => ({
+        id: payout.id,
+        amount: toAmount(payout.amount),
+        currency: payout.currency.toUpperCase(),
+        arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+        status: payout.status,
+        method: payout.method,
+      }));
 
     const txns = await this.getHostPendingAmount(event);
     const upcomingPayouts = txns.details.upcomingByDate;
 
-    const merged = [
+    const { forecast } = await this.getForecastFromBalance(event);
+
+    const merged = [];
+
+    if (forecast) merged.push(forecast);
+
+    merged.push(
       ...upcomingPayouts.map((x) => ({
         arrivalDate: x.availableOn,
         amount: x.amount,
         currency: x.currency,
         status: "incoming charge - pending",
         id: null,
-      })),
-      ...payoutDetails,
-    ];
+      }))
+    );
+
+    merged.push(...payoutDetails);
 
     return {
       statusCode: 200,
@@ -226,6 +236,61 @@ export default class StripePayoutsService {
       message: "Upcoming balance transactions fetched successfully",
       details: { upcomingByDate },
     };
+  }
+
+  async getForecastFromBalance(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+    if (!cognitoUserId) throw new BadRequestException("Missing required fields: cognitoUserId");
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    if (!stripeAccount?.account_id) throw new NotFoundException("No Stripe account found for this user.");
+
+    const balance = await this.stripe.balance.retrieve({}, { stripeAccount: stripeAccount.account_id });
+
+    const account = await this.stripe.accounts.retrieve(stripeAccount.account_id);
+    const schedule = account.settings?.payouts?.schedule || {};
+    let forecast = null;
+
+    const availableNow = (balance.available || []).reduce((sum, e) => sum + e.amount, 0) / 100;
+
+    if (schedule.interval && schedule.interval !== "manual" && availableNow > 0) {
+      const nowDate = new Date();
+      const mondayIndex = (d) => (d.getDay() + 6) % 7;
+
+      let nextDate = null;
+      if (schedule.interval === "daily") {
+        nextDate = new Date(nowDate);
+        nextDate.setDate(nowDate.getDate() + 1);
+      } else if (schedule.interval === "weekly" && schedule.weekly_anchor) {
+        const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+        const target = weekdays.indexOf(schedule.weekly_anchor.toLowerCase());
+        const diff = (target - mondayIndex(nowDate) + 7) % 7 || 7;
+        nextDate = new Date(nowDate);
+        nextDate.setDate(nowDate.getDate() + diff);
+      } else if (schedule.interval === "monthly" && schedule.monthly_anchor) {
+        const y = nowDate.getFullYear();
+        const m = nowDate.getDate() < schedule.monthly_anchor ? nowDate.getMonth() : nowDate.getMonth() + 1;
+        nextDate = new Date(y, m, schedule.monthly_anchor);
+      }
+
+      if (nextDate) {
+        forecast = {
+          id: null,
+          amount: availableNow,
+          currency: (balance.available?.[0]?.currency || "eur").toUpperCase(),
+          arrivalDate: nextDate.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          status: "forecasted (not yet started)",
+          method: "automatic",
+        };
+      }
+    }
+
+    return { forecast };
   }
 
   async setPayoutSchedule(event) {
