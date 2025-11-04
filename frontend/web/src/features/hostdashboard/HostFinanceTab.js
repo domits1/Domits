@@ -91,7 +91,7 @@ export default function HostFinanceTab() {
   const [processingStep, setProcessingStep] = useState(null);
   const [chargesPage, setChargesPage] = useState(1);
   const [payoutsPage, setPayoutsPage] = useState(1);
-  const [interval, setInterval] = useState(null);
+  const [payoutInterval, setPayoutInterval] = useState(null);
   const [weekly_anchor, setWeeklyAnchor] = useState(null);
   const [monthly_anchor, setMonthlyAnchor] = useState(null);
   const [toast, setToast] = useState(null);
@@ -240,9 +240,9 @@ export default function HostFinanceTab() {
 
   async function handlePayoutSchedule() {
     try {
-      const v = String(interval || "").toLowerCase();
+      const v = String(payoutInterval || "").toLowerCase();
       const payload = { interval: v };
-      if (v === "weekly" && weekly_anchor) payload.weekly_anchor = weekly_anchor.toLowerCase();
+      if (v === "weekly" && weekly_anchor) payload.weekly_anchor = String(weekly_anchor).toLowerCase();
       if (v === "monthly" && typeof monthly_anchor === "number") payload.monthly_anchor = monthly_anchor;
 
       showToast("Payout schedule updated");
@@ -259,7 +259,7 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("getPayoutSchedule", true);
         const details = await getPayoutSchedule();
-        setInterval(details?.interval || null);
+        setPayoutInterval(details?.interval || null);
         setWeeklyAnchor(details?.weekly_anchor || null);
         setMonthlyAnchor(details?.monthly_anchor || null);
       } catch (error) {
@@ -515,10 +515,10 @@ export default function HostFinanceTab() {
                   <select
                     id="pf-interval"
                     className="pf-select"
-                    value={interval ?? ""}
+                    value={payoutInterval ?? ""}
                     onChange={(e) => {
                       const v = e.target.value;
-                      setInterval(v);
+                      setPayoutInterval(v);
                       if (v !== "weekly") setWeeklyAnchor(null);
                       if (v !== "monthly") setMonthlyAnchor(null);
                     }}>
@@ -531,7 +531,7 @@ export default function HostFinanceTab() {
                   </select>
                 </div>
 
-                {interval === "weekly" && (
+                {payoutInterval === "weekly" && (
                   <div className="pf-row">
                     <label className="pf-label" htmlFor="pf-weekday">
                       Weekly anchor
@@ -553,7 +553,7 @@ export default function HostFinanceTab() {
                   </div>
                 )}
 
-                {interval === "monthly" && (
+                {payoutInterval === "monthly" && (
                   <div className="pf-row">
                     <label className="pf-label" htmlFor="pf-monthday">
                       Monthly anchor (day)
