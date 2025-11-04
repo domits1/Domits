@@ -127,7 +127,7 @@ export default class StripePayoutsService {
         arrivalDate: x.availableOn,
         amount: x.amount,
         currency: x.currency,
-        status: "pending",
+        status: "incoming charge - pending",
         id: null,
       })),
       ...payoutDetails,
@@ -225,6 +225,71 @@ export default class StripePayoutsService {
       statusCode: 200,
       message: "Upcoming balance transactions fetched successfully",
       details: { upcomingByDate },
+    };
+  }
+
+  async setPayoutSchedule(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+    if (!cognitoUserId) throw new BadRequestException("Missing required fields: cognitoUserId");
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    if (!stripeAccount?.account_id) throw new NotFoundException("No Stripe account found for this user.");
+
+    const body = JSON.parse(event.body || "{}");
+    let { interval, weekly_anchor, monthly_anchor } = body;
+
+    if (!interval) throw new BadRequestException("Missing required fields: interval");
+    interval = interval.toLowerCase();
+
+    const allowed = ["manual", "daily", "weekly", "monthly"];
+    if (!allowed.includes(interval)) {
+      throw new BadRequestException(`interval must be one of: ${allowed.join(", ")}`);
+    }
+
+    if (interval === "manual") {
+      const balanceRes = await this.getHostBalance(event);
+      const availableList = balanceRes.details.available;
+
+      const totalAvailableCents = availableList.reduce((sum, { amount }) => sum + amount * 100, 0);
+
+      if (totalAvailableCents <= 0) {
+        throw new BadRequestException("There is no available balance to set payout schedule.");
+      }
+    }
+
+    if (typeof weekly_anchor === "string") weekly_anchor = weekly_anchor.toLowerCase();
+    const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+    const schedule = { interval };
+
+    if (interval === "weekly") {
+      if (!weekly_anchor || !weekdays.includes(weekly_anchor)) {
+        throw new BadRequestException(`weekly_anchor must be one of: ${weekdays.join(", ")}`);
+      }
+      schedule.weekly_anchor = weekly_anchor;
+    }
+
+    if (interval === "monthly") {
+      if (!Number.isInteger(monthly_anchor) || monthly_anchor < 1 || monthly_anchor > 31) {
+        throw new BadRequestException("monthly_anchor must be an integer between 1 and 31");
+      }
+      schedule.monthly_anchor = monthly_anchor;
+    }
+
+    const account = await this.stripe.accounts.update(stripeAccount.account_id, {
+      settings: { payouts: { schedule } },
+    });
+
+    return {
+      statusCode: 200,
+      message: "Payout schedule updated",
+      details: {
+        accountId: account.id,
+        interval: account.settings.payouts.schedule.interval,
+        weekly_anchor: account.settings.payouts.schedule.weekly_anchor ?? null,
+        monthly_anchor: account.settings.payouts.schedule.monthly_anchor ?? null,
+      },
     };
   }
 }

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
-import "./ALOSCard.scss";
-import { HostRevenueService } from "../services/HostRevenueService";
 
 const ALOSCard = () => {
   const [alos, setAlos] = useState(0);
@@ -32,22 +30,8 @@ const ALOSCard = () => {
     setError(null);
 
     try {
-      const data = await HostRevenueService.fetchMetricData(
-        cognitoUserId,
-        "averageLengthOfStay",
-        filterType,
-        startDate,
-        endDate
-      );
-
-      let value = 0;
-      if (typeof data === "number") value = data;
-      else if (data?.averageLengthOfStay?.averageLengthOfStay != null)
-        value = Number(data.averageLengthOfStay.averageLengthOfStay);
-      else if (data?.averageLengthOfStay != null) value = Number(data.averageLengthOfStay);
-      else if (data?.value != null) value = Number(data.value);
-
-      setAlos(Number(value.toFixed(2)));
+      const value = await ALOSService.fetchALOS(cognitoUserId, filterType, startDate, endDate);
+      setAlos(value);
     } catch (err) {
       console.error("Error fetching ALOS:", err);
       setError(err.message || "Failed to fetch ALOS");
@@ -94,7 +78,7 @@ const ALOSCard = () => {
           {loading ? (
             <p>Loading...</p>
           ) : error ? (
-            <p>Error: {error}</p>
+            <p style={{ color: "red" }}>Error: {error}</p>
           ) : (
             <p>
               <strong>{alos}</strong> nights
