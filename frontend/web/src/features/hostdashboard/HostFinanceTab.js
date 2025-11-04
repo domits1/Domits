@@ -259,7 +259,6 @@ export default function HostFinanceTab() {
       try {
         updateLoadingState("getPayoutSchedule", true);
         const details = await getPayoutSchedule();
-        console.log("Payout schedule details:", details);
         setInterval(details?.interval || null);
         setWeeklyAnchor(details?.weekly_anchor || null);
         setMonthlyAnchor(details?.monthly_anchor || null);
