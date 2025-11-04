@@ -120,3 +120,25 @@ export async function setPayoutSchedule(event) {
   const data = await response.json();
   return data.details;
 }
+
+export async function getPayoutSchedule() {
+  const token = await getAccessToken();
+  const response = await fetch(
+    "https://4ac2ngbvlb.execute-api.eu-north-1.amazonaws.com/deployment/payments/retrieve-user-payout-schedule",
+    {
+      method: "GET",
+      headers: { Authorization: token },
+    }
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.details;
+}
