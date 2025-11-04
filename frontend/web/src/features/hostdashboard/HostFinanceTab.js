@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import "./HostFinanceTab.scss";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,6 +15,7 @@ import ClipLoader from "react-spinners/ClipLoader";
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const MAX_ITEMS_PER_PAGE = 5;
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+const POLL_MS = 1000;
 
 const getStatusMeta = (status) => {
   const s = String(status).toLowerCase();
@@ -102,6 +103,8 @@ export default function HostFinanceTab() {
     hostBalance: false,
   });
 
+  const isMountedRef = useRef(false);
+
   const updateLoadingState = (key, value) => setLoadingStates((prev) => ({ ...prev, [key]: value }));
 
   const handleEnlistNavigation = () => navigate("/hostonboarding");
@@ -128,9 +131,13 @@ export default function HostFinanceTab() {
 
   function showToast(message, type = "success") {
     setToast({ message, type });
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => setToast(null), 2000);
   }
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     (async () => {
       try {
         updateLoadingState("account", true);
@@ -145,9 +152,7 @@ export default function HostFinanceTab() {
         updateLoadingState("account", false);
       }
     })();
-  }, []);
 
-  useEffect(() => {
     (async () => {
       try {
         updateLoadingState("charges", true);
@@ -160,9 +165,7 @@ export default function HostFinanceTab() {
         updateLoadingState("charges", false);
       }
     })();
-  }, []);
 
-  useEffect(() => {
     (async () => {
       try {
         updateLoadingState("hostBalance", true);
@@ -175,6 +178,117 @@ export default function HostFinanceTab() {
         updateLoadingState("hostBalance", false);
       }
     })();
+
+    (async () => {
+      try {
+        updateLoadingState("payouts", true);
+        const details = await getPayouts();
+        setPayouts(details.payouts);
+      } catch (error) {
+        console.error("Error fetching payouts:", error);
+      } finally {
+        setLoading(false);
+        updateLoadingState("payouts", false);
+      }
+    })();
+
+    (async () => {
+      try {
+        updateLoadingState("getPayoutSchedule", true);
+        const details = await getPayoutSchedule();
+        setPayoutInterval(details?.interval || null);
+        setWeeklyAnchor(details?.weekly_anchor || null);
+        setMonthlyAnchor(details?.monthly_anchor || null);
+      } catch (error) {
+        console.error("Error fetching host payout schedule:", error);
+      } finally {
+        setLoading(false);
+        updateLoadingState("getPayoutSchedule", false);
+      }
+    })();
+
+    return () => {
+      isMountedRef.current = false;
+      clearTimeout(showToast._t);
+    };
+  }, []);
+
+  async function refreshAccountSilent() {
+    try {
+      const details = await getStripeAccountDetails();
+      if (!isMountedRef.current) return;
+      setAccountId(details?.accountId ?? null);
+      setOnboardingComplete(!!details?.onboardingComplete);
+    } catch (e) {
+      console.error("silent account refresh failed:", e);
+    }
+  }
+  async function refreshChargesSilent() {
+    try {
+      const details = await getCharges();
+      if (!isMountedRef.current) return;
+      setCharges(details?.charges ?? []);
+    } catch (e) {
+      console.error("silent charges refresh failed:", e);
+    }
+  }
+  async function refreshPayoutsSilent() {
+    try {
+      const details = await getPayouts();
+      if (!isMountedRef.current) return;
+      setPayouts(details?.payouts ?? []);
+    } catch (e) {
+      console.error("silent payouts refresh failed:", e);
+    }
+  }
+  async function refreshHostBalanceSilent() {
+    try {
+      const details = await getHostBalance();
+      if (!isMountedRef.current) return;
+      setHostBalance(details ?? { available: [], pending: [] });
+    } catch (e) {
+      console.error("silent balance refresh failed:", e);
+    }
+  }
+  async function refreshScheduleSilent() {
+    try {
+      const details = await getPayoutSchedule();
+      if (!isMountedRef.current) return;
+      setPayoutInterval(details?.interval || null);
+      setWeeklyAnchor(details?.weekly_anchor || null);
+      setMonthlyAnchor(details?.monthly_anchor || null);
+    } catch (e) {
+      console.error("silent schedule refresh failed:", e);
+    }
+  }
+
+  useEffect(() => {
+    const onFocus = () => {
+      refreshAccountSilent();
+      refreshChargesSilent();
+      refreshPayoutsSilent();
+      refreshHostBalanceSilent();
+      refreshScheduleSilent();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") onFocus();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      refreshChargesSilent();
+      refreshPayoutsSilent();
+      refreshHostBalanceSilent();
+    }, POLL_MS);
+    return () => clearInterval(id);
   }, []);
 
   const balanceView = useMemo(() => {
@@ -196,21 +310,6 @@ export default function HostFinanceTab() {
 
     return { currency, availableTotal, incomingTotal, pctAvailable, total };
   }, [hostBalance]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        updateLoadingState("payouts", true);
-        const details = await getPayouts();
-        setPayouts(details.payouts);
-      } catch (error) {
-        console.error("Error fetching payouts:", error);
-      } finally {
-        setLoading(false);
-        updateLoadingState("payouts", false);
-      }
-    })();
-  }, []);
 
   async function handleStripeAction() {
     try {
@@ -242,34 +341,30 @@ export default function HostFinanceTab() {
     try {
       const v = String(payoutInterval || "").toLowerCase();
       const payload = { interval: v };
-      if (v === "weekly" && weekly_anchor) payload.weekly_anchor = String(weekly_anchor).toLowerCase();
-      if (v === "monthly" && typeof monthly_anchor === "number") payload.monthly_anchor = monthly_anchor;
+      if (v === "weekly") {
+        if (!weekly_anchor) {
+          showToast("Please select a weekday.", "error");
+          return;
+        }
+        payload.weekly_anchor = String(weekly_anchor).toLowerCase();
+      }
+      if (v === "monthly") {
+        if (!monthly_anchor) {
+          showToast("Please select a day.", "error");
+          return;
+        }
+        payload.monthly_anchor = monthly_anchor;
+      }
 
       showToast("Payout schedule updated");
-
       await setPayoutSchedule(payload);
+      refreshScheduleSilent();
     } catch (error) {
       console.error("Error setting payout schedule:", error);
       showToast("Something went wrong, please contact support.", "error");
+      refreshScheduleSilent();
     }
   }
-
-  useEffect(() => {
-    (async () => {
-      try {
-        updateLoadingState("getPayoutSchedule", true);
-        const details = await getPayoutSchedule();
-        setPayoutInterval(details?.interval || null);
-        setWeeklyAnchor(details?.weekly_anchor || null);
-        setMonthlyAnchor(details?.monthly_anchor || null);
-      } catch (error) {
-        console.error("Error fetching host payout schedule:", error);
-      } finally {
-        setLoading(false);
-        updateLoadingState("getPayoutSchedule", false);
-      }
-    })();
-  }, []);
 
   const showLoader = loading || Object.values(loadingStates).some(Boolean);
   if (showLoader) {
@@ -344,251 +439,255 @@ export default function HostFinanceTab() {
               </ul>
             </div>
 
-            <div className="payouts-section">
-              <h3>Recent Charges</h3>
+            {onboardingComplete && (
+              <>
+                <div className="payouts-section">
+                  <h3>Recent Charges</h3>
 
-              {loadingStates.charges ? (
-                <div>
-                  <ClipLoader loading />
-                </div>
-              ) : charges.length > 0 ? (
-                <>
-                  <div className="table-wrap">
-                    <table className="payout-table">
-                      <thead>
-                        <tr>
-                          <th>Payment date</th>
-                          <th>Property</th>
-                          <th>Guest</th>
-                          <th>Amount received</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pageSlice(charges, chargesPage).map((charge, idx) => (
-                          <tr key={`${charge.createdDate}-${idx}-${charge.propertyTitle}`}>
-                            <td>{charge.createdDate}</td>
-                            <td className="property-cell">
-                              <img
-                                className="property-thumb"
-                                src={`${S3_URL}${charge.propertyImage}`}
-                                alt={charge.propertyTitle}
-                              />
-                              <div className="property-meta">
-                                <div className="property-title" title={charge.propertyTitle}>
-                                  {charge.propertyTitle}
-                                </div>
-                                <div className="property-sub">Booking nr:&nbsp;{charge.bookingId}</div>
-                                <div className="property-sub">Payment id:&nbsp;{charge.paymentId}</div>
-                              </div>
-                            </td>
-                            <td>{charge.customerName}</td>
-                            <td>{formatMoney(charge.hostReceives, charge.currency)}</td>
-                            <td>
-                              <StatusBadge status={charge.status} />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <TablePager page={chargesPage} setPage={setChargesPage} totalPages={chargesTotalPages} />
-                </>
-              ) : (
-                <p>No charges found.</p>
-              )}
-            </div>
-
-            <div className="payouts-section balance-section">
-              <h3>Balance overview</h3>
-
-              {loadingStates.hostBalance ? (
-                <div>
-                  <ClipLoader size={28} color="#0D9813" loading />
-                </div>
-              ) : (
-                <>
-                  <div
-                    className="balance-meter"
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={balanceView.pctAvailable}>
-                    <div
-                      className="bm-seg bm-seg--available"
-                      style={{ width: `${balanceView.pctAvailable}%` }}
-                      data-label="Available"
-                      data-value={formatMoney(balanceView.availableTotal, balanceView.currency)}
-                    />
-                    <div
-                      className="bm-seg bm-seg--incoming"
-                      style={{
-                        width: `${Math.min(100, Math.max(0, (balanceView.incomingTotal / balanceView.total) * 100))}%`,
-                      }}
-                      data-label="Incoming"
-                      data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
-                    />
-                  </div>
-
-                  <div className="balance-list">
-                    <div className="balance-header">
-                      <span>Payment type</span>
-                      <span>Amount</span>
+                  {loadingStates.charges ? (
+                    <div>
+                      <ClipLoader loading />
                     </div>
-                    <div className="balance-divider" />
-
-                    <div className="balance-item">
-                      <div className="balance-left">
-                        <span className="balance-dot balance-dot--incoming" />
-                        <span className="balance-label">Incoming</span>
+                  ) : charges.length > 0 ? (
+                    <>
+                      <div className="table-wrap">
+                        <table className="payout-table">
+                          <thead>
+                            <tr>
+                              <th>Payment date</th>
+                              <th>Property</th>
+                              <th>Guest</th>
+                              <th>Amount received</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pageSlice(charges, chargesPage).map((charge, idx) => (
+                              <tr key={`${charge.createdDate}-${idx}-${charge.propertyTitle}`}>
+                                <td>{charge.createdDate}</td>
+                                <td className="property-cell">
+                                  <img
+                                    className="property-thumb"
+                                    src={`${S3_URL}${charge.propertyImage}`}
+                                    alt={charge.propertyTitle}
+                                  />
+                                  <div className="property-meta">
+                                    <div className="property-title" title={charge.propertyTitle}>
+                                      {charge.propertyTitle}
+                                    </div>
+                                    <div className="property-sub">Booking nr:&nbsp;{charge.bookingId}</div>
+                                    <div className="property-sub">Payment id:&nbsp;{charge.paymentId}</div>
+                                  </div>
+                                </td>
+                                <td>{charge.customerName}</td>
+                                <td>{formatMoney(charge.hostReceives, charge.currency)}</td>
+                                <td>
+                                  <StatusBadge status={charge.status} />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                      <div className="balance-amount">
-                        {formatMoney(balanceView.incomingTotal, balanceView.currency)}
-                      </div>
-                    </div>
-                    <div className="balance-divider" />
 
-                    <div className="balance-item">
-                      <div className="balance-left">
-                        <span className="balance-dot balance-dot--available" />
-                        <span className="balance-label">Available</span>
-                      </div>
-                      <div className="balance-amount">
-                        {formatMoney(balanceView.availableTotal, balanceView.currency)}
-                      </div>
-                    </div>
-                    <div className="balance-divider" />
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="payouts-section">
-              <h3>Recent Payouts</h3>
-              {loadingStates.payouts ? (
-                <div style={{ padding: 12 }}>
-                  <ClipLoader size={28} loading />
-                </div>
-              ) : payouts.length > 0 ? (
-                <>
-                  <div className="table-wrap">
-                    <table className="payout-table">
-                      <thead>
-                        <tr>
-                          <th>Payout date</th>
-                          <th>Amount</th>
-                          <th>Status</th>
-                          <th>Payout ID</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pageSlice(payouts, payoutsPage).map((payout) => (
-                          <tr key={payout.id || `${payout.arrivalDate}-${payout.amount}`}>
-                            <td>{payout.arrivalDate}</td>
-                            <td>{formatMoney(payout.amount, payout.currency)}</td>
-                            <td>
-                              <StatusBadge status={payout.status} />
-                            </td>
-                            <td title={payout.id || ""}>{payout.id || " - "}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <TablePager page={payoutsPage} setPage={setPayoutsPage} totalPages={payoutsTotalPages} />
-                </>
-              ) : (
-                <p>No payouts found.</p>
-              )}
-            </div>
-
-            <div className="payout-frequency">
-              <h3>Payout Frequency</h3>
-
-              <div className="pf-grid">
-                <div className="pf-row">
-                  <label className="pf-label" htmlFor="pf-interval">
-                    Payout frequency
-                  </label>
-                  <select
-                    id="pf-interval"
-                    className="pf-select"
-                    value={payoutInterval ?? ""}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setPayoutInterval(v);
-                      if (v !== "weekly") setWeeklyAnchor(null);
-                      if (v !== "monthly") setMonthlyAnchor(null);
-                    }}>
-                    <option value="" disabled>
-                      Select payout frequency
-                    </option>
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                  </select>
+                      <TablePager page={chargesPage} setPage={setChargesPage} totalPages={chargesTotalPages} />
+                    </>
+                  ) : (
+                    <p>No charges found.</p>
+                  )}
                 </div>
 
-                {payoutInterval === "weekly" && (
-                  <div className="pf-row">
-                    <label className="pf-label" htmlFor="pf-weekday">
-                      Weekly anchor
-                    </label>
-                    <select
-                      id="pf-weekday"
-                      className="pf-select"
-                      value={weekly_anchor ?? ""}
-                      onChange={(e) => setWeeklyAnchor(e.target.value.toLowerCase())}>
-                      <option value="" disabled>
-                        Select weekday…
-                      </option>
-                      {WEEKDAYS.map((d) => (
-                        <option key={d} value={d}>
-                          {d.charAt(0).toUpperCase() + d.slice(1)}
+                <div className="payouts-section balance-section">
+                  <h3>Balance overview</h3>
+
+                  {loadingStates.hostBalance ? (
+                    <div>
+                      <ClipLoader size={28} color="#0D9813" loading />
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        className="balance-meter"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={balanceView.pctAvailable}>
+                        <div
+                          className="bm-seg bm-seg--available"
+                          style={{ width: `${balanceView.pctAvailable}%` }}
+                          data-label="Available"
+                          data-value={formatMoney(balanceView.availableTotal, balanceView.currency)}
+                        />
+                        <div
+                          className="bm-seg bm-seg--incoming"
+                          style={{
+                            width: `${Math.min(100, Math.max(0, (balanceView.incomingTotal / balanceView.total) * 100))}%`,
+                          }}
+                          data-label="Incoming"
+                          data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                        />
+                      </div>
+
+                      <div className="balance-list">
+                        <div className="balance-header">
+                          <span>Payment type</span>
+                          <span>Amount</span>
+                        </div>
+                        <div className="balance-divider" />
+
+                        <div className="balance-item">
+                          <div className="balance-left">
+                            <span className="balance-dot balance-dot--incoming" />
+                            <span className="balance-label">Incoming</span>
+                          </div>
+                          <div className="balance-amount">
+                            {formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                          </div>
+                        </div>
+                        <div className="balance-divider" />
+
+                        <div className="balance-item">
+                          <div className="balance-left">
+                            <span className="balance-dot balance-dot--available" />
+                            <span className="balance-label">Available</span>
+                          </div>
+                          <div className="balance-amount">
+                            {formatMoney(balanceView.availableTotal, balanceView.currency)}
+                          </div>
+                        </div>
+                        <div className="balance-divider" />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="payouts-section">
+                  <h3>Recent Payouts</h3>
+                  {loadingStates.payouts ? (
+                    <div style={{ padding: 12 }}>
+                      <ClipLoader size={28} loading />
+                    </div>
+                  ) : payouts.length > 0 ? (
+                    <>
+                      <div className="table-wrap">
+                        <table className="payout-table">
+                          <thead>
+                            <tr>
+                              <th>Payout date</th>
+                              <th>Amount</th>
+                              <th>Status</th>
+                              <th>Payout ID</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pageSlice(payouts, payoutsPage).map((payout) => (
+                              <tr key={payout.id || `${payout.arrivalDate}-${payout.amount}`}>
+                                <td>{payout.arrivalDate}</td>
+                                <td>{formatMoney(payout.amount, payout.currency)}</td>
+                                <td>
+                                  <StatusBadge status={payout.status} />
+                                </td>
+                                <td title={payout.id || ""}>{payout.id || " - "}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <TablePager page={payoutsPage} setPage={setPayoutsPage} totalPages={payoutsTotalPages} />
+                    </>
+                  ) : (
+                    <p>No payouts found.</p>
+                  )}
+                </div>
+
+                <div className="payout-frequency">
+                  <h3>Payout Frequency</h3>
+
+                  <div className="pf-grid">
+                    <div className="pf-row">
+                      <label className="pf-label" htmlFor="pf-interval">
+                        Payout frequency
+                      </label>
+                      <select
+                        id="pf-interval"
+                        className="pf-select"
+                        value={payoutInterval ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setPayoutInterval(v);
+                          if (v !== "weekly") setWeeklyAnchor(null);
+                          if (v !== "monthly") setMonthlyAnchor(null);
+                        }}>
+                        <option value="" disabled>
+                          Select payout frequency
                         </option>
-                      ))}
-                    </select>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                      </select>
+                    </div>
+
+                    {payoutInterval === "weekly" && (
+                      <div className="pf-row">
+                        <label className="pf-label" htmlFor="pf-weekday">
+                          Weekly anchor
+                        </label>
+                        <select
+                          id="pf-weekday"
+                          className="pf-select"
+                          value={weekly_anchor ?? ""}
+                          onChange={(e) => setWeeklyAnchor(e.target.value.toLowerCase())}>
+                          <option value="" disabled>
+                            Select weekday…
+                          </option>
+                          {WEEKDAYS.map((d) => (
+                            <option key={d} value={d}>
+                              {d.charAt(0).toUpperCase() + d.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {payoutInterval === "monthly" && (
+                      <div className="pf-row">
+                        <label className="pf-label" htmlFor="pf-monthday">
+                          Monthly anchor (day)
+                        </label>
+                        <select
+                          id="pf-monthday"
+                          className="pf-select"
+                          value={monthly_anchor ?? ""}
+                          onChange={(e) => setMonthlyAnchor(Number(e.target.value))}>
+                          <option value="" disabled>
+                            Select day…
+                          </option>
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                            <option key={d} value={d} disabled={d > daysInThisMonth}>
+                              {d}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                {payoutInterval === "monthly" && (
-                  <div className="pf-row">
-                    <label className="pf-label" htmlFor="pf-monthday">
-                      Monthly anchor (day)
-                    </label>
-                    <select
-                      id="pf-monthday"
-                      className="pf-select"
-                      value={monthly_anchor ?? ""}
-                      onChange={(e) => setMonthlyAnchor(Number(e.target.value))}>
-                      <option value="" disabled>
-                        Select day…
-                      </option>
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                        <option key={d} value={d} disabled={d > daysInThisMonth}>
-                          {d}
-                        </option>
-                      ))}
-                    </select>
+                  <small className="pf-note">
+                    If your scheduled payout date falls on a weekend, a holiday, or a day that doesn't exist in that
+                    month, your payout will begin the next business day.
+                  </small>
+
+                  {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
+
+                  <div className="pf-actions">
+                    <button className="btn btn-primary" onClick={handlePayoutSchedule}>
+                      Save payout schedule
+                    </button>
                   </div>
-                )}
-              </div>
-
-              <small className="pf-note">
-                If your scheduled payout date falls on a weekend, a holiday, or a day that doesn't exist in that month,
-                your payout will begin the next business day.
-              </small>
-
-              {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
-
-              <div className="pf-actions">
-                <button className="btn btn-primary" onClick={handlePayoutSchedule}>
-                  Save payout schedule
-                </button>
-              </div>
-            </div>
+                </div>
+              </>
+            )}
           </div>
         </section>
       </div>
