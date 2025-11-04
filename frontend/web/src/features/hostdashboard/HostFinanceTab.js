@@ -8,6 +8,7 @@ import {
   getPayouts,
   getHostBalance,
   setPayoutSchedule,
+  getPayoutSchedule,
 } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
 
@@ -252,6 +253,24 @@ export default function HostFinanceTab() {
       showToast("Something went wrong, please contact support.", "error");
     }
   }
+
+  useEffect(() => {
+    (async () => {
+      try {
+        updateLoadingState("getPayoutSchedule", true);
+        const details = await getPayoutSchedule();
+        console.log("Payout schedule details:", details);
+        setInterval(details?.interval || null);
+        setWeeklyAnchor(details?.weekly_anchor || null);
+        setMonthlyAnchor(details?.monthly_anchor || null);
+      } catch (error) {
+        console.error("Error fetching host payout schedule:", error);
+      } finally {
+        setLoading(false);
+        updateLoadingState("getPayoutSchedule", false);
+      }
+    })();
+  }, []);
 
   const showLoader = loading || Object.values(loadingStates).some(Boolean);
   if (showLoader) {
