@@ -74,6 +74,7 @@ Table of Contents
   - events/ # Lambda events for testing (POST, GET, PATCH, DELETE..)
   - functions/ # Lambda functions
   - test/ # Lambda tests (Jest)
+
 - docs/ # Documentation folder
   - backend/ 
   - debugging/ # Issue template for debugging
@@ -85,6 +86,7 @@ Table of Contents
     - public_overview # Public over
   - security # Security related documentation
   - templates # Templates to follow writing documentation
+
 - frontend/ # React/React-Natve Frontend Files
   - app/ # Domits App Development files (React Native)
     - Domits/
@@ -135,7 +137,7 @@ Welcome to the Intro Sprint!
 
 This sprint will help you to get familiar with domits within one week so you can start contibuting to issues.
 
-If you ever get stuck somewhere, do your best. Otherwise, google, and if that doesn't work, contact your fellow other students.
+If you ever get stuck, google, stack overflow, ask a LLM and then afterwards, ask a team member.
 
 ### General Introduction
 Learn the basics of Domits, who we are, what we build, and where to find key documentation.
@@ -151,7 +153,7 @@ Learn the basics of Domits, who we are, what we build, and where to find key doc
 After this section you should understand:
 - The company's products and market.
 - The long-term roadmap and sprint workflow.
-- Where you have technical leadership over, and what you will be working on.
+- Your technical arrea of responsibility.
 
 ---
 
@@ -193,7 +195,7 @@ Web Development Setup:
 **App**
 
 > [!Note]
-> Apple does not allow development of IOS on a Windows machine. A possible workaround could be using either Amazon EC2, or a VM on your machine.
+> IOS development requires macOS. On windows, consider using AWS EC2 or a VM for testing.
 
 App Development Setup:
 * [App Onboarding](./docs/internal/onboarding/app/app_onboarding.md)
@@ -208,8 +210,7 @@ You can decide to take a [Quick Fix](https://github.com/domits1/Domits/issues/12
 ### Other subjects to understand
 
 * [Domain Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design)
-DDD helps you structure complex systems around the real-world problems they solve.
-Understanding DDD will make your code modular, aligned with business logic, and easier to evolve as Domits grows.
+Structure code around real-world business logic.
 
 * [Agile Scrum](https://github.com/domits1/Domits/wiki/Agile-Scrum)
 Agile keeps our workflow flexible and fast. Learn how we do that, and check the [Scrum Guide](https://scrumguides.org/scrum-guide.html)
