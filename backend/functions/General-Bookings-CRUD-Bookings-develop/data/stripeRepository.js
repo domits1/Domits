@@ -114,7 +114,7 @@ class StripeRepository {
     } else {
       return query;
     }
-  }
+  }// hello world
 
   async getPaymentIntentByPaymentId(paymentId) {
     try {
