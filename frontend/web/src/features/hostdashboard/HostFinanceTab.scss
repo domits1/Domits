@@ -1,6 +1,13 @@
-$font-title: "Kanit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+$font-title:
+  "Kanit",
+  system-ui,
+  -apple-system,
+  Segoe UI,
+  Roboto,
+  Arial,
+  sans-serif;
 $radius: 12px;
-$shadow: 0 6px 20px rgba(0,0,0,.08);
+$shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 $muted: #f6f7f9;
 $green: #0d9813;
 
@@ -11,13 +18,24 @@ $bp-xl: 1280px;
 
 $color-success: #16a34a;
 $color-pending: #f59e0b;
-$color-danger:  #dc2626;
-$color-muted:  #6b7280;
+$color-danger: #dc2626;
+$color-muted: #6b7280;
 
-@mixin up($w) { @media (min-width: $w) { @content; } }
+@mixin up($w) {
+  @media (min-width: $w) {
+    @content;
+  }
+}
 
-.page-Host--loading { position: fixed; inset: 0; display: grid; }
-.page-Host__loader { display: grid; place-items: center; }
+.page-Host--loading {
+  position: fixed;
+  inset: 0;
+  display: grid;
+}
+.page-Host__loader {
+  display: grid;
+  place-items: center;
+}
 
 .page-Host {
   &-title {
@@ -26,7 +44,9 @@ $color-muted:  #6b7280;
     font-size: clamp(1.25rem, 1rem + 1.2vw, 2rem);
     margin: 0 0 0.75rem;
   }
-  &-content { padding: 16px; }
+  &-content {
+    padding: 16px;
+  }
 }
 
 .host-pc-finance {
@@ -36,48 +56,62 @@ $color-muted:  #6b7280;
   padding: 16px;
   max-width: 960px;
   width: 100%;
-  @include up($bp-md) { padding: 24px; }
-  @include up($bp-lg) { padding: 32px; }
+  @include up($bp-md) {
+    padding: 24px;
+  }
+  @include up($bp-lg) {
+    padding: 32px;
+  }
 }
 
 .finance-content {
   display: grid;
   gap: 16px;
-  @include up($bp-sm) { gap: 20px; }
-  @include up($bp-md) { gap: 24px; }
+  @include up($bp-sm) {
+    gap: 20px;
+  }
+  @include up($bp-md) {
+    gap: 24px;
+  }
 }
 
 .finance-steps {
   background: $muted;
   padding: 16px;
   border-radius: $radius;
-  @include up($bp-md) { padding: 20px; }
+  @include up($bp-md) {
+    padding: 20px;
+  }
 
   h2 {
-    font-size: clamp(1rem, .9rem + .6vw, 1.375rem);
+    font-size: clamp(1rem, 0.9rem + 0.6vw, 1.375rem);
     font-weight: 700;
     margin: 0 0 12px;
   }
 
   ul {
     list-style: none;
-    padding: 0; margin: 0;
+    padding: 0;
+    margin: 0;
     display: grid;
     gap: 12px;
-    @include up($bp-md) { gap: 14px; }
+    @include up($bp-md) {
+      gap: 14px;
+    }
   }
 
   li {
-    font-size: .98rem;
+    font-size: 0.98rem;
     line-height: 1.5;
-    align-items: center; gap: 6px;
+    align-items: center;
+    gap: 6px;
   }
 }
 
 .finance-steps-title {
   text-align: center;
   font-family: $font-title;
-  font-size: clamp(1.1rem, 1rem + .9vw, 1.6rem);
+  font-size: clamp(1.1rem, 1rem + 0.9vw, 1.6rem);
   margin: 0 0 8px;
 }
 
@@ -86,19 +120,26 @@ $color-muted:  #6b7280;
   text-decoration: underline;
   cursor: pointer;
   font-weight: 600;
-  &:hover { text-decoration: none; }
-  &.disabled { opacity: .6; pointer-events: none; }
+  &:hover {
+    text-decoration: none;
+  }
+  &.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
 }
 
 .payouts-section {
   background: $muted;
   padding: 16px;
   border-radius: $radius;
-  @include up($bp-md) { padding: 20px; }
+  @include up($bp-md) {
+    padding: 20px;
+  }
 
   h3 {
     margin: 0 0 10px;
-    font-size: clamp(1rem, .95rem + .3vw, 1.125rem);
+    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
     font-weight: 700;
   }
 
@@ -113,9 +154,10 @@ $color-muted:  #6b7280;
     min-width: 560px;
     border-collapse: collapse;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: .95rem;
+    font-size: 0.95rem;
 
-    th, td {
+    th,
+    td {
       padding: 8px;
       text-align: left;
       vertical-align: middle;
@@ -130,8 +172,12 @@ $color-muted:  #6b7280;
       position: static;
     }
 
-    tbody tr:nth-child(even) { background-color: #f2f2f2; }
-    tbody tr:hover { background-color: #ddd; }
+    tbody tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    tbody tr:hover {
+      background-color: #ddd;
+    }
 
     .property-cell {
       display: flex;
@@ -148,7 +194,9 @@ $color-muted:  #6b7280;
       flex: 0 0 64px;
     }
 
-    .property-meta { min-width: 0; }
+    .property-meta {
+      min-width: 0;
+    }
 
     .property-title {
       font-weight: 600;
@@ -189,19 +237,19 @@ $color-muted:  #6b7280;
 
   &.is-success {
     color: $color-success;
-    background: rgba($color-success, .12);
+    background: rgba($color-success, 0.12);
   }
   &.is-pending {
     color: $color-pending;
-    background: rgba($color-pending, .16);
+    background: rgba($color-pending, 0.16);
   }
   &.is-danger {
     color: $color-danger;
-    background: rgba($color-danger, .12);
+    background: rgba($color-danger, 0.12);
   }
   &.is-muted {
     color: $color-muted;
-    background: rgba(107, 114, 128, .12);
+    background: rgba(107, 114, 128, 0.12);
   }
 }
 
@@ -212,7 +260,9 @@ $color-muted:  #6b7280;
   justify-content: flex-end;
   padding: 8px 0 0;
 
-  .pager-info { font-weight: 600; }
+  .pager-info {
+    font-weight: 600;
+  }
 
   .pager-btn {
     padding: 6px 10px;
@@ -222,8 +272,128 @@ $color-muted:  #6b7280;
     cursor: pointer;
   }
   .pager-btn:disabled {
-    opacity: .5;
+    opacity: 0.5;
     cursor: not-allowed;
+  }
+}
+
+.balance-section {
+  .balance-meter {
+    display: flex;
+    height: 12px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: visible;
+    position: relative;
+    margin-bottom: 10px;
+  }
+
+  .bm-seg {
+    position: relative;
+    height: 100%;
+
+    &--incoming {
+      background: #9aa3af;
+    }
+    &--available {
+      background: $green;
+    }
+
+    &::after {
+      content: attr(data-label) "\A" attr(data-value);
+      position: absolute;
+      top: -42px;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: #374151;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      line-height: 1.1;
+      white-space: pre;
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+      z-index: 2;
+    }
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #374151;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 2;
+    }
+
+    &:hover::after,
+    &:hover::before {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  .balance-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    color: $color-muted;
+    font-weight: 600;
+    padding: 6px 2px;
+  }
+
+  .balance-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 6px 0;
+  }
+
+  .balance-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    padding: 8px 2px;
+    border-radius: 5px;
+    transition: background-color 0.15s ease;
+
+    &:hover,
+    &:focus-within {
+      background-color: #ddd;
+    }
+  }
+
+  .balance-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+  }
+
+  .balance-amount {
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .balance-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+
+    &--incoming {
+      background: #9aa3af;
+    }
+
+    &--available {
+      background: $green;
+    }
   }
 }
 
@@ -232,13 +402,18 @@ $color-muted:  #6b7280;
   padding: 16px;
   border-radius: $radius;
 
-  @include up($bp-md) { padding: 20px; }
+  @include up($bp-md) {
+    padding: 20px;
+  }
 
-  h3 { margin: 0 0 10px; font-size: 1.05rem; }
+  h3 {
+    margin: 0 0 10px;
+    font-size: 1.05rem;
+  }
 
   select {
     width: 100%;
-    padding: .7rem .9rem;
+    padding: 0.7rem 0.9rem;
     border-radius: 10px;
     border: 1px solid #d6d9de;
     background: #fff;
@@ -249,5 +424,7 @@ $color-muted:  #6b7280;
 @include up($bp-lg) {
   .finance-steps,
   .payouts-section,
-  .payout-frequency { margin-bottom: 0; }
+  .payout-frequency {
+    margin-bottom: 0;
+  }
 }

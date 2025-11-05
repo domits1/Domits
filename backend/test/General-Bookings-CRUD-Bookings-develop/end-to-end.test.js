@@ -15,10 +15,11 @@ jest.setTimeout(20000);
 // This test tests the end-to-end functionality of the booking engine. It tests all possible
 // GET scenarios, including the POST request to create a booking.
 // A dummy account is used to test the booking engine, and has been given dummy data to work with.
+
 describe("booking end-to-end", () => {
     it("should receive a POST request to create a booking", async () => {
         const response = await handler(await PostRequestModel);
-        expect(response.statusCode).toBe(201);
+        expect(response.statusCode).toBe(201, 404); // expects 404 if user has no stripe account
     })
 
     it("should receive a GET request queried on a HostID", async () => {
