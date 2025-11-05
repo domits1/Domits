@@ -331,16 +331,16 @@ export default function HostFinanceTab() {
 
   async function handlePayoutSchedule() {
     try {
-      const v = String(payoutInterval || "").toLowerCase();
-      const payload = { interval: v };
-      if (v === "weekly") {
+      const period = String(payoutInterval || "").toLowerCase();
+      const payload = { interval: period };
+      if (period === "weekly") {
         if (!weekly_anchor) {
           showToast("Please select a weekday.", "error");
           return;
         }
         payload.weekly_anchor = String(weekly_anchor).toLowerCase();
       }
-      if (v === "monthly") {
+      if (period === "monthly") {
         if (!monthly_anchor) {
           showToast("Please select a day.", "error");
           return;
@@ -606,10 +606,10 @@ export default function HostFinanceTab() {
                         className="pf-select"
                         value={payoutInterval ?? ""}
                         onChange={(e) => {
-                          const v = e.target.value;
-                          setPayoutInterval(v);
-                          if (v !== "weekly") setWeeklyAnchor(null);
-                          if (v !== "monthly") setMonthlyAnchor(null);
+                          const period = e.target.value;
+                          setPayoutInterval(period);
+                          if (period !== "weekly") setWeeklyAnchor(null);
+                          if (period !== "monthly") setMonthlyAnchor(null);
                         }}>
                         <option value="" disabled>
                           Select payout frequency
@@ -655,9 +655,9 @@ export default function HostFinanceTab() {
                           <option value="" disabled>
                             Select day…
                           </option>
-                          {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                            <option key={d} value={d}>
-                              {d}
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                            <option key={day} value={day}>
+                              {day}
                             </option>
                           ))}
                         </select>
