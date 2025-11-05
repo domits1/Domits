@@ -121,14 +121,6 @@ export default function HostFinanceTab() {
     setPayoutsPage(1);
   }, [payouts]);
 
-  function getDaysInMonth(date = new Date()) {
-    const y = date.getFullYear();
-    const m = date.getMonth();
-    return new Date(y, m + 1, 0).getDate();
-  }
-
-  const daysInThisMonth = getDaysInMonth();
-
   function showToast(message, type = "success") {
     setToast({ message, type });
     clearTimeout(showToast._t);
@@ -664,7 +656,7 @@ export default function HostFinanceTab() {
                             Select day…
                           </option>
                           {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                            <option key={d} value={d} disabled={d > daysInThisMonth}>
+                            <option key={d} value={d}>
                               {d}
                             </option>
                           ))}
