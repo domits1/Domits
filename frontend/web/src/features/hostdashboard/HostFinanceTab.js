@@ -15,7 +15,7 @@ import ClipLoader from "react-spinners/ClipLoader";
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const MAX_ITEMS_PER_PAGE = 5;
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
-const POLL_MS = 1000;
+const REFRESH_INTERVAL_MS = 1000;
 
 const getStatusMeta = (status) => {
   const s = String(status).toLowerCase();
@@ -279,7 +279,7 @@ export default function HostFinanceTab() {
       refreshChargesSilent();
       refreshPayoutsSilent();
       refreshHostBalanceSilent();
-    }, POLL_MS);
+    }, REFRESH_INTERVAL_MS);
     return () => clearInterval(id);
   }, []);
 
