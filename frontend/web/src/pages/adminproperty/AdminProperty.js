@@ -80,6 +80,12 @@ export default function AdminProperty() {
     return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
   };
 
+  const generateRegistrationNumber = () => {
+    const ts = Date.now().toString();
+    const rand = Math.floor(Math.random() * 1e6).toString().padStart(6, "0");
+    return ts + rand; 
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
     if (imageData.length < 5) {
@@ -115,7 +121,7 @@ export default function AdminProperty() {
     const rulePets = !!fd.get("rulePets");
 
     const rate = Number(fd.get("rate") || 0);
-    const registrationNumber = fd.get("registrationNumber")?.toString()?.trim() || "";
+    const registrationNumber = generateRegistrationNumber();
 
     const subtitleFromLocation = [city, country].filter(Boolean).join(", ");
     const subtitle = subtitleFromLocation || homeName;
@@ -134,7 +140,7 @@ export default function AdminProperty() {
         subtitle: String(subtitle ?? "").trim(),
         description: String(description ?? "").trim(),
         guestCapacity: Number.isFinite(guests) ? guests : 0,
-        registrationNumber: String(registrationNumber ?? "").trim(),
+        registrationNumber, 
         status: "ACTIVE",
         propertyType: "House",
         createdAt: now,
@@ -193,6 +199,12 @@ export default function AdminProperty() {
 
     setSubmitting(true);
     try {
+      try {
+        const payload = builder.build ? builder.build() : builder;
+        const sizeBytes = new Blob([JSON.stringify(payload)]).size;
+        console.log("Payload size (bytes):", sizeBytes, "≈", (sizeBytes/1024/1024).toFixed(2), "MB");
+      } catch {}
+
       await submitAccommodation(navigate, builder);
     } finally {
       setSubmitting(false);
@@ -300,11 +312,6 @@ export default function AdminProperty() {
       <div className="adminproperty-group">
         <label>Set your rate</label>
         <input type="number" name="rate" min="0" step="1" required />
-      </div>
-
-      <div className="adminproperty-group">
-        <label>Add your registration number (optional)</label>
-        <input type="text" name="registrationNumber" />
       </div>
 
       <button type="submit" className="adminproperty-submit" disabled={submitting}>
