@@ -225,7 +225,7 @@ Understand how DevOps work. This wiki page explains what DevOps are, and how it 
 Understand how to monitor and debug your AWS functions.
 
 * [Site Reliability Engineering (SRE)](https://github.com/domits1/Domits/wiki/Site-Reliability-Engineering-(SRE))
-...
+How reliability is maintained under scale — balancing uptime, latency, and resilience.
 
 * [Cyber Security Testing Red, Blue & Purple Team](https://github.com/domits1/Domits/wiki/Cyber-Security)
 Be aware of how Cyber Security teams work.
@@ -236,26 +236,23 @@ Understand how Quality Assurance (QA) testing works, and automated testing.
 * [APIs](https://github.com/domits1/Domits/wiki/APIs)
 Understand the type of API's, REST and HTTP API's.
 
+
+**AI, ML & Data Foundations**
+
 * [Data foundation for AI](https://github.com/domits1/Domits/wiki/Data-foundation-for-AI)
-AI stuff..
   
 * [Gen AI](https://github.com/domits1/Domits/wiki/Generative-AI)
-Learn more about using Generative AI for Development. 
 
 * [ML](https://github.com/domits1/Domits/wiki/Machine-Learning) 
-Learn more about Machine Learning.
 
 * [AI Infrastructure](https://github.com/domits1/Domits/wiki/AI-Infrastructure)
-Learn more about AI Infrastructure.
 
 * [AI Services](https://github.com/domits1/Domits/wiki/AI-Services)
-Learn more about AI services.
 
-Once your environment is set up, pick your first [Quick Fix](https://github.com/domits1/Domits/issues/122) and good luck!
-
+Explore how AI and data engineering can enhance the platform with personalization, automation, and intelligent insights.
 
 ## Core modules and APIs
-Core modules and APIs used through Domits
+Key modules powering Domits:
 
 **[Booking Engine](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
 
@@ -292,9 +289,11 @@ Docs recommended to take a look at.
 
 * [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
 
-
-
 ## Contribution guidelines
 
-* Follow code conventions...
-* Fill in PR template...
+Follow the established code conventions.
+
+Always fill out the PR template completely before review.
+
+Keep your commits clean and descriptive according to [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
