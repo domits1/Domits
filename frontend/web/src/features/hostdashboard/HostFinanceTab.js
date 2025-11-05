@@ -11,6 +11,7 @@ import {
   getPayoutSchedule,
 } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
+import formatMoney from "./hostfinance/utils/formatMoney";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const MAX_ITEMS_PER_PAGE = 5;
@@ -47,18 +48,6 @@ const StatusBadge = ({ status }) => {
       {meta.label}
     </span>
   );
-};
-
-const formatMoney = (amount, currency, locale = navigator.language || "en-US") => {
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency,
-      currencyDisplay: "symbol",
-    }).format(amount);
-  } catch {
-    return `${amount?.toFixed?.(2)} ${currency}`;
-  }
 };
 
 const pageSlice = (list, page, size = MAX_ITEMS_PER_PAGE) => list.slice((page - 1) * size, page * size);
