@@ -8,10 +8,6 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
 } from "recharts";
 import "./ADRCard.scss";
 import { ADRCardService as ADRService } from "../services/ADRCardService.js";
@@ -27,6 +23,7 @@ const ADRCard = () => {
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+}
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -78,8 +75,9 @@ const ADRCard = () => {
     { name: "Booked Nights", value: bookedNights },
   ];
 
-  const allZero = donutData.every((item) => item.value === 0);
+  const allZero = donutData.every(item => item.value === 0);
   const displayData = allZero ? [{ name: "No Data", value: 1 }] : donutData;
+
   const COLORS = ["#0d9813", "#82ca9d", "#ffc658"];
 
   return (
@@ -102,19 +100,11 @@ const ADRCard = () => {
         <div className="custom-date-filter">
           <div>
             <label>Start Date:</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div>
             <label>End Date:</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
         </div>
       )}
@@ -126,15 +116,9 @@ const ADRCard = () => {
           <p style={{ color: "red" }}>Error: {error}</p>
         ) : (
           <>
-            <p>
-              <strong>ADR:</strong> €{adr.toLocaleString()}
-            </p>
-            <p>
-              <strong>Total Revenue:</strong> €{totalRevenue.toLocaleString()}
-            </p>
-            <p>
-              <strong>Booked Nights:</strong> {bookedNights.toLocaleString()}
-            </p>
+            <p><strong>ADR:</strong> ${adr.toLocaleString()}</p>
+            <p><strong>Total Revenue:</strong> ${totalRevenue.toLocaleString()}</p>
+            <p><strong>Booked Nights:</strong> {bookedNights.toLocaleString()}</p>
           </>
         )}
       </div>
@@ -185,7 +169,6 @@ const ADRCard = () => {
         </div>
       )}
     </div>
-  );
-};
+  );;
 
 export default ADRCard;
