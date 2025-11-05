@@ -11,14 +11,14 @@ import "dotenv/config";
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
-  .getSystemManagerParameter("/stripe/keys/secret/test")
+  .getSystemManagerParameter("/stripe/keys/secret/live")
   .then((secret) => new Stripe(secret));
 
 const client = new DynamoDBClient({ region: "eu-north-1" });
 
 class StripeRepository {
 
-    async createPaymentIntent(account_id, propertyId, dates) {
+    async createPaymentIntent(account_id, propertyId, dates, bookingId) {
       try {
         if (!account_id || !propertyId || !dates) {
           console.error(`accountId ${account_id}, property_id ${propertyId}, or dates ${dates} are NaN.`);
@@ -32,7 +32,7 @@ class StripeRepository {
         const { hostCents, platformCents, totalCents } = await CalculateTotalRate(propertyId, dates);
 
         const paymentIntent = await stripe.paymentIntents.create({
-          amount: totalCents,
+          amount: 50,
           currency: "eur",
           payment_method_types: ["card", "ideal", "klarna"],
           transfer_data: {
@@ -42,6 +42,7 @@ class StripeRepository {
           metadata: {
             propertyId,
             dates: JSON.stringify(dates),
+            bookingId,
           },
         });
 

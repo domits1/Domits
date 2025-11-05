@@ -2,7 +2,7 @@ import "./styles/sass/app.scss";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Footer from "./components/base/Footer";
@@ -23,22 +23,7 @@ import BookingConfirmationOverview from "./features/bookingengine/BookingConfirm
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import MainDashboardHost from "./features/hostdashboard/mainDashboardHost.js";
-import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
-import HostIoTHub from "./features/hostdashboard/HostIoTHub";
-import HostListings from "./features/hostdashboard/HostListings";
-import HostPayments from "./features/hostdashboard/HostPayments";
-import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
-import HostProperty from "./features/hostdashboard/HostProperty";
-import HostReservations from "./features/hostdashboard/HostReservations";
-import HostRevenues from "./features/hostdashboard/HostRevenues";
-import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
-import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
-import HostMonitoring from "./features/hostdashboard/HostMonitoring";
-import HostScreening from "./features/hostdashboard/HostScreening";
-import HostSettings from "./features/hostdashboard/HostSettings";
-import HostSetup from "./features/hostdashboard/HostSetup";
-import HostHousekeeping from "./features/hostdashboard/Housekeeping.js";
-import StepGuard from "./features/hostonboarding/hooks/StepGuard.js";
+import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 import PropertyRateView from "./features/hostonboarding/views/10_PropertyRateView.js";
 import PropertyAvailabilityView from "./features/hostonboarding/views/11_PropertyAvailabilityView.js";
 import SummaryViewAndSubmit from "./features/hostonboarding/views/12_SummarySubmitView.js";
@@ -86,15 +71,20 @@ import { BuilderProvider } from "./context/propertyBuilderContext";
 import AmenitiesView from "./features/hostonboarding/views/5_AmenitiesView";
 import OnboardingLayout from "./features/hostonboarding/OnboardingLayout";
 import Navbar from "./components/base/navbar";
-import MainDashboardGuest from "./features/guestdashboard/mainDashboardGuest";
 import publicKeys from "./utils/const/publicKeys.json";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST);
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 Modal.setAppElement("#root");
+
+function RedirectHostOnboardingCatchAll() {
+  const location = useLocation();
+  const newPath = location.pathname.replace(/^\/hostonboarding/, "/hostdashboard/hostonboarding");
+  return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
+}
 
 function App() {
   const [searchResults, setSearchResults] = useState([]);
@@ -181,7 +171,6 @@ function App() {
                   <Route path="/bookingoverview" element={<BookingOverview />} />
                   <Route path="/bookingsend" element={<BookingSend />} />
                   <Route path="/bookingconfirmationoverview" element={<BookingConfirmationOverview />} />
-                  <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/security" element={<Security />} />
 
@@ -257,64 +246,11 @@ function App() {
                   <Route path="/channelmanager" element={<ChannelManager />} />
                   <Route path="/admin/property" element={<AdminProperty />} />
 
-                  {/* Error*/}
-                  <Route path="/*" element={<PageNotFound />} />
+                  {/* Legacy deep links: /hostonboarding/* -> /hostdashboard/hostonboarding/* */}
+                  <Route path="/hostonboarding/*" element={<RedirectHostOnboardingCatchAll />} />
 
-                  {/* Host Onboarding v3 */}
-                  <Route
-                    path="/hostonboarding/*"
-                    element={
-                      <BuilderProvider>
-                        <Routes>
-                          <Route path="" element={<OnboardingLayout><AccommodationTypeView /></OnboardingLayout>} />
-                          <Route
-                            path="accommodation"
-                            element={
-                              <StepGuard step="type">
-                                <OnboardingLayout><HouseTypeView /></OnboardingLayout>
-                              </StepGuard>
-                            }
-                          />
-                          <Route
-                            path="boat"
-                            element={
-                              <StepGuard step="type">
-                                <OnboardingLayout><BoatTypeView /></OnboardingLayout>
-                              </StepGuard>
-                            }
-                          />
-                          <Route
-                            path="camper"
-                            element={
-                              <StepGuard step="type">
-                                <OnboardingLayout><CamperTypeView /></OnboardingLayout>
-                              </StepGuard>
-                            }
-                          />
-                          {/* Dynamic onboarding steps */}
-                          {[
-                            { path: ":type/address", element: <AddressInputView /> },
-                            { path: ":type/capacity", element: <CapacityView /> },
-                            { path: ":type/amenities", element: <AmenitiesView /> },
-                            { path: ":type/rules", element: <PropertyHouseRulesView /> },
-                            { path: ":type/photos", element: <PhotosView /> },
-                            { path: ":type/title", element: <PropertyTitleView /> },
-                            { path: ":type/description", element: <PropertyDescriptionView /> },
-                            { path: ":type/pricing", element: <PropertyRateView /> },
-                            { path: ":type/availability", element: <PropertyAvailabilityView /> },
-                            { path: "legal/registrationnumber", element: <RegistrationNumberView /> },
-                            { path: "summary", element: <SummaryViewAndSubmit /> },
-                          ].map((step, index) => (
-                            <Route
-                              key={index}
-                              path={step.path}
-                              element={<OnboardingLayout>{step.element}</OnboardingLayout>}
-                            />
-                          ))}
-                        </Routes>
-                      </BuilderProvider>
-                    }
-                  />
+                  {/* 404 */}
+                  <Route path="/*" element={<PageNotFound />} />
                 </Routes>
                 {renderFooter()}
                 {currentPath !== "/admin" && <MenuBar />}

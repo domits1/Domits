@@ -44,7 +44,7 @@ const MainDashboardGuest = () => {
   return (
     <div className="main-dashboard-guest">
       <div className="main-dashboard-sidebar">
-        <Pages onNavigate={handleNavigation} activeLabel={activeComponent} />
+        <Pages onNavigate={handleNavigation} />
       </div>
       <div className="main-dashboard-content">{renderComponent()}</div>
     </div>
