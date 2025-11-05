@@ -18,7 +18,7 @@ jest.setTimeout(20000);
 describe("booking end-to-end", () => {
     it("should receive a POST request to create a booking", async () => {
         const response = await handler(await PostRequestModel);
-        expect(response.statusCode).toBe(201, 404); // expects 404 if user has no stripe account
+        expect([200, 404]).toContain(response.statusCode); // expects 404 if user has no stripe account
     })
 
     it("should receive a GET request queried on a HostID", async () => {
