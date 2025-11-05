@@ -8,9 +8,18 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from "recharts";
 import "./ADRCard.scss";
 import { ADRCardService as ADRService } from "../services/ADRCardService.js";
+
 
 const ADRCard = () => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
@@ -78,12 +87,26 @@ const ADRCard = () => {
   const allZero = donutData.every(item => item.value === 0);
   const displayData = allZero ? [{ name: "No Data", value: 1 }] : donutData;
 
+
   const COLORS = ["#0d9813", "#82ca9d", "#ffc658"];
 
   return (
     <div className="adr-card card-base">
       <h3>Average Daily Rate</h3>
+    <div className="adr-card card-base">
+      <h3>Average Daily Rate</h3>
 
+      <div className="time-filter">
+        <label>Time Filter:</label>
+        <select
+          className="timeFilter"
+          value={timeFilter}
+          onChange={(e) => setTimeFilter(e.target.value)}
+        >
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
       <div className="time-filter">
         <label>Time Filter:</label>
         <select
@@ -123,6 +146,49 @@ const ADRCard = () => {
         )}
       </div>
 
+      {!loading && !error && (
+        <div className="adr-donut-chart">
+          <div className="donut-wrapper">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={displayData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={3}
+                  label={!allZero}
+                  isAnimationActive={true}
+                >
+                  {displayData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={allZero ? "#c7c7c7" : COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+
+                {allZero && (
+                  <text
+                    x="50%"
+                    y="50%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="14"
+                    fill="#777"
+                  >
+                    No Data
+                  </text>
+                )}
+
+                <Tooltip />
+                <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
       {!loading && !error && (
         <div className="adr-donut-chart">
           <div className="donut-wrapper">

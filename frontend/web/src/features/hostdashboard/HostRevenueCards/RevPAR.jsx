@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
-<<<<<<< HEAD
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
-=======
 import {
   BarChart,
   Bar,
@@ -13,7 +10,6 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
 import "./ADRCard.scss";
 import { RevPARService } from "../services/RevParService.js";
 
@@ -30,6 +26,7 @@ const RevPARCard = () => {
   const [error, setError] = useState(null);
 
   // ✅ Fetch Cognito user ID
+  // ✅ Fetch Cognito user ID
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -43,10 +40,7 @@ const RevPARCard = () => {
     fetchUser();
   }, []);
 
-<<<<<<< HEAD
-=======
   // ✅ Helper: Get ISO week number
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
   const getWeekNumber = (date) => {
     const tempDate = new Date(date);
     tempDate.setHours(0, 0, 0, 0);
@@ -56,10 +50,7 @@ const RevPARCard = () => {
     return weekNo;
   };
 
-<<<<<<< HEAD
-=======
   // ✅ Generate last N months
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
   const getLastMonths = (count = 6) => {
     const months = [];
     const now = new Date();
@@ -76,10 +67,7 @@ const RevPARCard = () => {
     return months;
   };
 
-<<<<<<< HEAD
-=======
   // ✅ Generate last N weeks (Week 42, Week 43, ...)
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
   const getLastWeeks = (count = 6) => {
     const weeks = [];
     const now = new Date();
@@ -94,15 +82,10 @@ const RevPARCard = () => {
     return weeks;
   };
 
-<<<<<<< HEAD
-  const fetchComparisonData = async (userId) => {
-    const periods = timeFilter === "weekly" ? getLastWeeks(6) : getLastMonths(6);
-=======
   // ✅ Fetch chart data (multi-period comparison)
   const fetchComparisonData = async (userId) => {
     const periods =
       timeFilter === "weekly" ? getLastWeeks(6) : getLastMonths(6);
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
 
     const results = [];
     for (const p of periods) {
@@ -124,10 +107,7 @@ const RevPARCard = () => {
     return results;
   };
 
-<<<<<<< HEAD
-=======
   // ✅ Fetch summary + chart data
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
   const fetchMetrics = async () => {
     if (!cognitoUserId) return;
     setLoading(true);
@@ -136,18 +116,6 @@ const RevPARCard = () => {
     try {
       let summary;
       if (timeFilter === "custom" && startDate && endDate) {
-<<<<<<< HEAD
-        summary = await RevPARService.getRevPARMetrics(cognitoUserId, "custom", startDate, endDate);
-      } else {
-        summary = await RevPARService.getRevPARMetrics(cognitoUserId, timeFilter);
-      }
-
-      const totalRev =
-        typeof summary.totalRevenue === "object" ? summary.totalRevenue.totalRevenue : summary.totalRevenue;
-
-      const available =
-        typeof summary.availableNights === "object" ? summary.availableNights.availableNights : summary.availableNights;
-=======
         summary = await RevPARService.getRevPARMetrics(
           cognitoUserId,
           "custom",
@@ -171,7 +139,6 @@ const RevPARCard = () => {
         typeof summary.availableNights === "object"
           ? summary.availableNights.availableNights
           : summary.availableNights;
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
 
       const revparVal = parseFloat(summary.revPAR) || 0;
 
@@ -179,10 +146,7 @@ const RevPARCard = () => {
       setAvailableNights(Number(available) || 0);
       setRevPAR(Number(revparVal) || 0);
 
-<<<<<<< HEAD
-=======
       // get chart data
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
       const chart = await fetchComparisonData(cognitoUserId);
       setChartData(chart);
     } catch (err) {
@@ -202,37 +166,34 @@ const RevPARCard = () => {
       cognitoUserId &&
       (timeFilter !== "custom" || (startDate && endDate))
     ) {
+    if (
+      cognitoUserId &&
+      (timeFilter !== "custom" || (startDate && endDate))
+    ) {
       fetchMetrics();
     }
   }, [cognitoUserId, timeFilter, startDate, endDate]);
 
-<<<<<<< HEAD
-  const allZero = !chartData || chartData.every((item) => item.revPAR === 0);
-  const displayData = allZero ? [{ label: "No Data", revPAR: 1 }] : chartData;
-=======
   const allZero =
     !chartData || chartData.every((item) => item.revPAR === 0);
 
   const displayData = allZero
     ? [{ label: "No Data", revPAR: 1 }]
     : chartData;
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
 
   return (
+    <div className="adr-card card-base">
+      <h3>RevPAR</h3>
     <div className="adr-card card-base">
       <h3>RevPAR</h3>
 
       <div className="time-filter">
         <label>Time Filter:</label>
-<<<<<<< HEAD
-        <select className="timeFilter" value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
-=======
         <select
           className="timeFilter"
           value={timeFilter}
           onChange={(e) => setTimeFilter(e.target.value)}
         >
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
           <option value="custom">Custom</option>
@@ -243,13 +204,6 @@ const RevPARCard = () => {
         <div className="custom-date-filter">
           <div>
             <label>Start Date:</label>
-<<<<<<< HEAD
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </div>
-          <div>
-            <label>End Date:</label>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-=======
             <input
               type="date"
               value={startDate}
@@ -263,7 +217,6 @@ const RevPARCard = () => {
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
           </div>
         </div>
       )}
@@ -276,15 +229,6 @@ const RevPARCard = () => {
         ) : (
           <>
             <p>
-<<<<<<< HEAD
-              <strong>Total Revenue:</strong> €{totalRevenue.toLocaleString()}
-            </p>
-            <p>
-              <strong>Available Nights:</strong> {availableNights.toLocaleString()}
-            </p>
-            <p>
-              <strong>RevPAR:</strong> €{revPAR.toLocaleString()}
-=======
               <strong>Total Revenue:</strong> ${totalRevenue.toLocaleString()}
             </p>
             <p>
@@ -293,7 +237,6 @@ const RevPARCard = () => {
             </p>
             <p>
               <strong>RevPAR:</strong> ${revPAR.toLocaleString()}
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
             </p>
           </>
         )}
@@ -306,15 +249,11 @@ const RevPARCard = () => {
               <BarChart data={displayData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-<<<<<<< HEAD
-                <YAxis tick={{ fontSize: 12 }} domain={[0, "dataMax + 20"]} allowDataOverflow={false} />
-=======
                 <YAxis
                   tick={{ fontSize: 12 }}
                   domain={[0, "dataMax + 20"]}
                   allowDataOverflow={false}
                 />
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
                 <Tooltip />
                 {!allZero && <Legend />}
                 <Bar
@@ -325,9 +264,6 @@ const RevPARCard = () => {
                   isAnimationActive={true}
                 />
                 {allZero && (
-<<<<<<< HEAD
-                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="14" fill="#999">
-=======
                   <text
                     x="50%"
                     y="50%"
@@ -336,7 +272,6 @@ const RevPARCard = () => {
                     fontSize="14"
                     fill="#999"
                   >
->>>>>>> e45c67103 (visual van adr en revpar afgemaakt)
                     No Data
                   </text>
                 )}
