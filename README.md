@@ -50,6 +50,7 @@ Table of Contents
     - [Github Introduction](#github-introduction)
     - [Programming Introduction](#programming-introduction)
     - [Web/App Setup](#webapp-setup)
+    - [Other subjects to understand](#other-subjects-to-understand)
   - [Core modules and APIs](#core-modules-and-apis)
   - [Code Conventions](#code-conventions)
   - [Recommended Docs](#recommended-docs)
@@ -136,8 +137,6 @@ This sprint will help you to get familiar with domits within one week so you can
 
 If you ever get stuck somewhere, do your best. Otherwise, google, and if that doesn't work, contact your fellow other students.
 
----
-
 ### General Introduction
 Learn the basics of Domits, who we are, what we build, and where to find key documentation.
 
@@ -188,26 +187,16 @@ Get Domits running locally for development.
 
 **Web**
 
-Web Development Preperation:
-* [Running Domits Locally - Web](./docs/running%20Domits%20locally.md)
+Web Development Setup:
+* [Running Domits Locally - Web](./docs/internal/onboarding/running%20Domits%20locally.md)
 
 **App**
 
 > [!Note]
 > Apple does not allow development of IOS on a Windows machine. A possible workaround could be using either Amazon EC2, or a VM on your machine.
 
-App Development Preperation:
-* [App Onboarding](./docs/onboarding/app/app_onboarding.md)
-
-App Development on Windows:
-
-* [Android Setup on Windows](./docs/onboarding/app/android_setup.md)
-
-App Development on MacOS
-
-* [Android Setup on MacOS](./docs/onboarding/app/android_macOS_setup.md)
-* [IOS Setup on MacOS](./docs/onboarding/app/ios_setup.md)
-* [IOS Xcode Errors](./docs/onboarding/app/ios_xCode_errors.md)
+App Development Setup:
+* [App Onboarding](./docs/internal/onboarding/app/app_onboarding.md)
 
 After this section you should have:
 - The repo cloned locally.
@@ -215,6 +204,8 @@ After this section you should have:
 
 That are all the fundamental things to be aware of.
 You can decide to take a [Quick Fix](https://github.com/domits1/Domits/issues/122) now, or be aware of other subjects to understand.
+
+### Other subjects to understand
 
 * [Domain Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design)
 DDD helps you structure complex systems around the real-world problems they solve.
@@ -249,31 +240,56 @@ AI stuff..
   
 * [Gen AI](https://github.com/domits1/Domits/wiki/Generative-AI)
 Learn more about using Generative AI for Development. 
-[ML](https://github.com/domits1/Domits/wiki/Machine-Learning) 
-[AI Infrastructure](https://github.com/domits1/Domits/wiki/AI-Infrastructure)
-[AI Services](https://github.com/domits1/Domits/wiki/AI-Services)
+
+* [ML](https://github.com/domits1/Domits/wiki/Machine-Learning) 
+Learn more about Machine Learning.
+
+* [AI Infrastructure](https://github.com/domits1/Domits/wiki/AI-Infrastructure)
+Learn more about AI Infrastructure.
+
+* [AI Services](https://github.com/domits1/Domits/wiki/AI-Services)
+Learn more about AI services.
 
 Once your environment is set up, pick your first [Quick Fix](https://github.com/domits1/Domits/issues/122) and good luck!
 
 
-
-
 ## Core modules and APIs
 Core modules and APIs used through Domits
-**[Booking Engine](/docs/private_API/booking%20and%20reservations//booking_and_reservation.md)**
+
+**[Booking Engine](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
 
 * Responsible for: Handling Host + Guest bookings, performing CRUD operations. Sending a email to host/guest on received booking. Stripe/Payment logic.
 * Used for: Creating reservations, creating a paymentIntent with Stripe reading reservations on the host/guest side.
 
+**[Calendar](/docs/internal/apis/calendar/host_guest_calendar_workflow.md)**
+
+* Responsible for: Handling Calendar actions.
+* Used for: Calendar Component
+
+**[Finance](/docs/internal/apis/finance/hostFinance.md)**
+
+* Responsible for: Handling Finances/payouts with Stripe
+* Used for: Host Dashboard - Finance Tab
+
+**[Messaging](/docs/internal/apis/messaging/messaging_overview.md)**
+
+* Responsible for: Handling messages
+* Used for: Host/Guest messages
+
+**[Property Handler](/docs/internal/apis/propertyhandler/property_handler.md)**
+
+* Responsible for: Handling properties
+* Used for: Handling CRUD operations for properties, creating properties with the property listing, showing properties and getting propertyinformation in the homepage.
 
 ## Code Conventions
 
-Global styling goes in web/src/styles/sass and feature-specific styling goes into web/src/feature/INSERTFEATUREHERE/styles
-
+* [Clean Code: Reference Guide](./docs/internal/standards/clean_code_reference_guide.md) - Helps you write maintainable, readable and efficient code
+* [Code Conventions](./docs/internal/standards/code_conventions.md) - Helps you maintain a consistent and readable codebase in Domits.
+* [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
 ## Recommended Docs
 Docs recommended to take a look at.
 
-* [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer/
+* [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
 
 
 
