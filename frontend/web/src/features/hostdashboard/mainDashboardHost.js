@@ -7,7 +7,7 @@ import HostReservations from "./HostReservations";
 import Messages from "../../components/messages/Messages";
 import HostReports from "./HostPayments";
 import HostPropertyCare from "./Housekeeping";
-import HostFinanceTab from "./HostFinanceTab";
+import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostPricing from "./hostpricing/views/HostPricing";
 import HostListings from "./HostListings";
 import HostSettings from "./HostSettings";
