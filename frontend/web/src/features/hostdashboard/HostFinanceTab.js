@@ -12,43 +12,12 @@ import {
 } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
 import formatMoney from "./hostfinance/utils/formatMoney";
+import StatusBadge from "./hostfinance/components/StatusBadge/StatusBadge";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const MAX_ITEMS_PER_PAGE = 5;
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const REFRESH_INTERVAL_MS = 1000;
-
-const getStatusMeta = (status) => {
-  const s = String(status).toLowerCase();
-  switch (s) {
-    case "succeeded":
-      return { label: "Succeeded", tone: "is-success" };
-    case "paid":
-      return { label: "Paid", tone: "is-success" };
-    case "pending":
-      return { label: "Pending", tone: "is-pending" };
-    case "incoming charge - pending":
-      return { label: "incoming charge - pending", tone: "is-pending" };
-    case "failed":
-      return { label: "Failed", tone: "is-danger" };
-    case "canceled":
-      return { label: "Canceled", tone: "is-danger" };
-    case "cancelled":
-      return { label: "Cancelled", tone: "is-danger" };
-    default:
-      return { label: status || "Unknown", tone: "is-muted" };
-  }
-};
-
-const StatusBadge = ({ status }) => {
-  const meta = getStatusMeta(status);
-  return (
-    <span className={`status-badge ${meta.tone}`}>
-      <span className="status-dot" />
-      {meta.label}
-    </span>
-  );
-};
 
 const pageSlice = (list, page, size = MAX_ITEMS_PER_PAGE) => list.slice((page - 1) * size, page * size);
 
