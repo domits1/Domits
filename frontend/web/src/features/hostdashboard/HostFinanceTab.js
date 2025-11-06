@@ -11,8 +11,8 @@ import {
   getPayoutSchedule,
 } from "./services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
-import formatMoney from "./hostfinance/utils/formatMoney";
-import StatusBadge from "./hostfinance/components/StatusBadge/StatusBadge";
+import {formatMoney } from "./hostfinance/utils/formatMoney";
+import { StatusBadge } from "./hostfinance/components/StatusBadge/StatusBadge";
 import { TablePager } from "./hostfinance/components/TabelPager/TablePager";
 import { pageSlice, MAX_ITEMS_PER_PAGE, getTotalPages } from "./hostfinance/utils/pagination";
 
