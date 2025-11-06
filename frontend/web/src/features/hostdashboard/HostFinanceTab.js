@@ -47,7 +47,6 @@ export default function HostFinanceTab() {
 
   const updateLoadingState = (key, value) => setLoadingStates((prev) => ({ ...prev, [key]: value }));
 
-  const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
 
   const chargesTotalPages = getTotalPages(charges.length, MAX_ITEMS_PER_PAGE);
@@ -324,7 +323,7 @@ export default function HostFinanceTab() {
                 <li>
                   <strong>Step 1: </strong>
                   &nbsp;&nbsp;
-                  <span className="finance-span" onClick={handleEnlistNavigation}>
+                  <span className="finance-span" onClick={() => handleNavigation("/hostonboarding")}>
                     List your property.
                   </span>
                 </li>
