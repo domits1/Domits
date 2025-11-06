@@ -13,6 +13,7 @@ import {
 import ClipLoader from "react-spinners/ClipLoader";
 import formatMoney from "./hostfinance/utils/formatMoney";
 import StatusBadge from "./hostfinance/components/StatusBadge/StatusBadge";
+import { TablePager } from "./hostfinance/components/TabelPager/TabelPager";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const MAX_ITEMS_PER_PAGE = 5;
@@ -20,23 +21,6 @@ const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const REFRESH_INTERVAL_MS = 1000;
 
 const pageSlice = (list, page, size = MAX_ITEMS_PER_PAGE) => list.slice((page - 1) * size, page * size);
-
-const TablePager = ({ page, setPage, totalPages }) => {
-  if (totalPages <= 1) return null;
-  return (
-    <div className="table-pager">
-      <button className="pager-btn" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-        Previous
-      </button>
-      <span className="pager-info">
-        Page {page} of {totalPages}
-      </span>
-      <button className="pager-btn" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
-        Next
-      </button>
-    </div>
-  );
-};
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
