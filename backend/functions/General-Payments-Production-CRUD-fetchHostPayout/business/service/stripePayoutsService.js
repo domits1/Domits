@@ -138,19 +138,17 @@ export default class StripePayoutsService {
 
     const merged = [];
 
-    if (forecast) merged.push(forecast);
-
     merged.push(
+      ...forecast ? [forecast] : [],
       ...pendingAfterCutoff.map((x) => ({
         arrivalDate: x.availableOn,
         amount: x.amount,
         currency: x.currency,
         status: "incoming charge - pending",
         id: null,
-      }))
+      })),
+      ...payoutDetails
     );
-
-    merged.push(...payoutDetails);
 
     return {
       statusCode: 200,
