@@ -8,7 +8,7 @@ import {
   getHostBalance,
   setPayoutSchedule,
   getPayoutSchedule,
-} from "../../services/stripeAccountService";
+} from "../services/stripeAccountService";
 import ClipLoader from "react-spinners/ClipLoader";
 import { formatMoney } from "../utils/formatMoney";
 import { StatusBadge } from "./StatusBadge/StatusBadge";
