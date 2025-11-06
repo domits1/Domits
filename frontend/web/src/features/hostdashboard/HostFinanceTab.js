@@ -14,7 +14,7 @@ import ClipLoader from "react-spinners/ClipLoader";
 import formatMoney from "./hostfinance/utils/formatMoney";
 import StatusBadge from "./hostfinance/components/StatusBadge/StatusBadge";
 import { TablePager } from "./hostfinance/components/TabelPager/TabelPager";
-import { pageSlice, MAX_ITEMS_PER_PAGE } from "./hostfinance/utils/pagination";
+import { pageSlice, MAX_ITEMS_PER_PAGE, getTotalPages } from "./hostfinance/utils/pagination";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
@@ -50,17 +50,15 @@ export default function HostFinanceTab() {
   const handleEnlistNavigation = () => navigate("/hostonboarding");
   const handleNavigation = (value) => navigate(value);
 
-  const chargesTotalPages = Math.max(1, Math.ceil(charges.length / MAX_ITEMS_PER_PAGE));
-  const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / MAX_ITEMS_PER_PAGE));
+  const chargesTotalPages = getTotalPages(charges.length, MAX_ITEMS_PER_PAGE);
+  const payoutsTotalPages = getTotalPages(payouts.length, MAX_ITEMS_PER_PAGE);
 
   useEffect(() => {
-    const total = Math.max(1, Math.ceil(charges.length / MAX_ITEMS_PER_PAGE));
-    setChargesPage((p) => Math.min(Math.max(1, p), total));
+    setChargesPage((p) => Math.min(Math.max(1, p), chargesTotalPages));
   }, [charges.length]);
 
   useEffect(() => {
-    const total = Math.max(1, Math.ceil((payouts.length) / MAX_ITEMS_PER_PAGE));
-    setPayoutsPage((p) => Math.min(Math.max(1, p), total));
+    setPayoutsPage((p) => Math.min(Math.max(1, p), payoutsTotalPages));
   }, [payouts.length]);
 
   function showToast(message, type = "success") {
