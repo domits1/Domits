@@ -72,12 +72,14 @@ export default function HostFinanceTab() {
   const payoutsTotalPages = Math.max(1, Math.ceil(payouts.length / MAX_ITEMS_PER_PAGE));
 
   useEffect(() => {
-    setChargesPage(1);
-  }, [charges]);
+    const total = Math.max(1, Math.ceil(charges.length / MAX_ITEMS_PER_PAGE));
+    setChargesPage((p) => Math.min(Math.max(1, p), total));
+  }, [charges.length]);
 
   useEffect(() => {
-    setPayoutsPage(1);
-  }, [payouts]);
+    const total = Math.max(1, Math.ceil((payouts.length) / MAX_ITEMS_PER_PAGE));
+    setPayoutsPage((p) => Math.min(Math.max(1, p), total));
+  }, [payouts.length]);
 
   function showToast(message, type = "success") {
     setToast({ message, type });
