@@ -1,6 +1,6 @@
 import { getStatusMeta } from "./getStatusMeta";
 
-export default function StatusBadge ({ status }) {
+export function StatusBadge ({ status }) {
   const meta = getStatusMeta(status);
   return (
     <span className={`status-badge ${meta.tone}`}>
