@@ -14,13 +14,11 @@ import ClipLoader from "react-spinners/ClipLoader";
 import formatMoney from "./hostfinance/utils/formatMoney";
 import StatusBadge from "./hostfinance/components/StatusBadge/StatusBadge";
 import { TablePager } from "./hostfinance/components/TabelPager/TabelPager";
+import { pageSlice, MAX_ITEMS_PER_PAGE } from "./hostfinance/utils/pagination";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-const MAX_ITEMS_PER_PAGE = 5;
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const REFRESH_INTERVAL_MS = 1000;
-
-const pageSlice = (list, page, size = MAX_ITEMS_PER_PAGE) => list.slice((page - 1) * size, page * size);
 
 export default function HostFinanceTab() {
   const navigate = useNavigate();
