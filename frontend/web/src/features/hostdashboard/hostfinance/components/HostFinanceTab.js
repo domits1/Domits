@@ -40,6 +40,7 @@ export default function HostFinanceTab() {
     charges: false,
     payouts: false,
     hostBalance: false,
+    getPayoutSchedule: false,
   });
 
   const isMountedRef = useRef(false);
@@ -288,9 +289,11 @@ export default function HostFinanceTab() {
 
       showToast("Payout schedule updated");
       await setPayoutSchedule(payload);
+      await refreshScheduleSilent();
     } catch (error) {
       console.error("Error setting payout schedule:", error);
       showToast("Something went wrong, please contact support.", "error");
+      await refreshScheduleSilent();
     }
   }
 
