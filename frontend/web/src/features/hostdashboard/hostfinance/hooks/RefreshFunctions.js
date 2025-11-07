@@ -11,7 +11,7 @@ import {
 
 const REFRESH_INTERVAL_MS = 1000;
 
-export default function RefreshFunctions() {
+export function RefreshFunctions() {
   const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState([]);
   const [charges, setCharges] = useState([]);
