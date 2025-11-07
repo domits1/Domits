@@ -5,7 +5,7 @@ import { formatMoney } from "../utils/formatMoney";
 import { StatusBadge } from "./StatusBadge/StatusBadge";
 import { TablePager } from "./TabelPager/TablePager";
 import { pageSlice, MAX_ITEMS_PER_PAGE, getTotalPages } from "../utils/pagination";
-import { RefreshFunctions } from "../hooks/RefreshFunctions";
+import { RefreshFunctions } from "../hooks/refreshFunctions";
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
