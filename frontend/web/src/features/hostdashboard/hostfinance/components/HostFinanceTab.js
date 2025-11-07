@@ -61,8 +61,8 @@ export default function HostFinanceTab() {
 
   function showToast(message, type = "success") {
     setToast({ message, type });
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => setToast(null), 2000);
+    clearTimeout(showToast);
+    showToast = setTimeout(() => setToast(null), 2000);
   }
 
   useEffect(() => {
