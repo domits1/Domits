@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "r
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./styles/toast-notifications.scss";
+import "./styles/toast-notifications.scss";
 import Footer from "./components/base/Footer";
 import Header from "./components/base/Header";
 import MenuBar from "./components/base/MenuBar";
@@ -143,6 +144,7 @@ function App() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        theme="light"
         theme="light"
       />
       <FlowContext.Provider value={{ flowState, setFlowState }}>
