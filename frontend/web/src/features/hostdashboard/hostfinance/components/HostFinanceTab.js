@@ -139,7 +139,7 @@ export default function HostFinanceTab() {
 
     return () => {
       isMountedRef.current = false;
-      clearTimeout(showToast._t);
+      clearTimeout(showToast);
     };
   }, []);
 
