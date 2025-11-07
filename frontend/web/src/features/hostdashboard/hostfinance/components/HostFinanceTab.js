@@ -288,7 +288,6 @@ export default function HostFinanceTab() {
 
       showToast("Payout schedule updated");
       await setPayoutSchedule(payload);
-      refreshScheduleSilent();
     } catch (error) {
       console.error("Error setting payout schedule:", error);
       showToast("Something went wrong, please contact support.", "error");
