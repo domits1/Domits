@@ -5,6 +5,7 @@ import Modal from "react-modal";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "./styles/toast-notifications.scss";
 import Footer from "./components/base/Footer";
 import Header from "./components/base/Header";
 import MenuBar from "./components/base/MenuBar";
@@ -145,14 +146,14 @@ function App() {
       <ToastContainer
         position="top-right"
         autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
+        hideProgressBar={true}
+        newestOnTop={true}
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="colored"
+        theme="light"
       />
       <FlowContext.Provider value={{ flowState, setFlowState }}>
         <Router>

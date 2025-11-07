@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { FaPaperPlane, FaArrowLeft, FaTimes } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
 import { toast } from 'react-toastify';
+import MessageToast from './MessageToast';
 
 
 const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, onClose, dashboardType}) => {
@@ -97,7 +98,16 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
         ];
         automated.forEach((m, i) => {
             addNewMessage(m);
-            setTimeout(() => toast.info(m.text), i * 200);
+            setTimeout(() => {
+                toast.info(
+                    <MessageToast 
+                        contactName={contactName} 
+                        contactImage={contactImage} 
+                        message={m.text} 
+                    />,
+                    { className: 'message-toast-custom' }
+                );
+            }, i * 200);
         });
         const last = automated[automated.length - 1];
         if (last) {
@@ -120,8 +130,20 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
 
             addNewMessage(msg);
             addedMessageIds.current.add(msg.id);
+            
+            // Show toast for incoming messages (from contact, not from current user)
+            if (msg.userId === contactId && msg.recipientId === userId && msg.text) {
+                toast.info(
+                    <MessageToast 
+                        contactName={contactName} 
+                        contactImage={contactImage} 
+                        message={msg.text} 
+                    />,
+                    { className: 'message-toast-custom' }
+                );
+            }
         });
-    }, [wsMessages, userId, contactId, addNewMessage]);
+    }, [wsMessages, userId, contactId, addNewMessage, contactName, contactImage]);
 
     const handleSendMessage = async () => {
         const hasContent = (newMessage.trim() || uploadedFileUrls.length > 0);
