@@ -291,7 +291,6 @@ export default function HostFinanceTab() {
     } catch (error) {
       console.error("Error setting payout schedule:", error);
       showToast("Something went wrong, please contact support.", "error");
-      refreshScheduleSilent();
     }
   }
 
