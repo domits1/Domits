@@ -1,31 +1,27 @@
-import {Service} from "../business/service/service.js";
-import {AuthManager} from "../auth/authManager.js";
-
-import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
+import { Service } from "../business/service/service.js";
+import { AuthManager } from "../auth/authManager.js";
+import { ok, err, parseJson } from "../util/http.js";
 
 export class Controller {
-    service;
-    authManager;
+  service; authManager;
+  constructor() {
+    this.service = new Service();
+    this.authManager = new AuthManager();
+  }
 
-    constructor() {
-        this.service = new Service();
-        this.authManager = new AuthManager();
+  async generate(event) {
+    try {
+      const token = event.headers?.Authorization || event.headers?.authorization;
+      await this.authManager.userIsAuthorized(token);
+
+      const body = parseJson(event);
+      if (!body) return err(400, "Invalid JSON body");
+
+      const url = await this.service.generateFromHostRecords(body);
+      return ok({ url });
+    } catch (e) {
+      console.error(e);
+      return err(e.statusCode || 500, e.message || "Internal error");
     }
-
-    async getUser(event) {
-        try {
-            return {
-                statusCode: 200,
-                body: JSON.stringify(await this.service.getUser()),
-                headers: responseHeaders
-            };
-        } catch (error) {
-            console.error(error.message);
-            return {
-                statusCode: error.statusCode || 500,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            }
-        }
-    }
-
+  }
 }
