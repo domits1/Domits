@@ -80,7 +80,6 @@ $color-muted: #6b7280;
   background: $muted;
   padding: 16px;
   border-radius: $radius;
-  width: 100%;
   @include up($bp-md) {
     padding: 20px;
   }
