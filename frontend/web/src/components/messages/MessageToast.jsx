@@ -17,23 +17,27 @@ const MessageToast = ({ contactName, contactImage, message }) => {
           height: '40px',
           borderRadius: '50%',
           objectFit: 'cover',
-          flexShrink: 0
+          flexShrink: 0,
+          marginTop: '10px'
         }}
       />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ 
-          fontWeight: 600, 
-          fontSize: '14px', 
+          fontWeight: 700, 
+          fontSize: '16px', 
           marginBottom: '4px',
-          color: '#ffffff'
+          color: '#E5E5E5',
+          lineHeight: '1.4',
+          marginLeft: '2px'
         }}>
           {contactName || 'Contact'}
         </div>
         <div style={{ 
           fontSize: '13px', 
-          color: '#6c757d',
+          color: '#B3B3B3',
           wordBreak: 'break-word',
-          lineHeight: '1.4'
+          lineHeight: '1.4',
+          marginLeft: '2px'
         }}>
           {truncatedMessage}
         </div>

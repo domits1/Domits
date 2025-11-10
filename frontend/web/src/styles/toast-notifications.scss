@@ -1,8 +1,8 @@
 // Custom styles for react-toastify to look like real notifications
 
 // Variables
-$border-radius: 12px;
-$border-radius-mobile: 10px;
+$border-radius: 9999px; // fully oval/ pill shape on desktop
+$border-radius-mobile: 9999px; // fully oval/ pill shape on mobile
 $shadow-light: 0 8px 24px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
 $shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
 $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -27,8 +27,8 @@ $color-bg-dark-alt: #1a1a1a;
 .Toastify__toast {
   border-radius: $border-radius;
   box-shadow: $shadow-light;
-  padding: 16px 20px;
-  min-height: 64px;
+  padding: 8px 14px;
+  min-height: 40px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 15px;
   line-height: 1.5;
@@ -160,17 +160,8 @@ $color-bg-dark-alt: #1a1a1a;
 }
 
 .Toastify__close-button {
-  opacity: 0.5;
-  color: $color-text-light;
-  width: 20px;
-  height: 20px;
-  transition: $transition-fast;
-
-  &:hover {
-    opacity: 1;
-    color: $color-text-dark;
-    transform: scale(1.1);
-  }
+  display: none !important;
+  pointer-events: none !important;
 }
 
 .Toastify__toast-container--top-right {
@@ -182,8 +173,8 @@ $color-bg-dark-alt: #1a1a1a;
 @media (max-width: 480px) {
   .Toastify__toast {
     border-radius: $border-radius-mobile;
-    padding: 14px 16px;
-    min-height: 56px;
+    padding: 8px 12px;
+    min-height: 38px;
     font-size: 14px;
     width: 100%;
   }
