@@ -258,7 +258,7 @@ export function RefreshFunctions() {
       const urlToOpen = details.onboardingComplete ? details.loginLinkUrl : details.onboardingUrl;
 
       setProcessingStep("opening");
-      setTimeout(() => window.location.replace(urlToOpen), 200);
+      setTimeout(() => window.open(urlToOpen), 200);
     } catch (error) {
       console.error("Error during Stripe action:", error);
       setProcessingStep(null);
