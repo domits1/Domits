@@ -454,6 +454,14 @@ $color-muted: #6b7280;
     }
   }
 
+  .pf-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+}
+
   .pf-note {
     display: block;
     margin-top: 8px;
@@ -464,14 +472,6 @@ $color-muted: #6b7280;
     padding: 8px 10px;
     border-radius: 6px;
   }
-
-  .pf-actions {
-    margin-top: 14px;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-  }
-}
 
 .btn {
   appearance: none;
