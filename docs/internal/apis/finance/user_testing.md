@@ -1,8 +1,8 @@
-> # Gebruikerstest – Host Finance Dashboard (Charges & Payouts)
+> # Gebruikerstest – Host Finance Dashboard
 >
 > Dit document is afgestemd op de **HostFinanceTab** component (React) en de bijbehorende UI/flows:
 >
-> - Drie-stappen banner (property → Stripe -> live zetten)
+> - Drie-stappen banner (property -> Stripe -> live zetten)
 > - **Recent Charges** tabel met paginatie
 > - **Balance overview** (Incoming vs Available) duidelijk zichtbaar
 > - **Recent Payouts** tabel met paginatie
