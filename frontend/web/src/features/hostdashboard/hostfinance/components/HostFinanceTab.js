@@ -135,6 +135,10 @@ export default function HostFinanceTab() {
                     </div>
                   ) : charges.length > 0 ? (
                     <>
+                      <small className="pf-note">
+                        Succeeded charges by guest(s) become available 7 days after the payment date.
+                      </small>
+                      <br />
                       <div className="table-wrap">
                         <table className="payout-table">
                           <thead>
