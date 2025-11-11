@@ -98,8 +98,8 @@
     top: 24px;
     transform: none;
     box-shadow: none;
-    height: calc(100dvh - 24px); /* keep it tall but below top offset */
-    z-index: auto; /* not fighting with desktop layout */
+    height: calc(100dvh - 24px); 
+    z-index: auto; 
   }
 }
 
@@ -107,7 +107,7 @@
 .hamburger-btn {
   position: fixed;
   top: 16px; left: 16px; 
-  z-index: var(--gd-z-navbar); /* ALWAYS above overlay & drawer */
+  z-index: var(--gd-z-navbar);
   display: inline-flex; align-items: center; justify-content: center;
   width: 44px; height: 44px;
   border-radius: 10px; border: var(--gd-border);
@@ -121,7 +121,6 @@
   @media (min-width: 1024px) { display: none; }
 }
 
-/* Dark overlay */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
@@ -139,7 +138,6 @@
   @media (min-width: 1024px) { display: none; }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .sidebar, .sidebar-overlay, .hamburger-btn, .menu-item {
     transition: none !important;
