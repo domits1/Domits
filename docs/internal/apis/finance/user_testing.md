@@ -13,9 +13,9 @@
 >
 > ## Testpersoon
 >
-> **Naam:** _VUL IN_  
-> **Rol:** _VUL IN_  
-> **Datum:** _VUL IN_
+> **Naam:** Alessio Itofo 
+> **Rol:** developer/stagiere  
+> **Datum:** 11-11-2023
 >
 > ## Testscenario’s (functioneel + UI/UX)
 >
@@ -74,45 +74,53 @@
 >
 > ## Observatieformulier
 >
-> | Taak                                      | Gelukt? | Tijd     | Moeilijkheid (1–5) | > Opmerkingen |
-> | ----------------------------------------- | :-----: | -------- | :----------------: | ------------- |
-> | Finance pagina vinden                     | ja/nee  | \_\_\_ s |     1 2 3 4 5      |               |
-> | Stripe koppelen (juiste toestand)         | ja/nee  | \_\_\_ s |     1 2 3 4 5      |               |
-> | **Charges** lezen & begrijpen             | ja/nee  | \_\_\_ s |     1 2 3 4 5      |               |
-> | Paginatie **Charges**                     | ja/nee  | \_\_\_ s |     1 2 3 4 5      |               |
-> | Balance (Incoming vs Available) begrijpen | ja/nee  | \_\_\_ s |     1 2 3 4 5      |               |
-> | **Payouts** lezen & begrijpen             | ja/nee  | \_\_\_ s |     1 2 3 4 5      |               |
-> | Paginatie **Payouts**                     | ja/nee  | \_\_\_ s |     1 2 3 4 5      |               |
-> | Payout Frequency wijzigen                 | ja/nee  | \_\_\_ s |     1 2 3 4 5      |               |
-> | Verslag van toasts/feedback               | ja/nee  | \_\_\_ s |     1 2 3 4 5      |               |
+> | Taak                                      | Gelukt? | Tijd        | Moeilijkheid (1–5) | > Opmerkingen                                                                                                          |
+> | ----------------------------------------- | :-----: | ----------- | :----------------: | ---------------------------------------------------------------------------------------------------------------------- |
+> | Finance pagina vinden                     |   ja    | 10.15 s     |         3          | Als nieuwe gebruiker is het moeilijk de finance te vinden want je de layout nog niet kent van de website               |
+> | Stripe koppelen (juiste toestand)         |   ja    | 4 m 16.23 s |         2          | Het was makkelijk en duidelijk duurde alleen even om de gegevens in te vullen                                          |
+> | **Charges** lezen & begrijpen             |   ja    | 1 m 26.12 s |         3          | Het was niet duidelijk wat je bedoelde met die vraag                                                                   |
+> | Paginatie **Charges**                     |   ja    | 1 m 32.13 s |         1          | UI was duidelijk en makkelijk te vinden                                                                                |
+> | Balance (Incoming vs Available) begrijpen |   ja    | 5.60 s      |         4          | Avaiable is niet echt een duidelijke woord inplaats van avaiable kan je een beter woord kiezen                         |
+> | **Payouts** lezen & begrijpen             |   ja    | 11.22 s     |         1          | Duidelijk en makkelijk te begrijpen                                                                                    |
+> | Paginatie **Payouts**                     |   ja    | 11.60 s     |         1          | UI was duidelijk en makkelijk te vinden                                                                                |
+> | Payout Frequency wijzigen                 |   ja    | 13.85 s     |         3          | weekly is duidelijk en bij monthly zie je niet welke dag van de week de dag precies valt en welke maand hiervoor geldt |
 >
 > ## Tevredenheidsvragen (1 = helemaal oneens, 5 = helemaal eens)
 >
-> | Stelling                                                      |   Score   |
-> | ------------------------------------------------------------- | :-------: |
-> | Het was makkelijk om **Finance** te vinden                    | 1 2 3 4 5 |
-> | De uitleg over Stripe in **Step 2** was duidelijk             | 1 2 3 4 5 |
-> | Ik begrijp wat **Charges** zijn en hoe ik de tabel lees       | 1 2 3 4 5 |
-> | Ik begrijp wat **Payouts** zijn en wanneer ik uitbetaald word | 1 2 3 4 5 |
-> | Het verschil **Incoming vs Available** is duidelijk           | 1 2 3 4 5 |
-> | Paginatie werkte zoals verwacht                               | 1 2 3 4 5 |
-> | De **Payout Frequency**-instellingen waren logisch            | 1 2 3 4 5 |
-> | De feedback bij opslaan waren voldoende                       | 1 2 3 4 5 |
-> | De interface voelt betrouwbaar en rustig                      | 1 2 3 4 5 |
+> | Stelling                                                      | Score |
+> | ------------------------------------------------------------- | :---: |
+> | Het was makkelijk om **Finance** te vinden                    |   3   |
+> | De uitleg over Stripe in **Step 2** was duidelijk             |   1   |
+> | Ik begrijp wat **Charges** zijn en hoe ik de tabel lees       |   3   |
+> | Ik begrijp wat **Payouts** zijn en wanneer ik uitbetaald word |   1   |
+> | Het verschil **Incoming vs Available** is duidelijk           |   4   |
+> | Paginatie werkte zoals verwacht                               |   1   |
+> | De **Payout Frequency**-instellingen waren logisch            |   3   |
+> | De interface voelt betrouwbaar en rustig                      |   1   |
 >
 > ## Interviewvragen (kwalitatief – gericht op jouw UI)
 >
 > 1. Waar verwachtte je de **Finance**-pagina te vinden? Was dat raak?
+> Ja dat wist ik niet zo goed. Het is nu duidelijk dat het in de host dashboard zit,maar als nieuwe gebruiker weet je niet waar die staat precies.
 > 2. Wat betekent **Charge** voor jou? En **Payout**? (Laat gebruiker dit in eigen woorden uitleggen.)
+> Charge btekent wat ik zelf vraag aan een guest om te betalen aan mij. Payout is hoeveel ik binnen krijg.
 > 3. Kon je snel zien **welke Charge bij welke boeking** hoort (booking id/payment id + thumbnail)?
+> Ja dit was makkelijk en duidelijk te zien.
 > 4. Is het meteen duidelijk **wanneer je uitbetaald wordt** (Balance-overview + Recent Payouts)?
+> Ja dit is duidelijk want je zit een aparte gedeelte daarvoor die hier over gaat.
 > 5. Hoe ervaarde je de **CTA-teksten** (“Create/Continue/Open Stripe” en “Working on it…”)?  
 >    Waren ze informatief genoeg tijdens verwerking?
+> Ik geb eerlijk gezwegd niet doorgehad dat ze er waren.
 > 6. Wat zou je aanpassen aan de **paginatie** (plaatsing, labeling “Page X of Y”, Previous Next)?
+> Misschien zou ik het boven aan de card plaatsen in plaats van er onder dat is het enige.
 > 7. Mis je informatie in **Charges** of **Payouts** (bijv. betaalmethode en of gastcontact)?
+> Nee dit is duidelijk ik mis niks.
 > 8. Hoe duidelijk is het kiezen van **Weekly/Monthly anchors**? Wat zou het begrijpelijker maken of is het duidelijk genoeg?
+> weekly is duidelijk en bij monthly zie je niet welke dag van de week de dag precies valt en welke maand hiervoor geldt.
 > 9. Hoe beoordeel je de **statussen** (kleur/label leesbaarheid, succeeded/failed)?
+> Dit is mooi.De ui past bij de website netjes gedaan!
 > 10. Vertrouw je deze pagina om je inkomsten te beheren? Waarom (wel/niet)?
+> Ja ik vetrouw deze pagina het is rustig en overzichtelijk waardoor het makkelijk is mijn inkomsten te beheren.
 >
 > ## Conclusie (na uitvoering invullen)
 >
