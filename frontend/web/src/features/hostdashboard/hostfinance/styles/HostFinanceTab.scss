@@ -54,8 +54,9 @@ $color-muted: #6b7280;
   border-radius: $radius;
   box-shadow: $shadow;
   padding: 16px;
-  max-width: 960px;
-  width: 100%;
+  max-width: 100%;
+  width: 960px;
+  margin: 0 auto;
   @include up($bp-md) {
     padding: 24px;
   }
@@ -158,7 +159,7 @@ $color-muted: #6b7280;
 
     th,
     td {
-      padding: 8px;
+      padding: 7px;
       text-align: left;
       vertical-align: middle;
     }
@@ -399,26 +400,147 @@ $color-muted: #6b7280;
 
 .payout-frequency {
   background: $muted;
-  padding: 16px;
+  padding: 18px;
   border-radius: $radius;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.02);
 
-  @include up($bp-md) {
-    padding: 20px;
+  .pf-grid {
+    display: grid;
+    gap: 14px;
+    @include up($bp-md) {
+      gap: 16px;
+    }
   }
 
-  h3 {
-    margin: 0 0 10px;
-    font-size: 1.05rem;
+  .pf-row {
+    display: grid;
+    gap: 8px;
+    @include up($bp-md) {
+      grid-template-columns: 220px 1fr;
+      align-items: center;
+      gap: 16px;
+    }
   }
 
-  select {
+  .pf-label {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .pf-select {
     width: 100%;
     padding: 0.7rem 0.9rem;
     border-radius: 10px;
     border: 1px solid #d6d9de;
     background: #fff;
     font-size: 1rem;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
+
+    &:hover {
+      border-color: #c9cdd4;
+    }
+    &:focus {
+      outline: none;
+      border-color: rgba($green, 0.55);
+      box-shadow: 0 0 0 3px rgba($green, 0.15);
+    }
+    &:disabled {
+      opacity: 0.65;
+      background: #f3f4f6;
+      cursor: not-allowed;
+    }
   }
+
+  .pf-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+}
+
+  .pf-note {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #4b5563;
+    background: #f7fbf7;
+    border-left: 3px solid $green;
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.04s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  will-change: transform;
+
+  &:active {
+    transform: translateY(1px);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background: $green;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(13, 152, 19, 0.22);
+  &:hover {
+    background: darken($green, 5%);
+  }
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba($green, 0.2);
+  }
+}
+
+.toast {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: #e8f9ee;
+  color: #0a5f0e;
+  border: 1px solid #b7e3c2;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  animation: toastSlide 0.18s ease-out;
+
+  &.error {
+    background: #fff1f1;
+    color: #7a0c0c;
+    border-color: #f0caca;
+  }
+}
+
+@keyframes toastSlide {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.payout-frequency {
+  backdrop-filter: saturate(120%);
 }
 
 @include up($bp-lg) {
