@@ -21,17 +21,14 @@ function Pages({ onNavigate }) {
   const location = useLocation();
   const btnRef = useRef(null);
 
-  // Close drawer on route change (mobile)
   useEffect(() => { setOpen(false); }, [location.pathname]);
 
-  // ESC to close
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  // Lock page scroll when open (mobile)
   useEffect(() => {
     if (open) {
       const prev = document.body.style.overflow;
@@ -42,7 +39,6 @@ function Pages({ onNavigate }) {
 
   return (
     <>
-      {/* Hamburger (hidden ≥1024px by your SCSS) */}
       <button
         ref={btnRef}
         type="button"
@@ -52,28 +48,24 @@ function Pages({ onNavigate }) {
         aria-expanded={open}
         onClick={() => setOpen(true)}
       >
-        {/* simple icon (three bars) — replace with your own if desired */}
         <span aria-hidden="true">☰</span>
       </button>
 
-      {/* Dark overlay behind the drawer */}
+     
       <div
         className={`sidebar-overlay ${open ? "open" : ""}`}
         onClick={() => setOpen(false)}
         aria-hidden={!open}
       />
 
-      {/* Sidebar */}
       <nav
         className={`sidebar ${open ? "open" : ""}`}
         aria-label="Guest navigation"
         id="guest-menu"
       >
-        {/* Close button (visible on mobile inside the drawer if you want) */}
         <button
           type="button"
           className="hamburger-btn"
-          style={{ top: 16 }}                 // keeps style consistent with your class
           aria-label="Close menu"
           onClick={() => setOpen(false)}
         >
