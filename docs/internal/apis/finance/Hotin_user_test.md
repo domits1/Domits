@@ -1,4 +1,4 @@
-# 🧪 Gebruikerstest – Host Finance Dashboard (Charges & Payouts)
+# Gebruikerstest – Host Finance Dashboard (Charges & Payouts)
 
 Dit document is afgestemd op de **HostFinanceTab** component (React) en de bijbehorende UI/flows:
 
