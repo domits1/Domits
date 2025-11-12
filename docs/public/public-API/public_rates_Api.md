@@ -1,1 +1,0 @@
-This is the docs for the rates API
