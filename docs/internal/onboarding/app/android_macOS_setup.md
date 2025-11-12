@@ -37,11 +37,11 @@ You can find more information about setting up a React-Native project in the [Of
 2. Get to the path where cask was installed to find the JDK installer by running `brew info --cask zulu@17` and copy the highlighted path.
 
    _(The path is highlighted **blue** in the screenshot, but differs for everyone. So do not copy from this image.)_
-   <img width="573" alt="image" src="https://github.com/user-attachments/assets/ef5a3784-26c0-4ca0-b615-e614475c0c81">
+   <img width="573" alt="Screenshot" title="Path to cask location highlighted" src="images/screenshot_coppied_cask_path_hightlight.png">
 3. Open finder and go to the _"Go"_ tab and click _"Go to Folder..."_  
-   <img width="214" alt="image" src="https://github.com/user-attachments/assets/dd6fbcd0-9ca5-4d21-9f6a-07d445c70a17">
+   <img width="214" alt="Screenshot" title="Location of the go to folder button" src="images/screenshot_gotofolder_button.png">
 4. Paste the copied path in the search  
-   <img width="463" alt="image" src="https://github.com/user-attachments/assets/e385ff3b-2479-4e1d-be55-790d7fadb66b">
+   <img width="463" title="Copied path pasted in the search" alt="Screenshot" src="images/screenshot_copied_path_search.png">
 5. Double click to install the package.
 6. Add or update your _"JAVA_HOME"_ environment variable:  
    - Open terminal  
@@ -65,18 +65,18 @@ You can find more information about setting up a React-Native project in the [Of
 
    > Alternatively, if you already have a project open, the SDK Manager can be found under _"Tools > SDK Manager"_ or in the settings under _"Languages & Frameworks > Android SDK"_.
 
-   <img width="1010" alt="image" src="https://github.com/user-attachments/assets/0fd633cc-feec-441f-941b-a573874fc059">
+   <img width="1010" alt="Screenshot" title="Location of the SDK Manager in the Android Studio Welcome screen" src="images/screenshot_sdk_manager_location_welcomescreen.png">  
 3. In the SDK Platforms tab:  
    - Check Show Package Details in the bottom right corner.
    - Expand the Android 15 (VanillaIceCream) SDK and ensure the following are selected:
      - Android SDK Platform 35
      - Google APIs ARM 64 v8a System Image (for M1/M2 Macs).
-  <img width="728" alt="image" src="https://github.com/user-attachments/assets/b0c0c8eb-794d-428d-910d-0641f5cd58a6">
+     <img width="728" alt="Screenshot" title="Android SDK platform selection" src="images/screenshot_sdk_platform_selection.png">  
 
 4. In the SDK Tools tab:
    - Check Show Package Details.
    - Expand Android SDK Build-Tools and select version 35.0.0.
-   <img width="735" alt="image" src="https://github.com/user-attachments/assets/95e88da2-32bc-4ebe-a936-f3894cf0df41"> 
+   <img width="735" alt="Screenshot" title="Android SDK version selection" src="images/screenshot_sdk_version_selection.png">  
 
 5. Click Apply to install the selected SDK components.
 
@@ -92,10 +92,10 @@ You can find more information about setting up a React-Native project in the [Of
 ## Step 7 - Preparing the Android device
 1. Click on _"More Actions > Virtual Device Manager"_ from the welcome screen.
 
-   ![Screenshot](images/screenshot_device_manager_location_welcomescreen.png "Device Manager Location in the welcome screen")
+   <img width="1023" alt="Screenshot" title="Device Manager Location in the welcome screen" src="images/screenshot_device_manager_location_welcomescreen.png">
 
    > Alternatively, if you already have a project open, the Virtual Device Manager can be found under _"Tools > Device Manager"_ or in the upper right corner.  
-   > ![Screenshot](./images/screenshot_device_manager_location_corner.png "Device Manager Location in the corner")
+   > ![Screenshot](images/screenshot_device_manager_location_corner.png "Device Manager Location in the corner")
 
 2. Click on the `+` button and a device of choice.
 3. Press next and don't forget to put it on _"portrait"_ mode instead of _"landscape"_ mode.
