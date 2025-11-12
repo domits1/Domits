@@ -54,7 +54,7 @@
 >
 > ### Recent Payouts
 >
-> 8. **Bekijk “Recent Payouts”.** > _Verwachting:_ Kolommen **Payout date, Amount, Status, Payout ID**. Wanneer geen ID -> “-”.
+> 8. **Bekijk “Recent Payouts”.** _Verwachting:_ Kolommen **Payout date, Amount, Status, Payout ID**. Wanneer geen ID -> “-”.
 > 9. **Paginatie + laad/lege staat** zoals bij Charges.
 >
 > ### Payout Frequency
@@ -102,23 +102,33 @@
 >
 > 1. Waar verwachtte je de **Finance**-pagina te vinden? Was dat raak?
 > - Ja dat wist ik niet zo goed. Het is nu duidelijk dat het in de host dashboard zit,maar als nieuwe gebruiker weet je niet waar die staat precies.
+> <br><br>
 > 2. Wat betekent **Charge** voor jou? En **Payout**? (Laat gebruiker dit in eigen woorden uitleggen.)
+> <br><br>
 > - Charge btekent wat ik zelf vraag aan een guest om te betalen aan mij. Payout is hoeveel ik binnen krijg.
+> <br><br>
 > 3. Kon je snel zien **welke Charge bij welke boeking** hoort (booking id/payment id + thumbnail)?
 > - Ja dit was makkelijk en duidelijk te zien.
+> <br><br>
 > 4. Is het meteen duidelijk **wanneer je uitbetaald wordt** (Balance-overview + Recent Payouts)?
 > - Ja dit is duidelijk want je zit een aparte gedeelte daarvoor die hier over gaat.
+> <br><br>
 > 5. Hoe ervaarde je de **CTA-teksten** (“Create/Continue/Open Stripe” en “Working on it…”)?  
 >    Waren ze informatief genoeg tijdens verwerking?
 > - Ik geb eerlijk gezegd niet doorgehad dat ze er waren.
+> <br><br>
 > 6. Wat zou je aanpassen aan de **paginatie** (plaatsing, labeling “Page X of Y”, Previous Next)?
 > - Misschien zou ik het boven aan de card plaatsen in plaats van er onder dat is het enige.
+> <br><br>
 > 7. Mis je informatie in **Charges** of **Payouts** (bijv. betaalmethode en of gastcontact)?
 > - Nee dit is duidelijk ik mis niks.
+> <br><br>
 > 8. Hoe duidelijk is het kiezen van **Weekly/Monthly anchors**? Wat zou het begrijpelijker maken of is het duidelijk genoeg?
 > - weekly is duidelijk en bij monthly zie je niet welke dag van de week de dag precies valt en welke maand hiervoor geldt.
+> <br><br>
 > 9. Hoe beoordeel je de **statussen** (kleur/label leesbaarheid, succeeded/failed)?
 > - Dit is mooi.De ui past bij de website netjes gedaan!
+> <br><br>
 > 10. Vertrouw je deze pagina om je inkomsten te beheren? Waarom (wel/niet)?
 > - Ja ik vetrouw deze pagina het is rustig en overzichtelijk waardoor het makkelijk is mijn inkomsten te beheren.
 >
