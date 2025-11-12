@@ -17,7 +17,7 @@ Het doel van deze gebruikerstest is om te beoordelen of de gebruiker zelfstandig
 
 **Naam:** Hotin   
 **Rol:** Cyber Security / Stagiair  
-**Datum:** 11-11-2023
+**Datum:** 12-11-2023
 
 ---
 
