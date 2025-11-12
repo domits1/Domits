@@ -31,12 +31,11 @@ const ADRCard = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userInfo = await Auth.currentUserInfo();
-        if (!userInfo?.attributes?.sub) throw new Error("Cognito User ID not found");
-        setCognitoUserId(userInfo.attributes.sub);
+        const user = await Auth.currentAuthenticatedUser();
+        setCognitoUserId(user.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
-        setError(err.message);
+        setError("Failed to authenticate user");
       }
     };
     fetchUser();
@@ -79,9 +78,8 @@ const ADRCard = () => {
     { name: "Booked Nights", value: bookedNights },
   ];
 
-  const allZero = donutData.every(item => item.value === 0);
+  const allZero = donutData.every((item) => item.value === 0);
   const displayData = allZero ? [{ name: "No Data", value: 1 }] : donutData;
-
   const COLORS = ["#0d9813", "#82ca9d", "#ffc658"];
 
   return (
@@ -104,11 +102,19 @@ const ADRCard = () => {
         <div className="custom-date-filter">
           <div>
             <label>Start Date:</label>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
           </div>
           <div>
             <label>End Date:</label>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
           </div>
         </div>
       )}
@@ -120,9 +126,15 @@ const ADRCard = () => {
           <p style={{ color: "red" }}>Error: {error}</p>
         ) : (
           <>
-            <p><strong>ADR:</strong> ${adr.toLocaleString()}</p>
-            <p><strong>Total Revenue:</strong> ${totalRevenue.toLocaleString()}</p>
-            <p><strong>Booked Nights:</strong> {bookedNights.toLocaleString()}</p>
+            <p>
+              <strong>ADR:</strong> €{adr.toLocaleString()}
+            </p>
+            <p>
+              <strong>Total Revenue:</strong> €{totalRevenue.toLocaleString()}
+            </p>
+            <p>
+              <strong>Booked Nights:</strong> {bookedNights.toLocaleString()}
+            </p>
           </>
         )}
       </div>

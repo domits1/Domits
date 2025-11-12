@@ -29,10 +29,8 @@ const RevPARCard = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userInfo = await Auth.currentUserInfo();
-        if (!userInfo?.attributes?.sub)
-          throw new Error("Cognito User ID not found");
-        setCognitoUserId(userInfo.attributes.sub);
+        const user = await Auth.currentAuthenticatedUser();
+        setCognitoUserId(user.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
         setError(err.message);
@@ -68,7 +66,6 @@ const RevPARCard = () => {
     return months;
   };
 
-  // ✅ Generate last N weeks (Week 42, Week 43, ...)
   const getLastWeeks = (count = 6) => {
     const weeks = [];
     const now = new Date();
@@ -83,10 +80,8 @@ const RevPARCard = () => {
     return weeks;
   };
 
-  // ✅ Fetch chart data (multi-period comparison)
   const fetchComparisonData = async (userId) => {
-    const periods =
-      timeFilter === "weekly" ? getLastWeeks(6) : getLastMonths(6);
+    const periods = timeFilter === "weekly" ? getLastWeeks(6) : getLastMonths(6);
 
     const results = [];
     for (const p of periods) {
@@ -124,13 +119,9 @@ const RevPARCard = () => {
           endDate
         );
       } else {
-        summary = await RevPARService.getRevPARMetrics(
-          cognitoUserId,
-          timeFilter
-        );
+        summary = await RevPARService.getRevPARMetrics(cognitoUserId, timeFilter);
       }
 
-      // safely handle number/string/object cases
       const totalRev =
         typeof summary.totalRevenue === "object"
           ? summary.totalRevenue.totalRevenue
@@ -147,7 +138,6 @@ const RevPARCard = () => {
       setAvailableNights(Number(available) || 0);
       setRevPAR(Number(revparVal) || 0);
 
-      // get chart data
       const chart = await fetchComparisonData(cognitoUserId);
       setChartData(chart);
     } catch (err) {
@@ -163,20 +153,13 @@ const RevPARCard = () => {
   };
 
   useEffect(() => {
-    if (
-      cognitoUserId &&
-      (timeFilter !== "custom" || (startDate && endDate))
-    ) {
+    if (cognitoUserId && (timeFilter !== "custom" || (startDate && endDate))) {
       fetchMetrics();
     }
   }, [cognitoUserId, timeFilter, startDate, endDate]);
 
-  const allZero =
-    !chartData || chartData.every((item) => item.revPAR === 0);
-
-  const displayData = allZero
-    ? [{ label: "No Data", revPAR: 1 }]
-    : chartData;
+  const allZero = !chartData || chartData.every((item) => item.revPAR === 0);
+  const displayData = allZero ? [{ label: "No Data", revPAR: 1 }] : chartData;
 
   return (
     <div className="adr-card card-base">
@@ -224,14 +207,13 @@ const RevPARCard = () => {
         ) : (
           <>
             <p>
-              <strong>Total Revenue:</strong> ${totalRevenue.toLocaleString()}
+              <strong>Total Revenue:</strong> €{totalRevenue.toLocaleString()}
             </p>
             <p>
-              <strong>Available Nights:</strong>{" "}
-              {availableNights.toLocaleString()}
+              <strong>Available Nights:</strong> {availableNights.toLocaleString()}
             </p>
             <p>
-              <strong>RevPAR:</strong> ${revPAR.toLocaleString()}
+              <strong>RevPAR:</strong> €{revPAR.toLocaleString()}
             </p>
           </>
         )}
