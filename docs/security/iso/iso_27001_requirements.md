@@ -57,7 +57,7 @@ Auditor checks if the security controls are implemented and working.
 
 ---
 
-### Quick Checklist ✅
+### Quick Checklist 
 | Requirement | Completed |
 |------------|-----------|
 | ISMS Scope Defined | ☐ |
