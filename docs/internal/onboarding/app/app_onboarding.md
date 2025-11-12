@@ -5,7 +5,6 @@
 * [App Android Setup](android_setup.md)
 * [App iOS/macOS Setup](ios_setup.md)
 * [App Android/macOS Setup](android_macOS_setup.md)
-* [App TestFlight](app_testFlight.md)
 * [App iOS xCode issues/Errors](ios_xCode_errors.md)
 -
 To get started on the app follow this guide first. We use React Native and not expo!
