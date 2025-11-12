@@ -1,11 +1,5 @@
 # Risk Management Procedure & Checklist
 
-**Document Title:** Risk Management Procedure & Checklist  
-**Version:** 1.0  
-**Prepared by:** _[Your Name]_  
-**Approved by:** _[Management / Risk Owner]_  
-**Date:** _YYYY-MM-DD_
-
 ---
 
 ## 1. Purpose
@@ -120,13 +114,7 @@ Risk reviews must occur:
 - At least **quarterly**, and
 - During major changes or incidents
 
----
 
-## 8. Approval
-
-| Name | Role | Signature | Date |
-|------|------|-----------|------|
-|  |  |  |  |
 
 
 

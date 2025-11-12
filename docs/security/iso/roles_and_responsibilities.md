@@ -1,11 +1,5 @@
 # Roles & Responsibilities
 
-**Document Title:** Roles & Responsibilities  
-**Version:** 1.0  
-**Prepared by:** _[Your Name]_  
-**Approved by:** _[Management]_  
-**Date:** _YYYY-MM-DD_
-
 ---
 
 ## 1. Purpose
@@ -106,31 +100,14 @@ This applies to:
 
 ---
 
-## 5. RACI Responsibility Model (optional)
-
-| Activity | Responsible (R) | Accountable (A) | Consulted (C) | Informed (I) |
-|----------|-------------------|------------------|----------------|--------------|
-| Policy approval |  | ✅ |  | ✅ |
-| Internal audit | ✅ |  |  | ✅ |
-| Risk assessment | ✅ | ✅ |  | ✅ |
-| Incident response | ✅ | ✅ | ✅ | ✅ |
-
-(Modify based on your organization.)
-
----
-
 ## 6. Review and Updates
 Roles and responsibilities must be reviewed:
 
 - Annually, or
 - When organizational changes occur
 
----
 
-## 7. Approval
 
-| Name | Role | Signature | Date |
-|------|------|-----------|------|
-|  |  |  |  |
+
 
 

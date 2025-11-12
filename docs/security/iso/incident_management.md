@@ -1,10 +1,5 @@
 # Incident Management Checklist
 
-**Document Title:** Incident Management Checklist  
-**Version:** 1.0  
-**Prepared by:** _[Your Name]_  
-**Date:** _YYYY-MM-DD_
-
 ---
 
 ## 1. Purpose
@@ -114,12 +109,6 @@ Artifacts that must be retained:
 - Closure approval
 
 
-### Approval
 
-| Name | Position | Signature | Date |
-|------|----------|-----------|------|
-|  |  |  |  |
-
----
 
 

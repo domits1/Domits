@@ -1,11 +1,5 @@
 # Information Security Policy
 
-**Document Title:** Information Security Policy  
-**Version:** 1.0  
-**Prepared by:** _[Your Name]_  
-**Approved by:** _[Executive / CISO / Management]_  
-**Date:** _YYYY-MM-DD_
-
 ---
 
 ## 1. Purpose
@@ -94,13 +88,7 @@ Requirements:
 ## 7. Review and Updates
 This policy must be reviewed **annually**, or when significant organizational or regulatory changes occur.
 
----
 
-## 8. Policy Approval
-
-| Name | Role | Signature | Date |
-|------|------|-----------|------|
-|  |  |  |  |
 
 
 

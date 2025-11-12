@@ -1,11 +1,5 @@
 # Internal Audit Procedure & Checklist
 
-**Document Title:** Internal Audit Procedure & Checklist  
-**Version:** 1.0  
-**Prepared by:** _[Your Name]_  
-**Approved by:** _[Management / Compliance Lead]_  
-**Date:** _YYYY-MM-DD_
-
 ---
 
 ## 1. Purpose
@@ -128,11 +122,7 @@ Examples: screenshots, logs, reports, interviews, tickets.
 - Audit report
 - Corrective action tracking
 
-## 8. Approval
 
-| Name | Role | Signature | Date |
-|------|------|-----------|------|
-|  |  |  |  |
 
 
 

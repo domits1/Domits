@@ -1,10 +1,5 @@
 # Management Review
 
-**Document title:** Management Review  
-**Version:** 1.0  
-**Prepared by:** _[Your Name]_  
-**Date:** _YYYY-MM-DD_
-
 ---
 
 ## 1. Purpose
@@ -85,16 +80,8 @@ The following artifacts must be retained:
 - Action log
 - Approvals
 
-These are stored in: `_Enter file location or system here_`
 
----
 
-## 9. Approval
 
-| Name | Position | Signature | Date |
-|------|----------|-----------|------|
-|  |  |  |  |
-
----
 
 
