@@ -92,7 +92,7 @@ You can find more information about setting up a React-Native project in the [Of
 ## Step 7 - Preparing the Android device
 1. Click on _"More Actions > Virtual Device Manager"_ from the welcome screen.
 
-   <img width="1023" alt="image" src="https://github.com/user-attachments/assets/2ef68a32-7e0b-4155-82f3-af276891edb5">
+   ![Screenshot](images/screenshot_device_manager_location_welcomescreen.png "Device Manager Location in the welcome screen")
 
    > Alternatively, if you already have a project open, the Virtual Device Manager can be found under _"Tools > Device Manager"_ or in the upper right corner.  
    > ![Screenshot](./images/screenshot_device_manager_location_corner.png "Device Manager Location in the corner")
