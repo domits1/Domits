@@ -322,25 +322,41 @@
             .message-input-wrapper {
                 position: relative;
                 flex: 1;
-                max-width: 900px; /* slight increase */
+                max-width: 720px; /* reduce overall width */
                 margin: 0 auto; /* center wrapper */
+                overflow: visible;
+
+                .char-counter {
+                    position: absolute;
+                    right: 72px;
+                    bottom: 12px;
+                    font-size: 11px;
+                    line-height: 1;
+                    color: #666;
+                    user-select: none;
+                }
+                .char-counter.over {
+                    color: #dc3545; /* red when >= 200 */
+                    font-weight: 600;
+                }
             }
 
             .message-input-textarea {
-                background-color: #fff;
-                min-height: 44px;
-                max-height: 120px;
+                background-color: #f9fbfd;
+                min-height: 40px;
+                max-height: 100px;
                 width: 100%;
                 resize: none;
-                border-radius: 24px;
-                border: 1px solid #ddd;
-                padding: 12px 48px 12px 14px;
+                border-radius: 999px;
+                border: 2px solid #2f3a4a;
+                padding: 12px 56px 12px 20px;
                 overflow-y: auto;
                 transition: box-shadow 0.2s ease, border-color 0.2s ease;
-                text-align: center; /* placeholder centered */
+                text-align: left;
+                font-size: 15px;
 
                 &::placeholder {
-                    color: #666;
+                    color: #64748b;
                     font-weight: 500;
                     opacity: 1;
                 }
@@ -358,16 +374,31 @@
 
             .message-input-send-button {
                 position: absolute;
-                background: none;
-                border: none;
-                right: 1.25rem;
+                background: #f9fbfd;
+                border: 2px solid #2f3a4a;
+                right: -70px;
                 top: 50%;
                 transform: translateY(-50%);
-                color: #0D9813;
+                color: #2f3a4a;
+                width: 48px;
+                height: 48px;
+                border-radius: 999px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 cursor: pointer;
 
                 &:hover {
-                    color: #08730e;
+                    background: #2f3a4a;
+                    color: #fff;
+                }
+
+                &:disabled {
+                    opacity: 0.5;
+                    background: #edf1f6;
+                    border-color: #b8c4d6;
+                    color: #7b8698;
+                    cursor: not-allowed;
                 }
             }
 
