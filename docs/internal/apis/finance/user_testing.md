@@ -13,7 +13,7 @@
 >
 > ## Testpersoon
 >
-> **Naam:** Alessio Itofo 
+> **Naam:** Alessio Itofo, <br> 
 > **Rol:** developer/stagiere  
 > **Datum:** 11-11-2023
 >
@@ -101,26 +101,26 @@
 > ## Interviewvragen (kwalitatief – gericht op jouw UI)
 >
 > 1. Waar verwachtte je de **Finance**-pagina te vinden? Was dat raak?
-> Ja dat wist ik niet zo goed. Het is nu duidelijk dat het in de host dashboard zit,maar als nieuwe gebruiker weet je niet waar die staat precies.
+> - Ja dat wist ik niet zo goed. Het is nu duidelijk dat het in de host dashboard zit,maar als nieuwe gebruiker weet je niet waar die staat precies.
 > 2. Wat betekent **Charge** voor jou? En **Payout**? (Laat gebruiker dit in eigen woorden uitleggen.)
-> Charge btekent wat ik zelf vraag aan een guest om te betalen aan mij. Payout is hoeveel ik binnen krijg.
+> - Charge btekent wat ik zelf vraag aan een guest om te betalen aan mij. Payout is hoeveel ik binnen krijg.
 > 3. Kon je snel zien **welke Charge bij welke boeking** hoort (booking id/payment id + thumbnail)?
-> Ja dit was makkelijk en duidelijk te zien.
+> - Ja dit was makkelijk en duidelijk te zien.
 > 4. Is het meteen duidelijk **wanneer je uitbetaald wordt** (Balance-overview + Recent Payouts)?
-> Ja dit is duidelijk want je zit een aparte gedeelte daarvoor die hier over gaat.
+> - Ja dit is duidelijk want je zit een aparte gedeelte daarvoor die hier over gaat.
 > 5. Hoe ervaarde je de **CTA-teksten** (“Create/Continue/Open Stripe” en “Working on it…”)?  
 >    Waren ze informatief genoeg tijdens verwerking?
-> Ik geb eerlijk gezwegd niet doorgehad dat ze er waren.
+> - Ik geb eerlijk gezegd niet doorgehad dat ze er waren.
 > 6. Wat zou je aanpassen aan de **paginatie** (plaatsing, labeling “Page X of Y”, Previous Next)?
-> Misschien zou ik het boven aan de card plaatsen in plaats van er onder dat is het enige.
+> - Misschien zou ik het boven aan de card plaatsen in plaats van er onder dat is het enige.
 > 7. Mis je informatie in **Charges** of **Payouts** (bijv. betaalmethode en of gastcontact)?
-> Nee dit is duidelijk ik mis niks.
+> - Nee dit is duidelijk ik mis niks.
 > 8. Hoe duidelijk is het kiezen van **Weekly/Monthly anchors**? Wat zou het begrijpelijker maken of is het duidelijk genoeg?
-> weekly is duidelijk en bij monthly zie je niet welke dag van de week de dag precies valt en welke maand hiervoor geldt.
+> - weekly is duidelijk en bij monthly zie je niet welke dag van de week de dag precies valt en welke maand hiervoor geldt.
 > 9. Hoe beoordeel je de **statussen** (kleur/label leesbaarheid, succeeded/failed)?
-> Dit is mooi.De ui past bij de website netjes gedaan!
+> - Dit is mooi.De ui past bij de website netjes gedaan!
 > 10. Vertrouw je deze pagina om je inkomsten te beheren? Waarom (wel/niet)?
-> Ja ik vetrouw deze pagina het is rustig en overzichtelijk waardoor het makkelijk is mijn inkomsten te beheren.
+> - Ja ik vetrouw deze pagina het is rustig en overzichtelijk waardoor het makkelijk is mijn inkomsten te beheren.
 >
 > ## Conclusie (na uitvoering invullen)
 >
