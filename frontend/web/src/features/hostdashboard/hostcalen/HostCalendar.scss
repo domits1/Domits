@@ -315,3 +315,129 @@ $cyan: #06b6d4; // seasonal price
   font-weight: 700;
   margin-top: 2px;
 }
+
+/* Property Selector */
+.hc-property-selector {
+  background: $card;
+  border: 1px solid $line;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+
+  .property-select-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 250px;
+
+    label {
+      font-weight: 600;
+      color: $text;
+      white-space: nowrap;
+    }
+
+    select {
+      background: #fff;
+      border: 1px solid $line;
+      color: $text;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      flex: 1;
+      max-width: 400px;
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      &:focus {
+        outline: 2px solid #0d9813;
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  .calendar-actions {
+    display: flex;
+    gap: 10px;
+
+    .btn-save-changes {
+      background: #0d9813;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 120ms ease;
+
+      &:hover:not(:disabled) {
+        background: darken(#0d9813, 5%);
+        transform: translateY(-1px);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .error-message {
+    width: 100%;
+    padding: 10px;
+    background: rgba($red, 0.1);
+    border: 1px solid rgba($red, 0.3);
+    border-radius: 8px;
+    color: darken($red, 10%);
+    font-size: 14px;
+  }
+
+  .loading-indicator {
+    width: 100%;
+    padding: 10px;
+    background: rgba($blue, 0.1);
+    border: 1px solid rgba($blue, 0.3);
+    border-radius: 8px;
+    color: darken($blue, 10%);
+    font-size: 14px;
+    text-align: center;
+  }
+}
+
+/* Property Info Panel */
+.property-info {
+  background: $card;
+  border: 1px solid $line;
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 16px;
+
+  h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: $text;
+  }
+
+  p {
+    margin: 6px 0;
+    font-size: 14px;
+    color: $muted;
+
+    &:first-of-type {
+      margin-top: 0;
+    }
+    &:last-of-type {
+      margin-bottom: 0;
+    }
+  }
+}
