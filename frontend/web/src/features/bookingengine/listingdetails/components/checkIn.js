@@ -15,7 +15,7 @@ const CheckIn = ({ checkInDate, setCheckInDate, checkOutDate }) => {
         }}
         value={checkInDate}
         className="inputField"
-        min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+        min={new Date(Date.now()).toISOString().split("T")[0]}
       />
     </div>
   );
