@@ -299,13 +299,25 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                             placeholder="Type a message..."
                             className='message-input-textarea'
                             onKeyUp={(e) => {
-                                if (e.key === 'Enter') handleSendMessage();
+                                if (e.key === 'Enter') {
+                                    if ((newMessage?.length || 0) <= 200) {
+                                        handleSendMessage();
+                                    }
+                                }
                             }}
                         />
+                        {(newMessage?.length || 0) >= 200 && (
+                            <div
+                                className={`char-counter over`}
+                                aria-live="polite"
+                            >
+                                {newMessage?.length || 0}
+                            </div>
+                        )}
                         <button
                             onClick={handleSendMessage}
                             className='message-input-send-button'
-                            disabled={sending}
+                            disabled={sending || (newMessage?.length || 0) > 200}
                             title="Send"
                         >
                             <FaPaperPlane />
