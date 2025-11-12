@@ -115,7 +115,7 @@ Het doel van deze gebruikerstest is om te beoordelen of de gebruiker zelfstandig
 
 ---
 
-## Interviewvragen (kwalitatief – gericht op jouw UI)
+## Interviewvragen
 
 1. **Waar verwachtte je de Finance-pagina te vinden?**  
    “Ik wist het niet zo goed. Het is nu duidelijk dat het in de host dashboard zit, maar als nieuwe gebruiker weet je dat niet direct.”
