@@ -1,12 +1,12 @@
 * [Visual roadmap React Native](https://roadmap.sh/react-native)
 * [Visual roadmap iOS](https://roadmap.sh/ios)
 * [Visual roadmap Android](https://roadmap.sh/android)
--
+---
 * [App Android Setup](android_setup.md)
-* [App iOS/macOS Setup](ios_setup.md)
-* [App Android/macOS Setup](android_macOS_setup.md)
-* [App iOS xCode issues/Errors](ios_xCode_errors.md)
--
+* [App iOS on macOS Setup](ios_setup.md)
+* [App Android on macOS Setup](android_macOS_setup.md)
+---
+
 To get started on the app follow this guide first. We use React Native and not expo!
 
 https://reactnative.dev/docs/set-up-your-environment
