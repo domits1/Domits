@@ -2,12 +2,10 @@ import React, { useEffect, useState } from "react";
 import { formatYearMonth } from "../utils/date";
 import { Auth } from "aws-amplify";
 import { getAccessToken } from "../utils/getAccessToken";
-
-export default function Toolbar({ view, setView, cursor, onPrev, onNext, selectedPropertyId, onPropertySelect }) {
+export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState(null);
-
   useEffect(() => {
     (async () => {
       try {
@@ -39,13 +37,7 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext, selecte
         });
         if (!res.ok) throw new Error(`Failed to fetch (${res.status})`);
         const data = await res.json();
-        const accommodationsList = Array.isArray(data) ? data : [];
-        setAccommodations(accommodationsList);
-
-        // Auto-select first property if available and none selected
-        if (accommodationsList.length > 0 && !selectedPropertyId && onPropertySelect) {
-          onPropertySelect(accommodationsList[0]?.property?.id);
-        }
+        setAccommodations(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Unexpected fetch error:", error);
       } finally {
@@ -55,12 +47,6 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext, selecte
 
     fetchAccommodations().catch(console.error);
   }, [userId]);
-
-  const handlePropertyChange = (e) => {
-    if (onPropertySelect) {
-      onPropertySelect(e.target.value);
-    }
-  };
 
   return (
     <div className="hc-toolbar">
@@ -86,17 +72,8 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext, selecte
       </div>
       <div className="hc-toolbar-right">
         <span>Select your property</span>
-        <select
-          className="hc-select"
-          value={selectedPropertyId || ""}
-          onChange={handlePropertyChange}
-          disabled={isLoading}
-        >
+        <select className="hc-select" disabled={isLoading}>
           {isLoading && <option>Loading…</option>}
-          {!isLoading && accommodations.length === 0 && <option>No properties found</option>}
-          {!isLoading && accommodations.length > 0 && !selectedPropertyId && (
-            <option value="">Select a property</option>
-          )}
           {!isLoading &&
             accommodations.map((a) => (
               <option key={a?.property?.id} value={a?.property?.id}>

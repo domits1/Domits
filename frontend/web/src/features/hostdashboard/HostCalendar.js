@@ -7,12 +7,14 @@ import calenderStyles from "./HostCalendar.module.css";
 import { generateUUID } from "../../utils/generateUUID.js";
 import { formatDate, uploadICalToS3 } from "../../utils/iCalFormatHost";
 import { getAccessToken } from "../../services/getAccessToken.js";
+//import CalendarComponent from "./hostcalendar/views/Calender.js";
 
 function HostCalendar() {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const [selectedAccommodation, setSelectedAccommodation] = useState(null);
+
   const handleSelectAccommodation = (event) => {
     const accommodationId = event.target.value;
     const accommodation = accommodations.find(

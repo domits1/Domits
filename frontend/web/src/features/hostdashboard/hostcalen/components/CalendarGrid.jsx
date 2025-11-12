@@ -8,14 +8,12 @@ export default function CalendarGrid({
   monthGrid,
   selections,
   prices,
-  bookingsByDate = {},
   onToggle,
   onDragSelect,
 }) {
   // basic drag select (desktop)
   const dragging = useRef(false);
   const [range, setRange] = useState(new Set());
-  const [hoveredDate, setHoveredDate] = useState(null);
 
   const handleMouseDown = (key) => {
     dragging.current = true;
@@ -61,21 +59,12 @@ export default function CalendarGrid({
                 selections.maintenance.has(key) ? "maintenance" :
                 "available";
 
-              const bookingInfo = bookingsByDate[key];
-              const hasBooking = bookingInfo && bookingInfo.length > 0;
-
               return (
                 <div
                   key={key}
-                  className={cx("hc-cell", !inMonth && "muted", state, isDrag && "dragging", hasBooking && "has-booking")}
+                  className={cx("hc-cell", !inMonth && "muted", state, isDrag && "dragging")}
                   onMouseDown={() => handleMouseDown(key)}
-                  onMouseEnter={() => {
-                    handleEnter(key);
-                    if (hasBooking) setHoveredDate(key);
-                  }}
-                  onMouseLeave={() => {
-                    if (hasBooking) setHoveredDate(null);
-                  }}
+                  onMouseEnter={() => handleEnter(key)}
                   onClick={() => onToggle(state === "available" ? "blocked" : "available", key)}
                 >
                   <div className="hc-cell-top">
@@ -84,34 +73,6 @@ export default function CalendarGrid({
                       <span className="hc-price">€{prices[key]}</span>
                     )}
                   </div>
-                  {hasBooking && (
-                    <div className="hc-booking-info">
-                      <span className="hc-guest-name">{bookingInfo[0].guestName}</span>
-                      {bookingInfo[0].guests && (
-                        <span className="hc-guest-count">👤 {bookingInfo[0].guests}</span>
-                      )}
-                    </div>
-                  )}
-                  {hoveredDate === key && hasBooking && (
-                    <div className="hc-booking-tooltip">
-                      <div className="tooltip-header">
-                        <strong>Booking Details</strong>
-                      </div>
-                      {bookingInfo.map((booking, idx) => (
-                        <div key={idx} className="tooltip-booking">
-                          <div><strong>Guest:</strong> {booking.guestName}</div>
-                          {booking.guestEmail && <div><strong>Email:</strong> {booking.guestEmail}</div>}
-                          <div><strong>Check-in:</strong> {booking.checkIn}</div>
-                          <div><strong>Check-out:</strong> {booking.checkOut}</div>
-                          <div><strong>Guests:</strong> {booking.guests}</div>
-                          <div><strong>Nights:</strong> {booking.nights}</div>
-                          {booking.totalPrice > 0 && <div><strong>Total:</strong> €{booking.totalPrice}</div>}
-                          <div><strong>Status:</strong> <span className={`status-${booking.status}`}>{booking.status}</span></div>
-                          {booking.id && <div className="booking-id">ID: {booking.id}</div>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               );
             })}

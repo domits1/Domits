@@ -3,6 +3,7 @@ import "./MaintenanceModal.scss";
 
 export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDates }) {
   const [note, setNote] = useState("");
+
   useEffect(() => {
     if (!isOpen) {
       setNote("");
@@ -10,20 +11,24 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
   }, [isOpen]);
 
   if (!isOpen) return null;
+
   const handleSave = () => {
     if (!note.trim()) {
       alert("Please enter a note for maintenance");
       return;
     }
+
     onSave(note);
     setNote("");
     onClose();
   };
+
   const handleOverlayClick = (e) => {
     if (e.target.className === "maintenance-modal-overlay") {
       onClose();
     }
   };
+
   return (
     <div className="maintenance-modal-overlay" onClick={handleOverlayClick}>
       <div className="maintenance-modal">
@@ -33,6 +38,7 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
             ×
           </button>
         </div>
+
         <div className="modal-body">
           <div className="selected-dates-info">
             <strong>Selected Dates:</strong>
@@ -40,6 +46,7 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
               {selectedDates.length} date{selectedDates.length !== 1 ? 's' : ''} selected
             </p>
           </div>
+
           <div className="form-group">
             <label htmlFor="maintenance-note">
               Maintenance Note <span className="required">*</span>
@@ -57,10 +64,12 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
               {note.length} / 500 characters
             </div>
           </div>
+
           <div className="info-box">
-            <p><strong>ℹ️ Note:</strong> This maintenance date will be saved and can be viewed later. The selected dates will be marked as unavailable for booking.</p>
+            <p><strong>ℹ️ Note:</strong> This maintenance note will be saved and can be viewed later. The selected dates will be marked as unavailable for booking.</p>
           </div>
         </div>
+
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={onClose}>
             Cancel

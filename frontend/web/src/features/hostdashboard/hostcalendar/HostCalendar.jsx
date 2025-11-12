@@ -1,13 +1,16 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import "./HostCalendar.scss";
+
 import Toolbar from "./components/Toolbar";
 import Legend from "./components/Legend";
 import CalendarGrid from "./components/CalendarGrid";
 import StatsPanel from "./components/StatsPanel";
 import MaintenanceModal from "./components/MaintenanceModal";
+
 import AvailabilityCard from "./components/Sidebar/AvailabilityCard";
 import PricingCard from "./components/Sidebar/PricingCard";
 import ExternalCalendarsCard from "./components/Sidebar/ExternalCalendarsCard";
+
 import { getMonthMatrix, startOfMonthUTC, addMonthsUTC, subMonthsUTC, toKey } from "./utils/date";
 import { calendarService } from "./services/calendarService";
 
@@ -25,7 +28,9 @@ export default function HostCalendar() {
   const [selections, setSelections] = useState(initialBlocks);
   const [prices, setPrices] = useState(initialPrices);
   const [tempPrice, setTempPrice] = useState("");
-  const [bookingsByDate, setBookingsByDate] = useState({}); 
+  const [bookingsByDate, setBookingsByDate] = useState({}); // Store booking info by date
+
+  // New state for property selection and data
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
   const [propertyDetails, setPropertyDetails] = useState(null);
   const [bookings, setBookings] = useState([]);
@@ -39,11 +44,15 @@ export default function HostCalendar() {
     prices: {}
   });
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
-  const [maintenanceNotes, setMaintenanceNotes] = useState({});
+  const [maintenanceNotes, setMaintenanceNotes] = useState({}); // { "2025-01-15": "Plumbing repair" }
+
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
+
   const next = () => setCursor(addMonthsUTC(cursor, 1));
   const prev = () => setCursor(subMonthsUTC(cursor, 1));
   const today = () => setCursor(startOfMonthUTC(new Date()));
+
+  // Jump to first available date
   const jumpToAvailability = () => {
     const availabilityData = propertyDetails?.propertyAvailability || propertyDetails?.availability;
     if (availabilityData && Array.isArray(availabilityData) && availabilityData.length > 0) {
@@ -55,6 +64,8 @@ export default function HostCalendar() {
       }
     }
   };
+
+  // Fetch property data when selected
   useEffect(() => {
     if (!selectedPropertyId) {
       setDebugInfo(null);
@@ -68,25 +79,32 @@ export default function HostCalendar() {
       console.log("🔄 Fetching data for property:", selectedPropertyId);
 
       try {
-        const [details, propertyBookings] = await Promise.all([
+        const [details, bookingsResponse] = await Promise.all([
           calendarService.fetchPropertyDetails(selectedPropertyId),
           calendarService.fetchPropertyBookings(selectedPropertyId)
         ]);
 
         console.log("✅ API Response - Property Details:", details);
-        console.log("✅ API Response - Bookings:", propertyBookings);
+        console.log("✅ API Response - Bookings:", bookingsResponse);
+
         setPropertyDetails(details);
-        setBookings(propertyBookings);
+        setBookings(bookingsResponse);
+
+        // Set debug info
         setDebugInfo({
           propertyId: selectedPropertyId,
-          bookingsCount: propertyBookings?.length || 0,
+          bookingsCount: bookingsResponse?.length || 0,
           hasDetails: !!details,
           hasAvailability: !!(details?.propertyAvailability || details?.availability),
           hasPricing: !!(details?.propertyPricing || details?.pricing),
           rawDetails: details,
-          rawBookings: propertyBookings
+          rawBookings: bookingsResponse
         });
-        processBookingsIntoCalendar(propertyBookings, details);
+
+        // Process bookings into calendar selections
+        processBookingsIntoCalendar(bookingsResponse, details);
+
+        // Load saved calendar data (blocked, maintenance, pricing)
         const savedData = await calendarService.loadCalendarData(selectedPropertyId);
         if (savedData) {
           applySavedCalendarData(savedData);
@@ -106,6 +124,7 @@ export default function HostCalendar() {
     fetchPropertyData();
   }, [selectedPropertyId]);
 
+  // Process bookings and availability into calendar format
   const processBookingsIntoCalendar = useCallback((bookingData, details) => {
     console.log("=== Processing Calendar Data ===");
     console.log("Bookings:", bookingData);
@@ -118,32 +137,43 @@ export default function HostCalendar() {
       maintenance: new Set(),
     };
     const newPrices = {};
-    const bookingsByDate = {}; 
+    const bookingsByDate = {}; // Map dates to booking info
+
+    // Process bookings - mark as booked
     bookingData.forEach((booking) => {
       console.log("Processing booking:", booking);
-      const checkIn = booking.checkInDate || booking.check_in_date || booking.checkin;
-      const checkOut = booking.checkOutDate || booking.check_out_date || booking.checkout;
+
+      // Handle different possible date field names
+      // API returns: arrivaldate, departuredate (timestamps), guestname, hostname, guests, status
+      const checkIn = booking.arrivaldate || booking.checkInDate || booking.check_in_date || booking.checkin;
+      const checkOut = booking.departuredate || booking.checkOutDate || booking.check_out_date || booking.checkout;
 
       if (checkIn && checkOut) {
+        // Parse dates - handle both timestamp and date string formats
         const startDate = new Date(checkIn);
         const endDate = new Date(checkOut);
+
         console.log(`Booking from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+        // Mark each day as booked and store booking info
         const currentDate = new Date(startDate);
         while (currentDate <= endDate) {
           const key = toKey(currentDate);
           newSelections.booked.add(key);
+
+          // Store booking information for this date
           if (!bookingsByDate[key]) {
             bookingsByDate[key] = [];
           }
           bookingsByDate[key].push({
-            id: booking.booking_id || booking.id,
-            guestName: booking.guest_name || booking.guestName || booking.user_name || 'Guest',
+            id: booking.id || booking.booking_id,
+            guestName: booking.guestname || booking.guest_name || booking.guestName || 'Guest',
             guestEmail: booking.guest_email || booking.guestEmail || booking.email || '',
             checkIn: startDate.toISOString().split('T')[0],
             checkOut: endDate.toISOString().split('T')[0],
             totalPrice: booking.total_price || booking.totalPrice || booking.price || 0,
-            status: booking.status || booking.booking_status || 'confirmed',
-            guests: booking.number_of_guests || booking.numberOfGuests || booking.guests || 1,
+            status: booking.status || booking.booking_status || 'Confirmed',
+            guests: booking.guests || booking.number_of_guests || booking.numberOfGuests || 1,
             nights: Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) || 1
           });
 
@@ -154,7 +184,10 @@ export default function HostCalendar() {
         console.warn("Booking missing date fields:", booking);
       }
     });
+
     console.log(`Total booked dates: ${newSelections.booked.size}`);
+
+    // Process property availability
     if (details?.propertyAvailability || details?.availability) {
       const availabilityData = details.propertyAvailability || details.availability;
       const availability = Array.isArray(availabilityData)
@@ -163,11 +196,14 @@ export default function HostCalendar() {
 
       availability.forEach((avail) => {
         if (avail.availableStartDate && avail.availableEndDate) {
+          // Handle timestamp format
           const startDate = new Date(avail.availableStartDate);
           const endDate = new Date(avail.availableEndDate);
+
           const currentDate = new Date(startDate);
           while (currentDate <= endDate) {
             const key = toKey(currentDate);
+            // Only mark as available if not already booked
             if (!newSelections.booked.has(key)) {
               newSelections.available.add(key);
             }
@@ -178,16 +214,28 @@ export default function HostCalendar() {
     }
 
     console.log(`Total available dates: ${newSelections.available.size}`);
-    const pricing = details?.propertyPricing || details?.pricing;
-    if (pricing?.roomRate || pricing?.roomrate) {
-      const baseRate = pricing.roomRate || pricing.roomrate;
-      console.log(`Base room rate: €${baseRate}`);
-      newSelections.available.forEach((key) => {
-        newPrices[key] = baseRate;
-      });
-      newSelections.booked.forEach((key) => {
-        newPrices[key] = baseRate;
-      });
+
+    // Process pricing - try multiple sources
+    // 1. First check if pricing came with bookings API response
+    const bookingPricing = bookingData._pricing;
+    // 2. Then check property details
+    const detailsPricing = details?.propertyPricing || details?.pricing;
+
+    const pricing = bookingPricing || detailsPricing;
+
+    if (pricing) {
+      const baseRate = pricing.roomrate || pricing.roomRate || pricing.cleaning;
+      if (baseRate) {
+        console.log(`Base room rate: €${baseRate}`);
+
+        // Set default price for all visible dates (booked + available)
+        newSelections.available.forEach((key) => {
+          newPrices[key] = baseRate;
+        });
+        newSelections.booked.forEach((key) => {
+          newPrices[key] = baseRate;
+        });
+      }
     }
 
     console.log("=== Calendar Processing Complete ===");
@@ -198,14 +246,20 @@ export default function HostCalendar() {
       maintenance: newSelections.maintenance.size
     });
     console.log("Bookings by date:", bookingsByDate);
+
     setSelections(newSelections);
     setPrices(newPrices);
     setBookingsByDate(bookingsByDate);
   }, []);
+
+  // Apply saved calendar data (blocked, maintenance, pricing)
   const applySavedCalendarData = useCallback((savedData) => {
     console.log("📥 Applying saved calendar data:", savedData);
+
     setSelections((prev) => {
       const next = { ...prev };
+
+      // Apply blocked dates
       if (savedData.blocked && Array.isArray(savedData.blocked)) {
         savedData.blocked.forEach((dateStr) => {
           next.blocked.add(dateStr);
@@ -213,12 +267,18 @@ export default function HostCalendar() {
           next.available.delete(dateStr);
         });
       }
+
+      // Apply maintenance dates
       if (savedData.maintenance && Array.isArray(savedData.maintenance)) {
         savedData.maintenance.forEach((item) => {
           const dateStr = typeof item === 'string' ? item : item.date;
           const note = typeof item === 'object' ? item.note : '';
+
           next.maintenance.add(dateStr);
+          // Remove from available if it was there
           next.available.delete(dateStr);
+
+          // Store note
           if (note) {
             setMaintenanceNotes((prevNotes) => ({
               ...prevNotes,
@@ -230,12 +290,15 @@ export default function HostCalendar() {
 
       return next;
     });
+
+    // Apply saved prices
     if (savedData.prices && typeof savedData.prices === 'object') {
       setPrices((prev) => ({
         ...prev,
         ...savedData.prices
       }));
     }
+
     console.log("✅ Saved calendar data applied successfully");
   }, []);
 
@@ -247,10 +310,13 @@ export default function HostCalendar() {
       } else {
         next[bucket].add(key);
       }
+
+      // Remove from other buckets
       Object.keys(prev).forEach((b) => {
         if (b !== bucket) next[b] = new Set([...next[b]].filter((k) => k !== key));
       });
 
+      // Track pending changes for blocked/maintenance
       if (bucket === "blocked" || bucket === "maintenance") {
         setPendingChanges((prevChanges) => ({
           ...prevChanges,
@@ -286,6 +352,8 @@ export default function HostCalendar() {
         next[k] = value;
         updatedPrices[k] = value;
       });
+
+      // Track pending price changes
       setPendingChanges((prevChanges) => ({
         ...prevChanges,
         prices: { ...prevChanges.prices, ...updatedPrices }
@@ -296,7 +364,9 @@ export default function HostCalendar() {
     setTempPrice("");
   };
 
+  // Block dates handler
   const handleBlockDates = () => {
+    // Toggle selected dates to blocked
     setSelections((prev) => {
       const next = { ...prev };
       const selectedKeys = new Set([
@@ -318,6 +388,8 @@ export default function HostCalendar() {
       return next;
     });
   };
+
+  // Maintenance handler - open modal
   const handleMaintenance = () => {
     const selectedKeys = [
       ...selections.available,
@@ -328,8 +400,11 @@ export default function HostCalendar() {
       alert("Please select dates first by clicking on available or blocked dates");
       return;
     }
+
     setShowMaintenanceModal(true);
   };
+
+  // Save maintenance with note
   const handleSaveMaintenanceWithNote = (note) => {
     const selectedKeys = new Set([
       ...selections.available,
@@ -337,8 +412,11 @@ export default function HostCalendar() {
     ]);
 
     if (selectedKeys.size === 0) return;
+
+    // Update selections
     setSelections((prev) => {
       const next = { ...prev };
+
       selectedKeys.forEach((key) => {
         next.maintenance.add(key);
         next.available.delete(key);
@@ -347,6 +425,8 @@ export default function HostCalendar() {
 
       return next;
     });
+
+    // Store notes for each date
     const newNotes = {};
     selectedKeys.forEach((key) => {
       newNotes[key] = note;
@@ -357,6 +437,7 @@ export default function HostCalendar() {
       ...newNotes
     }));
 
+    // Track pending changes
     setPendingChanges((prevChanges) => ({
       ...prevChanges,
       maintenance: new Set([...prevChanges.maintenance, ...selectedKeys])
@@ -365,6 +446,7 @@ export default function HostCalendar() {
     console.log("✅ Maintenance dates added with note:", note);
   };
 
+  // Undo handler
   const handleUndo = () => {
     if (!selectedPropertyId || !propertyDetails) {
       setSelections(initialBlocks);
@@ -377,6 +459,7 @@ export default function HostCalendar() {
       return;
     }
 
+    // Reload from server data
     processBookingsIntoCalendar(bookings, propertyDetails);
     setPendingChanges({
       blocked: new Set(),
@@ -384,15 +467,19 @@ export default function HostCalendar() {
       prices: {}
     });
   };
+
+  // Save changes to backend
   const handleSaveChanges = async () => {
     if (!selectedPropertyId) return;
 
     setIsSaving(true);
     try {
+      // Prepare maintenance data with notes
       const maintenanceData = Array.from(pendingChanges.maintenance).map((dateStr) => ({
         date: dateStr,
         note: maintenanceNotes[dateStr] || ''
       }));
+
       const changes = {
         availability: {
           blocked: Array.from(pendingChanges.blocked),
@@ -402,18 +489,24 @@ export default function HostCalendar() {
       };
 
       const result = await calendarService.saveCalendarChanges(selectedPropertyId, changes);
+
+      // Clear pending changes after successful save
       setPendingChanges({
         blocked: new Set(),
         maintenance: new Set(),
         prices: {}
       });
+
+      // Show detailed message
       const blockedCount = changes.availability.blocked.length;
       const maintenanceCount = changes.availability.maintenance.length;
       const pricingCount = Object.keys(changes.pricing).length;
+
       const saveSuccess = result?.availability?.success !== false && result?.pricing?.success !== false;
+
       let message = saveSuccess
         ? "✅ Calendar data saved successfully!\n\n"
-        : "⚠️ Calendar data saved (fallback)\n\n";
+        : "⚠️ Calendar data saved to localStorage (fallback)\n\n";
 
       message += "Summary of changes:\n";
       if (blockedCount > 0) message += `  • ${blockedCount} blocked date${blockedCount > 1 ? 's' : ''}\n`;
@@ -429,6 +522,7 @@ export default function HostCalendar() {
         message += "  npm run calendar-server\n\n";
         message += "Data is currently in localStorage only.\n";
       }
+
       alert(message);
       console.log("📊 Calendar Changes Summary:", result);
     } catch (error) {
@@ -438,10 +532,12 @@ export default function HostCalendar() {
       setIsSaving(false);
     }
   };
+
   const hasPendingChanges =
     pendingChanges.blocked.size > 0 ||
     pendingChanges.maintenance.size > 0 ||
     Object.keys(pendingChanges.prices).length > 0;
+
   return (
     <div className="hc-container">
       <div className="hc-header-row">
@@ -456,6 +552,8 @@ export default function HostCalendar() {
           onPropertySelect={setSelectedPropertyId}
         />
       </div>
+
+      {/* Quick Jump Button */}
       {debugInfo && debugInfo.hasAvailability && (
         <div style={{ textAlign: "center", margin: "12px 0" }}>
           <button
@@ -502,7 +600,9 @@ export default function HostCalendar() {
             />
             <ExternalCalendarsCard />
           </div>
+
           <Legend />
+
           <CalendarGrid
             view={view}
             cursor={cursor}
@@ -517,6 +617,7 @@ export default function HostCalendar() {
           />
 
           <StatsPanel selections={selections} />
+
           {hasPendingChanges && (
             <div style={{ marginTop: "16px", textAlign: "center" }}>
               <button
@@ -531,6 +632,8 @@ export default function HostCalendar() {
           )}
         </>
       )}
+
+      {/* Maintenance Modal */}
       <MaintenanceModal
         isOpen={showMaintenanceModal}
         onClose={() => setShowMaintenanceModal(false)}

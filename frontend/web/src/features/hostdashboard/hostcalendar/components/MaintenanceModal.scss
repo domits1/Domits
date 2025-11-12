@@ -121,7 +121,7 @@
     }
 
     .maintenance-textarea {
-      width: 94%;
+      width: 100%;
       padding: 12px;
       border: 1px solid #d1d5db;
       border-radius: 10px;
@@ -203,6 +203,7 @@
     &-primary {
       background: #f59e0b;
       color: white;
+
       &:hover:not(:disabled) {
         background: #d97706;
         transform: translateY(-1px);
