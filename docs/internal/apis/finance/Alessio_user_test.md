@@ -92,10 +92,10 @@ Het doel van deze gebruikerstest is om te beoordelen of de gebruiker zelfstandig
 | Finance pagina vinden                     |   Ja    | 10.15 s     |         3          | Als nieuwe gebruiker was het lastig Finance te vinden, omdat de layout nog onbekend was. |
 | Stripe koppelen (juiste toestand)         |   Ja    | 4 m 16.23 s |         2          | Makkelijk en duidelijk, maar duurde even om gegevens in te vullen.                       |
 | **Charges** lezen & begrijpen             |   Ja    | 1 m 26.12 s |         3          | Niet direct duidelijk wat er met de vraag bedoeld werd.                                  |
-| Paginatie **Charges**                     |   Ja    | 1 m 32.13 s |         1          | UI was duidelijk en makkelijk te gebruiken.                                              |
+| Paginatie **Charges**                     |   Ja    | 6.13 s |         1          | UI was duidelijk en makkelijk te gebruiken.                                              |
 | Balance (Incoming vs Available) begrijpen |   Ja    | 5.60 s      |         4          | “Available” is niet erg duidelijk; beter alternatief woord gewenst.                      |
 | **Payouts** lezen & begrijpen             |   Ja    | 11.22 s     |         1          | Duidelijk en makkelijk te begrijpen.                                                     |
-| Paginatie **Payouts**                     |   Ja    | 11.60 s     |         1          | UI was duidelijk en makkelijk te vinden.                                                 |
+| Paginatie **Payouts**                     |   Ja    | 0.40 s     |         1          | UI was duidelijk en makkelijk te vinden.                                                 |
 | Payout Frequency wijzigen                 |   Ja    | 13.85 s     |         3          | Weekly is duidelijk; bij monthly is niet duidelijk welke dag van de week bedoeld wordt.  |
 
 ---
