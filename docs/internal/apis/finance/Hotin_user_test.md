@@ -15,7 +15,7 @@ Het doel van deze gebruikerstest is om te beoordelen of de gebruiker zelfstandig
 
 ## Testpersoon
 
-**Naam:** Hotin   
+**Naam:** Hotin  
 **Rol:** Cyber Security / Stagiair  
 **Datum:** 12-11-2023
 
@@ -87,16 +87,16 @@ Het doel van deze gebruikerstest is om te beoordelen of de gebruiker zelfstandig
 
 ## Observatieformulier
 
-| Taak                                      | Gelukt? | Tijd        | Moeilijkheid (1–5) | Opmerkingen                                                                              |
-| ----------------------------------------- | :-----: | ----------- | :----------------: | ---------------------------------------------------------------------------------------- |
-| Finance pagina vinden                     |   Ja    | 10.15 s     |         3          | Als nieuwe gebruiker was het lastig Finance te vinden, omdat de layout nog onbekend was. |
-| Stripe koppelen (juiste toestand)         |   Ja    | 4 m 16.23 s |         2          | Makkelijk en duidelijk, maar duurde even om gegevens in te vullen.                       |
-| **Charges** lezen & begrijpen             |   Ja    | 1 m 26.12 s |         3          | Niet direct duidelijk wat er met de vraag bedoeld werd.                                  |
-| Paginatie **Charges**                     |   Ja    | 1 m 32.13 s |         1          | UI was duidelijk en makkelijk te gebruiken.                                              |
-| Balance (Incoming vs Available) begrijpen |   Ja    | 5.60 s      |         4          | “Available” is niet erg duidelijk; beter alternatief woord gewenst.                      |
-| **Payouts** lezen & begrijpen             |   Ja    | 11.22 s     |         1          | Duidelijk en makkelijk te begrijpen.                                                     |
-| Paginatie **Payouts**                     |   Ja    | 11.60 s     |         1          | UI was duidelijk en makkelijk te vinden.                                                 |
-| Payout Frequency wijzigen                 |   Ja    | 13.85 s     |         3          | Weekly is duidelijk; bij monthly is niet duidelijk welke dag van de week bedoeld wordt.  |
+| Taak                                      | Gelukt? | Tijd        | Moeilijkheid (1–5) | Opmerkingen                                                                                                                                                                                                                      |
+| ----------------------------------------- | :-----: | ----------- | :----------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Finance pagina vinden                     |   Ja    | 10.15 s     |         3          | ik zou willen dat de finance in de navbar zoals go to host dashboard                                                                                                                                                             |
+| Stripe koppelen (juiste toestand)         |   Ja    | 4 m 16.23 s |         1          | Is gewoon een knop en dan de handleiding volgen en stappen                                                                                                                                                                       |
+| **Charges** lezen & begrijpen             |   Ja    | 1 m 26.12 s |         3          | Pas naam aan charges is onduidelijk kan een beter naamgeving                                                                                                                                                                     |
+| Paginatie **Charges**                     |   Ja    | 1 m 32.13 s |         1          | UI was duidelijk en makkelijk te gebruiken.                                                                                                                                                                                      |
+| Balance (Incoming vs Available) begrijpen |   Ja    | 5.60 s      |         3          | opzich is duidelijk ik begrijp het is duidelijk alleen maar ik kan voor andere mensen begrijpen dat het niet duidelijk is, wat is avaiable? misschien avaiable payouts of avaiable with draw of funds maakt het iets duidelijker |
+| **Payouts** lezen & begrijpen             |   Ja    | 11.22 s     |         1          | Het is gewon duidelijk                                                                                                                                                                                             |
+| Paginatie **Payouts**                     |   Ja    | 11.60 s     |         1          | UI was duidelijk en makkelijk te vinden.                                                                                                                                                                                         |
+| Payout Frequency wijzigen                 |   Ja    | 13.85 s     |         3          | Weekly is duidelijk; bij monthly is niet duidelijk welke dag van de week bedoeld wordt en de maand ook  niet echt duidelijk.                                                                                                                                          |
 
 ---
 
@@ -106,9 +106,9 @@ Het doel van deze gebruikerstest is om te beoordelen of de gebruiker zelfstandig
 | ------------------------------------------------------------- | :---: |
 | Het was makkelijk om **Finance** te vinden                    |   3   |
 | De uitleg over Stripe in **Step 2** was duidelijk             |   1   |
-| Ik begrijp wat **Charges** zijn en hoe ik de tabel lees       |   3   |
+| Ik begrijp wat **Charges** zijn en hoe ik de tabel lees       |   2   |
 | Ik begrijp wat **Payouts** zijn en wanneer ik uitbetaald word |   1   |
-| Het verschil **Incoming vs Available** is duidelijk           |   4   |
+| Het verschil **Incoming vs Available** is duidelijk           |   3   |
 | Paginatie werkte zoals verwacht                               |   1   |
 | De **Payout Frequency**-instellingen waren logisch            |   3   |
 | De interface voelt betrouwbaar en rustig                      |   1   |
@@ -118,25 +118,25 @@ Het doel van deze gebruikerstest is om te beoordelen of de gebruiker zelfstandig
 ## Interviewvragen
 
 1. **Waar verwachtte je de Finance-pagina te vinden?**  
-   “Ik wist het niet zo goed. Het is nu duidelijk dat het in de host dashboard zit, maar als nieuwe gebruiker weet je dat niet direct.”
-2. **Wat betekent Charge en Payout voor jou?**  
-   “Charge is wat ik aan de guest vraag om te betalen, Payout is wat ik ontvang.”
-3. **Was duidelijk welke Charge bij welke boeking hoort?**  
-   “Ja, dat was makkelijk te zien met booking ID en thumbnail.”
-4. **Was duidelijk wanneer je uitbetaald wordt (Balance + Payouts)?**  
-   “Ja, er is een apart gedeelte dat dat goed uitlegt.”
-5. **Hoe waren de CTA-teksten (“Create/Continue/Open Stripe”)?**  
-   “Ik had niet door dat ze er waren.”
-6. **Wat zou je aanpassen aan de paginatie?**  
-   “Misschien bovenaan de tabel plaatsen in plaats van onderaan.”
-7. **Mis je informatie in Charges of Payouts?**  
-   “Nee, het is duidelijk.”
-8. **Hoe duidelijk is Weekly/Monthly anchors?**  
-   “Weekly is duidelijk, bij monthly weet je niet welke dag dat precies is.”
-9. **Hoe beoordeel je de statussen (kleur/label)?**  
-   “Netjes gedaan, past goed bij de site.”
-10. **Vertrouw je deze pagina om inkomsten te beheren?**  
-    “Ja, het is rustig en overzichtelijk.”
+2. ergens als je op je profiel klikt en dan ergens in een dropdown menu ofzo.
+3. **Wat betekent Charge en Payout voor jou?**  
+4. charge wat betaald moet worden door de klant aan jou en payout het geld dat binnenkomt dan de klant heeft betaald
+5. **Was duidelijk welke Charge bij welke boeking hoort?**  
+6. ja de tabel is duidelijk
+7. **Was duidelijk wanneer je uitbetaald wordt (Balance + Payouts)?**  
+8. ja er staat duidelijk payout date
+9. **Hoe waren de CTA-teksten (“Create/Continue/Open Stripe”)?**  
+10. het is duidelijk want je krijgt eigenlijk een handleiding/stappenplan erbij van wat je moet invullen om door te gaan
+11. **Wat zou je aanpassen aan de paginatie?**  
+12. nu niks want het heeft duidelijke informatie die nodig is
+13. **Mis je informatie in Charges of Payouts?**  
+14. nee alle informatie die ik nodig heb staat er
+15. **Hoe duidelijk is Weekly/Monthly anchors?** 
+16. het is duidelijk welke dag je kiest voor uitbetalingen alleen de de monthly heeft wat fixes nodig doordat niet elke maand 31 dagen heeft
+17. **Hoe beoordeel je de statussen (kleur/label)?*  
+18. het is goed en duidelijk en ik begrijp aan de kleur wat er wordt bedoeld
+19. **Vertrouw je deze pagina om inkomsten te beheren?**  
+20. ja, doordat alle informatie duidelijk te zien is
 
 ---
 
