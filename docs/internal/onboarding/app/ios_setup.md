@@ -59,6 +59,9 @@
 3. Move to the ios folder _"(Domits/app/Domits/ios)"_ using `cd ios`.
 4. Install pod by running `pod install`.
 
+> [!TIP]  
+> If there have been npm package updates on the app make sure to navigate to the /app/domits/iOS directory and run "pod install". This is the equivalent of npm install for iOS.
+
 ## Step 7 - Start the app
 > [!TIP]   
 > Check out the [React Native](https://reactnative.dev/docs/set-up-your-environment?platform=ios&os=macos) documentation to find more about running a React Native project on your macOS. 
