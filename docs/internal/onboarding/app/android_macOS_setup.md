@@ -95,7 +95,7 @@ You can find more information about setting up a React-Native project in the [Of
    <img width="1023" alt="image" src="https://github.com/user-attachments/assets/2ef68a32-7e0b-4155-82f3-af276891edb5">
 
    > Alternatively, if you already have a project open, the Virtual Device Manager can be found under _"Tools > Device Manager"_ or in the upper right corner.  
-   > ![Device Manager Location in the corner](C:\Projects\Domits\docs\internal\onboarding\app\images\screenshot_device_manager_location_corner.png)
+   > ![Device Manager Location in the corner](docs/internal/onboarding/app/images/screenshot_device_manager_location_corner.png)
 
 2. Click on the `+` button and a device of choice.
 3. Press next and don't forget to put it on _"portrait"_ mode instead of _"landscape"_ mode.
