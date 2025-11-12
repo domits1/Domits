@@ -126,7 +126,7 @@ Het doel van deze gebruikerstest is te beoordelen of de gebruiker zelfstandig de
 4. **Was duidelijk wanneer je uitbetaald wordt (Balance + Payouts)?**  
    “Ja, er staat duidelijk de payout date bij.”
 5. **Hoe waren de CTA-teksten (“Create/Continue/Open Stripe”)?**  
-   “Duidelijk — je krijgt een handleiding/stappenplan wat je moet invullen.”
+   “Duidelijk je krijgt een handleiding/stappenplan wat je moet invullen.”
 6. **Wat zou je aanpassen aan de paginatie?**  
    “Niks, het bevat alle nodige informatie.”
 7. **Mis je informatie in Charges of Payouts?**  
