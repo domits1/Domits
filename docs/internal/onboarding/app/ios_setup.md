@@ -45,13 +45,13 @@
 2. Go to Settings… (or Preferences…) from the Xcode menu.
 3. Navigate to the Locations tab.
 4. Select the latest version of Command Line Tools in the dropdown menu.
-   <img width="639" alt="image" src="https://github.com/user-attachments/assets/3512ec39-8b66-42a6-8e2c-7050244e0fa2">
+   <img width="639" alt="Screenshot" title="Selection example of the latest xCode cmd line tools" src="images/screenshot_xcode_cmdline_version.png">
 
 ## Step 5 - Install iOS Simulator in Xcode
 1. Open Xcode.
 2. Go to Settings… (or Preferences…) and select the Platforms (or Components) tab.
 3. Click the “+” icon and add the desired iOS simulator version (iOS).
-   <img width="841" alt="image" src="https://github.com/user-attachments/assets/42dfcc38-f433-4a9c-89a9-7b8105949f48">
+   <img width="841" alt="Screenshot" title="Location of adding new device simulators in xCode" src="images/screenshot_add_simulator_button_location.png">
 
 ## Step 6 - Npm/Pod install
 1. Navigate to the _"frontend/app/Domits"_ folder (terminal in your code editor) using `cd frontend/app/Domits`.
