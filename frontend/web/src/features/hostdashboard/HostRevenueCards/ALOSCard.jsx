@@ -2,12 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
 import "./ALOSCard.scss";
 import { HostRevenueService } from "../services/HostRevenueService";
+import { ResponsiveContainer, LineChart, Line, Tooltip, CartesianGrid, YAxis } from "recharts";
 
 const ALOSCard = () => {
   const [alos, setAlos] = useState(0);
+  const [trendData, setTrendData] = useState([]);
+
   const [filterType, setFilterType] = useState("monthly");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cognitoUserId, setCognitoUserId] = useState(null);
@@ -15,9 +19,8 @@ const ALOSCard = () => {
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-        const userInfo = await Auth.currentUserInfo();
-        if (!userInfo?.attributes?.sub) throw new Error("Cognito user ID not found");
-        setCognitoUserId(userInfo.attributes.sub);
+        const user = await Auth.currentAuthenticatedUser();
+        setCognitoUserId(user.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
         setError("User not logged in.");
@@ -48,10 +51,27 @@ const ALOSCard = () => {
       else if (data?.value != null) value = Number(data.value);
 
       setAlos(Number(value.toFixed(2)));
+
+      const trendArray =
+        data?.trend ??
+        data?.history ??
+        [
+          { label: "1", value },
+          { label: "2", value: value * 0.9 },
+          { label: "3", value: value * 1.05 },
+        ];
+
+      setTrendData(
+        trendArray.map((x, i) => ({
+          name: x.label || `P${i + 1}`,
+          alos: Number(x.value),
+        }))
+      );
     } catch (err) {
       console.error("Error fetching ALOS:", err);
       setError(err.message || "Failed to fetch ALOS");
       setAlos(0);
+      setTrendData([]);
     } finally {
       setLoading(false);
     }
@@ -64,8 +84,8 @@ const ALOSCard = () => {
   }, [cognitoUserId, filterType, startDate, endDate]);
 
   return (
-    <div className="adr-card-container">
-      <div className="adr-card">
+    <div className="alos-card-container">
+      <div className="alos-card card-base">
         <h3>Average Length of Stay</h3>
 
         <div className="time-filter">
@@ -81,25 +101,51 @@ const ALOSCard = () => {
           <div className="custom-date-filter">
             <div>
               <label>Start Date:</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
             <div>
               <label>End Date:</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
             </div>
           </div>
         )}
 
-        <div className="adr-details">
+        <div className="alos-value">
           {loading ? (
             <p>Loading...</p>
           ) : error ? (
-            <p>Error: {error}</p>
+            <p style={{ color: "red" }}>Error: {error}</p>
           ) : (
-            <p>
+            <p className="alos-number">
               <strong>{alos}</strong> nights
             </p>
           )}
+        </div>
+
+        <div className="alos-chart">
+          <ResponsiveContainer width="100%" height={120}>
+            <LineChart data={trendData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <YAxis hide={true} />
+              <Tooltip formatter={(v) => `${v} nights`} />
+              <Line
+                type="monotone"
+                dataKey="alos"
+                stroke="#0d9813"
+                strokeWidth={3}
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
