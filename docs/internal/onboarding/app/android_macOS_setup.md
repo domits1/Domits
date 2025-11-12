@@ -37,7 +37,7 @@ You can find more information about setting up a React-Native project in the [Of
 2. Get to the path where cask was installed to find the JDK installer by running `brew info --cask zulu@17` and copy the highlighted path.
 
    _(The path is highlighted **blue** in the screenshot, but differs for everyone. So do not copy from this image.)_
-   <img width="573" alt="Screenshot" title="Path to cask location highlighted" src="images/screenshot_coppied_cask_path_hightlight.png">
+   <img width="573" alt="Screenshot" title="Path to cask location highlighted" src="images/screenshot_copied_cask_path_hightlight.png">
 3. Open finder and go to the _"Go"_ tab and click _"Go to Folder..."_  
    <img width="214" alt="Screenshot" title="Location of the go to folder button" src="images/screenshot_gotofolder_button.png">
 4. Paste the copied path in the search  
@@ -97,7 +97,7 @@ You can find more information about setting up a React-Native project in the [Of
    > Alternatively, if you already have a project open, the Virtual Device Manager can be found under _"Tools > Device Manager"_ or in the upper right corner.  
    > ![Screenshot](images/screenshot_device_manager_location_corner.png "Device Manager Location in the corner")
 
-2. Click on the `+` button and a device of choice.
+2. Click on the _"+"_ button and a device of choice.
 3. Press next and don't forget to put it on _"portrait"_ mode instead of _"landscape"_ mode.
 
 ## Step 8 - Starting the App
