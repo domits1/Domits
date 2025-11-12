@@ -69,7 +69,7 @@
 4. Switch to xCode and press the play button to start up the iOS simulator. The app will automatically start up.
 
 ### Possible build errors
-Xcode is quite a fragile environment and contains a lot of issues/errors, most of the errors are documented in the [xCode error wiki](https://github.com/domits1/Domits/wiki/iOS-xCode-Errors).
+Xcode is quite a fragile environment and contains a lot of issues/errors, most of the errors are documented in the [xCode error wiki](docs/internal/onboarding/app/archive/xCode_troubleshooting.md).
 
 ## Testing beta releases with TestFlight
 [TestFlight](https://testflight.apple.com/)  is Apple’s official platform for distributing and testing beta versions of iOS, iPadOS, macOS, tvOS, and watchOS apps before they’re released on the App Store.
