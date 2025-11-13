@@ -1,5 +1,5 @@
-# Troubleshooting xCode
-Recorded issues with xCode and their solutions.
+# Troubleshooting Xcode
+Recorded issues with Xcode and their solutions.
 
 # Table of contents
 <!-- TOC -->
@@ -14,7 +14,7 @@ Recorded issues with xCode and their solutions.
 ---
 
 ## Xcode delegate file not found error
-There could be a problem that occurs out of nowhere in Xcode that says: delegate file not found. and as long as this error occurs your not able to build de simulator or publish the app file into testflight.
+There could be a problem that occurs out of nowhere in Xcode that says: delegate file not found. Ss long as this error occurs you won't be able to build the simulator or publish the app file into testflight.
 
 **_Solution_**  
 - Reinstall Xcode and the pods
@@ -27,14 +27,14 @@ There could be a problem that occurs out of nowhere in Xcode that says: delegate
 
 
 ## Xcode CacheLocality Static assertion failed due to requirement error
-You can possible get this error after xml or npm changes,the cause is not clear
+You can possible get this error after xml or npm changes, the cause is not clear.
 ![Screenshot 2024-11-04 at 15 08 44](https://github.com/user-attachments/assets/283251c1-7266-405c-b13a-45212769a9c6)
 
 **_Solution_**  
 First execute `export NO_FLIPPER=1` in the domits/app/domits folder the `cd ios` and run: `rm -rf Podfile.lock` and `rm -rf Pods`. after you have removed both files run: `pod install` also inside the ios folder
 
 ## AnimatedSensorModule error
-After changing some aws-amplify packages in package.json, this error could pop up when trying to start up Xcdoe.
+After changing some aws-amplify packages in package.json, this error could pop up when trying to start up Xcode.
 <img width="801" alt="image" src="https://github.com/user-attachments/assets/b8401a8c-b997-4278-b2e0-eb79b83067f1">
 
 **_Solution_**  
@@ -42,7 +42,7 @@ First of all revert all the changes back though your code editor. After you have
 
 After you run the line in the terminal most there might be chance that this error pops up (after you try to start Xcode again):
 <img width="811" alt="image" src="https://github.com/user-attachments/assets/feecd718-fb13-43d6-901c-386da4f425a6">
-but this error basicaly means that you have to clear the build and rebuild in xcode.
+but this error basically means that you have to clear the build and rebuild in Xcode.
 
 as a last step it might complain about flipper again but for this issue you just run (cd .. out of ios folder) `export NO_FLIPPER=1` then you `cd ios` and finally run `pod install`
 
@@ -61,7 +61,7 @@ as a last step it might complain about flipper again but for this issue you just
 <img width="468" alt="image" src="https://github.com/user-attachments/assets/79b95693-8fe8-4eab-9472-aff5051ae8d3" />
 
 **_Solution_**  
-If you encounter this problem you just simply close Xcode through force quit, restart it, then go to product clean the build and build it again.
+If you encounter this problem, simply close Xcode through force quit, restart it, then go to product clean the build and build it again.
 
 ## react-native-maps problem
 <img width="590" alt="Screenshot 2025-01-29 at 11 12 54" src="https://github.com/user-attachments/assets/c212e52b-7b3e-4116-8581-016bfc05d16c" />
@@ -71,7 +71,7 @@ If you encounter this problem you just simply close Xcode through force quit, re
 2. remove the node modules folder: `rm -rf node_modules package-lock.json` if this doesn't work then remove the folder manually from the directories.
 3. `npm install` in the terminal
 4. `cd ios` -> `rm -rf Pods Podfile.lock` -> `pod install`
-5. xcode might give the MsghandlingError PIF Problem (follow the instruction above at MsghandlingError PIF Problem)
-6. the last error xcode might be able to give is kcpplibver if this occurs proceed to step 7 else your done.
+5. Xcode might give the MsghandlingError PIF Problem (follow the instruction above at MsghandlingError PIF Problem)
+6. the last error Xcode might be able to give is kcpplibver if this occurs proceed to step 7 else your done.
 7. `cd ios` -> `export NO_FLIPPER=1` -> `pod install`
 
