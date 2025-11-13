@@ -40,8 +40,6 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 
   &.open { transform: translateX(0); }
 
