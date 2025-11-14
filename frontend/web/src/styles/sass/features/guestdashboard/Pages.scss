@@ -28,7 +28,7 @@
 .sidebar {
   position: fixed;
   top: 0; left: 0;
-  height: 100dvh; 
+  height: 120dvh; 
   width: var(--gd-sidebar-w);
   background: var(--gd-bg);
   border-right: var(--gd-border);
@@ -96,7 +96,7 @@
     top: 24px;
     transform: none;
     box-shadow: none;
-    height: calc(100dvh - 24px); 
+    height: calc(120dvh - 24px); 
     z-index: auto; 
   }
 }
