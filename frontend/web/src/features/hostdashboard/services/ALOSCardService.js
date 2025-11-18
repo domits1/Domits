@@ -20,7 +20,7 @@ const ALOSCard = () => {
         const user = await Auth.currentAuthenticatedUser();
         setCognitoUserId(user.attributes.sub);
       } catch (err) {
-        setError("User not logged in");
+        setError("User not logged in.");
       }
     };
     fetchUserId();
