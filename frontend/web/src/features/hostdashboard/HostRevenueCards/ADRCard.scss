@@ -90,26 +90,9 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
   }
 }
 
-h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: $text-dark;
-  margin-bottom: 10px;
-}
-
-p {
-  margin: 12px 10px;
-  font-size: 18px;
-  color: $accent-color;
-
-  strong {
-    font-weight: 600;
-  }
-
-  &.large {
-    font-size: 110px;
-    font-weight: bold;
-  }
+&.large {
+  font-size: 110px;
+  font-weight: bold;
 }
 
 .time-filter {
