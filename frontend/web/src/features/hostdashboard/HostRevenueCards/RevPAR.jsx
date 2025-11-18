@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import "./ADRCard.scss";
 import { RevPARService } from "../services/RevParService.js";
 
@@ -25,7 +16,6 @@ const RevPARCard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ✅ Fetch Cognito user ID
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -39,7 +29,6 @@ const RevPARCard = () => {
     fetchUser();
   }, []);
 
-  // ✅ Helper: Get ISO week number
   const getWeekNumber = (date) => {
     const tempDate = new Date(date);
     tempDate.setHours(0, 0, 0, 0);
@@ -49,7 +38,6 @@ const RevPARCard = () => {
     return weekNo;
   };
 
-  // ✅ Generate last N months
   const getLastMonths = (count = 6) => {
     const months = [];
     const now = new Date();
@@ -103,7 +91,6 @@ const RevPARCard = () => {
     return results;
   };
 
-  // ✅ Fetch summary + chart data
   const fetchMetrics = async () => {
     if (!cognitoUserId) return;
     setLoading(true);
@@ -112,25 +99,16 @@ const RevPARCard = () => {
     try {
       let summary;
       if (timeFilter === "custom" && startDate && endDate) {
-        summary = await RevPARService.getRevPARMetrics(
-          cognitoUserId,
-          "custom",
-          startDate,
-          endDate
-        );
+        summary = await RevPARService.getRevPARMetrics(cognitoUserId, "custom", startDate, endDate);
       } else {
         summary = await RevPARService.getRevPARMetrics(cognitoUserId, timeFilter);
       }
 
       const totalRev =
-        typeof summary.totalRevenue === "object"
-          ? summary.totalRevenue.totalRevenue
-          : summary.totalRevenue;
+        typeof summary.totalRevenue === "object" ? summary.totalRevenue.totalRevenue : summary.totalRevenue;
 
       const available =
-        typeof summary.availableNights === "object"
-          ? summary.availableNights.availableNights
-          : summary.availableNights;
+        typeof summary.availableNights === "object" ? summary.availableNights.availableNights : summary.availableNights;
 
       const revparVal = parseFloat(summary.revPAR) || 0;
 
@@ -167,11 +145,7 @@ const RevPARCard = () => {
 
       <div className="time-filter">
         <label>Time Filter:</label>
-        <select
-          className="timeFilter"
-          value={timeFilter}
-          onChange={(e) => setTimeFilter(e.target.value)}
-        >
+        <select className="timeFilter" value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
           <option value="custom">Custom</option>
@@ -182,19 +156,11 @@ const RevPARCard = () => {
         <div className="custom-date-filter">
           <div>
             <label>Start Date:</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div>
             <label>End Date:</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
         </div>
       )}
@@ -226,11 +192,7 @@ const RevPARCard = () => {
               <BarChart data={displayData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                <YAxis
-                  tick={{ fontSize: 12 }}
-                  domain={[0, "dataMax + 20"]}
-                  allowDataOverflow={false}
-                />
+                <YAxis tick={{ fontSize: 12 }} domain={[0, "dataMax + 20"]} allowDataOverflow={false} />
                 <Tooltip />
                 {!allZero && <Legend />}
                 <Bar
@@ -241,14 +203,7 @@ const RevPARCard = () => {
                   isAnimationActive={true}
                 />
                 {allZero && (
-                  <text
-                    x="50%"
-                    y="50%"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="14"
-                    fill="#999"
-                  >
+                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="14" fill="#999">
                     No Data
                   </text>
                 )}
