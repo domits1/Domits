@@ -127,7 +127,7 @@ export default function HostFinanceTab() {
             {onboardingComplete && (
               <>
                 <div className="payouts-section">
-                  <h3>Recent Guest Payment</h3>
+                  <h3>Recent Guest payments</h3>
 
                   {loadingStates.charges ? (
                     <div>
