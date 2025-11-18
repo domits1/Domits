@@ -206,6 +206,7 @@ export default function HostFinanceTab() {
                           style={{ width: `${balanceView.pctAvailable}%` }}
                           data-label="Available"
                           data-value={formatMoney(balanceView.availableTotal, balanceView.currency)}
+                          data-desc="Funds that have been received and are ready to be paid out"
                         />
                         <div
                           className="bm-seg bm-seg--incoming"
@@ -214,6 +215,7 @@ export default function HostFinanceTab() {
                           }}
                           data-label="Incoming"
                           data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                          data-desc="Funds from bookings that are not yet fully received"
                         />
                       </div>
 
