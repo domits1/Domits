@@ -7,11 +7,9 @@ import { Auth } from "aws-amplify";
 const ALOSCard = () => {
   const [alos, setAlos] = useState(0);
   const [trendData, setTrendData] = useState([]);
-
   const [filterType, setFilterType] = useState("monthly");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cognitoUserId, setCognitoUserId] = useState(null);
