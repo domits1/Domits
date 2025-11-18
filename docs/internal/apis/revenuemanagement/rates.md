@@ -9,7 +9,7 @@ The Host KPI Metrics API provides performance analytics for property owners by c
 | Field           | Value          |
 | --------------- | -------------- |
 | Lambda Function | Handler        |
-| Related issue   | # 134         |
+| Related issue   | # 436         |
 | Status          | In Development |
 
 ### Working Endpoints
