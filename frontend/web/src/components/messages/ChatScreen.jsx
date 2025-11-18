@@ -15,7 +15,7 @@ import { toast } from 'react-toastify';
 import MessageToast from './MessageToast';
 
 
-const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, onClose, dashboardType}) => {
+const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, dashboardType}) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const socket = useContext(WebSocketContext);
     const isHost = dashboardType === 'host';
@@ -198,58 +198,21 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                             <FaArrowLeft />
                         </button>
                     )}
-                    {onClose && (
-                        <button 
-                            className="close-chat-button" 
-                            onClick={onClose}
-                            title="Close chat"
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                fontSize: '16px',
-                                color: '#666',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                marginRight: '8px',
-                                transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.color = '#333';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.color = '#666';
-                            }}
-                        >
-                            <FaTimes />
-                        </button>
-                    )}
                     <img src={contactImage || profileImage} alt={contactName} className="profile-img" />
                     <div className="chat-header-info">
                         <h3>{contactName}</h3>
-                    </div>
-                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingRight: '1rem' }}>
                         <input
                             type="text"
                             value={messageSearch}
                             onChange={(e) => setMessageSearch(e.target.value)}
                             placeholder="Search messages"
-                            style={{
-                                border: '1px solid #ccc',
-                                background: '#fff',
-                                borderRadius: '6px',
-                                padding: '6px 10px',
-                                minWidth: '180px'
-                            }}
+                            className="chat-message-search"
                         />
+                    </div>
+                    <div className="chat-header-actions">
                         <button
                             onClick={handleSendAutomatedTestMessages}
-                            style={{
-                                border: '1px solid #ccc',
-                                background: '#f3f3f3',
-                                borderRadius: '6px',
-                                padding: '6px 10px',
-                                cursor: 'pointer'
-                            }}
+                            className="test-messages-button"
                         >
                             Test messages
                         </button>
