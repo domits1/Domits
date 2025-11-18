@@ -89,8 +89,7 @@ export class Repository {
       )`,
         { periodStart, periodEndExclusive }
       )
-      .select(
-        `
+      .select(`
       SUM(
         GREATEST(
           0,
@@ -101,8 +100,7 @@ export class Repository {
           )
         )
       ) AS "bookedNights"
-    `
-      )
+    `)
       .setParameters({ periodStart, periodEndExclusive })
       .getRawOne();
 
