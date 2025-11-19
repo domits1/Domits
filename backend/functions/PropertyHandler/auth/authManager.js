@@ -65,4 +65,19 @@ export class AuthManager {
             throw new Forbidden("You must be the guest of this booking to access it.")
         }
     }
+
+    async getUserInfoFromId(id){
+        try {
+        const userData = await this.CognitoRepository.getUserById(id);
+        return {
+            userName: userData.given_name,
+            familyName: userData.family_name
+        }
+        } catch (error) {
+            console.log(error);
+            throw new NotFoundException("Could not request the property's userid.");
+        }
+
+
+    }
 }
