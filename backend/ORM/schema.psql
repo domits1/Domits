@@ -351,3 +351,16 @@ CREATE TABLE IF NOT EXISTS main.stripe_connectedaccounts (
 CREATE UNIQUE INDEX ASYNC id_UNIQUE_stripe_connected_accounts ON main.stripe_connectedaccounts (id);
 CREATE UNIQUE INDEX ASYNC account_id_UNIQUE_stripe_connected_accounts ON main.stripe_connectedaccounts (account_id);
 CREATE UNIQUE INDEX ASYNC user_id_UNIQUE_stripe_connected_accounts ON main.stripe_connectedaccounts (user_id);
+
+-- -----------------------------------------------------
+-- Table main.property_calendar_price
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_calendar_price
+
+
+CREATE TABLE IF NOT EXISTS   property_calendar_price (
+  property_id varchar(255) NOT NULL,
+  date       bigint        NOT NULL,
+  price      int           NOT NULL,
+  PRIMARY KEY (property_id, date)
+);
