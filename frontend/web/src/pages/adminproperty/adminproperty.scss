@@ -156,3 +156,16 @@ $button-padding: 0.8rem;
     &:hover { opacity: 0.9; }
   }
 }
+  .adminproperty-form {
+    .error-text {
+      color: #d32f2f;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      display: block;
+    }
+    
+    input.error,
+    textarea.error {
+      border-color: #d32f2f;
+    }
+  }

@@ -11,6 +11,8 @@ export default function AdminProperty() {
   const [files, setFiles] = useState([]);
   const [imageData, setImageData] = useState([]);
   const [amenityChecks, setAmenityChecks] = useState({});
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   const AMENITIES = useMemo(
     () =>
@@ -26,6 +28,54 @@ export default function AdminProperty() {
     "Entire Space": "Full house",
     Room: "Room",
     "Shared Room": "Shared room",
+  };
+
+  const validateField = (name, value) => {
+    switch (name) {
+      case "homeName":
+        return value.trim().length >= 2 ? "" : "Home name must be at least 2 characters";
+      
+      case "street":
+        return value.trim().length >= 2 ? "" : "Street is required";
+      
+      case "houseNumber":
+        const num = Number(value);
+        return !isNaN(num) && num > 0 ? "" : "Valid house number is required";
+      
+      case "postalCode":
+        return value.trim().length >= 2 ? "" : "Postal code is required";
+      
+      case "city":
+        return value.trim().length >= 2 ? "" : "City is required";
+      
+      case "country":
+        return value.trim().length >= 2 ? "" : "Country is required";
+      
+      case "description":
+        return value.trim().length >= 10 ? "" : "Description must be at least 10 characters";
+      
+      case "guests":
+      case "bedrooms":
+      case "beds":
+      case "bathrooms":
+        const val = Number(value);
+        return !isNaN(val) && val >= 0 ? "" : "Must be a valid number";
+      
+      case "rate":
+        const rate = Number(value);
+        return !isNaN(rate) && rate > 0 ? "" : "Rate must be greater than 0";
+      
+      default:
+        return "";
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    
+    const error = validateField(name, value);
+    setErrors(prev => ({ ...prev, [name]: error }));
   };
 
   const onAmenityToggle = (id, checked) => {
@@ -86,14 +136,69 @@ export default function AdminProperty() {
     return ts + rand; 
   };
 
+  const validateForm = (formData) => {
+    const newErrors = {};
+    
+    const requiredFields = [
+      "spaceType", "homeName", "street", "houseNumber", 
+      "postalCode", "city", "country", "description", "rate"
+    ];
+    
+    requiredFields.forEach(field => {
+      const value = formData.get(field)?.toString()?.trim();
+      if (!value) {
+        newErrors[field] = "This field is required";
+      }
+    });
+
+    const numericFields = ["guests", "bedrooms", "beds", "bathrooms", "houseNumber"];
+    numericFields.forEach(field => {
+      const value = formData.get(field);
+      const numValue = Number(value);
+      if (isNaN(numValue) || numValue < 0) {
+        newErrors[field] = "Must be a valid number";
+      }
+    });
+
+    const rate = Number(formData.get("rate") || 0);
+    if (rate <= 0) {
+      newErrors.rate = "Rate must be greater than 0";
+    }
+
+    if (imageData.length < 5) {
+      newErrors.images = "Add at least 5 photos";
+    }
+
+    return newErrors;
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
+    
+    const allFields = [
+      "spaceType", "homeName", "street", "houseNumber", 
+      "postalCode", "city", "country", "description", 
+      "guests", "bedrooms", "beds", "bathrooms", "rate"
+    ];
+    const allTouched = allFields.reduce((acc, field) => {
+      acc[field] = true;
+      return acc;
+    }, {});
+    setTouched(allTouched);
+    
+    const fd = new FormData(e.currentTarget);
+    const formErrors = validateForm(fd);
+    
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      alert("Please fix the errors before submitting.");
+      return;
+    }
+
     if (imageData.length < 5) {
       alert("Add at least 5 photos.");
       return;
     }
-
-    const fd = new FormData(e.currentTarget);
 
     const spaceTypeRaw = fd.get("spaceType")?.toString() || "Entire Space";
     const spaceType = SPACE_TYPE_MAP[spaceTypeRaw] || "Full house";
@@ -211,6 +316,8 @@ export default function AdminProperty() {
     }
   };
 
+  const hasError = (fieldName) => touched[fieldName] && errors[fieldName];
+
   return (
     <form className="adminproperty-form" onSubmit={onSubmit}>
       <div className="adminproperty-group">
@@ -220,39 +327,131 @@ export default function AdminProperty() {
           <label><input type="radio" name="spaceType" value="Room" /> Room</label>
           <label><input type="radio" name="spaceType" value="Shared Room" /> Shared Room</label>
         </div>
+        {hasError("spaceType") && <span className="error">{errors.spaceType}</span>}
       </div>
 
       <div className="adminproperty-group">
         <label>Name your home</label>
-        <input type="text" name="homeName" required />
+        <input 
+          type="text" 
+          name="homeName" 
+          required 
+          onBlur={handleBlur}
+          className={hasError("homeName") ? "error" : ""}
+        />
+        {hasError("homeName") && <span className="error-text">{errors.homeName}</span>}
       </div>
 
       <div className="adminproperty-group">
         <label>Address</label>
         <div className="grid-2">
-          <input type="text" name="street" placeholder="Street" required />
-          <input type="number" name="houseNumber" placeholder="No." min="0" required />
+          <input 
+            type="text" 
+            name="street" 
+            placeholder="Street" 
+            required 
+            onBlur={handleBlur}
+            className={hasError("street") ? "error" : ""}
+          />
+          <input 
+            type="number" 
+            name="houseNumber" 
+            placeholder="No." 
+            min="0" 
+            required 
+            onBlur={handleBlur}
+            className={hasError("houseNumber") ? "error" : ""}
+          />
         </div>
+        {hasError("street") && <span className="error-text">{errors.street}</span>}
+        {hasError("houseNumber") && <span className="error-text">{errors.houseNumber}</span>}
+        
         <div className="grid-3">
-          <input type="text" name="postalCode" placeholder="Postal code" required />
-          <input type="text" name="city" placeholder="City" required />
-          <input type="text" name="country" placeholder="Country" required />
+          <input 
+            type="text" 
+            name="postalCode" 
+            placeholder="Postal code" 
+            required 
+            onBlur={handleBlur}
+            className={hasError("postalCode") ? "error" : ""}
+          />
+          <input 
+            type="text" 
+            name="city" 
+            placeholder="City" 
+            required 
+            onBlur={handleBlur}
+            className={hasError("city") ? "error" : ""}
+          />
+          <input 
+            type="text" 
+            name="country" 
+            placeholder="Country" 
+            required 
+            onBlur={handleBlur}
+            className={hasError("country") ? "error" : ""}
+          />
         </div>
+        {hasError("postalCode") && <span className="error-text">{errors.postalCode}</span>}
+        {hasError("city") && <span className="error-text">{errors.city}</span>}
+        {hasError("country") && <span className="error-text">{errors.country}</span>}
       </div>
 
       <div className="adminproperty-group">
         <label>Provide a description</label>
-        <textarea name="description" rows={4} required />
+        <textarea 
+          name="description" 
+          rows={4} 
+          required 
+          onBlur={handleBlur}
+          className={hasError("description") ? "error" : ""}
+        />
+        {hasError("description") && <span className="error-text">{errors.description}</span>}
       </div>
 
       <div className="adminproperty-group">
         <label>How many people can stay here?</label>
         <div className="grid-4">
-          <input type="number" name="guests" placeholder="Guests" min="0" required />
-          <input type="number" name="bedrooms" placeholder="Bedrooms" min="0" required />
-          <input type="number" name="beds" placeholder="Beds" min="0" required />
-          <input type="number" name="bathrooms" placeholder="Bathrooms" min="0" required />
+          <input 
+            type="number" 
+            name="guests" 
+            placeholder="Guests" 
+            min="0" 
+            required 
+            onBlur={handleBlur}
+            className={hasError("guests") ? "error" : ""}
+          />
+          <input 
+            type="number" 
+            name="bedrooms" 
+            placeholder="Bedrooms" 
+            min="0" 
+            required 
+            onBlur={handleBlur}
+            className={hasError("bedrooms") ? "error" : ""}
+          />
+          <input 
+            type="number" 
+            name="beds" 
+            placeholder="Beds" 
+            min="0" 
+            required 
+            onBlur={handleBlur}
+            className={hasError("beds") ? "error" : ""}
+          />
+          <input 
+            type="number" 
+            name="bathrooms" 
+            placeholder="Bathrooms" 
+            min="0" 
+            required 
+            onBlur={handleBlur}
+            className={hasError("bathrooms") ? "error" : ""}
+          />
         </div>
+        {(hasError("guests") || hasError("bedrooms") || hasError("beds") || hasError("bathrooms")) && (
+          <span className="error-text">Please enter valid numbers for all fields</span>
+        )}
       </div>
 
       <div className="adminproperty-group">
@@ -297,6 +496,7 @@ export default function AdminProperty() {
       <div className="adminproperty-group">
         <label>Add photos (min 5, max 10)</label>
         <input type="file" accept="image/*" multiple onChange={onPickFiles} />
+        {hasError("images") && <span className="error-text">{errors.images}</span>}
         {files.length > 0 && (
           <div className="thumbs">
             {files.map((f, i) => (
@@ -311,7 +511,16 @@ export default function AdminProperty() {
 
       <div className="adminproperty-group">
         <label>Set your rate</label>
-        <input type="number" name="rate" min="0" step="1" required />
+        <input 
+          type="number" 
+          name="rate" 
+          min="0" 
+          step="1" 
+          required 
+          onBlur={handleBlur}
+          className={hasError("rate") ? "error" : ""}
+        />
+        {hasError("rate") && <span className="error-text">{errors.rate}</span>}
       </div>
 
       <button type="submit" className="adminproperty-submit" disabled={submitting}>
