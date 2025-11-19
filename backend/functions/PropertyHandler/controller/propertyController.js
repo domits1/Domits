@@ -246,6 +246,9 @@ export class PropertyController {
         try {
             const propertyId = event.queryStringParameters.property;
             const property = await this.propertyService.getFullActivePropertyById(propertyId)
+            const hostId = property.property.hostId
+            console.log(hostId);
+            console.log(await this.authManager.getUserInfoFromId(hostId));
             return {
                 statusCode: 200,
                 headers: responseHeaders,
