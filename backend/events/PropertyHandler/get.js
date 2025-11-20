@@ -14,7 +14,7 @@ async function main() {
       Authorization: "", 
     },
   });
-  console.log(JSON.parse(result.body).properties)
+  console.log(JSON.parse(result.body))
 }
 
 main();
