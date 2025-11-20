@@ -4,6 +4,8 @@ import amenitiesList from "../../store/amenities";
 import { PropertyBuilder } from "../../features/hostonboarding/stores/propertyBuilder";
 import { submitAccommodation } from "../../features/hostonboarding/services/SubmitAccommodation";
 import { useNavigate } from "react-router-dom";
+import { Auth } from "aws-amplify";
+import { useEffect } from "react";
 
 export default function AdminProperty() {
   const navigate = useNavigate();
@@ -13,6 +15,24 @@ export default function AdminProperty() {
   const [amenityChecks, setAmenityChecks] = useState({});
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+
+  useEffect(() => {
+    async function checkRole() {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        const role = user?.attributes?.["custom:group"];
+
+        if (role !== "Host") {
+          navigate("/");
+        }
+      } catch (err) {
+        navigate("/");
+      }
+    }
+
+    checkRole();
+  }, [navigate]);
+  
 
   const AMENITIES = useMemo(
     () =>
