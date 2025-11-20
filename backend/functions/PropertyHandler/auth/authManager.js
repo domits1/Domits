@@ -68,13 +68,15 @@ export class AuthManager {
 
     async getUserInfoFromId(id){
         try {
-        const userData = await this.CognitoRepository.getUserById(id);
+        const userData = await this.cognitoRepository.getUserById(id);
+        const givenUserName = userData.UserAttributes.find(a => a.Name === "given_name")?.Value;
+        const givenFamilyName = userData.UserAttributes.find(a => a.Name === "family_name")?.Value;
         return {
-            userName: userData.given_name,
-            familyName: userData.family_name
+            userName: givenUserName,
+            familyName: givenFamilyName
         }
         } catch (error) {
-            console.log(error);
+            console.error(error);
             throw new NotFoundException("Could not request the property's userid.");
         }
 
