@@ -356,31 +356,41 @@
                 max-width: 720px; /* reduce overall width */
                 margin: 0 auto 0 0; /* anchor left */
                 overflow: visible;
+            }
 
-                .char-counter {
-                    position: absolute;
-                    right: 72px;
-                    bottom: 12px;
-                    font-size: 11px;
-                    line-height: 1;
-                    color: #666;
-                    user-select: none;
-                }
-                .char-counter.over {
-                    color: #dc3545; /* red when >= 200 */
-                    font-weight: 600;
-                }
+            .char-limit-indicator {
+                position: absolute;
+                right: -160px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 11px;
+                line-height: 1;
+                color: #666;
+                padding: 4px 10px;
+                border-radius: 999px;
+                background: #f0f4f8;
+                white-space: nowrap;
+                user-select: none;
+                pointer-events: none;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            }
+
+            .char-limit-indicator.over {
+                color: #dc3545;
+                background: rgba(220, 53, 69, 0.18);
+                font-weight: 600;
+                box-shadow: 0 2px 6px rgba(220, 53, 69, 0.35);
             }
 
             .message-input-textarea {
                 background-color: #f9fbfd;
-                min-height: 40px;
-                max-height: 100px;
+                min-height: 34px;
+                max-height: 88px;
                 width: 100%;
                 resize: none;
                 border-radius: 999px;
                 border: 2px solid #2f3a4a;
-                padding: 12px 56px 12px 20px;
+                padding: 8px 56px 8px 18px;
                 overflow-y: auto;
                 transition: box-shadow 0.2s ease, border-color 0.2s ease;
                 text-align: left;
@@ -407,12 +417,12 @@
                 position: absolute;
                 background: #f9fbfd;
                 border: 2px solid #2f3a4a;
-                right: -70px;
+                right: -62px;
                 top: 50%;
                 transform: translateY(-50%);
                 color: #2f3a4a;
-                width: 48px;
-                height: 48px;
+                width: 40px;
+                height: 40px;
                 border-radius: 999px;
                 display: flex;
                 align-items: center;
