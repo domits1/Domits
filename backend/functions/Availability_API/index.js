@@ -13,21 +13,13 @@ export const handler = async (event) => {
             pool = await Database.getInstance();
         }
 
-        return await (async () => {
-            switch (event.httpMethod) {
-                case "GET":
-                    return controller.getUser(event)
-                default:
-                    return {
-                        statusCode: 404,
-                        body: "HTTP method not found."
-                    }
-            }
-        })();
+        return await controller.getProperty(event);
+
     } catch (error) {
+        console.error(error);
         return {
             statusCode: 500,
             body: "Something went wrong, please contact support."
-        }
+        };
     }
-}
+};

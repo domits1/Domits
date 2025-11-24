@@ -1,5 +1,5 @@
-import {Repository} from "../../data/repository.js";
-import {DatabaseException} from "../../util/exception/databaseException.js";
+import { Repository } from "../../data/repository.js";
+import { DatabaseException } from "../../util/exception/databaseException.js";
 
 export class Service {
     repository;
@@ -8,7 +8,20 @@ export class Service {
         this.repository = new Repository();
     }
 
-    async getUser() {
-        return await this.repository.getUser();
+    async getPropertyById(id) {
+        try {
+            if (!id) {
+                throw new Error("Property ID is required.");
+            }
+ 
+            return await this.repository.getPropertyById(id);
+
+        } catch (err) {
+            if (err.name === "NotFoundException") {
+                throw err; 
+            }
+            
+            throw new DatabaseException(err.message);
+        }
     }
 }

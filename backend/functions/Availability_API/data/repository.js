@@ -1,16 +1,25 @@
-import {UserMapping} from "../util/mapping/userMapping.js";
 import Database from "database";
-import {User_Table} from "database/models/User_Table";
+import { Property } from "database/models/Property";
+// import { NotFoundException } from "../util/exception/NotFoundException.js";
 
 export class Repository {
-
-    async getUser() {
+    async getPropertyById(id) {
         const client = await Database.getInstance();
-        const response = await client
-            .getRepository(User_Table)
-            .createQueryBuilder()
-            .getMany();
 
-        return response.map(user => UserMapping.mapGetUserCommandToUser(user));
+        const result = await client
+            .getRepository(Property)
+            .createQueryBuilder("property")
+            .where("property.id = :id", { id })
+            .getOne();
+
+        // if (!result) {
+        //     throw new NotFoundException("Property is inactive or does not exist.");
+        // }
+
+        return {
+            id: result.id,
+            hostId: result.hostid,
+            title: result.title
+        };
     }
 }
