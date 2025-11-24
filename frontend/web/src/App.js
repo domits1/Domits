@@ -135,16 +135,15 @@ function App() {
       {/* ApolloProvider */}
       <ToastContainer
         position="top-right"
-        autoClose={5000}
-        hideProgressBar={true}
-        newestOnTop={true}
-        closeButton={false}
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="light"
+        theme="colored"
       />
       <FlowContext.Provider value={{ flowState, setFlowState }}>
         <Router>

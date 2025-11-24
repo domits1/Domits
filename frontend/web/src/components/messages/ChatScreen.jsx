@@ -15,7 +15,7 @@ import { toast } from 'react-toastify';
 import MessageToast from './MessageToast';
 
 
-const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, dashboardType}) => {
+const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, onClose, dashboardType}) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const socket = useContext(WebSocketContext);
     const isHost = dashboardType === 'host';
@@ -96,27 +96,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                 messageType: 'wifi_info',
             },
         ];
-        automated.forEach((m, i) => {
-            addNewMessage(m);
-            setTimeout(() => {
-                toast.info(
-                    <MessageToast 
-                        contactName={contactName} 
-                        contactImage={contactImage} 
-                        message={m.text} 
-                    />,
-                    { className: 'message-toast-custom' }
-                );
-            }, i * 200);
-        });
-        const last = automated[automated.length - 1];
-        if (last) {
-            // Update contact list preview line
-            handleContactListMessage?.({
-                ...last,
-                recipientId: contactId, 
-            });
-        }
+        automated.forEach((m) => addNewMessage(m));
     };
 
     useEffect(() => {
@@ -130,20 +110,8 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
 
             addNewMessage(msg);
             addedMessageIds.current.add(msg.id);
-            
-            // Show toast for incoming messages (from contact, not from current user)
-            if (msg.userId === contactId && msg.recipientId === userId && msg.text) {
-                toast.info(
-                    <MessageToast 
-                        contactName={contactName} 
-                        contactImage={contactImage} 
-                        message={msg.text} 
-                    />,
-                    { className: 'message-toast-custom' }
-                );
-            }
         });
-    }, [wsMessages, userId, contactId, addNewMessage, contactName, contactImage]);
+    }, [wsMessages, userId, contactId, addNewMessage]);
 
     const handleSendMessage = async () => {
         const hasContent = (newMessage.trim() || uploadedFileUrls.length > 0);
@@ -198,6 +166,31 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                             <FaArrowLeft />
                         </button>
                     )}
+                    {onClose && (
+                        <button 
+                            className="close-chat-button" 
+                            onClick={onClose}
+                            title="Close chat"
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '16px',
+                                color: '#666',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                marginRight: '8px',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.color = '#333';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.color = '#666';
+                            }}
+                        >
+                            <FaTimes />
+                        </button>
+                    )}
                     <img src={contactImage || profileImage} alt={contactName} className="profile-img" />
                     <div className="chat-header-info">
                         <h3>{contactName}</h3>
@@ -213,6 +206,33 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                         <button
                             onClick={handleSendAutomatedTestMessages}
                             className="test-messages-button"
+                        >
+                            Test messages
+                        </button>
+                    </div>
+                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingRight: '1rem' }}>
+                        <input
+                            type="text"
+                            value={messageSearch}
+                            onChange={(e) => setMessageSearch(e.target.value)}
+                            placeholder="Search messages"
+                            style={{
+                                border: '1px solid #ccc',
+                                background: '#fff',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                minWidth: '180px'
+                            }}
+                        />
+                        <button
+                            onClick={handleSendAutomatedTestMessages}
+                            style={{
+                                border: '1px solid #ccc',
+                                background: '#f3f3f3',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                cursor: 'pointer'
+                            }}
                         >
                             Test messages
                         </button>
@@ -259,31 +279,20 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                         <textarea
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Type a message..."
                             className='message-input-textarea'
                             onKeyUp={(e) => {
-                                if (e.key === 'Enter') {
-                                    if ((newMessage?.length || 0) <= 200) {
-                                        handleSendMessage();
-                                    }
-                                }
+                                if (e.key === 'Enter') handleSendMessage();
                             }}
                         />
                         <button
                             onClick={handleSendMessage}
                             className='message-input-send-button'
-                            disabled={sending || (newMessage?.length || 0) > 200}
+                            disabled={sending}
                             title="Send"
                         >
                             <FaPaperPlane />
                         </button>
-                        {(newMessage?.length || 0) > 0 && (
-                            <div
-                                className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? 'over' : ''}`}
-                                aria-live="polite"
-                            >
-                                {(newMessage?.length || 0)}/200
-                            </div>
-                        )}
                     </div>
 
                     {showPreviewPopover && uploadedFileUrls.length > 0 && (
