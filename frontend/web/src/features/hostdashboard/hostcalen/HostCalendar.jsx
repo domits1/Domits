@@ -1,18 +1,19 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import "./HostCalendar.scss";
 
 import Toolbar from "./components/Toolbar";
 import Legend from "./components/Legend";
 import CalendarGrid from "./components/CalendarGrid";
 import StatsPanel from "./components/StatsPanel";
+import MaintenanceModal from "./components/MaintenanceModal";
+import Toast from "./components/Toast";
 
 import AvailabilityCard from "./components/Sidebar/AvailabilityCard";
 import PricingCard from "./components/Sidebar/PricingCard";
 import ExternalCalendarsCard from "./components/Sidebar/ExternalCalendarsCard";
 
-import { getMonthMatrix, startOfMonthUTC, addMonthsUTC, subMonthsUTC } from "./utils/date";
-import { calendarService } from "../hostcalendar/services/calendarService";
-import { getAccessToken } from "../../../services/getAccessToken";
+import { getMonthMatrix, startOfMonthUTC, addMonthsUTC, subMonthsUTC, toKey } from "./utils/date";
+import { calendarService } from "./services/calendarService";
 
 const initialBlocks = {
   booked: new Set(),
@@ -28,14 +29,30 @@ export default function HostCalendar() {
   const [selections, setSelections] = useState(initialBlocks);
   const [prices, setPrices] = useState(initialPrices);
   const [tempPrice, setTempPrice] = useState("");
+  const [bookingsByDate, setBookingsByDate] = useState({}); // Store booking info by date
 
-  // New state for API data
-  const [selectedProperty, setSelectedProperty] = useState(null);
-  const [properties, setProperties] = useState([]);
-  const [bookings, setBookings] = useState([]);
+  // New state for property selection and data
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
   const [propertyDetails, setPropertyDetails] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [apiError, setApiError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
+  const [pendingChanges, setPendingChanges] = useState({
+    blocked: new Set(),
+    maintenance: new Set(),
+    prices: {}
+  });
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [maintenanceNotes, setMaintenanceNotes] = useState({}); // { "2025-01-15": "Plumbing repair" }
+  const [visuallySelectedDates, setVisuallySelectedDates] = useState(new Set()); // Green selected dates
+  const [toast, setToast] = useState(null); // Toast notification
+
+  // Helper function to show toast
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+  };
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
 
@@ -43,251 +60,462 @@ export default function HostCalendar() {
   const prev = () => setCursor(subMonthsUTC(cursor, 1));
   const today = () => setCursor(startOfMonthUTC(new Date()));
 
-  // Load pricing from localStorage on mount
-  useEffect(() => {
-    if (selectedProperty) {
-      const savedPricing = localStorage.getItem(`calendar_pricing_${selectedProperty}`);
-      if (savedPricing) {
-        try {
-          setPrices(JSON.parse(savedPricing));
-        } catch (e) {
-          // Invalid JSON, ignore
-        }
+  // Jump to first available date
+  const jumpToAvailability = () => {
+    const availabilityData = propertyDetails?.propertyAvailability || propertyDetails?.availability;
+    if (availabilityData && Array.isArray(availabilityData) && availabilityData.length > 0) {
+      const firstAvail = availabilityData[0];
+      if (firstAvail.availableStartDate) {
+        const firstDate = new Date(firstAvail.availableStartDate);
+        setCursor(startOfMonthUTC(firstDate));
       }
     }
-  }, [selectedProperty]);
+  };
 
-  // Save pricing to localStorage whenever it changes
-  useEffect(() => {
-    if (selectedProperty && Object.keys(prices).length > 0) {
-      localStorage.setItem(`calendar_pricing_${selectedProperty}`, JSON.stringify(prices));
-    }
-  }, [prices, selectedProperty]);
-
-  // Fetch property list on component mount
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const token = getAccessToken();
-
-        if (!token) {
-          setError("Not authenticated. Please log in.");
-          alert("⚠️ No authentication token found. Please log in first.");
-          return;
-        }
-
-        const response = await fetch(
-          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all",
-          {
-            method: "GET",
-            headers: {
-              Authorization: token,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorMsg = `Failed to fetch properties: ${response.status} ${response.statusText}`;
-          setError(errorMsg);
-          alert(`❌ API Error: ${errorMsg}`);
-          return;
-        }
-
-        const data = await response.json();
-        const propertyList = Array.isArray(data) ? data : [];
-        setProperties(propertyList);
-
-        if (propertyList.length > 0) {
-          const firstPropertyId = propertyList[0].ID || propertyList[0].id;
-          setSelectedProperty(firstPropertyId);
-          alert(`✅ Loaded ${propertyList.length} properties. First property: ${propertyList[0].Title || firstPropertyId}`);
-        } else {
-          alert("⚠️ No properties found. Please create a property first.");
-        }
-      } catch (err) {
-        setError(err.message);
-        alert(`❌ Error: ${err.message}`);
-      } finally {
-        setLoading(false);
-      }
+  // Process bookings and availability into calendar format
+  const processBookingsIntoCalendar = useCallback((bookingData, details) => {
+    const newSelections = {
+      booked: new Set(),
+      available: new Set(),
+      blocked: new Set(),
+      maintenance: new Set(),
     };
+    const newPrices = {};
+    const bookingsByDate = {}; // Map dates to booking info
 
-    fetchProperties();
+    // Process bookings - mark as booked (simplified to match old implementation)
+    bookingData.forEach((booking) => {
+      const arrivalDate = booking.arrivaldate ? new Date(booking.arrivaldate) : null;
+      const departureDate = booking.departuredate ? new Date(booking.departuredate) : null;
+
+      if (arrivalDate && departureDate && !isNaN(arrivalDate) && !isNaN(departureDate)) {
+        const currentDate = new Date(arrivalDate);
+        while (currentDate <= departureDate) {
+          const dateKey = currentDate.toISOString().split("T")[0];
+          newSelections.booked.add(dateKey);
+
+          // Store booking information for this date
+          if (!bookingsByDate[dateKey]) {
+            bookingsByDate[dateKey] = [];
+          }
+          bookingsByDate[dateKey].push({
+            id: booking.id || booking.booking_id,
+            guestName: booking.guestname || 'Guest',
+            guestEmail: booking.guest_email || booking.guestEmail || '',
+            checkIn: arrivalDate.toISOString().split('T')[0],
+            checkOut: departureDate.toISOString().split('T')[0],
+            totalPrice: booking.total_price || booking.totalPrice || 0,
+            status: booking.status || 'Confirmed',
+            guests: booking.guests || 1,
+            nights: Math.ceil((departureDate - arrivalDate) / (1000 * 60 * 60 * 24)) || 1
+          });
+
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+      }
+    });
+
+
+    // Process property availability
+    if (details?.propertyAvailability || details?.availability) {
+      const availabilityData = details.propertyAvailability || details.availability;
+      const availability = Array.isArray(availabilityData)
+        ? availabilityData
+        : [availabilityData];
+
+      availability.forEach((avail) => {
+        if (avail.availableStartDate && avail.availableEndDate) {
+          // Handle timestamp format
+          const startDate = new Date(avail.availableStartDate);
+          const endDate = new Date(avail.availableEndDate);
+
+          const currentDate = new Date(startDate);
+          while (currentDate <= endDate) {
+            const key = toKey(currentDate);
+            // Only mark as available if not already booked
+            if (!newSelections.booked.has(key)) {
+              newSelections.available.add(key);
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+        }
+      });
+    }
+
+
+    // Process pricing - try multiple sources
+    // 1. First check if pricing came with bookings API response
+    const bookingPricing = bookingData._pricing;
+    // 2. Then check property details
+    const detailsPricing = details?.propertyPricing || details?.pricing;
+
+    const pricing = bookingPricing || detailsPricing;
+
+    if (pricing) {
+      const baseRate = pricing.roomrate || pricing.roomRate || pricing.cleaning;
+      if (baseRate) {
+
+        // Set default price for all visible dates (booked + available)
+        newSelections.available.forEach((key) => {
+          newPrices[key] = baseRate;
+        });
+        newSelections.booked.forEach((key) => {
+          newPrices[key] = baseRate;
+        });
+      }
+    }
+
+    setSelections(newSelections);
+    setPrices(newPrices);
+    setBookingsByDate(bookingsByDate);
   }, []);
 
-  // Fetch property details, bookings, and pricing when property is selected
-  useEffect(() => {
-    if (!selectedProperty) return;
+  // Apply saved calendar data (blocked, maintenance, pricing)
+  const applySavedCalendarData = useCallback((savedData) => {
 
-    const fetchPropertyData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    setSelections((prev) => {
+      const next = { ...prev };
 
-        // Fetch property details
-        const details = await calendarService.fetchPropertyDetails(selectedProperty);
-        setPropertyDetails(details);
+      // Apply blocked dates
+      if (savedData.blocked && Array.isArray(savedData.blocked)) {
+        savedData.blocked.forEach((dateStr) => {
+          next.blocked.add(dateStr);
+          // Remove from available if it was there
+          next.available.delete(dateStr);
+        });
+      }
 
-        // Fetch bookings
-        const bookingsData = await calendarService.fetchPropertyBookings(selectedProperty);
-        setBookings(bookingsData);
+      // Apply maintenance dates
+      if (savedData.maintenance && Array.isArray(savedData.maintenance)) {
+        savedData.maintenance.forEach((item) => {
+          const dateStr = typeof item === 'string' ? item : item.date;
+          const note = typeof item === 'object' ? item.note : '';
 
-        alert(`📊 Data loaded:\n- Property ID: ${selectedProperty}\n- Bookings found: ${bookingsData.length}\n- Property: ${details?.Title || 'Unknown'}`);
+          next.maintenance.add(dateStr);
+          // Remove from available if it was there
+          next.available.delete(dateStr);
 
-        // Load saved calendar data
-        const savedData = await calendarService.loadCalendarData(selectedProperty);
-
-        const bookedSet = new Set();
-
-        bookingsData.forEach((booking) => {
-          const arrivalDate = booking.arrivaldate
-            ? typeof booking.arrivaldate === 'number'
-              ? new Date(booking.arrivaldate)
-              : new Date(booking.arrivaldate)
-            : null;
-
-          const departureDate = booking.departuredate
-            ? typeof booking.departuredate === 'number'
-              ? new Date(booking.departuredate)
-              : new Date(booking.departuredate)
-            : null;
-
-          if (arrivalDate && departureDate && !isNaN(arrivalDate) && !isNaN(departureDate)) {
-            const currentDate = new Date(arrivalDate);
-            while (currentDate <= departureDate) {
-              const dateKey = currentDate.toISOString().split("T")[0];
-              bookedSet.add(dateKey);
-              currentDate.setDate(currentDate.getDate() + 1);
-            }
+          // Store note
+          if (note) {
+            setMaintenanceNotes((prevNotes) => ({
+              ...prevNotes,
+              [dateStr]: note
+            }));
           }
         });
+      }
 
-        const blockedSet = new Set(savedData.blocked || []);
-        const maintenanceSet = new Set(savedData.maintenance || []);
+      return next;
+    });
 
-        setSelections({
-          booked: bookedSet,
-          available: new Set(),
-          blocked: blockedSet,
-          maintenance: maintenanceSet,
+    // Apply saved prices
+    if (savedData.prices && typeof savedData.prices === 'object') {
+      setPrices((prev) => ({
+        ...prev,
+        ...savedData.prices
+      }));
+    }
+
+  }, []);
+
+  // Fetch property data when selected
+  useEffect(() => {
+    if (!selectedPropertyId) {
+      setDebugInfo(null);
+      setApiError(null);
+      return;
+    }
+
+    const fetchPropertyData = async () => {
+      setIsLoading(true);
+      setApiError(null);
+
+      try {
+        // Fetch property details and bookings in parallel for better performance
+        const [details, bookingsResponse] = await Promise.all([
+          calendarService.fetchPropertyDetails(selectedPropertyId),
+          calendarService.fetchPropertyBookings(selectedPropertyId)
+        ]);
+
+        setPropertyDetails(details);
+        setBookings(bookingsResponse);
+
+        // Set debug info for development
+        const bookingsCount = Array.isArray(bookingsResponse) ? bookingsResponse.length : 0;
+        setDebugInfo({
+          propertyId: selectedPropertyId,
+          bookingsCount: bookingsCount,
+          hasDetails: !!details,
+          hasAvailability: !!(details?.propertyAvailability || details?.availability),
+          hasPricing: !!(details?.propertyPricing || details?.pricing),
+          propertyTitle: details?.property?.title || details?.property?.Title || 'Unknown',
+          lastFetched: new Date().toISOString()
         });
 
-        alert(`📅 Calendar updated:\n- Booked dates: ${bookedSet.size}\n- Blocked dates: ${blockedSet.size}\n- Maintenance dates: ${maintenanceSet.size}`);
+        // Process bookings into calendar format
+        processBookingsIntoCalendar(bookingsResponse, details);
 
-        const pricingData = {};
-
-        if (savedData.prices) {
-          Object.assign(pricingData, savedData.prices);
+        // Load previously saved calendar customizations (blocked dates, maintenance, custom pricing)
+        const savedData = await calendarService.loadCalendarData(selectedPropertyId);
+        if (savedData) {
+          applySavedCalendarData(savedData);
         }
+      } catch (error) {
+        const errorMessage = error.message || "Unknown error occurred";
+        setApiError(errorMessage);
+        setDebugInfo({
+          error: errorMessage,
+          propertyId: selectedPropertyId,
+          timestamp: new Date().toISOString()
+        });
 
-        setPrices(pricingData);
-      } catch (err) {
-        setError(err.message);
-        alert(`❌ Error loading property data: ${err.message}`);
+        // Show user-friendly error message
+        if (errorMessage.includes("Authentication token not found")) {
+          showToast("You are not logged in. Please log in to view calendar data.", 'error');
+        } else if (errorMessage.includes("Failed to fetch")) {
+          showToast("Could not connect to the server. Please check your internet connection.", 'error');
+        } else {
+          showToast(`Error loading calendar: ${errorMessage}`, 'error');
+        }
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchPropertyData();
-  }, [selectedProperty]);
+  }, [selectedPropertyId, processBookingsIntoCalendar, applySavedCalendarData]);
 
   const toggleDayIn = (bucket, key) => {
-    // Don't allow toggling booked dates
-    if (selections.booked.has(key) && bucket !== "booked") {
-      alert("Cannot modify booked dates. This date is already booked.");
-      return;
-    }
-
     setSelections((prev) => {
       const next = { ...prev, [bucket]: new Set(prev[bucket]) };
-      if (next[bucket].has(key)) next[bucket].delete(key);
-      else next[bucket].add(key);
+      if (next[bucket].has(key)) {
+        next[bucket].delete(key);
+      } else {
+        next[bucket].add(key);
+      }
 
+      // Remove from other buckets
       Object.keys(prev).forEach((b) => {
         if (b !== bucket) next[b] = new Set([...next[b]].filter((k) => k !== key));
       });
+
+      // Track pending changes for blocked/maintenance
+      if (bucket === "blocked" || bucket === "maintenance") {
+        setPendingChanges((prevChanges) => ({
+          ...prevChanges,
+          [bucket]: new Set([...prevChanges[bucket], key])
+        }));
+      }
+
       return next;
     });
   };
 
   const setPriceForSelection = () => {
     const value = parseFloat(tempPrice);
-    if (Number.isNaN(value)) return;
-    setPrices((prev) => {
-      const next = { ...prev };
-      selections.available.forEach((k) => (next[k] = value));
-      selections.booked.forEach((k) => (next[k] = value));
-      selections.blocked.forEach((k) => (next[k] = value));
-      selections.maintenance.forEach((k) => (next[k] = value));
-      return next;
-    });
-    setTempPrice("");
-  };
+    if (Number.isNaN(value) || value < 0) return;
 
-  const handleSaveChanges = async () => {
-    if (!selectedProperty) {
-      alert("No property selected");
+    if (visuallySelectedDates.size === 0) {
+      showToast('Please select dates first by clicking on them (they will turn green)', 'warning');
       return;
     }
 
-    try {
-      setLoading(true);
+    setPrices((prev) => {
+      const next = { ...prev };
+      const updatedPrices = {};
 
-      await calendarService.saveCalendarChanges(selectedProperty, {
-        availability: {
-          blocked: Array.from(selections.blocked),
-          maintenance: Array.from(selections.maintenance),
-        },
-        pricing: prices,
+      // Only set price for visually selected dates
+      visuallySelectedDates.forEach((k) => {
+        next[k] = value;
+        updatedPrices[k] = value;
       });
 
-      alert("Changes saved successfully!");
-    } catch (err) {
-      alert("Failed to save changes: " + err.message);
+      // Track pending price changes
+      setPendingChanges((prevChanges) => ({
+        ...prevChanges,
+        prices: { ...prevChanges.prices, ...updatedPrices }
+      }));
+
+      return next;
+    });
+    setTempPrice("");
+    // Clear selections after setting price
+    setVisuallySelectedDates(new Set());
+  };
+
+  // Block dates handler
+  const handleBlockDates = () => {
+    if (visuallySelectedDates.size === 0) {
+      showToast('Please select dates first by clicking on them (they will turn green)', 'warning');
+      return;
+    }
+
+    // Move visually selected dates to blocked
+    setSelections((prev) => {
+      const next = { ...prev };
+
+      visuallySelectedDates.forEach((key) => {
+        next.blocked.add(key);
+        next.available.delete(key);
+        next.maintenance.delete(key);
+      });
+
+      setPendingChanges((prevChanges) => ({
+        ...prevChanges,
+        blocked: new Set([...prevChanges.blocked, ...visuallySelectedDates])
+      }));
+
+      return next;
+    });
+
+    // Clear visual selections after blocking
+    setVisuallySelectedDates(new Set());
+  };
+
+  // Maintenance handler - open modal
+  const handleMaintenance = () => {
+    if (visuallySelectedDates.size === 0) {
+      showToast("Please select dates first by clicking on them (they will turn green)", 'warning');
+      return;
+    }
+
+    setShowMaintenanceModal(true);
+  };
+
+  // Save maintenance with note
+  const handleSaveMaintenanceWithNote = (note) => {
+    if (visuallySelectedDates.size === 0) {
+      return;
+    }
+
+    // Update selections
+    setSelections((prev) => {
+      const next = { ...prev };
+
+      visuallySelectedDates.forEach((key) => {
+        next.maintenance.add(key);
+        next.available.delete(key);
+        next.blocked.delete(key);
+      });
+
+      return next;
+    });
+
+    // Store notes for each date
+    const newNotes = {};
+    visuallySelectedDates.forEach((key) => {
+      newNotes[key] = note;
+    });
+
+    setMaintenanceNotes((prev) => ({
+      ...prev,
+      ...newNotes
+    }));
+
+    // Track pending changes
+    setPendingChanges((prevChanges) => ({
+      ...prevChanges,
+      maintenance: new Set([...prevChanges.maintenance, ...visuallySelectedDates])
+    }));
+
+    // Clear visual selections and close modal
+    setVisuallySelectedDates(new Set());
+  };
+
+  // Undo handler
+  const handleUndo = () => {
+    if (!selectedPropertyId || !propertyDetails) {
+      setSelections(initialBlocks);
+      setPrices(initialPrices);
+      setPendingChanges({
+        blocked: new Set(),
+        maintenance: new Set(),
+        prices: {}
+      });
+      return;
+    }
+
+    // Reload from server data
+    processBookingsIntoCalendar(bookings, propertyDetails);
+    setPendingChanges({
+      blocked: new Set(),
+      maintenance: new Set(),
+      prices: {}
+    });
+  };
+
+  // Save changes to backend
+  const handleSaveChanges = async () => {
+    if (!selectedPropertyId) {
+      showToast('Please select a property first', 'warning');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Prepare maintenance data with notes
+      const maintenanceData = Array.from(pendingChanges.maintenance).map((dateStr) => ({
+        date: dateStr,
+        note: maintenanceNotes[dateStr] || ''
+      }));
+
+      const changes = {
+        availability: {
+          blocked: Array.from(pendingChanges.blocked),
+          maintenance: maintenanceData,
+        },
+        pricing: pendingChanges.prices,
+      };
+
+      const result = await calendarService.saveCalendarChanges(selectedPropertyId, changes);
+
+      // Determine success based on API responses
+      const availabilitySuccess = result?.availability?.success !== false;
+      const pricingSuccess = result?.pricing?.success !== false;
+      const overallSuccess = availabilitySuccess && pricingSuccess;
+
+      // Clear pending changes only if AWS API save was successful
+      if (overallSuccess) {
+        setPendingChanges({
+          blocked: new Set(),
+          maintenance: new Set(),
+          prices: {}
+        });
+      }
+
+      // Build detailed user feedback message
+      const blockedCount = changes.availability.blocked.length;
+      const maintenanceCount = changes.availability.maintenance.length;
+      const pricingCount = Object.keys(changes.pricing).length;
+
+      if (overallSuccess) {
+        const totalChanges = blockedCount + maintenanceCount + pricingCount;
+        showToast(`Successfully saved ${totalChanges} change${totalChanges !== 1 ? 's' : ''} to calendar`, 'success');
+      } else {
+        showToast("Changes saved locally but could not sync with server. Please try again.", 'warning');
+      }
+
+      // Reload data from server to confirm save
+      if (overallSuccess) {
+        const savedData = await calendarService.loadCalendarData(selectedPropertyId);
+        if (savedData) {
+          applySavedCalendarData(savedData);
+        }
+      }
+    } catch (error) {
+      showToast(`Failed to save changes: ${error.message}`, 'error');
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
+  const hasPendingChanges =
+    pendingChanges.blocked.size > 0 ||
+    pendingChanges.maintenance.size > 0 ||
+    Object.keys(pendingChanges.prices).length > 0;
+
   return (
     <div className="hc-container">
-      {/* Property Selector and Status */}
-      <div className="hc-property-selector">
-        <div className="property-select-wrapper">
-          <label htmlFor="property-select">Select Property:</label>
-          <select
-            id="property-select"
-            value={selectedProperty || ""}
-            onChange={(e) => setSelectedProperty(e.target.value)}
-            disabled={loading}
-          >
-            {properties.length === 0 && <option value="">No properties found</option>}
-            {properties.map((property) => (
-              <option key={property.ID || property.id} value={property.ID || property.id}>
-                {property.Title || property.name || property.title || property.ID || property.id}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="calendar-actions">
-          <button
-            className="btn-save-changes"
-            onClick={handleSaveChanges}
-            disabled={loading || !selectedProperty}
-          >
-            {loading ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
-
-        {error && <div className="error-message">Error: {error}</div>}
-        {loading && <div className="loading-indicator">Loading...</div>}
-      </div>
-
       <div className="hc-header-row">
         <Toolbar
           view={view}
@@ -296,74 +524,115 @@ export default function HostCalendar() {
           onPrev={prev}
           onNext={next}
           onToday={today}
+          selectedPropertyId={selectedPropertyId}
+          onPropertySelect={setSelectedPropertyId}
         />
       </div>
 
-      <div className="hc-top-cards">
-        <AvailabilityCard
-          onBlock={() => {}}
-          onMaintenance={() => {}}
-          onUndo={() =>
-            setSelections({
-              ...initialBlocks,
-              booked: selections.booked, // Keep booked dates
-            })
-          }
-        />
-        <PricingCard
-          tempPrice={tempPrice}
-          setTempPrice={setTempPrice}
-          onSetPrice={setPriceForSelection}
-        />
-        <ExternalCalendarsCard />
-      </div>
+      {/* Debug Info Panel */}
+      {debugInfo && (
+        <div style={{
+          background: "#e3f2fd",
+          border: "1px solid #2196f3",
+          borderRadius: "8px",
+          padding: "12px",
+          margin: "12px 0",
+          fontSize: "12px",
+          fontFamily: "monospace"
+        }}>
+          <strong>📊 Debug Info:</strong>
+          <div>Property ID: {debugInfo.propertyId}</div>
+          <div>Bookings Count: {debugInfo.bookingsCount}</div>
+          <div>Has Details: {debugInfo.hasDetails ? '✅' : '❌'}</div>
+          <div>Has Availability: {debugInfo.hasAvailability ? '✅' : '❌'}</div>
+          <div>Has Pricing: {debugInfo.hasPricing ? '✅' : '❌'}</div>
+          {debugInfo.error && <div style={{ color: "red" }}>Error: {debugInfo.error}</div>}
+        </div>
+      )}
 
-      <Legend />
+      {apiError && (
+        <div style={{
+          background: "#ffebee",
+          border: "1px solid #f44336",
+          borderRadius: "8px",
+          padding: "12px",
+          margin: "12px 0",
+          color: "#c62828"
+        }}>
+          ❌ API Error: {apiError}
+        </div>
+      )}
 
-      <CalendarGrid
-        view={view}
-        cursor={cursor}
-        monthGrid={monthGrid}
-        selections={selections}
-        prices={prices}
-        onToggle={(bucket, key) => toggleDayIn(bucket, key)}
-        onDragSelect={(keys) =>
-          setSelections((prev) => ({ ...prev, available: new Set(keys) }))
-        }
+      {isLoading && (
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          Loading property data...
+        </div>
+      )}
+
+      {!isLoading && (
+        <>
+          <div className="hc-top-cards">
+            <AvailabilityCard
+              onBlock={handleBlockDates}
+              onMaintenance={handleMaintenance}
+              onUndo={handleUndo}
+            />
+            <PricingCard
+              tempPrice={tempPrice}
+              setTempPrice={setTempPrice}
+              onSetPrice={setPriceForSelection}
+            />
+            <ExternalCalendarsCard />
+          </div>
+
+          <Legend />
+
+          <CalendarGrid
+            view={view}
+            cursor={cursor}
+            monthGrid={monthGrid}
+            selections={selections}
+            prices={prices}
+            bookingsByDate={bookingsByDate}
+            onToggle={(bucket, key) => toggleDayIn(bucket, key)}
+            onDragSelect={(keys) =>
+              setSelections((prev) => ({ ...prev, available: new Set(keys) }))
+            }
+            onSelectionChange={setVisuallySelectedDates}
+          />
+
+          <StatsPanel selections={selections} />
+
+          {hasPendingChanges && (
+            <div style={{ marginTop: "16px", textAlign: "center" }}>
+              <button
+                className="hc-btn primary"
+                onClick={handleSaveChanges}
+                disabled={isSaving}
+                style={{ padding: "12px 24px", fontSize: "16px" }}
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Maintenance Modal */}
+      <MaintenanceModal
+        isOpen={showMaintenanceModal}
+        onClose={() => setShowMaintenanceModal(false)}
+        onSave={handleSaveMaintenanceWithNote}
+        selectedDates={Array.from(visuallySelectedDates)}
       />
 
-      <StatsPanel selections={selections} />
-
-      {/* Booking Details Info */}
-      {propertyDetails && (
-        <div className="property-info">
-          <h3>Property Details</h3>
-          <p>Base Room Rate: €{propertyDetails.pricing?.roomrate || propertyDetails.Pricing?.RoomRate || "N/A"}</p>
-          <p>Cleaning Fee: €{propertyDetails.pricing?.cleaning || propertyDetails.Pricing?.Cleaning || "N/A"}</p>
-          <p>Total Bookings: {bookings.length}</p>
-        </div>
-      )}
-
-      {/* Debug Info - Remove after testing */}
-      {error && (
-        <div style={{padding: '10px', background: '#ffebee', marginTop: '10px', borderRadius: '5px'}}>
-          <strong>Error:</strong> {error}
-        </div>
-      )}
-      {selectedProperty && bookings.length === 0 && !loading && (
-        <div style={{padding: '10px', background: '#fff3e0', marginTop: '10px', borderRadius: '5px'}}>
-          <strong>No bookings found for this property.</strong> Property ID: {selectedProperty}
-        </div>
-      )}
-      {selectedProperty && bookings.length > 0 && (
-        <div style={{padding: '10px', background: '#e8f5e9', marginTop: '10px', borderRadius: '5px'}}>
-          <strong>✓ Found {bookings.length} booking(s)</strong>
-          {bookings.map((b, i) => (
-            <div key={i} style={{marginTop: '5px', fontSize: '12px'}}>
-              Booking {i+1}: {b.guestname || 'Guest'} - Status: {b.status}
-            </div>
-          ))}
-        </div>
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

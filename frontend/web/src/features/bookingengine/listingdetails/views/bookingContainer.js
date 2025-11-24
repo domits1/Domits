@@ -1,22 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DateSelectionContainer from "./dateSelectionContainer";
 import GuestSelectionContainer from "./guestSelectionContainer";
 import Pricing from "../components/pricing";
 import useHandleReservePress from "../hooks/handleReservePress";
+import { calendarService } from "../../../hostdashboard/hostcalen/services/calendarService";
 
-const BookingContainer = ({ property }) => {
-  // Set default to today and tomorrow
-  const [checkInDate, setCheckInDate] = useState(
-    new Date(Date.now()).toISOString().split("T")[0],
-  );
-  const [checkOutDate, setCheckOutDate] = useState(
-    new Date(Date.now() + 86400000).toISOString().split("T")[0],
-  );
-  const [nights, setNights] = useState();
+const BookingContainer = ({ property, checkInDate, checkOutDate, setCheckInDate, setCheckOutDate }) => {
+  const [nights, setNights] = useState(1);
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
+  const [dynamicPrices, setDynamicPrices] = useState({});
 
   const handleReservePress = useHandleReservePress();
+
+  // Calculate nights when dates change
+  useEffect(() => {
+    if (checkInDate && checkOutDate) {
+      const start = new Date(checkInDate);
+      const end = new Date(checkOutDate);
+      const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      setNights(diffDays > 0 ? diffDays : 1);
+    }
+  }, [checkInDate, checkOutDate]);
+
+  // Debug: Log initial dates
+  useEffect(() => {
+    console.log("🔵 BookingContainer - checkInDate:", checkInDate);
+    console.log("🔵 BookingContainer - checkOutDate:", checkOutDate);
+  }, [checkInDate, checkOutDate]);
+
+  // Fetch dynamic pricing when property ID is available
+  useEffect(() => {
+    const fetchDynamicPricing = async () => {
+      if (property?.property?.id) {
+        try {
+          console.log("📅 Fetching dynamic pricing for property:", property.property.id);
+          const calendarData = await calendarService.loadCalendarData(property.property.id);
+          console.log("💰 Dynamic prices loaded:", calendarData.prices);
+          setDynamicPrices(calendarData.prices || {});
+        } catch (error) {
+          console.error("❌ Error fetching dynamic pricing:", error);
+          setDynamicPrices({});
+        }
+      }
+    };
+
+    fetchDynamicPricing();
+  }, [property?.property?.id]);
 
   return (
     <div className="booking-container">
@@ -27,6 +57,13 @@ const BookingContainer = ({ property }) => {
         checkOutDate={checkOutDate}
         setCheckOutDate={setCheckOutDate}
         setNights={setNights}
+        dynamicPrices={dynamicPrices}
+        passedProp={property?.availability || {
+          MinimumStay: 0,
+          MaximumStay: 0,
+          MinimumAdvanceReservation: 0,
+          MaximumAdvanceReservation: 0
+        }}
       />
       <br />
       <GuestSelectionContainer
@@ -49,9 +86,16 @@ const BookingContainer = ({ property }) => {
       >
         Reserve
       </button>
-      <p className="note">*You won’t be charged yet</p>
+      <p className="note">*You won't be charged yet</p>
       <hr />
-      <Pricing pricing={property.pricing} nights={nights} />
+      <Pricing
+        pricing={property.pricing}
+        nights={nights}
+        guests={adults + kids}
+        checkInDate={checkInDate}
+        checkOutDate={checkOutDate}
+        dynamicPrices={dynamicPrices}
+      />
     </div>
   );
 };

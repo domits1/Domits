@@ -1,4 +1,15 @@
 const CheckOut = ({ checkOutDate, setCheckOutDate, checkInDate }) => {
+  // Calculate min date as day after checkInDate
+  const getMinDate = () => {
+    if (checkInDate) {
+      const checkIn = new Date(checkInDate);
+      checkIn.setDate(checkIn.getDate() + 1);
+      return checkIn.toISOString().split("T")[0];
+    }
+    // Default to tomorrow if no checkInDate
+    return new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  };
+
   return (
     <div className="date-box">
       <p className="label">Check out</p>
@@ -20,7 +31,7 @@ const CheckOut = ({ checkOutDate, setCheckOutDate, checkInDate }) => {
         value={checkOutDate}
         className="inputField"
         disabled={!checkInDate}
-        min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+        min={getMinDate()}
       />
     </div>
   );

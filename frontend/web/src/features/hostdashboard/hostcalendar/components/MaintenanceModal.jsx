@@ -5,12 +5,22 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
   const [note, setNote] = useState("");
 
   useEffect(() => {
+    console.log('🎭 MaintenanceModal isOpen changed:', isOpen);
+    console.log('Selected dates:', selectedDates);
+
     if (!isOpen) {
       setNote("");
     }
-  }, [isOpen]);
+  }, [isOpen, selectedDates]);
 
-  if (!isOpen) return null;
+  console.log('🎭 MaintenanceModal render - isOpen:', isOpen);
+
+  if (!isOpen) {
+    console.log('Modal not open, returning null');
+    return null;
+  }
+
+  console.log('✅ Rendering modal content');
 
   const handleSave = () => {
     if (!note.trim()) {

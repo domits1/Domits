@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { formatYearMonth } from "../utils/date";
 import { Auth } from "aws-amplify";
 import { getAccessToken } from "../utils/getAccessToken";
-export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
+export default function Toolbar({ view, setView, cursor, onPrev, onNext, selectedPropertyId, onPropertySelect }) {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState(null);
@@ -72,8 +72,19 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
       </div>
       <div className="hc-toolbar-right">
         <span>Select your property</span>
-        <select className="hc-select" disabled={isLoading}>
-          {isLoading && <option>Loading…</option>}
+        <select
+          className="hc-select"
+          disabled={isLoading}
+          value={selectedPropertyId || ''}
+          onChange={(e) => {
+            const propertyId = e.target.value;
+            if (onPropertySelect && propertyId) {
+              onPropertySelect(propertyId);
+            }
+          }}
+        >
+          <option value="">Select a property...</option>
+          {isLoading && <option disabled>Loading…</option>}
           {!isLoading &&
             accommodations.map((a) => (
               <option key={a?.property?.id} value={a?.property?.id}>
