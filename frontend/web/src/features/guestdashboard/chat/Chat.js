@@ -362,7 +362,6 @@ const Chat = ({ user }) => {
                 },
             });
 
-            console.log("Message sent successfully:", result);
             toast.success('Message sent');
 
             setNewMessage('');

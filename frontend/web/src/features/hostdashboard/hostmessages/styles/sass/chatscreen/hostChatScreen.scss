@@ -1,3 +1,28 @@
+$color-white: #fff;
+$color-black: #000;
+$color-text-dark: #333;
+$color-text-muted: #666;
+$color-placeholder: #64748b;
+$color-grey: grey;
+$color-image-bg: #222;
+$color-border-focus: #bbb;
+$color-border-muted: rgb(150, 150, 150);
+$color-border-mid: #ccc;
+$color-border-light: #eee;
+$color-border-surface: #e3e3e3;
+$color-panel-bg: #fafafa;
+$color-button-bg: #f3f3f3;
+$color-button-hover: #e5e5e5;
+$color-message-received: rgb(196, 230, 197);
+$color-message-sent: rgb(91, 126, 158);
+$color-textarea-bg: #f9fbfd;
+$color-accent-dark: #2f3a4a;
+$color-charpill-bg: #f0f4f8;
+$color-alert: #dc3545;
+$color-disabled-bg: #edf1f6;
+$color-disabled-border: #b8c4d6;
+$color-disabled-text: #7b8698;
+
 .host-chat,
 .guest-chat {
     display: flex;
@@ -6,28 +31,28 @@
     height: 88vh;
 
         .chat-screen-container {
-        background-color: #fff;
+        background-color: $color-white;
         display: flex;
         flex-direction: column;
         flex: 1; /* fill remaining space next to sidebar */
         min-width: 0; /* allow flex item to shrink */
         height: 88vh;
         justify-content: start;
-        border-left: 0.01rem rgb(150, 150, 150) solid;
-        border-right: 0.1rem rgb(150, 150, 150) solid;
+        border-left: 0.01rem $color-border-muted solid;
+        border-right: 0.1rem $color-border-muted solid;
 
         .chat-header {
             display: flex;
             width: 100%;
             margin: 0 auto;
             margin-top: 1rem;
-            border-bottom: 0.05rem solid rgb(150, 150, 150);
+            border-bottom: 0.05rem solid $color-border-muted;
 
             .back-to-contacts-button {
                 background: none;
                 border: none;
                 font-size: 1rem;
-                color: #333;
+                color: $color-text-dark;
                 cursor: pointer;
                 margin-left: 1rem;
             }
@@ -63,8 +88,8 @@
                 }
 
                 .chat-message-search {
-                    border: 1px solid #ccc;
-                    background: #fff;
+                    border: 1px solid $color-border-mid;
+                    background: $color-white;
                     border-radius: 6px;
                     padding: 6px 10px;
                     min-width: 180px;
@@ -80,14 +105,15 @@
                 padding-right: 1rem;
 
                 .test-messages-button {
-                    border: 1px solid #ccc;
-                    background: #f3f3f3;
+                    border: 1px solid $color-border-mid;
+                    border: 1px solid $color-border-mid;
+                    background: $color-button-bg;
                     border-radius: 6px;
                     padding: 6px 10px;
                     cursor: pointer;
 
                     &:hover {
-                        background: #e5e5e5;
+                        background: $color-button-hover;
                     }
                 }
             }
@@ -114,8 +140,8 @@
                 }
 
                 .message-content {
-                    background-color: rgb(196, 230, 197);
-                    color: black;
+                    background-color: $color-message-received;
+                    color: $color-black;
                     display: inline-block;
                     border-radius: 1rem;
                     padding: 0.3rem 1.25rem;
@@ -142,8 +168,8 @@
                 }
 
                 .message-content {
-                    background-color: rgb(91, 126, 158);
-                    color: black;
+                    background-color: $color-message-sent;
+                    color: $color-black;
                     display: inline-block;
                     border-radius: 1rem;
                     padding: 0.3rem 1.25rem;
@@ -174,9 +200,9 @@
 
                 .message-content {
                     display: inline-block;
-                    background-color: rgb(91, 126, 158);
+                    background-color: $color-message-sent;
 
-                    color: black;
+                    color: $color-black;
                     border-radius: 1rem;
                     padding: 0.3rem 1.25rem;
                     text-align: right;
@@ -207,8 +233,8 @@
 
                 .message-content {
                     display: inline-block;
-                    background-color: rgb(196, 230, 197);
-                    color: black;
+                    background-color: $color-message-received;
+                    color: $color-black;
                     border-radius: 1rem;
                     padding: 0.3rem 1.25rem;
                     text-align: right;
@@ -232,9 +258,9 @@
             padding: 0.5rem 1rem;
             width: 100%;
             overflow-x: auto;
-            background: #fff;
-            border-top: 1px solid #eee;
-            border-bottom: 1px solid #eee;
+            background: $color-white;
+            border-top: 1px solid $color-border-light;
+            border-bottom: 1px solid $color-border-light;
         }
 
         .upload-thumb {
@@ -244,7 +270,7 @@
             height: 64px;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            box-shadow: 0 1px 3px rgba($color-black,0.15);
 
             img {
                 width: 100%;
@@ -258,8 +284,8 @@
                 top: 4px;
                 right: 4px;
                 border: none;
-                background: rgba(0,0,0,0.5);
-                color: #fff;
+                background: rgba($color-black,0.5);
+                color: $color-white;
                 width: 20px;
                 height: 20px;
                 border-radius: 50%;
@@ -280,8 +306,8 @@
             padding: 0.75rem 1rem;
             height: auto;
             position: relative;
-            border-top: 1px solid #eee;
-            background: #fafafa;
+            border-top: 1px solid $color-border-light;
+            background: $color-panel-bg;
 
             .attachment-area {
                 display: flex;
@@ -299,7 +325,7 @@
                 height: 44px;
                 border-radius: 8px;
                 overflow: hidden;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+                box-shadow: 0 1px 3px rgba($color-black,0.15);
 
                 img {
                     width: 100%;
@@ -315,8 +341,8 @@
                     font-size: 11px;
                     line-height: 1;
                     padding: 3px 6px;
-                    color: #fff;
-                    background: rgba(0,0,0,0.65);
+                    color: $color-white;
+                    background: rgba($color-black,0.65);
                     border-radius: 999px;
                 }
             }
@@ -336,15 +362,15 @@
                     width: 36px;
                     font-size: 1.25rem; /* size of + */
                     border-radius: 0.3rem;
-                    background-color: white;
-                    color: black;
-                    border: solid black 1px;
+                    background-color: $color-white;
+                    color: $color-black;
+                    border: solid $color-black 1px;
                     cursor: pointer;
                     box-shadow: -2px 3px 5px rgba(0, 0, 0, 0.2);
 
                     &:hover {
-                        color: grey;
-                        border: grey solid 1px;
+                        color: $color-grey;
+                        border: $color-grey solid 1px;
                     }
                 }
 
@@ -365,31 +391,31 @@
                 transform: translateY(-50%);
                 font-size: 11px;
                 line-height: 1;
-                color: #666;
+                color: $color-text-muted;
                 padding: 4px 10px;
                 border-radius: 999px;
-                background: #f0f4f8;
+                background: $color-charpill-bg;
                 white-space: nowrap;
                 user-select: none;
                 pointer-events: none;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+                box-shadow: 0 2px 4px rgba($color-black, 0.08);
             }
 
             .char-limit-indicator.over {
-                color: #dc3545;
-                background: rgba(220, 53, 69, 0.18);
+                color: $color-alert;
+                background: rgba($color-alert, 0.18);
                 font-weight: 600;
-                box-shadow: 0 2px 6px rgba(220, 53, 69, 0.35);
+                box-shadow: 0 2px 6px rgba($color-alert, 0.35);
             }
 
             .message-input-textarea {
-                background-color: #f9fbfd;
+                background-color: $color-textarea-bg;
                 min-height: 34px;
                 max-height: 88px;
                 width: 100%;
                 resize: none;
                 border-radius: 999px;
-                border: 2px solid #2f3a4a;
+                border: 2px solid $color-accent-dark;
                 padding: 8px 56px 8px 18px;
                 overflow-y: auto;
                 transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -397,7 +423,7 @@
                 font-size: 15px;
 
                 &::placeholder {
-                    color: #64748b;
+                    color: $color-placeholder;
                     font-weight: 500;
                     opacity: 1;
                 }
@@ -408,19 +434,19 @@
 
                 &:focus {
                     outline: none;
-                    border-color: #bbb;
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+                    border-color: $color-border-focus;
+                    box-shadow: 0 2px 6px rgba($color-black, 0.08);
                 }
             }
 
             .message-input-send-button {
                 position: absolute;
-                background: #f9fbfd;
-                border: 2px solid #2f3a4a;
+                background: $color-textarea-bg;
+                border: 2px solid $color-accent-dark;
                 right: -62px;
                 top: 50%;
                 transform: translateY(-50%);
-                color: #2f3a4a;
+                color: $color-accent-dark;
                 width: 40px;
                 height: 40px;
                 border-radius: 999px;
@@ -430,29 +456,29 @@
                 cursor: pointer;
 
                 &:hover {
-                    background: #2f3a4a;
-                    color: #fff;
+                    background: $color-accent-dark;
+                    color: $color-white;
                 }
 
                 &:disabled {
                     opacity: 0.5;
-                    background: #edf1f6;
-                    border-color: #b8c4d6;
-                    color: #7b8698;
+                    background: $color-disabled-bg;
+                    border-color: $color-disabled-border;
+                    color: $color-disabled-text;
                     cursor: not-allowed;
                 }
             }
 
         }
 
-        .preview-popover {
+            .preview-popover {
             position: absolute;
             left: 1rem;
             bottom: 4.5rem;
             width: min(520px, 90vw);
             max-height: 60vh;
-            background: #fff;
-            border: 1px solid #e3e3e3;
+            background: $color-white;
+            border: 1px solid $color-border-surface;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             z-index: 10;
@@ -464,13 +490,13 @@
                 align-items: center;
                 justify-content: space-between;
                 padding: 8px 12px;
-                border-bottom: 1px solid #eee;
+                border-bottom: 1px solid $color-border-light;
 
                 .close-popover {
                     border: none;
                     background: transparent;
                     cursor: pointer;
-                    color: #666;
+                    color: $color-text-muted;
                 }
             }
 
@@ -488,7 +514,7 @@
                 aspect-ratio: 1 / 1;
                 border-radius: 8px;
                 overflow: hidden;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+                box-shadow: 0 1px 3px rgba($color-black,0.15);
 
                 img {
                     width: 100%;
@@ -501,8 +527,8 @@
                     top: 6px;
                     right: 6px;
                     border: none;
-                    background: rgba(0,0,0,0.55);
-                    color: #fff;
+                    background: rgba($color-black,0.55);
+                    color: $color-white;
                     width: 22px;
                     height: 22px;
                     border-radius: 50%;
@@ -516,12 +542,12 @@
 
         .sender-name {
             font-size: 0.9rem;
-            color: grey;
+            color: $color-grey;
         }
 
         .message-time {
             font-size: 0.9rem;
-            color: grey;
+            color: $color-grey;
         }
 
         .message-attachments {
@@ -542,7 +568,7 @@
         }
 
         .message-image {
-            background-color: #222;
+            background-color: $color-image-bg;
             width: 100%;
             max-width: 200px;
             aspect-ratio: 1 / 1;
