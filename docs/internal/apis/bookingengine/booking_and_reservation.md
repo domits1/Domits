@@ -1,7 +1,7 @@
 # Booking and Reservation docs
 
 ## Description
-This documentation documents the CRUD operations being performed with bookings and reservations. For the guest payments, refer to the [Booking and Reservation - Guest Payments docs](./booking_and_reservation_guest_payments.md)
+This documentation documents the CRUD operations being performed with bookings and reservations. For the guest payments, refer to the [Booking and Reservation - Guest docs](./booking_and_reservation_guest_payments.md)
 
 ## Metadata
 Lambda Function: `General-Bookings-CRUD-Bookings-develop`
@@ -45,7 +45,6 @@ Show your class in a Diagram. Use [Mermaid Flow](https://mermaid.live/). Github 
 Example:
 
 ```mermaid
-    classDiagram
 classDiagram
     class property {
 	    +string id
