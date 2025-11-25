@@ -17,16 +17,16 @@ These technological safeguards form the core of the organization’s security po
 # Annex A Controls — Technological (A.8)
 - [ ] Anti-malware controls implemented
 - [ ] Patch management process active
-- [ ] Strong authentication (MFA)
-- [ ] Logging & monitoring enabled
-- [ ] Secure coding practices
-- [ ] Encryption in transit & at rest
+- [x] Strong authentication (MFA)
+- [x] Logging & monitoring enabled
+- [x] Secure coding practices
+- [x] Encryption in transit & at rest
 - [ ] Backups performed and tested
 - [ ] Change management enforced
 - [ ] Network security boundaries defined
-- [ ] Cloud security controls implemented
-- [ ] Vulnerability scanning
-- [ ] Penetration testing program
+- [x] Cloud security controls implemented
+- [x] Vulnerability scanning
+- [x] Penetration testing program
 - [ ] System hardening standards
 
 

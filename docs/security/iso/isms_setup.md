@@ -19,7 +19,7 @@ This phase ensures your ISMS has a strong structure, clear governance, and a con
 - [ ] Define ISMS scope
 - [ ] Identify internal/external context
 - [ ] Identify stakeholders and requirements
-- [ ] Assign roles & responsibilities
+- [x] Assign roles & responsibilities
 - [ ] Create Information Security Policy
 - [ ] Establish risk assessment methodology
 - [ ] Conduct risk assessment
