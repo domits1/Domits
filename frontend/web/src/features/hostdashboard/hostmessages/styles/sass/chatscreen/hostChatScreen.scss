@@ -9,8 +9,8 @@
         background-color: #fff;
         display: flex;
         flex-direction: column;
-        flex: 1; /* fill remaining space next to sidebar */
-        min-width: 0; /* allow flex item to shrink */
+        flex: 1;
+        min-width: 0;
         height: 88vh;
         justify-content: start;
         border-left: 0.01rem rgb(150, 150, 150) solid;
