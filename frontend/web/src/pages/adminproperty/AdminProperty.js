@@ -515,6 +515,9 @@ export default function AdminProperty() {
 
       <div className="adminproperty-group">
         <label>Add photos (min 5, max 10)</label>
+        <p className="adminproperty-helper">
+      Photos must be larger than 50 KB and smaller than 500 KB.
+    </p>
         <input type="file" accept="image/*" multiple onChange={onPickFiles} />
         {hasError("images") && <span className="error-text">{errors.images}</span>}
         {files.length > 0 && (
