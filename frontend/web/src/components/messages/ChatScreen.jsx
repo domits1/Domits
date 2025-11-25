@@ -114,7 +114,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
             // Update contact list preview line
             handleContactListMessage?.({
                 ...last,
-                recipientId: contactId, // ensure ContactList finds this contact
+                recipientId: contactId, 
             });
         }
     };
