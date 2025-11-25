@@ -16,7 +16,7 @@ This phase ensures your ISMS has a strong structure, clear governance, and a con
 
 
 # ISMS Setup
-- [ ] Define ISMS scope
+- [x] Define ISMS scope
 - [ ] Identify internal/external context
 - [ ] Identify stakeholders and requirements
 - [ ] Assign roles & responsibilities
