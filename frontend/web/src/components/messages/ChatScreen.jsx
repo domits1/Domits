@@ -11,15 +11,20 @@ import '../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostCha
 import { v4 as uuidv4 } from 'uuid';
 import { FaPaperPlane, FaArrowLeft, FaTimes } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
-import { toast } from 'react-toastify';
-import MessageToast from './MessageToast';
+import {
+    loadAutomationSettings,
+    personalizeTemplate,
+    hasAutomationEventBeenSent,
+    markAutomationEventSent,
+    getAutomationStorageKey,
+} from './automationConfig';
 
 
 const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, dashboardType}) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const socket = useContext(WebSocketContext);
     const isHost = dashboardType === 'host';
-    const { bookingDetails } = isHost
+    const { bookingDetails, accommodation } = isHost
         ? useFetchBookingDetails(userId, contactId)
         : useFetchBookingDetails(contactId, userId);
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
@@ -31,6 +36,33 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
     const addedMessageIds = useRef(new Set());
     const chatContainerRef = useRef(null);
     const [forceStopLoading, setForceStopLoading] = useState(false);
+    const [automationSettings, setAutomationSettings] = useState(null);
+
+    useEffect(() => {
+        if (!isHost || !userId) {
+            setAutomationSettings(null);
+            return;
+        }
+        setAutomationSettings(loadAutomationSettings(userId));
+    }, [isHost, userId]);
+
+    useEffect(() => {
+        if (!isHost || typeof window === 'undefined' || !userId) return;
+        const handleAutomationUpdated = (event) => {
+            if (event?.detail?.hostId && event.detail.hostId !== userId) return;
+            setAutomationSettings(loadAutomationSettings(userId));
+        };
+        const handleStorage = (event) => {
+            if (event?.key !== getAutomationStorageKey(userId)) return;
+            setAutomationSettings(loadAutomationSettings(userId));
+        };
+        window.addEventListener('domits-automation-updated', handleAutomationUpdated);
+        window.addEventListener('storage', handleStorage);
+        return () => {
+            window.removeEventListener('domits-automation-updated', handleAutomationUpdated);
+            window.removeEventListener('storage', handleStorage);
+        };
+    }, [isHost, userId]);
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
@@ -130,20 +162,8 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
 
             addNewMessage(msg);
             addedMessageIds.current.add(msg.id);
-            
-            // Show toast for incoming messages (from contact, not from current user)
-            if (msg.userId === contactId && msg.recipientId === userId && msg.text) {
-                toast.info(
-                    <MessageToast 
-                        contactName={contactName} 
-                        contactImage={contactImage} 
-                        message={msg.text} 
-                    />,
-                    { className: 'message-toast-custom' }
-                );
-            }
         });
-    }, [wsMessages, userId, contactId, addNewMessage, contactName, contactImage]);
+    }, [wsMessages, userId, contactId, addNewMessage]);
 
     const handleSendMessage = async () => {
         const hasContent = (newMessage.trim() || uploadedFileUrls.length > 0);
