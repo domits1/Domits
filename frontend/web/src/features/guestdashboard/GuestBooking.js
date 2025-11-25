@@ -1,42 +1,27 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import { useNavigate } from "react-router-dom";
-import { getAccessToken } from "../../services/getAccessToken";
+import { getGuestBookings } from "./services/bookingAPI";
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import { getBookingTimestamp } from "../../utils/getBookingTimestamp";
+import { timestampToDate } from "../../utils/timestampToDate";
 
-const API_FETCH_BOOKINGS =
-  "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest";
 const API_LISTING_DETAILS_BASE =
   "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails";
 
 const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-const placeholderImage =
+const PLACEHOLDER_IMAGE =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='Arial' font-size='20'>No image</text></svg>";
 
 const buildListingDetailsUrl = (propertyId) =>
   `${API_LISTING_DETAILS_BASE}?property=${encodeURIComponent(propertyId)}`;
 
 const normalizeImageUrl = (maybeKeyOrUrl) => {
-  if (!maybeKeyOrUrl) return placeholderImage;
+  if (!maybeKeyOrUrl) return PLACEHOLDER_IMAGE;
   const val = String(maybeKeyOrUrl);
-  return val.startsWith("http") ? val : `${S3_URL}${val}`;
-};
 
-const toDate = (value) => {
-  if (value == null) return null;
-
-  const numericValue = Number(value);
-  if (Number.isFinite(numericValue)) {
-    const milliseconds =
-      String(Math.trunc(numericValue)).length <= 10
-        ? numericValue * 1000
-        : numericValue;
-    const parsed = new Date(milliseconds);
-    return isNaN(parsed) ? null : parsed;
-  }
-
-  const parsed = new Date(value);
-  return isNaN(parsed) ? null : parsed;
+  if (val.startsWith("http")) return val;
+  return `${S3_URL}${val.replace(/^\/+/, "")}`;
 };
 
 const splitBookingsByTime = (bookingList) => {
@@ -52,14 +37,14 @@ const splitBookingsByTime = (bookingList) => {
 
   bookingList.forEach((bookingItem) => {
     const arrivalDate =
-      toDate(
+      timestampToDate(
         bookingItem?.arrivaldate ??
           bookingItem?.arrival_date ??
           bookingItem?.arrivalDate
       ) || null;
 
     const departureDate =
-      toDate(
+      timestampToDate(
         bookingItem?.departuredate ??
           bookingItem?.departure_date ??
           bookingItem?.departureDate
@@ -86,8 +71,6 @@ const splitBookingsByTime = (bookingList) => {
 
     if (isOngoing || startsThisWeek) {
       currentBookings.push(bookingItem);
-    } else if (arrival > weekAhead) {
-      upcomingBookings.push(bookingItem);
     } else {
       upcomingBookings.push(bookingItem);
     }
@@ -125,7 +108,10 @@ const renderBookingRow = (
   const imageUrl = normalizeImageUrl(candidateImageKey);
 
   const bookingCity =
-    bookingItem?.city || bookingItem?.location?.city || "Unknown city";
+    propertyInfo?.city ||
+    bookingItem?.city ||
+    bookingItem?.location?.city ||
+    "Unknown city";
 
   const bookingStatus = String(
     bookingItem?.status || bookingItem?.Status || ""
@@ -141,8 +127,9 @@ const renderBookingRow = (
       tabIndex={0}
       onClick={() => handleBookingClick(bookingItem)}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ")
+        if (event.key === "Enter" || event.key === " ") {
           handleBookingClick(bookingItem);
+        }
       }}
     >
       <div className="guest-booking-row-inner">
@@ -150,7 +137,9 @@ const renderBookingRow = (
           <img
             src={imageUrl}
             alt={displayTitle}
-            onError={(e) => (e.currentTarget.src = placeholderImage)}
+            onError={(e) => {
+              e.currentTarget.src = PLACEHOLDER_IMAGE;
+            }}
           />
         </div>
         <div className="guest-booking-row-main">
@@ -183,9 +172,13 @@ function GuestBooking() {
   const [propLoading, setPropLoading] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    let isMounted = true;
+
+    const loadUser = async () => {
       try {
         const userInfo = await Auth.currentUserInfo();
+        if (!isMounted) return;
+
         const cognitoSub = userInfo?.attributes?.sub || null;
         setGuestId(cognitoSub);
         setUser({
@@ -193,41 +186,30 @@ function GuestBooking() {
           email: userInfo?.attributes?.email || "",
         });
       } catch (err) {
-        setError("Could not load your session.");
-        setIsLoading(false);
+        if (isMounted) {
+          setError("Could not load your session.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-    })();
+    };
+
+    loadUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const getPropertyId = (b) =>
-    b?.property_id ??
-    b?.propertyId ??
-    b?.PropertyID ??
-    b?.id ??
-    b?.ID ??
+  const getPropertyId = (booking) =>
+    booking?.property_id ??
+    booking?.propertyId ??
+    booking?.PropertyID ??
+    booking?.id ??
+    booking?.ID ??
     null;
-
-  const getTimestamp = (bookingItem) => {
-    const numericValue = Number(
-      bookingItem?.createdat ??
-        bookingItem?.createdAt ??
-        bookingItem?.arrivaldate ??
-        bookingItem?.arrivalDate
-    );
-    if (Number.isFinite(numericValue)) {
-      const ms =
-        String(Math.trunc(numericValue)).length <= 10
-          ? numericValue * 1000
-          : numericValue;
-      return ms;
-    }
-    const dateString =
-      bookingItem?.createdAt ??
-      bookingItem?.arrivalDate ??
-      bookingItem?.arrival_date;
-    const parsedDate = dateString ? new Date(dateString) : null;
-    return parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : 0;
-  };
 
   const fetchBookings = useCallback(async () => {
     if (!guestId) return;
@@ -236,50 +218,32 @@ function GuestBooking() {
     setError("");
 
     try {
-      const requestUrl = new URL(API_FETCH_BOOKINGS);
-      requestUrl.searchParams.set("guestId", guestId);
-
-      const response = await fetch(requestUrl.toString(), {
-        method: "GET",
-        headers: {
-          Authorization: await getAccessToken(),
-        },
-      });
-
-      if (!response.ok) {
-        const responseText = await response.text().catch(() => "");
-        throw new Error(
-          `Fetch failed: ${response.status} ${response.statusText} ${responseText}`.trim()
-        );
-      }
-
-      const rawData = await response.json().catch(async () => {
-        const fallbackText = await response.text();
-        try {
-          return JSON.parse(fallbackText);
-        } catch {
-          return fallbackText;
-        }
-      });
+      const bookingData = await getGuestBookings(guestId);
 
       let normalizedBookings = [];
-      if (Array.isArray(rawData)) normalizedBookings = rawData;
-      else if (Array.isArray(rawData?.data)) normalizedBookings = rawData.data;
-      else if (Array.isArray(rawData?.response))
-        normalizedBookings = rawData.response;
-      else if (typeof rawData?.body === "string") {
+      if (Array.isArray(bookingData)) normalizedBookings = bookingData;
+      else if (Array.isArray(bookingData?.data))
+        normalizedBookings = bookingData.data;
+      else if (Array.isArray(bookingData?.response))
+        normalizedBookings = bookingData.response;
+      else if (typeof bookingData?.body === "string") {
         try {
-          const innerParsed = JSON.parse(rawData.body);
+          const innerParsed = JSON.parse(bookingData.body);
           if (Array.isArray(innerParsed)) normalizedBookings = innerParsed;
           else if (Array.isArray(innerParsed?.response))
             normalizedBookings = innerParsed.response;
-        } catch {}
+        } catch {
+          // ignore JSON parse errors here
+        }
       }
 
-      normalizedBookings.sort((a, b) => getTimestamp(b) - getTimestamp(a));
+      normalizedBookings.sort(
+        (a, b) => getBookingTimestamp(b) - getBookingTimestamp(a)
+      );
 
       setBookings(normalizedBookings);
     } catch (err) {
+      console.error("Error fetching bookings:", err);
       setError("Could not load your bookings.");
     } finally {
       setIsLoading(false);
@@ -287,14 +251,18 @@ function GuestBooking() {
   }, [guestId]);
 
   useEffect(() => {
-    if (guestId) fetchBookings();
+    if (guestId) {
+      fetchBookings();
+    }
   }, [guestId, fetchBookings]);
 
   const fetchPropertyDetails = useCallback(
     async (propertyIds) => {
       if (!propertyIds?.length) return;
 
-      const toFetch = propertyIds.filter((id) => id && !propertyMap[id]);
+      const toFetch = propertyIds.filter(
+        (id) => id && !propertyMap[id]
+      );
       if (!toFetch.length) return;
 
       setPropLoading(true);
@@ -306,26 +274,40 @@ function GuestBooking() {
               if (!resp.ok) throw new Error();
               const data = await resp.json().catch(() => ({}));
 
+              const property = data.property || {};
+              const images = Array.isArray(data.images) ? data.images : [];
+              const location = data.location || {};
+
               const title =
-                data?.title ||
-                data?.propertyTitle ||
-                data?.name ||
-                data?.property?.title ||
-                `Property #${pid}`;
+                property.title ||
+                property.name ||
+                `Property #${property.id || pid}`;
 
-              const imageKey =
-                data?.coverImage ||
-                data?.image ||
-                data?.images?.[0]?.key ||
-                data?.property?.coverImage ||
-                data?.property?.images?.[0]?.key ||
-                null;
+              const firstImageKey = images[0]?.key || null;
 
-              return [pid, { title, imageUrl: normalizeImageUrl(imageKey) }];
+              const subtitle = property.subtitle || "";
+              const cityFromLocation = location.city || null;
+              const cityFromSubtitle = subtitle
+                ? subtitle.split(",")[0].trim()
+                : "";
+              const city = cityFromLocation || cityFromSubtitle || "";
+
+              return [
+                pid,
+                {
+                  title,
+                  imageUrl: normalizeImageUrl(firstImageKey),
+                  city,
+                },
+              ];
             } catch {
               return [
                 pid,
-                { title: `Property #${pid}`, imageUrl: placeholderImage },
+                {
+                  title: `Property #${pid}`,
+                  imageUrl: PLACEHOLDER_IMAGE,
+                  city: "",
+                },
               ];
             }
           })
@@ -347,30 +329,39 @@ function GuestBooking() {
 
   useEffect(() => {
     if (!bookings?.length) return;
+
     const paid = bookings.filter(
-      (b) =>
-        String(b?.status ?? b?.Status ?? "").toLowerCase() === "paid"
+      (booking) =>
+        String(booking?.status ?? booking?.Status ?? "").toLowerCase() ===
+        "paid"
     );
-    const ids = Array.from(new Set(paid.map(getPropertyId).filter(Boolean)));
-    if (ids.length) fetchPropertyDetails(ids);
+
+    const ids = Array.from(
+      new Set(paid.map(getPropertyId).filter(Boolean))
+    );
+
+    if (ids.length) {
+      fetchPropertyDetails(ids);
+    }
   }, [bookings, fetchPropertyDetails]);
 
   const handleBookingClick = (bookingItem) => {
     const propertyId = getPropertyId(bookingItem);
-    if (propertyId)
+    if (propertyId) {
       navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
+    }
   };
 
   const formatBookingDates = (bookingItem) => {
     const arrivalDate =
-      toDate(
+      timestampToDate(
         bookingItem?.arrivaldate ??
           bookingItem?.arrival_date ??
           bookingItem?.arrivalDate
       ) || null;
 
     const departureDate =
-      toDate(
+      timestampToDate(
         bookingItem?.departuredate ??
           bookingItem?.departure_date ??
           bookingItem?.departureDate
@@ -378,9 +369,9 @@ function GuestBooking() {
 
     if (!arrivalDate || !departureDate) return "-";
 
-    return `${dateFormatterDD_MM_YYYY(arrivalDate)} → ${dateFormatterDD_MM_YYYY(
-      departureDate
-    )}`;
+    return `${dateFormatterDD_MM_YYYY(
+      arrivalDate
+    )} → ${dateFormatterDD_MM_YYYY(departureDate)}`;
   };
 
   return (
@@ -388,7 +379,9 @@ function GuestBooking() {
       <div className="dashboardHost">
         <div className="dashboardContainer">
           <div className="dashboardLeft">
-            <h3 className="welcomeMsg">{user.name || "Guest"} Bookings</h3>
+            <h3 className="welcomeMsg">
+              {user.name || "Guest"} Bookings
+            </h3>
 
             <div className="dashboardHead">
               <div className="buttonBox">
@@ -400,7 +393,6 @@ function GuestBooking() {
                   {isLoading ? "Refreshing…" : "Refresh"}
                 </button>
               </div>
-              <h3>My Paid Bookings:</h3>
             </div>
 
             {isLoading ? (
@@ -412,15 +404,16 @@ function GuestBooking() {
             ) : (
               (() => {
                 const paidBookings = bookings.filter(
-                  (b) =>
-                    String(b?.status ?? b?.Status ?? "").toLowerCase() ===
-                    "paid"
+                  (booking) =>
+                    String(
+                      booking?.status ?? booking?.Status ?? ""
+                    ).toLowerCase() === "paid"
                 );
 
                 if (paidBookings.length === 0) {
                   return (
                     <div className="emptyState">
-                      <p>You don’t have any paid bookings yet.</p>
+                      <p>You don’t have any bookings yet.</p>
                     </div>
                   );
                 }
@@ -478,13 +471,14 @@ function GuestBooking() {
                               You don’t have any upcoming bookings yet.
                             </p>
                           ) : (
-                            upcomingBookings.map((bookingItem, index) =>
-                              renderBookingRow(bookingItem, index, {
-                                getPropertyId,
-                                propertyMap,
-                                handleBookingClick,
-                                formatBookingDates,
-                              })
+                            upcomingBookings.map(
+                              (bookingItem, index) =>
+                                renderBookingRow(bookingItem, index, {
+                                  getPropertyId,
+                                  propertyMap,
+                                  handleBookingClick,
+                                  formatBookingDates,
+                                })
                             )
                           )}
                         </div>
