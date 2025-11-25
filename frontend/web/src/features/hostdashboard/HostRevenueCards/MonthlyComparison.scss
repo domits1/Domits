@@ -1,34 +1,79 @@
-.mc-dashboard-container {
+$accent-color: #0d9813;
+$accent-hover-bg: #e9f7ef;
+$text-dark: #333;
+$text-muted: #555;
+$card-bg: #f9f9f9;
+$card-shadow: rgba(0, 0, 0, 0.1);
+
+.mc-comparison-card {
+  width: 100%;
+  max-width: 900px;
+  margin: 25px auto;
+  padding: 25px;
+  background: $card-bg;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px $card-shadow;
+  color: $accent-color;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.01);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .mc-header {
     display: flex;
     justify-content: space-between;
-    gap: 20px;
-    width: 80%;
-    padding: 20px;
+    align-items: center;
+    margin-bottom: 15px;
 
-    .mc-comparison-card {
-        padding: 20px;
-        border: 1px solid #e0e0e0;
-        border-radius: 10px;
-        background-color: #ffffff;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        margin: 0 auto;
-        .mc-comparison-card canvas { 
-            max-width: 80%; 
-            height: auto;
-            
-        }
-        .mc-card-header {
-            font-size: 1.2em;
-            font-weight: normal;
-            color: #333;
-            margin-bottom: 10px;
-        }
+    h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: $text-dark;
     }
 
-    .mc-chart-container {
-        padding: 20px; 
-        background-color: #f9f9f9; 
-        border-radius: 10px; 
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+    .mc-toggle {
+      display: flex;
+      gap: 10px;
+
+      button {
+        background: #fff;
+        border: 2px solid $accent-color;
+        border-radius: 30px;
+        color: $accent-color;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 6px 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: $accent-hover-bg;
+        }
+
+        &.active {
+          background: $accent-color;
+          color: #fff;
+          box-shadow: 0 0 0 3px rgba(13, 152, 19, 0.25);
+        }
+      }
     }
+  }
+
+  .mc-chart {
+    width: 100%;
+    height: 350px;
+  }
+
+  .mc-status {
+    text-align: center;
+    font-size: 16px;
+    color: $text-muted;
+    margin-top: 80px;
+
+    &.error {
+      color: red;
+    }
+  }
 }

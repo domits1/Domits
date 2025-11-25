@@ -1,4 +1,4 @@
-import { Auth } from "aws-amplify";
+import { getAccessToken } from "../../../../src/services/getAccessToken.js";
 
 const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
@@ -12,8 +12,7 @@ export const RevPARService = {
   async fetchMetric(hostId, metric, filterType = "monthly", startDate, endDate) {
     if (!hostId) throw new Error("Host ID required");
 
-    const session = await Auth.currentSession();
-    const token = session.getAccessToken().getJwtToken();
+    const token = await getAccessToken();
 
     let url = `${BASE_URL}?hostId=${hostId}&metric=${metric}&filterType=${filterType}`;
     if (filterType === "custom" && startDate && endDate) {
