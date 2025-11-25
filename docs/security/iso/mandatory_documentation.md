@@ -15,20 +15,20 @@ Having accurate, approved, and up-to-date documentation is essential before unde
 
 # Mandatory Documentation
 - [x] Information Security Policy
-- [ ] Risk Assessment Report
-- [ ] Statement of Applicability (SoA)
+- [x] Risk Assessment Report
+- [x] Statement of Applicability (SoA)
 - [x] Risk Treatment Plan
-- [ ] Asset Inventory
+- [x] Asset Inventory
 - [x] Access Control Policy
-- [ ] Supplier Management Policy
+- [x] Supplier Management Policy
 - [x] Backup & Recovery Policy
-- [ ] Incident Management Procedure
+- [x] Incident Management Procedure
 - [ ] Business Continuity Plan
-- [ ] Internal Audit Procedure
+- [x] Internal Audit Procedure
 - [ ] Management Review Procedure
-- [ ] Training & Awareness Records
+- [x] Training & Awareness Records
 - [ ] Change Management Procedure
-- [ ] Logging & Monitoring Procedure
+- [x] Logging & Monitoring Procedure
 
 
 
