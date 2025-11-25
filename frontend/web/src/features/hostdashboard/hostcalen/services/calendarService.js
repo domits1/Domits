@@ -1,4 +1,7 @@
 import { getAccessToken } from "../utils/getAccessToken";
+import { calendarApolloClient } from "../../../../config/apolloClient";
+import { GET_CALENDAR_DATA } from "../../../../graphql/calendarQueries";
+import { SAVE_CALENDAR_DATA } from "../../../../graphql/calendarMutations";
 
 // Detect if running locally
 const IS_LOCAL_DEV = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -6,18 +9,9 @@ const IS_LOCAL_DEV = window.location.hostname === 'localhost' || window.location
 const PROPERTY_API = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default";
 const BOOKING_API = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development";
 
-// Use local server when in development, AWS Lambda in production
-const DYNAMIC_PRICE_API = IS_LOCAL_DEV
-  ? "http://localhost:3001/api/calendar-data"
-  : "https://ieniewjmhk.execute-api.eu-north-1.amazonaws.com/default/property/dynamic-price";
-
-const LOCAL_CALENDAR_API = "http://localhost:3001/api/calendar-data";
-
-// Debug logging
-console.log('🔧 Calendar Service Configuration:', {
-  isLocalDev: IS_LOCAL_DEV,
-  dynamicPriceAPI: DYNAMIC_PRICE_API
-});
+// Use local server when in development, GraphQL in production
+const USE_GRAPHQL = !IS_LOCAL_DEV;
+const LOCAL_API = "http://localhost:3001/api/calendar-data";
 
 /**
  * Professional Calendar Service
@@ -161,38 +155,58 @@ export const calendarService = {
   },
 
   /**
-   * Load saved calendar data from AWS API with localStorage fallback
-   * Endpoint: GET /property/dynamic-price?property={propertyId}
-   * Returns: { blocked: string[], maintenance: [{date, note}], pricing: {date: price} }
+   * Load saved calendar data from GraphQL/REST API with localStorage fallback
+   * Production: Uses GraphQL (AppSync)
+   * Local: Uses REST (local server)
+   * Returns: { blocked: string[], maintenance: [{date, note}], prices: {date: price} }
    */
   async loadCalendarData(propertyId) {
     try {
-      const token = getAccessToken();
-
-      if (!token || !propertyId) {
-        throw new Error("Missing authentication or property ID");
+      if (!propertyId) {
+        throw new Error("Property ID is required");
       }
 
-      // Try to fetch from new Dynamic Price API first
-      const url = `${DYNAMIC_PRICE_API}?property=${propertyId}`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Authorization: token,
-        },
-      });
+      // Use GraphQL in production, REST locally
+      if (USE_GRAPHQL) {
+        // Fetch from GraphQL
+        const { data } = await calendarApolloClient.query({
+          query: GET_CALENDAR_DATA,
+          variables: { propertyId },
+          fetchPolicy: 'network-only'
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        // Data format: { blocked: [], maintenance: [{date, note}], pricing: {} }
+        const calendarData = data.getCalendarData;
+
+        // Convert GraphQL response to expected format
+        const pricesObject = {};
+        if (calendarData.prices) {
+          calendarData.prices.forEach(({ date, price }) => {
+            pricesObject[date] = price;
+          });
+        }
+
         return {
-          blocked: data.blocked || [],
-          maintenance: data.maintenance || [],
-          prices: data.pricing || {}
+          blocked: calendarData.blockedDates || [],
+          maintenance: calendarData.maintenanceDates || [],
+          prices: pricesObject
         };
-      }
+      } else {
+        // Fetch from local REST API
+        const url = `${LOCAL_API}/${propertyId}`;
+        const response = await fetch(url);
 
-      throw new Error("AWS API not available");
+        if (response.ok) {
+          const responseData = await response.json();
+          const data = responseData.data || responseData;
+          return {
+            blocked: data.blocked || [],
+            maintenance: data.maintenance || [],
+            prices: data.prices || {}
+          };
+        }
+
+        throw new Error("Local API not available");
+      }
     } catch (error) {
       // Fallback to localStorage
       try {
@@ -395,113 +409,108 @@ export const calendarService = {
 
   /**
    * Save all calendar changes (combined operation)
-   * This is the main save function called by the UI
-   * Uses new Dynamic Price API endpoint with POST method
-   * Endpoint: POST /property/dynamic-price
+   * Production: Uses GraphQL (AppSync)
+   * Local: Uses REST (local server)
    * Body: { propertyId, availability: { blocked, maintenance }, pricing: {} }
    */
   async saveCalendarChanges(propertyId, changes) {
-    console.log('💾 saveCalendarChanges called:', { propertyId, changes });
-
     try {
-      const token = getAccessToken();
-
-      if (!token) {
-        throw new Error("Authentication token not found");
-      }
-
       if (!propertyId) {
         throw new Error("Property ID is required");
       }
 
-      // Prepare request body
-      const requestBody = {
-        propertyId: propertyId
-      };
+      // Format maintenance dates
+      const formattedMaintenanceDates = (changes.availability?.maintenance || []).map(item => {
+        if (typeof item === 'string') {
+          return { date: item, note: '' };
+        } else if (typeof item === 'object' && item.date) {
+          return { date: item.date, note: item.note || '' };
+        }
+        return null;
+      }).filter(Boolean);
 
-      // Add availability if provided
-      if (changes.availability) {
-        const formattedMaintenanceDates = (changes.availability.maintenance || []).map(item => {
-          if (typeof item === 'string') {
-            return item;
-          } else if (typeof item === 'object' && item.date) {
-            return item.date;
+      // Use GraphQL in production, REST locally
+      if (USE_GRAPHQL) {
+        // Convert pricing object to array for GraphQL
+        const pricesArray = Object.entries(changes.pricing || {}).map(([date, price]) => ({
+          date,
+          price: parseInt(price)
+        }));
+
+        // Call GraphQL mutation
+        const { data } = await calendarApolloClient.mutate({
+          mutation: SAVE_CALENDAR_DATA,
+          variables: {
+            input: {
+              propertyId,
+              blockedDates: changes.availability?.blocked || [],
+              maintenanceDates: formattedMaintenanceDates,
+              prices: pricesArray
+            }
           }
-          return null;
-        }).filter(Boolean);
+        });
 
-        requestBody.availability = {
-          blocked: changes.availability.blocked || [],
-          maintenance: formattedMaintenanceDates
+        const result = data.saveCalendarData;
+
+        // Save to localStorage as backup
+        if (changes.availability) {
+          localStorage.setItem(`calendar_availability_${propertyId}`, JSON.stringify({
+            blockedDates: changes.availability.blocked || [],
+            maintenanceDates: formattedMaintenanceDates
+          }));
+        }
+        if (changes.pricing) {
+          localStorage.setItem(`calendar_pricing_${propertyId}`, JSON.stringify(changes.pricing));
+        }
+
+        return {
+          success: result.success,
+          message: result.message || "Calendar data saved to AWS GraphQL",
+          data: result
+        };
+      } else {
+        // Call local REST API
+        const url = `${LOCAL_API}/${propertyId}`;
+        const requestBody = {
+          blocked: changes.availability?.blocked,
+          maintenance: formattedMaintenanceDates,
+          prices: changes.pricing
+        };
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Local API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        return {
+          success: result.success,
+          message: "Calendar data saved to local server",
+          data: result.data
         };
       }
-
-      // Add pricing if provided
-      if (changes.pricing && Object.keys(changes.pricing).length > 0) {
-        requestBody.pricing = changes.pricing;
-      }
-
-      console.log('📤 Sending to API:', DYNAMIC_PRICE_API);
-      console.log('📦 Request body:', JSON.stringify(requestBody, null, 2));
-
-      // Call the new Dynamic Price API
-      const response = await fetch(DYNAMIC_PRICE_API, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token,
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log('📥 Response status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ API Error:', errorText);
-        throw new Error(`API Error ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ Save successful:', result);
-
-      // Also save to localStorage as backup
-      if (changes.availability) {
-        const fallbackKey = `calendar_availability_${propertyId}`;
-        localStorage.setItem(fallbackKey, JSON.stringify({
-          blockedDates: changes.availability.blocked || [],
-          maintenanceDates: changes.availability.maintenance || []
-        }));
-      }
-
-      if (changes.pricing) {
-        const fallbackKey = `calendar_pricing_${propertyId}`;
-        localStorage.setItem(fallbackKey, JSON.stringify(changes.pricing));
-      }
-
-      return {
-        success: true,
-        message: "Calendar changes saved successfully to AWS database",
-        data: result
-      };
     } catch (error) {
       // Fallback to localStorage only
       if (changes.availability) {
-        const fallbackKey = `calendar_availability_${propertyId}`;
-        localStorage.setItem(fallbackKey, JSON.stringify({
+        localStorage.setItem(`calendar_availability_${propertyId}`, JSON.stringify({
           blockedDates: changes.availability.blocked || [],
-          maintenanceDates: changes.availability.maintenance || []
+          maintenanceDates: formattedMaintenanceDates
         }));
       }
 
       if (changes.pricing) {
-        const fallbackKey = `calendar_pricing_${propertyId}`;
-        localStorage.setItem(fallbackKey, JSON.stringify(changes.pricing));
+        localStorage.setItem(`calendar_pricing_${propertyId}`, JSON.stringify(changes.pricing));
       }
 
       return {
         success: false,
-        message: `Failed to save to AWS API: ${error.message}. Saved to localStorage as fallback.`,
+        message: `Failed to save: ${error.message}. Saved to localStorage as fallback.`,
         error: error.message,
         data: { propertyId, changes }
       };

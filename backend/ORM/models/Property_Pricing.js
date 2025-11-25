@@ -18,5 +18,15 @@ export const Property_Pricing = new EntitySchema({
             type: "int",
             nullable: false
         },
+        date: {
+            type: "varchar",
+            length: 10,
+            nullable: true,
+            default: null
+        },
+        price: {
+            type: "int",
+            nullable: true
+        }
     }
 })

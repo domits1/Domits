@@ -529,39 +529,7 @@ export default function HostCalendar() {
         />
       </div>
 
-      {/* Debug Info Panel */}
-      {debugInfo && (
-        <div style={{
-          background: "#e3f2fd",
-          border: "1px solid #2196f3",
-          borderRadius: "8px",
-          padding: "12px",
-          margin: "12px 0",
-          fontSize: "12px",
-          fontFamily: "monospace"
-        }}>
-          <strong>📊 Debug Info:</strong>
-          <div>Property ID: {debugInfo.propertyId}</div>
-          <div>Bookings Count: {debugInfo.bookingsCount}</div>
-          <div>Has Details: {debugInfo.hasDetails ? '✅' : '❌'}</div>
-          <div>Has Availability: {debugInfo.hasAvailability ? '✅' : '❌'}</div>
-          <div>Has Pricing: {debugInfo.hasPricing ? '✅' : '❌'}</div>
-          {debugInfo.error && <div style={{ color: "red" }}>Error: {debugInfo.error}</div>}
-        </div>
-      )}
-
-      {apiError && (
-        <div style={{
-          background: "#ffebee",
-          border: "1px solid #f44336",
-          borderRadius: "8px",
-          padding: "12px",
-          margin: "12px 0",
-          color: "#c62828"
-        }}>
-          ❌ API Error: {apiError}
-        </div>
-      )}
+ 
 
       {isLoading && (
         <div style={{ padding: "20px", textAlign: "center" }}>

@@ -23,6 +23,7 @@ import {Property_Types} from "../../models/Property_Types.js";
 import {Rules} from "../../models/Rules.js";
 import {Property_Type} from "../../models/Property_Type.js";
 import {Stripe_Connected_Accounts} from "../../models/Stripe_Connected_Accounts.js";
+import {Property_Calendar_Price} from "../../models/Property_Calendar_Price.js";
 
 export const Tables = [
     Amenities,
@@ -49,5 +50,6 @@ export const Tables = [
     Property_Types,
     Rules,
     Stripe_Connected_Accounts,
-    User_Table
+    User_Table,
+    Property_Calendar_Price
 ]

@@ -101,12 +101,9 @@ export default function RangeCalendar({ onChange, propertyId }) {
     const fetchDynamicPricing = async () => {
       if (propertyId) {
         try {
-          console.log("📅 RangeCalendar - Fetching dynamic pricing for property:", propertyId);
           const calendarData = await calendarService.loadCalendarData(propertyId);
-          console.log("💰 RangeCalendar - Dynamic prices loaded:", calendarData.prices);
           setDynamicPrices(calendarData.prices || {});
         } catch (error) {
-          console.error("❌ RangeCalendar - Error fetching dynamic pricing:", error);
           setDynamicPrices({});
         }
       }

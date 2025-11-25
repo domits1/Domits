@@ -23,23 +23,14 @@ const BookingContainer = ({ property, checkInDate, checkOutDate, setCheckInDate,
     }
   }, [checkInDate, checkOutDate]);
 
-  // Debug: Log initial dates
-  useEffect(() => {
-    console.log("🔵 BookingContainer - checkInDate:", checkInDate);
-    console.log("🔵 BookingContainer - checkOutDate:", checkOutDate);
-  }, [checkInDate, checkOutDate]);
-
   // Fetch dynamic pricing when property ID is available
   useEffect(() => {
     const fetchDynamicPricing = async () => {
       if (property?.property?.id) {
         try {
-          console.log("📅 Fetching dynamic pricing for property:", property.property.id);
           const calendarData = await calendarService.loadCalendarData(property.property.id);
-          console.log("💰 Dynamic prices loaded:", calendarData.prices);
           setDynamicPrices(calendarData.prices || {});
         } catch (error) {
-          console.error("❌ Error fetching dynamic pricing:", error);
           setDynamicPrices({});
         }
       }
@@ -75,7 +66,6 @@ const BookingContainer = ({ property, checkInDate, checkOutDate, setCheckInDate,
         className="reserve-btn"
         disabled={adults < 1 || nights < 1}
         onClick={() => {
-          console.log(adults, " ", kids);
           handleReservePress(
             property.property.id,
             new Date(checkInDate).getTime(),

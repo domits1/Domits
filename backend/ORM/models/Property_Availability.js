@@ -27,5 +27,17 @@ export const Property_Availability = new EntitySchema({
             },
             nullable: false
         },
+        status: {
+            type: "varchar",
+            length: 50,
+            nullable: true,
+            default: null
+        },
+        note: {
+            type: "varchar",
+            length: 500,
+            nullable: true,
+            default: null
+        }
     }
 })
