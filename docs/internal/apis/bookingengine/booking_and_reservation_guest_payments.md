@@ -10,7 +10,7 @@ There is no clear logic to be explained. The payment does have some logic/calcul
 
 ## Flowchart
 
-```
+```mermaid
 ---
 title: Booking Payment Flow
 ---
