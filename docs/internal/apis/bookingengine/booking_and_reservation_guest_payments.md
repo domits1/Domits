@@ -6,10 +6,11 @@ This documentation how the payments work. For the bookings, refer to the [Bookin
 This also documents how the payments are being handled in the frontend. Please be aware that this specific documentation does not follow the API template, due to being a extension of the main document.
 
 ## Calculation / Logic Overview
-There is no clear logic to be explained. The payment does have some logic/calculation which needs explanation.
+
+The booking is calculated like: const total = totalRoomRate + responseData.pricing.cleaning + responseData.pricing.service;
 
 ## Flowchart
-
+This flowchart should explain you everything you need to know about how payments work in the backend and frontend
 ```mermaid
 ---
 title: Booking Payment Flow
@@ -47,9 +48,6 @@ flowchart TD
 	n9 --- n19["Something went wrong. Please contact support with error ${paymentIntent.status} (skill issue)"]
 ```
 ## Class Diagram
-Show your class in a Diagram. Use [Mermaid Flow](https://mermaid.live/). Github supports mermaid chart in .md
-
-Example:
 
 ```mermaid
 classDiagram
@@ -83,9 +81,6 @@ classDiagram
 ```
 
 ## Sequence Diagram
-Use [Mermaid Live Editor](https://mermaid.live/) and its examples to make a Sequence Diagram for a POST request
-
-### POST sequence diagram
 
 ```mermaid
 sequenceDiagram
@@ -150,17 +145,8 @@ Endpoint: https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bo
 }
 
 ```
-### GET
-
-| `readType`  | Description                                       | Auth | Example                                                               |
-| ----------- | ------------------------------------------------- | ---- | --------------------------------------------------------------------- |
-| `guest`     | Fetch all bookings of a guest                     | ✅    | `/bookings?readType=guest`                                            |
-| `hostId`    | Fetch all bookings for properties owned by a host | ✅    | `/bookings?readType=hostId`                                           |
-| `createdAt` | Get bookings created after a created at date         | ❌    | `/bookings?readType=createdAt&property_Id=<id>&createdAt=<timestamp>` |
-| `paymentId` | Get booking via Stripe payment ID                 | ✅    | `/bookings?readType=paymentId&paymentID=pi_3S5nsgGiInrsWMEc0djWC2YZ`  |
-| `departureDate` | Get bookings from a departureDate | ❌ | `/bookings?readType=departureDate&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&departureDate=1749513600000` |
 
 ## Todo & Improvements
 Todo:
-- [ ] Add GET requests as sequence diagram
-- [ ] Finish the rest of the documentation
+- [ ] ...
+- [ ] ...
