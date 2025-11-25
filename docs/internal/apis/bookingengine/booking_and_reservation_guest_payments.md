@@ -145,6 +145,11 @@ Endpoint: https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bo
 }
 
 ```
+## Common issues you can run into
+
+**Having the Stripe Live/Test key mixed up**
+*This results in the booking API not working properly and refusing to confirm a payment because the live key and test key are mixed up.*
+Fix: Stick to one mode, Live or Test.
 
 ## Todo & Improvements
 Todo:
