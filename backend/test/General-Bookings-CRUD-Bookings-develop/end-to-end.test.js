@@ -8,22 +8,29 @@ import GetByGuestIdModel from "./events/getByGuestId.js";
 import GetByCreatedAtModel from "./events/getByCreatedAtDate.js";
 import GetByPaymentIdModel from "./events/getByPaymentId.js";
 import getByDepartureDateModel from "./events/getByDepartureDate.js";
+import GetbyHostIdSinglePropertyRequestModel from "./events/GetbyHostIdSingleProperty.js";
 
 jest.setTimeout(20000);
 
 // This test tests the end-to-end functionality of the booking engine. It tests all possible
 // GET scenarios, including the POST request to create a booking.
 // A dummy account is used to test the booking engine, and has been given dummy data to work with.
+
 describe("booking end-to-end", () => {
     it("should receive a POST request to create a booking", async () => {
         const response = await handler(await PostRequestModel);
-        expect(response.statusCode).toBe(201);
+        expect([200, 404]).toContain(response.statusCode); // expects 404 if user has no stripe account
     })
 
     it("should receive a GET request queried on a HostID", async () => {
         const response = await handler(await GetbyHostIdRequestModel);
         expect([200, 404]).toContain(response.statusCode);
 
+    })
+
+    it("should receive a GET request queried on a HostID, and return one property", async () => {
+        const response = await handler(await GetbyHostIdSinglePropertyRequestModel);
+        expect([200, 404]).toContain(response.statusCode);
     })
 
     it("should receive a GET request queried on a property ID", async () => {

@@ -59,7 +59,7 @@ const Pricing = ({ pricing, nights, guests = 1, checkInDate, checkOutDate, dynam
       <div className="pricing-description-and-price">
         <div className="pricing-description">Host price:</div>
         <div className="pricing-price">
-          € &nbsp;{hostPrice.toFixed(2)}
+          € &nbsp;{nights * pricing.roomRate + (pricing.roomRate + pricing.cleaning) * nights * 0.1}
         </div>
       </div>
       {extraGuests > 0 && (
@@ -80,9 +80,9 @@ const Pricing = ({ pricing, nights, guests = 1, checkInDate, checkOutDate, dynam
       </div>
       <div className="pricing-description-and-price">
         <div className="pricing-description">
-          {nights} night{nights > 1 ? "s" : ""} x €{pricing.cleaning} a night
+          {nights} night{nights > 1 ? "s" : ""} x ${pricing.cleaning} a night
         </div>
-        <div className="pricing-price">€ &nbsp; {cleaningTotal.toFixed(2)}</div>
+        <div className="pricing-price">€ &nbsp; {pricing.cleaning * nights}</div>
       </div>
       <hr />
       <div className="pricing-description-and-price">
@@ -91,7 +91,12 @@ const Pricing = ({ pricing, nights, guests = 1, checkInDate, checkOutDate, dynam
         </div>
         <div className="pricing-price">
           <h2>
-            € &nbsp;{total.toFixed(2)}
+            € &nbsp;
+            {(
+              nights * pricing.roomRate +
+              (pricing.roomRate + pricing.cleaning) * nights * 0.1 +
+              pricing.cleaning * nights
+            ).toFixed(2)}
           </h2>
         </div>
       </div>

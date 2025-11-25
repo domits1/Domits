@@ -90,7 +90,7 @@ import SevereColdIcon from "@mui/icons-material/SevereCold";
 import ChairAltIcon from "@mui/icons-material/ChairAlt";
 import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTouristTaxes";
 
-const ListingDetails = () => {
+    const ListingDetails = () => {
   const navigate = useNavigate();
   const { search } = useLocation();
   const searchParams = new URLSearchParams(search);
