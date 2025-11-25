@@ -52,7 +52,6 @@ Show your class in a Diagram. Use [Mermaid Flow](https://mermaid.live/). Github 
 Example:
 
 ```mermaid
-    classDiagram
 classDiagram
     class property {
         +string id
