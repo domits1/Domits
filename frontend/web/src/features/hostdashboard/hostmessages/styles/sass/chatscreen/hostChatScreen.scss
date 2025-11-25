@@ -34,8 +34,8 @@ $color-disabled-text: #7b8698;
         background-color: $color-white;
         display: flex;
         flex-direction: column;
-        flex: 1; /* fill remaining space next to sidebar */
-        min-width: 0; /* allow flex item to shrink */
+        flex: 1;
+        min-width: 0;
         height: 88vh;
         justify-content: start;
         border-left: 0.01rem $color-border-muted solid;
