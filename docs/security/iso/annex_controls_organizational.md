@@ -13,12 +13,12 @@ The focus of A.5 is to:
 These controls create the foundation for how an organization manages security at a strategic and operational level. Completing the checklist below will help ensure your organization meets the requirements of A.5.
 
 #  Annex  Controls — Organizational (A.5)
-- [ ] Information security policies
-- [ ] Roles & responsibilities defined
+- [x] Information security policies
+- [x] Roles & responsibilities defined
 - [ ] Segregation of duties
 - [ ] Contact with authorities
 - [ ] Contact with special interest groups
-- [ ] Security in project management
-- [ ] Access control rules documented
+- [x] Security in project management
+- [x] Access control rules documented
 
 
