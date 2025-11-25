@@ -7,6 +7,7 @@ $card-shadow: rgba(0, 0, 0, 0.1);
 $text-dark: #333;
 $text-muted: #555;
 $text-light: #444;
+
 $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%232c3e50' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
 
 .card-base {
@@ -18,100 +19,167 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
   box-shadow: 0 4px 8px $card-shadow;
   background-color: $card-bg;
   text-align: center;
-  height: 440px;
+  min-height: 460px;
+  height: 460px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
   color: $accent-color;
+  overflow: hidden;
 
   &:hover {
     transform: scale(1.02);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
+}
 
-  select {
-    color: $accent-color;
-    :hover {
-      color: $accent-color;
-    }
-  }
+.adr-donut-chart {
+  margin-top: 0.8rem;
+  padding: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 
-  h3 {
-    font-size: 20px;
-    font-weight: 500;
-    color: $text-dark;
-  }
-
-  p {
-    margin: 20px 10px;
-    font-size: 20px;
-    color: $accent-color;
-
-    &.large {
-      font-size: 110px;
-      font-weight: bold;
-    }
-  }
-
-  .time-filter {
+  .donut-wrapper {
+    width: 100%;
+    height: 180px;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px;
-    padding: 12px 15px;
-    background-color: $card-bg;
-    border-radius: 50px;
+  }
+
+  .recharts-wrapper,
+  .recharts-surface {
+    background: transparent !important;
+  }
+
+  .recharts-legend-wrapper {
+    margin-top: -5px;
+  }
+}
+
+.revpar-barchart {
+  margin-top: 0.8rem;
+  padding: 0.3rem 0 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .bar-wrapper {
+    width: 100%;
+    height: 220px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .recharts-wrapper,
+  .recharts-surface {
+    background: transparent !important;
+  }
+}
+
+.large {
+  font-size: 110px;
+  font-weight: bold;
+}
+
+.time-filter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 15px;
+  background-color: $card-bg;
+  border-radius: 50px;
+  margin-bottom: 10px;
+
+  label {
+    font-size: 15px;
+    font-weight: 500;
+    color: $text-muted;
+  }
+}
+
+.timeFilter {
+  appearance: none;
+  border: 2px solid #eef2f7;
+  border-radius: 50px;
+  width: 150px;
+  height: 42px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: #fff;
+  color: $text-dark;
+  transition: all 0.25s ease;
+  background-image: $dropdown-icon;
+  background-repeat: no-repeat;
+  background-position: calc(100% - 15px) center;
+  padding-right: 40px;
+
+  &:hover {
+    border-color: $accent-color;
+    background-color: $accent-hover-bg;
+    transform: translateY(-1px);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $accent-color;
+    box-shadow: 0 0 0 3px $accent-focus-shadow;
+  }
+}
+
+.custom-date-filter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0;
+  width: 100%;
+  min-height: 90px;
+  transition:
+    opacity 0.3s ease-in-out,
+    transform 0.3s ease-in-out;
+  opacity: 1;
+  transform: translateY(0);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100px;
 
     label {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 500;
       color: $text-muted;
+      margin-bottom: 4px;
     }
-  }
-
-  .timeFilter {
-    appearance: none;
-    border: 2px solid #eef2f7;
-    border-radius: 50px;
-    width: 150px;
-    height: 42px;
-    padding: 0 18px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    background-color: #fff;
-    color: $text-dark;
-    transition: all 0.25s ease;
-    background-image: $dropdown-icon;
-    background-repeat: no-repeat;
-    background-position: calc(100% - 15px) center;
-    padding-right: 40px;
-
-    &:hover {
-      border-color: $accent-color;
-      background-color: $accent-hover-bg;
-      transform: translateY(-1px);
-    }
-
-    &:focus {
-      outline: none;
-      border-color: $accent-color;
-      box-shadow: 0 0 0 3px $accent-focus-shadow;
-    }
-  }
-
-  .custom-date-filter {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
 
     input[type="date"] {
       border: 2px solid #eef2f7;
       border-radius: 50px;
       padding: 8px 14px;
+      width: 160px;
+      text-align: center;
       font-size: 14px;
       color: $text-dark;
+      background-color: #fff;
       transition: all 0.25s ease;
 
       &:hover {
@@ -124,6 +192,43 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
         border-color: $accent-color;
         box-shadow: 0 0 0 3px $accent-focus-shadow;
       }
+
+      &::-webkit-calendar-picker-indicator {
+        filter: invert(0.4);
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+.custom-date-filter-hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+}
+
+.adr-details {
+  text-align: center;
+  margin-top: 10px;
+  transition: all 0.3s ease-in-out;
+}
+
+.adr-details,
+.custom-date-filter {
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 340px) {
+  .custom-date-filter {
+    flex-direction: column;
+    gap: 10px;
+
+    input[type="date"] {
+      width: 100%;
+      max-width: 220px;
     }
   }
 }
@@ -131,6 +236,14 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
 .booked-nights-card {
   @extend .card-base;
 }
+
 .adr-card {
+  @extend .card-base;
+}
+
+.revpar-card {
+  @extend .card-base;
+}
+.alo s-card {
   @extend .card-base;
 }

@@ -1,4 +1,4 @@
-import { Auth } from "aws-amplify";
+import { getAccessToken } from "../../../../src/services/getAccessToken.js";
 
 const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
@@ -12,8 +12,7 @@ export const ADRCardService = {
   async fetchMetric(hostId, metric, filterType = "monthly", startDate, endDate) {
     if (!hostId) throw new Error("Host ID required");
 
-    const session = await Auth.currentSession();
-    const token = session.getAccessToken().getJwtToken();
+    const token = await getAccessToken();
 
     let url = `${BASE_URL}?hostId=${hostId}&metric=${metric}&filterType=${filterType}`;
     if (filterType === "custom" && startDate && endDate) {
@@ -47,8 +46,7 @@ export const ADRCardService = {
 
       if (metric === "bookedNights") {
         if (typeof data.bookedNights === "number") results.bookedNights = data.bookedNights;
-        else if (data.bookedNights?.bookedNights != null)
-          results.bookedNights = data.bookedNights.bookedNights;
+        else if (data.bookedNights?.bookedNights != null) results.bookedNights = data.bookedNights.bookedNights;
         else if (data.value != null) results.bookedNights = data.value;
         else results.bookedNights = 0;
       }

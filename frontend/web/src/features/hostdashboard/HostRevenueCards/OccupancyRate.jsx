@@ -12,14 +12,11 @@ const OccupancyRate = () => {
   const [error, setError] = useState(null);
   const [cognitoUserId, setCognitoUserId] = useState(null);
 
- 
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-        const userInfo = await Auth.currentUserInfo();
-        if (!userInfo?.attributes?.sub)
-          throw new Error("Cognito User ID not found");
-        setCognitoUserId(userInfo.attributes.sub);
+        const user = await Auth.currentAuthenticatedUser();
+        setCognitoUserId(user.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
         setError("User not logged in.");
