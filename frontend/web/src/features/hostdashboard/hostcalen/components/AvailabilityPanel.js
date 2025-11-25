@@ -4,9 +4,6 @@ export default function AvailabilityPanel({ onBlockRangeMode, onMaintenance, onU
     <div className="hc-card">
       <div className="hc-card-title">Availability</div>
       <div className="hc-card-actions">
-        <button className="hc-btn" onClick={onBlockRangeMode}>
-          + Block dates
-        </button>
         <button className="hc-btn" onClick={onMaintenance}>
           Maintenance
         </button>
