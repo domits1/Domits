@@ -24,4 +24,5 @@ export class CognitoRepository {
         const result = await this.cognitoClient.send(params);
         return result.Username ? result : NotFoundException("User not found.");
     }
+
 }
