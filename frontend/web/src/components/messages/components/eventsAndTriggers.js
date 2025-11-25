@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { FaPlus, FaTrash, FaPen } from 'react-icons/fa';
 
 const EventsAndTriggers = ({ events = {}, onToggle, onAddCustomEvent, onDeleteEvent, onRenameEvent }) => {
@@ -64,6 +65,34 @@ const EventsAndTriggers = ({ events = {}, onToggle, onAddCustomEvent, onDeleteEv
             <button className="add-custom-event-btn" onClick={onAddCustomEvent}>
                 <FaPlus /> Add custom automated message
             </button>
+=======
+const EventsAndTriggers = ({ events = {}, onToggle }) => {
+    const eventEntries = Object.values(events);
+    if (!eventEntries.length) {
+        return <p className="empty-state">No automation events available.</p>;
+    }
+
+    return (
+        <div className="events-triggers">
+            {eventEntries.map((event) => (
+                <div key={event.id} className="event-row">
+                    <div className="event-row-heading">
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={!!event.enabled}
+                                onChange={() => onToggle?.(event.id)}
+                            />
+                            {event.label}
+                        </label>
+                        <span className={`badge ${event.enabled ? 'enabled' : 'disabled'}`}>
+                            {event.enabled ? 'Active' : 'Paused'}
+                        </span>
+                    </div>
+                    <p className="event-description">{event.description}</p>
+                </div>
+            ))}
+>>>>>>> 0f356f96e (automated messages)
         </div>
     );
 };
