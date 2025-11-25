@@ -39,7 +39,6 @@ flowchart TD
 	n11 --- n12["Frontend: User gets redirected to bookingconfirmationoverview"]
 	n7 --- n13["sets message: Payment is still processing. Auto refreshes every two seconds"]
 	n13 ---|"Success?"| n14["Goes to succeeded, otherwise it's required_payment_method"]
-	style n6 color:#000000
 	n8 ---|"Deactivate user booking"| n15["Booking API/Database"]
 	n15
 	
