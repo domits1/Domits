@@ -1,44 +1,52 @@
 # Booking and Reservation - Guest Payment Docs
 
 ## Description
-This documentation documents the CRUD operations being performed with bookings and reservations. For the bookings, refer to the [Booking and Reservation docs](./booking_and_reservation.md)
+This documentation how the payments work. For the bookings, refer to the [Booking and Reservation docs](./booking_and_reservation.md)
 
-## Metadata
-Lambda Function: `General-Bookings-CRUD-Bookings-develop`
-
-Related Issue: **Main issue: [#501](https://github.com/domits1/Domits/issues/501)**
-
-Status: **In Development/Active**
-
-## Working Endpoints
-Use https://tabletomarkdown.com/generate-markdown-table/ to simply make your own table.
-
-| Action | Description          | Auth Required                   | Endpoint |
-| ------ | -------------------- | ------------------------------- | -------- |
-| POST   | Create booking and payment  | Yes                             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings  |
-| GET    | Retrieve bookings created at date | No             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=createdAt&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&createdAt=1756857600000    |
-| GET    | Retrieve bookings from a departureDate | No             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=departureDate&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&departureDate=1749513600000    |
-| GET    | Retrieve bookings from a guest's id  | Yes             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest    |
-| GET    | Retrieve bookings from a hostId  | Yes             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest    |
-| GET    | Retrieve bookings from a paymentId  | Yes             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=paymentId&paymentID=pi_3S5nsgGiInrsWMEc0djWC2YZ    |
-| PATCH  | Update booking to set status as confirmed (checks stripe auth)      | No                             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?paymentid=${paymentID}  |
-
-
-## Security & Authorization
-
-Authorization will use your access_token.
-
-*How to grab your access token?*
-
-1. Head to domits.com, acceptance.domits.com or if you're running localhost, localhost
-2. Open the Dev console (CTRL+SHIFT+I)
-3. Click the application tab, copy the token from **CognitoIdentityServiceProvider**.xxxxxxxxxxxxxxxx...**accessToken**
-4. Copy and paste this into your request as header (If you're using Postman or any API application to invoke the request, be aware that the accessToken resets every hour.)
-
+This also documents how the payments are being handled in the frontend. Please be aware that this specific documentation does not follow the API template, due to being a extension of the main document.
 
 ## Calculation / Logic Overview
 There is no clear logic to be explained. The payment does have some logic/calculation which needs explanation.
 
+## Flowchart
+
+```
+---
+title: Booking Payment Flow
+---
+flowchart TD
+
+    A["User clicks <strong>Confirm & Pay</strong>"] 
+        --> B["Booking Lambda (handles booking logic)"]
+
+    B --> C["Booking API / Database"]
+    C -->|"Creates booking & returns { bookingId, clientSecret }"| D["Frontend"]
+
+    D -->|"Creates Stripe Elements session with clientsecret"| E["Frontend: Users fills in billing information"]
+	E
+	E --- n1["User clicks <strong>Submit</strong>"]
+	n1 --- n2["User pays on respective provider"]
+	n2 ---|"Return to domits with bookingID"| n3["User gets redirected to /validatepayment"]
+	n3 --- n4["Booking gets checked on paymentIntent.status"]
+	n5@{ shape: "diam", label: "paymentIntent.status" }
+	n4 --- n5
+	n5 --- n6["succeeded"]
+	n5 --- n7["processing"]
+	n5 --- n8["requires_payment_method"]
+	n5@{ shape: "diam", label: "paymentIntent.status (switch case)" } --- n9["default"]
+	n6 ---|"Activate user booking"| n10["Booking API/Database"]
+	n10 --- n11["set status paid on database with API call"]
+	n11 --- n12["Frontend: User gets redirected to bookingconfirmationoverview"]
+	n7 --- n13["sets message: Payment is still processing. Auto refreshes every two seconds"]
+	n13 ---|"Success?"| n14["Goes to succeeded, otherwise it's required_payment_method"]
+	style n6 color:#000000
+	n8 ---|"Deactivate user booking"| n15["Booking API/Database"]
+	n15
+	
+	n15 --- n16["set status unpaid on database with API call<br>"]
+	n16 --- n17["Frontend: Set message: Payment Failed. Please try another payment method. No charges have been made."]
+	n9 --- n19["Something went wrong. Please contact support with error ${paymentIntent.status} (skill issue)"]
+```
 ## Class Diagram
 Show your class in a Diagram. Use [Mermaid Flow](https://mermaid.live/). Github supports mermaid chart in .md
 
