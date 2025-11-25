@@ -16,7 +16,7 @@ These controls help safeguard the physical environment where information is stor
 - [ ] Physical entry controls implemented
 - [ ] Security of offices and secure areas
 - [ ] Visitor management procedure
-- [ ] Equipment protection
+- [x] Equipment protection
 - [ ] Secure disposal of assets
 
 
