@@ -88,7 +88,6 @@ export class PropertyAvailabilityRepository {
             .execute();
         return true;
     }
-
     async getBlockedAndMaintenanceByPropertyId(propertyId) {
         const client = await Database.getInstance();
         const results = await client
@@ -100,12 +99,10 @@ export class PropertyAvailabilityRepository {
 
         const blocked = [];
         const maintenance = [];
-
         results.forEach(row => {
             const dateStr = typeof row.availablestartdate === 'string'
                 ? row.availablestartdate
                 : new Date(row.availablestartdate).toISOString().split('T')[0];
-
             if (row.status === 'blocked') {
                 blocked.push(dateStr);
             } else if (row.status === 'maintenance') {
@@ -115,7 +112,6 @@ export class PropertyAvailabilityRepository {
                 });
             }
         });
-
         return { blocked, maintenance };
     }
 

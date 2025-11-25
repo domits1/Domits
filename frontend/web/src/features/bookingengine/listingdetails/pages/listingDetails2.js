@@ -14,17 +14,12 @@ const ListingDetails2 = () => {
   const [property, setProperty] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Shared date state - initialized to today and tomorrow
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-
   const [checkInDate, setCheckInDate] = useState(today.toISOString().split("T")[0]);
   const [checkOutDate, setCheckOutDate] = useState(tomorrow.toISOString().split("T")[0]);
-
-  // Handler for when dates change in RangeCalendar
   const handleDateChange = ({ start, end }) => {
     if (start) {
       setCheckInDate(start.toISOString().split("T")[0]);

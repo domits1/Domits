@@ -3,21 +3,13 @@ import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
-
 export class DynamicPriceController {
-
     dynamicPriceService;
     authManager;
-
     constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
         this.authManager = new AuthManager(dynamoDbClient, systemManagerRepository);
         this.dynamicPriceService = new DynamicPriceService(dynamoDbClient, systemManagerRepository);
     }
-
-    // -------------------------
-    // GET /property/dynamic-price
-    // Get calendar data (blocked dates, maintenance, custom pricing)
-    // -------------------------
     async getCalendarData(event) {
         try {
             const propertyId = event.queryStringParameters?.property;
@@ -29,10 +21,8 @@ export class DynamicPriceController {
                     body: JSON.stringify({ message: "Property ID is required" })
                 };
             }
-
             await this.authManager.authorizeOwnerRequest(event.headers.Authorization, propertyId);
             const calendarData = await this.dynamicPriceService.getCalendarData(propertyId);
-
             return {
                 statusCode: 200,
                 headers: responseHeaders,
@@ -47,11 +37,6 @@ export class DynamicPriceController {
             };
         }
     }
-
-    // -------------------------
-    // POST /property/dynamic-price
-    // Save calendar data (create new)
-    // -------------------------
     async saveCalendarData(event) {
         try {
             const accessToken = event.headers.Authorization;
@@ -65,11 +50,7 @@ export class DynamicPriceController {
                     body: JSON.stringify({ message: "Property ID is required" })
                 };
             }
-
-            // Authorize - user must be property owner
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-
-            // Save availability and pricing
             const result = await this.dynamicPriceService.saveCalendarData(propertyId, eventBody);
 
             return {
@@ -90,11 +71,6 @@ export class DynamicPriceController {
             };
         }
     }
-
-    // -------------------------
-    // PATCH /property/dynamic-price
-    // Update calendar data (modify existing)
-    // -------------------------
     async updateCalendarData(event) {
         try {
             const accessToken = event.headers.Authorization;
@@ -108,13 +84,8 @@ export class DynamicPriceController {
                     body: JSON.stringify({ message: "Property ID is required" })
                 };
             }
-
-            // Authorize - user must be property owner
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-
-            // Update availability and pricing
             const result = await this.dynamicPriceService.updateCalendarData(propertyId, eventBody);
-
             return {
                 statusCode: 200,
                 headers: responseHeaders,

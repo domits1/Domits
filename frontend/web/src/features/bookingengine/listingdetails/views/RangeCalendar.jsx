@@ -9,7 +9,6 @@ const makeDate = (y, m, d) => new Date(y, m, d);
 const addMonths = (date, offset) => makeDate(date.getFullYear(), date.getMonth() + offset, 1);
 const startOfCalendar = (y, m) => {
   const first = makeDate(y, m, 1);
-  // Monday=0 … Sunday=6
   const day = (first.getDay() + 6) % 7;
   const gridStart = new Date(first);
   gridStart.setDate(first.getDate() - day);
@@ -18,11 +17,9 @@ const startOfCalendar = (y, m) => {
 const weekdayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const monthLabel = (d) =>
   d.toLocaleString(undefined, { month: "long", year: "numeric" });
-
 function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, dynamicPrices = {} }) {
   const y = viewMonth.getFullYear();
   const m = viewMonth.getMonth();
-
   const cells = useMemo(() => {
     const start = startOfCalendar(y, m);
     const arr = [];
@@ -40,7 +37,6 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, dynamicPrices = {}
     }
     return arr;
   }, [y, m, rangeStart, rangeEnd, dynamicPrices]);
-
   return (
     <div className="rc-month">
       <div className="rc-month__label">{monthLabel(viewMonth)}</div>
@@ -78,25 +74,19 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, dynamicPrices = {}
     </div>
   );
 }
-
 export default function RangeCalendar({ onChange, propertyId }) {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  // Set initial dates to today and tomorrow
   const initialStart = new Date(now);
   const initialEnd = new Date(now);
   initialEnd.setDate(now.getDate() + 1);
-
   const [activeTab, setActiveTab] = useState("calendar");
   const [view, setView] = useState(initialMonth);
   const [start, setStart] = useState(initialStart);
   const [end, setEnd] = useState(initialEnd);
   const [draftStart, setDraftStart] = useState(null);
   const [dynamicPrices, setDynamicPrices] = useState({});
-
-  // Fetch dynamic pricing when propertyId is available
   useEffect(() => {
     const fetchDynamicPricing = async () => {
       if (propertyId) {
@@ -108,11 +98,8 @@ export default function RangeCalendar({ onChange, propertyId }) {
         }
       }
     };
-
     fetchDynamicPricing();
   }, [propertyId]);
-
-  // Call onChange when dates are set initially
   useEffect(() => {
     if (start && end && onChange) {
       onChange({ start, end });
@@ -137,7 +124,7 @@ export default function RangeCalendar({ onChange, propertyId }) {
   };
   return (
     <>
-      <p className="title">Booking Availability Calendar</p>
+      <p className="title">Calendar & Pricing</p>
       <div className="rc-con">
         <div className="rc">
           <div className="rc-header">
