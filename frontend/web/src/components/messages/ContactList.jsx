@@ -222,7 +222,9 @@ const ContactList = ({ userId, onContactClick, message, dashboardType, isChatOpe
 
                 {automatedSettings && (
                     <AutomatedSettings
-                        setAutomatedSettings={setAutomatedSettings} />
+                        setAutomatedSettings={setAutomatedSettings}
+                        hostId={userId}
+                    />
                 )}
 
 

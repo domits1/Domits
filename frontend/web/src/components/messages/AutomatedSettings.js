@@ -1,29 +1,148 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import EventsAndTriggers from './components/eventsAndTriggers';
 import Customization from './components/customization';
 import Scheduling from './components/scheduling';
 import Preview from './components/preview';
+import {
+    createDefaultAutomationSettings,
+    loadAutomationSettings,
+    saveAutomationSettings,
+    emitAutomationUpdated,
+} from './automationConfig';
 
-const AutomatedSettings = ({ setAutomatedSettings }) => {
-    const [settings, setSettings] = useState(null);
+const optionsList = ['Events & Triggers', 'Customization', 'Scheduling', 'Preview'];
+
+const AutomatedSettings = ({ setAutomatedSettings, hostId }) => {
     const [options, setOptions] = useState('Events & Triggers');
-    const optionsList = [
-        'Events & Triggers',
-        'Customization',
-        'Scheduling',
-        'Preview'
-    ];
-    
+    const [settings, setSettings] = useState(() => createDefaultAutomationSettings());
+    const [selection, setSelection] = useState('booking_confirmation');
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [saveState, setSaveState] = useState('idle'); // 'idle' | 'saving' | 'saved'
+
+    useEffect(() => {
+        if (!hostId) return;
+        setSettings(loadAutomationSettings(hostId));
+        setHasUnsavedChanges(false);
+    }, [hostId]);
+
+    const events = settings?.events || {};
+
+    const handleToggleEvent = (eventId) => {
+        setSettings((prev) => {
+            const next = {
+                ...prev,
+                events: {
+                    ...prev.events,
+                    [eventId]: {
+                        ...prev.events[eventId],
+                        enabled: !prev.events[eventId].enabled,
+                    },
+                },
+            };
+            return next;
+        });
+        setHasUnsavedChanges(true);
+    };
+
+    const handleTemplateChange = (eventId, template) => {
+        setSettings((prev) => ({
+            ...prev,
+            events: {
+                ...prev.events,
+                [eventId]: {
+                    ...prev.events[eventId],
+                    template,
+                },
+            },
+        }));
+        setHasUnsavedChanges(true);
+    };
+
+    const handleDelayChange = (eventId, minutes) => {
+        setSettings((prev) => ({
+            ...prev,
+            events: {
+                ...prev.events,
+                [eventId]: {
+                    ...prev.events[eventId],
+                    sendDelayMinutes: minutes,
+                },
+            },
+        }));
+        setHasUnsavedChanges(true);
+    };
+
+    const handleReset = () => {
+        const shouldReset =
+            typeof window === 'undefined' ? true : window.confirm('Reset automated messages to default drafts?');
+        if (!shouldReset) return;
+        setSettings(createDefaultAutomationSettings());
+        setHasUnsavedChanges(true);
+    };
+
+    const handleSave = () => {
+        if (!hostId) return;
+        setSaveState('saving');
+        saveAutomationSettings(hostId, settings);
+        emitAutomationUpdated(hostId);
+        setHasUnsavedChanges(false);
+        setSaveState('saved');
+        setTimeout(() => setSaveState('idle'), 2400);
+    };
+
+    const handleClose = () => {
+        if (hasUnsavedChanges) {
+            const shouldClose =
+                typeof window === 'undefined' ? true : window.confirm('You have unsaved changes. Close anyway?');
+            if (!shouldClose) {
+                return;
+            }
+        }
+        setAutomatedSettings(null);
+    };
+
+    const currentSubtitle = useMemo(() => {
+        switch (options) {
+            case 'Customization':
+                return 'Edit the templates guests will receive';
+            case 'Scheduling':
+                return 'Control when each message goes out';
+            case 'Preview':
+                return 'See the message exactly as guests will read it';
+            default:
+                return 'Decide which automations Domits sends for you';
+        }
+    }, [options]);
+
     return (
         <div className="automated-settings-modal">
             <div className="top-bar">
-                <h2>Automated Settings</h2>
-                <h2> {options}</h2>
-                <button onClick={() => setAutomatedSettings(null)}>Close</button>
+                <div>
+                    <h2>Automated messages</h2>
+                    <p>{currentSubtitle}</p>
+                </div>
+                <div className="settings-actions">
+                    <button className="ghost" onClick={handleReset} title="Reset to defaults">
+                        Reset
+                    </button>
+                    <button
+                        className="primary"
+                        onClick={handleSave}
+                        disabled={!hasUnsavedChanges || saveState === 'saving'}
+                    >
+                        {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved' : 'Save'}
+                    </button>
+                    <button onClick={handleClose}>Close</button>
+                </div>
             </div>
+            {!hostId && (
+                <p className="settings-warning">
+                    We could not detect your host account. Refresh and try opening settings again.
+                </p>
+            )}
             <div className="settings-body">
                 <div className="setting-bar-1">
-                    {optionsList.map(option => (
+                    {optionsList.map((option) => (
                         <h2
                             key={option}
                             onClick={() => setOptions(option)}
@@ -35,15 +154,31 @@ const AutomatedSettings = ({ setAutomatedSettings }) => {
                 </div>
 
                 <div className="setting-bar-2">
-                  {options === 'Events & Triggers' && <EventsAndTriggers />}
-                    {options === 'Customization' && <Customization />}
-                    {options === 'Scheduling' && <Scheduling />}
-                    {options === 'Preview' && <Preview />}
+                    {options === 'Events & Triggers' && (
+                        <EventsAndTriggers events={events} onToggle={handleToggleEvent} />
+                    )}
+                    {options === 'Customization' && (
+                        <Customization
+                            events={events}
+                            onTemplateChange={handleTemplateChange}
+                            onSelectEvent={setSelection}
+                            selectedEventId={selection}
+                        />
+                    )}
+                    {options === 'Scheduling' && (
+                        <Scheduling events={events} onDelayChange={handleDelayChange} />
+                    )}
+                    {options === 'Preview' && (
+                        <Preview
+                            events={events}
+                            selectedEventId={selection}
+                            onSelectEvent={setSelection}
+                        />
+                    )}
                 </div>
             </div>
         </div>
-    )
-
-}
+    );
+};
 
 export default AutomatedSettings;

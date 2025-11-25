@@ -11,13 +11,20 @@ import '../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostCha
 import { v4 as uuidv4 } from 'uuid';
 import { FaPaperPlane, FaArrowLeft, FaTimes } from 'react-icons/fa';
 import profileImage from './domits-logo.jpg';
+import {
+    loadAutomationSettings,
+    personalizeTemplate,
+    hasAutomationEventBeenSent,
+    markAutomationEventSent,
+    getAutomationStorageKey,
+} from './automationConfig';
 
 
 const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContactListMessage, onBack, onClose, dashboardType}) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const socket = useContext(WebSocketContext);
     const isHost = dashboardType === 'host';
-    const { bookingDetails } = isHost
+    const { bookingDetails, accommodation } = isHost
         ? useFetchBookingDetails(userId, contactId)
         : useFetchBookingDetails(contactId, userId);
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
@@ -29,6 +36,33 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
     const addedMessageIds = useRef(new Set());
     const chatContainerRef = useRef(null);
     const [forceStopLoading, setForceStopLoading] = useState(false);
+    const [automationSettings, setAutomationSettings] = useState(null);
+
+    useEffect(() => {
+        if (!isHost || !userId) {
+            setAutomationSettings(null);
+            return;
+        }
+        setAutomationSettings(loadAutomationSettings(userId));
+    }, [isHost, userId]);
+
+    useEffect(() => {
+        if (!isHost || typeof window === 'undefined' || !userId) return;
+        const handleAutomationUpdated = (event) => {
+            if (event?.detail?.hostId && event.detail.hostId !== userId) return;
+            setAutomationSettings(loadAutomationSettings(userId));
+        };
+        const handleStorage = (event) => {
+            if (event?.key !== getAutomationStorageKey(userId)) return;
+            setAutomationSettings(loadAutomationSettings(userId));
+        };
+        window.addEventListener('domits-automation-updated', handleAutomationUpdated);
+        window.addEventListener('storage', handleStorage);
+        return () => {
+            window.removeEventListener('domits-automation-updated', handleAutomationUpdated);
+            window.removeEventListener('storage', handleStorage);
+        };
+    }, [isHost, userId]);
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
@@ -110,6 +144,84 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
             addedMessageIds.current.add(msg.id);
         });
     }, [wsMessages, userId, contactId, addNewMessage]);
+
+    useEffect(() => {
+        if (!isHost || !contactId || !automationSettings || !bookingDetails || bookingDetails?.message) return;
+        const bookingStatus = (bookingDetails?.Status || bookingDetails?.status || '').toString().toLowerCase();
+        const confirmedStatuses = ['accepted', 'confirmed', 'paid', 'booked', 'success'];
+        if (!confirmedStatuses.some((status) => bookingStatus.includes(status))) return;
+
+        const eventConfig = automationSettings.events?.booking_confirmation;
+        if (!eventConfig?.enabled || !eventConfig.template) return;
+
+        const bookingId =
+            bookingDetails?.id ||
+            bookingDetails?.bookingId ||
+            bookingDetails?.BookingID ||
+            `${contactId}-${bookingDetails?.arrivalDate || ''}`;
+        if (!bookingId) return;
+
+        const bookingEventKey = `${bookingId}__${eventConfig.id}`;
+        if (hasAutomationEventBeenSent(bookingEventKey)) return;
+
+        const placeholderData = {
+            guestName: bookingDetails?.guestName || contactName,
+            propertyName: bookingDetails?.propertyName || accommodation?.property?.title || 'your stay',
+            checkInDate: bookingDetails?.arrivalDate || '',
+            checkOutDate: bookingDetails?.departureDate || '',
+            checkInTime:
+                bookingDetails?.checkInTime ||
+                (accommodation?.checkIn?.checkIn?.from
+                    ? `${accommodation.checkIn.checkIn.from}:00`
+                    : ''),
+            checkOutTime:
+                bookingDetails?.checkOutTime ||
+                (accommodation?.checkIn?.checkOut?.till
+                    ? `${accommodation.checkIn.checkOut.till}:00`
+                    : ''),
+        };
+
+        const messageBody = personalizeTemplate(eventConfig.template, placeholderData);
+        if (!messageBody.trim()) return;
+
+        const delayMs = Math.max(0, Number(eventConfig.sendDelayMinutes || 0)) * 60 * 1000;
+
+        const timer = setTimeout(async () => {
+            try {
+                const response = await sendMessage(contactId, messageBody, []);
+                if (!response?.success) return;
+
+                const autoMessage = {
+                    id: uuidv4(),
+                    userId,
+                    recipientId: contactId,
+                    text: messageBody,
+                    createdAt: new Date().toISOString(),
+                    isSent: true,
+                    isAutomated: true,
+                    messageType: eventConfig.id,
+                };
+                addNewMessage(autoMessage);
+                handleContactListMessage?.(autoMessage);
+                markAutomationEventSent(bookingEventKey);
+            } catch (err) {
+                console.error('Failed to send automated booking confirmation:', err);
+            }
+        }, delayMs);
+
+        return () => clearTimeout(timer);
+    }, [
+        isHost,
+        contactId,
+        automationSettings,
+        bookingDetails,
+        contactName,
+        accommodation,
+        sendMessage,
+        addNewMessage,
+        handleContactListMessage,
+        userId,
+    ]);
 
     const handleSendMessage = async () => {
         const hasContent = (newMessage.trim() || uploadedFileUrls.length > 0);
