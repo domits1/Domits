@@ -28,6 +28,19 @@ $brand-700: #0669d3;
   --summary-max: 1200px;   
   --card-max: 300px;       
 }
+.greenBtn{
+  padding: 20, 5, 20, 5px;
+  margin-left: 20px;
+  text-align: center;
+  background-color:rgb(12, 207, 12) ;
+  color: #111827;
+  border-radius: 10px ;
+  cursor: pointer;
+  :hover{
+    background-color: lightgreen;
+    
+  }
+}
 
 @media (prefers-color-scheme: dark) {
   :root {
