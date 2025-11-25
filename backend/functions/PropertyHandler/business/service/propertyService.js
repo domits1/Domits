@@ -20,12 +20,13 @@ import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
 
 export class PropertyService {
-
   constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
     this.propertyRepository = new PropertyRepository(systemManagerRepository);
     this.propertyAmenityRepository = new PropertyAmenityRepository(systemManagerRepository);
     this.propertyAvailabilityRepository = new PropertyAvailabilityRepository(systemManagerRepository);
-    this.propertyAvailabilityRestrictionRepository = new PropertyAvailabilityRestrictionRepository(systemManagerRepository);
+    this.propertyAvailabilityRestrictionRepository = new PropertyAvailabilityRestrictionRepository(
+      systemManagerRepository
+    );
     this.propertyCheckInRepository = new PropertyCheckInRepository(systemManagerRepository);
     this.propertyGeneralDetailRepository = new PropertyGeneralDetailRepository(systemManagerRepository);
     this.propertyLocationRepository = new PropertyLocationRepository(systemManagerRepository);
@@ -72,7 +73,7 @@ export class PropertyService {
   async getActivePropertyCards(lastEvaluatedKey) {
     const propertyIdentifiers = await this.propertyRepository.getActiveProperties(lastEvaluatedKey);
     const properties = await Promise.all(
-      propertyIdentifiers.identifiers.map(async (property) => await this.getCardPropertyAttributes(property)),
+      propertyIdentifiers.identifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
     return {
       properties: properties,
@@ -83,7 +84,7 @@ export class PropertyService {
   async getActivePropertyCardsByType(type) {
     const propertyIdentifiers = await this.propertyRepository.getActivePropertiesByType(type);
     return await Promise.all(
-      propertyIdentifiers.map(async (property) => await this.getCardPropertyAttributes(property)),
+      propertyIdentifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
   }
 
@@ -91,16 +92,17 @@ export class PropertyService {
     let countryParam;
     if (country.split(" ").length > 1) {
       const words = country.trim().split(" ");
-      const capitalizedWords = words.map(
-        word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
-      );
+      const capitalizedWords = words.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
       countryParam = capitalizedWords.join(" ");
     } else {
       countryParam = country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
     }
-    const propertyIdentifiers = await this.propertyLocationRepository.getActivePropertiesByCountry(countryParam, lastEvaluatedKey);
+    const propertyIdentifiers = await this.propertyLocationRepository.getActivePropertiesByCountry(
+      countryParam,
+      lastEvaluatedKey
+    );
     const properties = await Promise.all(
-      propertyIdentifiers.identifiers.map(async (property) => await this.getCardPropertyAttributes(property)),
+      propertyIdentifiers.identifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
     return {
       properties: properties,
@@ -138,15 +140,13 @@ export class PropertyService {
 
   async getFullPropertiesByHostId(hostId) {
     const propertyIdentifiers = await this.propertyRepository.getPropertiesByHostId(hostId);
-    return await Promise.all(
-      propertyIdentifiers.map(async (property) => this.getFullPropertyAttributes(property)),
-    );
+    return await Promise.all(propertyIdentifiers.map(async (property) => this.getFullPropertyAttributes(property)));
   }
 
   async getActivePropertyCardsByHostId(hostId) {
     const propertyIdentifiers = await this.propertyRepository.getActivePropertiesByHostId(hostId);
     return await Promise.all(
-      propertyIdentifiers.map(async (property) => await this.getCardPropertyAttributes(property)),
+      propertyIdentifiers.map(async (property) => await this.getCardPropertyAttributes(property))
     );
   }
 
@@ -159,12 +159,13 @@ export class PropertyService {
   }
 
   async getCardPropertyAttributes(propertyId) {
-    const [basePropertyInfo, generalDetails, pricing, images, location] = await Promise.all([
+    const [basePropertyInfo, generalDetails, pricing, images, location, checkIn] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getGeneralDetails(propertyId),
       this.getPricing(propertyId),
       this.getImages(propertyId),
       this.getLocation(propertyId),
+      this.getCheckIn(propertyId),
     ]);
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
@@ -175,12 +176,24 @@ export class PropertyService {
       propertyPricing: pricing,
       propertyImages: images,
       propertyLocation: location,
+      propertyCheckIn: checkIn,
     };
   }
 
   async getFullPropertyAttributes(propertyId) {
-    const [basePropertyInfo, amenities, availability, availabilityRestrictions, checkIn, generalDetails,
-      images, location, pricing, rules, propertyType] = await Promise.all([
+    const [
+      basePropertyInfo,
+      amenities,
+      availability,
+      availabilityRestrictions,
+      checkIn,
+      generalDetails,
+      images,
+      location,
+      pricing,
+      rules,
+      propertyType,
+    ] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getAmenities(propertyId),
       this.getAvailability(propertyId),
@@ -193,19 +206,40 @@ export class PropertyService {
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
     ]);
-    const technicalDetails = propertyType.property_type === "Boat" || propertyType.property_type === "Camper" ?
-      await this.getTechnicalDetails(propertyId) : null;
+    const technicalDetails =
+      propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
+        ? await this.getTechnicalDetails(propertyId)
+        : null;
     return {
-      property: basePropertyInfo, amenities: amenities, availability: availability,
-      availabilityRestrictions: availabilityRestrictions, checkIn: checkIn,
-      generalDetails: generalDetails, images: images, location: location, pricing: pricing,
-      rules: rules, propertyType: propertyType, technicalDetails: technicalDetails,
+      property: basePropertyInfo,
+      amenities: amenities,
+      availability: availability,
+      availabilityRestrictions: availabilityRestrictions,
+      checkIn: checkIn,
+      generalDetails: generalDetails,
+      images: images,
+      location: location,
+      pricing: pricing,
+      rules: rules,
+      propertyType: propertyType,
+      technicalDetails: technicalDetails,
     };
   }
 
   async getFullPropertyAttributesWithFullLocation(propertyId) {
-    const [basePropertyInfo, amenities, availability, availabilityRestrictions, checkIn, generalDetails,
-      images, location, pricing, rules, propertyType] = await Promise.all([
+    const [
+      basePropertyInfo,
+      amenities,
+      availability,
+      availabilityRestrictions,
+      checkIn,
+      generalDetails,
+      images,
+      location,
+      pricing,
+      rules,
+      propertyType,
+    ] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getAmenities(propertyId),
       this.getAvailability(propertyId),
@@ -218,13 +252,23 @@ export class PropertyService {
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
     ]);
-    const technicalDetails = propertyType.property_type === "Boat" || propertyType.property_type === "Camper" ?
-      await this.getTechnicalDetails(propertyId) : null;
+    const technicalDetails =
+      propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
+        ? await this.getTechnicalDetails(propertyId)
+        : null;
     return {
-      property: basePropertyInfo, amenities: amenities, availability: availability,
-      availabilityRestrictions: availabilityRestrictions, checkIn: checkIn,
-      generalDetails: generalDetails, images: images, location: location, pricing: pricing,
-      rules: rules, propertyType: propertyType, technicalDetails: technicalDetails,
+      property: basePropertyInfo,
+      amenities: amenities,
+      availability: availability,
+      availabilityRestrictions: availabilityRestrictions,
+      checkIn: checkIn,
+      generalDetails: generalDetails,
+      images: images,
+      location: location,
+      pricing: pricing,
+      rules: rules,
+      propertyType: propertyType,
+      technicalDetails: technicalDetails,
     };
   }
 
