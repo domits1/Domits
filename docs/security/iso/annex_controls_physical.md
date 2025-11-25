@@ -13,8 +13,8 @@ The purpose of A.7 is to:
 These controls help safeguard the physical environment where information is stored, processed, or accessed. Completing this checklist ensures your organization meets ISO 27001 physical security requirements.
 
 ## Annex A Controls — Physical (A.7)
-- [ ] Physical entry controls implemented
-- [ ] Security of offices and secure areas
+- [x] Physical entry controls implemented
+- [x] Security of offices and secure areas
 - [ ] Visitor management procedure
 - [x] Equipment protection
 - [ ] Secure disposal of assets
