@@ -4,7 +4,7 @@ Confidentiality focuses on protecting sensitive information from unauthorized ac
 
 ## Requirements  
 - [ ] Data classification performed  
-- [ ] Encryption at rest  
-- [ ] Encryption in transit  
-- [ ] Restricted access to confidential data  
+- [x] Encryption at rest  
+- [x] Encryption in transit  
+- [x] Restricted access to confidential data  
 - [ ] Secure disposal processes  
