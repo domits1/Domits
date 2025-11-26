@@ -57,6 +57,10 @@
 //landing
 @use "pages/landingpage/landing.module";
 
+//hostdashboard
+@use "../../features/hostdashboard/Pages2.scss";
+@use "../../features/hostdashboard/hostfinance/styles/HostFinanceTab.scss";
+
 
 
 
@@ -67,6 +71,8 @@
 @use "features/guestdashboard/Pages";
 @use "features/guestdashboard/GuestBooking";
 @use "features/guestdashboard/mainDashboardGuest";
+@use "features/guestdashboard/GuestReviews";
+
 
 
 

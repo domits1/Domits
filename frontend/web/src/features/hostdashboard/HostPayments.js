@@ -1,163 +1,125 @@
-import React, { useState, useEffect } from 'react';
-import './HostReports.css';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import React, { useState, useEffect, useRef } from "react";
+import { Auth } from "aws-amplify";
+import { HostRevenueService } from "../hostdashboard/services/HostRevenueService.js";
+import ClipLoader from "react-spinners/ClipLoader";
+import RevenueOverview from "./HostRevenueCards/RevenueOverview.jsx";
+import MonthlyComparison from "./HostRevenueCards/MonthlyComparison.jsx";
+import OccupancyRateCard from "./HostRevenueCards/OccupancyRate.jsx";
+import RevPARCard from "./HostRevenueCards/RevPAR.jsx";
+import ADRCard from "./HostRevenueCards/ADRCard.jsx";
+import BookedNights from "./HostRevenueCards/BookedNights.jsx";
+import ALOSCard from "./HostRevenueCards/ALOSCard.jsx";
+import "./HostRevenueStyle.scss";
 
-function HostReports() {
-    const [revenueData, setRevenueData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selectedDates, setSelectedDates] = useState({
-        journalEntries: new Date(),
-        balanceSheets: new Date(),
-        incomeStatements: new Date(),
-        waterfallCharts: new Date(),
-        arAgeingReports: new Date(),
-    });
+const HostRevenues = () => {
+  const [cognitoUserId, setCognitoUserId] = useState(null);
+  const [monthlyRevenueData, setMonthlyRevenueData] = useState([]);
+  const [bookedNights, setBookedNights] = useState(0);
+  const [availableNights, setAvailableNights] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [propertyCount, setPropertyCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchRevenueData = async () => {
-            try {
-                const data = {
-                    available: [{ amount: 5000 }],
-                    pending: [{ amount: 3000 }],
-                };
-                const formattedData = {
-                    recognized_revenue: data.available[0].amount,
-                    deferred_revenue: data.pending[0].amount,
-                    waterfall: [
-                        { month: 'May 2023', total: 10000, recognized: 5000, remaining: 5000 },
-                        { month: 'Jun 2023', total: 15000, recognized: 7000, remaining: 8000 },
-                    ],
-                };
-                setRevenueData(formattedData);
-                setLoading(false);
-            } catch (error) {
-                setError(error.message);
-                setLoading(false);
-            }
-        };
+  const isMountedRef = useRef(false);
 
-        fetchRevenueData();
-    }, []);
-
-    const handleDateChange = (reportType, date) => {
-        setSelectedDates(prevDates => ({
-            ...prevDates,
-            [reportType]: date,
-        }));
+  useEffect(() => {
+    isMountedRef.current = true;
+    (async () => {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        setCognitoUserId(user.attributes.sub);
+      } catch (err) {
+        console.error("Auth error:", err);
+        setError("Authentication failed");
+      }
+    })();
+    return () => {
+      isMountedRef.current = false;
     };
+  }, []);
 
-    const handleExport = (reportType) => {
-        const month = selectedDates[reportType].toLocaleString('default', { month: 'long' });
-        const year = selectedDates[reportType].getFullYear();
-        alert(`Exporting ${reportType} data for ${month} ${year}`);
-    };
+  async function fetchAllData() {
+    if (!cognitoUserId) return;
+    setLoading(true);
+    setError(null);
 
+    try {
+     
+      await Auth.currentSession();
+
+      const [revenue, nights, available, properties, monthly] =
+        await Promise.all([
+          HostRevenueService.getRevenue(cognitoUserId),
+          HostRevenueService.getBookedNights(cognitoUserId),
+          HostRevenueService.getAvailableNights(cognitoUserId),
+          HostRevenueService.getPropertyCount(cognitoUserId),
+          HostRevenueService.getMonthlyComparison(cognitoUserId),
+        ]);
+
+      if (!isMountedRef.current) return;
+
+      setTotalRevenue(revenue);
+      setBookedNights(nights);
+      setAvailableNights(available);
+      setPropertyCount(properties);
+      setMonthlyRevenueData(monthly);
+    } catch (err) {
+      console.error("Error fetching revenue data:", err);
+      if (isMountedRef.current) setError("Failed to fetch revenue data");
+    } finally {
+      if (isMountedRef.current) setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+  if (!cognitoUserId || monthlyRevenueData.length > 0) return;
+  fetchAllData();
+}, [cognitoUserId]);
+
+  const occupancyRate =
+    availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
+
+  if (loading) {
     return (
-        <main className="page-body">
-            <div className="dashboard">
-                <div className="contentContainer">
-                    {loading && <p>Loading data...</p>}
-                    {error && <p>Error loading data: {error}</p>}
-                    {revenueData && (
-                        <div className="reportsSection">
-                            <h2>Reports</h2>
-                            <div className="overview">
-                                <h3>Revenue Overview</h3>
-                                <div className="chart">
-                                    <p>Recognized revenue and deferred revenue over time</p>
-                                </div>
-                                <div className="summary">
-                                    <h4>May Summary</h4>
-                                    <p>Recognized revenue: ${revenueData.recognized_revenue / 100}</p>
-                                    <p>Deferred revenue: ${revenueData.deferred_revenue / 100}</p>
-                                </div>
-                            </div>
-                            <div className="waterfall">
-                                <h3>Revenue Waterfall</h3>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Month</th>
-                                            <th>Total</th>
-                                            <th>Recognized</th>
-                                            <th>Remaining</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {revenueData.waterfall.map((row, index) => (
-                                            <tr key={index}>
-                                                <td>{row.month}</td>
-                                                <td>${row.total}</td>
-                                                <td>${row.recognized}</td>
-                                                <td>${row.remaining}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Debits and Credits Journal Entries</h4>
-                                <p>Export detailed journal entries for all debits and credits...</p>
-                                <DatePicker
-                                    selected={selectedDates.journalEntries}
-                                    onChange={(date) => handleDateChange('journalEntries', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('journalEntries')}>Export</button>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Balance Sheets</h4>
-                                <p>Get comprehensive balance sheets for your business...</p>
-                                <DatePicker
-                                    selected={selectedDates.balanceSheets}
-                                    onChange={(date) => handleDateChange('balanceSheets', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('balanceSheets')}>Export</button>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Income Statements</h4>
-                                <p>Generate detailed income statements...</p>
-                                <DatePicker
-                                    selected={selectedDates.incomeStatements}
-                                    onChange={(date) => handleDateChange('incomeStatements', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('incomeStatements')}>Export</button>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Revenue Waterfall Charts</h4>
-                                <p>Visualize your revenue with waterfall charts...</p>
-                                <DatePicker
-                                    selected={selectedDates.waterfallCharts}
-                                    onChange={(date) => handleDateChange('waterfallCharts', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('waterfallCharts')}>Export</button>
-                            </div>
-                            <div className="reportBox">
-                                <h4>Accounts Receivable Ageing Reports</h4>
-                                <p>Access ageing reports for accounts receivable...</p>
-                                <DatePicker
-                                    selected={selectedDates.arAgeingReports}
-                                    onChange={(date) => handleDateChange('arAgeingReports', date)}
-                                    dateFormat="MM/yyyy"
-                                    showMonthYearPicker
-                                />
-                                <button className="exportButton" onClick={() => handleExport('arAgeingReports')}>Export</button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </main>
+      <div className="hr-revenue-spinner-container">
+        <ClipLoader size={100} color="#3498db" />
+      </div>
     );
-}
+  }
 
-export default HostReports;
+  if (error) {
+    return <div style={{ color: "red" }}>{error}</div>;
+  }
+
+  return (
+    <main className="hr-page-body hr-container">
+      <h2>Yearly Report</h2>
+      <section className="hr-host-revenues">
+        <div className="hr-content">
+          <div className="hr-revenue-overview">
+            <RevenueOverview title="Total Revenue" value={`€${totalRevenue.toLocaleString()}`} />
+            <RevenueOverview title="Booked Nights" value={bookedNights} />
+            <RevenueOverview title="Available Nights" value={availableNights} />
+            <RevenueOverview title="Total Properties" value={propertyCount} />
+          </div>
+
+          <div className="hr-monthly-comparison">
+            <h3>Monthly Comparison</h3>
+            <MonthlyComparison data={monthlyRevenueData} />
+          </div>
+
+          <div className="hr-cards">
+            <OccupancyRateCard occupancyRate={occupancyRate.toFixed(2)} numberOfProperties={propertyCount} />
+            <ADRCard hostId={cognitoUserId} />
+            <RevPARCard />
+            <BookedNights nights={bookedNights} />
+            <ALOSCard />
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+};
+
+export default HostRevenues;

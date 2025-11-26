@@ -30,7 +30,7 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
                 {accoImage && (
                     <img src={accoImage} alt="Accommodation" className="contact-item-accommodation-image" />
                 )}
-                <img src={profileImage} alt="Profile" className="contact-item-profile-image" />
+                <img src={contact.profileImage || profileImage} alt="Profile" className="contact-item-profile-image" />
             </div>
 
             <div className="contact-item-text-container">
@@ -41,13 +41,16 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
                         {bookingStatus === "Accepted" && <p id='status'>Reservation approved</p>}
                         {bookingStatus === "Pending" && <p id='status'>Inquiry sent</p>}
                         {bookingStatus === "Failed" && <p id='status'>Reservation unsuccessful</p>}
-                        {contact.latestMessage?.text
-                            ? contact.latestMessage.text
-                            : contact.latestMessage?.fileUrls?.length === 1
-                                ? `(${contact.latestMessage?.fileUrls?.length}) Image`
-                                : contact.latestMessage?.fileUrls?.length > 1
-                                    ? `(${contact.latestMessage?.fileUrls?.length}) Images`
-                                    : "No message history yet"}
+                        {(() => {
+                            const last = contact.latestMessage;
+                            if (!last) return "No message history yet";
+                            const isFromMe = last.userId === userId;
+                            const preview = (last.fileUrls && last.fileUrls.length > 0)
+                                ? "attachment sent"
+                                : (last.text || "").trim();
+                            const namePrefix = isFromMe ? "me" : (contact.givenName || "them");
+                            return `${namePrefix}: ${preview || ""}`.trim();
+                        })()}
                     </p>
                 )}
 

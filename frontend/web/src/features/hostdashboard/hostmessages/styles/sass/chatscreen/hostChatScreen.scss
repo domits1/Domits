@@ -1,32 +1,58 @@
+$color-white: #fff;
+$color-black: #000;
+$color-text-dark: #333;
+$color-text-muted: #666;
+$color-placeholder: #64748b;
+$color-grey: grey;
+$color-image-bg: #222;
+$color-border-focus: #bbb;
+$color-border-muted: rgb(150, 150, 150);
+$color-border-mid: #ccc;
+$color-border-light: #eee;
+$color-border-surface: #e3e3e3;
+$color-panel-bg: #fafafa;
+$color-button-bg: #f3f3f3;
+$color-button-hover: #e5e5e5;
+$color-message-received: rgb(196, 230, 197);
+$color-message-sent: rgb(91, 126, 158);
+$color-textarea-bg: #f9fbfd;
+$color-accent-dark: #2f3a4a;
+$color-charpill-bg: #f0f4f8;
+$color-alert: #dc3545;
+$color-disabled-bg: #edf1f6;
+$color-disabled-border: #b8c4d6;
+$color-disabled-text: #7b8698;
+
 .host-chat,
 .guest-chat {
     display: flex;
     flex-direction: row;
+    width: 100%;
+    height: 88vh;
 
-    .chat-screen-container {
-        background-color: #fff;
+        .chat-screen-container {
+        background-color: $color-white;
         display: flex;
         flex-direction: column;
-        width: 100%;
-        min-width: 40rem;
-        max-width: 40rem;
-        height: 85vh;
+        flex: 1;
+        min-width: 0;
+        height: 88vh;
         justify-content: start;
-        border-left: 0.05rem rgb(150, 150, 150) solid;
-        border-right: 0.05rem rgb(150, 150, 150) solid;
+        border-left: 0.01rem $color-border-muted solid;
+        border-right: 0.1rem $color-border-muted solid;
 
         .chat-header {
             display: flex;
             width: 100%;
             margin: 0 auto;
             margin-top: 1rem;
-            border-bottom: 0.05rem solid rgb(150, 150, 150);
+            border-bottom: 0.05rem solid $color-border-muted;
 
             .back-to-contacts-button {
                 background: none;
                 border: none;
                 font-size: 1rem;
-                color: #333;
+                color: $color-text-dark;
                 cursor: pointer;
                 margin-left: 1rem;
             }
@@ -40,33 +66,66 @@
                 margin-bottom: 1rem;
             }
 
-            .chat-header-info {
-                margin-left: 0.5rem;
-
-                p {
-                    margin: 0;
-                    font-size: 0.7rem;
-                    font-weight: 500;
-
-                    display: flex;
-                    align-items: center;
-                }
-
-            }
-
             h3 {
                 font-size: medium;
                 font-weight: 500;
                 margin: 0;
                 padding: 0;
             }
+            .chat-header-info {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin-left: 0.5rem;
+                flex: 1;
+
+                p {
+                    margin: 0;
+                    font-size: 0.7rem;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .chat-message-search {
+                    border: 1px solid $color-border-mid;
+                    background: $color-white;
+                    border-radius: 6px;
+                    padding: 6px 10px;
+                    min-width: 180px;
+                    font-size: 0.9rem;
+                }
+            }
+
+            .chat-header-actions {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding-right: 1rem;
+
+                .test-messages-button {
+                    border: 1px solid $color-border-mid;
+                    border: 1px solid $color-border-mid;
+                    background: $color-button-bg;
+                    border-radius: 6px;
+                    padding: 6px 10px;
+                    cursor: pointer;
+
+                    &:hover {
+                        background: $color-button-hover;
+                    }
+                }
+            }
         }
 
         .chat-screen {
             display: flex;
-            flex-direction: column-reverse;
-            height: 100%;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
+            padding-bottom: 1rem; 
 
             .chat-message.received {
                 margin-bottom: 1rem;
@@ -81,8 +140,8 @@
                 }
 
                 .message-content {
-                    background-color: rgb(196, 230, 197);
-                    color: black;
+                    background-color: $color-message-received;
+                    color: $color-black;
                     display: inline-block;
                     border-radius: 1rem;
                     padding: 0.3rem 1.25rem;
@@ -109,8 +168,8 @@
                 }
 
                 .message-content {
-                    background-color: rgb(91, 126, 158);
-                    color: black;
+                    background-color: $color-message-sent;
+                    color: $color-black;
                     display: inline-block;
                     border-radius: 1rem;
                     padding: 0.3rem 1.25rem;
@@ -141,9 +200,9 @@
 
                 .message-content {
                     display: inline-block;
-                    background-color: rgb(91, 126, 158);
+                    background-color: $color-message-sent;
 
-                    color: black;
+                    color: $color-black;
                     border-radius: 1rem;
                     padding: 0.3rem 1.25rem;
                     text-align: right;
@@ -174,8 +233,8 @@
 
                 .message-content {
                     display: inline-block;
-                    background-color: rgb(196, 230, 197);
-                    color: black;
+                    background-color: $color-message-received;
+                    color: $color-black;
                     border-radius: 1rem;
                     padding: 0.3rem 1.25rem;
                     text-align: right;
@@ -191,87 +250,304 @@
 
         }
 
+        /* Bar that shows selected uploads above the input */
+        .upload-preview-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            width: 100%;
+            overflow-x: auto;
+            background: $color-white;
+            border-top: 1px solid $color-border-light;
+            border-bottom: 1px solid $color-border-light;
+        }
+
+        .upload-thumb {
+            position: relative;
+            flex: 0 0 auto;
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba($color-black,0.15);
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+
+            .remove-thumb {
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                border: none;
+                background: rgba($color-black,0.5);
+                color: $color-white;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+        }
+
         .chat-input {
             display: flex;
             justify-self: flex-end;
             flex-direction: row;
-            justify-content: space-around;
             align-items: center;
+            gap: 0.75rem;
             width: 100%;
-            height: 10.5%;
+            padding: 0.75rem 1rem;
+            height: auto;
             position: relative;
+            border-top: 1px solid $color-border-light;
+            background: $color-panel-bg;
+
+            .attachment-area {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .inline-upload-preview {
+                position: relative;
+                border: none;
+                padding: 0;
+                background: transparent;
+                cursor: pointer;
+                width: 44px;
+                height: 44px;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 1px 3px rgba($color-black,0.15);
+
+                img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block;
+                }
+
+                .more-badge {
+                    position: absolute;
+                    right: 4px;
+                    bottom: 4px;
+                    font-size: 11px;
+                    line-height: 1;
+                    padding: 3px 6px;
+                    color: $color-white;
+                    background: rgba($color-black,0.65);
+                    border-radius: 999px;
+                }
+            }
 
             .add-attachment {
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 height: 100%;
-                width: 10%;
+                width: auto;
 
                 .add-file-button {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    height: 60%;
-                    width: 60%;
-                    font-size: 1.25rem;
+                    height: 36px;
+                    width: 36px;
+                    font-size: 1.25rem; /* size of + */
                     border-radius: 0.3rem;
-                    background-color: white;
-                    color: black;
-                    border: solid black 1px;
+                    background-color: $color-white;
+                    color: $color-black;
+                    border: solid $color-black 1px;
                     cursor: pointer;
                     box-shadow: -2px 3px 5px rgba(0, 0, 0, 0.2);
 
                     &:hover {
-                        color: grey;
-                        border: grey solid 1px;
+                        color: $color-grey;
+                        border: $color-grey solid 1px;
                     }
                 }
 
             }
 
+            .message-input-wrapper {
+                position: relative;
+                flex: 1;
+                max-width: 720px; /* reduce overall width */
+                margin: 0 auto 0 0; /* anchor left */
+                overflow: visible;
+            }
+
+            .char-limit-indicator {
+                position: absolute;
+                right: -160px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 11px;
+                line-height: 1;
+                color: $color-text-muted;
+                padding: 4px 10px;
+                border-radius: 999px;
+                background: $color-charpill-bg;
+                white-space: nowrap;
+                user-select: none;
+                pointer-events: none;
+                box-shadow: 0 2px 4px rgba($color-black, 0.08);
+            }
+
+            .char-limit-indicator.over {
+                color: $color-alert;
+                background: rgba($color-alert, 0.18);
+                font-weight: 600;
+                box-shadow: 0 2px 6px rgba($color-alert, 0.35);
+            }
+
             .message-input-textarea {
-                background-color: rgb(217, 217, 217);
-                height: 30%;
-                width: 80%;
+                background-color: $color-textarea-bg;
+                min-height: 34px;
+                max-height: 88px;
+                width: 100%;
                 resize: none;
-                border-radius: 1rem;
-                border-color: black;
-                padding: 0.5rem 2.5rem 0.5rem 1rem;
+                border-radius: 999px;
+                border: 2px solid $color-accent-dark;
+                padding: 8px 56px 8px 18px;
                 overflow-y: auto;
+                transition: box-shadow 0.2s ease, border-color 0.2s ease;
+                text-align: left;
+                font-size: 15px;
 
                 &::placeholder {
-                    color: black;
-                    font-weight: 600;
+                    color: $color-placeholder;
+                    font-weight: 500;
                     opacity: 1;
                 }
 
                 &::-webkit-scrollbar {
                     display: none;
                 }
+
+                &:focus {
+                    outline: none;
+                    border-color: $color-border-focus;
+                    box-shadow: 0 2px 6px rgba($color-black, 0.08);
+                }
             }
 
             .message-input-send-button {
                 position: absolute;
-                background: none;
-                border: none;
-                right: 1rem;
+                background: $color-textarea-bg;
+                border: 2px solid $color-accent-dark;
+                right: -62px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: $color-accent-dark;
+                width: 40px;
+                height: 40px;
+                border-radius: 999px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
 
                 &:hover {
-                    color: grey;
+                    background: $color-accent-dark;
+                    color: $color-white;
                 }
 
+                &:disabled {
+                    opacity: 0.5;
+                    background: $color-disabled-bg;
+                    border-color: $color-disabled-border;
+                    color: $color-disabled-text;
+                    cursor: not-allowed;
+                }
+            }
+
+        }
+
+            .preview-popover {
+            position: absolute;
+            left: 1rem;
+            bottom: 4.5rem;
+            width: min(520px, 90vw);
+            max-height: 60vh;
+            background: $color-white;
+            border: 1px solid $color-border-surface;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+
+            .preview-popover-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 12px;
+                border-bottom: 1px solid $color-border-light;
+
+                .close-popover {
+                    border: none;
+                    background: transparent;
+                    cursor: pointer;
+                    color: $color-text-muted;
+                }
+            }
+
+            .preview-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                gap: 10px;
+                padding: 12px;
+                overflow: auto;
+            }
+
+            .preview-item {
+                position: relative;
+                width: 100%;
+                aspect-ratio: 1 / 1;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 1px 3px rgba($color-black,0.15);
+
+                img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .remove-thumb {
+                    position: absolute;
+                    top: 6px;
+                    right: 6px;
+                    border: none;
+                    background: rgba($color-black,0.55);
+                    color: $color-white;
+                    width: 22px;
+                    height: 22px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                }
             }
         }
 
         .sender-name {
             font-size: 0.9rem;
-            color: grey;
+            color: $color-grey;
         }
 
         .message-time {
             font-size: 0.9rem;
-            color: grey;
+            color: $color-grey;
         }
 
         .message-attachments {
@@ -292,7 +568,7 @@
         }
 
         .message-image {
-            background-color: #222;
+            background-color: $color-image-bg;
             width: 100%;
             max-width: 200px;
             aspect-ratio: 1 / 1;
@@ -325,13 +601,13 @@
 
 
         @media (max-width: 875px) {
-            min-width: 28rem;
+            min-width: 0;
             min-height: 30rem;
             max-height: 30rem;
         }
 
         @media (max-width: 600px) {
-            width: 70%;
+            width: 100%;
         }
     }
 

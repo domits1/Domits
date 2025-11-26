@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import EventIcon from "@mui/icons-material/Event";
@@ -8,6 +8,7 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import BooleanToString from "./services/booleanToString.js";
 import { getAccessToken } from "../../services/getAccessToken.js";
 import spinner from "../../images/spinnner.gif";
+import { usePagination } from "./hooks/usePagination.js";
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -16,6 +17,9 @@ const HostReservations = () => {
   const [bookings, setBooking] = useState(null);
   const [sortedBookings, setSortedBookings] = useState(null);
   const authToken = getAccessToken();
+  const itemsPerPage = 10;
+  const { currentPage, totalPages, paginatedItems, pageRange, goToPage, goToNextPage, goToPreviousPage } =
+    usePagination(sortedBookings || [], itemsPerPage);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -26,14 +30,15 @@ const HostReservations = () => {
           setUserHasReservations(false);
         } else {
           setBooking(bookings);
-          setSortedBookings(  );
+          setSortedBookings();
           setUserHasReservations(true);
           sortBookings(null, bookings);
         }
-       } catch (error) {
-        console.error("Fetch Error:", error);
-        if (error.message.includes("Failed to fetch")) {
-        }
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+        toast.error(
+          "Something unexpected happened. You possibly don't have any reservations. Please refresh the page to try again."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -47,15 +52,19 @@ const HostReservations = () => {
       setSortedBookings([]);
       return;
     }
-    
-    let bookingArray = [];  
+
+    let bookingArray = [];
+
     bookings.forEach((property) => {
-      property.items.forEach((item) => {
+      const reservations = Array.isArray(property.res?.response) ? property.res.response : [];
+
+      reservations.forEach((item) => {
         bookingArray.push({
-            ...item,
-            title: property.title,
-            rate: property.rate
-        })
+          title: property.title,
+          rate: property.rate,
+          id: property.id,
+          ...item,
+        });
       });
     });
     if (type === null) {
@@ -63,7 +72,16 @@ const HostReservations = () => {
     } else {
       setSortedBookings(bookingArray.filter((booking) => booking.status === type));
     }
+    goToPage(1);
   };
+
+  const shouldShowPagination = userHasReservations && sortedBookings && sortedBookings.length > 0;
+
+  const pageNumbers = useMemo(() => {
+    if (!shouldShowPagination) return [];
+    const count = pageRange.endPage - pageRange.startPage + 1;
+    return Array.from({ length: count }, (_, i) => pageRange.startPage + i);
+  }, [shouldShowPagination, pageRange]);
 
   return (
     <main className="page-body">
@@ -84,7 +102,8 @@ const HostReservations = () => {
               <div className={styles.reservationButtons}>
                 <button onClick={() => sortBookings(null, bookings)}>All</button>
                 <button onClick={() => sortBookings("Paid", bookings)}>Paid</button>
-                <button onClick={() => sortBookings("Cancelled", bookings)}>Cancelled</button>
+                <button onClick={() => sortBookings("Awaiting Payment", bookings)}>Awaiting Payment</button>
+                <button onClick={() => sortBookings("Failed", bookings)}>Failed</button>
               </div>
               <section className={styles.reservationData}>
                 <table className={styles.reservationTable}>
@@ -141,19 +160,19 @@ const HostReservations = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {userHasReservations && sortedBookings && sortedBookings.length > 0 ? (
-                      sortedBookings.map((booking) => (
+                    {shouldShowPagination ? (
+                      paginatedItems.map((booking) => (
                         <tr key={booking.id}>
                           <td className={styles.singleReservationRow}>{booking.id}</td>
                           <td className={styles.singleReservationRow}>{booking.title}</td>
                           <td className={styles.singleReservationRow}>
-                            {new Date(booking.arrivalDate).toLocaleDateString()} -{" "}
-                            {new Date(booking.departureDate).toLocaleDateString()}
+                            {new Date(booking.arrivaldate).toLocaleDateString()} -{" "}
+                            {new Date(booking.departuredate).toLocaleDateString()}
                           </td>
                           <td className={styles.singleReservationRow}>
-                            {new Date(booking.createdAt).toLocaleDateString()}
+                            {new Date(booking.createdat).toLocaleDateString()}
                           </td>
-                          <td className={styles.singleReservationRow}>{booking.guestId}</td>
+                          <td className={styles.singleReservationRow}>{booking.guestname}</td>
                           <td className={styles.singleReservationRow}>€{booking.rate}</td>
                           <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
                           <td className={styles.singleReservationRow}>{booking.status}</td>
@@ -161,12 +180,41 @@ const HostReservations = () => {
                       ))
                     ) : (
                       <tr>
-                        <td className={styles.noData} colSpan={8}>You currently have no reservations for your accommodation(s). Refresh the page to try again.</td>
+                        <td className={styles.noData} colSpan={8}>
+                          You currently have no reservations for your accommodation(s). Refresh the page to try again.
+                        </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
               </section>
+              {shouldShowPagination && (
+                <div className={styles.paginationControls}>
+                  <button
+                    className={styles.paginationButton}
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    aria-label="Previous page">
+                    Previous
+                  </button>
+                  {pageNumbers.map((pageIndex) => (
+                    <button
+                      key={pageIndex}
+                      className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ""}`}
+                      onClick={() => goToPage(pageIndex)}
+                      aria-label={`Go to page ${pageIndex}`}>
+                      {pageIndex}
+                    </button>
+                  ))}
+                  <button
+                    className={styles.paginationButton}
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    aria-label="Next page">
+                    Next
+                  </button>
+                </div>
+              )}
             </section>
           </section>
         </>
