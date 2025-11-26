@@ -6,7 +6,7 @@ import "dotenv/config";
 
 export class PaymentsService {
   constructor() {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY_TEST);
     this.repository = new Repository();
     this.authManager = new AuthManager();    
   }
