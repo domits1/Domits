@@ -3,8 +3,8 @@ Communication and Information ensures that important security and operational in
 
 
 ## Requirements 
-- [ ] Policies accessible to employees  
-- [ ] Security expectations communicated  
+- [x] Policies accessible to employees  
+- [x] Security expectations communicated  
 - [ ] Incident or risk reporting channels  
-- [ ] Communication of system or process changes  
+- [x] Communication of system or process changes  
 - [ ] Accurate external communication processes  
