@@ -3,8 +3,8 @@ Security is the foundational SOC 2 criterion and applies to every audit. It ensu
 
 
 ## Requirements 
-- [ ] Authentication and authorization controls  
+- [x] Authentication and authorization controls  
 - [ ] Least privilege enforced  
-- [ ] Network protections (firewalls, segmentation)  
-- [ ] Monitoring for suspicious activity  
+- [x] Network protections (firewalls, segmentation)  
+- [x] Monitoring for suspicious activity  
 - [ ] Security policies documented and maintained  
