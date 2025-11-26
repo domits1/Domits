@@ -3,8 +3,8 @@ System Operations focuses on ensuring that systems are managed securely, reliabl
 
 
 ## Requirements
-- [ ] Logging and monitoring of system activity  
-- [ ] Vulnerability scanning  
+- [x] Logging and monitoring of system activity  
+- [x] Vulnerability scanning  
 - [ ] Patch management in place  
-- [ ] Incident detection and response  
+- [x] Incident detection and response  
 - [ ] Performance and availability monitoring  
