@@ -125,9 +125,9 @@ const RevPARCard = () => {
 
       const revparVal = parseFloat(summary.revPAR) || 0;
 
-      setTotalRevenue(Number(totalRev) || 0);
+      setTotalRevenue((totalRev) || 0);
       setAvailableNights(Number(available) || 0);
-      setRevPAR(Number(revparVal) || 0);
+      setRevPAR((revparVal) || 0);
 
       const chart = await fetchComparisonData(cognitoUserId);
       setChartData(chart);
