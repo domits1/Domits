@@ -14,8 +14,8 @@ These controls help minimize risks caused by human error, negligence, or misuse.
 
 
 # Annex A Controls — People (A.6)
-- [ ] Background checks completed
-- [ ] Confidentiality agreements signed
+- [x] Background checks completed
+- [x] Confidentiality agreements signed
 - [ ] Security awareness training provided
 - [ ] Disciplinary process defined
 - [ ] Onboarding/offboarding process in place
