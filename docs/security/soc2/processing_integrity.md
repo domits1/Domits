@@ -6,5 +6,5 @@ Processing Integrity ensures that systems process data accurately, completely, a
 - [ ] Input validation and error handling  
 - [ ] Quality assurance procedures  
 - [ ] Monitoring for processing failures  
-- [ ] Authorization for data changes  
-- [ ] Logging of processing activities  
+- [x] Authorization for data changes  
+- [x] Logging of processing activities  
