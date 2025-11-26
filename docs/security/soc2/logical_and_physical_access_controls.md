@@ -3,8 +3,8 @@ Logical and Physical Access Controls ensure that only authorized individuals can
 
 
 ## Requirements
-- [ ] Role-based access control (RBAC)  
+- [x] Role-based access control (RBAC)  
 - [ ] Multi-factor authentication (MFA)  
 - [ ] Endpoint and device protection  
-- [ ] Physical access controls enforced  
+- [x] Physical access controls enforced  
 - [ ] Regular access reviews  
