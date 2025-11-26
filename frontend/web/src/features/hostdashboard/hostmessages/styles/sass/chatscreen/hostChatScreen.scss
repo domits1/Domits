@@ -127,34 +127,7 @@ $color-disabled-text: #7b8698;
             overflow-y: auto;
             padding-bottom: 1rem; 
 
-            .chat-message.received {
-                margin-bottom: 1rem;
-                margin-left: 1.25rem;
-
-                .message-header {
-                    display: flex;
-                    flex-direction: row;
-                    margin-bottom: 0.25rem;
-                    gap: 0.5rem;
-                    align-items: center;
-                }
-
-                .message-content {
-                    background-color: $color-message-received;
-                    color: $color-black;
-                    display: inline-block;
-                    border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
-                    margin-right: auto;
-                    max-width: 70%;
-                    word-wrap: break-word;
-                }
-
-                .message-attachments {
-                    justify-content: flex-start;
-                }
-            }
-
+            .chat-message.received,
             .guest-chat-message.received {
                 margin-bottom: 1rem;
                 margin-left: 1.25rem;
@@ -183,39 +156,7 @@ $color-disabled-text: #7b8698;
                 }
             }
 
-            .chat-message.sent {
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-end;
-                margin-bottom: 1rem;
-                margin-right: 1.25rem;
-
-                .message-header {
-                    display: flex;
-                    flex-direction: row-reverse;
-                    margin-bottom: 0.5rem;
-                    gap: 0.5rem;
-                    align-items: center;
-                }
-
-                .message-content {
-                    display: inline-block;
-                    background-color: $color-message-sent;
-
-                    color: $color-black;
-                    border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
-                    text-align: right;
-                    margin-left: auto;
-                    max-width: 70%;
-                    word-wrap: break-word;
-                }
-
-                .message-attachments {
-                    justify-content: flex-end;
-                }
-            }
-
+            .chat-message.sent,
             .guest-chat-message.sent {
                 display: flex;
                 flex-direction: column;
