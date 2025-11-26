@@ -43,7 +43,8 @@ export const HostRevenueService = {
 
   async getRevenue(hostId) {
     const data = await this.fetchMetricData(hostId, "revenue");
-    return Number(data?.revenue?.totalRevenue ?? 0);
+    console.log("Revenue Data:", data?.revenue?.totalRevenue);
+    return data.revenue.totalRevenue ?? 0;
   },
 
   async getBookedNights(hostId) {

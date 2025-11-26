@@ -45,20 +45,19 @@ const HostRevenues = () => {
     setError(null);
 
     try {
-     
       await Auth.currentSession();
 
-      const [revenue, nights, available, properties, monthly] =
-        await Promise.all([
-          HostRevenueService.getRevenue(cognitoUserId),
-          HostRevenueService.getBookedNights(cognitoUserId),
-          HostRevenueService.getAvailableNights(cognitoUserId),
-          HostRevenueService.getPropertyCount(cognitoUserId),
-          HostRevenueService.getMonthlyComparison(cognitoUserId),
-        ]);
+      const [revenue, nights, available, properties, monthly] = await Promise.all([
+        HostRevenueService.getRevenue(cognitoUserId),
+        HostRevenueService.getBookedNights(cognitoUserId),
+        HostRevenueService.getAvailableNights(cognitoUserId),
+        HostRevenueService.getPropertyCount(cognitoUserId),
+        HostRevenueService.getMonthlyComparison(cognitoUserId),
+      ]);
 
       if (!isMountedRef.current) return;
-
+      const test = HostRevenueService.getRevenue(cognitoUserId)
+      console.log("Fetched Data:", test);
       setTotalRevenue(revenue);
       setBookedNights(nights);
       setAvailableNights(available);
@@ -73,12 +72,11 @@ const HostRevenues = () => {
   }
 
   useEffect(() => {
-  if (!cognitoUserId || monthlyRevenueData.length > 0) return;
-  fetchAllData();
-}, [cognitoUserId]);
+    if (!cognitoUserId || monthlyRevenueData.length > 0) return;
+    fetchAllData();
+  }, [cognitoUserId]);
 
-  const occupancyRate =
-    availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
+  const occupancyRate = availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
 
   if (loading) {
     return (

@@ -41,7 +41,7 @@ export const ADRCardService = {
       }
 
       if (metric === "revenue") {
-        results.totalRevenue = Number(data?.revenue?.totalRevenue ?? 0);
+        results.totalRevenue = data?.revenue?.totalRevenue ?? 0;
       }
 
       if (metric === "bookedNights") {
@@ -62,3 +62,4 @@ export const ADRCardService = {
     return results;
   },
 };
+

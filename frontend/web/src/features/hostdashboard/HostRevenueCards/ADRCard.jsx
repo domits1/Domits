@@ -11,6 +11,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  
   Legend,
 } from "recharts";
 import "./ADRCard.scss";
@@ -27,6 +28,7 @@ const ADRCard = () => {
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
 
   useEffect(() => {
     const fetchUser = async () => {
