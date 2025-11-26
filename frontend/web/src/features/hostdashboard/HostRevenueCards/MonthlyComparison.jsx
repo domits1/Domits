@@ -61,7 +61,7 @@ const MonthlyComparison = () => {
         const revparPromises = shortMonths.map((_, i) => {
           const { start, end } = getMonthRange(year, i);
           return RevPARService.fetchMetric(hostId, "revenuePerAvailableRoom", "custom", start, end).then((data) => {
-            const value = typeof data === "number" ? data : Number(data?.revenuePerAvailableRoom ?? data?.value ?? 0);
+            const value = typeof data === "number" ? data : data?.revenuePerAvailableRoom ?? data?.value ?? 0
             return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
           });
         });
