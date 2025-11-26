@@ -159,13 +159,12 @@ export class PropertyService {
   }
 
   async getCardPropertyAttributes(propertyId) {
-    const [basePropertyInfo, generalDetails, pricing, images, location, checkIn] = await Promise.all([
+    const [basePropertyInfo, generalDetails, pricing, images, location] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getGeneralDetails(propertyId),
       this.getPricing(propertyId),
       this.getImages(propertyId),
       this.getLocation(propertyId),
-      this.getCheckIn(propertyId),
     ]);
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
@@ -176,7 +175,6 @@ export class PropertyService {
       propertyPricing: pricing,
       propertyImages: images,
       propertyLocation: location,
-      propertyCheckIn: checkIn,
     };
   }
 
