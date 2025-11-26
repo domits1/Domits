@@ -44,11 +44,12 @@ export class PaymentsService {
       const hostReceives = customerPaid - platformFeeGross;
       totalRevenue += hostReceives;
     }
-    return {
-      totalRevenue: (totalRevenue / 100).toLocaleString("de-DE", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
+   return {
+  totalRevenue: totalRevenue / 100,  
+  formattedTotalRevenue: (totalRevenue / 100).toLocaleString("de-DE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }),
     };
   }
 }
