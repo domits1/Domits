@@ -3,8 +3,8 @@ The Control Environment establishes the foundation for an organization’s commi
 
 
 ## Requirements 
-- [ ] Defined roles and responsibilities  
+- [x] Defined roles and responsibilities  
 - [ ] Management oversight of security  
 - [ ] Code of conduct and ethics policy  
 - [ ] Job descriptions include security duties  
-- [ ] Background checks performed  
+- [x] Background checks performed  
