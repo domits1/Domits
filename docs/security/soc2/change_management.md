@@ -5,6 +5,6 @@ Change Management ensures that all modifications to systems, applications, and i
 ## Requirements 
 - [ ] Formal change request workflow  
 - [ ] Testing in non-production environments  
-- [ ] Code reviews and approvals  
+- [x] Code reviews and approvals  
 - [ ] Version control in use  
 - [ ] Documentation of all changes 
