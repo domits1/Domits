@@ -49,11 +49,12 @@ Table of Contents
     - [General Introduction](#general-introduction)
     - [Github Introduction](#github-introduction)
     - [Programming Introduction](#programming-introduction)
+    - [Backend Introduction](#backend-introduction)
     - [Web/App Setup](#webapp-setup)
     - [Other subjects to understand](#other-subjects-to-understand)
   - [Core modules and APIs](#core-modules-and-apis)
   - [Code Conventions](#code-conventions)
-  - [Recommended Docs](#recommended-docs)
+  - [Documentation Overview](#documentation-overview)
   - [Contribution guidelines](#contribution-guidelines)
 
 
@@ -164,7 +165,8 @@ Everything in Domits revolves around Issues. Each Issue belongs to a Milestone w
 * [Issues](https://github.com/domits1/Domits/issues)
 * [Milestones](https://github.com/domits1/Domits/milestones)
 * [Pull Requests](https://github.com/domits1/Domits/pulls)
-
+* [Sprints](https://github.com/domits1/Domits/wiki/Domits-Sprints)
+  
 > [!tip]
 > When you start coding, make a branch from Acceptance. Don't make commits while being on Acceptance, you will most likely lose code.
 > When you're done, submit a Pull Request (PR) to merge your work. Fill in the template and check everything before asking for a reviewer.
@@ -183,6 +185,8 @@ Get familar with code conventions to write clean code. Become aware of our serve
 * Become familiar with our [Code Conventions](https://github.com/domits1/Domits/wiki/Code-conventions) to maintain a consistent and readable codebase.
 * Understand the code pipeline (CI/CD)
 
+### Backend Introduction
+* [Backend Setup](./docs/internal/onboarding/backend_setup.md) The createlambda function will create a template lambda for you. Familiarize yourself with the structure [here](./docs/internal/tools/backend_development_flow.md) before starting to code.
 
 ### Web/App Setup
 Get Domits running locally for development.
@@ -284,7 +288,10 @@ Key modules powering Domits:
 * [Clean Code: Reference Guide](./docs/internal/standards/clean_code_reference_guide.md) - Helps you write maintainable, readable and efficient code
 * [Code Conventions](./docs/internal/standards/code_conventions.md) - Helps you maintain a consistent and readable codebase in Domits.
 * [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
-## Recommended Docs
+
+## Documentation Overview
+// TODO: add important documentation, add explanation about internal/public/partner api's and service folder
+
 Docs recommended to take a look at.
 
 * [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
