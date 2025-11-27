@@ -215,7 +215,7 @@ export default function HostFinanceTab() {
                           }}
                           data-label="Incoming"
                           data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
-                          data-desc="Funds from bookings that are not yet fully received"
+                          data-desc="Yet to be received funds from bookings that are still within the pending period"
                         />
                       </div>
 
