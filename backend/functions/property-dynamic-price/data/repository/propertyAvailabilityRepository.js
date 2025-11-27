@@ -1,9 +1,7 @@
 import { AvailabilityMapping } from "../../util/mapping/availability.js";
 import Database from "database";
 import {Property_Availability} from "database/models/Property_Availability";
-
 export class PropertyAvailabilityRepository {
-
     constructor(systemManager) {
         this.systemManager = systemManager
     }
@@ -18,7 +16,6 @@ export class PropertyAvailabilityRepository {
             .getOne()
         return result ? result : null;
     }
-
     async getAvailabilityByPropertyId(id) {
         const client = await Database.getInstance();
         const result = await client
@@ -28,7 +25,6 @@ export class PropertyAvailabilityRepository {
             .getMany();
         return result ? result.map(item => AvailabilityMapping.mapDatabaseEntryToAvailability(item)) : null;
     }
-
     async create(availability) {
         const client = await Database.getInstance();
         await client
@@ -44,7 +40,6 @@ export class PropertyAvailabilityRepository {
         const result = await this.getAvailabilityByPropertyIdAndStartDate(availability.property_id, availability.availableStartDate);
         return result ? result: null;
     }
-
     async deleteByPropertyId(propertyId) {
         const client = await Database.getInstance();
         await client
@@ -55,7 +50,6 @@ export class PropertyAvailabilityRepository {
             .execute();
         return true;
     }
-
     async createBlocked(data) {
         const client = await Database.getInstance();
         await client
@@ -71,7 +65,6 @@ export class PropertyAvailabilityRepository {
             .execute();
         return true;
     }
-
     async createMaintenance(data) {
         const client = await Database.getInstance();
         await client

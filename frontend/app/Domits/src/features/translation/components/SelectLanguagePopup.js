@@ -14,14 +14,11 @@ import {NativeModules} from 'react-native';
 import React, {useState} from 'react';
 import TranslatedText from './TranslatedText';
 import LoadingScreen from "../../../screens/loadingscreen/screens/LoadingScreen";
-
 const {EncryptedSharedPreferences} = NativeModules;
-
 const SelectLanguagePopup = ({isVisible, setIsVisible}) => {
   const {i18n} = useTranslation();
   const languages = LanguageInfo;
   const [loading, setLoading] = useState(false);
-
   return (
     <Modal
       animationType={'none'}
@@ -80,7 +77,6 @@ const SelectLanguagePopup = ({isVisible, setIsVisible}) => {
     </Modal>
   );
 };
-
 const style = StyleSheet.create({
   loaderContainer: {
     flex: 1,
@@ -93,7 +89,6 @@ const style = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   modal: {
     width: '80%',
     backgroundColor: 'white',
@@ -106,14 +101,12 @@ const style = StyleSheet.create({
     shadowRadius: 5,
     elevation: 6,
   },
-
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
-
   title: {
     fontSize: 18,
     fontWeight: '600',

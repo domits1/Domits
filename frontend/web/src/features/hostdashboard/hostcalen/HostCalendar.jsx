@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import "./HostCalendar.scss";
-
 import Toolbar from "./components/Toolbar";
 import Legend from "./components/Legend";
 import CalendarGrid from "./components/CalendarGrid";
@@ -20,7 +19,6 @@ const initialBlocks = {
   maintenance: new Set(),
 };
 const initialPrices = {};
-
 export default function HostCalendar() {
   const [view, setView] = useState("month");
   const [cursor, setCursor] = useState(startOfMonthUTC(new Date()));
@@ -305,7 +303,6 @@ export default function HostCalendar() {
 
     setVisuallySelectedDates(new Set());
   };
-
   const handleMaintenance = () => {
     if (visuallySelectedDates.size === 0) {
       showToast("Please select dates first by clicking on them (they will turn green)", 'warning');
@@ -314,7 +311,6 @@ export default function HostCalendar() {
 
     setShowMaintenanceModal(true);
   };
-
   const handleSaveMaintenanceWithNote = (note) => {
     if (visuallySelectedDates.size === 0) {
       return;
