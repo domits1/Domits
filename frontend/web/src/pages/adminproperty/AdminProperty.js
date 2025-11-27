@@ -5,6 +5,7 @@ import { PropertyBuilder } from "../../features/hostonboarding/stores/propertyBu
 import { submitAccommodation } from "../../features/hostonboarding/services/SubmitAccommodation";
 import { useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
+import allFields from "./store/AllAdminPropertyFields";
 
 export default function AdminProperty() {
   const navigate = useNavigate();
@@ -47,6 +48,8 @@ export default function AdminProperty() {
     Room: "Room",
     "Shared Room": "Shared room",
   };
+
+  const requiredFields = allFields;
 
   const validateField = (name, value) => {
     switch (name) {
@@ -148,18 +151,6 @@ export default function AdminProperty() {
 
   const validateForm = (formData) => {
     const newErrors = {};
-
-    const requiredFields = [
-      "spaceType",
-      "homeName",
-      "street",
-      "houseNumber",
-      "postalCode",
-      "city",
-      "country",
-      "description",
-      "rate",
-    ];
 
     requiredFields.forEach((field) => {
       const value = formData.get(field)?.toString()?.trim();
