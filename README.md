@@ -286,6 +286,29 @@ Key modules powering Domits:
 * [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
 
 ## Documentation Overview
+
+Domits has documentation, those which are essential for understanding. As of now, we have 3 key folders to pay attention to:
+```
+* internal/ - Internal documentation for Devs at Domits (you most likely be spending your time here most of the time)
+  * apis/ - All documentation for our Lambda API's goes here. Including is a fancy template.
+  * architecture/ - Our system architecture belongs here.
+  * changelog/ - Any changelog in the docs goes here.
+  * data/ - 
+  * infra/
+  * onboarding/
+  * qa/
+  * security/
+  * services/
+  * standards/
+  * tools/
+* partner/
+  * API/
+  * intregrations/
+* public/
+  * overview/
+````
+
+
 // TODO: add important documentation, add explanation about internal/public/partner api's and service folder
 
 * [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
