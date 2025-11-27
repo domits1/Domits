@@ -33,4 +33,7 @@ const EventsAndTriggers = ({ events = {}, onToggle }) => {
 export default EventsAndTriggers;
 
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
