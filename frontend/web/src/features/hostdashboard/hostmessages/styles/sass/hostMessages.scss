@@ -1,6 +1,6 @@
 .page-body {
     width: 100%;
-    height: 93vh;
+    height: 100vh; // Use full viewport height to show all messages
     display: flex;
     flex-direction: column;
 }
@@ -9,7 +9,7 @@
     display: flex;
     flex-direction: row;
     width: 100%;
-    height: 93vh;
+    height: 100vh; // Use full viewport height to show all messages
 
     .guest-contact-panel {
         width: 100%;
@@ -30,6 +30,18 @@
         overflow: hidden;
         background: #f8f8f8;
         position: relative;
+    }
+
+    // Ensure booking tab overlay doesn't block input
+    .host-booking-tab-overlay,
+    .guest-booking-tab-overlay {
+        position: relative;
+        z-index: 0; // Below chat input area
+        pointer-events: auto; // Allow interactions with booking tab
+        
+        &:empty {
+            display: none;
+        }
     }
 
     .ContactsBack-button {

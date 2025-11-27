@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useContext } from 'react';
+import { useEffect, useState, useRef, useContext, useMemo } from 'react';
 
 import useFetchMessages from '../../features/hostdashboard/hostmessages/hooks/useFetchMessages';
 import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
@@ -31,6 +31,13 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
     const addedMessageIds = useRef(new Set());
     const chatContainerRef = useRef(null);
     const [forceStopLoading, setForceStopLoading] = useState(false);
+
+    // Reset new message input when contact changes
+    useEffect(() => {
+        setNewMessage('');
+        setUploadedFileUrls([]);
+        setShowPreviewPopover(false);
+    }, [contactId]);
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
@@ -179,16 +186,19 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
         }
     };
 
-    if (!contactId) return null;
-
-    const visibleMessages = messageSearch
-        ? messages.filter((m) => {
+    // Memoize filtered messages to avoid recalculating on every render
+    // Must be called before conditional return to follow Rules of Hooks
+    const visibleMessages = useMemo(() => {
+        if (!messageSearch) return messages;
+        const term = messageSearch.toLowerCase();
+        return messages.filter((m) => {
             const text = (m.text || '').toLowerCase();
             const urls = (m.fileUrls || []).join(' ').toLowerCase();
-            const term = messageSearch.toLowerCase();
             return text.includes(term) || urls.includes(term);
-        })
-        : messages;
+        });
+    }, [messages, messageSearch]);
+
+    if (!contactId) return null;
     return (
         <div className={`${dashboardType}-chat`}>
             <div className="chat-screen-container">

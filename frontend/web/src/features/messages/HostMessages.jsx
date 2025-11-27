@@ -12,14 +12,33 @@ const HostMessagesInner = () => {
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [selectedContactName, setSelectedContactName] = useState(null);
   const [selectedContactAvatar, setSelectedContactAvatar] = useState(null);
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-  const isMobile = screenWidth < 768;
-  const isTablet = screenWidth >= 768 && screenWidth < 1440;
+  // Only track breakpoint categories, not exact width to avoid re-renders on zoom
+  const getBreakpoint = (width) => {
+    if (width < 768) return 'mobile';
+    if (width >= 768 && width < 1440) return 'tablet';
+    return 'desktop';
+  };
+  
+  const [breakpoint, setBreakpoint] = useState(getBreakpoint(window.innerWidth));
+  const isMobile = breakpoint === 'mobile';
+  const isTablet = breakpoint === 'tablet';
 
   useEffect(() => {
-    const handleResize = () => setScreenWidth(window.innerWidth);
+    let timeoutId;
+    const handleResize = () => {
+      // Debounce to reduce frequency of checks
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const newBreakpoint = getBreakpoint(window.innerWidth);
+        // Only update state if breakpoint category actually changed
+        setBreakpoint(prev => prev !== newBreakpoint ? newBreakpoint : prev);
+      }, 150);
+    };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   const handleContactClick = (contactId, contactName, profileImage) => {
@@ -68,12 +87,14 @@ const HostMessagesInner = () => {
         )}
         {showChatScreen && (
           <div className={`host-booking-tab-overlay`}>
-            <BookingTab
-              userId={userId}
-              contactId={selectedContactId}
-              contactName={selectedContactName}
-              dashboardType={'host'}
-            />
+            {!selectedContactId?.toString().startsWith('test-') && (
+              <BookingTab
+                userId={userId}
+                contactId={selectedContactId}
+                contactName={selectedContactName}
+                dashboardType={'host'}
+              />
+            )}
           </div>
         )}
       </div>

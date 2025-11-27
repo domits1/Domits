@@ -27,26 +27,37 @@ $color-disabled-text: #7b8698;
 .guest-chat {
     display: flex;
     flex-direction: row;
+    flex: 1;
     width: 100%;
-    height: 88vh;
+    max-width: 100%;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden; /* Ensure main container doesn't overflow */
 
-        .chat-screen-container {
+    .chat-screen-container {
         background-color: $color-white;
         display: flex;
         flex-direction: column;
         flex: 1;
+        width: 100%;
         min-width: 0;
-        height: 88vh;
+        min-height: 0;
+        height: 100%;
         justify-content: start;
         border-left: 0.01rem $color-border-muted solid;
         border-right: 0.1rem $color-border-muted solid;
+        overflow: hidden; /* Contain children */
 
         .chat-header {
             display: flex;
             width: 100%;
             margin: 0 auto;
-            margin-top: 1rem;
+            padding: 1rem 0; /* Replaced margin-top with padding */
             border-bottom: 0.05rem solid $color-border-muted;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            
+            /* ... rest of header styles ... */
 
             .back-to-contacts-button {
                 background: none;
@@ -106,7 +117,6 @@ $color-disabled-text: #7b8698;
 
                 .test-messages-button {
                     border: 1px solid $color-border-mid;
-                    border: 1px solid $color-border-mid;
                     background: $color-button-bg;
                     border-radius: 6px;
                     padding: 6px 10px;
@@ -123,13 +133,21 @@ $color-disabled-text: #7b8698;
             display: flex;
             flex-direction: column;
             flex: 1;
+            width: 100%;
             min-height: 0;
             overflow-y: auto;
-            padding-bottom: 1rem; 
+            overflow-x: hidden;
+            padding: 1rem; /* Add padding for content */
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+
+            /* Ensure all content is visible */
+            max-height: none; 
 
             .chat-message.received {
                 margin-bottom: 1rem;
-                margin-left: 1.25rem;
+                /* margin-left: 1.25rem;  Removed fixed left margin to rely on padding */
+                max-width: 100%; /* Ensure it doesn't overflow container */
 
                 .message-header {
                     display: flex;
@@ -144,10 +162,11 @@ $color-disabled-text: #7b8698;
                     color: $color-black;
                     display: inline-block;
                     border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
+                    padding: 0.5rem 1rem; /* Adjusted padding */
                     margin-right: auto;
-                    max-width: 70%;
+                    max-width: 85%; /* Increased from 70% for better use of space on small screens */
                     word-wrap: break-word;
+                    word-break: break-word; /* Ensure long words break */
                 }
 
                 .message-attachments {
@@ -157,7 +176,7 @@ $color-disabled-text: #7b8698;
 
             .guest-chat-message.received {
                 margin-bottom: 1rem;
-                margin-left: 1.25rem;
+                max-width: 100%;
 
                 .message-header {
                     display: flex;
@@ -172,10 +191,11 @@ $color-disabled-text: #7b8698;
                     color: $color-black;
                     display: inline-block;
                     border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
+                    padding: 0.5rem 1rem;
                     margin-right: auto;
-                    max-width: 70%;
+                    max-width: 85%;
                     word-wrap: break-word;
+                    word-break: break-word;
                 }
 
                 .message-attachments {
@@ -188,7 +208,8 @@ $color-disabled-text: #7b8698;
                 flex-direction: column;
                 justify-content: flex-end;
                 margin-bottom: 1rem;
-                margin-right: 1.25rem;
+                /* margin-right: 1.25rem; Removed fixed right margin */
+                max-width: 100%;
 
                 .message-header {
                     display: flex;
@@ -201,14 +222,14 @@ $color-disabled-text: #7b8698;
                 .message-content {
                     display: inline-block;
                     background-color: $color-message-sent;
-
                     color: $color-black;
                     border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
-                    text-align: right;
+                    padding: 0.5rem 1rem;
+                    text-align: left; /* Usually better for reading multi-line */
                     margin-left: auto;
-                    max-width: 70%;
+                    max-width: 85%;
                     word-wrap: break-word;
+                    word-break: break-word;
                 }
 
                 .message-attachments {
@@ -221,7 +242,8 @@ $color-disabled-text: #7b8698;
                 flex-direction: column;
                 justify-content: flex-end;
                 margin-bottom: 1rem;
-                margin-right: 1.25rem;
+                /* margin-right: 1.25rem; */
+                max-width: 100%;
 
                 .message-header {
                     display: flex;
@@ -236,11 +258,12 @@ $color-disabled-text: #7b8698;
                     background-color: $color-message-received;
                     color: $color-black;
                     border-radius: 1rem;
-                    padding: 0.3rem 1.25rem;
-                    text-align: right;
+                    padding: 0.5rem 1rem;
+                    text-align: left;
                     margin-left: auto;
-                    max-width: 70%;
+                    max-width: 85%;
                     word-wrap: break-word;
+                    word-break: break-word;
                 }
 
                 .message-attachments {
@@ -261,6 +284,7 @@ $color-disabled-text: #7b8698;
             background: $color-white;
             border-top: 1px solid $color-border-light;
             border-bottom: 1px solid $color-border-light;
+            flex-shrink: 0;
         }
 
         .upload-thumb {
@@ -308,11 +332,17 @@ $color-disabled-text: #7b8698;
             position: relative;
             border-top: 1px solid $color-border-light;
             background: $color-panel-bg;
+            flex-shrink: 0;
+            z-index: 1; // Ensure input area is above other elements
+            box-sizing: border-box; /* Ensure padding doesn't cause overflow */
 
             .attachment-area {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
+                position: relative;
+                z-index: 1; // Above background but below input
+                pointer-events: auto; // Allow interactions with attachment buttons
             }
 
             .inline-upload-preview {
@@ -382,6 +412,7 @@ $color-disabled-text: #7b8698;
                 max-width: 720px; /* reduce overall width */
                 margin: 0 auto 0 0; /* anchor left */
                 overflow: visible;
+                z-index: 2; // Ensure wrapper is above other elements
             }
 
             .char-limit-indicator {
@@ -421,6 +452,9 @@ $color-disabled-text: #7b8698;
                 transition: box-shadow 0.2s ease, border-color 0.2s ease;
                 text-align: left;
                 font-size: 15px;
+                position: relative;
+                z-index: 2; // Ensure textarea is above other elements
+                pointer-events: auto; // Explicitly allow pointer events
 
                 &::placeholder {
                     color: $color-placeholder;
@@ -454,6 +488,8 @@ $color-disabled-text: #7b8698;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
+                z-index: 3; // Ensure button is above textarea
+                pointer-events: auto; // Explicitly allow pointer events
 
                 &:hover {
                     background: $color-accent-dark;
@@ -481,9 +517,10 @@ $color-disabled-text: #7b8698;
             border: 1px solid $color-border-surface;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            z-index: 10;
+            z-index: 5; // Lower than input area to prevent blocking
             display: flex;
             flex-direction: column;
+            pointer-events: auto; // Allow interactions with popover
 
             .preview-popover-header {
                 display: flex;
@@ -560,22 +597,24 @@ $color-disabled-text: #7b8698;
 
         .message-video {
             max-width: 100%;
-            max-height: 200px;
+            max-height: 400px; // Increased to show more of the video
             border-radius: 8px;
-            object-fit: cover;
-            aspect-ratio: 1 / 1;
+            object-fit: contain; // Show full video instead of cropping
+            width: auto;
+            height: auto;
 
         }
 
         .message-image {
             background-color: $color-image-bg;
-            width: 100%;
-            max-width: 200px;
-            aspect-ratio: 1 / 1;
+            max-width: min(100%, 400px); // Increased from 200px to show larger images, but respect container width
+            max-height: 500px; // Allow taller images
             border-radius: 8px;
-            object-fit: cover;
+            object-fit: contain; // Show full image instead of cropping
             flex-shrink: 0;
             display: block;
+            width: auto;
+            height: auto;
         }
 
         .image-modal {
@@ -602,8 +641,8 @@ $color-disabled-text: #7b8698;
 
         @media (max-width: 875px) {
             min-width: 0;
-            min-height: 30rem;
-            max-height: 30rem;
+            min-height: auto; // Allow natural height
+            max-height: none; // Remove height restriction on mobile
         }
 
         @media (max-width: 600px) {

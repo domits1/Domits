@@ -14,16 +14,31 @@ const GuestMessagesInner = () => {
   const { userId } = useAuth();
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [selectedContactName, setSelectedContactName] = useState(null);
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+  // Only track breakpoint categories, not exact width to avoid re-renders on zoom
+  const getBreakpoint = (width) => width < 768 ? 'mobile' : 'desktop';
+  
+  const [breakpoint, setBreakpoint] = useState(getBreakpoint(window.innerWidth));
   const [testMessages, setTestMessages] = useState([]);
   const [latestContactListMessage, setLatestContactListMessage] = useState(null);
   const [selectedContactAvatar, setSelectedContactAvatar] = useState(null);
-  const isMobile = screenWidth < 768; // Max mobile screen width
+  const isMobile = breakpoint === 'mobile';
 
   useEffect(() => {
-    const handleResize = () => setScreenWidth(window.innerWidth);
+    let timeoutId;
+    const handleResize = () => {
+      // Debounce to reduce frequency of checks
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const newBreakpoint = getBreakpoint(window.innerWidth);
+        // Only update state if breakpoint category actually changed
+        setBreakpoint(prev => prev !== newBreakpoint ? newBreakpoint : prev);
+      }, 150);
+    };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   const handleContactClick = (contactId, contactName, profileImage) => {

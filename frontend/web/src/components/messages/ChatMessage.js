@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import Icon from '@mdi/react';
 import {
     mdiPartyPopper,
@@ -9,7 +9,7 @@ import {
     mdiRobotOutline 
 } from '@mdi/js';
 
-const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
+const ChatMessage = memo(({ message, userId, contactName, dashboardType }) => {
     const { userId: senderId, text, createdAt, isRead, isSent, fileUrls, isAutomated, messageType } = message;
     const variant = dashboardType;
 
@@ -90,6 +90,8 @@ const ChatMessage = ({ message, userId, contactName, dashboardType }) => {
             )}
         </div>
     );
-};
+});
+
+ChatMessage.displayName = 'ChatMessage';
 
 export default ChatMessage;
