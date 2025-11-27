@@ -336,13 +336,6 @@ export default function AdminProperty() {
       try {
         const payload = builder.build ? builder.build() : builder;
         const sizeBytes = new Blob([JSON.stringify(payload)]).size;
-        console.log(
-          "Payload size (bytes):",
-          sizeBytes,
-          "≈",
-          (sizeBytes / 1024 / 1024).toFixed(2),
-          "MB"
-        );
       } catch {}
 
       await submitAccommodation(navigate, builder);
