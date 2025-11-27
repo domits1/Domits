@@ -77,16 +77,12 @@ Table of Contents
   - test/ # Lambda tests (Jest)
 
 - docs/ # Documentation folder
-  - backend/ 
   - debugging/ # Issue template for debugging
-  - frontend/
-  - onboarding/app # Android/IOS onboarding setup documentation
-  - private-API # API Documentation for Developers
-  - public # Documentation for extern developers/partners (Channel Management)
-    - public_API # Public API documentation for people outside Domits
-    - public_overview # Public over
+  - images/ # Image save location for doc images
+  - internal/ # Our internal developer documentation for every dev at Domits.
+  - partner/ # Partner related documentation for partners with Domits (part of channel management)
+  - public # Documentation for extern developers/partners
   - security # Security related documentation
-  - templates # Templates to follow writing documentation
 
 - frontend/ # React/React-Natve Frontend Files
   - app/ # Domits App Development files (React Native)
@@ -291,8 +287,6 @@ Key modules powering Domits:
 
 ## Documentation Overview
 // TODO: add important documentation, add explanation about internal/public/partner api's and service folder
-
-Docs recommended to take a look at.
 
 * [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
 
