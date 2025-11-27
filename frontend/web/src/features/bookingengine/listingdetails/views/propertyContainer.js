@@ -8,7 +8,7 @@ import Description from "../components/description";
 import RulesContainer from "./rulesContainer";
 import RangeCalendar from "./RangeCalendar";
 
-const PropertyContainer = ({ property }) => {
+const PropertyContainer = ({ property, onDateChange }) => {
   return (
     <div className="property-container">
       <ImageGallery images={property.images} />
@@ -18,7 +18,10 @@ const PropertyContainer = ({ property }) => {
       <hr />
       <AmenitiesContainer amenityIds={property.amenities} />
       <hr />
-      <RangeCalendar />
+      <RangeCalendar
+        propertyId={property?.property?.id}
+        onChange={onDateChange}
+      />
        <hr />
       <RulesContainer rules={property.rules} checkIn={property.checkIn} />
     </div>

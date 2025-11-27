@@ -15,7 +15,7 @@ import AddIcon from "@mui/icons-material/Add";
 const NAV = [
   { key: "ListProperty", label: "List your property", icon: <AddIcon />,            to: "/hostonboarding" },
   { key: "Dashboard",    label: "Dashboard",         icon: <DashboardIcon />,       to: "." },
-  { key: "Calendar",     label: "Calendar",          icon: <CalendarIcon />,        to: "calendar" },
+  { key: "Calendar",     label: "Price Calendar",    icon: <CalendarIcon />,        to: "calendar" },
   { key: "Reservations", label: "Reservations",      icon: <EventIcon />,           to: "reservations" },
   { key: "Messages",     label: "Messages",          icon: <MessageIcon />,         to: "messages" },
   { key: "Revenues",     label: "Revenues",          icon: <ShowChartIcon />,       to: "revenues" },

@@ -248,12 +248,56 @@
     background-color: #ff6666;
   }
   
+  .calendar .price {
+    font-size: 0.75rem;
+    color: #22c55e;
+    font-weight: 600;
+    margin-top: 0.25rem;
+  }
+
+  .applySection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .dateRange {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .applyButton {
+    background: #5469d4;
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .applyButton:hover {
+    background: #4158c4;
+  }
+
+  .applyButton:active {
+    transform: scale(0.98);
+  }
+
   /* Media query to hide one calendar on mobile view */
   @media (max-width: 600px) {
     .calendarContent .calendar:nth-child(2) {
       display: none;
     }
-  
+
     .calendar {
       width: 100%;
       max-width: 300px;

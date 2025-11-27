@@ -11,6 +11,7 @@ const ALOSCard = ({ hostId }) => {
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [cognitoUserId, setCognitoUserId] = useState(null);
 
   const fetchALOS = async () => {
     if (!hostId) return;
@@ -52,6 +53,43 @@ const ALOSCard = ({ hostId }) => {
     fetchALOS();
   }, [filterType, startDate, endDate, hostId]);
 
+  const fetchALOS = async () => {
+    if (!cognitoUserId) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await HostRevenueService.fetchMetricData(
+        cognitoUserId,
+        "averageLengthOfStay",
+        filterType,
+        startDate,
+        endDate
+      );
+
+      let value = 0;
+      if (typeof data === "number") value = data;
+      else if (data?.averageLengthOfStay?.averageLengthOfStay != null)
+        value = Number(data.averageLengthOfStay.averageLengthOfStay);
+      else if (data?.averageLengthOfStay != null) value = Number(data.averageLengthOfStay);
+      else if (data?.value != null) value = Number(data.value);
+
+      setAlos(Number(value.toFixed(2)));
+    } catch (err) {
+      console.error("Error fetching ALOS:", err);
+      setError(err.message || "Failed to fetch ALOS");
+      setAlos(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (cognitoUserId && (filterType !== "custom" || (startDate && endDate))) {
+      fetchALOS();
+    }
+  }, [cognitoUserId, filterType, startDate, endDate]);
+
   return (
     <div className="alos-card-container">
       <div className="alos-card card-base">
@@ -89,6 +127,18 @@ const ALOSCard = ({ hostId }) => {
             </LineChart>
           </ResponsiveContainer>
         )}
+
+        <div className="adr-details">
+          {loading ? (
+            <p>Loading...</p>
+          ) : error ? (
+            <p>Error: {error}</p>
+          ) : (
+            <p>
+              <strong>{alos}</strong> nights
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

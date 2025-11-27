@@ -10,23 +10,34 @@ export default function CalendarGrid({
   prices,
   onToggle,
   onDragSelect,
+  bookingsByDate,
+  onSelectionChange,
 }) {
-  // basic drag select (desktop)
-  const dragging = useRef(false);
-  const [range, setRange] = useState(new Set());
+  // Local selection state - purely for visual feedback
+  const [selectedDates, setSelectedDates] = useState(new Set());
 
-  const handleMouseDown = (key) => {
-    dragging.current = true;
-    setRange(new Set([key]));
-  };
-  const handleEnter = (key) => {
-    if (!dragging.current) return;
-    setRange((prev) => new Set(prev).add(key));
-  };
-  const handleUp = () => {
-    if (dragging.current && range.size) onDragSelect([...range]);
-    dragging.current = false;
-    setRange(new Set());
+  const handleClick = (key, state) => {
+    // Don't allow clicking booked dates
+    if (state === 'booked') {
+      return;
+    }
+
+    // Toggle local selection state ONLY for visual feedback
+    setSelectedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+
+      // Notify parent of selection change
+      if (onSelectionChange) {
+        onSelectionChange(next);
+      }
+
+      return next;
+    });
   };
 
   if (view !== "month") {
@@ -38,7 +49,7 @@ export default function CalendarGrid({
   }
 
   return (
-    <div className="hc-calendar" onMouseLeave={handleUp} onMouseUp={handleUp}>
+    <div className="hc-calendar">
       <div className="hc-grid-head">
         {dayNames.map((d) => (
           <div key={d} className="hc-grid-head-cell">{d}</div>
@@ -51,7 +62,7 @@ export default function CalendarGrid({
             {week.map((date) => {
               const key = toKey(date);
               const inMonth = isSameMonthUTC(date, cursor);
-              const isDrag = range.has(key);
+              const isSelected = selectedDates.has(key);
 
               const state =
                 selections.booked.has(key) ? "booked" :
@@ -62,10 +73,13 @@ export default function CalendarGrid({
               return (
                 <div
                   key={key}
-                  className={cx("hc-cell", !inMonth && "muted", state, isDrag && "dragging")}
-                  onMouseDown={() => handleMouseDown(key)}
-                  onMouseEnter={() => handleEnter(key)}
-                  onClick={() => onToggle(state === "available" ? "blocked" : "available", key)}
+                  className={cx(
+                    "hc-cell",
+                    !inMonth && "muted",
+                    state,
+                    isSelected && "selected"
+                  )}
+                  onClick={() => handleClick(key, state)}
                 >
                   <div className="hc-cell-top">
                     <span className="hc-date">{date.getUTCDate()}</span>

@@ -217,6 +217,33 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                             Test messages
                         </button>
                     </div>
+                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', paddingRight: '1rem' }}>
+                        <input
+                            type="text"
+                            value={messageSearch}
+                            onChange={(e) => setMessageSearch(e.target.value)}
+                            placeholder="Search messages"
+                            style={{
+                                border: '1px solid #ccc',
+                                background: '#fff',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                minWidth: '180px'
+                            }}
+                        />
+                        <button
+                            onClick={handleSendAutomatedTestMessages}
+                            style={{
+                                border: '1px solid #ccc',
+                                background: '#f3f3f3',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Test messages
+                        </button>
+                    </div>
                 </div>
 
                 <div className="chat-screen" ref={chatContainerRef}>

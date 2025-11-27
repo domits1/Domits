@@ -97,6 +97,7 @@ const MessagesContent = ({ dashboardType }) => {
                                 contactName={selectedContactName}
                                 contactImage={selectedContactImage}
                                 onBack={isTablet ? handleBackToContacts : null}
+                                onClose={handleCloseChat}
                                 dashboardType={dashboardType}
 
                             />

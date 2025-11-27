@@ -1,0 +1,26 @@
+{
+  "name": "property-dynamic-price",
+  "version": "1.0.0",
+  "description": "Lambda function for managing dynamic pricing and calendar availability",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "pricing",
+    "calendar"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "database": "file:../../ORM"
+  },
+  "devDependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
+}

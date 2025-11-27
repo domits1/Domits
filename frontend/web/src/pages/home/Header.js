@@ -150,7 +150,7 @@ function Header({ setSearchResults, setLoading }) {
                     <div className="helloUsername">Hello {username}!</div>
                     <button onClick={navigateToHostDashboard} className="dropdownLoginButton">Dashboard</button>
                     <button onClick={() => navigate('/hostdashboard/calendar')}
-                        className="dropdownLoginButton">Calendar
+                        className="dropdownLoginButton">Price Calendar
                     </button>
                     <button onClick={() => navigate('/hostdashboard/reservations')}
                         className="dropdownLoginButton">Reservations

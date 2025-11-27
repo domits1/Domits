@@ -110,6 +110,14 @@ $text-muted:#6b7280;
           background:rgba(0,0,0,.03);
           border-left-color:var(--primary-color);
         }
+      }
+
+      
+      .guest-rec-preview {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 12px;
 
         &:active{transform:translateY(1px);}
       }

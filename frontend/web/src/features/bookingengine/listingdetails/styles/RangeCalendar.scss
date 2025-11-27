@@ -96,9 +96,11 @@
 .rc-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 40px;
   padding: 16px 20px 8px;
 }
+
+
 
 /* Month block */
 .rc-month__label {
@@ -172,10 +174,27 @@
   }
 
   /* Date number */
-  span {
+  .rc-day-number {
     position: relative;
     z-index: 1;
     font-weight: 600;
+    display: block;
+  }
+
+  /* Price display */
+  .rc-day-price {
+    position: relative;
+    z-index: 1;
+    font-size: 10px;
+    font-weight: 500;
+    color: #22c55e;
+    display: block;
+    margin-top: 2px;
+  }
+
+  &.is-start .rc-day-price,
+  &.is-end .rc-day-price {
+    color: #fff;
   }
 }
 
