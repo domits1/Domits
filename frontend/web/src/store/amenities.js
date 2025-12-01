@@ -1,4 +1,6 @@
+// amenities.js — Optie A (exact jouw volgorde)
 import React from "react";
+import IconWrapper from "./iconWrapper";
 
 import ToysIcon from "@mui/icons-material/Toys";
 import WifiIcon from "@mui/icons-material/Wifi";
@@ -67,119 +69,121 @@ import HotTubIcon from "@mui/icons-material/HotTub";
 import GrassIcon from "@mui/icons-material/Grass";
 import DirectionsBikeIcon from "@mui/icons-material/DirectionsBike";
 
+const wrap = (icon) => <IconWrapper>{icon}</IconWrapper>;
+
 const amenities = [
   // Accessibility
-  {category: "Accessibility", amenity: "Accessible-height bed", id: "63", icon: <AccessibleIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Accessibility", amenity: "Accessible-height toilet", id: "64", icon: <AccessibleIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Accessibility", amenity: "Wide doorways", id: "62", icon: <DoorSlidingIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Accessibility", amenity: "Step-free access", id: "61", icon: <AccessibleIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Accessibility", amenity: "Shower chair", id: "65", icon: <BathtubIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "Accessibility", amenity: "Accessible-height bed", id: "63", icon: wrap(<AccessibleIcon />) },
+  { category: "Accessibility", amenity: "Accessible-height toilet", id: "64", icon: wrap(<AccessibleIcon />) },
+  { category: "Accessibility", amenity: "Wide doorways", id: "62", icon: wrap(<DoorSlidingIcon />) },
+  { category: "Accessibility", amenity: "Step-free access", id: "61", icon: wrap(<AccessibleIcon />) },
+  { category: "Accessibility", amenity: "Shower chair", id: "65", icon: wrap(<BathtubIcon />) },
 
   // Bathroom
-  {category: "Bathroom", amenity: "Shower gel", id: "24", icon: <SoapIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Bathroom", amenity: "First aid kit", id: "27", icon: <MedicalServicesIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Bathroom", amenity: "Hair dryer", id: "23", icon: <AirIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Bathroom", amenity: "Body lotion", id: "26", icon: <SoapIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Bathroom", amenity: "Conditioner", id: "25", icon: <SoapIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "Bathroom", amenity: "Shower gel", id: "24", icon: wrap(<SoapIcon />) },
+  { category: "Bathroom", amenity: "First aid kit", id: "27", icon: wrap(<MedicalServicesIcon />) },
+  { category: "Bathroom", amenity: "Hair dryer", id: "23", icon: wrap(<AirIcon />) },
+  { category: "Bathroom", amenity: "Body lotion", id: "26", icon: wrap(<SoapIcon />) },
+  { category: "Bathroom", amenity: "Conditioner", id: "25", icon: wrap(<SoapIcon />) },
 
   // Bedroom
-  {category: "Bedroom", amenity: "Alarm clock", id: "31", icon: <AccessAlarmIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Bedroom", amenity: "Hangers", id: "28", icon: <CheckroomIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Bedroom", amenity: "Closet/drawers", id: "30", icon: <CheckroomIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Bedroom", amenity: "Iron and ironing board", id: "29", icon: <IronIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "Bedroom", amenity: "Alarm clock", id: "31", icon: wrap(<AccessAlarmIcon />) },
+  { category: "Bedroom", amenity: "Hangers", id: "28", icon: wrap(<CheckroomIcon />) },
+  { category: "Bedroom", amenity: "Closet/drawers", id: "30", icon: wrap(<CheckroomIcon />) },
+  { category: "Bedroom", amenity: "Iron and ironing board", id: "29", icon: wrap(<IronIcon />) },
 
   // Convenience
-  {category: "Convenience", amenity: "Parking space", id: "59", icon: <LocalParkingIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Convenience", amenity: "EV charger", id: "60", icon: <EvStationIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Convenience", amenity: "Luggage drop-off allowed", id: "58", icon: <LuggageIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Convenience", amenity: "Keyless entry", id: "55", icon: <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Convenience", amenity: "Self-check-in", id: "56", icon: <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Convenience", amenity: "Local maps and guides", id: "57", icon: <MapIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "Convenience", amenity: "Parking space", id: "59", icon: wrap(<LocalParkingIcon />) },
+  { category: "Convenience", amenity: "EV charger", id: "60", icon: wrap(<EvStationIcon />) },
+  { category: "Convenience", amenity: "Luggage drop-off allowed", id: "58", icon: wrap(<LuggageIcon />) },
+  { category: "Convenience", amenity: "Keyless entry", id: "55", icon: wrap(<CheckCircleIcon />) },
+  { category: "Convenience", amenity: "Self-check-in", id: "56", icon: wrap(<CheckCircleIcon />) },
+  { category: "Convenience", amenity: "Local maps and guides", id: "57", icon: wrap(<MapIcon />) },
 
   // EcoFriendly
-  {category: "EcoFriendly", amenity: "Energy-efficient appliances", id: "75", icon: <EnergySavingsLeafIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "EcoFriendly", amenity: "Solar panels", id: "76", icon: <SolarPowerIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "EcoFriendly", amenity: "Composting bin", id: "77", icon: <DeleteIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "EcoFriendly", amenity: "Recycling bins", id: "74", icon: <RecyclingIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "EcoFriendly", amenity: "Energy-efficient appliances", id: "75", icon: wrap(<EnergySavingsLeafIcon />) },
+  { category: "EcoFriendly", amenity: "Solar panels", id: "76", icon: wrap(<SolarPowerIcon />) },
+  { category: "EcoFriendly", amenity: "Composting bin", id: "77", icon: wrap(<DeleteIcon />) },
+  { category: "EcoFriendly", amenity: "Recycling bins", id: "74", icon: wrap(<RecyclingIcon />) },
 
   // Essentials
-  {category: "Essentials", amenity: "Air conditioning", id: "2", icon: <AcUnitIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Essentials", amenity: "Toilet paper", id: "8", icon: <WcIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Essentials", amenity: "Soap and shampoo", id: "9", icon: <SoapIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Essentials", amenity: "Wi-Fi", id: "1", icon: <WifiIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Essentials", amenity: "Bed linens", id: "6", icon: <BedIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Essentials", amenity: "Hot water", id: "5", icon: <WhatshotIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Essentials", amenity: "TV with cable/satellite", id: "4", icon: <TvIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Essentials", amenity: "Extra pillows and blankets", id: "7", icon: <BedIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Essentials", amenity: "Heating", id: "3", icon: <HvacIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "Essentials", amenity: "Air conditioning", id: "2", icon: wrap(<AcUnitIcon />) },
+  { category: "Essentials", amenity: "Toilet paper", id: "8", icon: wrap(<WcIcon />) },
+  { category: "Essentials", amenity: "Soap and shampoo", id: "9", icon: wrap(<SoapIcon />) },
+  { category: "Essentials", amenity: "Wi-Fi", id: "1", icon: wrap(<WifiIcon />) },
+  { category: "Essentials", amenity: "Bed linens", id: "6", icon: wrap(<BedIcon />) },
+  { category: "Essentials", amenity: "Hot water", id: "5", icon: wrap(<WhatshotIcon />) },
+  { category: "Essentials", amenity: "TV with cable/satellite", id: "4", icon: wrap(<TvIcon />) },
+  { category: "Essentials", amenity: "Extra pillows and blankets", id: "7", icon: wrap(<BedIcon />) },
+  { category: "Essentials", amenity: "Heating", id: "3", icon: wrap(<HvacIcon />) },
 
   // ExtraServices
-  {category: "ExtraServices", amenity: "Cleaning service (add service fee manually)", id: "66", icon: <CleaningServicesIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "ExtraServices", amenity: "Private chef", id: "71", icon: <RamenDiningIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "ExtraServices", amenity: "Housekeeping", id: "68", icon: <CleaningServicesIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "ExtraServices", amenity: "Airport shuttle", id: "70", icon: <AirportShuttleIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "ExtraServices", amenity: "Grocery delivery", id: "69", icon: <LocalGroceryStoreIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "ExtraServices", amenity: "Concierge service", id: "67", icon: <CleaningServicesIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "ExtraServices", amenity: "Personal trainer", id: "72", icon: <DirectionsRunIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "ExtraServices", amenity: "Massage therapist", id: "73", icon: <SpaIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "ExtraServices", amenity: "Cleaning service (add service fee manually)", id: "66", icon: wrap(<CleaningServicesIcon />) },
+  { category: "ExtraServices", amenity: "Private chef", id: "71", icon: wrap(<RamenDiningIcon />) },
+  { category: "ExtraServices", amenity: "Housekeeping", id: "68", icon: wrap(<CleaningServicesIcon />) },
+  { category: "ExtraServices", amenity: "Airport shuttle", id: "70", icon: wrap(<AirportShuttleIcon />) },
+  { category: "ExtraServices", amenity: "Grocery delivery", id: "69", icon: wrap(<LocalGroceryStoreIcon />) },
+  { category: "ExtraServices", amenity: "Concierge service", id: "67", icon: wrap(<CleaningServicesIcon />) },
+  { category: "ExtraServices", amenity: "Personal trainer", id: "72", icon: wrap(<DirectionsRunIcon />) },
+  { category: "ExtraServices", amenity: "Massage therapist", id: "73", icon: wrap(<SpaIcon />) },
 
   // FamilyFriendly
-  {category: "FamilyFriendly", amenity: "Baby safety gates", id: "49", icon: <FenceIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "FamilyFriendly", amenity: "Baby bath", id: "50", icon: <BathtubIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "FamilyFriendly", amenity: "Children's books and toys", id: "48", icon: <ToysIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "FamilyFriendly", amenity: "Baby monitor", id: "51", icon: <LiveTvIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "FamilyFriendly", amenity: "High chair", id: "46", icon: <ChairAltIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "FamilyFriendly", amenity: "Crib", id: "47", icon: <CribIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "FamilyFriendly", amenity: "Baby safety gates", id: "49", icon: wrap(<FenceIcon />) },
+  { category: "FamilyFriendly", amenity: "Baby bath", id: "50", icon: wrap(<BathtubIcon />) },
+  { category: "FamilyFriendly", amenity: "Children's books and toys", id: "48", icon: wrap(<ToysIcon />) },
+  { category: "FamilyFriendly", amenity: "Baby monitor", id: "51", icon: wrap(<LiveTvIcon />) },
+  { category: "FamilyFriendly", amenity: "High chair", id: "46", icon: wrap(<ChairAltIcon />) },
+  { category: "FamilyFriendly", amenity: "Crib", id: "47", icon: wrap(<CribIcon />) },
 
   // Kitchen
-  {category: "Kitchen", amenity: "Kettle", id: "22", icon: <EmojiFoodBeverageIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Dishes and silverware", id: "18", icon: <FlatwareIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Toaster", id: "16", icon: <BreakfastDiningIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Stove", id: "13", icon: <MicrowaveIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Glasses and mugs", id: "19", icon: <FreeBreakfastIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Microwave", id: "11", icon: <MicrowaveIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Cutting board and knives", id: "20", icon: <FoodBankIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Blender", id: "21", icon: <BlenderIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Oven", id: "12", icon: <MicrowaveIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Basic cooking essentials", id: "17", icon: <FlatwareIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Refrigerator", id: "10", icon: <KitchenIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Coffee maker", id: "15", icon: <CoffeeMakerIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Kitchen", amenity: "Dishwasher", id: "14", icon: <LocalLaundryServiceIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "Kitchen", amenity: "Kettle", id: "22", icon: wrap(<EmojiFoodBeverageIcon />) },
+  { category: "Kitchen", amenity: "Dishes and silverware", id: "18", icon: wrap(<FlatwareIcon />) },
+  { category: "Kitchen", amenity: "Toaster", id: "16", icon: wrap(<BreakfastDiningIcon />) },
+  { category: "Kitchen", amenity: "Stove", id: "13", icon: wrap(<MicrowaveIcon />) },
+  { category: "Kitchen", amenity: "Glasses and mugs", id: "19", icon: wrap(<FreeBreakfastIcon />) },
+  { category: "Kitchen", amenity: "Microwave", id: "11", icon: wrap(<MicrowaveIcon />) },
+  { category: "Kitchen", amenity: "Cutting board and knives", id: "20", icon: wrap(<FoodBankIcon />) },
+  { category: "Kitchen", amenity: "Blender", id: "21", icon: wrap(<BlenderIcon />) },
+  { category: "Kitchen", amenity: "Oven", id: "12", icon: wrap(<MicrowaveIcon />) },
+  { category: "Kitchen", amenity: "Basic cooking essentials", id: "17", icon: wrap(<FlatwareIcon />) },
+  { category: "Kitchen", amenity: "Refrigerator", id: "10", icon: wrap(<KitchenIcon />) },
+  { category: "Kitchen", amenity: "Coffee maker", id: "15", icon: wrap(<CoffeeMakerIcon />) },
+  { category: "Kitchen", amenity: "Dishwasher", id: "14", icon: wrap(<LocalLaundryServiceIcon />) },
 
   // Laundry
-  {category: "Laundry", amenity: "Clothes drying rack", id: "54", icon: <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Laundry", amenity: "Laundry detergent", id: "53", icon: <LocalLaundryServiceIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Laundry", amenity: "Washer and dryer", id: "52", icon: <LocalLaundryServiceIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "Laundry", amenity: "Clothes drying rack", id: "54", icon: wrap(<CheckCircleIcon />) },
+  { category: "Laundry", amenity: "Laundry detergent", id: "53", icon: wrap(<LocalLaundryServiceIcon />) },
+  { category: "Laundry", amenity: "Washer and dryer", id: "52", icon: wrap(<LocalLaundryServiceIcon />) },
 
   // LivingArea
-  {category: "LivingArea", amenity: "Board games", id: "36", icon: <ExtensionIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "LivingArea", amenity: "Armchairs", id: "33", icon: <ChairIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "LivingArea", amenity: "Books and magazines", id: "35", icon: <LibraryBooksIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "LivingArea", amenity: "Sofa", id: "32", icon: <WeekendIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "LivingArea", amenity: "Coffee table", id: "34", icon: <TableBarIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "LivingArea", amenity: "Board games", id: "36", icon: wrap(<ExtensionIcon />) },
+  { category: "LivingArea", amenity: "Armchairs", id: "33", icon: wrap(<ChairIcon />) },
+  { category: "LivingArea", amenity: "Books and magazines", id: "35", icon: wrap(<LibraryBooksIcon />) },
+  { category: "LivingArea", amenity: "Sofa", id: "32", icon: wrap(<WeekendIcon />) },
+  { category: "LivingArea", amenity: "Coffee table", id: "34", icon: wrap(<TableBarIcon />) },
 
   // Outdoor
-  {category: "Outdoor", amenity: "Outdoor furniture", id: "79", icon: <OutdoorGrillIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Outdoor", amenity: "Grill", id: "80", icon: <OutdoorGrillIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Outdoor", amenity: "Garden or backyard", id: "84", icon: <GrassIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Outdoor", amenity: "Pool", id: "82", icon: <PoolIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Outdoor", amenity: "Fire pit", id: "81", icon: <FireplaceIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Outdoor", amenity: "Patio or balcony", id: "78", icon: <BalconyIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Outdoor", amenity: "Hot tub", id: "83", icon: <HotTubIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Outdoor", amenity: "Bicycle", id: "85", icon: <DirectionsBikeIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "Outdoor", amenity: "Outdoor furniture", id: "79", icon: wrap(<OutdoorGrillIcon />) },
+  { category: "Outdoor", amenity: "Grill", id: "80", icon: wrap(<OutdoorGrillIcon />) },
+  { category: "Outdoor", amenity: "Garden or backyard", id: "84", icon: wrap(<GrassIcon />) },
+  { category: "Outdoor", amenity: "Pool", id: "82", icon: wrap(<PoolIcon />) },
+  { category: "Outdoor", amenity: "Fire pit", id: "81", icon: wrap(<FireplaceIcon />) },
+  { category: "Outdoor", amenity: "Patio or balcony", id: "78", icon: wrap(<BalconyIcon />) },
+  { category: "Outdoor", amenity: "Hot tub", id: "83", icon: wrap(<HotTubIcon />) },
+  { category: "Outdoor", amenity: "Bicycle", id: "85", icon: wrap(<DirectionsBikeIcon />) },
 
   // Safety
-  {category: "Safety", amenity: "Fire extinguisher", id: "44", icon: <FireExtinguisherIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Safety", amenity: "Lock on bedroom door", id: "45", icon: <LockPersonIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Safety", amenity: "Smoke detector", id: "42", icon: <SmokeFreeIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Safety", amenity: "Carbon monoxide detector", id: "43", icon: <RadarIcon sx={{color: 'var(--primary-color)'}}/>},
+  { category: "Safety", amenity: "Fire extinguisher", id: "44", icon: wrap(<FireExtinguisherIcon />) },
+  { category: "Safety", amenity: "Lock on bedroom door", id: "45", icon: wrap(<LockPersonIcon />) },
+  { category: "Safety", amenity: "Smoke detector", id: "42", icon: wrap(<SmokeFreeIcon />) },
+  { category: "Safety", amenity: "Carbon monoxide detector", id: "43", icon: wrap(<RadarIcon />) },
 
   // Technology
-  {category: "Technology", amenity: "Universal chargers", id: "40", icon: <ElectricalServicesIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Technology", amenity: "Streaming services", id: "38", icon: <CastIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Technology", amenity: "Work desk and chair", id: "41", icon: <DeskIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Technology", amenity: "Bluetooth speaker", id: "39", icon: <BluetoothIcon sx={{color: 'var(--primary-color)'}}/>},
-  {category: "Technology", amenity: "Smart TV", id: "37", icon: <TvIcon sx={{color: 'var(--primary-color)'}}/>}
+  { category: "Technology", amenity: "Universal chargers", id: "40", icon: wrap(<ElectricalServicesIcon />) },
+  { category: "Technology", amenity: "Streaming services", id: "38", icon: wrap(<CastIcon />) },
+  { category: "Technology", amenity: "Work desk and chair", id: "41", icon: wrap(<DeskIcon />) },
+  { category: "Technology", amenity: "Bluetooth speaker", id: "39", icon: wrap(<BluetoothIcon />) },
+  { category: "Technology", amenity: "Smart TV", id: "37", icon: wrap(<TvIcon />) }
 ];
 
 export default amenities;

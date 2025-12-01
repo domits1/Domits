@@ -19,50 +19,44 @@
     }
 
     .property-container {
-      .image-section {
-        position: relative;
-        flex: 2;
+   .image-section {
+  position: relative;
+  flex: 2;
 
-        .image-gallery {
-          display: grid;
-          grid-template-columns: 1.7fr 1.3fr;
-          grid-template-rows: repeat(1, 1fr);
-          column-gap: 10px;
-          align-items: center;
+.image-gallery {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  grid-template-rows: 255px 255px;
+  gap: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+}
 
-          @media (max-width: 768px) {
-            grid-template-columns: none;
-          }
+.main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  grid-row: 1 / span 2;
+}
 
-          .main-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 10px;
-            grid-row: span 2;
-          }
+.small-images-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 255px 255px;
+  gap: 8px;
+}
 
-          .small-images-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 10px;
-            height: 100%;
+.small-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity .2s ease;
+}
 
-            @media (max-width: 768px) {
-              display: none;
-            }
 
-            .small-image {
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-              border-radius: 10px;
-            }
-
-          }
-
-        }
 
         .rating-section {
           position: absolute;
@@ -153,64 +147,50 @@
 
       }
 
-      .amenities-container {
+     .rules-container {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 20px 25px;
+  margin-top: 25px;
+  font-family: "Inter", sans-serif;
+}
 
-        .amenities-title {
-          font-size: 18px;
-          font-weight: 400;
-        }
+.rules-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #1a1a1a;
+}
 
-        .essential-amenities-container {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          grid-template-rows: repeat(3, auto);
-          gap: 20px;
-          width: 100%;
-          margin: 0 auto;
+.rules {
+  color: #4d4d4d;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 25px;
+}
 
-          .essential-amenity-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-          }
-        }
+.rules-check-in-check-out-container {
+  padding: 18px 20px;
+  background: #fafafa;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-        @media (max-width: 768px) {
-          .essential-amenities-container {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
+.rules-check-in-check-out-container p {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin: 0;
+}
 
-        @media (max-width: 480px) {
-          .essential-amenities-container {
-            grid-template-columns: 1fr;
-          }
-        }
-      }
-
-      .rules-container {
-
-        .rules-title {
-          font-size: 18px;
-          font-weight: 400;
-        }
-
-        .rules {
-          margin-bottom: 10px;
-          color: #666;
-          font-size: medium;
-        }
-
-        .rules-check-in-check-out-container {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          padding: 10px;
-          background: white;
-          border-radius: 10px;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
+/* Add subtle icons similar to Booking */
+.rules-check-in-check-out-container p::before {
+  content: "🕒";
+  margin-right: 8px;
+}
       }
 
     }
@@ -357,8 +337,6 @@
 
   }
 
-}
-
 .listing-details-error {
   width: 100%;
   height: auto;
@@ -367,3 +345,163 @@
   align-items: center;
   color: red;
 }
+
+/* ==========================
+   AMENITIES – CLEAN VERSION
+   ========================== */
+
+.amenities-container {
+  margin-top: 30px;
+
+  .amenities-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* Featured section like Holidu */
+  .amenities-featured {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px 12px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .amenity {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      svg {
+        font-size: 18px;
+        background: rgba(20, 200, 90, 0.12);
+        color: var(--primary-color);
+        padding: 4px;
+        border-radius: 6px;
+      }
+
+      .amenity-name {
+        color: #333;
+        font-size: 14px;
+        line-height: 1.2;
+      }
+    }
+  }
+
+  /* Button */
+  .show-all-amenities-btn {
+    margin: 15px auto 25px;
+    display: block;
+    padding: 10px 18px;
+    background: #fff;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+
+    &:hover {
+      background: #f6f6f6;
+    }
+  }
+}
+
+/* ==========================
+   AMENITIES MODAL
+   ========================== */
+
+.amenities-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 60px;
+  z-index: 3000;
+}
+
+.amenities-modal {
+  background: white;
+  width: 55%;
+  max-height: 80vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  padding: 35px;
+  position: relative;
+
+  @media (max-width: 1200px) {
+    width: 70%;
+  }
+  @media (max-width: 900px) {
+    width: 85%;
+  }
+  @media (max-width: 600px) {
+    width: 95%;
+    padding: 25px;
+  }
+
+  .modal-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 25px;
+  }
+
+  .close-modal-btn {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+  }
+
+  .modal-group {
+    margin-bottom: 25px;
+
+    .category-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #222;
+    }
+
+    .modal-items {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px 15px;
+
+      @media (max-width: 900px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      @media (max-width: 500px) {
+        grid-template-columns: 1fr;
+      }
+
+      .amenity {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        svg {
+          font-size: 18px;
+          background: rgba(20, 200, 90, 0.12);
+          color: var(--primary-color);
+          padding: 4px;
+          border-radius: 6px;
+        }
+
+        .amenity-name {
+          color: #333;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+
