@@ -1,3 +1,6 @@
+import React, { useEffect, useState, useMemo } from "react";
+import { toast } from "react-toastify";
+import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import EventIcon from "@mui/icons-material/Event";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
@@ -8,6 +11,7 @@ import { getAccessToken } from "../../services/getAccessToken.js";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import BooleanToString from "./services/booleanToString.js";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
+import { usePagination } from "./hooks/usePagination.js";
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -16,6 +20,9 @@ const HostReservations = () => {
   const [bookings, setBooking] = useState(null);
   const [sortedBookings, setSortedBookings] = useState(null);
   const authToken = getAccessToken();
+  const itemsPerPage = 10;
+  const { currentPage, totalPages, paginatedItems, pageRange, goToPage, goToNextPage, goToPreviousPage } =
+    usePagination(sortedBookings || [], itemsPerPage);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -68,6 +75,7 @@ const HostReservations = () => {
     } else {
       setSortedBookings(bookingArray.filter((booking) => booking.status === type));
     }
+    goToPage(1);
   };
 
   const calculateNights = (arrival, departure) => {
@@ -90,6 +98,13 @@ const HostReservations = () => {
     const numericRate = Number(rate) || 0;
     return numericRate * nights;
   };
+  const shouldShowPagination = userHasReservations && sortedBookings && sortedBookings.length > 0;
+
+  const pageNumbers = useMemo(() => {
+    if (!shouldShowPagination) return [];
+    const count = pageRange.endPage - pageRange.startPage + 1;
+    return Array.from({ length: count }, (_, i) => pageRange.startPage + i);
+  }, [shouldShowPagination, pageRange]);
 
   return (
     <main className="page-body">
@@ -179,8 +194,8 @@ const HostReservations = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {userHasReservations && sortedBookings && sortedBookings.length > 0 ? (
-                      sortedBookings.map((booking) => (
+                    {shouldShowPagination ? (
+                      paginatedItems.map((booking) => (
                         <tr key={booking.id}>
                           <td className={styles.singleReservationRow}>{booking.property_id}</td>
                           <td className={styles.singleReservationRow}>{booking.title}</td>
@@ -218,6 +233,33 @@ const HostReservations = () => {
                   </tbody>
                 </table>
               </section>
+              {shouldShowPagination && (
+                <div className={styles.paginationControls}>
+                  <button
+                    className={styles.paginationButton}
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    aria-label="Previous page">
+                    Previous
+                  </button>
+                  {pageNumbers.map((pageIndex) => (
+                    <button
+                      key={pageIndex}
+                      className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ""}`}
+                      onClick={() => goToPage(pageIndex)}
+                      aria-label={`Go to page ${pageIndex}`}>
+                      {pageIndex}
+                    </button>
+                  ))}
+                  <button
+                    className={styles.paginationButton}
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    aria-label="Next page">
+                    Next
+                  </button>
+                </div>
+              )}
             </section>
           </section>
         </>

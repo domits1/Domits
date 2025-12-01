@@ -5,6 +5,7 @@ import Modal from "react-modal";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "./styles/toast-notifications.scss";
 import Footer from "./components/base/Footer";
 import Header from "./components/base/Header";
 import MenuBar from "./components/base/MenuBar";
@@ -77,7 +78,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST);
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 Modal.setAppElement("#root");
 
 function RedirectHostOnboardingCatchAll() {
@@ -134,15 +135,16 @@ function App() {
       {/* ApolloProvider */}
       <ToastContainer
         position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
+        autoClose={5000}
+        hideProgressBar={true}
+        newestOnTop={true}
+        closeButton={false}
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="colored"
+        theme="light"
       />
       <FlowContext.Provider value={{ flowState, setFlowState }}>
         <Router>

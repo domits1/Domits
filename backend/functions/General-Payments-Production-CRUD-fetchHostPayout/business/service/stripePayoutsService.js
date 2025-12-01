@@ -7,9 +7,10 @@ import AuthManager from "../../auth/authManager.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 
+const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
 const getAuth = (event) => event.headers.Authorization;
 const toAmount = (cents) => cents / 100;
-
 export default class StripePayoutsService {
   constructor() {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -106,39 +107,53 @@ export default class StripePayoutsService {
 
     const payouts = await this.stripe.payouts.list({ stripeAccount: stripeAccount.account_id });
 
-    const payoutDetails = payouts.data.map((payout) => ({
-      id: payout.id,
-      amount: toAmount(payout.amount),
-      currency: payout.currency.toUpperCase(),
-      arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-      status: payout.status,
-      method: payout.method,
-    }));
+    const payoutDetails = payouts.data
+      .sort((a, b) => (b.arrival_date || 0) - (a.arrival_date || 0))
+      .map((payout) => ({
+        id: payout.id,
+        amount: toAmount(payout.amount),
+        currency: payout.currency.toUpperCase(),
+        arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+        status: payout.status,
+        method: payout.method,
+      }));
 
     const txns = await this.getHostPendingAmount(event);
     const upcomingPayouts = txns.details.upcomingByDate;
 
-    const merged = [
-      ...upcomingPayouts.map((x) => ({
+    const { forecast, cutoffTs } = await this.getForecastFromBalance(event);
+
+    const pendingAfterCutoff = (() => {
+      if (!cutoffTs) return upcomingPayouts;
+      const cutoffNum = Number(cutoffTs);
+      return upcomingPayouts.filter((x) => {
+        const ts = Number(x?.availableOnTs);
+        return Number.isFinite(ts) ? ts > cutoffNum : true;
+      });
+    })();
+
+    const merged = [];
+
+    merged.push(
+      ...forecast ? [forecast] : [],
+      ...pendingAfterCutoff.map((x) => ({
         arrivalDate: x.availableOn,
         amount: x.amount,
         currency: x.currency,
-        status: "pending",
+        status: "incoming charge - pending",
         id: null,
       })),
-      ...payoutDetails,
-    ];
+      ...payoutDetails
+    );
 
     return {
       statusCode: 200,
       message: "Payouts fetched successfully",
-      details: {
-        payouts: merged,
-      },
+      details: { payouts: merged },
     };
   }
 
@@ -156,9 +171,7 @@ export default class StripePayoutsService {
       throw new NotFoundException("No Stripe account found for this user.");
     }
 
-    const balance = await this.stripe.balance.retrieve({
-      stripeAccount: stripeAccount.account_id,
-    });
+    const balance = await this.stripe.balance.retrieve({}, { stripeAccount: stripeAccount.account_id });
 
     const available = balance.available.map((balance) => ({
       currency: balance.currency.toUpperCase(),
@@ -225,6 +238,179 @@ export default class StripePayoutsService {
       statusCode: 200,
       message: "Upcoming balance transactions fetched successfully",
       details: { upcomingByDate },
+    };
+  }
+
+  async getForecastFromBalance(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required fields: cognitoUserId");
+    }
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
+
+    const account = await this.stripe.accounts.retrieve(stripeAccount.account_id);
+    const schedule = account.settings?.payouts?.schedule || {};
+    if (!schedule.interval || schedule.interval === "manual") {
+      return { forecast: null, cutoffTs: null };
+    }
+
+    const nowDate = new Date();
+    const mondayIndex = (d) => (d.getDay() + 6) % 7;
+    let nextDate = null;
+
+    if (schedule.interval === "daily") {
+      nextDate = new Date(nowDate);
+      nextDate.setDate(nowDate.getDate() + 1);
+    } else if (schedule.interval === "weekly" && schedule.weekly_anchor) {
+      const target = WEEKDAYS.indexOf(String(schedule.weekly_anchor).toLowerCase());
+      const diff = (target - mondayIndex(nowDate) + 7) % 7 || 7;
+      nextDate = new Date(nowDate);
+      nextDate.setDate(nowDate.getDate() + diff);
+    } else if (schedule.interval === "monthly" && Number.isInteger(schedule.monthly_anchor)) {
+      const y = nowDate.getFullYear();
+      const m = nowDate.getDate() < schedule.monthly_anchor ? nowDate.getMonth() : nowDate.getMonth() + 1;
+      nextDate = new Date(y, m, schedule.monthly_anchor);
+    }
+
+    if (!nextDate) return { forecast: null, cutoffTs: null };
+
+    const cutoffEndOfDay = new Date(nextDate);
+    cutoffEndOfDay.setUTCHours(23, 59, 59, 999);
+    const cutoffTs = Math.floor(cutoffEndOfDay.getTime() / 1000);
+
+    const nowTs = Math.floor(Date.now() / 1000);
+
+    const balance = await this.stripe.balance.retrieve({}, { stripeAccount: stripeAccount.account_id });
+    const availableNowCents = (balance.available || []).reduce((sum, e) => sum + (e.amount || 0), 0);
+
+    const pendingTxns = await this.stripe.balanceTransactions.list(
+      {
+        limit: 100,
+        available_on: { lte: cutoffTs, gte: nowTs },
+      },
+      { stripeAccount: stripeAccount.account_id }
+    );
+
+    const pendingUntilCutoffCents = pendingTxns.data
+      .filter((t) => t.status === "pending")
+      .reduce((sum, t) => sum + (t.net || 0), 0);
+
+    const totalCents = availableNowCents + pendingUntilCutoffCents;
+    if (totalCents <= 0) return { forecast: null, cutoffTs };
+
+    const currency = (balance.available?.[0]?.currency || pendingTxns.data?.[0]?.currency || "eur").toUpperCase();
+
+    const forecast = {
+      id: null,
+      amount: toAmount(totalCents),
+      currency,
+      arrivalDate: nextDate.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      status: "forecasted (not yet started)",
+      method: "automatic",
+    };
+
+    return { forecast, cutoffTs };
+  }
+
+  async setPayoutSchedule(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+    if (!cognitoUserId) throw new BadRequestException("Missing required fields: cognitoUserId");
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    if (!stripeAccount?.account_id) throw new NotFoundException("No Stripe account found for this user.");
+
+    const body = JSON.parse(event.body || "{}");
+    let { interval, weekly_anchor, monthly_anchor } = body;
+
+    if (!interval) throw new BadRequestException("Missing required fields: interval");
+    interval = interval.toLowerCase();
+
+    const allowed = ["manual", "daily", "weekly", "monthly"];
+    if (!allowed.includes(interval)) {
+      throw new BadRequestException(`interval must be one of: ${allowed.join(", ")}`);
+    }
+
+    if (interval === "manual") {
+      const balanceRes = await this.getHostBalance(event);
+      const availableList = balanceRes.details.available;
+
+      const totalAvailableCents = availableList.reduce((sum, { amount }) => sum + amount * 100, 0);
+
+      if (totalAvailableCents <= 0) {
+        throw new BadRequestException("There is no available balance to set payout schedule.");
+      }
+    }
+
+    if (typeof weekly_anchor === "string") weekly_anchor = weekly_anchor.toLowerCase();
+
+    const schedule = { interval };
+
+    if (interval === "weekly") {
+      if (!weekly_anchor || !WEEKDAYS.includes(weekly_anchor)) {
+        throw new BadRequestException(`weekly_anchor must be one of: ${WEEKDAYS.join(", ")}`);
+      }
+      schedule.weekly_anchor = weekly_anchor;
+    }
+
+    if (interval === "monthly") {
+      if (!Number.isInteger(monthly_anchor) || monthly_anchor < 1 || monthly_anchor > 31) {
+        throw new BadRequestException("monthly_anchor must be an integer between 1 and 31");
+      }
+      schedule.monthly_anchor = monthly_anchor;
+    }
+
+    const account = await this.stripe.accounts.update(stripeAccount.account_id, {
+      settings: { payouts: { schedule } },
+    });
+
+    return {
+      statusCode: 200,
+      message: "Payout schedule updated",
+      details: {
+        accountId: account.id,
+        interval: account.settings.payouts.schedule.interval,
+        weekly_anchor: account.settings.payouts.schedule.weekly_anchor ?? null,
+        monthly_anchor: account.settings.payouts.schedule.monthly_anchor ?? null,
+      },
+    };
+  }
+
+  async getPayoutSchedule(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required fields: cognitoUserId");
+    }
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
+
+    const account = await this.stripe.accounts.retrieve(stripeAccount.account_id);
+
+    const schedule = account?.settings?.payouts?.schedule || {};
+    const details = {
+      accountId: account.id,
+      interval: schedule.interval ?? null,
+      weekly_anchor: schedule.weekly_anchor ?? null,
+      monthly_anchor: schedule.monthly_anchor ?? null,
+    };
+
+    return {
+      statusCode: 200,
+      message: "Payout schedule fetched",
+      details,
     };
   }
 }
