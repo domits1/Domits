@@ -74,7 +74,6 @@ const HostReservations = () => {
     goToPage(1);
   };
 
-  // Calculate number of nights and total payment based on rate
   const calculateNights = (arrival, departure) => {
     try {
       const msPerDay = 1000 * 60 * 60 * 24;
@@ -82,8 +81,8 @@ const HostReservations = () => {
       const departureMs = Number(departure);
       if (Number.isNaN(arrivalMs) || Number.isNaN(departureMs)) return 1;
       const diff = departureMs - arrivalMs;
-      // round to nearest day; fallback to at least 1 night
       const nights = Math.max(1, Math.round(diff / msPerDay));
+
       return nights;
     } catch (e) {
       return 1;
