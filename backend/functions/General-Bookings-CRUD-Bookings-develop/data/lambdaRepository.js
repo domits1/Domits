@@ -13,8 +13,8 @@ class LambdaRepository {
     }
 
     const properties = receivedData.map((property) => ({
-      id: property.id,
-      title: property.title,
+      id: property.property.id,
+      title: property.property.title,
       rate: property.propertyPricing.roomRate,
       city: property.propertyLocation.city,
       country: property.propertyLocation.country,
