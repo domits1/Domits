@@ -76,14 +76,6 @@ Table of Contents
   - functions/ # Lambda functions
   - test/ # Lambda tests (Jest)
 
-- docs/ # Documentation folder
-  - debugging/ # Issue template for debugging
-  - images/ # Image save location for doc images
-  - internal/ # Our internal developer documentation for every dev at Domits.
-  - partner/ # Partner related documentation for partners with Domits (part of channel management)
-  - public # Documentation for extern developers/partners
-  - security # Security related documentation
-
 - frontend/ # React/React-Natve Frontend Files
   - app/ # Domits App Development files (React Native)
     - Domits/
