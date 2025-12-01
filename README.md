@@ -48,13 +48,14 @@ Table of Contents
   - [Intro Sprint](#intro-sprint)
     - [General Introduction](#general-introduction)
     - [Github Introduction](#github-introduction)
+      - [Reviewing a PR as Reviewer/Creating a PR requester](#reviewing-a-pr-as-reviewercreating-a-pr-requester)
     - [Programming Introduction](#programming-introduction)
     - [Backend Introduction](#backend-introduction)
     - [Web/App Setup](#webapp-setup)
     - [Other subjects to understand](#other-subjects-to-understand)
   - [Core modules and APIs](#core-modules-and-apis)
   - [Code Conventions](#code-conventions)
-  - [Documentation Overview](#documentation-overview)
+  - [Documentation Structure Overview](#documentation-structure-overview)
   - [Contribution guidelines](#contribution-guidelines)
 
 
@@ -165,6 +166,10 @@ After this section you should understand:
 - How to create a branch and PR.
 ---
 
+#### Reviewing a PR as Reviewer/Creating a PR requester
+
+If you have been working at Domits for a while, you surely got familiar with Pull Requests. Now, if its time for you to review those, I'm sure that you have a lot of questions on the *how* aspect. Don't worry, there is a documentation available for you to get ready as reviewer [here.](./docs/internal/onboarding/pr_reviewer_onboarding.md) (You can also click the link as pr requester.)
+
 ### Programming Introduction
 Get familar with code conventions to write clean code. Become aware of our serverless backend.
 
@@ -244,7 +249,10 @@ Understand the type of API's, REST and HTTP API's.
 Explore how AI and data engineering can enhance the platform with personalization, automation, and intelligent insights.
 
 ## Core modules and APIs
-Key modules powering Domits:
+
+Get a basic understanding of every AWS service we use [here](/docs/internal/services/overview.md).
+
+Other key AWS Lambda microservices powering Domits:
 
 **[Booking Engine](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
 
@@ -277,9 +285,9 @@ Key modules powering Domits:
 * [Code Conventions](./docs/internal/standards/code_conventions.md) - Helps you maintain a consistent and readable codebase in Domits.
 * [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
 
-## Documentation Overview
+## Documentation Structure Overview
 
-Domits has documentation, those which are essential for understanding. As of now, we have 3 key folders to pay attention to:
+Domits contains documentation, those which are essential for understanding. As of now, we have 3 key folders to pay attention to:
 ```
 * internal/ - Internal documentation for Devs at Domits (you most likely be spending your time here most of the time)
   * apis/ - All documentation for our Lambda API's goes here. Including is a fancy template.
