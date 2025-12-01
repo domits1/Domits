@@ -149,12 +149,12 @@ class ReservationRepository {
     // Fetches user's property first, throws error if not found
     this.lambdaRepository = new LambdaRepository();
     const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);
-    const properties = propertiesOutput.id.map((_, i) => ({
-      id: propertiesOutput.id[i],
-      title: propertiesOutput.title[i],
-      rate: propertiesOutput.rate[i],
-      city: propertiesOutput.city[i],
-      country: propertiesOutput.country[i],
+    const properties = propertiesOutput.map((item) => ({
+      id: item.id,
+      title: item.title,
+      rate: item.rate,
+      city: item.city,
+      country: item.country,
     }));
 
     // Proceeds to send a request for every id returning their respective data
