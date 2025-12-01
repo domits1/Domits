@@ -8,6 +8,7 @@ import { getAccessToken } from "../../services/getAccessToken.js";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import BooleanToString from "./services/booleanToString.js";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
+import { calculateTotalPayment } from "./utils/reservationCalculations.js";
 import { usePagination } from "./hooks/usePagination.js";
 
 const HostReservations = () => {
@@ -75,26 +76,6 @@ const HostReservations = () => {
     goToPage(1);
   };
 
-  const calculateNights = (arrival, departure) => {
-    try {
-      const msPerDay = 1000 * 60 * 60 * 24;
-      const arrivalMs = Number(arrival);
-      const departureMs = Number(departure);
-      if (Number.isNaN(arrivalMs) || Number.isNaN(departureMs)) return 1;
-      const diff = departureMs - arrivalMs;
-      const nights = Math.max(1, Math.round(diff / msPerDay));
-
-      return nights;
-    } catch (e) {
-      return 1;
-    }
-  };
-
-  const calculateTotalPayment = (rate, arrival, departure) => {
-    const nights = calculateNights(arrival, departure);
-    const numericRate = Number(rate) || 0;
-    return numericRate * nights;
-  };
   const shouldShowPagination = userHasReservations && sortedBookings && sortedBookings.length > 0;
 
   const pageNumbers = useMemo(() => {

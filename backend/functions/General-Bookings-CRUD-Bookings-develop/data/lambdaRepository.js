@@ -11,19 +11,16 @@ class LambdaRepository {
     if (receivedData === "No property found.") {
       throw new NotFoundException("User has no active properties.");
     }
-    const propertyIds = receivedData.map((item) => item.property.id);
-    const propertyTitles = receivedData.map((item) => item.property.title);
-    const propertyRates = receivedData.map((item) => item.propertyPricing.roomRate);
-    const propertyCities = receivedData.map((item) => item.propertyLocation.city);
-    const propertyCountries = receivedData.map((item) => item.propertyLocation.country);
 
-    return {
-      id: propertyIds,
-      title: propertyTitles,
-      rate: propertyRates,
-      city: propertyCities,
-      country: propertyCountries,
-    };
+    const properties = receivedData.map((property) => ({
+      id: property.id,
+      title: property.title,
+      rate: property.propertyPricing.roomRate,
+      city: property.propertyLocation.city,
+      country: property.propertyLocation.country,
+    }));
+
+    return properties;
   }
 
   async getPropertyPricingById(id) {
