@@ -8,6 +8,8 @@ import { getAccessToken } from "../../services/getAccessToken.js";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import BooleanToString from "./services/booleanToString.js";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
+import { calculateTotalPayment } from "./utils/reservationCalculations.js";
+import { usePagination } from "./hooks/usePagination.js";
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
