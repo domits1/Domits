@@ -17,7 +17,20 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
+  padding-bottom: 60px;
   font-family: inherit;
+  box-sizing: border-box;
+  overflow-x: hidden;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    padding-bottom: 60px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    padding-bottom: 60px;
+  }
 
   &__header {
     display: flex;
@@ -53,6 +66,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     font-weight: 700;
     color: $text-primary;
     margin: 0;
+
+    @media (max-width: 480px) {
+      font-size: 20px;
+    }
   }
 
   &__loading,
@@ -64,6 +81,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     background: $bg-white;
     border-radius: $radius;
     border: 1px solid $border-color;
+
+    @media (max-width: 480px) {
+      padding: 24px;
+    }
   }
 
   &__error {
@@ -141,6 +162,7 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0;
   }
 
   &__property-title {
@@ -148,6 +170,12 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     font-weight: 700;
     color: $text-primary;
     margin: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
+    @media (max-width: 480px) {
+      font-size: 18px;
+    }
   }
 
   &__property-location {
@@ -157,9 +185,11 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     font-size: 14px;
     color: $text-muted;
     margin: 0;
+    flex-wrap: wrap;
 
     svg {
       color: $host-blue;
+      flex-shrink: 0;
     }
   }
 
@@ -182,6 +212,11 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     &:hover {
       background: $host-blue-hover;
     }
+
+    @media (max-width: 600px) {
+      width: 100%;
+      justify-content: center;
+    }
   }
 
   &__status-card {
@@ -198,6 +233,7 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
       flex-direction: column;
       gap: 12px;
       align-items: flex-start;
+      padding: 14px 16px;
     }
   }
 
@@ -228,6 +264,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     border-radius: $radius;
     padding: 20px;
     box-shadow: $shadow-sm;
+
+    @media (max-width: 480px) {
+      padding: 16px;
+    }
   }
 
   &__section-title {
@@ -241,6 +281,11 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
 
     svg {
       color: $host-blue;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 15px;
     }
   }
 
@@ -251,6 +296,7 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
 
     @media (max-width: 480px) {
       grid-template-columns: 1fr;
+      gap: 12px;
     }
   }
 
@@ -278,6 +324,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     font-size: 16px;
     font-weight: 600;
     color: $text-primary;
+
+    @media (max-width: 480px) {
+      font-size: 15px;
+    }
   }
 
   &__gallery {
@@ -286,6 +336,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     border-radius: $radius;
     padding: 20px;
     box-shadow: $shadow-sm;
+
+    @media (max-width: 480px) {
+      padding: 16px;
+    }
   }
 
   &__gallery-grid {
@@ -295,6 +349,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
 
     @media (max-width: 768px) {
       grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 480px) {
+      gap: 8px;
     }
   }
 
@@ -322,6 +380,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     border-radius: $radius;
     padding: 20px;
     box-shadow: $shadow-light;
+
+    @media (max-width: 480px) {
+      padding: 16px;
+    }
   }
 
   &__price-breakdown {
@@ -330,6 +392,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     gap: 12px;
     padding-bottom: 16px;
     border-bottom: 1px solid $border-color;
+
+    @media (max-width: 480px) {
+      gap: 10px;
+    }
   }
 
   &__price-row {
@@ -338,17 +404,28 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     align-items: center;
     font-size: 14px;
     color: $text-primary;
+    gap: 8px;
 
     span:first-child {
       display: flex;
       align-items: center;
       gap: 6px;
       color: $text-muted;
+      flex-wrap: wrap;
 
       svg {
         font-size: 16px;
         color: $host-blue;
+        flex-shrink: 0;
       }
+    }
+
+    span:last-child {
+      white-space: nowrap;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 13px;
     }
   }
 
@@ -360,6 +437,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     font-size: 18px;
     font-weight: 700;
     color: $text-primary;
+
+    @media (max-width: 480px) {
+      font-size: 16px;
+    }
   }
 
   &__booking-id {
@@ -367,6 +448,10 @@ $shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid $border-color;
     border-radius: $radius;
     padding: 20px;
+
+    @media (max-width: 480px) {
+      padding: 16px;
+    }
   }
 
   &__booking-id-value {
