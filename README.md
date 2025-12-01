@@ -143,10 +143,8 @@ If you ever get stuck, google, stack overflow, ask a LLM and then afterwards, as
 Learn the basics of Domits, who we are, what we build, and where to find key documentation.
 
 * Get access to tooling (AWS, Github, Discord, Figma, ...) 
-* Understand the [Hospitality & Vacation rental market](https://bookdomits.com/)
-* Visit [domits.com](https://www.domits.com) and understand the product.
-* Read through the [Domits Handbook](https://docs.google.com/document/d/1VxkKQtqS_B9NvDvtcBZ7BUZCSGPUG-PHEkayGi3D6mU/edit?tab=t.0#heading=h.xau35oj9sp4z).
-* Understand [product backlog, roadmap and vision](https://github.com/domits1/Domits/wiki/Product-Backlog,-Roadmap-and-Vision).
+* Understand the [Company]([https://bookdomits.com/](https://bookdomits.com/company/)), [Hospitality Market](https://bookdomits.com/blog/), [Ecosystem](https://bookdomits.com/ecosystem/) and [Product](https://bookdomits.com/features/). 
+* Understand [product vision, roadmap and back](https://github.com/domits1/Domits/issues/2272).
 * Check who is [responsible for what parts of Domits, and check the issues placed on your name.](https://github.com/domits1/Domits/wiki/Technical-Leadership)
 
 
@@ -207,6 +205,58 @@ After this section you should have:
 That are all the fundamental things to be aware of.
 You can decide to take a [Quick Fix](https://github.com/domits1/Domits/issues/122) now, or be aware of other subjects to understand.
 
+## Core modules and APIs
+Key modules powering Domits:
+
+**[Property Handler](/docs/internal/apis/propertyhandler/property_handler.md)**
+
+* Responsible for: Handling properties
+* Used for: Handling CRUD operations for properties, creating properties with the property listing, showing properties and getting propertyinformation in the homepage.
+
+**[Booking Engine](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
+
+* Responsible for: Handling Host + Guest bookings, performing CRUD operations. Sending a email to host/guest on received booking. Stripe/Payment logic.
+* Used for: Creating reservations, creating a paymentIntent with Stripe reading reservations on the host/guest side.
+
+**[Availability Calendar](/docs/internal/apis/calendar/host_guest_calendar_workflow.md)**
+
+* Responsible for: Handling Calendar actions.
+* Used for: Calendar Component
+
+**[Finance](/docs/internal/apis/finance/hostFinance.md)**
+
+* Responsible for: Handling Finances/payouts with Stripe
+* Used for: Host Dashboard - Finance Tab
+
+**[Rates](/docs/internal/apis/revenuemanagement/rates.md)**
+
+* Responsible for: Handling rates
+* Used for: Host Revenue Management
+
+**[Messaging](/docs/internal/apis/messaging/messaging_overview.md)**
+
+* Responsible for: Handling messages
+* Used for: Host/Guest messages
+
+## Code Conventions
+
+* [Clean Code: Reference Guide](./docs/internal/standards/clean_code_reference_guide.md) - Helps you write maintainable, readable and efficient code
+* [Code Conventions](./docs/internal/standards/code_conventions.md) - Helps you maintain a consistent and readable codebase in Domits.
+* [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
+
+## Recommended Docs
+Docs recommended to take a look at.
+
+* [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
+
+## Contribution guidelines
+
+Follow the established code conventions.
+
+Always fill out the PR template completely before review.
+
+Keep your commits clean and descriptive according to [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
 ### Other subjects to understand
 
 * [Domain Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design)
@@ -250,50 +300,4 @@ Understand the type of API's, REST and HTTP API's.
 * [AI Services](https://github.com/domits1/Domits/wiki/AI-Services)
 
 Explore how AI and data engineering can enhance the platform with personalization, automation, and intelligent insights.
-
-## Core modules and APIs
-Key modules powering Domits:
-
-**[Booking Engine](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
-
-* Responsible for: Handling Host + Guest bookings, performing CRUD operations. Sending a email to host/guest on received booking. Stripe/Payment logic.
-* Used for: Creating reservations, creating a paymentIntent with Stripe reading reservations on the host/guest side.
-
-**[Calendar](/docs/internal/apis/calendar/host_guest_calendar_workflow.md)**
-
-* Responsible for: Handling Calendar actions.
-* Used for: Calendar Component
-
-**[Finance](/docs/internal/apis/finance/hostFinance.md)**
-
-* Responsible for: Handling Finances/payouts with Stripe
-* Used for: Host Dashboard - Finance Tab
-
-**[Messaging](/docs/internal/apis/messaging/messaging_overview.md)**
-
-* Responsible for: Handling messages
-* Used for: Host/Guest messages
-
-**[Property Handler](/docs/internal/apis/propertyhandler/property_handler.md)**
-
-* Responsible for: Handling properties
-* Used for: Handling CRUD operations for properties, creating properties with the property listing, showing properties and getting propertyinformation in the homepage.
-
-## Code Conventions
-
-* [Clean Code: Reference Guide](./docs/internal/standards/clean_code_reference_guide.md) - Helps you write maintainable, readable and efficient code
-* [Code Conventions](./docs/internal/standards/code_conventions.md) - Helps you maintain a consistent and readable codebase in Domits.
-* [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
-## Recommended Docs
-Docs recommended to take a look at.
-
-* [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
-
-## Contribution guidelines
-
-Follow the established code conventions.
-
-Always fill out the PR template completely before review.
-
-Keep your commits clean and descriptive according to [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
