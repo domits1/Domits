@@ -7,6 +7,21 @@ import { useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import allFields from "./store/AllAdminPropertyFields";
 
+const NumberField = ({ name, placeholder, handleBlur, hasError, errors }) => (
+  <div className="field-wrapper">
+    <input
+      type="number"
+      name={name}
+      placeholder={placeholder}
+      min="0"
+      required
+      onBlur={handleBlur}
+      className={hasError(name) ? "error" : ""}
+    />
+    {hasError(name) && <span className="error-text">{errors[name]}</span>}
+  </div>
+);
+
 export default function AdminProperty() {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
@@ -21,15 +36,13 @@ export default function AdminProperty() {
       try {
         const user = await Auth.currentAuthenticatedUser();
         const role = user?.attributes?.["custom:group"];
-
         if (role !== "Host") {
           navigate("/");
         }
-      } catch (err) {
+      } catch {
         navigate("/");
       }
     }
-
     checkRole();
   }, [navigate]);
 
@@ -88,7 +101,6 @@ export default function AdminProperty() {
   const handleBlur = (e) => {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
-
     const error = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
@@ -108,18 +120,15 @@ export default function AdminProperty() {
   const onPickFiles = async (ev) => {
     const picked = Array.from(ev.target.files || []);
     if (!picked.length) return;
-
     const newFiles = [...files, ...picked].slice(0, 10);
     const addedFiles = newFiles.slice(files.length);
     setFiles(newFiles);
-
     const enc = await Promise.all(addedFiles.map(readAsDataUrl));
     const stamped = enc.map((dataUrl, i) => {
       const f = addedFiles[i];
       const safeName = (f?.name || `img-${Date.now()}-${i}`).replace(/\s+/g, "_");
       return { key: safeName, image: dataUrl };
     });
-
     setImageData((prev) => [...prev, ...stamped]);
   };
 
@@ -153,70 +162,39 @@ export default function AdminProperty() {
 
   const validateForm = (formData) => {
     const newErrors = {};
-
     requiredFields.forEach((field) => {
-      const value = formData.get(field)?.toString()?.trim();
+      const rawValue = formData.get(field);
+      const value = rawValue != null ? rawValue.toString().trim() : "";
       if (!value) {
         newErrors[field] = "This field is required";
+      } else {
+        const fieldError = validateField(field, value);
+        if (fieldError) {
+          newErrors[field] = fieldError;
+        }
       }
     });
-
-    const numericFields = ["guests", "bedrooms", "beds", "bathrooms", "houseNumber"];
-    numericFields.forEach((field) => {
-      const value = formData.get(field);
-      const numValue = Number(value);
-      if (isNaN(numValue) || numValue < 0) {
-        newErrors[field] = "Must be a valid number";
-      }
-    });
-
-    const rate = Number(formData.get("rate") || 0);
-    if (rate <= 0) {
-      newErrors.rate = "Rate must be greater than 0";
-    }
-
     if (imageData.length < 5) {
       newErrors.images = "Add at least 5 photos";
     }
-
     return newErrors;
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
-
-    const allFields = [
-      "spaceType",
-      "homeName",
-      "street",
-      "houseNumber",
-      "postalCode",
-      "city",
-      "country",
-      "description",
-      "guests",
-      "bedrooms",
-      "beds",
-      "bathrooms",
-      "rate",
-    ];
-    const allTouched = allFields.reduce((acc, field) => {
+    const fd = new FormData(e.currentTarget);
+    const formErrors = validateForm(fd);
+    const allTouched = requiredFields.reduce((acc, field) => {
       acc[field] = true;
       return acc;
     }, {});
+    if (formErrors.images) {
+      allTouched.images = true;
+    }
     setTouched(allTouched);
-
-    const fd = new FormData(e.currentTarget);
-    const formErrors = validateForm(fd);
-
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
       alert("Please fix the errors before submitting.");
-      return;
-    }
-
-    if (imageData.length < 5) {
-      alert("Add at least 5 photos.");
       return;
     }
 
@@ -328,7 +306,6 @@ export default function AdminProperty() {
         const payload = builder.build ? builder.build() : builder;
         const sizeBytes = new Blob([JSON.stringify(payload)]).size;
       } catch {}
-
       await submitAccommodation(navigate, builder);
     } finally {
       setSubmitting(false);
@@ -461,61 +438,34 @@ export default function AdminProperty() {
       <div className="adminproperty-group">
         <label>How many people can stay here</label>
         <div className="grid-4">
-          <div className="field-wrapper">
-            <input
-              type="number"
-              name="guests"
-              placeholder="Guests"
-              min="0"
-              required
-              onBlur={handleBlur}
-              className={hasError("guests") ? "error" : ""}
-            />
-            {hasError("guests") && <span className="error-text">{errors.guests}</span>}
-          </div>
-
-          <div className="field-wrapper">
-            <input
-              type="number"
-              name="bedrooms"
-              placeholder="Bedrooms"
-              min="0"
-              required
-              onBlur={handleBlur}
-              className={hasError("bedrooms") ? "error" : ""}
-            />
-            {hasError("bedrooms") && (
-              <span className="error-text">{errors.bedrooms}</span>
-            )}
-          </div>
-
-          <div className="field-wrapper">
-            <input
-              type="number"
-              name="beds"
-              placeholder="Beds"
-              min="0"
-              required
-              onBlur={handleBlur}
-              className={hasError("beds") ? "error" : ""}
-            />
-            {hasError("beds") && <span className="error-text">{errors.beds}</span>}
-          </div>
-
-          <div className="field-wrapper">
-            <input
-              type="number"
-              name="bathrooms"
-              placeholder="Bathrooms"
-              min="0"
-              required
-              onBlur={handleBlur}
-              className={hasError("bathrooms") ? "error" : ""}
-            />
-            {hasError("bathrooms") && (
-              <span className="error-text">{errors.bathrooms}</span>
-            )}
-          </div>
+          <NumberField
+            name="guests"
+            placeholder="Guests"
+            handleBlur={handleBlur}
+            hasError={hasError}
+            errors={errors}
+          />
+          <NumberField
+            name="bedrooms"
+            placeholder="Bedrooms"
+            handleBlur={handleBlur}
+            hasError={hasError}
+            errors={errors}
+          />
+          <NumberField
+            name="beds"
+            placeholder="Beds"
+            handleBlur={handleBlur}
+            hasError={hasError}
+            errors={errors}
+          />
+          <NumberField
+            name="bathrooms"
+            placeholder="Bathrooms"
+            handleBlur={handleBlur}
+            hasError={hasError}
+            errors={errors}
+          />
         </div>
       </div>
 
