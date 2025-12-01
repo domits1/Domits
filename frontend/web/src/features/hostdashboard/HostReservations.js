@@ -37,7 +37,7 @@ const HostReservations = () => {
       } catch (error) {
         console.error("Error fetching properties:", error);
         toast.error(
-          "Something unexpected happenend. You possibly don't have any reservations. Please refresh the page to try again."
+          "Something unexpected happened. You possibly don't have any reservations. Please refresh the page to try again."
         );
       } finally {
         setIsLoading(false);
