@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 const EventsAndTriggers = ({ events = {}, onToggle }) => {
     const eventEntries = Object.values(events);
     if (!eventEntries.length) {
@@ -31,9 +29,3 @@ const EventsAndTriggers = ({ events = {}, onToggle }) => {
 };
 
 export default EventsAndTriggers;
-
-
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
