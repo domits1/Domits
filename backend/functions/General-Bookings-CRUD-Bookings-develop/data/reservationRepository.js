@@ -153,6 +153,8 @@ class ReservationRepository {
       id: propertiesOutput.id[i],
       title: propertiesOutput.title[i],
       rate: propertiesOutput.rate[i],
+      city: propertiesOutput.city[i],
+      country: propertiesOutput.country[i],
     }));
 
     // Proceeds to send a request for every id returning their respective data
