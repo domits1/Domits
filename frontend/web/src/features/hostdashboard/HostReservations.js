@@ -1,13 +1,14 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { toast } from "react-toastify";
-import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import EventIcon from "@mui/icons-material/Event";
-import SwapVertIcon from "@mui/icons-material/SwapVert";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import getReservationsFromToken from "./services/getReservationsFromToken.js";
-import BooleanToString from "./services/booleanToString.js";
-import { getAccessToken } from "../../services/getAccessToken.js";
+import SwapVertIcon from "@mui/icons-material/SwapVert";
+import { useEffect, useState, useMemo } from "react";
+import { toast } from "react-toastify";
 import spinner from "../../images/spinnner.gif";
+import { getAccessToken } from "../../services/getAccessToken.js";
+import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
+import BooleanToString from "./services/booleanToString.js";
+import getReservationsFromToken from "./services/getReservationsFromToken.js";
+import { calculateTotalPayment } from "./utils/reservationCalculations.js";
 import { usePagination } from "./hooks/usePagination.js";
 
 const HostReservations = () => {
@@ -89,7 +90,6 @@ const HostReservations = () => {
         <img src={spinner} className={styles.CenterMe}></img>
       ) : (
         <>
-          <h2>Reservations</h2>
           <section className={styles.reservationContainer}>
             <section className={styles.reservationContent}>
               <div className={styles.reservationInfo}>
@@ -110,43 +110,31 @@ const HostReservations = () => {
                   <thead>
                     <tr>
                       <th>
-                        Reservation Id
+                        Property ID
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
-                        Accommodation name
+                        Accommodation Name
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
-                        Reserved dates
+                        Location
                         <span className={styles.reservationIcons}>
                           <FilterListIcon />
                         </span>
                       </th>
                       <th>
-                        Requested on
+                        Guest Name
                         <span className={styles.reservationIcons}>
                           <FilterListIcon />
                         </span>
                       </th>
                       <th>
-                        Guest name
-                        <span className={styles.reservationIcons}>
-                          <SwapVertIcon />
-                        </span>
-                      </th>
-                      <th>
-                        Rate
-                        <span className={styles.reservationIcons}>
-                          <SwapVertIcon />
-                        </span>
-                      </th>
-                      <th>
-                        Payed
+                        Check-In - Check-Out
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
@@ -157,25 +145,60 @@ const HostReservations = () => {
                           <SwapVertIcon />
                         </span>
                       </th>
+                      <th>
+                        Total Payment
+                        <span className={styles.reservationIcons}>
+                          <SwapVertIcon />
+                        </span>
+                      </th>
+                      <th>
+                        Commission
+                        <span className={styles.reservationIcons}>
+                          <SwapVertIcon />
+                        </span>
+                      </th>
+                      <th>
+                        Reservation Number
+                        <span className={styles.reservationIcons}>
+                          <SwapVertIcon />
+                        </span>
+                      </th>
+                      <th>
+                        Booked On
+                        <span className={styles.reservationIcons}>
+                          <SwapVertIcon />
+                        </span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {shouldShowPagination ? (
                       paginatedItems.map((booking) => (
                         <tr key={booking.id}>
-                          <td className={styles.singleReservationRow}>{booking.id}</td>
+                          <td className={styles.singleReservationRow}>{booking.property_id}</td>
                           <td className={styles.singleReservationRow}>{booking.title}</td>
+                          <td className={styles.singleReservationRow}>
+                            {booking.city}, {booking.country}
+                          </td>
+                          <td className={styles.singleReservationRow}>{booking.guestname}</td>
                           <td className={styles.singleReservationRow}>
                             {new Date(booking.arrivaldate).toLocaleDateString()} -{" "}
                             {new Date(booking.departuredate).toLocaleDateString()}
                           </td>
+                          <td className={styles.singleReservationRow}>{booking.status}</td>
+                          <td className={styles.singleReservationRow}>
+                            €{calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate)}
+                          </td>
+                          <td className={styles.singleReservationRow}>
+                            €
+                            {(
+                              calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate) * 0.1
+                            ).toFixed(2)}
+                          </td>
+                          <td className={styles.singleReservationRow}>{BooleanToString(booking.id)}</td>
                           <td className={styles.singleReservationRow}>
                             {new Date(booking.createdat).toLocaleDateString()}
                           </td>
-                          <td className={styles.singleReservationRow}>{booking.guestname}</td>
-                          <td className={styles.singleReservationRow}>€{booking.rate}</td>
-                          <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
-                          <td className={styles.singleReservationRow}>{booking.status}</td>
                         </tr>
                       ))
                     ) : (
