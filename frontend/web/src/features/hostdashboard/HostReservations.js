@@ -4,7 +4,7 @@ import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss
 import EventIcon from "@mui/icons-material/Event";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
 import spinner from "../../images/spinnner.gif";
 import { getAccessToken } from "../../services/getAccessToken.js";
