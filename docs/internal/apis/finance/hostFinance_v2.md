@@ -63,47 +63,111 @@ Use [Mermaid Live Editor](https://mermaid.live/) and its examples to make a Sequ
 
 ```mermaid
 sequenceDiagram
-%% POST example
+%% POST create Stripe connected account
     participant user
     participant index.js
-    participant parseEvent.js
-    participant reservationController.js
-    participant bookingService.js
+    participant stripeAccountController.js
+    participant stripeAccountService.js
     participant authManager.js
-    participant reservationRepository.js
-    participant propertyRepository.js
-    participant getHostEmailById.js
-    participant sendEmail.js
-    participant paymentService.js
-    participant stripeRepository.js
+    participant stripeAccountRepository.js
+    participant database
+    participant stripe
 
-    user->>index.js: sends API request
-    index.js->>+parseEvent.js: parses event based on requestbody/queryparams
-    parseEvent.js->>-index.js: returns requestbody (in this scenario)
-    index.js->>reservationController.js: sends parsedevent
-    reservationController.js->>bookingService.js: send info needed for booking
-    bookingService.js->>+authManager.js: ensure user has a valid auth token
-    authManager.js->>-bookingService.js: Return user's information
-    bookingService.js->>+propertyRepository.js: Get property details (send property_id)
-    propertyRepository.js->>-bookingService.js: Return property details
-    bookingService.js->>+getHostEmailById.js: Get host email from property details getHostEmailById
-    getHostEmailById.js->>-bookingService.js: Returns host email
-    bookingService.js->>sendEmail.js: Send email to Guest and Host with Bookingdetails
-    bookingService.js->>reservationRepository.js: Send booking in database
-    reservationRepository.js->>reservationController.js: Return 201 and bookingdetails for payment information
-    reservationController.js->>paymentService.js: Send bookingdetails for payment to the paymentService
-    paymentService.js->>+stripeRepository.js: Gets stripe accountid (db query)
-    stripeRepository.js->>-paymentService.js: Returns stripe accountid
-    paymentService.js->>+stripeRepository.js: Create a payment intent with bookingdetails
-    stripeRepository.js->>-paymentService.js: Retrieve paymentintent
-    paymentService.js->>stripeRepository.js: Update payment id to proper paymentid from intent
-    paymentService.js->>+stripeRepository.js: Add paymentdata to database table payment
-    stripeRepository.js->>-user: Returns 201, paymentdata + clientsecret/intent and bookingid
+    user->>index.js: sends POST request (Authorization header)
+    index.js->>stripeAccountController.js: calls controller.create(event)
+    stripeAccountController.js->>stripeAccountService.js: createStripeAccount(event)
+
+    stripeAccountService.js->>+authManager.js: authenticateUser(Authorization token)
+    authManager.js->>-stripeAccountService.js: returns { email, sub: cognitoUserId }
+
+    stripeAccountService.js->>+stripeAccountRepository.js: getExistingStripeAccount(cognitoUserId)
+    stripeAccountRepository.js->>+database: SELECT FROM Stripe_Connected_Accounts WHERE user_id = cognitoUserId
+    database->>-stripeAccountRepository.js: returns stripeAccount or null
+    stripeAccountRepository.js->>-stripeAccountService.js: returns stripeAccount
+
+    %% Scenario 1: Stripe account already exists -> 409 Conflict
+    stripeAccountService.js->>stripeAccountService.js: check stripeAccount?.account_id
+    stripeAccountService.js->>stripeAccountController.js: throw ConflictException("Stripe account already exists")
+    stripeAccountController.js->>index.js: build HTTP 409 response
+    index.js->>user: returns 409, message "Stripe account already exists"
+
+    %% Scenario 2: No existing account -> create new Stripe Express account
+    stripeAccountService.js->>+stripe: accounts.create(type="express", email=userEmail)
+    stripe->>-stripeAccountService.js: returns Stripe account (account.id)
+
+    stripeAccountService.js->>+stripeAccountRepository.js: insertStripeAccount(uuid, account.id, cognitoUserId, unixNow(), unixNow())
+    stripeAccountRepository.js->>+database: INSERT INTO Stripe_Connected_Accounts (...)
+    database->>-stripeAccountRepository.js: insert success
+    stripeAccountRepository.js->>-stripeAccountService.js: confirm insert
+
+    stripeAccountService.js->>+stripe: accountLinks.create(accountId, refresh_url, return_url)
+    stripe->>-stripeAccountService.js: returns onboarding link (link.url)
+
+    stripeAccountService.js->>stripeAccountController.js: returns { statusCode: 202, message, details { accountId, onboardingUrl } }
+    stripeAccountController.js->>index.js: build HTTP 202 response
+    index.js->>user: returns 202, message + onboardingUrl (JSON body)
+```
+
+### GET sequence diagram
+
+```mermaid
+sequenceDiagram
+sequenceDiagram
+%% GET Stripe account status - meerdere scenario's
+    participant user
+    participant index.js
+    participant stripeAccountController.js
+    participant stripeAccountService.js
+    participant authManager.js
+    participant stripeAccountRepository.js
+    participant database
+    participant stripe
+
+    user->>index.js: sends GET request (Authorization header)
+    index.js->>stripeAccountController.js: calls controller.read(event)
+    stripeAccountController.js->>stripeAccountService.js: getStatusOfStripeAccount(event)
+
+    stripeAccountService.js->>authManager.js: authenticateUser(Authorization token)
+    authManager.js->>stripeAccountService.js: returns { sub: cognitoUserId }
+
+    stripeAccountService.js->>stripeAccountRepository.js: getExistingStripeAccount(cognitoUserId)
+    stripeAccountRepository.js->>database: SELECT FROM Stripe_Connected_Accounts WHERE user_id = cognitoUserId
+    database->>stripeAccountRepository.js: returns stripeAccount or null
+    stripeAccountRepository.js->>stripeAccountService.js: returns stripeAccount
+
+    %% Scenario 1: No Stripe account in DB -> 404
+    stripeAccountService.js->>stripeAccountService.js: check stripeAccount?.account_id
+    stripeAccountService.js->>stripeAccountController.js: throw NotFoundException("No Stripe account has been found...")
+    stripeAccountController.js->>index.js: build HTTP 404 response
+    index.js->>user: returns 404, message "No Stripe account has been found..."
+
+    %% Scenario 2 & 3: Stripe account exists -> retrieve status from Stripe
+    stripeAccountService.js->>stripe: accounts.retrieve(account_id)
+    stripe->>stripeAccountService.js: returns Stripe account details
+
+    stripeAccountService.js->>stripeAccountService.js: set onboardingComplete, chargesEnabled, payoutsEnabled, bankDetailsProvided
+
+    %% Scenario 2: onboarding NOT complete -> always onboarding link
+    stripeAccountService.js->>stripe: accountLinks.create(accountId, refresh_url, return_url)
+    stripe->>stripeAccountService.js: returns onboardingUrl
+    stripeAccountService.js->>stripeAccountController.js: { statusCode: 200, message "Onboarding not complete...", details { onboardingUrl, loginLinkUrl: null, flags... } }
+    stripeAccountController.js->>index.js: build HTTP 200 response
+    index.js->>user: returns 200, onboardingUrl (user blijft onboarding zien)
+
+    %% Scenario 3: onboarding complete -> login link (fallback: onboarding)
+    stripeAccountService.js->>stripe: accounts.createLoginLink(accountId)
+    stripe->>stripeAccountService.js: returns loginLinkUrl
+    stripeAccountService.js->>stripeAccountController.js: { statusCode: 200, message "Account onboarded. Redirecting to Stripe Express Dashboard.", details { loginLinkUrl, onboardingUrl: null, flags... } }
+    stripeAccountController.js->>index.js: build HTTP 200 response
+    index.js->>user: returns 200, loginLinkUrl (redirect to Stripe Dashboard)
+
+    %% (fallback binnen createLoginLinkOrOnboarding)
+    stripeAccountService.js->>stripe: accountLinks.create(accountId, refresh_url, return_url) on loginLink error
+    stripe->>stripeAccountService.js: returns onboardingUrl
+    stripeAccountService.js->>stripeAccountController.js: { statusCode: 200, message "Onboarding not complete...", details { onboardingUrl, loginLinkUrl: null } }
 ```
 
 ## Todo & Improvements
 
 Todo:
-
-- [ ] Add GET requests as sequence diagram
-- [ ] Finish the rest of the documentation
+- [ ] idk
