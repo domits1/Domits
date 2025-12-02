@@ -28,7 +28,7 @@ const AmenitiesContainer = ({ amenityIds }) => {
       </div>
 
       <button className="show-all-amenities-btn" onClick={() => setShowModal(true)}>
-        Toon alle voorzieningen
+        Show all amenities
       </button>
 
       {showModal && (
