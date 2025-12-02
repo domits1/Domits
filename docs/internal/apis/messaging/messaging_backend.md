@@ -6,7 +6,7 @@ Domits messaging relies on AWS API Gateway (WebSocket + REST) and Lambda handler
 ## Metadata
 Lambda Function: `General-Messaging-Production-Create-WebSocketMessage`, `General-Messaging-Production-Read-MessagesHistory`
 
-Related Issue: N/A
+Related issues: #89 (host) and #749 (guest)
 
 Status: **Active**
 
