@@ -4,7 +4,7 @@ export default function IconWrapper({ children }) {
   return React.cloneElement(children, {
     sx: {
       color: "var(--primary-color)",
-      fontSize: 18,  // Holidu-size
+      fontSize: 18,
       padding: "4px",
     },
   });

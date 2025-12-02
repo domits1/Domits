@@ -4,14 +4,12 @@ const ImageGallery = ({ images }) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Prepare main + thumbnails
   const main = images[0];
-  const thumbs = images.slice(1, 5); // max 4
+  const thumbs = images.slice(1, 5);
 
   const toSrc = (key) => {
     if (!key) return "";
-    if (typeof key === "string" &&
-      (key.startsWith("http://") || key.startsWith("https://"))) {
+    if (typeof key === "string" && (key.startsWith("http://") || key.startsWith("https://"))) {
       return key;
     }
     return `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`;
@@ -22,23 +20,20 @@ const ImageGallery = ({ images }) => {
   };
 
   const prevImage = () => {
-    setActiveIndex((prev) =>
-      prev === 0 ? images.length - 1 : prev - 1
-    );
+    setActiveIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   return (
     <section className="image-section">
-
-      {/* GALLERY */}
       <div className="image-gallery">
-
-        {/* MAIN IMAGE */}
         {main && (
           <img
             className="main-image"
             src={toSrc(main.key)}
-            onClick={() => { setActiveIndex(0); setShowOverlay(true); }}
+            onClick={() => {
+              setActiveIndex(0);
+              setShowOverlay(true);
+            }}
           />
         )}
 
@@ -49,36 +44,27 @@ const ImageGallery = ({ images }) => {
               key={img.key}
               className="small-image"
               src={toSrc(img.key)}
-              onClick={() => { setActiveIndex(index + 1); setShowOverlay(true); }}
+              onClick={() => {
+                setActiveIndex(index + 1);
+                setShowOverlay(true);
+              }}
             />
           ))}
         </div>
-
       </div>
 
-      {/* FULLSCREEN OVERLAY */}
       {showOverlay && (
         <div className="image-overlay">
-
           <button className="close-overlay-button" onClick={() => setShowOverlay(false)}>
             ×
           </button>
 
           <div className="overlay-center-wrapper">
+            <button className="nav-button left" onClick={prevImage}></button>
 
-            <button className="nav-button left" onClick={prevImage}>
-              ‹
-            </button>
+            <img className="overlay-main-image" src={toSrc(images[activeIndex].key)} />
 
-            <img
-              className="overlay-main-image"
-              src={toSrc(images[activeIndex].key)}
-            />
-
-            <button className="nav-button right" onClick={nextImage}>
-              ›
-            </button>
-
+            <button className="nav-button right" onClick={nextImage}></button>
           </div>
 
           <div className="overlay-thumbnails">
@@ -91,10 +77,8 @@ const ImageGallery = ({ images }) => {
               />
             ))}
           </div>
-
         </div>
       )}
-
     </section>
   );
 };
