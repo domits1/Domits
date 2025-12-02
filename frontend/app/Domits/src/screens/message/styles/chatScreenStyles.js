@@ -115,31 +115,34 @@ import { StyleSheet } from "react-native";
         flexDirection: 'row',
         alignItems: 'center',
         padding: 10,
-
         borderTopColor: '#ddd',
     },
     input: {
         flex: 1,
         height: 40,
-        borderColor: 'green',
-        borderWidth: 1,
         borderRadius: 20,
         paddingHorizontal: 15,
+        marginLeft: 10,
         marginRight: 10,
-        marginLeft: 10,
-        backgroundColor: 'white',
+        backgroundColor: '#f5f5f5',
     },
-    icon: {
-        marginLeft: 10,
-    },
-    sendButton: {
-        backgroundColor: '#4CAF50',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
+    actionButton: {
+        width: 40,
+        height: 40,
         borderRadius: 20,
+        backgroundColor: '#4CAF50',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    sendButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
+    plusButtonContainer: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    plusButton: {
+        fontSize: 32,
+        color: 'black',
+        fontWeight: '300',
     },
 });
