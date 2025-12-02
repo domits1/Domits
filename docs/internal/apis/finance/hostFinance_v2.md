@@ -112,7 +112,6 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-sequenceDiagram
 %% GET Stripe account status - meerdere scenario's
     participant user
     participant index.js
