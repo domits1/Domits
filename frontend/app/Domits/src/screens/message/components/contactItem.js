@@ -4,16 +4,22 @@ import React from 'react';
 import { View, Text, Image, } from 'react-native';
 import { styles } from '../styles/contactItemStyles';
 
-const ContactItem = ({ contact, isPending, selected, dashboardType }) => {
+const ContactItem = ({ contact, isPending, selected, dashboardType, userId }) => {
     const isGuest = dashboardType === 'guest';
 
     let subtitle = 'No message history yet';
-    if (contact.latestMessage?.text) {
-        subtitle = contact.latestMessage.text;
-    } else if (contact.latestMessage?.fileUrls?.length === 1) {
-        subtitle = '(1) Image';
-    } else if (contact.latestMessage?.fileUrls?.length > 1) {
-        subtitle = `(${contact.latestMessage.fileUrls.length}) Images`;
+    if (contact.latestMessage) {
+        const messageSenderId = contact.latestMessage.userId;
+        const isFromCurrentUser = messageSenderId === userId;
+        const senderName = isFromCurrentUser ? 'You' : contact.givenName;
+        
+        if (contact.latestMessage.text) {
+            subtitle = `${senderName}: ${contact.latestMessage.text}`;
+        } else if (contact.latestMessage.fileUrls?.length === 1) {
+            subtitle = `${senderName}: (1) Image`;
+        } else if (contact.latestMessage.fileUrls?.length > 1) {
+            subtitle = `${senderName}: (${contact.latestMessage.fileUrls.length}) Images`;
+        }
     }
 
     return (
@@ -26,6 +32,7 @@ const ContactItem = ({ contact, isPending, selected, dashboardType }) => {
                 <Text style={styles.fullName}>{contact.givenName}</Text>
                 {!isPending && <Text style={styles.subtitle}>{subtitle}</Text>}
             </View>
+            <View style={styles.divider} />
         </View>
     );
 };

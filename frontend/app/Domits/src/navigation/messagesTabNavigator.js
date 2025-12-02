@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Notifications from '../screens/message/notifications';
 import Inbox from '../screens/message/Inbox';
-import Support from '../screens/message/support';
 
 import { WebSocketProvider } from '../screens/message/context/webSocketContext';
 import {styles} from './styles/messagesStackNavigatorStyles';
 
 const MessagesTab = () => {
-    const [activeTab, setActiveTab] = useState('Notifications');
     const { user, userAttributes } = useAuth();
     const [userGroup, setUserGroup] = useState('');
     const [userId] = useState(userAttributes?.sub || '');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         if (user) {
@@ -24,32 +23,46 @@ const MessagesTab = () => {
     }, [user, userAttributes]);
 
     return (
-            <View style={styles.tabAll}>
-                <View style={styles.tabBar}>
-                    <TouchableOpacity onPress={() => setActiveTab('Notifications')}>
-                        <Text style={[styles.tabText, activeTab === 'Notifications' && styles.activeTabText]}>
-                            Notifications
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setActiveTab('Inbox')}>
-                        <Text style={[styles.tabText, activeTab === 'Inbox' && styles.activeTabText]}>
-                            Inbox
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setActiveTab('Support')}>
-                        <Text style={[styles.tabText, activeTab === 'Support' && styles.activeTabText]}>
-                            AI & Support
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.screenContainer}>
-                    {activeTab === 'Notifications' && <Notifications userId={userId} />}
-                    {activeTab === 'Inbox' && <Inbox userId={userId} dashboardType={userGroup} />}
-
-                    {activeTab === 'Support' && <Support />}
-                </View>
+        <SafeAreaView style={styles.tabAll} edges={['top']}>
+            <View style={headerStyles.headerContainer}>
+                <Text style={headerStyles.title}>Chats</Text>
+                <TextInput
+                    style={headerStyles.searchBar}
+                    placeholder="Search chats..."
+                    placeholderTextColor="#999"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                />
             </View>
+            <View style={styles.screenContainer}>
+                <Inbox userId={userId} dashboardType={userGroup} searchQuery={searchQuery} />
+            </View>
+        </SafeAreaView>
     );
 };
+
+const headerStyles = StyleSheet.create({
+    headerContainer: {
+        backgroundColor: 'white',
+        paddingHorizontal: 15,
+        paddingTop: 10,
+        paddingBottom: 10,
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#000',
+        marginBottom: 10,
+        marginLeft: 5,
+    },
+    searchBar: {
+        backgroundColor: '#f5f5f5',
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        fontSize: 16,
+        color: '#000',
+    },
+});
 
 export default MessagesTab;

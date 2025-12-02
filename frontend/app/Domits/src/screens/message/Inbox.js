@@ -9,7 +9,7 @@ import { WebSocketContext } from './context/webSocketContext';
 import { CHAT_SCREEN } from '../../navigation/utils/NavigationNameConstants';
 import { styles } from './styles/inboxStyles';
 
-const Inbox = ({ userId, onContactClick, message, dashboardType }) => {
+const Inbox = ({ userId, onContactClick, message, dashboardType, searchQuery = '' }) => {
 
     const navigation = useNavigation();
     const {
@@ -23,7 +23,34 @@ const Inbox = ({ userId, onContactClick, message, dashboardType }) => {
         loading: guestLoading,
     } = useFetchContacts(userId, 'guest');
 
-    const contacts = [...hostContacts, ...guestContacts];
+    // Combine and deduplicate contacts by recipientId
+    const allContacts = [...hostContacts, ...guestContacts];
+    const contactsMap = new Map();
+    allContacts.forEach(contact => {
+        const key = contact.recipientId || contact.userId;
+        if (!contactsMap.has(key)) {
+            contactsMap.set(key, contact);
+        } else {
+            // If duplicate exists, keep the one with the latest message
+            const existing = contactsMap.get(key);
+            const existingDate = existing.latestMessage?.createdAt ? new Date(existing.latestMessage.createdAt) : 0;
+            const newDate = contact.latestMessage?.createdAt ? new Date(contact.latestMessage.createdAt) : 0;
+            if (newDate > existingDate) {
+                contactsMap.set(key, contact);
+            }
+        }
+    });
+    let contacts = Array.from(contactsMap.values());
+    
+    // Filter contacts based on search query
+    if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        contacts = contacts.filter(contact => 
+            contact.givenName?.toLowerCase().includes(query) ||
+            contact.latestMessage?.text?.toLowerCase().includes(query)
+        );
+    }
+    
     const loading = hostLoading || guestLoading;
     const [selectedContactId, setSelectedContactId] = useState(null);
 
@@ -96,7 +123,7 @@ const Inbox = ({ userId, onContactClick, message, dashboardType }) => {
             ) : (
                 <FlatList
                     data={sortedContacts}
-                    keyExtractor={(item) => item.userId.toString()}
+                    keyExtractor={(item) => (item.recipientId || item.userId || '').toString()}
                     renderItem={renderItem}
                 />
             )}

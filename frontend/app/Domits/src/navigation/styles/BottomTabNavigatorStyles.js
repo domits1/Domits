@@ -1,12 +1,13 @@
-import {StyleSheet} from "react-native";
+import {StyleSheet, Platform} from "react-native";
 
 export const styles = StyleSheet.create({
     // Tab bar
     bottomTabBar: {
-        backgroundColor: '#f0f0f0',
-        borderTopColor: 'transparent',
-        height: 60,
-        paddingBottom: 10,
+        backgroundColor: 'transparent',
+        borderTopColor: '#d3d3d3',
+        borderTopWidth: 1,
+        height: Platform.OS === 'ios' ? 77 : 60,
+        paddingBottom: Platform.OS === 'ios' ? 8 : 10,
     },
     // Nav item
     tabBarItem: {
