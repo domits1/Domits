@@ -12,6 +12,7 @@ export class Repository {
             .where("property.id = :id", { id })
             .getOne();
 
+
         return {
             id: result.id,
             hostId: result.hostid,
