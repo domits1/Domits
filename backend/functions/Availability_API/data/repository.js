@@ -12,6 +12,9 @@ export class Repository {
             .where("property.id = :id", { id })
             .getOne();
 
+        // if (!result) {
+        //     throw new NotFoundException("Property is inactive or does not exist.");
+        // }
 
         return {
             id: result.id,
