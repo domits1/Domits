@@ -5,7 +5,7 @@ export const styles = StyleSheet.create({
     bottomTabBar: {
         backgroundColor: 'transparent',
         borderTopColor: '#d3d3d3',
-        borderTopWidth: 1,
+        borderTopWidth: 0.2,
         height: Platform.OS === 'ios' ? 77 : 60,
         paddingBottom: Platform.OS === 'ios' ? 8 : 10,
     },
