@@ -1,0 +1,38 @@
+.message-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+
+    &__avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        margin-top: 10px;
+    }
+
+    &__content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__name {
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 4px;
+        color: #e5e5e5;
+        line-height: 1.4;
+        margin-left: 2px;
+    }
+
+    &__body {
+        font-size: 13px;
+        color: #b3b3b3;
+        word-break: break-word;
+        line-height: 1.4;
+        margin-left: 2px;
+    }
+}
+
