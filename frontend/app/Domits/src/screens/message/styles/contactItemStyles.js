@@ -7,8 +7,15 @@ export const styles = StyleSheet.create({
         marginTop: 0,
         paddingVertical: 20,
         paddingHorizontal: 10,
-        borderBottomWidth: 0.5,
-        borderColor: '#e0e0e0',
+        position: 'relative',
+    },
+    divider: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        left: '18%',
+        height: 0.5,
+        backgroundColor: '#e0e0e0',
     },
    
     profileImage: {
