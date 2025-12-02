@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { View, TextInput, FlatList, Image, TouchableOpacity, Text } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
-
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 import ChatMessage from './chatMessage';
-import ChatUploadAttachment from './chatUploadAttachment';
 import { WebSocketContext } from '../context/webSocketContext';
 
 import useFetchMessages from '../Hooks/useFetchMessages';
@@ -76,14 +75,24 @@ const ChatScreen = ({ route }) => {
         }
     };
 
+    // Deduplicate messages by ID to prevent duplicate key errors
+    const uniqueMessages = React.useMemo(() => {
+        const messageMap = new Map();
+        messages.forEach(msg => {
+            if (msg.id && !messageMap.has(msg.id)) {
+                messageMap.set(msg.id, msg);
+            }
+        });
+        return Array.from(messageMap.values());
+    }, [messages]);
+
     return (
         <View style={styles.container}>
             <FlatList
-                data={messages}
-                keyExtractor={(item) => item.id}
+                data={uniqueMessages}
+                keyExtractor={(item) => item.id || `${item.userId}-${item.createdAt}-${item.text}`}
                 renderItem={({ item }) => (
                     <ChatMessage
-                        key={item.id}
                         message={item}
                         userId={userId}
                         contactName={contactName}
@@ -95,15 +104,6 @@ const ChatScreen = ({ route }) => {
             />
 
             <View style={styles.inputContainer}>
-                {/* <Icon name="image" size={40} color="black" style={styles.icon} /> */}
-
-                <ChatUploadAttachment
-                    onUploadComplete={(fileUrl) =>
-                        setUploadedFileUrls((prev) => [...prev, fileUrl])
-                    }
-                    iconStyle={styles.icon}
-                />
-
                 <TextInput
                     style={styles.input}
                     placeholder="Write a message..."
@@ -112,9 +112,19 @@ const ChatScreen = ({ route }) => {
                     onSubmitEditing={handleSendMessage}
                     onKeyPress={handleKeyUp}
                 />
-                <TouchableOpacity style={styles.sendButton}>
-                    <Text style={styles.sendButtonText}>Send</Text>
-                </TouchableOpacity>
+                {newMessage.trim() && (
+                    <TouchableOpacity 
+                        style={styles.actionButton}
+                        onPress={handleSendMessage}
+                    >
+                        <MaterialIcons name="arrow-forward" size={20} color="white" />
+                    </TouchableOpacity>
+                )}
+                {!newMessage.trim() && (
+                    <TouchableOpacity style={styles.plusButtonContainer}>
+                        <Text style={styles.plusButton}>+</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </View>
 
