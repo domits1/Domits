@@ -85,7 +85,7 @@ For the Directory Structure, refer to this:
         - exception/ # Custom exceptions (e.g., Unauthorized)
 ```
 
-Last but not least, use the PR template for your pull requests. Make a quick # header with MD saying Copilot output, to put your own output there.
+Last but not least, COPY AND PASTE THE PR TEMPLATE INTO YOUR OWN PR. 
 Use this PR Template: https://github.com/domits1/Domits/blob/acceptance/PULL_REQUEST_TEMPLATE.md
 The only exception you can override the checklist, is when the user asks you to skip a certain test, or if the test exists. For that case, ask the user if the test should be included or not. But follow the Checklist.
 If you occur Merge Conflicts while pulling from acceptance, let the user know. This should never be solved by Copilot unless the user stated to do so.

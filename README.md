@@ -55,6 +55,7 @@ Table of Contents
     - [Other subjects to understand](#other-subjects-to-understand)
   - [Core modules and APIs](#core-modules-and-apis)
   - [Code Conventions](#code-conventions)
+  - [Common issues and their fixes](#common-issues-and-their-fixes)
   - [Documentation Structure Overview](#documentation-structure-overview)
   - [Contribution guidelines](#contribution-guidelines)
 
@@ -176,6 +177,7 @@ Get familar with code conventions to write clean code. Become aware of our serve
 * Follow the [AWS Intro Course (Cloud Practitioner Essentials)](https://explore.skillbuilder.aws/learn/course/external/view/elearning/134/aws-cloud-practitioner-essentials)
 * Learn and improve [Programming/Clean Code: Quick Reference Guide](https://github.com/domits1/Domits/wiki/Programming)
 * Become familiar with our [Code Conventions](https://github.com/domits1/Domits/wiki/Code-conventions) to maintain a consistent and readable codebase.
+* Get to know why we use SCSS compared to css and its benefits [here](https://www.youtube.com/watch?v=akDIJa0AP5c)
 * Understand the code pipeline (CI/CD)
 
 ### Backend Introduction
@@ -285,6 +287,10 @@ Other key AWS Lambda microservices powering Domits:
 * [Code Conventions](./docs/internal/standards/code_conventions.md) - Helps you maintain a consistent and readable codebase in Domits.
 * [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
 
+## Common issues and their fixes
+
+Check out this document: [common_issues.md](./docs/internal/qa/common_issues.md)
+
 ## Documentation Structure Overview
 
 Domits contains documentation, those which are essential for understanding. As of now, we have 3 key folders to pay attention to:
@@ -293,23 +299,25 @@ Domits contains documentation, those which are essential for understanding. As o
   * apis/ - All documentation for our Lambda API's goes here. Including is a fancy template.
   * architecture/ - Our system architecture belongs here.
   * changelog/ - Any changelog in the docs goes here.
-  * data/ - 
-  * infra/
-  * onboarding/
-  * qa/
-  * security/
-  * services/
-  * standards/
-  * tools/
-* partner/
-  * API/
-  * intregrations/
-* public/
-  * overview/
-````
+  * data/ - Currently contains our business logic and model.
+  * infra/ - Infrastructure, workflows and devops goes here.
+  * onboarding/ - General developer onboarding.
+  * qa/ - Testing documentation.
+  * security/ - All security related documentation
+  * services/ - Currently contains a overview of the AWS services we intregrate into Domits.
+  * standards/ - Company-wide engineering best practices.
+  * tools/ - Overview over our tools and portals.
 
+* partner/ - Documentation for Domits partner (Channel Manager).
+  * API/ - API documentation for partners.
+  * intregrations/ - Intregration guide for partners.
 
-// TODO: add important documentation, add explanation about internal/public/partner api's and service folder
+* public/ - Public documentation for everyone
+  * overview/ 
+```
+* Internal Documentation Issue: [#2212](https://github.com/domits1/Domits/issues/2212)
+* Partner Documentation Issue: [#2225](https://github.com/domits1/Domits/issues/2225)
+* Public Documentation Issue: [#2194](https://github.com/domits1/Domits/issues/2194)
 
 * [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
 
