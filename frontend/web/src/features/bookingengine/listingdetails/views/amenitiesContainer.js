@@ -38,7 +38,7 @@ const AmenitiesContainer = ({ amenityIds }) => {
               ×
             </button>
 
-            <h2 className="modal-title">Voorzieningen</h2>
+            <h2 className="modal-title">Amenities</h2>
 
             <div className="modal-groups">
               {Object.keys(grouped).map((category) => (

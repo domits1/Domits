@@ -1,4 +1,3 @@
-// amenities.js — Optie A (exact jouw volgorde)
 import React from "react";
 import IconWrapper from "./iconWrapper";
 
@@ -118,7 +117,12 @@ const amenities = [
   { category: "Essentials", amenity: "Heating", id: "3", icon: wrap(<HvacIcon />) },
 
   // ExtraServices
-  { category: "ExtraServices", amenity: "Cleaning service (add service fee manually)", id: "66", icon: wrap(<CleaningServicesIcon />) },
+  {
+    category: "ExtraServices",
+    amenity: "Cleaning service (add service fee manually)",
+    id: "66",
+    icon: wrap(<CleaningServicesIcon />),
+  },
   { category: "ExtraServices", amenity: "Private chef", id: "71", icon: wrap(<RamenDiningIcon />) },
   { category: "ExtraServices", amenity: "Housekeeping", id: "68", icon: wrap(<CleaningServicesIcon />) },
   { category: "ExtraServices", amenity: "Airport shuttle", id: "70", icon: wrap(<AirportShuttleIcon />) },
@@ -183,7 +187,7 @@ const amenities = [
   { category: "Technology", amenity: "Streaming services", id: "38", icon: wrap(<CastIcon />) },
   { category: "Technology", amenity: "Work desk and chair", id: "41", icon: wrap(<DeskIcon />) },
   { category: "Technology", amenity: "Bluetooth speaker", id: "39", icon: wrap(<BluetoothIcon />) },
-  { category: "Technology", amenity: "Smart TV", id: "37", icon: wrap(<TvIcon />) }
+  { category: "Technology", amenity: "Smart TV", id: "37", icon: wrap(<TvIcon />) },
 ];
 
 export default amenities;
