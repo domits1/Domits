@@ -60,11 +60,15 @@ const ImageGallery = ({ images }) => {
           </button>
 
           <div className="overlay-center-wrapper">
-            <button className="nav-button left" onClick={prevImage}></button>
+            <button className="nav-button left" onClick={prevImage}>
+              ‹
+            </button>
 
             <img className="overlay-main-image" src={toSrc(images[activeIndex].key)} />
 
-            <button className="nav-button right" onClick={nextImage}></button>
+            <button className="nav-button right" onClick={nextImage}>
+              ›
+            </button>
           </div>
 
           <div className="overlay-thumbnails">
