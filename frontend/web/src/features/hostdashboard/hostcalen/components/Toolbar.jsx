@@ -2,10 +2,16 @@ import React, { useEffect, useState } from "react";
 import { formatYearMonth } from "../utils/date";
 import { Auth } from "aws-amplify";
 import { getAccessToken } from "../utils/getAccessToken";
+<<<<<<<< HEAD:frontend/web/src/features/hostdashboard/hostcalen/components/Toolbar.jsx
 export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
+========
+
+export default function Toolbar({ view, setView, cursor, onPrev, onNext, selectedPropertyId, onPropertySelect }) {
+>>>>>>>> 01f56b30a (Dynamic price & property single page):frontend/web/src/features/hostdashboard/hostcalendar/components/Toolbar.jsx
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState(null);
+
   useEffect(() => {
     (async () => {
       try {

@@ -7,7 +7,7 @@ import calenderStyles from "./HostCalendar.module.css";
 import { generateUUID } from "../../utils/generateUUID.js";
 import { formatDate, uploadICalToS3 } from "../../utils/iCalFormatHost";
 import { getAccessToken } from "../../services/getAccessToken.js";
-import CalendarComponent from "./hostcalendar/views/Calender.js";
+//import CalendarComponent from "./hostcalendar/views/Calender.js";
 
 function HostCalendar() {
   const [accommodations, setAccommodations] = useState([]);
