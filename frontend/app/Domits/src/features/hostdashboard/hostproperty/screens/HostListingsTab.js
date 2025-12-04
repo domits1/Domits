@@ -51,53 +51,6 @@ const HostListingsTab = () => {
     }
   };
 
-  const asyncDeleteAccommodation = async accommodation => {
-    Alert.alert(
-      'Confirm Delete',
-      'Are you sure you want to remove this item from your listing?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: async () => {
-            const accId = accommodation.ID;
-            const accImages = accommodation.Images;
-            const options = {id: accId, images: accImages};
-            setIsLoading(true);
-            try {
-              const response = await fetch(
-                'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/DeleteAccommodation',
-                {
-                  method: 'DELETE',
-                  body: JSON.stringify(options),
-                  headers: {'Content-type': 'application/json; charset=UTF-8'},
-                },
-              );
-              if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-              }
-              setAccommodations(prevAccommodations =>
-                prevAccommodations.filter(item => item.ID !== accId),
-              );
-              Alert.alert(
-                'Success',
-                'This item has been successfully removed from your listing!',
-              );
-            } catch (error) {
-              console.error(error);
-            } finally {
-              setIsLoading(false);
-            }
-          },
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
   const navigateToDetailPage = accommodationId => {
     navigation.navigate(PROPERTY_DETAILS_SCREEN, {accommodation: accommodationId});
   };
@@ -145,10 +98,6 @@ const HostListingsTab = () => {
                     <View style={styles.accommodationText}>
                       <Text style={styles.accommodationName}>{item.property.title}</Text>
                     </View>
-                    <TouchableOpacity
-                      onPress={() => asyncDeleteAccommodation(item)}>
-                      <MaterialIcons name="delete" size={22} color="red" />
-                    </TouchableOpacity>
                   </TouchableOpacity>
                 );
               })
