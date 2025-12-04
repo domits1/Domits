@@ -74,7 +74,6 @@ classDiagram
 
     user "has1" --> stripe_account
     stripe_account "has1" --> stripe_account_status
-    stripe_account_status --> stripe : "built from"
 ```
 
 ### Example `General-Payments-Production-CRUD-fetchHostPayout`:
