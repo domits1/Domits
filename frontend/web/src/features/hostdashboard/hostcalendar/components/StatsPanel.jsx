@@ -9,7 +9,6 @@ export default function StatsPanel({ selections }) {
       selections.available.size ||
       Math.max(0, 0), // placeholder when nothing selected
   };
-
   return (
     <div className="hc-stats">
       <div className="hc-stats-title">Availability → Bookings (last 8 weeks)</div>

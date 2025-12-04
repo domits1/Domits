@@ -14,7 +14,6 @@ function HostCalendar() {
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const [selectedAccommodation, setSelectedAccommodation] = useState(null);
-
   const handleSelectAccommodation = (event) => {
     const accommodationId = event.target.value;
     const accommodation = accommodations.find(
