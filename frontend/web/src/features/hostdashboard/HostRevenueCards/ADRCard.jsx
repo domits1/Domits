@@ -1,46 +1,74 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-} from "recharts";
-import "./ADRCard.scss";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import "./KpiCard.scss";      
+import "./ADRCard.scss";      
 import { ADRCardService as ADRService } from "../services/ADRCardService.js";
 
-const ADRCard = () => {
+const ADRCard = ({ refreshKey }) => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
+
   const [adr, setAdr] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [bookedNights, setBookedNights] = useState(0);
+
   const [timeFilter, setTimeFilter] = useState("monthly");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const isMountedRef = useRef(false);
+  const fetchingRef = useRef(false);
+
+  const lastRef = useRef({
+    adr: null,
+    totalRevenue: null,
+    bookedNights: null,
+    chartKey: "",
+  });
+
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        setCognitoUserId(user?.attributes?.sub ?? null);
-      } catch {
-        setError("Failed to authenticate user");
-      }
+    isMountedRef.current = true;
+
+    Auth.currentAuthenticatedUser()
+      .then((user) => {
+        if (isMountedRef.current) setCognitoUserId(user.attributes.sub);
+      })
+      .catch(() => {
+        if (isMountedRef.current) setError("Failed to authenticate user");
+      });
+
+    return () => {
+      isMountedRef.current = false;
     };
-    fetchUser();
   }, []);
 
-  useEffect(() => {
-    if (!cognitoUserId) return;
-    if (timeFilter === "custom" && (!startDate || !endDate)) return;
+  const canFetch = useCallback(() => {
+    if (!cognitoUserId) return false;
+    if (timeFilter === "custom" && (!startDate || !endDate)) return false;
+    return true;
+  }, [cognitoUserId, timeFilter, startDate, endDate]);
 
-    const fetchMetrics = async () => {
-      setLoading(true);
-      setError(null);
+  const safeValue = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+  const buildChartKey = (data) => {
+    if (!Array.isArray(data)) return "";
+    return data.map((d) => `${d?.name ?? ""}:${Number(d?.value ?? 0)}`).join("|");
+  };
+
+  const fetchMetrics = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!canFetch() || !isMountedRef.current) return;
+      if (fetchingRef.current) return;
+
+      fetchingRef.current = true;
+
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
 
       try {
         const results = await ADRService.getADRMetrics(
@@ -50,43 +78,73 @@ const ADRCard = () => {
           endDate
         );
 
-        setAdr(results?.adr ?? 0);
-        setTotalRevenue(results?.totalRevenue ?? 0);
-        setBookedNights(results?.bookedNights ?? 0);
-      } catch (err) {
-        setError(err?.message || "Failed to fetch ADR metrics");
+        if (!isMountedRef.current || !results) return;
+
+        const nextAdr = safeValue(results.adr);
+        const nextTotalRevenue = safeValue(results.totalRevenue);
+        const nextBookedNights = safeValue(results.bookedNights);
+
+        const nextChartData = Array.isArray(results.chartData) ? results.chartData : [];
+        const nextChartKey = buildChartKey(nextChartData);
+
+        if (lastRef.current.adr !== nextAdr) {
+          setAdr(nextAdr);
+          lastRef.current.adr = nextAdr;
+        }
+
+        if (lastRef.current.totalRevenue !== nextTotalRevenue) {
+          setTotalRevenue(nextTotalRevenue);
+          lastRef.current.totalRevenue = nextTotalRevenue;
+        }
+
+        if (lastRef.current.bookedNights !== nextBookedNights) {
+          setBookedNights(nextBookedNights);
+          lastRef.current.bookedNights = nextBookedNights;
+        }
+
+        if (lastRef.current.chartKey !== nextChartKey) {
+          lastRef.current.chartKey = nextChartKey;
+        }
+
+        if (!silent) setError(null);
+      } catch (e) {
+        if (!silent && isMountedRef.current) setError("Failed to fetch ADR metrics");
       } finally {
-        setLoading(false);
+        fetchingRef.current = false;
+        if (!silent && isMountedRef.current) setLoading(false);
       }
-    };
-
-    fetchMetrics();
-  }, [cognitoUserId, timeFilter, startDate, endDate]);
-
-  const donutData = useMemo(
-    () => [
-      { name: "ADR", value: Number(adr) || 0 },
-      { name: "Total Revenue", value: Number(totalRevenue) || 0 },
-      { name: "Booked Nights", value: Number(bookedNights) || 0 },
-    ],
-    [adr, totalRevenue, bookedNights]
+    },
+    [canFetch, cognitoUserId, timeFilter, startDate, endDate]
   );
 
-  const allZero = donutData.every((item) => item.value === 0);
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchMetrics({ silent: false });
+  }, [canFetch, fetchMetrics]);
+
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchMetrics({ silent: true });
+  }, [refreshKey, canFetch, fetchMetrics]);
+
+  const donutData = [
+    { name: "ADR", value: safeValue(adr) },
+    { name: "Total Revenue", value: safeValue(totalRevenue) },
+    { name: "Booked Nights", value: safeValue(bookedNights) },
+  ];
+
+  const allZero = donutData.every((i) => i.value === 0);
   const displayData = allZero ? [{ name: "No Data", value: 1 }] : donutData;
+
   const COLORS = ["#0d9813", "#82ca9d", "#ffc658"];
 
   return (
-    <div className="adr-card card-base">
+    <div className="kpi-card adr-card">
       <h3>Average Daily Rate</h3>
 
       <div className="time-filter">
         <label>Time Filter:</label>
-        <select
-          className="timeFilter"
-          value={timeFilter}
-          onChange={(e) => setTimeFilter(e.target.value)}
-        >
+        <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
           <option value="monthly">Monthly</option>
           <option value="custom">Custom</option>
         </select>
@@ -113,75 +171,55 @@ const ADRCard = () => {
         </div>
       )}
 
-      <div className="adr-details">
-        {loading ? (
-          <p>Loading...</p>
-        ) : error ? (
-          <p style={{ color: "red" }}>Error: {error}</p>
-        ) : (
-          <>
-            <p>
-              <strong>ADR:</strong> €{(Number(adr) || 0).toLocaleString()}
-            </p>
-            <p>
-              <strong>Total Revenue:</strong> €{(Number(totalRevenue) || 0).toLocaleString()}
-            </p>
-            <p>
-              <strong>Booked Nights:</strong> {(Number(bookedNights) || 0).toLocaleString()}
-            </p>
-          </>
-        )}
-      </div>
+      <div className="kpi-body">
+        <div className="adr-details">
+          {loading ? (
+            <p>Loading…</p>
+          ) : error ? (
+            <p style={{ color: "red" }}>Error: {error}</p>
+          ) : (
+            <>
+              <p>
+                <strong>ADR:</strong> €{safeValue(adr).toLocaleString()}
+              </p>
+              <p>
+                <strong>Total Revenue:</strong> €{safeValue(totalRevenue).toLocaleString()}
+              </p>
+              <p>
+                <strong>Booked Nights:</strong> {safeValue(bookedNights).toLocaleString()}
+              </p>
+            </>
+          )}
+        </div>
 
-      {!loading && !error && (
-        <div className="adr-donut-chart">
-          <div className="donut-wrapper">
+        {!loading && !error && (
+          <div className="adr-donut-chart">
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
                   data={displayData}
                   dataKey="value"
                   nameKey="name"
-                  cx="50%"
-                  cy="50%"
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={3}
-                  label={!allZero}
                   isAnimationActive={true}
                 >
-                  {displayData.map((_, index) => (
+                  {displayData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={allZero ? "#c7c7c7" : COLORS[index % COLORS.length]}
+                      fill={allZero ? "#ccc" : COLORS[index % COLORS.length]}
                     />
                   ))}
                 </Pie>
 
-                {allZero && (
-                  <text
-                    x="50%"
-                    y="50%"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="14"
-                    fill="#777"
-                  >
-                    No Data
-                  </text>
-                )}
-
                 <Tooltip />
-                <Legend
-                  layout="horizontal"
-                  verticalAlign="bottom"
-                  align="center"
-                />
+                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
