@@ -1,6 +1,5 @@
 import Database from "database";
 import { Property } from "database/models/Property";
-// import { NotFoundException } from "../util/exception/NotFoundException.js";
 
 export class Repository {
     async getPropertyById(id) {
