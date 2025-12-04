@@ -46,7 +46,7 @@ _How to grab your access token?_
 
 Show your class in a Diagram. Use [Mermaid Flow](https://mermaid.live/). Github supports mermaid chart in .md
 
-Example:
+### Example `general-crud-payment-handler`:
 
 ```mermaid
 classDiagram
@@ -57,12 +57,102 @@ classDiagram
     class stripe_account {
         +string id
         +string account_id
-        +string created_at
-        +string updated_at
         +string user_id
+        +number created_at
+        +number updated_at
+    }
+
+    class stripe_account_status {
+        +string accountId
+        +string onboardingUrl
+        +string loginLinkUrl
+        +boolean bankDetailsProvided
+        +boolean onboardingComplete
+        +boolean chargesEnabled
+        +boolean payoutsEnabled
+    }
+
+    class stripe {
+        <<external>>
+        +accounts.create()
+        +accounts.retrieve()
+        +accountLinks.create()
+        +accounts.createLoginLink()
     }
 
     user "has1" --> stripe_account
+    stripe_account "has1" --> stripe_account_status
+    stripe_account_status --> stripe : "built from"
+```
+
+### Example `General-Payments-Production-CRUD-fetchHostPayout`:
+
+```mermaid
+classDiagram
+    class user {
+        +string cognitoUserId
+    }
+
+    class stripe_account {
+        +string account_id
+        +string user_id
+    }
+
+    class property {
+        +string id
+        +string title
+        +string key
+    }
+
+    class host_charge {
+        +number customerPaid
+        +number stripeProcessingFees
+        +number platformFeeGross
+        +number platformFeeNet
+        +number hostReceives
+        +string currency
+        +string status
+        +string createdDate
+        +string customerName
+        +string paymentMethod
+        +string propertyTitle
+        +string propertyImage
+        +string bookingId
+        +string paymentId
+    }
+
+    class host_payout {
+        +string id
+        +number amount
+        +string currency
+        +string arrivalDate
+        +string status
+        +string method
+    }
+
+    class upcoming_payout_group {
+        +number amount
+        +string currency
+        +string availableOn
+        +number availableOnTs
+    }
+
+    class payout_forecast {
+        +string id
+        +number amount
+        +string currency
+        +string arrivalDate
+        +string status
+        +string method
+    }
+
+    user "has1" --> stripe_account
+    stripe_account "has many" --> host_charge
+    host_charge "relates to" --> property
+
+    stripe_account "has many" --> host_payout
+    stripe_account "has many" --> upcoming_payout_group
+    stripe_account "may have" --> payout_forecast
 ```
 
 ## Sequence Diagram
