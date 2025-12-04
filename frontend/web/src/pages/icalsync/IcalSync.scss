@@ -1,0 +1,88 @@
+@import "../adminproperty/adminproperty.scss";
+
+.ical-sync-form {
+  .ical-section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba($primary-color, 0.2);
+  }
+
+  .ical-section-heading {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: $primary-color;
+    margin-bottom: 0.4rem;
+  }
+
+  select {
+    padding: 0.6rem;
+    border: 1px solid $primary-color;
+    border-radius: $field-radius;
+    font-size: $font-size-input;
+    background-color: #fff;
+  }
+
+  .ical-export-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+
+    input[type="text"] {
+      padding: 0.6rem;
+      border: 1px solid $primary-color;
+      border-radius: $field-radius;
+      font-size: $font-size-input;
+      background-color: #f9fafb;
+    }
+  }
+
+  .ical-copy-btn {
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: $field-radius;
+    background: $primary-color;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .adminproperty-submit {
+    margin-top: 1.2rem;
+  }
+}
+
+.hc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hc-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 600px;
+  width: 100%;
+  border: 1px solid $primary-color;
+}
+
+.ical-modal-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  h2 {
+    font-size: 1.2rem;
+    color: $primary-color;
+  }
+}
+
+.ical-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
