@@ -1,6 +1,7 @@
 import Database from "database";
 import { Property } from "database/models/Property";
 
+
 export class Repository {
     async getPropertyById(id) {
         const client = await Database.getInstance();
