@@ -107,7 +107,7 @@ Table of Contents
           - utils/ # Feature specific functions or utillities
           - views/ # Page view files
       - fonts/kanit/ # Kanit fonts
-      - graphql/ # GraphQL files (afaik unused)
+      - graphql/ # GraphQL files (unused?)
       - hooks/ # Custom react hooks files
       - images/ # Assets, Icons and team pictures
       - models/ # Amplify Models?
@@ -127,25 +127,23 @@ Table of Contents
 ## Intro Sprint
 Welcome to the Intro Sprint!
 
-This sprint will help you to get familiar with domits within one week so you can start contibuting to issues.
+The Intro Sprint is designed to help you get onboarded as a Domits Developer quickly and efficiently.
 
-If you ever get stuck, google, stack overflow, ask a LLM and then afterwards, ask a team member.
+If you get stuck, try Googling, checking Stack Overflow, or asking an LLM first, then reach out to a team member if needed.
 
 ### General Introduction
 Learn the basics of Domits, who we are, what we build, and where to find key documentation.
 
-* Get access to tooling (AWS, Github, Discord, Figma, ...) 
-* Understand the [Hospitality & Vacation rental market](https://bookdomits.com/)
-* Visit [domits.com](https://www.domits.com) and understand the product.
-* Read through the [Domits Handbook](https://docs.google.com/document/d/1VxkKQtqS_B9NvDvtcBZ7BUZCSGPUG-PHEkayGi3D6mU/edit?tab=t.0#heading=h.xau35oj9sp4z).
-* Understand [product backlog, roadmap and vision](https://github.com/domits1/Domits/wiki/Product-Backlog,-Roadmap-and-Vision).
+* Get access to tooling (AWS, Github, Discord, Figma, ...)  
+* Understand the [Company](https://bookdomits.com/company/), [Hospitality Market](https://bookdomits.com/blog/), [Ecosystem](https://bookdomits.com/ecosystem/) and [Product](https://bookdomits.com/features/).  
+* Understand [product vision, roadmap and back](https://github.com/domits1/Domits/issues/2272).
 * Check who is [responsible for what parts of Domits, and check the issues placed on your name.](https://github.com/domits1/Domits/wiki/Technical-Leadership)
 
 
 After this section you should understand:
 - The company's products and market.
 - The long-term roadmap and sprint workflow.
-- Your technical arrea of responsibility.
+- Your technical area of responsibility.
 
 ---
 
