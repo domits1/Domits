@@ -32,7 +32,7 @@
   </div>
 
   
-<p align="center">A fast-growing platform where you can book holiday homes, boats and campers.</p>
+<p align="center">A global strategic advisor to grow the hospitality ecosystem.</p>
 
 
 # What is Domits?
