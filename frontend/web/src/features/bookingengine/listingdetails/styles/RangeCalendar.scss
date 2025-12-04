@@ -96,9 +96,11 @@
 .rc-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 40px;
   padding: 16px 20px 8px;
 }
+
+
 
 /* Month block */
 .rc-month__label {
