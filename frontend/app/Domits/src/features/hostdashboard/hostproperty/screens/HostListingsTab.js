@@ -8,6 +8,7 @@ import {styles} from '../styles/HostPropertiesStyles'
 import LoadingScreen from "../../../../screens/loadingscreen/screens/LoadingScreen";
 import {HOST_ONBOARDING_SCREEN, PROPERTY_DETAILS_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 import TabHeader from "../../../../screens/accounthome/components/TabHeader";
+import retrieveAccessToken from "../../../auth/RetrieveAccessToken";
 
 const HostListingsTab = () => {
   const [accommodations, setAccommodations] = useState([]);
@@ -25,31 +26,24 @@ const HostListingsTab = () => {
   const fetchAccommodations = async () => {
     setIsLoading(true);
     if (!userId) {
-      console.log('No user id');
+      console.error('No user id');
       return;
     }
     try {
       const response = await fetch(
-        'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation',
-        {
-          method: 'POST',
-          body: JSON.stringify({OwnerId: userId}),
-          headers: {'Content-type': 'application/json; charset=UTF-8'},
-        },
+          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all",
+          {
+            method: "GET",
+            headers: {
+              Authorization: await retrieveAccessToken(),
+            },
+          }
       );
       if (!response.ok) {
         throw new Error('Failed to fetch');
       }
       const data = await response.json();
-      if (data.body && typeof data.body === 'string') {
-        const accommodationsArray = JSON.parse(data.body);
-        if (Array.isArray(accommodationsArray)) {
-          setAccommodations(accommodationsArray);
-        } else {
-          console.error('Parsed data is not an array:', accommodationsArray);
-          setAccommodations([]);
-        }
-      }
+      setAccommodations(data)
     } catch (error) {
       console.error('Unexpected error:', error);
     } finally {
@@ -139,7 +133,7 @@ const HostListingsTab = () => {
                   imageUrls.length > 0 ? imageUrls[0] : null;
                 return (
                   <TouchableOpacity
-                    key={item.ID}
+                    key={item.property.id}
                     style={styles.accommodationItem}
                     onPress={() => navigateToDetailPage(item.ID)}>
                     {primaryImageUrl && (
@@ -149,7 +143,7 @@ const HostListingsTab = () => {
                       />
                     )}
                     <View style={styles.accommodationText}>
-                      <Text style={styles.accommodationName}>{item.Title}</Text>
+                      <Text style={styles.accommodationName}>{item.property.title}</Text>
                     </View>
                     <TouchableOpacity
                       onPress={() => asyncDeleteAccommodation(item)}>
