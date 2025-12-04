@@ -6,13 +6,12 @@ This documentation covers all operations related to Stripe Connect for hosts.
 It includes creating and managing Stripe Express accounts (onboarding, login access, and account status), as well as retrieving all payout-related financial data.  
 This includes host charges, upcoming and completed payouts, balance information, payout forecasting, and managing payout schedules (daily, weekly, monthly, or manual).
 
-
 ## Metadata
 
-Lambda Functions: 
+Lambda Functions:
+
 - `general-crud-payment-handler` Handles creation and status retrieval of Stripe Express accounts for hosts
 - `General-Payments-Production-CRUD-fetchHostPayout` Shows lists charges transferred from bookings made by guests, retrieves past and upcoming payouts (including forecast based on balance and payout schedule), returns current Stripe balance (available and pending), and allows reading and updating the host’s Stripe payout schedule (daily/weekly/monthly/manual).
-
 
 Related Issue: **Main issue: [#163](https://github.com/domits1/Domits/issues/163)**
 
@@ -22,10 +21,15 @@ Status: **In Development/Active**
 
 Use https://tabletomarkdown.com/generate-markdown-table/ to simply make your own table.
 
-| Action | Description                                                           | Auth Required | Endpoint                                                                     |
-| ------ | --------------------------------------------------------------------- | ------------- | ---------------------------------------------------------------------------- |
-| POST   | Create a new Stripe Express account for the authenticated user        | Yes           | https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments |
-| GET    | Retrieve the current Stripe account status for the authenticated user | Yes           | https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments |
+| Action | Description                                                                                                         | Auth Required | Endpoint                                                                                                  |
+| ------ | ------------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------- |
+| POST   | Create a new Stripe Express account for the authenticated host                                                      | Yes           | https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments                              |
+| GET    | Retrieve the current Stripe account status for the authenticated host                                               | Yes           | https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments                              |
+| GET    | Retrieve the current Stripe balance (available and pending) for the authenticated host                              | Yes           | https://4ac2ngbvlb.execute-api.eu-north-1.amazonaws.com/deployment/payments/retrieve-user-balance         |
+| GET    | Retrieve all charges paid out to the authenticated host (per booking)                                               | Yes           | https://4ac2ngbvlb.execute-api.eu-north-1.amazonaws.com/deployment/payments/retrieve-user-charges         |
+| GET    | Retrieve the current Stripe payout schedule for the authenticated host                                              | Yes           | https://4ac2ngbvlb.execute-api.eu-north-1.amazonaws.com/deployment/payments/retrieve-user-payout-schedule |
+| GET    | Retrieve payouts, including past payouts, upcoming payouts and forecasted payout amounts for the authenticated host | Yes           | https://4ac2ngbvlb.execute-api.eu-north-1.amazonaws.com/deployment/payments/retrieve-user-payouts         |
+| POST   | Update the Stripe payout schedule (manual, daily, weekly, monthly) for the authenticated host                       | Yes           | https://4ac2ngbvlb.execute-api.eu-north-1.amazonaws.com/deployment/payments/set-payout-schedule           |
 
 ## Security & Authorization
 
@@ -175,4 +179,5 @@ sequenceDiagram
 ## Todo & Improvements
 
 Todo:
+
 - [ ] idk
