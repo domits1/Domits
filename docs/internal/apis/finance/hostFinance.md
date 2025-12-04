@@ -72,14 +72,6 @@ classDiagram
         +boolean payoutsEnabled
     }
 
-    class stripe {
-        <<external>>
-        +accounts.create()
-        +accounts.retrieve()
-        +accountLinks.create()
-        +accounts.createLoginLink()
-    }
-
     user "has1" --> stripe_account
     stripe_account "has1" --> stripe_account_status
     stripe_account_status --> stripe : "built from"
