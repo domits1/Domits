@@ -200,7 +200,10 @@ After this section you should have:
 - Either the app or web environment fully working.
 
 That are all the fundamental things to be aware of.
-You can decide to take a [Quick Fix](https://github.com/domits1/Domits/issues/122) now, or be aware of other subjects to understand.
+Here's what you can do next:
+* Tackle a [Beginner Issue](https://github.com/domits1/Domits/issues/2326) where you have to add your own name+profile picture as developer, and make a pull request for it.
+* Take a quick fix [Quick Fix](https://github.com/domits1/Domits/issues/122) and eventually make a PR where you mention the issue's name.
+* Read more of the docs, and get a better understanding of Domits.
 
 ## Code Conventions
 
