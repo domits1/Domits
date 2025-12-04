@@ -25,7 +25,7 @@ Additionaly, check out those links to extend your knowledge about PR reviewing:
 > ![Enable Try new experience screenshot](../../images/pr_onboarding/try_new_experience_button.png)
 
 1. Review the code.  
-* Ensure code follows checklist (no console.logs/ global styling, inline styling)
+* Ensure code follows checklist (no console.logs, global or inline styling, etc.)
 * Ensure code has no unnecessary comments
 * Ensure code follows the Domits [Code Conventions](https://github.com/domits1/Domits/blob/acceptance/docs/internal/standards/code_conventions.md) and use the [Clean Code: Reference Guide](https://github.com/domits1/Domits/blob/acceptance/docs/internal/standards/clean_code_reference_guide.md) to your advantage and pinpoint things which don't seem right
 * Use common sense. If you see something where you think "Hm, that doesn't seem right", research a bit on the code, to validate your claim about something not being right, and then add a comment about it.
@@ -49,7 +49,7 @@ Those are vital, if a CI fails, that means that the PR broke something. To get a
 
 Last but not least, ensure the branch is up-to-date with acceptance. Go to the github repo -> code -> branches or click this fancy [link](https://github.com/domits1/Domits/branches)  
 ![areYouBehindChanges?](../../images/pr_onboarding/behind_counter_git_branches.png)  
-It's a good idea that you make sure your PR is never behind, by running `git pull origin acceptance`
+Ensure your PR is not behind by running `git pull origin acceptance`
 
 Here are some additional resources you can take a look to, to get a better grasp of reviewing a pull request.
 

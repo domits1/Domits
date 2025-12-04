@@ -27,7 +27,7 @@ This document serves the purpose of documenting all of our (current) used servic
 ## What is a microservice?
 
 Before starting to get to know every AWS service, it is essential what a microservice is, as it is part of the biggest service we use, yet many (including Raman(skill issue)) didn't know what it means. 
-A **microservice architecture** is a [**Architectural pattern**](https://en.wikipedia.org/wiki/Architectural_pattern) that organizes a application into a collection of loosely coupled services that communicate through **lightweight protocols**. This pattern provides the ability to **develop** and **deploy** **services** **independetly**, improving modularity, scalability and adaptability. [source: Wikipedia](https://en.wikipedia.org/wiki/Microservices)
+A **microservice architecture** is a [**Architectural pattern**](https://en.wikipedia.org/wiki/Architectural_pattern) that organises a application into a collection of loosely coupled services that communicate through **lightweight protocols**. This pattern provides the ability to **develop** and **deploy** **services** **independently**, improving modularity, scalability and adaptability. [source: Wikipedia](https://en.wikipedia.org/wiki/Microservices)
 
 [AWS Lambda](https://aws.amazon.com/lambda/) is a microservice.
 
