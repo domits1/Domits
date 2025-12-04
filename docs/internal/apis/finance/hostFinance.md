@@ -2,7 +2,10 @@
 
 ## Description
 
-This documentation describes the operations related to creating and managing Stripe Express accounts for hosts. It covers account creation, onboarding, login link generation, and retrieving the status of a host’s Stripe account.  
+This documentation covers all operations related to Stripe Connect for hosts.  
+It includes creating and managing Stripe Express accounts (onboarding, login access, and account status), as well as retrieving all payout-related financial data.  
+This includes host charges, upcoming and completed payouts, balance information, payout forecasting, and managing payout schedules (daily, weekly, monthly, or manual).
+
 
 ## Metadata
 
