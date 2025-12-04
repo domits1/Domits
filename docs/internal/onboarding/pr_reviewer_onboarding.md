@@ -26,7 +26,7 @@ Additionaly, check out those links to extend your knowledge about PR reviewing:
 
 1. Review the code.  
 * Ensure code follows checklist (no console.logs, global or inline styling, etc.)
-* Ensure code has no unnecessary comments
+* Provide comments **only** when necessary to explain complicated code or communicate important details. They're not for decoration.
 * Ensure code follows the Domits [Code Conventions](https://github.com/domits1/Domits/blob/acceptance/docs/internal/standards/code_conventions.md) and use the [Clean Code: Reference Guide](https://github.com/domits1/Domits/blob/acceptance/docs/internal/standards/clean_code_reference_guide.md) to your advantage and pinpoint things which don't seem right
 * Use common sense. If you see something where you think "Hm, that doesn't seem right", research a bit on the code, to validate your claim about something not being right, and then add a comment about it.
 
