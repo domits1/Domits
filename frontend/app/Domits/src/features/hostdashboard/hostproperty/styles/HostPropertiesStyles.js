@@ -1,4 +1,5 @@
 import {StyleSheet} from "react-native";
+import {COLORS} from "../../../../styles/COLORS";
 
 export const styles = StyleSheet.create({
     container: {
@@ -23,20 +24,23 @@ export const styles = StyleSheet.create({
     },
     box: {
         elevation: 1,
-        shadowColor: '#003366',
+        shadowColor: COLORS.domitsHostBlue,
         padding: 10,
         margin: 10,
         minHeight: 150,
         borderRadius: 2,
         borderWidth: 0.5,
-        borderColor: '#003366',
+        borderColor: COLORS.domitsHostBlue,
     },
     boxText: {
-        borderWidth: 1,
-        borderColor: '#003366',
+        borderWidth: 3,
+        borderColor: 'rgba(0,51,102,0.25)',
         borderRadius: 15,
-        padding: 5,
+        padding: 10,
         marginBottom: 10,
+        backgroundColor: COLORS.domitsHostBlue,
+        textAlign: 'center',
+        color: 'white'
     },
     listItem: {
         flexDirection: 'row',
@@ -45,7 +49,7 @@ export const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 20,
         borderWidth: 1,
-        borderColor: '#003366',
+        borderColor: COLORS.domitsHostBlue,
         borderRadius: 10,
         margin: 20,
         marginBottom: 0,

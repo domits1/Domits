@@ -9,6 +9,7 @@ import LoadingScreen from "../../../../screens/loadingscreen/screens/LoadingScre
 import {HOST_ONBOARDING_SCREEN, PROPERTY_DETAILS_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 import TabHeader from "../../../../screens/accounthome/components/TabHeader";
 import HostPropertyRepository from "../../../../services/property/HostPropertyRepository";
+import TranslatedText from "../../../translation/components/TranslatedText";
 
 const HostListingsTab = () => {
   const hostPropertyRepository = new HostPropertyRepository();
@@ -53,12 +54,16 @@ const HostListingsTab = () => {
       <ScrollView style={styles.container}>
         <TabHeader tabTitle={'Properties'}/>
         <TouchableOpacity onPress={addProperty} style={styles.listItem}>
-          <Text style={styles.listItemText}>Add new accommodation</Text>
+          <Text style={styles.listItemText}>
+            <TranslatedText textToTranslate={"Add new property"}/>
+          </Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         <View style={styles.boxColumns}>
           <View style={styles.box}>
-            <Text style={styles.boxText}>Current Listings</Text>
+            <Text style={styles.boxText}>
+              <TranslatedText textToTranslate={"Current listings"}/>
+            </Text>
             {isLoading ? (
               <LoadingScreen/>
             ) : properties.length > 0 ? (
@@ -92,12 +97,9 @@ const HostListingsTab = () => {
               })
             ) : (
               <Text style={styles.noListingsText}>
-                It appears that you have not listed any accommodations yet...
+                <TranslatedText textToTranslate={"You have no properties listed yet"}/>
               </Text>
             )}
-          </View>
-          <View style={styles.box}>
-            <Text style={styles.boxText}>Pending</Text>
           </View>
         </View>
       </ScrollView>
