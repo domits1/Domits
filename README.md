@@ -62,11 +62,12 @@ Table of Contents
 
 ## Tech Stack
 🖥️ **Frontend:** React Native, JavaScript, TypeScript, SASS/SCSS  
-🧠 **Backend:** Node.js, AWS Lambda, TypeORM, PostgreSQL  
+🧠 **Backend:** Node.js, AWS Lambda, PostgreSQL  
 ☁️ **Cloud:** Amazon Web Services  
 🧪 **Testing:** Jest, Cypress  
-🚀 **CI/CD:** GitHub Actions  
+🚀 **CI/CD:** GitHub Actions, Amplify  
 📦 **Package Management:** npm  
+🪛 **Tooling:** TypeORM
 
 ## Repository Structure
 ```
