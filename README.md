@@ -36,7 +36,8 @@
 
 
 # What is Domits?
-Domits is a hospitality-management platform designed to help hosts and guest manage properties, bookings and communications through a single application. The system combines a React/React-Native front-end with a serverless AWS backend. The backend is written in Node.JS/TypeScript and is structured as individual AWS Lambda functions wired to API Gateway endpoints. It uses Aurora DSQL and other AWS services (Amplify, Cognito, S3, etc.) and external APIs such as Stripe for payments.
+Domits is a hospitality-management platform that allows hosts and guests to manage properties, bookings, availability, and communication in one unified system. The application uses a React/React Native frontend and a fully serverless AWS backend. The backend is built in Node.js/TypeScript and structured as individual AWS Lambda functions connected to API Gateway. It integrates with Aurora DSQL and various AWS services (Amplify, Cognito, S3, etc.), as well as external services like Stripe for payments.
+This README is intended for developers working on the Domits codebase.
 
 Table of Contents
 =================
@@ -44,19 +45,19 @@ Table of Contents
 - [What is Domits?](#what-is-domits)
 - [Table of Contents](#table-of-contents)
   - [Tech Stack](#tech-stack)
-  - [Repository structure](#repository-structure)
+  - [Repository Structure](#repository-structure)
   - [Intro Sprint](#intro-sprint)
     - [General Introduction](#general-introduction)
     - [Github Introduction](#github-introduction)
-      - [Reviewing a PR as Reviewer/Creating a PR requester](#reviewing-a-pr-as-reviewercreating-a-pr-requester)
+      - [Reviewing A PR As Reviewer/Creating A PR Requester](#reviewing-a-pr-as-reviewercreating-a-pr-requester)
     - [Programming Introduction](#programming-introduction)
     - [Backend Introduction](#backend-introduction)
     - [Web/App Setup](#webapp-setup)
   - [Code Conventions](#code-conventions)
-  - [Core modules and APIs](#core-modules-and-apis)
+  - [Core Modules and APIs](#core-modules-and-apis)
   - [Documentation Structure Overview](#documentation-structure-overview)
-  - [Contribution guidelines](#contribution-guidelines)
-    - [Other subjects to understand](#other-subjects-to-understand)
+  - [Contribution Guidelines](#contribution-guidelines)
+    - [Other Subjects to Understand](#other-subjects-to-understand)
 
 
 ## Tech Stack
@@ -67,7 +68,7 @@ Table of Contents
 🚀 **CI/CD:** GitHub Actions  
 📦 **Package Management:** npm  
 
-## Repository structure
+## Repository Structure
 ```
 - .github/ # CI files
 - backend/ # Backend related files
@@ -123,7 +124,7 @@ Table of Contents
         - exception/ # Custom exceptions (e.g., Unauthorized)
 ```
 ## Intro Sprint
-Welcome to the Intro Sprint! 
+Welcome to the Intro Sprint!
 
 This sprint will help you to get familiar with domits within one week so you can start contibuting to issues.
 
@@ -166,7 +167,7 @@ After this section you should understand:
 - How to create a branch and PR.
 ---
 
-#### Reviewing a PR as Reviewer/Creating a PR requester
+#### Reviewing A PR As Reviewer/Creating A PR Requester
 
 If you have been working at Domits for a while, you surely got familiar with Pull Requests. Now, if its time for you to review those, I'm sure that you have a lot of questions on the *how* aspect. Don't worry, there is a documentation available for you to get ready as reviewer [here.](./docs/internal/onboarding/pr_reviewer_onboarding.md) (You can also click the link as pr requester.)
 
@@ -211,7 +212,7 @@ You can decide to take a [Quick Fix](https://github.com/domits1/Domits/issues/12
 * [Code Conventions](./docs/internal/standards/code_conventions.md) - Helps you maintain a consistent and readable codebase in Domits.
 * [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
 
-## Core modules and APIs
+## Core Modules and APIs
 
 Get a basic understanding of every AWS service we use [here](/docs/internal/services/overview.md).
 
@@ -277,7 +278,7 @@ Domits contains documentation, those which are essential for understanding. As o
 
 * [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
 
-## Contribution guidelines
+## Contribution Guidelines
 
 Follow the established code conventions.
 
@@ -285,7 +286,7 @@ Always fill out the PR template completely before review.
 
 Keep your commits clean and descriptive according to [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-### Other subjects to understand
+### Other Subjects to Understand
 
 * [Domain Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design)
 Structure code around real-world business logic.
