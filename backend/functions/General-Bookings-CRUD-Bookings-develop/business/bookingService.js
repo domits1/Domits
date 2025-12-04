@@ -3,6 +3,7 @@ import IdentifierModel from "./model/identifierModel.js";
 import GetParamsModel from "./model/getParamsModel.js";
 import AuthManager from "../auth/authManager.js";
 import sendEmail from './sendEmail.js';
+import sendAutomatedMessage from "./sendAutomatedMessage.js";
 import Forbidden from "../util/exception/Forbidden.js";
 import TypeException from "../util/exception/TypeException.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
@@ -40,6 +41,23 @@ class BookingService {
 			departureDate: event.general.departureDate
 		};
 		await sendEmail(userEmail, hostEmail, bookingInfo);
+
+		// Use host-configured automated message if available, otherwise use default
+		const defaultMessage = `Welcome to ${bookingInfo.propertyName} 🎉\n\nCheck-in: ${fetchedProperty.checkIn || "15:00"}\nCheck-out: ${fetchedProperty.checkOut || "11:00"}\nGuests: ${bookingInfo.guests}\n\nLet me know if you have any questions or special requests. Have a wonderful stay!`;
+		
+		let messageText = fetchedProperty.automatedWelcomeMessage || defaultMessage;
+		
+		// Simple template replacement for host custom messages
+		if (fetchedProperty.automatedWelcomeMessage) {
+			messageText = messageText
+				.replace('{{guestName}}', "Guest") // We don't have guest name easily available here yet without another fetch, defaulting to Guest
+				.replace('{{propertyName}}', bookingInfo.propertyName)
+				.replace('{{checkIn}}', fetchedProperty.checkIn || "15:00")
+				.replace('{{checkOut}}', fetchedProperty.checkOut || "11:00")
+				.replace('{{numGuests}}', bookingInfo.guests);
+		}
+
+		await sendAutomatedMessage(fetchedProperty.hostId, authenticatedUser.sub, event.identifiers.property_Id, messageText, "host_property_welcome");
 
 		return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
 

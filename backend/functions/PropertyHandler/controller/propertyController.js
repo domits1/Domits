@@ -49,8 +49,25 @@ export class PropertyController {
         try {
             const accessToken = event.headers.Authorization;
             const eventBody = JSON.parse(event.body);
-            const propertyId = eventBody.property
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId)
+            const propertyId = eventBody.property;
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+            // Check if this is an update for automated messages
+            if (eventBody.automatedWelcomeMessage !== undefined || eventBody.automatedCheckinMessage !== undefined) {
+                await this.propertyService.updateAutomatedMessages(
+                    propertyId, 
+                    eventBody.automatedWelcomeMessage, 
+                    eventBody.automatedCheckinMessage
+                );
+                return {
+                    statusCode: 200,
+                    headers: responseHeaders,
+                    body: JSON.stringify("Automated messages updated successfully.")
+                }
+            }
+
+            // Otherwise, proceed with activation logic
             await this.propertyService.activateProperty(propertyId);
             return {
                 statusCode: 204,
