@@ -25,22 +25,18 @@ const RevPARCard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ✅ Fetch Cognito user ID
-  // ✅ Fetch Cognito user ID
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
         setCognitoUserId(user.attributes.sub);
       } catch (err) {
-        console.error("Error fetching Cognito User ID:", err);
-        setError(err.message);
+        setError(err.message || "Failed to authenticate user");
       }
     };
     fetchUser();
   }, []);
 
-  // ✅ Helper: Get ISO week number
   const getWeekNumber = (date) => {
     const tempDate = new Date(date);
     tempDate.setHours(0, 0, 0, 0);
@@ -50,7 +46,6 @@ const RevPARCard = () => {
     return weekNo;
   };
 
-  // ✅ Generate last N months
   const getLastMonths = (count = 6) => {
     const months = [];
     const now = new Date();
@@ -67,7 +62,6 @@ const RevPARCard = () => {
     return months;
   };
 
-  // ✅ Generate last N weeks (Week 42, Week 43, ...)
   const getLastWeeks = (count = 6) => {
     const weeks = [];
     const now = new Date();
@@ -82,12 +76,10 @@ const RevPARCard = () => {
     return weeks;
   };
 
-  // ✅ Fetch chart data (multi-period comparison)
   const fetchComparisonData = async (userId) => {
-    const periods =
-      timeFilter === "weekly" ? getLastWeeks(6) : getLastMonths(6);
-
+    const periods = timeFilter === "weekly" ? getLastWeeks(6) : getLastMonths(6);
     const results = [];
+
     for (const p of periods) {
       try {
         const res = await RevPARService.getRevPARMetrics(
@@ -96,20 +88,21 @@ const RevPARCard = () => {
           p.start.toISOString().split("T")[0],
           p.end.toISOString().split("T")[0]
         );
-
         const value = Math.max(0, parseFloat(res.revPAR) || 0);
         results.push({ label: p.label, revPAR: value });
-      } catch (err) {
-        console.warn(`Failed to fetch RevPAR for ${p.label}:`, err);
+      } catch {
         results.push({ label: p.label, revPAR: 0 });
       }
     }
+
     return results;
   };
 
-  // ✅ Fetch summary + chart data
   const fetchMetrics = async () => {
     if (!cognitoUserId) return;
+
+    if (timeFilter === "custom" && (!startDate || !endDate)) return;
+
     setLoading(true);
     setError(null);
 
@@ -129,7 +122,6 @@ const RevPARCard = () => {
         );
       }
 
-      // safely handle number/string/object cases
       const totalRev =
         typeof summary.totalRevenue === "object"
           ? summary.totalRevenue.totalRevenue
@@ -146,11 +138,9 @@ const RevPARCard = () => {
       setAvailableNights(Number(available) || 0);
       setRevPAR(Number(revparVal) || 0);
 
-      // get chart data
       const chart = await fetchComparisonData(cognitoUserId);
       setChartData(chart);
     } catch (err) {
-      console.error("Error fetching RevPAR metrics:", err);
       setError(err.message || "Failed to fetch RevPAR metrics");
       setRevPAR(0);
       setTotalRevenue(0);
@@ -162,28 +152,18 @@ const RevPARCard = () => {
   };
 
   useEffect(() => {
-    if (
-      cognitoUserId &&
-      (timeFilter !== "custom" || (startDate && endDate))
-    ) {
-    if (
-      cognitoUserId &&
-      (timeFilter !== "custom" || (startDate && endDate))
-    ) {
+    if (cognitoUserId && (timeFilter !== "custom" || (startDate && endDate))) {
       fetchMetrics();
     }
   }, [cognitoUserId, timeFilter, startDate, endDate]);
 
-  const allZero =
-    !chartData || chartData.every((item) => item.revPAR === 0);
+  const allZero = !chartData || chartData.every((item) => item.revPAR === 0);
 
   const displayData = allZero
     ? [{ label: "No Data", revPAR: 1 }]
     : chartData;
 
   return (
-    <div className="adr-card card-base">
-      <h3>RevPAR</h3>
     <div className="adr-card card-base">
       <h3>RevPAR</h3>
 
@@ -229,7 +209,8 @@ const RevPARCard = () => {
         ) : (
           <>
             <p>
-              <strong>Total Revenue:</strong> ${totalRevenue.toLocaleString()}
+              <strong>Total Revenue:</strong> $
+              {totalRevenue.toLocaleString()}
             </p>
             <p>
               <strong>Available Nights:</strong>{" "}
@@ -261,7 +242,7 @@ const RevPARCard = () => {
                   fill={allZero ? "#ccc" : "#0d9813"}
                   radius={[6, 6, 0, 0]}
                   barSize={25}
-                  isAnimationActive={true}
+                  isAnimationActive
                 />
                 {allZero && (
                   <text
