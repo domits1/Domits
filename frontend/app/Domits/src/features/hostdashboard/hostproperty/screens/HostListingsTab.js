@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
+import {Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -8,10 +8,11 @@ import {styles} from '../styles/HostPropertiesStyles'
 import LoadingScreen from "../../../../screens/loadingscreen/screens/LoadingScreen";
 import {HOST_ONBOARDING_SCREEN, PROPERTY_DETAILS_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 import TabHeader from "../../../../screens/accounthome/components/TabHeader";
-import retrieveAccessToken from "../../../auth/RetrieveAccessToken";
+import HostPropertyRepository from "../../../../services/property/HostPropertyRepository";
 
 const HostListingsTab = () => {
-  const [accommodations, setAccommodations] = useState([]);
+  const hostPropertyRepository = new HostPropertyRepository();
+  const [properties, setProperties] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
   const {userAttributes} = useAuth();
@@ -19,31 +20,19 @@ const HostListingsTab = () => {
 
   useEffect(() => {
     if (userId) {
-      fetchAccommodations();
+      fetchProperties().catch(error => console.error('Could not fetch properties upon initialisation.', error));
     }
   }, [userId]);
 
-  const fetchAccommodations = async () => {
+  const fetchProperties = async () => {
     setIsLoading(true);
     if (!userId) {
-      console.error('No user id');
+      console.error('No user id provided.');
       return;
     }
     try {
-      const response = await fetch(
-          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all",
-          {
-            method: "GET",
-            headers: {
-              Authorization: await retrieveAccessToken(),
-            },
-          }
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch');
-      }
-      const data = await response.json();
-      setAccommodations(data)
+      const data = await hostPropertyRepository.fetchAllHostProperties()
+      setProperties(data)
     } catch (error) {
       console.error('Unexpected error:', error);
     } finally {
@@ -51,8 +40,8 @@ const HostListingsTab = () => {
     }
   };
 
-  const navigateToDetailPage = accommodationId => {
-    navigation.navigate(PROPERTY_DETAILS_SCREEN, {accommodation: accommodationId});
+  const navigateToDetailPage = propertyId => {
+    navigation.navigate(PROPERTY_DETAILS_SCREEN, {property: {property: {id: propertyId}}});
   };
 
   const addProperty = () => {
@@ -72,8 +61,8 @@ const HostListingsTab = () => {
             <Text style={styles.boxText}>Current Listings</Text>
             {isLoading ? (
               <LoadingScreen/>
-            ) : accommodations.length > 0 ? (
-              accommodations.map(item => {
+            ) : properties.length > 0 ? (
+              properties.map(item => {
                 const imageUrls = item.Images ? Object.values(item.Images) : [];
                 if (imageUrls.length > 1) {
                   const mainImage = imageUrls.splice(
@@ -88,7 +77,7 @@ const HostListingsTab = () => {
                   <TouchableOpacity
                     key={item.property.id}
                     style={styles.accommodationItem}
-                    onPress={() => navigateToDetailPage(item.ID)}>
+                    onPress={() => navigateToDetailPage(item.property.id)}>
                     {primaryImageUrl && (
                       <Image
                         source={{uri: primaryImageUrl}}
