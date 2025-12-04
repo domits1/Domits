@@ -10,9 +10,9 @@ Reviewing a PR can be really confusing at sometimes. This documentation will exp
 Additionaly, check out those links to extend your knowledge about PR reviewing:
 
 1. The pull requester sends you a PR, where you can access the PR.  
-![DM from someone sending you a PR](../../images/pr_onboarding/1..png)
+![DM from someone sending you a PR](../../images/pr_onboarding/dm_for_a_pull_request.png)
 
-2. Check the PR template, read the name, description at Proposed Changes.
+1. Check the PR template, read the name, description at Proposed Changes.
 
 > [!Note]
 > Ensure that the PR you review is ideally under 500 lines, and defintely under a 1000 lines.  
@@ -22,9 +22,9 @@ Additionaly, check out those links to extend your knowledge about PR reviewing:
 
 > [!TIP]
 > For a better experience reviewing a PR, click the Try the new experience while reviewing your PR. This doc is made using the new experience, so please keep that in mind.  
-> ![Enable Try new experience screenshot](../../images/pr_onboarding/2..png)
+> ![Enable Try new experience screenshot](../../images/pr_onboarding/try_new_experience_button.png)
 
-4. Review the code.  
+1. Review the code.  
 * Ensure code follows checklist (no console.logs/ global styling, inline styling)
 * Ensure code has no unnecessary comments
 * Ensure code follows the Domits [Code Conventions](https://github.com/domits1/Domits/blob/acceptance/docs/internal/standards/code_conventions.md) and use the [Clean Code: Reference Guide](https://github.com/domits1/Domits/blob/acceptance/docs/internal/standards/clean_code_reference_guide.md) to your advantage and pinpoint things which don't seem right
@@ -35,7 +35,7 @@ Afterwards, you can decide if the comments you place are good to be pushed throu
 Hereby some visual explanations showing the how's on doing your reviewing part:
 
 **Making a comment on a line or multiple and adding suggestions:**
-![commentingOnPullRequests](../../images/pr_onboarding/commentingOnPRS.gif)
+![commentingOnPullRequests](../../images/pr_onboarding/pr_comment_showcase.gif)
 
 **Approving a Pull Request**
 ![approved:)](../../images/pr_onboarding/lgtm.gif)
@@ -45,14 +45,14 @@ Hereby some visual explanations showing the how's on doing your reviewing part:
 
 **After that, you should always, but ALWAYS ensure all CI checks pass.**  
 Those are vital, if a CI fails, that means that the PR broke something. To get a detailed guide on what, click the test what failed.  
-![yourCIShouldPass](../../images/pr_onboarding/CI_should_pass!.png)
+![yourCIShouldPass](../../images/pr_onboarding/CI_screenshot_checks.png)
 
 Last but not least, ensure the branch is up-to-date with acceptance. Go to the github repo -> code -> branches or click this fancy [link](https://github.com/domits1/Domits/branches)  
-![areYouBehindChanges?](../../images/pr_onboarding/are_you_behind_questionmark.png)  
+![areYouBehindChanges?](../../images/pr_onboarding/behind_counter_git_branches.png)  
 It's a good idea that you make sure your PR is never behind, by running `git pull origin acceptance`
 
 Here are some additional resources you can take a look to, to get a better grasp of reviewing a pull request.
 
-- [links with good indicators for code reviewing](https://docs.aws.amazon.com/wellarchitected/latest/devops-guidance/indicators-for-code-review.html)
-- [making a good PR](https://docs.aws.amazon.com/wellarchitected/latest/devops-guidance/dl.cr.6-initiate-code-reviews-using-pull-requests.html)
-- [pits to look out for](https://docs.aws.amazon.com/wellarchitected/latest/devops-guidance/anti-patterns-for-code-review.html)
+- [Links with good indicators for code reviewing](https://docs.aws.amazon.com/wellarchitected/latest/devops-guidance/indicators-for-code-review.html)
+- [Making a good PR](https://docs.aws.amazon.com/wellarchitected/latest/devops-guidance/dl.cr.6-initiate-code-reviews-using-pull-requests.html)
+- [Pits to look out for](https://docs.aws.amazon.com/wellarchitected/latest/devops-guidance/anti-patterns-for-code-review.html)
