@@ -1,4 +1,4 @@
-$accent-color: #0d9813;
+$accent-color: #0D9813;
 $accent-hover-bg: #e9f7ef;
 $accent-focus-shadow: rgba(13, 152, 19, 0.25);
 $card-bg: #f9f9f9;
@@ -7,8 +7,9 @@ $card-shadow: rgba(0, 0, 0, 0.1);
 $text-dark: #333;
 $text-muted: #555;
 $text-light: #444;
-
 $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%232c3e50' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+$border-light-adr: #ddd;
+$white-adr: #ffffff;
 
 .card-base {
   width: 300px;
@@ -24,9 +25,7 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   color: $accent-color;
   overflow: hidden;
 
@@ -60,39 +59,13 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
     background: transparent !important;
   }
 
-  .recharts-legend-wrapper {
-    margin-top: -5px;
+  p {
+    margin: 20px 10px;
+    font-size: 20px;
+    font-weight: 400;
+    color: #333;
+    text-align: center;
   }
-}
-
-.revpar-barchart {
-  margin-top: 0.8rem;
-  padding: 0.3rem 0 0;
-  background: transparent;
-  box-shadow: none;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  .bar-wrapper {
-    width: 100%;
-    height: 220px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .recharts-wrapper,
-  .recharts-surface {
-    background: transparent !important;
-  }
-}
-
-.large {
-  font-size: 110px;
-  font-weight: bold;
 }
 
 .time-filter {
@@ -103,32 +76,32 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
   padding: 12px 15px;
   background-color: $card-bg;
   border-radius: 50px;
-  margin-bottom: 10px;
 
-  label {
-    font-size: 15px;
-    font-weight: 500;
-    color: $text-muted;
+    label {
+      font-size: 15px;
+      font-weight: 500;
+      color: $text-color-adr;
+    }
   }
-}
 
 .timeFilter {
   appearance: none;
-  border: 2px solid #eef2f7;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: 2px solid $border-light-adr;
   border-radius: 50px;
   width: 150px;
   height: 42px;
   padding: 0 18px;
+  cursor: pointer;
+  background-color: $white-adr;
+  color: $text-dark;
   font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
-  background-color: #fff;
-  color: $text-dark;
   transition: all 0.25s ease;
   background-image: $dropdown-icon;
   background-repeat: no-repeat;
-  background-position: calc(100% - 15px) center;
-  padding-right: 40px;
+  background-position: calc(100% - 12px) center;
 
   &:hover {
     border-color: $accent-color;
@@ -152,15 +125,13 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
   margin: 10px 0;
   width: 100%;
   min-height: 90px;
-  transition:
-    opacity 0.3s ease-in-out,
-    transform 0.3s ease-in-out;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
   opacity: 1;
   transform: translateY(0);
 
   div {
     display: flex;
-    flex-direction: column;
+    gap: 10px;
     align-items: center;
     width: 100px;
 
@@ -245,5 +216,13 @@ $dropdown-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
   @extend .card-base;
 }
 .alo s-card {
+  @extend .card-base;
+}
+
+.booked-nights-card {
+  @extend .card-base;
+}
+
+.adr-card {
   @extend .card-base;
 }

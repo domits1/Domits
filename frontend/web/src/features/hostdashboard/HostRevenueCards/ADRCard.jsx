@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
+  Tooltip,
   Legend,
 } from "recharts";
 import "./ADRCard.scss";
@@ -34,42 +29,40 @@ const ADRCard = () => {
         const user = await Auth.currentAuthenticatedUser();
         setCognitoUserId(user.attributes.sub);
       } catch (err) {
-        console.error("Error fetching Cognito User ID:", err);
         setError("Failed to authenticate user");
       }
     };
     fetchUser();
   }, []);
 
-  const fetchMetrics = async () => {
-    if (!cognitoUserId) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const results = await ADRService.getADRMetrics(
-        cognitoUserId,
-        timeFilter,
-        startDate,
-        endDate
-      );
-
-      setAdr(results.adr || 0);
-      setTotalRevenue(results.totalRevenue || 0);
-      setBookedNights(results.bookedNights || 0);
-      setChartData(results.chartData || []);
-    } catch (err) {
-      console.error("Error fetching ADR metrics:", err);
-      setError(err.message || "Failed to fetch ADR metrics");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (cognitoUserId && (timeFilter !== "custom" || (startDate && endDate))) {
-      fetchMetrics();
-    }
+    if (!cognitoUserId) return;
+    if (timeFilter === "custom" && (!startDate || !endDate)) return;
+
+    const fetchMetrics = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const results = await ADRService.getADRMetrics(
+          cognitoUserId,
+          timeFilter,
+          startDate,
+          endDate
+        );
+
+        setAdr(results.adr || 0);
+        setTotalRevenue(results.totalRevenue || 0);
+        setBookedNights(results.bookedNights || 0);
+        setChartData(results.chartData || []);
+      } catch (err) {
+        setError(err.message || "Failed to fetch ADR metrics");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetrics();
   }, [cognitoUserId, timeFilter, startDate, endDate]);
 
   const donutData = [
@@ -155,6 +148,75 @@ const ADRCard = () => {
                   paddingAngle={3}
                   label={!allZero}
                   isAnimationActive={true}
+                >
+                  {displayData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={allZero ? "#c7c7c7" : COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+
+                {allZero && (
+                  <text
+                    x="50%"
+                    y="50%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="14"
+                    fill="#777"
+                  >
+                    No Data
+                  </text>
+                )}
+
+                <Tooltip />
+                <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+      <div className="adr-details">
+        {loading ? (
+          <p>Loading...</p>
+        ) : error ? (
+          <p style={{ color: "red" }}>Error: {error}</p>
+        ) : (
+          <>
+            <p>
+              <strong>ADR:</strong> €{adr.toLocaleString()}
+            </p>
+            <p>
+              <strong>Total Revenue:</strong> €{totalRevenue.toLocaleString()}
+            </p>
+            <p>
+              <strong>Booked Nights:</strong> {bookedNights.toLocaleString()}
+            </p>
+          </>
+        )}
+      </div>
+
+      {!loading && !error && (
+        <div className="adr-donut-chart">
+          <div className="donut-wrapper">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={displayData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={3}
+                  label={!allZero}
+                  isAnimationActive
                 >
                   {displayData.map((entry, index) => (
                     <Cell
