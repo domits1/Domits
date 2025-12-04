@@ -261,4 +261,4 @@ sequenceDiagram
 
 Todo:
 
-- [ ] idk
+- [ ] Make it more clearer for future devs and ask feedback to current devs if this is clear enough
