@@ -49,9 +49,8 @@ Table of Contents
   - [Intro Sprint](#intro-sprint)
     - [General Introduction](#general-introduction)
     - [Github Introduction](#github-introduction)
-      - [Reviewing A PR As Reviewer/Creating A PR Requester](#reviewing-a-pr-as-reviewercreating-a-pr-requester)
+      - [Reviewing A PR As Reviewer](#reviewing-a-pr-as-reviewer)
     - [Programming Introduction](#programming-introduction)
-    - [Backend Introduction](#backend-introduction)
     - [Web/App Setup](#webapp-setup)
   - [Code Conventions](#code-conventions)
   - [Core Modules and APIs](#core-modules-and-apis)
@@ -162,13 +161,13 @@ Everything in Domits revolves around Issues. Each Issue belongs to a Milestone w
 
 
 After this section you should understand:
-- How to find, pick, and work on an Issue.
+- How to find, pick, and work on an issue.
 - How to create a branch and PR.
 ---
 
-#### Reviewing A PR As Reviewer/Creating A PR Requester
+#### Reviewing A PR As Reviewer
 
-If you have been working at Domits for a while, you surely got familiar with Pull Requests. Now, if its time for you to review those, I'm sure that you have a lot of questions on the *how* aspect. Don't worry, there is a documentation available for you to get ready as reviewer [here.](./docs/internal/onboarding/pr_reviewer_onboarding.md) (You can also click the link as pr requester.)
+If you have been working at Domits for a while, you surely got familiar with Pull Requests. Now, if its time for you to review those, I'm sure that you have a lot of questions on the *how* aspect. Don't worry, there is a documentation available for you to get ready as reviewer [here.](./docs/internal/onboarding/pr_reviewer_onboarding.md)
 
 ### Programming Introduction
 Get familar with code conventions to write clean code. Become aware of our serverless backend.
@@ -177,10 +176,8 @@ Get familar with code conventions to write clean code. Become aware of our serve
 * Learn and improve [Programming/Clean Code: Quick Reference Guide](https://github.com/domits1/Domits/wiki/Programming)
 * Become familiar with our [Code Conventions](https://github.com/domits1/Domits/wiki/Code-conventions) to maintain a consistent and readable codebase.
 * Get to know why we use SCSS compared to css and its benefits [here](https://www.youtube.com/watch?v=akDIJa0AP5c)
-* Understand the code pipeline (CI/CD)
-
-### Backend Introduction
 * [Backend Setup](./docs/internal/onboarding/backend_setup.md) The createlambda function will create a template lambda for you. Familiarize yourself with the structure [here](./docs/internal/tools/backend_development_flow.md) before starting to code.
+* Understand the code pipeline (CI/CD)
 
 ### Web/App Setup
 Get Domits running locally for development.
