@@ -5,11 +5,12 @@ import Pricing from "../components/pricing";
 import useHandleReservePress from "../hooks/handleReservePress";
 
 const BookingContainer = ({ property }) => {
+  // Set default to today and tomorrow
   const [checkInDate, setCheckInDate] = useState(
-    new Date(Date.now() + 86400000).toISOString().split("T")[0],
+    new Date(Date.now()).toISOString().split("T")[0],
   );
   const [checkOutDate, setCheckOutDate] = useState(
-    new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0],
+    new Date(Date.now() + 86400000).toISOString().split("T")[0],
   );
   const [nights, setNights] = useState();
   const [adults, setAdults] = useState(1);

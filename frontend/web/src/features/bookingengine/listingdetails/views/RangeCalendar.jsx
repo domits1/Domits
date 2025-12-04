@@ -18,13 +18,16 @@ const weekdayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const monthLabel = (d) =>
   d.toLocaleString(undefined, { month: "long", year: "numeric" });
 
-function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
+function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, pricing }) {
   const y = viewMonth.getFullYear();
   const m = viewMonth.getMonth();
 
   const cells = useMemo(() => {
     const start = startOfCalendar(y, m);
     const arr = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     for (let i = 0; i < 42; i++) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
@@ -34,7 +37,8 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
         rangeStart && rangeEnd && d >= rangeStart && d <= rangeEnd && inMonth;
       const isStart = rangeStart && key === toKey(rangeStart);
       const isEnd = rangeEnd && key === toKey(rangeEnd);
-      arr.push({ d, key, inMonth, inRange, isStart, isEnd });
+      const isPast = d < today;
+      arr.push({ d, key, inMonth, inRange, isStart, isEnd, isPast });
     }
     return arr;
   }, [y, m, rangeStart, rangeEnd]);
@@ -60,13 +64,18 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
               c.inRange && "is-inrange",
               c.isStart && "is-start",
               c.isEnd && "is-end",
+              c.isPast && "is-past",
             ]
               .filter(Boolean)
               .join(" ")}
             aria-label={c.d.toDateString()}
             onClick={() => onPick(c.d)}
+            disabled={c.isPast}
           >
-            <span>{c.d.getDate()}</span>
+            <span className="rc-day-number">{c.d.getDate()}</span>
+            {pricing && pricing.roomRate && c.inMonth && !c.isPast && (
+              <span className="rc-price">${pricing.roomRate}</span>
+            )}
           </button>
         ))}
       </div>
@@ -74,13 +83,13 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
   );
 }
 
-export default function RangeCalendar({ onChange }) {
+export default function RangeCalendar({ onChange, pricing }) {
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
   const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const initialStart = new Date(now);
-  initialStart.setDate(now.getDate() - 2);
+  const initialStart = new Date(now); // Today
   const initialEnd = new Date(now);
-  initialEnd.setDate(now.getDate() + 2);
+  initialEnd.setDate(now.getDate() + 1); // Tomorrow
   const [activeTab, setActiveTab] = useState("calendar");
   const [view, setView] = useState(initialMonth);
   const [start, setStart] = useState(initialStart);
@@ -143,12 +152,14 @@ export default function RangeCalendar({ onChange }) {
                 rangeStart={start}
                 rangeEnd={end}
                 onPick={handlePick}
+                pricing={pricing}
               />
               <MonthGrid
                 viewMonth={rightMonth}
                 rangeStart={start}
                 rangeEnd={end}
                 onPick={handlePick}
+                pricing={pricing}
               />
             </div>
           ) : (
