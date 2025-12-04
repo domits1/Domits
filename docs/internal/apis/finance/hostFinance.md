@@ -1,76 +1,172 @@
-> # Host Finance
->
-> **Code snippets do not match how the code is located in the project itself, but I have the indicated paths where the code can be located.**
-> 
-> ## Introduction
-> Hosts receive payouts via **Stripe Connect** connected to the Domits Business Stripe account.
-> 
-> - Stripe Connect docs: https://stripe.com/docs/connect
-> 
-> ---
->
-> ## Payment Flow 
-> 
-> ### Web payments
-> ![Web payments flow](https://github.com/user-attachments/assets/88f314cf-76a5-4a2b-9aeb-b046f029cd96)
-> 
-> ### Sequence: Guest -> Domits -> Host -> Payment Gateway -> Bank
-> ![End-to-end payment sequence](https://github.com/user-attachments/assets/e5883665-d67e-4f07-bdfa-8357502de5bc)
-> 
-> ### API flow (server create flow)
-> > How the server handles the create request for payments.
-> ![Create request handling sequence](https://github.com/domits1/Domits/assets/108460857/c36e91bb-46d7-4ddf-81a4-215d3c6d3ce7)
-> 
-> ---
-> 
-> ## Host Onboarding
-> 
-> File: `Domits\frontend\web\src\features\hostdashboard\HostFinanceTab.js`
-> 
-> On load check if the host already has a connected account the **Set up payments** button switches to **Go to Stripe dashboard**.
-> 
-> ```js HostFinanceTab.js
-> useEffect(() => {
->   const setUserEmailAsync = async () => {
->     try {
->       const userInfo = await Auth.currentUserInfo();
->       setUserEmail(userInfo.attributes.email);
->       setCognitoUserId(userInfo.attributes.sub);
-> 
->       const response = await fetch('https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists', {
->         method: 'POST',
->         headers: { 'Content-type': 'application/json; charset=UTF-8' },
->         body: JSON.stringify({ sub: userInfo.attributes.sub }),
->       });
->       const data = await response.json();
->       if (data.hasStripeAccount) setStripeLoginUrl(data.loginLinkUrl);
->     } catch (e) {
->       console.error('Error fetching user data or Stripe status:', e);
->     } finally {
->       setLoading(false);
->     }
->   };
->   setUserEmailAsync();
-> }, []);
-> ```
-> 
-> The action handler either opens the Stripe dashboard (login link) or starts onboarding:
-> 
-> ```js
-> async function handleStripeAction() {
->   if (stripeLoginUrl) {
->     window.open(stripeLoginUrl, '_blank');
->   } else if (userEmail && cognitoUserId) {
->     const options = { userEmail, cognitoUserId };
->     const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
->       method: 'POST',
->       body: JSON.stringify(options),
->       headers: { 'Content-type': 'application/json; charset=UTF-8' },
->     });
->     const data = await result.json();
->     window.location.replace(data.url); // Stripe Connect onboarding link
->   } else {
->     console.error('User email or cognitoUserId is not defined.');
->   }
-> }
-> ```
+# Stripe Account Management docs
+
+## Description
+
+This documentation describes the operations related to creating and managing Stripe Express accounts for hosts. It covers account creation, onboarding, login link generation, and retrieving the status of a host’s Stripe account.  
+
+## Metadata
+
+Lambda Function: `general-crud-payment-handler`
+
+Related Issue: **Main issue: [#163](https://github.com/domits1/Domits/issues/163)**
+
+Status: **In Development/Active**
+
+## Working Endpoints
+
+Use https://tabletomarkdown.com/generate-markdown-table/ to simply make your own table.
+
+| Action | Description                                                           | Auth Required | Endpoint                                                                     |
+| ------ | --------------------------------------------------------------------- | ------------- | ---------------------------------------------------------------------------- |
+| POST   | Create a new Stripe Express account for the authenticated user        | Yes           | https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments |
+| GET    | Retrieve the current Stripe account status for the authenticated user | Yes           | https://hamuly8izh.execute-api.eu-north-1.amazonaws.com/development/payments |
+
+## Security & Authorization
+
+Authorization will use your access_token.
+
+_How to grab your access token?_
+
+1. Head to domits.com, acceptance.domits.com or if you're running localhost, localhost
+2. Open the Dev console (CTRL+SHIFT+I)
+3. Click the application tab, copy the token from **CognitoIdentityServiceProvider**.xxxxxxxxxxxxxxxx...**accessToken**
+4. Copy and paste this into your request as header (If you're using Postman or any API application to invoke the request, be aware that the accessToken resets every hour.)
+
+## Class Diagram
+
+Show your class in a Diagram. Use [Mermaid Flow](https://mermaid.live/). Github supports mermaid chart in .md
+
+Example:
+
+```mermaid
+classDiagram
+    class user {
+        +string cognitoUserId
+    }
+
+    class stripe_account {
+        +string id
+        +string account_id
+        +string created_at
+        +string updated_at
+        +string user_id
+    }
+
+    user "has1" --> stripe_account
+```
+
+## Sequence Diagram
+
+Use [Mermaid Live Editor](https://mermaid.live/) and its examples to make a Sequence Diagram for a POST request
+
+### POST sequence diagram
+
+```mermaid
+sequenceDiagram
+%% POST create Stripe connected account
+    participant user
+    participant index.js
+    participant stripeAccountController.js
+    participant stripeAccountService.js
+    participant authManager.js
+    participant stripeAccountRepository.js
+    participant database
+    participant stripe
+
+    user->>index.js: sends POST request (Authorization header)
+    index.js->>stripeAccountController.js: calls controller.create(event)
+    stripeAccountController.js->>stripeAccountService.js: createStripeAccount(event)
+
+    stripeAccountService.js->>+authManager.js: authenticateUser(Authorization token)
+    authManager.js->>-stripeAccountService.js: returns { email, sub: cognitoUserId }
+
+    stripeAccountService.js->>+stripeAccountRepository.js: getExistingStripeAccount(cognitoUserId)
+    stripeAccountRepository.js->>+database: SELECT FROM Stripe_Connected_Accounts WHERE user_id = cognitoUserId
+    database->>-stripeAccountRepository.js: returns stripeAccount or null
+    stripeAccountRepository.js->>-stripeAccountService.js: returns stripeAccount
+
+    %% Scenario 1: Stripe account already exists -> 409 Conflict
+    stripeAccountService.js->>stripeAccountService.js: check stripeAccount?.account_id
+    stripeAccountService.js->>stripeAccountController.js: throw ConflictException("Stripe account already exists")
+    stripeAccountController.js->>index.js: build HTTP 409 response
+    index.js->>user: returns 409, message "Stripe account already exists"
+
+    %% Scenario 2: No existing account -> create new Stripe Express account
+    stripeAccountService.js->>+stripe: accounts.create(type="express", email=userEmail)
+    stripe->>-stripeAccountService.js: returns Stripe account (account.id)
+
+    stripeAccountService.js->>+stripeAccountRepository.js: insertStripeAccount(uuid, account.id, cognitoUserId, unixNow(), unixNow())
+    stripeAccountRepository.js->>+database: INSERT INTO Stripe_Connected_Accounts (...)
+    database->>-stripeAccountRepository.js: insert success
+    stripeAccountRepository.js->>-stripeAccountService.js: confirm insert
+
+    stripeAccountService.js->>+stripe: accountLinks.create(accountId, refresh_url, return_url)
+    stripe->>-stripeAccountService.js: returns onboarding link (link.url)
+
+    stripeAccountService.js->>stripeAccountController.js: returns { statusCode: 202, message, details { accountId, onboardingUrl } }
+    stripeAccountController.js->>index.js: build HTTP 202 response
+    index.js->>user: returns 202, message + onboardingUrl (JSON body)
+```
+
+### GET sequence diagram
+
+```mermaid
+sequenceDiagram
+%% GET Stripe account status - meerdere scenario's
+    participant user
+    participant index.js
+    participant stripeAccountController.js
+    participant stripeAccountService.js
+    participant authManager.js
+    participant stripeAccountRepository.js
+    participant database
+    participant stripe
+
+    user->>index.js: sends GET request (Authorization header)
+    index.js->>stripeAccountController.js: calls controller.read(event)
+    stripeAccountController.js->>stripeAccountService.js: getStatusOfStripeAccount(event)
+
+    stripeAccountService.js->>authManager.js: authenticateUser(Authorization token)
+    authManager.js->>stripeAccountService.js: returns { sub: cognitoUserId }
+
+    stripeAccountService.js->>stripeAccountRepository.js: getExistingStripeAccount(cognitoUserId)
+    stripeAccountRepository.js->>database: SELECT FROM Stripe_Connected_Accounts WHERE user_id = cognitoUserId
+    database->>stripeAccountRepository.js: returns stripeAccount or null
+    stripeAccountRepository.js->>stripeAccountService.js: returns stripeAccount
+
+    %% Scenario 1: No Stripe account in DB -> 404
+    stripeAccountService.js->>stripeAccountService.js: check stripeAccount?.account_id
+    stripeAccountService.js->>stripeAccountController.js: throw NotFoundException("No Stripe account has been found...")
+    stripeAccountController.js->>index.js: build HTTP 404 response
+    index.js->>user: returns 404, message "No Stripe account has been found..."
+
+    %% Scenario 2 & 3: Stripe account exists -> retrieve status from Stripe
+    stripeAccountService.js->>stripe: accounts.retrieve(account_id)
+    stripe->>stripeAccountService.js: returns Stripe account details
+
+    stripeAccountService.js->>stripeAccountService.js: set onboardingComplete, chargesEnabled, payoutsEnabled, bankDetailsProvided
+
+    %% Scenario 2: onboarding NOT complete -> always onboarding link
+    stripeAccountService.js->>stripe: accountLinks.create(accountId, refresh_url, return_url)
+    stripe->>stripeAccountService.js: returns onboardingUrl
+    stripeAccountService.js->>stripeAccountController.js: { statusCode: 200, message "Onboarding not complete...", details { onboardingUrl, loginLinkUrl: null, flags... } }
+    stripeAccountController.js->>index.js: build HTTP 200 response
+    index.js->>user: returns 200, onboardingUrl (user blijft onboarding zien)
+
+    %% Scenario 3: onboarding complete -> login link (fallback: onboarding)
+    stripeAccountService.js->>stripe: accounts.createLoginLink(accountId)
+    stripe->>stripeAccountService.js: returns loginLinkUrl
+    stripeAccountService.js->>stripeAccountController.js: { statusCode: 200, message "Account onboarded. Redirecting to Stripe Express Dashboard.", details { loginLinkUrl, onboardingUrl: null, flags... } }
+    stripeAccountController.js->>index.js: build HTTP 200 response
+    index.js->>user: returns 200, loginLinkUrl (redirect to Stripe Dashboard)
+
+    %% (fallback binnen createLoginLinkOrOnboarding)
+    stripeAccountService.js->>stripe: accountLinks.create(accountId, refresh_url, return_url) on loginLink error
+    stripe->>stripeAccountService.js: returns onboardingUrl
+    stripeAccountService.js->>stripeAccountController.js: { statusCode: 200, message "Onboarding not complete...", details { onboardingUrl, loginLinkUrl: null } }
+```
+
+## Todo & Improvements
+
+Todo:
+- [ ] idk
