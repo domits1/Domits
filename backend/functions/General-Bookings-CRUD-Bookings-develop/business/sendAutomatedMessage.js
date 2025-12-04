@@ -39,3 +39,4 @@ const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageTe
 
 export default sendAutomatedMessage;
 
+
