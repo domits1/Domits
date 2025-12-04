@@ -6,7 +6,10 @@ This documentation describes the operations related to creating and managing Str
 
 ## Metadata
 
-Lambda Function: `general-crud-payment-handler`
+Lambda Functions: 
+- `general-crud-payment-handler` Handles creation and status retrieval of Stripe Express accounts for hosts
+- `General-Payments-Production-CRUD-fetchHostPayout` Shows lists charges transferred from bookings made by guests, retrieves past and upcoming payouts (including forecast based on balance and payout schedule), returns current Stripe balance (available and pending), and allows reading and updating the host’s Stripe payout schedule (daily/weekly/monthly/manual).
+
 
 Related Issue: **Main issue: [#163](https://github.com/domits1/Domits/issues/163)**
 
