@@ -257,8 +257,6 @@ sequenceDiagram
     stripeAccountService.js->>stripeAccountController.js: { statusCode: 200, message "Onboarding not complete...", details { onboardingUrl, loginLinkUrl: null } }
 ```
 
-<hr>
-
 ### GET sequence diagram (`retrieve-user-charges` → `General-Payments-Production-CRUD-fetchHostPayout`)
 ```mermaid
 sequenceDiagram
