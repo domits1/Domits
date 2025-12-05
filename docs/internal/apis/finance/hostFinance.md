@@ -154,7 +154,7 @@ Use [Mermaid Live Editor](https://mermaid.live/) and its examples to make a Sequ
 
 ```mermaid
 sequenceDiagram
-%% POST create Stripe connected account
+    %% POST create Stripe connected account
     participant user
     participant index.js
     participant stripeAccountController.js
@@ -199,11 +199,11 @@ sequenceDiagram
     index.js->>user: returns 202, message + onboardingUrl (JSON body)
 ```
 
-### GET sequence diagram (`general-crud-payment-handler`)
+### GET sequence diagram (`general-crud-payment-handler` )
 
 ```mermaid
 sequenceDiagram
-%% GET Stripe account status - meerdere scenario's
+    %% GET Stripe account status - meerdere scenario's
     participant user
     participant index.js
     participant stripeAccountController.js
@@ -255,6 +255,252 @@ sequenceDiagram
     stripeAccountService.js->>stripe: accountLinks.create(accountId, refresh_url, return_url) on loginLink error
     stripe->>stripeAccountService.js: returns onboardingUrl
     stripeAccountService.js->>stripeAccountController.js: { statusCode: 200, message "Onboarding not complete...", details { onboardingUrl, loginLinkUrl: null } }
+```
+
+<hr>
+
+### GET sequence diagram (`retrieve-user-charges` → `General-Payments-Production-CRUD-fetchHostPayout`)
+
+```marmaid
+sequenceDiagram
+    %% GET host charges (transfers to connected account)
+    participant user
+    participant index.js
+    participant stripePayoutsController.js
+    participant stripePayoutsService.js
+    participant authManager.js
+    participant stripeAccountRepository.js
+    participant database
+    participant propertyRepository.js
+    participant stripe
+
+    user->>index.js: sends GET /payments/retrieve-user-charges (Authorization header)
+    index.js->>stripePayoutsController.js: controller.getHostCharges(event)
+    stripePayoutsController.js->>stripePayoutsService.js: getHostCharges(event)
+
+    stripePayoutsService.js->>authManager.js: authenticateUser(Authorization token)
+    authManager.js->>stripePayoutsService.js: { sub: cognitoUserId }
+
+    stripePayoutsService.js->>stripeAccountRepository.js: getExistingStripeAccount(cognitoUserId)
+    stripeAccountRepository.js->>database: SELECT * FROM Stripe_Connected_Accounts WHERE user_id = cognitoUserId
+    database->>stripeAccountRepository.js: stripeAccount or null
+    stripeAccountRepository.js->>stripePayoutsService.js: stripeAccount
+
+    %% Scenario: no Stripe account
+    stripePayoutsService.js->>stripePayoutsController.js: throw NotFoundException("No Stripe account found for this user.")
+    stripePayoutsController.js->>index.js: build HTTP 404 response
+    index.js->>user: 404 Not Found
+
+    %% Scenario: Stripe account exists -> load transfers
+    stripePayoutsService.js->>stripe: transfers.list({ destination: account_id, expand: [...] })
+    stripe->>stripePayoutsService.js: transfers[]
+
+    %% For each transfer: compute financials + load property
+    stripePayoutsService.js->>propertyRepository.js: getProperty(propertyId from charge.metadata)
+    propertyRepository.js->>database: SELECT title, key FROM Property LEFT JOIN Property_Image ...
+    database->>propertyRepository.js: { title, key }
+    propertyRepository.js->>stripePayoutsService.js: property
+
+    stripePayoutsService.js->>stripePayoutsController.js: { statusCode: 200, details: { charges: [...] } }
+    stripePayoutsController.js->>index.js: build HTTP 200 response
+    index.js->>user: 200 OK (charges list)
+```
+### GET sequence diagram (`retrieve-user-payouts` → `General-Payments-Production-CRUD-fetchHostPayout`)
+```mermaid
+sequenceDiagram
+    %% GET host payouts (past, upcoming, forecast)
+    participant user
+    participant index.js
+    participant stripePayoutsController.js
+    participant stripePayoutsService.js
+    participant authManager.js
+    participant stripeAccountRepository.js
+    participant database
+    participant stripe
+
+    user->>index.js: sends GET /payments/retrieve-user-payouts (Authorization header)
+    index.js->>stripePayoutsController.js: controller.getHostPayouts(event)
+    stripePayoutsController.js->>stripePayoutsService.js: getHostPayouts(event)
+
+    stripePayoutsService.js->>authManager.js: authenticateUser(Authorization token)
+    authManager.js->>stripePayoutsService.js: { sub: cognitoUserId }
+
+    stripePayoutsService.js->>stripeAccountRepository.js: getExistingStripeAccount(cognitoUserId)
+    stripeAccountRepository.js->>database: SELECT * FROM Stripe_Connected_Accounts WHERE user_id = cognitoUserId
+    database->>stripeAccountRepository.js: stripeAccount or null
+    stripeAccountRepository.js->>stripePayoutsService.js: stripeAccount
+
+    %% Scenario: no Stripe account
+    stripePayoutsService.js->>stripePayoutsController.js: throw NotFoundException("No Stripe account found for this user.")
+    stripePayoutsController.js->>index.js: build HTTP 404 response
+    index.js->>user: 404 Not Found
+
+    %% Scenario: Stripe account exists -> Stripe payouts
+    stripePayoutsService.js->>stripe: payouts.list({ stripeAccount: account_id })
+    stripe->>stripePayoutsService.js: payouts[]
+
+    stripePayoutsService.js->>stripePayoutsService.js: map & sort payouts into payoutDetails[]
+
+    %% Load upcoming pending amounts via getHostPendingAmount
+    stripePayoutsService.js->>stripePayoutsService.js: getHostPendingAmount(event)
+    stripePayoutsService.js->>stripe: balanceTransactions.list({ available_on >= now }, { stripeAccount })
+    stripe->>stripePayoutsService.js: balanceTransactions[]
+    stripePayoutsService.js->>stripePayoutsService.js: group into upcomingByDate[]
+
+    %% Load forecast payout via getForecastFromBalance
+    stripePayoutsService.js->>stripePayoutsService.js: getForecastFromBalance(event)
+    stripePayoutsService.js->>stripe: accounts.retrieve(account_id)
+    stripe->>stripePayoutsService.js: account (payouts.schedule)
+
+    stripePayoutsService.js->>stripe: balance.retrieve({}, { stripeAccount })
+    stripe->>stripePayoutsService.js: balance (available/pending)
+
+    stripePayoutsService.js->>stripe: balanceTransactions.list({ available_on between now and cutoffTs }, { stripeAccount })
+    stripe->>stripePayoutsService.js: pendingTxns[]
+    stripePayoutsService.js->>stripePayoutsService.js: compute forecast + cutoffTs
+
+    %% Merge forecast + upcoming pending + historical payouts
+    stripePayoutsService.js->>stripePayoutsService.js: merge forecast, upcomingByDate, payoutDetails into payouts[]
+
+    stripePayoutsService.js->>stripePayoutsController.js: { statusCode: 200, details: { payouts } }
+    stripePayoutsController.js->>index.js: build HTTP 200 response
+    index.js->>user: 200 OK (payouts list)
+```
+
+### GET sequence diagram (`retrieve-user-balance` → `General-Payments-Production-CRUD-fetchHostPayout`)
+```mermaid
+sequenceDiagram
+    %% GET host balance (available & pending)
+    participant user
+    participant index.js
+    participant stripePayoutsController.js
+    participant stripePayoutsService.js
+    participant authManager.js
+    participant stripeAccountRepository.js
+    participant database
+    participant stripe
+
+    user->>index.js: sends GET /payments/retrieve-user-balance (Authorization header)
+    index.js->>stripePayoutsController.js: controller.getHostBalance(event)
+    stripePayoutsController.js->>stripePayoutsService.js: getHostBalance(event)
+
+    stripePayoutsService.js->>authManager.js: authenticateUser(Authorization token)
+    authManager.js->>stripePayoutsService.js: { sub: cognitoUserId }
+
+    stripePayoutsService.js->>stripeAccountRepository.js: getExistingStripeAccount(cognitoUserId)
+    stripeAccountRepository.js->>database: SELECT * FROM Stripe_Connected_Accounts WHERE user_id = cognitoUserId
+    database->>stripeAccountRepository.js: stripeAccount or null
+    stripeAccountRepository.js->>stripePayoutsService.js: stripeAccount
+
+    %% Scenario: no Stripe account
+    stripePayoutsService.js->>stripePayoutsController.js: throw NotFoundException("No Stripe account found for this user.")
+    stripePayoutsController.js->>index.js: build HTTP 404 response
+    index.js->>user: 404 Not Found
+
+    %% Scenario: Stripe account exists -> Stripe balance
+    stripePayoutsService.js->>stripe: balance.retrieve({}, { stripeAccount: account_id })
+    stripe->>stripePayoutsService.js: balance (available[], pending[])
+
+    stripePayoutsService.js->>stripePayoutsService.js: map available & pending to amounts (cents -> amount)
+
+    stripePayoutsService.js->>stripePayoutsController.js: { statusCode: 200, details: { available, pending } }
+    stripePayoutsController.js->>index.js: build HTTP 200 response
+    index.js->>user: 200 OK (available & pending)
+```
+
+### POST sequence diagram (`set-payout-schedule` → `General-Payments-Production-CRUD-fetchHostPayout`)
+```mermaid
+sequenceDiagram
+    %% POST set payout schedule (manual/daily/weekly/monthly)
+    participant user
+    participant index.js
+    participant stripePayoutsController.js
+    participant stripePayoutsService.js
+    participant authManager.js
+    participant stripeAccountRepository.js
+    participant database
+    participant stripe
+
+    user->>index.js: sends POST /payments/set-payout-schedule (Authorization + body)
+    index.js->>stripePayoutsController.js: controller.setPayoutSchedule(event)
+    stripePayoutsController.js->>stripePayoutsService.js: setPayoutSchedule(event)
+
+    stripePayoutsService.js->>authManager.js: authenticateUser(Authorization token)
+    authManager.js->>stripePayoutsService.js: { sub: cognitoUserId }
+
+    stripePayoutsService.js->>stripeAccountRepository.js: getExistingStripeAccount(cognitoUserId)
+    stripeAccountRepository.js->>database: SELECT * FROM Stripe_Connected_Accounts WHERE user_id = cognitoUserId
+    database->>stripeAccountRepository.js: stripeAccount or null
+    stripeAccountRepository.js->>stripePayoutsService.js: stripeAccount
+
+    %% Scenario: no Stripe account
+    stripePayoutsService.js->>stripePayoutsController.js: throw NotFoundException("No Stripe account found for this user.")
+    stripePayoutsController.js->>index.js: build HTTP 404 response
+    index.js->>user: 404 Not Found
+
+    %% Parse & validate body
+    stripePayoutsService.js->>stripePayoutsService.js: parse JSON body (interval, weekly_anchor, monthly_anchor)
+    stripePayoutsService.js->>stripePayoutsService.js: validate interval in [manual,daily,weekly,monthly]
+
+    %% Scenario: interval = manual -> require positive available balance
+    stripePayoutsService.js->>stripePayoutsService.js: getHostBalance(event)
+    stripePayoutsService.js->>stripe: balance.retrieve({}, { stripeAccount })
+    stripe->>stripePayoutsService.js: balance
+    stripePayoutsService.js->>stripePayoutsService.js: sum available amounts
+    stripePayoutsService.js->>stripePayoutsController.js: throw BadRequestException if totalAvailableCents <= 0
+
+    %% Scenario: interval = weekly -> validate weekly_anchor
+    stripePayoutsService.js->>stripePayoutsService.js: check weekly_anchor ∈ [monday..sunday]
+
+    %% Scenario: interval = monthly -> validate monthly_anchor (1..31)
+    stripePayoutsService.js->>stripePayoutsService.js: check monthly_anchor between 1 and 31
+
+    %% Update schedule in Stripe
+    stripePayoutsService.js->>stripe: accounts.update(account_id, { settings: { payouts: { schedule } } })
+    stripe->>stripePayoutsService.js: updated account (with schedule)
+
+    stripePayoutsService.js->>stripePayoutsController.js: { statusCode: 200, message, details { accountId, interval, weekly_anchor, monthly_anchor } }
+    stripePayoutsController.js->>index.js: build HTTP 200 response
+    index.js->>user: 200 OK (schedule updated)
+```
+
+### GET sequence diagram (`retrieve-user-payout-schedule` → `General-Payments-Production-CRUD-fetchHostPayout`)
+```mermaid
+sequenceDiagram
+    %% GET payout schedule
+    participant user
+    participant index.js
+    participant stripePayoutsController.js
+    participant stripePayoutsService.js
+    participant authManager.js
+    participant stripeAccountRepository.js
+    participant database
+    participant stripe
+
+    user->>index.js: sends GET /payments/retrieve-user-payout-schedule (Authorization header)
+    index.js->>stripePayoutsController.js: controller.getPayoutSchedule(event)
+    stripePayoutsController.js->>stripePayoutsService.js: getPayoutSchedule(event)
+
+    stripePayoutsService.js->>authManager.js: authenticateUser(Authorization token)
+    authManager.js->>stripePayoutsService.js: { sub: cognitoUserId }
+
+    stripePayoutsService.js->>stripeAccountRepository.js: getExistingStripeAccount(cognitoUserId)
+    stripeAccountRepository.js->>database: SELECT * FROM Stripe_Connected_Accounts WHERE user_id = cognitoUserId
+    database->>stripeAccountRepository.js: stripeAccount or null
+    stripeAccountRepository.js->>stripePayoutsService.js: stripeAccount
+
+    %% Scenario: no Stripe account
+    stripePayoutsService.js->>stripePayoutsController.js: throw NotFoundException("No Stripe account found for this user.")
+    stripePayoutsController.js->>index.js: build HTTP 404 response
+    index.js->>user: 404 Not Found
+
+    %% Scenario: Stripe account exists -> read payout schedule
+    stripePayoutsService.js->>stripe: accounts.retrieve(account_id)
+    stripe->>stripePayoutsService.js: account (settings.payouts.schedule)
+
+    stripePayoutsService.js->>stripePayoutsController.js: { statusCode: 200, details { accountId, interval, weekly_anchor, monthly_anchor } }
+    stripePayoutsController.js->>index.js: build HTTP 200 response
+    index.js->>user: 200 OK (payout schedule)
 ```
 
 ## Todo & Improvements
