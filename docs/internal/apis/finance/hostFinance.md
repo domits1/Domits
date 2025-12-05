@@ -1,4 +1,4 @@
-# Stripe Account Management docs
+# Host finance (Stripe Account Management) docs
 
 ## Description
 
