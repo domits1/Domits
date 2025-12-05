@@ -260,7 +260,7 @@ sequenceDiagram
 <hr>
 
 ### GET sequence diagram (`retrieve-user-charges` → `General-Payments-Production-CRUD-fetchHostPayout`)
-```marmaid
+```mermaid
 sequenceDiagram
     %% GET host charges (transfers to connected account)
     participant user
