@@ -150,7 +150,7 @@ classDiagram
 
 Use [Mermaid Live Editor](https://mermaid.live/) and its examples to make a Sequence Diagram for a POST request
 
-### POST sequence diagram
+### POST sequence diagram (`general-crud-payment-handler`)
 
 ```mermaid
 sequenceDiagram
@@ -199,7 +199,7 @@ sequenceDiagram
     index.js->>user: returns 202, message + onboardingUrl (JSON body)
 ```
 
-### GET sequence diagram
+### GET sequence diagram (`general-crud-payment-handler`)
 
 ```mermaid
 sequenceDiagram
