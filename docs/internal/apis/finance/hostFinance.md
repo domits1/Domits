@@ -260,7 +260,6 @@ sequenceDiagram
 <hr>
 
 ### GET sequence diagram (`retrieve-user-charges` → `General-Payments-Production-CRUD-fetchHostPayout`)
-
 ```marmaid
 sequenceDiagram
     %% GET host charges (transfers to connected account)
@@ -305,6 +304,7 @@ sequenceDiagram
     stripePayoutsController.js->>index.js: build HTTP 200 response
     index.js->>user: 200 OK (charges list)
 ```
+
 ### GET sequence diagram (`retrieve-user-payouts` → `General-Payments-Production-CRUD-fetchHostPayout`)
 ```mermaid
 sequenceDiagram
