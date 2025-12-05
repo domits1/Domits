@@ -20,7 +20,6 @@ import {
   GUEST_PROFILE_SCREEN,
   GUEST_REVIEWS_SCREEN,
   HOST_CALENDAR_SCREEN,
-  HOST_DASHBOARD_SCREEN,
   HOST_HELP_DESK_SCREEN,
   HOST_ONBOARDING_CHECK_SCREEN,
   HOST_ONBOARDING_LANDING_SCREEN,
@@ -40,7 +39,6 @@ import GuestPaymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
 import HostOnboardingLanding from "../screens/Landing";
 import HostOnboarding from "../features/hostonboarding/screens/HostOnboarding";
 import HostOnboardingCheck from "../features/hostonboarding/screens/OnboardingCheck.js";
-import HostDashboard from "../features/hostdashboard/screens/HostDashboardTab";
 import HostCalendar from "../features/hostdashboard/hostcalendar/screens/HostCalendarTab";
 import HostReviews from "../features/hostdashboard/hostreviews/screens/HostReviewsTab";
 import HostPayments from "../features/hostdashboard/hostfinance/screens/HostPaymentsTab";
@@ -75,7 +73,6 @@ function AccountNavigationStack() {
             <Stack.Screen name={HOST_PROPERTIES_SCREEN} component={HostProperties}/>
 
             {/* Host Dashboard */}
-            <Stack.Screen name={HOST_DASHBOARD_SCREEN} component={HostDashboard}/>
             <Stack.Screen name={HOST_CALENDAR_SCREEN} component={HostCalendar}/>
             <Stack.Screen name={HOST_REVIEWS_SCREEN} component={HostReviews}/>
             <Stack.Screen name={HOST_PAYMENTS_SCREEN} component={HostPayments}/>
