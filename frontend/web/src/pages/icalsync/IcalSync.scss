@@ -58,31 +58,41 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2000;
 }
 
 .hc-modal {
   background: #fff;
   border-radius: 12px;
-  padding: 1.5rem;
-  max-width: 600px;
-  width: 100%;
   border: 1px solid $primary-color;
+  max-width: 720px;
+  width: 90%;
+  max-height: calc(100vh - 8rem);
+  margin-top: 4rem;
+  margin-bottom: 4rem;
+  padding: 1.5rem;
+  padding-top: 2.2rem;
+  position: relative;
+  overflow-y: auto;
+}
+
+.ical-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
 }
 
 .ical-modal-header {
-  display: flex;
-  justify-content: space-between;
+  text-align: center;
   margin-bottom: 1rem;
 
   h2 {
     font-size: 1.2rem;
     color: $primary-color;
+    margin: 0;
   }
-}
-
-.ical-close-btn {
-  background: transparent;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
 }

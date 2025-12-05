@@ -34,29 +34,22 @@ export default function ExternalCalendarsCard() {
         </div>
       </div>
 
-      <Modal
-        isOpen={isIcalModalOpen}
-        onRequestClose={handleCloseIcalModal}
-        className="hc-modal ical-modal"
-        overlayClassName="hc-modal-overlay"
-      >
-        <div className="ical-modal-header">
-          <h2>Calendar synchronization</h2>
-          <button
-            type="button"
-            className="ical-close-btn"
-            onClick={handleCloseIcalModal}
-          >
+              <Modal
+          isOpen={isIcalModalOpen}
+          onRequestClose={handleCloseIcalModal}
+          className="hc-modal"
+          overlayClassName="hc-modal-overlay"
+        >
+          <span className="ical-modal-close" onClick={handleCloseIcalModal}>
             ×
-          </button>
-        </div>
-
-        <IcalSyncForm
-          exportUrl={dummyExportUrl}
-          onImport={handleImport}
-          submitting={false}
-        />
-      </Modal>
+          </span>
+          
+          <IcalSyncForm
+            exportUrl={dummyExportUrl}
+            onImport={handleImport}
+            submitting={false}
+          />
+        </Modal>    
     </>
   );
 }
