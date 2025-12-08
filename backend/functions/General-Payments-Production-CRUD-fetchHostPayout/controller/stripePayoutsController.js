@@ -8,7 +8,6 @@ export default class StripePayoutsController {
     this.stripePayoutService = new StripePayoutsService();
   }
 
-  // ----------- GET -----------
   async getHostCharges(event) {
     try {
       const response = await this.stripePayoutService.getHostCharges(event);
