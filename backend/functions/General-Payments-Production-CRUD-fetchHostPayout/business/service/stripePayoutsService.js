@@ -139,7 +139,7 @@ export default class StripePayoutsService {
     const merged = [];
 
     merged.push(
-      ...(forecast ? [forecast] : []),
+      ...forecast ? [forecast] : [],
       ...pendingAfterCutoff.map((x) => ({
         arrivalDate: x.availableOn,
         amount: x.amount,
