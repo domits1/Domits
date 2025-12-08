@@ -25,6 +25,9 @@ export const handler = async (event) => {
     case httpMethod === "GET" && path.endsWith("/retrieve-user-payout-schedule"):
       returnedResponse = await controller.getPayoutSchedule(event);
       break;
+    case httpMethod === "GET" && path.endsWith("/retrieve-user-bank-account"):
+      returnedResponse = await controller.getHostBankAccount(event);
+      break;
     default:
       throw new Error("Unable to determine request type. Please contact the Admin.");
   }
