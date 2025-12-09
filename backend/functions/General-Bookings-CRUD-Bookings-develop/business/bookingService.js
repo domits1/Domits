@@ -50,7 +50,7 @@ class BookingService {
 		// Simple template replacement for host custom messages
 		if (fetchedProperty.automatedWelcomeMessage) {
 			messageText = messageText
-				.replace('{{guestName}}', "Guest") // We don't have guest name easily available here yet without another fetch, defaulting to Guest
+				.replace('{{guestName}}', "Guest") 
 				.replace('{{propertyName}}', bookingInfo.propertyName)
 				.replace('{{checkIn}}', fetchedProperty.checkIn || "15:00")
 				.replace('{{checkOut}}', fetchedProperty.checkOut || "11:00")
@@ -63,9 +63,7 @@ class BookingService {
 
 	}
 
-	// -----------
 	// /bookings PATCH
-	// -----------
 
 	async confirmPayment(paymentid) {
 		const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
@@ -88,9 +86,7 @@ class BookingService {
 			return true;
 		}
 	}
-	// -----------
 	// /bookings GET
-	// -----------
 
 	async read(event) {
 		let authToken;
@@ -164,9 +160,7 @@ class BookingService {
 		}
 	}
 
-	// -----------
 	// verify Booking GET request
-	// -----------
 
 	async verifyQueryDataTypes(params) {
 		try {
