@@ -6,6 +6,7 @@ export const handler = async (event) => {
     console.log("Partner API v1 - listingDetails invoked");
     console.log("Event:", JSON.stringify(event));
 
+
     const propertyId =
       event?.queryStringParameters?.propertyId ??
       event?.queryStringParameters?.property;   
