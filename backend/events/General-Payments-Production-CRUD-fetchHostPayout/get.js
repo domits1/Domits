@@ -5,11 +5,10 @@ async function get() {
   console.log(
     await handler({
       httpMethod: "GET",
-      path: "/retrieve-user-pending-amount",
+      path: "/retrieve-user-bank-account",
       resource: "/retrieve-user-payouts",
       headers: {
-        Authorization:
-          await getHostAuthToken(),
+        Authorization: await getHostAuthToken(),
       },
     })
   );

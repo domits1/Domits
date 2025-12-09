@@ -413,4 +413,45 @@ export default class StripePayoutsService {
       details,
     };
   }
+
+  async getHostBankAccount(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required fields: cognitoUserId");
+    }
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
+
+    const externalAccounts = await this.stripe.accounts.listExternalAccounts(stripeAccount.account_id, {
+      object: "bank_account",
+      limit: 100,
+    });
+
+    const bankAccounts = externalAccounts.data.map((ba) => ({
+      id: ba.id,
+      bankName: ba.bank_name,
+      country: ba.country,
+      currency: ba.currency.toUpperCase(),
+      last4: ba.last4,
+      routingNumber: ba.routing_number,
+      accountHolderName: ba.account_holder_name,
+      accountHolderType: ba.account_holder_type,
+      defaultForCurrency: ba.default_for_currency,
+      status: ba.status,
+      fingerprint: ba.fingerprint,
+    }));
+
+    return {
+      statusCode: 200,
+      message: "Bank accounts fetched successfully",
+      details: { bankAccounts },
+    };
+  }
+
 }
