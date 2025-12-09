@@ -156,7 +156,7 @@ class BookingService {
 			}
 		} catch (error) {
 			console.error(error);
-			throw new Forbidden("Unable to verify data! Check your request or contact support!");
+			throw new Forbidden("Unable to verify data");
 		}
 	}
 
@@ -167,7 +167,7 @@ class BookingService {
 			//await this.getParamsModel.verifyGetParams(params);
 		} catch (error) {
 			console.error(error);
-			throw new Forbidden("Unable to verify data! Check your request or contact support!");
+			throw new Forbidden("Unable to verify data");
 		}
 	}
 }
