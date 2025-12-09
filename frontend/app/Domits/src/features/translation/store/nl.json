@@ -70,7 +70,7 @@
     "Does not follow the email format example@mail.com": "Volgt niet het email formaat example@mail.com",
     "What best describes your property?": "Hoe kan uw accommodatie het best omschreven worden?",
     "House": "Huis", "Villa": "Villa", "Cottage": "Hut", "Apartment": "Appartement", "Camper": "Camper", "Boat": "Boot",
-    "Yes": "Ja", "No": "Nee",
+    "Yes": "Ja", "No": "Nee", "Cancel": "Annuleer",
     "Quit": "Stoppen", "Back": "Terug", "Next": "Volgende", "Finish": "Voltooien",
     "Are you sure you want to quit?": "Weet u zeker dat u wilt stoppen?",
     "Entered property data will be lost.": "Ingevulde accommodatie gegevens zullen verloren gaan.",
@@ -111,6 +111,9 @@
     "How many people can stay here?": "Hoeveel mensen kunnen hier verblijven?",
     "Add new property": "Nieuwe accommodatie toevoegen",
     "Current listings": "Huidige accommodaties",
-    "You have no properties listed yet": "U hebt nog geen accommodaties toegevoegd"
+    "You have no properties listed yet": "U hebt nog geen accommodaties toegevoegd",
+    "Confirm Property Status": "Bevestig Accommodatie Status",
+    "Are you sure you want to set this property LIVE?": "Weet u zeker dat u uw accommodatie LIVE wilt zetten?",
+    "Property is already live": "Accommodatie staat al LIVE"
   }
 }

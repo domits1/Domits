@@ -1,24 +1,26 @@
 import React, {useEffect, useState} from 'react';
-import {Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {ActivityIndicator, Alert, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../../../../context/AuthContext';
 import {styles} from '../styles/HostPropertiesStyles'
-import LoadingScreen from "../../../../screens/loadingscreen/screens/LoadingScreen";
 import {HOST_ONBOARDING_SCREEN, PROPERTY_DETAILS_SCREEN} from "../../../../navigation/utils/NavigationNameConstants";
 import TabHeader from "../../../../screens/accounthome/components/TabHeader";
 import HostPropertyRepository from "../../../../services/property/HostPropertyRepository";
 import TranslatedText from "../../../translation/components/TranslatedText";
 import {S3URL} from "../../../../store/constants";
+import {COLORS} from "../../../../styles/COLORS";
+import {useTranslation} from "react-i18next";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 const HostListingsTab = () => {
   const hostPropertyRepository = new HostPropertyRepository();
-  const [properties, setProperties] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
   const {userAttributes} = useAuth();
   const userId = userAttributes?.sub;
+  const {t} = useTranslation();
+
+  const [properties, setProperties] = useState([]);
+  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
 
   useEffect(() => {
     if (userId) {
@@ -27,7 +29,7 @@ const HostListingsTab = () => {
   }, [userId]);
 
   const fetchProperties = async () => {
-    setIsLoading(true);
+    setIsLoadingProperties(true);
     if (!userId) {
       console.error('No user id provided.');
       return;
@@ -38,62 +40,100 @@ const HostListingsTab = () => {
     } catch (error) {
       console.error('Unexpected error:', error);
     } finally {
-      setIsLoading(false);
+      setIsLoadingProperties(false);
     }
   };
 
+  const updatePropertyStatus = async (propertyId) => {
+    //todo Check if host is verified and eligible
+
+    try {
+      await hostPropertyRepository.updatePropertyStatus(propertyId);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+    }
+  }
+
   const navigateToDetailPage = propertyId => {
-    {/*fixme PropertyDetailsScreen lives on the Home stack while also having usage in Account stack, Details screen for hosts required*/}
+    //fixme PropertyDetailsScreen lives on the Home stack while also having usage in Account stack, Details screen for hosts required
     navigation.navigate(PROPERTY_DETAILS_SCREEN, {property: {property: {id: propertyId}}});
   };
 
-  const addProperty = () => {
+  const navigateToAddProperty = () => {
     navigation.navigate(HOST_ONBOARDING_SCREEN);
   };
 
+  const confirmUpdatePropertyStatus = (propertyId) => {
+    Alert.alert(t('Confirm Property Status'), t('Are you sure you want to set this property LIVE?'), [
+      {
+        text: t('Cancel'),
+        style: 'cancel',
+      },
+      {
+        text: t('Yes'), onPress: () => {
+          updatePropertyStatus(propertyId).then(() => fetchProperties())
+        }
+      },
+    ]);
+  }
+
   return (
-    <SafeAreaView style={{flex: 1}}>
-      <ScrollView style={styles.container}>
-        <TabHeader tabTitle={'Properties'}/>
-        <TouchableOpacity onPress={addProperty} style={styles.listItem}>
-          <Text style={styles.listItemText}>
-            <TranslatedText textToTranslate={"Add new property"}/>
+    <ScrollView style={{flex: 1}}>
+      <View style={styles.contentContainer}>
+        <TabHeader tabTitle={'Properties'} />
+        <TouchableOpacity onPress={navigateToAddProperty} style={styles.addPropertyButton}>
+          <Ionicons name="add" size={22} color="white" />
+          <Text style={styles.addPropertyButtonText}>
+            <TranslatedText textToTranslate={"Add new property"} />
           </Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <View style={styles.boxColumns}>
-          <View style={styles.box}>
-            <Text style={styles.boxText}>
-              <TranslatedText textToTranslate={"Current listings"}/>
-            </Text>
-            {isLoading ? (
-              <LoadingScreen/>
-            ) : properties.length > 0 ? (
-              properties.map(item => {
-                return (
-                  <TouchableOpacity
-                    key={item.property.id}
-                    style={styles.accommodationItem}
-                    onPress={() => navigateToDetailPage(item.property.id)}>
-                    <Image
-                      source={{uri: `${S3URL}${item.images[0].key}`}}
-                      style={styles.accommodationImage}
-                    />
-                    <View style={styles.accommodationText}>
-                      <Text style={styles.accommodationName}>{item.property.title}</Text>
+        <Text style={styles.hostPageHeading}>
+          <TranslatedText textToTranslate={"Current listings"} />
+        </Text>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {isLoadingProperties ? (
+            <ActivityIndicator size="large" color={COLORS.domitsGuestGreen} />
+          ) : properties.length > 0 ? (
+            properties.map(item => {
+              return (
+                <TouchableOpacity
+                  key={item.property.id}
+                  style={styles.propertyItem}
+                  onPress={() => navigateToDetailPage(item.property.id)}>
+                  <Image
+                    source={{uri: `${S3URL}${item.images[0].key}`}}
+                    style={styles.propertyImage}
+                  />
+                  <View style={styles.propertyNameContainer}>
+                    <Text style={styles.propertyNameText}>{item.property.title}</Text>
+                  </View>
+
+                  <TouchableOpacity onPress={() => {
+                    item.property.status === "INACTIVE" ?
+                      confirmUpdatePropertyStatus(item.property.id) :
+                      Alert.alert(t("Property is already live"));
+                  }}>
+
+                    <View style={styles.propertyStatusContainer}>
+                      <Text style={styles.propertyStatusText}>
+                        {item.property.status}
+                      </Text>
+                      {item.property.status === "INACTIVE" && (
+                        <Ionicons name="cloud-upload-outline" size={22} color="#000" />
+                      )}
                     </View>
                   </TouchableOpacity>
-                );
-              })
-            ) : (
-              <Text style={styles.noListingsText}>
-                <TranslatedText textToTranslate={"You have no properties listed yet"}/>
-              </Text>
-            )}
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <Text style={styles.noListingsText}>
+              <TranslatedText textToTranslate={"You have no properties listed yet"} />
+            </Text>
+          )}
+        </ScrollView>
+      </View>
+    </ScrollView>
   );
 };
 
