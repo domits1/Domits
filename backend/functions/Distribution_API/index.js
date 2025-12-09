@@ -6,10 +6,9 @@ export const handler = async (event) => {
     console.log("Partner API v1 - listingDetails invoked");
     console.log("Event:", JSON.stringify(event));
 
-    // Accepteer 'propertyId' (publieke API) en eventueel 'property' als fallback
     const propertyId =
       event?.queryStringParameters?.propertyId ??
-      event?.queryStringParameters?.property;
+      event?.queryStringParameters?.property;   
 
     if (!propertyId) {
       return jsonResponse(400, {
@@ -17,7 +16,6 @@ export const handler = async (event) => {
       });
     }
 
-    // Intern moet het 'property' heten
     const internalUrl = `${INTERNAL_BASE_URL}/property/bookingEngine/listingDetails?property=${encodeURIComponent(
       propertyId
     )}`;
