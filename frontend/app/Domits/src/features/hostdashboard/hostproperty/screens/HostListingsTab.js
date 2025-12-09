@@ -10,6 +10,7 @@ import {HOST_ONBOARDING_SCREEN, PROPERTY_DETAILS_SCREEN} from "../../../../navig
 import TabHeader from "../../../../screens/accounthome/components/TabHeader";
 import HostPropertyRepository from "../../../../services/property/HostPropertyRepository";
 import TranslatedText from "../../../translation/components/TranslatedText";
+import {S3URL} from "../../../../store/constants";
 
 const HostListingsTab = () => {
   const hostPropertyRepository = new HostPropertyRepository();
@@ -68,27 +69,15 @@ const HostListingsTab = () => {
               <LoadingScreen/>
             ) : properties.length > 0 ? (
               properties.map(item => {
-                const imageUrls = item.Images ? Object.values(item.Images) : [];
-                if (imageUrls.length > 1) {
-                  const mainImage = imageUrls.splice(
-                    imageUrls.length - 2,
-                    1,
-                  )[0];
-                  imageUrls.unshift(mainImage);
-                }
-                const primaryImageUrl =
-                  imageUrls.length > 0 ? imageUrls[0] : null;
                 return (
                   <TouchableOpacity
                     key={item.property.id}
                     style={styles.accommodationItem}
                     onPress={() => navigateToDetailPage(item.property.id)}>
-                    {primaryImageUrl && (
-                      <Image
-                        source={{uri: primaryImageUrl}}
-                        style={styles.accommodationImage}
-                      />
-                    )}
+                    <Image
+                      source={{uri: `${S3URL}${item.images[0].key}`}}
+                      style={styles.accommodationImage}
+                    />
                     <View style={styles.accommodationText}>
                       <Text style={styles.accommodationName}>{item.property.title}</Text>
                     </View>
