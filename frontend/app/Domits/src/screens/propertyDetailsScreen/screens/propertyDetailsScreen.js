@@ -73,7 +73,6 @@ const PropertyDetailsScreen = ({route, navigation}) => {
     return (
       <SafeAreaView style={{flex: 1}}>
         <View style={styles.container}>
-          {/*fixme PropertyDetailsScreen lives on the Home stack while also having usage in Account stack, Details screen for hosts required*/}
           <TabHeader tabTitle={"Property"} />
           <View style={styles.contentContainer}>
             <TranslatedText textToTranslate={"Property information unavailable."} />
