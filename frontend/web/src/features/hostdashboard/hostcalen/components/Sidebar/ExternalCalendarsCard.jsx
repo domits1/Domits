@@ -18,38 +18,38 @@ export default function ExternalCalendarsCard() {
     <>
       <div className="hc-card">
         <div className="hc-card-title">External calendars</div>
+
         <div className="hc-card-actions col">
           <button className="hc-btn ghost" disabled>
             Connect Google
           </button>
-          <button className="hc-btn ghost" onClick={handleOpenIcalModal}>
-            Import .ics
-          </button>
+
           <button className="hc-btn" onClick={handleOpenIcalModal}>
-            Export .ics
+            iCal &amp; Calendar synchronization
           </button>
+
           <button className="hc-icon-btn" title="Refresh">
             ⟲
           </button>
         </div>
       </div>
 
-              <Modal
-          isOpen={isIcalModalOpen}
-          onRequestClose={handleCloseIcalModal}
-          className="hc-modal"
-          overlayClassName="hc-modal-overlay"
-        >
-          <span className="ical-modal-close" onClick={handleCloseIcalModal}>
-            ×
-          </span>
-          
-          <IcalSyncForm
-            exportUrl={dummyExportUrl}
-            onImport={handleImport}
-            submitting={false}
-          />
-        </Modal>    
+      <Modal
+        isOpen={isIcalModalOpen}
+        onRequestClose={handleCloseIcalModal}
+        className="hc-modal"
+        overlayClassName="hc-modal-overlay"
+      >
+        <span className="ical-modal-close" onClick={handleCloseIcalModal}>
+          ×
+        </span>
+
+        <IcalSyncForm
+          exportUrl={dummyExportUrl}
+          onImport={handleImport}
+          submitting={false}
+        />
+      </Modal>
     </>
   );
 }
