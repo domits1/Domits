@@ -1,33 +1,17 @@
 import { Controller } from "./controller/controller.js";
-import Database from "database";
+import { ok, err, isOptions } from "./util/http.js";
 
 let controller = null;
-let pool = null;
 
 export const handler = async (event) => {
-    try {
-        if (!controller) {
-            controller = new Controller();
-        }
-        if (!pool) {
-            pool = await Database.getInstance();
-        }
+  try {
+    if (isOptions(event)) return ok({});
 
-        return await (async () => {
-            switch (event.httpMethod) {
-                case "GET":
-                    return controller.getUser(event)
-                default:
-                    return {
-                        statusCode: 404,
-                        body: "HTTP method not found."
-                    }
-            }
-        })();
-    } catch (error) {
-        return {
-            statusCode: 500,
-            body: "Something went wrong, please contact support."
-        }
-    }
-}
+    if (!controller) controller = new Controller();
+
+    return await controller.retrieve(event);
+  } catch (e) {
+    console.error(e);
+    return err(500, "Something went wrong, please contact support.");
+  }
+};
