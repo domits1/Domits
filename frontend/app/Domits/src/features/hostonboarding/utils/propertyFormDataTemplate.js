@@ -1,5 +1,3 @@
-import {tempImageBase64} from "../store/TemporaryTemplateImages";
-
 const propertyFormDataTemplate = {
     property: {
         id: "",
@@ -77,26 +75,7 @@ const propertyFormDataTemplate = {
         spaceType: ""
     },
     propertyImages: [
-        {
-            key: "images/1/9/Picture1.png",
-            image: tempImageBase64
-        },
-        {
-            key: "images/1/9/Picture2.png",
-            image: tempImageBase64
-        },
-        {
-            key: "images/1/9/Picture3.png",
-            image: tempImageBase64
-        },
-        {
-            key: "images/1/9/Picture4.png",
-            image: tempImageBase64
-        },
-        {
-            key: "images/1/9/Picture5.png",
-            image: tempImageBase64
-        },
+
     ],
     propertyTechnicalDetails: {
         length: -1,
