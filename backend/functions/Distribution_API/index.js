@@ -1,22 +1,17 @@
-import { Controller } from "./controller/controller.js";
-import Database from "database";
+import { PropertyController } from "./controller/propertyController.js";
 
 let controller = null;
-let pool = null;
 
 export const handler = async (event) => {
     try {
         if (!controller) {
-            controller = new Controller();
-        }
-        if (!pool) {
-            pool = await Database.getInstance();
+            controller = new PropertyController();
         }
 
         return await (async () => {
             switch (event.httpMethod) {
                 case "GET":
-                    return controller.getUser(event)
+                    return controller.get(event);
                 default:
                     return {
                         statusCode: 404,
@@ -25,6 +20,7 @@ export const handler = async (event) => {
             }
         })();
     } catch (error) {
+        console.error(error);
         return {
             statusCode: 500,
             body: "Something went wrong, please contact support."
