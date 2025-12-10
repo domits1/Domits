@@ -157,7 +157,7 @@ const HostReservations = () => {
                         <span className={styles.reservationIcons}></span>
                       </th>
                       <th>
-                        Check-In - Check-Out
+                        Check In - Check Out
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
