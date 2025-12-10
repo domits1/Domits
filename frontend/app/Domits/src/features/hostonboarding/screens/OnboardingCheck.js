@@ -7,9 +7,13 @@ import CheckBox from "@react-native-community/checkbox";
 import CheckTextModal from "../views/onboardingcheck/CheckTextModal";
 import CheckPhotosModal from "../views/onboardingcheck/CheckPhotosModal";
 import CheckAmenitiesModal from "../views/onboardingcheck/CheckAmenitiesModal";
+import HostPropertyRepository from "../../../services/property/HostPropertyRepository";
+import {HOST_PROPERTIES_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 
 const OnboardingCheck = ({route, navigation}) => {
   const {formData} = route.params;
+  const hostPropertyRepository = new HostPropertyRepository();
+
   const [toggleComplianceCheckBox, setToggleComplianceCheckBox] = useState(false);
   const [toggleTermsConditionsCheckBox, setToggleTermsConditionsCheckBox] = useState(false);
   const [areCheckboxesChecked, setAreCheckboxesChecked] = useState(false);
@@ -25,6 +29,16 @@ const OnboardingCheck = ({route, navigation}) => {
         .map(item => `${item.rule.replace('allow', '')}: ${item.value ? '✔' : '✖'}`)
         .join('\n')
   };
+
+  const createProperty = async () => {
+      try {
+        await hostPropertyRepository.createProperty(formData);
+    } catch (err) {
+      console.error(err)
+    } finally {
+        navigation.navigate(HOST_PROPERTIES_SCREEN);
+    }
+  }
 
   useEffect(() => {
     setAreCheckboxesChecked(toggleComplianceCheckBox && toggleTermsConditionsCheckBox);
@@ -134,7 +148,7 @@ const OnboardingCheck = ({route, navigation}) => {
               <TouchableOpacity
                   disabled={!areCheckboxesChecked}
                   style={[styles.completeButton, !areCheckboxesChecked && {backgroundColor: 'rgb(128,128,128)'}]}
-                  onPress={() => console.log('pressed complete')}>
+                  onPress={() => createProperty()}>
                 <Text style={styles.completeButtonText}>
                   <TranslatedText textToTranslate={'Complete'}/>
                 </Text>
