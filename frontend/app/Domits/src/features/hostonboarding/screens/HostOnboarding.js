@@ -20,16 +20,16 @@ const HostOnboarding = ({navigation}) => {
   const currentStep = steps[currentStepIndex];
   const CurrentComponent = currentStep.component;
   const [pageStatus, setPageStatus] = useState({
-    propertyType: {visited: false, valid: false},
-    propertySpace: {visited: false, valid: false},
-    propertyName: {visited: false, valid: false},
-    propertyLocation: {visited: false, valid: false},
-    propertyDescription: {visited: false, valid: false},
-    propertyAmountOfGuests: {visited: false, valid: false},
-    propertyAmenities: {visited: false, valid: false},
-    propertyHouseRules: {visited: false, valid: false},
-    propertyPhotos: {visited: false, valid: false},
-    propertyRegistrationNumber: {visited: false, valid: false}
+    propertyType: {visited: true, valid: true},
+    propertySpace: {visited: true, valid: true},
+    propertyName: {visited: true, valid: true},
+    propertyLocation: {visited: true, valid: true},
+    propertyDescription: {visited: true, valid: true},
+    propertyAmountOfGuests: {visited: true, valid: true},
+    propertyAmenities: {visited: true, valid: true},
+    propertyHouseRules: {visited: true, valid: true},
+    propertyPhotos: {visited: true, valid: true},
+    propertyRegistrationNumber: {visited: true, valid: true}
   });
 
   const updateFormData = (updaterFn) => {
