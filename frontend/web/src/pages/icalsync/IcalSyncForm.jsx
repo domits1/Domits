@@ -10,8 +10,9 @@ const CALENDAR_OPTIONS = [
 
 export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
   const [calendarUrl, setCalendarUrl] = useState("");
-  const [calendarName, setCalendarName] = useState("GENERAL");
+  const [calendarName, setCalendarName] = useState("");
   const [errors, setErrors] = useState({});
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -32,14 +33,19 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
   const handleCopyExportUrl = async () => {
     if (!exportUrl) return;
     await navigator.clipboard.writeText(exportUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <form className="adminproperty-form ical-sync-form" onSubmit={handleSubmit}>
-      <h2 className="adminproperty-title">Calendar synchronization</h2>
+      <h2 className="adminproperty-title">iCal &amp; synchronization</h2>
 
       <div className="ical-section">
         <h3 className="ical-section-heading">1. Import</h3>
+        <p className="ical-section-description">
+          Connect an external calendar so Domits can import your bookings.
+        </p>
 
         <div className="adminproperty-group">
           <label htmlFor="calendarUrl">Address of iCal (.ics file)</label>
@@ -69,6 +75,9 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
               onChange={(e) => setCalendarName(e.target.value)}
               className={errors.calendarName ? "error" : ""}
             >
+              <option value="" disabled>
+                Choose an external calendar name
+              </option>
               {CALENDAR_OPTIONS.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
@@ -89,24 +98,22 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
 
       <div className="ical-section ical-section-export">
         <h3 className="ical-section-heading">2. Export</h3>
+        <p className="ical-section-description">
+          Use this Domits iCal address to sync your calendar with external platforms.
+        </p>
 
         <div className="adminproperty-group">
           <label htmlFor="exportUrl">Domits iCal address</label>
 
           <div className="ical-export-row">
-            <input
-              id="exportUrl"
-              type="text"
-              value={exportUrl || ""}
-              readOnly
-            />
+            <input id="exportUrl" type="text" value={exportUrl || ""} readOnly />
             <button
               type="button"
-              className="ical-copy-btn"
+              className={`ical-copy-btn ${copied ? "copied" : ""}`}
               onClick={handleCopyExportUrl}
               disabled={!exportUrl}
             >
-              Copy
+              {copied ? "Copied ✓" : "Copy"}
             </button>
           </div>
         </div>
