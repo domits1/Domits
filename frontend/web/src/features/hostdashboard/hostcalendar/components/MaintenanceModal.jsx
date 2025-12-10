@@ -5,29 +5,21 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
   const [note, setNote] = useState("");
 
   useEffect(() => {
-    console.log('🎭 MaintenanceModal isOpen changed:', isOpen);
-    console.log('Selected dates:', selectedDates);
 
     if (!isOpen) {
       setNote("");
     }
   }, [isOpen, selectedDates]);
 
-  console.log('🎭 MaintenanceModal render - isOpen:', isOpen);
-
   if (!isOpen) {
-    console.log('Modal not open, returning null');
     return null;
   }
-
-  console.log('✅ Rendering modal content');
 
   const handleSave = () => {
     if (!note.trim()) {
       alert("Please enter a note for maintenance");
       return;
     }
-
     onSave(note);
     setNote("");
     onClose();
@@ -76,7 +68,7 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
           </div>
 
           <div className="info-box">
-            <p><strong>ℹ️ Note:</strong> This maintenance note will be saved and can be viewed later. The selected dates will be marked as unavailable for booking.</p>
+            <p><strong>Note:</strong> This maintenance note will be saved and can be viewed later. The selected dates will be marked as unavailable for booking.</p>
           </div>
         </div>
 

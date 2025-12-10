@@ -12,11 +12,9 @@ export default function CalendarGrid({
   onToggle,
   onDragSelect,
 }) {
-  // basic drag select (desktop)
   const dragging = useRef(false);
   const [range, setRange] = useState(new Set());
   const [hoveredDate, setHoveredDate] = useState(null);
-
   const handleMouseDown = (key) => {
     dragging.current = true;
     setRange(new Set([key]));
@@ -38,15 +36,13 @@ export default function CalendarGrid({
       </div>
     );
   }
-
   return (
     <div className="hc-calendar" onMouseLeave={handleUp} onMouseUp={handleUp}>
       <div className="hc-grid-head">
-        {dayNames.map((d) => (
-          <div key={d} className="hc-grid-head-cell">{d}</div>
+        {dayNames.map((day) => (
+          <div key={day} className="hc-grid-head-cell">{day}</div>
         ))}
       </div>
-
       <div className="hc-grid-body">
         {monthGrid.map((week, wi) => (
           <div className="hc-grid-row" key={wi}>
@@ -54,13 +50,11 @@ export default function CalendarGrid({
               const key = toKey(date);
               const inMonth = isSameMonthUTC(date, cursor);
               const isDrag = range.has(key);
-
               const state =
                 selections.booked.has(key) ? "booked" :
                 selections.blocked.has(key) ? "blocked" :
                 selections.maintenance.has(key) ? "maintenance" :
                 "available";
-
               const bookingInfo = bookingsByDate[key];
               const hasBooking = bookingInfo && bookingInfo.length > 0;
 

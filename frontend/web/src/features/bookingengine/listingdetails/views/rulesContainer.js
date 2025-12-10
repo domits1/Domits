@@ -3,7 +3,6 @@ import React from "react";
 const RulesContainer = ({ rules, checkIn }) => {
   const formatRule = (rule) => {
     const allowedText = rule.value ? "allowed" : "not allowed";
-
     const parts = rule.rule.split("/").map((part) => {
       const cleaned = part.replace("Allowed", "");
       const words = cleaned.split(/(?=[A-Z])/).join(" ");

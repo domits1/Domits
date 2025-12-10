@@ -9,22 +9,12 @@ export class PropertyPricingRepository {
         this.systemManager = systemManager
     }
 
-    /**
-     * Convert date string to timestamp
-     * @param {string} dateStr - Date in YYYY-MM-DD format
-     * @returns {number} - Unix timestamp in milliseconds
-     */
     dateToTimestamp(dateStr) {
         const date = new Date(dateStr);
         date.setHours(0, 0, 0, 0);
         return date.getTime();
     }
 
-    /**
-     * Convert timestamp to date string
-     * @param {number} timestamp - Unix timestamp in milliseconds
-     * @returns {string} - Date in YYYY-MM-DD format
-     */
     timestampToDate(timestamp) {
         return new Date(timestamp).toISOString().split('T')[0];
     }

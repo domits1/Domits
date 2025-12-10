@@ -1,13 +1,11 @@
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { Forbidden } from "../util/exception/Forbidden.js";
 import { NotFoundException } from "../util/exception/NotFoundException.js";
-
 import { CognitoRepository } from "../data/repository/cognitoRepository.js";
 import { PropertyRepository } from "../data/repository/propertyRepository.js";
 import { BookingRepository } from "../data/repository/bookingRepository.js";
 
 export class AuthManager {
-
     cognitoRepository;
     propertyRepository;
     bookingRepository;

@@ -3,15 +3,12 @@ import Rating from "./rating";
 
 const ImageGallery = ({ images }) => {
   const [showOverlay, setShowOverlay] = useState(false);
-
   const handleMainImageClick = () => {
-    setShowOverlay(true); // Show the overlay
+    setShowOverlay(true);
   };
-
   const handleCloseOverlay = () => {
-    setShowOverlay(false); // Hide the overlay
+    setShowOverlay(false); 
   };
-
   const toSrc = (key) => {
     if (!key) return '';
     if (typeof key === 'string' && (key.startsWith('http://') || key.startsWith('https://'))) {
@@ -27,7 +24,7 @@ const ImageGallery = ({ images }) => {
           className="main-image"
           src={toSrc(images[0].key)}
           alt="Main"
-          onClick={handleMainImageClick} // Show overlay on click
+          onClick={handleMainImageClick}
         />
         <div className="small-images-container">
           {images.map((image) => {
@@ -44,9 +41,6 @@ const ImageGallery = ({ images }) => {
           })}
         </div>
       </div>
-      {/* Rating and host label removed per request */}
-
-      {/* Overlay */}
       {showOverlay && (
         <div className="image-overlay">
           <button className="close-overlay-button" onClick={handleCloseOverlay}>

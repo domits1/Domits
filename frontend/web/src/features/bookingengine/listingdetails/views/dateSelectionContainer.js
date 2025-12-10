@@ -13,13 +13,10 @@ const DateSelectionContainer = ({
   passedProp,
 }) => {
   const [showCalendar, setShowCalendar] = useState(false);
-
-  // Calculate nights using useEffect to avoid setting state during render
   useEffect(() => {
     if (checkInDate && checkOutDate) {
       const checkIn = new Date(checkInDate);
       const checkOut = new Date(checkOutDate);
-
       const timeDifference = checkOut.getTime() - checkIn.getTime();
       const diffDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 
@@ -30,8 +27,6 @@ const DateSelectionContainer = ({
   const nights = checkInDate && checkOutDate ?
     Math.ceil((new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24)) :
     null;
-
-  // Convert ISO date strings to Date objects for BookingCalendar
   const handleCheckInChange = (date) => {
     const dateStr = date.toISOString().split("T")[0];
     setCheckInDate(dateStr);
@@ -41,13 +36,12 @@ const DateSelectionContainer = ({
     if (date) {
       const dateStr = date.toISOString().split("T")[0];
       setCheckOutDate(dateStr);
-      setShowCalendar(false); // Close calendar after selecting checkout date
+      setShowCalendar(false);
     } else {
       setCheckOutDate("");
     }
   };
 
-  // Filter functions for calendar
   const checkInFilter = (date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -59,14 +53,12 @@ const DateSelectionContainer = ({
     const checkIn = new Date(checkInDate);
     return date > checkIn;
   };
-
-  // Debug: Log what's being passed to BookingCalendar
   useEffect(() => {
-    console.log("🟢 DateSelectionContainer - checkInDate:", checkInDate);
-    console.log("🟢 DateSelectionContainer - checkOutDate:", checkOutDate);
-    console.log("🟢 DateSelectionContainer - checkIn Date object:", checkInDate ? new Date(checkInDate) : null);
-    console.log("🟢 DateSelectionContainer - checkOut Date object:", checkOutDate ? new Date(checkOutDate) : null);
-    console.log("🟢 DateSelectionContainer - dynamicPrices:", dynamicPrices);
+    console.log("DateSelectionContainer - checkInDate:", checkInDate);
+    console.log("DateSelectionContainer - checkOutDate:", checkOutDate);
+    console.log("DateSelectionContainer - checkIn Date object:", checkInDate ? new Date(checkInDate) : null);
+    console.log("DateSelectionContainer - checkOut Date object:", checkOutDate ? new Date(checkOutDate) : null);
+    console.log("DateSelectionContainer - dynamicPrices:", dynamicPrices);
   }, [checkInDate, checkOutDate, dynamicPrices]);
 
   return (
@@ -77,7 +69,6 @@ const DateSelectionContainer = ({
           setCheckInDate={setCheckInDate}
           checkOutDate={checkOutDate}
         />
-
         <div className="nights-info">
           {nights && <p>{`${nights} night${nights !== 1 ? "s" : ""}`}</p>}
           <div className="arrow">↔</div>

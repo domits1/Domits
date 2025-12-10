@@ -22,13 +22,11 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext, selecte
 
   useEffect(() => {
     if (!userId) return;
-
     const fetchAccommodations = async () => {
       setIsLoading(true);
       try {
         const url = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all";
         const token = getAccessToken();
-
         const res = await fetch(url, {
           method: "GET",
           headers: {
@@ -39,12 +37,9 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext, selecte
         if (!res.ok) {
           throw new Error(`Failed to fetch properties (${res.status})`);
         }
-
         const data = await res.json();
         const accommodationsList = Array.isArray(data) ? data : [];
         setAccommodations(accommodationsList);
-
-        // Auto-select first property if available and none selected
         if (accommodationsList.length > 0 && !selectedPropertyId && onPropertySelect) {
           const firstPropertyId = accommodationsList[0]?.property?.id || accommodationsList[0]?.property?.ID || accommodationsList[0]?.ID || accommodationsList[0]?.id;
           if (firstPropertyId) {
@@ -52,7 +47,6 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext, selecte
           }
         }
       } catch (error) {
-        // Silent error handling
       } finally {
         setIsLoading(false);
       }
@@ -78,11 +72,9 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext, selecte
         <select className="hc-select" value={view} onChange={(e) => setView(e.target.value)}>
           <option value="month">Month</option>
         </select>
-
         <div className="hc-toolbar-center">
           <div className="hc-month-pill">{formatYearMonth(cursor)}</div>
         </div>
-
         <button className="hc-icon-btn" onClick={onNext} aria-label="Next">
           <svg width="18" height="18" viewBox="0 0 24 24">
             <path d="M9 6l6 6-6 6" stroke="currentColor" fill="none" strokeWidth="2" />
