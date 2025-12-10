@@ -3,10 +3,6 @@ const INTERNAL_BASE_URL =
 
 export const handler = async (event) => {
   try {
-    console.log("Partner API v1 - listingDetails invoked");
-    console.log("Event:", JSON.stringify(event));
-
-
     const propertyId =
       event?.queryStringParameters?.propertyId ??
       event?.queryStringParameters?.property;   
@@ -20,8 +16,6 @@ export const handler = async (event) => {
     const internalUrl = `${INTERNAL_BASE_URL}/property/bookingEngine/listingDetails?property=${encodeURIComponent(
       propertyId
     )}`;
-
-    console.log("Calling internal API:", internalUrl);
 
     const internalResponse = await fetch(internalUrl);
     const internalData = await internalResponse.json();
