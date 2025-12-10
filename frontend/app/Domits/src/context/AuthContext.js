@@ -21,12 +21,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const userData = await getCurrentUser();
       const attributes = await fetchUserAttributes(userData);
-      console.log('User data:', userData); // Log user data on success
-      console.log('User Attributes:', attributes);
       setUser(userData);
       setUserAttributes(attributes);
     } catch (error) {
-      // console.error('checkAuth error:', error); // Detailed logging of the error
       setUser(null);
       setUserAttributes(null);
     }
