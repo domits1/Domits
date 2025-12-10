@@ -10,6 +10,9 @@ export const handler = async (event) => {
     case httpMethod === "POST" && path.endsWith("/set-payout-schedule"):
       returnedResponse = await controller.setPayoutSchedule(event);
       break;
+    case httpMethod === "POST" && path.endsWith("/add-user-bank-account"):
+      returnedResponse = await controller.addHostBankAccount(event);
+      break;
     case httpMethod === "GET" && path.endsWith("/retrieve-user-payouts"):
       returnedResponse = await controller.getHostPayouts(event);
       break;
@@ -27,6 +30,9 @@ export const handler = async (event) => {
       break;
     case httpMethod === "GET" && path.endsWith("/retrieve-user-bank-account"):
       returnedResponse = await controller.getHostBankAccount(event);
+      break;
+    case httpMethod === "DELETE" && path.endsWith("/delete-user-bank-account"):
+      returnedResponse = await controller.deleteHostBankAccount(event);
       break;
     default:
       throw new Error("Unable to determine request type. Please contact the Admin.");
