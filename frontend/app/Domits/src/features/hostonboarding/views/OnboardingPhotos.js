@@ -7,22 +7,18 @@ import React, {useEffect, useState} from "react";
 const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited}) => {
   const MIN_AMOUNT_IMAGES = 5;
   const MAX_AMOUNT_IMAGES = 10;
-  const [images, setImages] = useState(formData.localImages || []);
+  const [images, setImages] = useState(formData.propertyImages || []);
   const [errorMessage, setErrorMessage] = useState("");
   const [canAddImage, setCanAddImage] = useState(images.length < MAX_AMOUNT_IMAGES);
-
-  //fixme remove local images and get from formData
 
   const onAddImage = () => {
     const options = {
       selectionLimit: 5,
       mediaType: 'photo',
       includeBase64: true,
-      maxWidth: 1600,
-      maxHeight: 1600,
-      quality: 0.85,
     }
 
+    //fixme resize image to be between 50kb and 500kb
     launchImageLibrary(options,
         (res) => {
           if (res.errorCode) {
@@ -54,6 +50,7 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
 
       const imagesBase64 = [];
       images.forEach(image => {
+        const imageKey = image.fileName.toString();
         const base64Data = image.base64;
         const mimeType = image.type;
         const dataUri = `data:${mimeType};base64,${base64Data}`;

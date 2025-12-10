@@ -269,6 +269,7 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginTop: 10,
+    flexDirection: 'row',
   },
   completeButtonDisabled: {
     backgroundColor: 'rgba(128,128,128,0.5)',

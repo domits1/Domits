@@ -18,7 +18,6 @@ export const steps = [
     { key: 'propertyAmountOfGuests', title: 'Amount of Guests', component: OnboardingAmountOfGuests},
     { key: 'propertyAmenities', title: 'Property Amenity', component: OnboardingAmenities},
     { key: 'propertyHouseRules', title: 'House Rules', component:OnboardingHouseRules},
-  //fixme image must be at least 50kb, commented and fallback on default in template
-    // { key: 'propertyPhotos', title: 'Property Photos', component:OnboardingPhotos},
+    { key: 'propertyPhotos', title: 'Property Photos', component:OnboardingPhotos},
     { key: 'propertyRegistrationNumber', title: 'Property Registration Number', component:onboardingRegistrationNumber},
 ];
