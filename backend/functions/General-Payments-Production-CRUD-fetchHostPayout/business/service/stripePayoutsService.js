@@ -454,4 +454,86 @@ export default class StripePayoutsService {
     };
   }
 
+  async addHostBankAccount(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required fields: cognitoUserId");
+    }
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
+
+    const body = JSON.parse(event.body || "{}");
+    const { country, currency, accountHolderName, accountHolderType, routingNumber, accountNumber } = body;
+
+    if (!country || !currency || !accountHolderName || !accountHolderType || !routingNumber || !accountNumber) {
+      throw new BadRequestException(
+        "Missing required fields: country, currency, accountHolderName, accountHolderType, routingNumber, accountNumber"
+      );
+    }
+
+    const bankAccount = await this.stripe.accounts.createExternalAccount(
+      stripeAccount.account_id,
+      {
+        external_account: {
+          object: "bank_account",
+          country,
+          currency,
+          account_holder_name: accountHolderName,
+          account_holder_type: accountHolderType,
+          routing_number: routingNumber,
+          account_number: accountNumber,
+        },
+      }
+    );
+
+    return {
+      statusCode: 200,
+      message: "Bank account added successfully",
+      details: { bankAccount },
+    };
+  }
+
+  async deleteHostBankAccount(event) {
+    const token = getAuth(event);
+    const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
+
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required fields: cognitoUserId");
+    }
+
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
+
+    if (!stripeAccount?.account_id) {
+      throw new NotFoundException("No Stripe account found for this user.");
+    }
+
+    const body = JSON.parse(event.body || "{}");
+    const { bankAccountId } = body;
+
+    if (!bankAccountId) {
+      throw new BadRequestException("Missing required fields: bankAccountId");
+    }
+
+    const account = await this.stripe.accounts.retrieve(stripeAccount.account_id);
+    console.log({account
+    });
+
+    const deleted = await this.stripe.accounts.deleteExternalAccount(
+      stripeAccount.account_id,
+      bankAccountId
+    );
+
+    return {
+      statusCode: 200,
+      message: "Bank account deleted successfully",
+      details: { deleted },
+    };
+  }
+
 }
