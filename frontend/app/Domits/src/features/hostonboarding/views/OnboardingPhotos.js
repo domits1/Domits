@@ -11,11 +11,13 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
   const [errorMessage, setErrorMessage] = useState("");
   const [canAddImage, setCanAddImage] = useState(images.length < MAX_AMOUNT_IMAGES);
 
+  //fixme remove local images and get from formData
+
   const onAddImage = () => {
     const options = {
       selectionLimit: 5,
       mediaType: 'photo',
-      includeBase64: false,
+      includeBase64: true,
       maxWidth: 1600,
       maxHeight: 1600,
       quality: 0.85,
@@ -45,15 +47,28 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
 
     if (images.length < MIN_AMOUNT_IMAGES) {
       reportValidity(false);
-      setErrorMessage("You must have at least 5 photos of your property");
+      setErrorMessage(`You must have at least ${MIN_AMOUNT_IMAGES} photos of your property`);
     } else {
       reportValidity(true);
       setErrorMessage("");
+
+      const imagesBase64 = [];
+      images.forEach(image => {
+        const base64Data = image.base64;
+        const mimeType = image.type;
+        const dataUri = `data:${mimeType};base64,${base64Data}`;
+
+        imagesBase64.push({
+          key: image.fileName,
+          image: dataUri
+        })
+      })
+
+      updateFormData((draft) => {
+        draft.propertyImages = imagesBase64;
+      })
     }
 
-    updateFormData((draft) => {
-      draft.localImages = images;
-    })
   }, [images])
 
   useEffect(() => {
@@ -67,7 +82,7 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
             <TranslatedText textToTranslate={"Add photos of your property"}/>
           </Text>
           <Text style={styles.onboardingPageDescription}>
-            <TranslatedText textToTranslate={"A minimum of 5 photos (max. 10 photos). \nClick a photo to remove it."}/>
+            <TranslatedText textToTranslate={`A minimum of ${MIN_AMOUNT_IMAGES} photos (max. ${MAX_AMOUNT_IMAGES} photos). \nClick a photo to remove it.`}/>
           </Text>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
 
