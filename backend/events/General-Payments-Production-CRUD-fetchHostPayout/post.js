@@ -5,16 +5,19 @@ async function post() {
   console.log(
     await handler({
       httpMethod: "POST",
-      path: "/set-payout-schedule",
+      path: "/add-user-bank-account",
       resource: "/set-payout-schedule",
       headers: {
         Authorization:
-            await getHostAuthToken(),
+          await getHostAuthToken(),
       },
       body: JSON.stringify({
-        interval: "monthly",
-        // weekly_anchor: "Thursday",
-        monthly_anchor: 26,
+        country: "UK",
+        currency: "GBP",
+        accountHolderName: "John Doe",
+        accountHolderType: "individual",
+        routingNumber: "110000000",
+        accountNumber: "000123456789",
       }),
     })
   );
