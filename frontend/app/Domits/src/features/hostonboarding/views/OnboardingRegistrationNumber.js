@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {ScrollView, Text, TextInput, View} from "react-native";
 import {styles} from "../styles/HostOnboardingStyles";
 import TranslatedText from "../../translation/components/TranslatedText";
@@ -25,6 +25,9 @@ const onboardingRegistrationNumber = ({formData, updateFormData, reportValidity,
       <View style={styles.contentContainer}>
         <Text style={styles.onboardingPageTitle}>
           <TranslatedText textToTranslate={"Provide your property registration number"}/>:
+        </Text>
+        <Text style={styles.onboardingPageDescription}>
+          <TranslatedText textToTranslate={"This is required to create a property"}/>
         </Text>
         <View style={styles.inputContainerCenter}>
           <TextInput
