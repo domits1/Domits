@@ -1,4 +1,3 @@
-import AuthManager from "../../auth/authManager.js";
 import FaqRepository from "../../data/FaqRepository.js";
 
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
@@ -12,7 +11,7 @@ export default class FaqService {
   async getFinanceFaqs() {
     const faqs = await this.faqRepository.getFinanceFaqs();
 
-    if (!faqs) {
+    if (!faqs || faqs.length === 0) {
       throw new NotFoundException("No finance FAQs found");
     }
 
