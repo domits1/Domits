@@ -1,6 +1,6 @@
 import responsejson from "../util/constant/responseHeader.json" with { type: 'json' };
 import StripePayoutsService from "../business/service/stripePayoutsService.js";
-import FaqService from "../business/service/FaqService.js";
+import FaqService from "../business/service/faqService.js";
 
 const responseHeaderJSON = responsejson;
 
