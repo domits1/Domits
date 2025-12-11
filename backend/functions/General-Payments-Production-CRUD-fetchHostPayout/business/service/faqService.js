@@ -3,8 +3,6 @@ import FaqRepository from "../../data/FaqRepository.js";
 
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 
-
-
 export default class FaqService {
   constructor() {
     this.authManager = new AuthManager();
