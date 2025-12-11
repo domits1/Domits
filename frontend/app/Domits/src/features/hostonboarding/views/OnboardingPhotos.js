@@ -7,26 +7,28 @@ import React, {useEffect, useState} from "react";
 const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited}) => {
   const MIN_AMOUNT_IMAGES = 5;
   const MAX_AMOUNT_IMAGES = 10;
+  const MIN_FILE_SIZE = 50 * 1024; // 50 kB
+  const MAX_FILE_SIZE = 500 * 1024; // 500 kB
+
   const [images, setImages] = useState(formData.propertyImages || []);
   const [errorMessage, setErrorMessage] = useState("");
   const [canAddImage, setCanAddImage] = useState(images.length < MAX_AMOUNT_IMAGES);
 
   const onAddImage = () => {
     const options = {
-      selectionLimit: 5,
       mediaType: 'photo',
       includeBase64: true,
     }
 
-    //fixme resize image to be between 50kb and 500kb
     launchImageLibrary(options,
-        (res) => {
-          if (res.errorCode) {
-            console.error('ImagePicker Error: ', res.errorMessage);
+        (pickedImage) => {
+          if (pickedImage.errorCode) {
+            console.error('ImagePicker Error: ', pickedImage.errorMessage);
           } else {
-            if (images.length < MAX_AMOUNT_IMAGES) {
-              setImages(prevImages => [...prevImages, res]);
-            }
+            if (pickedImage.fileSize < MIN_FILE_SIZE) return setErrorMessage(`File size must be at least ${MIN_FILE_SIZE / 1024} kB`);
+            if (pickedImage.fileSize > MAX_FILE_SIZE) return setErrorMessage(`File size cannot be bigger than ${MIN_FILE_SIZE / 1024} kB`);
+
+            setImages(prevImages => [...prevImages, pickedImage]);
           }
         }
     )
@@ -47,25 +49,24 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
     } else {
       reportValidity(true);
       setErrorMessage("");
-
-      const imagesBase64 = [];
-      images.forEach(image => {
-        const imageKey = image.fileName.toString();
-        const base64Data = image.base64;
-        const mimeType = image.type;
-        const dataUri = `data:${mimeType};base64,${base64Data}`;
-
-        imagesBase64.push({
-          key: image.fileName,
-          image: dataUri
-        })
-      })
-
-      updateFormData((draft) => {
-        draft.propertyImages = imagesBase64;
-      })
     }
 
+    const imagesBase64 = [];
+    images.forEach(image => {
+      const imageKey = image.fileName.toString();
+      const base64Data = image.base64;
+      const mimeType = image.type;
+      const dataUri = `data:${mimeType};base64,${base64Data}`;
+
+      imagesBase64.push({
+        key: image.fileName,
+        image: dataUri
+      })
+    })
+
+    updateFormData((draft) => {
+      draft.propertyImages = imagesBase64;
+    })
   }, [images])
 
   useEffect(() => {
@@ -79,7 +80,8 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
             <TranslatedText textToTranslate={"Add photos of your property"}/>
           </Text>
           <Text style={styles.onboardingPageDescription}>
-            <TranslatedText textToTranslate={`A minimum of ${MIN_AMOUNT_IMAGES} photos (max. ${MAX_AMOUNT_IMAGES} photos). \nClick a photo to remove it.`}/>
+            {images.length}/{MAX_AMOUNT_IMAGES} photos added.{'\n'}
+            Click a photo to remove it.
           </Text>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
 
