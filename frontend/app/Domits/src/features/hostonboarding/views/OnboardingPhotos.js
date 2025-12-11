@@ -10,7 +10,7 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
   const MIN_FILE_SIZE = 50 * 1024; // 50 kB
   const MAX_FILE_SIZE = 500 * 1024; // 500 kB
 
-  const [images, setImages] = useState(formData.propertyImages || []);
+  const [images, setImages] = useState(formData.localImages || []);
   const [errorMessage, setErrorMessage] = useState("");
   const [canAddImage, setCanAddImage] = useState(images.length < MAX_AMOUNT_IMAGES);
 
@@ -52,12 +52,15 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
     }
 
     const imagesBase64 = [];
+    const localImages = [];
     images.forEach(image => {
-      const imageKey = image.fileName.toString();
       const base64Data = image.base64;
       const mimeType = image.type;
       const dataUri = `data:${mimeType};base64,${base64Data}`;
 
+      localImages.push({
+        uri: image.uri,
+      })
       imagesBase64.push({
         key: image.fileName,
         image: dataUri
@@ -66,6 +69,7 @@ const OnboardingPhotos = ({formData, updateFormData, reportValidity, markVisited
 
     updateFormData((draft) => {
       draft.propertyImages = imagesBase64;
+      draft.localImages = localImages;
     })
   }, [images])
 
