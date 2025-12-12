@@ -11,7 +11,7 @@ export default class FaqRepository {
       .getRepository(Faq)
       .createQueryBuilder("faq")
       .where("faq.section = :section", { section: "finance" })
-      .getRawMany();
+      .getMany();
       
     return records;
   }
