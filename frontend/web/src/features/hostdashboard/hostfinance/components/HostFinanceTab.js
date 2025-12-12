@@ -26,6 +26,7 @@ export default function HostFinanceTab() {
     monthly_anchor,
     loadingStates,
     balanceView,
+    faqs,
 
     setPayoutInterval,
     setWeeklyAnchor,
@@ -381,6 +382,26 @@ export default function HostFinanceTab() {
             )}
           </div>
         </section>
+
+        <div className="faqs">
+          <h3>FAQs</h3>
+
+          {faqs.length > 0 ? (
+            <ul className="faq-list">
+              {faqs.map((faq) => (
+                <li key={faq.faq_id} className="faq-item">
+                  <p className="faq-q">
+                    <strong>{faq.question}</strong>
+                  </p>
+                  <p className="faq-a">{faq.answer}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No FAQs found.</p>
+          )}
+        </div>
+        
       </div>
     </main>
   );
