@@ -14,6 +14,10 @@ export default function CalendarGrid({
   // basic drag select (desktop)
   const dragging = useRef(false);
   const [range, setRange] = useState(new Set());
+<<<<<<<< HEAD:frontend/web/src/features/hostdashboard/hostcalen/components/CalendarGrid.jsx
+========
+  const [hoveredDate, setHoveredDate] = useState(null);
+>>>>>>>> 01f56b30a (Dynamic price & property single page):frontend/web/src/features/hostdashboard/hostcalendar/components/CalendarGrid.jsx
 
   const handleMouseDown = (key) => {
     dragging.current = true;
@@ -59,6 +63,12 @@ export default function CalendarGrid({
                 selections.maintenance.has(key) ? "maintenance" :
                 "available";
 
+<<<<<<<< HEAD:frontend/web/src/features/hostdashboard/hostcalen/components/CalendarGrid.jsx
+========
+              const bookingInfo = bookingsByDate[key];
+              const hasBooking = bookingInfo && bookingInfo.length > 0;
+
+>>>>>>>> 01f56b30a (Dynamic price & property single page):frontend/web/src/features/hostdashboard/hostcalendar/components/CalendarGrid.jsx
               return (
                 <div
                   key={key}
