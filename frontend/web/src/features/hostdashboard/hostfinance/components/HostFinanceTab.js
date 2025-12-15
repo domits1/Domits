@@ -384,7 +384,7 @@ export default function HostFinanceTab() {
         </section>
 
         <div className="faqs">
-          <h3>FAQs</h3>
+          <p className="faqs-title">FAQs</p>
 
           {faqs.length > 0 ? (
             <ul className="faq-list">
@@ -401,7 +401,6 @@ export default function HostFinanceTab() {
             <p>No FAQs found.</p>
           )}
         </div>
-        
       </div>
     </main>
   );

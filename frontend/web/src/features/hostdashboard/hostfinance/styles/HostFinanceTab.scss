@@ -109,7 +109,7 @@ $color-muted: #6b7280;
   }
 }
 
-.finance-steps-title {
+.finance-steps-title, .faqs-title {
   text-align: center;
   font-family: $font-title;
   font-size: clamp(1.1rem, 1rem + 0.9vw, 1.6rem);
