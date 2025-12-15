@@ -252,7 +252,7 @@ Inside Domits, we have different API's used as key modules for powering Domits. 
 
 ### Distribution API 
 
-**[Distribution API](/)**
+**[Distribution API](/docs/partner/API/distribution_Api.md)**
 
 * Responsible for: Handling Distribution
 * Used for: An API to connect anything (PMS, Channel Manager, RMS, Distribution Channels, ...) to the Domits system.
