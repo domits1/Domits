@@ -390,10 +390,12 @@ export default function HostFinanceTab() {
             <ul className="faq-list">
               {faqs.map((faq) => (
                 <li key={faq.faq_id} className="faq-item">
-                  <p className="faq-q">
-                    <strong>{faq.question}</strong>
-                  </p>
-                  <p className="faq-a">{faq.answer}</p>
+                  <details className="faq-details">
+                    <summary className="faq-q">
+                      <strong>{faq.question}</strong>
+                    </summary>
+                    <p className="faq-a">{faq.answer}</p>
+                  </details>
                 </li>
               ))}
             </ul>
