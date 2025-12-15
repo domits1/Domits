@@ -72,17 +72,27 @@ export const loadAutomationSettings = (hostId) => {
     }
 
     const defaults = createDefaultAutomationSettings();
-    const mergedEvents = Object.keys(defaults.events).reduce((acc, eventKey) => {
-        acc[eventKey] = {
-            ...defaults.events[eventKey],
-            ...parsed.events[eventKey],
-            id: defaults.events[eventKey].id,
-            label: defaults.events[eventKey].label,
-            description: defaults.events[eventKey].description,
-        };
-        if (!acc[eventKey].template) {
-            acc[eventKey].template = defaults.events[eventKey].defaultTemplate;
+    const allKeys = new Set([...Object.keys(defaults.events), ...Object.keys(parsed.events)]);
+
+    const mergedEvents = Array.from(allKeys).reduce((acc, eventKey) => {
+        const defaultEvent = defaults.events[eventKey];
+        const savedEvent = parsed.events[eventKey];
+
+        if (defaultEvent) {
+            acc[eventKey] = {
+                ...defaultEvent,
+                ...savedEvent,
+                id: defaultEvent.id, // Ensure ID is correct
+                label: defaultEvent.label, // Ensure label is correct
+                description: defaultEvent.description, // Ensure description is correct
+            };
+             if (!acc[eventKey].template) {
+                acc[eventKey].template = defaultEvent.defaultTemplate;
+            }
+        } else {
+            acc[eventKey] = savedEvent;
         }
+       
         return acc;
     }, {});
 
