@@ -3,6 +3,7 @@ import EventsAndTriggers from './components/eventsAndTriggers';
 import Customization from './components/customization';
 import Scheduling from './components/scheduling';
 import Preview from './components/preview';
+import { v4 as uuidv4 } from 'uuid';
 import {
     createDefaultAutomationSettings,
     loadAutomationSettings,
@@ -41,6 +42,54 @@ const AutomatedSettings = ({ setAutomatedSettings, hostId }) => {
             };
             return next;
         });
+        setHasUnsavedChanges(true);
+    };
+
+    const handleAddCustomEvent = () => {
+        const newId = `custom_${uuidv4()}`;
+        setSettings((prev) => ({
+            ...prev,
+            events: {
+                ...prev.events,
+                [newId]: {
+                    id: newId,
+                    label: 'New Custom Message',
+                    description: 'A custom automated message.',
+                    template: '',
+                    enabled: false,
+                    sendDelayMinutes: 0,
+                    isCustom: true,
+                },
+            },
+        }));
+        setHasUnsavedChanges(true);
+    };
+
+    const handleDeleteEvent = (eventId) => {
+        if (confirm('Are you sure you want to delete this custom message?')) {
+            setSettings((prev) => {
+                const nextEvents = { ...prev.events };
+                delete nextEvents[eventId];
+                return {
+                    ...prev,
+                    events: nextEvents,
+                };
+            });
+            setHasUnsavedChanges(true);
+        }
+    };
+
+    const handleRenameEvent = (eventId, newLabel) => {
+        setSettings((prev) => ({
+            ...prev,
+            events: {
+                ...prev.events,
+                [eventId]: {
+                    ...prev.events[eventId],
+                    label: newLabel,
+                },
+            },
+        }));
         setHasUnsavedChanges(true);
     };
 
@@ -155,7 +204,13 @@ const AutomatedSettings = ({ setAutomatedSettings, hostId }) => {
 
                 <div className="setting-bar-2">
                     {options === 'Events & Triggers' && (
-                        <EventsAndTriggers events={events} onToggle={handleToggleEvent} />
+                        <EventsAndTriggers
+                            events={events}
+                            onToggle={handleToggleEvent}
+                            onAddCustomEvent={handleAddCustomEvent}
+                            onDeleteEvent={handleDeleteEvent}
+                            onRenameEvent={handleRenameEvent}
+                        />
                     )}
                     {options === 'Customization' && (
                         <Customization
