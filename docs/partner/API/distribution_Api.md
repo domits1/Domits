@@ -1,7 +1,7 @@
 # Distribution docs 
 
 ## Description
-This API is the public partner-facing endpoint used by external distribution partners (e.g., Booking.com, Holidu) to retrieve full listing details for a property.
+This API is the public partner-facing endpoint used by external distribution partners to retrieve full listing details for a property.
 
 ## Metadata
 Lambda Function: partner-listingDetails
