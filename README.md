@@ -215,17 +215,18 @@ Here's what you can do next:
 
 Get a basic understanding of every AWS service we use [here](/docs/internal/services/overview.md).
 
-Key modules powering Domits:
+Inside Domits, we have different API's used as key modules for powering Domits. We will devide the following API's into two API sections: 
+
+---
+
+### Connectivity API's
 
 **[Property Handler](/docs/internal/apis/propertyhandler/property_handler.md)**
 
 * Responsible for: Handling properties
 * Used for: Handling CRUD operations for properties, creating properties with the property listing, showing properties and getting propertyinformation in the homepage.
 
-**[Booking Engine](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
-
-* Responsible for: Handling Host + Guest bookings, performing CRUD operations. Sending a email to host/guest on received booking. Stripe/Payment logic.
-* Used for: Creating reservations, creating a paymentIntent with Stripe reading reservations on the host/guest side.
+**[Reservations](/)**
 
 **[Availability Calendar](/docs/internal/apis/calendar/host_guest_calendar_workflow.md)**
 
@@ -246,6 +247,20 @@ Key modules powering Domits:
 
 * Responsible for: Handling messages
 * Used for: Host/Guest messages
+
+---
+
+### Distribution API 
+
+**[Distribution API](/)**
+
+* Responsible for: Handling Distribution
+* Used for: An API to connect anything (PMS, Channel Manager, RMS, Distribution Channels, ...) to the Domits system.
+
+**[Booking Engine](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
+
+* Responsible for: Handling Host + Guest bookings, performing CRUD operations. Sending a email to host/guest on received booking. Stripe/Payment logic.
+* Used for: Creating reservations, creating a paymentIntent with Stripe reading reservations on the host/guest side.
 
 ## Documentation Structure Overview
 
