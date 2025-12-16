@@ -67,7 +67,7 @@ export function RefreshFunctions() {
       try {
         updateLoadingState("charges", true);
         const details = await getCharges();
-        setCharges(details.charges);
+        setCharges(details?.charges ?? []);
       } catch (error) {
         console.error("Error fetching charges:", error);
       } finally {
@@ -93,7 +93,7 @@ export function RefreshFunctions() {
       try {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
-        setPayouts(details.payouts);
+        setPayouts(details?.payouts ?? []);
       } catch (error) {
         console.error("Error fetching payouts:", error);
       } finally {
@@ -121,7 +121,7 @@ export function RefreshFunctions() {
       try {
         updateLoadingState("faqs", true);
         const details = await getFaqs();
-        setFaqs(details.faqs);
+        setFaqs(details?.faqs ?? []);
       } catch (error) {
         console.error("Error fetching FAQs:", error);
       } finally {
