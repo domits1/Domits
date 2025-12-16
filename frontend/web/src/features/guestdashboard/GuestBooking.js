@@ -117,6 +117,15 @@ const renderBookingRow = (
     bookingItem?.status || bookingItem?.Status || ""
   );
 
+  // Host name: from propertyMap first, then fall back to booking object if needed
+  const hostName =
+    propertyInfo?.hostName ||
+    bookingItem?.hostName ||
+    bookingItem?.host_name ||
+    bookingItem?.host?.name ||
+    bookingItem?.host?.fullName ||
+    "";
+
   return (
     <div
       key={
@@ -145,6 +154,14 @@ const renderBookingRow = (
         <div className="guest-booking-row-main">
           <div className="row-title">{displayTitle}</div>
           <div className="row-sub">{bookingCity}</div>
+
+          {/* Host shown for every booking */}
+          {hostName && (
+            <div className="row-host">
+              Host: <span className="row-host-name">{hostName}</span>
+            </div>
+          )}
+
           <div className="guest-booking-row-meta">
             <span className="guest-booking-status">
               {bookingStatus || "—"}
@@ -260,9 +277,7 @@ function GuestBooking() {
     async (propertyIds) => {
       if (!propertyIds?.length) return;
 
-      const toFetch = propertyIds.filter(
-        (id) => id && !propertyMap[id]
-      );
+      const toFetch = propertyIds.filter((id) => id && !propertyMap[id]);
       if (!toFetch.length) return;
 
       setPropLoading(true);
@@ -277,6 +292,38 @@ function GuestBooking() {
               const property = data.property || {};
               const images = Array.isArray(data.images) ? data.images : [];
               const location = data.location || {};
+
+              // Host extraction: username + familyname, with fallbacks
+              const host =
+                data.host ||
+                data.hostInfo ||
+                property.host ||
+                property.hostInfo ||
+                null;
+
+              const hostNameFromHost =
+                host?.name ||
+                host?.fullName ||
+                (host?.firstName && host?.lastName
+                  ? `${host.firstName} ${host.lastName}`
+                  : null);
+
+              const hostNameFromProperty =
+                property.username && property.familyname
+                  ? `${String(property.username).trim()} ${String(
+                      property.familyname
+                    ).trim()}`
+                  : (property.username && String(property.username).trim()) ||
+                    (property.familyname &&
+                      String(property.familyname).trim()) ||
+                    null;
+
+              const hostName =
+                hostNameFromHost ||
+                hostNameFromProperty ||
+                data.hostName ||
+                property.hostName ||
+                "";
 
               const title =
                 property.title ||
@@ -298,6 +345,7 @@ function GuestBooking() {
                   title,
                   imageUrl: normalizeImageUrl(firstImageKey),
                   city,
+                  hostName,
                 },
               ];
             } catch {
@@ -307,6 +355,7 @@ function GuestBooking() {
                   title: `Property #${pid}`,
                   imageUrl: PLACEHOLDER_IMAGE,
                   city: "",
+                  hostName: "",
                 },
               ];
             }
@@ -336,9 +385,7 @@ function GuestBooking() {
         "paid"
     );
 
-    const ids = Array.from(
-      new Set(paid.map(getPropertyId).filter(Boolean))
-    );
+    const ids = Array.from(new Set(paid.map(getPropertyId).filter(Boolean)));
 
     if (ids.length) {
       fetchPropertyDetails(ids);
@@ -471,14 +518,13 @@ function GuestBooking() {
                               You don’t have any upcoming bookings yet.
                             </p>
                           ) : (
-                            upcomingBookings.map(
-                              (bookingItem, index) =>
-                                renderBookingRow(bookingItem, index, {
-                                  getPropertyId,
-                                  propertyMap,
-                                  handleBookingClick,
-                                  formatBookingDates,
-                                })
+                            upcomingBookings.map((bookingItem, index) =>
+                              renderBookingRow(bookingItem, index, {
+                                getPropertyId,
+                                propertyMap,
+                                handleBookingClick,
+                                formatBookingDates,
+                              })
                             )
                           )}
                         </div>
