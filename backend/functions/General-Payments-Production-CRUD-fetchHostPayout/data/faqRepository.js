@@ -10,7 +10,7 @@ export default class FaqRepository {
     const records = await client
       .getRepository(Faq)
       .createQueryBuilder("faq")
-      .where("faq.section = :section", { section: "finance" })
+      .where("faq.category = :category", { category: "finance" })
       .getMany();
       
     return records;
