@@ -220,13 +220,18 @@ Inside Domits, we have different API's used as key modules for powering Domits. 
 ---
 
 ### Connectivity API's
+APIs that give access to data and services in Domits and supports multiple use cases.
 
 **[Property Handler](/docs/internal/apis/propertyhandler/property_handler.md)**
 
 * Responsible for: Handling properties
 * Used for: Handling CRUD operations for properties, creating properties with the property listing, showing properties and getting propertyinformation in the homepage.
 
-**[Reservations](/)**
+**[Reservations](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
+
+* Responsible for: Handling Host + Guest bookings, performing CRUD operations. Sending a email to host/guest on received booking. Stripe/Payment logic.
+* Used for: Creating reservations, creating a paymentIntent with Stripe reading reservations on the host/guest side.
+
 
 **[Availability Calendar](/docs/internal/apis/calendar/host_guest_calendar_workflow.md)**
 
@@ -252,36 +257,38 @@ Inside Domits, we have different API's used as key modules for powering Domits. 
 
 ### Distribution API 
 
-**[Distribution API](/docs/partner/API/distribution_Api.md)**
-
+**[Distribution](/docs/partner/API/distribution_Api.md)**
 * Responsible for: Handling Distribution
 * Used for: An API to connect anything (PMS, Channel Manager, RMS, Distribution Channels, ...) to the Domits system.
 
-**[Booking Engine](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
+### Booking Engine API
 
-* Responsible for: Handling Host + Guest bookings, performing CRUD operations. Sending a email to host/guest on received booking. Stripe/Payment logic.
-* Used for: Creating reservations, creating a paymentIntent with Stripe reading reservations on the host/guest side.
+**[Booking Engine](/docs/internal/apis/directbookingwebsite/bookingengine.md)**
+
+* Responsible for: Handling external direct reservations 
+* Used for: An API for external booking websites and booking engines to create direct reservations in Domits 
+
 
 ## Documentation Structure Overview
 
 Domits contains documentation, those which are essential for understanding. As of now, we have 3 key folders to pay attention to:
 ```
-* internal/ - Internal documentation for Devs at Domits (you most likely be spending your time here most of the time)
-  * apis/ - All documentation for our Lambda API's goes here. Including is a fancy template.
+* internal/ - Internal documentation for Devs at Domits (you will be spending most of your time here)
+  * apis/ - All documentation for our Lambda API's goes here. Including a fancy template.
   * architecture/ - Our system architecture belongs here.
   * changelog/ - Any changelog in the docs goes here.
   * data/ - Currently contains our business logic and model.
   * infra/ - Infrastructure, workflows and devops goes here.
   * onboarding/ - General developer onboarding.
   * qa/ - Testing documentation.
-  * security/ - All security related documentation
-  * services/ - Currently contains a overview of the AWS services we intregrate into Domits.
+  * security/ - All security related documentation.
+  * services/ - Currently contains an overview of the AWS services we integrate into Domits.
   * standards/ - Company-wide engineering best practices.
   * tools/ - Overview over our tools and portals.
 
 * partner/ - Documentation for Domits partner (Channel Manager).
   * API/ - API documentation for partners.
-  * intregrations/ - Intregration guide for partners.
+  * integration/ - Integration guide for partners.
 
 * public/ - Public documentation for everyone
   * overview/ 
