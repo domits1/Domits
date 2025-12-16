@@ -23,6 +23,8 @@ import {Property_Types} from "../../models/Property_Types.js";
 import {Rules} from "../../models/Rules.js";
 import {Property_Type} from "../../models/Property_Type.js";
 import {Stripe_Connected_Accounts} from "../../models/Stripe_Connected_Accounts.js";
+import {UnifiedThread} from "../../models/UnifiedThread.js";
+import {UnifiedMessage} from "../../models/UnifiedMessage.js";
 
 export const Tables = [
     Amenities,
@@ -49,5 +51,7 @@ export const Tables = [
     Property_Types,
     Rules,
     Stripe_Connected_Accounts,
+    UnifiedThread,
+    UnifiedMessage,
     User_Table
 ]
