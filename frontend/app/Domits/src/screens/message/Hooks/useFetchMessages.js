@@ -27,6 +27,18 @@ export const useFetchMessages = (userId) => {
             });
 
             if (!response.ok) {
+                // If the dummy account is selected, return dummy messages
+                if (recipientId === 'dummy-1') {
+                    setMessages([{
+                        id: 'dummy-msg-1',
+                        text: 'Welcome to Domits! This is a test message.',
+                        userId: 'dummy-1',
+                        recipientId: userId,
+                        createdAt: new Date().toISOString(),
+                        isRead: true
+                    }]);
+                    return;
+                }
                 throw new Error('Failed to fetch messages');
             }
 

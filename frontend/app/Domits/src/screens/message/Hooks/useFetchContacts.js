@@ -63,6 +63,14 @@ const useFetchContacts = (userId, role) => {
       };
 
       const fetchLatestMessage = async (recipientIdToSend) => {
+        // Handle dummy account
+        if (recipientIdToSend === 'dummy-1') {
+            return {
+                text: 'Welcome to Domits! This is a test message.',
+                createdAt: new Date().toISOString()
+            };
+        }
+
         const response = await fetch('https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages', {
           method: 'POST',
           headers: {
