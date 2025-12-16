@@ -12,7 +12,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ContactItem from "../guestdashboard/chat/ContactItem";
 import spinner from "../../images/spinnner.gif";
 import ContactModal from "./contactModal";
-import { messageTemplates } from "./hostmessages/store/templates";
+import { messageTemplates as initialMessageTemplates } from "./hostmessages/store/templates";
+import TemplateManager from "./hostmessages/components/TemplateManager";
 
 
 const Chat = ({ user }) => {
@@ -45,6 +46,15 @@ const Chat = ({ user }) => {
     const [selectedTemplateId, setSelectedTemplateId] = useState("");
     const [avgResponseMinutes, setAvgResponseMinutes] = useState(null);
     const [hasUnansweredOlderThan24h, setHasUnansweredOlderThan24h] = useState(false);
+
+    // Template state
+    const [templates, setTemplates] = useState(initialMessageTemplates);
+    const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
+
+    const handleSaveTemplates = (updatedTemplates) => {
+        setTemplates(updatedTemplates);
+        // Ideally, save to backend here
+    };
 
     const getUUIDForUser = (userId) => {
         let uuid = localStorage.getItem(`${userId}_uuid`);
@@ -412,7 +422,7 @@ const Chat = ({ user }) => {
 
     const handleInsertTemplate = (templateId) => {
         setSelectedTemplateId(templateId);
-        const template = messageTemplates.find(t => t.id === templateId);
+        const template = templates.find(t => t.id === templateId);
         if (!template) return;
         const merged = (newMessage ? newMessage + "\n\n" : "") + template.content;
         setNewMessage(merged);
@@ -642,10 +652,22 @@ const Chat = ({ user }) => {
                                                     style={{flex: 1, padding: 8}}
                                                 >
                                                     <option value="">Insert template…</option>
-                                                    {messageTemplates.map(t => (
+                                                    {templates.map(t => (
                                                         <option key={t.id} value={t.id}>{t.title}</option>
                                                     ))}
                                                 </select>
+                                                <button 
+                                                    onClick={() => setIsTemplateManagerOpen(true)}
+                                                    style={{
+                                                        padding: '0 15px',
+                                                        background: '#f0f0f0',
+                                                        border: '1px solid #ccc',
+                                                        borderRadius: '4px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    Manage
+                                                </button>
                                             </div>
                                             <input
                                                 className="chat__input"
@@ -699,6 +721,12 @@ const Chat = ({ user }) => {
                 onConfirm={handleConfirmReject}
                 title="Confirm Rejection"
                 message="Are you sure you want to reject this contact request?"
+            />
+            <TemplateManager
+                isOpen={isTemplateManagerOpen}
+                onClose={() => setIsTemplateManagerOpen(false)}
+                templates={templates}
+                onSave={handleSaveTemplates}
             />
         </main>
     );
