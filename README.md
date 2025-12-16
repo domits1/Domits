@@ -32,11 +32,12 @@
   </div>
 
   
-<p align="center">A fast-growing platform where you can book holiday homes, boats and campers.</p>
+<p align="center">A global strategic advisor to grow the hospitality ecosystem.</p>
 
 
 # What is Domits?
-Domits is a hospitality-management platform designed to help hosts and guest manage properties, bookings and communications through a single application. The system combines a React/React-Native front-end with a serverless AWS backend. The backend is written in Node.JS/TypeScript and is structured as individual AWS Lambda functions wired to API Gateway endpoints. It uses Aurora DSQL and other AWS services (Amplify, Cognito, S3, etc.) and external APIs such as Stripe for payments.
+Domits is a hospitality-management platform that allows hosts and guests to manage properties, bookings, availability, and communication in one unified system. The application uses a React/React Native frontend and a fully serverless AWS backend. The backend is built in Node.js/TypeScript and structured as individual AWS Lambda functions connected to API Gateway. It integrates with Aurora DSQL and various AWS services (Amplify, Cognito, S3, etc.), as well as external services like Stripe for payments.
+This README is intended for developers working on the Domits codebase.
 
 Table of Contents
 =================
@@ -44,28 +45,30 @@ Table of Contents
 - [What is Domits?](#what-is-domits)
 - [Table of Contents](#table-of-contents)
   - [Tech Stack](#tech-stack)
-  - [Repository structure](#repository-structure)
+  - [Repository Structure](#repository-structure)
   - [Intro Sprint](#intro-sprint)
     - [General Introduction](#general-introduction)
     - [Github Introduction](#github-introduction)
+      - [Reviewing A PR As Reviewer](#reviewing-a-pr-as-reviewer)
     - [Programming Introduction](#programming-introduction)
     - [Web/App Setup](#webapp-setup)
-    - [Other subjects to understand](#other-subjects-to-understand)
-  - [Core modules and APIs](#core-modules-and-apis)
   - [Code Conventions](#code-conventions)
-  - [Recommended Docs](#recommended-docs)
-  - [Contribution guidelines](#contribution-guidelines)
+  - [Core Modules and APIs](#core-modules-and-apis)
+  - [Documentation Structure Overview](#documentation-structure-overview)
+  - [Contribution Guidelines](#contribution-guidelines)
+    - [Other Subjects to Understand](#other-subjects-to-understand)
 
 
 ## Tech Stack
 🖥️ **Frontend:** React Native, JavaScript, TypeScript, SASS/SCSS  
-🧠 **Backend:** Node.js, AWS Lambda, TypeORM, PostgreSQL  
+🧠 **Backend:** Node.js, AWS Lambda, PostgreSQL  
 ☁️ **Cloud:** Amazon Web Services  
 🧪 **Testing:** Jest, Cypress  
-🚀 **CI/CD:** GitHub Actions  
+🚀 **CI/CD:** GitHub Actions, Amplify  
 📦 **Package Management:** npm  
+🪛 **Tooling:** TypeORM
 
-## Repository structure
+## Repository Structure
 ```
 - .github/ # CI files
 - backend/ # Backend related files
@@ -74,18 +77,6 @@ Table of Contents
   - events/ # Lambda events for testing (POST, GET, PATCH, DELETE..)
   - functions/ # Lambda functions
   - test/ # Lambda tests (Jest)
-
-- docs/ # Documentation folder
-  - backend/ 
-  - debugging/ # Issue template for debugging
-  - frontend/
-  - onboarding/app # Android/IOS onboarding setup documentation
-  - private-API # API Documentation for Developers
-  - public # Documentation for extern developers/partners (Channel Management)
-    - public_API # Public API documentation for people outside Domits
-    - public_overview # Public over
-  - security # Security related documentation
-  - templates # Templates to follow writing documentation
 
 - frontend/ # React/React-Natve Frontend Files
   - app/ # Domits App Development files (React Native)
@@ -115,7 +106,7 @@ Table of Contents
           - utils/ # Feature specific functions or utillities
           - views/ # Page view files
       - fonts/kanit/ # Kanit fonts
-      - graphql/ # GraphQL files (afaik unused)
+      - graphql/ # GraphQL files (unused?)
       - hooks/ # Custom react hooks files
       - images/ # Assets, Icons and team pictures
       - models/ # Amplify Models?
@@ -133,17 +124,17 @@ Table of Contents
         - exception/ # Custom exceptions (e.g., Unauthorized)
 ```
 ## Intro Sprint
-Welcome to the Intro Sprint! 
+Welcome to the Intro Sprint!
 
-This sprint will help you to get familiar with domits within one week so you can start contibuting to issues.
+The Intro Sprint is designed to help you get onboarded as a Domits Developer quickly and efficiently.
 
-If you ever get stuck, google, stack overflow, ask a LLM and then afterwards, ask a team member.
+If you get stuck, try Googling, checking Stack Overflow, or asking an LLM first, then reach out to a team member if needed.
 
 ### General Introduction
 Learn the basics of Domits, who we are, what we build, and where to find key documentation.
 
-* Get access to tooling (AWS, Github, Discord, Figma, ...) 
-* Understand the [Company]([https://bookdomits.com/](https://bookdomits.com/company/)), [Hospitality Market](https://bookdomits.com/blog/), [Ecosystem](https://bookdomits.com/ecosystem/) and [Product](https://bookdomits.com/features/). 
+* Get access to tooling (AWS, Github, Discord, Figma, ...)  
+* Understand the [Company](https://bookdomits.com/company/), [Hospitality Market](https://bookdomits.com/blog/), [Ecosystem](https://bookdomits.com/ecosystem/) and [Product](https://bookdomits.com/features/).  
 * Understand [product vision, roadmap and back](https://github.com/domits1/Domits/issues/2272).
 * Check who is [responsible for what parts of Domits, and check the issues placed on your name.](https://github.com/domits1/Domits/wiki/Technical-Leadership)
 
@@ -151,7 +142,7 @@ Learn the basics of Domits, who we are, what we build, and where to find key doc
 After this section you should understand:
 - The company's products and market.
 - The long-term roadmap and sprint workflow.
-- Your technical arrea of responsibility.
+- Your technical area of responsibility.
 
 ---
 
@@ -162,16 +153,21 @@ Everything in Domits revolves around Issues. Each Issue belongs to a Milestone w
 * [Issues](https://github.com/domits1/Domits/issues)
 * [Milestones](https://github.com/domits1/Domits/milestones)
 * [Pull Requests](https://github.com/domits1/Domits/pulls)
-
+* [Sprints](https://github.com/domits1/Domits/wiki/Domits-Sprints)
+  
 > [!tip]
 > When you start coding, make a branch from Acceptance. Don't make commits while being on Acceptance, you will most likely lose code.
 > When you're done, submit a Pull Request (PR) to merge your work. Fill in the template and check everything before asking for a reviewer.
 
 
 After this section you should understand:
-- How to find, pick, and work on an Issue.
+- How to find, pick, and work on an issue.
 - How to create a branch and PR.
 ---
+
+#### Reviewing A PR As Reviewer
+
+If you have been working at Domits for a while, you surely got familiar with Pull Requests. Now, if its time for you to review those, I'm sure that you have a lot of questions on the *how* aspect. Don't worry, there is a documentation available for you to get ready as reviewer [here.](./docs/internal/onboarding/pr_reviewer_onboarding.md)
 
 ### Programming Introduction
 Get familar with code conventions to write clean code. Become aware of our serverless backend.
@@ -179,8 +175,9 @@ Get familar with code conventions to write clean code. Become aware of our serve
 * Follow the [AWS Intro Course (Cloud Practitioner Essentials)](https://explore.skillbuilder.aws/learn/course/external/view/elearning/134/aws-cloud-practitioner-essentials)
 * Learn and improve [Programming/Clean Code: Quick Reference Guide](https://github.com/domits1/Domits/wiki/Programming)
 * Become familiar with our [Code Conventions](https://github.com/domits1/Domits/wiki/Code-conventions) to maintain a consistent and readable codebase.
+* Get to know why we use SCSS compared to css and its benefits [here](https://www.youtube.com/watch?v=akDIJa0AP5c)
+* [Backend Setup](./docs/internal/onboarding/backend_setup.md) The createlambda function will create a template lambda for you. Familiarize yourself with the structure [here](./docs/internal/tools/backend_development_flow.md) before starting to code.
 * Understand the code pipeline (CI/CD)
-
 
 ### Web/App Setup
 Get Domits running locally for development.
@@ -203,20 +200,38 @@ After this section you should have:
 - Either the app or web environment fully working.
 
 That are all the fundamental things to be aware of.
-You can decide to take a [Quick Fix](https://github.com/domits1/Domits/issues/122) now, or be aware of other subjects to understand.
+Here's what you can do next:
+* Tackle a [Beginner Issue](https://github.com/domits1/Domits/issues/2326) where you have to add your own name+profile picture as developer, and make a pull request for it.
+* Take a quick fix [Quick Fix](https://github.com/domits1/Domits/issues/122) and eventually make a PR where you mention the issue's name.
+* Read more of the docs, and get a better understanding of Domits.
 
-## Core modules and APIs
-Key modules powering Domits:
+## Code Conventions
+
+* [Clean Code: Reference Guide](./docs/internal/standards/clean_code_reference_guide.md) - Helps you write maintainable, readable and efficient code
+* [Code Conventions](./docs/internal/standards/code_conventions.md) - Helps you maintain a consistent and readable codebase in Domits.
+* [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
+
+## Core Modules and APIs
+
+Get a basic understanding of every AWS service we use [here](/docs/internal/services/overview.md).
+
+Inside Domits, we have different API's used as key modules for powering Domits. We will devide the following API's into two API sections: 
+
+---
+
+### Connectivity API's
+APIs that give access to data and services in Domits and supports multiple use cases.
 
 **[Property Handler](/docs/internal/apis/propertyhandler/property_handler.md)**
 
 * Responsible for: Handling properties
 * Used for: Handling CRUD operations for properties, creating properties with the property listing, showing properties and getting propertyinformation in the homepage.
 
-**[Booking Engine](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
+**[Reservations](/docs/internal/apis/bookingengine/booking_and_reservation.md)**
 
 * Responsible for: Handling Host + Guest bookings, performing CRUD operations. Sending a email to host/guest on received booking. Stripe/Payment logic.
 * Used for: Creating reservations, creating a paymentIntent with Stripe reading reservations on the host/guest side.
+
 
 **[Availability Calendar](/docs/internal/apis/calendar/host_guest_calendar_workflow.md)**
 
@@ -238,18 +253,53 @@ Key modules powering Domits:
 * Responsible for: Handling messages
 * Used for: Host/Guest messages
 
-## Code Conventions
+---
 
-* [Clean Code: Reference Guide](./docs/internal/standards/clean_code_reference_guide.md) - Helps you write maintainable, readable and efficient code
-* [Code Conventions](./docs/internal/standards/code_conventions.md) - Helps you maintain a consistent and readable codebase in Domits.
-* [SASS/SCSS Standard](/docs/internal/standards/sass_scss_standard.md) - Helps you use SASS/SCSS for efficient styling. 
+### Distribution API 
 
-## Recommended Docs
-Docs recommended to take a look at.
+**[Distribution](/docs/partner/API/distribution_Api.md)**
+* Responsible for: Handling Distribution
+* Used for: An API to connect anything (PMS, Channel Manager, RMS, Distribution Channels, ...) to the Domits system.
+
+### Booking Engine API
+
+**[Booking Engine](/docs/internal/apis/directbookingwebsite/bookingengine.md)**
+
+* Responsible for: Handling external direct reservations 
+* Used for: An API for external booking websites and booking engines to create direct reservations in Domits 
+
+
+## Documentation Structure Overview
+
+Domits contains documentation, those which are essential for understanding. As of now, we have 3 key folders to pay attention to:
+```
+* internal/ - Internal documentation for Devs at Domits (you will be spending most of your time here)
+  * apis/ - All documentation for our Lambda API's goes here. Including a fancy template.
+  * architecture/ - Our system architecture belongs here.
+  * changelog/ - Any changelog in the docs goes here.
+  * data/ - Currently contains our business logic and model.
+  * infra/ - Infrastructure, workflows and devops goes here.
+  * onboarding/ - General developer onboarding.
+  * qa/ - Testing documentation.
+  * security/ - All security related documentation.
+  * services/ - Currently contains an overview of the AWS services we integrate into Domits.
+  * standards/ - Company-wide engineering best practices.
+  * tools/ - Overview over our tools and portals.
+
+* partner/ - Documentation for Domits partner (Channel Manager).
+  * API/ - API documentation for partners.
+  * integration/ - Integration guide for partners.
+
+* public/ - Public documentation for everyone
+  * overview/ 
+```
+* Internal Documentation Issue: [#2212](https://github.com/domits1/Domits/issues/2212)
+* Partner Documentation Issue: [#2225](https://github.com/domits1/Domits/issues/2225)
+* Public Documentation Issue: [#2194](https://github.com/domits1/Domits/issues/2194)
 
 * [Developer Resources](./docs/developer_resources.md) - Find useful links for a developer.
 
-## Contribution guidelines
+## Contribution Guidelines
 
 Follow the established code conventions.
 
@@ -257,7 +307,7 @@ Always fill out the PR template completely before review.
 
 Keep your commits clean and descriptive according to [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-### Other subjects to understand
+### Other Subjects to Understand
 
 * [Domain Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design)
 Structure code around real-world business logic.
@@ -300,4 +350,3 @@ Understand the type of API's, REST and HTTP API's.
 * [AI Services](https://github.com/domits1/Domits/wiki/AI-Services)
 
 Explore how AI and data engineering can enhance the platform with personalization, automation, and intelligent insights.
-
