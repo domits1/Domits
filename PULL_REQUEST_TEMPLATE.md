@@ -1,6 +1,3 @@
-## Your name
-Name: @_GitHub_username
-
 ## close or relate the issue
 - Closes #_issue_number (only if it should close it)
 - Related Issue: #_issue_number (in the issue a reference will be added to this pr)
@@ -69,7 +66,6 @@ As the Pull Requester, **you are responsible for your own pull request.**
 ### Select two reviewers
 - [ ] Primary Reviewer: @_GitHub_username
 - Stephanie (App/Web, Backend)  
-- Raman (Web, Backend)
 
 - [ ] Secondary Reviewer: @_GitHub_username
 Preferably someone familiar with the part of code you're working on. For example:  
