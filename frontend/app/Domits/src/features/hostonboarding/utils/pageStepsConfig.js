@@ -7,6 +7,7 @@ import OnboardingAmountOfGuests from "../views/OnboardingAmountOfGuests";
 import OnboardingAmenities from "../views/OnboardingAmenities";
 import OnboardingHouseRules from "../views/OnboardingHouseRules";
 import OnboardingPhotos from "../views/OnboardingPhotos";
+import onboardingRegistrationNumber from "../views/OnboardingRegistrationNumber";
 
 export const steps = [
     { key: 'propertyType', title: 'Property Type', component: OnboardingType },
@@ -18,4 +19,5 @@ export const steps = [
     { key: 'propertyAmenities', title: 'Property Amenity', component: OnboardingAmenities},
     { key: 'propertyHouseRules', title: 'House Rules', component:OnboardingHouseRules},
     { key: 'propertyPhotos', title: 'Property Photos', component:OnboardingPhotos},
+    { key: 'propertyRegistrationNumber', title: 'Property Registration Number', component:onboardingRegistrationNumber},
 ];
