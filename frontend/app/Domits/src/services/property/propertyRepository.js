@@ -43,6 +43,19 @@ class PropertyRepository {
     return await response.json();
   }
 
+  async fetchPropertyByType(type) {
+    const encodedType = encodeURIComponent(type ?? '');
+    const response = await fetch(
+      `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byType?type=${encodedType}`
+    );
+    if (!response.ok) {
+      throw new Error(
+        'Something went wrong while fetching properties by type.',
+      );
+    }
+    return await response.json();
+  }
+
   async fetchPropertyByBookingId(bookingId) {
       const response = await fetch(
         `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/booking?bookingId=${bookingId}`,

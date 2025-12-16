@@ -17,6 +17,10 @@ class TestPropertyRepository {
         return propertyTypes
     }
 
+    async fetchPropertyByType(type) {
+        return propertyTypes; // Return mock data for type
+    }
+
     async fetchPropertyByBookingId(bookingId) {
         return propertyTypes.properties[0]
     }

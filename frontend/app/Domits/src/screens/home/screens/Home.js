@@ -1,7 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {FlatList, Text, ToastAndroid, View} from 'react-native';
+import {FlatList, Text, ToastAndroid, View, ScrollView, TouchableOpacity} from 'react-native';
 import PropertyCard from '../views/PropertyCard';
-import HomeTopBarTabs from '../../../header/homeTopBarTabs';
 import GetWishlist from "../../../services/wishlist/GetWishlist";
 import addToWishlist from "../../../services/wishlist/AddToWishlist";
 import RemoveFromWishlist from "../../../services/wishlist/RemoveFromWishlist";
@@ -41,6 +40,41 @@ const HomeScreen = () => {
 
     const [loading, setLoading] = useState(false);
     const [originalDataSetLoaded, setOriginalDataSetLoaded] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState("All");
+
+    const fetchPropertiesByType = async (type) => {
+        setLoading(true);
+        setProperties([]);
+        setLastEvaluatedKey({createdAt: null, id: null});
+        setPropertiesByCountry([]);
+        setByCountryLastEvaluatedKey({id: null, city: null});
+        setSelectedCategory(type);
+
+        if (type === "All") {
+            try {
+                const response = await propertyRepository.fetchAllPropertyTypes(null, null);
+                setProperties(response.properties);
+                setLastEvaluatedKey(response.lastEvaluatedKey ?? {createdAt: null, id: null});
+            } catch (error) {
+                ToastMessage(error.message, ToastAndroid.SHORT);
+            }
+            return;
+        }
+
+        try {
+            const response = await propertyRepository.fetchPropertyByType(type);
+            if (Array.isArray(response)) {
+                setProperties(response);
+            } else if (response.properties) {
+                setProperties(response.properties);
+            } else {
+                setProperties([]);
+            }
+        } catch (error) {
+            ToastMessage(error.message, ToastAndroid.SHORT);
+        }
+        setLoading(false);
+    };
 
     const fetchProperties = useCallback(async () => {
         setLoading(true);
@@ -171,7 +205,26 @@ const HomeScreen = () => {
             <Header country={country} setCountry={setCountry} loading={loading}
                     onSearchButtonPress={fetchPropertiesByCountry}
                     onCancelButtonPress={fetchProperties}/>
-            <HomeTopBarTabs/>
+            <View style={styles.categoryContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScrollContent}>
+                    {["All", "Accommodations", "Boat", "Camper"].map((cat) => (
+                        <TouchableOpacity
+                            key={cat}
+                            onPress={() => fetchPropertiesByType(cat)}
+                            style={[
+                                styles.categoryButton,
+                                selectedCategory === cat ? styles.categoryButtonSelected : styles.categoryButtonUnselected
+                            ]}>
+                            <Text style={[
+                                styles.categoryText,
+                                selectedCategory === cat ? styles.categoryTextSelected : styles.categoryTextUnselected
+                            ]}>
+                                {cat === "Accommodations" ? "Stays" : cat}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
             {loading && originalDataSetLoaded || favoritesLoading ? (
                 <LoadingScreen loadingName={'Properties'}/>
             ) : (

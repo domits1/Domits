@@ -112,6 +112,20 @@ const Inbox = ({ userId, onContactClick, message, dashboardType, searchQuery = '
         new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
     );
 
+    // Dummy account for testing
+    if (sortedContacts.length === 0) {
+        sortedContacts.push({
+            recipientId: 'dummy-1',
+            userId: 'dummy-1',
+            givenName: 'Domits Support',
+            latestMessage: {
+                text: 'Welcome to Domits! This is a test message.',
+                createdAt: new Date().toISOString()
+            },
+            profileImage: null
+        });
+    }
+
     const noContactsMessage = dashboardType === 'host' ? 'No clients yet' : 'No hosts yet';
 
     return (
