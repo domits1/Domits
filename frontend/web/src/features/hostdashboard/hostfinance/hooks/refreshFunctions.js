@@ -123,7 +123,7 @@ export function RefreshFunctions() {
         const details = await getFaqs();
         setFaqs(details.faqs);
       } catch (error) {
-        console.error("Error fetching charges:", error);
+        console.error("Error fetching FAQs:", error);
       } finally {
         setLoading(false);
         updateLoadingState("faqs", false);
