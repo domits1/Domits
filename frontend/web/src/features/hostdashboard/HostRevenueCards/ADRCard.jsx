@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Auth } from "aws-amplify";
 import {
   ResponsiveContainer,
@@ -16,7 +16,6 @@ const ADRCard = () => {
   const [adr, setAdr] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [bookedNights, setBookedNights] = useState(0);
-  const [chartData, setChartData] = useState([]);
   const [timeFilter, setTimeFilter] = useState("monthly");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -27,8 +26,8 @@ const ADRCard = () => {
     const fetchUser = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
-        setCognitoUserId(user.attributes.sub);
-      } catch (err) {
+        setCognitoUserId(user?.attributes?.sub ?? null);
+      } catch {
         setError("Failed to authenticate user");
       }
     };
@@ -51,12 +50,11 @@ const ADRCard = () => {
           endDate
         );
 
-        setAdr(results.adr || 0);
-        setTotalRevenue(results.totalRevenue || 0);
-        setBookedNights(results.bookedNights || 0);
-        setChartData(results.chartData || []);
+        setAdr(results?.adr ?? 0);
+        setTotalRevenue(results?.totalRevenue ?? 0);
+        setBookedNights(results?.bookedNights ?? 0);
       } catch (err) {
-        setError(err.message || "Failed to fetch ADR metrics");
+        setError(err?.message || "Failed to fetch ADR metrics");
       } finally {
         setLoading(false);
       }
@@ -65,11 +63,14 @@ const ADRCard = () => {
     fetchMetrics();
   }, [cognitoUserId, timeFilter, startDate, endDate]);
 
-  const donutData = [
-    { name: "ADR", value: adr },
-    { name: "Total Revenue", value: totalRevenue },
-    { name: "Booked Nights", value: bookedNights },
-  ];
+  const donutData = useMemo(
+    () => [
+      { name: "ADR", value: Number(adr) || 0 },
+      { name: "Total Revenue", value: Number(totalRevenue) || 0 },
+      { name: "Booked Nights", value: Number(bookedNights) || 0 },
+    ],
+    [adr, totalRevenue, bookedNights]
+  );
 
   const allZero = donutData.every((item) => item.value === 0);
   const displayData = allZero ? [{ name: "No Data", value: 1 }] : donutData;
@@ -120,13 +121,13 @@ const ADRCard = () => {
         ) : (
           <>
             <p>
-              <strong>ADR:</strong> €{adr.toLocaleString()}
+              <strong>ADR:</strong> €{(Number(adr) || 0).toLocaleString()}
             </p>
             <p>
-              <strong>Total Revenue:</strong> €{totalRevenue.toLocaleString()}
+              <strong>Total Revenue:</strong> €{(Number(totalRevenue) || 0).toLocaleString()}
             </p>
             <p>
-              <strong>Booked Nights:</strong> {bookedNights.toLocaleString()}
+              <strong>Booked Nights:</strong> {(Number(bookedNights) || 0).toLocaleString()}
             </p>
           </>
         )}
@@ -149,7 +150,7 @@ const ADRCard = () => {
                   label={!allZero}
                   isAnimationActive={true}
                 >
-                  {displayData.map((entry, index) => (
+                  {displayData.map((_, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={allZero ? "#c7c7c7" : COLORS[index % COLORS.length]}
@@ -171,76 +172,11 @@ const ADRCard = () => {
                 )}
 
                 <Tooltip />
-                <Legend layout="horizontal" verticalAlign="bottom" align="center" />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-      <div className="adr-details">
-        {loading ? (
-          <p>Loading...</p>
-        ) : error ? (
-          <p style={{ color: "red" }}>Error: {error}</p>
-        ) : (
-          <>
-            <p>
-              <strong>ADR:</strong> €{adr.toLocaleString()}
-            </p>
-            <p>
-              <strong>Total Revenue:</strong> €{totalRevenue.toLocaleString()}
-            </p>
-            <p>
-              <strong>Booked Nights:</strong> {bookedNights.toLocaleString()}
-            </p>
-          </>
-        )}
-      </div>
-
-      {!loading && !error && (
-        <div className="adr-donut-chart">
-          <div className="donut-wrapper">
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={displayData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={3}
-                  label={!allZero}
-                  isAnimationActive
-                >
-                  {displayData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={allZero ? "#c7c7c7" : COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-
-                {allZero && (
-                  <text
-                    x="50%"
-                    y="50%"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="14"
-                    fill="#777"
-                  >
-                    No Data
-                  </text>
-                )}
-
-                <Tooltip />
-                <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+                <Legend
+                  layout="horizontal"
+                  verticalAlign="bottom"
+                  align="center"
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
