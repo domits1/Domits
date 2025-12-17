@@ -65,7 +65,6 @@ const Login = () => {
       const user = await Auth.signIn(email, password);
 
       if (user.challengeName === "SOFTWARE_TOKEN_MFA") {
-        console.log("MFA required (SOFTWARE_TOKEN_MFA)");
         setMfaUser(user);
         setMfaRequired(true);
         return;
