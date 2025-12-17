@@ -134,7 +134,9 @@ function GuestSecurity() {
               type="text"
               maxLength={6}
               value={mfaSetupCode}
-              onChange={(e) => setMfaSetupCode(e.target.value)}
+              onChange={(e) =>
+                setMfaSetupCode(e.target.value.replace(/\D/g, ""))
+              }
             />
 
             {mfaSetupError && (
