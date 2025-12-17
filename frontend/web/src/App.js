@@ -10,8 +10,9 @@ import Footer from "./components/base/Footer";
 import Header from "./components/base/Header";
 import MenuBar from "./components/base/MenuBar";
 import { AuthProvider } from "./features/auth/AuthContext";
-import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
-import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
+// ❌ REMOVE these two (leave them commented or delete them completely):
+// import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
+// import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
 import ConfirmEmailView from "./features/auth/confirmEmail/ConfirmEmailView.js";
@@ -77,6 +78,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
+import RequireAuth from "./routes/RequireAuth"; // ✅ NEW
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 Modal.setAppElement("#root");
@@ -93,10 +95,10 @@ function App() {
 
   // Apollo Client
   const client = new ApolloClient({
-    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql", //
+    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
     cache: new InMemoryCache(),
     headers: {
-      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm", // Replace with your AppSync API key
+      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",
     },
   });
 
@@ -131,7 +133,6 @@ function App() {
 
   return (
     <ApolloProvider client={client}>
-      {" "}
       {/* ApolloProvider */}
       <ToastContainer
         position="top-right"
@@ -177,45 +178,22 @@ function App() {
                   <Route path="/security" element={<Security />} />
 
                   {/* Chat */}
-                  {/*<Route path="/chat" element={<Chat/>}/>*/}
                   <Route path="/employeechat" element={<EmployeeChat />} />
 
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
 
-                  {/* Guest Dashboard */}
-                  <Route
-                    path="/guestdashboard/messages"
-                    element={
-                      <GuestProtectedRoute>
-                        <MainDashboardGuest />
-                      </GuestProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/guestdashboard/*"
-                    element={
-                      <GuestProtectedRoute>
-                        <MainDashboardGuest />
-                      </GuestProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/guestdashboard/messages"
-                    element={
-                      <GuestProtectedRoute>
-                        <MainDashboardGuest />
-                      </GuestProtectedRoute>
-                    }
-                  />
-
-                  {/* Host Management */}
-                  {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
+                  {/* Guest Dashboard (protected for Traveler) */}
+                  <Route element={<RequireAuth allowedGroups={["Traveler"]} />}>
+                    <Route path="/guestdashboard/*" element={<MainDashboardGuest />} />
+                  </Route>
 
                   {/* Verification */}
                   <Route path="/verify" element={<HostVerificationView />} />
                   <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                   <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
+                  {/* if you use RegistrationNumberView, add its route here as well */}
+                  {/* <Route path="/verify/registration" element={<RegistrationNumberView />} /> */}
 
                   {/* Payment Logic */}
                   <Route
@@ -227,14 +205,10 @@ function App() {
                     }
                   />
 
-                  <Route
-                    path="/hostdashboard/*"
-                    element={
-                      <HostProtectedRoute>
-                        <MainDashboardHost />
-                      </HostProtectedRoute>
-                    }
-                  />
+                  {/* Host Dashboard (protected for Host) */}
+                  <Route element={<RequireAuth allowedGroups={["Host"]} />}>
+                    <Route path="/hostdashboard/*" element={<MainDashboardHost />} />
+                  </Route>
 
                   <Route path="/stripe/callback" element={<StripeCallback />} />
 

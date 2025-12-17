@@ -1,3 +1,4 @@
+// src/pages/hostdashboard/HostDashboard.js
 import React, { useState, useEffect } from "react";
 import "./HostHomepage.scss";
 import styles from "./HostDashboard.module.scss";
@@ -16,7 +17,13 @@ function HostDashboard() {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState(null);
-  const [user, setUser] = useState({ email: "", name: "", address: "", phone: "", family: "" });
+  const [user, setUser] = useState({
+    email: "",
+    name: "",
+    address: "",
+    phone: "",
+    family: "",
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -95,7 +102,10 @@ function HostDashboard() {
 
       <div className="page-Host-content">
         <section className="host-pc-dashboard">
-          <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)} />
+          <StripeModal
+            isOpen={isStripeModalOpen}
+            onClose={() => setIsStripeModalOpen(false)}
+          />
 
           <div className={styles.dashboardContainer}>
             <div className={styles.dashboardLeft}>
@@ -104,13 +114,22 @@ function HostDashboard() {
                   <h3 className={styles.welcomeMsg}>Welcome {user.name}</h3>
 
                   <div className={styles.buttonBox}>
-                    <button className={styles.greenBtn} onClick={fetchRecentAccommodations}>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={fetchRecentAccommodations}
+                    >
                       Refresh
                     </button>
-                    <button className={styles.greenBtn} onClick={() => navigate("/hostdashboard/listings")}>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={() => navigate("/hostdashboard/listings")}
+                    >
                       Go to listing
                     </button>
-                    <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={() => navigate("/hostonboarding")}
+                    >
                       Add accommodation
                     </button>
                   </div>
@@ -133,7 +152,10 @@ function HostDashboard() {
 
               <div className={styles.infoBox}>
                 <img className={styles.infoIcon} src={info} alt="Info" />
-                <p>Click on your listed accommodations to see their listing details</p>
+                <p>
+                  Click on your listed accommodations to see their listing
+                  details
+                </p>
               </div>
 
               {isLoading ? (
@@ -148,9 +170,14 @@ function HostDashboard() {
                       className={styles.dashboardCard}
                       onClick={() =>
                         accommodation?.property?.status === "INACTIVE"
-                          ? toast.warning("This listing is still in draft mode. Please publish it to make it live.")
-                          : navigate(`/listingdetails?ID=${accommodation.property.id}`)
-                      }>
+                          ? toast.warning(
+                              "This listing is still in draft mode. Please publish it to make it live."
+                            )
+                          : navigate(
+                              `/listingdetails?ID=${accommodation.property.id}`
+                            )
+                      }
+                    >
                       {accommodation?.images?.length > 0 ? (
                         <img
                           src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`}
@@ -158,19 +185,40 @@ function HostDashboard() {
                           className={styles.imgListedDashboard}
                         />
                       ) : (
-                        <img src={placeholderImage} alt="No image available" className={styles.imgListedDashboard} />
+                        <div
+                          className={`${styles.imgListedDashboard} ${styles.noImagePlaceholder || ""}`}
+                        >
+                          No image available
+                        </div>
                       )}
 
                       <div className={styles.accommodationText}>
-                        <p className={styles.accommodationTitle}>{accommodation?.property?.title}</p>
-                        <p className={styles.accommodationLocation}>{accommodation?.location?.city}</p>
+                        <p className={styles.accommodationTitle}>
+                          {accommodation?.property?.title}
+                        </p>
+                        <p className={styles.accommodationLocation}>
+                          {accommodation?.location?.city}
+                        </p>
                       </div>
 
                       <div className={styles.accommodationDetails}>
-                        <span className={accommodation?.property?.status ? styles.status : styles.isLive}>
-                          {accommodation?.property?.status === "INACTIVE" ? "Drafted" : "Live"}
+                        <span
+                          className={
+                            accommodation?.property?.status
+                              ? styles.status
+                              : styles.isLive
+                          }
+                        >
+                          {accommodation?.property?.status === "INACTIVE"
+                            ? "Drafted"
+                            : "Live"}
                         </span>
-                        <span>Listed on: {DateFormatterDD_MM_YYYY(accommodation?.property?.createdAt)}</span>
+                        <span>
+                          Listed on:{" "}
+                          {DateFormatterDD_MM_YYYY(
+                            accommodation?.property?.createdAt
+                          )}
+                        </span>
                       </div>
                     </div>
                   ))}

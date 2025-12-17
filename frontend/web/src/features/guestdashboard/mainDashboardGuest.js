@@ -8,6 +8,8 @@ import GuestReviews from "./GuestReviews";
 import GuestSettings from "./GuestSettings";
 import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
+import GuestSecurity from "./GuestSecurity";
+
 const MainDashboardGuest = () => {
   const [activeComponent, setActiveComponent] = useState("Dashboard");
   const location = useLocation();
@@ -15,8 +17,11 @@ const MainDashboardGuest = () => {
   useEffect(() => {
     if (location.pathname === "/guestdashboard/messages") {
       setActiveComponent("Messages");
+    } else if (location.pathname === "/guestdashboard/security") {
+      setActiveComponent("Security");
     }
   }, [location.pathname]);
+
   const renderComponent = () => {
     switch (activeComponent) {
       case "Dashboard":
@@ -33,6 +38,8 @@ const MainDashboardGuest = () => {
         return <GuestSettings />;
       case "Wishlist":
         return <GuestWishlist />;
+      case "Security":            
+        return <GuestSecurity />;
       default:
         return <GuestDashboard />;
     }
@@ -41,6 +48,7 @@ const MainDashboardGuest = () => {
   const handleNavigation = (componentName) => {
     setActiveComponent(componentName);
   };
+
   return (
     <div className="main-dashboard-guest">
       <div className="main-dashboard-sidebar">
