@@ -1,14 +1,15 @@
 import responsejson from "../util/constant/responseHeader.json" with { type: 'json' };
 import StripePayoutsService from "../business/service/stripePayoutsService.js";
+import FaqService from "../business/service/faqService.js";
 
 const responseHeaderJSON = responsejson;
 
 export default class StripePayoutsController {
   constructor() {
     this.stripePayoutService = new StripePayoutsService();
+    this.faqService = new FaqService();
   }
 
-  // ----------- GET -----------
   async getHostCharges(event) {
     try {
       const response = await this.stripePayoutService.getHostCharges(event);
@@ -127,6 +128,52 @@ export default class StripePayoutsController {
   async getPayoutSchedule(event) {
     try {
       const response = await this.stripePayoutService.getPayoutSchedule(event);
+
+      return {
+        statusCode: response.statusCode || 200,
+        headers: responseHeaderJSON,
+        response: {
+          message: response.message,
+          details: response.details,
+        },
+      };
+    } catch (error) {
+      return {
+        statusCode: error.statusCode || 500,
+        headers: responseHeaderJSON,
+        response: { 
+          message: error.message || "Something went wrong, please contact support." 
+        },
+      };
+    }
+  }
+
+    async getHostBankAccount(event) {
+    try {
+      const response = await this.stripePayoutService.getHostBankAccount(event);
+
+      return {
+        statusCode: response.statusCode || 200,
+        headers: responseHeaderJSON,
+        response: {
+          message: response.message,
+          details: response.details,
+        },
+      };
+    } catch (error) {
+      return {
+        statusCode: error.statusCode || 500,
+        headers: responseHeaderJSON,
+        response: { 
+          message: error.message || "Something went wrong, please contact support." 
+        },
+      };
+    }
+  }
+
+  async getFinanceFaqs(event) {
+    try {
+      const response = await this.faqService.getFinanceFaqs(event);
 
       return {
         statusCode: response.statusCode || 200,
