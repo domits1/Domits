@@ -10,9 +10,6 @@ import Footer from "./components/base/Footer";
 import Header from "./components/base/Header";
 import MenuBar from "./components/base/MenuBar";
 import { AuthProvider } from "./features/auth/AuthContext";
-// ❌ REMOVE these two (leave them commented or delete them completely):
-// import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
-// import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
 import ConfirmEmailView from "./features/auth/confirmEmail/ConfirmEmailView.js";
@@ -192,8 +189,6 @@ function App() {
                   <Route path="/verify" element={<HostVerificationView />} />
                   <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                   <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
-                  {/* if you use RegistrationNumberView, add its route here as well */}
-                  {/* <Route path="/verify/registration" element={<RegistrationNumberView />} /> */}
 
                   {/* Payment Logic */}
                   <Route

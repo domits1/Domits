@@ -1,4 +1,3 @@
-// src/pages/guestdashboard/GuestSecurity.js
 import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
 import QRCode from "react-qr-code";
@@ -62,6 +61,9 @@ function GuestSecurity() {
   };
 
   const handleConfirmMfaSetup = async () => {
+      setMfaSetupError("");
+      setMfaMessage("");
+    
     try {
       const user = await Auth.currentAuthenticatedUser();
       await Auth.verifyTotpToken(user, mfaSetupCode);

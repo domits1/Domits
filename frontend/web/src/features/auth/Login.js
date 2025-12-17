@@ -99,54 +99,34 @@ const Login = () => {
   };
 
   const handleConfirmMfa = async () => {
-    if (!mfaUser) {
-      setErrorMessage("No user session found for MFA.");
-      return;
-    }
+  if (!mfaUser) {
+    setErrorMessage("No user session found for MFA.");
+    return;
+  }
+
+  try {
+    await Auth.confirmSignIn(mfaUser, mfaCode, "SOFTWARE_TOKEN_MFA");
 
     try {
-      console.log("Confirming MFA with code:", mfaCode);
-      await Auth.confirmSignIn(mfaUser, mfaCode, "SOFTWARE_TOKEN_MFA");
-
-      try {
-        await Auth.rememberDevice();
-        console.log("Device remembered successfully");
-      } catch (rememberErr) {
-        console.error("Error remembering device:", rememberErr);
-      }
-
-      const currentUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
-      const attrs = currentUser.attributes || {};
-      const userGroup = attrs["custom:group"];
-      const givenName = attrs["given_name"] || attrs["name"] || formData.email;
-
-      console.log("MFA success, user group:", userGroup);
-
-      localStorage.setItem(
-        "domitsUser",
-        JSON.stringify({
-          group: userGroup,
-          name: givenName,
-        })
-      );
-
-      setErrorMessage("");
-      setMfaRequired(false);
-      setMfaCode("");
-      setMfaUser(null);
-
-      if (userGroup === "Host") {
-        window.location.href = "/hostdashboard";
-      } else if (userGroup === "Traveler") {
-        window.location.href = "/guestdashboard";
-      } else {
-        window.location.href = "/";
-      }
+      await Auth.rememberDevice();
     } catch (err) {
-      console.error("Error confirming MFA:", err);
-      setErrorMessage("Invalid authentication code. Please try again.");
+      console.warn("Device remember failed:", err);
     }
-  };
+
+    await handlePostLogin({
+      email: formData.email,
+      setErrorMessage,
+      cleanup: () => {
+        setMfaRequired(false);
+        setMfaCode("");
+        setMfaUser(null);
+      },
+    });
+  } catch (error) {
+    console.error("MFA confirmation failed:", error);
+    setErrorMessage("Invalid MFA code. Please try again.");
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -312,7 +292,6 @@ const Login = () => {
             </main>
           ) : (
             <main className="loginContainer">
-              {/* <img src={logo} alt="Logo Domits" className='loginLogo'/> */}
               <div className="loginTitle">Good to see you again</div>
               <div className="loginForm">
                 <form onSubmit={handleSubmit}>

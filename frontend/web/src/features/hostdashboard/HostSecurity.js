@@ -19,7 +19,6 @@ function HostSecurity() {
       try {
         const user = await Auth.currentAuthenticatedUser({ bypassCache: true });
         const preferred = await Auth.getPreferredMFA(user);
-        console.log("Preferred MFA:", preferred);
 
         if (preferred === "SOFTWARE_TOKEN_MFA" || preferred === "TOTP") {
           setMfaEnabled(true);
@@ -47,12 +46,9 @@ function HostSecurity() {
 
     try {
       const user = await Auth.currentAuthenticatedUser();
-
       const secret = await Auth.setupTOTP(user);
-
       const appName = "Domits";
       const username = user.username;
-
       const uri = `otpauth://totp/${encodeURIComponent(appName)}:${encodeURIComponent(
         username
       )}?secret=${secret}&issuer=${encodeURIComponent(
@@ -92,7 +88,6 @@ function HostSecurity() {
   return (
     <main className="page-Host">
       <p className="page-Host-title">Security</p>
-
       <div className="page-Host-content">
         <section className="host-pc-dashboard">
           <div className={styles.dashboardContainer}>
@@ -128,7 +123,7 @@ function HostSecurity() {
                         type="button"
                         onClick={handleStartMfaSetup}
                       >
-                        Enable MFA 
+                      Enable MFA 
                       </button>
                     )}
                   </div>
@@ -139,8 +134,7 @@ function HostSecurity() {
                 <div className={styles.mfaSetupBox}>
                   <h3>Enable two-factor authentication</h3>
                   <p>
-                    1. Scan this QR code with Google Authenticator or a similar
-                    app.
+                    1. Scan this QR code with your authenticator app.
                   </p>
 
                   {mfaSetupUri && (
@@ -191,8 +185,7 @@ function HostSecurity() {
               {!mfaSetupMode && (
                 <div className={styles.infoBox}>
                   <p>
-                    We strongly recommend enabling two-factor authentication to
-                    protect your account and payouts.
+                    We strongly recommend enabling two-factor authentication to rprotect your account and payouts.
                   </p>
                 </div>
               )}

@@ -1,4 +1,3 @@
-// src/pages/hostdashboard/HostDashboard.js
 import React, { useState, useEffect } from "react";
 import "./HostHomepage.scss";
 import styles from "./HostDashboard.module.scss";
@@ -153,8 +152,7 @@ function HostDashboard() {
               <div className={styles.infoBox}>
                 <img className={styles.infoIcon} src={info} alt="Info" />
                 <p>
-                  Click on your listed accommodations to see their listing
-                  details
+                  Click on your listed accommodations to see their listing details
                 </p>
               </div>
 

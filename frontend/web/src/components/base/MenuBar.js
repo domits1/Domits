@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useContext } from "react";
+import loginArrow from "../../images/whitearrow.png";
+import logoutArrow from "../../images/log-out-04.svg";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Auth } from "aws-amplify";
 import {
   HouseOutlined as HouseOutlinedIcon,
   ForumOutlined as ForumOutlinedIcon,
   AccountCircleOutlined as AccountCircleOutlinedIcon,
 } from "@mui/icons-material";
-import loginArrow from "../../images/whitearrow.png";
-import logoutArrow from "../../images/log-out-04.svg";
-import FlowContext from "../../services/FlowContext";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Auth } from "aws-amplify";
 
 function MenuBar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setFlowState } = useContext(FlowContext);
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [group, setGroup] = useState("");
+  const [, setGroup] = useState("");
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [currentView, setCurrentView] = useState("guest");
@@ -30,40 +27,37 @@ function MenuBar() {
   }, [location]);
 
   const restoreSession = async () => {
-    try {
-      const user = await Auth.currentAuthenticatedUser({ bypassCache: true });
-      const attrs = user.attributes;
+  try {
+    const user = await Auth.currentAuthenticatedUser({ bypassCache: true });
+    const attrs = user.attributes;
 
-      const userGroup = attrs["custom:group"];
-      const givenName = attrs["given_name"] || "User";
+    const userGroup = attrs["custom:group"];
+    const givenName = attrs["given_name"] || "User";
 
-      setIsLoggedIn(true);
-      setGroup(userGroup);
-      setUsername(givenName);
-      setCurrentView(userGroup === "Host" ? "host" : "guest");
+    setIsLoggedIn(true);
+    setGroup(userGroup);
+    setUsername(givenName);
+    setCurrentView(userGroup === "Host" ? "host" : "guest");
 
-      localStorage.setItem(
-        "domitsUser",
-        JSON.stringify({
-          group: userGroup,
-          name: givenName,
-        })
-      );
-    } catch (err) {
-      console.warn("Cognito session missing — using fallback:", err);
+    localStorage.setItem(
+      "domitsUser",
+      JSON.stringify({
+        group: userGroup,
+        name: givenName,
+      })
+    );
+  } catch (err) {
+    console.warn("No valid Cognito session:", err);
 
-      const saved = localStorage.getItem("domitsUser");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setIsLoggedIn(true);
-        setGroup(parsed.group);
-        setUsername(parsed.name);
-        setCurrentView(parsed.group === "Host" ? "host" : "guest");
-      } else {
-        setIsLoggedIn(false);
-      }
-    }
-  };
+    setIsLoggedIn(false);
+    setGroup(null);
+    setUsername(null);
+    setCurrentView("login");
+
+    localStorage.removeItem("domitsUser");
+  }
+};
+
 
   const handleLogout = async () => {
     try {
@@ -93,16 +87,6 @@ function MenuBar() {
   const navigateToPayments = () => navigate("/guestdashboard/payments");
   const navigateToReviews = () => navigate("/guestdashboard/reviews");
   const navigateToSettings = () => navigate("/guestdashboard/settings");
-
-  const navigateToDashboard = () => {
-    if (!isLoggedIn) {
-      navigate("/landing");
-    } else {
-      currentView === "host"
-        ? navigateToGuestDashboard()
-        : navigateToHostDashboard();
-    }
-  };
 
   const renderDropdownMenu = () => {
     if (!isLoggedIn) {
