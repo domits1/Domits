@@ -10,14 +10,13 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
 
 .guest-dashboard-page-body {
   color: $text;
-  
+
   > h2 {
     font-size: 24px;
     margin: 24px 0 8px;
     text-align: center;
   }
 
-  
   .guest-dashboard-dashboards {
     margin: 0 auto;
     padding: 0 16px;
@@ -27,14 +26,11 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
       grid-template-columns: minmax(0, 1fr) 420px; 
       gap: 24px;
       margin-top: 20px;
-
      
       .guest-dashboard-accomodation-side {
         display: grid;
         align-content: start;
         gap: 16px; 
-        
-
         
         .guest-dashboard-viewAllBooking {
           display: inline-flex;
@@ -53,7 +49,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           }
         }
 
-        
         .booking-details {
           background: $card-bg;         
           border: 1px solid $border;      
@@ -64,7 +59,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           gap: 16px;
           align-items: start;
         }
-
        
         .booking-details__media {
           position: relative;
@@ -75,7 +69,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           background: #eef2f7;
         }
 
-       
         .booking-details__image {
           position: absolute;
           inset: 0;
@@ -86,7 +79,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           object-position: center;
         }
 
-      
         .booking-details__content {
           display: grid;
           gap: 12px;
@@ -103,7 +95,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           font-size: 14px;
           color: #64748b;
         }
-
        
         .booking-details__pi {
           display: grid;
@@ -148,8 +139,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           gap: 8px;
           flex-wrap: wrap;
         }
-
-        
         .messages-section {
           background: $card-bg;
           border: 1px solid $border;
@@ -180,7 +169,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           color: #fff;
         }
 
-       
         .messages-section__cta {
           display: flex;
           align-items: center;
@@ -209,7 +197,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           justify-content: center;
         }
       }
-
       
       .guest-dashboard-personalInfoContent {
         width: 100%;
@@ -343,7 +330,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
   color: $brand;
   border-color: $brand;
 }
-
 
 /* -------- Tablet (<= 1024px) -------- */
 @media (max-width: 1024px) {
