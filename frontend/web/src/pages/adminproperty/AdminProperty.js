@@ -30,7 +30,8 @@ export default function AdminProperty() {
   const [amenityChecks, setAmenityChecks] = useState({});
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-
+  const [isSpecialUser, setIsSpecialUser] = useState(false);
+  const [testProperty, setTestProperty] = useState(null);
   useEffect(() => {
     async function checkRole() {
       try {
@@ -45,6 +46,21 @@ export default function AdminProperty() {
     }
     checkRole();
   }, [navigate]);
+
+  useEffect(() => {
+    try {
+      const SPECIAL_ID = "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3";
+      const cognitoKey = "CognitoIdentityServiceProvider.78jfrfhpded6meevllpfmo73mo.LastAuthUser";
+      const val = localStorage.getItem(cognitoKey);
+      if (val && String(val).includes(SPECIAL_ID)) {
+        setIsSpecialUser(true);
+      } else {
+        setIsSpecialUser(false);
+      }
+    } catch (e) {
+      setIsSpecialUser(false);
+    }
+  }, []);
 
   const AMENITIES = useMemo(
     () =>
@@ -156,7 +172,9 @@ export default function AdminProperty() {
 
   const generateRegistrationNumber = () => {
     const ts = Date.now().toString();
-    const rand = Math.floor(Math.random() * 1e6).toString().padStart(6, "0");
+    const rand = Math.floor(Math.random() * 1e6)
+      .toString()
+      .padStart(6, "0");
     return ts + rand;
   };
 
@@ -331,6 +349,32 @@ export default function AdminProperty() {
         </div>
         {hasError("spaceType") && <span className="error-text">{errors.spaceType}</span>}
       </div>
+      {isSpecialUser && (
+        <div className="adminproperty-group">
+          <label>Test property</label>
+          <div className="field-wrapper">
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={() => setTestProperty(true)}
+                className={testProperty === true ? "test-yes active" : "test-yes"}>
+                Ja
+              </button>
+              <button
+                type="button"
+                onClick={() => setTestProperty(false)}
+                className={testProperty === false ? "test-no active" : "test-no"}>
+                Nee
+              </button>
+            </div>
+            <input
+              type="hidden"
+              name="testProperty"
+              value={testProperty === true ? "true" : testProperty === false ? "false" : ""}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="adminproperty-group">
         <label>Name your home</label>
@@ -372,9 +416,7 @@ export default function AdminProperty() {
               onBlur={handleBlur}
               className={hasError("houseNumber") ? "error" : ""}
             />
-            {hasError("houseNumber") && (
-              <span className="error-text">{errors.houseNumber}</span>
-            )}
+            {hasError("houseNumber") && <span className="error-text">{errors.houseNumber}</span>}
           </div>
         </div>
 
@@ -388,9 +430,7 @@ export default function AdminProperty() {
               onBlur={handleBlur}
               className={hasError("postalCode") ? "error" : ""}
             />
-            {hasError("postalCode") && (
-              <span className="error-text">{errors.postalCode}</span>
-            )}
+            {hasError("postalCode") && <span className="error-text">{errors.postalCode}</span>}
           </div>
 
           <div className="field-wrapper">
@@ -429,22 +469,14 @@ export default function AdminProperty() {
             onBlur={handleBlur}
             className={hasError("description") ? "error" : ""}
           />
-          {hasError("description") && (
-            <span className="error-text">{errors.description}</span>
-          )}
+          {hasError("description") && <span className="error-text">{errors.description}</span>}
         </div>
       </div>
 
       <div className="adminproperty-group">
         <label>How many people can stay here</label>
         <div className="grid-4">
-          <NumberField
-            name="guests"
-            placeholder="Guests"
-            handleBlur={handleBlur}
-            hasError={hasError}
-            errors={errors}
-          />
+          <NumberField name="guests" placeholder="Guests" handleBlur={handleBlur} hasError={hasError} errors={errors} />
           <NumberField
             name="bedrooms"
             placeholder="Bedrooms"
@@ -452,13 +484,7 @@ export default function AdminProperty() {
             hasError={hasError}
             errors={errors}
           />
-          <NumberField
-            name="beds"
-            placeholder="Beds"
-            handleBlur={handleBlur}
-            hasError={hasError}
-            errors={errors}
-          />
+          <NumberField name="beds" placeholder="Beds" handleBlur={handleBlur} hasError={hasError} errors={errors} />
           <NumberField
             name="bathrooms"
             placeholder="Bathrooms"
@@ -523,9 +549,7 @@ export default function AdminProperty() {
 
       <div className="adminproperty-group">
         <label>Add photos (min 5, max 10)</label>
-        <p className="adminproperty-helper">
-          Photos must be larger than 50 KB and smaller than 500 KB.
-        </p>
+        <p className="adminproperty-helper">Photos must be larger than 50 KB and smaller than 500 KB.</p>
         <input type="file" accept="image/*" multiple onChange={onPickFiles} />
         {hasError("images") && <span className="error-text">{errors.images}</span>}
         {files.length > 0 && (
