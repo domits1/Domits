@@ -257,7 +257,7 @@ APIs that give access to data and services in Domits and supports multiple use c
 
 ### Distribution API 
 
-**[Distribution](/docs/partner/API/distribution_Api.md)**
+**[Distribution](/docs/partner/api/distribution.md)**
 * Responsible for: Handling Distribution
 * Used for: An API to connect anything (PMS, Channel Manager, RMS, Distribution Channels, ...) to the Domits system.
 
