@@ -63,7 +63,7 @@ $white-adr: #ffffff;
     margin: 20px 10px;
     font-size: 20px;
     font-weight: 400;
-    color: #333;
+    color: $text-dark;
     text-align: center;
   }
 }
@@ -77,12 +77,12 @@ $white-adr: #ffffff;
   background-color: $card-bg;
   border-radius: 50px;
 
-    label {
-      font-size: 15px;
-      font-weight: 500;
-      color: $text-color-adr;
-    }
+  label {
+    font-size: 15px;
+    font-weight: 500;
+    color: $text-dark;
   }
+}
 
 .timeFilter {
   appearance: none;
@@ -133,7 +133,6 @@ $white-adr: #ffffff;
     display: flex;
     gap: 10px;
     align-items: center;
-    width: 100px;
 
     label {
       font-size: 14px;
@@ -215,14 +214,7 @@ $white-adr: #ffffff;
 .revpar-card {
   @extend .card-base;
 }
-.alo s-card {
-  @extend .card-base;
-}
 
-.booked-nights-card {
-  @extend .card-base;
-}
-
-.adr-card {
+.alos-card {
   @extend .card-base;
 }
