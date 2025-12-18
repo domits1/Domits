@@ -14,6 +14,7 @@ import { PropertyTechnicalDetailRepository } from "../../data/repository/propert
 import { PropertyTypeRepository } from "../../data/repository/propertyTypeRepository.js";
 import { PropertyImageRepository } from "../../data/repository/propertyImageRepository.js";
 import { BookingRepository } from "../../data/repository/bookingRepository.js";
+import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatus.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
@@ -36,10 +37,12 @@ export class PropertyService {
     this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
     this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
   }
 
   async create(property) {
     await this.createBasePropertyInfo(property.property);
+
     await Promise.all([
       this.createAmenities(property.propertyAmenities),
       this.createAvailability(property.propertyAvailabilities),
@@ -51,6 +54,7 @@ export class PropertyService {
       this.createPropertyType(property.propertyType),
       this.createImages(property.propertyImages),
       this.createAvailabilityRestrictions(property.propertyAvailabilityRestrictions),
+      this.createPropertyTestStatus(property.propertyTestStatus),
     ]);
     if (property.propertyType.property_type === "Boat" || property.propertyType.property_type === "Camper") {
       await this.createTechnicalDetails(property.propertyTechnicalDetails);
@@ -424,5 +428,9 @@ export class PropertyService {
 
   async getPropertyType(property) {
     return await this.propertyTypeRepository.getPropertyTypeByPropertyId(property);
+  }
+
+  async createPropertyTestStatus(testStatus) {
+    return await this.propertyTestStatusRepository.create(testStatus);
   }
 }

@@ -227,6 +227,9 @@ export default function AdminProperty() {
     const country = fd.get("country")?.toString()?.trim() || "";
     const description = fd.get("description")?.toString()?.trim() || "";
 
+    const isTestPropertyRaw = fd.get("testProperty");
+    const isTest = isTestPropertyRaw === "true";
+
     const guests = Number(fd.get("guests") || 0);
     const bedrooms = Number(fd.get("bedrooms") || 0);
     const beds = Number(fd.get("beds") || 0);
@@ -292,7 +295,8 @@ export default function AdminProperty() {
       .addPricing({ roomRate: rate, cleaning: 0, service: 0 })
       .addAmenities(selectedAmenityIds.map((id) => ({ id })))
       .addAvailability([{ availableStartDate: start, availableEndDate: end }])
-      .addAvailabilityRestrictions([]);
+      .addAvailabilityRestrictions([])
+      .addPropertyTestStatus(isTest);
 
     const rules = [];
     if (ruleSmoking) rules.push({ rule: "SmokingAllowed", value: false });
@@ -375,6 +379,8 @@ export default function AdminProperty() {
           </div>
         </div>
       )}
+
+      {!isSpecialUser && <input type="hidden" name="testProperty" value="false" />}
 
       <div className="adminproperty-group">
         <label>Name your home</label>
