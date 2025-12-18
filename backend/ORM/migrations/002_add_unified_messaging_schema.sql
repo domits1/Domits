@@ -29,8 +29,9 @@ CREATE TABLE IF NOT EXISTS main.unified_message (
   createdAt BIGINT NOT NULL,
   isRead BOOLEAN DEFAULT FALSE,
   metadata TEXT, -- JSON string for extra data
+  attachments TEXT, -- JSON string for attachments
+  deliveryStatus VARCHAR(50) DEFAULT 'pending',
   PRIMARY KEY (id)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS id_unified_message_UNIQUE ON main.unified_message (id);
 CREATE INDEX IF NOT EXISTS idx_unified_message_thread ON main.unified_message (threadId);
-

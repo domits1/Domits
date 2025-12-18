@@ -46,7 +46,15 @@ export const UnifiedMessage = new EntitySchema({
         metadata: {
             type: "text",
             nullable: true
+        },
+        attachments: {
+            type: "text", // JSON string to store array of { url: string, type: string, name: string }
+            nullable: true
+        },
+        deliveryStatus: {
+            type: "varchar", // 'pending', 'sent', 'delivered', 'failed'
+            default: "pending",
+            nullable: true
         }
     }
 });
-
