@@ -70,7 +70,7 @@ export class PropertyBuilder {
         throw new Error("Available start date can not be in the past.");
       }
       if (availability.availableEndDate < Date.now()) {
-        throw new Error("Available end dat can not be in the past.");
+        throw new Error("Available end date can not be in the past.");
       }
       if (availability.availableStartDate > availability.availableEndDate) {
         throw new Error("Available end date can not be before available start date");
