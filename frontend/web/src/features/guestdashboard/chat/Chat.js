@@ -11,8 +11,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './ChatPage.module.css';
 import spinner from "../../../images/spinnner.gif";
 import ContactItem from "./ContactItem_Guest";
-import { toast } from 'react-toastify';
-import MessageToast from '../../../components/messages/MessageToast';
 
 const Chat = ({ user }) => {
     const [chats, setChats] = useState([]);
@@ -65,29 +63,12 @@ const Chat = ({ user }) => {
                     updatedChats.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
                     return updatedChats;
                 });
-                if (newChat && newChat.recipientId === userId && newChat.userId !== userId) {
-                    const text = newChat.text && newChat.text.trim() !== '' ? newChat.text : 'You have a new message';
-                    // Find the sender's contact info
-                    const senderContact = contacts.find(c => c.hostId === newChat.userId) || 
-                                         pendingContacts.find(c => c.hostId === newChat.userId);
-                    const senderName = senderContact?.hostName || 'Contact';
-                    const senderImage = senderContact?.profileImage || null;
-                    
-                    toast.info(
-                        <MessageToast 
-                            contactName={senderName} 
-                            contactImage={senderImage} 
-                            message={text} 
-                        />,
-                        { className: 'message-toast-custom' }
-                    );
-                }
             },
             error: error => console.error("Subscription error:", error)
         });
 
         return () => subscription.unsubscribe();
-    }, [userId, contacts, pendingContacts]);
+    }, []);
 
     useEffect(() => {
         if (recipientId) {
@@ -362,7 +343,7 @@ const Chat = ({ user }) => {
                 },
             });
 
-            toast.success('Message sent');
+            console.log("Message sent successfully:", result);
 
             setNewMessage('');
             setShowDate(true);
@@ -372,7 +353,6 @@ const Chat = ({ user }) => {
             await fetchChatUsers();
         } catch (error) {
             console.error("Error sending message:", error);
-            toast.error('Failed to send message');
         }
     };
 

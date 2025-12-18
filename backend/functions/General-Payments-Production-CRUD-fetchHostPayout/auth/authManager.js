@@ -1,17 +1,11 @@
-import { CognitoRepository } from "../data/cognitoRepository.js";
+import {UnauthorizedException} from "../util/exception/unauthorizedException.js";
 
-export default class AuthManager {
+export class AuthManager {
 
-  constructor() {
-    this.cognitoRepository = new CognitoRepository();
-  }
-
-  async authenticateUser(auth) {
-    const returnedResponse = await this.cognitoRepository.getUserByAccessToken(auth);
-    const UserAttributes = {};
-    returnedResponse.UserAttributes.forEach((attr) => {
-      UserAttributes[attr.Name] = attr.Value;
-    });
-    return UserAttributes;
-  }
+    async userIsAuthorized(accessToken) {
+        if (!accessToken) {
+            throw new UnauthorizedException("No authorization token provided.")
+        }
+        return !!accessToken;
+    }
 }

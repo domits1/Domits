@@ -14,6 +14,7 @@ export const HOST_HELP_DESK_SCREEN = "host-help-desk";
 export const HOST_PROPERTIES_SCREEN = "host-properties";
 
 // Host Dashboard
+export const HOST_DASHBOARD_SCREEN = "host-dashboard";
 export const HOST_CALENDAR_SCREEN = "host-calendar";
 export const HOST_REVIEWS_SCREEN = "host-reviews";
 export const HOST_PAYMENTS_SCREEN = "host-payments";

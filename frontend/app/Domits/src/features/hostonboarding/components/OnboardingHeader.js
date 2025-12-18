@@ -6,8 +6,6 @@ import TranslatedText from "../../translation/components/TranslatedText";
 import {useNavigation} from "@react-navigation/native";
 import {useTranslation} from "react-i18next";
 import {steps} from "../utils/pageStepsConfig";
-import RNFS from "react-native-fs";
-import {HOST_PROPERTIES_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
 
 const OnboardingHeader = ({headerTitle, jumpToStep, pageStatus}) => {
     const navigation = useNavigation();
@@ -21,11 +19,7 @@ const OnboardingHeader = ({headerTitle, jumpToStep, pageStatus}) => {
             [
                 {
                     text: t("Yes"),
-                    onPress: async () => {
-                        // clear all cache (including onboarding images)
-                        await RNFS.unlink(RNFS.CachesDirectoryPath);
-                        navigation.navigate(HOST_PROPERTIES_SCREEN);
-
+                    onPress: () => {
                         navigation.goBack()
                     }
                 },

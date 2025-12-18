@@ -6,16 +6,19 @@ import CalculateNumberOfNights from '../../../features/bookingengine/stripe/util
 import ImagesView from '../views/imagesView';
 import LoadingScreen from '../../loadingscreen/screens/LoadingScreen';
 import PropertyMainDetailsView from '../views/PropertyMainDetailsView';
-import {STRIPE_PROCESS_SCREEN,} from '../../../navigation/utils/NavigationNameConstants';
+import {
+  HOME_SCREEN,
+  STRIPE_PROCESS_SCREEN,
+} from '../../../navigation/utils/NavigationNameConstants';
 import PropertyRepository from '../../../services/property/propertyRepository';
 import TestPropertyRepository from '../../../services/property/test/testPropertyRepository';
 import CalendarComponent from '../../../features/calendar/CalendarComponent';
+import Header from '../components/header';
 import PricingView from '../views/pricingView';
 import BookingView from '../views/bookingView';
 import AmenitiesView from '../views/amenitiesView';
 import ToastMessage from '../../../components/ToastMessage';
 import TranslatedText from "../../../features/translation/components/TranslatedText";
-import TabHeader from "../../accounthome/components/TabHeader";
 
 const PropertyDetailsScreen = ({route, navigation}) => {
   const [property, setProperty] = useState({});
@@ -24,7 +27,6 @@ const PropertyDetailsScreen = ({route, navigation}) => {
   const [firstSelectedDate, setFirstSelectedDate] = useState(null);
   const [lastSelectedDate, setLastSelectedDate] = useState(null);
 
-  const nights = CalculateNumberOfNights(firstSelectedDate, lastSelectedDate);
   const propertyRepository =
     process.env.REACT_APP_TESTING === 'true'
       ? new TestPropertyRepository()
@@ -32,22 +34,22 @@ const PropertyDetailsScreen = ({route, navigation}) => {
 
   const fetchPropertyDetails = useCallback(async () => {
     try {
-      const data = await propertyRepository.fetchPropertyDetails(
+      const property = await propertyRepository.fetchPropertyDetails(
         route.params.property.property.id,
       );
-      if (data.property) {
-        setProperty(data);
+      if (property.property) {
+        setProperty(property);
       }
     } catch (error) {
-      console.error(error)
       ToastMessage(error.message, ToastAndroid.SHORT);
-      setProperty(null)
     }
   });
 
   useEffect(() => {
     fetchPropertyDetails().then(() => setLoading(false));
   }, []);
+
+  const nights = CalculateNumberOfNights(firstSelectedDate, lastSelectedDate);
 
   const handleOnBookPress = () => {
     if (!firstSelectedDate || !lastSelectedDate) {
@@ -73,10 +75,11 @@ const PropertyDetailsScreen = ({route, navigation}) => {
     return (
       <SafeAreaView style={{flex: 1}}>
         <View style={styles.container}>
-          <TabHeader tabTitle={"Property"} />
-          <View style={styles.contentContainer}>
-            <TranslatedText textToTranslate={"Property information unavailable."} />
-          </View>
+          <Header
+            property={property}
+            handleHomeScreenPress={() => navigation.navigate(HOME_SCREEN)}
+          />
+          <TranslatedText textToTranslate={"Property information unavailable."} />
         </View>
       </SafeAreaView>
     );
@@ -85,7 +88,10 @@ const PropertyDetailsScreen = ({route, navigation}) => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={styles.container}>
-        <TabHeader tabTitle={property.property.title} />
+        <Header
+          property={property}
+          handleHomeScreenPress={() => navigation.navigate(HOME_SCREEN)}
+        />
         <ScrollView style={styles.contentContainer}>
           <ImagesView images={property.images} />
           <View style={styles.propertyDetailsContainer}>

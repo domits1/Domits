@@ -557,9 +557,9 @@ const Homepage = () => {
           </div>
           <div className="domits-accommodationGroup">
             {boatLoading === false ? (
-              camperAccommodations.length > 0 ? (
-                camperAccommodations.map((camperAccommodations) => (
-                  <AccommodationCard key={camperAccommodations.property.id} accommodation={camperAccommodations} onClick={handleClick} />
+              boatAccommodations.length > 0 ? (
+                boatAccommodations.map((boat) => (
+                  <AccommodationCard key={boat.property.id} accommodation={boat} onClick={handleClick} />
                 ))
               ) : (
                 <div>No boats available.</div>

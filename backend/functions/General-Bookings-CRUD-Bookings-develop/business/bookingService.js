@@ -79,6 +79,8 @@ class BookingService {
 		await this.verifyQueryDataTypes(event);
 		switch (event.event.readType) {
 			case "property": {
+				// await this.authManager.authenticateUser(event.Authorization);
+				// return await this.reservationRepository.readByPropertyId(event.event.property_Id);
 				return {response: "Removed readtype due to security flaws.", statusCode: 501};
 			}
 			case "guest": {
@@ -95,9 +97,6 @@ class BookingService {
 			}
 			case "hostId": {
 				authToken = await this.authManager.authenticateUser(event.Authorization);
-				if (event.event?.property_Id){
-					return await this.reservationRepository.readByHostIdSingleProperty(authToken.sub, event.event.property_Id);
-				}
 				return await this.reservationRepository.readByHostId(authToken.sub);
 			}
 			case "departureDate": {

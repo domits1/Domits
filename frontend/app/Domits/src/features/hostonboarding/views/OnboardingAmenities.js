@@ -7,7 +7,7 @@ import CheckBox from "@react-native-community/checkbox";
 
 const OnboardingAmenities = ({formData, updateFormData, reportValidity, markVisited}) => {
   const [selected, setSelected] = useState(formData.propertyAmenities.map(item => item.amenityId));
-  const amenityNames = ['Wi-Fi', 'TV with cable/satellite', 'Heating', 'Hot water', 'Bed linens', 'Toilet paper', 'Air conditioning', 'Extra pillows and blankets', 'Soap and shampoo']
+  const amenityNames = ['Wi-Fi', 'TV with cable/satellite', 'Heating', 'Hot water', 'Bed linens', 'Toilet paper', 'Air conditioning', 'Towels', 'Extra pillows and blankets', 'Soap and shampoo']
 
   const toggleAmenity = (amenityId) => {
     const isSelected = formData.propertyAmenities.some(

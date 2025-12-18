@@ -26,32 +26,6 @@ $border-radius: 8px;
     flex-direction: column;
     margin-left: 5%;
     min-height: 55rem;
-    padding-right: 5%;
-    box-sizing: border-box;
-    .searchInput {
-      width: 100%;
-      max-width: 680px;
-      padding: 0.5em 0.8em;
-      border: 1px solid $border-color;
-      border-radius: 6px;
-      font-size: $font-size-data;
-      box-sizing: border-box;
-      margin: 0.6em 0 0.8em 0;
-    }
-    .controlsRow {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      margin-top: 0.5em;
-      margin-bottom: 0.5em;
-      width: 100%;
-    }
-    .searchWrap {
-      margin-left: auto;
-      flex: 0 0 520px;
-      max-width: 80%;
-    }
   }
 
   .reservationButtons button {
@@ -76,53 +50,48 @@ $border-radius: 8px;
   }
 
   .reservationTable {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
+    display: block;
 
-    thead th {
-      background: $primary-color;
-      color: #ffffff;
-      font-weight: 700;
-      padding: 0.9em 0.8em;
-      text-align: left;
-      border-bottom: 2px solid rgba(0, 0, 0, 0.08);
-      vertical-align: middle;
-      font-size: $font-size-data;
+    thead,
+    tr {
+      table-layout: fixed;
+      width: 100%;
+      border-collapse: collapse;
+      border: 3px solid purple;
+  
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
-    tbody td {
-      padding: 0.9em 0.8em;
-      border-bottom: 1px solid $border-color;
-      vertical-align: middle;
-      font-size: $font-size-data;
-      word-break: break-word;
+    tr,
+    td{
+      margin: 200px;
     }
 
-    .singleReservationRow {
-      padding-right: 0.5em;
+    th,
+    td{
+      padding: 1.0em 0.9em 1.0em;
     }
 
-    .cellContent {
-      display: inline-block;
-      margin-right: 1.2em;
-    }
-
-    tbody tr:nth-child(odd) {
-      background-color: #ffffff;
-    }
-
-    tbody tr:nth-child(even) {
-      background-color: #fbfbfb;
+    tbody,
+    tr {
+      margin: 10px 0.5px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
     .noData {
       font-size: $font-size-big;
-      text-align: center;
-      padding: 2em 1em;
-    }
 
-    .reservationIcons {
+      .noDataText {
+        border: none;
+        border-collapse: none;
+        background-color: transparent;
+
+      }
+    }
+    .reservationIcons{
       cursor: pointer;
       display: inline-flex;
       transition: transform 0.2s;
@@ -130,32 +99,6 @@ $border-radius: 8px;
       &:hover {
         transform: scale(1.1);
       }
-    }
-
-    .status {
-      display: inline-block;
-      padding: 0.25em 0.6em;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 12px;
-      text-transform: capitalize;
-      color: #fff;
-    }
-
-    .statusPaid {
-      background-color: $primary-color;
-    }
-
-    .statusAwaitingPayment {
-      background-color: #ff9800;
-    }
-
-    .statusFailed {
-      background-color: #f44336;
-    }
-
-    .statusOther {
-      background-color: $secondary-color;
     }
   }
 

@@ -21,10 +21,17 @@ describe("BookingEngine (General-Bookings-CRUD-Bookings-develop) function testin
     it("should throw error at empty GET", async () => {
         await expect(handler({httpMethod: "GET"}))
             .rejects
-            .toThrow("Unable to parse your request");
+            .toThrow("Unable to parse your request!");
     })
     it("should throw error at empty PATCH", async () => {
         expect(handler({httpMethod: "PATCH"}))
             .rejects;
+    })
+})
+
+describe("BookingEngine (General-Bookings-CRUD-Bookings-develop) function testing /business/parseEvent.js", () => {
+    it("should throw a error if parsing a body goes wrong", () => {
+        expect(ParseEvent({httpMethod: "POST"}))
+
     })
 })

@@ -1,4 +1,4 @@
-import { getAccessToken } from "../../../../src/services/getAccessToken.js";
+import { Auth } from "aws-amplify";
 
 const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
@@ -18,7 +18,8 @@ export const HostRevenueService = {
     if (!metric) throw new Error("Metric name is missing");
 
     try {
-      const token = await getAccessToken();
+      const session = await Auth.currentSession();
+      const token = session.getAccessToken().getJwtToken();
 
       const formatDate = (isoDate) => {
         if (!isoDate) return "";

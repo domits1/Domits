@@ -23,6 +23,8 @@ export const handler = async (event) => {
                                     return await controller.getFullOwnedProperties(event);
                                 case "single":
                                     return await controller.getFullOwnedPropertyById(event);
+                                case "calendarData":
+                                    return await controller.getCalendarData(event);
                                 default:
                                     return {
                                         statusCode: 404,
@@ -57,7 +59,28 @@ export const handler = async (event) => {
                                 body: "Path not found."
                             }
                     }
-                    // TODO add functionality
+                case "PUT":
+                    const putPath = event.resource;
+                    const putSubResource = event.pathParameters.subResource;
+                    switch (putPath) {
+                        case "/property/{subResource}":
+                            switch (putSubResource) {
+                                case "availability":
+                                    return await controller.updateAvailability(event);
+                                case "pricing":
+                                    return await controller.updatePricing(event);
+                                default:
+                                    return {
+                                        statusCode: 404,
+                                        body: "Sub-resource for '/property' PUT not found."
+                                    }
+                            }
+                        default:
+                            return {
+                                statusCode: 404,
+                                body: "PUT path not found."
+                            }
+                    }
                 case "DELETE":
                     return await controller.delete(event);
                 default:

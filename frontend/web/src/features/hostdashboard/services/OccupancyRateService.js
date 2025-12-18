@@ -1,4 +1,4 @@
-import { getAccessToken } from "../../../../src/services/getAccessToken.js";
+import { Auth } from "aws-amplify";
 
 const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
@@ -12,7 +12,8 @@ export const OccupancyRateService = {
   async fetchOccupancyRate(hostId, periodType = "monthly", startDate, endDate) {
     if (!hostId) throw new Error("Host ID is required");
 
-    const token = await getAccessToken();
+    const session = await Auth.currentSession();
+    const token = session.getAccessToken().getJwtToken();
 
     let url = `${BASE_URL}?hostId=${hostId}&metric=occupancyRate&filterType=${periodType}`;
     if (periodType === "custom" && startDate && endDate) {

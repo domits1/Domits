@@ -15,8 +15,9 @@ const BookedNights = () => {
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-        const user = await Auth.currentAuthenticatedUser();
-        setCognitoUserId(user.attributes.sub);
+        const userInfo = await Auth.currentUserInfo();
+        if (!userInfo?.attributes?.sub) throw new Error("Cognito user not found");
+        setCognitoUserId(userInfo.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito user ID:", err);
         setError("User not logged in.");

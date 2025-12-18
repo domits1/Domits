@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test - Calendar Data</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 5px; background: #0d9813; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        button:hover { background: #0b7a0f; }
+        .result { margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 500px; overflow-y: auto; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+        input { padding: 8px; margin: 5px; width: 400px; }
+        .info { background: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Calendar API Test Tool</h1>
+
+    <div class="info">
+        <strong>Instructions:</strong>
+        <ol>
+            <li>Make sure you're logged in to your application</li>
+            <li>Click "Get Token" to retrieve your authentication token</li>
+            <li>Test the APIs step by step</li>
+        </ol>
+    </div>
+
+    <h2>Step 1: Get Token</h2>
+    <button onclick="getToken()">Get Token from localStorage</button>
+    <div id="tokenResult"></div>
+
+    <h2>Step 2: Test Property API</h2>
+    <button onclick="testGetProperties()">Get All Properties</button>
+    <div id="propertiesResult"></div>
+
+    <h2>Step 3: Test Booking API</h2>
+    <input type="text" id="propertyIdInput" placeholder="Enter Property ID (from step 2)">
+    <button onclick="testGetBookings()">Get Bookings for Property</button>
+    <div id="bookingsResult"></div>
+
+    <script>
+        let token = null;
+
+        function getToken() {
+            try {
+                const keys = Object.keys(localStorage).filter(key =>
+                    key.includes("CognitoIdentityServiceProvider") &&
+                    key.endsWith(".accessToken")
+                );
+
+                if (keys.length === 0) {
+                    document.getElementById('tokenResult').innerHTML = '<div class="result error">❌ No token found. Please log in first.</div>';
+                    return;
+                }
+
+                token = localStorage.getItem(keys[0]);
+                document.getElementById('tokenResult').innerHTML = `
+                    <div class="result success">
+                        ✅ Token retrieved successfully!<br>
+                        Token (first 50 chars): ${token.substring(0, 50)}...<br>
+                        <small>Full token stored in memory</small>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('tokenResult').innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testGetProperties() {
+            if (!token) {
+                alert('Please get token first!');
+                return;
+            }
+
+            document.getElementById('propertiesResult').innerHTML = '<div class="result">Loading...</div>';
+
+            try {
+                const response = await fetch(
+                    'https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all',
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': token
+                        }
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
+                }
+
+                let html = `<div class="result success">✅ Success! Found ${data.length} properties:<br><br>`;
+
+                data.forEach((prop, i) => {
+                    html += `<strong>Property ${i + 1}:</strong><br>`;
+                    html += `  ID: ${prop.ID}<br>`;
+                    html += `  Title: ${prop.Title || 'N/A'}<br>`;
+                    html += `  Type: ${prop.AccommodationType || 'N/A'}<br>`;
+                    html += `  Owner: ${prop.OwnerId || 'N/A'}<br>`;
+                    if (prop.Pricing) {
+                        html += `  Room Rate: €${prop.Pricing.RoomRate || 'N/A'}<br>`;
+                        html += `  Cleaning: €${prop.Pricing.Cleaning || 'N/A'}<br>`;
+                    }
+                    html += `<br>`;
+
+                    // Auto-fill first property ID
+                    if (i === 0) {
+                        document.getElementById('propertyIdInput').value = prop.ID;
+                    }
+                });
+
+                html += `<br><strong>Raw JSON:</strong><br>${JSON.stringify(data, null, 2)}</div>`;
+                document.getElementById('propertiesResult').innerHTML = html;
+
+            } catch (error) {
+                document.getElementById('propertiesResult').innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testGetBookings() {
+            if (!token) {
+                alert('Please get token first!');
+                return;
+            }
+
+            const propertyId = document.getElementById('propertyIdInput').value;
+            if (!propertyId) {
+                alert('Please enter a property ID!');
+                return;
+            }
+
+            document.getElementById('bookingsResult').innerHTML = '<div class="result">Loading...</div>';
+
+            try {
+                const url = `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=hostId&property_Id=${propertyId}`;
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': token
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
+                }
+
+                // Filter by property_id
+                const filteredData = Array.isArray(data)
+                    ? data.filter(booking => booking.property_id === propertyId)
+                    : [];
+
+                let html = `<div class="result success">✅ Success! Found ${filteredData.length} bookings for property ${propertyId}:<br><br>`;
+
+                if (filteredData.length === 0) {
+                    html += `<strong>No bookings found for this property.</strong><br>`;
+                    html += `<small>Total bookings in response: ${Array.isArray(data) ? data.length : 0}</small><br>`;
+                } else {
+                    filteredData.forEach((booking, i) => {
+                        html += `<strong>Booking ${i + 1}:</strong><br>`;
+                        html += `  ID: ${booking.id}<br>`;
+                        html += `  Guest: ${booking.guestname || 'N/A'}<br>`;
+                        html += `  Host: ${booking.hostname || 'N/A'}<br>`;
+                        html += `  Status: ${booking.status}<br>`;
+                        html += `  Arrival: ${new Date(booking.arrivaldate).toLocaleDateString()} (${booking.arrivaldate})<br>`;
+                        html += `  Departure: ${new Date(booking.departuredate).toLocaleDateString()} (${booking.departuredate})<br>`;
+                        html += `  Guests: ${booking.guests || 0}<br>`;
+                        html += `  Property ID: ${booking.property_id}<br>`;
+                        html += `<br>`;
+                    });
+                }
+
+                html += `<br><strong>Raw JSON (filtered):</strong><br>${JSON.stringify(filteredData, null, 2)}</div>`;
+                document.getElementById('bookingsResult').innerHTML = html;
+
+            } catch (error) {
+                document.getElementById('bookingsResult').innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

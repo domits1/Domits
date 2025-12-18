@@ -90,7 +90,7 @@ import SevereColdIcon from "@mui/icons-material/SevereCold";
 import ChairAltIcon from "@mui/icons-material/ChairAlt";
 import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTouristTaxes";
 
-    const ListingDetails = () => {
+const ListingDetails = () => {
   const navigate = useNavigate();
   const { search } = useLocation();
   const searchParams = new URLSearchParams(search);
@@ -115,6 +115,8 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
   const [cleaningFee, setCleaningFee] = useState(0);
   const [taxes, setTaxes] = useState(0);
   const [amountOfGuest, setAmountOfGuest] = useState(0);
+  const [dynamicPrices, setDynamicPrices] = useState({}); // Store pricing from API
+  const [pricePerNight, setPricePerNight] = useState(0); // Average price per night
   const [hostID, setHostID] = useState();
   const [showAll, setShowAll] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -414,6 +416,33 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
     };
     appendUserID();
   }, []);
+  // Fetch dynamic pricing from API
+  const fetchDynamicPricing = async (propertyId, startDate, endDate) => {
+    try {
+      const url = `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/calendarData?property=${propertyId}`;
+      console.log("Fetching pricing from:", url);
+
+      const response = await fetch(url);
+      console.log("Pricing API response status:", response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Pricing API response data:", data);
+
+        if (data.pricing) {
+          console.log("Setting dynamic prices:", data.pricing);
+          setDynamicPrices(data.pricing);
+        } else {
+          console.log("No pricing data in response");
+        }
+      } else {
+        console.error("Pricing API returned non-OK status:", response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching dynamic pricing:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchAccommodation = async () => {
       try {
@@ -429,12 +458,28 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
         }
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
-        console.log(data);
+        console.log("Accommodation data:", data);
         setAccommodation(data);
         setDates(data.StartDate, data.EndDate, data.BookedDates || []);
         fetchHostInfo(data.OwnerId);
         setHostID(data.OwnerId);
         fetchReviewsByAccommodation(data.ID);
+
+        // Set initial dates: today and tomorrow
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        console.log("Setting initial checkIn:", today);
+        console.log("Setting initial checkOut:", tomorrow);
+
+        setCheckIn(today);
+        setCheckOut(tomorrow);
+
+        // Fetch dynamic pricing for initial dates
+        console.log("Fetching dynamic pricing for property:", data.ID);
+        await fetchDynamicPricing(data.ID, today, tomorrow);
       } catch (error) {
         console.error("Error fetching accommodation data:", error);
       }
@@ -618,10 +663,18 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
 
   const handleCheckInChange = (date) => {
     setCheckIn(date);
+    // Fetch pricing when check-in changes
+    if (date && checkOut && accommodation) {
+      fetchDynamicPricing(accommodation.ID, date, checkOut);
+    }
   };
 
   const handleCheckOutChange = (date) => {
     setCheckOut(date);
+    // Fetch pricing when check-out changes
+    if (checkIn && date && accommodation) {
+      fetchDynamicPricing(accommodation.ID, checkIn, date);
+    }
   };
 
   const checkFormValidity = () => {
@@ -641,7 +694,23 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
       if (!accommodation || !checkIn || !checkOut) return;
 
       const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-      const basePrice = nights * accommodation.Rent * 100;
+
+      // Calculate base price using dynamic pricing from API
+      let totalNightlyPrice = 0;
+      const currentDate = new Date(checkIn);
+      const endDate = new Date(checkOut);
+
+      while (currentDate < endDate) {
+        const dateKey = currentDate.toISOString().split('T')[0];
+        const nightPrice = dynamicPrices[dateKey] || accommodation.Rent;
+        totalNightlyPrice += nightPrice;
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Store average price per night for display
+      setPricePerNight(nights > 0 ? totalNightlyPrice / nights : accommodation.Rent);
+
+      const basePrice = totalNightlyPrice * 100;
       const cleaningFee = accommodation.CleaningFee ? parseFloat(accommodation.CleaningFee * 100) : 0;
       const calculatedServiceFee = basePrice * 0.15;
 
@@ -678,7 +747,7 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
     };
 
     calculateTotal();
-  }, [accommodation, checkIn, checkOut]);
+  }, [accommodation, checkIn, checkOut, dynamicPrices, adults, children, pets]);
 
   const handleStartChat = () => {
     const recipientId = hostID;
@@ -968,6 +1037,7 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
                   onCheckOutChange={handleCheckOutChange}
                   checkInFilter={combinedCheckInDateFilter}
                   checkOutFilter={combinedCheckOutDateFilter}
+                  dynamicPrices={dynamicPrices}
                 />
               </div>
               <div>
@@ -1169,31 +1239,54 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
                                     <p className="disclaimer">*You won't be charged yet</p>
                                 )} */}
               {checkIn && checkOut ? (
-                <div className="price-details">
-                  <div className="price-item">
-                    <p>
-                      {(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights x €{accommodation.Rent}{" "}
-                      a night
-                    </p>
-                    <p>€{((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)) * accommodation.Rent}</p>
+                <>
+                  <div className="booking-summary">
+                    <h4>Booking details</h4>
+                    <div className="date-info">
+                      <div>
+                        <strong>Check in</strong>
+                        <p>{dateFormatterDD_MM_YYYY(checkIn)}</p>
+                      </div>
+                      <div className="nights-info">
+                        <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} night{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) > 1 ? 's' : ''}</p>
+                        <span>↔</span>
+                      </div>
+                      <div>
+                        <strong>Check out</strong>
+                        <p>{dateFormatterDD_MM_YYYY(checkOut)}</p>
+                      </div>
+                    </div>
+                    <div className="guest-info">
+                      <strong>Guests</strong>
+                      <p>{adults} adult{adults > 1 ? 's' : ''} {children > 0 ? `${children} kid${children > 1 ? 's' : ''}` : ''}</p>
+                    </div>
                   </div>
-                  <div className="price-item">
-                    <p>Cleaning fee</p>
-                    <p>&euro;{cleaningFee}</p>
+
+                  <div className="price-details">
+                    <div className="price-item">
+                      <p>
+                        {(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} night{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) > 1 ? 's' : ''} x €{pricePerNight.toFixed(2)} a night
+                      </p>
+                      <p>€{(((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)) * pricePerNight).toFixed(2)}</p>
+                    </div>
+                    <div className="price-item">
+                      <p>Cleaning fee</p>
+                      <p>€{cleaningFee.toFixed(2)}</p>
+                    </div>
+                    <div className="price-item">
+                      <p>Domits service fee</p>
+                      <p>€{ServiceFee.toFixed(2)}</p>
+                    </div>
+                    <div className="price-item">
+                      <p>Taxes</p>
+                      <p>€{taxes.toFixed(2)}</p>
+                    </div>
+                    <div className="total">
+                      <p>Total</p>
+                      <p>€{totalPrice.toFixed(2)}</p>
+                    </div>
                   </div>
-                  <div className="price-item">
-                    <p>Domits service fee</p>
-                    <p>€{ServiceFee.toFixed(2)}</p>
-                  </div>
-                  <div className="price-item">
-                    <p>Taxes</p>
-                    <p>€{taxes.toFixed(2)}</p>
-                  </div>
-                  <div className="total">
-                    <p>Total</p>
-                    <p>€{totalPrice.toFixed(2)}</p>
-                  </div>
-                </div>
+                </>
               ) : (
                 <div>Please choose your Check-in date and Check-out date</div>
               )}

@@ -6,7 +6,7 @@ import '../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostCo
 import { FaCog, FaSearch, FaBars, FaPlus } from 'react-icons/fa';
 import AutomatedSettings from './AutomatedSettings';
 
-const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardType, isChatOpen = false, activeContactId = null }) => {
+const ContactList = ({ userId, onContactClick, message, dashboardType, isChatOpen = false }) => {
     const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId, dashboardType);
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [displayType, setDisplayType] = useState('contacts');
@@ -16,17 +16,6 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
     const [automatedSettings, setAutomatedSettings] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortAlphabetically, setSortAlphabetically] = useState(false);
-    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactId: null });
-    useEffect(() => {
-        setSelectedContactId(activeContactId || null);
-    }, [activeContactId]);
-
-    useEffect(() => {
-        const handleClickAway = () => setContextMenu((prev) => prev.visible ? { ...prev, visible: false } : prev);
-        window.addEventListener('click', handleClickAway);
-        return () => window.removeEventListener('click', handleClickAway);
-    }, []);
-
 
     const labels = {
         contacts: 'Contacts',
@@ -141,9 +130,7 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
                     latestMessage: { 
                         text: displayText, 
                         createdAt: message.createdAt,
-                        fileUrls: message.fileUrls,
-                        userId: message.userId,
-                        recipientId: message.recipientId
+                        fileUrls: message.fileUrls 
                     }
                 };
             }
@@ -175,24 +162,6 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
     const handleClick = (contactId, contactName, contactImage) => {
         setSelectedContactId(contactId);
         onContactClick?.(contactId, contactName, contactImage);
-    };
-
-    const handleContextMenu = (event, contact) => {
-        if (displayType === 'pendingContacts') return;
-        event.preventDefault();
-        setContextMenu({
-            visible: true,
-            x: event.clientX,
-            y: event.clientY,
-            contactId: contact.recipientId,
-        });
-    };
-
-    const handleCloseSelectedChat = () => {
-        if (contextMenu.contactId) {
-            onCloseChat?.(contextMenu.contactId);
-        }
-        setContextMenu({ visible: false, x: 0, y: 0, contactId: null });
     };
 
     return (
@@ -271,7 +240,6 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
                                 key={contact.userId}
                                 className={`contact-list-list-item ${displayType === 'pendingContacts' ? 'disabled' : ''}`}
                                 onClick={() => displayType !== 'pendingContacts' && handleClick(contact.recipientId, contact.givenName, contact.profileImage)}
-                                onContextMenu={(event) => handleContextMenu(event, contact)}
                             >
                                 <ContactItem
                                     contact={contact}
@@ -285,17 +253,6 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
                         ))
                 )}
             </ul>
-            {contextMenu.visible && (
-                <div
-                    className="contact-context-menu"
-                    style={{ top: contextMenu.y, left: contextMenu.x }}
-                    role="menu"
-                >
-                    <button type="button" onClick={handleCloseSelectedChat}>
-                        Close chat
-                    </button>
-                </div>
-            )}
         </div>
     );
 };

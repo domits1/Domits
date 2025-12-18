@@ -246,11 +246,6 @@ export class PropertyController {
         try {
             const propertyId = event.queryStringParameters.property;
             const property = await this.propertyService.getFullActivePropertyById(propertyId)
-            const hostId = property.property.hostId
-            const userInfo = await this.authManager.getUserInfoFromId(hostId);
-            property.property.username = userInfo.userName;
-            property.property.familyname = userInfo.familyName;
-
             return {
                 statusCode: 200,
                 headers: responseHeaders,
@@ -336,6 +331,102 @@ export class PropertyController {
         }
 
         return builder.build();
+    }
+
+    // -------------------------
+    // PUT /property/availability
+    // -------------------------
+    async updateAvailability(event) {
+        try {
+            const accessToken = event.headers.Authorization;
+            const eventBody = JSON.parse(event.body);
+            const propertyId = eventBody.propertyId;
+
+            // Authorize - user must be property owner
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+            // Update availability (blocked and maintenance dates)
+            await this.propertyService.updateAvailability(
+                propertyId,
+                eventBody.availability.blocked || [],
+                eventBody.availability.maintenance || []
+            );
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({
+                    message: "Availability updated successfully",
+                    propertyId: propertyId
+                })
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    // -------------------------
+    // PUT /property/pricing
+    // -------------------------
+    async updatePricing(event) {
+        try {
+            const accessToken = event.headers.Authorization;
+            const eventBody = JSON.parse(event.body);
+            const propertyId = eventBody.propertyId;
+
+            // Authorize - user must be property owner
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+            // Update per-date pricing
+            await this.propertyService.updatePricing(
+                propertyId,
+                eventBody.pricing || {}
+            );
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({
+                    message: "Pricing updated successfully",
+                    propertyId: propertyId
+                })
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    // -------------------------
+    // GET /property/hostDashboard/calendarData
+    // -------------------------
+    async getCalendarData(event) {
+        try {
+            const propertyId = event.queryStringParameters.property;
+            await this.authManager.authorizeOwnerRequest(event.headers.Authorization, propertyId);
+            const calendarData = await this.propertyService.getCalendarData(propertyId);
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(calendarData)
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
     }
 
 }

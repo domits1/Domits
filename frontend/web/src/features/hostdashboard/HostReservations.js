@@ -1,16 +1,14 @@
-import EventIcon from "@mui/icons-material/Event";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import SwapVertIcon from "@mui/icons-material/SwapVert";
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
-import spinner from "../../images/spinnner.gif";
-import { getAccessToken } from "../../services/getAccessToken.js";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
-import BooleanToString from "./services/booleanToString.js";
+import EventIcon from "@mui/icons-material/Event";
+import SwapVertIcon from "@mui/icons-material/SwapVert";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import getReservationsFromToken from "./services/getReservationsFromToken.js";
-import { calculateTotalPayment } from "./utils/reservationCalculations.js";
+import BooleanToString from "./services/booleanToString.js";
+import { getAccessToken } from "../../services/getAccessToken.js";
+import spinner from "../../images/spinnner.gif";
 import { usePagination } from "./hooks/usePagination.js";
-import filterReservations from "./utils/filterReservations.js";
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -18,18 +16,10 @@ const HostReservations = () => {
   const [userHasReservations, setUserHasReservations] = useState(false);
   const [bookings, setBooking] = useState(null);
   const [sortedBookings, setSortedBookings] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const authToken = getAccessToken();
   const itemsPerPage = 10;
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
-
-  const filteredBookings = useMemo(
-    () => filterReservations(sortedBookings || [], searchTerm),
-    [sortedBookings, searchTerm]
-  );
-
   const { currentPage, totalPages, paginatedItems, pageRange, goToPage, goToNextPage, goToPreviousPage } =
-    usePagination(filteredBookings || [], itemsPerPage);
+    usePagination(sortedBookings || [], itemsPerPage);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -70,11 +60,9 @@ const HostReservations = () => {
 
       reservations.forEach((item) => {
         bookingArray.push({
-          property_id: property.id,
           title: property.title,
           rate: property.rate,
-          city: property.city,
-          country: property.country,
+          id: property.id,
           ...item,
         });
       });
@@ -85,15 +73,6 @@ const HostReservations = () => {
       setSortedBookings(bookingArray.filter((booking) => booking.status === type));
     }
     goToPage(1);
-  };
-
-  const mapStatusToClass = (status) => {
-    if (!status) return "statusOther";
-    const normalized = String(status).toLowerCase();
-    if (normalized === "paid") return "statusPaid";
-    if (normalized === "awaiting payment" || normalized === "awaiting_payment") return "statusAwaitingPayment";
-    if (normalized === "failed") return "statusFailed";
-    return "statusOther";
   };
 
   const shouldShowPagination = userHasReservations && sortedBookings && sortedBookings.length > 0;
@@ -110,6 +89,7 @@ const HostReservations = () => {
         <img src={spinner} className={styles.CenterMe}></img>
       ) : (
         <>
+          <h2>Reservations</h2>
           <section className={styles.reservationContainer}>
             <section className={styles.reservationContent}>
               <div className={styles.reservationInfo}>
@@ -119,67 +99,60 @@ const HostReservations = () => {
                   You can manage your reservations on your properties here.
                 </p>
               </div>
-              <div className={styles.controlsRow}>
-                <div className={styles.reservationButtons}>
-                  <button onClick={() => sortBookings(null, bookings)}>All</button>
-                  <button onClick={() => sortBookings("Paid", bookings)}>Paid</button>
-                  <button onClick={() => sortBookings("Awaiting Payment", bookings)}>Awaiting Payment</button>
-                  <button onClick={() => sortBookings("Failed", bookings)}>Failed</button>
-                </div>
-                <div className={styles.searchWrap}>
-                  <input
-                    type="search"
-                    placeholder="Search by property, city, guest or id..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    className={styles.searchInput}
-                  />
-                </div>
+              <div className={styles.reservationButtons}>
+                <button onClick={() => sortBookings(null, bookings)}>All</button>
+                <button onClick={() => sortBookings("Paid", bookings)}>Paid</button>
+                <button onClick={() => sortBookings("Awaiting Payment", bookings)}>Awaiting Payment</button>
+                <button onClick={() => sortBookings("Failed", bookings)}>Failed</button>
               </div>
               <section className={styles.reservationData}>
                 <table className={styles.reservationTable}>
                   <thead>
                     <tr>
                       <th>
-                        Property ID
-                        <span className={styles.reservationIcons}></span>
+                        Reservation Id
+                        <span className={styles.reservationIcons}>
+                          <SwapVertIcon />
+                        </span>
                       </th>
                       <th>
-                        Accommodation Name
-                        <span className={styles.reservationIcons}></span>
+                        Accommodation name
+                        <span className={styles.reservationIcons}>
+                          <SwapVertIcon />
+                        </span>
                       </th>
                       <th>
-                        Location
-                        <span className={styles.reservationIcons}></span>
+                        Reserved dates
+                        <span className={styles.reservationIcons}>
+                          <FilterListIcon />
+                        </span>
                       </th>
                       <th>
-                        Guest Name
-                        <span className={styles.reservationIcons}></span>
+                        Requested on
+                        <span className={styles.reservationIcons}>
+                          <FilterListIcon />
+                        </span>
                       </th>
                       <th>
-                        Check In - Check Out
+                        Guest name
+                        <span className={styles.reservationIcons}>
+                          <SwapVertIcon />
+                        </span>
+                      </th>
+                      <th>
+                        Rate
+                        <span className={styles.reservationIcons}>
+                          <SwapVertIcon />
+                        </span>
+                      </th>
+                      <th>
+                        Payed
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
                         Status
-                        <span className={styles.reservationIcons}></span>
-                      </th>
-                      <th>
-                        Total Payment
-                        <span className={styles.reservationIcons}></span>
-                      </th>
-                      <th>
-                        Commission
-                        <span className={styles.reservationIcons}></span>
-                      </th>
-                      <th>
-                        Reservation Number
-                        <span className={styles.reservationIcons}></span>
-                      </th>
-                      <th>
-                        Booked On
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
@@ -190,57 +163,24 @@ const HostReservations = () => {
                     {shouldShowPagination ? (
                       paginatedItems.map((booking) => (
                         <tr key={booking.id}>
+                          <td className={styles.singleReservationRow}>{booking.id}</td>
+                          <td className={styles.singleReservationRow}>{booking.title}</td>
                           <td className={styles.singleReservationRow}>
-                            <span className={styles.cellContent}>{booking.property_id}</span>
+                            {new Date(booking.arrivaldate).toLocaleDateString()} -{" "}
+                            {new Date(booking.departuredate).toLocaleDateString()}
                           </td>
                           <td className={styles.singleReservationRow}>
-                            <span className={styles.cellContent}>{booking.title}</span>
+                            {new Date(booking.createdat).toLocaleDateString()}
                           </td>
-                          <td className={styles.singleReservationRow}>
-                            <span className={styles.cellContent}>
-                              {booking.city}, {booking.country}
-                            </span>
-                          </td>
-                          <td className={styles.singleReservationRow}>
-                            <span className={styles.cellContent}>{booking.guestname}</span>
-                          </td>
-                          <td className={styles.singleReservationRow}>
-                            <span className={styles.cellContent}>
-                              {new Date(booking.arrivaldate).toLocaleDateString()} -{" "}
-                              {new Date(booking.departuredate).toLocaleDateString()}
-                            </span>
-                          </td>
-                          <td className={styles.singleReservationRow}>
-                            <span className={`${styles.status} ${styles[mapStatusToClass(booking.status)]}`}>
-                              {booking.status}
-                            </span>
-                          </td>
-                          <td className={styles.singleReservationRow}>
-                            <span className={styles.cellContent}>
-                              €{calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate)}
-                            </span>
-                          </td>
-                          <td className={styles.singleReservationRow}>
-                            <span className={styles.cellContent}>
-                              €
-                              {(
-                                calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate) * 0.1
-                              ).toFixed(2)}
-                            </span>
-                          </td>
-                          <td className={styles.singleReservationRow}>
-                            <span className={styles.cellContent}>{booking.id}</span>
-                          </td>
-                          <td className={styles.singleReservationRow}>
-                            <span className={styles.cellContent}>
-                              {new Date(booking.createdat).toLocaleDateString()}
-                            </span>
-                          </td>
+                          <td className={styles.singleReservationRow}>{booking.guestname}</td>
+                          <td className={styles.singleReservationRow}>€{booking.rate}</td>
+                          <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
+                          <td className={styles.singleReservationRow}>{booking.status}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td className={styles.noData} colSpan={10}>
+                        <td className={styles.noData} colSpan={8}>
                           You currently have no reservations for your accommodation(s). Refresh the page to try again.
                         </td>
                       </tr>

@@ -68,7 +68,7 @@ class ReservationRepository {
 
     if (query < 1) {
       console.error("No bookings found for property ", property_Id);
-      return { response: null };
+      return { response: null }
     }
     return {
       response: query,
@@ -149,19 +149,17 @@ class ReservationRepository {
     // Fetches user's property first, throws error if not found
     this.lambdaRepository = new LambdaRepository();
     const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);
-    const properties = propertiesOutput.map((item) => ({
-      id: item.id,
-      title: item.title,
-      rate: item.rate,
-      city: item.city,
-      country: item.country,
+    const properties = propertiesOutput.id.map((_, i) => ({
+      id: propertiesOutput.id[i],
+      title: propertiesOutput.title[i],
+      rate: propertiesOutput.rate[i],
     }));
 
     // Proceeds to send a request for every id returning their respective data
     const results = await Promise.all(
       properties.map(async (property) => {
         const res = await this.readByPropertyId(property.id);
-
+        
         return {
           ...property,
           res,
@@ -174,33 +172,6 @@ class ReservationRepository {
     };
   }
 
-  // ---------
-  // Read bookings by HostID (single property) - Used for the Calender as of now.
-  // ---------
-  async readByHostIdSingleProperty(host_id, property_Id) {
-    const lambdaRepository = new LambdaRepository();
-    const pricing = await lambdaRepository.getPropertyPricingById(property_Id);
-
-    const client = await Database.getInstance();
-    const query = await client
-      .getRepository(Booking)
-      .createQueryBuilder("booking")
-      .where("booking.hostid = :hostid", { hostid: host_id })
-      .andWhere("booking.property_id = :property_id", { property_id: property_Id })
-      .getMany();
-
-    if (query.length < 1) {
-      throw new NotFoundException("No bookings found with given property_id and hostid.");
-    }
-
-    return {
-      response: {
-        query,
-        pricing,
-      },
-      statusCode: 200,
-    };
-  }
   // ---------
   // Read bookings by departureDate + property_Id (auth-less) (this is for the guests)
   // ---------

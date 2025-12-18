@@ -82,7 +82,7 @@
     ]
   },
   "dependencies": {
-    "@apollo/client": "^3.11.8",
+    "@apollo/client": "^3.14.0",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -98,10 +98,12 @@
     "babel-eslint": "^10.1.0",
     "browser-image-compression": "^2.0.2",
     "chart.js": "^4.5.0",
+    "cors": "^2.8.5",
     "country-data": "^0.0.31",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.7",
-    "graphql": "^16.9.0",
+    "express": "^5.1.0",
+    "graphql": "^16.12.0",
     "immer": "^10.0.4",
     "lucide-react": "^0.503.0",
     "node-fetch": "^2.7.0",

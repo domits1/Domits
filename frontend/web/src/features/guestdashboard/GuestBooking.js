@@ -1,157 +1,378 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Auth } from "aws-amplify";
 import { useNavigate } from "react-router-dom";
-import { getGuestBookings } from "./services/bookingAPI";
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
-import { getBookingTimestamp } from "../../utils/getBookingTimestamp";
-import { timestampToDate } from "../../utils/timestampToDate";
 
-const API_LISTING_DETAILS_BASE =
-  "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails";
+// API (unchanged path; now called with GET)
+const API_FETCH_BOOKINGS =
+  "https://j1ids2iygi.execute-api.eu-north-1.amazonaws.com/default/FetchGuestPayments";
 
-const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-const PLACEHOLDER_IMAGE =
-  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='Arial' font-size='20'>No image</text></svg>";
+/* ---------------- Helpers ---------------- */
+function toDate(val) {
+  if (val == null) return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
 
-const buildListingDetailsUrl = (propertyId) =>
-  `${API_LISTING_DETAILS_BASE}?property=${encodeURIComponent(propertyId)}`;
+  if (typeof val === "number" || /^\d+$/.test(String(val))) {
+    let n = Number(val);
+    if (!Number.isFinite(n)) return null;
+    if (String(Math.trunc(n)).length <= 10) n *= 1000; 
+    const d = new Date(n);
+    return isNaN(d.getTime()) ? null : d;
+  }
 
-const normalizeImageUrl = (maybeKeyOrUrl) => {
-  if (!maybeKeyOrUrl) return PLACEHOLDER_IMAGE;
-  const val = String(maybeKeyOrUrl);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    const d = new Date(`${val}T00:00:00`);
+    return isNaN(d.getTime()) ? null : d;
+  }
 
-  if (val.startsWith("http")) return val;
-  return `${S3_URL}${val.replace(/^\/+/, "")}`;
-};
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+}
 
-const splitBookingsByTime = (bookingList) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+const isSameOrBefore = (a, b) => a && b && a.getTime() <= b.getTime();
+const isSameOrAfter = (a, b) => a && b && a.getTime() >= b.getTime();
+const inRange = (d, start, end) => isSameOrAfter(d, start) && isSameOrBefore(d, end);
 
-  const weekAhead = new Date(today);
-  weekAhead.setDate(today.getDate() + 7);
+// Treat these as “active stays”
+const ACTIVE_STATUSES = new Set(["Accepted", "Paid", "Confirmed"]);
 
-  const currentBookings = [];
-  const upcomingBookings = [];
-  const pastBookings = [];
+/** Prefer AccessToken for API Gateway User Pool authorizers; fall back to IdToken */
+async function getBestAuthHeader() {
+  try {
+    const session = await Auth.currentSession();
+    const accessToken = session?.getAccessToken?.().getJwtToken?.();
+    const idToken = session?.getIdToken?.().getJwtToken?.();
+    if (accessToken) return { Authorization: `Bearer ${accessToken}` };
+    if (idToken) return { Authorization: `Bearer ${idToken}` };
+  } catch {}
+  return {};
+}
 
-  bookingList.forEach((bookingItem) => {
-    const arrivalDate =
-      timestampToDate(
-        bookingItem?.arrivaldate ??
-          bookingItem?.arrival_date ??
-          bookingItem?.arrivalDate
-      ) || null;
+/** GET bookings so Lambda hits controller.read() */
+async function fetchGuestBookings(guestID, signal, attempts = 2) {
+  const headersBase = {
+    "x-correlation-id": crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()),
+  };
 
-    const departureDate =
-      timestampToDate(
-        bookingItem?.departuredate ??
-          bookingItem?.departure_date ??
-          bookingItem?.departureDate
-      ) || null;
+  const authHeader = await getBestAuthHeader();
 
-    if (!arrivalDate || !departureDate) {
-      upcomingBookings.push(bookingItem);
-      return;
+  // Be liberal: include both guestId & GuestID to satisfy any backend casing
+  const url = new URL(API_FETCH_BOOKINGS);
+  url.searchParams.set("guestId", guestID);
+  url.searchParams.set("GuestID", guestID);
+
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url.toString(), {
+        method: "GET",
+        headers: { ...headersBase, ...authHeader },
+        signal,
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        const err = new Error(`GET ${res.status} ${res.statusText} ${text || ""}`.trim());
+        err._status = res.status;
+        err._text = text;
+        throw err;
+      }
+
+      // response normalisation
+      const json = await res.json().catch(async () => {
+        const raw = await res.text();
+        try { return JSON.parse(raw); } catch { return raw; }
+      });
+
+      if (Array.isArray(json)) return json;
+      if (Array.isArray(json?.response)) return json.response;
+      if (Array.isArray(json?.data)) return json.data;
+      if (typeof json?.body === "string") {
+        try {
+          const inner = JSON.parse(json.body);
+          if (Array.isArray(inner)) return inner;
+          if (Array.isArray(inner?.response)) return inner.response;
+        } catch {}
+      }
+      return [];
+    } catch (e) {
+      if (e.name === "AbortError") throw e;
+      lastErr = e;
+      await new Promise((r) => setTimeout(r, 350)); // brief backoff then retry
     }
+  }
+  throw lastErr || new Error("Request failed");
+}
 
-    const arrival = new Date(arrivalDate);
-    arrival.setHours(0, 0, 0, 0);
+/* ---------------- Component ---------------- */
+const BookingGuestDashboard = ({ timezone }) => {
+  const navigate = useNavigate();
 
-    const departure = new Date(departureDate);
-    departure.setHours(0, 0, 0, 0);
+  const [bookings, setBookings] = useState([]);
+  const [guestID, setGuestID] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    if (departure < today) {
-      pastBookings.push(bookingItem);
-      return;
-    }
+  const mountedRef = useRef(true);
 
-    const isOngoing = arrival <= today && departure >= today;
-    const startsThisWeek = arrival > today && arrival <= weekAhead;
+  // Load Cognito user id (sub)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        const sub = user?.attributes?.sub ?? user?.username ?? null;
+        if (!cancelled) setGuestID(sub);
+      } catch {
+        try {
+          const info = await Auth.currentUserInfo();
+          if (!cancelled) setGuestID(info?.attributes?.sub ?? null);
+        } catch (err2) {
+          console.error("Auth error:", err2);
+          if (!cancelled) setErrorMsg("Kon je sessie niet ophalen (auth).");
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
-    if (isOngoing || startsThisWeek) {
-      currentBookings.push(bookingItem);
-    } else {
-      upcomingBookings.push(bookingItem);
-    }
-  });
+  // Fetch with GET (so backend uses read())
+  const doFetch = React.useCallback(() => {
+    if (!guestID) return;
+    const ac = new AbortController();
+    (async () => {
+      setLoading(true);
+      setErrorMsg("");
+      try {
+        const data = await fetchGuestBookings(guestID, ac.signal);
+        if (!mountedRef.current) return;
+        setBookings(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (e.name !== "AbortError") {
+          console.error("Fetch bookings failed:", e);
+          const hint =
+            e._status === 401 || e._status === 403
+              ? "\n\nTip: Check API Gateway authorizer (expects AccessToken vs IdToken) and that GET is enabled on this route."
+              : String(e).includes("Failed to fetch")
+              ? "\n\nTip: Likely CORS/OPTIONS issue—ensure GET responses include CORS headers."
+              : "";
+          if (mountedRef.current) setErrorMsg(`Boekingen ophalen mislukt.\n${e.message || e}\n${hint}`);
+        }
+      } finally {
+        if (mountedRef.current) setLoading(false);
+      }
+    })();
+    return () => ac.abort();
+  }, [guestID]);
 
-  return { currentBookings, upcomingBookings, pastBookings };
-};
+  useEffect(() => {
+    const cleanup = doFetch();
+    return cleanup;
+  }, [doFetch]);
 
-const renderBookingRow = (
-  bookingItem,
-  index,
-  { getPropertyId, propertyMap, handleBookingClick, formatBookingDates }
-) => {
-  const propertyId = getPropertyId(bookingItem);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
-  const fallbackTitle =
-    bookingItem?.title ||
-    bookingItem?.Title ||
-    (bookingItem?.property_id
-      ? `Property #${bookingItem.property_id}`
-      : "Booking");
 
-  const propertyInfo = propertyId ? propertyMap[propertyId] : undefined;
-  const displayTitle = propertyInfo?.title || fallbackTitle;
+  const getStart = (b) =>
+    toDate(
+      b?.arrivaldate ??
+      b?.arrival_date ??
+      b?.arrivalDate ??
+      b?.StartDate ?? b?.start_date ?? b?.checkIn
+    );
 
-  const candidateImageKey =
-    propertyInfo?.imageUrl ||
-    bookingItem?.propertyImage ||
-    bookingItem?.image ||
-    bookingItem?.images?.[0]?.key ||
-    bookingItem?.property?.coverImage ||
-    bookingItem?.property?.images?.[0]?.key ||
-    null;
+  const getEnd = (b) =>
+    toDate(
+      b?.departuredate ??
+      b?.departure_date ??
+      b?.departureDate ??
+      b?.EndDate ?? b?.end_date ?? b?.checkOut
+    );
 
-  const imageUrl = normalizeImageUrl(candidateImageKey);
+  const getStatusRaw = (b) => String(b?.status ?? b?.Status ?? "").trim();
 
-  const bookingCity =
-    propertyInfo?.city ||
-    bookingItem?.city ||
-    bookingItem?.location?.city ||
-    "Unknown city";
 
-  const bookingStatus = String(
-    bookingItem?.status || bookingItem?.Status || ""
+  const now =
+    timezone
+      ? new Date(new Date().toLocaleString("en-US", { timeZone: timezone }))
+      : new Date();
+
+  
+  const currentBookings = useMemo(
+    () =>
+      bookings.filter((b) => {
+        const s = getStart(b);
+        const e = getEnd(b);
+        const status = getStatusRaw(b);
+        const accepted = ACTIVE_STATUSES.has(status) || status === "";
+        return accepted && s && e && inRange(now, s, e);
+      }),
+    [bookings, now]
   );
 
-  return (
-    <div
-      key={
-        bookingItem?.id || bookingItem?.ID || `${index}-${displayTitle}`
-      }
-      className="guest-card-row"
-      role="button"
-      tabIndex={0}
-      onClick={() => handleBookingClick(bookingItem)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          handleBookingClick(bookingItem);
+  const futureBookings = useMemo(
+    () =>
+      bookings
+        .filter((b) => {
+          const s = getStart(b);
+          const e = getEnd(b);
+          const status = getStatusRaw(b);
+          const accepted = ACTIVE_STATUSES.has(status) || status === "";
+          return accepted && s && e && s.getTime() > now.getTime();
+        })
+        .sort((a, b) => (getStart(a)?.getTime() ?? 0) - (getStart(b)?.getTime() ?? 0))
+        .slice(0, 5),
+    [bookings, now]
+  );
+
+  const pastBookings = useMemo(
+    () =>
+      bookings
+        .filter((b) => {
+          const e = getEnd(b);
+          return e && e.getTime() < now.getTime();
+        })
+        .sort((a, b) => (getEnd(b)?.getTime() ?? 0) - (getEnd(a)?.getTime() ?? 0))
+        .reverse()
+        .slice(0, 5),
+    [bookings, now]
+  );
+
+  const cancelledBookings = useMemo(
+    () =>
+      bookings
+        .filter((b) => getStatusRaw(b).toLowerCase() === "cancelled")
+        .sort((a, b) => {
+          const da = toDate(a?.updatedAt ?? a?.createdAt)?.getTime() ?? 0;
+          const db = toDate(b?.updatedAt ?? b?.createdAt)?.getTime() ?? 0;
+          return db - da;
+        })
+        .slice(0, 5),
+    [bookings]
+  );
+
+  const onRowClick = (propertyId, fallbackId) => {
+    const id = propertyId ?? fallbackId;
+    if (!id) return;
+    navigate(`/listingdetails?ID=${encodeURIComponent(id)}`);
+  };
+
+  const Row = ({ b }) => {
+    const s = getStart(b);
+    const e = getEnd(b);
+    const key = b?.id ?? b?.ID ?? `${b?.property_id ?? "prop"}-${s?.getTime() ?? "s"}-${e?.getTime() ?? "e"}`;
+
+    const title =
+      b?.Title ??
+      b?.title ??
+      b?.AccommodationName ??
+      (b?.property_id ? `Property #${b.property_id}` : "-");
+
+    const subline = [
+      s && e ? `${dateFormatterDD_MM_YYYY(s)} → ${dateFormatterDD_MM_YYYY(e)}` : "-",
+      b?.hostname ? ` • Host: ${b.hostname}` : null,
+      b?.guests ? ` • Guests: ${b.guests}` : null,
+      getStatusRaw(b) ? ` • ${getStatusRaw(b)}` : null,
+    ]
+      .filter(Boolean)
+      .join("");
+
+    return (
+      <div
+        key={key}
+        className="guest-card-row is-clickable"
+        onClick={() => onRowClick(b?.property_id, b?.id ?? b?.ID)}
+        title="Open listing details"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) =>
+          (e.key === "Enter" || e.key === " ") &&
+          onRowClick(b?.property_id, b?.id ?? b?.ID)
         }
-      }}
-    >
-      <div className="guest-booking-row-inner">
-        <div className="guest-booking-row-image">
-          <img
-            src={imageUrl}
-            alt={displayTitle}
-            onError={(e) => {
-              e.currentTarget.src = PLACEHOLDER_IMAGE;
-            }}
-          />
+      >
+        <div className="row-title">{title}</div>
+        <div className="row-sub">{subline || "-"}</div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="guest-booking-page-body">
+      <div className="guest-booking-dashboards"> 
+        {/* <h2>{user.name ? `${user.name} Bookings` : "Bookings"}</h2> */}
         </div>
-        <div className="guest-booking-row-main">
-          <div className="row-title">{displayTitle}</div>
-          <div className="row-sub">{bookingCity}</div>
-          <div className="guest-booking-row-meta">
-            <span className="guest-booking-status">
-              {bookingStatus || "—"}
-            </span>
-            <span className="guest-booking-dates">
-              {formatBookingDates(bookingItem)}
-            </span>
+
+      <div className="guest-booking-bookingContent">
+        {/* status row */}
+        <div className="guest-booking-status">
+          {loading ? (
+            <span className="guest-booking-info">Loading bookings…</span>
+          ) : errorMsg ? (
+            <div className="guest-booking-error" role="alert" style={{ whiteSpace: "pre-wrap" }}>
+              {errorMsg}
+              <div style={{ marginTop: 8 }}>
+                <button className="guest-booking-retry" onClick={doFetch} type="button">Retry</button>
+              </div>
+              <details style={{ marginTop: 8 }}>
+                <summary>Troubleshoot tips</summary>
+                <ul style={{ marginLeft: 16 }}>
+                  <li><b>401/403?</b> API authorizer may require <code>AccessToken</code>. This component already prefers it.</li>
+                  <li><b>TypeError: Failed to fetch</b> → CORS: ensure GET responses include <code>Access-Control-Allow-Origin</code> etc.</li>
+                  <li><b>405 Method Not Allowed</b> → enable GET on this route in API Gateway.</li>
+                </ul>
+              </details>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Summary cards */}
+        <div className="guest-booking-summary-grid">
+          {/* Current */}
+          <div className="guest-card">
+            <div className="guest-card-header">Current booking</div>
+            <div className="guest-card-body">
+              {currentBookings.length === 0 ? (
+                <div className="guest-booking-info">No active stay today.</div>
+              ) : (
+                currentBookings.map((b) => <Row key={(b.ID ?? b.id) || Math.random()} b={b} />)
+              )}
+            </div>
+          </div>
+
+          {/* Upcoming */}
+          <div className="guest-card">
+            <div className="guest-card-header">Upcoming bookings</div>
+            <div className="guest-card-body">
+              {futureBookings.length === 0 ? (
+                <div className="guest-booking-info">No upcoming stays.</div>
+              ) : (
+                futureBookings.map((b) => <Row key={(b.ID ?? b.id) || Math.random()} b={b} />)
+              )}
+            </div>
+          </div>
+
+          {/* Past */}
+          <div className="guest-card">
+            <div className="guest-card-header">Past bookings</div>
+            <div className="guest-card-body">
+              {pastBookings.length === 0 ? (
+                <div className="guest-booking-info">No past stays yet.</div>
+              ) : (
+                pastBookings.map((b) => <Row key={(b.ID ?? b.id) || Math.random()} b={b} />)
+              )}
+            </div>
+          </div>
+
+          {/* Cancelled */}
+          <div className="guest-card">
+            <div className="guest-card-header">Cancelled bookings</div>
+            <div className="guest-card-body">
+              {cancelledBookings.length === 0 ? (
+                <div className="guest-booking-info">No cancelled bookings.</div>
+              ) : (
+                cancelledBookings.map((b) => <Row key={(b.ID ?? b.id) || Math.random()} b={b} />)
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -159,365 +380,4 @@ const renderBookingRow = (
   );
 };
 
-function GuestBooking() {
-  const navigate = useNavigate();
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [guestId, setGuestId] = useState(null);
-  const [user, setUser] = useState({ name: "", email: "" });
-  const [bookings, setBookings] = useState([]);
-  const [error, setError] = useState("");
-
-  const [propertyMap, setPropertyMap] = useState({});
-  const [propLoading, setPropLoading] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadUser = async () => {
-      try {
-        const userInfo = await Auth.currentUserInfo();
-        if (!isMounted) return;
-
-        const cognitoSub = userInfo?.attributes?.sub || null;
-        setGuestId(cognitoSub);
-        setUser({
-          name: userInfo?.attributes?.given_name || "",
-          email: userInfo?.attributes?.email || "",
-        });
-      } catch (err) {
-        if (isMounted) {
-          setError("Could not load your session.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadUser();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const getPropertyId = (booking) =>
-    booking?.property_id ??
-    booking?.propertyId ??
-    booking?.PropertyID ??
-    booking?.id ??
-    booking?.ID ??
-    null;
-
-  const fetchBookings = useCallback(async () => {
-    if (!guestId) return;
-
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const bookingData = await getGuestBookings(guestId);
-
-      let normalizedBookings = [];
-      if (Array.isArray(bookingData)) normalizedBookings = bookingData;
-      else if (Array.isArray(bookingData?.data))
-        normalizedBookings = bookingData.data;
-      else if (Array.isArray(bookingData?.response))
-        normalizedBookings = bookingData.response;
-      else if (typeof bookingData?.body === "string") {
-        try {
-          const innerParsed = JSON.parse(bookingData.body);
-          if (Array.isArray(innerParsed)) normalizedBookings = innerParsed;
-          else if (Array.isArray(innerParsed?.response))
-            normalizedBookings = innerParsed.response;
-        } catch {
-          // ignore JSON parse errors here
-        }
-      }
-
-      normalizedBookings.sort(
-        (a, b) => getBookingTimestamp(b) - getBookingTimestamp(a)
-      );
-
-      setBookings(normalizedBookings);
-    } catch (err) {
-      console.error("Error fetching bookings:", err);
-      setError("Could not load your bookings.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [guestId]);
-
-  useEffect(() => {
-    if (guestId) {
-      fetchBookings();
-    }
-  }, [guestId, fetchBookings]);
-
-  const fetchPropertyDetails = useCallback(
-    async (propertyIds) => {
-      if (!propertyIds?.length) return;
-
-      const toFetch = propertyIds.filter(
-        (id) => id && !propertyMap[id]
-      );
-      if (!toFetch.length) return;
-
-      setPropLoading(true);
-      try {
-        const results = await Promise.all(
-          toFetch.map(async (pid) => {
-            try {
-              const resp = await fetch(buildListingDetailsUrl(pid));
-              if (!resp.ok) throw new Error();
-              const data = await resp.json().catch(() => ({}));
-
-              const property = data.property || {};
-              const images = Array.isArray(data.images) ? data.images : [];
-              const location = data.location || {};
-
-              const title =
-                property.title ||
-                property.name ||
-                `Property #${property.id || pid}`;
-
-              const firstImageKey = images[0]?.key || null;
-
-              const subtitle = property.subtitle || "";
-              const cityFromLocation = location.city || null;
-              const cityFromSubtitle = subtitle
-                ? subtitle.split(",")[0].trim()
-                : "";
-              const city = cityFromLocation || cityFromSubtitle || "";
-
-              return [
-                pid,
-                {
-                  title,
-                  imageUrl: normalizeImageUrl(firstImageKey),
-                  city,
-                },
-              ];
-            } catch {
-              return [
-                pid,
-                {
-                  title: `Property #${pid}`,
-                  imageUrl: PLACEHOLDER_IMAGE,
-                  city: "",
-                },
-              ];
-            }
-          })
-        );
-
-        setPropertyMap((prev) => {
-          const next = { ...prev };
-          results.forEach(([pid, obj]) => {
-            next[pid] = obj;
-          });
-          return next;
-        });
-      } finally {
-        setPropLoading(false);
-      }
-    },
-    [propertyMap]
-  );
-
-  useEffect(() => {
-    if (!bookings?.length) return;
-
-    const paid = bookings.filter(
-      (booking) =>
-        String(booking?.status ?? booking?.Status ?? "").toLowerCase() ===
-        "paid"
-    );
-
-    const ids = Array.from(
-      new Set(paid.map(getPropertyId).filter(Boolean))
-    );
-
-    if (ids.length) {
-      fetchPropertyDetails(ids);
-    }
-  }, [bookings, fetchPropertyDetails]);
-
-  const handleBookingClick = (bookingItem) => {
-    const propertyId = getPropertyId(bookingItem);
-    if (propertyId) {
-      navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
-    }
-  };
-
-  const formatBookingDates = (bookingItem) => {
-    const arrivalDate =
-      timestampToDate(
-        bookingItem?.arrivaldate ??
-          bookingItem?.arrival_date ??
-          bookingItem?.arrivalDate
-      ) || null;
-
-    const departureDate =
-      timestampToDate(
-        bookingItem?.departuredate ??
-          bookingItem?.departure_date ??
-          bookingItem?.departureDate
-      ) || null;
-
-    if (!arrivalDate || !departureDate) return "-";
-
-    return `${dateFormatterDD_MM_YYYY(
-      arrivalDate
-    )} → ${dateFormatterDD_MM_YYYY(departureDate)}`;
-  };
-
-  return (
-    <main className="page-body">
-      <div className="dashboardHost">
-        <div className="dashboardContainer">
-          <div className="dashboardLeft">
-            <h3 className="welcomeMsg">
-              {user.name || "Guest"} Bookings
-            </h3>
-
-            <div className="dashboardHead">
-              <div className="buttonBox">
-                <button
-                  className="greenBtn"
-                  onClick={fetchBookings}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Refreshing…" : "Refresh"}
-                </button>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="guest-booking-loader">Loading…</div>
-            ) : error ? (
-              <div className="guest-booking-error" role="alert">
-                {error}
-              </div>
-            ) : (
-              (() => {
-                const paidBookings = bookings.filter(
-                  (booking) =>
-                    String(
-                      booking?.status ?? booking?.Status ?? ""
-                    ).toLowerCase() === "paid"
-                );
-
-                if (paidBookings.length === 0) {
-                  return (
-                    <div className="emptyState">
-                      <p>You don’t have any bookings yet.</p>
-                    </div>
-                  );
-                }
-
-                const {
-                  currentBookings,
-                  upcomingBookings,
-                  pastBookings,
-                } = splitBookingsByTime(paidBookings);
-
-                return (
-                  <div className="guest-booking-bookingContent">
-                    {propLoading && (
-                      <div className="guest-booking-loader-inline">
-                        Loading property details…
-                      </div>
-                    )}
-
-                    <div className="guest-booking-summary-grid">
-                      <section className="guest-card guest-card--current">
-                        <div className="guest-card-header">
-                          <span>Current / This Week</span>
-                          <span className="guest-booking-badge">
-                            {currentBookings.length}
-                          </span>
-                        </div>
-                        <div className="guest-card-body">
-                          {currentBookings.length === 0 ? (
-                            <p className="guest-booking-empty">
-                              No current bookings this week.
-                            </p>
-                          ) : (
-                            currentBookings.map((bookingItem, index) =>
-                              renderBookingRow(bookingItem, index, {
-                                getPropertyId,
-                                propertyMap,
-                                handleBookingClick,
-                                formatBookingDates,
-                              })
-                            )
-                          )}
-                        </div>
-                      </section>
-
-                      <section className="guest-card guest-card--upcoming">
-                        <div className="guest-card-header">
-                          <span>Upcoming Bookings</span>
-                          <span className="guest-booking-badge">
-                            {upcomingBookings.length}
-                          </span>
-                        </div>
-                        <div className="guest-card-body">
-                          {upcomingBookings.length === 0 ? (
-                            <p className="guest-booking-empty">
-                              You don’t have any upcoming bookings yet.
-                            </p>
-                          ) : (
-                            upcomingBookings.map(
-                              (bookingItem, index) =>
-                                renderBookingRow(bookingItem, index, {
-                                  getPropertyId,
-                                  propertyMap,
-                                  handleBookingClick,
-                                  formatBookingDates,
-                                })
-                            )
-                          )}
-                        </div>
-                      </section>
-
-                      <section className="guest-card guest-card--past">
-                        <div className="guest-card-header">
-                          <span>Past Bookings</span>
-                          <span className="guest-booking-badge">
-                            {pastBookings.length}
-                          </span>
-                        </div>
-                        <div className="guest-card-body">
-                          {pastBookings.length === 0 ? (
-                            <p className="guest-booking-empty">
-                              You don’t have any past bookings yet.
-                            </p>
-                          ) : (
-                            pastBookings.map((bookingItem, index) =>
-                              renderBookingRow(bookingItem, index, {
-                                getPropertyId,
-                                propertyMap,
-                                handleBookingClick,
-                                formatBookingDates,
-                              })
-                            )
-                          )}
-                        </div>
-                      </section>
-                    </div>
-                  </div>
-                );
-              })()
-            )}
-          </div>
-        </div>
-      </div>
-    </main>
-  );
-}
-
-export default GuestBooking;
+export default BookingGuestDashboard;

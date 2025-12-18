@@ -48,12 +48,13 @@ export const useFetchMessages = (userId) => {
     }, [userId]);
 
     const addNewMessage = useCallback((newMessage) => {
-        const messageExists = prevMessages.some((msg) => msg.id === newMessage.id);
-                    if (messageExists) return prevMessages;
-                    // Append to end so newest is at the bottom
-                    const next = [...prevMessages, newMessage];
-                    return next.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
+        setMessages((prevMessages) => {
+            const messageExists = prevMessages.some((msg) => msg.id === newMessage.id);
+            if (!messageExists) {
+                return [newMessage, ...prevMessages];
+            }
+            return prevMessages;
+        });
     }, []);
 
     return {

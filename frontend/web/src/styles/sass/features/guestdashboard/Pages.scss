@@ -28,7 +28,7 @@
 .sidebar {
   position: fixed;
   top: 0; left: 0;
-  height: 120dvh; 
+  height: 100dvh; 
   width: var(--gd-sidebar-w);
   background: var(--gd-bg);
   border-right: var(--gd-border);
@@ -40,6 +40,8 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 
   &.open { transform: translateX(0); }
 
@@ -96,7 +98,7 @@
     top: 24px;
     transform: none;
     box-shadow: none;
-    height: calc(120dvh - 24px); 
+    height: calc(100dvh - 24px); 
     z-index: auto; 
   }
 }

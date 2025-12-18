@@ -1,43 +1,44 @@
-import StripePayoutsController from "./controller/stripePayoutsController.js";
+import Stripe from "stripe";
+import "dotenv/config";
+import { Controller } from "./controller/controller.js";
 
-const controller = new StripePayoutsController();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+const controller = new Controller();
 
 export const handler = async (event) => {
-  const { path, httpMethod } = event;
-  let returnedResponse = {};
+  const { userId } = 15;
 
-  switch (true) {
-    case httpMethod === "POST" && path.endsWith("/set-payout-schedule"):
-      returnedResponse = await controller.setPayoutSchedule(event);
-      break;
-    case httpMethod === "GET" && path.endsWith("/retrieve-user-payouts"):
-      returnedResponse = await controller.getHostPayouts(event);
-      break;
-    case httpMethod === "GET" && path.endsWith("/retrieve-user-charges"):
-      returnedResponse = await controller.getHostCharges(event);
-      break;
-    case httpMethod === "GET" && path.endsWith("/retrieve-user-balance"):
-      returnedResponse = await controller.getHostBalance(event);
-      break;
-    case httpMethod === "GET" && path.endsWith("/retrieve-user-pending-amount"):
-      returnedResponse = await controller.getHostPendingAmount(event);
-      break;
-    case httpMethod === "GET" && path.endsWith("/retrieve-user-payout-schedule"):
-      returnedResponse = await controller.getPayoutSchedule(event);
-      break;
-    case httpMethod === "GET" && path.endsWith("/retrieve-user-bank-account"):
-      returnedResponse = await controller.getHostBankAccount(event);
-      break;
-    case httpMethod === "GET" && path.endsWith("/retrieve-finance-faqs"):
-      returnedResponse = await controller.getFinanceFaqs(event);
-      break;
-    default:
-      throw new Error("Unable to determine request type. Please contact the Admin.");
+  try {
+    const payouts = await stripe.payouts.list({
+      limit: 5,
+      stripeAccount: userId,
+    });
+
+    const payoutDetails = payouts.data.map((payout) => ({
+      id: payout.id,
+      amount: payout.amount / 100,
+      currency: payout.currency.toUpperCase(),
+      status: payout.status,
+      arrivalDate: new Date(payout.arrival_date * 1000).toLocaleDateString(),
+      createdDate: new Date(payout.created * 1000).toLocaleDateString(),
+      method: payout.method,
+      type: payout.type,
+      destination: payout.destination,
+      failureMessage: payout.failure_message || null,
+      balanceTransactionId: payout.balance_transaction || null,
+      automatic: payout.automatic,
+    }));
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ payoutDetails }),
+    };
+  } catch (error) {
+    console.error("Error fetching payouts:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Failed to retrieve payout information." }),
+    };
   }
-
-  return {
-    statusCode: returnedResponse?.statusCode || 200,
-    headers: returnedResponse?.headers || {},
-    body: JSON.stringify(returnedResponse?.response),
-  };
 };

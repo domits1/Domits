@@ -1,0 +1,88 @@
+import { TypeException } from "../../util/exception/TypeException.js";
+
+export class PropertyTechnicalDetails {
+    property_id;
+    length;
+    height;
+    fuelConsumption;
+    speed;
+    renovationYear;
+    transmission;
+    generalPeriodicInspection;
+    fourWheelDrive;
+
+    constructor(params) {
+        this._property_id = params.property_id;
+        this._length = params.length;
+        this._height = params.height;
+        this._fuelConsumption = params.fuelConsumption;
+        this._speed = params.speed;
+        this._renovationYear = params.renovationYear;
+        this._transmission = params.transmission;
+        this._generalPeriodicInspection = params.generalPeriodicInspection;
+        this._fourWheelDrive = params.fourWheelDrive;
+    }
+
+    set _property_id(id) {
+        if (typeof id !== "string") {
+            throw new TypeException("propertyTechnicalDetails - Property id must be a string.")
+        }
+        this.property_id = id;
+    }
+
+    set _length(value) {
+        if (typeof value !== "number") {
+            throw new TypeException("propertyTechnicalDetails - Length must be a number.")
+        }
+        this.length = value;
+    }
+
+    set _height(value) {
+        if (typeof value !== "number") {
+            throw new TypeException("propertyTechnicalDetails - Height must be a number.")
+        }
+        this.height = value;
+    }
+
+    set _fuelConsumption(value) {
+        if (typeof value !== "number") {
+            throw new TypeException("propertyTechnicalDetails - Fuel consumption must be a number.")
+        }
+        this.fuelConsumption = value;
+    }
+
+    set _speed(value) {
+        if (typeof value !== "number") {
+            throw new TypeException("propertyTechnicalDetails - Speed must be a number.")
+        }
+        this.speed = value;
+    }
+
+    set _renovationYear(value) {
+        if (typeof value !== "number") {
+            throw new TypeException("propertyTechnicalDetails - Renovation year must be a number.")
+        }
+        this.renovationYear = value;
+    }
+
+    set _transmission(value) {
+        if (typeof value !== "string") {
+            throw new TypeException("propertyTechnicalDetails - Transmission must be a string.")
+        }
+        this.transmission = value;
+    }
+
+    set _generalPeriodicInspection(value) {
+        if (typeof value !== "number") {
+            throw new TypeException("propertyTechnicalDetails - General periodic inspection must be a number.")
+        }
+        this.generalPeriodicInspection = value;
+    }
+
+    set _fourWheelDrive(value) {
+        if (typeof value !== "boolean") {
+            throw new TypeException("propertyTechnicalDetails - Four wheel drive must be a boolean.")
+        }
+        this.fourWheelDrive = value;
+    }
+}

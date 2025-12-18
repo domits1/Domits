@@ -79,3 +79,6 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 #amplify-do-not-edit-end
+nul
+nul.txt
+nul*
