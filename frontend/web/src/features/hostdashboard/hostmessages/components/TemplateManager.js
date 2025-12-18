@@ -177,3 +177,4 @@ const TemplateManager = ({ isOpen, onClose, templates, onSave }) => {
 
 export default TemplateManager;
 
+
