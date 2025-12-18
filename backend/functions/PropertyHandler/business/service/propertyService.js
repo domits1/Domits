@@ -14,7 +14,7 @@ import { PropertyTechnicalDetailRepository } from "../../data/repository/propert
 import { PropertyTypeRepository } from "../../data/repository/propertyTypeRepository.js";
 import { PropertyImageRepository } from "../../data/repository/propertyImageRepository.js";
 import { BookingRepository } from "../../data/repository/bookingRepository.js";
-import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatus.js";
+import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatusRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";

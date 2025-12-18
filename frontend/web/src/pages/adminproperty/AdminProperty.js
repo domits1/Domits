@@ -49,7 +49,7 @@ export default function AdminProperty() {
 
   useEffect(() => {
     try {
-      const SPECIAL_ID = "0f5cc159-c8b2-48f3-bf75-114a10a1d6b3";
+      const SPECIAL_ID = process.env.REACT_APP_DEMO_TESTER_ID;
       const cognitoKey = "CognitoIdentityServiceProvider.78jfrfhpded6meevllpfmo73mo.LastAuthUser";
       const val = localStorage.getItem(cognitoKey);
       if (val && String(val).includes(SPECIAL_ID)) {

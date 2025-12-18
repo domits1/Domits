@@ -11,15 +11,15 @@ export class PropertyTestStatus {
 
   set _property_id(id) {
     if (typeof id !== "string") {
-      throw new TypeException("propertyCheckIn - Property id must be a string.");
+      throw new TypeException("propertyTestStatus - Property id must be a string.");
     }
     this.property_id = id;
   }
 
-  set _isTest(value) {
-    if (typeof value !== "boolean") {
+  set _isTest(isTest) {
+    if (typeof isTest !== "boolean") {
       throw new TypeException("propertyTestStatus - isTest must be a boolean.");
     }
-    this.isTest = value;
+    this.isTest = isTest;
   }
 }

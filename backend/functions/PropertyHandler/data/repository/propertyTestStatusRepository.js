@@ -25,7 +25,7 @@ export class PropertyTestStatusRepository {
       .into(Property_Test_Status)
       .values({
         property_id: testStatus.property_id,
-        istest: testStatus.isTest,
+        isTest: testStatus.isTest,
       })
       .execute();
     const result = await this.getPropertyTestStatusByPropertyId(testStatus.property_id);
