@@ -161,7 +161,6 @@ const BookingOverview = () => {
       </div>
 
       <div className="Bookingcontainer">
-        {/* Right Panel */}
         <div className="right-panel">
           <div>Your Journey</div>
           <div className="booking-details">
@@ -193,7 +192,6 @@ const BookingOverview = () => {
                   <button className="login-button">Login</button>
                 </Link>
               </div>
-              {/* <Register /> */}
             </div>
           ) : (
             <>
@@ -216,7 +214,6 @@ const BookingOverview = () => {
           )}
         </div>
 
-        {/* Left Panel */}
         <div className="booking-details-container">
           <div className="booking-header1">Booking Details</div>
           <div className="left-panel">
