@@ -21,7 +21,9 @@ class MessageRepository {
                 platformMessageId: data.platformMessageId,
                 createdAt: createdAt,
                 isRead: false,
-                metadata: data.metadata
+                metadata: data.metadata,
+                attachments: data.attachments,
+                deliveryStatus: data.deliveryStatus || 'pending'
             })
             .execute();
 
@@ -46,4 +48,3 @@ class MessageRepository {
 }
 
 export default MessageRepository;
-

@@ -9,7 +9,7 @@ class MessageService {
     }
 
     async sendMessage(payload) {
-        // payload: { senderId, recipientId, content, propertyId, platform, externalThreadId }
+        // payload: { senderId, recipientId, content, propertyId, platform, externalThreadId, attachments, metadata }
         
         let threadId = payload.threadId;
 
@@ -34,7 +34,9 @@ class MessageService {
             recipientId: payload.recipientId,
             content: payload.content,
             platformMessageId: payload.platformMessageId,
-            metadata: payload.metadata
+            metadata: payload.metadata,
+            attachments: payload.attachments,
+            deliveryStatus: payload.platform === 'DOMITS' ? 'delivered' : 'pending' // Pending for external platforms until confirmed
         });
 
         // Update thread's lastMessageAt
@@ -64,4 +66,3 @@ class MessageService {
 }
 
 export default MessageService;
-
