@@ -1,12 +1,5 @@
-//This is written by Marijn Klappe
-import sortDates from "./sortDates";
 
-/**
- * this function adds a new date to the selectedDates array it also makes shore that the dates dont overlap
- *
- * @param {[number,number]} date
- * @param {[number,number][]} selectedDates
- */
+import sortDates from "./sortDates";
 function newDate(date,selectedDates) {
     let addNewDate = true;
 

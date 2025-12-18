@@ -1,8 +1,3 @@
-/**
- * This is written by Marijn Klappe
- *
- * If you do not understand what is happening here, do not change anything. If something needs to be adjusted, contact me via discord --@marijn3--
- */
 import React, { useState } from "react";
 import convertDatesToDBDates from "../utils/convertToDBDates";
 import decodeDateNumber from "../utils/decodeDateNumber";
@@ -22,18 +17,6 @@ let selectedMonth = new Date().getMonth();
 let selectedYear = new Date().getFullYear();
 let editMode = false;
 
-/**
- * CalendarComponent is a component that displays a calendar
- * 
- * @param {Object} props
- * @param {*} props.passedProp
- * @param {boolean} props.isNew
- * @param {*} props.updateDates
- * @param {"host" | "guest"} props.calenderType
- * @param {1 | 2} props.displayMonths
- * 
- * @returns {JSX.Element}
- */
 function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builder, displayMonths = 1 }) {
     const [selectedMonthState, setSelectedMonth] = useState(selectedMonth);
     const [selectedYearState, setSelectedYear] = useState(selectedYear);
@@ -42,12 +25,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
     );
     const [datesGridObject, setDates] = useState(getDatesObject(selectedDates));
     const [editModeClass, setEditMode] = useState("switch-btn");
-
-    /**
-     * this function handles the interaction when a day is clicked, it selects a new date
-     *
-     * @param {MouseEvent} e
-     */
     function dayClick(e) {
         e.preventDefault();
         const anchorElement = e.currentTarget;
@@ -77,14 +54,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
 
         builder.addAvailability(convertDatesToDBDates(selectedDates));
     }
-
-    /**
-     * this function returns the class name of the day, this is used to style the day
-     *
-     * @param {number} date the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
-     * @param {[number,number]} currentDate this is the current selected month and year month is stored as 0-11
-     * @returns {string}
-     */
     function getDayClassName(date, currentDate) {
         let dayClass = "";
         let dateDecode = decodeDateNumber(date);
@@ -113,12 +82,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
 
         return dayClass;
     }
-
-    /**
-     * this function is called when the user clicks the trash icon, the date is removed from the selectedDates
-     *
-     * @param {MouseEvent} e
-     */
     function deleteDateBtn(e) {
         e.preventDefault();
         const anchorElement = e.currentTarget;
@@ -128,13 +91,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
         setDates(getDatesObject(selectedDates));
         setGrid(getGridObject(selectedMonth, selectedYear));
     }
-
-    /**
-     * this function returns the selected dates as an HTML element
-     *
-     * @param {[number,number][]} dates the dates have a (year month day structure) e.g. 18890420 is 1889 Apr 20
-     * @returns {Element[]}
-     */
     function getDatesObject(dates) {
         const tableData = [];
         for (let i = 0; i < dates.length; i++) {
@@ -151,14 +107,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
 
         return tableData;
     }
-
-    /**
-     * this function returns the month days as an HTML element
-     *
-     * @param {number} month the month is stored here from 0-11 so 0 is January and 11 is December
-     * @param {number} year
-     * @returns {Element[]}
-     */
     function getGridObject(month, year) {
         const calDays = getCalDays(month, year);
         const tableData = [];
@@ -187,12 +135,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
 
         return tableData;
     }
-
-    /**
-     * this function is called when the user clicks the nextMonth button, the Calendar is updated with the days of the next month
-     *
-     * @param {MouseEvent} e
-     */
     function nextMonthBtn(e) {
         e.preventDefault();
 
@@ -208,11 +150,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
         setGrid(getGridObject(selectedMonth, selectedYear));
     }
 
-    /**
-     * this function is called when the user clicks the previousMonth button, the Calendar is updated with the days of the previous month
-     *
-     * @param {MouseEvent} e
-     */
     function previusMonthBtn(e) {
         e.preventDefault();
 
@@ -227,12 +164,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
         setSelectedYear(selectedYear);
         setGrid(getGridObject(selectedMonth, selectedYear));
     }
-
-    /**
-     * this function is called when the user clicks the switch button, the edit mode is toggled
-     *
-     * @param {MouseEvent} e
-     */
     function switchBtn(e) {
         e.preventDefault();
         if (editMode) {

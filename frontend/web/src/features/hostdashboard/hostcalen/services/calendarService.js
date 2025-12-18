@@ -5,20 +5,8 @@ const IS_LOCAL_DEV = window.location.hostname === 'localhost' || window.location
 
 const PROPERTY_API = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default";
 const BOOKING_API = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development";
-
-// Local server for development (run: node local-file-server.js)
 const LOCAL_API = "http://localhost:3001/api/calendar-data";
-
-/**
- * Professional Calendar Service
- * Handles all API communication for the host dashboard calendar
- * - LOCAL: Uses local server (localhost:3001) - saves to JSON file
- * - PRODUCTION: Uses AWS PropertyHandler API
- */
 export const calendarService = {
-  /**
-   * Fetch single property details including availability and pricing
-   */
   async fetchPropertyDetails(propertyId) {
     try {
       const token = getAccessToken();
@@ -51,10 +39,6 @@ export const calendarService = {
       throw error;
     }
   },
-
-  /**
-   * Fetch all bookings for a specific property
-   */
   async fetchPropertyBookings(propertyId) {
     try {
       const token = getAccessToken();
@@ -66,9 +50,7 @@ export const calendarService = {
       if (!propertyId) {
         return [];
       }
-
       const url = `${BOOKING_API}/bookings?readType=hostId&property_Id=${propertyId}`;
-
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -79,15 +61,12 @@ export const calendarService = {
       if (!response.ok) {
         return [];
       }
-
       const data = await response.json();
-
       let bookingsArray = [];
       let pricingData = null;
 
       if (data.query && Array.isArray(data.query)) {
         bookingsArray = data.query;
-
         if (data.pricing && data.pricing.pricing && Array.isArray(data.pricing.pricing)) {
           const propertyPricing = data.pricing.pricing.find(p => p.property_id === propertyId);
           if (propertyPricing) {
@@ -97,22 +76,15 @@ export const calendarService = {
       } else if (Array.isArray(data)) {
         bookingsArray = data;
       }
-
       const filteredData = bookingsArray.filter(booking => booking.property_id === propertyId);
-
       if (pricingData && filteredData.length > 0) {
         filteredData._pricing = pricingData;
       }
-
       return filteredData;
     } catch (error) {
       return [];
     }
   },
-
-  /**
-   * Fetch all host bookings
-   */
   async fetchHostBookings() {
     try {
       const token = getAccessToken();
@@ -141,11 +113,6 @@ export const calendarService = {
     }
   },
 
-  /**
-   * Load saved calendar data
-   * LOCAL: Uses localhost:3001
-   * PRODUCTION: Uses AWS PropertyHandler API
-   */
   async loadCalendarData(propertyId) {
     try {
       const token = getAccessToken();
@@ -153,8 +120,6 @@ export const calendarService = {
       if (!propertyId) {
         throw new Error("Property ID required");
       }
-
-      // Use local server in development
       if (IS_LOCAL_DEV) {
         const response = await fetch(`${LOCAL_API}?property=${propertyId}`, {
           method: "GET",
@@ -170,14 +135,10 @@ export const calendarService = {
         }
         throw new Error("Local server not available");
       }
-
-      // Production: Use AWS API
       if (!token) {
         throw new Error("Authentication token not found");
       }
-
       const url = `${PROPERTY_API}/property/hostDashboard/calendarData?property=${propertyId}`;
-
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -196,14 +157,11 @@ export const calendarService = {
 
       throw new Error("API not available");
     } catch (error) {
-      // Fallback to localStorage
       try {
         const availabilityKey = `calendar_availability_${propertyId}`;
         const pricingKey = `calendar_pricing_${propertyId}`;
-
         const availabilityData = localStorage.getItem(availabilityKey);
         const pricingData = localStorage.getItem(pricingKey);
-
         const result = {
           blocked: [],
           maintenance: [],
@@ -231,9 +189,6 @@ export const calendarService = {
     }
   },
 
-  /**
-   * Save blocked/maintenance dates
-   */
   async saveAvailabilityChanges(propertyId, blockedDates, maintenanceDates) {
     try {
       const token = getAccessToken();
@@ -248,7 +203,6 @@ export const calendarService = {
       if (!Array.isArray(maintenanceDates)) {
         throw new Error("maintenanceDates must be an array");
       }
-
       const formattedMaintenanceDates = maintenanceDates.map(item => {
         if (typeof item === 'string') {
           return item;
@@ -265,8 +219,6 @@ export const calendarService = {
           maintenance: formattedMaintenanceDates
         }
       };
-
-      // Use local server in development
       if (IS_LOCAL_DEV) {
         const response = await fetch(LOCAL_API, {
           method: "POST",
@@ -287,8 +239,6 @@ export const calendarService = {
           data: result
         };
       }
-
-      // Production: Use AWS API
       if (!token) {
         throw new Error("Authentication token not found");
       }
@@ -306,9 +256,7 @@ export const calendarService = {
         const errorText = await response.text();
         throw new Error(`API Error ${response.status}: ${errorText}`);
       }
-
       const result = await response.json();
-
       const fallbackKey = `calendar_availability_${propertyId}`;
       localStorage.setItem(fallbackKey, JSON.stringify({
         blockedDates,
@@ -333,9 +281,6 @@ export const calendarService = {
     }
   },
 
-  /**
-   * Save per-day custom pricing
-   */
   async savePricingChanges(propertyId, pricesByDate) {
     try {
       const token = getAccessToken();
@@ -359,7 +304,6 @@ export const calendarService = {
         pricing: pricesByDate
       };
 
-      // Use local server in development
       if (IS_LOCAL_DEV) {
         const response = await fetch(LOCAL_API, {
           method: "POST",
@@ -380,8 +324,6 @@ export const calendarService = {
           data: result
         };
       }
-
-      // Production: Use AWS API
       if (!token) {
         throw new Error("Authentication token not found");
       }
@@ -401,7 +343,6 @@ export const calendarService = {
       }
 
       const result = await response.json();
-
       const fallbackKey = `calendar_pricing_${propertyId}`;
       localStorage.setItem(fallbackKey, JSON.stringify(pricesByDate));
 
@@ -422,12 +363,6 @@ export const calendarService = {
       };
     }
   },
-
-  /**
-   * Save all calendar changes (combined operation)
-   * LOCAL: Uses localhost:3001 - saves to JSON file
-   * PRODUCTION: Uses AWS PropertyHandler API
-   */
   async saveCalendarChanges(propertyId, changes) {
     const formattedMaintenanceDates = (changes?.availability?.maintenance || []).map(item => {
       if (typeof item === 'string') {
@@ -444,8 +379,6 @@ export const calendarService = {
       if (!propertyId) {
         throw new Error("Property ID is required");
       }
-
-      // Use local server in development
       if (IS_LOCAL_DEV) {
         const requestBody = {
           propertyId: propertyId
@@ -457,11 +390,9 @@ export const calendarService = {
             maintenance: formattedMaintenanceDates
           };
         }
-
         if (changes.pricing && Object.keys(changes.pricing).length > 0) {
           requestBody.pricing = changes.pricing;
         }
-
         const response = await fetch(LOCAL_API, {
           method: "POST",
           headers: {
@@ -475,8 +406,6 @@ export const calendarService = {
         }
 
         const result = await response.json();
-
-        // Also save to localStorage
         if (changes.availability) {
           localStorage.setItem(`calendar_availability_${propertyId}`, JSON.stringify({
             blockedDates: changes.availability.blocked || [],
@@ -494,13 +423,10 @@ export const calendarService = {
         };
       }
 
-      // Production: Use AWS API
       if (!token) {
         throw new Error("Authentication token not found");
       }
-
       const results = {};
-
       if (changes.availability) {
         const availabilityBody = {
           propertyId: propertyId,
@@ -526,13 +452,11 @@ export const calendarService = {
 
         results.availability = await availabilityResponse.json();
       }
-
       if (changes.pricing && Object.keys(changes.pricing).length > 0) {
         const pricingBody = {
           propertyId: propertyId,
           pricing: changes.pricing
         };
-
         const pricingResponse = await fetch(`${PROPERTY_API}/property/pricing`, {
           method: "PUT",
           headers: {
@@ -546,7 +470,6 @@ export const calendarService = {
           const errorText = await pricingResponse.text();
           throw new Error(`Pricing API Error ${pricingResponse.status}: ${errorText}`);
         }
-
         results.pricing = await pricingResponse.json();
       }
 
@@ -559,7 +482,6 @@ export const calendarService = {
       if (changes.pricing) {
         localStorage.setItem(`calendar_pricing_${propertyId}`, JSON.stringify(changes.pricing));
       }
-
       return {
         success: true,
         message: "Calendar data saved successfully to AWS database",

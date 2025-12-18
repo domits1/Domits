@@ -13,16 +13,11 @@ export default function CalendarGrid({
   bookingsByDate,
   onSelectionChange,
 }) {
-  // Local selection state - purely for visual feedback
   const [selectedDates, setSelectedDates] = useState(new Set());
-
   const handleClick = (key, state) => {
-    // Don't allow clicking booked dates
     if (state === 'booked') {
       return;
     }
-
-    // Toggle local selection state ONLY for visual feedback
     setSelectedDates((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
@@ -30,8 +25,6 @@ export default function CalendarGrid({
       } else {
         next.add(key);
       }
-
-      // Notify parent of selection change
       if (onSelectionChange) {
         onSelectionChange(next);
       }
