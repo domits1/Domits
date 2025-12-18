@@ -5,7 +5,6 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import SetupForm from "./views/SetupForm.js";
 import { getAccessToken } from "../../services/getAccessToken";
-import Register from "../auth/Register";
 import FetchPropertyDetails from "./services/FetchPropertyDetails";
 import NotFoundException from "../../utils/exception/NotFoundException";
 import Unauthorized from "../../utils/exception/Unauthorized";
@@ -22,7 +21,6 @@ const BookingOverview = () => {
   const navigate = useNavigate();
   const [bookingDetails, setBookingDetails] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userData, setUserData] = useState({ username: "", email: "", phone_number: "" });
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [cognitoUserEmail, setCognitoUserEmail] = useState(null);
   const [showCheckout, setShowCheckout] = useState(null);
@@ -69,27 +67,6 @@ const BookingOverview = () => {
     };
     fetchAccommodation();
   }, [propertyId, checkInDate, checkOutDate, guests]);
-
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      try {
-        const userInfo = await Auth.currentUserInfo();
-        setIsLoggedIn(true);
-        const userAttributes = userInfo.attributes;
-        setUserData({
-          username: userAttributes["custom:username"],
-          email: userAttributes["email"],
-          phone_number: userAttributes["phone_number"],
-        });
-        setCognitoUserId(userAttributes.sub);
-        setCognitoUserEmail(userAttributes["email"]);
-      } catch (error) {
-        setIsLoggedIn(false);
-        console.error("Error logging in:", error);
-      }
-    };
-    checkAuthentication();
-  }, []);
 
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -184,7 +161,6 @@ const BookingOverview = () => {
       </div>
 
       <div className="Bookingcontainer">
-        {/* Right Panel */}
         <div className="right-panel">
           <div>Your Journey</div>
           <div className="booking-details">
@@ -208,7 +184,14 @@ const BookingOverview = () => {
           {!isLoggedIn ? (
             <div>
               <h2>Please Register or Log In to Continue</h2>
-              <Register />
+              <div className="auth-actions">
+                <Link to="/register">
+                  <button className="register-button">Register</button>
+                </Link>
+                <Link to="/login">
+                  <button className="login-button">Login</button>
+                </Link>
+              </div>
             </div>
           ) : (
             <>
@@ -231,7 +214,6 @@ const BookingOverview = () => {
           )}
         </div>
 
-        {/* Left Panel */}
         <div className="booking-details-container">
           <div className="booking-header1">Booking Details</div>
           <div className="left-panel">
