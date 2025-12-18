@@ -7,6 +7,7 @@ import {
   getHostBalance,
   getPayoutSchedule,
   setPayoutSchedule,
+  getFaqs,
 } from "../services/stripeAccountService";
 
 const REFRESH_INTERVAL_MS = 1000;
@@ -23,6 +24,7 @@ export function RefreshFunctions() {
   const [payoutInterval, setPayoutInterval] = useState(null);
   const [weekly_anchor, setWeeklyAnchor] = useState(null);
   const [monthly_anchor, setMonthlyAnchor] = useState(null);
+  const [faqs, setFaqs] = useState([]);
   const [loadingStates, setLoadingStates] = useState({
     account: true,
     charges: false,
@@ -65,7 +67,7 @@ export function RefreshFunctions() {
       try {
         updateLoadingState("charges", true);
         const details = await getCharges();
-        setCharges(details.charges);
+        setCharges(details?.charges ?? []);
       } catch (error) {
         console.error("Error fetching charges:", error);
       } finally {
@@ -91,7 +93,7 @@ export function RefreshFunctions() {
       try {
         updateLoadingState("payouts", true);
         const details = await getPayouts();
-        setPayouts(details.payouts);
+        setPayouts(details?.payouts ?? []);
       } catch (error) {
         console.error("Error fetching payouts:", error);
       } finally {
@@ -112,6 +114,19 @@ export function RefreshFunctions() {
       } finally {
         setLoading(false);
         updateLoadingState("getPayoutSchedule", false);
+      }
+    })();
+
+    (async () => {
+      try {
+        updateLoadingState("faqs", true);
+        const details = await getFaqs();
+        setFaqs(details?.faqs ?? []);
+      } catch (error) {
+        console.error("Error fetching FAQs:", error);
+      } finally {
+        setLoading(false);
+        updateLoadingState("faqs", false);
       }
     })();
 
@@ -279,6 +294,7 @@ export function RefreshFunctions() {
     payoutInterval,
     weekly_anchor,
     monthly_anchor,
+    faqs,
     loadingStates,
 
     setPayoutInterval,
