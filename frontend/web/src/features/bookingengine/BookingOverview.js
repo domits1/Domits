@@ -20,7 +20,10 @@ const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 const BookingOverview = () => {
   const navigate = useNavigate();
   const [bookingDetails, setBookingDetails] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // use Auth.currentAuthenticatedUser() to determine auth status
+  // keep `isAuthenticated` state for showing auth-specific UI
+  // removed unused isLoggedIn state
+
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [cognitoUserEmail, setCognitoUserEmail] = useState(null);
   const [showCheckout, setShowCheckout] = useState(null);
@@ -71,14 +74,14 @@ const BookingOverview = () => {
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
-        const user = await Auth.currentAuthenticatedUser();
+        await Auth.currentAuthenticatedUser();
         setIsAuthenticated(true);
       } catch {
         setIsAuthenticated(false);
       }
     };
     checkAuthentication();
-  }, []);
+  }, [location.key, location.search]);
 
   if (error) {
     return <div className="error-message">{error}</div>;
@@ -181,15 +184,15 @@ const BookingOverview = () => {
             </div>
           </div>
 
-          {!isLoggedIn ? (
+          {!isAuthenticated ? (
             <div>
               <h2>Please Register or Log In to Continue</h2>
               <div className="auth-actions">
-                <Link to="/register">
-                  <button className="register-button">Register</button>
-                </Link>
-                <Link to="/login">
+                <Link to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}>
                   <button className="login-button">Login</button>
+                </Link>
+                <Link to={`/register?redirect=${encodeURIComponent(location.pathname + location.search)}`}>
+                  <button className="register-button">Register</button>
                 </Link>
               </div>
             </div>
