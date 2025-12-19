@@ -10,7 +10,6 @@ import { PropertyRule } from "./models/propertyRule";
 import { PropertyType } from "./models/propertyType";
 import { PropertyImage } from "./models/propertyImage";
 import { PropertyTechnicalDetails } from "./models/propertyTechnicalDetails";
-import { PropertyTestStatus } from "./models/propertyTestStatus";
 
 export class PropertyBuilder {
   addProperty(property) {
@@ -19,32 +18,50 @@ export class PropertyBuilder {
   }
 
   addAmenities(amenities) {
-    this.propertyAmenities = amenities.map((amenity) => new PropertyAmenity("", "", amenity.id));
+    this.propertyAmenities = amenities.map(
+      (amenity) => new PropertyAmenity("", "", amenity.id),
+    );
     return this;
   }
 
   addAvailability(availabilities) {
     this.propertyAvailability = availabilities.map(
-      (availability) => new PropertyAvailability("", availability.availableStartDate, availability.availableEndDate)
+      (availability) =>
+        new PropertyAvailability(
+          "",
+          availability.availableStartDate,
+          availability.availableEndDate,
+        ),
     );
     return this;
   }
 
   addAvailabilityRestrictions(restrictions) {
     this.propertyAvailabilityRestrictions = restrictions.map(
-      (restriction) => new PropertyAvailabilityRestriction("", "", restriction.restriction, restriction.value)
+      (restriction) =>
+        new PropertyAvailabilityRestriction(
+          "",
+          "",
+          restriction.restriction,
+          restriction.value,
+        ),
     );
     return this;
   }
 
   addCheckIn(checkIn) {
-    this.propertyCheckIn = new PropertyCheckIn("", checkIn.checkIn, checkIn.checkOut);
+    this.propertyCheckIn = new PropertyCheckIn(
+      "",
+      checkIn.checkIn,
+      checkIn.checkOut,
+    );
     return this;
   }
 
   addGeneralDetails(details) {
     this.propertyGeneralDetails = details.map(
-      (detail) => new PropertyGeneralDetail("", "", detail.detail, detail.value)
+      (detail) =>
+        new PropertyGeneralDetail("", "", detail.detail, detail.value),
     );
     return this;
   }
@@ -57,18 +74,25 @@ export class PropertyBuilder {
       location.street,
       location.houseNumber,
       location.houseNumberExtension,
-      location.postalCode
+      location.postalCode,
     );
     return this;
   }
 
   addPricing(pricing) {
-    this.propertyPricing = new PropertyPricing("", pricing.roomRate, pricing.cleaning, pricing.service);
+    this.propertyPricing = new PropertyPricing(
+      "",
+      pricing.roomRate,
+      pricing.cleaning,
+      pricing.service,
+    );
     return this;
   }
 
   addRules(rules) {
-    this.propertyRules = rules.map((rule) => new PropertyRule("", rule.rule, rule.value));
+    this.propertyRules = rules.map(
+      (rule) => new PropertyRule("", rule.rule, rule.value),
+    );
     return this;
   }
 
@@ -82,7 +106,9 @@ export class PropertyBuilder {
   }
 
   addImages(images) {
-    this.propertyImages = images.map((image) => new PropertyImage("", "", image));
+    this.propertyImages = images.map(
+      (image) => new PropertyImage("", "", image),
+    );
     return this;
   }
 
@@ -98,11 +124,6 @@ export class PropertyBuilder {
       generalPeriodicInspection: details.generalPeriodicInspection,
       fourWheelDrive: details.fourWheelDrive,
     });
-    return this;
-  }
-
-  addPropertyTestStatus(testStatus) {
-    this.propertyTestStatus = testStatus.map((testStatus) => new PropertyTestStatus("", testStatus.isTest));
     return this;
   }
 
