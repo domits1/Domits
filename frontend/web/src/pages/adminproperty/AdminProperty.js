@@ -296,7 +296,7 @@ export default function AdminProperty() {
       .addAmenities(selectedAmenityIds.map((id) => ({ id })))
       .addAvailability([{ availableStartDate: start, availableEndDate: end }])
       .addAvailabilityRestrictions([])
-      .addPropertyTestStatus(isTest);
+      .addPropertyTestStatus({ isTest });
 
     const rules = [];
     if (ruleSmoking) rules.push({ rule: "SmokingAllowed", value: false });
