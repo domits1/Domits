@@ -83,8 +83,6 @@ export default function RangeCalendar({ onChange, propertyId }) {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  // Set initial dates to today and tomorrow
   const initialStart = new Date(now);
   const initialEnd = new Date(now);
   initialEnd.setDate(now.getDate() + 1);
@@ -96,7 +94,6 @@ export default function RangeCalendar({ onChange, propertyId }) {
   const [draftStart, setDraftStart] = useState(null);
   const [dynamicPrices, setDynamicPrices] = useState({});
 
-  // Fetch dynamic pricing when propertyId is available
   useEffect(() => {
     const fetchDynamicPricing = async () => {
       if (propertyId) {
@@ -112,7 +109,6 @@ export default function RangeCalendar({ onChange, propertyId }) {
     fetchDynamicPricing();
   }, [propertyId]);
 
-  // Call onChange when dates are set initially
   useEffect(() => {
     if (start && end && onChange) {
       onChange({ start, end });

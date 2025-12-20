@@ -1,4 +1,4 @@
-/* Container + design tokens */
+
 .rc {
   --rc-bg: #ffffff;
   --rc-border: #e5e7eb;
@@ -33,8 +33,6 @@
   justify-content: center;
   align-items: center;
 }
-
-/* Header */
 .rc-header {
   display: flex;
   justify-content: space-between;
@@ -92,7 +90,6 @@
   }
 }
 
-/* Two months side-by-side */
 .rc-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -100,7 +97,6 @@
   padding: 16px 20px 8px;
 }
 
-/* Month block */
 .rc-month__label {
   font-weight: 700;
   padding: 0 6px 10px;
@@ -148,30 +144,23 @@
     color: var(--rc-muted);
   }
 
-  /* Range highlight */
   &.is-inrange {
     background: var(--rc-brand-ghost);
   }
-
-  /* Rounded start & end caps */
   &.is-start,
   &.is-end {
     background: var(--rc-brand);
     color: #fff;
   }
-
-  /* Left pill cap on start */
   &.is-start {
     border-top-left-radius: 50%;
     border-bottom-left-radius: 50%;
   }
-  /* Right pill cap on end */
+
   &.is-end {
     border-top-right-radius: 50%;
     border-bottom-right-radius: 50%;
   }
-
-  /* Date number */
   .rc-day-number {
     position: relative;
     z-index: 1;
@@ -179,7 +168,6 @@
     display: block;
   }
 
-  /* Price display */
   .rc-day-price {
     position: relative;
     z-index: 1;
@@ -196,7 +184,6 @@
   }
 }
 
-/* Footer */
 .rc-footer {
   display: flex;
   justify-content: space-between;
@@ -228,7 +215,6 @@
   cursor: pointer;
 }
 
-/* Responsive */
 @media (max-width: 720px) {
   .rc-panels {
     grid-template-columns: 1fr;
