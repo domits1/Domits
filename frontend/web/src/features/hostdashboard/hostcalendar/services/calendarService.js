@@ -1,19 +1,8 @@
 import { getAccessToken } from "../utils/getAccessToken";
-
 const PROPERTY_API = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default";
 const BOOKING_API = "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development";
-
-/**
- * Professional Calendar Service
- * Handles all API communication for the host dashboard calendar
- * Uses PropertyHandler Lambda API for data persistence
- */
 export const calendarService = {
-  /**
-   * Fetch single property details including availability and pricing
-   * Endpoint: GET /property/hostDashboard/single?property={propertyId}
-   * Returns: Full property object with nested availability, pricing, location, etc.
-   */
+
   async fetchPropertyDetails(propertyId) {
     try {
       const token = getAccessToken();
@@ -47,12 +36,6 @@ export const calendarService = {
     }
   },
 
-  /**
-   * Fetch all bookings for a specific property
-   * Endpoint: GET /bookings?readType=hostId&property_Id={propertyId}
-   * Returns: Array of booking objects filtered by property_id
-   * Response structure: { query: [...bookings], pricing: {...} }
-   */
   async fetchPropertyBookings(propertyId) {
     try {
       const token = getAccessToken();
@@ -79,15 +62,11 @@ export const calendarService = {
       }
 
       const data = await response.json();
-
-      // Handle the API response structure: { query: [...], pricing: {...} }
       let bookingsArray = [];
       let pricingData = null;
 
       if (data.query && Array.isArray(data.query)) {
         bookingsArray = data.query;
-
-        // Extract pricing if available
         if (data.pricing && data.pricing.pricing && Array.isArray(data.pricing.pricing)) {
           const propertyPricing = data.pricing.pricing.find(p => p.property_id === propertyId);
           if (propertyPricing) {
@@ -97,11 +76,7 @@ export const calendarService = {
       } else if (Array.isArray(data)) {
         bookingsArray = data;
       }
-
-      // Filter by property_id to ensure we only get relevant bookings
       const filteredData = bookingsArray.filter(booking => booking.property_id === propertyId);
-
-      // Attach pricing data to the response for use in the calendar
       if (pricingData && filteredData.length > 0) {
         filteredData._pricing = pricingData;
       }
@@ -112,10 +87,6 @@ export const calendarService = {
     }
   },
 
-  /**
-   * Fetch all host bookings (for statistics across all properties)
-   * Endpoint: GET /bookings?readType=hostId
-   */
   async fetchHostBookings() {
     try {
       const token = getAccessToken();
@@ -144,11 +115,6 @@ export const calendarService = {
     }
   },
 
-  /**
-   * Load saved calendar data from AWS PropertyHandler API
-   * Endpoint: GET /property/hostDashboard/calendarData?property={propertyId}
-   * Returns: { blocked: string[], maintenance: [{date, note}], prices: {date: price} }
-   */
   async loadCalendarData(propertyId) {
     try {
       const token = getAccessToken();
@@ -158,7 +124,6 @@ export const calendarService = {
       }
 
       const url = `${PROPERTY_API}/property/hostDashboard/calendarData?property=${propertyId}`;
-
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -177,7 +142,6 @@ export const calendarService = {
 
       throw new Error("API not available");
     } catch (error) {
-      // Fallback to localStorage
       try {
         const availabilityKey = `calendar_availability_${propertyId}`;
         const pricingKey = `calendar_pricing_${propertyId}`;
@@ -211,13 +175,6 @@ export const calendarService = {
       }
     }
   },
-
-  /**
-   * Save blocked/maintenance dates to AWS PropertyHandler API
-   * Endpoint: PUT /property/availability
-   * Body: { propertyId: string, availability: { blocked: string[], maintenance: string[] } }
-   * Backend will delete existing entries and create new ones (replace operation)
-   */
   async saveAvailabilityChanges(propertyId, blockedDates, maintenanceDates) {
     try {
       const token = getAccessToken();
@@ -230,15 +187,12 @@ export const calendarService = {
         throw new Error("Property ID is required");
       }
 
-      // Validate input
       if (!Array.isArray(blockedDates)) {
         throw new Error("blockedDates must be an array");
       }
       if (!Array.isArray(maintenanceDates)) {
         throw new Error("maintenanceDates must be an array");
       }
-
-      // Format maintenance dates properly (handle both string and object formats)
       const formattedMaintenanceDates = maintenanceDates.map(item => {
         if (typeof item === 'string') {
           return item;
@@ -271,8 +225,6 @@ export const calendarService = {
       }
 
       const result = await response.json();
-
-      // Also save to localStorage as backup
       const fallbackKey = `calendar_availability_${propertyId}`;
       localStorage.setItem(fallbackKey, JSON.stringify({
         blockedDates,
@@ -285,7 +237,6 @@ export const calendarService = {
         data: result
       };
     } catch (error) {
-      // Fallback to localStorage only
       const fallbackKey = `calendar_availability_${propertyId}`;
       localStorage.setItem(fallbackKey, JSON.stringify({ blockedDates, maintenanceDates }));
 
@@ -298,12 +249,6 @@ export const calendarService = {
     }
   },
 
-  /**
-   * Save per-day custom pricing to AWS PropertyHandler API
-   * Endpoint: PUT /property/pricing
-   * Body: { propertyId: string, pricing: { "YYYY-MM-DD": price } }
-   * Backend will delete existing custom pricing and create new entries (replace operation)
-   */
   async savePricingChanges(propertyId, pricesByDate) {
     try {
       const token = getAccessToken();
@@ -316,12 +261,10 @@ export const calendarService = {
         throw new Error("Property ID is required");
       }
 
-      // Validate input
       if (typeof pricesByDate !== 'object' || pricesByDate === null) {
         throw new Error("pricesByDate must be an object");
       }
 
-      // Validate all prices are numbers
       for (const [dateStr, price] of Object.entries(pricesByDate)) {
         if (typeof price !== 'number' || price < 0) {
           throw new Error(`Invalid price for date ${dateStr}: must be a positive number`);
@@ -348,8 +291,6 @@ export const calendarService = {
       }
 
       const result = await response.json();
-
-      // Also save to localStorage as backup
       const fallbackKey = `calendar_pricing_${propertyId}`;
       localStorage.setItem(fallbackKey, JSON.stringify(pricesByDate));
 
@@ -359,7 +300,6 @@ export const calendarService = {
         data: result
       };
     } catch (error) {
-      // Fallback to localStorage only
       const fallbackKey = `calendar_pricing_${propertyId}`;
       localStorage.setItem(fallbackKey, JSON.stringify(pricesByDate));
 
@@ -372,14 +312,7 @@ export const calendarService = {
     }
   },
 
-  /**
-   * Save all calendar changes (combined operation)
-   * Uses PropertyHandler API endpoints:
-   * - PUT /property/availability for blocked/maintenance dates
-   * - PUT /property/pricing for custom prices
-   */
   async saveCalendarChanges(propertyId, changes) {
-    // Format maintenance dates upfront so it's available in catch block
     const formattedMaintenanceDates = (changes?.availability?.maintenance || []).map(item => {
       if (typeof item === 'string') {
         return item;
@@ -401,8 +334,6 @@ export const calendarService = {
       }
 
       const results = {};
-
-      // Save availability if provided
       if (changes.availability) {
         const availabilityBody = {
           propertyId: propertyId,
@@ -428,8 +359,6 @@ export const calendarService = {
 
         results.availability = await availabilityResponse.json();
       }
-
-      // Save pricing if provided
       if (changes.pricing && Object.keys(changes.pricing).length > 0) {
         const pricingBody = {
           propertyId: propertyId,
@@ -453,7 +382,6 @@ export const calendarService = {
         results.pricing = await pricingResponse.json();
       }
 
-      // Save to localStorage as backup
       if (changes.availability) {
         localStorage.setItem(`calendar_availability_${propertyId}`, JSON.stringify({
           blockedDates: changes.availability.blocked || [],
@@ -470,7 +398,6 @@ export const calendarService = {
         data: results
       };
     } catch (error) {
-      // Fallback to localStorage only
       if (changes.availability) {
         localStorage.setItem(`calendar_availability_${propertyId}`, JSON.stringify({
           blockedDates: changes.availability.blocked || [],
@@ -490,17 +417,9 @@ export const calendarService = {
       };
     }
   },
-
-  /**
-   * Helper: Convert date string to timestamp for backend
-   */
   dateToTimestamp(dateString) {
     return new Date(dateString).getTime();
   },
-
-  /**
-   * Helper: Convert timestamp to date string
-   */
   timestampToDate(timestamp) {
     return new Date(timestamp).toISOString().split('T')[0];
   }

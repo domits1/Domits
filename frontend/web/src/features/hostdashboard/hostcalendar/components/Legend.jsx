@@ -1,5 +1,4 @@
 import React from "react";
-
 export default function Legend() {
   const items = [
     { color: "#4e7cff", label: "Booked" },

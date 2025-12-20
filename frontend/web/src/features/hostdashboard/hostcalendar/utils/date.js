@@ -1,4 +1,3 @@
-// UTC-safe helpers so month edges don't shift across timezones.
 export const startOfMonthUTC = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
 export const addMonthsUTC = (d, n) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, 1));
 export const subMonthsUTC = (d, n) => addMonthsUTC(d, -n);
@@ -14,10 +13,9 @@ export const toKey = (d) => {
 };
 
 export const getMonthMatrix = (cursor) => {
-  // returns 6x7 matrix (weeks x days) of Date objects (UTC)
   const first = startOfMonthUTC(cursor);
   const firstDay = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), 1));
-  const startWeekDay = (firstDay.getUTCDay() + 6) % 7; // make Monday first
+  const startWeekDay = (firstDay.getUTCDay() + 6) % 7; 
   const start = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), 1 - startWeekDay));
 
   const matrix = [];

@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
 import MaintenanceModal from './MaintenanceModal';
-
-/**
- * Test component for MaintenanceModal
- * Run this to verify modal works in isolation
- *
- * To use: Import this in HostCalendar temporarily:
- * import MaintenanceModalTest from './components/MaintenanceModalTest';
- *
- * Then add: <MaintenanceModalTest /> at the bottom of HostCalendar return
- */
 export default function MaintenanceModalTest() {
   const [isOpen, setIsOpen] = useState(false);
   const [savedNote, setSavedNote] = useState('');

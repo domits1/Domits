@@ -12,7 +12,6 @@ export default function CalendarGrid({
   onToggle,
   onDragSelect,
 }) {
-  // basic drag select (desktop)
   const dragging = useRef(false);
   const [range, setRange] = useState(new Set());
   const [hoveredDate, setHoveredDate] = useState(null);

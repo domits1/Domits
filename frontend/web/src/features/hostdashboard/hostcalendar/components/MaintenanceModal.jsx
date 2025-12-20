@@ -3,7 +3,6 @@ import "./MaintenanceModal.scss";
 
 export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDates }) {
   const [note, setNote] = useState("");
-
   useEffect(() => {
     console.log('🎭 MaintenanceModal isOpen changed:', isOpen);
     console.log('Selected dates:', selectedDates);
@@ -19,7 +18,6 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
     console.log('Modal not open, returning null');
     return null;
   }
-
   console.log('✅ Rendering modal content');
 
   const handleSave = () => {
@@ -38,7 +36,6 @@ export default function MaintenanceModal({ isOpen, onClose, onSave, selectedDate
       onClose();
     }
   };
-
   return (
     <div className="maintenance-modal-overlay" onClick={handleOverlayClick}>
       <div className="maintenance-modal">

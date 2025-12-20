@@ -1,5 +1,4 @@
 import React from "react";
-
 export default function StatsPanel({ selections }) {
   const counts = {
     booked: selections.booked.size,
@@ -7,7 +6,7 @@ export default function StatsPanel({ selections }) {
     maintenance: selections.maintenance.size,
     available:
       selections.available.size ||
-      Math.max(0, 0), // placeholder when nothing selected
+      Math.max(0, 0),
   };
 
   return (

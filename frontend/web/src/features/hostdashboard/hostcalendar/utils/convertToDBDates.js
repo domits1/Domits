@@ -1,9 +1,3 @@
-//This is written by Marijn Klappe
-/**
- * this function converts the selected dates to the datetypes in the database
- *
- * @return {{availableStartDate:number, availableEndDate:number}[]}
- */
 function convertDatesToDBDates(selectedDates) {
     let updatedList = [];
 

@@ -43,8 +43,6 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext, selecte
         const data = await res.json();
         const accommodationsList = Array.isArray(data) ? data : [];
         setAccommodations(accommodationsList);
-
-        // Auto-select first property if available and none selected
         if (accommodationsList.length > 0 && !selectedPropertyId && onPropertySelect) {
           const firstPropertyId = accommodationsList[0]?.property?.id || accommodationsList[0]?.property?.ID || accommodationsList[0]?.ID || accommodationsList[0]?.id;
           if (firstPropertyId) {
@@ -52,7 +50,6 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext, selecte
           }
         }
       } catch (error) {
-        // Silent error handling
       } finally {
         setIsLoading(false);
       }
