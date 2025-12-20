@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import "../styles/RangeCalendar.scss";
+import { calendarService } from "../../../hostdashboard/hostcalendar/services/calendarService";
 
 const pad = (n) => (n < 10 ? `0${n}` : String(n));
 const toKey = (d) =>
@@ -18,7 +19,7 @@ const weekdayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const monthLabel = (d) =>
   d.toLocaleString(undefined, { month: "long", year: "numeric" });
 
-function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
+function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, dynamicPrices = {} }) {
   const y = viewMonth.getFullYear();
   const m = viewMonth.getMonth();
 
@@ -34,10 +35,11 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
         rangeStart && rangeEnd && d >= rangeStart && d <= rangeEnd && inMonth;
       const isStart = rangeStart && key === toKey(rangeStart);
       const isEnd = rangeEnd && key === toKey(rangeEnd);
-      arr.push({ d, key, inMonth, inRange, isStart, isEnd });
+      const price = dynamicPrices[key];
+      arr.push({ d, key, inMonth, inRange, isStart, isEnd, price });
     }
     return arr;
-  }, [y, m, rangeStart, rangeEnd]);
+  }, [y, m, rangeStart, rangeEnd, dynamicPrices]);
 
   return (
     <div className="rc-month">
@@ -66,7 +68,10 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
             aria-label={c.d.toDateString()}
             onClick={() => onPick(c.d)}
           >
-            <span>{c.d.getDate()}</span>
+            <span className="rc-day-number">{c.d.getDate()}</span>
+            {c.price && c.inMonth && (
+              <span className="rc-day-price">€{c.price}</span>
+            )}
           </button>
         ))}
       </div>
@@ -74,18 +79,45 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
   );
 }
 
-export default function RangeCalendar({ onChange }) {
+export default function RangeCalendar({ onChange, propertyId }) {
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
   const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Set initial dates to today and tomorrow
   const initialStart = new Date(now);
-  initialStart.setDate(now.getDate() - 2);
   const initialEnd = new Date(now);
-  initialEnd.setDate(now.getDate() + 2);
+  initialEnd.setDate(now.getDate() + 1);
+
   const [activeTab, setActiveTab] = useState("calendar");
   const [view, setView] = useState(initialMonth);
   const [start, setStart] = useState(initialStart);
   const [end, setEnd] = useState(initialEnd);
   const [draftStart, setDraftStart] = useState(null);
+  const [dynamicPrices, setDynamicPrices] = useState({});
+
+  // Fetch dynamic pricing when propertyId is available
+  useEffect(() => {
+    const fetchDynamicPricing = async () => {
+      if (propertyId) {
+        try {
+          const calendarData = await calendarService.loadCalendarData(propertyId);
+          setDynamicPrices(calendarData.prices || {});
+        } catch (error) {
+          setDynamicPrices({});
+        }
+      }
+    };
+
+    fetchDynamicPricing();
+  }, [propertyId]);
+
+  // Call onChange when dates are set initially
+  useEffect(() => {
+    if (start && end && onChange) {
+      onChange({ start, end });
+    }
+  }, []);
   const next = () => setView((v) => addMonths(v, 1));
   const prev = () => setView((v) => addMonths(v, -1));
   const rightMonth = useMemo(() => addMonths(view, 1), [view]);
@@ -143,12 +175,14 @@ export default function RangeCalendar({ onChange }) {
                 rangeStart={start}
                 rangeEnd={end}
                 onPick={handlePick}
+                dynamicPrices={dynamicPrices}
               />
               <MonthGrid
                 viewMonth={rightMonth}
                 rangeStart={start}
                 rangeEnd={end}
                 onPick={handlePick}
+                dynamicPrices={dynamicPrices}
               />
             </div>
           ) : (

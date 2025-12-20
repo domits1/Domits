@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import { formatYearMonth } from "../utils/date";
 import { Auth } from "aws-amplify";
 import { getAccessToken } from "../utils/getAccessToken";
-export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
+
+export default function Toolbar({ view, setView, cursor, onPrev, onNext, selectedPropertyId, onPropertySelect }) {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState(null);
+
   useEffect(() => {
     (async () => {
       try {
@@ -24,29 +26,46 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
     const fetchAccommodations = async () => {
       setIsLoading(true);
       try {
-        const url = new URL(
-          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byHostId"
-        );
-        url.searchParams.set("hostId", userId);
+        const url = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all";
         const token = getAccessToken();
-        const res = await fetch(url.toString(), {
+
+        const res = await fetch(url, {
           method: "GET",
           headers: {
             Authorization: token,
           },
         });
-        if (!res.ok) throw new Error(`Failed to fetch (${res.status})`);
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch properties (${res.status})`);
+        }
+
         const data = await res.json();
-        setAccommodations(Array.isArray(data) ? data : []);
+        const accommodationsList = Array.isArray(data) ? data : [];
+        setAccommodations(accommodationsList);
+
+        // Auto-select first property if available and none selected
+        if (accommodationsList.length > 0 && !selectedPropertyId && onPropertySelect) {
+          const firstPropertyId = accommodationsList[0]?.property?.id || accommodationsList[0]?.property?.ID || accommodationsList[0]?.ID || accommodationsList[0]?.id;
+          if (firstPropertyId) {
+            onPropertySelect(firstPropertyId);
+          }
+        }
       } catch (error) {
-        console.error("Unexpected fetch error:", error);
+        // Silent error handling
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchAccommodations().catch(console.error);
-  }, [userId]);
+    fetchAccommodations();
+  }, [userId, selectedPropertyId, onPropertySelect]);
+
+  const handlePropertyChange = (e) => {
+    if (onPropertySelect) {
+      onPropertySelect(e.target.value);
+    }
+  };
 
   return (
     <div className="hc-toolbar">
@@ -72,8 +91,17 @@ export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
       </div>
       <div className="hc-toolbar-right">
         <span>Select your property</span>
-        <select className="hc-select" disabled={isLoading}>
+        <select
+          className="hc-select"
+          value={selectedPropertyId || ""}
+          onChange={handlePropertyChange}
+          disabled={isLoading}
+        >
           {isLoading && <option>Loading…</option>}
+          {!isLoading && accommodations.length === 0 && <option>No properties found</option>}
+          {!isLoading && accommodations.length > 0 && !selectedPropertyId && (
+            <option value="">Select a property</option>
+          )}
           {!isLoading &&
             accommodations.map((a) => (
               <option key={a?.property?.id} value={a?.property?.id}>

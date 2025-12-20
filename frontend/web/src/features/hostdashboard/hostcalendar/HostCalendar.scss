@@ -251,6 +251,19 @@ $cyan: #06b6d4; // seasonal price
   &.dragging {
     box-shadow: inset 0 0 0 2px rgba($cyan, 0.6);
   }
+  &.selected {
+    box-shadow: inset 0 0 0 4px #22c55e !important;
+    background: #22c55e !important;
+    .hc-date {
+      color: #fff !important;
+      font-weight: 700;
+    }
+    .hc-price {
+      background: #fff !important;
+      color: #22c55e !important;
+      font-weight: 800;
+    }
+  }
 }
 
 .hc-cell-top {

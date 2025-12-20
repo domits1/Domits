@@ -6,6 +6,7 @@ import fetchHostInfo from "../services/fetchHostInfo";
 import Header from "../components/header";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
+
 const ListingDetails2 = () => {
   const { search } = useLocation();
   const searchParams = new URLSearchParams(search);
@@ -13,6 +14,25 @@ const ListingDetails2 = () => {
   const [property, setProperty] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Shared date state - initialized to today and tomorrow
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const [checkInDate, setCheckInDate] = useState(today.toISOString().split("T")[0]);
+  const [checkOutDate, setCheckOutDate] = useState(tomorrow.toISOString().split("T")[0]);
+
+  // Handler for when dates change in RangeCalendar
+  const handleDateChange = ({ start, end }) => {
+    if (start) {
+      setCheckInDate(start.toISOString().split("T")[0]);
+    }
+    if (end) {
+      setCheckOutDate(end.toISOString().split("T")[0]);
+    }
+  };
   useEffect(() => {
     setError(null);
     setProperty({});
@@ -41,9 +61,18 @@ const ListingDetails2 = () => {
       <div className="listing-details">
         <Header title={property.property.title} />
         <div className="container">
-          <PropertyContainer property={property} />
+          <PropertyContainer
+            property={property}
+            onDateChange={handleDateChange}
+          />
 
-          <BookingContainer property={property} />
+          <BookingContainer
+            property={property}
+            checkInDate={checkInDate}
+            checkOutDate={checkOutDate}
+            setCheckInDate={setCheckInDate}
+            setCheckOutDate={setCheckOutDate}
+          />
         </div>
       </div>
     );
