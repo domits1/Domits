@@ -163,12 +163,13 @@ export class PropertyService {
   }
 
   async getCardPropertyAttributes(propertyId) {
-    const [basePropertyInfo, generalDetails, pricing, images, location] = await Promise.all([
+    const [basePropertyInfo, generalDetails, pricing, images, location, testStatus] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getGeneralDetails(propertyId),
       this.getPricing(propertyId),
       this.getImages(propertyId),
       this.getLocation(propertyId),
+      this.getPropertyTestStatus(propertyId),
     ]);
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
@@ -179,6 +180,7 @@ export class PropertyService {
       propertyPricing: pricing,
       propertyImages: images,
       propertyLocation: location,
+      propertyTestStatus: testStatus,
     };
   }
 
@@ -195,6 +197,7 @@ export class PropertyService {
       pricing,
       rules,
       propertyType,
+      propertyTestStatus,
     ] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getAmenities(propertyId),
@@ -207,6 +210,7 @@ export class PropertyService {
       this.getPricing(propertyId),
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
+      this.getPropertyTestStatus(propertyId),
     ]);
     const technicalDetails =
       propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
@@ -225,6 +229,7 @@ export class PropertyService {
       rules: rules,
       propertyType: propertyType,
       technicalDetails: technicalDetails,
+      propertyTestStatus: propertyTestStatus,
     };
   }
 
@@ -241,6 +246,7 @@ export class PropertyService {
       pricing,
       rules,
       propertyType,
+      propertyTestStatus,
     ] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getAmenities(propertyId),
@@ -253,6 +259,7 @@ export class PropertyService {
       this.getPricing(propertyId),
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
+      this.getPropertyTestStatus(propertyId),
     ]);
     const technicalDetails =
       propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
@@ -271,6 +278,7 @@ export class PropertyService {
       rules: rules,
       propertyType: propertyType,
       technicalDetails: technicalDetails,
+      propertyTestStatus: propertyTestStatus,
     };
   }
 
@@ -428,6 +436,10 @@ export class PropertyService {
 
   async getPropertyType(property) {
     return await this.propertyTypeRepository.getPropertyTypeByPropertyId(property);
+  }
+
+  async getPropertyTestStatus(property) {
+    return await this.propertyTestStatusRepository.getPropertyTestStatusByPropertyId(property);
   }
 
   async createPropertyTestStatus(testStatus) {
