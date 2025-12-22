@@ -11,6 +11,7 @@ import PriceChangeIcon from "@mui/icons-material/PriceChange";
 import HomeIcon from "@mui/icons-material/Home";
 import SettingsIcon from "@mui/icons-material/Settings";
 import AddIcon from "@mui/icons-material/Add";
+import SecurityIcon from "@mui/icons-material/Security";
 
 const NAV = [
   { key: "ListProperty", label: "List your property", icon: <AddIcon />,            to: "/hostonboarding" },
@@ -24,6 +25,7 @@ const NAV = [
   { key: "Pricing",      label: "Pricing",           icon: <PriceChangeIcon />,     to: "pricing" },
   { key: "Listings",     label: "Listings",          icon: <HomeIcon />,            to: "listings" },
   { key: "Settings",     label: "Settings",          icon: <SettingsIcon />,        to: "settings" },
+  { key: "Security",     label: "Security",          icon: <SecurityIcon />,        to: "security" },
 ];
 
 function Pages({ onNavigate }) {

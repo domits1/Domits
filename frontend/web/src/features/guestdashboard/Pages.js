@@ -6,6 +6,7 @@ import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
 import WishlistIcon from "@mui/icons-material/Favorite";
 import Settings from "@mui/icons-material/Settings";
 import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
+import SecurityIcon from "@mui/icons-material/Security";
 
 const NAV = [
   { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "." },
@@ -14,6 +15,7 @@ const NAV = [
   { key: "Reviews",   label: "Reviews",   icon: <ReviewsOutlinedIcon />, to: "reviews" },
   { key: "Wishlist",  label: "Wishlist",  icon: <WishlistIcon />,  to: "wishlist" },
   { key: "Settings",  label: "Settings",  icon: <Settings />,      to: "settings" },
+  { key: "Security",  label: "Security",  icon: <SecurityIcon />,  to: "security" },
 ];
 
 function Pages({ onNavigate }) {
@@ -51,7 +53,6 @@ function Pages({ onNavigate }) {
         <span aria-hidden="true">☰</span>
       </button>
 
-     
       <div
         className={`sidebar-overlay ${open ? "open" : ""}`}
         onClick={() => setOpen(false)}

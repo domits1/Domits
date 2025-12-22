@@ -11,7 +11,7 @@ import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostPricing from "./hostpricing/views/HostPricing";
 import HostListings from "./HostListings";
 import HostSettings from "./HostSettings";
-
+import HostSecurity from "./HostSecurity";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
 import StepGuard from "../hostonboarding/hooks/StepGuard";
@@ -101,6 +101,8 @@ function MainDashboardHost() {
           <Route path="pricing" element={<HostPricing />} />
           <Route path="listings" element={<HostListings />} />
           <Route path="settings" element={<HostSettings />} />
+          <Route path="security" element={<HostSecurity />} />
+
 
           <Route path="*" element={<Navigate to="." replace />} />
         </Routes>
