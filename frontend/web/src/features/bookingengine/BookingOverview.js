@@ -20,9 +20,6 @@ const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 const BookingOverview = () => {
   const navigate = useNavigate();
   const [bookingDetails, setBookingDetails] = useState(null);
-  // use Auth.currentAuthenticatedUser() to determine auth status
-  // keep `isAuthenticated` state for showing auth-specific UI
-  // removed unused isLoggedIn state
 
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [cognitoUserEmail, setCognitoUserEmail] = useState(null);
