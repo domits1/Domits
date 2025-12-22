@@ -10,7 +10,7 @@ export const Property_Test_Status = new EntitySchema({
       generated: false,
       nullable: false,
     },
-    value: {
+    istest: {
       type: "boolean",
       nullable: false,
     },

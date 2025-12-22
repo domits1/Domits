@@ -102,7 +102,7 @@ export class PropertyBuilder {
   }
 
   addPropertyTestStatus(testStatus) {
-    this.propertyTestStatus = testStatus.map((testStatus) => new PropertyTestStatus("", testStatus.isTest));
+    this.propertyTestStatus = new PropertyTestStatus("", testStatus.isTest);
     return this;
   }
 

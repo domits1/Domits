@@ -331,7 +331,6 @@ export class PropertyController {
         builder = await builder.addGeneralDetails(body.propertyGeneralDetails);
         builder = await builder.addRules(body.propertyRules);
         builder = await builder.addAvailabilityRestrictions({restriction: "MaximumNightsPerYear", value: 30});
-        builder = await builder.addPropertyTestStatus(body.propertyTestStatus);
 
         if (builder.propertyType.property_type === "Boat" || builder.propertyType.property_type === "Camper") {
             builder = await builder.addTechnicalDetails(body.propertyTechnicalDetails)

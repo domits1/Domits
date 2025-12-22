@@ -1,6 +1,6 @@
 import Database from "database";
 import { Property_Test_Status } from "database/models/Property_Test_Status";
-import { PropertyTestStatusMapping } from "../../util/mapping/propertyTestStatus.js";
+import { PropertyTestStatusMapping } from "../../util/mapping/testStatus.js";
 
 export class PropertyTestStatusRepository {
   constructor(systemManager) {
@@ -14,7 +14,7 @@ export class PropertyTestStatusRepository {
       .createQueryBuilder("property_test_status")
       .where("property_id = :id", { id: id })
       .getOne();
-    return result ? PropertyTestStatusMapping.mapDatabaseEntryToCheckIn(result) : null;
+    return result ? PropertyTestStatusMapping.mapDatabaseEntryToPropertyTestStatus(result) : null;
   }
 
   async create(testStatus) {
@@ -25,7 +25,7 @@ export class PropertyTestStatusRepository {
       .into(Property_Test_Status)
       .values({
         property_id: testStatus.property_id,
-        isTest: testStatus.isTest,
+        istest: testStatus.isTest,
       })
       .execute();
     const result = await this.getPropertyTestStatusByPropertyId(testStatus.property_id);
