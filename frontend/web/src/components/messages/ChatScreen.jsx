@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useContext } from 'react';
+import { useEffect, useMemo, useState, useRef, useContext } from 'react';
 
 import useFetchMessages from '../../features/hostdashboard/hostmessages/hooks/useFetchMessages';
 import useFetchBookingDetails from '../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails';
@@ -32,15 +32,22 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
     const chatContainerRef = useRef(null);
     const [forceStopLoading, setForceStopLoading] = useState(false);
 
+    const isDemoConversation = useMemo(() => {
+        const isDemoId = (id) =>
+            typeof id === 'string' && (id.startsWith('test-') || id.startsWith('demo-'));
+        return isDemoId(userId) || isDemoId(contactId);
+    }, [userId, contactId]);
+
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
     };
 
     useEffect(() => {
         if (contactId) {
-            fetchMessages(contactId);
+            // Demo/test contacts should not hit the backend history endpoint.
+            fetchMessages(contactId, { skipRemote: isDemoConversation });
         }
-    }, [userId, contactId, fetchMessages]);
+    }, [userId, contactId, fetchMessages, isDemoConversation]);
 
     // Safety: if loading persists too long (e.g., network hang), clear after 12s
     useEffect(() => {
@@ -96,7 +103,23 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                 messageType: 'wifi_info',
             },
         ];
-        automated.forEach((m) => addNewMessage(m));
+        automated.forEach((m, i) => {
+            addNewMessage(m);
+            setTimeout(() => {
+                // These messages are injected locally (not via websocket), so we toast them here
+                // to mimic an incoming message notification.
+                if (m?.text) {
+                    toast.info(
+                        <MessageToast
+                            contactName={contactName}
+                            contactImage={contactImage}
+                            message={m.text}
+                        />,
+                        { className: 'message-toast-custom' }
+                    );
+                }
+            }, i * 200);
+        });
     };
 
     useEffect(() => {
@@ -202,7 +225,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                 <div className="chat-screen" ref={chatContainerRef}>
                     {loading && !forceStopLoading ? (
                         <p>Loading messages...</p>
-                    ) : error ? (
+                    ) : error && !isDemoConversation ? (
                         <p>{String(error)}</p>
                     ) : visibleMessages.length === 0 ? (
                         <p>No messages yet. Say hello 👋</p>

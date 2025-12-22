@@ -380,14 +380,14 @@ $color-disabled-text: #7b8698;
             .message-input-wrapper {
                 position: relative;
                 flex: 1;
-                max-width: 720px; /* reduce overall width */
-                margin: 0 4.5rem 0 auto; /* anchor right with space for button */
+                max-width: 720px;
+                margin: 0 auto;
                 overflow: visible;
             }
 
             .char-limit-indicator {
                 position: absolute;
-                left: -6rem;
+                left: calc(100% + 7.5rem);
                 top: 50%;
                 transform: translateY(-50%);
                 font-size: 11px;
@@ -444,7 +444,7 @@ $color-disabled-text: #7b8698;
                 position: absolute;
                 background: $color-textarea-bg;
                 border: 2px solid $color-accent-dark;
-                right: -62px;
+                right: 8px;
                 top: 50%;
                 transform: translateY(-50%);
                 color: $color-accent-dark;

@@ -9,7 +9,7 @@ export const useFetchMessages = (userId) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const fetchMessages = useCallback(async (recipientId) => {
+    const fetchMessages = useCallback(async (recipientId, options) => {
         if (!recipientId) {
             console.error('Recipient ID is undefined');
             return;
@@ -23,11 +23,34 @@ export const useFetchMessages = (userId) => {
         setActiveRecipientId(recipientId);
         setError(null);
 
+        const skipRemote = options?.skipRemote === true;
+        if (skipRemote) {
+            // For demo/test conversations we don't hit the backend. Ensure UI has an empty array and no error.
+            setLoading(false);
+            setMessagesByRecipient((prev) => ({
+                ...prev,
+                [recipientId]: prev[recipientId] || [],
+            }));
+            cacheRef.current[recipientId] = cacheRef.current[recipientId] || [];
+            return;
+        }
+
         // If we already have messages for this conversation, don't refetch unnecessarily
         const cached = cacheRef.current[recipientId];
         if (Array.isArray(cached) && cached.length > 0) {
             // Ensure UI is not stuck in loading state when switching to cached chat
             setLoading(false);
+            return;
+        }
+
+        // Skip fetch for demo/test accounts (ids starting with 'test-')
+        if (typeof recipientId === 'string' && recipientId.startsWith('test-')) {
+            setLoading(false);
+            setMessagesByRecipient((prev) => ({
+                ...prev,
+                [recipientId]: [],
+            }));
+            cacheRef.current[recipientId] = [];
             return;
         }
 
