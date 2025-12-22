@@ -96,27 +96,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                 messageType: 'wifi_info',
             },
         ];
-        automated.forEach((m, i) => {
-            addNewMessage(m);
-            setTimeout(() => {
-                toast.info(
-                    <MessageToast 
-                        contactName={contactName} 
-                        contactImage={contactImage} 
-                        message={m.text} 
-                    />,
-                    { className: 'message-toast-custom' }
-                );
-            }, i * 200);
-        });
-        const last = automated[automated.length - 1];
-        if (last) {
-            // Update contact list preview line
-            handleContactListMessage?.({
-                ...last,
-                recipientId: contactId, 
-            });
-        }
+        automated.forEach((m) => addNewMessage(m));
     };
 
     useEffect(() => {

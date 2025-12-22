@@ -27,7 +27,8 @@ $color-disabled-text: #7b8698;
 .guest-chat {
     display: flex;
     flex-direction: row;
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     height: 88vh;
 
         .chat-screen-container {
@@ -380,13 +381,13 @@ $color-disabled-text: #7b8698;
                 position: relative;
                 flex: 1;
                 max-width: 720px; /* reduce overall width */
-                margin: 0 auto 0 0; /* anchor left */
+                margin: 0 4.5rem 0 auto; /* anchor right with space for button */
                 overflow: visible;
             }
 
             .char-limit-indicator {
                 position: absolute;
-                right: -160px;
+                left: -6rem;
                 top: 50%;
                 transform: translateY(-50%);
                 font-size: 11px;

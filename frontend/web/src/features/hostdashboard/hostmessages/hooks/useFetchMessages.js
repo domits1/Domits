@@ -15,6 +15,11 @@ export const useFetchMessages = (userId) => {
             return;
         }
 
+        if (!userId) {
+            console.error('User ID is undefined');
+            return;
+        }
+
         setActiveRecipientId(recipientId);
         setError(null);
 

@@ -41,16 +41,9 @@ const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashbo
                         {bookingStatus === "Accepted" && <p id='status'>Reservation approved</p>}
                         {bookingStatus === "Pending" && <p id='status'>Inquiry sent</p>}
                         {bookingStatus === "Failed" && <p id='status'>Reservation unsuccessful</p>}
-                        {(() => {
-                            const last = contact.latestMessage;
-                            if (!last) return "No message history yet";
-                            const isFromMe = last.userId === userId;
-                            const preview = (last.fileUrls && last.fileUrls.length > 0)
-                                ? "attachment sent"
-                                : (last.text || "").trim();
-                            const namePrefix = isFromMe ? "me" : (contact.givenName || "them");
-                            return `${namePrefix}: ${preview || ""}`.trim();
-                        })()}
+                        {contact.latestMessage?.text
+                            ? contact.latestMessage.text
+                            : "No message history yet"}
                     </p>
                 )}
 

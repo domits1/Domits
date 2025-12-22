@@ -37,31 +37,26 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
 
     const handleCreateTestContact = () => {
         const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.inset = '0';
-        overlay.style.background = 'rgba(0,0,0,0.5)';
-        overlay.style.display = 'flex';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-        overlay.style.zIndex = '10000';
+        overlay.className = 'add-contact-overlay';
 
         const modal = document.createElement('div');
-        modal.style.background = '#fff';
-        modal.style.padding = '16px';
-        modal.style.borderRadius = '8px';
-        modal.style.width = '420px';
-        modal.style.maxWidth = '90vw';
-        modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+        modal.className = 'add-contact-modal';
 
         modal.innerHTML = `
-            <h3 style="margin:0 0 12px 0;">Add contact</h3>
-            <label style="display:block;margin-bottom:6px;">Name</label>
-            <input id="new-contact-name" type="text" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;margin-bottom:12px;" placeholder="Contact name"/>
-            <label style="display:block;margin-bottom:6px;">Profile image (PNG/JPG)</label>
-            <input id="new-contact-file" type="file" accept="image/png, image/jpeg" style="width:100%;margin-bottom:12px;"/>
-            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
-                <button id="cancel-add-contact" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;background:#f6f6f6;">Cancel</button>
-                <button id="save-add-contact" style="padding:6px 10px;border:1px solid #0D9813;border-radius:6px;background:#0D9813;color:#fff;">Add</button>
+            <h3>Add contact</h3>
+            <div class="form-group">
+                <label>Name</label>
+                <input id="new-contact-name" type="text" placeholder="Contact name" />
+            </div>
+            <div class="form-group">
+                <label>Profile image (PNG/JPG)</label>
+                <div class="file-input-wrapper">
+                    <input id="new-contact-file" type="file" accept="image/png, image/jpeg" />
+                </div>
+            </div>
+            <div class="actions">
+                <button id="cancel-add-contact" class="cancel-btn">Cancel</button>
+                <button id="save-add-contact" class="save-btn">Add</button>
             </div>
         `;
 
