@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   LineChart,
   Line,
@@ -16,59 +16,54 @@ import { ADRCardService } from "../services/ADRCardService";
 import { HostRevenueService } from "../services/HostRevenueService";
 import { OccupancyRateService } from "../services/OccupancyRateService";
 
-import { Auth } from "aws-amplify";
-
-const MonthlyComparison = () => {
-  const [selectedMetric, setSelectedMetric] = useState("OCC"); // OCC first
+const MonthlyComparison = ({ hostId }) => {
+  const [selectedMetric, setSelectedMetric] = useState("OCC");
   const [adrData, setAdrData] = useState([]);
   const [revparData, setRevparData] = useState([]);
   const [alosData, setAlosData] = useState([]);
-  const [occData, setOccData] = useState([]); // NEW
+  const [occData, setOccData] = useState([]);
 
   const [loading, setLoading] = useState(false);
-  const [hostId, setHostId] = useState(null);
   const [error, setError] = useState(null);
 
+  const isMountedRef = useRef(false);
+
+  // cache keys to avoid re-setting state when nothing changed
+  const lastKeysRef = useRef({
+    adrKey: "",
+    revparKey: "",
+    alosKey: "",
+    occKey: "",
+  });
+
   const shortMonths = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
+    "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec",
   ];
 
   const getMonthRange = (year, monthIndex) => {
     const start = new Date(year, monthIndex, 1);
     const end = new Date(year, monthIndex + 1, 0);
     const format = (d) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-        2,
-        "0"
-      )}-${String(d.getDate()).padStart(2, "0")}`;
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+        d.getDate()
+      ).padStart(2, "0")}`;
     return { start: format(start), end: format(end) };
   };
 
-  // Get Auth User
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        setHostId(user.attributes.sub);
-      } catch {
-        setError("Authentication failed");
-      }
-    };
-    fetchUser();
+  const buildKey = useCallback((arr) => {
+    return (arr || [])
+      .map((x) => `${x.month}:${Number(x.thisYear || 0)}:${Number(x.lastYear || 0)}`)
+      .join("|");
   }, []);
 
-  // Fetch all metrics monthly
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Fetch all metrics monthly (only update state when changed)
   useEffect(() => {
     if (!hostId) return;
 
@@ -79,7 +74,6 @@ const MonthlyComparison = () => {
       try {
         const year = new Date().getFullYear();
 
-        // ADR
         const adrPromises = shortMonths.map((_, i) => {
           const { start, end } = getMonthRange(year, i);
           return ADRCardService.fetchMetric(
@@ -93,15 +87,11 @@ const MonthlyComparison = () => {
               typeof data === "number"
                 ? data
                 : Number(data?.averageDailyRate ?? data?.value ?? 0);
-            return {
-              month: shortMonths[i],
-              thisYear: value,
-              lastYear: value * 0.9,
-            };
+
+            return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
           });
         });
 
-        // RevPAR
         const revparPromises = shortMonths.map((_, i) => {
           const { start, end } = getMonthRange(year, i);
           return RevPARService.fetchMetric(
@@ -114,17 +104,12 @@ const MonthlyComparison = () => {
             const value =
               typeof data === "number"
                 ? data
-                : data?.revenuePerAvailableRoom ?? data?.value ?? 0;
+                : Number(data?.revenuePerAvailableRoom ?? data?.value ?? 0);
 
-            return {
-              month: shortMonths[i],
-              thisYear: value,
-              lastYear: value * 0.9,
-            };
+            return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
           });
         });
 
-        // ALOS
         const alosPromises = shortMonths.map((_, i) => {
           const { start, end } = getMonthRange(year, i);
 
@@ -142,15 +127,11 @@ const MonthlyComparison = () => {
               data ??
               0;
 
-            return {
-              month: shortMonths[i],
-              thisYear: Number(value),
-              lastYear: Number(value) * 0.9,
-            };
+            const num = Number(value) || 0;
+            return { month: shortMonths[i], thisYear: num, lastYear: num * 0.9 };
           });
         });
 
-        // NEW — OCCUPANCY RATE
         const occPromises = shortMonths.map((_, i) => {
           const { start, end } = getMonthRange(year, i);
 
@@ -161,16 +142,10 @@ const MonthlyComparison = () => {
             end
           ).then((rate) => {
             const value = typeof rate === "number" ? rate : Number(rate ?? 0);
-
-            return {
-              month: shortMonths[i],
-              thisYear: value,
-              lastYear: value * 0.9,
-            };
+            return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
           });
         });
 
-        // Wait for all
         const [adrRes, revparRes, alosRes, occRes] = await Promise.all([
           Promise.all(adrPromises),
           Promise.all(revparPromises),
@@ -178,22 +153,42 @@ const MonthlyComparison = () => {
           Promise.all(occPromises),
         ]);
 
-        setAdrData(adrRes);
-        setRevparData(revparRes);
-        setAlosData(alosRes);
-        setOccData(occRes);
+        if (!isMountedRef.current) return;
+
+        const nextAdrKey = buildKey(adrRes);
+        if (lastKeysRef.current.adrKey !== nextAdrKey) {
+          setAdrData(adrRes);
+          lastKeysRef.current.adrKey = nextAdrKey;
+        }
+
+        const nextRevparKey = buildKey(revparRes);
+        if (lastKeysRef.current.revparKey !== nextRevparKey) {
+          setRevparData(revparRes);
+          lastKeysRef.current.revparKey = nextRevparKey;
+        }
+
+        const nextAlosKey = buildKey(alosRes);
+        if (lastKeysRef.current.alosKey !== nextAlosKey) {
+          setAlosData(alosRes);
+          lastKeysRef.current.alosKey = nextAlosKey;
+        }
+
+        const nextOccKey = buildKey(occRes);
+        if (lastKeysRef.current.occKey !== nextOccKey) {
+          setOccData(occRes);
+          lastKeysRef.current.occKey = nextOccKey;
+        }
       } catch (err) {
         console.error(err);
-        setError("Failed to fetch monthly comparison data");
+        if (isMountedRef.current) setError("Failed to fetch monthly comparison data");
       } finally {
-        setLoading(false);
+        if (isMountedRef.current) setLoading(false);
       }
     };
 
     fetchAll();
-  }, [hostId]);
+  }, [hostId, buildKey]);
 
-  // Chart data selector
   const chartData =
     selectedMetric === "OCC"
       ? occData
@@ -207,7 +202,6 @@ const MonthlyComparison = () => {
     <div className="mc-comparison-card">
       <div className="mc-header">
         <div className="mc-toggle">
-          {/* OCCUPANCY FIRST */}
           <button
             className={selectedMetric === "OCC" ? "active" : ""}
             onClick={() => setSelectedMetric("OCC")}
@@ -245,21 +239,17 @@ const MonthlyComparison = () => {
       ) : (
         <div className="mc-chart">
           <ResponsiveContainer width="100%" height={350}>
-            <LineChart
-              data={chartData}
-              margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
-            >
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
 
-              {/* Y-axis format based on metric */}
               <YAxis
                 tickFormatter={(v) =>
                   selectedMetric === "ALOS"
                     ? `${v}`
                     : selectedMetric === "OCC"
                     ? `${v}%`
-                    : `$${v}`
+                    : `€${v}`
                 }
               />
 
@@ -269,7 +259,7 @@ const MonthlyComparison = () => {
                     ? `${v} nights`
                     : selectedMetric === "OCC"
                     ? `${v}%`
-                    : `$${v}`
+                    : `€${v}`
                 }
               />
 
