@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { UserProvider } from '../hostdashboard/hostmessages/context/AuthContext';
-import { WebSocketProvider } from '../hostdashboard/hostmessages/context/webSocketContext';
+import { WebSocketProvider, WebSocketContext } from '../hostdashboard/hostmessages/context/webSocketContext';
 import { useAuth } from '../hostdashboard/hostmessages/hooks/useAuth';
 
 import ContactList from '../../components/messages/ContactList';
 import ChatScreen from '../../components/messages/ChatScreen';
 import BookingTab from '../../components/messages/BookingTab';
+import NotificationContainer from '../../components/notifications/NotificationContainer';
 import '../hostdashboard/hostmessages/styles/sass/hostMessages.scss';
 import Navbar from '../../components/base/navbar';
 import Pages from '../guestdashboard/Pages';
 
 const GuestMessagesInner = () => {
   const { userId } = useAuth();
+  const socket = useContext(WebSocketContext);
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [selectedContactName, setSelectedContactName] = useState(null);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
@@ -19,6 +21,10 @@ const GuestMessagesInner = () => {
   const [latestContactListMessage, setLatestContactListMessage] = useState(null);
   const [selectedContactAvatar, setSelectedContactAvatar] = useState(null);
   const isMobile = screenWidth < 768; // Max mobile screen width
+
+  const handleNotificationClick = (contactId) => {
+    setSelectedContactId(contactId);
+  };
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -88,6 +94,10 @@ const GuestMessagesInner = () => {
 
   return (
     <WebSocketProvider userId={userId}>
+      <NotificationContainer 
+        notifications={socket?.notifications || []} 
+        onClose={socket?.removeNotification}
+      />
       <div className={`guest-chat-components`}>
         {showContactList && (
           <div className={`guest-contact-panel`}>
@@ -158,5 +168,3 @@ const GuestMessages = () => (
 );
 
 export default GuestMessages;
-
-

@@ -41,6 +41,19 @@ export class PropertyRepository {
             .execute();
     }
 
+    async updateAutomatedMessages(propertyId, welcomeMessage, checkinMessage) {
+        const client = await Database.getInstance();
+        await client
+            .createQueryBuilder()
+            .update(Property)
+            .set({ 
+                automatedwelcomemessage: welcomeMessage,
+                automatedcheckinmessage: checkinMessage
+             })
+            .where("id = :id", { id: propertyId })
+            .execute();
+    }
+
     async getActivePropertiesByType(type) {
         const client = await Database.getInstance();
         const result = await client
