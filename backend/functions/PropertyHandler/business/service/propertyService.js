@@ -74,6 +74,14 @@ export class PropertyService {
     }
   }
 
+  async updateAutomatedMessages(propertyId, welcomeMessage, checkinMessage) {
+      const property = await this.getBasePropertyInfo(propertyId);
+      if (!property) {
+          throw new NotFoundException(`Property ${propertyId} not found.`);
+      }
+      await this.propertyRepository.updateAutomatedMessages(propertyId, welcomeMessage, checkinMessage);
+  }
+
   async getActivePropertyCards(lastEvaluatedKey) {
     const propertyIdentifiers = await this.propertyRepository.getActiveProperties(lastEvaluatedKey);
     const properties = await Promise.all(

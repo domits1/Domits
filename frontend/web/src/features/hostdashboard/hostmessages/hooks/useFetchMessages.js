@@ -46,7 +46,8 @@ export const useFetchMessages = (userId) => {
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-                throw new Error('Failed to fetch messages');
+                const errorText = await response.text().catch(() => 'Unknown error');
+                throw new Error(`Failed to fetch messages: ${response.status} ${errorText}`);
             }
 
             const rawResponse = await response.text();
