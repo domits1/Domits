@@ -11,7 +11,7 @@ import {
 import "./ADRCard.scss";
 import { ADRCardService as ADRService } from "../services/ADRCardService.js";
 
-const ADRCard = () => {
+const ADRCard = ({ refreshKey }) => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [adr, setAdr] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -61,68 +61,78 @@ const ADRCard = () => {
 
   const buildChartKey = (data) => {
     if (!Array.isArray(data)) return "";
-    // stable-ish signature of chart data contents
     return data.map((d) => `${d.name ?? ""}:${Number(d.value ?? 0)}`).join("|");
   };
 
-  // Fetch all ADR metrics (no polling, only on dependency change)
-  const fetchMetrics = useCallback(async () => {
-    if (!canFetch() || !isMountedRef.current) return;
+  // Fetch all ADR metrics
+  const fetchMetrics = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!canFetch() || !isMountedRef.current) return;
 
-    if (fetching.current) return;
-    fetching.current = true;
+      if (fetching.current) return;
+      fetching.current = true;
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const results = await ADRService.getADRMetrics(
-        cognitoUserId,
-        timeFilter,
-        startDate,
-        endDate
-      );
-
-      if (!isMountedRef.current || !results) return;
-
-      const nextAdr = Number(results.adr) || 0;
-      const nextTotalRevenue = Number(results.totalRevenue) || 0;
-      const nextBookedNights = Number(results.bookedNights) || 0;
-      const nextChartData = results.chartData || [];
-      const nextChartKey = buildChartKey(nextChartData);
-
-      // Only update if changed
-      if (lastRef.current.adr !== nextAdr) {
-        setAdr(nextAdr);
-        lastRef.current.adr = nextAdr;
-      }
-      if (lastRef.current.totalRevenue !== nextTotalRevenue) {
-        setTotalRevenue(nextTotalRevenue);
-        lastRef.current.totalRevenue = nextTotalRevenue;
-      }
-      if (lastRef.current.bookedNights !== nextBookedNights) {
-        setBookedNights(nextBookedNights);
-        lastRef.current.bookedNights = nextBookedNights;
-      }
-      if (lastRef.current.chartKey !== nextChartKey) {
-        setChartData(nextChartData);
-        lastRef.current.chartKey = nextChartKey;
+      if (!silent) {
+        setLoading(true);
+        setError(null);
       }
 
-      setError(null);
-    } catch (e) {
-      if (isMountedRef.current) setError("Failed to fetch ADR metrics");
-    } finally {
-      fetching.current = false;
-      if (isMountedRef.current) setLoading(false);
-    }
-  }, [canFetch, cognitoUserId, timeFilter, startDate, endDate]);
+      try {
+        const results = await ADRService.getADRMetrics(
+          cognitoUserId,
+          timeFilter,
+          startDate,
+          endDate
+        );
 
-  // Fetch on dependency updates ONLY (removed interval polling)
+        if (!isMountedRef.current || !results) return;
+
+        const nextAdr = Number(results.adr) || 0;
+        const nextTotalRevenue = Number(results.totalRevenue) || 0;
+        const nextBookedNights = Number(results.bookedNights) || 0;
+        const nextChartData = results.chartData || [];
+        const nextChartKey = buildChartKey(nextChartData);
+
+        // Only update if changed
+        if (lastRef.current.adr !== nextAdr) {
+          setAdr(nextAdr);
+          lastRef.current.adr = nextAdr;
+        }
+        if (lastRef.current.totalRevenue !== nextTotalRevenue) {
+          setTotalRevenue(nextTotalRevenue);
+          lastRef.current.totalRevenue = nextTotalRevenue;
+        }
+        if (lastRef.current.bookedNights !== nextBookedNights) {
+          setBookedNights(nextBookedNights);
+          lastRef.current.bookedNights = nextBookedNights;
+        }
+        if (lastRef.current.chartKey !== nextChartKey) {
+          setChartData(nextChartData);
+          lastRef.current.chartKey = nextChartKey;
+        }
+
+        if (!silent) setError(null);
+      } catch (e) {
+        if (!silent && isMountedRef.current) setError("Failed to fetch ADR metrics");
+      } finally {
+        fetching.current = false;
+        if (!silent && isMountedRef.current) setLoading(false);
+      }
+    },
+    [canFetch, cognitoUserId, timeFilter, startDate, endDate]
+  );
+
+  // Fetch on filter changes (normal)
   useEffect(() => {
     if (!canFetch()) return;
-    fetchMetrics();
+    fetchMetrics({ silent: false });
   }, [canFetch, fetchMetrics]);
+
+  // ✅ Parent-triggered refresh (silent)
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchMetrics({ silent: true });
+  }, [refreshKey, canFetch, fetchMetrics]);
 
   // Safe number value for chart & UI
   const safeValue = (v) => (Number.isFinite(v) ? Number(v) : 0);
@@ -142,41 +152,27 @@ const ADRCard = () => {
     <div className="adr-card card-base">
       <h3>Average Daily Rate</h3>
 
-      {/* Time Filter */}
       <div className="time-filter">
         <label>Time Filter:</label>
-        <select
-          value={timeFilter}
-          onChange={(e) => setTimeFilter(e.target.value)}
-        >
+        <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
           <option value="monthly">Monthly</option>
           <option value="custom">Custom</option>
         </select>
       </div>
 
-      {/* Custom Date Filter */}
       {timeFilter === "custom" && (
         <div className="custom-date-filter">
           <div>
             <label>Start Date:</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div>
             <label>End Date:</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
         </div>
       )}
 
-      {/* Metric Details */}
       <div className="adr-details">
         {loading ? (
           <p>Loading…</p>
@@ -184,20 +180,13 @@ const ADRCard = () => {
           <p style={{ color: "red" }}>Error: {error}</p>
         ) : (
           <>
-            <p>
-              <strong>ADR:</strong> €{safeValue(adr).toLocaleString()}
-            </p>
-            <p>
-              <strong>Total Revenue:</strong> €{safeValue(totalRevenue).toLocaleString()}
-            </p>
-            <p>
-              <strong>Booked Nights:</strong> {safeValue(bookedNights).toLocaleString()}
-            </p>
+            <p><strong>ADR:</strong> €{safeValue(adr).toLocaleString()}</p>
+            <p><strong>Total Revenue:</strong> €{safeValue(totalRevenue).toLocaleString()}</p>
+            <p><strong>Booked Nights:</strong> {safeValue(bookedNights).toLocaleString()}</p>
           </>
         )}
       </div>
 
-      {/* Donut Chart */}
       {!loading && !error && (
         <div className="adr-donut-chart">
           <ResponsiveContainer width="100%" height={220}>

@@ -3,7 +3,7 @@ import { Auth } from "aws-amplify";
 import "./BookedNights.scss";
 import { BookedNightsService } from "../services/BookedNightService.js";
 
-const BookedNights = () => {
+const BookedNights = ({ refreshKey }) => {
   const [bookedNights, setBookedNights] = useState(0);
   const [periodType, setPeriodType] = useState("monthly");
   const [startDate, setStartDate] = useState("");
@@ -12,57 +12,91 @@ const BookedNights = () => {
   const [error, setError] = useState(null);
   const [cognitoUserId, setCognitoUserId] = useState(null);
 
+  const isMountedRef = useRef(false);
+
   // prevents setting loading=true when nothing changed
   const lastValueRef = useRef(null);
 
   // Fetch user ID
   useEffect(() => {
+    isMountedRef.current = true;
+
     const fetchUserId = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
+        if (!isMountedRef.current) return;
         setCognitoUserId(user.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito user ID:", err);
-        setError("User not logged in.");
+        if (isMountedRef.current) setError("User not logged in.");
       }
     };
+
     fetchUserId();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
-  const fetchBookedNights = useCallback(async () => {
-    if (!cognitoUserId) return;
-    if (periodType === "custom" && (!startDate || !endDate)) return;
-
-    setError(null);
-
-    try {
-      const nights = await BookedNightsService.fetchBookedNights(
-        cognitoUserId,
-        periodType,
-        startDate,
-        endDate
-      );
-
-      // Only update state if changed
-      if (lastValueRef.current !== nights) {
-        setLoading(true); // optional: show loading only on real change
-        setBookedNights(nights);
-        lastValueRef.current = nights;
-        setLoading(false);
-      }
-    } catch (err) {
-      console.error("Error fetching booked nights:", err);
-      setError(err.message || "Failed to fetch booked nights.");
-      setBookedNights(0);
-      lastValueRef.current = 0;
-      setLoading(false);
-    }
+  const canFetch = useCallback(() => {
+    if (!cognitoUserId) return false;
+    if (periodType === "custom" && (!startDate || !endDate)) return false;
+    return true;
   }, [cognitoUserId, periodType, startDate, endDate]);
 
-  // Fetch on filter changes ONLY (no interval)
+  const fetchBookedNights = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!canFetch()) return;
+
+      if (!silent) setLoading(true);
+      if (!silent) setError(null);
+
+      try {
+        const nights = await BookedNightsService.fetchBookedNights(
+          cognitoUserId,
+          periodType,
+          startDate,
+          endDate
+        );
+
+        if (!isMountedRef.current) return;
+
+        const next = Number(nights) || 0;
+
+        // Only update state if changed
+        if (lastValueRef.current !== next) {
+          setBookedNights(next);
+          lastValueRef.current = next;
+        }
+      } catch (err) {
+        console.error("Error fetching booked nights:", err);
+
+        if (!isMountedRef.current) return;
+
+        // only show errors on non-silent fetch (optional)
+        if (!silent) setError(err.message || "Failed to fetch booked nights.");
+
+        setBookedNights(0);
+        lastValueRef.current = 0;
+      } finally {
+        if (!silent && isMountedRef.current) setLoading(false);
+      }
+    },
+    [canFetch, cognitoUserId, periodType, startDate, endDate]
+  );
+
+  // Fetch on filter changes (normal)
   useEffect(() => {
-    if (cognitoUserId) fetchBookedNights();
-  }, [cognitoUserId, periodType, startDate, endDate, fetchBookedNights]);
+    if (!canFetch()) return;
+    fetchBookedNights({ silent: false });
+  }, [canFetch, fetchBookedNights]);
+
+  // ✅ Parent-triggered refresh (silent)
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchBookedNights({ silent: true });
+  }, [refreshKey, canFetch, fetchBookedNights]);
 
   return (
     <div className="booked-nights-card-container">

@@ -13,7 +13,7 @@ import {
 import "./ADRCard.scss";
 import { RevPARService } from "../services/RevParService.js";
 
-const RevPARCard = () => {
+const RevPARCard = ({ refreshKey }) => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [revPAR, setRevPAR] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -27,6 +27,9 @@ const RevPARCard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const isMountedRef = useRef(false);
+  const fetchingRef = useRef(false);
+
   // cache last values to prevent useless updates
   const lastRef = useRef({
     totalRevenue: null,
@@ -39,16 +42,23 @@ const RevPARCard = () => {
    * GET AUTH USER
    * ----------------------------------------------------- */
   useEffect(() => {
+    isMountedRef.current = true;
+
     const fetchUser = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
-        setCognitoUserId(user.attributes.sub);
+        if (isMountedRef.current) setCognitoUserId(user.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
-        setError("Failed to authenticate user");
+        if (isMountedRef.current) setError("Failed to authenticate user");
       }
     };
+
     fetchUser();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   /** -------------------------------------------------------
@@ -148,90 +158,119 @@ const RevPARCard = () => {
   /** -------------------------------------------------------
    * MAIN METRIC FETCH (only updates state when changed)
    * ----------------------------------------------------- */
-  const fetchMetrics = useCallback(async () => {
-    if (!canFetch()) return;
+  const fetchMetrics = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!canFetch()) return;
+      if (!isMountedRef.current) return;
+      if (fetchingRef.current) return;
 
-    setLoading(true);
-    setError(null);
+      fetchingRef.current = true;
 
-    try {
-      let summary;
-
-      if (timeFilter === "custom") {
-        summary = await RevPARService.getRevPARMetrics(
-          cognitoUserId,
-          "custom",
-          startDate,
-          endDate
-        );
-      } else {
-        summary = await RevPARService.getRevPARMetrics(cognitoUserId, timeFilter);
+      if (!silent) {
+        setLoading(true);
+        setError(null);
       }
 
-      const nextTotalRev =
-        typeof summary.totalRevenue === "object"
-          ? summary.totalRevenue.totalRevenue
-          : summary.totalRevenue;
+      try {
+        let summary;
 
-      const nextAvailable =
-        typeof summary.availableNights === "object"
-          ? summary.availableNights.availableNights
-          : summary.availableNights;
+        if (timeFilter === "custom") {
+          summary = await RevPARService.getRevPARMetrics(
+            cognitoUserId,
+            "custom",
+            startDate,
+            endDate
+          );
+        } else {
+          summary = await RevPARService.getRevPARMetrics(cognitoUserId, timeFilter);
+        }
 
-      const nextRevparVal = parseFloat(summary.revPAR) || 0;
+        if (!isMountedRef.current) return;
 
-      // Only set state if changed
-      if (lastRef.current.totalRevenue !== (nextTotalRev || 0)) {
-        setTotalRevenue(nextTotalRev || 0);
-        lastRef.current.totalRevenue = nextTotalRev || 0;
+        const nextTotalRev =
+          typeof summary.totalRevenue === "object"
+            ? summary.totalRevenue.totalRevenue
+            : summary.totalRevenue;
+
+        const nextAvailable =
+          typeof summary.availableNights === "object"
+            ? summary.availableNights.availableNights
+            : summary.availableNights;
+
+        const nextRevparVal = parseFloat(summary.revPAR) || 0;
+
+        if (lastRef.current.totalRevenue !== (nextTotalRev || 0)) {
+          setTotalRevenue(nextTotalRev || 0);
+          lastRef.current.totalRevenue = nextTotalRev || 0;
+        }
+
+        const nextAvailNum = Number(nextAvailable) || 0;
+        if (lastRef.current.availableNights !== nextAvailNum) {
+          setAvailableNights(nextAvailNum);
+          lastRef.current.availableNights = nextAvailNum;
+        }
+
+        if (lastRef.current.revPAR !== (nextRevparVal || 0)) {
+          setRevPAR(nextRevparVal || 0);
+          lastRef.current.revPAR = nextRevparVal || 0;
+        }
+
+        const chart = await fetchComparisonData(cognitoUserId);
+        const nextChartKey = buildChartKey(chart);
+
+        if (lastRef.current.chartKey !== nextChartKey) {
+          setChartData(chart);
+          lastRef.current.chartKey = nextChartKey;
+        }
+
+        if (!silent) setError(null);
+      } catch (err) {
+        console.error("Error fetching RevPAR metrics:", err);
+        if (!silent && isMountedRef.current) setError("Failed to fetch RevPAR metrics");
+
+        // If you want silent refresh to also zero on error, remove the "!silent" guard
+        if (!silent && isMountedRef.current) {
+          setRevPAR(0);
+          setTotalRevenue(0);
+          setAvailableNights(0);
+          setChartData([]);
+          lastRef.current = {
+            totalRevenue: 0,
+            availableNights: 0,
+            revPAR: 0,
+            chartKey: "",
+          };
+        }
+      } finally {
+        fetchingRef.current = false;
+        if (!silent && isMountedRef.current) setLoading(false);
       }
-
-      const nextAvailNum = Number(nextAvailable) || 0;
-      if (lastRef.current.availableNights !== nextAvailNum) {
-        setAvailableNights(nextAvailNum);
-        lastRef.current.availableNights = nextAvailNum;
-      }
-
-      if (lastRef.current.revPAR !== (nextRevparVal || 0)) {
-        setRevPAR(nextRevparVal || 0);
-        lastRef.current.revPAR = nextRevparVal || 0;
-      }
-
-      const chart = await fetchComparisonData(cognitoUserId);
-      const nextChartKey = buildChartKey(chart);
-
-      if (lastRef.current.chartKey !== nextChartKey) {
-        setChartData(chart);
-        lastRef.current.chartKey = nextChartKey;
-      }
-
-    } catch (err) {
-      console.error("Error fetching RevPAR metrics:", err);
-      setError("Failed to fetch RevPAR metrics");
-
-      setRevPAR(0);
-      setTotalRevenue(0);
-      setAvailableNights(0);
-      setChartData([]);
-
-      lastRef.current = {
-        totalRevenue: 0,
-        availableNights: 0,
-        revPAR: 0,
-        chartKey: "",
-      };
-    } finally {
-      setLoading(false);
-    }
-  }, [canFetch, cognitoUserId, timeFilter, startDate, endDate, fetchComparisonData]);
+    },
+    [canFetch, cognitoUserId, timeFilter, startDate, endDate, fetchComparisonData]
+  );
 
   /** -------------------------------------------------------
-   * FETCH ON DEPENDENCY CHANGE ONLY
+   * FETCH ON DEPENDENCY CHANGE (normal)
+   * ----------------------------------------------------- */
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchMetrics({ silent: false });
+  }, [canFetch, fetchMetrics]);
+
+  /** -------------------------------------------------------
+   * ✅ PARENT-TRIGGERED REFRESH (silent)
    * ----------------------------------------------------- */
   useEffect(() => {
     if (!canFetch()) return;
-    fetchMetrics();
-  }, [canFetch, fetchMetrics]);
+    fetchMetrics({ silent: true });
+  }, [refreshKey, canFetch, fetchMetrics]);
 
   /** -------------------------------------------------------
    * RENDER
@@ -284,15 +323,9 @@ const RevPARCard = () => {
           <p style={{ color: "red" }}>Error: {error}</p>
         ) : (
           <>
-            <p>
-              <strong>Total Revenue:</strong> €{Number(totalRevenue).toLocaleString()}
-            </p>
-            <p>
-              <strong>Available Nights:</strong> {Number(availableNights).toLocaleString()}
-            </p>
-            <p>
-              <strong>RevPAR:</strong> €{Number(revPAR).toLocaleString()}
-            </p>
+            <p><strong>Total Revenue:</strong> €{Number(totalRevenue).toLocaleString()}</p>
+            <p><strong>Available Nights:</strong> {Number(availableNights).toLocaleString()}</p>
+            <p><strong>RevPAR:</strong> €{Number(revPAR).toLocaleString()}</p>
           </>
         )}
       </div>

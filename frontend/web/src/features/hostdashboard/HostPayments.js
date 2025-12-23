@@ -9,7 +9,6 @@ import RevPARCard from "./HostRevenueCards/RevPAR.jsx";
 import ADRCard from "./HostRevenueCards/ADRCard.jsx";
 import BookedNights from "./HostRevenueCards/BookedNights.jsx";
 import ALOSCard from "./HostRevenueCards/ALOSCard.jsx";
-import MonthlyComparison from "./HostRevenueCards/MonthlyComparison.jsx";
 
 import "./HostRevenueStyle.scss";
 
@@ -23,12 +22,14 @@ const HostRevenues = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [propertyCount, setPropertyCount] = useState(0);
 
+  // ✅ this triggers child card refresh
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const isMountedRef = useRef(false);
 
-  // ✅ cache last values so we only setState when changed
   const lastRef = useRef({
     revenue: null,
     nights: null,
@@ -57,7 +58,6 @@ const HostRevenues = () => {
     };
   }, []);
 
-  // ---------- FETCH ALL ----------
   const fetchAllData = useCallback(
     async (silent = false) => {
       if (!cognitoUserId) return;
@@ -84,26 +84,33 @@ const HostRevenues = () => {
         const nextAvailable = available ?? 0;
         const nextProperties = properties ?? 0;
 
-        // ✅ only update state when the value actually changed
+        // detect change
+        const changed =
+          lastRef.current.revenue !== nextRevenue ||
+          lastRef.current.nights !== nextNights ||
+          lastRef.current.available !== nextAvailable ||
+          lastRef.current.properties !== nextProperties;
+
+        // update parent state (only if changed)
         if (lastRef.current.revenue !== nextRevenue) {
           setTotalRevenue(nextRevenue);
           lastRef.current.revenue = nextRevenue;
         }
-
         if (lastRef.current.nights !== nextNights) {
           setBookedNights(nextNights);
           lastRef.current.nights = nextNights;
         }
-
         if (lastRef.current.available !== nextAvailable) {
           setAvailableNights(nextAvailable);
           lastRef.current.available = nextAvailable;
         }
-
         if (lastRef.current.properties !== nextProperties) {
           setPropertyCount(nextProperties);
           lastRef.current.properties = nextProperties;
         }
+
+        // ✅ tell child cards to refetch
+        if (changed) setRefreshKey((k) => k + 1);
       } catch (err) {
         if (isMountedRef.current && !silent) {
           setError("Failed to fetch revenue data");
@@ -117,13 +124,11 @@ const HostRevenues = () => {
     [cognitoUserId]
   );
 
-  // First load
   useEffect(() => {
     if (!cognitoUserId) return;
     fetchAllData(false);
   }, [cognitoUserId, fetchAllData]);
 
-  // Focus & visibility refresh (silent)
   useEffect(() => {
     const onFocus = () => fetchAllData(true);
     const onVisibility = () => {
@@ -139,7 +144,6 @@ const HostRevenues = () => {
     };
   }, [fetchAllData]);
 
-  // Interval refresh (silent) — still polls, but UI updates only on change
   useEffect(() => {
     const id = setInterval(() => {
       if (!document.hidden) fetchAllData(true);
@@ -151,7 +155,6 @@ const HostRevenues = () => {
   const occupancyRate =
     availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
 
-  // ---------- RENDER ----------
   if (loading) {
     return (
       <div className="hr-revenue-spinner-container">
@@ -170,37 +173,24 @@ const HostRevenues = () => {
 
       <section className="hr-host-revenues">
         <div className="hr-content">
-          {/* Overview Cards */}
           <div className="hr-revenue-overview">
-            <RevenueOverview
-              title="Total Revenue"
-              value={`€${Number(totalRevenue).toLocaleString()}`}
-            />
-            <RevenueOverview
-              title="Booked Nights"
-              value={Number(bookedNights).toLocaleString()}
-            />
-            <RevenueOverview
-              title="Available Nights"
-              value={Number(availableNights).toLocaleString()}
-            />
-            <RevenueOverview
-              title="Total Properties"
-              value={Number(propertyCount).toLocaleString()}
-            />
+            <RevenueOverview title="Total Revenue" value={`€${totalRevenue.toLocaleString()}`} />
+            <RevenueOverview title="Booked Nights" value={bookedNights.toLocaleString()} />
+            <RevenueOverview title="Available Nights" value={availableNights.toLocaleString()} />
+            <RevenueOverview title="Total Properties" value={propertyCount.toLocaleString()} />
           </div>
 
-          {/* Detail cards */}
           <div className="hr-cards">
             <OccupancyRateCard
               occupancyRate={occupancyRate.toFixed(2)}
               numberOfProperties={propertyCount}
+              refreshKey={refreshKey}
             />
 
-            <ADRCard />
-            <RevPARCard />
-            <BookedNights />
-            <ALOSCard hostId={cognitoUserId} />
+            <ADRCard refreshKey={refreshKey} />
+            <RevPARCard refreshKey={refreshKey} />
+            <BookedNights refreshKey={refreshKey} />
+            <ALOSCard hostId={cognitoUserId} refreshKey={refreshKey} />
           </div>
         </div>
       </section>

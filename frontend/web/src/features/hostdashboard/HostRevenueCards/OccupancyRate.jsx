@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import "./OccupancyRate.scss";
 import { OccupancyRateService } from "../services/OccupancyRateService.js";
-import { useRefreshSignal } from "./RefreshContext.js";
 
-const OccupancyRate = () => {
+const OccupancyRate = ({ refreshKey }) => {
   const [occupancyRate, setOccupancyRate] = useState(0);
   const [periodType, setPeriodType] = useState("monthly");
   const [startDate, setStartDate] = useState("");
@@ -13,23 +12,31 @@ const OccupancyRate = () => {
   const [error, setError] = useState(null);
   const [cognitoUserId, setCognitoUserId] = useState(null);
 
-  const refreshSignal = useRefreshSignal(); // triggers periodically in your app
+  const isMountedRef = useRef(false);
 
   // cache last value so we only update when changed
   const lastRateRef = useRef(null);
 
   // Get User ID
   useEffect(() => {
+    isMountedRef.current = true;
+
     const fetchUserId = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
+        if (!isMountedRef.current) return;
         setCognitoUserId(user.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
-        setError("User not logged in.");
+        if (isMountedRef.current) setError("User not logged in.");
       }
     };
+
     fetchUserId();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const canFetch = useCallback(() => {
@@ -38,13 +45,12 @@ const OccupancyRate = () => {
     return true;
   }, [cognitoUserId, periodType, startDate, endDate]);
 
-  // Main fetch function
   const fetchOccupancyRate = useCallback(
-    async (silent = false) => {
+    async ({ silent = false } = {}) => {
       if (!canFetch()) return;
 
       if (!silent) setLoading(true);
-      setError(null);
+      if (!silent) setError(null);
 
       try {
         const rate = await OccupancyRateService.fetchOccupancyRate(
@@ -54,8 +60,9 @@ const OccupancyRate = () => {
           endDate
         );
 
-        // Normalize (avoid "50" vs 50.0 issues)
-        const nextRate = Number(rate);
+        if (!isMountedRef.current) return;
+
+        const nextRate = Number(rate) || 0;
 
         // Only update when changed
         if (lastRateRef.current !== nextRate) {
@@ -64,27 +71,30 @@ const OccupancyRate = () => {
         }
       } catch (err) {
         console.error("Error fetching occupancy rate:", err);
-        setError(err.message || "Failed to fetch occupancy rate.");
+        if (!isMountedRef.current) return;
+
+        if (!silent) setError(err.message || "Failed to fetch occupancy rate.");
+
         setOccupancyRate(0);
         lastRateRef.current = 0;
       } finally {
-        if (!silent) setLoading(false);
+        if (!silent && isMountedRef.current) setLoading(false);
       }
     },
     [canFetch, cognitoUserId, periodType, startDate, endDate]
   );
 
-  // Fetch on filter changes (normal fetch)
+  // Fetch on filter changes (normal)
   useEffect(() => {
-    if (!cognitoUserId) return;
-    fetchOccupancyRate(false);
-  }, [cognitoUserId, periodType, startDate, endDate, fetchOccupancyRate]);
+    if (!canFetch()) return;
+    fetchOccupancyRate({ silent: false });
+  }, [canFetch, fetchOccupancyRate]);
 
-  // Refresh signal fetch (silent, and only updates state if changed)
+  // ✅ Parent-triggered refresh (silent)
   useEffect(() => {
-    if (!cognitoUserId) return;
-    fetchOccupancyRate(true);
-  }, [refreshSignal, cognitoUserId, fetchOccupancyRate]);
+    if (!canFetch()) return;
+    fetchOccupancyRate({ silent: true });
+  }, [refreshKey, canFetch, fetchOccupancyRate]);
 
   return (
     <div className="booked-nights-card-container">

@@ -16,7 +16,7 @@ import { ADRCardService } from "../services/ADRCardService";
 import { HostRevenueService } from "../services/HostRevenueService";
 import { OccupancyRateService } from "../services/OccupancyRateService";
 
-const MonthlyComparison = ({ hostId }) => {
+const MonthlyComparison = ({ hostId, refreshKey }) => {
   const [selectedMetric, setSelectedMetric] = useState("OCC");
   const [adrData, setAdrData] = useState([]);
   const [revparData, setRevparData] = useState([]);
@@ -28,7 +28,6 @@ const MonthlyComparison = ({ hostId }) => {
 
   const isMountedRef = useRef(false);
 
-  // cache keys to avoid re-setting state when nothing changed
   const lastKeysRef = useRef({
     adrKey: "",
     revparKey: "",
@@ -63,131 +62,142 @@ const MonthlyComparison = ({ hostId }) => {
     };
   }, []);
 
-  // Fetch all metrics monthly (only update state when changed)
-  useEffect(() => {
+  const fetchAll = useCallback(async ({ silent = false } = {}) => {
     if (!hostId) return;
 
-    const fetchAll = async () => {
+    if (!silent) {
       setLoading(true);
       setError(null);
+    }
 
-      try {
-        const year = new Date().getFullYear();
+    try {
+      const year = new Date().getFullYear();
 
-        const adrPromises = shortMonths.map((_, i) => {
-          const { start, end } = getMonthRange(year, i);
-          return ADRCardService.fetchMetric(
-            hostId,
-            "averageDailyRate",
-            "custom",
-            start,
-            end
-          ).then((data) => {
-            const value =
-              typeof data === "number"
-                ? data
-                : Number(data?.averageDailyRate ?? data?.value ?? 0);
+      const adrPromises = shortMonths.map((_, i) => {
+        const { start, end } = getMonthRange(year, i);
+        return ADRCardService.fetchMetric(
+          hostId,
+          "averageDailyRate",
+          "custom",
+          start,
+          end
+        ).then((data) => {
+          const value =
+            typeof data === "number"
+              ? data
+              : Number(data?.averageDailyRate ?? data?.value ?? 0);
 
-            return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
-          });
+          return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
         });
+      });
 
-        const revparPromises = shortMonths.map((_, i) => {
-          const { start, end } = getMonthRange(year, i);
-          return RevPARService.fetchMetric(
-            hostId,
-            "revenuePerAvailableRoom",
-            "custom",
-            start,
-            end
-          ).then((data) => {
-            const value =
-              typeof data === "number"
-                ? data
-                : Number(data?.revenuePerAvailableRoom ?? data?.value ?? 0);
+      const revparPromises = shortMonths.map((_, i) => {
+        const { start, end } = getMonthRange(year, i);
+        return RevPARService.fetchMetric(
+          hostId,
+          "revenuePerAvailableRoom",
+          "custom",
+          start,
+          end
+        ).then((data) => {
+          const value =
+            typeof data === "number"
+              ? data
+              : Number(data?.revenuePerAvailableRoom ?? data?.value ?? 0);
 
-            return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
-          });
+          return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
         });
+      });
 
-        const alosPromises = shortMonths.map((_, i) => {
-          const { start, end } = getMonthRange(year, i);
+      const alosPromises = shortMonths.map((_, i) => {
+        const { start, end } = getMonthRange(year, i);
 
-          return HostRevenueService.fetchMetricData(
-            hostId,
-            "averageLengthOfStay",
-            "custom",
-            start,
-            end
-          ).then((data) => {
-            const value =
-              data?.averageLengthOfStay?.averageLengthOfStay ??
-              data?.averageLengthOfStay ??
-              data?.value ??
-              data ??
-              0;
+        return HostRevenueService.fetchMetricData(
+          hostId,
+          "averageLengthOfStay",
+          "custom",
+          start,
+          end
+        ).then((data) => {
+          const value =
+            data?.averageLengthOfStay?.averageLengthOfStay ??
+            data?.averageLengthOfStay ??
+            data?.value ??
+            data ??
+            0;
 
-            const num = Number(value) || 0;
-            return { month: shortMonths[i], thisYear: num, lastYear: num * 0.9 };
-          });
+          const num = Number(value) || 0;
+          return { month: shortMonths[i], thisYear: num, lastYear: num * 0.9 };
         });
+      });
 
-        const occPromises = shortMonths.map((_, i) => {
-          const { start, end } = getMonthRange(year, i);
+      const occPromises = shortMonths.map((_, i) => {
+        const { start, end } = getMonthRange(year, i);
 
-          return OccupancyRateService.fetchOccupancyRate(
-            hostId,
-            "custom",
-            start,
-            end
-          ).then((rate) => {
-            const value = typeof rate === "number" ? rate : Number(rate ?? 0);
-            return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
-          });
+        return OccupancyRateService.fetchOccupancyRate(
+          hostId,
+          "custom",
+          start,
+          end
+        ).then((rate) => {
+          const value = typeof rate === "number" ? rate : Number(rate ?? 0);
+          return { month: shortMonths[i], thisYear: value, lastYear: value * 0.9 };
         });
+      });
 
-        const [adrRes, revparRes, alosRes, occRes] = await Promise.all([
-          Promise.all(adrPromises),
-          Promise.all(revparPromises),
-          Promise.all(alosPromises),
-          Promise.all(occPromises),
-        ]);
+      const [adrRes, revparRes, alosRes, occRes] = await Promise.all([
+        Promise.all(adrPromises),
+        Promise.all(revparPromises),
+        Promise.all(alosPromises),
+        Promise.all(occPromises),
+      ]);
 
-        if (!isMountedRef.current) return;
+      if (!isMountedRef.current) return;
 
-        const nextAdrKey = buildKey(adrRes);
-        if (lastKeysRef.current.adrKey !== nextAdrKey) {
-          setAdrData(adrRes);
-          lastKeysRef.current.adrKey = nextAdrKey;
-        }
-
-        const nextRevparKey = buildKey(revparRes);
-        if (lastKeysRef.current.revparKey !== nextRevparKey) {
-          setRevparData(revparRes);
-          lastKeysRef.current.revparKey = nextRevparKey;
-        }
-
-        const nextAlosKey = buildKey(alosRes);
-        if (lastKeysRef.current.alosKey !== nextAlosKey) {
-          setAlosData(alosRes);
-          lastKeysRef.current.alosKey = nextAlosKey;
-        }
-
-        const nextOccKey = buildKey(occRes);
-        if (lastKeysRef.current.occKey !== nextOccKey) {
-          setOccData(occRes);
-          lastKeysRef.current.occKey = nextOccKey;
-        }
-      } catch (err) {
-        console.error(err);
-        if (isMountedRef.current) setError("Failed to fetch monthly comparison data");
-      } finally {
-        if (isMountedRef.current) setLoading(false);
+      const nextAdrKey = buildKey(adrRes);
+      if (lastKeysRef.current.adrKey !== nextAdrKey) {
+        setAdrData(adrRes);
+        lastKeysRef.current.adrKey = nextAdrKey;
       }
-    };
 
-    fetchAll();
+      const nextRevparKey = buildKey(revparRes);
+      if (lastKeysRef.current.revparKey !== nextRevparKey) {
+        setRevparData(revparRes);
+        lastKeysRef.current.revparKey = nextRevparKey;
+      }
+
+      const nextAlosKey = buildKey(alosRes);
+      if (lastKeysRef.current.alosKey !== nextAlosKey) {
+        setAlosData(alosRes);
+        lastKeysRef.current.alosKey = nextAlosKey;
+      }
+
+      const nextOccKey = buildKey(occRes);
+      if (lastKeysRef.current.occKey !== nextOccKey) {
+        setOccData(occRes);
+        lastKeysRef.current.occKey = nextOccKey;
+      }
+
+      if (!silent) setError(null);
+    } catch (err) {
+      console.error(err);
+      if (!silent && isMountedRef.current) setError("Failed to fetch monthly comparison data");
+    } finally {
+      if (!silent && isMountedRef.current) setLoading(false);
+    }
   }, [hostId, buildKey]);
+
+  // initial load
+  useEffect(() => {
+    if (!hostId) return;
+    fetchAll({ silent: false });
+  }, [hostId, fetchAll]);
+
+  // ✅ parent-triggered refresh
+  useEffect(() => {
+    if (!hostId) return;
+    fetchAll({ silent: true });
+  }, [refreshKey, hostId, fetchAll]);
 
   const chartData =
     selectedMetric === "OCC"

@@ -10,7 +10,7 @@ import {
   YAxis,
 } from "recharts";
 
-const ALOSCard = ({ hostId }) => {
+const ALOSCard = ({ hostId, refreshKey }) => {
   const [alos, setAlos] = useState(0);
   const [trendData, setTrendData] = useState([]);
   const [filterType, setFilterType] = useState("monthly");
@@ -20,10 +20,17 @@ const ALOSCard = ({ hostId }) => {
   const [error, setError] = useState(null);
 
   const isMountedRef = useRef(false);
+  const fetchingRef = useRef(false);
 
   // Cache last values so we only update when changed
   const lastAlosRef = useRef(null);
   const lastTrendKeyRef = useRef("");
+
+  const canFetch = useCallback(() => {
+    if (!hostId) return false;
+    if (filterType === "custom" && (!startDate || !endDate)) return false;
+    return true;
+  }, [hostId, filterType, startDate, endDate]);
 
   const parseResponse = (data) => {
     let value = 0;
@@ -42,54 +49,64 @@ const ALOSCard = ({ hostId }) => {
       alos: Number(t.value),
     }));
 
-    // Build a stable "key" to compare trends
     const trendKey = parsedTrend.map((p) => `${p.name}:${p.alos}`).join("|");
-
     return { parsedAlos, parsedTrend, trendKey };
   };
 
-  const fetchALOS = useCallback(async () => {
-    if (!hostId) return;
-    if (filterType === "custom" && (!startDate || !endDate)) return;
-
-    setError(null);
-    setLoading(true);
-
-    try {
-      const data = await HostRevenueService.fetchMetricData(
-        hostId,
-        "averageLengthOfStay",
-        filterType,
-        startDate,
-        endDate
-      );
-
+  const fetchALOS = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!canFetch()) return;
       if (!isMountedRef.current) return;
+      if (fetchingRef.current) return;
 
-      const { parsedAlos, parsedTrend, trendKey } = parseResponse(data);
+      fetchingRef.current = true;
 
-      // Only update ALOS if changed
-      if (lastAlosRef.current !== parsedAlos) {
-        setAlos(parsedAlos);
-        lastAlosRef.current = parsedAlos;
+      if (!silent) {
+        setError(null);
+        setLoading(true);
       }
 
-      // Only update trend if changed
-      if (lastTrendKeyRef.current !== trendKey) {
-        setTrendData(parsedTrend);
-        lastTrendKeyRef.current = trendKey;
+      try {
+        const data = await HostRevenueService.fetchMetricData(
+          hostId,
+          "averageLengthOfStay",
+          filterType,
+          startDate,
+          endDate
+        );
+
+        if (!isMountedRef.current) return;
+
+        const { parsedAlos, parsedTrend, trendKey } = parseResponse(data);
+
+        if (lastAlosRef.current !== parsedAlos) {
+          setAlos(parsedAlos);
+          lastAlosRef.current = parsedAlos;
+        }
+
+        if (lastTrendKeyRef.current !== trendKey) {
+          setTrendData(parsedTrend);
+          lastTrendKeyRef.current = trendKey;
+        }
+
+        if (!silent) setError(null);
+      } catch (err) {
+        if (!isMountedRef.current) return;
+
+        // show error only on non-silent (optional)
+        if (!silent) setError("Failed to fetch ALOS");
+
+        setAlos(0);
+        setTrendData([]);
+        lastAlosRef.current = 0;
+        lastTrendKeyRef.current = "";
+      } finally {
+        fetchingRef.current = false;
+        if (!silent && isMountedRef.current) setLoading(false);
       }
-    } catch (err) {
-      if (!isMountedRef.current) return;
-      setError("Failed to fetch ALOS");
-      setAlos(0);
-      setTrendData([]);
-      lastAlosRef.current = 0;
-      lastTrendKeyRef.current = "";
-    } finally {
-      if (isMountedRef.current) setLoading(false);
-    }
-  }, [hostId, filterType, startDate, endDate]);
+    },
+    [canFetch, hostId, filterType, startDate, endDate]
+  );
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -98,10 +115,15 @@ const ALOSCard = ({ hostId }) => {
     };
   }, []);
 
-  // Fetch ONLY on dependency changes (no polling)
+  // Fetch on dependency changes (normal)
   useEffect(() => {
-    fetchALOS();
+    fetchALOS({ silent: false });
   }, [fetchALOS]);
+
+  // ✅ Parent-triggered refresh (silent)
+  useEffect(() => {
+    fetchALOS({ silent: true });
+  }, [refreshKey, fetchALOS]);
 
   return (
     <div className="alos-card-container">
