@@ -127,32 +127,6 @@ $color-disabled-text: #7b8698;
             overflow-y: auto;
             padding-bottom: 1rem; 
 
-            .chat-error-state,
-            .chat-loading-state,
-            .chat-empty-state {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100%;
-                gap: 1rem;
-                color: $color-text-muted;
-
-                .retry-button {
-                    padding: 0.5rem 1rem;
-                    background-color: var(--domits-host-blue, #274bf0);
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                    
-                    &:hover {
-                        background-color: darken(#274bf0, 10%);
-                    }
-                }
-            }
-
             .chat-message.received {
                 margin-bottom: 1rem;
                 margin-left: 1.25rem;
@@ -276,6 +250,7 @@ $color-disabled-text: #7b8698;
 
         }
 
+        /* Bar that shows selected uploads above the input */
         .upload-preview-bar {
             display: flex;
             gap: 8px;
@@ -328,7 +303,7 @@ $color-disabled-text: #7b8698;
             align-items: center;
             gap: 0.75rem;
             width: 100%;
-            padding: 0.75rem 1rem 0.75rem 0.75rem;
+            padding: 0.75rem 1rem;
             height: auto;
             position: relative;
             border-top: 1px solid $color-border-light;
@@ -385,7 +360,7 @@ $color-disabled-text: #7b8698;
                     justify-content: center;
                     height: 36px;
                     width: 36px;
-                    font-size: 1.25rem;
+                    font-size: 1.25rem; /* size of + */
                     border-radius: 0.3rem;
                     background-color: $color-white;
                     color: $color-black;
@@ -404,27 +379,26 @@ $color-disabled-text: #7b8698;
             .message-input-wrapper {
                 position: relative;
                 flex: 1;
-                width: 100%;
-                margin: 0; 
+                max-width: 720px; /* reduce overall width */
+                margin: 0 auto 0 0; /* anchor left */
                 overflow: visible;
             }
 
             .char-limit-indicator {
                 position: absolute;
-                right: 10px;
-                bottom: -25px;
-                top: auto;
-                transform: none;
+                right: -160px;
+                top: 50%;
+                transform: translateY(-50%);
                 font-size: 11px;
                 line-height: 1;
                 color: $color-text-muted;
                 padding: 4px 10px;
                 border-radius: 999px;
-                background: transparent;
+                background: $color-charpill-bg;
                 white-space: nowrap;
                 user-select: none;
                 pointer-events: none;
-                box-shadow: none;
+                box-shadow: 0 2px 4px rgba($color-black, 0.08);
             }
 
             .char-limit-indicator.over {
@@ -435,23 +409,22 @@ $color-disabled-text: #7b8698;
             }
 
             .message-input-textarea {
-                background-color: $color-white;
-                min-height: 44px;
-                max-height: 120px;
+                background-color: $color-textarea-bg;
+                min-height: 34px;
+                max-height: 88px;
                 width: 100%;
                 resize: none;
-                border-radius: 8px;
-                border: 1px solid $color-border-mid;
-                padding: 10px 50px 10px 12px;
+                border-radius: 999px;
+                border: 2px solid $color-accent-dark;
+                padding: 8px 56px 8px 18px;
                 overflow-y: auto;
                 transition: box-shadow 0.2s ease, border-color 0.2s ease;
                 text-align: left;
-                font-size: 0.95rem;
-                font-family: 'Kanit', sans-serif;
+                font-size: 15px;
 
                 &::placeholder {
                     color: $color-placeholder;
-                    font-weight: 400;
+                    font-weight: 500;
                     opacity: 1;
                 }
 
@@ -461,36 +434,36 @@ $color-disabled-text: #7b8698;
 
                 &:focus {
                     outline: none;
-                    border-color: var(--domits-host-blue, #274bf0);
-                    box-shadow: 0 0 0 3px rgba(39, 75, 240, 0.1);
+                    border-color: $color-border-focus;
+                    box-shadow: 0 2px 6px rgba($color-black, 0.08);
                 }
             }
 
             .message-input-send-button {
                 position: absolute;
-                background: transparent;
-                border: none;
-                right: 8px;
+                background: $color-textarea-bg;
+                border: 2px solid $color-accent-dark;
+                right: -62px;
                 top: 50%;
                 transform: translateY(-50%);
-                color: var(--domits-host-blue, #274bf0);
-                width: 36px;
-                height: 36px;
-                border-radius: 50%;
+                color: $color-accent-dark;
+                width: 40px;
+                height: 40px;
+                border-radius: 999px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
-                transition: background-color 0.2s;
 
                 &:hover {
-                    background: #f0f4ff;
-                    color: var(--domits-host-blue, #274bf0);
+                    background: $color-accent-dark;
+                    color: $color-white;
                 }
 
                 &:disabled {
                     opacity: 0.5;
-                    background: transparent;
+                    background: $color-disabled-bg;
+                    border-color: $color-disabled-border;
                     color: $color-disabled-text;
                     cursor: not-allowed;
                 }

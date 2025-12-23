@@ -12,9 +12,7 @@ export class PropertyBaseInfoMapping {
             registrationNumber: propertyBaseInfoEntry.registrationnumber,
             status: propertyBaseInfoEntry.status,
             createdAt: propertyBaseInfoEntry.createdat,
-            updatedAt: propertyBaseInfoEntry.updatedat,
-            automatedWelcomeMessage: propertyBaseInfoEntry.automatedwelcomemessage,
-            automatedCheckinMessage: propertyBaseInfoEntry.automatedcheckinmessage
+            updatedAt: propertyBaseInfoEntry.updatedat
         })
     }
 }
