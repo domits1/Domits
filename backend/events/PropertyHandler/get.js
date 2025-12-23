@@ -8,13 +8,13 @@ async function main() {
       subResource: "listingDetails",
     },
     queryStringParameters: {
-      property: "c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8"
+      property: "113131c2-6b35-4652-91e7-b69948f2b54f",
     },
     headers: {
-      Authorization: "", 
+      Authorization: "",
     },
   });
-  console.log(JSON.parse(result.body))
+  console.log(JSON.parse(result.body));
 }
 
 main();

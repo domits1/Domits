@@ -9,6 +9,26 @@ class HostPropertyRepository {
   }
 
   /**
+   * Create new property as 'INACTIVE'
+   */
+  async createProperty(property) {
+    const payload = typeof property === "string" ? property : JSON.stringify(property);
+    const response = await fetch("https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property", {
+      method: "POST",
+      body: payload,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: await retrieveAccessToken(),
+      },
+    });
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      console.error(errorMessage)
+      throw new Error('Failed to create a property');
+    } else return await response.text();
+  }
+
+  /**
    * Get all properties from current host user
    */
   async fetchAllHostProperties() {

@@ -364,3 +364,15 @@ CREATE TABLE IF NOT EXISTS   property_calendar_price (
   price      int           NOT NULL,
   PRIMARY KEY (property_id, date)
 );
+
+-- -----------------------------------------------------
+-- Table main.property_test_status
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_test_status
+
+
+CREATE TABLE IF NOT EXISTS   property_test_status (
+  property_id varchar(255) NOT NULL,
+  isTest       BOOLEAN     NOT NULL,
+  PRIMARY KEY (property_id)
+);

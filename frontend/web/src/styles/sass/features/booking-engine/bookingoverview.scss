@@ -1,4 +1,3 @@
-// Variables
 $primary-color: #4caf50;
 $secondary-color: #333;
 $background-color: #f9f9f9;
@@ -9,7 +8,11 @@ $font-size-large: 16px;
 $box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 $border-radius: 8px;
 
-// Booking Container
+$login-color: #1fb13a;
+$login-text-color: #ffffff;
+$register-color: #083a66;
+$register-text-color: #ffffff;
+
 .booking-container {
   display: block;
   padding: 20px;
@@ -29,7 +32,6 @@ $border-radius: 8px;
   }
 }
 
-// Booking Header
 .booking-header {
   display: flex;
   flex-direction: row;
@@ -51,7 +53,6 @@ $border-radius: 8px;
   }
 }
 
-// Booking Container Grid
 .Bookingcontainer {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -72,7 +73,6 @@ $border-radius: 8px;
   }
 }
 
-// Left Panel
 .left-panel {
   display: flex;
   flex-direction: column;
@@ -99,7 +99,6 @@ $border-radius: 8px;
   }
 }
 
-// Right Panel
 .right-panel {
   display: flex;
   flex-direction: column;
@@ -122,7 +121,6 @@ $border-radius: 8px;
   }
 }
 
-// Booking Details
 .booking-details {
   margin-top: 20px;
   display: flex;
@@ -134,7 +132,6 @@ $border-radius: 8px;
   }
 }
 
-// Booking Details Name
 .booking-details-name {
   display: flex;
   align-items: center;
@@ -154,7 +151,6 @@ $border-radius: 8px;
   }
 }
 
-// Booking Details Image
 .bookingDetailsImage {
   width: 80px;
   height: 80px;
@@ -172,7 +168,6 @@ $border-radius: 8px;
   }
 }
 
-// Booking Title
 .booking-title {
   font-size: $font-size-large;
   font-weight: bold;
@@ -188,7 +183,6 @@ $border-radius: 8px;
   }
 }
 
-// Accommodation Title Span
 .acco-title-span {
   font-size: $font-size-medium;
   color: #777;
@@ -198,7 +192,6 @@ $border-radius: 8px;
   }
 }
 
-// Detail Row
 .detail-row {
   display: flex;
   justify-content: space-between;
@@ -218,7 +211,6 @@ $border-radius: 8px;
   }
 }
 
-// Total Price
 .total-price {
   font-size: $font-size-large;
   font-weight: bold;
@@ -233,7 +225,6 @@ $border-radius: 8px;
   }
 }
 
-// Confirm Pay Button
 .confirm-pay-button {
   padding: 12px 16px;
   font-size: $font-size-large;
@@ -261,7 +252,49 @@ $border-radius: 8px;
   }
 }
 
-// Login Reserve Form
+.auth-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 1em;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+
+  .register-button,
+  .login-button {
+    padding: 14px 18px;
+    font-size: $font-size-large;
+    border-radius: 28px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .register-button {
+    background-color: $register-color;
+    color: $register-text-color;
+    box-shadow: 0 2px 6px rgba(8, 58, 102, 0.15);
+
+    &:hover {
+      background-color: darken($register-color, 5%);
+    }
+  }
+
+  .login-button {
+    background-color: $login-color;
+    color: $login-text-color;
+    box-shadow: 0 2px 6px rgba(27, 171, 58, 0.15);
+
+    &:hover {
+      background-color: darken($login-color, 5%);
+    }
+  }
+}
+
 .login-reserve-form {
   display: flex;
   flex-direction: column;

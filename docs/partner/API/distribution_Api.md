@@ -1,1 +1,0 @@
-This is the document for the public distribution API 
