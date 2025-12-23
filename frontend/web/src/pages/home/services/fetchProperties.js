@@ -1,5 +1,8 @@
 export const FetchAllPropertyTypes = async (lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId) => {
-  const baseUrl = 'https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/all';
+  const propertyApiBase =
+    process.env.REACT_APP_PROPERTY_API_BASE ??
+    'https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property';
+  const baseUrl = `${propertyApiBase}/bookingEngine/all`;
   const params = new URLSearchParams();
   if (lastEvaluatedKeyCreatedAt) params.set('lastEvaluatedKeyCreatedAt', lastEvaluatedKeyCreatedAt);
   if (lastEvaluatedKeyId) params.set('lastEvaluatedKeyId', lastEvaluatedKeyId);
@@ -19,8 +22,11 @@ export const FetchAllPropertyTypes = async (lastEvaluatedKeyCreatedAt, lastEvalu
 };
 
 export const FetchPropertyType = async (type) => {
+  const propertyApiBase =
+    process.env.REACT_APP_PROPERTY_API_BASE ??
+    'https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property';
   const encodedType = encodeURIComponent(type ?? '');
-  const url = `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byType?type=${encodedType}`;
+  const url = `${propertyApiBase}/bookingEngine/byType?type=${encodedType}`;
   const response = await fetch(url);
   if (!response.ok) {
     let details = '';

@@ -52,11 +52,13 @@ export const Property = new EntitySchema({
         },
         automatedwelcomemessage: {
             type: "text",
-            nullable: true
+            nullable: true,
+            select: false
         },
         automatedcheckinmessage: {
             type: "text",
-            nullable: true
+            nullable: true,
+            select: false
         }
     }
 })

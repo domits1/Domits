@@ -1,7 +1,9 @@
 import { getAccessToken } from "../../../services/getAccessToken";
 
 export async function submitAccommodation(navigate, builder) {
-  const API_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
+  const API_URL =
+    process.env.REACT_APP_PROPERTY_API_BASE ??
+    "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
   try {
     const res = await fetch(API_URL, {
