@@ -47,20 +47,18 @@ const Chat = ({ user }) => {
     const [avgResponseMinutes, setAvgResponseMinutes] = useState(null);
     const [hasUnansweredOlderThan24h, setHasUnansweredOlderThan24h] = useState(false);
 
-    // Template state
     const [templates, setTemplates] = useState(initialMessageTemplates);
     const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
 
     const handleSaveTemplates = (updatedTemplates) => {
         setTemplates(updatedTemplates);
-        // Ideally, save to backend here
     };
 
     const getUUIDForUser = (userId) => {
         let uuid = localStorage.getItem(`${userId}_uuid`);
         if (!uuid) {
             uuid = generateUUID();
-            localStorage.setItem(`${userId}_uuid`, uuid); // Corrected this line
+            localStorage.setItem(`${userId}_uuid`, uuid); 
         }
         return uuid;
     };
@@ -131,7 +129,6 @@ const Chat = ({ user }) => {
         }
     }, [accoId]);
 
-    // Track average response time and unanswered reminders when chats change
     useEffect(() => {
         if (!chats || chats.length === 0) {
             setAvgResponseMinutes(null);

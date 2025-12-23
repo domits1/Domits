@@ -1,4 +1,3 @@
--- Add automated message configuration to property table
 ALTER TABLE main.property 
 ADD COLUMN IF NOT EXISTS automatedWelcomeMessage TEXT,
 ADD COLUMN IF NOT EXISTS automatedCheckinMessage TEXT;

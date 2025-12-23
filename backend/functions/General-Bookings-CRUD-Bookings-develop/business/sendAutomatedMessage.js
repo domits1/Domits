@@ -3,13 +3,12 @@ import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 const lambdaClient = new LambdaClient({ region: "eu-north-1" });
 
 /**
- * Sends an automated message via the Messaging Lambda.
  * 
- * @param {string} senderId - The ID of the sender (usually Host ID for confirmation)
- * @param {string} recipientId - The ID of the recipient (usually Guest ID)
- * @param {string} propertyId - The ID of the property
- * @param {string} messageText - The content of the message
- * @param {string} messageType - The type of automated message (e.g., 'booking_confirmation')
+ * @param {string} senderId 
+ * @param {string} recipientId
+ * @param {string} propertyId 
+ * @param {string} messageText 
+ * @param {string} messageType 
  */
 const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageText, messageType) => {
     const payload = {
@@ -29,11 +28,9 @@ const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageTe
         });
 
         await lambdaClient.send(command);
-        // console.log("Automated message sent successfully");
     } catch (error) {
         console.error("Error sending automated message via Lambda:", error);
-        // We intentionally do not throw here to ensure the booking process completes 
-        // even if the message fails to send.
+        
     }
 };
 

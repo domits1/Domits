@@ -276,7 +276,6 @@ $color-disabled-text: #7b8698;
 
         }
 
-        /* Bar that shows selected uploads above the input */
         .upload-preview-bar {
             display: flex;
             gap: 8px;
@@ -386,7 +385,7 @@ $color-disabled-text: #7b8698;
                     justify-content: center;
                     height: 36px;
                     width: 36px;
-                    font-size: 1.25rem; /* size of + */
+                    font-size: 1.25rem;
                     border-radius: 0.3rem;
                     background-color: $color-white;
                     color: $color-black;

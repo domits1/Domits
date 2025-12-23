@@ -17,9 +17,7 @@ export class PropertyController {
         this.propertyService = new PropertyService(dynamoDbClient, systemManagerRepository);
     }
 
-    // -------------------------
-    // POST /property
-    // -------------------------
+  
     async create(event) {
         try {
             const accessToken = event.headers.Authorization;
@@ -42,9 +40,7 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // PATCH /property
-    // -------------------------
+   
     async activateProperty(event) {
         try {
             const accessToken = event.headers.Authorization;
@@ -53,7 +49,6 @@ export class PropertyController {
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
 
-            // Check if this is an update for automated messages
             if (eventBody.automatedWelcomeMessage !== undefined || eventBody.automatedCheckinMessage !== undefined) {
                 await this.propertyService.updateAutomatedMessages(
                     propertyId, 
@@ -67,7 +62,6 @@ export class PropertyController {
                 }
             }
 
-            // Otherwise, proceed with activation logic
             await this.propertyService.activateProperty(propertyId);
             return {
                 statusCode: 204,
@@ -83,9 +77,7 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // GET /property/hostDashboard/all
-    // -------------------------
+
     async getFullOwnedProperties(event) {
         try {
             const accessToken = event.headers.Authorization;
@@ -106,9 +98,7 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // GET /property/hostDashboard/single
-    // -------------------------
+    
     async getFullOwnedPropertyById(event) {
         try {
             const propertyId = event.queryStringParameters.property;
@@ -129,9 +119,6 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // GET /property/bookingEngine/byType
-    // -------------------------
     async getActivePropertiesCardByType(event) {
         try {
             const type = event.queryStringParameters.type;
@@ -156,9 +143,7 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // GET /property/bookingEngine/all
-    // -------------------------
+
     async getActivePropertiesCard(event) {
         try {
             const lastEvaluatedKey = {
@@ -181,9 +166,7 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // GET /property/bookingEngine/country
-    // -------------------------
+
     async getActivePropertiesCardByCountry(event) {
         try {
             const country = event.queryStringParameters.country;
@@ -207,9 +190,7 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // GET /property/bookingEngine/byHostId
-    // -------------------------
+   
     async getActivePropertiesCardByHostId(event) {
         try {
             const hostId = event.queryStringParameters.hostId;
@@ -229,9 +210,6 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // GET /property/bookingEngine/set
-    // -------------------------
     async getActivePropertiesCardById(event) {
         try {
             const propertyIds = event.queryStringParameters.properties.split(",");
@@ -256,9 +234,7 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // GET /property/bookingEngine/listingDetails
-    // -------------------------
+  
     async getFullActivePropertyById(event) {
         try {
             const propertyId = event.queryStringParameters.property;
@@ -282,9 +258,7 @@ export class PropertyController {
             }
         }
     }
-    // -------------------------
-    // GET /property/bookingEngine/booking
-    // -------------------------
+   
     async getFullPropertyByBookingId(event) {
         try {
             const bookingId = event.queryStringParameters.bookingId;
@@ -305,9 +279,7 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // DELETE /property
-    // -------------------------
+  
     async delete(event) {
         try {
             const accessToken = event.headers.Authorization;
@@ -328,9 +300,7 @@ export class PropertyController {
         }
     }
 
-    // -------------------------
-    // Helper method (internal only)
-    // -------------------------
+   
     async createPropertyObject(propertyBuilder, body, userId) {
         let builder =
             await propertyBuilder.addBasePropertyInfo(body.property, body.propertyType.property_type, userId);

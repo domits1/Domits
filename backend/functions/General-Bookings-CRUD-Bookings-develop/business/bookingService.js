@@ -23,9 +23,6 @@ class BookingService {
 		this.getParamsModel = new GetParamsModel();
 	}
 
-	// -----------
-	// /bookings POST
-	// -----------
 
 	async create(event) {
 		//await this.verifyEventDataTypes(event);
@@ -63,7 +60,6 @@ class BookingService {
 
 	}
 
-	// /bookings PATCH
 
 	async confirmPayment(paymentid) {
 		const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
@@ -86,7 +82,6 @@ class BookingService {
 			return true;
 		}
 	}
-	// /bookings GET
 
 	async read(event) {
 		let authToken;
@@ -144,9 +139,7 @@ class BookingService {
 	}
 
 
-	// -----------
-	// verify Booking POST request
-	// -----------
+
 
 	async verifyEventDataTypes(event) {
 		try {
@@ -160,7 +153,6 @@ class BookingService {
 		}
 	}
 
-	// verify Booking GET request
 
 	async verifyQueryDataTypes(params) {
 		try {
