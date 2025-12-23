@@ -1,3 +1,4 @@
+
 export const FetchAllPropertyTypes = async (lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId) => {
   const propertyApiBase =
     process.env.REACT_APP_PROPERTY_API_BASE ??
@@ -15,8 +16,12 @@ export const FetchAllPropertyTypes = async (lastEvaluatedKeyCreatedAt, lastEvalu
     try {
       const text = await response.text();
       details = text?.slice(0, 500);
-    } catch (_) { /* ignore */ }
-    throw new Error(`Something went wrong while fetching AllPropertyTypes: ${response.status} ${response.statusText}${details ? ` - ${details}` : ''}`);
+    } catch (_) {
+      /* ignore */
+    }
+    throw new Error(
+      `Something went wrong while fetching AllPropertyTypes: ${response.status} ${response.statusText}${details ? ` - ${details}` : ''}`
+    );
   }
   return await response.json();
 };
@@ -33,8 +38,12 @@ export const FetchPropertyType = async (type) => {
     try {
       const text = await response.text();
       details = text?.slice(0, 500);
-    } catch (_) { /* ignore */ }
-    throw new Error(`Something went wrong while fetching PropertyType: ${response.status} ${response.statusText}${details ? ` - ${details}` : ''}`);
+    } catch (_) {
+      /* ignore */
+    }
+    throw new Error(
+      `Something went wrong while fetching PropertyType: ${response.status} ${response.statusText}${details ? ` - ${details}` : ''}`
+    );
   }
   return await response.json();
 };

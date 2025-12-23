@@ -9,6 +9,10 @@ export const useFetchMessages = (userId) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    const messagingApiBase =
+        process.env.REACT_APP_MESSAGING_HISTORY_API_BASE ??
+        'https://8pwu9lnge0.execute-api.eu-north-1.amazonaws.com';
+
     const fetchMessages = useCallback(async (recipientId) => {
         if (!recipientId) {
             console.error('Recipient ID is undefined');
@@ -31,26 +35,53 @@ export const useFetchMessages = (userId) => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            const response = await fetch('https://8pwu9lnge0.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-MessagesHistory', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    recipientId: recipientId,
-                }),
-                signal: controller.signal,
-            });
+            const payload = {
+                userId: userId,
+                recipientId: recipientId,
+            };
+
+            const buildUrl = (base, path) => {
+                const normalizedBase = String(base || '').replace(/\/+$/, '');
+                const normalizedPath = String(path || '').replace(/^\/+/, '');
+                return `${normalizedBase}/${normalizedPath}`;
+            };
+
+            const primaryUrl = buildUrl(
+                messagingApiBase,
+                'General-Messaging-Production-Read-MessagesHistory'
+            );
+
+            const doRequest = async (url) => {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal,
+                });
+                const text = await res.text().catch(() => '');
+                return { res, text };
+            };
+
+            let { res: response, text: rawResponse } = await doRequest(primaryUrl);
+
+            // Some API Gateway deployments require an explicit stage (e.g. /default) in the path.
+            // When missing, API Gateway can respond with a 500 containing "Requested resource not found".
+            if (!response.ok && rawResponse && rawResponse.includes('Requested resource not found')) {
+                const fallbackUrl = buildUrl(
+                    messagingApiBase,
+                    'default/General-Messaging-Production-Read-MessagesHistory'
+                );
+                ({ res: response, text: rawResponse } = await doRequest(fallbackUrl));
+            }
 
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-                const errorText = await response.text().catch(() => 'Unknown error');
-                throw new Error(`Failed to fetch messages: ${response.status} ${errorText}`);
+                throw new Error(`Failed to fetch messages: ${response.status} ${rawResponse || 'Unknown error'}`);
             }
 
-            const rawResponse = await response.text();
             const result = JSON.parse(rawResponse);
 
             if (Array.isArray(result)) {
@@ -73,7 +104,7 @@ export const useFetchMessages = (userId) => {
         } finally {
             setLoading(false);
         }
-    }, [userId]);
+    }, [userId, messagingApiBase]);
 
     const addNewMessage = useCallback((newMessage) => {
         // Determine the other participant to decide which conversation to place this in
