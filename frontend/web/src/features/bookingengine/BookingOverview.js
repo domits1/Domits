@@ -211,9 +211,11 @@ const BookingOverview = () => {
                 </button>
               )}
               {bookingDetails.testStatus && (
-                <button type="button" className="confirm-pay-button" onClick={handleRequestInfo} disabled={loading}>
-                  Request Info
-                </button>
+                <Link to="/contact" className="footer-links">
+                  <button type="button" className="confirm-pay-button" onClick={handleRequestInfo} disabled={loading}>
+                    Request Info
+                  </button>
+                </Link>
               )}
               {!bookingDetails.testStatus && showCheckout && stripeClientSecret && bookingId && (
                 <Elements
