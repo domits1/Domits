@@ -1,6 +1,6 @@
-import {handler} from "../../functions/PropertyHandler/index.js";
-import {getHostAuthToken} from "../../test/util/getHostAuthToken.js";
-import {image} from "../../test/PropertyHandler/events/approvedImage.js";
+import { handler } from "../../functions/PropertyHandler/index.js";
+import { getHostAuthToken } from "../../test/util/getHostAuthToken.js";
+import { image } from "../../test/PropertyHandler/events/approvedImage.js";
 
 async function main() {
     console.log(await handler({

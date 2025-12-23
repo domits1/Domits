@@ -1,5 +1,6 @@
 NOTE: This doc gets updated frequently in GitHub Docs, so this MIGHT be outdated. Refer to [the wiki.](https://github.com/domits1/Domits/wiki/Programming)
 
+
 Resources
 * Visual onboarding [software design architecture](https://roadmap.sh/software-design-architecture), [system design](https://roadmap.sh/system-design)
 * [frontend](https://roadmap.sh/frontend), [backend](https://roadmap.sh/backend), [fullstack](https://roadmap.sh/full-stack), [engineering manager](https://roadmap.sh/engineering-manager)
@@ -33,6 +34,15 @@ Resources
 * [ ] Communicate clearly in standups and PRs
 * [ ] Be reliable with small tasks
 * [ ] Read books (e.g., Clean Code, The Pragmatic Programmer)
+
+## Short cuts of Visual studio Code IDE 
+### Windows
+
+<img src="image.png" alt ="cheat sheet" width =800 height=600/>
+
+### MAC
+
+<img src="image-1.png" alt ="cheat sheet" width =800 height=600/>
 
 ## level 2
 ### Technical Skills (links to proof skills)
