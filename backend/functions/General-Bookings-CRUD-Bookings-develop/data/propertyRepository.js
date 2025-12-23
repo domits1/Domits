@@ -11,12 +11,16 @@ class PropertyRepository {
         const result = await client
             .getRepository(Property)
             .createQueryBuilder("property")
+            .addSelect("property.automatedwelcomemessage")
+            .addSelect("property.automatedcheckinmessage")
             .where("property.id = :id", {id: id})
             .getOne();
         if (result) {
             return {
                 hostId: result.hostid,
-                title: result.title
+                title: result.title,
+                automatedWelcomeMessage: result.automatedwelcomemessage,
+                automatedCheckinMessage: result.automatedcheckinmessage
             }
         } else {
             throw new NotFoundException("Property is inactive or does not exist.")
