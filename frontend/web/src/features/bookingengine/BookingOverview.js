@@ -15,7 +15,7 @@ import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
 import publicKeys from "../../utils/const/publicKeys.json";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST);
 
 const BookingOverview = () => {
   const navigate = useNavigate();
