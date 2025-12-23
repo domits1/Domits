@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Auth } from "aws-amplify";
 import "./BookedNights.scss";
 import { BookedNightsService } from "../services/BookedNightService.js";
@@ -12,6 +12,10 @@ const BookedNights = () => {
   const [error, setError] = useState(null);
   const [cognitoUserId, setCognitoUserId] = useState(null);
 
+  // prevents setting loading=true when nothing changed
+  const lastValueRef = useRef(null);
+
+  // Fetch user ID
   useEffect(() => {
     const fetchUserId = async () => {
       try {
@@ -25,9 +29,10 @@ const BookedNights = () => {
     fetchUserId();
   }, []);
 
-  const fetchBookedNights = async () => {
+  const fetchBookedNights = useCallback(async () => {
     if (!cognitoUserId) return;
-    setLoading(true);
+    if (periodType === "custom" && (!startDate || !endDate)) return;
+
     setError(null);
 
     try {
@@ -37,19 +42,27 @@ const BookedNights = () => {
         startDate,
         endDate
       );
-      setBookedNights(nights);
+
+      // Only update state if changed
+      if (lastValueRef.current !== nights) {
+        setLoading(true); // optional: show loading only on real change
+        setBookedNights(nights);
+        lastValueRef.current = nights;
+        setLoading(false);
+      }
     } catch (err) {
       console.error("Error fetching booked nights:", err);
       setError(err.message || "Failed to fetch booked nights.");
       setBookedNights(0);
-    } finally {
+      lastValueRef.current = 0;
       setLoading(false);
     }
-  };
+  }, [cognitoUserId, periodType, startDate, endDate]);
 
+  // Fetch on filter changes ONLY (no interval)
   useEffect(() => {
     if (cognitoUserId) fetchBookedNights();
-  }, [periodType, startDate, endDate, cognitoUserId]);
+  }, [cognitoUserId, periodType, startDate, endDate, fetchBookedNights]);
 
   return (
     <div className="booked-nights-card-container">

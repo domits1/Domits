@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import "./OccupancyRate.scss";
 import { OccupancyRateService } from "../services/OccupancyRateService.js";
+import { useRefreshSignal } from "./RefreshContext.js";
 
 const OccupancyRate = () => {
   const [occupancyRate, setOccupancyRate] = useState(0);
@@ -12,6 +13,12 @@ const OccupancyRate = () => {
   const [error, setError] = useState(null);
   const [cognitoUserId, setCognitoUserId] = useState(null);
 
+  const refreshSignal = useRefreshSignal(); // triggers periodically in your app
+
+  // cache last value so we only update when changed
+  const lastRateRef = useRef(null);
+
+  // Get User ID
   useEffect(() => {
     const fetchUserId = async () => {
       try {
@@ -25,34 +32,59 @@ const OccupancyRate = () => {
     fetchUserId();
   }, []);
 
-  const fetchOccupancyRate = async () => {
-    if (!cognitoUserId) return;
-    if (periodType === "custom" && (!startDate || !endDate)) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const rate = await OccupancyRateService.fetchOccupancyRate(
-        cognitoUserId,
-        periodType,
-        startDate,
-        endDate
-      );
-
-      setOccupancyRate(rate);
-    } catch (err) {
-      console.error("Error fetching occupancy rate:", err);
-      setError(err.message || "Failed to fetch occupancy rate.");
-      setOccupancyRate(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOccupancyRate();
+  const canFetch = useCallback(() => {
+    if (!cognitoUserId) return false;
+    if (periodType === "custom" && (!startDate || !endDate)) return false;
+    return true;
   }, [cognitoUserId, periodType, startDate, endDate]);
+
+  // Main fetch function
+  const fetchOccupancyRate = useCallback(
+    async (silent = false) => {
+      if (!canFetch()) return;
+
+      if (!silent) setLoading(true);
+      setError(null);
+
+      try {
+        const rate = await OccupancyRateService.fetchOccupancyRate(
+          cognitoUserId,
+          periodType,
+          startDate,
+          endDate
+        );
+
+        // Normalize (avoid "50" vs 50.0 issues)
+        const nextRate = Number(rate);
+
+        // Only update when changed
+        if (lastRateRef.current !== nextRate) {
+          setOccupancyRate(nextRate);
+          lastRateRef.current = nextRate;
+        }
+      } catch (err) {
+        console.error("Error fetching occupancy rate:", err);
+        setError(err.message || "Failed to fetch occupancy rate.");
+        setOccupancyRate(0);
+        lastRateRef.current = 0;
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [canFetch, cognitoUserId, periodType, startDate, endDate]
+  );
+
+  // Fetch on filter changes (normal fetch)
+  useEffect(() => {
+    if (!cognitoUserId) return;
+    fetchOccupancyRate(false);
+  }, [cognitoUserId, periodType, startDate, endDate, fetchOccupancyRate]);
+
+  // Refresh signal fetch (silent, and only updates state if changed)
+  useEffect(() => {
+    if (!cognitoUserId) return;
+    fetchOccupancyRate(true);
+  }, [refreshSignal, cognitoUserId, fetchOccupancyRate]);
 
   return (
     <div className="booked-nights-card-container">
