@@ -253,9 +253,7 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
 
                 {automatedSettings && (
                     <AutomatedSettings
-                        setAutomatedSettings={setAutomatedSettings}
-                        hostId={userId}
-                    />
+                        setAutomatedSettings={setAutomatedSettings} />
                 )}
 
 

@@ -221,20 +221,11 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
 
                 <div className="chat-screen" ref={chatContainerRef}>
                     {loading && !forceStopLoading ? (
-                        <div className="chat-loading-state">
-                            <p>Loading messages...</p>
-                        </div>
+                        <p>Loading messages...</p>
                     ) : error ? (
-                        <div className="chat-error-state">
-                            <p>{String(error)}</p>
-                            <button onClick={() => fetchMessages(contactId)} className="retry-button">
-                                Retry
-                            </button>
-                        </div>
+                        <p>{String(error)}</p>
                     ) : visibleMessages.length === 0 ? (
-                        <div className="chat-empty-state">
-                            <p>No messages yet. Say hello 👋</p>
-                        </div>
+                        <p>No messages yet. Say hello 👋</p>
                     ) : (
                         visibleMessages.map((message) => (
                             <ChatMessage
