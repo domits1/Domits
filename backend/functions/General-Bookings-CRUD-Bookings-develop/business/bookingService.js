@@ -39,12 +39,10 @@ class BookingService {
 		};
 		await sendEmail(userEmail, hostEmail, bookingInfo);
 
-		// Use host-configured automated message if available, otherwise use default
 		const defaultMessage = `Welcome to ${bookingInfo.propertyName} 🎉\n\nCheck-in: ${fetchedProperty.checkIn || "15:00"}\nCheck-out: ${fetchedProperty.checkOut || "11:00"}\nGuests: ${bookingInfo.guests}\n\nLet me know if you have any questions or special requests. Have a wonderful stay!`;
 		
 		let messageText = fetchedProperty.automatedWelcomeMessage || defaultMessage;
 		
-		// Simple template replacement for host custom messages
 		if (fetchedProperty.automatedWelcomeMessage) {
 			messageText = messageText
 				.replace('{{guestName}}', "Guest") 
