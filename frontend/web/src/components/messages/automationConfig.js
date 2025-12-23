@@ -7,11 +7,11 @@ export const DEFAULT_AUTOMATION_EVENTS = {
         label: 'Booking confirmation',
         description: 'Send a warm welcome as soon as a reservation is confirmed.',
         defaultTemplate:
-            `Hi [Guest Name]! 👋\n` +
-            `Thanks for booking [Property Name] — it’s confirmed! ✅\n` +
+            `Hi [Guest Name]! \n` +
+            `Thanks for booking [Property Name] — it’s confirmed! \n` +
             `Your stay is from [Check-in Date] to [Check-out Date]. ` +
             `I’ll reach out with more details closer to check-in.\n\n` +
-            `Let me know if you have any questions in the meantime! 😊`,
+            `Let me know if you have any questions in the meantime! `,
         sendDelayMinutes: 0,
     },
     check_in_instructions: {
