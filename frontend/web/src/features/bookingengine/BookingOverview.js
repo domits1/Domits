@@ -51,7 +51,13 @@ const BookingOverview = () => {
 
         const retrievedPricingObject = await FetchPropertyDetails(propertyId, checkInDate, checkOutDate);
         setPricingObject(retrievedPricingObject);
-        const retrievedBookingDetails = { accommodation: retrievedPricingObject, checkInDate, checkOutDate, guests };
+        const retrievedBookingDetails = {
+          accommodation: retrievedPricingObject,
+          checkInDate,
+          checkOutDate,
+          guests,
+          testStatus: Boolean(retrievedPricingObject?.testStatus),
+        };
         setBookingDetails(retrievedBookingDetails);
 
         if (!retrievedBookingDetails) {
@@ -148,6 +154,10 @@ const BookingOverview = () => {
     }
   };
 
+  const handleRequestInfo = () => {
+    navigate(`/listingdetails?ID=${propertyId}`);
+  };
+
   return (
     <main className="booking-container" style={{ cursor: isProcessing ? "wait" : "default" }}>
       {error && <div className="error-message">{error}</div>}
@@ -195,12 +205,17 @@ const BookingOverview = () => {
             </div>
           ) : (
             <>
-              {!hideButton && (
+              {!hideButton && !bookingDetails.testStatus && (
                 <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading}>
                   {loading ? "Loading..." : "Confirm & Pay"}
                 </button>
               )}
-              {showCheckout && stripeClientSecret && bookingId && (
+              {bookingDetails.testStatus && (
+                <button type="button" className="confirm-pay-button" onClick={handleRequestInfo} disabled={loading}>
+                  Request Info
+                </button>
+              )}
+              {!bookingDetails.testStatus && showCheckout && stripeClientSecret && bookingId && (
                 <Elements
                   stripe={stripePromise}
                   options={{
