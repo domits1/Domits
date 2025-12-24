@@ -96,7 +96,7 @@ If you want to make your own Lambda function, you can do so by following these s
 1. In your Terminal (IDE or terminal app), navigate to the root folder of your project, and `cd backend`.
 2. Run `npm run createLambda`.
 3. On `What will your lambda function be called?`, think about a good name and enter it. 
-4. It's done! Make sure to familarize yourself with the structure in docs\workflows\backend_development_flow.md before starting to code.
+4. It's done! Make sure to familarize yourself with the structure in docs\tools\backend_development_flow.md before starting to code.
 
 ## Add/Migrate a existing Lambda Function
 It is important that you know the exact name of the lambda function you'd wish to add.
