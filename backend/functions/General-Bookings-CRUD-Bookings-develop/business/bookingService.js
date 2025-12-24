@@ -3,7 +3,6 @@ import IdentifierModel from "./model/identifierModel.js";
 import GetParamsModel from "./model/getParamsModel.js";
 import AuthManager from "../auth/authManager.js";
 import sendEmail from './sendEmail.js';
-import sendAutomatedMessage from "./sendAutomatedMessage.js";
 import Forbidden from "../util/exception/Forbidden.js";
 import TypeException from "../util/exception/TypeException.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
@@ -23,6 +22,9 @@ class BookingService {
 		this.getParamsModel = new GetParamsModel();
 	}
 
+	// -----------
+	// /bookings POST
+	// -----------
 
 	async create(event) {
 		//await this.verifyEventDataTypes(event);
@@ -39,25 +41,13 @@ class BookingService {
 		};
 		await sendEmail(userEmail, hostEmail, bookingInfo);
 
-		const defaultMessage = `Welcome to ${bookingInfo.propertyName} 🎉\n\nCheck-in: ${fetchedProperty.checkIn || "15:00"}\nCheck-out: ${fetchedProperty.checkOut || "11:00"}\nGuests: ${bookingInfo.guests}\n\nLet me know if you have any questions or special requests. Have a wonderful stay!`;
-		
-		let messageText = fetchedProperty.automatedWelcomeMessage || defaultMessage;
-		
-		if (fetchedProperty.automatedWelcomeMessage) {
-			messageText = messageText
-				.replace('{{guestName}}', "Guest") 
-				.replace('{{propertyName}}', bookingInfo.propertyName)
-				.replace('{{checkIn}}', fetchedProperty.checkIn || "15:00")
-				.replace('{{checkOut}}', fetchedProperty.checkOut || "11:00")
-				.replace('{{numGuests}}', bookingInfo.guests);
-		}
-
-		await sendAutomatedMessage(fetchedProperty.hostId, authenticatedUser.sub, event.identifiers.property_Id, messageText, "host_property_welcome");
-
 		return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
 
 	}
 
+	// -----------
+	// /bookings PATCH
+	// -----------
 
 	async confirmPayment(paymentid) {
 		const booking = await this.reservationRepository.getBookingByPaymentId(paymentid);
@@ -80,6 +70,9 @@ class BookingService {
 			return true;
 		}
 	}
+	// -----------
+	// /bookings GET
+	// -----------
 
 	async read(event) {
 		let authToken;
@@ -137,7 +130,9 @@ class BookingService {
 	}
 
 
-
+	// -----------
+	// verify Booking POST request
+	// -----------
 
 	async verifyEventDataTypes(event) {
 		try {
@@ -147,17 +142,20 @@ class BookingService {
 			}
 		} catch (error) {
 			console.error(error);
-			throw new Forbidden("Unable to verify data");
+			throw new Forbidden("Unable to verify data! Check your request or contact support!");
 		}
 	}
 
+	// -----------
+	// verify Booking GET request
+	// -----------
 
 	async verifyQueryDataTypes(params) {
 		try {
 			//await this.getParamsModel.verifyGetParams(params);
 		} catch (error) {
 			console.error(error);
-			throw new Forbidden("Unable to verify data");
+			throw new Forbidden("Unable to verify data! Check your request or contact support!");
 		}
 	}
 }
