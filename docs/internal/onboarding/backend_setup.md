@@ -109,7 +109,7 @@ For this example, I'll use the CreateStripeCheckout function as a lambda functio
 
 # Coding your Function
 If you just made your lambda or imported one, you will notice that there is a template. This template assures that every developer follows this template, and all backend code will be neat and understandable for everyone. If you understand the template, you can easier understand all other functions written like this.
-There is a well explained file: docs\workflows\backend_development_flow.md, this one explains everything about the backend development flow well. However, this will serve here as a quick summary with bulletpoints.
+There is a well explained file: [docs\workflows\backend_development_flow.md](https://github.com/domits1/Domits/blob/acceptance/docs/internal/tools/backend_development_flow.md), this one explains everything about the backend development flow well. However, this will serve here as a quick summary with bulletpoints.
 
 ### Why follow the workflow?
 
