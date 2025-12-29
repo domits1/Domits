@@ -1,14 +1,4 @@
 import {EntitySchema} from "typeorm";
-
-/**
- * Property_Calendar_Price Schema
- * Stores daily custom pricing for properties
- * Matches AWS table structure exactly:
- * - property_id: varchar(255)
- * - date: bigint (timestamp)
- * - price: int
- * - Primary Key: (property_id, date)
- */
 export const Property_Calendar_Price = new EntitySchema({
     name: "Property_Calendar_Price",
     tableName: "property_calendar_price",
