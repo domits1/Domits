@@ -4,13 +4,12 @@
     width: 100%;
 }
 
-/* Shared dashboard shell (used by both host + guest dashboards) */
 .main-dashboard-sidebar {
     flex: 0 0 auto;
 }
 
 .main-dashboard-content {
     flex: 1 1 auto;
-    min-width: 0; /* critical: allow children to shrink in flex row */
+    min-width: 0;
     width: 100%;
 }

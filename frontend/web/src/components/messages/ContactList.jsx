@@ -75,7 +75,6 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
             let profileImageUrl;
             const file = fileInput.files && fileInput.files[0];
             if (file) {
-                // Read file as data URL so it immediately renders in the UI
                 profileImageUrl = await new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onload = () => resolve(reader.result);
@@ -103,7 +102,6 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
             wsMessages.forEach((msg) => {
                 const contact = updatedContacts.find(c => c.recipientId === msg.userId || c.recipientId === msg.recipientId);
                 if (contact) {
-                    // Determine the display text based on message content
                     let displayText = msg.text;
                     if (msg.fileUrls && msg.fileUrls.length > 0) {
                         displayText = "attachment sent";
@@ -125,7 +123,6 @@ const ContactList = ({ userId, onContactClick, onCloseChat, message, dashboardTy
             const updatedContacts = [...prevContacts];
             const index = updatedContacts.findIndex(c => c.recipientId === message.recipientId);
             if (index !== -1) {
-                // Determine the display text based on message content
                 let displayText = message.text;
                 if (message.fileUrls && message.fileUrls.length > 0) {
                     displayText = "attachment sent";

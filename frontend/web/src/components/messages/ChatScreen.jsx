@@ -44,12 +44,10 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
 
     useEffect(() => {
         if (contactId) {
-            // Demo/test contacts should not hit the backend history endpoint.
             fetchMessages(contactId, { skipRemote: isDemoConversation });
         }
     }, [userId, contactId, fetchMessages, isDemoConversation]);
 
-    // Safety: if loading persists too long (e.g., network hang), clear after 12s
     useEffect(() => {
         if (!loading) {
             setForceStopLoading(false);
@@ -66,7 +64,6 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
         } catch {}
     }, [messages, contactId]);
 
-    // No search UI in this simplified version
 
     const handleSendAutomatedTestMessages = () => {
         if (!contactId) return;
@@ -106,8 +103,7 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
         automated.forEach((m, i) => {
             addNewMessage(m);
             setTimeout(() => {
-                // These messages are injected locally (not via websocket), so we toast them here
-                // to mimic an incoming message notification.
+              
                 if (m?.text) {
                     toast.info(
                         <MessageToast
