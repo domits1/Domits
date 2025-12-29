@@ -11,11 +11,11 @@ import { Auth } from 'aws-amplify';
 import './components/bases.css';
 import { SearchBar } from '../../components/base/SearchBar';
 
+
 function Header({ setSearchResults, setLoading }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { setFlowState } = useContext(FlowContext);
-
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [group, setGroup] = useState('');
     const [username, setUsername] = useState('');
