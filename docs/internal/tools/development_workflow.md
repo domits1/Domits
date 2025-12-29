@@ -18,7 +18,6 @@ Otherwise reviewers will request changes based on the code you have written.
 > [!TIP]
 > Check the code conventions early while working. Over time, this becomes second nature and prevents unnecessary review feedback.
 
-
 ---
 
 ## 2. Sync Your Branch With `acceptance`
@@ -47,10 +46,8 @@ This helps detect integration issues, or broken functionality early, before prob
 
 ## 3. Create a Pull Request
 
-### Important rules
-- Do **not** merge locally
-- Do **not** push directly to `acceptance`
-- All changes go through a Pull Request
+> [!Important]
+> Do **not** push directly to `acceptance`, all changes go through a Pull Request
 
 ### PR configuration
 - **Base branch:** `acceptance`
