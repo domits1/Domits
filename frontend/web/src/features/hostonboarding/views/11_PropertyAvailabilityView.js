@@ -1,5 +1,5 @@
 import React from "react";
-import CalendarComponent from "../../hostdashboard/hostcalendar/views/Calender";
+//import CalendarComponent from "../../hostdashboard/hostcalendar/views/Calender";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
 import OnboardingButton from "../components/OnboardingButton";
@@ -25,13 +25,13 @@ function PropertyAvailabilityView() {
         <h2 className="onboardingSectionTitle">Share your first availability</h2>
         <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within your dashboard</p>
 
-        <CalendarComponent
+        {/* <CalendarComponent
           passedProp={availability}
           isNew={true}
           updateDates={updateSelectedDates}
           calenderType="host"
           builder = {builder}
-        />
+        /> */}
 
         <nav className="onboarding-button-box">
           <OnboardingButton routePath={`/hostonboarding/${accommodationType}/pricing`} btnText="Go back" />

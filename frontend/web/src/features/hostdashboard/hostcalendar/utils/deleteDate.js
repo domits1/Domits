@@ -1,13 +1,6 @@
-//This is written by Marijn Klappe
 import sortDates from "./sortDates";
 import addToDate from "./addToDate";
 
-/**
- * deleteDate is a function that removes a date from the selectedDates
- *
- * @param {[number, number]} date - The date range to be deleted, represented as an array of two numbers.
- * @param {[number,number][]} selectedDates
- */
 function deleteDate(date,selectedDates) {
     for (let i = 0; i < selectedDates.length; i++) {
         let v = selectedDates[i];

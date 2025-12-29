@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 import Pages from "./Pages2";
 import HostDashboard from "./HostDashboard";
-import HostCalendar from "./hostcalen/HostCalendar";
+import HostCalendar from "./hostcalendar/HostCalendar";
 import HostReservations from "./HostReservations";
 import Messages from "../../components/messages/Messages";
 import HostReports from "./HostPayments";
