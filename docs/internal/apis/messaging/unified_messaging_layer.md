@@ -33,7 +33,6 @@ The goal is to support external channel messaging (e.g. Airbnb, Booking.com, VRB
   - Implement thread/conversation logic.
   - Implement inbound + outbound handlers.
   - Add retry strategy and idempotency (deduplication).
-  - Rough effort: on the order of a few weeks of engineering time.
 - **Channel adapters**
   - Airbnb adapter: OAuth, fetch messages, send messages, map to unified schema.
   - Booking.com adapter: client-credentials auth, polling vs push strategy, map to unified schema.
@@ -46,7 +45,7 @@ The goal is to support external channel messaging (e.g. Airbnb, Booking.com, VRB
   - Unit + integration tests.
   - Monitoring/observability.
 
-Overall effort is currently estimated in the range of multiple weeks of work (roughly ~5–7 weeks).
+Overall effort is currently estimated in the range of multiple weeks of work (roughly 5–7 weeks).
 
 ## Core Identifiers
 ### `userId` / `recipientId`
@@ -185,9 +184,9 @@ Inbound messages are appended to the client state and typically include:
 
 ## Known Gaps / Notes
 - **Backend code location**
-  - The deployed Lambda names are referenced in docs, but the Lambda handler source for those endpoints does not appear to be present under `backend/` in this repository (at least not under obvious naming). The frontend currently targets deployed API Gateway endpoints directly.
+  - The deployed Lambda names are referenced in docs, but the Lambda handler source for those endpoints does not appear to be present under `backend/` in this repository. The frontend currently targets deployed API Gateway endpoints directly.
 - **Configuration**
-  - URLs are hardcoded in frontend hooks/services; consider consolidating into a single config module if/when refactoring.
+  - URLs are hardcoded in frontend hooks/services.
 
 ## Related docs
 - `messaging_overview.md`
