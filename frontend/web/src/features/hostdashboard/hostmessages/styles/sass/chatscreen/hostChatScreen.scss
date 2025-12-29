@@ -13,8 +13,8 @@ $color-border-surface: #e3e3e3;
 $color-panel-bg: #fafafa;
 $color-button-bg: #f3f3f3;
 $color-button-hover: #e5e5e5;
-$color-message-received: rgb(196, 230, 197);
-$color-message-sent: rgb(91, 126, 158);
+$color-message-own: #4CAF50; // Green for own messages
+$color-message-other: #f0f0f0; // Grey for other messages
 $color-textarea-bg: #f9fbfd;
 $color-accent-dark: #2f3a4a;
 $color-charpill-bg: #f0f4f8;
@@ -141,7 +141,7 @@ $color-disabled-text: #7b8698;
                 }
 
                 .message-content {
-                    background-color: $color-message-received;
+                    background-color: $color-message-other;
                     color: $color-black;
                     display: inline-block;
                     border-radius: 1rem;
@@ -169,7 +169,7 @@ $color-disabled-text: #7b8698;
                 }
 
                 .message-content {
-                    background-color: $color-message-sent;
+                    background-color: $color-message-other;
                     color: $color-black;
                     display: inline-block;
                     border-radius: 1rem;
@@ -201,7 +201,7 @@ $color-disabled-text: #7b8698;
 
                 .message-content {
                     display: inline-block;
-                    background-color: $color-message-sent;
+                    background-color: $color-message-own;
 
                     color: $color-black;
                     border-radius: 1rem;
@@ -234,7 +234,7 @@ $color-disabled-text: #7b8698;
 
                 .message-content {
                     display: inline-block;
-                    background-color: $color-message-received;
+                    background-color: $color-message-own;
                     color: $color-black;
                     border-radius: 1rem;
                     padding: 0.3rem 1.25rem;
@@ -377,11 +377,17 @@ $color-disabled-text: #7b8698;
 
             }
 
+            .message-input-container {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+                flex: 1;
+                justify-content: center;
+            }
+
             .message-input-wrapper {
                 position: relative;
-                flex: 1;
-                max-width: 720px;
-                margin: 0 auto;
+                max-width: 500px;
                 overflow: visible;
             }
 
@@ -417,7 +423,7 @@ $color-disabled-text: #7b8698;
                 resize: none;
                 border-radius: 999px;
                 border: 2px solid $color-accent-dark;
-                padding: 8px 56px 8px 18px;
+                padding: 8px 18px;
                 overflow-y: auto;
                 transition: box-shadow 0.2s ease, border-color 0.2s ease;
                 text-align: left;
@@ -441,12 +447,8 @@ $color-disabled-text: #7b8698;
             }
 
             .message-input-send-button {
-                position: absolute;
                 background: $color-textarea-bg;
                 border: 2px solid $color-accent-dark;
-                right: 8px;
-                top: 50%;
-                transform: translateY(-50%);
                 color: $color-accent-dark;
                 width: 40px;
                 height: 40px;
@@ -455,6 +457,8 @@ $color-disabled-text: #7b8698;
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
+                flex-shrink: 0;
+                margin-left: 3.35rem;
 
                 &:hover {
                     background: $color-accent-dark;

@@ -258,19 +258,29 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                             </button>
                         )}
                     </div>
-                    <div className='message-input-wrapper'>
-                        <textarea
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            className='message-input-textarea'
-                            onKeyUp={(e) => {
-                                if (e.key === 'Enter') {
-                                    if ((newMessage?.length || 0) <= 200) {
-                                        handleSendMessage();
+                    <div className='message-input-container'>
+                        <div className='message-input-wrapper'>
+                            <textarea
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                className='message-input-textarea'
+                                onKeyUp={(e) => {
+                                    if (e.key === 'Enter') {
+                                        if ((newMessage?.length || 0) <= 200) {
+                                            handleSendMessage();
+                                        }
                                     }
-                                }
-                            }}
-                        />
+                                }}
+                            />
+                            {(newMessage?.length || 0) > 0 && (
+                                <div
+                                    className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? 'over' : ''}`}
+                                    aria-live="polite"
+                                >
+                                    {(newMessage?.length || 0)}/200
+                                </div>
+                            )}
+                        </div>
                         <button
                             onClick={handleSendMessage}
                             className='message-input-send-button'
@@ -279,14 +289,6 @@ const ChatScreen = ({ userId, contactId, contactName, contactImage, handleContac
                         >
                             <FaPaperPlane />
                         </button>
-                        {(newMessage?.length || 0) > 0 && (
-                            <div
-                                className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? 'over' : ''}`}
-                                aria-live="polite"
-                            >
-                                {(newMessage?.length || 0)}/200
-                            </div>
-                        )}
                     </div>
 
                     {showPreviewPopover && uploadedFileUrls.length > 0 && (
