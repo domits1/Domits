@@ -3,8 +3,9 @@ import { WebSocketContext } from "../../features/hostdashboard/hostmessages/cont
 import useFetchContacts from "../../features/hostdashboard/hostmessages/hooks/useFetchContacts";
 import ContactItem from "./ContactItem";
 import "../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss";
-import { FaCog, FaSearch, FaBars, FaPlus } from "react-icons/fa";
+import { FaCog, FaSearch, FaBars, FaPlus, FaUser } from "react-icons/fa";
 import AutomatedSettings from "./AutomatedSettings";
+import AddContactByUserId from "./AddContactByUserId";
 
 const ContactList = ({
   userId,
@@ -25,6 +26,7 @@ const ContactList = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactId: null });
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
   useEffect(() => {
     setSelectedContactId(activeContactId || null);
   }, [activeContactId]);
@@ -291,9 +293,25 @@ const ContactList = ({
           <button className={`contact-list-side-button`} onClick={handleCreateTestContact} title="Create test contact">
             <FaPlus />
           </button>
+          <button
+            className={`contact-list-side-button`}
+            onClick={() => setShowAddContactModal(true)}
+            title="Add contact by User ID">
+            <FaUser />
+          </button>
         </div>
 
         {automatedSettings && <AutomatedSettings setAutomatedSettings={setAutomatedSettings} hostId={userId} />}
+
+        {showAddContactModal && (
+          <AddContactByUserId
+            onContactAdded={(contact) => {
+              console.log("Contact added:", contact);
+              // Optionally refresh contacts list here
+            }}
+            onClose={() => setShowAddContactModal(false)}
+          />
+        )}
       </div>
 
       <ul className={`contact-list-list`}>

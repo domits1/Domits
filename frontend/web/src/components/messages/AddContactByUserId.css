@@ -1,0 +1,392 @@
+.add-contact-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.add-contact-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.add-contact-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-contact-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  line-height: 1;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.add-contact-form {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.input-help {
+  display: block;
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.userid-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  transition: all 0.2s ease;
+  background: white;
+  box-sizing: border-box;
+}
+
+.userid-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.userid-input:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.userid-input::placeholder {
+  color: #9ca3af;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.85rem;
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.error-icon {
+  font-size: 1.1rem;
+}
+
+.success-message {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.success-icon {
+  font-size: 1.1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.cancel-button,
+.send-button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 100px;
+}
+
+.cancel-button {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.send-button {
+  background: #667eea;
+  color: white;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #5a67d8;
+  transform: translateY(-1px);
+}
+
+.send-button:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-contact-help {
+  background: #f8fafc;
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.help-text {
+  margin: 0 0 10px 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.help-text strong {
+  color: #374151;
+}
+
+.help-list {
+  margin: 8px 0 15px 20px;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.help-list li {
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+/* Loading state for button */
+.send-button:disabled::after {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  .add-contact-modal {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .add-contact-header {
+    padding: 15px;
+  }
+
+  .add-contact-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .add-contact-form {
+    padding: 15px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancel-button,
+  .send-button {
+    width: 100%;
+    margin: 0;
+  }
+
+  .add-contact-help {
+    padding: 15px;
+  }
+
+  .userid-input {
+    font-size: 0.8rem;
+  }
+
+  .userid-input::placeholder {
+    font-size: 0.75rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .add-contact-modal {
+    background: #1f2937;
+    color: #f9fafb;
+  }
+
+  .form-group label {
+    color: #e5e7eb;
+  }
+
+  .userid-input {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .userid-input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+  }
+
+  .userid-input:disabled {
+    background: #4b5563;
+    color: #9ca3af;
+  }
+
+  .userid-input::placeholder {
+    color: #9ca3af;
+  }
+
+  .cancel-button {
+    background: #374151;
+    color: #e5e7eb;
+    border-color: #4b5563;
+  }
+
+  .cancel-button:hover:not(:disabled) {
+    background: #4b5563;
+  }
+
+  .add-contact-help {
+    background: #111827;
+    border-top-color: #374151;
+  }
+
+  .help-text {
+    color: #9ca3af;
+  }
+
+  .help-text strong {
+    color: #e5e7eb;
+  }
+
+  .input-help {
+    color: #9ca3af;
+  }
+
+  .help-list {
+    color: #9ca3af;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .add-contact-modal {
+    border: 2px solid currentColor;
+  }
+
+  .userid-input {
+    border-width: 2px;
+  }
+
+  .cancel-button,
+  .send-button {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .add-contact-modal {
+    animation: none;
+  }
+
+  .send-button:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .send-button:disabled::after {
+    animation: none;
+  }
+}
