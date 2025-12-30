@@ -473,9 +473,8 @@ $color-disabled-text: #7b8698;
 
       .char-limit-indicator {
         position: absolute;
-        bottom: -25px;
-        left: 50%;
-        transform: translateX(-50%);
+        top: -25px;
+        right: 0;
         font-size: 11px;
         line-height: 1;
         color: $color-text-muted;
