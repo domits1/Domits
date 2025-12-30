@@ -470,11 +470,14 @@ $color-disabled-text: #7b8698;
       }
 
       .char-limit-indicator {
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
         font-size: 11px;
         line-height: 1;
         color: $color-text-muted;
         padding: 4px 8px;
-        margin-left: 8px;
         white-space: nowrap;
         user-select: none;
         pointer-events: none;
