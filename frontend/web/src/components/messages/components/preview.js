@@ -90,12 +90,12 @@ const Preview = ({ events = {}, selectedEventId, onSelectEvent }) => {
 };
 
 const Preview = ({ events = {}, selectedEventId, onSelectEvent }) => {
-    const eventEntries = Object.values(events);
-    if (!eventEntries.length) {
-        return <p className="empty-state">Select an event to preview the outgoing message.</p>;
-    }
+  const eventEntries = Object.values(events);
+  if (!eventEntries.length) {
+    return <p className="empty-state">Select an event to preview the outgoing message.</p>;
+  }
 
-    const currentEvent = events[selectedEventId] || eventEntries[0];
+  const currentEvent = events[selectedEventId] || eventEntries[0];
 
     return (
         <div className="preview">
@@ -121,6 +121,11 @@ const Preview = ({ events = {}, selectedEventId, onSelectEvent }) => {
         </div>
     );
 >>>>>>> 0f356f96e (automated messages)
+=======
+      </div>
+    </div>
+  );
+>>>>>>> eef2bf0b9 (comments from pr)
 };
 
 export default Preview;
