@@ -1,4 +1,15 @@
 .main-dashboard-guest {
     display: flex;
     min-height: 500px;
+    width: 100%;
+}
+
+.main-dashboard-sidebar {
+    flex: 0 0 auto;
+}
+
+.main-dashboard-content {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
 }
