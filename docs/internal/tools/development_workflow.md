@@ -29,9 +29,11 @@ While on your own branch, pull the latest changes from `acceptance`:
 ```bash
 git pull origin acceptance
 ```
+
 This will merge the latest acceptance changes into your branch.
 
 Why this is required:
+
 - Detects merge conflicts early
 - Ensures your changes are based on the latest integrated code
 - Prevents last-minute conflicts during PR review
@@ -40,7 +42,7 @@ If merge conflicts appear, resolve them in your branch, commit the fixes, and pu
 
 > [!NOTE]
 > Team members are encouraged to regularly pull the latest `acceptance` branch and run the application locally.
-This helps detect integration issues, or broken functionality early, before problems reach production or block others.
+> This helps detect integration issues, or broken functionality early, before problems reach production or block others.
 
 ---
 
@@ -67,9 +69,10 @@ Verify carefully that the base branch is `acceptance` before continuing.
 The PR title must follow the **Conventional Commit** format.
 
 This is mandatory and enforced as part of our Git branching and commit standards.  
-Check the full specification [here](https://github.com/domits1/Domits/issues/2353):  
+Check the full specification [here](https://github.com/domits1/Domits/issues/2353):
 
 Example:
+
 ```text
 docs(backend): document local frontend-backend connection
 ```
@@ -80,6 +83,7 @@ When creating a PR, a template will automatically be shown.
 **All sections of this template must be filled in.**
 
 The template includes:
+
 - Issue linking (close or relate)
 - Description of proposed changes
 - Change type and size
@@ -98,10 +102,13 @@ Do **not** remove sections from the template.
 ## 4. Code Review Process
 
 ### Required approvals
+
 - A minimum of **2 reviewers** must approve the PR
 
 ### Reviewer responsibilities
+
 Reviewers must verify:
+
 - Code correctness and clarity
 - Compliance with code conventions
 - All CI checks pass:
@@ -109,25 +116,36 @@ Reviewers must verify:
   - build
   - pipeline checks
 
+For a detailed guide on how to review a Pull Request at Domits, see the **[PR Reviewer Onboarding documentation](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/pr_reviewer_onboarding.md)**
+
+This document explains:
+
+- How to review PRs effectively
+- What to look for in code changes
+- How to use the PR template and checklist
+- How to handle approvals, comments, and CI checks
+
 ### Handling review comments
+
 - Read all comments carefully
 - Apply requested changes when valid
 - Respond to comments **inside the PR** to keep context
 - Push updates to the same branch
-
-Ignoring comments or responding outside the PR is not acceptable.
+-
 
 ---
 
 ## 5. CI Checks Must Pass
 
 Before a PR can be merged:
+
 - All CI checks must be **green**
 - No failing tests
 - No failing builds
 - No blocked checks
 
 If CI fails:
+
 1. Fix the issue in your branch
 2. Push a new commit
 3. Confirm CI passes again
@@ -137,41 +155,25 @@ If CI fails:
 ## 6. Merging to `acceptance`
 
 Once all conditions are met:
+
 - 2 approvals
 - All review comments resolved
 - CI fully green
 
-➡️ The PR can be merged **via GitHub** into `acceptance`.
-
-You do **not** perform this merge locally.
+The PR can be merged **via GitHub** into `acceptance`.
 
 ---
 
 ## 7. Automatic Deployment to Acceptance
 
 After merging into `acceptance`:
+
 - Deployment to the acceptance environment starts automatically
-- Deployment status can be monitored via the AWS Console (e.g. Amplify)
+- Deployment status can be monitored via Amplify in the AWS Console
 
 Always verify:
+
 - Deployment completes successfully
-- Your changes are visible and working in acceptance
+- Your changes are visible and working in [https://acceptance.domits.com/](https://acceptance.domits.com/)
 
 If a deployment fails, notify the team immediately.
-
----
-
-## Final Checklist
-
-Before merging, confirm:
-
-- [ ] Code follows Domits code conventions
-- [ ] Branch is rebased on `acceptance`
-- [ ] PR base branch is `acceptance`
-- [ ] PR title follows Conventional Commits
-- [ ] PR template is fully filled in
-- [ ] 2 reviewers approved
-- [ ] All review comments resolved
-- [ ] CI checks are green
-- [ ] Merge performed via GitHub
-- [ ] Deployment to acceptance verified
