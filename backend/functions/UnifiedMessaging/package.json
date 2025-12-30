@@ -1,0 +1,14 @@
+{
+  "name": "unified-messaging",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "TEST=true && jest"
+  },
+  "dependencies": {}
+}
+
