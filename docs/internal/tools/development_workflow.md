@@ -122,7 +122,6 @@ This document explains:
 
 - How to review PRs effectively
 - What to look for in code changes
-- How to use the PR template and checklist
 - How to handle approvals, comments, and CI checks
 
 ### Handling review comments
@@ -131,7 +130,6 @@ This document explains:
 - Apply requested changes when valid
 - Respond to comments **inside the PR** to keep context
 - Push updates to the same branch
--
 
 ---
 
@@ -158,7 +156,7 @@ Once all conditions are met:
 
 - 2 approvals
 - All review comments resolved
-- CI fully green
+- CI fully green (except sonar cloud)
 
 The PR can be merged **via GitHub** into `acceptance`.
 
@@ -169,7 +167,7 @@ The PR can be merged **via GitHub** into `acceptance`.
 After merging into `acceptance`:
 
 - Deployment to the acceptance environment starts automatically
-- Deployment status can be monitored via Amplify in the AWS Console
+- Deployment status can be monitored via [Amplify](https://eu-north-1.console.aws.amazon.com/amplify/home?region=eu-north-1#) in the [AWS Console](https://eu-north-1.console.aws.amazon.com/console/home?region=eu-north-1#)
 
 Always verify:
 
