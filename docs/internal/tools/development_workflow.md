@@ -69,14 +69,24 @@ Must follow the Conventional Commit format, for example:
 docs(backend): document local frontend-backend connection
 ```
 
-### PR template
-Fill in **all sections** of the PR template:
-- What was changed
-- Why it was changed
-- How it was tested
-- Relevant notes or risks
+### PR Template
 
-Incomplete templates slow down or block reviews.
+When creating a PR, a template will automatically be shown.  
+**All sections of this template must be filled in.**
+
+The template includes:
+- Issue linking (close or relate)
+- Description of proposed changes
+- Change type and size
+- Refactoring clarification (if applicable)
+- NPM package changes
+- Security and convention checks
+- Testing confirmation
+- Branch cleanup preference
+
+Incomplete or careless templates will slow down reviews or block the PR entirely.
+
+Do **not** remove sections from the template.
 
 ---
 
