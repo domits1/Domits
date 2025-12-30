@@ -9,44 +9,20 @@ export const useFetchMessages = (userId) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const fetchMessages = useCallback(async (recipientId, options) => {
+    const fetchMessages = useCallback(async (recipientId) => {
         if (!recipientId) {
             console.error('Recipient ID is undefined');
-            return;
-        }
-
-        if (!userId) {
-            console.error('User ID is undefined');
             return;
         }
 
         setActiveRecipientId(recipientId);
         setError(null);
 
-        const skipRemote = options?.skipRemote === true;
-        if (skipRemote) {
-            setLoading(false);
-            setMessagesByRecipient((prev) => ({
-                ...prev,
-                [recipientId]: prev[recipientId] || [],
-            }));
-            cacheRef.current[recipientId] = cacheRef.current[recipientId] || [];
-            return;
-        }
-
+        // If we already have messages for this conversation, don't refetch unnecessarily
         const cached = cacheRef.current[recipientId];
         if (Array.isArray(cached) && cached.length > 0) {
+            // Ensure UI is not stuck in loading state when switching to cached chat
             setLoading(false);
-            return;
-        }
-
-        if (typeof recipientId === 'string' && recipientId.startsWith('test-')) {
-            setLoading(false);
-            setMessagesByRecipient((prev) => ({
-                ...prev,
-                [recipientId]: [],
-            }));
-            cacheRef.current[recipientId] = [];
             return;
         }
 
@@ -55,15 +31,12 @@ export const useFetchMessages = (userId) => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            const response = await fetch('https://8pwu9lnge0.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-MessagesHistory', {
-                method: 'POST',
+            // Fetch messages from UnifiedMessaging API
+            const response = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?userId=${userId}&recipientId=${recipientId}`, {
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    userId: userId,
-                    recipientId: recipientId,
-                }),
                 signal: controller.signal,
             });
 
@@ -73,8 +46,7 @@ export const useFetchMessages = (userId) => {
                 throw new Error('Failed to fetch messages');
             }
 
-            const rawResponse = await response.text();
-            const result = JSON.parse(rawResponse);
+            const result = await response.json();
 
             if (Array.isArray(result)) {
                 const sorted = result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
@@ -90,6 +62,7 @@ export const useFetchMessages = (userId) => {
         } catch (err) {
             console.error('Error fetching messages:', err);
             setError(err);
+            // Ensure cache holds at least an empty array so UI can render empty state
             setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: prev[recipientId] || [] }));
             cacheRef.current[recipientId] = cacheRef.current[recipientId] || [];
         } finally {
@@ -98,6 +71,7 @@ export const useFetchMessages = (userId) => {
     }, [userId]);
 
     const addNewMessage = useCallback((newMessage) => {
+        // Determine the other participant to decide which conversation to place this in
         const partnerId = newMessage.userId === userId ? newMessage.recipientId : newMessage.userId;
         if (!partnerId) return;
 
@@ -113,6 +87,7 @@ export const useFetchMessages = (userId) => {
         });
     }, [userId]);
 
+    // Expose the messages for the active conversation so existing components keep working
     const messages = messagesByRecipient[activeRecipientId] || [];
 
     return {
