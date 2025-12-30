@@ -8,9 +8,15 @@ The Automated Messaging API provides intelligent, event-driven message delivery 
 
 **Related Issue:** [#767 - Messaging Unified Inbox Airbnb](https://github.com/domits1/Domits/issues/767)
 
-**Status:** **In Development**
+**Status:** **In Development** - Infrastructure exists, automation features need implementation
 
 **Branch:** `feature/767-messaging-unified-inbox-airbnb`
+
+**Implementation Status:** 
+- ✅ Basic messaging infrastructure (WebSocket, manual messages)
+- ❌ Automated message triggers and templates
+- ❌ EventBridge integration for booking events
+- ❌ Message scheduling and queuing system
 
 **Last Updated:** December 30, 2025
 
@@ -423,14 +429,239 @@ RATE_LIMIT_PER_USER=100
 - `WIFI_CREDENTIALS_ENABLED` - Wi-Fi credential messages
 - `CHECKOUT_REMINDERS_ENABLED` - Check-out reminder messages
 
+## Current Implementation Status
+
+### ✅ What Currently Exists
+- **Basic Infrastructure**: `backend/functions/UnifiedMessaging/index.js` with routing logic
+- **Manual Messaging**: WebSocket-based real-time messaging between users
+- **Frontend Integration**: Web and mobile clients can send/receive messages
+- **Database Schema**: Message storage and retrieval working
+
+### ❌ What's Missing for Automated Messages
+- **MessageController Methods**: Only skeleton exists, needs automated message logic
+- **MessageService Class**: Referenced in controller but not implemented
+- **AutomationService**: Completely missing - handles event processing
+- **TemplateService**: Missing - manages message templates
+- **EventBridge Integration**: No booking event listeners
+- **Message Scheduling**: No delayed/timed message delivery
+- **Template System**: No template storage or rendering
+
+## Implementation Guide for Next Intern
+
+### 🎯 Priority 1: Core Automation Infrastructure (Week 1-2)
+
+#### Step 1: Create Missing Service Classes
+Create these files in `backend/functions/UnifiedMessaging/`:
+
+**File: `service/messageService.js`**
+```javascript
+import AutomationService from './automationService.js';
+
+class MessageService {
+    constructor() {
+        this.automationService = new AutomationService();
+    }
+    
+    async sendMessage(payload) {
+        // Implement manual message sending (existing logic)
+        // Add automated message detection and routing
+    }
+    
+    async processAutomatedMessage(event) {
+        // NEW: Handle automated message creation
+        return await this.automationService.processBookingEvent(event);
+    }
+}
+```
+
+**File: `service/automationService.js`**
+```javascript
+class AutomationService {
+    async processBookingEvent(bookingEvent) {
+        // Determine message type based on event
+        // Generate message from template
+        // Schedule delivery if needed
+        // Send via existing WebSocket infrastructure
+    }
+}
+```
+
+#### Step 2: Enhance MessageController
+Update `controller/messageController.js`:
+```javascript
+// Add new method for automated messages
+async processAutomation(event) {
+    const automationEvent = JSON.parse(event.body);
+    return await this.messageService.processAutomatedMessage(automationEvent);
+}
+```
+
+#### Step 3: Update Routing
+In `index.js`, add automated message route:
+```javascript
+case httpMethod === "POST" && path.endsWith("/automation"):
+    returnedResponse = await controller.processAutomation(event);
+    break;
+```
+
+### 🎯 Priority 2: Template System (Week 2-3)
+
+#### Step 1: Create Template Service
+**File: `service/templateService.js`**
+```javascript
+class TemplateService {
+    async getTemplate(messageType, language = 'en') {
+        // Fetch template from database or static files
+    }
+    
+    async renderTemplate(template, variables) {
+        // Replace {{variable}} placeholders
+        // Validate required variables exist
+    }
+}
+```
+
+#### Step 2: Create Template Storage
+Create `templates/` folder with JSON files:
+- `booking_confirmation_guest.json`
+- `checkin_instructions.json` 
+- `wifi_credentials.json`
+- `checkout_reminder.json`
+
+### 🎯 Priority 3: Event Integration (Week 3-4)
+
+#### Step 1: EventBridge Setup
+Create `infrastructure/eventbridge-rules.json`:
+```json
+{
+  "Rules": [
+    {
+      "Name": "BookingConfirmedRule",
+      "EventPattern": {
+        "source": ["domits.bookings"],
+        "detail-type": ["Booking Status Change"]
+      }
+    }
+  ]
+}
+```
+
+#### Step 2: Booking Service Integration
+Modify booking service to emit events:
+```javascript
+// In booking confirmation logic
+await eventBridge.putEvents({
+  Entries: [{
+    Source: 'domits.bookings',
+    DetailType: 'Booking Status Change',
+    Detail: JSON.stringify({
+      bookingId,
+      status: 'confirmed',
+      guestId,
+      hostId,
+      propertyId
+    })
+  }]
+});
+```
+
+### 🎯 Priority 4: Message Scheduling (Week 4-5)
+
+#### Step 1: SQS Integration
+Create delayed message queue for scheduled delivery:
+- Check-in reminders (24h before)
+- Wi-Fi credentials (day of check-in)
+- Check-out reminders (day before checkout)
+
+#### Step 2: Cron Jobs
+Set up EventBridge scheduled rules for time-based triggers.
+
+## Missing Files Checklist for Intern
+
+### 📁 Files to Create
+- [ ] `backend/functions/UnifiedMessaging/service/messageService.js`
+- [ ] `backend/functions/UnifiedMessaging/service/automationService.js`
+- [ ] `backend/functions/UnifiedMessaging/service/templateService.js` 
+- [ ] `backend/functions/UnifiedMessaging/controller/messageController.js` (enhance existing)
+- [ ] `backend/functions/UnifiedMessaging/templates/booking_confirmation_guest.json`
+- [ ] `backend/functions/UnifiedMessaging/templates/checkin_instructions.json`
+- [ ] `backend/functions/UnifiedMessaging/templates/wifi_credentials.json`
+- [ ] `backend/functions/UnifiedMessaging/templates/checkout_reminder.json`
+- [ ] `backend/functions/UnifiedMessaging/util/eventProcessor.js`
+- [ ] `backend/functions/UnifiedMessaging/util/messageQueue.js`
+
+### 📁 Files to Modify  
+- [ ] `backend/functions/UnifiedMessaging/index.js` (add automation routes)
+- [ ] Booking service (add event emission)
+- [ ] Infrastructure files (EventBridge, SQS setup)
+
+### 🗄️ Database Changes Needed
+- [ ] Create `message_templates` table
+- [ ] Add `isAutomated` and `messageType` columns to existing messages table
+- [ ] Create `scheduled_messages` table for delayed delivery
+
+### 🔧 Infrastructure Setup Required
+- [ ] EventBridge custom bus for booking events
+- [ ] SQS queue for message scheduling
+- [ ] IAM roles for cross-service communication
+- [ ] CloudWatch alarms for monitoring
+
+## Quick Start Commands for Intern
+
+```bash
+# 1. Navigate to function directory
+cd backend/functions/UnifiedMessaging
+
+# 2. Create service directory structure
+mkdir -p service templates util controller
+
+# 3. Copy existing controller if it exists elsewhere
+# cp path/to/existing/messageController.js controller/
+
+# 4. Start with messageService.js implementation
+touch service/messageService.js service/automationService.js service/templateService.js
+
+# 5. Create template files
+touch templates/booking_confirmation_guest.json templates/checkin_instructions.json
+
+# 6. Test existing infrastructure
+npm test # or yarn test
+```
+
+## Testing Strategy for Each Phase
+
+### Phase 1 Tests
+```javascript
+// Test automated message detection
+describe('AutomationService', () => {
+  it('should process booking confirmation events', async () => {
+    const event = { bookingId: 'test_123', status: 'confirmed' };
+    const result = await automationService.processBookingEvent(event);
+    expect(result.messageType).toBe('booking_confirmation');
+  });
+});
+```
+
+### Phase 2 Tests  
+```javascript
+// Test template rendering
+describe('TemplateService', () => {
+  it('should render booking confirmation template', async () => {
+    const variables = { guestName: 'John Doe', propertyName: 'Test Property' };
+    const message = await templateService.renderTemplate('booking_confirmation_guest', variables);
+    expect(message).toContain('John Doe');
+  });
+});
+```
+
 ## Todo & Improvements
 
-### Phase 1 (Current)
-- [x] Basic message sending infrastructure
-- [x] Template system foundation
-- [ ] EventBridge integration for booking events
-- [ ] Message scheduling and queuing
-- [ ] Template variable validation
+### Phase 1 (Current - Intern Focus)
+- [ ] **CRITICAL**: Create missing service layer (`messageService.js`, `automationService.js`)
+- [ ] **CRITICAL**: Implement template system with basic templates
+- [ ] **CRITICAL**: Add automation routing to `index.js`
+- [ ] **HIGH**: EventBridge integration for booking events  
+- [ ] **HIGH**: Message scheduling infrastructure
 
 ### Phase 2 (Next Sprint)
 - [ ] Multi-language template support
