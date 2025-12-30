@@ -1,0 +1,266 @@
+.template-manager-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    width: 800px;
+    max-width: 90vw;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    outline: none;
+
+    .template-manager-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+
+        h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+    }
+
+    .template-manager-body {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        gap: 20px;
+
+        .template-list {
+            width: 250px;
+            border-right: 1px solid #eee;
+            padding-right: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+
+            .create-btn {
+                width: 100%;
+                padding: 10px;
+                background: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-bottom: 10px;
+
+                &:hover {
+                    background: #0056b3;
+                }
+            }
+
+            .template-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px;
+                background: #f9f9f9;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                cursor: pointer;
+
+                &.active {
+                    background: #e6f7ff;
+                    border-color: #1890ff;
+                }
+
+                span {
+                    flex: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .delete-btn {
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    opacity: 0.5;
+
+                    &:hover {
+                        opacity: 1;
+                    }
+                }
+            }
+        }
+
+        .template-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+
+                label {
+                    font-weight: bold;
+                    font-size: 14px;
+                }
+
+                input, textarea {
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    font-family: inherit;
+                }
+
+                textarea {
+                    resize: vertical;
+                }
+            }
+
+            .triggers-section {
+                border-top: 1px solid #eee;
+                padding-top: 15px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+
+                .triggers-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+
+                    label {
+                        font-weight: bold;
+                        font-size: 14px;
+                    }
+
+                    .add-trigger-btn {
+                        background: none;
+                        border: 1px dashed #007bff;
+                        color: #007bff;
+                        padding: 5px 10px;
+                        border-radius: 4px;
+                        cursor: pointer;
+
+                        &:hover {
+                            background: #f0f8ff;
+                        }
+                    }
+                }
+
+                .trigger-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    background: #f9f9f9;
+                    padding: 8px;
+                    border-radius: 4px;
+
+                    select, input {
+                        padding: 5px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                    }
+
+                    .remove-trigger-btn {
+                        margin-left: auto;
+                        background: none;
+                        border: none;
+                        color: #dc3545;
+                        font-size: 18px;
+                        cursor: pointer;
+                    }
+                }
+            }
+
+            .editor-actions {
+                margin-top: auto;
+                display: flex;
+                gap: 10px;
+                padding-top: 20px;
+
+                .save-btn {
+                    padding: 8px 16px;
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+
+                    &:hover {
+                        background: #218838;
+                    }
+                }
+
+                .cancel-btn {
+                    padding: 8px 16px;
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+
+                    &:hover {
+                        background: #5a6268;
+                    }
+                }
+            }
+
+            .no-selection {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
+                color: #999;
+                font-style: italic;
+            }
+        }
+    }
+
+    .template-manager-footer {
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+
+        .main-save-btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+
+            &:hover {
+                background: #0056b3;
+            }
+        }
+    }
+}
+
+.template-manager-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+}
+
