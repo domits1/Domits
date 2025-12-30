@@ -415,8 +415,8 @@ $color-disabled-text: #7b8698;
           border-color 0.2s ease;
 
         &:focus-within {
-          border-color: var(--domits-host-blue, #274bf0);
-          box-shadow: 0 0 0 3px rgba(39, 75, 240, 0.1);
+          border-color: $color-border-mid;
+          box-shadow: none;
         }
       }
 
