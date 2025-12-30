@@ -4,6 +4,14 @@ This document explains **what to do after you finish your work** (feature, fix, 
 
 This workflow is mandatory. Skipping steps will result in blocked PRs, failed reviews, or broken deployments.
 
+> [!IMPORTANT]  
+> This document assumes that you already have Domits running locally.
+>
+> If you have not set up or run Domits on your machine yet, first follow the [Running Domits Locally](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/running%20Domits%20locally.md) guide.
+>
+> Only continue with this workflow once the application runs successfully on your local environment.
+
+
 ---
 
 ## 1. Verify Code Conventions
