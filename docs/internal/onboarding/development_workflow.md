@@ -14,21 +14,7 @@ This workflow is mandatory. Skipping steps will result in blocked PRs, failed re
 
 ---
 
-## 1. Verify Code Conventions
-
-Before opening a Pull Request, you **must** verify that your changes comply with the Domits code conventions.
-
-All code conventions are documented [here](https://github.com/domits1/Domits?tab=readme-ov-file#code-conventions).
-
-After a while you are expected to review and follow these conventions **independently**.  
-Otherwise reviewers will request changes based on the code you have written.
-
-> [!TIP]
-> Check the code conventions early while working. Over time, this becomes second nature and prevents unnecessary review feedback.
-
----
-
-## 2. Sync Your Branch With `acceptance`
+## 1. Sync Your Branch With `acceptance`
 
 Before creating a PR, your branch must be up-to-date with `acceptance`.
 
@@ -51,6 +37,20 @@ If merge conflicts appear, resolve them in your branch, commit the fixes, and pu
 > [!NOTE]
 > Team members are encouraged to regularly pull the latest `acceptance` branch and run the application locally.
 > This helps detect integration issues, or broken functionality early, before problems reach production or block others.
+
+---
+
+## 2. Verify Code Conventions
+
+Before opening a Pull Request, you **must** verify that your changes comply with the Domits code conventions.
+
+All code conventions are documented [here](https://github.com/domits1/Domits?tab=readme-ov-file#code-conventions).
+
+After a while you are expected to review and follow these conventions **independently**.  
+Otherwise reviewers will request changes based on the code you have written.
+
+> [!TIP]
+> Check the code conventions early while working. Over time, this becomes second nature and prevents unnecessary review feedback.
 
 ---
 
