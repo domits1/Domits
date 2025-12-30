@@ -108,7 +108,7 @@ const ChatScreen = ({
     automated.forEach((m, i) => {
       addNewMessage(m);
       setTimeout(() => {
-        if (message?.text) {
+        if (m?.text) {
           toast.info(<MessageToast contactName={contactName} contactImage={contactImage} message={m.text} />, {
             className: "message-toast-custom",
           });
