@@ -77,6 +77,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
+import DualMessagingTest from "./demo/DualMessagingTest";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 Modal.setAppElement("#root");
@@ -247,6 +248,9 @@ function App() {
                   <Route path="/Sustainability" element={<Sustainability />} />
                   <Route path="/channelmanager" element={<ChannelManager />} />
                   <Route path="/admin/property" element={<AdminProperty />} />
+
+                  {/* Demo/Test Routes */}
+                  <Route path="/demo/messaging" element={<DualMessagingTest />} />
 
                   {/* Legacy deep links: /hostonboarding/* -> /hostdashboard/hostonboarding/* */}
                   <Route path="/hostonboarding/*" element={<RedirectHostOnboardingCatchAll />} />
