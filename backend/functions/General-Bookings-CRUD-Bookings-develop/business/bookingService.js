@@ -3,7 +3,7 @@ import IdentifierModel from "./model/identifierModel.js";
 import GetParamsModel from "./model/getParamsModel.js";
 import AuthManager from "../auth/authManager.js";
 import sendEmail from './sendEmail.js';
-import sendAutomatedMessage from "./sendAutomatedMessage.js";
+import sendAutomatedMessage from "../../UnifiedMessaging/business/sendAutomatedMessage.js";
 import Forbidden from "../util/exception/Forbidden.js";
 import TypeException from "../util/exception/TypeException.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
