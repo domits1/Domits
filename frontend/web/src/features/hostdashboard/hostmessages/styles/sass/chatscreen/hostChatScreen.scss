@@ -322,7 +322,7 @@ $color-disabled-text: #7b8698;
 
     .chat-input {
       display: flex;
-      justify-self: flex-end;
+      justify-content: center;
       flex-direction: row;
       align-items: center;
       gap: 0.75rem;
@@ -337,6 +337,8 @@ $color-disabled-text: #7b8698;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        position: absolute;
+        left: 1rem;
       }
 
       .inline-upload-preview {
