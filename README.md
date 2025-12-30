@@ -180,7 +180,7 @@ Get familar with code conventions to write clean code. Become aware of our serve
 * Become familiar with our [Code Conventions](https://github.com/domits1/Domits/wiki/Code-conventions) to maintain a consistent and readable codebase.
 * Get to know why we use SCSS compared to css and its benefits [here](https://www.youtube.com/watch?v=akDIJa0AP5c)
 * [Backend Setup](./docs/internal/onboarding/backend_setup.md) The createlambda function will create a template lambda for you. Familiarize yourself with the structure [here](./docs/internal/tools/backend_development_flow.md) before starting to code.
-* Understand the development workflow from finished work to deployment on acceptance [here](docs/internal/workflows/development_workflow.md)
+* Understand the development workflow from finished work to deployment on acceptance [here](https://github.com/domits1/Domits/blob/docs/2377-frontend-backend-connection/docs/internal/tools/development_workflow.md)
 * Understand the code pipeline (CI/CD)
 
 ### Web/App Setup
