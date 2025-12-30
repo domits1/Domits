@@ -63,7 +63,7 @@ Otherwise reviewers will request changes based on the code you have written.
 ### Creating a PR via GitHub
 
 1. Go to the **Domits GitHub repository**
-2. Open the **Pull requests** tab
+2. Open the [Pull requests](https://github.com/domits1/Domits/pulls) tab
 3. Click **New pull request**
    - Or use the **Compare & pull request** button if GitHub suggests it after pushing your branch
 4. Configure the PR:
