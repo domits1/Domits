@@ -86,7 +86,6 @@ const ContactList = ({
       }
     });
 
-    // Handle escape key
     const handleEscape = (e) => {
       if (e.key === "Escape") {
         removeModal();
@@ -154,7 +153,6 @@ const ContactList = ({
       document.removeEventListener("keydown", handleEscape);
     };
 
-    // Focus on name input
     setTimeout(() => nameInput.focus(), 100);
   };
 
@@ -295,7 +293,7 @@ const ContactList = ({
           </button>
         </div>
 
-        {automatedSettings && <AutomatedSettings setAutomatedSettings={setAutomatedSettings} />}
+        {automatedSettings && <AutomatedSettings setAutomatedSettings={setAutomatedSettings} hostId={userId} />}
       </div>
 
       <ul className={`contact-list-list`}>
