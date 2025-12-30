@@ -248,6 +248,7 @@ const ChatScreen = ({
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="message-input-textarea"
+                placeholder="Type a message..."
                 onKeyUp={(e) => {
                   if (event.key === "Enter") {
                     if ((newMessage?.length || 0) <= 200) {
@@ -256,21 +257,21 @@ const ChatScreen = ({
                   }
                 }}
               />
-              {(newMessage?.length || 0) > 0 && (
-                <div
-                  className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? "over" : ""}`}
-                  aria-live="polite">
-                  {newMessage?.length || 0}/200
-                </div>
-              )}
+              <button
+                onClick={handleSendMessage}
+                className="message-input-send-button"
+                disabled={sending || (newMessage?.length || 0) > 200}
+                title="Send">
+                <FaPaperPlane />
+              </button>
             </div>
-            <button
-              onClick={handleSendMessage}
-              className="message-input-send-button"
-              disabled={sending || (newMessage?.length || 0) > 200}
-              title="Send">
-              <FaPaperPlane />
-            </button>
+            {(newMessage?.length || 0) > 0 && (
+              <div
+                className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? "over" : ""}`}
+                aria-live="polite">
+                {newMessage?.length || 0}/200
+              </div>
+            )}
           </div>
 
           {showPreviewPopover && uploadedFileUrls.length > 0 && (
