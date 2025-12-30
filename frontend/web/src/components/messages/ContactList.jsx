@@ -6,6 +6,8 @@ import "../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostCo
 import { FaCog, FaSearch, FaBars, FaPlus, FaUser } from "react-icons/fa";
 import AutomatedSettings from "./AutomatedSettings";
 import AddContactByUserId from "./AddContactByUserId";
+import PendingContactItem from "./PendingContactItem";
+import useContactRequests from "./hooks/useContactRequests";
 
 const ContactList = ({
   userId,
@@ -16,7 +18,10 @@ const ContactList = ({
   isChatOpen = false,
   activeContactId = null,
 }) => {
-  const { contacts, pendingContacts, loading, setContacts } = useFetchContacts(userId, dashboardType);
+  const { contacts, pendingContacts, loading, setContacts, setPendingContacts } = useFetchContacts(
+    userId,
+    dashboardType
+  );
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [displayType, setDisplayType] = useState("contacts");
   const socket = useContext(WebSocketContext);
@@ -27,6 +32,7 @@ const ContactList = ({
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactId: null });
   const [showAddContactModal, setShowAddContactModal] = useState(false);
+  const { acceptContact, declineContact, loading: requestLoading } = useContactRequests();
   useEffect(() => {
     setSelectedContactId(activeContactId || null);
   }, [activeContactId]);
@@ -39,9 +45,9 @@ const ContactList = ({
 
   const labels = {
     contacts: "Contacts",
-    pending: "Sent requests",
+    pending: isHost ? "Sent requests" : "Pending requests",
     noContacts: "No contacts found.",
-    noPending: "No requests sent.",
+    noPending: isHost ? "No requests sent." : "No pending requests.",
   };
 
   const handleCreateTestContact = (e) => {
@@ -248,6 +254,62 @@ const ContactList = ({
     setContextMenu({ visible: false, x: 0, y: 0, contactId: null });
   };
 
+  const handleAcceptContact = async (contact) => {
+    const result = await acceptContact(contact);
+    if (result.success) {
+      // Remove from pending contacts and add to accepted contacts
+      setPendingContacts((prev) => prev.filter((c) => c.ID !== contact.ID));
+      // Optionally refresh contacts list
+      window.location.reload(); // Simple refresh for now
+    }
+  };
+
+  const handleDeclineContact = async (contact) => {
+    const result = await declineContact(contact);
+    if (result.success) {
+      // Remove from pending contacts
+      setPendingContacts((prev) => prev.filter((c) => c.ID !== contact.ID));
+    }
+  };
+
+  const renderContactItems = () => {
+    if (displayType === "pendingContacts") {
+      // Show pending contacts with accept/decline actions
+      return contactList.map((contact) => (
+        <li key={contact.ID || contact.userId} className="contact-list-list-item pending">
+          <PendingContactItem
+            contact={contact}
+            onAccept={handleAcceptContact}
+            onDecline={handleDeclineContact}
+            dashboardType={dashboardType}
+            loading={requestLoading}
+          />
+        </li>
+      ));
+    } else {
+      // Show regular contacts
+      return contactList.map((contact) => (
+        <li
+          key={contact.userId}
+          className={`contact-list-list-item ${displayType === "pendingContacts" ? "disabled" : ""}`}
+          onClick={() =>
+            displayType !== "pendingContacts" &&
+            handleClick(contact.recipientId, contact.givenName, contact.profileImage)
+          }
+          onContextMenu={(event) => handleContextMenu(event, contact)}>
+          <ContactItem
+            contact={contact}
+            isPending={displayType === "pendingContacts"}
+            setContacts={setContacts}
+            userId={userId}
+            selected={selectedContactId === contact.recipientId}
+            dashboardType={dashboardType}
+          />
+        </li>
+      ));
+    }
+  };
+
   return (
     <div className={`${dashboardType}-contact-list-modal`}>
       <h3>Message dashboard</h3>
@@ -284,7 +346,9 @@ const ContactList = ({
       <div className={`contact-list-toggle`}>
         <select value={displayType} onChange={(e) => setDisplayType(e.target.value)} className="contact-dropdown">
           <option value="contacts">{labels.contacts}</option>
-          <option value="pendingContacts">{labels.pending}</option>
+          <option value="pendingContacts">
+            {labels.pending} {pendingContacts.length > 0 && `(${pendingContacts.length})`}
+          </option>
         </select>
 
         <div className="contact-list-side-buttons">
@@ -320,25 +384,7 @@ const ContactList = ({
         ) : contactList.length === 0 ? (
           <p className={`contact-list-empty-text`}>{noContactsMessage}</p>
         ) : (
-          contactList.map((contact) => (
-            <li
-              key={contact.userId}
-              className={`contact-list-list-item ${displayType === "pendingContacts" ? "disabled" : ""}`}
-              onClick={() =>
-                displayType !== "pendingContacts" &&
-                handleClick(contact.recipientId, contact.givenName, contact.profileImage)
-              }
-              onContextMenu={(event) => handleContextMenu(event, contact)}>
-              <ContactItem
-                contact={contact}
-                isPending={displayType === "pendingContacts"}
-                setContacts={setContacts}
-                userId={userId}
-                selected={selectedContactId === contact.recipientId}
-                dashboardType={dashboardType}
-              />
-            </li>
-          ))
+          renderContactItems()
         )}
       </ul>
       {contextMenu.visible && (

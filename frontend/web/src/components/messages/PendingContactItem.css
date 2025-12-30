@@ -1,0 +1,307 @@
+.pending-contact-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pending-contact-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.pending-contact-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e2e8f0;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.2rem;
+  border: 2px solid #e2e8f0;
+}
+
+.pending-contact-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-main-info {
+  margin-bottom: 4px;
+}
+
+.contact-name {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.contact-message {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #718096;
+  line-height: 1.4;
+}
+
+.booking-info {
+  margin-top: 8px;
+}
+
+.booking-dates {
+  font-size: 0.85rem;
+  color: #4a5568;
+  background: #f7fafc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.property-info {
+  margin-top: 8px;
+}
+
+.property-title {
+  font-size: 0.85rem;
+  color: #38a169;
+  font-weight: 500;
+}
+
+.pending-contact-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 16px;
+  flex-shrink: 0;
+}
+
+.action-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.accept-button {
+  background: #48bb78;
+  color: white;
+}
+
+.accept-button:hover:not(:disabled) {
+  background: #38a169;
+  transform: scale(1.1);
+}
+
+.decline-button {
+  background: #f56565;
+  color: white;
+}
+
+.decline-button:hover:not(:disabled) {
+  background: #e53e3e;
+  transform: scale(1.1);
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-button.processing {
+  pointer-events: none;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.pending-status {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: #fef5e7;
+  border: 1px solid #f6ad55;
+  border-radius: 20px;
+}
+
+.status-text {
+  font-size: 0.85rem;
+  color: #c05621;
+  font-weight: 500;
+}
+
+/* Notification badge styles */
+.pending-contact-item.has-notification::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background: #f56565;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .pending-contact-item {
+    padding: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .pending-contact-avatar {
+    margin: 0 auto 12px;
+  }
+
+  .pending-contact-info {
+    margin-bottom: 12px;
+  }
+
+  .pending-contact-actions {
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .action-button {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pending-contact-item {
+    padding: 10px;
+  }
+
+  .contact-name {
+    font-size: 1rem;
+  }
+
+  .contact-message {
+    font-size: 0.85rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .pending-contact-item {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .pending-contact-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .contact-name {
+    color: #e2e8f0;
+  }
+
+  .contact-message {
+    color: #a0aec0;
+  }
+
+  .booking-dates {
+    background: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .avatar-placeholder {
+    border-color: #4a5568;
+  }
+
+  .avatar-image {
+    border-color: #4a5568;
+  }
+
+  .pending-status {
+    background: #744210;
+    border-color: #d69e2e;
+  }
+
+  .status-text {
+    color: #faf089;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .pending-contact-item {
+    border-width: 2px;
+  }
+
+  .action-button {
+    border: 2px solid currentColor;
+  }
+
+  .avatar-image,
+  .avatar-placeholder {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .pending-contact-item,
+  .action-button,
+  .loading-spinner {
+    transition: none;
+    animation: none;
+  }
+
+  .pending-contact-item:hover {
+    transform: none;
+  }
+
+  .action-button:hover:not(:disabled) {
+    transform: none;
+  }
+}
