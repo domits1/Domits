@@ -46,12 +46,21 @@ This helps detect integration issues, or broken functionality early, before prob
 
 ## 3. Create a Pull Request
 
-> [!Important]
-> Do **not** push directly to `acceptance`, all changes go through a Pull Request otherwise you will lose your work
+> [!IMPORTANT]  
+> Do **not** push directly to `acceptance`.  
+> All changes must go through a Pull Request, otherwise you risk losing work or breaking the integration branch.
 
-### PR configuration
-- **Base branch:** `acceptance`
-- **Compare branch:** your working branch (`feature/*`, `docs/*`, `fix/*`, etc.)
+### Creating a PR via GitHub
+
+1. Go to the **Domits GitHub repository**
+2. Open the **Pull requests** tab
+3. Click **New pull request**
+   - Or use the **Compare & pull request** button if GitHub suggests it after pushing your branch
+4. Configure the PR:
+   - **Base branch:** `acceptance`
+   - **Compare branch:** your working branch (`feature/*`, `docs/*`, `fix/*`, etc.)
+
+Verify carefully that the base branch is `acceptance` before continuing.
 
 ### PR title
 Must follow the Conventional Commit format, for example:
