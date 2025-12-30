@@ -126,12 +126,12 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: white;
-            width: 50vw;
-            min-height: 50vh;
-            max-height: 50vh;
-            border: 1px solid #dcdcdc;
-            border-radius: 8px;
-            box-shadow: 1px 3px 4px rgba(0, 0, 0, 0.3);
+            width: 60vw;
+            min-height: 60vh;
+            max-height: 80vh;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -142,12 +142,12 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 1rem;
-                border-bottom: 1px solid #dcdcdc;
+                padding: 1.5rem;
+                border-bottom: 1px solid #f0f0f0;
                 background-color: #fff;
 
                 h2 {
-                    font-size: 1.25rem;
+                    font-size: 1.5rem;
                     margin: 0;
                     color: #333;
                 }
@@ -164,9 +164,9 @@
 
                     button {
                         background: none;
-                        border: 1px solid #ccc;
-                        padding: 4px 8px;
-                        border-radius: 4px;
+                        border: 1px solid #ddd;
+                        padding: 0.5rem 1rem;
+                        border-radius: 6px;
                         cursor: pointer;
                         font-weight: 500;
                         transition: all 0.2s;
@@ -796,152 +796,4 @@
     }
 
 
-}
-
-/* ADD CONTACT MODAL STYLES */
-.add-contact-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    backdrop-filter: blur(4px);
-    animation: fadeIn 0.2s ease-out;
-
-    .add-contact-modal {
-        background: #fff;
-        padding: 24px;
-        border-radius: 16px;
-        width: 400px;
-        max-width: 90vw;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        font-family: 'Kanit', sans-serif;
-
-        h3 {
-            margin: 0 0 20px 0;
-            font-size: 1.5rem;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-
-            label {
-                display: block;
-                margin-bottom: 8px;
-                font-weight: 500;
-                color: #555;
-                font-size: 0.95rem;
-            }
-
-            input[type="text"] {
-                width: 100%;
-                padding: 10px 12px;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                font-size: 1rem;
-                outline: none;
-                transition: all 0.2s;
-                box-sizing: border-box;
-
-                &:focus {
-                    border-color: #0D9813;
-                    box-shadow: 0 0 0 3px rgba(13, 152, 19, 0.1);
-                }
-
-                &::placeholder {
-                    color: #aaa;
-                }
-            }
-
-            .file-input-wrapper {
-                position: relative;
-                
-                input[type="file"] {
-                    width: 100%;
-                    padding: 8px;
-                    background: #f9f9f9;
-                    border: 1px dashed #ccc;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    
-                    &::file-selector-button {
-                        margin-right: 12px;
-                        border: none;
-                        background: #0D9813;
-                        padding: 6px 12px;
-                        border-radius: 6px;
-                        color: #fff;
-                        cursor: pointer;
-                        font-family: inherit;
-                        font-size: 0.9rem;
-                        transition: background 0.2s;
-
-                        &:hover {
-                            background: darken(#0D9813, 5%);
-                        }
-                    }
-                }
-            }
-        }
-
-        .actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 24px;
-
-            button {
-                padding: 8px 16px;
-                border-radius: 8px;
-                font-size: 0.95rem;
-                font-weight: 500;
-                cursor: pointer;
-                border: none;
-                transition: all 0.2s;
-                font-family: inherit;
-
-                &.cancel-btn {
-                    background: #f5f5f5;
-                    color: #666;
-
-                    &:hover {
-                        background: #eee;
-                        color: #333;
-                    }
-                }
-
-                &.save-btn {
-                    background: #0D9813;
-                    color: #fff;
-                    box-shadow: 0 2px 4px rgba(13, 152, 19, 0.2);
-
-                    &:hover {
-                        background: darken(#0D9813, 5%);
-                        box-shadow: 0 4px 8px rgba(13, 152, 19, 0.3);
-                        transform: translateY(-1px);
-                    }
-                    
-                    &:active {
-                        transform: translateY(0);
-                    }
-                }
-            }
-        }
-    }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.96);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
 }
