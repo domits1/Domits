@@ -1,11 +1,7 @@
 # Automated Messaging API
 
 ## Description
-<<<<<<< HEAD
 The Automated Messaging API provides intelligent, event-driven message delivery within the Domits messaging ecosystem. It automatically sends contextual messages to guests and hosts based on booking events, property interactions and predefined triggers.
-=======
-The Automated Messaging API provides smart, event-driven message delivery within the Domits messaging ecosystem. It automatically sends contextual messages to guests and hosts based on booking events, property interactions, and predefined triggers.
->>>>>>> a2da23b8f (docs automated messages)
 
 ## Metadata
 **Lambda Function:** UnifiedMessaging
@@ -455,11 +451,6 @@ RATE_LIMIT_PER_USER=100
 ### 🎯 Priority 1: Core Automation Infrastructure 
 
 #### Step 1: Create Missing Service Classes
-<<<<<<< HEAD
-=======
-Create these files in `backend/functions/UnifiedMessaging/`:
-
->>>>>>> a2da23b8f (docs automated messages)
 Create `service/messageService.js` and `service/automationService.js` with the core automation logic.
 
 #### Step 2: Enhance MessageController
@@ -468,7 +459,6 @@ Update `controller/messageController.js` to add automated message processing met
 #### Step 3: Update Routing
 In `index.js`, add automated message route for `/automation` endpoint.
 
-<<<<<<< HEAD
 
 #### Step 1: Create Template Service
 **File: `service/templateService.js`**
@@ -497,21 +487,11 @@ Create `templates/` folder with JSON files:
 #### Step 1: EventBridge Setup
 Create EventBridge rules to listen for booking events.
 
-=======
-### 🎯 Priority 2: Event Integration (Week 2-3)
-
-#### Step 1: EventBridge Setup
-Create EventBridge rules to listen for booking events.
->>>>>>> a2da23b8f (docs automated messages)
 
 #### Step 2: Booking Service Integration
 Modify booking service to emit events when booking status changes.
 
-<<<<<<< HEAD
 ### 🎯 Priority 3: Message Scheduling
-=======
-### 🎯 Priority 3: Message Scheduling (Week 3-4)
->>>>>>> a2da23b8f (docs automated messages)
 
 #### Step 1: SQS Integration
 Create delayed message queue for scheduled delivery:
