@@ -451,58 +451,13 @@ RATE_LIMIT_PER_USER=100
 ### 🎯 Priority 1: Core Automation Infrastructure (Week 1-2)
 
 #### Step 1: Create Missing Service Classes
-Create these files in `backend/functions/UnifiedMessaging/`:
-
-**File: `service/messageService.js`**
-```javascript
-import AutomationService from './automationService.js';
-
-class MessageService {
-    constructor() {
-        this.automationService = new AutomationService();
-    }
-    
-    async sendMessage(payload) {
-        // Implement manual message sending (existing logic)
-        // Add automated message detection and routing
-    }
-    
-    async processAutomatedMessage(event) {
-        // NEW: Handle automated message creation
-        return await this.automationService.processBookingEvent(event);
-    }
-}
-```
-
-**File: `service/automationService.js`**
-```javascript
-class AutomationService {
-    async processBookingEvent(bookingEvent) {
-        // Determine message type based on event
-        // Generate message from template
-        // Schedule delivery if needed
-        // Send via existing WebSocket infrastructure
-    }
-}
-```
+Create `service/messageService.js` and `service/automationService.js` with the core automation logic.
 
 #### Step 2: Enhance MessageController
-Update `controller/messageController.js`:
-```javascript
-// Add new method for automated messages
-async processAutomation(event) {
-    const automationEvent = JSON.parse(event.body);
-    return await this.messageService.processAutomatedMessage(automationEvent);
-}
-```
+Update `controller/messageController.js` to add automated message processing method.
 
 #### Step 3: Update Routing
-In `index.js`, add automated message route:
-```javascript
-case httpMethod === "POST" && path.endsWith("/automation"):
-    returnedResponse = await controller.processAutomation(event);
-    break;
-```
+In `index.js`, add automated message route for `/automation` endpoint.
 
 ### 🎯 Priority 2: Template System (Week 2-3)
 
