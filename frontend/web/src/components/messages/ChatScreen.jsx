@@ -265,14 +265,12 @@ const ChatScreen = ({
                 <FaPaperPlane />
               </button>
             </div>
-            {(newMessage?.length || 0) > 0 && (
-              <div
-                className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? "over" : ""}`}
-                aria-live="polite">
-                {newMessage?.length || 0}/200
-              </div>
-            )}
           </div>
+          {(newMessage?.length || 0) > 0 && (
+            <div className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? "over" : ""}`} aria-live="polite">
+              {newMessage?.length || 0}/200
+            </div>
+          )}
 
           {showPreviewPopover && uploadedFileUrls.length > 0 && (
             <div className="preview-popover" role="dialog" aria-label="Attachment previews">
