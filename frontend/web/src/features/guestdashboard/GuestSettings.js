@@ -459,6 +459,37 @@ const GuestDashboard = () => {
                 <img src={editIcon} alt="Edit Phone number" className="guest-edit-icon" />
               </div>
             </div>
+
+            <div className="InfoBox">
+              <span>User ID:</span>
+              <p style={{ fontFamily: "monospace", fontSize: "0.9rem", wordBreak: "break-all" }}>{user.userId}</p>
+              <div
+                onClick={() => navigator.clipboard.writeText(user.userId)}
+                className="edit-icon-background"
+                title="Copy User ID"
+                style={{ cursor: "pointer" }}>
+                <span style={{ fontSize: "1.2rem" }}>📋</span>
+              </div>
+            </div>
+            <div
+              style={{
+                backgroundColor: "#f0f8ff",
+                padding: "10px",
+                borderRadius: "6px",
+                marginTop: "10px",
+                border: "1px solid #e0e0e0",
+              }}>
+              <p
+                style={{
+                  margin: "0",
+                  fontSize: "0.85rem",
+                  color: "#666",
+                  lineHeight: "1.4",
+                }}>
+                <strong>💡 What is this?</strong> Your User ID is unique to your account. Share this ID with others so
+                they can add you as a contact for messaging.
+              </p>
+            </div>
             {/* Voorlopig gecommend samen met Stefan aangezien we nu nog geen need hebben (misschien later) */}
             {/*<div className="InfoBox">*/}
             {/*    <span>Address:</span>*/}
