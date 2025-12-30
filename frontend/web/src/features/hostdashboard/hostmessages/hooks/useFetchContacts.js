@@ -18,7 +18,6 @@ const useFetchContacts = (userId, role) => {
     try {
       const isHost = role === "host";
 
-      // Fetch threads from UnifiedMessaging
       let unifiedThreads = [];
       try {
         const threadsResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads?userId=${userId}`, {
@@ -52,7 +51,6 @@ const useFetchContacts = (userId, role) => {
       const responseData = await response.json();
       const JSONData = JSON.parse(responseData.body);
       
-      // Merge unified threads with legacy contacts
       const unifiedContacts = unifiedThreads.map(thread => ({
         userId: isHost ? thread.guestId : thread.hostId,
         hostId: thread.hostId,
@@ -61,7 +59,6 @@ const useFetchContacts = (userId, role) => {
         isFromUnified: true
       }));
       
-      // Combine and deduplicate
       const allAccepted = [...(JSONData.accepted || []), ...unifiedContacts];
       const uniqueAccepted = allAccepted.filter((contact, index, self) => 
         index === self.findIndex(c => c.userId === contact.userId)
@@ -98,7 +95,6 @@ const useFetchContacts = (userId, role) => {
       };
 
       const fetchLatestMessage = async (recipientIdToSend) => {
-        // First try to get messages from UnifiedMessaging system via Lambda invocation
         try {
           const unifiedResponse = await fetch("https://lambda.eu-north-1.amazonaws.com/", {
             method: "POST",
@@ -139,7 +135,6 @@ const useFetchContacts = (userId, role) => {
           console.warn("Failed to fetch from UnifiedMessaging, falling back to legacy system:", unifiedError);
         }
 
-        // Fallback to legacy system
         const response = await fetch(
           "https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages",
           {

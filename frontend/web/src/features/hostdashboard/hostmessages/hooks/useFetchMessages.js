@@ -1,8 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 
-// Persists messages per conversation so switching contacts does not wipe history
 export const useFetchMessages = (userId) => {
-    // Map of recipientId -> messages[]
     const [messagesByRecipient, setMessagesByRecipient] = useState({});
     const cacheRef = useRef({});
     const [activeRecipientId, setActiveRecipientId] = useState(null);
@@ -18,10 +16,8 @@ export const useFetchMessages = (userId) => {
         setActiveRecipientId(recipientId);
         setError(null);
 
-        // If we already have messages for this conversation, don't refetch unnecessarily
         const cached = cacheRef.current[recipientId];
         if (Array.isArray(cached) && cached.length > 0) {
-            // Ensure UI is not stuck in loading state when switching to cached chat
             setLoading(false);
             return;
         }
@@ -31,7 +27,6 @@ export const useFetchMessages = (userId) => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            // Fetch messages from UnifiedMessaging API
             const response = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?userId=${userId}&recipientId=${recipientId}`, {
                 method: 'GET',
                 headers: {
@@ -62,7 +57,6 @@ export const useFetchMessages = (userId) => {
         } catch (err) {
             console.error('Error fetching messages:', err);
             setError(err);
-            // Ensure cache holds at least an empty array so UI can render empty state
             setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: prev[recipientId] || [] }));
             cacheRef.current[recipientId] = cacheRef.current[recipientId] || [];
         } finally {
@@ -71,7 +65,6 @@ export const useFetchMessages = (userId) => {
     }, [userId]);
 
     const addNewMessage = useCallback((newMessage) => {
-        // Determine the other participant to decide which conversation to place this in
         const partnerId = newMessage.userId === userId ? newMessage.recipientId : newMessage.userId;
         if (!partnerId) return;
 
@@ -87,7 +80,6 @@ export const useFetchMessages = (userId) => {
         });
     }, [userId]);
 
-    // Expose the messages for the active conversation so existing components keep working
     const messages = messagesByRecipient[activeRecipientId] || [];
 
     return {
