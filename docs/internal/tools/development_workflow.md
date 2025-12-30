@@ -47,7 +47,7 @@ This helps detect integration issues, or broken functionality early, before prob
 ## 3. Create a Pull Request
 
 > [!Important]
-> Do **not** push directly to `acceptance`, all changes go through a Pull Request
+> Do **not** push directly to `acceptance`, all changes go through a Pull Request otherwise you will lose your work
 
 ### PR configuration
 - **Base branch:** `acceptance`
