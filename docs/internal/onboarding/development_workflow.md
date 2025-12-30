@@ -175,3 +175,21 @@ Always verify:
 - Your changes are visible and working in [https://acceptance.domits.com/](https://acceptance.domits.com/)
 
 If a deployment fails, notify the team immediately.
+
+---
+
+## Further Learning & Growth
+
+To understand the expected technical levels, responsibilities, and growth paths within Domits, refer to the [Programming Levels & Onboarding Guide](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/programming_levels.md):
+
+This document outlines:
+- Expected skills per level (Level 1–3)
+- Technical, cloud, and professional competencies
+- Recommended learning resources and roadmaps
+- Clean Code principles and best practices
+- Insight into Domits’ tech stack and engineering structure
+
+This guide is especially useful for interns and junior developers to understand **what is expected now** and **what to grow towards next**.
+
+> [!NOTE]  
+> This document is updated frequently. If information appears outdated, always refer to the Domits GitHub Wiki as the source of truth.
