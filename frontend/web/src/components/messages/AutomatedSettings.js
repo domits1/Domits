@@ -1,6 +1,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eef2bf0b9 (comments from pr)
 =======
@@ -10,28 +11,28 @@ import Customization from './components/customization';
 import Scheduling from './components/scheduling';
 import Preview from './components/preview';
 import {
-    createDefaultAutomationSettings,
-    loadAutomationSettings,
-    saveAutomationSettings,
-    emitAutomationUpdated,
-} from './automationConfig';
+  createDefaultAutomationSettings,
+  loadAutomationSettings,
+  saveAutomationSettings,
+  emitAutomationUpdated,
+} from "./automationConfig";
 
-const optionsList = ['Events & Triggers', 'Customization', 'Scheduling', 'Preview'];
+const optionsList = ["Events & Triggers", "Customization", "Scheduling", "Preview"];
 
 const AutomatedSettings = ({ setAutomatedSettings, hostId }) => {
-    const [options, setOptions] = useState('Events & Triggers');
-    const [settings, setSettings] = useState(() => createDefaultAutomationSettings());
-    const [selection, setSelection] = useState('booking_confirmation');
-    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-    const [saveState, setSaveState] = useState('idle'); // 'idle' | 'saving' | 'saved'
+  const [options, setOptions] = useState("Events & Triggers");
+  const [settings, setSettings] = useState(() => createDefaultAutomationSettings());
+  const [selection, setSelection] = useState("booking_confirmation");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [saveState, setSaveState] = useState("idle");
 
-    useEffect(() => {
-        if (!hostId) return;
-        setSettings(loadAutomationSettings(hostId));
-        setHasUnsavedChanges(false);
-    }, [hostId]);
+  useEffect(() => {
+    if (!hostId) return;
+    setSettings(loadAutomationSettings(hostId));
+    setHasUnsavedChanges(false);
+  }, [hostId]);
 
-    const events = settings?.events || {};
+  const events = settings?.events || {};
 
     const handleToggleEvent = (eventId) => {
         setSettings((prev) => {
@@ -50,75 +51,75 @@ const AutomatedSettings = ({ setAutomatedSettings, hostId }) => {
         setHasUnsavedChanges(true);
     };
 
-    const handleTemplateChange = (eventId, template) => {
-        setSettings((prev) => ({
-            ...prev,
-            events: {
-                ...prev.events,
-                [eventId]: {
-                    ...prev.events[eventId],
-                    template,
-                },
-            },
-        }));
-        setHasUnsavedChanges(true);
-    };
+  const handleTemplateChange = (eventId, template) => {
+    setSettings((prev) => ({
+      ...prev,
+      events: {
+        ...prev.events,
+        [eventId]: {
+          ...prev.events[eventId],
+          template,
+        },
+      },
+    }));
+    setHasUnsavedChanges(true);
+  };
 
-    const handleDelayChange = (eventId, minutes) => {
-        setSettings((prev) => ({
-            ...prev,
-            events: {
-                ...prev.events,
-                [eventId]: {
-                    ...prev.events[eventId],
-                    sendDelayMinutes: minutes,
-                },
-            },
-        }));
-        setHasUnsavedChanges(true);
-    };
+  const handleDelayChange = (eventId, minutes) => {
+    setSettings((prev) => ({
+      ...prev,
+      events: {
+        ...prev.events,
+        [eventId]: {
+          ...prev.events[eventId],
+          sendDelayMinutes: minutes,
+        },
+      },
+    }));
+    setHasUnsavedChanges(true);
+  };
 
-    const handleReset = () => {
-        const shouldReset =
-            typeof window === 'undefined' ? true : window.confirm('Reset automated messages to default drafts?');
-        if (!shouldReset) return;
-        setSettings(createDefaultAutomationSettings());
-        setHasUnsavedChanges(true);
-    };
+  const handleReset = () => {
+    const shouldReset =
+      typeof window === "undefined" ? true : window.confirm("Reset automated messages to default drafts?");
+    if (!shouldReset) return;
+    setSettings(createDefaultAutomationSettings());
+    setHasUnsavedChanges(true);
+  };
 
-    const handleSave = () => {
-        if (!hostId) return;
-        setSaveState('saving');
-        saveAutomationSettings(hostId, settings);
-        emitAutomationUpdated(hostId);
-        setHasUnsavedChanges(false);
-        setSaveState('saved');
-        setTimeout(() => setSaveState('idle'), 2400);
-    };
+  const handleSave = () => {
+    if (!hostId) return;
+    setSaveState("saving");
+    saveAutomationSettings(hostId, settings);
+    emitAutomationUpdated(hostId);
+    setHasUnsavedChanges(false);
+    setSaveState("saved");
+    setTimeout(() => setSaveState("idle"), 2400);
+  };
 
-    const handleClose = () => {
-        if (hasUnsavedChanges) {
-            const shouldClose =
-                typeof window === 'undefined' ? true : window.confirm('You have unsaved changes. Close anyway?');
-            if (!shouldClose) {
-                return;
-            }
-        }
-        setAutomatedSettings(null);
-    };
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      const shouldClose =
+        typeof window === "undefined" ? true : window.confirm("You have unsaved changes. Close anyway?");
+      if (!shouldClose) {
+        return;
+      }
+    }
+    setAutomatedSettings(null);
+  };
 
-    const currentSubtitle = useMemo(() => {
-        switch (options) {
-            case 'Customization':
-                return 'Edit the templates guests will receive';
-            case 'Scheduling':
-                return 'Control when each message goes out';
-            case 'Preview':
-                return 'See the message exactly as guests will read it';
-            default:
-                return 'Decide which automations Domits sends for you';
-        }
-    }, [options]);
+  const currentSubtitle = useMemo(() => {
+    switch (options) {
+      case "Customization":
+        return "Edit the templates guests will receive";
+      case "Scheduling":
+        return "Control when each message goes out";
+      case "Preview":
+        return "See the message exactly as guests will read it";
+      default:
+        return "Decide which automations Domits sends for you";
+    }
+  }, [options]);
 
     return (
         <div className="automated-settings-modal">
