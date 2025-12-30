@@ -1,7 +1,7 @@
 # Automated Messaging API
 
 ## Description
-The Automated Messaging API provides intelligent, event-driven message delivery within the Domits messaging ecosystem. It automatically sends contextual messages to guests and hosts based on booking lifecycle events, property interactions, and predefined triggers, enhancing user experience through timely communication without manual intervention.
+The Automated Messaging API provides intelligent, event-driven message delivery within the Domits messaging ecosystem. It automatically sends contextual messages to guests and hosts based on booking events, property interactions, and predefined triggers.
 
 ## Metadata
 **Lambda Function:** UnifiedMessaging
