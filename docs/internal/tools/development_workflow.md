@@ -62,10 +62,15 @@ This helps detect integration issues, or broken functionality early, before prob
 
 Verify carefully that the base branch is `acceptance` before continuing.
 
-### PR title
-Must follow the Conventional Commit format, for example:
+### PR Title
 
-```
+The PR title must follow the **Conventional Commit** format.
+
+This is mandatory and enforced as part of our Git branching and commit standards.  
+Check the full specification [here](https://github.com/domits1/Domits/issues/2353):  
+
+Example:
+```text
 docs(backend): document local frontend-backend connection
 ```
 
