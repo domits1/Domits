@@ -1,7 +1,7 @@
 # Automated Messaging API
 
 ## Description
-The Automated Messaging API provides intelligent, event-driven message delivery within the Domits messaging ecosystem. It automatically sends contextual messages to guests and hosts based on booking lifecycle events, property interactions, and predefined triggers, enhancing user experience through timely communication without manual intervention.
+The Automated Messaging API provides smart, event-driven message delivery within the Domits messaging ecosystem. It automatically sends contextual messages to guests and hosts based on booking events, property interactions, and predefined triggers.
 
 ## Metadata
 **Lambda Function:** UnifiedMessaging
@@ -453,119 +453,23 @@ RATE_LIMIT_PER_USER=100
 #### Step 1: Create Missing Service Classes
 Create these files in `backend/functions/UnifiedMessaging/`:
 
-**File: `service/messageService.js`**
-```javascript
-import AutomationService from './automationService.js';
-
-class MessageService {
-    constructor() {
-        this.automationService = new AutomationService();
-    }
-    
-    async sendMessage(payload) {
-        // Implement manual message sending (existing logic)
-        // Add automated message detection and routing
-    }
-    
-    async processAutomatedMessage(event) {
-        // NEW: Handle automated message creation
-        return await this.automationService.processBookingEvent(event);
-    }
-}
-```
-
-**File: `service/automationService.js`**
-```javascript
-class AutomationService {
-    async processBookingEvent(bookingEvent) {
-        // Determine message type based on event
-        // Generate message from template
-        // Schedule delivery if needed
-        // Send via existing WebSocket infrastructure
-    }
-}
-```
+Create `service/messageService.js` and `service/automationService.js` with the core automation logic.
 
 #### Step 2: Enhance MessageController
-Update `controller/messageController.js`:
-```javascript
-// Add new method for automated messages
-async processAutomation(event) {
-    const automationEvent = JSON.parse(event.body);
-    return await this.messageService.processAutomatedMessage(automationEvent);
-}
-```
+Update `controller/messageController.js` to add automated message processing method.
 
 #### Step 3: Update Routing
-In `index.js`, add automated message route:
-```javascript
-case httpMethod === "POST" && path.endsWith("/automation"):
-    returnedResponse = await controller.processAutomation(event);
-    break;
-```
+In `index.js`, add automated message route for `/automation` endpoint.
 
-### 🎯 Priority 2: Template System (Week 2-3)
-
-#### Step 1: Create Template Service
-**File: `service/templateService.js`**
-```javascript
-class TemplateService {
-    async getTemplate(messageType, language = 'en') {
-        // Fetch template from database or static files
-    }
-    
-    async renderTemplate(template, variables) {
-        // Replace {{variable}} placeholders
-        // Validate required variables exist
-    }
-}
-```
-
-#### Step 2: Create Template Storage
-Create `templates/` folder with JSON files:
-- `booking_confirmation_guest.json`
-- `checkin_instructions.json` 
-- `wifi_credentials.json`
-- `checkout_reminder.json`
-
-### 🎯 Priority 3: Event Integration (Week 3-4)
+### 🎯 Priority 2: Event Integration (Week 2-3)
 
 #### Step 1: EventBridge Setup
-Create `infrastructure/eventbridge-rules.json`:
-```json
-{
-  "Rules": [
-    {
-      "Name": "BookingConfirmedRule",
-      "EventPattern": {
-        "source": ["domits.bookings"],
-        "detail-type": ["Booking Status Change"]
-      }
-    }
-  ]
-}
-```
+Create EventBridge rules to listen for booking events.
 
 #### Step 2: Booking Service Integration
-Modify booking service to emit events:
-```javascript
-// In booking confirmation logic
-await eventBridge.putEvents({
-  Entries: [{
-    Source: 'domits.bookings',
-    DetailType: 'Booking Status Change',
-    Detail: JSON.stringify({
-      bookingId,
-      status: 'confirmed',
-      guestId,
-      hostId,
-      propertyId
-    })
-  }]
-});
-```
+Modify booking service to emit events when booking status changes.
 
-### 🎯 Priority 4: Message Scheduling (Week 4-5)
+### 🎯 Priority 3: Message Scheduling (Week 3-4)
 
 #### Step 1: SQS Integration
 Create delayed message queue for scheduled delivery:
