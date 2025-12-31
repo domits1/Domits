@@ -143,7 +143,7 @@ Reviewers must verify:
   - build
   - pipeline checks
 
-For a detailed guide on how to review a Pull Request at Domits, see the **[PR Reviewer Onboarding documentation](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/pr_reviewer_onboarding.md)**
+For a detailed guide on how to review a Pull Request at Domits, see the [PR Reviewer Onboarding documentation](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/pr_reviewer_onboarding.md)
 
 This document explains:
 
