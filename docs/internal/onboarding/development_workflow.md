@@ -5,12 +5,17 @@ This document explains **what to do after you finish your work** (feature, fix, 
 This workflow is mandatory. Skipping steps will result in blocked PRs, failed reviews, or broken deployments.
 
 > [!IMPORTANT]  
-> This document assumes that you already have Domits running locally.
+> This workflow assumes you already understand how Domits is set up and how backend development works.
 >
-> If you have not set up or run Domits on your machine yet, first follow the [Running Domits Locally](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/running%20Domits%20locally.md) guide.
+> Before continuing, make sure you are familiar with the following documentation:
 >
-> Only continue with this workflow once the application runs successfully on your local environment.
-
+> - [Running Domits locally](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/running%20Domits%20locally.md)
+>
+> - [Backend Setup (AWS Lambda)](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/backend_setup.md)  
+>   Explains how backend functions are created, structured, tested, and run locally.  
+>
+> - [Backend Development Flow](https://github.com/domits1/Domits/blob/acceptance/docs/internal/tools/backend_development_flow.md)
+>   Describes the backend architecture, layers (controller/business/data), directory structure, and deployment flow.
 
 ---
 
@@ -188,7 +193,7 @@ If a deployment fails, notify the team immediately.
 
 ## Further Learning & Growth
 
-To understand the expected technical levels, responsibilities, and growth paths within Domits, refer to the [Programming Levels & Onboarding Guide](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/programming_levels.md):
+To understand the expected technical levels, responsibilities, and growth paths within Domits, refer to the [Programming Levels & Onboarding Guide](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/programming_levels.md)
 
 This document outlines:
 - Expected skills per level (Level 1–3)
