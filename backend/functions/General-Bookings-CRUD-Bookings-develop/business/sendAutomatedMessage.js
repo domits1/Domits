@@ -1,11 +1,3 @@
-/**
- * 
- * @param {string} senderId 
- * @param {string} recipientId
- * @param {string} propertyId 
- * @param {string} messageText 
- * @param {string} messageType 
- */
 const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageText, messageType) => {
     const payload = {
         senderId: senderId,
