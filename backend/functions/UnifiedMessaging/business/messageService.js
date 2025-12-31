@@ -59,6 +59,21 @@ class MessageService {
       response: messages,
     };
   }
+
+  async getMessagesByUsers(userId, recipientId, propertyId) {
+    const thread = await this.threadRepository.findThread(userId, recipientId, propertyId);
+    if (!thread) {
+      return {
+        statusCode: 200,
+        response: [],
+      };
+    }
+    const messages = await this.messageRepository.getMessagesByThreadId(thread.id);
+    return {
+      statusCode: 200,
+      response: messages,
+    };
+  }
 }
 
 export default MessageService;

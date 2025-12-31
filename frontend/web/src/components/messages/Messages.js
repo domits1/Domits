@@ -24,6 +24,7 @@ const MessagesContent = ({ dashboardType }) => {
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [selectedContactName, setSelectedContactName] = useState(null);
     const [selectedContactImage, setSelectedContactImage] = useState(null);
+    const [selectedThreadId, setSelectedThreadId] = useState(null);
     const [message, setMessage] = useState([]);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
     const isMobile = screenWidth < 768;
@@ -36,15 +37,17 @@ const MessagesContent = ({ dashboardType }) => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    const handleContactClick = (contactId, contactName, contactImage) => {
+    const handleContactClick = (contactId, contactName, contactImage, threadId = null) => {
         setSelectedContactId(contactId);
         setSelectedContactName(contactName);
         setSelectedContactImage(contactImage || null);
+        setSelectedThreadId(threadId);
     };
 
     const handleBackToContacts = () => {
         setSelectedContactId(null);
         setSelectedContactName(null);
+        setSelectedThreadId(null);
     };
 
     const handleCloseChat = (contactId = null) => {
@@ -52,6 +55,7 @@ const MessagesContent = ({ dashboardType }) => {
             setSelectedContactId(null);
             setSelectedContactName(null);
             setSelectedContactImage(null);
+            setSelectedThreadId(null);
         }
     };
 
@@ -96,6 +100,7 @@ const MessagesContent = ({ dashboardType }) => {
                                 contactId={selectedContactId}
                                 contactName={selectedContactName}
                                 contactImage={selectedContactImage}
+                                threadId={selectedThreadId}
                                 onBack={isTablet ? handleBackToContacts : null}
                                 dashboardType={dashboardType}
 

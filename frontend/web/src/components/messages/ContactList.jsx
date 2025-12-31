@@ -223,9 +223,9 @@ const ContactList = ({
 
   const noContactsMessage = displayType === "contacts" ? labels.noContacts : labels.noPending;
 
-  const handleClick = (contactId, contactName, contactImage) => {
+  const handleClick = (contactId, contactName, contactImage, threadId = null) => {
     setSelectedContactId(contactId);
-    onContactClick?.(contactId, contactName, contactImage);
+    onContactClick?.(contactId, contactName, contactImage, threadId);
   };
 
   const handleContextMenu = (event, contact) => {
@@ -308,7 +308,7 @@ const ContactList = ({
               className={`contact-list-list-item ${displayType === "pendingContacts" ? "disabled" : ""}`}
               onClick={() =>
                 displayType !== "pendingContacts" &&
-                handleClick(contact.recipientId, contact.givenName, contact.profileImage)
+                handleClick(contact.recipientId, contact.givenName, contact.profileImage, contact.threadId)
               }
               onContextMenu={(event) => handleContextMenu(event, contact)}>
               <ContactItem
