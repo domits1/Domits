@@ -109,7 +109,7 @@ The template includes:
 Incomplete or careless templates will slow down reviews.
 
 > [!NOTE]
-> Do not remove sections from the template.
+> Do not remove sections from the template without any good reason.
 
 ---
 
@@ -117,7 +117,20 @@ Incomplete or careless templates will slow down reviews.
 
 ### Required approvals
 
-- A minimum of **2 reviewers** must approve the PR
+- A minimum of **2 human reviewers** must approve the PR
+- In addition, **GitHub Copilot** may be added as an extra reviewer to assist with:
+  - spotting potential issues
+  - suggesting improvements
+  - identifying common mistakes
+
+> [!NOTE]
+> Copilot is intended as **support only** and does **not** replace human code review or approval.
+>
+> If you do not have access to GitHub Copilot yet, you can obtain it for free via the [GitHub Student Developer Pack](https://education.github.com/pack)
+>
+> As a student, you can activate this pack.
+Many educational institutions are eligible, which means you get access to Copilot and other developer tools **at no cost during your studies**.
+
 
 ### Reviewer responsibilities
 
