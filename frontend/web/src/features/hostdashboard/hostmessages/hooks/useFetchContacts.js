@@ -18,54 +18,6 @@ const useFetchContacts = (userId, role) => {
     try {
       const isHost = role === "host";
 
-      let unifiedThreads = [];
-      try {
-        const threadsResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads?userId=${userId}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        
-        if (threadsResponse.ok) {
-          const threadsData = await threadsResponse.json();
-          unifiedThreads = Array.isArray(threadsData) ? threadsData : [];
-        }
-      } catch (error) {
-        console.warn("Failed to fetch unified threads:", error);
-      }
-
-      const requestData = isHost ? { hostID: userId } : { userID: userId };
-      const endpoint = isHost
-        ? "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts"
-        : "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts_Guest";
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch host contacts");
-      }
-
-      const responseData = await response.json();
-      const JSONData = JSON.parse(responseData.body);
-      
-      const unifiedContacts = unifiedThreads.map(thread => ({
-        userId: isHost ? thread.guestId : thread.hostId,
-        hostId: thread.hostId,
-        Status: "accepted",
-        AccoId: thread.propertyId,
-        isFromUnified: true
-      }));
-      
-      const allAccepted = [...(JSONData.accepted || []), ...unifiedContacts];
-      const uniqueAccepted = allAccepted.filter((contact, index, self) => 
-        index === self.findIndex(c => c.userId === contact.userId)
-      );
-      
-      JSONData.accepted = uniqueAccepted;
-
       const fetchUserInfo = async (userId) => {
         const userResponse = await fetch(
           "https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo",
@@ -96,65 +48,175 @@ const useFetchContacts = (userId, role) => {
 
       const fetchLatestMessage = async (recipientIdToSend) => {
         try {
-          const unifiedResponse = await fetch("https://lambda.eu-north-1.amazonaws.com/", {
-            method: "POST",
+          // Use UnifiedMessaging endpoint directly
+          const threadId1 = `${userId}-${recipientIdToSend}`;
+          const threadId2 = `${recipientIdToSend}-${userId}`;
+          
+          // Try first threadId format
+          let unifiedResponse = await fetch("https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages", {
+            method: "GET",
             headers: {
               "Content-Type": "application/json",
-              "X-Amz-Target": "AWSLambda.Invoke",
-              "X-Amz-Content-Sha256": "UNSIGNED-PAYLOAD",
             },
-            body: JSON.stringify({
-              FunctionName: "UnifiedMessaging",
-              InvocationType: "RequestResponse",
-              Payload: JSON.stringify({
-                httpMethod: "GET",
-                path: "/messages",
-                queryStringParameters: {
-                  senderId: userId,
-                  recipientId: recipientIdToSend,
-                },
-              }),
-            }),
           });
 
+          // Try with threadId parameter if needed
+          if (!unifiedResponse.ok) {
+            unifiedResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId1}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+          }
+
+          // Try reverse threadId if first doesn't work
+          if (!unifiedResponse.ok) {
+            unifiedResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId2}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+          }
+
           if (unifiedResponse.ok) {
-            const lambdaResult = await unifiedResponse.json();
-            if (lambdaResult.statusCode === 200 && lambdaResult.response) {
-              const messages = JSON.parse(lambdaResult.response);
-              if (messages && messages.length > 0) {
-                const latestMessage = messages[messages.length - 1];
-                return {
-                  text: latestMessage.content,
-                  createdAt: new Date(latestMessage.createdAt).toISOString(),
-                  isAutomated: latestMessage.metadata?.isAutomated || false,
-                };
-              }
+            const messages = await unifiedResponse.json();
+            if (messages && messages.length > 0) {
+              const latestMessage = messages[messages.length - 1];
+              return {
+                text: latestMessage.content,
+                createdAt: new Date(latestMessage.createdAt).toISOString(),
+                isAutomated: latestMessage.metadata?.isAutomated || false,
+              };
             }
           }
         } catch (unifiedError) {
-          console.warn("Failed to fetch from UnifiedMessaging, falling back to legacy system:", unifiedError);
+          console.warn("Failed to fetch from UnifiedMessaging:", unifiedError);
         }
 
-        const response = await fetch(
-          "https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userId: userId,
-              recipientId: recipientIdToSend,
-            }),
-          }
-        );
-
-        const rawResponse = await response.text();
-        const result = JSON.parse(rawResponse);
-
-        return response.ok ? result : null;
+        // Return null instead of trying legacy system that's failing
+        return null;
       };
 
+      // Primary: Try to get contacts from UnifiedMessaging
+      let unifiedContacts = [];
+      try {
+        const threadsResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads?userId=${userId}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        
+        if (threadsResponse.ok) {
+          const threadsData = await threadsResponse.json();
+          const threads = Array.isArray(threadsData) ? threadsData : [];
+          
+          unifiedContacts = threads
+          .filter(thread => {
+            // Filter out threads where host and guest are the same (self-threads)
+            return thread.hostId !== thread.guestId;
+          })
+          .map(thread => ({
+            userId: isHost ? thread.guestId : thread.hostId,
+            hostId: thread.hostId,
+            Status: "accepted",
+            AccoId: thread.propertyId,
+            threadId: thread.id, // Add the actual threadId
+            isFromUnified: true
+          }))
+          .filter((contact, index, self) => {
+            // Remove duplicates based on userId
+            return index === self.findIndex(c => c.userId === contact.userId);
+          });
+          
+          console.log("Found unified contacts:", unifiedContacts);
+        }
+      } catch (error) {
+        console.warn("Failed to fetch unified threads:", error);
+      }
+
+      // If we have unified contacts, use them directly
+      if (unifiedContacts.length > 0) {
+        const fetchUserInfoForContacts = async (contacts, idField) => {
+          return await Promise.all(
+            contacts.map(async (contact) => {
+              const recipientId = contact[idField];
+              const userInfo = await fetchUserInfo(recipientId);
+              const latestMessage = await fetchLatestMessage(recipientId);
+
+              const hostId = role === "host" ? userId : contact.hostId;
+              const guestId = role === "host" ? contact.userId : userId;
+
+              let accoImage = null;
+              let bookingStatus = null;
+              let arrivalDate = null;
+              let departureDate = null;
+              let propertyId = contact.AccoId;
+              let propertyTitle = null;
+
+              try {
+                const bookingInfo = await fetchBookingDetailsAndAccommodation({
+                  hostId,
+                  guestId,
+                  withAuth: role !== "guest",
+                  accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
+                });
+
+                accoImage = bookingInfo.accoImage;
+                bookingStatus = bookingInfo.bookingStatus;
+                arrivalDate = bookingInfo.arrivalDate || null;
+                departureDate = bookingInfo.departureDate || null;
+                propertyId = bookingInfo.propertyId || propertyId;
+                propertyTitle = bookingInfo.propertyTitle || null;
+              } catch (error) {
+                console.warn("Failed to fetch booking or accommodation", error);
+              }
+              
+              return {
+                ...contact,
+                ...userInfo,
+                latestMessage,
+                recipientId,
+                accoImage,
+                bookingStatus,
+                arrivalDate,
+                departureDate,
+                propertyId,
+                propertyTitle,
+              };
+            })
+          );
+        };
+
+        const acceptedContacts = await fetchUserInfoForContacts(unifiedContacts, isHost ? "userId" : "hostId");
+        
+        setContacts(acceptedContacts);
+        setPendingContacts([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback: Try legacy system only if no unified contacts found
+      console.log("No unified contacts found, trying legacy system...");
+      
+      const requestData = isHost ? { hostID: userId } : { userID: userId };
+      const endpoint = isHost
+        ? "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts"
+        : "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts_Guest";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch host contacts");
+      }
+
+      const responseData = await response.json();
+      const JSONData = JSON.parse(responseData.body);
+      
       const fetchUserInfoForContacts = async (contacts, idField) => {
         return await Promise.all(
           contacts.map(async (contact) => {
@@ -216,7 +278,8 @@ const useFetchContacts = (userId, role) => {
       setContacts(acceptedContacts);
       setPendingContacts(pendingContacts);
     } catch (error) {
-      setError("Error fetching host contacts: " + error.message);
+      setError("Error fetching contacts: " + error.message);
+      console.error("Error fetching contacts:", error);
     } finally {
       setLoading(false);
     }

@@ -19,6 +19,7 @@ const ChatScreen = ({
   contactId,
   contactName,
   contactImage,
+  threadId,
   handleContactListMessage,
   onBack,
   dashboardType,
@@ -50,9 +51,9 @@ const ChatScreen = ({
 
   useEffect(() => {
     if (contactId) {
-      fetchMessages(contactId, { skipRemote: isDemoConversation });
+      fetchMessages(contactId, threadId);
     }
-  }, [userId, contactId, fetchMessages, isDemoConversation]);
+  }, [userId, contactId, threadId, fetchMessages]);
 
   useEffect(() => {
     if (!loading) {
