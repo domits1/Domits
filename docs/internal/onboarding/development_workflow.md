@@ -106,9 +106,10 @@ The template includes:
 - Testing confirmation
 - Branch cleanup preference
 
-Incomplete or careless templates will slow down reviews or block the PR entirely.
+Incomplete or careless templates will slow down reviews.
 
-Do **not** remove sections from the template.
+> [!NOTE]
+> Do not remove sections from the template.
 
 ---
 
