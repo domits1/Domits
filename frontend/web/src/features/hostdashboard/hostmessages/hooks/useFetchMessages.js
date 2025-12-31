@@ -33,7 +33,6 @@ export const useFetchMessages = (userId) => {
 
             let response;
 
-            // If we have a threadId, use it directly
             if (threadId) {
                 console.log('Using provided threadId:', threadId);
                 response = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId}`, {
@@ -44,7 +43,6 @@ export const useFetchMessages = (userId) => {
                     signal: controller.signal,
                 });
             } else {
-                // Fallback: Try to construct threadId format
                 const threadId1 = `${userId}-${recipientId}`;
                 const threadId2 = `${recipientId}-${userId}`;
                 
@@ -59,7 +57,6 @@ export const useFetchMessages = (userId) => {
 
                 console.log('ThreadId1 response status:', response.status);
 
-                // If first threadId doesn't work, try the reverse
                 if (!response.ok) {
                     console.log('Trying threadId2:', threadId2);
                     response = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId2}`, {
@@ -86,7 +83,6 @@ export const useFetchMessages = (userId) => {
 
             if (Array.isArray(result)) {
                 const transformed = result.map(msg => {
-                    // Parse metadata if it's a string
                     let metadata = msg.metadata || {};
                     if (typeof metadata === 'string') {
                         try {
@@ -98,10 +94,10 @@ export const useFetchMessages = (userId) => {
                     
                     return {
                         ...msg,
-                        text: msg.content || msg.text, // Map content to text
+                        text: msg.content || msg.text,
                         isAutomated: metadata.isAutomated || false,
                         messageType: metadata.messageType || null,
-                        isSent: (metadata.isAutomated) ? false : (msg.senderId === userId), // Automated messages are always received
+                        isSent: (metadata.isAutomated) ? false : (msg.senderId === userId),
                     };
                 });
                 

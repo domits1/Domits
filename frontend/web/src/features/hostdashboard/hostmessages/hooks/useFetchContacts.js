@@ -48,11 +48,9 @@ const useFetchContacts = (userId, role) => {
 
       const fetchLatestMessage = async (recipientIdToSend) => {
         try {
-          // Use UnifiedMessaging endpoint directly
           const threadId1 = `${userId}-${recipientIdToSend}`;
           const threadId2 = `${recipientIdToSend}-${userId}`;
           
-          // Try first threadId format
           let unifiedResponse = await fetch("https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages", {
             method: "GET",
             headers: {
@@ -60,7 +58,6 @@ const useFetchContacts = (userId, role) => {
             },
           });
 
-          // Try with threadId parameter if needed
           if (!unifiedResponse.ok) {
             unifiedResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId1}`, {
               method: "GET",
@@ -70,7 +67,6 @@ const useFetchContacts = (userId, role) => {
             });
           }
 
-          // Try reverse threadId if first doesn't work
           if (!unifiedResponse.ok) {
             unifiedResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId2}`, {
               method: "GET",
@@ -95,11 +91,9 @@ const useFetchContacts = (userId, role) => {
           console.warn("Failed to fetch from UnifiedMessaging:", unifiedError);
         }
 
-        // Return null instead of trying legacy system that's failing
         return null;
       };
 
-      // Primary: Try to get contacts from UnifiedMessaging
       let unifiedContacts = [];
       try {
         const threadsResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads?userId=${userId}`, {
@@ -113,7 +107,6 @@ const useFetchContacts = (userId, role) => {
           
           unifiedContacts = threads
           .filter(thread => {
-            // Filter out threads where host and guest are the same (self-threads)
             return thread.hostId !== thread.guestId;
           })
           .map(thread => ({
@@ -121,11 +114,10 @@ const useFetchContacts = (userId, role) => {
             hostId: thread.hostId,
             Status: "accepted",
             AccoId: thread.propertyId,
-            threadId: thread.id, // Add the actual threadId
+            threadId: thread.id,
             isFromUnified: true
           }))
           .filter((contact, index, self) => {
-            // Remove duplicates based on userId
             return index === self.findIndex(c => c.userId === contact.userId);
           });
           
@@ -135,7 +127,6 @@ const useFetchContacts = (userId, role) => {
         console.warn("Failed to fetch unified threads:", error);
       }
 
-      // If we have unified contacts, use them directly
       if (unifiedContacts.length > 0) {
         const fetchUserInfoForContacts = async (contacts, idField) => {
           return await Promise.all(
@@ -196,7 +187,6 @@ const useFetchContacts = (userId, role) => {
         return;
       }
 
-      // Fallback: Try legacy system only if no unified contacts found
       console.log("No unified contacts found, trying legacy system...");
       
       const requestData = isHost ? { hostID: userId } : { userID: userId };

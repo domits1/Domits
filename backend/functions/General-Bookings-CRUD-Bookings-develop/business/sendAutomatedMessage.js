@@ -20,7 +20,6 @@ const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageTe
     };
 
     try {
-        // Use UnifiedMessaging endpoint instead of legacy Lambda
         const response = await fetch("https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/send", {
             method: "POST",
             headers: {
@@ -40,7 +39,6 @@ const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageTe
     } catch (error) {
         console.error("Error sending automated message:", error);
         
-        // Fallback to legacy system if UnifiedMessaging fails
         try {
             const { LambdaClient, InvokeCommand } = await import("@aws-sdk/client-lambda");
             const lambdaClient = new LambdaClient({ region: "eu-north-1" });

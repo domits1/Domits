@@ -2,7 +2,6 @@ const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazona
 const ACCOMMODATION_API_BASE = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
 export async function getGuestBookingDetails(hostId, guestId) {
-  // Use UnifiedMessaging endpoint with threadId format
   const threadId1 = `${hostId}-${guestId}`;
   const threadId2 = `${guestId}-${hostId}`;
   
