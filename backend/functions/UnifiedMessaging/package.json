@@ -9,6 +9,10 @@
   "scripts": {
     "test": "TEST=true && jest"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@aws-sdk/client-ssm": "^3.958.0",
+    "@aws-sdk/dsql-signer": "^3.958.0",
+    "pg": "^8.16.3",
+    "typeorm": "^0.3.28"
+  }
 }
-
