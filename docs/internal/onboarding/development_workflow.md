@@ -12,7 +12,7 @@ This workflow is mandatory. Skipping steps will result in blocked PRs, failed re
 > - [Running Domits locally](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/running%20Domits%20locally.md)
 >
 > - [Backend Setup (AWS Lambda)](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/backend_setup.md)  
->   Explains how backend functions are created, structured, tested, and run locally.  
+>   Explains how backend functions are created, structured, tested, and run locally.
 >
 > - [Backend Development Flow](https://github.com/domits1/Domits/blob/acceptance/docs/internal/tools/backend_development_flow.md)
 >   Describes the backend architecture, layers (controller/business/data), directory structure, and deployment flow.
@@ -82,7 +82,7 @@ Verify carefully that the base branch is `acceptance` before continuing.
 The PR title must follow the **Conventional Commit** format.
 
 This is mandatory and enforced as part of our Git branching and commit standards.  
-Check the full specification [here](https://github.com/domits1/Domits/issues/2353):
+Check the full specification [here](https://github.com/domits1/Domits/issues/2353).
 
 Example:
 
@@ -129,8 +129,7 @@ Incomplete or careless templates will slow down reviews.
 > If you do not have access to GitHub Copilot yet, you can obtain it for free via the [GitHub Student Developer Pack](https://education.github.com/pack)
 >
 > As a student, you can activate this pack.
-Many educational institutions are eligible, which means you get access to Copilot and other developer tools **at no cost during your studies**.
-
+> Many educational institutions are eligible, which means you get access to Copilot and other developer tools **at no cost during your studies**.
 
 ### Reviewer responsibilities
 
@@ -205,11 +204,126 @@ If a deployment fails, notify the team immediately.
 
 ---
 
+## 8. Exposing Your Backend Logic via API Gateway
+
+After merging your PR and completing the automatic deployment to the acceptance environment, your backend logic is deployed to AWS **but is not automatically reachable via HTTP**.
+
+### Important: What `npm run createLambda` does (and does not do)
+
+At this point, your backend logic and Lambda function **should already be created** using the standard Domits workflow.
+
+When you started by running the commando:
+
+```bash
+npm run createLambda
+```
+
+If not, first complete the steps described in [here](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/backend_setup.md#create-a-lambda-function):
+
+That document explains in detail how `npm run createLambda`:
+
+- Creates the required folders in `/backend/functions`, `/backend/events`, and `/backend/test`
+- Applies the Domits Lambda template
+- Creates the Lambda function in AWS
+- Creates a REST API in API Gateway linked to the Lambda
+
+---
+
+However:
+
+- **No API Gateway resources are created**
+- **No HTTP methods (GET/POST/etc.) are created**
+- **No usable endpoint exists yet**
+
+The frontend cannot call your backend logic until you manually create and deploy the API Gateway resources.
+
+---
+
+### Creating an API Gateway Resource and Method
+
+To expose your Lambda via HTTP:
+
+1. Open the **AWS Console**
+2. Navigate to **API Gateway**
+3. Search the REST API created for your Lambda
+4. In the left sidebar, go to **Resources**
+
+#### Step 1: Create a Resource
+
+- Click **Create Resource**
+- Enter a **Resource Name** (e.g. `bookings`, `properties`)
+- Save the resource
+
+#### Step 2: Create a Method
+
+- Select the newly created resource
+- Click **Create Method**
+- Choose the HTTP method you need:
+  - `GET`, `POST`, `PUT`, `DELETE`, etc.
+- Confirm the method
+
+#### Step 3: Configure the Method Integration
+
+- Set **Integration type** to `Lambda Function`
+- Enable **Lambda proxy integration**
+- Select your Lambda function by name or ARN this can be fount in lambda itself
+- Save the integration
+
+---
+
+### Enabling CORS (Required)
+
+1. Select the created **resource**
+2. Click **Enable CORS**
+3. Enable CORS for:
+   - Resource methods
+   - Gateway responses `DEFAULT_4XX` and `DEFAULT_5XX`
+4. In **Access-Control-Allow-Methods**, include:
+   - Your HTTP method(s)
+   - `OPTIONS`
+5. Apply changes
+
+---
+
+### Deploy the API
+
+After creating or updating API Gateway resources or methods, the changes are **not active** until the API is deployed.
+
+1. Click **Deploy API**
+2. In the **Stage** dropdown:
+   - Select an existing stage (e.g. `acceptance`), **or**
+   - Click **New stage** to create one
+3. If creating a new stage:
+   - Enter a clear stage name (e.g. `development`)
+   - Optionally add a short description
+4. Confirm deployment
+
+Use a clear and consistent stage name so it is obvious which environment the endpoint belongs to.
+
+> [!NOTE]  
+> Creating a new stage is useful for local development, testing, or isolated changes without impacting the acceptance environment.
+
+---
+
+### Verify the Endpoint
+
+Test using Postman.  
+Check CloudWatch logs if issues occur.
+
+---
+
+### Responsibility
+
+The developer is responsible for exposing and validating the endpoint.
+
+---
+
 ## Further Learning & Growth
 
 To understand the expected technical levels, responsibilities, and growth paths within Domits, refer to the [Programming Levels & Onboarding Guide](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/programming_levels.md)
 
 This document outlines:
+
 - Expected skills per level (Level 1–3)
 - Technical, cloud, and professional competencies
 - Recommended learning resources and roadmaps
