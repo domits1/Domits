@@ -1,5 +1,5 @@
 import Database from "database";
-import { UnifiedThread } from "database/models/UnifiedThread";
+import { UnifiedThread } from "../models/UnifiedThread.js";
 import { randomUUID } from "crypto";
 
 class ThreadRepository {
