@@ -34,7 +34,6 @@ function About() {
   const { language } = useContext(LanguageContext);
   const aboutContent = contentByLanguage[language]?.about;
 
-  // Safety guard
   if (!aboutContent) return null;
 
   const founderMembers = [
@@ -218,8 +217,7 @@ function About() {
             ))}
           </div>
         </div>
-
-        {/* Footer */}
+        
         <div className="about__footer">
           <p className="about__footer-text">{aboutContent.footerText.description}</p>
           <p className="about__footer-text">{aboutContent.footerText.description2}</p>

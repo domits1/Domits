@@ -6,12 +6,10 @@ $focus-ring:0 0 0 3px rgba(13,152,19,.25);
 
 $summary-max:1100px;
 $bg:#ffffff;
-$bg-subtle:#f8fafc;
-$border:#e5e7eb;
 $text:#111827;
 $text-muted:#6b7280;
 
-:focus-visible{outline:none;box-shadow:$focus-ring;}
+:focus-visible{ outline:none; box-shadow:$focus-ring; }
 
 .guest-booking-loader,
 .guest-booking-error{
@@ -20,7 +18,7 @@ $text-muted:#6b7280;
   color:$text-muted;
 }
 
-.guest-booking-error{color:#b91c1c;}
+.guest-booking-error{ color:#b91c1c; }
 
 .guest-booking-loader-inline{
   padding:8px 0 4px;
@@ -28,6 +26,20 @@ $text-muted:#6b7280;
   color:$text-muted;
 }
 
+/* ✅ Booking page uses dashboard shell — only override the grid to 1-column */
+.guest-booking-page-body {
+
+  /* Make sure the dashboard grid doesn't force 2 columns on booking page */
+  .guest-dashboard-content.guest-booking-dashboard-content{
+    grid-template-columns: 1fr;   /* ✅ one column so it behaves like a normal page */
+  }
+
+  .guest-booking-right-empty{
+    display:none; /* ✅ remove the empty right panel completely */
+  }
+}
+
+/* ---- Your booking styles (kept) ---- */
 .guest-booking-bookingContent{
   margin-top:8px;
 
@@ -38,14 +50,13 @@ $text-muted:#6b7280;
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(440px,1fr));
     justify-content:center;
-    justify-items:center;  
+    justify-items:center;
     gap:clamp(16px,2vw,24px);
 
     @media(max-width:900px){
       grid-template-columns:1fr;
       justify-items:stretch;
     }
-
   }
 
   .guest-card{
@@ -104,14 +115,14 @@ $text-muted:#6b7280;
         cursor:pointer;
         border-left:3px solid transparent;
 
-        + .guest-card-row{margin-top:10px;}
+        + .guest-card-row{ margin-top:10px; }
 
         &:hover{
           background:rgba(0,0,0,.03);
           border-left-color:var(--primary-color);
         }
 
-        &:active{transform:translateY(1px);}
+        &:active{ transform:translateY(1px); }
       }
 
       .guest-booking-row-inner{
@@ -132,7 +143,7 @@ $text-muted:#6b7280;
         }
       }
 
-      .guest-booking-row-main{flex:1;min-width:0;}
+      .guest-booking-row-main{ flex:1; min-width:0; }
 
       .row-title{
         font-weight:700;
@@ -150,6 +161,17 @@ $text-muted:#6b7280;
         white-space:nowrap;
         overflow:hidden;
         text-overflow:ellipsis;
+      }
+
+      .row-host{
+        margin-top:6px;
+        font-size:13px;
+        color:$text-muted;
+
+        .row-host-name{
+          color:$text;
+          font-weight:600;
+        }
       }
 
       .guest-booking-row-meta{
@@ -181,30 +203,33 @@ $text-muted:#6b7280;
     }
   }
 
-  .guest-card--past{
-    grid-column:1 / -1;
+  /* Past full-width only on wide screens */
+  @media(min-width:901px){
+    .guest-card--past{
+      grid-column:1 / -1;
+      justify-self:stretch;
+    }
   }
-  .guest-card--past .guest-card-body {
-    max-height: 360px;          
-    overflow-y: auto;           
-    scrollbar-gutter: stable;
+  @media(max-width:900px){
+    .guest-card--past{ grid-column:auto; }
+  }
 
-    &::-webkit-scrollbar {
-        width: 6px;
-    }
+  /* Keep scroll inside Past */
+  .guest-card--past .guest-card-body{
+    max-height:360px;
+    overflow-y:auto;
+    scrollbar-gutter:stable;
 
-    &::-webkit-scrollbar-track {
-        background: transparent;
+    &::-webkit-scrollbar{ width:6px; }
+    &::-webkit-scrollbar-track{ background:transparent; }
+    &::-webkit-scrollbar-thumb{
+      background:rgba(0,0,0,.25);
+      border-radius:999px;
     }
-
-    &::-webkit-scrollbar-thumb {
-        background: rgba(0,0,0,.25);
-        border-radius: 999px;
-    }
+  }
 }
-}
 
-.guest-card-body::-webkit-scrollbar{width:6px;}
+.guest-card-body::-webkit-scrollbar{ width:6px; }
 .guest-card-body::-webkit-scrollbar-thumb{
   background:rgba(0,0,0,.25);
   border-radius:999px;

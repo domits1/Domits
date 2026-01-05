@@ -1,7 +1,6 @@
-// GuestInfoRow.jsx
 import React from "react";
 import editIcon from "../../../images/icons/edit-05.png";
-import checkIcon from "../../../images/icons//checkPng.png";
+import checkIcon from "../../../images/icons/checkPng.png";
 
 const GuestInfoRow = ({
   label,
@@ -19,38 +18,23 @@ const GuestInfoRow = ({
   setVerificationCode,
 }) => {
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") onSave();
+    if (e.key === "Enter") onSave(field);
   };
 
-  const renderInput = () => {
-    if (!isEdit) {
-      return (
-        <span className="pi-value" title={value || "-"}>
-          {value || "-"}
-        </span>
-      );
-    }
+  const renderViewValue = () => (
+    <span className="pi-value" title={value || "-"}>
+      {value || "-"}
+    </span>
+  );
 
-    if (field === "email") {
-      if (!isVerifying) {
-        return (
-          <input
-            type="email"
-            className="pi-input"
-            value={tempValue ?? ""}
-            onChange={(e) => onTempChange(field, e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoFocus
-          />
-        );
-      }
-
+  const renderEmailInput = () => {
+    if (isVerifying) {
       return (
         <input
           type="text"
           className="pi-input"
           placeholder="Verification code"
-          value={verificationCode}
+          value={verificationCode ?? ""}
           onChange={(e) => setVerificationCode(e.target.value)}
           onKeyDown={handleKeyDown}
           autoFocus
@@ -60,7 +44,7 @@ const GuestInfoRow = ({
 
     return (
       <input
-        type={type}
+        type="email"
         className="pi-input"
         value={tempValue ?? ""}
         onChange={(e) => onTempChange(field, e.target.value)}
@@ -70,11 +54,27 @@ const GuestInfoRow = ({
     );
   };
 
+  const renderDefaultInput = () => (
+    <input
+      type={type}
+      className="pi-input"
+      value={tempValue ?? ""}
+      onChange={(e) => onTempChange(field, e.target.value)}
+      onKeyDown={handleKeyDown}
+      autoFocus
+    />
+  );
+
+  const renderEditInput = () => {
+    if (field === "email") return renderEmailInput();
+    return renderDefaultInput();
+  };
+
   return (
     <div className="pi-row">
       <div className="pi-left">
         <span className="pi-label">{label}</span>
-        {renderInput()}
+        {!isEdit ? renderViewValue() : renderEditInput()}
       </div>
 
       <div className="pi-right">
@@ -92,7 +92,7 @@ const GuestInfoRow = ({
             <button
               type="button"
               className="pi-action save"
-              onClick={onSave}
+              onClick={() => onSave(field)}
               aria-label="Save"
             >
               <img src={checkIcon} alt="" />

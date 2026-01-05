@@ -1,13 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Auth } from "aws-amplify";
-
 import { confirmEmailChange } from "./emailSettings";
 import { getGuestBookings } from "./services/bookingAPI";
-
 import GuestInfoRow from "./components/GuestInfoRow";
 import GuestFamilyRow from "./components/GuestFamilyRow";
-
 import {
   placeholderImage,
   buildListingDetailsUrl,
@@ -23,22 +20,8 @@ import {
 } from "./utils/guestDashboardUtils";
 
 const GuestDashboard = () => {
-  const [user, setUser] = useState({
-    email: "",
-    name: "",
-    address: "",
-    phone: "",
-    family: "",
-  });
-
-  const [temp, setTemp] = useState({
-    email: "",
-    name: "",
-    address: "",
-    phone: "",
-    family: "",
-  });
-
+  const [user, setUser] = useState({ email: "", name: "", address: "", phone: "", family: "" });
+  const [temp, setTemp] = useState({ email: "", name: "", address: "", phone: "", family: "" });
   const [editing, setEditing] = useState({
     email: false,
     name: false,
@@ -54,10 +37,8 @@ const GuestDashboard = () => {
 
   const [guestId, setGuestId] = useState(null);
   const [currentBooking, setCurrentBooking] = useState(null);
-  const [currentBookingImage, setCurrentBookingImage] =
-    useState(placeholderImage);
-  const [currentBookingTitle, setCurrentBookingTitle] =
-    useState("Current booking");
+  const [currentBookingImage, setCurrentBookingImage] = useState(placeholderImage);
+  const [currentBookingTitle, setCurrentBookingTitle] = useState("Current booking");
   const [currentBookingCity, setCurrentBookingCity] = useState("");
   const [hostName, setHostName] = useState("—");
   const [bookingLoading, setBookingLoading] = useState(true);
@@ -67,37 +48,21 @@ const GuestDashboard = () => {
     setEditing((prev) => ({ ...prev, [field]: true }));
     setIsVerifying(false);
     setAskPhoneVerify(false);
-
-    setTemp((prev) => ({
-      ...prev,
-      [field]: user[field] ?? "",
-    }));
-
-    if (field === "family") {
-      setFamilyCounts(parseFamilyString(user.family));
-    }
+    setTemp((prev) => ({ ...prev, [field]: user[field] ?? "" }));
+    if (field === "family") setFamilyCounts(parseFamilyString(user.family));
   };
 
   const cancelEdit = (field) => {
     setEditing((prev) => ({ ...prev, [field]: false }));
-
     if (field === "email") {
       setIsVerifying(false);
       setVerificationCode("");
     }
-
-    if (field === "phone") {
-      setAskPhoneVerify(false);
-    }
-
-    if (field === "family") {
-      setFamilyCounts(parseFamilyString(user.family));
-    }
+    if (field === "phone") setAskPhoneVerify(false);
+    if (field === "family") setFamilyCounts(parseFamilyString(user.family));
   };
 
-  const onTempChange = (field, value) => {
-    setTemp((prev) => ({ ...prev, [field]: value }));
-  };
+  const onTempChange = (field, value) => setTemp((prev) => ({ ...prev, [field]: value }));
 
   const saveEmail = async () => {
     try {
@@ -123,31 +88,23 @@ const GuestDashboard = () => {
 
       const resp = await fetch(
         "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-CustomerIAM-Production-Update-UserEmail",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(params),
-        }
+        { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
       );
 
-      const json = await resp.json();
+      const json = await resp.json().catch(() => ({}));
 
       if (resp.ok) {
-        if (
-          json.message ===
-          "Email update successful, please verify your new email."
-        ) {
+        if (json.message === "Email update successful, please verify your new email.") {
           setIsVerifying(true);
         } else if (json.message === "This email address is already in use.") {
           alert(json.message);
         } else {
-          console.error("Unexpected:", json.message);
+          alert("Email update response was unexpected. Please try again.");
         }
       } else {
         alert("Failed to update email. Please try again later.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("An error occurred while updating the email.");
     }
   };
@@ -155,18 +112,14 @@ const GuestDashboard = () => {
   const saveName = async () => {
     try {
       const userInfo = await Auth.currentAuthenticatedUser();
-      const params = { userId: userInfo.username, newName: temp.name.trim() };
+      const params = { userId: userInfo.username, newName: (temp.name || "").trim() };
 
       const resp = await fetch(
         "https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-UserName",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(params),
-        }
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
       );
 
-      const json = await resp.json();
+      const json = await resp.json().catch(() => ({}));
 
       if (json.statusCode === 200) {
         setUser((prev) => ({ ...prev, name: temp.name }));
@@ -174,8 +127,7 @@ const GuestDashboard = () => {
       } else {
         alert("Could not update name.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("An error occurred while updating the name.");
     }
   };
@@ -184,9 +136,7 @@ const GuestDashboard = () => {
     try {
       const authUser = await Auth.currentAuthenticatedUser();
       const newAddress = (temp.address || "").trim();
-      const res = await Auth.updateUserAttributes(authUser, {
-        address: newAddress,
-      });
+      const res = await Auth.updateUserAttributes(authUser, { address: newAddress });
 
       if (res === "SUCCESS") {
         setUser((prev) => ({ ...prev, address: newAddress }));
@@ -194,70 +144,47 @@ const GuestDashboard = () => {
       } else {
         alert("Could not update address.");
       }
-    } catch (e) {
-      console.error("Update address error:", e);
-      alert(
-        "Failed to update address. Make sure 'address' is enabled & writable in Cognito."
-      );
+    } catch {
+      alert("Failed to update address. Make sure 'address' is enabled & writable in Cognito.");
     }
   };
 
   const savePhone = async () => {
     try {
       const newPhone = (temp.phone || "").replace(/\s/g, "");
-
       if (!isValidPhoneE164(newPhone)) {
         alert("Phone must be in international format, e.g., +31612345678");
         return;
       }
 
       const authUser = await Auth.currentAuthenticatedUser();
-      const res = await Auth.updateUserAttributes(authUser, {
-        phone_number: newPhone,
-      });
+      const res = await Auth.updateUserAttributes(authUser, { phone_number: newPhone });
 
       if (res === "SUCCESS") {
         setUser((prev) => ({ ...prev, phone: newPhone }));
         setAskPhoneVerify(true);
-
         try {
           await Auth.verifyCurrentUserAttribute("phone_number");
-        } catch {
-          // ignore verify error
-        }
-
+        } catch {}
         cancelEdit("phone");
       } else {
         alert("Could not update phone number.");
       }
-    } catch (e) {
-      console.error("Update phone error:", e);
-      alert(
-        "Failed to update phone. Ensure 'phone_number' is enabled & writable in Cognito."
-      );
+    } catch {
+      alert("Failed to update phone. Ensure 'phone_number' is enabled & writable in Cognito.");
     }
   };
 
   const saveFamily = async () => {
     try {
       const payload = formatFamilyLabel(familyCounts);
-
       try {
         const authUser = await Auth.currentAuthenticatedUser();
-        await Auth.updateUserAttributes(authUser, {
-          "custom:family": payload,
-        });
-      } catch (e) {
-        console.warn(
-          "custom:family not writable/defined; keeping local only.",
-          e
-        );
-      }
-
+        await Auth.updateUserAttributes(authUser, { "custom:family": payload });
+      } catch {}
       setUser((prev) => ({ ...prev, family: payload }));
       cancelEdit("family");
-    } catch (e) {
-      console.error("saveFamily error:", e);
+    } catch {
       alert("Couldn't save family details.");
     }
   };
@@ -278,122 +205,82 @@ const GuestDashboard = () => {
 
       let normalizedBookings = [];
       if (Array.isArray(bookingData)) normalizedBookings = bookingData;
-      else if (Array.isArray(bookingData?.data))
-        normalizedBookings = bookingData.data;
-      else if (Array.isArray(bookingData?.response))
-        normalizedBookings = bookingData.response;
+      else if (Array.isArray(bookingData?.data)) normalizedBookings = bookingData.data;
+      else if (Array.isArray(bookingData?.response)) normalizedBookings = bookingData.response;
       else if (typeof bookingData?.body === "string") {
         try {
           const innerParsed = JSON.parse(bookingData.body);
           if (Array.isArray(innerParsed)) normalizedBookings = innerParsed;
-          else if (Array.isArray(innerParsed?.response))
-            normalizedBookings = innerParsed.response;
-        } catch {
-          // ignore parse error
-        }
+          else if (Array.isArray(innerParsed?.response)) normalizedBookings = innerParsed.response;
+        } catch {}
       }
 
       const paidBookings = normalizedBookings.filter(
-        (b) =>
-          String(b?.status ?? b?.Status ?? "").toLowerCase() === "paid"
+        (b) => String(b?.status ?? b?.Status ?? "").toLowerCase() === "paid"
       );
 
-      if (!paidBookings.length) {
-        setBookingLoading(false);
-        return;
-      }
+      if (!paidBookings.length) return;
 
-      const { currentBookings, upcomingBookings } =
-        splitBookingsByTime(paidBookings);
-
-      const selectedBooking =
-        currentBookings[0] || upcomingBookings[0] || paidBookings[0];
-
-      if (!selectedBooking) {
-        setBookingLoading(false);
-        return;
-      }
+      const { currentBookings, upcomingBookings } = splitBookingsByTime(paidBookings);
+      const selectedBooking = currentBookings[0] || upcomingBookings[0] || paidBookings[0];
+      if (!selectedBooking) return;
 
       setCurrentBooking(selectedBooking);
 
       const bookingCity =
-        selectedBooking?.city ||
-        selectedBooking?.location?.city ||
-        "Unknown city";
+        selectedBooking?.city || selectedBooking?.location?.city || "Unknown city";
       setCurrentBookingCity(bookingCity);
 
       const propertyId = getPropertyId(selectedBooking);
-      if (propertyId) {
-        try {
-          const resp = await fetch(buildListingDetailsUrl(propertyId));
-          if (resp.ok) {
-            const data = await resp.json().catch(() => ({}));
-            const property = data.property || {};
-            const images = Array.isArray(data.images) ? data.images : [];
-            const location = data.location || {};
+      if (!propertyId) return;
 
-            const hostObj =
-              data.host ||
-              data.hostInfo ||
-              property.host ||
-              property.hostInfo ||
-              null;
+      const resp = await fetch(buildListingDetailsUrl(propertyId));
+      if (!resp.ok) return;
 
-            const hostNameFromHost =
-              hostObj?.name ||
-              hostObj?.fullName ||
-              (hostObj?.firstName && hostObj?.lastName
-                ? `${hostObj.firstName} ${hostObj.lastName}`
-                : null);
+      const data = await resp.json().catch(() => ({}));
+      const property = data.property || {};
+      const images = Array.isArray(data.images) ? data.images : [];
+      const location = data.location || {};
+      const hostObj = data.host || data.hostInfo || property.host || property.hostInfo || null;
 
-            const hostNameFromProperty =
-              property.username && property.familyname
-                ? `${String(property.username).trim()} ${String(
-                    property.familyname
-                  ).trim()}`
-                : (property.username && String(property.username).trim()) ||
-                  (property.familyname &&
-                    String(property.familyname).trim()) ||
-                  null;
+      const hostNameFromHost =
+        hostObj?.name ||
+        hostObj?.fullName ||
+        (hostObj?.firstName && hostObj?.lastName ? `${hostObj.firstName} ${hostObj.lastName}` : null);
 
-            const resolvedHostName =
-              hostNameFromHost ||
-              hostNameFromProperty ||
-              data.hostName ||
-              property.hostName ||
-              selectedBooking?.hostName ||
-              selectedBooking?.host_name ||
-              selectedBooking?.host?.name ||
-              selectedBooking?.host?.fullName ||
-              property.hostId || // fallback
-              "—";
+      const hostNameFromProperty =
+        property.username && property.familyname
+          ? `${String(property.username).trim()} ${String(property.familyname).trim()}`
+          : (property.username && String(property.username).trim()) ||
+            (property.familyname && String(property.familyname).trim()) ||
+            null;
 
-            setHostName(resolvedHostName);
+      const resolvedHostName =
+        hostNameFromHost ||
+        hostNameFromProperty ||
+        data.hostName ||
+        property.hostName ||
+        selectedBooking?.hostName ||
+        selectedBooking?.host_name ||
+        selectedBooking?.host?.name ||
+        selectedBooking?.host?.fullName ||
+        property.hostId ||
+        "—";
 
-            const title =
-              property.title ||
-              property.name ||
-              `Property #${property.id || propertyId}`;
-            setCurrentBookingTitle(title);
+      setHostName(resolvedHostName);
 
-            const firstImageKey = images[0]?.key || null;
-            setCurrentBookingImage(normalizeImageUrl(firstImageKey));
+      const title = property.title || property.name || `Property #${property.id || propertyId}`;
+      setCurrentBookingTitle(title);
 
-            const subtitle = property.subtitle || "";
-            const cityFromLocation = location.city || null;
-            const cityFromSubtitle = subtitle
-              ? subtitle.split(",")[0].trim()
-              : "";
-            const city = cityFromLocation || cityFromSubtitle || "";
+      const firstImageKey = images[0]?.key || null;
+      setCurrentBookingImage(normalizeImageUrl(firstImageKey));
 
-            setCurrentBookingCity(city || subtitle || bookingCity);
-          }
-        } catch (e) {
-          console.warn("Could not load listing details for dashboard:", e);
-        }
-      }
-    } catch (err) {
-      console.error(err);
+      const subtitle = property.subtitle || "";
+      const cityFromLocation = location.city || null;
+      const cityFromSubtitle = subtitle ? subtitle.split(",")[0].trim() : "";
+      const city = cityFromLocation || cityFromSubtitle || "";
+      setCurrentBookingCity(city || subtitle || bookingCity);
+    } catch {
       setBookingError("Could not load your current booking.");
     } finally {
       setBookingLoading(false);
@@ -405,7 +292,6 @@ const GuestDashboard = () => {
       try {
         const authUser = await Auth.currentAuthenticatedUser();
         const attrs = authUser.attributes || {};
-
         setGuestId(attrs.sub || null);
 
         let address = attrs.address || "";
@@ -414,15 +300,12 @@ const GuestDashboard = () => {
           address =
             parsed.formatted ||
             parsed.street_address ||
-            `${parsed.street_address || ""} ${parsed.postal_code || ""} ${
-              parsed.locality || ""
-            } ${parsed.country || ""}`.trim();
-        } catch {
-          // ignore parse error
-        }
+            `${parsed.street_address || ""} ${parsed.postal_code || ""} ${parsed.locality || ""} ${
+              parsed.country || ""
+            }`.trim();
+        } catch {}
 
-        const familyAttr =
-          attrs["custom:family"] || attrs["family"] || "2 adults - 2 kids";
+        const familyAttr = attrs["custom:family"] || attrs["family"] || "2 adults - 2 kids";
         const parsedFamily = parseFamilyString(familyAttr);
 
         setUser({
@@ -434,8 +317,7 @@ const GuestDashboard = () => {
         });
 
         setFamilyCounts(parsedFamily);
-      } catch (e) {
-        console.error("Error fetching user data:", e);
+      } catch {
         setBookingLoading(false);
       }
     })();
@@ -445,24 +327,6 @@ const GuestDashboard = () => {
     if (guestId) fetchCurrentBooking();
   }, [guestId, fetchCurrentBooking]);
 
-  // Test API useEffect (optional – you can remove in production)
-  useEffect(() => {
-    async function testApi() {
-      try {
-        const resp = await fetch(
-          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails?property=9882a79e-3420-42f3-ac3a-b37445264c89"
-        );
-
-        const data = await resp.json();
-        console.log("LISTING DETAILS API RESPONSE:", data);
-      } catch (e) {
-        console.error("API TEST ERROR:", e);
-      }
-    }
-
-    testApi();
-  }, []);
-
   return (
     <div className="guest-dashboard-shell">
       <div className="guest-dashboard-page-body">
@@ -470,7 +334,6 @@ const GuestDashboard = () => {
 
         <div className="guest-dashboard-dashboards">
           <div className="guest-dashboard-content">
-            {/* LEFT SIDE: current booking + messages */}
             <div className="guest-dashboard-accomodation-side">
               <article className="booking-details">
                 <div className="booking-details__media">
@@ -486,15 +349,9 @@ const GuestDashboard = () => {
                 </div>
 
                 <div className="booking-details__content">
-                  <h4 className="booking-details__title">
-                    {currentBookingTitle}
-                  </h4>
+                  <h4 className="booking-details__title">{currentBookingTitle}</h4>
 
-                  {bookingLoading && (
-                    <div className="booking-details__host">
-                      Loading booking…
-                    </div>
-                  )}
+                  {bookingLoading && <div className="booking-details__host">Loading booking…</div>}
 
                   {!bookingLoading && !currentBooking && !bookingError && (
                     <div className="booking-details__host">
@@ -503,33 +360,23 @@ const GuestDashboard = () => {
                   )}
 
                   {bookingError && (
-                    <div className="booking-details__host error">
-                      {bookingError}
-                    </div>
+                    <div className="booking-details__host error">{bookingError}</div>
                   )}
 
                   {currentBooking && !bookingLoading && (
                     <>
-                      <div className="booking-details__host">
-                        Host: {hostName || "—"}
-                      </div>
-                      <div className="booking-details__host">
-                        {currentBookingCity}
-                      </div>
+                      <div className="booking-details__host">Host: {hostName || "—"}</div>
+                      <div className="booking-details__host">{currentBookingCity}</div>
 
                       <div className="booking-details__pi">
                         <div className="booking-details__row">
-                          <div className="booking-details__label">
-                            Check-in
-                          </div>
+                          <div className="booking-details__label">Check-in</div>
                           <div className="booking-details__value">
                             {formatDate(getArrivalDate(currentBooking))}
                           </div>
                         </div>
                         <div className="booking-details__row">
-                          <div className="booking-details__label">
-                            Check-out
-                          </div>
+                          <div className="booking-details__label">Check-out</div>
                           <div className="booking-details__value">
                             {formatDate(getDepartureDate(currentBooking))}
                           </div>
@@ -537,11 +384,7 @@ const GuestDashboard = () => {
                         <div className="booking-details__row">
                           <div className="booking-details__label">Status</div>
                           <div className="booking-details__value">
-                            {String(
-                              currentBooking?.status ??
-                                currentBooking?.Status ??
-                                ""
-                            ) || "—"}
+                            {String(currentBooking?.status ?? currentBooking?.Status ?? "") || "—"}
                           </div>
                         </div>
                       </div>
@@ -562,19 +405,13 @@ const GuestDashboard = () => {
               <section className="messages-section">
                 <div className="messages-section__header">
                   <span className="messages-section__title">Messages</span>
-                  <span
-                    className="messages-section__badge"
-                    aria-label="9+ unread"
-                  >
+                  <span className="messages-section__badge" aria-label="9+ unread">
                     9+
                   </span>
                 </div>
                 <a className="messages-section__cta" href="#">
                   <span>Go to message centre</span>
-                  <span
-                    className="messages-section__icon"
-                    aria-hidden="true"
-                  >
+                  <span className="messages-section__icon" aria-hidden="true">
                     <svg
                       width="20"
                       height="20"
@@ -592,7 +429,6 @@ const GuestDashboard = () => {
               </section>
             </div>
 
-            {/* RIGHT SIDE: personal info */}
             <aside className="guest-dashboard-personalInfoContent">
               <div className="pi-card">
                 <div className="pi-header">
@@ -668,8 +504,7 @@ const GuestDashboard = () => {
 
                 {askPhoneVerify && (
                   <p className="pi-hint">
-                    We sent a code to your phone. If required, finish
-                    verification in your profile.
+                    We sent a code to your phone. If required, finish verification in your profile.
                   </p>
                 )}
               </div>
