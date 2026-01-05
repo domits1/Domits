@@ -101,14 +101,14 @@ Steps to resolve them:
   =======
   >>>>>>>
   ```
-1. Decide which changes to keep:
+3. Decide which changes to keep:
    - Your changes
    - Incoming changes
    - Or a combination of both
-2. Remove **all** conflict markers
-3. Run the application and relevant tests locally
-4. Commit the resolved changes
-5. Push the updated branch
+4. Remove **all** conflict markers
+5. Run the application and relevant tests locally
+6. Commit the resolved changes
+7. Push the updated branch
 
 Never commit files that still contain conflict markers (merge conflicts).
 
