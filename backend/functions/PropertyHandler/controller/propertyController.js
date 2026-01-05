@@ -324,7 +324,8 @@ export class PropertyController {
             .addLocation(body.propertyLocation)
             .addPricing(body.propertyPricing)
             .addImages(body.propertyImages)
-            .addPropertyType(body.propertyType);
+            .addPropertyType(body.propertyType)
+            .addPropertyTestStatus(body.propertyTestStatus);
 
         builder = await builder.addAmenities(body.propertyAmenities);
         builder = await builder.addGeneralDetails(body.propertyGeneralDetails);

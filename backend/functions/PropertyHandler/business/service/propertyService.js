@@ -14,6 +14,7 @@ import { PropertyTechnicalDetailRepository } from "../../data/repository/propert
 import { PropertyTypeRepository } from "../../data/repository/propertyTypeRepository.js";
 import { PropertyImageRepository } from "../../data/repository/propertyImageRepository.js";
 import { BookingRepository } from "../../data/repository/bookingRepository.js";
+import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatusRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
@@ -36,10 +37,12 @@ export class PropertyService {
     this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
     this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
+    this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
   }
 
   async create(property) {
     await this.createBasePropertyInfo(property.property);
+
     await Promise.all([
       this.createAmenities(property.propertyAmenities),
       this.createAvailability(property.propertyAvailabilities),
@@ -51,6 +54,7 @@ export class PropertyService {
       this.createPropertyType(property.propertyType),
       this.createImages(property.propertyImages),
       this.createAvailabilityRestrictions(property.propertyAvailabilityRestrictions),
+      this.createPropertyTestStatus(property.propertyTestStatus),
     ]);
     if (property.propertyType.property_type === "Boat" || property.propertyType.property_type === "Camper") {
       await this.createTechnicalDetails(property.propertyTechnicalDetails);
@@ -159,12 +163,13 @@ export class PropertyService {
   }
 
   async getCardPropertyAttributes(propertyId) {
-    const [basePropertyInfo, generalDetails, pricing, images, location] = await Promise.all([
+    const [basePropertyInfo, generalDetails, pricing, images, location, testStatus] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getGeneralDetails(propertyId),
       this.getPricing(propertyId),
       this.getImages(propertyId),
       this.getLocation(propertyId),
+      this.getPropertyTestStatus(propertyId),
     ]);
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
@@ -175,6 +180,7 @@ export class PropertyService {
       propertyPricing: pricing,
       propertyImages: images,
       propertyLocation: location,
+      propertyTestStatus: testStatus,
     };
   }
 
@@ -191,6 +197,7 @@ export class PropertyService {
       pricing,
       rules,
       propertyType,
+      propertyTestStatus,
     ] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getAmenities(propertyId),
@@ -203,6 +210,7 @@ export class PropertyService {
       this.getPricing(propertyId),
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
+      this.getPropertyTestStatus(propertyId),
     ]);
     const technicalDetails =
       propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
@@ -221,6 +229,7 @@ export class PropertyService {
       rules: rules,
       propertyType: propertyType,
       technicalDetails: technicalDetails,
+      propertyTestStatus: propertyTestStatus,
     };
   }
 
@@ -237,6 +246,7 @@ export class PropertyService {
       pricing,
       rules,
       propertyType,
+      propertyTestStatus,
     ] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getAmenities(propertyId),
@@ -249,6 +259,7 @@ export class PropertyService {
       this.getPricing(propertyId),
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
+      this.getPropertyTestStatus(propertyId),
     ]);
     const technicalDetails =
       propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
@@ -267,6 +278,7 @@ export class PropertyService {
       rules: rules,
       propertyType: propertyType,
       technicalDetails: technicalDetails,
+      propertyTestStatus: propertyTestStatus,
     };
   }
 
@@ -424,5 +436,13 @@ export class PropertyService {
 
   async getPropertyType(property) {
     return await this.propertyTypeRepository.getPropertyTypeByPropertyId(property);
+  }
+
+  async getPropertyTestStatus(property) {
+    return await this.propertyTestStatusRepository.getPropertyTestStatusByPropertyId(property);
+  }
+
+  async createPropertyTestStatus(testStatus) {
+    return await this.propertyTestStatusRepository.create(testStatus);
   }
 }
