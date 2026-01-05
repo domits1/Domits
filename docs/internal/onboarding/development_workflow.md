@@ -19,6 +19,41 @@ This workflow is mandatory. Skipping steps will result in blocked PRs, failed re
 
 ---
 
+## Table of Contents
+
+- [Development Workflow: From Finished Work to Acceptance Deployment](#development-workflow-from-finished-work-to-acceptance-deployment)
+  - [Table of Contents](#table-of-contents)
+  - [1. Sync Your Branch With `acceptance`](#1-sync-your-branch-with-acceptance)
+  - [Resolving Merge Conflicts](#resolving-merge-conflicts)
+    - [How to resolve merge conflicts](#how-to-resolve-merge-conflicts)
+    - [Time expectations](#time-expectations)
+    - [When and how to escalate](#when-and-how-to-escalate)
+  - [2. Verify Code Conventions](#2-verify-code-conventions)
+  - [3. Create a Pull Request](#3-create-a-pull-request)
+    - [Creating a PR via GitHub](#creating-a-pr-via-github)
+    - [PR Title](#pr-title)
+    - [PR Template](#pr-template)
+  - [4. Code Review Process](#4-code-review-process)
+    - [Required approvals](#required-approvals)
+    - [Reviewer responsibilities](#reviewer-responsibilities)
+    - [Handling review comments](#handling-review-comments)
+  - [5. CI Checks Must Pass](#5-ci-checks-must-pass)
+  - [6. Merging to `acceptance`](#6-merging-to-acceptance)
+  - [7. Automatic Deployment to Acceptance](#7-automatic-deployment-to-acceptance)
+  - [8. Exposing Your Backend Logic via API Gateway](#8-exposing-your-backend-logic-via-api-gateway)
+    - [Important: What `npm run createLambda` does (and does not do)](#important-what-npm-run-createlambda-does-and-does-not-do)
+    - [Creating an API Gateway Resource and Method](#creating-an-api-gateway-resource-and-method)
+      - [Step 1: Create a Resource](#step-1-create-a-resource)
+      - [Step 2: Create a Method](#step-2-create-a-method)
+      - [Step 3: Configure the Method Integration](#step-3-configure-the-method-integration)
+    - [Enabling CORS (Required)](#enabling-cors-required)
+    - [Deploy the API](#deploy-the-api)
+    - [Verify the Endpoint](#verify-the-endpoint)
+    - [Responsibility](#responsibility)
+  - [Further Learning \& Growth](#further-learning--growth)
+
+---
+
 ## 1. Sync Your Branch With `acceptance`
 
 Before creating a PR, your branch must be up-to-date with `acceptance`.
