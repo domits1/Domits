@@ -462,4 +462,4 @@ This document outlines:
 This guide is especially useful for interns and junior developers to understand **what is expected now** and **what to grow towards next**.
 
 > [!NOTE]  
-> This document is updated frequently. If information appears outdated, always refer to the Domits GitHub Wiki as the source of truth.
+> This document is updated frequently. If information appears outdated, always refer to the [Domits GitHub Wiki](https://github.com/domits1/Domits/wiki) as the source of truth.
