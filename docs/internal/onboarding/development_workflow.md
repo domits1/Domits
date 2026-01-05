@@ -97,9 +97,9 @@ Steps to resolve them:
 1. Open the files listed by Git
 2. Locate conflict markers:
   ```javascript
-  <<<<<<<
+  <<<<<<< HEAD
   =======
-  >>>>>>>
+  >>>>>>> origin/acceptance
   ```
 3. Decide which changes to keep:
    - Your changes
@@ -374,7 +374,7 @@ To expose your Lambda via HTTP:
 
 1. Open the [AWS Console](https://eu-north-1.console.aws.amazon.com/console/home?region=eu-north-1)
 2. Navigate to [API Gateway](https://eu-north-1.console.aws.amazon.com/apigateway/main/apis?region=eu-north-1)
-3. Search the REST API created for your Lambda
+3. Search for the REST API created for your Lambda
 4. In the left sidebar, go to **Resources**
 
 #### Step 1: Create a Resource
