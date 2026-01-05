@@ -97,9 +97,9 @@ Steps to resolve them:
 1. Open the files listed by Git
 2. Locate conflict markers:
   ```javascript
-  <<<<<<<
+  <<<<<<< HEAD
   =======
-  >>>>>>>
+  >>>>>>> origin/acceptance
   ```
 1. Decide which changes to keep:
    - Your changes
