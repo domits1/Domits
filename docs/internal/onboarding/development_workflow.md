@@ -24,7 +24,7 @@ This workflow is mandatory. Skipping steps will result in blocked PRs, failed re
 - [Development Workflow: From Finished Work to Acceptance Deployment](#development-workflow-from-finished-work-to-acceptance-deployment)
   - [Table of Contents](#table-of-contents)
   - [1. Sync Your Branch With `acceptance`](#1-sync-your-branch-with-acceptance)
-  - [Resolving Merge Conflicts](#resolving-merge-conflicts)
+  - [1.1 Resolving Merge Conflicts](#11-resolving-merge-conflicts)
     - [How to resolve merge conflicts](#how-to-resolve-merge-conflicts)
     - [Time expectations](#time-expectations)
     - [When and how to escalate](#when-and-how-to-escalate)
@@ -78,7 +78,7 @@ If merge conflicts appear, resolve them in your branch, commit the fixes, and pu
 > Team members are encouraged to regularly pull the latest `acceptance` branch and run the application locally.
 > This helps detect integration issues, or broken functionality early, before problems reach production or block others.
 
-## Resolving Merge Conflicts
+## 1.1 Resolving Merge Conflicts
 
 Merge conflicts can occur when changes in your branch overlap with changes already merged into `acceptance`.
 
