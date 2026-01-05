@@ -43,6 +43,100 @@ If merge conflicts appear, resolve them in your branch, commit the fixes, and pu
 > Team members are encouraged to regularly pull the latest `acceptance` branch and run the application locally.
 > This helps detect integration issues, or broken functionality early, before problems reach production or block others.
 
+## Resolving Merge Conflicts
+
+Merge conflicts can occur when changes in your branch overlap with changes already merged into `acceptance`.
+
+### How to resolve merge conflicts
+
+When running:
+
+```bash
+git pull origin acceptance
+```
+
+Git may report merge conflicts.
+
+Steps to resolve them:
+
+1. Open the files listed by Git
+2. Locate conflict markers:
+  ```javascript
+  <<<<<<<
+  =======
+  >>>>>>>
+  ```
+1. Decide which changes to keep:
+   - Your changes
+   - Incoming changes
+   - Or a combination of both
+2. Remove **all** conflict markers
+3. Run the application and relevant tests locally
+4. Commit the resolved changes
+5. Push the updated branch
+
+Never commit files that still contain conflict markers (merge conflicts).
+
+---
+
+### Time expectations
+
+Merge conflicts do **not** have a fixed time limit.
+
+How long resolving conflicts takes depends on:
+- How long your branch diverged from `acceptance`
+- The size of your PR (max 300–500 lines is the guideline, not a guarantee)
+- The type of changes (formatting vs. business logic)
+- Your familiarity with the affected code
+
+**Guideline (not a hard rule):**
+- Small, recent conflicts are usually resolved quickly
+- Larger or long-lived branches may require more time
+
+If resolving conflicts starts to feel risky, unclear, or frustrating, **do not brute-force it**.
+
+Instead:
+- Ask for help early
+- Communication is always cheaper than guessing
+
+You can request help via:
+- **Discord** → Domits channel: `#4engineering-security`
+- **In person** if you are working from the office
+
+Being stuck in silence is worse than asking for help.  
+Merge conflicts are a team problem, not a personal failure.
+
+> [!NOTE]
+> Escalation is expected and encouraged when safety or clarity is at risk.
+> Asking for help early is a sign of professionalism, not lack of skill.
+
+
+---
+
+### When and how to escalate
+
+Escalation is expected **when clarity or safety is at risk**, not after everything breaks.
+
+Escalate when:
+- The conflict involves critical or unclear business logic
+- You do not understand the intent behind the conflicting code
+- Many files are affected and the solution feels unsafe or speculative
+
+How to escalate effectively:
+- Push your branch (even if conflicts are unresolved)  
+  This allows others to inspect the exact conflict state locally.
+- Share:
+  - The branch name
+  - The files with conflicts
+  - What you already tried and where you are stuck
+
+> [!NOTE]
+> Prefer:
+> - A **short Discord call** to walk through the conflict together, or
+> - **In-person help** if you are in the office
+> 
+> This allows another developer to reproduce the conflict quickly and help without guesswork.
+
 ---
 
 ## 2. Verify Code Conventions
@@ -225,7 +319,7 @@ That document explains in detail how `npm run createLambda`:
 - Creates the required folders in `/backend/functions`, `/backend/events`, and `/backend/test`
 - Applies the Domits Lambda template
 - Creates the Lambda function in AWS
-- Creates a REST API in API Gateway linked to the Lambda
+- Creates a REST API in [API Gateway](https://eu-north-1.console.aws.amazon.com/apigateway/main/apis?region=eu-north-1) linked to the Lambda
 
 ---
 
@@ -243,8 +337,8 @@ The frontend cannot call your backend logic until you manually create and deploy
 
 To expose your Lambda via HTTP:
 
-1. Open the **AWS Console**
-2. Navigate to **API Gateway**
+1. Open the [AWS Console](https://eu-north-1.console.aws.amazon.com/console/home?region=eu-north-1)
+2. Navigate to [API Gateway](https://eu-north-1.console.aws.amazon.com/apigateway/main/apis?region=eu-north-1)
 3. Search the REST API created for your Lambda
 4. In the left sidebar, go to **Resources**
 
@@ -308,7 +402,7 @@ Use a clear and consistent stage name so it is obvious which environment the end
 ### Verify the Endpoint
 
 Test using Postman.  
-Check CloudWatch logs if issues occur.
+Check [CloudWatch](https://eu-north-1.console.aws.amazon.com/cloudwatch/home?region=eu-north-1#) logs if issues occur.
 
 ---
 
