@@ -19,7 +19,6 @@ const buildListingDetailsUrl = (propertyId) =>
 const normalizeImageUrl = (maybeKeyOrUrl) => {
   if (!maybeKeyOrUrl) return PLACEHOLDER_IMAGE;
   const val = String(maybeKeyOrUrl);
-
   if (val.startsWith("http")) return val;
   return `${S3_URL}${val.replace(/^\/+/, "")}`;
 };
@@ -69,11 +68,8 @@ const splitBookingsByTime = (bookingList) => {
     const isOngoing = arrival <= today && departure >= today;
     const startsThisWeek = arrival > today && arrival <= weekAhead;
 
-    if (isOngoing || startsThisWeek) {
-      currentBookings.push(bookingItem);
-    } else {
-      upcomingBookings.push(bookingItem);
-    }
+    if (isOngoing || startsThisWeek) currentBookings.push(bookingItem);
+    else upcomingBookings.push(bookingItem);
   });
 
   return { currentBookings, upcomingBookings, pastBookings };
@@ -113,11 +109,8 @@ const renderBookingRow = (
     bookingItem?.location?.city ||
     "Unknown city";
 
-  const bookingStatus = String(
-    bookingItem?.status || bookingItem?.Status || ""
-  );
+  const bookingStatus = String(bookingItem?.status || bookingItem?.Status || "");
 
-  // Host name: from propertyMap first, then fall back to booking object if needed
   const hostName =
     propertyInfo?.hostName ||
     bookingItem?.hostName ||
@@ -128,17 +121,13 @@ const renderBookingRow = (
 
   return (
     <div
-      key={
-        bookingItem?.id || bookingItem?.ID || `${index}-${displayTitle}`
-      }
+      key={bookingItem?.id || bookingItem?.ID || `${index}-${displayTitle}`}
       className="guest-card-row"
       role="button"
       tabIndex={0}
       onClick={() => handleBookingClick(bookingItem)}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          handleBookingClick(bookingItem);
-        }
+        if (event.key === "Enter" || event.key === " ") handleBookingClick(bookingItem);
       }}
     >
       <div className="guest-booking-row-inner">
@@ -151,11 +140,11 @@ const renderBookingRow = (
             }}
           />
         </div>
+
         <div className="guest-booking-row-main">
           <div className="row-title">{displayTitle}</div>
           <div className="row-sub">{bookingCity}</div>
 
-          {/* Host shown for every booking */}
           {hostName && (
             <div className="row-host">
               Host: <span className="row-host-name">{hostName}</span>
@@ -163,12 +152,8 @@ const renderBookingRow = (
           )}
 
           <div className="guest-booking-row-meta">
-            <span className="guest-booking-status">
-              {bookingStatus || "—"}
-            </span>
-            <span className="guest-booking-dates">
-              {formatBookingDates(bookingItem)}
-            </span>
+            <span className="guest-booking-status">{bookingStatus || "—"}</span>
+            <span className="guest-booking-dates">{formatBookingDates(bookingItem)}</span>
           </div>
         </div>
       </div>
@@ -202,19 +187,14 @@ function GuestBooking() {
           name: userInfo?.attributes?.given_name || "",
           email: userInfo?.attributes?.email || "",
         });
-      } catch (err) {
-        if (isMounted) {
-          setError("Could not load your session.");
-        }
+      } catch {
+        if (isMounted) setError("Could not load your session.");
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
 
     loadUser();
-
     return () => {
       isMounted = false;
     };
@@ -239,25 +219,19 @@ function GuestBooking() {
 
       let normalizedBookings = [];
       if (Array.isArray(bookingData)) normalizedBookings = bookingData;
-      else if (Array.isArray(bookingData?.data))
-        normalizedBookings = bookingData.data;
-      else if (Array.isArray(bookingData?.response))
-        normalizedBookings = bookingData.response;
+      else if (Array.isArray(bookingData?.data)) normalizedBookings = bookingData.data;
+      else if (Array.isArray(bookingData?.response)) normalizedBookings = bookingData.response;
       else if (typeof bookingData?.body === "string") {
         try {
           const innerParsed = JSON.parse(bookingData.body);
           if (Array.isArray(innerParsed)) normalizedBookings = innerParsed;
-          else if (Array.isArray(innerParsed?.response))
-            normalizedBookings = innerParsed.response;
+          else if (Array.isArray(innerParsed?.response)) normalizedBookings = innerParsed.response;
         } catch {
-          // ignore JSON parse errors here
+          
         }
       }
 
-      normalizedBookings.sort(
-        (a, b) => getBookingTimestamp(b) - getBookingTimestamp(a)
-      );
-
+      normalizedBookings.sort((a, b) => getBookingTimestamp(b) - getBookingTimestamp(a));
       setBookings(normalizedBookings);
     } catch (err) {
       console.error("Error fetching bookings:", err);
@@ -268,9 +242,7 @@ function GuestBooking() {
   }, [guestId]);
 
   useEffect(() => {
-    if (guestId) {
-      fetchBookings();
-    }
+    if (guestId) fetchBookings();
   }, [guestId, fetchBookings]);
 
   const fetchPropertyDetails = useCallback(
@@ -293,13 +265,8 @@ function GuestBooking() {
               const images = Array.isArray(data.images) ? data.images : [];
               const location = data.location || {};
 
-              // Host extraction: username + familyname, with fallbacks
               const host =
-                data.host ||
-                data.hostInfo ||
-                property.host ||
-                property.hostInfo ||
-                null;
+                data.host || data.hostInfo || property.host || property.hostInfo || null;
 
               const hostNameFromHost =
                 host?.name ||
@@ -310,12 +277,9 @@ function GuestBooking() {
 
               const hostNameFromProperty =
                 property.username && property.familyname
-                  ? `${String(property.username).trim()} ${String(
-                      property.familyname
-                    ).trim()}`
+                  ? `${String(property.username).trim()} ${String(property.familyname).trim()}`
                   : (property.username && String(property.username).trim()) ||
-                    (property.familyname &&
-                      String(property.familyname).trim()) ||
+                    (property.familyname && String(property.familyname).trim()) ||
                     null;
 
               const hostName =
@@ -326,17 +290,13 @@ function GuestBooking() {
                 "";
 
               const title =
-                property.title ||
-                property.name ||
-                `Property #${property.id || pid}`;
+                property.title || property.name || `Property #${property.id || pid}`;
 
               const firstImageKey = images[0]?.key || null;
 
               const subtitle = property.subtitle || "";
               const cityFromLocation = location.city || null;
-              const cityFromSubtitle = subtitle
-                ? subtitle.split(",")[0].trim()
-                : "";
+              const cityFromSubtitle = subtitle ? subtitle.split(",")[0].trim() : "";
               const city = cityFromLocation || cityFromSubtitle || "";
 
               return [
@@ -380,23 +340,16 @@ function GuestBooking() {
     if (!bookings?.length) return;
 
     const paid = bookings.filter(
-      (booking) =>
-        String(booking?.status ?? booking?.Status ?? "").toLowerCase() ===
-        "paid"
+      (booking) => String(booking?.status ?? booking?.Status ?? "").toLowerCase() === "paid"
     );
 
     const ids = Array.from(new Set(paid.map(getPropertyId).filter(Boolean)));
-
-    if (ids.length) {
-      fetchPropertyDetails(ids);
-    }
+    if (ids.length) fetchPropertyDetails(ids);
   }, [bookings, fetchPropertyDetails]);
 
   const handleBookingClick = (bookingItem) => {
     const propertyId = getPropertyId(bookingItem);
-    if (propertyId) {
-      navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
-    }
+    if (propertyId) navigate(`/listingdetails?ID=${encodeURIComponent(propertyId)}`);
   };
 
   const formatBookingDates = (bookingItem) => {
@@ -416,153 +369,124 @@ function GuestBooking() {
 
     if (!arrivalDate || !departureDate) return "-";
 
-    return `${dateFormatterDD_MM_YYYY(
-      arrivalDate
-    )} → ${dateFormatterDD_MM_YYYY(departureDate)}`;
+    return `${dateFormatterDD_MM_YYYY(arrivalDate)} → ${dateFormatterDD_MM_YYYY(departureDate)}`;
   };
 
+  const paidBookings = bookings.filter(
+    (b) => String(b?.status ?? b?.Status ?? "").toLowerCase() === "paid"
+  );
+
+  const { currentBookings, upcomingBookings, pastBookings } =
+    splitBookingsByTime(paidBookings);
+
   return (
-    <main className="page-body">
-      <div className="dashboardHost">
-        <div className="dashboardContainer">
-          <div className="dashboardLeft">
-            <h3 className="welcomeMsg">
-              {user.name || "Guest"} Bookings
-            </h3>
+    <div className="guest-dashboard-shell">
+      <div className="guest-dashboard-page-body guest-booking-page-body">
+        <h2>{user.name || "Guest"} Bookings</h2>
 
-            <div className="dashboardHead">
-              <div className="buttonBox">
-                <button
-                  className="greenBtn"
-                  onClick={fetchBookings}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Refreshing…" : "Refresh"}
-                </button>
+        <div className="guest-dashboard-dashboards">
+          <div className="guest-dashboard-content guest-booking-dashboard-content">
+            {/* We use ONLY the left side (like current booking section) */}
+            <div className="guest-dashboard-accomodation-side guest-booking-accomodation-side">
+              <div className="dashboardHead">
+                <div className="buttonBox">
+                  <button className="greenBtn" onClick={fetchBookings} disabled={isLoading}>
+                    {isLoading ? "Refreshing…" : "Refresh"}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {isLoading ? (
-              <div className="guest-booking-loader">Loading…</div>
-            ) : error ? (
-              <div className="guest-booking-error" role="alert">
-                {error}
-              </div>
-            ) : (
-              (() => {
-                const paidBookings = bookings.filter(
-                  (booking) =>
-                    String(
-                      booking?.status ?? booking?.Status ?? ""
-                    ).toLowerCase() === "paid"
-                );
-
-                if (paidBookings.length === 0) {
-                  return (
-                    <div className="emptyState">
-                      <p>You don’t have any bookings yet.</p>
+              {isLoading ? (
+                <div className="guest-booking-loader">Loading…</div>
+              ) : error ? (
+                <div className="guest-booking-error" role="alert">
+                  {error}
+                </div>
+              ) : paidBookings.length === 0 ? (
+                <div className="emptyState">
+                  <p>You don’t have any bookings yet.</p>
+                </div>
+              ) : (
+                <div className="guest-booking-bookingContent">
+                  {propLoading && (
+                    <div className="guest-booking-loader-inline">
+                      Loading property details…
                     </div>
-                  );
-                }
+                  )}
 
-                const {
-                  currentBookings,
-                  upcomingBookings,
-                  pastBookings,
-                } = splitBookingsByTime(paidBookings);
-
-                return (
-                  <div className="guest-booking-bookingContent">
-                    {propLoading && (
-                      <div className="guest-booking-loader-inline">
-                        Loading property details…
+                  <div className="guest-booking-summary-grid">
+                    <section className="guest-card guest-card--current">
+                      <div className="guest-card-header">
+                        <span>Current / This Week</span>
+                        <span className="guest-booking-badge">{currentBookings.length}</span>
                       </div>
-                    )}
+                      <div className="guest-card-body">
+                        {currentBookings.length === 0 ? (
+                          <p className="guest-booking-empty">No current bookings this week.</p>
+                        ) : (
+                          currentBookings.map((bookingItem, index) =>
+                            renderBookingRow(bookingItem, index, {
+                              getPropertyId,
+                              propertyMap,
+                              handleBookingClick,
+                              formatBookingDates,
+                            })
+                          )
+                        )}
+                      </div>
+                    </section>
 
-                    <div className="guest-booking-summary-grid">
-                      <section className="guest-card guest-card--current">
-                        <div className="guest-card-header">
-                          <span>Current / This Week</span>
-                          <span className="guest-booking-badge">
-                            {currentBookings.length}
-                          </span>
-                        </div>
-                        <div className="guest-card-body">
-                          {currentBookings.length === 0 ? (
-                            <p className="guest-booking-empty">
-                              No current bookings this week.
-                            </p>
-                          ) : (
-                            currentBookings.map((bookingItem, index) =>
-                              renderBookingRow(bookingItem, index, {
-                                getPropertyId,
-                                propertyMap,
-                                handleBookingClick,
-                                formatBookingDates,
-                              })
-                            )
-                          )}
-                        </div>
-                      </section>
+                    <section className="guest-card guest-card--upcoming">
+                      <div className="guest-card-header">
+                        <span>Upcoming Bookings</span>
+                        <span className="guest-booking-badge">{upcomingBookings.length}</span>
+                      </div>
+                      <div className="guest-card-body">
+                        {upcomingBookings.length === 0 ? (
+                          <p className="guest-booking-empty">You don’t have any upcoming bookings yet.</p>
+                        ) : (
+                          upcomingBookings.map((bookingItem, index) =>
+                            renderBookingRow(bookingItem, index, {
+                              getPropertyId,
+                              propertyMap,
+                              handleBookingClick,
+                              formatBookingDates,
+                            })
+                          )
+                        )}
+                      </div>
+                    </section>
 
-                      <section className="guest-card guest-card--upcoming">
-                        <div className="guest-card-header">
-                          <span>Upcoming Bookings</span>
-                          <span className="guest-booking-badge">
-                            {upcomingBookings.length}
-                          </span>
-                        </div>
-                        <div className="guest-card-body">
-                          {upcomingBookings.length === 0 ? (
-                            <p className="guest-booking-empty">
-                              You don’t have any upcoming bookings yet.
-                            </p>
-                          ) : (
-                            upcomingBookings.map((bookingItem, index) =>
-                              renderBookingRow(bookingItem, index, {
-                                getPropertyId,
-                                propertyMap,
-                                handleBookingClick,
-                                formatBookingDates,
-                              })
-                            )
-                          )}
-                        </div>
-                      </section>
-
-                      <section className="guest-card guest-card--past">
-                        <div className="guest-card-header">
-                          <span>Past Bookings</span>
-                          <span className="guest-booking-badge">
-                            {pastBookings.length}
-                          </span>
-                        </div>
-                        <div className="guest-card-body">
-                          {pastBookings.length === 0 ? (
-                            <p className="guest-booking-empty">
-                              You don’t have any past bookings yet.
-                            </p>
-                          ) : (
-                            pastBookings.map((bookingItem, index) =>
-                              renderBookingRow(bookingItem, index, {
-                                getPropertyId,
-                                propertyMap,
-                                handleBookingClick,
-                                formatBookingDates,
-                              })
-                            )
-                          )}
-                        </div>
-                      </section>
-                    </div>
+                    <section className="guest-card guest-card--past">
+                      <div className="guest-card-header">
+                        <span>Past Bookings</span>
+                        <span className="guest-booking-badge">{pastBookings.length}</span>
+                      </div>
+                      <div className="guest-card-body">
+                        {pastBookings.length === 0 ? (
+                          <p className="guest-booking-empty">You don’t have any past bookings yet.</p>
+                        ) : (
+                          pastBookings.map((bookingItem, index) =>
+                            renderBookingRow(bookingItem, index, {
+                              getPropertyId,
+                              propertyMap,
+                              handleBookingClick,
+                              formatBookingDates,
+                            })
+                          )
+                        )}
+                      </div>
+                    </section>
                   </div>
-                );
-              })()
-            )}
+                </div>
+              )}
+            </div>
+   
+            <aside className="guest-dashboard-personalInfoContent guest-booking-right-empty" />
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
