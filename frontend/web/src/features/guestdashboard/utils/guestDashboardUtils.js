@@ -1,54 +1,58 @@
 import dateFormatterDD_MM_YYYY from "../../../utils/DateFormatterDD_MM_YYYY";
+import { placeholderImage, normalizeImageUrl } from "./image";
 
-export const API_FETCH_BOOKINGS =
-  "https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest";
+export {
+  API_FETCH_BOOKINGS,
+  API_LISTING_DETAILS_BASE,
+  buildListingDetailsUrl,
+} from "../services/bookingAPI";
 
-export const API_LISTING_DETAILS_BASE =
-  "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails";
+export { placeholderImage, normalizeImageUrl };
 
-export const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+const E164_PHONE_REGEX = /^\+[1-9]\d{7,14}$/;
+const FAMILY_PATTERN = /(\d+)\s*adult[s]?\s*-\s*(\d+)\s*kid[s]?/i;
 
-export const placeholderImage =
-  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='Arial' font-size='20'>No image</text></svg>";
+const ARRIVAL_KEYS = ["arrivaldate", "arrival_date", "arrivalDate"];
+const DEPARTURE_KEYS = ["departuredate", "departure_date", "departureDate"];
 
-export const buildListingDetailsUrl = (propertyId) =>
-  `${API_LISTING_DETAILS_BASE}?property=${encodeURIComponent(propertyId)}`;
-
-export const normalizeImageUrl = (maybeKeyOrUrl) => {
-  if (!maybeKeyOrUrl) return placeholderImage;
-
-  const valueAsString = String(maybeKeyOrUrl);
-
-  if (valueAsString.startsWith("http")) return valueAsString;
-
-  return `${S3_URL}${valueAsString.replace(/^\/+/, "")}`;
+const pickFirst = (obj, keys) => {
+  for (const key of keys) {
+    const value = obj?.[key];
+    if (value != null && value !== "") return value;
+  }
+  return null;
 };
 
-export const isValidPhoneE164 = (phoneNumber) =>
-  /^\+[1-9]\d{7,14}$/.test(phoneNumber || "");
+const startOfDay = (date) => {
+  const copy = new Date(date);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+};
 
-export const limitBetween = (value, min = 0, max = 20) =>
-  Math.min(max, Math.max(min, value));
+export const isValidPhoneE164 = (phoneNumber = "") => E164_PHONE_REGEX.test(phoneNumber);
+
+export const clamp = (value, min = 0, max = 20) => {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+};
+
+export const limitBetween = clamp;
 
 export const parseFamilyString = (familyString = "") => {
-  const match = String(familyString).match(
-    /(\d+)\s*adult[s]?\s*-\s*(\d+)\s*kid[s]?/i
-  );
+  const text = String(familyString);
+  const match = text.match(FAMILY_PATTERN);
 
-  if (!match) {
-    return { adults: 0, kids: 0 };
-  }
+  if (!match) return { adults: 0, kids: 0 };
 
-  return {
-    adults: Number(match[1] || 0),
-    kids: Number(match[2] || 0),
-  };
+  const adults = Number(match[1]);
+  const kids = Number(match[2]);
+
+  return { adults, kids };
 };
 
 export const formatFamilyLabel = ({ adults = 0, kids = 0 }) =>
-  `${adults} adult${adults === 1 ? "" : "s"} - ${kids} kid${
-    kids === 1 ? "" : "s"
-  }`;
+  `${adults} adult${adults === 1 ? "" : "s"} - ${kids} kid${kids === 1 ? "" : "s"}`;
 
 export const toDate = (rawValue) => {
   if (rawValue == null) return null;
@@ -56,22 +60,22 @@ export const toDate = (rawValue) => {
   const numericValue = Number(rawValue);
 
   if (Number.isFinite(numericValue)) {
-    const milliseconds =
-      String(Math.trunc(numericValue)).length <= 10
-        ? numericValue * 1000
-        : numericValue;
+    const isSeconds = String(Math.trunc(numericValue)).length <= 10;
+    const ms = isSeconds ? numericValue * 1000 : numericValue;
 
-    const parsedFromNumber = new Date(milliseconds);
-    return isNaN(parsedFromNumber) ? null : parsedFromNumber;
+    const date = new Date(ms);
+    return isNaN(date) ? null : date;
   }
 
-  const parsedFromString = new Date(rawValue);
-  return isNaN(parsedFromString) ? null : parsedFromString;
+  const date = new Date(rawValue);
+  return isNaN(date) ? null : date;
 };
 
+export const getArrivalDate = (booking) => toDate(pickFirst(booking, ARRIVAL_KEYS));
+export const getDepartureDate = (booking) => toDate(pickFirst(booking, DEPARTURE_KEYS));
+
 export const splitBookingsByTime = (bookings) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = startOfDay(new Date());
 
   const weekAhead = new Date(today);
   weekAhead.setDate(today.getDate() + 7);
@@ -81,30 +85,16 @@ export const splitBookingsByTime = (bookings) => {
   const pastBookings = [];
 
   bookings.forEach((booking) => {
-    const arrivalDate =
-      toDate(
-        booking?.arrivaldate ??
-          booking?.arrival_date ??
-          booking?.arrivalDate
-      ) || null;
-
-    const departureDate =
-      toDate(
-        booking?.departuredate ??
-          booking?.departure_date ??
-          booking?.departureDate
-      ) || null;
+    const arrivalDate = getArrivalDate(booking);
+    const departureDate = getDepartureDate(booking);
 
     if (!arrivalDate || !departureDate) {
       upcomingBookings.push(booking);
       return;
     }
 
-    const arrival = new Date(arrivalDate);
-    arrival.setHours(0, 0, 0, 0);
-
-    const departure = new Date(departureDate);
-    departure.setHours(0, 0, 0, 0);
+    const arrival = startOfDay(arrivalDate);
+    const departure = startOfDay(departureDate);
 
     if (departure < today) {
       pastBookings.push(booking);
@@ -114,13 +104,8 @@ export const splitBookingsByTime = (bookings) => {
     const isOngoing = arrival <= today && departure >= today;
     const startsThisWeek = arrival > today && arrival <= weekAhead;
 
-    if (isOngoing || startsThisWeek) {
-      currentBookings.push(booking);
-    } else if (arrival > weekAhead) {
-      upcomingBookings.push(booking);
-    } else {
-      upcomingBookings.push(booking);
-    }
+    if (isOngoing || startsThisWeek) currentBookings.push(booking);
+    else upcomingBookings.push(booking);
   });
 
   return { currentBookings, upcomingBookings, pastBookings };
@@ -133,20 +118,6 @@ export const getPropertyId = (booking) =>
   booking?.id ??
   booking?.ID ??
   null;
-
-export const getArrivalDate = (booking) =>
-  toDate(
-    booking?.arrivaldate ??
-      booking?.arrival_date ??
-      booking?.arrivalDate
-  );
-
-export const getDepartureDate = (booking) =>
-  toDate(
-    booking?.departuredate ??
-      booking?.departure_date ??
-      booking?.departureDate
-  );
 
 export const formatDate = (dateValue) => {
   if (!dateValue) return "-";

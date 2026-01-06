@@ -1,27 +1,13 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import { useNavigate } from "react-router-dom";
-import { getGuestBookings } from "./services/bookingAPI";
+
+import { getGuestBookings, buildListingDetailsUrl } from "./services/bookingAPI";
+
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import { getBookingTimestamp } from "../../utils/getBookingTimestamp";
 import { timestampToDate } from "../../utils/timestampToDate";
-
-const API_LISTING_DETAILS_BASE =
-  "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/listingDetails";
-
-const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-const PLACEHOLDER_IMAGE =
-  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='Arial' font-size='20'>No image</text></svg>";
-
-const buildListingDetailsUrl = (propertyId) =>
-  `${API_LISTING_DETAILS_BASE}?property=${encodeURIComponent(propertyId)}`;
-
-const normalizeImageUrl = (maybeKeyOrUrl) => {
-  if (!maybeKeyOrUrl) return PLACEHOLDER_IMAGE;
-  const val = String(maybeKeyOrUrl);
-  if (val.startsWith("http")) return val;
-  return `${S3_URL}${val.replace(/^\/+/, "")}`;
-};
+import { placeholderImage, normalizeImageUrl } from "./utils/image";
 
 const splitBookingsByTime = (bookingList) => {
   const today = new Date();
@@ -85,9 +71,7 @@ const renderBookingRow = (
   const fallbackTitle =
     bookingItem?.title ||
     bookingItem?.Title ||
-    (bookingItem?.property_id
-      ? `Property #${bookingItem.property_id}`
-      : "Booking");
+    (bookingItem?.property_id ? `Property #${bookingItem.property_id}` : "Booking");
 
   const propertyInfo = propertyId ? propertyMap[propertyId] : undefined;
   const displayTitle = propertyInfo?.title || fallbackTitle;
@@ -104,10 +88,7 @@ const renderBookingRow = (
   const imageUrl = normalizeImageUrl(candidateImageKey);
 
   const bookingCity =
-    propertyInfo?.city ||
-    bookingItem?.city ||
-    bookingItem?.location?.city ||
-    "Unknown city";
+    propertyInfo?.city || bookingItem?.city || bookingItem?.location?.city || "Unknown city";
 
   const bookingStatus = String(bookingItem?.status || bookingItem?.Status || "");
 
@@ -136,7 +117,7 @@ const renderBookingRow = (
             src={imageUrl}
             alt={displayTitle}
             onError={(e) => {
-              e.currentTarget.src = PLACEHOLDER_IMAGE;
+              e.currentTarget.src = placeholderImage;
             }}
           />
         </div>
@@ -226,15 +207,12 @@ function GuestBooking() {
           const innerParsed = JSON.parse(bookingData.body);
           if (Array.isArray(innerParsed)) normalizedBookings = innerParsed;
           else if (Array.isArray(innerParsed?.response)) normalizedBookings = innerParsed.response;
-        } catch {
-          
-        }
+        } catch {}
       }
 
       normalizedBookings.sort((a, b) => getBookingTimestamp(b) - getBookingTimestamp(a));
       setBookings(normalizedBookings);
-    } catch (err) {
-      console.error("Error fetching bookings:", err);
+    } catch {
       setError("Could not load your bookings.");
     } finally {
       setIsLoading(false);
@@ -265,15 +243,12 @@ function GuestBooking() {
               const images = Array.isArray(data.images) ? data.images : [];
               const location = data.location || {};
 
-              const host =
-                data.host || data.hostInfo || property.host || property.hostInfo || null;
+              const host = data.host || data.hostInfo || property.host || property.hostInfo || null;
 
               const hostNameFromHost =
                 host?.name ||
                 host?.fullName ||
-                (host?.firstName && host?.lastName
-                  ? `${host.firstName} ${host.lastName}`
-                  : null);
+                (host?.firstName && host?.lastName ? `${host.firstName} ${host.lastName}` : null);
 
               const hostNameFromProperty =
                 property.username && property.familyname
@@ -283,14 +258,9 @@ function GuestBooking() {
                     null;
 
               const hostName =
-                hostNameFromHost ||
-                hostNameFromProperty ||
-                data.hostName ||
-                property.hostName ||
-                "";
+                hostNameFromHost || hostNameFromProperty || data.hostName || property.hostName || "";
 
-              const title =
-                property.title || property.name || `Property #${property.id || pid}`;
+              const title = property.title || property.name || `Property #${property.id || pid}`;
 
               const firstImageKey = images[0]?.key || null;
 
@@ -313,7 +283,7 @@ function GuestBooking() {
                 pid,
                 {
                   title: `Property #${pid}`,
-                  imageUrl: PLACEHOLDER_IMAGE,
+                  imageUrl: placeholderImage,
                   city: "",
                   hostName: "",
                 },
@@ -355,16 +325,12 @@ function GuestBooking() {
   const formatBookingDates = (bookingItem) => {
     const arrivalDate =
       timestampToDate(
-        bookingItem?.arrivaldate ??
-          bookingItem?.arrival_date ??
-          bookingItem?.arrivalDate
+        bookingItem?.arrivaldate ?? bookingItem?.arrival_date ?? bookingItem?.arrivalDate
       ) || null;
 
     const departureDate =
       timestampToDate(
-        bookingItem?.departuredate ??
-          bookingItem?.departure_date ??
-          bookingItem?.departureDate
+        bookingItem?.departuredate ?? bookingItem?.departure_date ?? bookingItem?.departureDate
       ) || null;
 
     if (!arrivalDate || !departureDate) return "-";
@@ -376,8 +342,7 @@ function GuestBooking() {
     (b) => String(b?.status ?? b?.Status ?? "").toLowerCase() === "paid"
   );
 
-  const { currentBookings, upcomingBookings, pastBookings } =
-    splitBookingsByTime(paidBookings);
+  const { currentBookings, upcomingBookings, pastBookings } = splitBookingsByTime(paidBookings);
 
   return (
     <div className="guest-dashboard-shell">
@@ -386,7 +351,6 @@ function GuestBooking() {
 
         <div className="guest-dashboard-dashboards">
           <div className="guest-dashboard-content guest-booking-dashboard-content">
-            {/* We use ONLY the left side (like current booking section) */}
             <div className="guest-dashboard-accomodation-side guest-booking-accomodation-side">
               <div className="dashboardHead">
                 <div className="buttonBox">
@@ -409,9 +373,7 @@ function GuestBooking() {
               ) : (
                 <div className="guest-booking-bookingContent">
                   {propLoading && (
-                    <div className="guest-booking-loader-inline">
-                      Loading property details…
-                    </div>
+                    <div className="guest-booking-loader-inline">Loading property details…</div>
                   )}
 
                   <div className="guest-booking-summary-grid">
@@ -481,7 +443,7 @@ function GuestBooking() {
                 </div>
               )}
             </div>
-   
+
             <aside className="guest-dashboard-personalInfoContent guest-booking-right-empty" />
           </div>
         </div>

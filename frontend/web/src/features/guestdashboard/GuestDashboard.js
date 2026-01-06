@@ -1,14 +1,17 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Auth } from "aws-amplify";
+
 import { confirmEmailChange } from "./emailSettings";
-import { getGuestBookings } from "./services/bookingAPI";
+import { getGuestBookings, buildListingDetailsUrl } from "./services/bookingAPI";
+
 import GuestInfoRow from "./components/GuestInfoRow";
 import GuestFamilyRow from "./components/GuestFamilyRow";
+
+
+import { placeholderImage, normalizeImageUrl } from "./utils/image";
+
 import {
-  placeholderImage,
-  buildListingDetailsUrl,
-  normalizeImageUrl,
   isValidPhoneE164,
   parseFamilyString,
   formatFamilyLabel,
@@ -20,8 +23,22 @@ import {
 } from "./utils/guestDashboardUtils";
 
 const GuestDashboard = () => {
-  const [user, setUser] = useState({ email: "", name: "", address: "", phone: "", family: "" });
-  const [temp, setTemp] = useState({ email: "", name: "", address: "", phone: "", family: "" });
+  const [user, setUser] = useState({
+    email: "",
+    name: "",
+    address: "",
+    phone: "",
+    family: "",
+  });
+
+  const [temp, setTemp] = useState({
+    email: "",
+    name: "",
+    address: "",
+    phone: "",
+    family: "",
+  });
+
   const [editing, setEditing] = useState({
     email: false,
     name: false,
@@ -88,7 +105,11 @@ const GuestDashboard = () => {
 
       const resp = await fetch(
         "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-CustomerIAM-Production-Update-UserEmail",
-        { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(params),
+        }
       );
 
       const json = await resp.json().catch(() => ({}));
@@ -116,7 +137,11 @@ const GuestDashboard = () => {
 
       const resp = await fetch(
         "https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-UserName",
-        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(params),
+        }
       );
 
       const json = await resp.json().catch(() => ({}));
@@ -227,8 +252,7 @@ const GuestDashboard = () => {
 
       setCurrentBooking(selectedBooking);
 
-      const bookingCity =
-        selectedBooking?.city || selectedBooking?.location?.city || "Unknown city";
+      const bookingCity = selectedBooking?.city || selectedBooking?.location?.city || "Unknown city";
       setCurrentBookingCity(bookingCity);
 
       const propertyId = getPropertyId(selectedBooking);
@@ -354,14 +378,10 @@ const GuestDashboard = () => {
                   {bookingLoading && <div className="booking-details__host">Loading booking…</div>}
 
                   {!bookingLoading && !currentBooking && !bookingError && (
-                    <div className="booking-details__host">
-                      You have no current or upcoming paid bookings.
-                    </div>
+                    <div className="booking-details__host">You have no current or upcoming paid bookings.</div>
                   )}
 
-                  {bookingError && (
-                    <div className="booking-details__host error">{bookingError}</div>
-                  )}
+                  {bookingError && <div className="booking-details__host error">{bookingError}</div>}
 
                   {currentBooking && !bookingLoading && (
                     <>
