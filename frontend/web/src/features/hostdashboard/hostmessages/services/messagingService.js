@@ -1,12 +1,32 @@
-const BOOKING_DETAILS_API = "https://912b02rvk4.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-GuestBookingDetails";
+const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 const ACCOMMODATION_API_BASE = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
 export async function getGuestBookingDetails(hostId, guestId) {
-  const response = await fetch(`${BOOKING_DETAILS_API}?hostId=${hostId}&guestId=${guestId}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch booking details");
+  const threadId1 = `${hostId}-${guestId}`;
+  const threadId2 = `${guestId}-${hostId}`;
+  
+  try {
+    let response = await fetch(`${UNIFIED_MESSAGING_API}/messages?threadId=${threadId1}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    
+    if (!response.ok) {
+      response = await fetch(`${UNIFIED_MESSAGING_API}/messages?threadId=${threadId2}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    }
+  } catch (error) {
+    console.warn("Failed to fetch booking details from UnifiedMessaging:", error);
   }
-  return response.json();
+  
+  throw new Error("Failed to fetch booking details");
 }
 
 export async function getAccommodationByPropertyId(accommodationEndpoint, propertyId, token) {

@@ -26,6 +26,7 @@ export default function HostFinanceTab() {
     monthly_anchor,
     loadingStates,
     balanceView,
+    faqs,
 
     setPayoutInterval,
     setWeeklyAnchor,
@@ -127,7 +128,7 @@ export default function HostFinanceTab() {
             {onboardingComplete && (
               <>
                 <div className="payouts-section">
-                  <h3>Recent Charges</h3>
+                  <h3>Recent guest payments</h3>
 
                   {loadingStates.charges ? (
                     <div>
@@ -187,7 +188,7 @@ export default function HostFinanceTab() {
                 </div>
 
                 <div className="payouts-section balance-section">
-                  <h3>Balance overview</h3>
+                  <h3>Withdrawable balance overview</h3>
 
                   {loadingStates.hostBalance ? (
                     <div>
@@ -206,6 +207,7 @@ export default function HostFinanceTab() {
                           style={{ width: `${balanceView.pctAvailable}%` }}
                           data-label="Available"
                           data-value={formatMoney(balanceView.availableTotal, balanceView.currency)}
+                          data-desc="Funds that have been received and are ready to be paid out"
                         />
                         <div
                           className="bm-seg bm-seg--incoming"
@@ -214,6 +216,7 @@ export default function HostFinanceTab() {
                           }}
                           data-label="Incoming"
                           data-value={formatMoney(balanceView.incomingTotal, balanceView.currency)}
+                          data-desc="Yet to be received funds from bookings that are still within the pending period"
                         />
                       </div>
 
@@ -379,6 +382,27 @@ export default function HostFinanceTab() {
             )}
           </div>
         </section>
+
+        <div className="faqs">
+          <p className="faqs-title">FAQs</p>
+
+          {faqs.length > 0 ? (
+            <ul className="faq-list">
+              {faqs.map((faq) => (
+                <li key={faq.faq_id} className="faq-item">
+                  <details className="faq-details">
+                    <summary className="faq-q">
+                      <strong>{faq.question}</strong>
+                    </summary>
+                    <p className="faq-a">{faq.answer}</p>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No FAQs found.</p>
+          )}
+        </div>
       </div>
     </main>
   );

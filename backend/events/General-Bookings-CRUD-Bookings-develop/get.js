@@ -12,7 +12,6 @@ async function get(){
         },
         queryStringParameters: {
             readType: "hostId",
-            property_Id: "a7a438d5-528d-4578-85ef-d3282ce92e6e"
         }
     }));
 }
