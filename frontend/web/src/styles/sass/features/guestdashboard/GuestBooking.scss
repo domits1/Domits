@@ -26,20 +26,17 @@ $text-muted:#6b7280;
   color:$text-muted;
 }
 
-/* ✅ Booking page uses dashboard shell — only override the grid to 1-column */
 .guest-booking-page-body {
 
-  /* Make sure the dashboard grid doesn't force 2 columns on booking page */
   .guest-dashboard-content.guest-booking-dashboard-content{
-    grid-template-columns: 1fr;   /* ✅ one column so it behaves like a normal page */
+    grid-template-columns: 1fr;
   }
 
   .guest-booking-right-empty{
-    display:none; /* ✅ remove the empty right panel completely */
+    display:none;
   }
 }
 
-/* ---- Your booking styles (kept) ---- */
 .guest-booking-bookingContent{
   margin-top:8px;
 
@@ -203,7 +200,6 @@ $text-muted:#6b7280;
     }
   }
 
-  /* Past full-width only on wide screens */
   @media(min-width:901px){
     .guest-card--past{
       grid-column:1 / -1;
@@ -214,7 +210,6 @@ $text-muted:#6b7280;
     .guest-card--past{ grid-column:auto; }
   }
 
-  /* Keep scroll inside Past */
   .guest-card--past .guest-card-body{
     max-height:360px;
     overflow-y:auto;
