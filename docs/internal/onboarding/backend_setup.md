@@ -96,7 +96,7 @@ If you want to make your own Lambda function, you can do so by following these s
 1. In your Terminal (IDE or terminal app), navigate to the root folder of your project, and `cd backend`.
 2. Run `npm run createLambda`.
 3. On `What will your lambda function be called?`, think about a good name and enter it. 
-4. It's done! Make sure to familarize yourself with the structure in docs\workflows\backend_development_flow.md before starting to code.
+4. It's done! Make sure to familarize yourself with the structure in docs\tools\backend_development_flow.md before starting to code.
 
 ## Add/Migrate a existing Lambda Function
 It is important that you know the exact name of the lambda function you'd wish to add.
@@ -105,11 +105,11 @@ For this example, I'll use the CreateStripeCheckout function as a lambda functio
 1. In your Terminal (IDE or terminal app), navigate to the root folder of your project, and `cd backend`.
 2. Run `npm run createLambda false`.
 3. On `What will your lambda function be called?`, enter the **EXACT** name of the function. 
-4. It's done! Make sure to familarize yourself with the structure in docs\workflows\backend_development_flow.md before starting to code.
+4. It's done! Make sure to familarize yourself with the structure in [docs\workflows\backend_development_flow.md](https://github.com/domits1/Domits/blob/acceptance/docs/internal/tools/backend_development_flow.md) before starting to code.
 
 # Coding your Function
 If you just made your lambda or imported one, you will notice that there is a template. This template assures that every developer follows this template, and all backend code will be neat and understandable for everyone. If you understand the template, you can easier understand all other functions written like this.
-There is a well explained file: docs\workflows\backend_development_flow.md, this one explains everything about the backend development flow well. However, this will serve here as a quick summary with bulletpoints.
+There is a well explained file: [docs\workflows\backend_development_flow.md](https://github.com/domits1/Domits/blob/acceptance/docs/internal/tools/backend_development_flow.md), this one explains everything about the backend development flow well. However, this will serve here as a quick summary with bulletpoints.
 
 ### Why follow the workflow?
 
