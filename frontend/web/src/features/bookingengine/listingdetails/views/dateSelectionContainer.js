@@ -1,13 +1,7 @@
 import CheckIn from "../components/checkIn";
 import CheckOut from "../components/checkOut";
 
-const DateSelectionContainer = ({
-  checkInDate,
-  setCheckInDate,
-  checkOutDate,
-  setCheckOutDate,
-  setNights,
-}) => {
+const DateSelectionContainer = ({ checkInDate, setCheckInDate, checkOutDate, setCheckOutDate, setNights }) => {
   const calculateNights = () => {
     if (checkInDate && checkOutDate) {
       const checkIn = new Date(checkInDate);
@@ -26,22 +20,9 @@ const DateSelectionContainer = ({
 
   return (
     <div className="date-container">
-      <CheckIn
-        checkInDate={checkInDate}
-        setCheckInDate={setCheckInDate}
-        checkOutDate={checkOutDate}
-      />
+      <CheckIn checkInDate={checkInDate} setCheckInDate={setCheckInDate} checkOutDate={checkOutDate} />
 
-      <div className="nights-info">
-        {nights && <p>{`${nights} night${nights !== 1 ? "s" : ""}`}</p>}
-        <div className="arrow">↔</div>
-      </div>
-
-      <CheckOut
-        checkOutDate={checkOutDate}
-        setCheckOutDate={setCheckOutDate}
-        checkInDate={checkInDate}
-      />
+      <CheckOut checkOutDate={checkOutDate} setCheckOutDate={setCheckOutDate} checkInDate={checkInDate} />
     </div>
   );
 };

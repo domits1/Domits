@@ -54,9 +54,13 @@ Table of Contents
     - [Web/App Setup](#webapp-setup)
   - [Code Conventions](#code-conventions)
   - [Core Modules and APIs](#core-modules-and-apis)
+    - [Connectivity API's](#connectivity-apis)
+    - [Distribution API](#distribution-api)
+    - [Booking Engine API](#booking-engine-api)
   - [Documentation Structure Overview](#documentation-structure-overview)
   - [Contribution Guidelines](#contribution-guidelines)
     - [Other Subjects to Understand](#other-subjects-to-understand)
+  - [License](#license)
 
 
 ## Tech Stack
@@ -177,6 +181,7 @@ Get familar with code conventions to write clean code. Become aware of our serve
 * Become familiar with our [Code Conventions](https://github.com/domits1/Domits/wiki/Code-conventions) to maintain a consistent and readable codebase.
 * Get to know why we use SCSS compared to css and its benefits [here](https://www.youtube.com/watch?v=akDIJa0AP5c)
 * [Backend Setup](./docs/internal/onboarding/backend_setup.md) The createlambda function will create a template lambda for you. Familiarize yourself with the structure [here](./docs/internal/tools/backend_development_flow.md) before starting to code.
+* Understand the development workflow from finished work to deployment on acceptance [here](https://github.com/domits1/Domits/blob/docs/2377-frontend-backend-connection/docs/internal/onboarding/development_workflow.md)
 * Understand the code pipeline (CI/CD)
 
 ### Web/App Setup
@@ -351,3 +356,22 @@ Understand the type of API's, REST and HTTP API's.
 
 Explore how AI and data engineering can enhance the platform with personalization, automation, and intelligent insights.
 
+---
+
+## License
+
+This project is licensed under the **MIT License**.
+
+You are free to:
+- Use the code for personal or commercial purposes
+- Modify and distribute the code
+- Include it in proprietary or open-source projects
+
+Under the following conditions:
+- The original copyright and license notice must be included in any copies or substantial portions of the software
+
+All contributions are assumed to be licensed under the same MIT License unless explicitly stated otherwise.
+
+This software is provided **“as is”**, without warranty of any kind.
+
+See the [LICENSE](./LICENSE) file for full details.
