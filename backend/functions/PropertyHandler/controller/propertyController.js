@@ -3,7 +3,7 @@ import { PropertyService } from "../business/service/propertyService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { toHolidu } from "../../data-mapping/holidu/propertyBaseDetailsMapper.js";
+import { toHoliduFull } from "../../data-mapping/holidu/propertyBaseDetailsMapper.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
@@ -253,14 +253,16 @@ export class PropertyController {
             property.property.username = userInfo.userName;
             property.property.familyname = userInfo.familyName;
 
+            let responsePayload = property;
             if (format === 'holidu') {
-                property.property = toHolidu(property.property);
-            }
+                responsePayload = toHoliduFull(property);
+            } 
+
 
             return {
                 statusCode: 200,
                 headers: responseHeaders,
-                body: JSON.stringify(property)
+                body: JSON.stringify(responsePayload)
             };
         } catch (error) {
             console.error(error);
