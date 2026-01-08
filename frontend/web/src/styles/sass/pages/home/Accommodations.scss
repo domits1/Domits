@@ -1,10 +1,3 @@
-/* =========================
-   ACCOCARD + FILTER SIDEBAR (FULL)
-   ========================= */
-
-/* =========================
-   ACCOCARD
-   ========================= */
 .accocard {
   width: 100%;
   max-width: 450px;
@@ -145,9 +138,6 @@
   gap: 5px;
 }
 
-/* =========================
-   WISHLIST POPUP
-   ========================= */
 .wishlist-popup {
   position: absolute;
   top: 55px;
@@ -163,9 +153,6 @@
   transition: all 0.3s ease;
 }
 
-/* =========================
-   ACCOMMODATIONS LAYOUT
-   ========================= */
 #container {
   display: flex;
   gap: 20px;
@@ -189,9 +176,6 @@
   width: 100%;
 }
 
-/* =========================
-   RESPONSIVE
-   ========================= */
 @media (max-width: 856px) {
   .accocard-specs {
     justify-content: space-around;
@@ -200,19 +184,16 @@
   }
 }
 
-/* =========================
-   MOBILE FILTER DRAWER
-   ========================= */
 .filters-mobile-bar {
-  display: none; /* hidden on desktop */
+  display: none;
 }
 
 .filters-overlay {
-  display: none; /* hidden on desktop */
+  display: none;
 }
 
 .filters-drawer-header {
-  display: none; /* only used on mobile drawer */
+  display: none;
 }
 
 @media (max-width: 580px) {
@@ -221,7 +202,6 @@
     padding: 0 14px;
   }
 
-  /* Button */
   .filters-mobile-bar {
     display: block;
     position: sticky;
@@ -245,7 +225,6 @@
     align-items: center;
   }
 
-  /* Overlay */
   .filters-overlay {
     display: block;
     position: fixed;
@@ -257,7 +236,6 @@
     z-index: 9998;
   }
 
-  /* Sidebar as drawer */
   #filters-sidebar {
     position: fixed;
     top: 0;
@@ -275,7 +253,6 @@
     margin: 0;
   }
 
-  /* OPEN STATE (class on #container) */
   .filters-open .filters-overlay {
     opacity: 1;
     pointer-events: auto;
@@ -285,7 +262,6 @@
     transform: translateX(0);
   }
 
-  /* Header inside drawer (optional) */
   .filters-drawer-header {
     display: flex;
     align-items: center;
@@ -308,7 +284,6 @@
     cursor: pointer;
   }
 
-  /* Cards on mobile */
   #card-visibility {
     grid-template-columns: 1fr;
     gap: 14px;
@@ -325,7 +300,6 @@
     width: calc(100% - 28px);
   }
 
-  /* Touch: show controls */
   .accocard-share-button,
   .accocard-like-button,
   .swiper-button-prev,
