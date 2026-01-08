@@ -60,6 +60,9 @@ Table of Contents
   - [Documentation Structure Overview](#documentation-structure-overview)
   - [Contribution Guidelines](#contribution-guidelines)
     - [Other Subjects to Understand](#other-subjects-to-understand)
+  - [License](#license)
+  - [Code of Conduct](#code-of-conduct)
+  - [Contributing](#contributing)
 
 
 ## Tech Stack
@@ -355,3 +358,42 @@ Understand the type of API's, REST and HTTP API's.
 
 Explore how AI and data engineering can enhance the platform with personalization, automation, and intelligent insights.
 
+---
+
+## License
+
+This project is licensed under the **MIT License**.
+
+You are free to:
+- Use the code for personal or commercial purposes
+- Modify and distribute the code
+- Include it in proprietary or open-source projects
+
+Under the following conditions:
+- The original copyright and license notice must be included in any copies or substantial portions of the software
+
+All contributions are assumed to be licensed under the same MIT License unless explicitly stated otherwise.
+
+This software is provided **“as is”**, without warranty of any kind.
+
+See the [LICENSE](./LICENSE) file for full details.
+
+---
+
+## Code of Conduct
+
+This project follows a **Code of Conduct** to ensure a respectful, inclusive, and professional environment for everyone involved.
+
+All contributors, maintainers, and participants are expected to uphold these standards when interacting in the project’s repositories, issues, pull requests, and other community spaces.
+
+See the [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) file for full details.
+
+---
+
+## Contributing
+
+Contributions to Domits are welcome, including code, documentation, bug reports, and improvements.
+
+Please follow the project’s contribution guidelines to ensure a smooth and consistent collaboration process.
+
+See the [CONTRIBUTING.md](./CONTRIBUTING.md) file for full details.
