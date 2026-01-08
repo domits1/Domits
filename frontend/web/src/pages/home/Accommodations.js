@@ -16,10 +16,10 @@ const Accommodations = ({ searchResults }) => {
   const [searchLoading, setSearchLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15; // Number of items per page
+  const itemsPerPage = 15;
   const navigate = useNavigate();
 
-  const [filtersOpen, setFiltersOpen] = useState(false); // ✅ ADDED
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const totalPages = Math.ceil(accolist.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -36,19 +36,18 @@ const Accommodations = ({ searchResults }) => {
   const handleFilterApplied = (filteredResults) => {
     setFilterLoading(true);
 
-    // Small timeout to ensure the loader is displayed
     setTimeout(() => {
       setAccolist(filteredResults);
       setCurrentPage(1);
       setFilterLoading(false);
-      setFiltersOpen(false); // ✅ ADDED: close drawer after applying filters
+      setFiltersOpen(false);
     }, 500);
   };
 
   useEffect(() => {
     async function loadData() {
       setSearchLoading(true);
-      // If there are search results, update the list, otherwise fetch all accommodations
+
       if (searchResults && searchResults.length > 0) {
         setTimeout(() => {
           setAccolist(searchResults);
@@ -75,7 +74,6 @@ const Accommodations = ({ searchResults }) => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [currentPage]);
 
-  // ✅ ADDED: prevent background scroll when drawer is open
   useEffect(() => {
     document.body.style.overflow = filtersOpen ? "hidden" : "";
     return () => {
@@ -86,18 +84,15 @@ const Accommodations = ({ searchResults }) => {
   if (filterLoading || searchLoading) {
     return (
       <div id="container" className={filtersOpen ? "filters-open" : ""}>
-        {/* ✅ ADDED: Mobile Filters Button */}
         <div className="filters-mobile-bar">
           <button className="filters-open-btn" type="button" onClick={() => setFiltersOpen(true)}>
             Filters <span>☰</span>
           </button>
         </div>
 
-        {/* ✅ ADDED: Overlay */}
         <div className="filters-overlay" onClick={() => setFiltersOpen(false)} />
 
         <div id="filters-sidebar">
-          {/* ✅ OPTIONAL close button header (doesn't break layout) */}
           <div className="filters-drawer-header">
             <span>Filters</span>
             <button type="button" className="filters-close-btn" onClick={() => setFiltersOpen(false)}>
@@ -134,18 +129,15 @@ const Accommodations = ({ searchResults }) => {
   return (
     <>
       <div id="container" className={filtersOpen ? "filters-open" : ""}>
-        {/* ✅ ADDED: Mobile Filters Button */}
         <div className="filters-mobile-bar">
           <button className="filters-open-btn" type="button" onClick={() => setFiltersOpen(true)}>
             Filters <span>☰</span>
           </button>
         </div>
 
-        {/* ✅ ADDED: Overlay */}
         <div className="filters-overlay" onClick={() => setFiltersOpen(false)} />
 
         <div id="filters-sidebar">
-          {/* ✅ OPTIONAL close button header */}
           <div className="filters-drawer-header">
             <span>Filters</span>
             <button type="button" className="filters-close-btn" onClick={() => setFiltersOpen(false)}>
