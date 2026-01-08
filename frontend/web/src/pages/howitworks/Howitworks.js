@@ -6,7 +6,7 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
-
+import {Helmet} from "react-helmet";
 const contentByLanguage = {
   en,
   nl,
@@ -15,6 +15,10 @@ const contentByLanguage = {
 };
 
 function Howitworks() {
+    <Helmet>
+        <title>How it works Domits | Learn how it works</title>
+        <meta name="description" content="Show you how Domits works in 3 simple steps." />
+    </Helmet>
     const {language} =  useContext(LanguageContext);
     const howItWorksContent = contentByLanguage[language]?.howItWorksContent;
     
