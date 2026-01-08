@@ -1,79 +1,41 @@
-export const toHolidu = (propertyBaseDetails) => {
-  return {
-    property_id: propertyBaseDetails.id,
-    owner_id: propertyBaseDetails.hostId,
-    name: propertyBaseDetails.title,
-    tagline: propertyBaseDetails.subtitle,
-    description_text: propertyBaseDetails.description,
-    registration_code: propertyBaseDetails.registrationNumber,
-    listing_status: propertyBaseDetails.status,
-    created_timestamp: propertyBaseDetails.createdAt,
-    modified_timestamp: propertyBaseDetails.updatedAt,
-  };
-};
-
-export const fromHolidu = (holiduPayload) => {
-  return {
-    id: holiduPayload.property_id,
-    hostId: holiduPayload.owner_id,
-    title: holiduPayload.name,
-    subtitle: holiduPayload.tagline,
-    description: holiduPayload.description_text,
-    registrationNumber: holiduPayload.registration_code,
-    status: holiduPayload.listing_status,
-    createdAt: holiduPayload.created_timestamp,
-    updatedAt: holiduPayload.modified_timestamp,
-  };
-};
-
 // Maps a full property payload (as returned by PropertyService) into a Holidu-friendly shape.
 export const toHoliduFull = (fullPropertyPayload) => {
   if (!fullPropertyPayload || !fullPropertyPayload.property) {
     return fullPropertyPayload;
   }
 
-  const toIsoOrNull = (epochMs) => (typeof epochMs === "number" ? new Date(epochMs).toISOString() : null);
+  const property = fullPropertyPayload.property;
 
-  const base = toHolidu(fullPropertyPayload.property);
-
-  return {
-    property: base,
-    location: fullPropertyPayload.location
-      ? {
-          country: fullPropertyPayload.location.country,
-          city: fullPropertyPayload.location.city,
-        }
-      : null,
-    images:
-      fullPropertyPayload.images?.map((image) => ({
-        key: image.key,
-      })) ?? [],
-    amenities:
-      fullPropertyPayload.amenities?.map((amenity) => ({
-        amenity_id: amenity.amenityId,
-      })) ?? [],
-    availability:
-      fullPropertyPayload.availability?.map((slot) => ({
-        available_from: toIsoOrNull(slot.availableStartDate),
-        available_until: toIsoOrNull(slot.availableEndDate),
-      })) ?? [],
-    availability_restrictions:
-      fullPropertyPayload.availabilityRestrictions?.map((restriction) => ({
-        restriction: restriction.restriction,
-        value: restriction.value,
-      })) ?? [],
-    check_in: fullPropertyPayload.checkIn?.checkIn
-      ? {
-          from: fullPropertyPayload.checkIn.checkIn.from,
-          to: fullPropertyPayload.checkIn.checkIn.till,
-        }
-      : null,
-    check_out: fullPropertyPayload.checkIn?.checkOut
-      ? {
-          from: fullPropertyPayload.checkIn.checkOut.from,
-          to: fullPropertyPayload.checkIn.checkOut.till,
-        }
-      : null,
+  const base = {
+    providerApartmentGroupId: property.id,
+    name: property.title,
+    apartmentAddress: {
+      countryCode: fullPropertyPayload.location?.country || null,
+      city: fullPropertyPayload.location?.city || null,
+      street: fullPropertyPayload.location?.street || null,
+      zipCode: fullPropertyPayload.location?.zipCode || null,
+    },
+    guestCapacityRules: {
+      //Function doesn't exist yet
+      standardCapacity: fullPropertyPayload.generalDetails?.find((d) => d.detail === "Guests")?.value ?? null,
+      adultsOnly: false,
+      additionalChildren: null,
+      maxBabies: null,
+    },
+    numberOfBedrooms: fullPropertyPayload.generalDetails?.find((d) => d.detail === "Bedrooms")?.value ?? null,
+    numberOfBathrooms: fullPropertyPayload.generalDetails?.find((d) => d.detail === "Bathrooms")?.value ?? null,
+    apartmentType: fullPropertyPayload.propertyType?.property_type || null,
+    checkInCheckOutTimes: {
+      checkIn: fullPropertyPayload.checkIn?.checkIn
+        ? {
+            checkInFrom: fullPropertyPayload.checkIn.checkIn.from,
+            checkInTo: fullPropertyPayload.checkIn.checkIn.till,
+          }
+        : null,
+      checkOutUntil: fullPropertyPayload.checkIn?.checkOut?.till || null,
+    },
+    license: property.registrationNumber || null,
+    isTestApartment: fullPropertyPayload.propertyTestStatus?.isTest || false,
     pricing: fullPropertyPayload.pricing
       ? {
           nightly_rate: fullPropertyPayload.pricing.roomRate,
@@ -81,22 +43,52 @@ export const toHoliduFull = (fullPropertyPayload) => {
         }
       : null,
     rules:
-      fullPropertyPayload.rules?.map((rule) => ({
-        rule: rule.rule,
-        value: rule.value,
+      fullPropertyPayload.rules?.map((r) => ({
+        rule: r.rule,
+        value: r.value,
       })) ?? [],
-    property_type: fullPropertyPayload.propertyType
-      ? {
-          type: fullPropertyPayload.propertyType.property_type,
-          space_type: fullPropertyPayload.propertyType.spaceType,
-        }
-      : null,
-    technical_details: fullPropertyPayload.technicalDetails ?? null,
-    general_details:
-      fullPropertyPayload.generalDetails?.map((detail) => ({
-        name: detail.detail,
-        value: detail.value,
-      })) ?? [],
-    test_status: fullPropertyPayload.propertyTestStatus ?? null,
+    technicalDetails: fullPropertyPayload.technicalDetails || null,
+  };
+
+  const descriptions = [
+    {
+      language: "HARDCODED_LANGUAGE", // Default; This should be dynamic in the future.
+      title: property.title,
+      description: property.description,
+    },
+  ];
+
+  const images =
+    fullPropertyPayload.images?.map((img, index) => ({
+      url: img.key,
+      position: index + 1,
+    })) ?? [];
+
+  const facilities = // amenities are not stored properly for external channels. This needs a refactoring.
+    fullPropertyPayload.amenities?.map((a) => ({
+      type: a.amenityId,
+      maxAmount: null,
+      privateUsage: false,
+      additionalFeesApply: false,
+      room: null,
+      availableTime: fullPropertyPayload.availability
+        ? {
+            availableFrom: {
+              pointInMonth: "HARDCODED_POINT_IN_TIME",
+              month: "HARDCODED_MONTH",
+            },
+            availableTo: {
+              pointInMonth: "HARDCODED_POINT_IN_TIME",
+              month: "HARDCODED_MONTH",
+            },
+          }
+        : null,
+    })) ?? [];
+
+  return {
+    property: base,
+    descriptions,
+    images,
+    facilities,
   };
 };
