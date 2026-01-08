@@ -61,6 +61,7 @@ Table of Contents
   - [Contribution Guidelines](#contribution-guidelines)
     - [Other Subjects to Understand](#other-subjects-to-understand)
   - [License](#license)
+  - [Code of Conduct](#code-of-conduct)
 
 
 ## Tech Stack
@@ -375,3 +376,13 @@ All contributions are assumed to be licensed under the same MIT License unless e
 This software is provided **“as is”**, without warranty of any kind.
 
 See the [LICENSE](./LICENSE) file for full details.
+
+---
+
+## Code of Conduct
+
+This project follows a **Code of Conduct** to ensure a respectful, inclusive, and professional environment for everyone involved.
+
+All contributors, maintainers, and participants are expected to uphold these standards when interacting in the project’s repositories, issues, pull requests, and other community spaces.
+
+See the [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) file for full details.
