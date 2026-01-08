@@ -76,60 +76,7 @@ function Howitworks() {
                     </div>
                     <p className="howitworks__info-text">{howItWorksContent.host.welcomeGuest.description}</p>
                 </section>
-            </article>
-
-
-            <article className="howitworks__titles-container">
-                <h3 className="howitworks__title">{howItWorksContent.feature.title}</h3>
-                    <h4>{howItWorksContent.feature.subtitle}</h4> 
-
-            <div className="HostContainer">
-                    <div>
-                        <p><span className="span">{howItWorksContent.feature.core}</span></p>
-                        <p><span className="span">{howItWorksContent.feature.budles}</span>{howItWorksContent.feature.bundles2}</p>
-                        <p><span className="span">{howItWorksContent.feature.support}</span>{howItWorksContent.feature.support2}</p> 
-                    </div>  
-                    </div>
-
-                    <div className="Container">
-                    <span className="span">{howItWorksContent.feature.pms}</span>
-                    <p>{howItWorksContent.feature.listing}</p>
-                    <p>{howItWorksContent.feature.calendar}</p>
-                    <p>{howItWorksContent.feature.reservations}</p>
-                    <p>{howItWorksContent.feature.messages}</p>
-                    <p>{howItWorksContent.feature.revenues}</p>
-                    <p>{howItWorksContent.feature.reviews}</p>
-                    <p>{howItWorksContent.feature.finance}</p>
-                    <br/>
-
-                    <span className="span">{howItWorksContent.feature.communication}</span>
-                    <p>{howItWorksContent.feature.inbox}</p>
-                    <p>{howItWorksContent.feature.hostdash}</p>
-                    <p>{howItWorksContent.feature.guestdash}</p>
-                    <br/>
-
-
-                    <span className="span">{howItWorksContent.feature.revManagement}</span>
-                    <p>{howItWorksContent.feature.overview}</p>
-                    <p>{howItWorksContent.feature.rates}</p>
-                    <p>{howItWorksContent.feature.adr}</p>
-                    <p>{howItWorksContent.feature.revPar}</p>
-                    <br/>
-                    <span className="span">{howItWorksContent.feature.operations}</span>
-                    <p>{howItWorksContent.feature.reservation}</p>
-                    <p>{howItWorksContent.feature.pricing}</p>
-                    <p>{howItWorksContent.feature.housekeeping}</p>
-                    <p>{howItWorksContent.feature.maintenance}</p>
-                    <br/>
-                    <span className="span">{howItWorksContent.feature.clientSupport}</span>
-                    <p>{howItWorksContent.feature.faq}</p>
-                    <p>{howItWorksContent.feature.email}</p>
-                    <p>{howItWorksContent.feature.phone}</p>
-                            
-
-                    </div>
-            </article>
-            
+            </article>   
         </section>
     );
 }

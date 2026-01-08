@@ -17,7 +17,7 @@ const Pricing = ({ pricing, nights }) => {
       </div>
       <div className="pricing-description-and-price">
         <div className="pricing-description">
-          {nights} night{nights > 1 ? "s" : ""} x ${pricing.cleaning} a night
+          {nights} night{nights > 1 ? "s" : ""} x €{pricing.cleaning} a night
         </div>
         <div className="pricing-price">€ &nbsp; {pricing.cleaning * nights}</div>
       </div>
