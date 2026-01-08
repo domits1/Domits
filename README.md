@@ -63,6 +63,7 @@ Table of Contents
   - [License](#license)
   - [Code of Conduct](#code-of-conduct)
   - [Contributing](#contributing)
+  - [Security](#security)
 
 
 ## Tech Stack
@@ -397,3 +398,14 @@ Contributions to Domits are welcome, including code, documentation, bug reports,
 Please follow the project’s contribution guidelines to ensure a smooth and consistent collaboration process.
 
 See the [CONTRIBUTING.md](./CONTRIBUTING.md) file for full details.
+
+---
+
+## Security
+
+Domits takes security seriously.
+
+If you discover a security vulnerability, please **do not report it via public GitHub issues**.
+Follow the responsible disclosure process described in our Security Policy.
+
+See the [SECURITY.md](./SECURITY.md) file for full details.
