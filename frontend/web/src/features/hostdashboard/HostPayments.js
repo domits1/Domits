@@ -9,6 +9,7 @@ import RevPARCard from "./HostRevenueCards/RevPAR.jsx";
 import ADRCard from "./HostRevenueCards/ADRCard.jsx";
 import BookedNights from "./HostRevenueCards/BookedNights.jsx";
 import ALOSCard from "./HostRevenueCards/ALOSCard.jsx";
+import MonthlyComparison from "./HostRevenueCards/MonthlyComparison.jsx";
 
 import "./HostRevenueStyle.scss";
 
@@ -180,6 +181,10 @@ const HostRevenues = () => {
             <RevenueOverview title="Total Properties" value={propertyCount.toLocaleString()} />
           </div>
 
+          <div className="hr-monthly-comparison">
+  <MonthlyComparison hostId={cognitoUserId} refreshKey={refreshKey}/>
+</div>
+
           <div className="hr-cards">
             <OccupancyRateCard
               occupancyRate={occupancyRate.toFixed(2)}
@@ -191,6 +196,7 @@ const HostRevenues = () => {
             <RevPARCard refreshKey={refreshKey} />
             <BookedNights refreshKey={refreshKey} />
             <ALOSCard hostId={cognitoUserId} refreshKey={refreshKey} />
+
           </div>
         </div>
       </section>
