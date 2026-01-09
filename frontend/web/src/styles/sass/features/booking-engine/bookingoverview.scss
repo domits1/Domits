@@ -1,3 +1,8 @@
+/* =========================
+   BOOKING (MOBILE CLEANUP)
+   + Proper Back Button Layout
+   ========================= */
+
 $primary-color: #4caf50;
 $secondary-color: #333;
 $background-color: #f9f9f9;
@@ -13,88 +18,140 @@ $login-text-color: #ffffff;
 $register-color: #083a66;
 $register-text-color: #ffffff;
 
+/* =========================
+   SAFETY
+   ========================= */
+.booking-container,
+.Bookingcontainer,
+.left-panel,
+.right-panel {
+  max-width: 100%;
+}
+
+/* =========================
+   PAGE WRAPPER
+   ========================= */
 .booking-container {
   display: block;
   padding: 20px;
-
-  @media (max-width: 768px) {
-    padding: 10px;
-  }
-
-  @media (max-width: 375px) {
-    padding: 8px;
-  }
+  padding-bottom: 110px;
+  min-height: 100vh;
+  overflow-x: hidden;
 
   .centerObject {
     display: flex;
     margin: auto;
     text-align: center;
   }
-}
-
-.booking-header {
-  display: flex;
-  flex-direction: row;
-  margin-bottom: 20px;
-  gap: 2%;
-  align-items: center;
-  padding-left: 10vh;
 
   @media (max-width: 768px) {
-    flex-direction: column;
-    text-align: center;
-    padding-left: 0;
+    padding: 12px;
+    padding-bottom: 110px;
   }
 
   @media (max-width: 375px) {
-    flex-direction: column;
-    text-align: center;
-    padding-left: 0;
+    padding: 10px;
+    padding-bottom: 120px;
   }
 }
 
+/* =========================
+   HEADER (FIXED PROPERLY)
+   ========================= */
+.booking-header {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px; /* back | title | spacer */
+  align-items: center;
+  margin-bottom: 20px;
+  min-height: 44px;
+
+  h1 {
+    margin: 0;
+    font-size: clamp(20px, 4vw, 28px);
+    text-align: center;
+    justify-self: center;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 40px 1fr 40px;
+    margin-bottom: 14px;
+  }
+}
+
+/* =========================
+   BACK BUTTON (NO ABSOLUTE!)
+   ========================= */
+.goBackButton {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  a {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #fff;
+    border: 1px solid #e7e7e7;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    text-decoration: none;
+
+    svg {
+      font-size: 26px;
+      color: #111;
+    }
+  }
+
+  @media (max-width: 768px) {
+    a {
+      width: 36px;
+      height: 36px;
+
+      svg {
+        font-size: 24px;
+      }
+    }
+  }
+}
+
+/* =========================
+   MAIN LAYOUT
+   ========================= */
 .Bookingcontainer {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15%;
-  padding-left: 15vh;
+  gap: 40px;
 
-  @media (max-width: 768px) {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding-left: 0;
+  @media (max-width: 1024px) {
+    gap: 24px;
   }
 
-  @media (max-width: 375px) {
-    flex-direction: column;
-    gap: 15px;
-    padding-left: 0;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 18px;
   }
 }
 
 .left-panel {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 10px;
   border: 1px solid $border-color;
   border-radius: $border-radius;
-  background-color: #ffffff;
+  background: #fff;
   padding: 16px;
-  width: 100%;
   max-width: 400px;
   box-shadow: $box-shadow;
 
-  @media (max-width: 768px) {
-    width: 100%;
+  @media (max-width: 900px) {
     max-width: none;
-    box-shadow: none;
-    padding: 10px;
   }
 
-  @media (max-width: 375px) {
-    width: 100%;
-    padding: 8px;
+  @media (max-width: 768px) {
+    padding: 14px;
     box-shadow: none;
   }
 }
@@ -104,50 +161,32 @@ $register-text-color: #ffffff;
   flex-direction: column;
   gap: 20px;
   padding: 20px;
-  width: 100%;
   max-width: 700px;
 
-  @media (max-width: 768px) {
-    width: 100%;
+  @media (max-width: 900px) {
     max-width: none;
-    box-shadow: none;
-    padding: 10px;
-  }
-
-  @media (max-width: 375px) {
-    width: 100%;
-    padding: 8px;
-    box-shadow: none;
+    padding: 0;
   }
 }
 
+/* =========================
+   DETAILS
+   ========================= */
 .booking-details {
   margin-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 15px;
-
-  @media (max-width: 375px) {
-    gap: 10px;
-  }
 }
 
 .booking-details-name {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding-left: 2vh;
 
   @media (max-width: 768px) {
     flex-direction: column;
-    align-items: center;
-    padding-left: 0;
-  }
-
-  @media (max-width: 375px) {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    text-align: center;
   }
 }
 
@@ -158,13 +197,8 @@ $register-text-color: #ffffff;
   object-fit: cover;
 
   @media (max-width: 768px) {
-    width: 100px;
-    height: 100px;
-  }
-
-  @media (max-width: 375px) {
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
   }
 }
 
@@ -172,219 +206,83 @@ $register-text-color: #ffffff;
   font-size: $font-size-large;
   font-weight: bold;
   margin: 0;
-  color: $secondary-color;
-
-  @media (max-width: 768px) {
-    font-size: $font-size-medium;
-  }
-
-  @media (max-width: 375px) {
-    font-size: $font-size-small;
-  }
 }
 
 .acco-title-span {
   font-size: $font-size-medium;
   color: #777;
-
-  @media (max-width: 375px) {
-    font-size: $font-size-small;
-  }
 }
 
+/* =========================
+   ROWS
+   ========================= */
 .detail-row {
   display: flex;
   justify-content: space-between;
-  padding: 4px;
+  gap: 10px;
   font-size: $font-size-medium;
-  color: $secondary-color;
+
+  > * {
+    min-width: 0;
+    word-break: break-word;
+  }
 
   @media (max-width: 768px) {
     flex-direction: column;
-    align-items: flex-start;
-  }
-
-  @media (max-width: 375px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
+    gap: 4px;
   }
 }
 
 .total-price {
   font-size: $font-size-large;
   font-weight: bold;
-  margin-top: 10px;
   border-top: 1px solid $border-color;
   padding-top: 10px;
-  color: #000;
-
-  @media (max-width: 375px) {
-    font-size: $font-size-medium;
-    padding-top: 8px;
-  }
 }
 
+/* =========================
+   BUTTONS
+   ========================= */
 .confirm-pay-button {
+  margin-top: 1em;
   padding: 12px 16px;
-  font-size: $font-size-large;
-  background-color: $primary-color;
+  width: 100%;
+  border-radius: $border-radius;
+  background: $primary-color;
   color: #fff;
   border: none;
-  border-radius: $border-radius;
+  font-size: $font-size-large;
   cursor: pointer;
-  width: 100%;
-  text-align: center;
-  margin-top: 1em;
 
   &:hover {
-    background-color: darken($primary-color, 5%);
-  }
-
-  @media (max-width: 768px) {
-    font-size: $font-size-medium;
-    padding: 10px;
-  }
-
-  @media (max-width: 375px) {
-    font-size: $font-size-small;
-    padding: 8px;
+    background: darken($primary-color, 5%);
   }
 }
 
 .auth-actions {
   display: flex;
   gap: 12px;
-  margin-top: 1em;
-  align-items: center;
 
   @media (max-width: 768px) {
     flex-direction: column;
   }
 
-  .register-button,
-  .login-button {
-    padding: 14px 18px;
-    font-size: $font-size-large;
+  button {
+    width: 100%;
+    padding: 14px;
     border-radius: 28px;
     border: none;
-    cursor: pointer;
-    width: 100%;
-    text-align: center;
     font-weight: 500;
+    cursor: pointer;
+  }
+
+  .login-button {
+    background: $login-color;
+    color: $login-text-color;
   }
 
   .register-button {
-    background-color: $register-color;
+    background: $register-color;
     color: $register-text-color;
-    box-shadow: 0 2px 6px rgba(8, 58, 102, 0.15);
-
-    &:hover {
-      background-color: darken($register-color, 5%);
-    }
-  }
-
-  .login-button {
-    background-color: $login-color;
-    color: $login-text-color;
-    box-shadow: 0 2px 6px rgba(27, 171, 58, 0.15);
-
-    &:hover {
-      background-color: darken($login-color, 5%);
-    }
-  }
-}
-
-.login-reserve-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  background-color: $background-color;
-  border-radius: $border-radius;
-  box-shadow: $box-shadow;
-
-  .form-title {
-    font-size: $font-size-large;
-    font-weight: bold;
-    margin: 0;
-    color: $secondary-color;
-
-    @media (max-width: 375px) {
-      font-size: $font-size-medium;
-    }
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    position: relative;
-
-    @media (max-width: 768px) {
-      gap: 10px;
-    }
-
-    @media (max-width: 375px) {
-      gap: 8px;
-    }
-  }
-
-  .form-label {
-    font-size: $font-size-small;
-    color: #666;
-  }
-
-  .dropdown-wrapper {
-    display: flex;
-    align-items: center;
-    position: relative;
-    background-color: #f2f2f2;
-    border-radius: $border-radius;
-    padding: 10px;
-    border: 1px solid $border-color;
-
-    @media (max-width: 768px) {
-      padding: 8px;
-    }
-
-    @media (max-width: 375px) {
-      padding: 6px;
-    }
-  }
-
-  .country-dropdown {
-    appearance: none;
-    border: none;
-    background: transparent;
-    font-size: $font-size-medium;
-    color: $secondary-color;
-    flex: 1;
-    outline: none;
-    cursor: pointer;
-
-    @media (max-width: 375px) {
-      font-size: $font-size-small;
-    }
-  }
-
-  .phone-input {
-    padding: 10px;
-    border: 1px solid $border-color;
-    border-radius: $border-radius;
-    background-color: #f2f2f2;
-    font-size: $font-size-medium;
-    color: #aaa;
-    outline: none;
-
-    @media (max-width: 768px) {
-      font-size: $font-size-small;
-    }
-
-    @media (max-width: 375px) {
-      font-size: $font-size-small;
-      padding: 8px;
-    }
   }
 }
