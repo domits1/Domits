@@ -14,7 +14,8 @@
 # -------------------------------------------------------------------
 # Global default (everything not explicitly owned below)
 # -------------------------------------------------------------------
-* @domits1/platform-core @domits1/security-core
+* @domits1/platform-core
+* @domits1/security-core
 
 # -------------------------------------------------------------------
 # GitHub & CI/CD
