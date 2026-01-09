@@ -1,76 +1,76 @@
-name: Issue Auto-Triage
+# name: Issue Auto-Triage
 
-on:
-  issues:
-    types: [opened, edited]
+# on:
+#   issues:
+#     types: [opened, edited]
 
-permissions:
-  issues: write
+# permissions:
+#   issues: write
 
-jobs:
-  triage:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Auto-label bug report issues
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const body = context.payload.issue.body || "";
-            const labels = new Set();
+# jobs:
+#   triage:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Auto-label bug report issues
+#         uses: actions/github-script@v7
+#         with:
+#           script: |
+#             const body = context.payload.issue.body || "";
+#             const labels = new Set();
 
-            const envMap = {
-              Production: "env:production",
-              Staging: "env:staging",
-              Development: "env:development",
-            };
+#             const envMap = {
+#               Production: "env:production",
+#               Staging: "env:staging",
+#               Development: "env:development",
+#             };
 
-            const sevMap = {
-              Critical: "severity:critical",
-              High: "severity:high",
-              Medium: "severity:medium",
-              Low: "severity:low",
-            };
+#             const sevMap = {
+#               Critical: "severity:critical",
+#               High: "severity:high",
+#               Medium: "severity:medium",
+#               Low: "severity:low",
+#             };
 
-            function getSectionContent(titles) {
-              const titleGroup = Array.isArray(titles) ? titles : [titles];
-              const titlePattern = titleGroup.map(t => `(?:${t})`).join("|");
-              const re = new RegExp(
-                `^##\\s*(?:${titlePattern})\\s*[\\r\\n]+([\\s\\S]*?)(?=^##\\s|$)`,
-                "im"
-              );
-              const match = body.match(re);
-              return match ? match[1] : "";
-            }
+#             function getSectionContent(titles) {
+#               const titleGroup = Array.isArray(titles) ? titles : [titles];
+#               const titlePattern = titleGroup.map(t => `(?:${t})`).join("|");
+#               const re = new RegExp(
+#                 `^##\\s*(?:${titlePattern})\\s*[\\r\\n]+([\\s\\S]*?)(?=^##\\s|$)`,
+#                 "im"
+#               );
+#               const match = body.match(re);
+#               return match ? match[1] : "";
+#             }
 
-            const envSection = getSectionContent(["📍\\s*Environment", "Environment"]);
-            const sevSection = getSectionContent(["📊\\s*Severity", "Severity"]);
-            const secSection = getSectionContent(["🔒\\s*Security", "Security"]);
+#             const envSection = getSectionContent(["📍\\s*Environment", "Environment"]);
+#             const sevSection = getSectionContent(["📊\\s*Severity", "Severity"]);
+#             const secSection = getSectionContent(["🔒\\s*Security", "Security"]);
 
-            for (const [key, label] of Object.entries(envMap)) {
-              if (new RegExp(`\\b${key}\\b`, "i").test(envSection)) {
-                labels.add(label);
-              }
-            }
+#             for (const [key, label] of Object.entries(envMap)) {
+#               if (new RegExp(`\\b${key}\\b`, "i").test(envSection)) {
+#                 labels.add(label);
+#               }
+#             }
 
-            for (const [key, label] of Object.entries(sevMap)) {
-              if (new RegExp(`\\b${key}\\b`, "i").test(sevSection)) {
-                labels.add(label);
-              }
-            }
+#             for (const [key, label] of Object.entries(sevMap)) {
+#               if (new RegExp(`\\b${key}\\b`, "i").test(sevSection)) {
+#                 labels.add(label);
+#               }
+#             }
 
-            if (/-\s*\[[xX]\]\s*/.test(secSection)) {
-              labels.add("security-review");
-            }
+#             if (/-\s*\[[xX]\]\s*/.test(secSection)) {
+#               labels.add("security-review");
+#             }
 
-            if (labels.has("env:production") && labels.has("severity:critical")) {
-              labels.add("incident");
-            }
+#             if (labels.has("env:production") && labels.has("severity:critical")) {
+#               labels.add("incident");
+#             }
 
-            if (labels.size > 0) {
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                labels: Array.from(labels),
-              });
-            }
+#             if (labels.size > 0) {
+#               await github.rest.issues.addLabels({
+#                 owner: context.repo.owner,
+#                 repo: context.repo.repo,
+#                 issue_number: context.issue.number,
+#                 labels: Array.from(labels),
+#               });
+#             }
