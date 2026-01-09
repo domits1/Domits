@@ -1,14 +1,14 @@
-name: Dependency Review
+# name: Dependency Review
 
-on:
-  pull_request:
+# on:
+#   pull_request:
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
 
-jobs:
-  review:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/dependency-review-action@v4
+# jobs:
+#   review:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v5
+#       - uses: actions/dependency-review-action@v4
