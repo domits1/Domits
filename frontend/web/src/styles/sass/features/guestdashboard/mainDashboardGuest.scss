@@ -1,4 +1,11 @@
 .main-dashboard-guest {
     display: flex;
-    min-height: 500px;
+    min-height: auto;
+}
+
+@media (max-width: 640px) {
+    .main-dashboard-guest {
+    justify-content: center;
+    align-items: center;
+    }
 }

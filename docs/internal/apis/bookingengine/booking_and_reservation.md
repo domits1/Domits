@@ -1,25 +1,30 @@
-**Main issue: [#501](https://github.com/domits1/Domits/issues/501)**
+# Booking and Reservation docs
 
-# Core information
+## Description
+This documentation documents the CRUD operations being performed with bookings and reservations. For the guest payments, refer to the [Booking and Reservation - Guest docs](./booking_and_reservation_guest_payments.md)
 
-For naming concerns, we refer to reservations in the front-end and booking in the back-end. In the lambda function, both keywords booking and reservations are used, but that has to be one name to ensure naming consistency. This is planned to be changed to that.
+## Metadata
+Lambda Function: `General-Bookings-CRUD-Bookings-develop`
 
-Also, remember that the Class Diagram and Sequence Diagram design and is not 100% accurate to what exists currently. This is bound to be updated soon.
+Related Issue: **Main issue: [#501](https://github.com/domits1/Domits/issues/501)**
 
-The host for a booking needs to have their account connected with Stripe.
-The total calculation for an booking is as followed: `const total = totalRoomRate + responseData.pricing.cleaning + responseData.pricing.service`
+Status: **In Development/Active**
 
-# Core functionality
+## Working Endpoints
+Use https://tabletomarkdown.com/generate-markdown-table/ to simply make your own table.
 
-The CRUD is responsible for 4 tasks, which are:
-1. Make bookings and put them in the database 
-2. Read bookings for host dashboard and guest dashboard
-3. Edit bookings for the create process
-4. Remove bookings (probably won't be done.)
+| Action | Description          | Auth Required                   | Endpoint |
+| ------ | -------------------- | ------------------------------- | -------- |
+| POST   | Create booking and payment  | Yes                             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings  |
+| GET    | Retrieve bookings created at date | No             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=createdAt&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&createdAt=1756857600000    |
+| GET    | Retrieve bookings from a departureDate | No             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=departureDate&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&departureDate=1749513600000    |
+| GET    | Retrieve bookings from a guest's id  | Yes             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest    |
+| GET    | Retrieve bookings from a hostId  | Yes             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest    |
+| GET    | Retrieve bookings from a paymentId  | Yes             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=paymentId&paymentID=pi_3S5nsgGiInrsWMEc0djWC2YZ    |
+| PATCH  | Update booking to set status as confirmed (checks stripe auth)      | No                             | https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?paymentid=${paymentID}  |
 
-All API requests will go through this lambda function (General-Bookings-CRUD-Bookings-develop), and that will determine which function is suited for which task.
 
-# Security
+## Security & Authorization
 
 Authorization will use your access_token.
 
@@ -31,142 +36,124 @@ Authorization will use your access_token.
 4. Copy and paste this into your request as header (If you're using Postman or any API application to invoke the request, be aware that the accessToken resets every hour.)
 
 
-# API Information
-The API used is an REST api called: Booking-API-Develop
+## Calculation / Logic Overview
+There is no clear logic to be explained. The payment does have some logic/calculation which needs explanation.
 
-You can check it out [here](https://eu-north-1.console.aws.amazon.com/apigateway/main/apis/92a7z9y2m5/resources?api=92a7z9y2m5&region=eu-north-1&routes=jwqjok3).
+## Class Diagram
+Show your class in a Diagram. Use [Mermaid Flow](https://mermaid.live/). Github supports mermaid chart in .md
 
-# Class diagram
-![ReservationsCRUD drawio](https://github.com/user-attachments/assets/a2d0b969-836d-4ee3-8931-6aedc80742be)
+Example:
 
-[Class Diagram Edit Link](https://drive.google.com/file/d/1R07G2hYAxQhD3D1YhsxFvE4A0kERSELc/view?usp=sharing)
-(To edit the Class Diagram, click the link and click: "Open With -> draw.io")
-
-# Sequence diagram
-Flow of the Create booking [(Code)](https://raw.githubusercontent.com/Bambaclad1/charts/refs/heads/main/bookingCRUDCreateSequence.txt)
-
-![mermaid-flow-1x](https://github.com/user-attachments/assets/9e65e49b-c9d5-49e2-90a3-d461a162e092)
-...
-# Request formats
-
-## Running requests
-Requests can be run through various ways, the ones listed are the common methods used:
-1. In Node. You can configure a post in your events folder. 
-    This is by far the best way, because it does not require changing an auth token. You can find it here: `backend\events\General-Bookings-CRUD-Bookings-develop\` and eventually run `node ./post.js`
-> [!warning]
-> Using the Node function does not ask you for an authorization and uses a dummy account to handle bookings. This can result in many errors where your web environment's data does not match the backend data. To fix this, input your own auth token.
-
-2. In Postman. Ensure to add your auth token in the headers page. See the GIF below how that works. Do bare in mind that Postman does not generate CORS errors, incase you get them. Rather, localhost gets CORS errors.
-
-![sendarequestpostman](https://github.com/user-attachments/assets/3d2241a1-a591-44f4-93c6-0cce1cca4ea2)
-
-3. Using a `await fetch` (or any other fetch packages) to send a request from the front-end. This is the way users will interact with Domits. So make sure that this one is the most polished one. For functions that require authorization, use `frontend\web\src\services\getAccessToken.js`. Eventually you'd run `const getAccessToken();`
-```js
-import { getAccessToken } from "frontend\web\src\services\getAccessToken.js"; // always use "../../src/services", never a direct path. This is just a example.
-
-    const token = await getAccessToken();
-
-    const response = await fetch(
-        `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?paymentid=${paymentID}`, {
-            method: "PATCH",
-            headers: {
-                Authorization: token
-            }
-            body: JSON.stringify(body),
-        }
-    );
-```
-
----
-
-### POST Request Format:
-
-```
-{
-    "httpMethod" : "POST",
-    "headers": {
-        "Authorization": "null"
-    },
-    "body": {
-        "identifiers": {
-            "property_Id": "606519ba-89a4-4e52-a940-3e4f79dabdd7"
-        },
-        "general": {
-            "guests": 1,
-            "arrivalDate": 1744934400000,   
-            "departureDate": 1745020800000
-        },
+```mermaid
+classDiagram
+    class property {
+	    +string id
     }
-}
+
+    class booking {
+	    +string id
+	    +number arrivaldate
+	    +number departuredate
+        +number createdat
+        +string guestid
+        +number guests
+        +string hostid
+        +bool latepayment
+        +string paymentid
+        +string property_id
+        +string status
+        +string hostname
+        +string guestname
+    }
+
+    class payment {
+	    +string stripepaymentid
+	    +string stripeclientsecret
+    }
+
+    property --> "has many" booking
+    booking --> "has one" payment
 ```
----
-### GET Request Format:
 
-**The first thing you need to configure in your request is a readType. This tells every read type apart and the function knows what to get based on which readType is requested.**
+## Sequence Diagram
+Use [Mermaid Live Editor](https://mermaid.live/) and its examples to make a Sequence Diagram for a POST request
 
-**Current developed `readtype`'s:**
-* `createdAt`
-* `departureDate`
-* `guest`
-* `hostId`
-* `paymentId`
-* `property`
+### POST sequence diagram
 
-### get by `createdAt` 
-Uses token: No
+```mermaid
+sequenceDiagram
+%% POST example
+    participant user
+    participant index.js
+    participant parseEvent.js
+    participant reservationController.js
+    participant bookingService.js
+    participant authManager.js
+    participant reservationRepository.js
+    participant propertyRepository.js
+    participant getHostEmailById.js
+    participant sendEmail.js
+    participant paymentService.js
+    participant stripeRepository.js
 
-Use Case: Getting bookings from a date where the reservation was created
+    user->>index.js: sends API request
+    index.js->>+parseEvent.js: parses event based on requestbody/queryparams
+    parseEvent.js->>-index.js: returns requestbody (in this scenario)
+    index.js->>reservationController.js: sends parsedevent
+    reservationController.js->>bookingService.js: send info needed for booking
+    bookingService.js->>+authManager.js: ensure user has a valid auth token
+    authManager.js->>-bookingService.js: Return user's information
+    bookingService.js->>+propertyRepository.js: Get property details (send property_id)
+    propertyRepository.js->>-bookingService.js: Return property details
+    bookingService.js->>+getHostEmailById.js: Get host email from property details getHostEmailById
+    getHostEmailById.js->>-bookingService.js: Returns host email
+    bookingService.js->>sendEmail.js: Send email to Guest and Host with Bookingdetails
+    bookingService.js->>reservationRepository.js: Send booking in database
+    reservationRepository.js->>reservationController.js: Return 201 and bookingdetails for payment information
+    reservationController.js->>paymentService.js: Send bookingdetails for payment to the paymentService
+    paymentService.js->>+stripeRepository.js: Gets stripe accountid (db query)
+    stripeRepository.js->>-paymentService.js: Returns stripe accountid
+    paymentService.js->>+stripeRepository.js: Create a payment intent with bookingdetails
+    stripeRepository.js->>-paymentService.js: Retrieve paymentintent
+    paymentService.js->>stripeRepository.js: Update payment id to proper paymentid from intent
+    paymentService.js->>+stripeRepository.js: Add paymentdata to database table payment
+    stripeRepository.js->>-user: Returns 201, paymentdata + clientsecret/intent and bookingid
+```
 
-Retuns: Dates from the date which a reservation was created and the corrosponding property_id.
+## Request Examples
 
-Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=createdAt&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&createdAt=1756857600000`
+### POST 
+Endpoint: https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings
+```json
+{
+  "httpMethod": "POST",
+  "headers": {
+    "Authorization": "ADDYOUROWNTOKENHERE()"
+  },
+  "body": {
+    "identifiers": {
+      "property_Id": "c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8"
+    },
+    "general": {
+      "guests": 2,
+      "arrivalDate": 1744934400000,
+      "departureDate": 1745020800000
+    }
+  }
+}
 
-### get by `departureDate`
-Uses token: No
+```
+### GET
 
-Use Case: Getting bookings from a departureDate
+| `readType`  | Description                                       | Auth | Example                                                               |
+| ----------- | ------------------------------------------------- | ---- | --------------------------------------------------------------------- |
+| `guest`     | Fetch all bookings of a guest                     | ✅    | `/bookings?readType=guest`                                            |
+| `hostId`    | Fetch all bookings for properties owned by a host | ✅    | `/bookings?readType=hostId`                                           |
+| `createdAt` | Get bookings created after a created at date         | ❌    | `/bookings?readType=createdAt&property_Id=<id>&createdAt=<timestamp>` |
+| `paymentId` | Get booking via Stripe payment ID                 | ✅    | `/bookings?readType=paymentId&paymentID=pi_3S5nsgGiInrsWMEc0djWC2YZ`  |
+| `departureDate` | Get bookings from a departureDate | ❌ | `/bookings?readType=departureDate&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&departureDate=1749513600000` |
 
-Returns: Dates from the data which a reservation's departureDate is over with the corrosponding property_id
-
-Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=departureDate&property_Id=c759a4b7-8dcf-4544-a6cf-8df7edf3a7e8&departureDat=1749513600000`
-
-### get by `guest`
-Uses token: Yes 
-
-Use case: Getting bookings which the guest has booked.
-
-Returns: Full booking information.
-
-Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=guest`
-
-### get by `hostId` 
-Uses token: Yes
-
-Use case: Getting all bookings for all the properties a host owns.
-
-Returns: Full booking information.
-
-Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=hostId`
-
-> [!TIP]
-> Add property_Id in your request to sort with only one property_id.
-> 
-> Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=hostId&property_Id=a7a438d5-528d-4578-85ef-d3282ce92e6e`
-
-
-### get by `paymentId` 
-Uses token: Yes
-
-Use case: Gets bookings on the unique payment_id
-
-Returns: Full booking information.
-
-Format: `https://92a7z9y2m5.execute-api.eu-north-1.amazonaws.com/development/bookings?readType=paymentId&paymentID=pi_3S5nsgGiInrsWMEc0djWC2YZ`
-
-### get by `property`
-This is pending refactoring. This function returns nothing at the moment because of a security flaw.
-
-## Todo Wiki:
-- [ ] Update sequence/class diagram to current code for create/read
-- [ ] Show proper flow for creating a booking (flowchart) in Domits
-- [ ] ...
+## Todo & Improvements
+Todo:
+- [ ] Add GET requests as sequence diagram
+- [ ] Finish the rest of the documentation
