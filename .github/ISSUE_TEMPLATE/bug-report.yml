@@ -1,0 +1,108 @@
+name: "🐞 Bug Report"
+description: "Report a reproducible bug or unexpected behavior"
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If this is a security vulnerability, do not open an issue.
+        Please report it via SECURITY.md.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: "Bug Summary"
+      description: "Clear and concise description."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected Behavior"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "Actual Behavior"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to Reproduce"
+      placeholder: |
+        1. Go to `...`
+        2. Click `...`
+        3. Enter `...`
+        4. Observe `...`
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: "Environment"
+      options:
+        - Production
+        - Staging
+        - Development
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "Severity"
+      options:
+        - Low (minor UI issue)
+        - Medium (feature degraded)
+        - High (core feature broken)
+        - Critical (system outage / data risk)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: security
+    attributes:
+      label: "Security & Data Considerations"
+      options:
+        - label: "Authentication / authorization involved"
+        - label: "Personal or sensitive data involved"
+        - label: "Could be exploitable"
+        - label: "No security implications identified"
+
+  - type: input
+    id: app
+    attributes:
+      label: "App / Service"
+      placeholder: "Web / API / Mobile / etc."
+
+  - type: input
+    id: version
+    attributes:
+      label: "Version / Commit"
+      placeholder: "Commit SHA (if known)"
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: "📸 Evidence"
+      description: "Logs/screenshots/videos. Redact sensitive data."
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Reporter Checklist"
+      options:
+        - label: "I searched existing issues"
+          required: true
+        - label: "I provided clear reproduction steps"
+          required: true
+        - label: "I removed sensitive data"
+          required: true
