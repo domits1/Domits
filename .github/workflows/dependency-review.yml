@@ -1,3 +1,7 @@
+# NOTE:
+# This workflow is intentionally commented out.
+# It serves as a baseline for future automation.
+
 # name: Dependency Review
 
 # on:
