@@ -8,9 +8,7 @@ export default function ExternalCalendarsCard() {
   const handleOpenIcalModal = () => setIsIcalModalOpen(true);
   const handleCloseIcalModal = () => setIsIcalModalOpen(false);
 
-  const handleImport = (payload) => {
-    console.log("IMPORT PAYLOAD:", payload);
-  };
+  const handleImport = (payload) => {};
 
   const dummyExportUrl = "https://api.domits.nl/ical?ownerId=123";
 
