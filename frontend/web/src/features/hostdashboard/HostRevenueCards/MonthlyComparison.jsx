@@ -1,14 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import "./MonthlyComparison.scss";
 
 import { RevPARService } from "../services/RevParService";
@@ -30,10 +21,8 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
   const isMountedRef = useRef(false);
   const fetchingRef = useRef(false);
 
-  // Optional: coalesce many refreshKey bumps into 1 fetch
   const refreshTimerRef = useRef(null);
 
-  // Prevent useless state updates
   const lastKeysRef = useRef({
     adr: "",
     revpar: "",
@@ -41,25 +30,18 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
     occ: "",
   });
 
-  const shortMonths = [
-    "Jan","Feb","Mar","Apr","May","Jun",
-    "Jul","Aug","Sep","Oct","Nov","Dec",
-  ];
+  const shortMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const getMonthRange = (year, monthIndex) => {
     const start = new Date(year, monthIndex, 1);
     const end = new Date(year, monthIndex + 1, 0);
     const format = (d) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-        d.getDate()
-      ).padStart(2, "0")}`;
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     return { start: format(start), end: format(end) };
   };
 
   const buildKey = useCallback((arr) => {
-    return (arr || [])
-      .map((x) => `${x.month}:${Number(x.thisYear || 0)}:${Number(x.lastYear || 0)}`)
-      .join("|");
+    return (arr || []).map((x) => `${x.month}:${Number(x.thisYear || 0)}:${Number(x.lastYear || 0)}`).join("|");
   }, []);
 
   useEffect(() => {
@@ -75,7 +57,6 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
       if (!hostId) return;
       if (!isMountedRef.current) return;
 
-      // ✅ avoid overlapping fetches if refreshKey bumps while fetching
       if (fetchingRef.current) return;
       fetchingRef.current = true;
 
@@ -92,14 +73,12 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
         const alosRes = [];
         const occRes = [];
 
-        // ✅ month-by-month to avoid 48 parallel requests
         for (let i = 0; i < 12; i++) {
           if (!isMountedRef.current) return;
 
           const { start, end } = getMonthRange(year, i);
           const monthLabel = shortMonths[i];
 
-          // ✅ only 4 requests at a time (per month)
           const [adrRaw, revparRaw, alosRaw, occRaw] = await Promise.all([
             ADRCardService.fetchMetric(hostId, "averageDailyRate", "custom", start, end),
             RevPARService.fetchMetric(hostId, "revenuePerAvailableRoom", "custom", start, end),
@@ -107,10 +86,7 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
             OccupancyRateService.fetchOccupancyRate(hostId, "custom", start, end),
           ]);
 
-          const adrVal =
-            typeof adrRaw === "number"
-              ? adrRaw
-              : Number(adrRaw?.averageDailyRate ?? adrRaw?.value ?? 0);
+          const adrVal = typeof adrRaw === "number" ? adrRaw : Number(adrRaw?.averageDailyRate ?? adrRaw?.value ?? 0);
 
           const revparVal =
             typeof revparRaw === "number"
@@ -135,7 +111,6 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
 
         if (!isMountedRef.current) return;
 
-        // ✅ only set state when changed
         const adrKey = buildKey(adrRes);
         if (lastKeysRef.current.adr !== adrKey) {
           setAdrData(adrRes);
@@ -174,17 +149,14 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
     [hostId, buildKey]
   );
 
-  // Initial load
   useEffect(() => {
     if (!hostId) return;
     fetchAll({ silent: false });
   }, [hostId, fetchAll]);
 
-  // ✅ refreshKey trigger (silent + debounced)
   useEffect(() => {
     if (!hostId) return;
 
-    // debounce to avoid rapid refresh storms
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshTimerRef.current = setTimeout(() => {
       fetchAll({ silent: true });
@@ -199,35 +171,21 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
     selectedMetric === "OCC"
       ? occData
       : selectedMetric === "ADR"
-      ? adrData
-      : selectedMetric === "RevPAR"
-      ? revparData
-      : alosData;
+        ? adrData
+        : selectedMetric === "RevPAR"
+          ? revparData
+          : alosData;
 
-  const yTick = (v) =>
-    selectedMetric === "ALOS"
-      ? `${v}`
-      : selectedMetric === "OCC"
-      ? `${v}%`
-      : `€${v}`;
+  const yTick = (v) => (selectedMetric === "ALOS" ? `${v}` : selectedMetric === "OCC" ? `${v}%` : `€${v}`);
 
-  const tipFmt = (v) =>
-    selectedMetric === "ALOS"
-      ? `${v} nights`
-      : selectedMetric === "OCC"
-      ? `${v}%`
-      : `€${v}`;
+  const tipFmt = (v) => (selectedMetric === "ALOS" ? `${v} nights` : selectedMetric === "OCC" ? `${v}%` : `€${v}`);
 
   return (
     <div className="mc-comparison-card">
       <div className="mc-header">
         <div className="mc-toggle">
           {["OCC", "ADR", "RevPAR", "ALOS"].map((m) => (
-            <button
-              key={m}
-              className={selectedMetric === m ? "active" : ""}
-              onClick={() => setSelectedMetric(m)}
-            >
+            <button key={m} className={selectedMetric === m ? "active" : ""} onClick={() => setSelectedMetric(m)}>
               {m}
             </button>
           ))}

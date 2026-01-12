@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import "./ADRCard.scss";
 import { RevPARService } from "../services/RevParService.js";
 
@@ -30,7 +21,6 @@ const RevPARCard = ({ refreshKey }) => {
   const isMountedRef = useRef(false);
   const fetchingRef = useRef(false);
 
-  // cache last values to prevent useless updates
   const lastRef = useRef({
     totalRevenue: null,
     availableNights: null,
@@ -38,9 +28,6 @@ const RevPARCard = ({ refreshKey }) => {
     chartKey: "",
   });
 
-  /** -------------------------------------------------------
-   * GET AUTH USER
-   * ----------------------------------------------------- */
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -61,9 +48,6 @@ const RevPARCard = ({ refreshKey }) => {
     };
   }, []);
 
-  /** -------------------------------------------------------
-   * HELPERS FOR WEEK/MONTH LABELS
-   * ----------------------------------------------------- */
   const getWeekNumber = (date) => {
     const temp = new Date(date);
     temp.setHours(0, 0, 0, 0);
@@ -119,12 +103,8 @@ const RevPARCard = ({ refreshKey }) => {
     return true;
   }, [cognitoUserId, timeFilter, startDate, endDate]);
 
-  const buildChartKey = (data) =>
-    (data || []).map((d) => `${d.label}:${Number(d.revPAR || 0)}`).join("|");
+  const buildChartKey = (data) => (data || []).map((d) => `${d.label}:${Number(d.revPAR || 0)}`).join("|");
 
-  /** -------------------------------------------------------
-   * FETCH CHART DATA (weekly/monthly)
-   * ----------------------------------------------------- */
   const fetchComparisonData = useCallback(
     async (userId) => {
       const periods = timeFilter === "weekly" ? getLastWeeks(6) : getLastMonths(6);
@@ -155,9 +135,6 @@ const RevPARCard = ({ refreshKey }) => {
     [timeFilter]
   );
 
-  /** -------------------------------------------------------
-   * MAIN METRIC FETCH (only updates state when changed)
-   * ----------------------------------------------------- */
   const fetchMetrics = useCallback(
     async ({ silent = false } = {}) => {
       if (!canFetch()) return;
@@ -175,12 +152,7 @@ const RevPARCard = ({ refreshKey }) => {
         let summary;
 
         if (timeFilter === "custom") {
-          summary = await RevPARService.getRevPARMetrics(
-            cognitoUserId,
-            "custom",
-            startDate,
-            endDate
-          );
+          summary = await RevPARService.getRevPARMetrics(cognitoUserId, "custom", startDate, endDate);
         } else {
           summary = await RevPARService.getRevPARMetrics(cognitoUserId, timeFilter);
         }
@@ -188,9 +160,7 @@ const RevPARCard = ({ refreshKey }) => {
         if (!isMountedRef.current) return;
 
         const nextTotalRev =
-          typeof summary.totalRevenue === "object"
-            ? summary.totalRevenue.totalRevenue
-            : summary.totalRevenue;
+          typeof summary.totalRevenue === "object" ? summary.totalRevenue.totalRevenue : summary.totalRevenue;
 
         const nextAvailable =
           typeof summary.availableNights === "object"
@@ -228,7 +198,6 @@ const RevPARCard = ({ refreshKey }) => {
         console.error("Error fetching RevPAR metrics:", err);
         if (!silent && isMountedRef.current) setError("Failed to fetch RevPAR metrics");
 
-        // If you want silent refresh to also zero on error, remove the "!silent" guard
         if (!silent && isMountedRef.current) {
           setRevPAR(0);
           setTotalRevenue(0);
@@ -249,9 +218,6 @@ const RevPARCard = ({ refreshKey }) => {
     [canFetch, cognitoUserId, timeFilter, startDate, endDate, fetchComparisonData]
   );
 
-  /** -------------------------------------------------------
-   * FETCH ON DEPENDENCY CHANGE (normal)
-   * ----------------------------------------------------- */
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
@@ -264,17 +230,11 @@ const RevPARCard = ({ refreshKey }) => {
     fetchMetrics({ silent: false });
   }, [canFetch, fetchMetrics]);
 
-  /** -------------------------------------------------------
-   * ✅ PARENT-TRIGGERED REFRESH (silent)
-   * ----------------------------------------------------- */
   useEffect(() => {
     if (!canFetch()) return;
     fetchMetrics({ silent: true });
   }, [refreshKey, canFetch, fetchMetrics]);
 
-  /** -------------------------------------------------------
-   * RENDER
-   * ----------------------------------------------------- */
   const allZero = !chartData || chartData.every((item) => item.revPAR === 0);
   const displayData = allZero ? [{ label: "No Data", revPAR: 1 }] : chartData;
 
@@ -284,11 +244,7 @@ const RevPARCard = ({ refreshKey }) => {
 
       <div className="time-filter">
         <label>Time Filter:</label>
-        <select
-          className="timeFilter"
-          value={timeFilter}
-          onChange={(e) => setTimeFilter(e.target.value)}
-        >
+        <select className="timeFilter" value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
           <option value="custom">Custom</option>
@@ -299,19 +255,11 @@ const RevPARCard = ({ refreshKey }) => {
         <div className="custom-date-filter">
           <div>
             <label>Start Date:</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div>
             <label>End Date:</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
         </div>
       )}
@@ -323,9 +271,15 @@ const RevPARCard = ({ refreshKey }) => {
           <p style={{ color: "red" }}>Error: {error}</p>
         ) : (
           <>
-            <p><strong>Total Revenue:</strong> €{Number(totalRevenue).toLocaleString()}</p>
-            <p><strong>Available Nights:</strong> {Number(availableNights).toLocaleString()}</p>
-            <p><strong>RevPAR:</strong> €{Number(revPAR).toLocaleString()}</p>
+            <p>
+              <strong>Total Revenue:</strong> €{Number(totalRevenue).toLocaleString()}
+            </p>
+            <p>
+              <strong>Available Nights:</strong> {Number(availableNights).toLocaleString()}
+            </p>
+            <p>
+              <strong>RevPAR:</strong> €{Number(revPAR).toLocaleString()}
+            </p>
           </>
         )}
       </div>
@@ -341,22 +295,10 @@ const RevPARCard = ({ refreshKey }) => {
                 <Tooltip />
                 {!allZero && <Legend />}
 
-                <Bar
-                  dataKey="revPAR"
-                  fill={allZero ? "#ccc" : "#0d9813"}
-                  radius={[6, 6, 0, 0]}
-                  barSize={25}
-                />
+                <Bar dataKey="revPAR" fill={allZero ? "#ccc" : "#0d9813"} radius={[6, 6, 0, 0]} barSize={25} />
 
                 {allZero && (
-                  <text
-                    x="50%"
-                    y="50%"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="14"
-                    fill="#999"
-                  >
+                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="14" fill="#999">
                     No Data
                   </text>
                 )}

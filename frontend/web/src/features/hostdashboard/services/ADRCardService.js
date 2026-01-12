@@ -1,4 +1,3 @@
-// ADRCardService.js
 import { Auth } from "aws-amplify";
 
 const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
@@ -9,7 +8,6 @@ const formatDate = (isoDate) => {
   return `${d}-${m}-${y}`;
 };
 
-// Parse API Gateway wrapper
 function safelyParse(data) {
   if (data?.body && typeof data.body === "string") {
     try {
@@ -22,7 +20,6 @@ function safelyParse(data) {
 }
 
 export const ADRCardService = {
-  // Always refresh token
   async getFreshToken() {
     try {
       const session = await Auth.currentSession();
@@ -32,7 +29,6 @@ export const ADRCardService = {
     }
   },
 
-  // Fetch ANY metric safely
   async fetchMetric(hostId, metric, filterType = "monthly", startDate, endDate) {
     if (!hostId) return null;
 
@@ -52,7 +48,6 @@ export const ADRCardService = {
         headers: { Authorization: token },
       });
     } catch {
-      // Network failed → return null but do not break the UI
       return null;
     }
 
@@ -73,7 +68,6 @@ export const ADRCardService = {
     return safelyParse(parsed);
   },
 
-  // Compute ADR, revenue, booked nights
   async getADRMetrics(hostId, filterType = "monthly", startDate, endDate) {
     const metrics = ["averageDailyRate", "revenue", "bookedNights"];
 
@@ -85,21 +79,12 @@ export const ADRCardService = {
     };
 
     for (const metric of metrics) {
-      const data = await this.fetchMetric(
-        hostId,
-        metric,
-        filterType,
-        startDate,
-        endDate
-      );
+      const data = await this.fetchMetric(hostId, metric, filterType, startDate, endDate);
 
       if (!data) continue;
 
       if (metric === "averageDailyRate") {
-        const v =
-          data?.averageDailyRate ??
-          data?.value ??
-          (typeof data === "number" ? data : 0);
+        const v = data?.averageDailyRate ?? data?.value ?? (typeof data === "number" ? data : 0);
         results.adr = Number(v || 0);
       }
 
@@ -108,11 +93,7 @@ export const ADRCardService = {
       }
 
       if (metric === "bookedNights") {
-        results.bookedNights =
-          data?.bookedNights?.bookedNights ??
-          data?.bookedNights ??
-          data?.value ??
-          0;
+        results.bookedNights = data?.bookedNights?.bookedNights ?? data?.bookedNights ?? data?.value ?? 0;
       }
     }
 

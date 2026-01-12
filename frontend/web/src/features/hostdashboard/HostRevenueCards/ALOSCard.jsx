@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import "./ALOSCard.scss";
 import { HostRevenueService } from "../services/HostRevenueService";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Tooltip,
-  CartesianGrid,
-  YAxis,
-} from "recharts";
+import { ResponsiveContainer, LineChart, Line, Tooltip, CartesianGrid, YAxis } from "recharts";
 
 const ALOSCard = ({ hostId, refreshKey }) => {
   const [alos, setAlos] = useState(0);
@@ -22,7 +15,6 @@ const ALOSCard = ({ hostId, refreshKey }) => {
   const isMountedRef = useRef(false);
   const fetchingRef = useRef(false);
 
-  // Cache last values so we only update when changed
   const lastAlosRef = useRef(null);
   const lastTrendKeyRef = useRef("");
 
@@ -37,9 +29,7 @@ const ALOSCard = ({ hostId, refreshKey }) => {
 
     if (typeof data === "number") value = data;
     else if (data?.averageLengthOfStay)
-      value = Number(
-        data.averageLengthOfStay.averageLengthOfStay ?? data.averageLengthOfStay
-      );
+      value = Number(data.averageLengthOfStay.averageLengthOfStay ?? data.averageLengthOfStay);
     else if (data?.value != null) value = Number(data.value);
 
     const parsedAlos = Number(Number(value).toFixed(2));
@@ -93,7 +83,6 @@ const ALOSCard = ({ hostId, refreshKey }) => {
       } catch (err) {
         if (!isMountedRef.current) return;
 
-        // show error only on non-silent (optional)
         if (!silent) setError("Failed to fetch ALOS");
 
         setAlos(0);
@@ -115,12 +104,10 @@ const ALOSCard = ({ hostId, refreshKey }) => {
     };
   }, []);
 
-  // Fetch on dependency changes (normal)
   useEffect(() => {
     fetchALOS({ silent: false });
   }, [fetchALOS]);
 
-  // ✅ Parent-triggered refresh (silent)
   useEffect(() => {
     fetchALOS({ silent: true });
   }, [refreshKey, fetchALOS]);
@@ -132,10 +119,7 @@ const ALOSCard = ({ hostId, refreshKey }) => {
 
         <div className="time-filter">
           <label>Time Filter:</label>
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
             <option value="custom">Custom</option>
@@ -144,16 +128,8 @@ const ALOSCard = ({ hostId, refreshKey }) => {
 
         {filterType === "custom" && (
           <div className="custom-date-filter">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
         )}
 
@@ -175,13 +151,7 @@ const ALOSCard = ({ hostId, refreshKey }) => {
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <YAxis hide />
               <Tooltip formatter={(v) => `${v} nights`} />
-              <Line
-                type="monotone"
-                dataKey="alos"
-                stroke="#0d9813"
-                strokeWidth={3}
-                dot={false}
-              />
+              <Line type="monotone" dataKey="alos" stroke="#0d9813" strokeWidth={3} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         )}

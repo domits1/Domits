@@ -14,10 +14,8 @@ const OccupancyRate = ({ refreshKey }) => {
 
   const isMountedRef = useRef(false);
 
-  // cache last value so we only update when changed
   const lastRateRef = useRef(null);
 
-  // Get User ID
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -53,18 +51,12 @@ const OccupancyRate = ({ refreshKey }) => {
       if (!silent) setError(null);
 
       try {
-        const rate = await OccupancyRateService.fetchOccupancyRate(
-          cognitoUserId,
-          periodType,
-          startDate,
-          endDate
-        );
+        const rate = await OccupancyRateService.fetchOccupancyRate(cognitoUserId, periodType, startDate, endDate);
 
         if (!isMountedRef.current) return;
 
         const nextRate = Number(rate) || 0;
 
-        // Only update when changed
         if (lastRateRef.current !== nextRate) {
           setOccupancyRate(nextRate);
           lastRateRef.current = nextRate;
@@ -84,13 +76,11 @@ const OccupancyRate = ({ refreshKey }) => {
     [canFetch, cognitoUserId, periodType, startDate, endDate]
   );
 
-  // Fetch on filter changes (normal)
   useEffect(() => {
     if (!canFetch()) return;
     fetchOccupancyRate({ silent: false });
   }, [canFetch, fetchOccupancyRate]);
 
-  // ✅ Parent-triggered refresh (silent)
   useEffect(() => {
     if (!canFetch()) return;
     fetchOccupancyRate({ silent: true });
@@ -103,11 +93,7 @@ const OccupancyRate = ({ refreshKey }) => {
 
         <div className="time-filter">
           <label htmlFor="periodType">Time Filter:</label>
-          <select
-            id="periodType"
-            value={periodType}
-            onChange={(e) => setPeriodType(e.target.value)}
-          >
+          <select id="periodType" value={periodType} onChange={(e) => setPeriodType(e.target.value)}>
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
             <option value="custom">Custom</option>
@@ -118,19 +104,11 @@ const OccupancyRate = ({ refreshKey }) => {
           <div className="custom-date-filter">
             <div>
               <label>Start Date:</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
               <label>End Date:</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
         )}

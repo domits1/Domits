@@ -23,7 +23,6 @@ const HostRevenues = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [propertyCount, setPropertyCount] = useState(0);
 
-  // ✅ this triggers child card refresh
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [loading, setLoading] = useState(true);
@@ -85,14 +84,12 @@ const HostRevenues = () => {
         const nextAvailable = available ?? 0;
         const nextProperties = properties ?? 0;
 
-        // detect change
         const changed =
           lastRef.current.revenue !== nextRevenue ||
           lastRef.current.nights !== nextNights ||
           lastRef.current.available !== nextAvailable ||
           lastRef.current.properties !== nextProperties;
 
-        // update parent state (only if changed)
         if (lastRef.current.revenue !== nextRevenue) {
           setTotalRevenue(nextRevenue);
           lastRef.current.revenue = nextRevenue;
@@ -110,7 +107,6 @@ const HostRevenues = () => {
           lastRef.current.properties = nextProperties;
         }
 
-        // ✅ tell child cards to refetch
         if (changed) setRefreshKey((k) => k + 1);
       } catch (err) {
         if (isMountedRef.current && !silent) {
@@ -153,8 +149,7 @@ const HostRevenues = () => {
     return () => clearInterval(id);
   }, [fetchAllData]);
 
-  const occupancyRate =
-    availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
+  const occupancyRate = availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
 
   if (loading) {
     return (
@@ -182,8 +177,8 @@ const HostRevenues = () => {
           </div>
 
           <div className="hr-monthly-comparison">
-  <MonthlyComparison hostId={cognitoUserId} refreshKey={refreshKey}/>
-</div>
+            <MonthlyComparison hostId={cognitoUserId} refreshKey={refreshKey} />
+          </div>
 
           <div className="hr-cards">
             <OccupancyRateCard
@@ -196,7 +191,6 @@ const HostRevenues = () => {
             <RevPARCard refreshKey={refreshKey} />
             <BookedNights refreshKey={refreshKey} />
             <ALOSCard hostId={cognitoUserId} refreshKey={refreshKey} />
-
           </div>
         </div>
       </section>

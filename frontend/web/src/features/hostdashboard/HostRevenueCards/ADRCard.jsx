@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-} from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import "./ADRCard.scss";
 import { ADRCardService as ADRService } from "../services/ADRCardService.js";
 
@@ -28,7 +21,6 @@ const ADRCard = ({ refreshKey }) => {
   const isMountedRef = useRef(false);
   const fetching = useRef(false);
 
-  // cache last values to avoid useless state updates
   const lastRef = useRef({
     adr: null,
     totalRevenue: null,
@@ -36,7 +28,6 @@ const ADRCard = ({ refreshKey }) => {
     chartKey: "",
   });
 
-  // Load Cognito User
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -64,7 +55,6 @@ const ADRCard = ({ refreshKey }) => {
     return data.map((d) => `${d.name ?? ""}:${Number(d.value ?? 0)}`).join("|");
   };
 
-  // Fetch all ADR metrics
   const fetchMetrics = useCallback(
     async ({ silent = false } = {}) => {
       if (!canFetch() || !isMountedRef.current) return;
@@ -78,12 +68,7 @@ const ADRCard = ({ refreshKey }) => {
       }
 
       try {
-        const results = await ADRService.getADRMetrics(
-          cognitoUserId,
-          timeFilter,
-          startDate,
-          endDate
-        );
+        const results = await ADRService.getADRMetrics(cognitoUserId, timeFilter, startDate, endDate);
 
         if (!isMountedRef.current || !results) return;
 
@@ -93,7 +78,6 @@ const ADRCard = ({ refreshKey }) => {
         const nextChartData = results.chartData || [];
         const nextChartKey = buildChartKey(nextChartData);
 
-        // Only update if changed
         if (lastRef.current.adr !== nextAdr) {
           setAdr(nextAdr);
           lastRef.current.adr = nextAdr;
@@ -122,19 +106,16 @@ const ADRCard = ({ refreshKey }) => {
     [canFetch, cognitoUserId, timeFilter, startDate, endDate]
   );
 
-  // Fetch on filter changes (normal)
   useEffect(() => {
     if (!canFetch()) return;
     fetchMetrics({ silent: false });
   }, [canFetch, fetchMetrics]);
 
-  // ✅ Parent-triggered refresh (silent)
   useEffect(() => {
     if (!canFetch()) return;
     fetchMetrics({ silent: true });
   }, [refreshKey, canFetch, fetchMetrics]);
 
-  // Safe number value for chart & UI
   const safeValue = (v) => (Number.isFinite(v) ? Number(v) : 0);
 
   const donutData = [
@@ -180,9 +161,15 @@ const ADRCard = ({ refreshKey }) => {
           <p style={{ color: "red" }}>Error: {error}</p>
         ) : (
           <>
-            <p><strong>ADR:</strong> €{safeValue(adr).toLocaleString()}</p>
-            <p><strong>Total Revenue:</strong> €{safeValue(totalRevenue).toLocaleString()}</p>
-            <p><strong>Booked Nights:</strong> {safeValue(bookedNights).toLocaleString()}</p>
+            <p>
+              <strong>ADR:</strong> €{safeValue(adr).toLocaleString()}
+            </p>
+            <p>
+              <strong>Total Revenue:</strong> €{safeValue(totalRevenue).toLocaleString()}
+            </p>
+            <p>
+              <strong>Booked Nights:</strong> {safeValue(bookedNights).toLocaleString()}
+            </p>
           </>
         )}
       </div>
@@ -198,13 +185,9 @@ const ADRCard = ({ refreshKey }) => {
                 innerRadius={60}
                 outerRadius={80}
                 paddingAngle={3}
-                isAnimationActive={true}
-              >
+                isAnimationActive={true}>
                 {displayData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={allZero ? "#ccc" : COLORS[index % COLORS.length]}
-                  />
+                  <Cell key={`cell-${index}`} fill={allZero ? "#ccc" : COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
 
