@@ -16,6 +16,25 @@ During the development of the data mapping for Holidu, we need to explain how th
 
 At the moment, Domits uses the property handler as the core function of its platform. Since the property hanlder does not allow us to take certain information due to security risks, we have decided to make a seperate API for external channels, which allows us to take all the necessary information needed for the holdiu mapping. 
 
+**Our current scope**
+| Domain                 | Status                            | Notes                                                   |
+| ---------------------- | --------------------------------- | ------------------------------------------------------- |
+| Property Static Data   | **Mapped (Not Holidu-Compliant)** | werkt in `toHoliduFull` maar types/enums niet Holidu    |
+| Images                 | **Mapped (Compliant)**            | `url` + `position` werken                               |
+| Descriptions           | **Mapped (Not Holidu-Compliant)** | `language` hardcoded, Holidu vereist ISO taalcodes      |
+| Amenities / Facilities | **Mapped (Placeholder)**          | Fields bestaan maar inhoud niet Holidu-conform          |
+| Pricing                | **Mapped (Partial)**              | alleen nightly + cleaning; geen rate plans / currencies |
+| Check-in/out           | **Mapped (Compliant)**            | `checkInFrom`, `checkInTo`, `checkOutUntil` aanwezig    |
+| Test flags             | **Mapped (Compliant)**            | `isTestApartment` werkt                                 |
+| License                | **Mapped (Compliant)**            | direct passthrough                                      |
+| Property Type          | **Mapped (Not Holidu-Compliant)** | `House` verwacht `VACATION_HOME` enums                  |
+| Guest Capacity Rules   | **Mapped (Partial)**              | alleen `standardCapacity`, rest null                    |
+| Address                | **Mapped (Partial)**              | `country` is naam, Holidu verwacht ISO alpha-2          |
+| Availability           | ❌ **Not Implemented**             | Holidu vereist push voor availability/pricing           |
+| Reservations           | ❌ **Out of Scope (Future)**       | Holidu → Domits pull                                    |
+| Reviews                | ❌ **Not Relevant (Push Model)**   | Holidu reviews worden niet gepusht                      |
+
+
 # Security & Authorization
 Currently **no authentication** is enforced.
 
