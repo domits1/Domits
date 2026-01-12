@@ -1,14 +1,17 @@
-import {Repository} from "../../data/repository.js";
-import {DatabaseException} from "../../util/exception/databaseException.js";
+import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { buildIcs } from "../../util/icalBuilder.js";
 
 export class Service {
-    repository;
-
-    constructor() {
-        this.repository = new Repository();
+  async generateCalendarIcs({ events, calendarName }) {
+    if (!Array.isArray(events)) {
+      throw new BadRequestException("events must be an array");
     }
 
-    async getUser() {
-        return await this.repository.getUser();
-    }
+    const icsText = buildIcs({
+      events,
+      calendarName: calendarName || "Domits",
+    });
+
+    return icsText;
+  }
 }

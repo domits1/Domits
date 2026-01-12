@@ -5,7 +5,6 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import SetupForm from "./views/SetupForm.js";
 import { getAccessToken } from "../../services/getAccessToken";
-import Register from "../auth/Register";
 import FetchPropertyDetails from "./services/FetchPropertyDetails";
 import NotFoundException from "../../utils/exception/NotFoundException";
 import Unauthorized from "../../utils/exception/Unauthorized";
@@ -21,8 +20,7 @@ const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 const BookingOverview = () => {
   const navigate = useNavigate();
   const [bookingDetails, setBookingDetails] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userData, setUserData] = useState({ username: "", email: "", phone_number: "" });
+
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [cognitoUserEmail, setCognitoUserEmail] = useState(null);
   const [showCheckout, setShowCheckout] = useState(null);
@@ -53,7 +51,13 @@ const BookingOverview = () => {
 
         const retrievedPricingObject = await FetchPropertyDetails(propertyId, checkInDate, checkOutDate);
         setPricingObject(retrievedPricingObject);
-        const retrievedBookingDetails = { accommodation: retrievedPricingObject, checkInDate, checkOutDate, guests };
+        const retrievedBookingDetails = {
+          accommodation: retrievedPricingObject,
+          checkInDate,
+          checkOutDate,
+          guests,
+          testStatus: Boolean(retrievedPricingObject?.testStatus),
+        };
         setBookingDetails(retrievedBookingDetails);
 
         if (!retrievedBookingDetails) {
@@ -73,35 +77,14 @@ const BookingOverview = () => {
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
-        const userInfo = await Auth.currentUserInfo();
-        setIsLoggedIn(true);
-        const userAttributes = userInfo.attributes;
-        setUserData({
-          username: userAttributes["custom:username"],
-          email: userAttributes["email"],
-          phone_number: userAttributes["phone_number"],
-        });
-        setCognitoUserId(userAttributes.sub);
-        setCognitoUserEmail(userAttributes["email"]);
-      } catch (error) {
-        setIsLoggedIn(false);
-        console.error("Error logging in:", error);
-      }
-    };
-    checkAuthentication();
-  }, []);
-
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
+        await Auth.currentAuthenticatedUser();
         setIsAuthenticated(true);
       } catch {
         setIsAuthenticated(false);
       }
     };
     checkAuthentication();
-  }, []);
+  }, [location.key, location.search]);
 
   if (error) {
     return <div className="error-message">{error}</div>;
@@ -171,6 +154,10 @@ const BookingOverview = () => {
     }
   };
 
+  const handleRequestInfo = () => {
+    navigate(`/listingdetails?ID=${propertyId}`);
+  };
+
   return (
     <main className="booking-container" style={{ cursor: isProcessing ? "wait" : "default" }}>
       {error && <div className="error-message">{error}</div>}
@@ -184,7 +171,6 @@ const BookingOverview = () => {
       </div>
 
       <div className="Bookingcontainer">
-        {/* Right Panel */}
         <div className="right-panel">
           <div>Your Journey</div>
           <div className="booking-details">
@@ -205,19 +191,33 @@ const BookingOverview = () => {
             </div>
           </div>
 
-          {!isLoggedIn ? (
+          {!isAuthenticated ? (
             <div>
               <h2>Please Register or Log In to Continue</h2>
-              <Register />
+              <div className="auth-actions">
+                <Link to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}>
+                  <button className="login-button">Login</button>
+                </Link>
+                <Link to={`/register?redirect=${encodeURIComponent(location.pathname + location.search)}`}>
+                  <button className="register-button">Register</button>
+                </Link>
+              </div>
             </div>
           ) : (
             <>
-              {!hideButton && (
+              {!hideButton && !bookingDetails.testStatus && (
                 <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading}>
                   {loading ? "Loading..." : "Confirm & Pay"}
                 </button>
               )}
-              {showCheckout && stripeClientSecret && bookingId && (
+              {bookingDetails.testStatus && (
+                <Link to="/contact" className="footer-links">
+                  <button type="button" className="confirm-pay-button" onClick={handleRequestInfo} disabled={loading}>
+                    Request Info
+                  </button>
+                </Link>
+              )}
+              {!bookingDetails.testStatus && showCheckout && stripeClientSecret && bookingId && (
                 <Elements
                   stripe={stripePromise}
                   options={{
@@ -231,7 +231,6 @@ const BookingOverview = () => {
           )}
         </div>
 
-        {/* Left Panel */}
         <div className="booking-details-container">
           <div className="booking-header1">Booking Details</div>
           <div className="left-panel">

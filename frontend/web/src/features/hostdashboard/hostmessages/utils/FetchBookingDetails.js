@@ -16,6 +16,7 @@ const fetchBookingDetailsAndAccommodation = async ({
   const propertyId = bookingData.property_id || null;
 
   let accoImage = null;
+  let propertyTitle = null;
 
   if (bookingData.property_id && accommodationEndpoint) {
     const accoRaw = await getAccommodationByPropertyId(accommodationEndpoint, bookingData.property_id, token);
