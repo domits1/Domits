@@ -62,6 +62,8 @@ Table of Contents
     - [Other Subjects to Understand](#other-subjects-to-understand)
   - [License](#license)
   - [Code of Conduct](#code-of-conduct)
+  - [Contributing](#contributing)
+  - [Security](#security)
 
 
 ## Tech Stack
@@ -386,3 +388,24 @@ This project follows a **Code of Conduct** to ensure a respectful, inclusive, an
 All contributors, maintainers, and participants are expected to uphold these standards when interacting in the project’s repositories, issues, pull requests, and other community spaces.
 
 See the [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) file for full details.
+
+---
+
+## Contributing
+
+Contributions to Domits are welcome, including code, documentation, bug reports, and improvements.
+
+Please follow the project’s contribution guidelines to ensure a smooth and consistent collaboration process.
+
+See the [CONTRIBUTING.md](./CONTRIBUTING.md) file for full details.
+
+---
+
+## Security
+
+Domits takes security seriously.
+
+If you discover a security vulnerability, please **do not report it via public GitHub issues**.
+Follow the responsible disclosure process described in our Security Policy.
+
+See the [SECURITY.md](./SECURITY.md) file for full details.

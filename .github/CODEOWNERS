@@ -1,0 +1,130 @@
+# ===================================================================
+# CODEOWNERS
+# Domits
+# ===================================================================
+# Docs:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Rules:
+# - Order matters: last matching rule wins
+# - Owners must be GitHub users or teams (@domits1/team)
+# - Security-first ownership model
+# ===================================================================
+
+# -------------------------------------------------------------------
+# Global default (everything not explicitly owned below)
+# -------------------------------------------------------------------
+* @domits1/platform-core
+* @domits1/security-core
+
+# -------------------------------------------------------------------
+# GitHub & CI/CD
+# -------------------------------------------------------------------
+.github/                 @domits1/platform-core @domits1/security-core
+.github/workflows/       @domits1/platform-core @domits1/security-core
+.github/actions/         @domits1/platform-core
+.github/CODEOWNERS       @domits1/platform-core @domits1/security-core
+
+# -------------------------------------------------------------------
+# Infrastructure as Code (High risk)
+# -------------------------------------------------------------------
+infra/                   @domits1/cloud-platform @domits1/security-core
+terraform/               @domits1/cloud-platform @domits1/security-core
+pulumi/                  @domits1/cloud-platform @domits1/security-core
+k8s/                     @domits1/cloud-platform @domits1/security-core
+helm/                    @domits1/cloud-platform
+docker/                  @domits1/cloud-platform
+Dockerfile               @domits1/cloud-platform
+
+# -------------------------------------------------------------------
+# Backend services
+# -------------------------------------------------------------------
+backend/**               @domits1/backend-core
+
+# -------------------------------------------------------------------
+# Identity, auth & security-critical code paths
+# (always reviewed by security)
+# -------------------------------------------------------------------
+**/auth/**               @domits1/identity @domits1/security-core
+**/crypto/**             @domits1/security-core
+**/encryption/**         @domits1/security-core
+**/iam/**                @domits1/identity @domits1/security-core
+**/rbac/**               @domits1/identity @domits1/security-core
+
+# -------------------------------------------------------------------
+# Frontend & UX
+# -------------------------------------------------------------------
+frontend/                @domits1/frontend-core
+ui/                      @domits1/frontend-core
+*.css                    @domits1/frontend-core
+*.scss                   @domits1/frontend-core
+*.tsx                    @domits1/frontend-core
+
+# -------------------------------------------------------------------
+# Data, analytics & ML
+# -------------------------------------------------------------------
+data/                    @domits1/data-platform
+analytics/               @domits1/data-platform
+ml/                      @domits1/data-platform
+pipelines/               @domits1/data-platform
+
+# -------------------------------------------------------------------
+# Compliance, audit & risk
+# -------------------------------------------------------------------
+compliance/              @domits1/security-core
+audit/                   @domits1/security-core
+risk/                    @domits1/security-core
+policies/                @domits1/security-core
+benchmarks/              @domits1/security-core
+soc/                     @domits1/security-core
+cis/                     @domits1/security-core
+nist/                    @domits1/security-core
+iso27001/                @domits1/security-core
+
+# -------------------------------------------------------------------
+# Reliability & operations
+# -------------------------------------------------------------------
+sre/                     @domits1/platform-core
+resilience/              @domits1/platform-core
+chaos/                   @domits1/platform-core
+capacity/                @domits1/platform-core
+
+# -------------------------------------------------------------------
+# Documentation & public content
+# -------------------------------------------------------------------
+docs/                    @domits1/platform-core
+README.md                @domits1/platform-core
+CHANGELOG.md             @domits1/platform-core
+website/                 @domits1/marketing
+blog/                    @domits1/marketing
+
+# -------------------------------------------------------------------
+# SDKs & APIs
+# -------------------------------------------------------------------
+sdk/                     @domits1/sdk
+openapi.yaml             @domits1/backend-core
+
+# -------------------------------------------------------------------
+# Tests & quality
+# -------------------------------------------------------------------
+tests/                   @domits1/quality
+e2e/                     @domits1/quality
+security-tests/          @domits1/security-core
+
+# -------------------------------------------------------------------
+# Experimental Labs & research
+# -------------------------------------------------------------------
+labs/                    @domits1/platform-core @domits1/security-core
+prototypes/              @domits1/platform-core
+
+# -------------------------------------------------------------------
+# Secrets & sensitive files (locked down)
+# -------------------------------------------------------------------
+**/credentials/**        @domits1/security-core
+**/keys/**               @domits1/security-core
+**/secrets/**            @domits1/security-core
+**/certs/**              @domits1/security-core
+**/*.pem                 @domits1/security-core
+**/*.key                 @domits1/security-core
+**/*.crt                 @domits1/security-core
+**/*.secrets.*           @domits1/security-core
