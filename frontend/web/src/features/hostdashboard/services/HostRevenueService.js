@@ -61,8 +61,6 @@ export const HostRevenueService = {
     return data?.propertyCount?.propertyCount ?? 0;
   },
 
-  // 🚫 Removed getMonthlyComparison — backend doesn't support it
-
   async getAverageLengthOfStay(hostId, filterType = "monthly", startDate, endDate) {
     const data = await this.fetchMetricData("averageLengthOfStay", hostId, filterType, startDate, endDate);
     if (typeof data === "number") return data;

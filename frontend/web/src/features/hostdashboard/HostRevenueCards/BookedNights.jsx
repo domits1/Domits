@@ -14,10 +14,8 @@ const BookedNights = ({ refreshKey }) => {
 
   const isMountedRef = useRef(false);
 
-  // prevents setting loading=true when nothing changed
   const lastValueRef = useRef(null);
 
-  // Fetch user ID
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -53,18 +51,12 @@ const BookedNights = ({ refreshKey }) => {
       if (!silent) setError(null);
 
       try {
-        const nights = await BookedNightsService.fetchBookedNights(
-          cognitoUserId,
-          periodType,
-          startDate,
-          endDate
-        );
+        const nights = await BookedNightsService.fetchBookedNights(cognitoUserId, periodType, startDate, endDate);
 
         if (!isMountedRef.current) return;
 
         const next = Number(nights) || 0;
 
-        // Only update state if changed
         if (lastValueRef.current !== next) {
           setBookedNights(next);
           lastValueRef.current = next;
@@ -74,7 +66,6 @@ const BookedNights = ({ refreshKey }) => {
 
         if (!isMountedRef.current) return;
 
-        // only show errors on non-silent fetch (optional)
         if (!silent) setError(err.message || "Failed to fetch booked nights.");
 
         setBookedNights(0);
@@ -86,13 +77,11 @@ const BookedNights = ({ refreshKey }) => {
     [canFetch, cognitoUserId, periodType, startDate, endDate]
   );
 
-  // Fetch on filter changes (normal)
   useEffect(() => {
     if (!canFetch()) return;
     fetchBookedNights({ silent: false });
   }, [canFetch, fetchBookedNights]);
 
-  // ✅ Parent-triggered refresh (silent)
   useEffect(() => {
     if (!canFetch()) return;
     fetchBookedNights({ silent: true });
@@ -105,11 +94,7 @@ const BookedNights = ({ refreshKey }) => {
 
         <div className="time-filter">
           <label htmlFor="periodType">Time Filter:</label>
-          <select
-            id="periodType"
-            value={periodType}
-            onChange={(e) => setPeriodType(e.target.value)}
-          >
+          <select id="periodType" value={periodType} onChange={(e) => setPeriodType(e.target.value)}>
             <option value="monthly">Monthly</option>
             <option value="custom">Custom</option>
           </select>
@@ -119,19 +104,11 @@ const BookedNights = ({ refreshKey }) => {
           <div className="custom-date-filter">
             <div>
               <label>Start Date:</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
               <label>End Date:</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
         )}
