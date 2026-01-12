@@ -9,12 +9,16 @@ async function main() {
     },
     queryStringParameters: {
       property: "113131c2-6b35-4652-91e7-b69948f2b54f",
+      format: "holidu", // request Holidu-formatted payload
     },
     headers: {
       Authorization: "",
     },
   });
-  console.log(JSON.parse(result.body));
+
+  const bodyObject = typeof result.body === "string" ? JSON.parse(result.body) : result.body;
+
+  console.log(JSON.stringify(bodyObject, null, 2));
 }
 
 main();
