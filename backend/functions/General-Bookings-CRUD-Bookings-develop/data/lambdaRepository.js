@@ -1,6 +1,6 @@
 import NotFoundException from "../util/exception/NotFoundException.js";
 import Database from "database";
-import { Property_Pricing } from "database/models/Property_Pricing";
+import { Property_Pricing } from "database/models/Property_Pricing.js";
 class LambdaRepository {
   async getPropertiesFromHostId(host_Id) {
     const response = await fetch(
