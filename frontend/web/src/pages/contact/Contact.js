@@ -5,6 +5,7 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import {Helmet} from "react-helmet";
 
 const contentByLanguage = {
   en,
@@ -14,6 +15,11 @@ const contentByLanguage = {
 };
 
 function Contact() {
+    <title>Contact Domits | Get in Touch With Our Team</title>
+  <meta
+    name="description"
+    content="Have questions or want to work with Domits? Contact our team for support, partnerships, or information about our digital property solutions."
+  />
     const [sourceEmail, setSourceEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState("");
