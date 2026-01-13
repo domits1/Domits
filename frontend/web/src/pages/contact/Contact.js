@@ -15,11 +15,14 @@ const contentByLanguage = {
 };
 
 function Contact() {
+    <Helmet>
+    
     <title>Contact Domits | Get in Touch With Our Team</title>
-  <meta
-    name="description"
-    content="Have questions or want to work with Domits? Contact our team for support, partnerships, or information about our digital property solutions."
-  />
+      <meta
+        name="description"
+        content="Have questions or want to work with Domits? Contact our team for support, partnerships, or information about our digital property solutions."
+      />
+   </Helmet>
     const [sourceEmail, setSourceEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState("");
