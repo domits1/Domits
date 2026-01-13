@@ -4,11 +4,10 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import SystemManagerRepository from "./systemManagerRepository.js";
 import CalculateTotalRate from "../util/calcuateTotalRate.js";
-import { Payment } from "database/models/Payment";
+import { Payment } from "database/models/Payment.js";
 import Database from "database";
-import { Booking } from "database/models/Booking";
-import "dotenv/config";
-import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
+import { Booking } from "database/models/Booking.js";
+import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts.js";
 
 const systemManagerRepository = new SystemManagerRepository();
 const stripePromise = systemManagerRepository
