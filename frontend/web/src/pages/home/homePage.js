@@ -70,7 +70,6 @@ import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 import villaBackground from "../../images/villaHomepage.jpg";
-import {Helmet} from "react-helmet";
 
 const contentByLanguage = {
   en,
@@ -80,13 +79,6 @@ const contentByLanguage = {
 };
 
 const Homepage = () => {
-  <Helmet>
-    <title>Domits | Smart Property Management & Digital Housing Solutions</title>
-    <meta
-      name="description"
-      content="Domits simplifies property management with smart digital solutions for housing, rentals, and real estate operations. Manage smarter, faster, and better."
-    />
-  </Helmet>
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingImages, setLoadingImages] = useState(false);

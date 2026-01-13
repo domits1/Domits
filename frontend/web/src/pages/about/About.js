@@ -24,7 +24,6 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
-import {Helmet} from "react-helmet";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -32,14 +31,6 @@ const contentByLanguage = { en, nl, de, es };
 // https://imageresizer.com/image-compressor
 
 function About() {
-  <Helmet>
-    <title>About Domits | Building Smarter Digital Property Solutions</title>
-    <meta
-      name="description"
-      content="Learn about Domits’ mission, vision, and team behind our smart digital solutions for property management, housing, and real estate innovation."
-    />  
-  </Helmet>
-  
   const { language } = useContext(LanguageContext);
   const aboutContent = contentByLanguage[language]?.about;
 
