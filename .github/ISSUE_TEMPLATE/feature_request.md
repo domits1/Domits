@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Propose a new feature or product improvement
+description: Propose a new feature or product improvement
 title: "[Feature]: "
 labels: ["feature", "needs-triage"]
 ---
