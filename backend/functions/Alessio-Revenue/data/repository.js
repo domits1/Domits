@@ -76,12 +76,7 @@ export class Repository {
       ? new Date(
           new Date(endDate).getFullYear(),
           new Date(endDate).getMonth(),
-          new Date(endDate).getDate() + 1,
-          0,
-          0,
-          0,
-          0
-        )
+          new Date(endDate).getDate() + 1, 0, 0, 0, 0)
       : new Date(year + 1, 0, 1, 0, 0, 0, 0);
 
     const propertyRepo = client.getRepository("property");
