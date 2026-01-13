@@ -1,5 +1,5 @@
 import Database from "database";
-import { Property } from "database/models/Property.js";
+import { Property } from "database/models/Property";
 import NotFoundException from "../util/exception/NotFoundException.js";
 
 class PropertyRepository {
