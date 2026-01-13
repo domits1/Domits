@@ -11,10 +11,15 @@ Lambda Function: partner-listingDetails
 Status: **In Development/Active**
 
 
-# System context 
+## System context 
 During the development of the data mapping for Holidu, we need to explain how the process works. 
 
 At the moment, Domits uses the property handler as the core function of its platform. Since the property hanlder does not allow us to take certain information due to security risks, we have decided to make a seperate API for external channels, which allows us to take all the necessary information needed for the holdiu mapping. 
+
+## Workflow 
+[Link](https://developer.holidu.com/docs/general-static-data) to the holidu developer page 
+
+Looking at the [issue](https://github.com/domits1/Domits/issues/2188), it's explained how the data mapping is supposed to be done. In the current scope below u can see what paramets has been added already. 
 
 **Our current scope**
 | Domain                 | Status                            | Notes                                                   |
