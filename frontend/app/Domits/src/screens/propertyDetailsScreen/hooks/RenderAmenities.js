@@ -1,11 +1,11 @@
 import {Text, View} from "react-native";
 import {styles} from "../styles/propertyDetailsStyles";
 import React from "react";
-import mapPropertyAmenities from "./mapPropertyAmenities";
+import amenityUtils from "../../../hooks/AmenityUtils";
 
 const RenderAmenities = ({propertyAmenities, categoriesToSlice}) => {
 
-    const mappedPropertyAmenities = mapPropertyAmenities(propertyAmenities);
+    const mappedPropertyAmenities = amenityUtils.mapPropertyAmenities(propertyAmenities);
 
     const amenitiesByType = mappedPropertyAmenities.reduce((categories, amenity) => {
         if (!categories[amenity.category]) {

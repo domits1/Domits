@@ -22,7 +22,8 @@ const RevPARCard = () => {
         const user = await Auth.currentAuthenticatedUser();
         setCognitoUserId(user.attributes.sub);
       } catch (err) {
-        setError(err.message || "Failed to authenticate user");
+        console.error("Error fetching Cognito User ID:", err);
+        setError(err.message);
       }
     };
     fetchUser();
@@ -69,8 +70,8 @@ const RevPARCard = () => {
 
   const fetchComparisonData = async (userId) => {
     const periods = timeFilter === "weekly" ? getLastWeeks(6) : getLastMonths(6);
-    const results = [];
 
+    const results = [];
     for (const p of periods) {
       try {
         const res = await RevPARService.getRevPARMetrics(
@@ -79,49 +80,35 @@ const RevPARCard = () => {
           p.start.toISOString().split("T")[0],
           p.end.toISOString().split("T")[0]
         );
+
         const value = Math.max(0, parseFloat(res.revPAR) || 0);
         results.push({ label: p.label, revPAR: value });
-      } catch {
+      } catch (err) {
+        console.warn(`Failed to fetch RevPAR for ${p.label}:`, err);
         results.push({ label: p.label, revPAR: 0 });
       }
     }
-
     return results;
   };
 
   const fetchMetrics = async () => {
     if (!cognitoUserId) return;
-
-    if (timeFilter === "custom" && (!startDate || !endDate)) return;
-
     setLoading(true);
     setError(null);
 
     try {
       let summary;
       if (timeFilter === "custom" && startDate && endDate) {
-        summary = await RevPARService.getRevPARMetrics(
-          cognitoUserId,
-          "custom",
-          startDate,
-          endDate
-        );
+        summary = await RevPARService.getRevPARMetrics(cognitoUserId, "custom", startDate, endDate);
       } else {
-        summary = await RevPARService.getRevPARMetrics(
-          cognitoUserId,
-          timeFilter
-        );
+        summary = await RevPARService.getRevPARMetrics(cognitoUserId, timeFilter);
       }
 
       const totalRev =
-        typeof summary.totalRevenue === "object"
-          ? summary.totalRevenue.totalRevenue
-          : summary.totalRevenue;
+        typeof summary.totalRevenue === "object" ? summary.totalRevenue.totalRevenue : summary.totalRevenue;
 
       const available =
-        typeof summary.availableNights === "object"
-          ? summary.availableNights.availableNights
-          : summary.availableNights;
+        typeof summary.availableNights === "object" ? summary.availableNights.availableNights : summary.availableNights;
 
       const revparVal = parseFloat(summary.revPAR) || 0;
 
@@ -132,6 +119,7 @@ const RevPARCard = () => {
       const chart = await fetchComparisonData(cognitoUserId);
       setChartData(chart);
     } catch (err) {
+      console.error("Error fetching RevPAR metrics:", err);
       setError(err.message || "Failed to fetch RevPAR metrics");
       setRevPAR(0);
       setTotalRevenue(0);
@@ -149,10 +137,7 @@ const RevPARCard = () => {
   }, [cognitoUserId, timeFilter, startDate, endDate]);
 
   const allZero = !chartData || chartData.every((item) => item.revPAR === 0);
-
-  const displayData = allZero
-    ? [{ label: "No Data", revPAR: 1 }]
-    : chartData;
+  const displayData = allZero ? [{ label: "No Data", revPAR: 1 }] : chartData;
 
   return (
     <div className="adr-card card-base">
@@ -160,11 +145,7 @@ const RevPARCard = () => {
 
       <div className="time-filter">
         <label>Time Filter:</label>
-        <select
-          className="timeFilter"
-          value={timeFilter}
-          onChange={(e) => setTimeFilter(e.target.value)}
-        >
+        <select className="timeFilter" value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
           <option value="custom">Custom</option>
@@ -175,19 +156,11 @@ const RevPARCard = () => {
         <div className="custom-date-filter">
           <div>
             <label>Start Date:</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div>
             <label>End Date:</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
         </div>
       )}
@@ -200,15 +173,13 @@ const RevPARCard = () => {
         ) : (
           <>
             <p>
-              <strong>Total Revenue:</strong> $
-              {totalRevenue.toLocaleString()}
+              <strong>Total Revenue:</strong> €{totalRevenue.toLocaleString()}
             </p>
             <p>
-              <strong>Available Nights:</strong>{" "}
-              {availableNights.toLocaleString()}
+              <strong>Available Nights:</strong> {availableNights.toLocaleString()}
             </p>
             <p>
-              <strong>RevPAR:</strong> ${revPAR.toLocaleString()}
+              <strong>RevPAR:</strong> €{revPAR.toLocaleString()}
             </p>
           </>
         )}
@@ -221,11 +192,7 @@ const RevPARCard = () => {
               <BarChart data={displayData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                <YAxis
-                  tick={{ fontSize: 12 }}
-                  domain={[0, "dataMax + 20"]}
-                  allowDataOverflow={false}
-                />
+                <YAxis tick={{ fontSize: 12 }} domain={[0, "dataMax + 20"]} allowDataOverflow={false} />
                 <Tooltip />
                 {!allZero && <Legend />}
                 <Bar
@@ -233,17 +200,10 @@ const RevPARCard = () => {
                   fill={allZero ? "#ccc" : "#0d9813"}
                   radius={[6, 6, 0, 0]}
                   barSize={25}
-                  isAnimationActive
+                  isAnimationActive={true}
                 />
                 {allZero && (
-                  <text
-                    x="50%"
-                    y="50%"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="14"
-                    fill="#999"
-                  >
+                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="14" fill="#999">
                     No Data
                   </text>
                 )}

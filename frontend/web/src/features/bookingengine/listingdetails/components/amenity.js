@@ -1,10 +1,10 @@
-const Amenity = ({amenity}) => {
+const Amenity = ({ amenity }) => {
     return (
-        <div className="essential-amenity-item">
-            <div className="icon">{amenity.icon}</div>
-            <p>{amenity.amenity}</p>
+        <div className="amenity">
+            {amenity.icon}
+            <span className="amenity-name">{amenity.amenity}</span>
         </div>
-    )
-}
+    );
+};
 
 export default Amenity;

@@ -10,7 +10,7 @@ function About() {
                 <h2>Why choose for Domits</h2>
             </div>
             <div>
-                <h3>One of the fastest improving travel platforms.</h3>
+                <h3>A fast improving hospitality & travel platform</h3>
             </div>
 
             <div className="underbigtext">
@@ -18,7 +18,7 @@ function About() {
                     Mission: Simplify travel for 1 million people.
                 </p>
                 <p className="aboutText">
-                    Besides our traveltech network and talent, we are one of the fastest improving travel platforms. Although we only launched Domits in late 2023,
+                    Besides our traveltech network and talent, we are one of the fastest improving travel platform. Although we only launched Domits in late 2023,
                     we have been supporting travel companies to grow since 2015.
                 </p>
                 <p className="aboutText">

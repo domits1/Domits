@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
 import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  Tooltip,
   Legend,
 } from "recharts";
 import "./ADRCard.scss";
@@ -16,6 +21,7 @@ const ADRCard = () => {
   const [adr, setAdr] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [bookedNights, setBookedNights] = useState(0);
+  const [chartData, setChartData] = useState([]);
   const [timeFilter, setTimeFilter] = useState("monthly");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -26,51 +32,51 @@ const ADRCard = () => {
     const fetchUser = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
-        setCognitoUserId(user?.attributes?.sub ?? null);
-      } catch {
+        setCognitoUserId(user.attributes.sub);
+      } catch (err) {
+        console.error("Error fetching Cognito User ID:", err);
         setError("Failed to authenticate user");
       }
     };
     fetchUser();
   }, []);
 
-  useEffect(() => {
+  const fetchMetrics = async () => {
     if (!cognitoUserId) return;
-    if (timeFilter === "custom" && (!startDate || !endDate)) return;
+    setLoading(true);
+    setError(null);
 
-    const fetchMetrics = async () => {
-      setLoading(true);
-      setError(null);
+    try {
+      const results = await ADRService.getADRMetrics(
+        cognitoUserId,
+        timeFilter,
+        startDate,
+        endDate
+      );
 
-      try {
-        const results = await ADRService.getADRMetrics(
-          cognitoUserId,
-          timeFilter,
-          startDate,
-          endDate
-        );
+      setAdr(results.adr || 0);
+      setTotalRevenue(results.totalRevenue || 0);
+      setBookedNights(results.bookedNights || 0);
+      setChartData(results.chartData || []);
+    } catch (err) {
+      console.error("Error fetching ADR metrics:", err);
+      setError(err.message || "Failed to fetch ADR metrics");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setAdr(results?.adr ?? 0);
-        setTotalRevenue(results?.totalRevenue ?? 0);
-        setBookedNights(results?.bookedNights ?? 0);
-      } catch (err) {
-        setError(err?.message || "Failed to fetch ADR metrics");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMetrics();
+  useEffect(() => {
+    if (cognitoUserId && (timeFilter !== "custom" || (startDate && endDate))) {
+      fetchMetrics();
+    }
   }, [cognitoUserId, timeFilter, startDate, endDate]);
 
-  const donutData = useMemo(
-    () => [
-      { name: "ADR", value: Number(adr) || 0 },
-      { name: "Total Revenue", value: Number(totalRevenue) || 0 },
-      { name: "Booked Nights", value: Number(bookedNights) || 0 },
-    ],
-    [adr, totalRevenue, bookedNights]
-  );
+  const donutData = [
+    { name: "ADR", value: adr },
+    { name: "Total Revenue", value: totalRevenue },
+    { name: "Booked Nights", value: bookedNights },
+  ];
 
   const allZero = donutData.every((item) => item.value === 0);
   const displayData = allZero ? [{ name: "No Data", value: 1 }] : donutData;
@@ -121,13 +127,13 @@ const ADRCard = () => {
         ) : (
           <>
             <p>
-              <strong>ADR:</strong> €{(Number(adr) || 0).toLocaleString()}
+              <strong>ADR:</strong> €{adr.toLocaleString()}
             </p>
             <p>
-              <strong>Total Revenue:</strong> €{(Number(totalRevenue) || 0).toLocaleString()}
+              <strong>Total Revenue:</strong> €{totalRevenue.toLocaleString()}
             </p>
             <p>
-              <strong>Booked Nights:</strong> {(Number(bookedNights) || 0).toLocaleString()}
+              <strong>Booked Nights:</strong> {bookedNights.toLocaleString()}
             </p>
           </>
         )}
@@ -150,7 +156,7 @@ const ADRCard = () => {
                   label={!allZero}
                   isAnimationActive={true}
                 >
-                  {displayData.map((_, index) => (
+                  {displayData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={allZero ? "#c7c7c7" : COLORS[index % COLORS.length]}
@@ -172,11 +178,7 @@ const ADRCard = () => {
                 )}
 
                 <Tooltip />
-                <Legend
-                  layout="horizontal"
-                  verticalAlign="bottom"
-                  align="center"
-                />
+                <Legend layout="horizontal" verticalAlign="bottom" align="center" />
               </PieChart>
             </ResponsiveContainer>
           </div>
