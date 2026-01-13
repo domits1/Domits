@@ -4,6 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContaine
 import "./ADRCard.scss";
 import { RevPARService } from "../services/RevParService.js";
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 const RevPARCard = ({ refreshKey }) => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [revPAR, setRevPAR] = useState(0);
@@ -54,7 +56,7 @@ const RevPARCard = ({ refreshKey }) => {
     temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
 
     const yearStart = new Date(temp.getFullYear(), 0, 1);
-    return Math.ceil(((temp - yearStart) / 86400000 + 1) / 7);
+    return Math.ceil(((temp - yearStart) / MS_PER_DAY + 1) / 7);
   };
 
   const getLastMonths = (count = 6) => {
@@ -62,12 +64,12 @@ const RevPARCard = ({ refreshKey }) => {
     const now = new Date();
 
     for (let i = count - 1; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const start = new Date(d.getFullYear(), d.getMonth(), 1);
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const start = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+      const end = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
 
       months.push({
-        label: d.toLocaleString("default", { month: "short" }),
+        label: monthDate.toLocaleString("default", { month: "short" }),
         start,
         end,
       });
