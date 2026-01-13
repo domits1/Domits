@@ -6,11 +6,17 @@ const ICAL_RETRIEVE_URL =
 export async function retrieveExternalCalendar(calendarUrl) {
   const token = getAccessToken();
 
+  if (!token) {
+    throw new Error("No access token available");
+  }
+
+  const authHeader = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+
   const res = await fetch(ICAL_RETRIEVE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: token,
+      Authorization: authHeader,
     },
     body: JSON.stringify({ calendarUrl }),
   });
@@ -20,8 +26,7 @@ export async function retrieveExternalCalendar(calendarUrl) {
     try {
       const body = await res.json();
       if (body?.message) message = body.message;
-    } catch {
-    }
+    } catch {}
     throw new Error(message);
   }
 
