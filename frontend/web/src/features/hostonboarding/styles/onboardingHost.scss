@@ -1,4 +1,4 @@
-$domits-guest-green: #0D9813;
+$domits-guest-green: #0d9813;
 $domits-host-blue: #003366;
 
 $border-radius: 8px;
@@ -8,7 +8,6 @@ $white: #fff;
 $off-white: #f0f0f0;
 
 .onboarding-host-div {
-
   /* Headings */
   h2 {
     text-align: center;
@@ -33,18 +32,26 @@ $off-white: #f0f0f0;
   }
 
   /* Main content area styling */
-  .page-body, .container {
+  .page-body,
+  .container {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 2rem;
-    max-width: 800px;
+
+    max-width: 1200px; /* CHANGED: was 800px, needed for 4 columns */
     margin: 0 auto;
     width: 100%;
+
+    min-height: 100vh; /* CHANGED: prevent content ending under footer */
+    padding-bottom: 220px; /* CHANGED: space for footer overlap */
+    box-sizing: border-box; /* CHANGED */
   }
 
   /* Form and content sections */
-  .guest-access, .accommodation-types, .boat-types {
+  .guest-access,
+  .accommodation-types,
+  .boat-types {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -89,7 +96,6 @@ $off-white: #f0f0f0;
 
     margin-bottom: 15px;
     position: relative;
-
   }
 
   .file-image {
@@ -100,8 +106,22 @@ $off-white: #f0f0f0;
 
   .amenity-groups {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 1;
+    grid-template-columns: repeat(4, 1fr); /* CHANGED: was 2 */
     grid-gap: 2rem;
+    width: 100%; /* CHANGED: helps grid use full width */
+  }
+
+  /* CHANGED: responsive for amenities grid */
+  @media (max-width: 1200px) {
+    .amenity-groups {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 900px) {
+    .amenity-groups {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .listing-calendar {
@@ -136,7 +156,6 @@ $off-white: #f0f0f0;
     justify-content: space-between;
     gap: 1.5vw;
   }
-
 
   .check-box {
     display: grid;
@@ -199,7 +218,6 @@ $off-white: #f0f0f0;
     }
   }
 
-
   .form-row {
     justify-content: space-between;
     flex-wrap: nowrap;
@@ -217,7 +235,6 @@ $off-white: #f0f0f0;
     flex-wrap: wrap;
     margin: auto;
   }
-
 
   .loading {
     display: flex;
@@ -295,9 +312,14 @@ $off-white: #f0f0f0;
     margin-top: 40px;
     padding: 0 2rem;
     width: 100%;
-    max-width: 800px;
+
+    max-width: 1200px; /* CHANGED: was 800px */
     margin-left: auto;
     margin-right: auto;
+
+    margin-bottom: 80px; /* CHANGED: extra space above footer */
+    position: relative; /* CHANGED */
+    z-index: 10; /* CHANGED: stay above potential fixed footer */
   }
 
   .onboarding-button {
@@ -316,7 +338,7 @@ $off-white: #f0f0f0;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     min-width: 120px;
-    
+
     &:hover {
       background-color: darken($domits-host-blue, 10%);
       transform: translateY(-2px);
@@ -326,7 +348,7 @@ $off-white: #f0f0f0;
     &.back-button {
       background-color: #6c757d;
       margin-right: auto;
-      
+
       &:hover {
         background-color: darken(#6c757d, 10%);
       }
@@ -474,14 +496,17 @@ $off-white: #f0f0f0;
     align-items: center;
   }
 
-  .accommodation-title, .accommodation-specification {
+  .accommodation-title,
+  .accommodation-specification {
     align-self: center;
   }
 
   .accommodation-specification {
     max-width: 50%;
 
-    .radioBtn-box, .radioBtn-box-vertical, input {
+    .radioBtn-box,
+    .radioBtn-box-vertical,
+    input {
       margin-bottom: 5%;
     }
 
@@ -544,13 +569,13 @@ $off-white: #f0f0f0;
     border-radius: 8px;
     margin-bottom: 1rem;
     transition: border-color 0.3s ease;
-    
+
     &:focus {
       outline: none;
       border-color: $domits-host-blue;
       box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
     }
-    
+
     &::placeholder {
       color: #999;
     }
@@ -624,7 +649,8 @@ $off-white: #f0f0f0;
       grid-template-columns: repeat(2, 1fr);
     }
 
-    .file-image, .accommodation-thumbnail {
+    .file-image,
+    .accommodation-thumbnail {
       width: 30%;
       height: 30%;
     }
@@ -640,7 +666,8 @@ $off-white: #f0f0f0;
     .acco-location {
       flex-direction: column;
     }
-    .location-left, .location-right {
+    .location-left,
+    .location-right {
       width: 70vw !important;
     }
 
@@ -717,7 +744,6 @@ $off-white: #f0f0f0;
     background: $domits-host-blue;
   }
 
-
   .toggle-checkbox:checked + .toggle-switch:before {
     left: 30px;
   }
@@ -727,11 +753,10 @@ $off-white: #f0f0f0;
     visibility: hidden;
   }
 
-
-  .toggle-switch:before, .toggle-switch:after {
+  .toggle-switch:before,
+  .toggle-switch:after {
     content: "";
   }
-
 
   .Check {
     display: flex;
@@ -739,7 +764,6 @@ $off-white: #f0f0f0;
     flex-wrap: wrap;
     align-items: center;
     margin-top: 30px;
-
   }
 
   input[type="time"] {
@@ -751,7 +775,6 @@ $off-white: #f0f0f0;
     margin-left: 10px;
     margin-right: 10px;
   }
-
 
   .verifyCheck {
     width: 60vw;
