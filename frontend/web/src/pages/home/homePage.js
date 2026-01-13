@@ -80,11 +80,13 @@ const contentByLanguage = {
 };
 
 const Homepage = () => {
-  <title>Domits | Smart Property Management & Digital Housing Solutions</title>
-  <meta
-    name="description"
-    content="Domits simplifies property management with smart digital solutions for housing, rentals, and real estate operations. Manage smarter, faster, and better."
-  />
+  <Helmet>
+    <title>Domits | Smart Property Management & Digital Housing Solutions</title>
+    <meta
+      name="description"
+      content="Domits simplifies property management with smart digital solutions for housing, rentals, and real estate operations. Manage smarter, faster, and better."
+    />
+  </Helmet>
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingImages, setLoadingImages] = useState(false);

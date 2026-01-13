@@ -32,11 +32,14 @@ const contentByLanguage = { en, nl, de, es };
 // https://imageresizer.com/image-compressor
 
 function About() {
-  <title>About Domits | Building Smarter Digital Property Solutions</title>
-  <meta
-    name="description"
-    content="Learn about Domits’ mission, vision, and team behind our smart digital solutions for property management, housing, and real estate innovation."
-  />
+  <Helmet>
+    <title>About Domits | Building Smarter Digital Property Solutions</title>
+    <meta
+      name="description"
+      content="Learn about Domits’ mission, vision, and team behind our smart digital solutions for property management, housing, and real estate innovation."
+    />  
+  </Helmet>
+  
   const { language } = useContext(LanguageContext);
   const aboutContent = contentByLanguage[language]?.about;
 
