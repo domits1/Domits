@@ -20,13 +20,8 @@
     gap: 20px;
     margin: 20px 0;
 
-    /* ✅ 2 columns: left overview, right chart */
     grid-template-columns: 360px 1fr;
 
-    /* ✅ Layout:
-       overview | monthly
-       cards    | cards
-    */
     grid-template-areas:
       "overview monthly"
       "cards cards";
@@ -34,7 +29,6 @@
     align-items: start;
   }
 
-  /* ✅ LEFT */
   .hr-revenue-overview {
     grid-area: overview;
     display: grid;
@@ -44,7 +38,6 @@
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-    /* ✅ remove width: 30vh */
     width: 100%;
     max-width: 360px;
 
@@ -57,7 +50,6 @@
     }
   }
 
-  /* ✅ RIGHT (MonthlyComparison container) */
   .hr-monthly-comparison {
     grid-area: monthly;
     background-color: #ffffff;
@@ -65,19 +57,17 @@
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-    /* ✅ remove fixed width/margins */
     width: 100%;
-    min-width: 0; /* important for recharts inside grid */
+    min-width: 0;
   }
 
-  /* ✅ BELOW BOTH */
   .hr-cards {
     grid-area: cards;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
 
-    margin-top: 0; /* since grid gap handles spacing */
+    margin-top: 0;
     border: 1px solid #e0e0e0;
     border-radius: 10px;
     background-color: #ffffff;
@@ -93,7 +83,6 @@
     color: #0d9813;
   }
 
-  /* ✅ Responsive */
   @media (max-width: 1100px) {
     .hr-content {
       grid-template-columns: 1fr;
