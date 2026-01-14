@@ -15,13 +15,6 @@ export const toHoliduFull = (fullPropertyPayload) => {
       street: fullPropertyPayload.location?.street || null,
       zipCode: fullPropertyPayload.location?.zipCode || null,
     },
-    guestCapacityRules: {
-      //Function doesn't exist yet
-      standardCapacity: fullPropertyPayload.generalDetails?.find((d) => d.detail === "Guests")?.value ?? null,
-      adultsOnly: false,
-      additionalChildren: null,
-      maxBabies: null,
-    },
     numberOfBedrooms: fullPropertyPayload.generalDetails?.find((d) => d.detail === "Bedrooms")?.value ?? null,
     numberOfBathrooms: fullPropertyPayload.generalDetails?.find((d) => d.detail === "Bathrooms")?.value ?? null,
     apartmentType: fullPropertyPayload.propertyType?.property_type || null,
@@ -64,7 +57,7 @@ export const toHoliduFull = (fullPropertyPayload) => {
       position: index + 1,
     })) ?? [];
 
-  const facilities = // amenities are not stored properly for external channels. This needs a refactoring.
+  const facilities =
     fullPropertyPayload.amenities?.map((a) => ({
       type: a.amenityId,
       maxAmount: null,
