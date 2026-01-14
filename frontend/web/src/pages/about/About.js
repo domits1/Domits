@@ -39,10 +39,11 @@ function About() {
   const founderMembers = [
     { name: "Stefan", src: stefan, role: aboutContent.crew.founder },
     { name: "Robert", src: Robert, role: aboutContent.crew.engineeringManager },
-    { name: "Tim H.", src: tim, role: aboutContent.crew.productOwner },
+    
   ];
 
   const developerMembers = [
+    { name: "Tim H.", src: tim, role: aboutContent.crew.developer },
     { name: "Ales", src: Ales, role: aboutContent.crew.developer },
     { name: "Bekir", src: Bekir, role: aboutContent.crew.developer },
     { name: "Chant", src: Chant, role: aboutContent.crew.developer },

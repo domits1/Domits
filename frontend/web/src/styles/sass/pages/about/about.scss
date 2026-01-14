@@ -187,7 +187,6 @@ $white-color: white;
       font-size: 1.8em;
     }
 
-    /* ===================== NEW: group separation ===================== */
     .about__group {
       margin-top: 28px;
       padding: 18px 16px;
@@ -210,7 +209,6 @@ $white-color: white;
       }
     }
 
-    /* ===================== UPDATED: team layout (responsive grid) ===================== */
     .about__team {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -256,8 +254,16 @@ $white-color: white;
         }
       }
     }
+    .about__team--founder {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      justify-items: center;
+      
 
-    /* ===================== Footer (moved out of .about__team) ===================== */
+      @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+      }
+    }
+
     .about__footer {
       text-align: left;
       display: flex;
