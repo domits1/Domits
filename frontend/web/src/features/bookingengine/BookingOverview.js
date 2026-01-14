@@ -81,7 +81,9 @@ const BookingOverview = () => {
         const authUser = await Auth.currentAuthenticatedUser();
         setIsAuthenticated(true);
 
-        const name = authUser.username;
+        const attrs = authUser.attributes || {};
+        const name = attrs.username || "Guest";
+
         setUserName(name);
       } catch {
         setIsAuthenticated(false);
