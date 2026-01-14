@@ -112,8 +112,6 @@ const BookingOverview = () => {
       },
     };
 
-    console.log("Creating booking with event:", event);
-
     try {
       const authToken = await getAccessToken();
       if (!authToken) {
