@@ -81,7 +81,6 @@ const BookingOverview = () => {
         const authUser = await Auth.currentAuthenticatedUser();
         setIsAuthenticated(true);
 
-        // Get user name from Cognito attributes (same as GuestDashboard)
         const attrs = authUser.attributes || {};
         const name = attrs.given_name ?? attrs.name ?? "";
         setUserName(name);
