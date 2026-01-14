@@ -37,27 +37,27 @@ function Pages({ onNavigate }) {
   }, []);
 
   useEffect(() => {
-    if (open) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prev;
-      };
-    }
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [open]);
 
   return (
     <>
+      {/* Toggle button: ☰ (closed) / × (open) */}
       <button
         ref={btnRef}
         type="button"
         className="hamburger-btn"
-        aria-label="Open menu"
+        aria-label={open ? "Close menu" : "Open menu"}
         aria-controls="guest-menu"
         aria-expanded={open}
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((v) => !v)}
       >
-        <span aria-hidden="true">☰</span>
+        <span aria-hidden="true">{open ? "×" : "☰"}</span>
       </button>
 
       <div
@@ -71,17 +71,9 @@ function Pages({ onNavigate }) {
         aria-label="Guest navigation"
         id="guest-menu"
       >
-        <button
-          type="button"
-          className="hamburger-btn"
-          aria-label="Close menu"
-          onClick={() => setOpen(false)}
-        >
-          ×
-        </button>
-
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
+
           <ul className="menu-list">
             {NAV.map((item) => (
               <li key={item.key}>

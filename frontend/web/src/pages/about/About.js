@@ -152,7 +152,7 @@ function About() {
 
         {/* ===================== Founder Section ===================== */}
         <div className="about__group">
-          <h2 className="about__group-title">{aboutContent.crew.founder}</h2>
+          <h2 className="about__group-title">Management</h2>
 
           <div className="about__team about__team--founder">
             {founderMembers
@@ -177,7 +177,7 @@ function About() {
 
         {/* ===================== Developer Section ===================== */}
         <div className="about__group">
-          <h2 className="about__group-title">{aboutContent.crew.developer}</h2>
+          <h2 className="about__group-title">Engineering</h2>
 
           <div className="about__team about__team--developer">
             {developerMembers.map((member) => (
@@ -199,7 +199,7 @@ function About() {
 
         {/* ===================== Marketing Section ===================== */}
         <div className="about__group">
-          <h2 className="about__group-title">{aboutContent.crew.marketing}</h2>
+          <h2 className="about__group-title">Marketing, Contracting, Partnerships, Support</h2>
 
           <div className="about__team about__team--marketing">
             {marketingMembers.map((member) => (
