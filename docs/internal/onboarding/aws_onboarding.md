@@ -1,4 +1,4 @@
-# ☁️ AWS Onboarding Guide (Invite-Based Access)
+# AWS Onboarding Guide (Invite-Based Access)
 
 This guide explains how to access an existing AWS account after receiving an invite link.
 
