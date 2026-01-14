@@ -45,14 +45,18 @@ function AddressInputView() {
           <OnboardingButton routePath={`/hostonboarding/${accommodationType}`} btnText="Go back" />
           <OnboardingButton
             onClick={() => {
-              const houseNumberAndExtension = location.houseNumber.split(" ");
-              if (houseNumberAndExtension > 1) {
+              const houseNumberAndExtension = location?.houseNumber
+                                              ? location.houseNumber.split(" ")
+                                              : [];
+
+              if (houseNumberAndExtension.length > 1) {
                 location.houseNumber = houseNumberAndExtension[0];
-                location.houseNumberExtension = houseNumberAndExtension[1];
+                location.houseNumberExtension = houseNumberAndExtension.slice(1).join(" ");
               } else {
-                location.houseNumber = houseNumberAndExtension[0];
+                location.houseNumber = houseNumberAndExtension[0] || "";
                 location.houseNumberExtension = "";
               }
+
               builder.addLocation({
                 country: location.country,
                 city: location.city,
