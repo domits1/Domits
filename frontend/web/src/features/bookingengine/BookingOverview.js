@@ -15,7 +15,7 @@ import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
 import publicKeys from "../../utils/const/publicKeys.json";
 
-const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
+const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.TEST);
 
 const BookingOverview = () => {
   const navigate = useNavigate();
@@ -82,7 +82,7 @@ const BookingOverview = () => {
         setIsAuthenticated(true);
 
         const attrs = authUser.attributes || {};
-        const name = attrs.username || "Guest";
+        const name = attrs.given_name ?? attrs.name ?? "";
 
         setUserName(name);
       } catch {
@@ -111,6 +111,8 @@ const BookingOverview = () => {
         guestName: userName,
       },
     };
+
+    console.log("Creating booking with event:", event);
 
     try {
       const authToken = await getAccessToken();
