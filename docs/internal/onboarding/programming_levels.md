@@ -38,11 +38,11 @@ Resources
 ## Short cuts of Visual studio Code IDE 
 ### Windows
 
-<img src="image.png" alt ="cheat sheet" width =800 height=600/>
+<img src="../../images/vscode-keyboard-shortcuts-windows.png" alt ="cheat sheet" width =800 height=600/>
 
 ### MAC
 
-<img src="image-1.png" alt ="cheat sheet" width =800 height=600/>
+<img src="../../images/vscode-keyboard-shortcuts-macos.png" alt ="cheat sheet" width =800 height=600/>
 
 ## level 2
 ### Technical Skills (links to proof skills)

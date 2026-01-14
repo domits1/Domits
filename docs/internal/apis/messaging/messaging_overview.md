@@ -6,6 +6,8 @@ Domits provides real-time messaging between hosts and guests with automated syst
 - **Clients**: Web (React) and Mobile (React Native) UIs share a similar flow.
 - **Automation**: Booking-triggered templates (check-in, Wi‑Fi, check-out, booking confirmation).
 
+See also: `unified_messaging_layer.md`.
+
 ### Architecture
 - **Frontend (Web)**: `ChatScreen.jsx`, hooks for send/fetch, `WebSocketContext` for live updates.
 - **Frontend (Mobile)**: `websocket.js`, `WebSocketProvider`, `useSendMessage`, `useFetchMessages`.
