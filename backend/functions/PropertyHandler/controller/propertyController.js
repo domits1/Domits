@@ -3,6 +3,7 @@ import { PropertyService } from "../business/service/propertyService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { toHoliduFull } from "../../../datamapping/holiduMapper.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
@@ -250,11 +251,17 @@ export class PropertyController {
             const userInfo = await this.authManager.getUserInfoFromId(hostId);
             property.property.username = userInfo.userName;
             property.property.familyname = userInfo.familyName;
+            const format = event.queryStringParameters.format;
+
+            let responsePayload = property;
+            if (format === 'holidu') {
+                responsePayload = toHoliduFull(property);
+            } 
 
             return {
                 statusCode: 200,
                 headers: responseHeaders,
-                body: JSON.stringify(property)
+                body: JSON.stringify(responsePayload)
             };
         } catch (error) {
             console.error(error);
