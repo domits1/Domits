@@ -2,10 +2,18 @@ import { Service } from "../business/service/service.js";
 import { AuthManager } from "../auth/authManager.js";
 import { ok, err, parseJson } from "../util/http.js";
 
-export class Controller {
-  service;
-  authManager;
+const getAuthToken = (event) => {
+  return (
+    event?.headers?.authorization ||
+    event?.headers?.Authorization ||
+    event?.multiValueHeaders?.authorization?.[0] ||
+    event?.multiValueHeaders?.Authorization?.[0] ||
+    event?.authorizationToken ||
+    null
+  );
+};
 
+export class Controller {
   constructor() {
     this.service = new Service();
     this.authManager = new AuthManager();
@@ -13,15 +21,7 @@ export class Controller {
 
   async retrieve(event) {
     try {
-      const token =
-        event.headers?.Authorization ||
-        event.headers?.authorization ||
-        event?.multiValueHeaders?.Authorization?.[0] ||
-        event?.multiValueHeaders?.authorization?.[0] ||
-        event?.params?.header?.Authorization ||
-        event?.params?.header?.authorization ||
-        event.authorizationToken;
-
+      const token = getAuthToken(event);
       await this.authManager.userIsAuthorized(token);
 
       const body = parseJson(event);

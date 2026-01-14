@@ -1,8 +1,9 @@
 const CRLF = "\r\n";
 
-const escapeText = (v) => {
-  if (v === null || v === undefined) return "";
-  return String(v)
+const escapeText = (value) => {
+  if (value === null || value === undefined) return "";
+
+  return String(value)
     .replace(/\\/g, "\\\\")
     .replace(/\n/g, "\\n")
     .replace(/\r/g, "")
@@ -11,33 +12,33 @@ const escapeText = (v) => {
 };
 
 const foldLine = (line) => {
-  const max = 70;
-  if (line.length <= max) return line;
+  const maxLineLength = 70;
+  if (line.length <= maxLineLength) return line;
 
-  let out = "";
-  let i = 0;
+  let foldedLine = "";
+  let offset = 0;
 
-  while (i < line.length) {
-    const chunk = line.slice(i, i + max);
-    out += (i === 0 ? chunk : CRLF + " " + chunk);
-    i += max;
+  while (offset < line.length) {
+    const chunk = line.slice(offset, offset + maxLineLength);
+    foldedLine += offset === 0 ? chunk : CRLF + " " + chunk;
+    offset += maxLineLength;
   }
 
-  return out;
+  return foldedLine;
 };
 
-const toIcsDateTimeUtc = (date) => {
-  const d = date instanceof Date ? date : new Date(date);
-  if (isNaN(d.getTime())) return "";
+const toIcsDateTimeUtc = (input) => {
+  const date = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(date.getTime())) return "";
 
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const mm = String(d.getUTCMinutes()).padStart(2, "0");
-  const ss = String(d.getUTCSeconds()).padStart(2, "0");
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0");
 
-  return `${y}${m}${day}T${hh}${mm}${ss}Z`;
+  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
 };
 
 export const buildIcs = ({
@@ -54,19 +55,19 @@ export const buildIcs = ({
   lines.push("CALSCALE:GREGORIAN");
   lines.push("METHOD:PUBLISH");
 
-  for (const e of events) {
-    const uid = e.uid || e.UID || e.id || `${Math.random()}@domits`;
-    const dtstamp = e.dtstamp || e.Dtstamp || new Date().toISOString();
-    const dtstart = e.dtstart || e.Dtstart;
-    const dtend = e.dtend || e.Dtend;
+  for (const event of events) {
+    const uid = event.uid || event.UID || event.id || `${Math.random()}@domits`;
+    const dtstamp = event.dtstamp || event.Dtstamp || new Date().toISOString();
+    const dtstart = event.dtstart || event.Dtstart;
+    const dtend = event.dtend || event.Dtend;
 
-    const summary = e.summary || e.Summary || "Blocked";
-    const description = e.description || e.Description || "";
-    const location = e.location || e.Location || "";
-    const status = e.status || e.Status || "";
+    const summary = event.summary || event.Summary || "Blocked";
+    const description = event.description || event.Description || "";
+    const location = event.location || event.Location || "";
+    const status = event.status || event.Status || "";
 
     const dtstartIcs = toIcsDateTimeUtc(dtstart);
-    if (!dtstartIcs) continue; // zonder DTSTART is een event useless
+    if (!dtstartIcs) continue;
 
     const dtendIcs = dtend ? toIcsDateTimeUtc(dtend) : "";
 
@@ -83,6 +84,5 @@ export const buildIcs = ({
   }
 
   lines.push("END:VCALENDAR");
-
   return lines.join(CRLF) + CRLF;
 };
