@@ -54,13 +54,15 @@ async getFullLocation(property) {
     return await this.propertyLocationRepository.getFullPropertyLocationById(property);
   }
 ```
-The base of the mapping is already made by us, so this only needs to be expanded. In order to do this, there will be a refactor needed inside the database. It's the best to combine this with the [database refactor](https://github.com/domits1/Domits/issues/2446) that is going to take place on february 2026 with the other interns you are working with. **Note** that the changes that needs to be made for the data mapping for holidu is not included in this issue and still needs to be made which is proably your first step after reviewing what has been done so far by us.  
+The base of the mapping is already made by us, so this only needs to be expanded. It's located in a branch we made called ``feature/2188-property-api``. There is **one problem** in this branch which we were not able to fix due to our time limit. When merging to acceptance, the file couldn't be recognized as Lambda function, since it is in fact not a lambda function (and it was placed inside the lambda folders with all the other functions). We put it outside the lambda function folder but we had problems in the cloud watch stating it cannot find the module of data mapping because it was placed outside of the functions. 
 
-The file that has been used for data mapping is: 
+**To fix this problem, it will probably need to be implemented as new method (not as function) inside the lambda functions folder.*
 
-```
+As matters are standing, we left this at how it was because we didn't want to change too many things for u guys since it's better to pick it up at this stage of your internship. 
 
-```
+After this, there will also be a refactor needed inside the database. It's the best to combine this with the [database refactor](https://github.com/domits1/Domits/issues/2446) that is going to take place on february 2026 with the other interns you are working with. **Note** that the changes that needs to be made for the data mapping for holidu is not included in this issue and still needs to be created, which is proably your first step after reviewing what has been done so far by us.  
+
+You might be overwhelmed by things I explained here, but don't worry, it's not as hard as you think. In case u don't know what to do, Chat provides a decent roadmap for u guys in order to achieve what you desire. 
 
 # Security & Authorization (generated)
 Currently **no authentication** is enforced.
