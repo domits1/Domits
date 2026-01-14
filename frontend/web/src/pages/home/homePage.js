@@ -71,6 +71,10 @@ import de from "../../content/de.json";
 import es from "../../content/es.json";
 import villaBackground from "../../images/villaHomepage.jpg";
 
+export const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com";
+export const specificKey = "711e6be3-005b-4f13-b2e2-4b9fcf0efafd/01472484-844a-4eaf-8eed-6a05fb3f4cf7";
+
+
 const contentByLanguage = {
   en,
   nl,
@@ -494,6 +498,8 @@ const Homepage = () => {
             <div className="domits-boatText">
               <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
 
+              <img className="bookingDetailsImage" src={`${S3_URL}/images/${specificKey}`} alt="Accommodation" />
+
               <div className="domits-trendingContainer">
                 {[
                   {
@@ -612,7 +618,7 @@ const Homepage = () => {
             {countries.map((country, index) => (
               <div className="country-card" key={index}>
                 <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy"/>
+                  <img src={country.img} alt={country.name} loading="lazy" />
                 </Link>
                 <h3>{country.name}</h3>
                 <p>{country.description}</p>
@@ -623,7 +629,7 @@ const Homepage = () => {
             {smallCountries.map((country, index) => (
               <div className="country-card small-country-card" key={index}>
                 <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy"/>
+                  <img src={country.img} alt={country.name} loading="lazy" />
                 </Link>
                 <h3>{country.name}</h3>
                 <p>{country.description}</p>
@@ -635,7 +641,7 @@ const Homepage = () => {
             {asiaCountries.map((country, index) => (
               <div className="country-card asia-country-card" key={index}>
                 <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy"/>
+                  <img src={country.img} alt={country.name} loading="lazy" />
                 </Link>
                 <h3>{country.name}</h3>
                 <p>{country.description}</p>
