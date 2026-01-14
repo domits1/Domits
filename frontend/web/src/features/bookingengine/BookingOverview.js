@@ -23,6 +23,7 @@ const BookingOverview = () => {
 
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [cognitoUserEmail, setCognitoUserEmail] = useState(null);
+  const [userName, setUserName] = useState(null);
   const [showCheckout, setShowCheckout] = useState(null);
   const [hideButton, setHideButton] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -77,8 +78,12 @@ const BookingOverview = () => {
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
-        await Auth.currentAuthenticatedUser();
+        const authUser = await Auth.currentAuthenticatedUser();
         setIsAuthenticated(true);
+
+        const attrs = authUser.attributes || {};
+        const name = attrs.given_name ?? attrs.name ?? "";
+        setUserName(name);
       } catch {
         setIsAuthenticated(false);
       }
@@ -102,6 +107,7 @@ const BookingOverview = () => {
         latePayment: false,
         arrivalDate: parseFloat(bookingDetails.checkInDate),
         departureDate: parseFloat(bookingDetails.checkOutDate),
+        guestName: userName,
       },
     };
 
