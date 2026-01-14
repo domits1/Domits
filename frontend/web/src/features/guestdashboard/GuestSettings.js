@@ -5,6 +5,9 @@ import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
 // import './PagesDropdown.css';
 import { confirmEmailChange } from "./emailSettings";
+import { Auth } from "aws-amplify";
+import QRCode from "react-qr-code";
+import styles from "../hostdashboard/HostDashboard.module.scss";
 
 
 const GuestDashboard = () => {
@@ -458,6 +461,8 @@ const GuestDashboard = () => {
                                 <img src={editIcon} alt="Edit Phone number" className="guest-edit-icon"/>
                             </div>
                         </div>
+
+                        
                         {/* Voorlopig gecommend samen met Stefan aangezien we nu nog geen need hebben (misschien later) */}
                         {/*<div className="InfoBox">*/}
                         {/*    <span>Address:</span>*/}
@@ -483,6 +488,7 @@ const GuestDashboard = () => {
                         {/*    </div>*/}
                         {/*</div>*/}
 
+                            
                     </div>
                 </div>
             </div>
@@ -491,3 +497,5 @@ const GuestDashboard = () => {
 }
 
 export default GuestDashboard;
+
+
