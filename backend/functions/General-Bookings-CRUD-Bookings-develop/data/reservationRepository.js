@@ -30,7 +30,7 @@ class ReservationRepository {
         hostid: hostId,
         hostname: "WIP-Host",
         guests: requestBody.general.guests.toString(),
-        guestname: "WIP-Guest",
+        guestname: guestName,
         latepayment: false,
         paymentid: "FAILED: ",
         tempPaymentId,
