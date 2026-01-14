@@ -3,7 +3,7 @@ import { PropertyService } from "../business/service/propertyService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { toHoliduFull } from "../../datamapping/holiduMapper.js";
+import { toHoliduFull } from "../../../datamapping/holiduMapper.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
