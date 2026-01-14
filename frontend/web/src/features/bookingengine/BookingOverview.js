@@ -111,7 +111,6 @@ const BookingOverview = () => {
         guestName: userName,
       },
     };
-    console.log(event);
 
     try {
       const authToken = await getAccessToken();
