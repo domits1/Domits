@@ -1,7 +1,43 @@
 import { getAccessToken } from "../../../services/getAccessToken";
 
+function toTimeString(value) {
+  if (typeof value === "number") {
+    return String(value).padStart(2, "0") + ":00";
+  }
+
+  if (typeof value === "string" && /^\d{1,2}$/.test(value)) {
+    return value.padStart(2, "0") + ":00";
+  }
+
+  return value; // already HH:MM
+}
+
 export async function submitAccommodation(navigate, builder) {
   const API_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
+
+  const payload = builder.build();
+
+  // Normalize check-in / check-out times
+  if (payload.propertyCheckIn) {
+    payload.propertyCheckIn = {
+      ...payload.propertyCheckIn,
+      checkIn: {
+        from: toTimeString(payload.propertyCheckIn.checkIn.from),
+        till: toTimeString(payload.propertyCheckIn.checkIn.till),
+      },
+      checkOut: {
+        from: toTimeString(payload.propertyCheckIn.checkOut.from),
+        till: toTimeString(payload.propertyCheckIn.checkOut.till),
+      },
+    };
+  }
+
+  // ✅ SAFE INITIALIZATION
+  payload.propertyTestStatus = {
+    ...(payload.propertyTestStatus || {}),
+    isTest: true,
+  };
+
 
   try {
     const res = await fetch(API_URL, {
@@ -10,7 +46,7 @@ export async function submitAccommodation(navigate, builder) {
         Authorization: getAccessToken(),
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(builder.build())
+      body: JSON.stringify(payload)
     });
 
     if (!res.ok) {

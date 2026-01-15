@@ -11,6 +11,7 @@ function PropertyCapacityView() {
   const builder = useBuilder();
   const { type: accommodationType } = useParams();
 
+
   const accommodationCapacity = useFormStoreHostOnboarding((state) => state.accommodationDetails.accommodationCapacity);
   const setAccommodationCapacity = useFormStoreHostOnboarding((state) => state.setAccommodationCapacity);
 
