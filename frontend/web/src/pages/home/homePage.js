@@ -61,8 +61,6 @@ import adventure from "./Images/adventure.webp";
 import nature from "./Images/nature.webp";
 import culture from "./Images/culture.webp";
 import culinary from "./Images/culinary.webp";
-import waterman from "./Images/waterman.webp";
-import sleutelvrouw from "./Images/sleutelvrouw.webp";
 import { FetchAllPropertyTypes, FetchPropertyType } from "./services/fetchProperties";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -72,8 +70,6 @@ import es from "../../content/es.json";
 import villaBackground from "../../images/villaHomepage.jpg";
 
 export const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com";
-export const specificKey = "711e6be3-005b-4f13-b2e2-4b9fcf0efafd/01472484-844a-4eaf-8eed-6a05fb3f4cf7";
-
 
 const contentByLanguage = {
   en,
@@ -141,8 +137,8 @@ const Homepage = () => {
   };
 
   const hostImages = [
-    { src: waterman, alt: "Waterman" },
-    { src: sleutelvrouw, alt: "Sleutelvrouw" },
+    { src: `${S3_URL}/images/Images/waterman.webp`, alt: "Waterman" },
+    { src: `${S3_URL}/images/Images/sleutelvrouw.webp`, alt: "Sleutelvrouw" },
   ];
 
   const countries = [
@@ -497,8 +493,6 @@ const Homepage = () => {
           <div className="domits-boatContainer">
             <div className="domits-boatText">
               <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
-
-              <img className="bookingDetailsImage" src={`${S3_URL}/images/${specificKey}`} alt="Accommodation" />
 
               <div className="domits-trendingContainer">
                 {[
