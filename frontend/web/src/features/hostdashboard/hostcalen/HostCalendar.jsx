@@ -1,16 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./HostCalendar.scss";
-
 import Toolbar from "./components/Toolbar";
 import Legend from "./components/Legend";
 import CalendarGrid from "./components/CalendarGrid";
 import StatsPanel from "./components/StatsPanel";
-
 import AvailabilityCard from "./components/Sidebar/AvailabilityCard";
 import PricingCard from "./components/Sidebar/PricingCard";
 import ExternalCalendarsCard from "./components/Sidebar/ExternalCalendarsCard";
-
 import { getMonthMatrix, startOfMonthUTC, addMonthsUTC, subMonthsUTC } from "./utils/date";
+import { getCognitoUserId } from "../../../services/getAccessToken";
+import { loadExternalBlockedDates, saveExternalBlockedDates } from "../../../utils/externalCalendarStorage";
 
 const initialBlocks = {
   booked: new Set(),
@@ -21,31 +20,7 @@ const initialBlocks = {
 
 const initialPrices = {};
 
-const EXTERNAL_BLOCKED_STORAGE_KEY = "domits:externalBlockedKeys:v1";
-
 const isYmd = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
-
-const loadExternalBlocked = () => {
-  try {
-    const raw = window.sessionStorage.getItem(EXTERNAL_BLOCKED_STORAGE_KEY);
-    if (!raw) return new Set();
-    const parsed = JSON.parse(raw);
-    const arr = Array.isArray(parsed?.keys) ? parsed.keys : Array.isArray(parsed) ? parsed : [];
-    return new Set(arr.filter(isYmd));
-  } catch {
-    return new Set();
-  }
-};
-
-const saveExternalBlocked = (set) => {
-  try {
-    const keys = Array.from(set || []).filter(isYmd);
-    window.sessionStorage.setItem(
-      EXTERNAL_BLOCKED_STORAGE_KEY,
-      JSON.stringify({ v: 1, savedAt: new Date().toISOString(), keys })
-    );
-  } catch {}
-};
 
 export default function HostCalendar() {
   const [view, setView] = useState("month");
@@ -54,7 +29,8 @@ export default function HostCalendar() {
   const [prices, setPrices] = useState(initialPrices);
   const [tempPrice, setTempPrice] = useState("");
 
-  const [externalBlocked, setExternalBlocked] = useState(() => loadExternalBlocked());
+  const [userId, setUserId] = useState(null);
+  const [externalBlocked, setExternalBlocked] = useState(new Set());
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
 
@@ -63,33 +39,73 @@ export default function HostCalendar() {
   const today = () => setCursor(startOfMonthUTC(new Date()));
 
   useEffect(() => {
+    setUserId(getCognitoUserId());
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    const loaded = loadExternalBlockedDates({ userId, propertyId: null });
+    setExternalBlocked(loaded);
+  }, [userId]);
+
+  useEffect(() => {
     if (!externalBlocked?.size) return;
     setSelections((prev) => {
-      const nextSel = { ...prev, blocked: new Set(prev.blocked) };
+      const nextSel = {
+        booked: new Set(prev.booked),
+        available: new Set(prev.available),
+        blocked: new Set(prev.blocked),
+        maintenance: new Set(prev.maintenance),
+      };
       externalBlocked.forEach((k) => nextSel.blocked.add(k));
+      externalBlocked.forEach((k) => {
+        nextSel.available.delete(k);
+        nextSel.booked.delete(k);
+        nextSel.maintenance.delete(k);
+      });
       return nextSel;
     });
   }, [externalBlocked]);
 
+  const isExternallyBlocked = (key) => externalBlocked?.has(key);
+
   const toggleDayIn = (bucket, key) => {
     setSelections((prev) => {
-      if (externalBlocked?.has(key)) {
-        const nextSel = { ...prev, blocked: new Set(prev.blocked) };
+      if (isExternallyBlocked(key)) {
+        const nextSel = {
+          booked: new Set(prev.booked),
+          available: new Set(prev.available),
+          blocked: new Set(prev.blocked),
+          maintenance: new Set(prev.maintenance),
+        };
         nextSel.blocked.add(key);
+        nextSel.available.delete(key);
+        nextSel.booked.delete(key);
+        nextSel.maintenance.delete(key);
         return nextSel;
       }
 
-      const nextSel = { ...prev, [bucket]: new Set(prev[bucket]) };
+      const nextSel = {
+        booked: new Set(prev.booked),
+        available: new Set(prev.available),
+        blocked: new Set(prev.blocked),
+        maintenance: new Set(prev.maintenance),
+      };
+
       if (nextSel[bucket].has(key)) nextSel[bucket].delete(key);
       else nextSel[bucket].add(key);
 
-      Object.keys(prev).forEach((b) => {
-        if (b !== bucket) nextSel[b] = new Set([...nextSel[b]].filter((k) => k !== key));
+      Object.keys(nextSel).forEach((b) => {
+        if (b !== bucket) nextSel[b].delete(key);
       });
 
       if (externalBlocked?.size) {
-        nextSel.blocked = new Set(nextSel.blocked);
         externalBlocked.forEach((k) => nextSel.blocked.add(k));
+        externalBlocked.forEach((k) => {
+          nextSel.available.delete(k);
+          nextSel.booked.delete(k);
+          nextSel.maintenance.delete(k);
+        });
       }
 
       return nextSel;
@@ -117,11 +133,51 @@ export default function HostCalendar() {
     const cleaned = new Set(Array.from(set).filter(isYmd));
 
     setExternalBlocked(cleaned);
-    saveExternalBlocked(cleaned);
+
+    if (userId) {
+      saveExternalBlockedDates({ userId, propertyId: null, blockedSet: cleaned });
+    }
 
     setSelections((prev) => {
-      const nextSel = { ...prev, blocked: new Set(prev.blocked) };
+      const nextSel = {
+        booked: new Set(prev.booked),
+        available: new Set(prev.available),
+        blocked: new Set(prev.blocked),
+        maintenance: new Set(prev.maintenance),
+      };
+
       cleaned.forEach((k) => nextSel.blocked.add(k));
+      cleaned.forEach((k) => {
+        nextSel.available.delete(k);
+        nextSel.booked.delete(k);
+        nextSel.maintenance.delete(k);
+      });
+
+      return nextSel;
+    });
+  };
+
+  const handleDragSelect = (keys) => {
+    const arr = Array.isArray(keys) ? keys : [];
+    const filtered = arr.filter((k) => isYmd(k) && !isExternallyBlocked(k));
+
+    setSelections((prev) => {
+      const nextSel = {
+        booked: new Set(prev.booked),
+        available: new Set(filtered),
+        blocked: new Set(prev.blocked),
+        maintenance: new Set(prev.maintenance),
+      };
+
+      if (externalBlocked?.size) {
+        externalBlocked.forEach((k) => nextSel.blocked.add(k));
+        externalBlocked.forEach((k) => {
+          nextSel.available.delete(k);
+          nextSel.booked.delete(k);
+          nextSel.maintenance.delete(k);
+        });
+      }
+
       return nextSel;
     });
   };
@@ -151,7 +207,7 @@ export default function HostCalendar() {
         selections={selections}
         prices={prices}
         onToggle={(bucket, key) => toggleDayIn(bucket, key)}
-        onDragSelect={(keys) => setSelections((prev) => ({ ...prev, available: new Set(keys) }))}
+        onDragSelect={handleDragSelect}
       />
 
       <StatsPanel selections={selections} />

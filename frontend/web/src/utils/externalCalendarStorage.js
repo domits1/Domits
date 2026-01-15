@@ -1,7 +1,10 @@
-const STORAGE_PREFIX = "domits:externalBlockedDates:v1";
+const STORAGE_PREFIX = "domits:externalBlockedKeys:v1";
 
-const makeKey = ({ userId, propertyId }) =>
-  `${STORAGE_PREFIX}:${String(userId)}:${String(propertyId)}`;
+const makeKey = ({ userId, propertyId }) => {
+  const uid = String(userId || "").trim();
+  const pid = propertyId ? String(propertyId).trim() : "global";
+  return `${STORAGE_PREFIX}:${uid}:${pid}`;
+};
 
 const normalizeYmd = (v) => {
   const s = String(v || "").trim();
@@ -10,14 +13,14 @@ const normalizeYmd = (v) => {
 
 const getStorage = () => {
   try {
-    return window.sessionStorage;
+    return window.localStorage;
   } catch {
     return null;
   }
 };
 
 export function saveExternalBlockedDates({ userId, propertyId, blockedSet }) {
-  if (!userId || !propertyId) return;
+  if (!userId) return;
 
   const storage = getStorage();
   if (!storage) return;
@@ -40,7 +43,7 @@ export function saveExternalBlockedDates({ userId, propertyId, blockedSet }) {
 }
 
 export function loadExternalBlockedDates({ userId, propertyId }) {
-  if (!userId || !propertyId) return new Set();
+  if (!userId) return new Set();
 
   const storage = getStorage();
   if (!storage) return new Set();
@@ -66,7 +69,7 @@ export function loadExternalBlockedDates({ userId, propertyId }) {
 }
 
 export function clearExternalBlockedDates({ userId, propertyId }) {
-  if (!userId || !propertyId) return;
+  if (!userId) return;
 
   const storage = getStorage();
   if (!storage) return;
