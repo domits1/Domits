@@ -1,7 +1,7 @@
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
-import { Property_Availability } from "database/models/Property_Availability";
+import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 
 export class Repository {
   async getBookedNights(cognitoUserId, startDate = null, endDate = null) {
@@ -53,6 +53,17 @@ export class Repository {
     }));
   }
 
+  async getExistingStripeRevenueAccount(cognitoUserId) {
+    const client = await Database.getInstance();
+    const record = await client
+      .getRepository(Stripe_Connected_Accounts)
+      .createQueryBuilder("stripe_accounts")
+      .where("stripe_accounts.user_id = :user_id", { user_id: cognitoUserId })
+      .getOne();
+
+    return record;
+  }
+
   async getAvailableNights(cognitoUserId, startDate = null, endDate = null) {
     const client = await Database.getInstance();
 
@@ -65,8 +76,7 @@ export class Repository {
       ? new Date(
           new Date(endDate).getFullYear(),
           new Date(endDate).getMonth(),
-          new Date(endDate).getDate() + 1, 0, 0, 0, 0
-        )
+          new Date(endDate).getDate() + 1, 0, 0, 0, 0)
       : new Date(year + 1, 0, 1, 0, 0, 0, 0);
 
     const propertyRepo = client.getRepository("property");
@@ -89,7 +99,8 @@ export class Repository {
       )`,
         { periodStart, periodEndExclusive }
       )
-      .select(`
+      .select(
+        `
       SUM(
         GREATEST(
           0,
@@ -100,7 +111,8 @@ export class Repository {
           )
         )
       ) AS "bookedNights"
-    `)
+    `
+      )
       .setParameters({ periodStart, periodEndExclusive })
       .getRawOne();
 

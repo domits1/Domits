@@ -482,7 +482,13 @@ export default function AdminProperty() {
       <div className="adminproperty-group">
         <label>How many people can stay here</label>
         <div className="grid-4">
-          <NumberField name="guests" placeholder="Guests" handleBlur={handleBlur} hasError={hasError} errors={errors} />
+          <NumberField
+            name="guests"
+            placeholder="Guests"
+            handleBlur={handleBlur}
+            hasError={hasError}
+            errors={errors}
+          />
           <NumberField
             name="bedrooms"
             placeholder="Bedrooms"
@@ -490,7 +496,13 @@ export default function AdminProperty() {
             hasError={hasError}
             errors={errors}
           />
-          <NumberField name="beds" placeholder="Beds" handleBlur={handleBlur} hasError={hasError} errors={errors} />
+          <NumberField
+            name="beds"
+            placeholder="Beds"
+            handleBlur={handleBlur}
+            hasError={hasError}
+            errors={errors}
+          />
           <NumberField
             name="bathrooms"
             placeholder="Bathrooms"
