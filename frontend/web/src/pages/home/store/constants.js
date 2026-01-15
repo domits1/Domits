@@ -126,7 +126,7 @@ export const reviews = [
   },
 ];
 
-export const hostImages = [
-  { src: waterman, alt: "Waterman" },
-  { src: sleutelvrouw, alt: "Sleutelvrouw" },
-];
+  export const hostImages = [
+    { src: `${S3_URL}/Images/waterman.webp`, alt: "Waterman" },
+    { src: `${S3_URL}/Images/sleutelvrouw.webp`, alt: "Sleutelvrouw" },
+  ];
