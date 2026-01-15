@@ -7,7 +7,6 @@ import CalculateTotalRate from "../util/calcuateTotalRate.js";
 import { Payment } from "database/models/Payment";
 import Database from "database";
 import { Booking } from "database/models/Booking";
-import "dotenv/config";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 
 const systemManagerRepository = new SystemManagerRepository();
