@@ -1,59 +1,34 @@
-import waterman from "../Images/waterman.webp";
-import sleutelvrouw from "../Images/sleutelvrouw.webp";
-import friends from "../Images/friends.webp";
-import couples from "../Images/couples.webp";
-import family from "../Images/family.webp";
-import solo from "../Images/solo.webp";
-import senior from "../Images/senior.webp";
-import petFriendly from "../Images/petfriendly.webp";
-import Reviewer1 from "../Images/Reviewer 1.webp";
-import Reviewer2 from "../Images/Reviewer 2.webp";
-import Reviewer3 from "../Images/Reviewer 3.webp";
-import Reviewer4 from "../Images/Reviewer 4.webp";
-import Reviewer5 from "../Images/Reviewer 5.webp";
-import Reviewer6 from "../Images/Reviewer 6.webp";
-import Reviewer7 from "../Images/Reviewer 7.webp";
-import Reviewer8 from "../Images/Reviewer 8.webp";
-import Reviewer9 from "../Images/Reviewer 9.webp";
-import Reviewer10 from "../Images/Reviewer 10.webp";
-import Reviewer11 from "../Images/Reviewer 11.webp";
-import Reviewer12 from "../Images/Reviewer 12.webp";
-import Reviewer13 from "../Images/Reviewer 13.webp";
-import Reviewer14 from "../Images/Reviewer 14.webp";
-import Reviewer15 from "../Images/Reviewer 15.webp";
-import Reviewer16 from "../Images/Reviewer 16.webp";
-import Reviewer17 from "../Images/Reviewer 17.webp";
-import Reviewer18 from "../Images/Reviewer 18.webp";
+export const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/images";
 
 export const categories = [
   {
     name: "Friends",
-    img: friends,
+    img: `${S3_URL}/Images/friends.webp`,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Couples",
-    img: couples,
+    img: `${S3_URL}/Images/couples.webp`,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Family & child friendly",
-    img: family,
+    img: `${S3_URL}/Images/family.webp`,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Solo",
-    img: solo,
+    img: `${S3_URL}/Images/solo.webp`,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Senior",
-    img: senior,
+    img: `${S3_URL}/Images/senior.webp`,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Pet Friendly",
-    img: petFriendly,
+    img: `${S3_URL}/Images/petfriendly.webp`,
     description: "Vacation Rentals and Apartments",
   },
 ];
@@ -61,92 +36,92 @@ export const categories = [
 export const reviews = [
   {
     name: "Oliver Reynolds",
-    img: Reviewer1,
+    img: `${S3_URL}/Images/Reviewer 1.webp`,
     text: "Fantastic platform! Booking was a breeze, and the support team was incredibly helpful.",
   },
   {
     name: "Sophia Bennett",
-    img: Reviewer2,
+    img: `${S3_URL}/Images/Reviewer 2.webp`,
     text: "Seamless experience from start to finish. Highly recommend!",
   },
   {
     name: "Liam Anderson",
-    img: Reviewer3,
+    img: `${S3_URL}/Images/Reviewer 3.webp`,
     text: "Super easy to use, and the customer service was excellent!",
   },
   {
     name: "Emma Carter",
-    img: Reviewer4,
+    img: `${S3_URL}/Images/Reviewer 4.webp`,
     text: "Absolutely loved using this platform. Will definitely book again!",
   },
   {
     name: "Noah Fitzgerald",
-    img: Reviewer5,
+    img: `${S3_URL}/Images/Reviewer 5.webp`,
     text: "Great experience! Everything was smooth and hassle-free.",
   },
   {
     name: "Ava Mitchell",
-    img: Reviewer6,
+    img: `${S3_URL}/Images/Reviewer 6.webp`,
     text: "Top-tier service and an intuitive interface. Loved it!",
   },
   {
     name: "Mason Brooks",
-    img: Reviewer7,
+    img: `${S3_URL}/Images/Reviewer 7.webp`,
     text: "This platform made my trip planning effortless!",
   },
   {
     name: "Isabella Collins",
-    img: Reviewer8,
+    img: `${S3_URL}/Images/Reviewer 8.webp`,
     text: "User-friendly and reliable. Couldn’t ask for more.",
   },
   {
     name: "Elijah Thompson",
-    img: Reviewer9,
+    img: `${S3_URL}/Images/Reviewer 9.webp`,
     text: "Exceptional service and very easy to navigate!",
   },
   {
     name: "Mia Richardson",
-    img: Reviewer10,
+    img: `${S3_URL}/Images/Reviewer 10.webp`,
     text: "Best booking experience I’ve ever had!",
   },
   {
     name: "James Parker",
-    img: Reviewer11,
+    img: `${S3_URL}/Images/Reviewer 11.webp`,
     text: "A must-use platform for hassle-free travel!",
   },
   {
     name: "Charlotte Hayes",
-    img: Reviewer12,
+    img: `${S3_URL}/Images/Reviewer 12.webp`,
     text: "Loved the simplicity and efficiency. Highly recommended!",
   },
   {
     name: "Benjamin Scott",
-    img: Reviewer13,
+    img: `${S3_URL}/Images/Reviewer 13.webp`,
     text: "Flawless experience! The platform was intuitive and responsive.",
   },
   {
     name: "Amelia Cooper",
-    img: Reviewer14,
+    img: `${S3_URL}/Images/Reviewer 14.webp`,
     text: "Booking was quick and easy. Amazing service!",
   },
   {
     name: "Lucas Edwards",
-    img: Reviewer15,
+    img: `${S3_URL}/Images/Reviewer 15.webp`,
     text: "Perfect for stress-free trip planning. Five stars!",
   },
   {
     name: "Harper Morgan",
-    img: Reviewer16,
+    img: `${S3_URL}/Images/Reviewer 16.webp`,
     text: "Superb experience! Will definitely use this again.",
   },
   {
     name: "Henry Watson",
-    img: Reviewer17,
+    img: `${S3_URL}/Images/Reviewer 17.webp`,
     text: "Everything worked perfectly. I’m very satisfied!",
   },
   {
     name: "Evelyn Turner",
-    img: Reviewer18,
+    img: `${S3_URL}/Images/Reviewer 18.webp`,
     text: "The best travel booking site I’ve ever used!",
   },
 ];
