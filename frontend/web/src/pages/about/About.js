@@ -39,10 +39,11 @@ function About() {
   const founderMembers = [
     { name: "Stefan", src: stefan, role: aboutContent.crew.founder },
     { name: "Robert", src: Robert, role: aboutContent.crew.engineeringManager },
-    { name: "Tim H.", src: tim, role: aboutContent.crew.productOwner },
+    
   ];
 
   const developerMembers = [
+    { name: "Tim H.", src: tim, role: aboutContent.crew.developer },
     { name: "Ales", src: Ales, role: aboutContent.crew.developer },
     { name: "Bekir", src: Bekir, role: aboutContent.crew.developer },
     { name: "Chant", src: Chant, role: aboutContent.crew.developer },
@@ -151,7 +152,7 @@ function About() {
 
         {/* ===================== Founder Section ===================== */}
         <div className="about__group">
-          <h2 className="about__group-title">{aboutContent.crew.founder}</h2>
+          <h2 className="about__group-title">Management</h2>
 
           <div className="about__team about__team--founder">
             {founderMembers
@@ -176,7 +177,7 @@ function About() {
 
         {/* ===================== Developer Section ===================== */}
         <div className="about__group">
-          <h2 className="about__group-title">{aboutContent.crew.developer}</h2>
+          <h2 className="about__group-title">Engineering</h2>
 
           <div className="about__team about__team--developer">
             {developerMembers.map((member) => (
@@ -198,7 +199,7 @@ function About() {
 
         {/* ===================== Marketing Section ===================== */}
         <div className="about__group">
-          <h2 className="about__group-title">{aboutContent.crew.marketing}</h2>
+          <h2 className="about__group-title">Marketing, Contracting, Partnerships, Support</h2>
 
           <div className="about__team about__team--marketing">
             {marketingMembers.map((member) => (

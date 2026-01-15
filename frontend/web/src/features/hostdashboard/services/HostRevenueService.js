@@ -43,29 +43,22 @@ export const HostRevenueService = {
 
   async getRevenue(hostId) {
     const data = await this.fetchMetricData(hostId, "revenue");
-    return Number(data?.revenue?.totalRevenue ?? 0);
+    return data?.revenue?.totalRevenue ?? 0;
   },
 
   async getBookedNights(hostId) {
     const data = await this.fetchMetricData(hostId, "bookedNights");
-    return Number(data?.bookedNights?.bookedNights ?? 0);
+    return data?.bookedNights?.bookedNights ?? 0;
   },
 
   async getAvailableNights(hostId) {
     const data = await this.fetchMetricData(hostId, "availableNights");
-    return Number(data?.availableNights?.availableNights ?? 0);
+    return data?.availableNights?.availableNights ?? 0;
   },
 
   async getPropertyCount(hostId) {
     const data = await this.fetchMetricData(hostId, "propertyCount");
-    return Number(data?.propertyCount?.propertyCount ?? 0);
-  },
-
-  async getMonthlyComparison(hostId) {
-    const data = await this.fetchMetricData(hostId, "monthlyComparison");
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.monthlyComparison)) return data.monthlyComparison;
-    return [];
+    return data?.propertyCount?.propertyCount ?? 0;
   },
 
   async getAverageLengthOfStay(hostId, filterType = "monthly", startDate, endDate) {
