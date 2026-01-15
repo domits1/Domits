@@ -44,7 +44,6 @@ const Homepage = () => {
 
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
-  // const groups = useCategories();
   const {language} = useContext(LanguageContext);
   const homePageContent = contentByLanguage[language]?.homepage;
 
