@@ -82,8 +82,7 @@ const BookingOverview = () => {
         setIsAuthenticated(true);
 
         const attrs = authUser.attributes || {};
-        const name = attrs.username || "Guest";
-
+        const name = attrs.given_name ?? attrs.name ?? "";
         setUserName(name);
       } catch {
         setIsAuthenticated(false);
