@@ -3,70 +3,43 @@ import Modal from "react-modal";
 import IcalSyncForm from "../../../../../pages/icalsync/IcalSyncForm";
 import { retrieveExternalCalendar } from "../../../../../utils/icalRetrieveHost";
 import { buildBlockedSetFromIcsEvents } from "../../../../../utils/icalConvert";
-import { saveExternalBlockedDates } from "../../../../../utils/externalCalendarStorage";
-import { getCognitoUserId } from "../../../../../services/getAccessToken";
 
-export default function ExternalCalendarsCard({
-  exportUrl,
-  exportLoading,
-  userId,
-  onImportedBlockedDates,
-}) {
+export default function ExternalCalendarsCard({ onImportedBlockedKeys }) {
   const [isIcalModalOpen, setIsIcalModalOpen] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState(null);
-  const [importSuccess, setImportSuccess] = useState(false);
-
-  const effectiveUserId = useMemo(() => userId || getCognitoUserId(), [userId]);
+  const [importedCount, setImportedCount] = useState(0);
 
   const handleOpenIcalModal = () => {
     setImportError(null);
-    setImportSuccess(false);
+    setImportedCount(0);
     setIsIcalModalOpen(true);
   };
 
   const handleCloseIcalModal = () => {
     setIsIcalModalOpen(false);
     setImportError(null);
-    setImportSuccess(false);
   };
 
-  const handleImport = async ({ propertyId, calendarUrl, calendarName }) => {
-    const pid = String(propertyId || "").trim();
+  const handleImport = async (payload) => {
+    const calendarUrl = String(payload?.calendarUrl || "").trim();
 
-    if (!pid) {
-      setImportError("Select an accommodation first.");
-      return;
-    }
-
-    if (!effectiveUserId) {
-      setImportError("No userId available.");
+    if (!calendarUrl) {
+      setImportError("calendarUrl is required.");
       return;
     }
 
     setImportLoading(true);
     setImportError(null);
-    setImportSuccess(false);
+    setImportedCount(0);
 
     try {
       const events = await retrieveExternalCalendar(calendarUrl);
       const blockedSet = buildBlockedSetFromIcsEvents(events);
 
-      saveExternalBlockedDates({
-        userId: effectiveUserId,
-        propertyId: pid,
-        blockedSet,
-      });
+      setImportedCount(blockedSet?.size || 0);
+      onImportedBlockedKeys?.(blockedSet);
 
-      onImportedBlockedDates?.(blockedSet, {
-        userId: effectiveUserId,
-        propertyId: pid,
-        calendarUrl,
-        calendarName,
-        events,
-      });
-
-      setImportSuccess(true);
       setIsIcalModalOpen(false);
     } catch (e) {
       setImportError(e?.message || "Failed to import calendar");
@@ -74,6 +47,9 @@ export default function ExternalCalendarsCard({
       setImportLoading(false);
     }
   };
+
+  const exportUrl = "";
+  const exportLoading = false;
 
   return (
     <>
@@ -85,19 +61,17 @@ export default function ExternalCalendarsCard({
             Connect Google
           </button>
 
-          <button
-            className="hc-btn"
-            onClick={handleOpenIcalModal}
-            disabled={exportLoading}
-          >
-            {exportLoading
-              ? "Generating iCal link…"
-              : "iCal & Calendar synchronization"}
+          <button className="hc-btn" onClick={handleOpenIcalModal} disabled={exportLoading}>
+            {exportLoading ? "Generating iCal link…" : "iCal & Calendar synchronization"}
           </button>
 
           <button className="hc-icon-btn" title="Refresh" disabled>
             ⟲
           </button>
+        </div>
+
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
+          Imported blocked: {importedCount}
         </div>
       </div>
 
@@ -113,11 +87,7 @@ export default function ExternalCalendarsCard({
 
         {importError && <div className="ical-error-banner">{importError}</div>}
 
-        <IcalSyncForm
-          exportUrl={exportUrl}
-          onImport={handleImport}
-          submitting={importLoading}
-        />
+        <IcalSyncForm exportUrl={exportUrl} onImport={handleImport} submitting={importLoading} />
       </Modal>
     </>
   );
