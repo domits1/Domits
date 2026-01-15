@@ -7,7 +7,8 @@ import bill from "../../images/icons/bill.png";
 import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
-import { hostImages, reviews, categories as groups } from "./store/constants";
+import { hostImages, reviews, categories as groups, buildHomepageLists, S3_URL } from "./store/constants";
+
 import 'swiper/css';                
 import 'swiper/css/pagination';    
 import 'swiper/css/effect-fade'; 
@@ -18,7 +19,18 @@ import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 
-export const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/images";
+const {
+  countries,
+  smallCountries,
+  asiaCountries,
+  smallAsiaCountries,
+  caribbeanCountries,
+  smallCaribbeanCountries,
+  skiCountries,
+  seasons,
+  interests,
+} = buildHomepageLists(homePageContent);
+
 
 const contentByLanguage = {
   en,
@@ -84,257 +96,6 @@ const Homepage = () => {
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
   };
-
-  const countries = [
-    {
-      name: `${homePageContent.destinations.europe.countries.netherlands}`,
-      img: `${S3_URL}/Images/netherlands.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.france}`,
-      img: `${S3_URL}/Images/france.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.spain}`,
-      img: `${S3_URL}/Images/spain.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const smallCountries = [
-    {
-      name: `${homePageContent.destinations.europe.countries.italy}`,
-      img: `${S3_URL}/Images/italy.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.belgium}`,
-      img: `${S3_URL}/Images/belgium.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.germany}`,
-      img: `${S3_URL}/Images/germany.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.greece}`,
-      img: `${S3_URL}/Images/greece.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.unitedKingdom}`,
-      img: `${S3_URL}/Images/unitedkingdom.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.portugal}`,
-      img: `${S3_URL}/Images/portugal.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.croatia}`,
-      img: `${S3_URL}/Images/croatia.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.poland}`,
-      img: `${S3_URL}/Images/poland.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.austria}`,
-      img: `${S3_URL}/Images/austria.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.czech}`,
-      img: `${S3_URL}/Images/czech.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const asiaCountries = [
-    {
-      name: `${homePageContent.destinations.asia.countries.philippines}`,
-      img: `${S3_URL}/Images/philippines.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.thailand}`,
-      img: `${S3_URL}/Images/thailand.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.indonesia}`,
-      img: `${S3_URL}/Images/indonesia.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const smallAsiaCountries = [
-    {
-      name: `${homePageContent.destinations.asia.countries.india}`,
-      img: `${S3_URL}/Images/india.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.malaysia}`,
-      img: `${S3_URL}/Images/malaysia.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.vietnam}`,
-      img: `${S3_URL}/Images/vietnam.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.turkey}`,
-      img: `${S3_URL}/Images/turkey.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.singapore}`,
-      img: `${S3_URL}/Images/singapore.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const caribbeanCountries = [
-    {
-      name: `${homePageContent.destinations.caribbean.locations.aruba}`,
-      img: `${S3_URL}/Images/aruba.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.bonaire}`,
-      img: `${S3_URL}/Images/bonaire.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.curacao}`,
-      img: `${S3_URL}/Images/curacao.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const smallCaribbeanCountries = [
-    {
-      name: `${homePageContent.destinations.caribbean.locations.saintBarthelemy}`,
-      img: `${S3_URL}/Images/saintbarthelemy.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.costaRica}`,
-      img: `${S3_URL}/Images/costarica.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.dominicanRepublic}`,
-      img: `${S3_URL}/Images/dominicanrepublic.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.puertoRico}`,
-      img: `${S3_URL}/Images/puertrorico.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.stMaarten}`,
-      img: `${S3_URL}/Images/stmaarten.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const skiCountries = [
-    {
-      name: `${homePageContent.destinations.ski.locations.austria}`,
-      img: `${S3_URL}/Images/austria.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.frenchAlps}`,
-      img: `${S3_URL}/Images/frenchalps.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.switzerland}`,
-      img: `${S3_URL}/Images/switzerland.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.chamonix}`,
-      img: `${S3_URL}/Images/Chamonix-Mont-Blanc.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.blackForest}`,
-      img: `${S3_URL}/Images/blackforest.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.italyTrentino}`,
-      img: `${S3_URL}/Images/italytretinio.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const seasons = [
-    { name: `${homePageContent.filters.season.spring}`, img: `${S3_URL}/Images/spring.webp` },
-    { name: `${homePageContent.filters.season.summer}`, img: `${S3_URL}/Images/summer.webp` },
-    { name: `${homePageContent.filters.season.fall}`, img: `${S3_URL}/Images/fall.webp` },
-    { name: `${homePageContent.filters.season.winter}`, img: `${S3_URL}/Images/winter.webp` },
-  ];
-
-  const interests = [
-    {
-      name: `${homePageContent.filters.interest.luxury}`,
-      img: `${S3_URL}/Images/luxury.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.beach}`,
-      img: `${S3_URL}/Images/beach.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.lastMinute}`,
-      img: `${S3_URL}/Images/lastminute.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.wellness}`,
-      img: `${S3_URL}/Images/wellness.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.romantic}`,
-      img: `${S3_URL}/Images/romantic.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.adventure}`,
-      img: `${S3_URL}/Images/adventure.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.nature}`,
-      img: `${S3_URL}/Images/nature.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.culture}`,
-      img: `${S3_URL}/Images/culture.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.culinary}`,
-      img: `${S3_URL}/Images/culinary.webp`,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
 
   const handleScroll = () => {
     if (!searchBarRef.current) return;
