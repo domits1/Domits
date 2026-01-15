@@ -3,17 +3,20 @@ import { NavLink, useLocation } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import BookingIcon from "@mui/icons-material/LanguageOutlined";
 import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
-import WishlistIcon from "@mui/icons-material/Favorite";
+// import WishlistIcon from "@mui/icons-material/Favorite";
 import Settings from "@mui/icons-material/Settings";
-import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
+// import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
 
 const NAV = [
   { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "." },
-  { key: "Bookings",  label: "Bookings",  icon: <BookingIcon />,  to: "bookings" },
-  { key: "Messages",  label: "Messages",  icon: <MessageIcon />,  to: "messages" },
-  { key: "Reviews",   label: "Reviews",   icon: <ReviewsOutlinedIcon />, to: "reviews" },
-  { key: "Wishlist",  label: "Wishlist",  icon: <WishlistIcon />,  to: "wishlist" },
-  { key: "Settings",  label: "Settings",  icon: <Settings />,      to: "settings" },
+  { key: "Bookings", label: "Bookings", icon: <BookingIcon />, to: "bookings" },
+  { key: "Messages", label: "Messages", icon: <MessageIcon />, to: "messages" },
+
+  // Work on it later
+  // { key: "Reviews",  label: "Reviews",  icon: <ReviewsOutlinedIcon />, to: "reviews" },
+  // { key: "Wishlist", label: "Wishlist", icon: <WishlistIcon />,        to: "wishlist" },
+
+  { key: "Settings", label: "Settings", icon: <Settings />, to: "settings" },
 ];
 
 function Pages({ onNavigate }) {
@@ -21,37 +24,42 @@ function Pages({ onNavigate }) {
   const location = useLocation();
   const btnRef = useRef(null);
 
-  useEffect(() => { setOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   useEffect(() => {
-    if (open) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = prev; };
-    }
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [open]);
 
   return (
     <>
+      {/* Toggle button: ☰ (closed) / × (open) */}
       <button
         ref={btnRef}
         type="button"
         className="hamburger-btn"
-        aria-label="Open menu"
+        aria-label={open ? "Close menu" : "Open menu"}
         aria-controls="guest-menu"
         aria-expanded={open}
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((v) => !v)}
       >
-        <span aria-hidden="true">☰</span>
+        <span aria-hidden="true">{open ? "×" : "☰"}</span>
       </button>
 
-     
       <div
         className={`sidebar-overlay ${open ? "open" : ""}`}
         onClick={() => setOpen(false)}
@@ -63,17 +71,9 @@ function Pages({ onNavigate }) {
         aria-label="Guest navigation"
         id="guest-menu"
       >
-        <button
-          type="button"
-          className="hamburger-btn"
-          aria-label="Close menu"
-          onClick={() => setOpen(false)}
-        >
-          ×
-        </button>
-
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
+
           <ul className="menu-list">
             {NAV.map((item) => (
               <li key={item.key}>
@@ -85,7 +85,9 @@ function Pages({ onNavigate }) {
                     `menu-item ${isActive ? "active" : ""}`
                   }
                 >
-                  <span className="icon" aria-hidden="true">{item.icon}</span>
+                  <span className="icon" aria-hidden="true">
+                    {item.icon}
+                  </span>
                   <span className="label">{item.label}</span>
                 </NavLink>
               </li>

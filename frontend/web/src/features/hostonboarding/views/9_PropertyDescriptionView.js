@@ -11,7 +11,7 @@ function PropertyDescriptionView() {
   const builder = useBuilder();
   const form = useFormStoreHostOnboarding();
   const technicalDetails = useFormStoreHostOnboarding((state) => state.technicalDetails);
-  const type = builder.propertyType.property_type;
+  const type = builder?.propertyType?.property_type ?? null;
   const {
     description,
     boatSpecifications,

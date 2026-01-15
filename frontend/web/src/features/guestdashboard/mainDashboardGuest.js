@@ -4,10 +4,11 @@ import Pages from "./Pages";
 import GuestDashboard from "./GuestDashboard";
 import GuestBooking from "./GuestBooking";
 import GuestPayments from "./GuestPayments";
-import GuestReviews from "./GuestReviews";
+// import GuestReviews from "./GuestReviews";
 import GuestSettings from "./GuestSettings";
-import GuestWishlist from "./GuestWishlist";
+// import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
+
 const MainDashboardGuest = () => {
   const [activeComponent, setActiveComponent] = useState("Dashboard");
   const location = useLocation();
@@ -17,6 +18,7 @@ const MainDashboardGuest = () => {
       setActiveComponent("Messages");
     }
   }, [location.pathname]);
+
   const renderComponent = () => {
     switch (activeComponent) {
       case "Dashboard":
@@ -27,12 +29,18 @@ const MainDashboardGuest = () => {
         return <Messages dashboardType="guest" />;
       case "Payments":
         return <GuestPayments />;
-      case "Reviews":
-        return <GuestReviews />;
+
+      // Work on it later
+      // case "Reviews":
+      //   return <GuestReviews />;
+
       case "Settings":
         return <GuestSettings />;
-      case "Wishlist":
-        return <GuestWishlist />;
+
+      // Work on it later
+      // case "Wishlist":
+      //   return <GuestWishlist />;
+
       default:
         return <GuestDashboard />;
     }
@@ -41,6 +49,7 @@ const MainDashboardGuest = () => {
   const handleNavigation = (componentName) => {
     setActiveComponent(componentName);
   };
+
   return (
     <div className="main-dashboard-guest">
       <div className="main-dashboard-sidebar">

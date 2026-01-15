@@ -61,6 +61,9 @@ Table of Contents
   - [Contribution Guidelines](#contribution-guidelines)
     - [Other Subjects to Understand](#other-subjects-to-understand)
   - [License](#license)
+  - [Code of Conduct](#code-of-conduct)
+  - [Contributing](#contributing)
+  - [Security](#security)
 
 
 ## Tech Stack
@@ -137,10 +140,11 @@ If you get stuck, try Googling, checking Stack Overflow, or asking an LLM first,
 ### General Introduction
 Learn the basics of Domits, who we are, what we build, and where to find key documentation.
 
-* Get access to tooling (AWS, Github, Discord, Figma, ...)  
-* Understand the [Company](https://bookdomits.com/company/), [Hospitality Market](https://bookdomits.com/blog/), [Ecosystem](https://bookdomits.com/ecosystem/) and [Product](https://bookdomits.com/features/).  
-* Understand [product vision, roadmap and back](https://github.com/domits1/Domits/issues/2272).
-* Check who is [responsible for what parts of Domits, and check the issues placed on your name.](https://github.com/domits1/Domits/wiki/Technical-Leadership)
+* Understand the [Company](https://bookdomits.com/company/), [Hospitality Market](https://bookdomits.com/blog/), [Ecosystem](https://bookdomits.com/ecosystem/), [Product Features](https://bookdomits.com/features/), [Glossary](https://bookdomits.com/glossary/), [Job Roles](https://bookdomits.com/hospitality-roles/), [Agentic Workforce](https://bookdomits.com/agentic-travel-hospitality-workforce/), [Alternatives](https://bookdomits.com/domits-alternatives/) and [Why Domits](https://bookdomits.com/why-domits/)
+* Understand the [product vision, roadmap and backlog](https://github.com/domits1/Domits/issues/2272).
+* Learn the basics of [Cloud Security Glossary](https://niagaros.com/glossary/), [Compliance Frameworks](https://niagaros.com/frameworks/) , [Cybersecurity Job Roles](https://niagaros.com/cybersecurity-job-roles/), [Unified Cloud Security Categories](https://niagaros.com/unified-cloud-security-categories/) and [Cloud Security Risk Assessment](https://niagaros.com/cloud-security-risk-assessment/)
+* Understand the Domits growth flywheel with [partners](https://bookdomits.com/partners/) and [accelerator](https://bookdomits.com/accelerator/).
+* Check who is [responsible for which parts of Domits and review the issues assigned to your name](https://github.com/domits1/Domits/wiki/Technical-Leadership).
 
 
 After this section you should understand:
@@ -375,3 +379,34 @@ All contributions are assumed to be licensed under the same MIT License unless e
 This software is provided **“as is”**, without warranty of any kind.
 
 See the [LICENSE](./LICENSE) file for full details.
+
+---
+
+## Code of Conduct
+
+This project follows a **Code of Conduct** to ensure a respectful, inclusive, and professional environment for everyone involved.
+
+All contributors, maintainers, and participants are expected to uphold these standards when interacting in the project’s repositories, issues, pull requests, and other community spaces.
+
+See the [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) file for full details.
+
+---
+
+## Contributing
+
+Contributions to Domits are welcome, including code, documentation, bug reports, and improvements.
+
+Please follow the project’s contribution guidelines to ensure a smooth and consistent collaboration process.
+
+See the [CONTRIBUTING.md](./CONTRIBUTING.md) file for full details.
+
+---
+
+## Security
+
+Domits takes security seriously.
+
+If you discover a security vulnerability, please **do not report it via public GitHub issues**.
+Follow the responsible disclosure process described in our Security Policy.
+
+See the [SECURITY.md](./SECURITY.md) file for full details.
