@@ -165,7 +165,7 @@ Everything in Domits revolves around Issues. Each Issue belongs to a Milestone w
   
 > [!tip]
 > When you start coding, make a branch from Acceptance. Don't make commits while being on Acceptance, you will most likely lose code.
-> When you're done, submit a Pull Request (PR) to merge your work. Fill in the template and check everything before asking for a reviewer.
+> When you're done, pull from acceptance again so that your branch is up to date and submit a Pull Request (PR) to merge your work. Fill in the template and check everything before asking for a reviewer.
 
 
 After this section you should understand:
