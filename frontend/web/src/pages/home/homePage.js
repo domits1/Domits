@@ -19,19 +19,6 @@ import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
 
-const {
-  countries,
-  smallCountries,
-  asiaCountries,
-  smallAsiaCountries,
-  caribbeanCountries,
-  smallCaribbeanCountries,
-  skiCountries,
-  seasons,
-  interests,
-} = buildHomepageLists(homePageContent);
-
-
 const contentByLanguage = {
   en,
   nl,
@@ -60,6 +47,18 @@ const Homepage = () => {
   // const groups = useCategories();
   const {language} = useContext(LanguageContext);
   const homePageContent = contentByLanguage[language]?.homepage;
+
+  const {
+    countries,
+    smallCountries,
+    asiaCountries,
+    smallAsiaCountries,
+    caribbeanCountries,
+    smallCaribbeanCountries,
+    skiCountries,
+    seasons,
+    interests,
+  } = buildHomepageLists(homePageContent);
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
