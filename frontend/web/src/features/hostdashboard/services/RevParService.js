@@ -48,7 +48,7 @@ export const RevPARService = {
       }
 
       if (metric === "revenue") {
-        results.totalRevenue = data?.revenue?.totalRevenue ?? 0;
+        results.totalRevenue = Number(data?.revenue?.totalRevenue ?? 0);
       }
 
       if (metric === "availableNights") {

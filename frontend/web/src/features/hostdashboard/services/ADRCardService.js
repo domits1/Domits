@@ -1,4 +1,4 @@
-import { Auth } from "aws-amplify";
+import { getAccessToken } from "../../../../src/services/getAccessToken.js";
 
 const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
@@ -8,93 +8,55 @@ const formatDate = (isoDate) => {
   return `${d}-${m}-${y}`;
 };
 
-function safelyParse(data) {
-  if (data?.body && typeof data.body === "string") {
-    try {
-      return JSON.parse(data.body);
-    } catch {
-      return data;
-    }
-  }
-  return data;
-}
-
 export const ADRCardService = {
-  async getFreshToken() {
-    try {
-      const session = await Auth.currentSession();
-      return session.getAccessToken().getJwtToken();
-    } catch {
-      return null;
-    }
-  },
-
   async fetchMetric(hostId, metric, filterType = "monthly", startDate, endDate) {
-    if (!hostId) return null;
+    if (!hostId) throw new Error("Host ID required");
 
-    const token = await this.getFreshToken();
-    if (!token) return null;
+    const token = await getAccessToken();
 
     let url = `${BASE_URL}?hostId=${hostId}&metric=${metric}&filterType=${filterType}`;
-
     if (filterType === "custom" && startDate && endDate) {
       url += `&startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`;
     }
 
-    let response;
-    try {
-      response = await fetch(url, {
-        method: "GET",
-        headers: { Authorization: token },
-      });
-    } catch {
-      return null;
-    }
+    const response = await fetch(url, { headers: { Authorization: token } });
+    let data = await response.json();
+    if (data.body) data = JSON.parse(data.body);
 
-    let rawText;
-    try {
-      rawText = await response.text();
-    } catch {
-      return null;
-    }
-
-    let parsed;
-    try {
-      parsed = rawText ? JSON.parse(rawText) : {};
-    } catch {
-      return null;
-    }
-
-    return safelyParse(parsed);
+    return data;
   },
 
   async getADRMetrics(hostId, filterType = "monthly", startDate, endDate) {
     const metrics = ["averageDailyRate", "revenue", "bookedNights"];
-
-    const results = {
-      adr: 0,
-      totalRevenue: 0,
-      bookedNights: 0,
-      chartData: [],
-    };
+    const results = {};
 
     for (const metric of metrics) {
       const data = await this.fetchMetric(hostId, metric, filterType, startDate, endDate);
 
-      if (!data) continue;
-
       if (metric === "averageDailyRate") {
-        const v = data?.averageDailyRate ?? data?.value ?? (typeof data === "number" ? data : 0);
-        results.adr = Number(v || 0);
+        if (typeof data === "number") results.adr = data;
+        else if (data.averageDailyRate != null) results.adr = Number(data.averageDailyRate);
+        else if (data.value != null) results.adr = Number(data.value);
+        else results.adr = 0;
       }
 
       if (metric === "revenue") {
-        results.totalRevenue = data?.revenue?.totalRevenue ?? 0;
+        results.totalRevenue = Number(data?.revenue?.totalRevenue ?? 0);
       }
 
       if (metric === "bookedNights") {
-        results.bookedNights = data?.bookedNights?.bookedNights ?? data?.bookedNights ?? data?.value ?? 0;
+        if (typeof data.bookedNights === "number") results.bookedNights = data.bookedNights;
+        else if (data.bookedNights?.bookedNights != null) results.bookedNights = data.bookedNights.bookedNights;
+        else if (data.value != null) results.bookedNights = data.value;
+        else results.bookedNights = 0;
       }
+    }
+
+    if (results.adrDailyMetrics?.length) {
+      results.chartData = results.adrDailyMetrics.map((i) => ({
+        date: i.date,
+        adr: Number(i.adr),
+      }));
     }
 
     return results;

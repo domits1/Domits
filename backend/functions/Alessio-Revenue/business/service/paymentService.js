@@ -1,14 +1,14 @@
 import { Repository } from "../../data/repository.js";
+import StripeAccountRepository from "../../../General-Payments-Production-CRUD-fetchHostPayout/data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
 import Stripe from "stripe";
-import "dotenv/config";
-
 
 export class PaymentsService {
   constructor() {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     this.repository = new Repository();
-    this.authManager = new AuthManager();    
+    this.stripeAccountRepository = new StripeAccountRepository();
+    this.authManager = new AuthManager();
   }
 
   async getTotalHostRevenue(event) {
@@ -18,7 +18,7 @@ export class PaymentsService {
     const { sub: cognitoUserId } = await this.authManager.authenticateUser(token);
     if (!cognitoUserId) throw new Error("User ID is missing");
 
-    const stripeAccount = await this.repository.getExistingStripeRevenueAccount(cognitoUserId);
+    const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
     if (!stripeAccount?.account_id) {
       throw new Error("No Stripe account found for this user.");
     }
@@ -44,12 +44,11 @@ export class PaymentsService {
       const hostReceives = customerPaid - platformFeeGross;
       totalRevenue += hostReceives;
     }
-   return {
-  totalRevenue: totalRevenue / 100,  
-  formattedTotalRevenue: (totalRevenue / 100).toLocaleString("de-DE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }),
+    return {
+      totalRevenue: (totalRevenue / 100).toLocaleString("de-DE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
     };
   }
 }
