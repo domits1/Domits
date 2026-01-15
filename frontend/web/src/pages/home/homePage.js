@@ -7,8 +7,7 @@ import bill from "../../images/icons/bill.png";
 import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
-import { reviews } from "./store/constants";
-import { categories as groups } from "./store/constants";
+import { reviews, categories as groups } from "./store/constants";
 import 'swiper/css';                
 import 'swiper/css/pagination';    
 import 'swiper/css/effect-fade'; 
@@ -18,7 +17,6 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
-import villaBackground from "../../images/villaHomepage.jpg";
 
 export const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/images";
 
@@ -399,7 +397,7 @@ const Homepage = () => {
     <>
       <div className="homePage-container">
         <div className="domits-homepage">
-          <div className="domits-searchContainer" style={{ "--villa-background": `url(${villaBackground})` }}>
+          <div className="domits-searchContainer" style={{ "--villa-background": `url(${S3_URL}/Images/villaHomepage.webp)` }}>
             <div className="domits-searchTextCon">
               <h3 className="domits-searchText">{homePageContent.hero.title}</h3>
             </div>
