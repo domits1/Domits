@@ -1,5 +1,3 @@
-
-
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useDescription } from "../hooks/usePropertyDescription";
@@ -13,8 +11,6 @@ function PropertyDescriptionView() {
   const builder = useBuilder();
   const form = useFormStoreHostOnboarding();
   const technicalDetails = useFormStoreHostOnboarding((state) => state.technicalDetails);
-  
-  // FIX: Get type from Zustand store instead of builder
   const type = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
   
   const {

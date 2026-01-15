@@ -1,9 +1,6 @@
-
 import { createContext, useContext, useState, useEffect } from "react";
 import { PropertyBuilder } from "../features/hostonboarding/stores/propertyBuilder";
-
 const BuilderContext = createContext(null);
-
 export const useBuilder = () => {
   const context = useContext(BuilderContext);
   if (!context) {
@@ -13,14 +10,12 @@ export const useBuilder = () => {
 };
 
 export const BuilderProvider = ({ children }) => {
-  // Initialize builder from sessionStorage or create new
   const [builder] = useState(() => {
     const saved = sessionStorage.getItem('propertyBuilder');
     if (saved) {
       try {
         const data = JSON.parse(saved);
         const restoredBuilder = new PropertyBuilder();
-        // Restore all properties
         Object.assign(restoredBuilder, data);
         return restoredBuilder;
       } catch (e) {
@@ -29,8 +24,6 @@ export const BuilderProvider = ({ children }) => {
     }
     return new PropertyBuilder();
   });
-
-  // Save builder to sessionStorage whenever it changes
   useEffect(() => {
     const saveBuilder = () => {
       try {
@@ -39,22 +32,15 @@ export const BuilderProvider = ({ children }) => {
         console.error('Failed to save builder:', e);
       }
     };
-
-    // Save periodically (every 500ms after changes)
     const timer = setTimeout(saveBuilder, 500);
     return () => clearTimeout(timer);
   }, [builder]);
-
-  // Wrap builder methods to force re-render and save
   const wrappedBuilder = new Proxy(builder, {
     get(target, prop) {
       const value = target[prop];
-      
-      // If it's a builder method (returns this), wrap it
       if (typeof value === 'function' && prop.startsWith('add')) {
         return function(...args) {
           const result = value.apply(target, args);
-          // Force save after mutation
           sessionStorage.setItem('propertyBuilder', JSON.stringify(target));
           return result;
         };
