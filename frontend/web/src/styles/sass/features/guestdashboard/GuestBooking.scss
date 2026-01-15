@@ -36,6 +36,16 @@ $text-muted:#6b7280;
     display:none;
   }
 }
+.greenBtn{
+  border-radius: 5px;
+  background-color: rgb(90, 232, 90);
+  padding: 8px;
+  font-weight: bold;
+}
+.greenBtn:hover{
+    background-color: rgba(10, 155, 39);
+    color:  rgb(252, 252, 252);
+  }
 
 .guest-booking-bookingContent{
   margin-top:8px;
@@ -199,6 +209,8 @@ $text-muted:#6b7280;
       }
     }
   }
+
+
 
   @media(min-width:901px){
     .guest-card--past{
