@@ -7,7 +7,7 @@ import bill from "../../images/icons/bill.png";
 import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
-import { reviews, categories as groups } from "./store/constants";
+import { hostImages, reviews, categories as groups } from "./store/constants";
 import 'swiper/css';                
 import 'swiper/css/pagination';    
 import 'swiper/css/effect-fade'; 
@@ -84,11 +84,6 @@ const Homepage = () => {
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
   };
-
-  const hostImages = [
-    { src: `${S3_URL}/Images/waterman.webp`, alt: "Waterman" },
-    { src: `${S3_URL}/Images/sleutelvrouw.webp`, alt: "Sleutelvrouw" },
-  ];
 
   const countries = [
     {
