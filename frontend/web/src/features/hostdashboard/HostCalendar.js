@@ -1,143 +1,136 @@
 import React, { useEffect, useState } from "react";
 import "./HostHomepage.scss";
+import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import styles from "./HostDashboard.module.scss";
 import calenderStyles from "./HostCalendar.module.css";
-import { generateUUID } from "../../utils/generateUUID";
+import { generateUUID } from "../../utils/generateUUID.js";
 import { formatDate, uploadICalToS3 } from "../../utils/iCalFormatHost";
-import { getAccessToken, getCognitoUserId } from "../../services/getAccessToken";
-import CalendarComponent from "./hostcalendar/views/Calender";
-import ExternalCalendarsCard from "./hostcalendar/components/ExternalCalendarsCard";
-import {
-  loadExternalBlockedDates,
-  saveExternalBlockedDates,
-} from "../../utils/externalCalendarStorage";
+import { getAccessToken } from "../../services/getAccessToken.js";
+import CalendarComponent from "./hostcalendar/views/Calender.js";
 
 function HostCalendar() {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState(null);
-
-  const [selectedPropertyId, setSelectedPropertyId] = useState("");
   const [selectedAccommodation, setSelectedAccommodation] = useState(null);
 
-  const [externalBlockedDates, setExternalBlockedDates] = useState(new Set());
-
-  const getPropertyId = (a) => {
-    const v =
-      a?.property?.id ??
-      a?.property?.ID ??
-      a?.property?.propertyId ??
-      a?.propertyId ??
-      a?.PropertyId ??
-      a?.ID ??
-      a?.id ??
-      null;
-    return v === null || v === undefined ? "" : String(v);
+  const handleSelectAccommodation = (event) => {
+    const accommodationId = event.target.value;
+    const accommodation = accommodations.find(
+      (accommodation) => accommodation.ID === accommodationId
+    );
+    setSelectedAccommodation(accommodation);
   };
 
-  const getTitle = (a) =>
-    a?.property?.title ?? a?.property?.Title ?? a?.Title ?? a?.title ?? "";
-
   useEffect(() => {
-    setUserId(getCognitoUserId());
-  }, []);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    const fetchAccommodations = async () => {
-      setIsLoading(true);
+    const setUserIdAsync = async () => {
       try {
-        const res = await fetch(
-          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all",
-          { method: "GET", headers: { Authorization: getAccessToken() } }
-        );
-
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setAccommodations(Array.isArray(data) ? data : []);
-      } catch {
-        setAccommodations([]);
-      } finally {
-        setIsLoading(false);
+        const userInfo = await Auth.currentUserInfo();
+        await setUserId(userInfo.attributes.sub);
+      } catch (error) {
+        console.error("Error setting user id:", error);
       }
     };
 
-    fetchAccommodations();
+    setUserIdAsync();
+  }, []);
+
+  const updateDates = (dateRanges) => {};
+
+  useEffect(() => {
+    const fetchAccommodations = async () => {
+      setIsLoading(true);
+      if (!userId) {
+        console.log("No user id");
+        return;
+      } else {
+        try {
+          const response = await fetch('https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/hostDashboard/all', {
+            method: 'GET',
+            headers: {
+            'Authorization': getAccessToken(),
+          }
+          });
+          if (!response.ok) {
+            throw new Error("Failed to fetch");
+          }
+          const data = await response.json();
+          console.log(data);
+
+          setAccommodations(data);
+        } catch (error) {
+          console.error("Unexpected error:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    if (userId) {
+      fetchAccommodations().catch(console.error);
+    }
   }, [userId]);
 
-  useEffect(() => {
-    if (!selectedPropertyId) {
-      setSelectedAccommodation(null);
-      setExternalBlockedDates(new Set());
-      return;
-    }
-
-    const acc =
-      accommodations.find((a) => getPropertyId(a) === selectedPropertyId) || null;
-
-    setSelectedAccommodation(acc);
-  }, [selectedPropertyId, accommodations]);
-
-  useEffect(() => {
-    if (!userId || !selectedPropertyId) {
-      setExternalBlockedDates(new Set());
-      return;
-    }
-
-    const loaded = loadExternalBlockedDates({
-      userId,
-      propertyId: selectedPropertyId,
-    });
-
-    setExternalBlockedDates(loaded);
-  }, [userId, selectedPropertyId]);
-
-  const handleSelectAccommodation = (e) => {
-    setSelectedPropertyId(String(e.target.value || ""));
-  };
-
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      alert("The URL has been copied to your clipboard: " + text);
-    } catch {}
+  const copyToClipboard = (text) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        alert("The URL has been copied to your clipboard: " + text);
+      })
+      .catch((err) => {
+        console.error("Could not copy text: ", err);
+      });
   };
 
   const handleICal = async (e) => {
     e.preventDefault();
-    if (!userId) return;
 
-    const listOfAccommodations = [];
+    let uid;
+    let dtStamp;
+    let dtStart;
+    let dtEnd;
+    let accommodationId;
+    let street;
+    let city;
+    let country;
+    let harbour;
+    let location;
+    let status;
+    let summary;
+    let ownerId;
 
-    for (const acc of accommodations) {
-      const dateRanges = acc?.DateRanges || [];
+    let params;
 
-      for (const r of dateRanges) {
-        const uid = generateUUID();
-        const dtStamp = formatDate(new Date());
-        const dtStart = formatDate(new Date(r.startDate));
-        const dtEnd = formatDate(new Date(r.endDate));
+    let listOfAccommodations = [];
 
-        const accommodationId = getPropertyId(acc);
+    for (let i = 0; i < accommodations.length; i++) {
+      for (let j = 0; j < accommodations[i].DateRanges.length; j++) {
+        uid = generateUUID();
+        dtStamp = formatDate(new Date());
+        dtStart = formatDate(
+          new Date(accommodations[i].DateRanges[j].startDate)
+        );
+        dtEnd = formatDate(new Date(accommodations[i].DateRanges[j].endDate));
+        accommodationId = accommodations[i].ID;
+        street = accommodations[i].Street || "";
+        harbour = accommodations[i].Harbour || "";
+        city = accommodations[i].City;
+        country = accommodations[i].Country;
+        if (accommodations[i].AccommodationType === "Boat") {
+          location = harbour + ", " + city + ", " + country;
+        } else {
+          location = street + ", " + city + ", " + country;
+        }
+        if (accommodations[i].Drafted === true) {
+          status = "Unavailable";
+        } else if (accommodations[i].Drafted === false) {
+          status = "Available";
+        }
+        summary = accommodations[i].Title + " - " + status;
+        ownerId = accommodations[i].OwnerId;
 
-        const street = acc?.Street || "";
-        const harbour = acc?.Harbour || "";
-        const city = acc?.City || acc?.property?.city || "";
-        const country = acc?.Country || acc?.property?.country || "";
-
-        const location =
-          acc?.AccommodationType === "Boat"
-            ? `${harbour}, ${city}, ${country}`
-            : `${street}, ${city}, ${country}`;
-
-        const status = acc?.Drafted === true ? "Unavailable" : "Available";
-        const title = getTitle(acc);
-        const summary = `${title} - ${status}`;
-        const ownerId = acc?.OwnerId || acc?.property?.ownerId;
-
-        listOfAccommodations.push({
+        params = {
           UID: uid,
           Dtstamp: dtStamp,
           Dtstart: dtStart,
@@ -146,94 +139,72 @@ function HostCalendar() {
           Location: location,
           AccommodationId: accommodationId,
           OwnerId: ownerId,
-        });
+        };
+        listOfAccommodations.push(params);
       }
     }
 
     try {
       const uploadURL = await uploadICalToS3(listOfAccommodations, userId);
-      if (uploadURL) await copyToClipboard(uploadURL);
-    } catch {}
+      if (uploadURL) {
+        copyToClipboard(uploadURL);
+      } else {
+        console.error("Failed to POST iCal data");
+      }
+    } catch (error) {
+      console.error("Failed to POST iCal data:", error);
+    }
   };
-
-  const exportUrl = "";
 
   return (
     <div className="page-body">
       <h2>Calendar</h2>
-
       <div className={styles.dashboardHost}>
         {isLoading ? (
           <div className="loading-spinner-calender">
-            <img src={spinner} alt="Loading" />
+            <img src={spinner} />
           </div>
         ) : accommodations.length < 1 ? (
           <p>No accommodations found...</p>
         ) : (
           <div className={calenderStyles.contentContainerCalendar}>
             <div className={calenderStyles.calendarHeader}>
-              <button className={calenderStyles.exportICal} onClick={handleICal}>
-                Export to calendar
+              <button
+                className={calenderStyles.exportICal}
+                onClick={handleICal}
+              >
+                Export to calender
               </button>
-
-              <ExternalCalendarsCard
-                exportUrl={exportUrl}
-                exportLoading={false}
-                userId={userId}
-                onImportedBlockedDates={(blockedSet, meta) => {
-                  const importedPid = String(meta?.propertyId || "").trim();
-                  if (!userId || !importedPid) return;
-
-                  saveExternalBlockedDates({
-                    userId,
-                    propertyId: importedPid,
-                    blockedSet,
-                  });
-
-                  setSelectedPropertyId(importedPid);
-                  setExternalBlockedDates(blockedSet);
-                }}
-              />
             </div>
-
             <div className={calenderStyles.calendarDropdown}>
               <div>
                 <select
                   className={calenderStyles.locationBox}
                   onChange={handleSelectAccommodation}
-                  value={selectedPropertyId}
                 >
                   <option value="" className={calenderStyles.selectOption}>
                     Select your Accommodation
                   </option>
-
-                  {accommodations
-                    .map((a) => {
-                      const pid = getPropertyId(a);
-                      const label = getTitle(a) || pid || "Accommodation";
-                      return pid ? { pid, label } : null;
-                    })
-                    .filter(Boolean)
-                    .map(({ pid, label }) => (
-                      <option key={pid} value={pid}>
-                        {label}
-                      </option>
-                    ))}
+                  {accommodations.map((accommodation) => (
+                    <option key={accommodation.property.id} value={accommodation.property.id}>
+                      {accommodation.property.title}
+                    </option>
+                  ))}
                 </select>
               </div>
-
-              {selectedAccommodation ? (
+              {selectedAccommodation !== null &&
+              selectedAccommodation !== undefined ? (
                 <div>
-                  <p>Booking availability for {getTitle(selectedAccommodation)}</p>
-
+                  <p>
+                    Booking availability for
+                    {" " + selectedAccommodation.Title}
+                  </p>
                   <div className={calenderStyles.locationBox}>
                     <CalendarComponent
                       passedProp={selectedAccommodation}
                       isNew={false}
-                      updateDates={() => {}}
-                      calenderType="host"
-                      builder={null}
-                      externalBlockedDates={externalBlockedDates}
+                      updateDates={updateDates}
+                      componentView={true}
                     />
                   </div>
                 </div>
