@@ -1,70 +1,48 @@
-# AWS Onboarding Guide (Invite-Based Access)
+# Domits AWS Access Guide – Users and Groups
 
-This guide explains how to access an existing AWS account after receiving an invite link.
+## 1️⃣ Overview
 
----
+All AWS access is managed via **IAM users grouped into IAM groups**. Each group defines a **set of permissions**, and users inherit access from their group membership.
 
-## Step 1 — Open the AWS Invite Link
-You will receive a link to AWS.
-
-1. Click the **AWS invite link**
-2. You will be taken to the AWS sign-in page
+> ✅ No individual long-lived access policies; all access comes from groups.
 
 ---
 
-## Step 2 — Sign In for the First Time
-Enter the credentials **provided** to you:
+## 2️⃣ AWS IAM Groups and Permissions
 
-- **Username**
-- **Temporary password**
-
-Click **Sign in**.
-
----
-
-## Step 3 — Change Your Password
-After your first login, AWS will require you to change your password.
-
-1. Enter the **temporary password**
-2. Create a **new password**
-3. Confirm the new password
-4. Click **Submit**
+| Group Name                  | Purpose                                   | Permissions                                               |
+|------------------------------|-------------------------------------------|-----------------------------------------------------------|
+| `domits-platform-admins`     | Full administrative access to all platform infrastructure | AdministratorAccess                                      |
+| `domits-security-auditors`   | Security and audit tasks only             | SecurityAudit, ReadOnlyAccess                             |
+| `domits-cloud-operators`     | Cloud deployment and operational tasks   | EC2, S3, EKS, CloudWatch, CloudFormation                 |
+| `domits-backend-developers`  | Backend application development          | Lambda, API Gateway, DynamoDB, SQS, SNS                  |
+| `domits-frontend-developers` | Frontend deployment                       | S3, CloudFront, Route53                                   |
+| `domits-data-engineers`      | Data pipelines and analytics             | S3, Athena, Glue, Redshift, Lake Formation               |
+| `domits-quality-assurance`   | Testing and CI/CD pipelines               | ReadOnlyAccess, CloudWatch Logs, Test resource access    |
 
 ---
 
-## Step 4 — Sign In Again
-After changing your password:
+## 3️⃣ Example Users
 
-1. Go to https://console.aws.amazon.com
-2. Enter your **username** and **new password**
-3. Sign in to the AWS Management Console
-
----
-
-## Step 5 — Open IAM (Identity and Access Management)
-
-1. In the AWS console search bar, type **IAM**
-2. Click **IAM**
-3. Select **Users**
-4. Click your **username**
+| Username     | Group Membership                                       | Notes                             |
+|-------------|--------------------------------------------------------|-----------------------------------|
+| `alice.doe`  | `domits-backend-developers`, `domits-cloud-operators` | Backend developer with deployment access |
+| `bob.smith`  | `domits-frontend-developers`                           | Frontend developer                |
+| `carol.jones`| `domits-security-auditors`                             | Security auditing only            |
+| `david.lee`  | `domits-platform-admins`                               | Platform administrator            |
+| `emma.kim`   | `domits-data-engineers`                                | Data engineer                     |
 
 ---
 
-## Step 6 — Request Permissions
-By default, your user may not have access to AWS resources.
+## 4️⃣ Access Guidelines
 
-Permissions must be **provided** by adding:
-- The correct **IAM group**, or
-- The required **IAM policies**
+1. **Group-based access only** – No direct user policies.  
+2. **Least privilege** – Assign the smallest group needed.  
+3. **Environment-specific roles** – Separate roles/groups for dev, staging, prod if needed.  
+4. **Audit and review** – Group membership reviewed quarterly.  
+5. **Password & MFA** – Enforce strong passwords + MFA for all users.  
 
-Until permissions are added, you may see access errors. This is expected.
 
----
 
-## Step 7 — Log Out and Log Back In
-After permissions are provided:
 
-1. Log out of AWS
-2. Log back in
 
-Your permissions will now be active.
