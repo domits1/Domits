@@ -1,10 +1,5 @@
-// ./store/constants.js
-
 export const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/images";
 
-// --------------------
-// Static (no language)
-// --------------------
 export const categories = [
   { name: "Friends", img: `${S3_URL}/Images/friends.webp`, description: "Vacation Rentals and Apartments" },
   { name: "Couples", img: `${S3_URL}/Images/couples.webp`, description: "Vacation Rentals and Apartments" },
@@ -112,9 +107,6 @@ export const hostImages = [
   { src: `${S3_URL}/Images/sleutelvrouw.webp`, alt: "Sleutelvrouw" },
 ];
 
-// -------------------------------------
-// Dynamic (depends on homePageContent)
-// -------------------------------------
 export const buildHomepageLists = (homePageContent) => {
   const desc = homePageContent.filters.groups.description;
 
