@@ -391,11 +391,13 @@
 
         .booking-title {
             text-align: left;
-            font-size: 18px;
-            font-weight: 400;
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 16px;
 
             @media (max-width: 768px) {
-                font-size: 16px;
+                font-size: 18px;
+                margin-bottom: 12px;
             }
         }
 
