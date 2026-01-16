@@ -53,7 +53,7 @@ the merge into `main` can be performed **without additional approvals**.
 
 Steps:
 
-1. Go to **Settings → Branches**
+1. Go  to [Settings](https://github.com/domits1/Domits/settings) → [Branches](https://github.com/domits1/Domits/settings/branches)
 2. Locate the branch rule for `main`
 3. Click **Edit**
 4. Temporarily disable:
@@ -79,8 +79,8 @@ Steps:
 After the merge, verification is the developer’s responsibility.
 
 Check:
-- **AWS Amplify** to confirm the deployment completed successfully
-- The live environment (for example):
+- [AWS Amplify](https://eu-north-1.console.aws.amazon.com/amplify/apps/d34jwd0sihmsus/branches/main/deployments) to confirm the deployment completed successfully
+- The live environment:
   https://www.domits.com/
 
 At minimum, verify:
@@ -97,8 +97,8 @@ If anything fails:
 
 After a successful deployment:
 
-1. Go back to **Settings → Branches**
-2. Edit the `main` branch rule
+1. Go back to [Settings](https://github.com/domits1/Domits/settings) → [Branches](https://github.com/domits1/Domits/settings/branches)
+2. Edit the [main](https://github.com/domits1/Domits/settings/branch_protection_rules/46400769) branch rule
 3. Re-enable:
    - **Require approvals**
 4. Click **Save changes**
