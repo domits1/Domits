@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-import "./ADRCard.scss";
+import "./KpiCard.scss";      
+import "./ADRCard.scss";      
 import { ADRCardService as ADRService } from "../services/ADRCardService.js";
 
 const ADRCard = ({ refreshKey }) => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
+
   const [adr, setAdr] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [bookedNights, setBookedNights] = useState(0);
-  const [chartData, setChartData] = useState([]);
 
   const [timeFilter, setTimeFilter] = useState("monthly");
   const [startDate, setStartDate] = useState("");
@@ -19,7 +20,7 @@ const ADRCard = ({ refreshKey }) => {
   const [error, setError] = useState(null);
 
   const isMountedRef = useRef(false);
-  const fetching = useRef(false);
+  const fetchingRef = useRef(false);
 
   const lastRef = useRef({
     adr: null,
@@ -50,17 +51,19 @@ const ADRCard = ({ refreshKey }) => {
     return true;
   }, [cognitoUserId, timeFilter, startDate, endDate]);
 
+  const safeValue = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
   const buildChartKey = (data) => {
     if (!Array.isArray(data)) return "";
-    return data.map((d) => `${d.name ?? ""}:${Number(d.value ?? 0)}`).join("|");
+    return data.map((d) => `${d?.name ?? ""}:${Number(d?.value ?? 0)}`).join("|");
   };
 
   const fetchMetrics = useCallback(
     async ({ silent = false } = {}) => {
       if (!canFetch() || !isMountedRef.current) return;
+      if (fetchingRef.current) return;
 
-      if (fetching.current) return;
-      fetching.current = true;
+      fetchingRef.current = true;
 
       if (!silent) {
         setLoading(true);
@@ -68,30 +71,38 @@ const ADRCard = ({ refreshKey }) => {
       }
 
       try {
-        const results = await ADRService.getADRMetrics(cognitoUserId, timeFilter, startDate, endDate);
+        const results = await ADRService.getADRMetrics(
+          cognitoUserId,
+          timeFilter,
+          startDate,
+          endDate
+        );
 
         if (!isMountedRef.current || !results) return;
 
-        const nextAdr = Number(results.adr) || 0;
-        const nextTotalRevenue = Number(results.totalRevenue) || 0;
-        const nextBookedNights = Number(results.bookedNights) || 0;
-        const nextChartData = results.chartData || [];
+        const nextAdr = safeValue(results.adr);
+        const nextTotalRevenue = safeValue(results.totalRevenue);
+        const nextBookedNights = safeValue(results.bookedNights);
+
+        const nextChartData = Array.isArray(results.chartData) ? results.chartData : [];
         const nextChartKey = buildChartKey(nextChartData);
 
         if (lastRef.current.adr !== nextAdr) {
           setAdr(nextAdr);
           lastRef.current.adr = nextAdr;
         }
+
         if (lastRef.current.totalRevenue !== nextTotalRevenue) {
           setTotalRevenue(nextTotalRevenue);
           lastRef.current.totalRevenue = nextTotalRevenue;
         }
+
         if (lastRef.current.bookedNights !== nextBookedNights) {
           setBookedNights(nextBookedNights);
           lastRef.current.bookedNights = nextBookedNights;
         }
+
         if (lastRef.current.chartKey !== nextChartKey) {
-          setChartData(nextChartData);
           lastRef.current.chartKey = nextChartKey;
         }
 
@@ -99,7 +110,7 @@ const ADRCard = ({ refreshKey }) => {
       } catch (e) {
         if (!silent && isMountedRef.current) setError("Failed to fetch ADR metrics");
       } finally {
-        fetching.current = false;
+        fetchingRef.current = false;
         if (!silent && isMountedRef.current) setLoading(false);
       }
     },
@@ -116,8 +127,6 @@ const ADRCard = ({ refreshKey }) => {
     fetchMetrics({ silent: true });
   }, [refreshKey, canFetch, fetchMetrics]);
 
-  const safeValue = (v) => (Number.isFinite(v) ? Number(v) : 0);
-
   const donutData = [
     { name: "ADR", value: safeValue(adr) },
     { name: "Total Revenue", value: safeValue(totalRevenue) },
@@ -130,7 +139,7 @@ const ADRCard = ({ refreshKey }) => {
   const COLORS = ["#0d9813", "#82ca9d", "#ffc658"];
 
   return (
-    <div className="adr-card card-base">
+    <div className="kpi-card adr-card">
       <h3>Average Daily Rate</h3>
 
       <div className="time-filter">
@@ -145,58 +154,72 @@ const ADRCard = ({ refreshKey }) => {
         <div className="custom-date-filter">
           <div>
             <label>Start Date:</label>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
           </div>
           <div>
             <label>End Date:</label>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
           </div>
         </div>
       )}
 
-      <div className="adr-details">
-        {loading ? (
-          <p>Loading…</p>
-        ) : error ? (
-          <p style={{ color: "red" }}>Error: {error}</p>
-        ) : (
-          <>
-            <p>
-              <strong>ADR:</strong> €{safeValue(adr).toLocaleString()}
-            </p>
-            <p>
-              <strong>Total Revenue:</strong> €{safeValue(totalRevenue).toLocaleString()}
-            </p>
-            <p>
-              <strong>Booked Nights:</strong> {safeValue(bookedNights).toLocaleString()}
-            </p>
-          </>
+      <div className="kpi-body">
+        <div className="adr-details">
+          {loading ? (
+            <p>Loading…</p>
+          ) : error ? (
+            <p style={{ color: "red" }}>Error: {error}</p>
+          ) : (
+            <>
+              <p>
+                <strong>ADR:</strong> €{safeValue(adr).toLocaleString()}
+              </p>
+              <p>
+                <strong>Total Revenue:</strong> €{safeValue(totalRevenue).toLocaleString()}
+              </p>
+              <p>
+                <strong>Booked Nights:</strong> {safeValue(bookedNights).toLocaleString()}
+              </p>
+            </>
+          )}
+        </div>
+
+        {!loading && !error && (
+          <div className="adr-donut-chart">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={displayData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={3}
+                  isAnimationActive={true}
+                >
+                  {displayData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={allZero ? "#ccc" : COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </div>
-
-      {!loading && !error && (
-        <div className="adr-donut-chart">
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie
-                data={displayData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={3}
-                isAnimationActive={true}>
-                {displayData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={allZero ? "#ccc" : COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      )}
     </div>
   );
 };
