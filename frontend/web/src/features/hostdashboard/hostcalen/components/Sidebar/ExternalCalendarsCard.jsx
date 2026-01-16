@@ -1,28 +1,25 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import Modal from "react-modal";
 import IcalSyncForm from "../../../../../pages/icalsync/IcalSyncForm";
-import { retrieveExternalCalendar } from "../../../../../utils/icalRetrieveHost";
-import { buildBlockedSetFromIcsEvents } from "../../../../../utils/icalConvert";
 
-export default function ExternalCalendarsCard({ onImportedBlockedKeys }) {
+export default function ExternalCalendarsCard({ sources, onAddSource, onRemoveSource, onRefreshAll }) {
   const [isIcalModalOpen, setIsIcalModalOpen] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState(null);
-  const [importedCount, setImportedCount] = useState(0);
 
-  const handleOpenIcalModal = () => {
+  const open = () => {
     setImportError(null);
-    setImportedCount(0);
     setIsIcalModalOpen(true);
   };
 
-  const handleCloseIcalModal = () => {
+  const close = () => {
     setIsIcalModalOpen(false);
     setImportError(null);
   };
 
   const handleImport = async (payload) => {
     const calendarUrl = String(payload?.calendarUrl || "").trim();
+    const calendarName = String(payload?.calendarName || "").trim();
 
     if (!calendarUrl) {
       setImportError("calendarUrl is required.");
@@ -31,15 +28,9 @@ export default function ExternalCalendarsCard({ onImportedBlockedKeys }) {
 
     setImportLoading(true);
     setImportError(null);
-    setImportedCount(0);
 
     try {
-      const events = await retrieveExternalCalendar(calendarUrl);
-      const blockedSet = buildBlockedSetFromIcsEvents(events);
-
-      setImportedCount(blockedSet?.size || 0);
-      onImportedBlockedKeys?.(blockedSet);
-
+      await onAddSource?.({ calendarUrl, calendarName });
       setIsIcalModalOpen(false);
     } catch (e) {
       setImportError(e?.message || "Failed to import calendar");
@@ -48,8 +39,7 @@ export default function ExternalCalendarsCard({ onImportedBlockedKeys }) {
     }
   };
 
-  const exportUrl = "";
-  const exportLoading = false;
+  const list = Array.isArray(sources) ? sources : [];
 
   return (
     <>
@@ -61,33 +51,46 @@ export default function ExternalCalendarsCard({ onImportedBlockedKeys }) {
             Connect Google
           </button>
 
-          <button className="hc-btn" onClick={handleOpenIcalModal} disabled={exportLoading}>
-            {exportLoading ? "Generating iCal link…" : "iCal & Calendar synchronization"}
+          <button className="hc-btn" onClick={open}>
+            iCal & Calendar synchronization
           </button>
 
-          <button className="hc-icon-btn" title="Refresh" disabled>
-            ⟲
+          <button className="hc-btn" onClick={() => onRefreshAll?.()}>
+            Refresh all
           </button>
         </div>
 
-        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
-          Imported blocked: {importedCount}
+        <div style={{ marginTop: 10, fontSize: 12, opacity: 0.9 }}>
+          {list.length === 0 ? (
+            <div>No connected calendars</div>
+          ) : (
+            list.map((s) => (
+              <div key={s.sourceId} style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
+                  {s.calendarName || "EXTERNAL"}
+                </div>
+                <button className="hc-btn ghost" onClick={() => onRemoveSource?.(s.sourceId)}>
+                  Disconnect
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
       <Modal
         isOpen={isIcalModalOpen}
-        onRequestClose={handleCloseIcalModal}
+        onRequestClose={close}
         className="hc-modal"
         overlayClassName="hc-modal-overlay"
       >
-        <span className="ical-modal-close" onClick={handleCloseIcalModal}>
+        <span className="ical-modal-close" onClick={close}>
           ×
         </span>
 
         {importError && <div className="ical-error-banner">{importError}</div>}
 
-        <IcalSyncForm exportUrl={exportUrl} onImport={handleImport} submitting={importLoading} />
+        <IcalSyncForm exportUrl={""} onImport={handleImport} submitting={importLoading} />
       </Modal>
     </>
   );
