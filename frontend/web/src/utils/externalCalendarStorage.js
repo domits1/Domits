@@ -1,15 +1,9 @@
-const STORAGE_PREFIX = "domits:externalBlockedKeys:v1";
+const PREFIX = "domits:ical:v2";
 
-const makeKey = ({ userId, propertyId }) => {
-  const uid = String(userId || "").trim();
-  const pid = propertyId ? String(propertyId).trim() : "global";
-  return `${STORAGE_PREFIX}:${uid}:${pid}`;
-};
+const keySources = (userId) => `${PREFIX}:sources:${String(userId || "").trim()}`;
+const keyBlocked = (userId) => `${PREFIX}:blocked:${String(userId || "").trim()}`;
 
-const normalizeYmd = (v) => {
-  const s = String(v || "").trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
-};
+const isYmd = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 const getStorage = () => {
   try {
@@ -19,64 +13,56 @@ const getStorage = () => {
   }
 };
 
-export function saveExternalBlockedDates({ userId, propertyId, blockedSet }) {
-  if (!userId) return;
-
-  const storage = getStorage();
-  if (!storage) return;
-
-  const set = blockedSet instanceof Set ? blockedSet : new Set();
-  const arr = Array.from(set).map(normalizeYmd).filter(Boolean);
-  const uniqueSorted = Array.from(new Set(arr)).sort();
-
-  const payload = {
-    v: 1,
-    savedAt: new Date().toISOString(),
-    dates: uniqueSorted,
-  };
-
+export function loadIcalSources(userId) {
+  const s = getStorage();
+  if (!s || !userId) return [];
   try {
-    storage.setItem(makeKey({ userId, propertyId }), JSON.stringify(payload));
-  } catch (e) {
-    console.error("Failed to save external blocked dates:", e);
+    const raw = s.getItem(keySources(userId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
 }
 
-export function loadExternalBlockedDates({ userId, propertyId }) {
-  if (!userId) return new Set();
-
-  const storage = getStorage();
-  if (!storage) return new Set();
-
+export function saveIcalSources(userId, sources) {
+  const s = getStorage();
+  if (!s || !userId) return;
   try {
-    const raw = storage.getItem(makeKey({ userId, propertyId }));
+    const arr = Array.isArray(sources) ? sources : [];
+    s.setItem(keySources(userId), JSON.stringify(arr));
+  } catch {}
+}
+
+export function loadExternalBlockedDates({ userId }) {
+  const s = getStorage();
+  if (!s || !userId) return new Set();
+  try {
+    const raw = s.getItem(keyBlocked(userId));
     if (!raw) return new Set();
-
     const parsed = JSON.parse(raw);
-
-    const dates = Array.isArray(parsed)
-      ? parsed
-      : Array.isArray(parsed?.dates)
-      ? parsed.dates
-      : [];
-
-    const cleaned = dates.map(normalizeYmd).filter(Boolean);
-    return new Set(cleaned);
-  } catch (e) {
-    console.error("Failed to load external blocked dates:", e);
+    const dates = Array.isArray(parsed?.dates) ? parsed.dates : Array.isArray(parsed) ? parsed : [];
+    return new Set(dates.filter(isYmd));
+  } catch {
     return new Set();
   }
 }
 
-export function clearExternalBlockedDates({ userId, propertyId }) {
-  if (!userId) return;
-
-  const storage = getStorage();
-  if (!storage) return;
-
+export function saveExternalBlockedDates({ userId, blockedSet }) {
+  const s = getStorage();
+  if (!s || !userId) return;
   try {
-    storage.removeItem(makeKey({ userId, propertyId }));
-  } catch (e) {
-    console.error("Failed to clear external blocked dates:", e);
-  }
+    const dates = Array.from(blockedSet instanceof Set ? blockedSet : new Set()).filter(isYmd).sort();
+    s.setItem(keyBlocked(userId), JSON.stringify({ v: 2, savedAt: new Date().toISOString(), dates }));
+  } catch {}
+}
+
+export function clearAllIcal(userId) {
+  const s = getStorage();
+  if (!s || !userId) return;
+  try {
+    s.removeItem(keySources(userId));
+    s.removeItem(keyBlocked(userId));
+  } catch {}
 }

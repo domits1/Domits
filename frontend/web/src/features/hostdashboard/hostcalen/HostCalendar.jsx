@@ -1,15 +1,25 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./HostCalendar.scss";
+
 import Toolbar from "./components/Toolbar";
 import Legend from "./components/Legend";
 import CalendarGrid from "./components/CalendarGrid";
 import StatsPanel from "./components/StatsPanel";
+
 import AvailabilityCard from "./components/Sidebar/AvailabilityCard";
 import PricingCard from "./components/Sidebar/PricingCard";
 import ExternalCalendarsCard from "./components/Sidebar/ExternalCalendarsCard";
+
 import { getMonthMatrix, startOfMonthUTC, addMonthsUTC, subMonthsUTC } from "./utils/date";
 import { getCognitoUserId } from "../../../services/getAccessToken";
-import { loadExternalBlockedDates, saveExternalBlockedDates } from "../../../utils/externalCalendarStorage";
+import { retrieveExternalCalendar } from "../../../utils/icalRetrieveHost";
+import { buildBlockedSetFromIcsEvents } from "../../../utils/icalConvert";
+import {
+  loadIcalSources,
+  saveIcalSources,
+  loadExternalBlockedDates,
+  saveExternalBlockedDates,
+} from "../../../utils/externalCalendarStorage";
 
 const initialBlocks = {
   booked: new Set(),
@@ -22,6 +32,16 @@ const initialPrices = {};
 
 const isYmd = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
+const hashSourceId = (url) => {
+  const s = String(url || "").trim();
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return `src_${(h >>> 0).toString(16)}`;
+};
+
 export default function HostCalendar() {
   const [view, setView] = useState("month");
   const [cursor, setCursor] = useState(startOfMonthUTC(new Date()));
@@ -30,6 +50,7 @@ export default function HostCalendar() {
   const [tempPrice, setTempPrice] = useState("");
 
   const [userId, setUserId] = useState(null);
+  const [sources, setSources] = useState([]);
   const [externalBlocked, setExternalBlocked] = useState(new Set());
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
@@ -44,12 +65,11 @@ export default function HostCalendar() {
 
   useEffect(() => {
     if (!userId) return;
-    const loaded = loadExternalBlockedDates({ userId, propertyId: null });
-    setExternalBlocked(loaded);
+    setSources(loadIcalSources(userId));
+    setExternalBlocked(loadExternalBlockedDates({ userId }));
   }, [userId]);
 
   useEffect(() => {
-    if (!externalBlocked?.size) return;
     setSelections((prev) => {
       const nextSel = {
         booked: new Set(prev.booked),
@@ -71,26 +91,20 @@ export default function HostCalendar() {
 
   const toggleDayIn = (bucket, key) => {
     setSelections((prev) => {
-      if (isExternallyBlocked(key)) {
-        const nextSel = {
-          booked: new Set(prev.booked),
-          available: new Set(prev.available),
-          blocked: new Set(prev.blocked),
-          maintenance: new Set(prev.maintenance),
-        };
-        nextSel.blocked.add(key);
-        nextSel.available.delete(key);
-        nextSel.booked.delete(key);
-        nextSel.maintenance.delete(key);
-        return nextSel;
-      }
-
       const nextSel = {
         booked: new Set(prev.booked),
         available: new Set(prev.available),
         blocked: new Set(prev.blocked),
         maintenance: new Set(prev.maintenance),
       };
+
+      if (isExternallyBlocked(key)) {
+        nextSel.blocked.add(key);
+        nextSel.available.delete(key);
+        nextSel.booked.delete(key);
+        nextSel.maintenance.delete(key);
+        return nextSel;
+      }
 
       if (nextSel[bucket].has(key)) nextSel[bucket].delete(key);
       else nextSel[bucket].add(key);
@@ -99,55 +113,8 @@ export default function HostCalendar() {
         if (b !== bucket) nextSel[b].delete(key);
       });
 
-      if (externalBlocked?.size) {
-        externalBlocked.forEach((k) => nextSel.blocked.add(k));
-        externalBlocked.forEach((k) => {
-          nextSel.available.delete(k);
-          nextSel.booked.delete(k);
-          nextSel.maintenance.delete(k);
-        });
-      }
-
-      return nextSel;
-    });
-  };
-
-  const setPriceForSelection = () => {
-    const value = parseFloat(tempPrice);
-    if (Number.isNaN(value)) return;
-
-    setPrices((prev) => {
-      const nextPrices = { ...prev };
-      selections.available.forEach((k) => (nextPrices[k] = value));
-      selections.booked.forEach((k) => (nextPrices[k] = value));
-      selections.blocked.forEach((k) => (nextPrices[k] = value));
-      selections.maintenance.forEach((k) => (nextPrices[k] = value));
-      return nextPrices;
-    });
-
-    setTempPrice("");
-  };
-
-  const onImportedBlockedKeys = (blockedSet) => {
-    const set = blockedSet instanceof Set ? blockedSet : new Set(blockedSet || []);
-    const cleaned = new Set(Array.from(set).filter(isYmd));
-
-    setExternalBlocked(cleaned);
-
-    if (userId) {
-      saveExternalBlockedDates({ userId, propertyId: null, blockedSet: cleaned });
-    }
-
-    setSelections((prev) => {
-      const nextSel = {
-        booked: new Set(prev.booked),
-        available: new Set(prev.available),
-        blocked: new Set(prev.blocked),
-        maintenance: new Set(prev.maintenance),
-      };
-
-      cleaned.forEach((k) => nextSel.blocked.add(k));
-      cleaned.forEach((k) => {
+      externalBlocked.forEach((k) => nextSel.blocked.add(k));
+      externalBlocked.forEach((k) => {
         nextSel.available.delete(k);
         nextSel.booked.delete(k);
         nextSel.maintenance.delete(k);
@@ -169,17 +136,93 @@ export default function HostCalendar() {
         maintenance: new Set(prev.maintenance),
       };
 
-      if (externalBlocked?.size) {
-        externalBlocked.forEach((k) => nextSel.blocked.add(k));
-        externalBlocked.forEach((k) => {
-          nextSel.available.delete(k);
-          nextSel.booked.delete(k);
-          nextSel.maintenance.delete(k);
-        });
-      }
+      externalBlocked.forEach((k) => nextSel.blocked.add(k));
+      externalBlocked.forEach((k) => {
+        nextSel.available.delete(k);
+        nextSel.booked.delete(k);
+        nextSel.maintenance.delete(k);
+      });
 
       return nextSel;
     });
+  };
+
+  const setPriceForSelection = () => {
+    const value = parseFloat(tempPrice);
+    if (Number.isNaN(value)) return;
+
+    setPrices((prev) => {
+      const nextPrices = { ...prev };
+      selections.available.forEach((k) => (nextPrices[k] = value));
+      selections.booked.forEach((k) => (nextPrices[k] = value));
+      selections.blocked.forEach((k) => (nextPrices[k] = value));
+      selections.maintenance.forEach((k) => (nextPrices[k] = value));
+      return nextPrices;
+    });
+
+    setTempPrice("");
+  };
+
+  const rebuildFromSources = async (nextSources) => {
+    const allBlocked = new Set();
+
+    for (const s of nextSources) {
+      const url = String(s?.calendarUrl || "").trim();
+      if (!url) continue;
+
+      try {
+        const events = await retrieveExternalCalendar(url);
+        const blocked = buildBlockedSetFromIcsEvents(events);
+        blocked.forEach((k) => allBlocked.add(k));
+      } catch (e) {
+        console.error("Failed source sync:", url, e);
+      }
+    }
+
+    setExternalBlocked(allBlocked);
+    if (userId) saveExternalBlockedDates({ userId, blockedSet: allBlocked });
+  };
+
+  const addOrUpdateSource = async ({ calendarUrl, calendarName }) => {
+    const url = String(calendarUrl || "").trim();
+    const name = String(calendarName || "").trim();
+    if (!url) return;
+
+    const sourceId = hashSourceId(url);
+
+    const nextSources = (() => {
+      const prev = Array.isArray(sources) ? sources : [];
+      const existingIdx = prev.findIndex((x) => x?.sourceId === sourceId);
+      const next = [...prev];
+
+      const item = {
+        sourceId,
+        calendarUrl: url,
+        calendarName: name || "EXTERNAL",
+        lastSyncAt: new Date().toISOString(),
+      };
+
+      if (existingIdx >= 0) next[existingIdx] = item;
+      else next.push(item);
+
+      return next;
+    })();
+
+    setSources(nextSources);
+    if (userId) saveIcalSources(userId, nextSources);
+
+    await rebuildFromSources(nextSources);
+  };
+
+  const removeSource = async (sourceId) => {
+    const nextSources = (Array.isArray(sources) ? sources : []).filter((s) => s?.sourceId !== sourceId);
+    setSources(nextSources);
+    if (userId) saveIcalSources(userId, nextSources);
+    await rebuildFromSources(nextSources);
+  };
+
+  const refreshAll = async () => {
+    await rebuildFromSources(sources);
   };
 
   return (
@@ -195,7 +238,12 @@ export default function HostCalendar() {
       <div className="hc-top-cards">
         <AvailabilityCard onBlock={() => {}} onMaintenance={() => {}} onUndo={() => setSelections(initialBlocks)} />
         <PricingCard tempPrice={tempPrice} setTempPrice={setTempPrice} onSetPrice={setPriceForSelection} />
-        <ExternalCalendarsCard onImportedBlockedKeys={onImportedBlockedKeys} />
+        <ExternalCalendarsCard
+          sources={sources}
+          onAddSource={addOrUpdateSource}
+          onRemoveSource={removeSource}
+          onRefreshAll={refreshAll}
+        />
       </div>
 
       <Legend />
