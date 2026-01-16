@@ -1,8 +1,30 @@
 .listing-details {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 90px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+
+  @media (max-width: 768px) {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 80px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+  }
+
   .listing-details-header {
     font-size: 24px;
     font-weight: bold;
     margin: 20px 30px;
+
+    @media (max-width: 768px) {
+      font-size: 20px;
+      margin: 12px 14px 8px;
+    }
+
+    @media (max-width: 420px) {
+      font-size: 18px;
+      margin: 10px 12px 8px;
+    }
   }
 
   .container {
@@ -13,14 +35,31 @@
     margin: 0 auto;
     max-width: 1500px;
 
+    flex-wrap: nowrap;
+    align-items: flex-start;
+
+    width: 100%;
+    min-width: 0;
+
+    @media (max-width: 1024px) {
+      padding: 0 16px;
+      gap: 16px;
+    }
+
     @media (max-width: 768px) {
       flex-direction: column;
+      gap: 14px;
+      padding: 0 14px;
     }
 
     .property-container {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: 100%;
+
       .image-section {
         position: relative;
-        flex: 2;
+        width: 100%;
 
         .image-gallery {
           display: grid;
@@ -29,6 +68,17 @@
           gap: 8px;
           border-radius: 10px;
           overflow: hidden;
+
+          @media (max-width: 1024px) {
+            grid-template-rows: 220px 220px;
+          }
+
+          @media (max-width: 768px) {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-radius: 12px;
+          }
         }
 
         .main-image {
@@ -37,6 +87,17 @@
           object-fit: cover;
           border-radius: 10px;
           grid-row: 1 / span 2;
+          display: block;
+
+          @media (max-width: 768px) {
+            grid-row: auto;
+            border-radius: 12px;
+            height: 240px;
+          }
+
+          @media (max-width: 420px) {
+            height: 210px;
+          }
         }
 
         .small-images-container {
@@ -44,6 +105,18 @@
           grid-template-columns: 1fr 1fr;
           grid-template-rows: 255px 255px;
           gap: 8px;
+
+          @media (max-width: 1024px) {
+            grid-template-rows: 220px 220px;
+          }
+
+          @media (max-width: 768px) {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            -webkit-overflow-scrolling: touch;
+          }
         }
 
         .small-image {
@@ -53,6 +126,19 @@
           border-radius: 10px;
           cursor: pointer;
           transition: opacity 0.2s ease;
+          display: block;
+
+          @media (max-width: 768px) {
+            border-radius: 12px;
+            height: 110px;
+            width: 160px;
+            flex: 0 0 auto;
+          }
+
+          @media (max-width: 420px) {
+            height: 95px;
+            width: 140px;
+          }
         }
 
         .rating-section {
@@ -75,6 +161,16 @@
             color: white;
             font-size: 14px;
           }
+
+          @media (max-width: 768px) {
+            padding: 4px 10px;
+            border-radius: 999px;
+
+            .rating-star,
+            .rating-rating {
+              font-size: 12px;
+            }
+          }
         }
 
         .host-name {
@@ -88,6 +184,12 @@
           display: inline-block;
           width: auto;
           color: white;
+
+          @media (max-width: 768px) {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+          }
         }
       }
 
@@ -100,12 +202,22 @@
         .price-night {
           color: #777;
         }
+
+        @media (max-width: 768px) {
+          margin-top: 12px;
+          font-size: 18px;
+        }
       }
 
       .details {
         margin-bottom: 10px;
         color: #666;
         font-size: medium;
+
+        @media (max-width: 768px) {
+          font-size: 14px;
+          line-height: 1.35;
+        }
       }
 
       .description-container {
@@ -113,6 +225,11 @@
           overflow: hidden;
           transition: max-height 0.3s ease;
           font-size: large;
+
+          @media (max-width: 768px) {
+            font-size: 15px;
+            line-height: 1.45;
+          }
         }
 
         .collapsed {
@@ -136,6 +253,11 @@
           font-size: 0.9em;
           padding: 0;
           margin-bottom: 30px;
+
+          @media (max-width: 768px) {
+            margin-bottom: 18px;
+            font-size: 14px;
+          }
         }
       }
 
@@ -146,6 +268,12 @@
         padding: 20px 25px;
         margin-top: 25px;
         font-family: "Inter", sans-serif;
+
+        @media (max-width: 768px) {
+          padding: 16px;
+          border-radius: 14px;
+          margin-top: 18px;
+        }
       }
 
       .rules-title {
@@ -153,6 +281,11 @@
         font-weight: 600;
         margin-bottom: 15px;
         color: #1a1a1a;
+
+        @media (max-width: 768px) {
+          font-size: 18px;
+          margin-bottom: 10px;
+        }
       }
 
       .rules {
@@ -160,6 +293,11 @@
         font-size: 15px;
         line-height: 1.5;
         margin-bottom: 25px;
+
+        @media (max-width: 768px) {
+          font-size: 14px;
+          margin-bottom: 16px;
+        }
       }
 
       .rules-check-in-check-out-container {
@@ -170,12 +308,22 @@
         display: flex;
         flex-direction: column;
         gap: 12px;
+
+        @media (max-width: 768px) {
+          padding: 14px;
+          border-radius: 12px;
+          gap: 10px;
+        }
       }
 
       .rules-check-in-check-out-container p {
         font-size: 16px;
         color: #1a1a1a;
         margin: 0;
+
+        @media (max-width: 768px) {
+          font-size: 14px;
+        }
       }
 
       .rules-check-in-check-out-container p::before {
@@ -186,17 +334,43 @@
   }
 
   .booking-container {
-    position: relative;
     background: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    height: 100%;
+
+    flex: 0 0 360px;
+    width: 360px;
+    max-width: 360px;
+    align-self: flex-start;
+
+    position: sticky;
+    top: 20px;
+
+    @media (max-width: 1100px) {
+      flex-basis: 320px;
+      width: 320px;
+      max-width: 320px;
+    }
+
+    @media (max-width: 768px) {
+      position: relative;
+      top: auto;
+      width: 100%;
+      max-width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
 
     .booking-title {
       text-align: left;
       font-size: 18px;
       font-weight: 400;
+
+      @media (max-width: 768px) {
+        font-size: 16px;
+      }
     }
 
     .date-container {
@@ -206,16 +380,30 @@
       font-family: Arial, sans-serif;
       font-weight: 200;
 
+      @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
       .date-box {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+
+        @media (max-width: 768px) {
+          width: 100%;
+        }
 
         .label {
           font-size: 16px;
           color: black;
           margin-bottom: 5px;
           font-weight: 400;
+
+          @media (max-width: 768px) {
+            font-size: 14px;
+          }
         }
 
         .inputField {
@@ -225,6 +413,8 @@
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
           font-size: 14px;
           text-align: left;
+          width: 100%;
+          padding: 12px 12px;
         }
       }
 
@@ -235,9 +425,19 @@
         font-size: 14px;
         color: #666;
 
+        @media (max-width: 768px) {
+          flex-direction: row;
+          justify-content: center;
+          gap: 10px;
+        }
+
         .arrow {
           font-size: 18px;
           margin-top: 5px;
+
+          @media (max-width: 768px) {
+            margin-top: 0;
+          }
         }
       }
     }
@@ -253,20 +453,30 @@
         color: black;
         margin-bottom: 5px;
         font-weight: 400;
+
+        @media (max-width: 768px) {
+          font-size: 14px;
+        }
       }
 
       .guests-inputFields {
         display: flex;
         flex-direction: row;
+        gap: 10px;
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+        }
 
         .inputField {
           background-color: white;
-          padding: 10px 20px;
+          padding: 12px 12px;
           border: none;
           border-radius: 12px;
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
           font-size: 14px;
           text-align: left;
+          width: 100%;
         }
       }
     }
@@ -275,43 +485,50 @@
       width: 100%;
       background: var(--primary-color);
       color: white;
-      padding: 10px;
+      padding: 12px;
       border: none;
-      border-radius: 5px;
-      font-size: 16px;
+      border-radius: 10px;
+      font-size: 15px;
       cursor: pointer;
       margin-top: 10px;
-    }
 
-    .reserve-btn:hover {
-      filter: brightness(90%);
+      &:hover {
+        filter: brightness(90%);
+      }
     }
 
     .note {
       font-size: 12px;
       color: #777;
       text-align: center;
-      margin-top: 5px;
+      margin-top: 8px;
     }
 
     .pricing-container {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
 
       .pricing-description-and-price {
         width: 100%;
         display: flex;
-        flex-direction: row;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
+        gap: 10px;
+
+        > * {
+          min-width: 0;
+          word-break: break-word;
+        }
 
         .pricing-description {
           text-align: left;
+          flex: 1;
         }
 
         .pricing-price {
           text-align: right;
+          white-space: nowrap;
         }
       }
     }
@@ -330,11 +547,20 @@
 .amenities-container {
   margin-top: 30px;
 
+  @media (max-width: 768px) {
+    margin-top: 18px;
+  }
+
   .amenities-title {
     font-size: 20px;
     font-weight: 600;
     margin-bottom: 20px;
     text-align: center;
+
+    @media (max-width: 768px) {
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
   }
 
   .amenities-featured {
@@ -344,6 +570,11 @@
 
     @media (max-width: 768px) {
       grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 420px) {
+      grid-template-columns: 1fr;
     }
 
     .amenity {
@@ -363,6 +594,10 @@
         color: #333;
         font-size: 14px;
         line-height: 1.2;
+
+        @media (max-width: 768px) {
+          font-size: 13px;
+        }
       }
     }
   }
@@ -380,6 +615,12 @@
     &:hover {
       background: #f6f6f6;
     }
+
+    @media (max-width: 768px) {
+      width: 100%;
+      max-width: 360px;
+      border-radius: 12px;
+    }
   }
 }
 
@@ -392,6 +633,12 @@
   align-items: flex-start;
   padding-top: 60px;
   z-index: 3000;
+
+  @media (max-width: 768px) {
+    align-items: flex-end;
+    padding-top: 0;
+    padding: 12px;
+  }
 }
 
 .amenities-modal {
@@ -409,9 +656,12 @@
   @media (max-width: 900px) {
     width: 85%;
   }
-  @media (max-width: 600px) {
-    width: 95%;
-    padding: 25px;
+  @media (max-width: 768px) {
+    width: 100%;
+    max-height: 85vh;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 6px;
   }
 
   .modal-title {
@@ -419,6 +669,11 @@
     font-size: 22px;
     font-weight: 700;
     margin-bottom: 25px;
+
+    @media (max-width: 768px) {
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
   }
 
   .close-modal-btn {
@@ -429,16 +684,31 @@
     border: none;
     font-size: 28px;
     cursor: pointer;
+
+    @media (max-width: 768px) {
+      right: 14px;
+      top: 10px;
+      font-size: 26px;
+    }
   }
 
   .modal-group {
     margin-bottom: 25px;
+
+    @media (max-width: 768px) {
+      margin-bottom: 18px;
+    }
 
     .category-title {
       font-size: 15px;
       font-weight: 600;
       margin-bottom: 10px;
       color: #222;
+
+      @media (max-width: 768px) {
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
     }
 
     .modal-items {
@@ -469,294 +739,12 @@
         .amenity-name {
           color: #333;
           font-size: 14px;
-        }
-      }
-    }
-  }
-}
 
-@media (max-width: 768px) {
-  .listing-details {
-    .listing-details-header {
-      font-size: 20px;
-      margin: 14px 16px;
-      line-height: 1.2;
-    }
-
-    .container {
-      gap: 14px;
-      padding: 0 14px;
-    }
-
-    .container .property-container {
-      .image-section {
-        flex: 1;
-
-        .image-gallery {
-          display: grid;
-          grid-template-columns: 1fr;
-          grid-template-rows: auto;
-          gap: 8px;
-          border-radius: 12px;
-          overflow: hidden;
-        }
-
-        .main-image {
-          grid-row: auto;
-          border-radius: 12px;
-          height: 230px;
-        }
-
-        .small-images-container {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          grid-template-rows: auto;
-          gap: 8px;
-        }
-
-        .small-image {
-          border-radius: 12px;
-          height: 110px;
-        }
-
-        .rating-section {
-          padding: 4px 10px;
-          border-radius: 999px;
-
-          .rating-star,
-          .rating-rating {
-            font-size: 12px;
-          }
-        }
-
-        .host-name {
-          padding: 4px 10px;
-          border-radius: 999px;
-          font-size: 12px;
-        }
-      }
-
-      .price {
-        margin-top: 12px;
-        font-size: 18px;
-      }
-
-      .details {
-        font-size: 14px;
-        line-height: 1.35;
-      }
-
-      .description-container {
-        .description {
-          font-size: 15px;
-          line-height: 1.45;
-        }
-
-        .toggle-button {
-          margin-bottom: 18px;
-          font-size: 14px;
-        }
-      }
-
-      .rules-container {
-        padding: 16px;
-        border-radius: 14px;
-        margin-top: 18px;
-      }
-
-      .rules-title {
-        font-size: 18px;
-        margin-bottom: 10px;
-      }
-
-      .rules {
-        font-size: 14px;
-        margin-bottom: 16px;
-      }
-
-      .rules-check-in-check-out-container {
-        padding: 14px;
-        border-radius: 12px;
-        gap: 10px;
-      }
-
-      .rules-check-in-check-out-container p {
-        font-size: 14px;
-      }
-    }
-
-    .booking-container {
-      padding: 16px;
-      border-radius: 14px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-
-      .booking-title {
-        font-size: 16px;
-      }
-
-      .date-container {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-
-        .date-box {
-          width: 100%;
-
-          .label {
-            font-size: 14px;
-          }
-
-          .inputField {
-            width: 100%;
-            padding: 12px 12px;
-            font-size: 14px;
-          }
-        }
-
-        .nights-info {
-          flex-direction: row;
-          justify-content: center;
-          gap: 10px;
-
-          .arrow {
-            margin-top: 0;
+          @media (max-width: 768px) {
+            font-size: 13px;
           }
         }
       }
-
-      .guests-container {
-        .label {
-          font-size: 14px;
-        }
-
-        .guests-inputFields {
-          flex-direction: column;
-          gap: 10px;
-
-          .inputField {
-            width: 100%;
-            padding: 12px 12px;
-            font-size: 14px;
-          }
-        }
-      }
-
-      .reserve-btn {
-        padding: 12px;
-        border-radius: 10px;
-        font-size: 15px;
-      }
-
-      .note {
-        font-size: 12px;
-        margin-top: 8px;
-      }
-
-      .pricing-container {
-        gap: 10px;
-
-        .pricing-description-and-price {
-          align-items: flex-start;
-          gap: 10px;
-
-          .pricing-description,
-          .pricing-price {
-            font-size: 14px;
-            line-height: 1.3;
-          }
-        }
-      }
-    }
-  }
-
-  .amenities-container {
-    margin-top: 20px;
-
-    .amenities-title {
-      font-size: 18px;
-      margin-bottom: 14px;
-    }
-
-    .amenities-featured {
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-
-      .amenity .amenity-name {
-        font-size: 13px;
-      }
-    }
-
-    .show-all-amenities-btn {
-      width: 100%;
-      max-width: 360px;
-      border-radius: 12px;
-    }
-  }
-
-  .amenities-modal-overlay {
-    align-items: flex-end;
-    padding-top: 0;
-    padding: 12px;
-  }
-
-  .amenities-modal {
-    width: 100%;
-    max-height: 85vh;
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 6px;
-
-    .modal-title {
-      font-size: 18px;
-      margin-bottom: 14px;
-    }
-
-    .close-modal-btn {
-      right: 14px;
-      top: 10px;
-      font-size: 26px;
-    }
-
-    .modal-group {
-      margin-bottom: 18px;
-
-      .category-title {
-        font-size: 14px;
-        margin-bottom: 8px;
-      }
-
-      .modal-items {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px 12px;
-
-        .amenity .amenity-name {
-          font-size: 13px;
-        }
-      }
-    }
-  }
-}
-
-@media (max-width: 420px) {
-  .listing-details {
-    .container {
-      padding: 0 12px;
-    }
-
-    .container .property-container .image-section {
-      .main-image {
-        height: 200px;
-      }
-
-      .small-image {
-        height: 95px;
-      }
-    }
-  }
-
-  .amenities-modal {
-    .modal-items {
-      grid-template-columns: 1fr;
     }
   }
 }
