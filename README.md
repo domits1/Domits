@@ -1,8 +1,8 @@
   <!-- Hero 1 -->
-<h1 align="center">
-  <table role="presentation" cellspacing="0" cellpadding="16" border="0" align="center" style="border-radius:12px; overflow:hidden;">
+<p align="center">
+  <table role="presentation" cellspacing="0" cellpadding="16" border="0">
     <tr>
-      <td bgcolor="#ffffff" align="center" style="border-radius:12px; overflow:hidden;">
+      <td bgcolor="#ffffff" align="center">
         <img
           src="https://i.ibb.co/rKVk8xDm/logo-aea153ca0521f26f9487364e1a11dc2e.png"
           alt="Domits"
@@ -11,7 +11,8 @@
       </td>
     </tr>
   </table>
-</h1>
+</p>
+
   <!-- Website links -->
   <div align="center">
     <a href="https://bookdomits.com" target="_blank">
