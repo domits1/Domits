@@ -1,9 +1,7 @@
 .listing-details {
-  /* ✅ FIX: page content was going behind fixed top navbar and bottom nav */
   padding-top: calc(env(safe-area-inset-top, 0px) + 90px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
 
-  /* ✅ SAFETY: prevent horizontal scroll */
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
@@ -40,7 +38,6 @@
     flex-wrap: nowrap;
     align-items: flex-start;
 
-    /* ✅ SAFETY: don’t overflow on small devices */
     width: 100%;
     min-width: 0;
 
@@ -76,7 +73,6 @@
             grid-template-rows: 220px 220px;
           }
 
-          /* ✅ mobile: stack main image + horizontal thumbnails */
           @media (max-width: 768px) {
             display: flex;
             flex-direction: column;
@@ -114,7 +110,6 @@
             grid-template-rows: 220px 220px;
           }
 
-          /* ✅ mobile: horizontal scroll thumbnails */
           @media (max-width: 768px) {
             display: flex;
             gap: 10px;
@@ -338,7 +333,6 @@
     }
   }
 
-  /* ===== Sidebar fixes + responsive ===== */
   .booking-container {
     background: white;
     padding: 20px;
