@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
 import AmenityCategory from "../components/AmenityCategory";
@@ -7,7 +7,28 @@ import { useBuilder } from "../../../context/propertyBuilderContext";
 import amenities from "../../../store/amenities";
 import "../styles/onboardingHost.scss";
 
-const CATEGORIES_PER_PAGE = 8;
+function useCategoriesPerPage() {
+  const getValue = () => {
+    const w = window.innerWidth;
+
+    if (w <= 600) return 3;
+
+    if (w <= 900) return 6;
+
+    return 8;
+  };
+
+  const [value, setValue] = useState(getValue);
+
+  useEffect(() => {
+    const onResize = () => setValue(getValue());
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  return value;
+}
 
 const AmenitiesView = () => {
   const builder = useBuilder();
@@ -15,6 +36,8 @@ const AmenitiesView = () => {
 
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [page, setPage] = useState(1);
+
+  const categoriesPerPage = useCategoriesPerPage();
 
   const amenitiesByType = useMemo(() => {
     return amenities.reduce((categories, amenity) => {
@@ -28,16 +51,16 @@ const AmenitiesView = () => {
     return Object.keys(amenitiesByType).sort((a, b) => a.localeCompare(b));
   }, [amenitiesByType]);
 
-  const totalPages = Math.max(1, Math.ceil(categoryKeys.length / CATEGORIES_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(categoryKeys.length / categoriesPerPage));
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
   const pagedCategories = useMemo(() => {
-    const start = (page - 1) * CATEGORIES_PER_PAGE;
-    return categoryKeys.slice(start, start + CATEGORIES_PER_PAGE);
-  }, [categoryKeys, page]);
+    const start = (page - 1) * categoriesPerPage;
+    return categoryKeys.slice(start, start + categoriesPerPage);
+  }, [categoryKeys, page, categoriesPerPage]);
 
   const handleAmenityChange = (amenity) => {
     setSelectedAmenities((prev) => (prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity]));

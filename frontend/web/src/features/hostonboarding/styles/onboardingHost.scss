@@ -8,7 +8,6 @@ $white: #fff;
 $off-white: #f0f0f0;
 
 .onboarding-host-div {
-  /* Headings */
   h2 {
     text-align: center;
     flex-wrap: wrap;
@@ -31,7 +30,6 @@ $off-white: #f0f0f0;
     color: #333;
   }
 
-  /* Main content area styling */
   .page-body,
   .container {
     display: flex;
@@ -42,11 +40,10 @@ $off-white: #f0f0f0;
     margin: 0 auto;
     width: 100%;
 
-    padding: 2rem 2rem 3rem; /* bottom spacing only */
+    padding: 2rem 2rem 3rem;
     box-sizing: border-box;
   }
 
-  /* Form and content sections */
   .guest-access,
   .accommodation-types,
   .boat-types {
@@ -56,7 +53,6 @@ $off-white: #f0f0f0;
     align-items: center;
   }
 
-  /* Divs */
   .map-section {
     min-width: 45%;
   }
@@ -104,13 +100,12 @@ $off-white: #f0f0f0;
 
   .amenity-groups {
     display: grid;
-    margin-bottom: 2.5rem; /* ✅ FIXED invalid "1" */
+    margin-bottom: 2.5rem;
     grid-template-columns: repeat(4, 1fr);
     grid-gap: 2rem;
     width: 100%;
   }
 
-  /* CHANGED: responsive for amenities grid */
   @media (max-width: 1200px) {
     .amenity-groups {
       grid-template-columns: repeat(3, 1fr);
@@ -302,20 +297,19 @@ $off-white: #f0f0f0;
     text-align: center;
   }
 
-  /* ✅ FIXED BUTTON POSITION HERE */
   .onboarding-button-box {
     display: flex;
-    justify-content: center; /* ✅ was space-between */
+    justify-content: center;
     align-items: center;
-    gap: 2.5rem; /* ✅ distance between buttons */
+    gap: 2.5rem;
 
     width: 100%;
-    max-width: 700px; /* ✅ prevents extreme left/right */
+    max-width: 700px;
 
-    margin-top: 0.75rem; /* ✅ close to paginator */
-    margin-bottom: 2rem; /* ✅ space above footer */
+    margin-top: 0.75rem;
+    margin-bottom: 2rem;
 
-    padding: 0; /* ✅ remove big horizontal push */
+    padding: 0;
   }
 
   .onboarding-button {
@@ -327,7 +321,7 @@ $off-white: #f0f0f0;
     text-decoration: none;
     display: inline-block;
 
-    margin-top: 0; /* ✅ was 20px pushing it down */
+    margin-top: 0;
 
     cursor: pointer;
     border-radius: 25px;
@@ -345,11 +339,11 @@ $off-white: #f0f0f0;
 
     &.back-button {
       background-color: #6c757d;
-      margin-right: 0; /* ✅ was auto */
+      margin-right: 0;
     }
 
     &.proceed-button {
-      margin-left: 0; /* ✅ was auto */
+      margin-left: 0;
     }
   }
 
@@ -803,7 +797,7 @@ $off-white: #f0f0f0;
     align-items: center;
     gap: 1rem;
 
-    margin: 1.25rem 0 0.75rem; /* ✅ tighter so buttons are close */
+    margin: 1.25rem 0 0.75rem;
   }
 
   .pager-btn {
@@ -823,13 +817,8 @@ $off-white: #f0f0f0;
     font-weight: 600;
     color: #333;
   }
-  /* =========================
-   RESPONSIVE (Tablet/Mobile)
-   Paste at the bottom
-   ========================= */
 
   .onboarding-host-div {
-    /* Tablet */
     @media (max-width: 900px) {
       .page-body,
       .container {
@@ -845,27 +834,23 @@ $off-white: #f0f0f0;
         margin-bottom: 1.5rem;
       }
 
-      /* Amenities cards grid */
       .amenity-groups {
         grid-template-columns: repeat(2, 1fr);
         gap: 1.25rem;
         margin-bottom: 1.5rem;
       }
 
-      /* Checkbox grid */
       .check-box {
         grid-template-columns: repeat(2, 1fr);
         gap: 0.75rem;
       }
 
-      /* Paginator */
       .paginator {
         max-width: 100%;
         margin: 1rem 0 0.75rem;
         flex-wrap: wrap;
       }
 
-      /* Buttons: still next to each other on tablet */
       .onboarding-button-box {
         max-width: 100%;
         gap: 1.25rem;
@@ -873,7 +858,6 @@ $off-white: #f0f0f0;
       }
     }
 
-    /* Phone */
     @media (max-width: 600px) {
       .page-body,
       .container {
@@ -891,26 +875,22 @@ $off-white: #f0f0f0;
         margin-bottom: 1.25rem;
       }
 
-      /* Amenities cards become 1 per row */
       .amenity-groups {
         grid-template-columns: 1fr;
         gap: 1rem;
         margin-bottom: 1.25rem;
       }
 
-      /* Checkbox list becomes 1 column */
       .check-box {
         grid-template-columns: 1fr;
         gap: 0.65rem;
       }
 
-      /* Inputs / text areas full width */
       .textInput,
       .textInput-field {
         width: 100% !important;
       }
 
-      /* Buttons stacked + full width */
       .onboarding-button-box {
         flex-direction: column;
         align-items: stretch;
@@ -925,14 +905,12 @@ $off-white: #f0f0f0;
         font-size: 16px;
       }
 
-      /* Paginator buttons fill nicely */
       .pager-btn {
         padding: 10px 14px;
         width: auto;
       }
     }
 
-    /* Very small devices */
     @media (max-width: 400px) {
       .page-body,
       .container {
