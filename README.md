@@ -1,5 +1,6 @@
   <!-- Hero 1 -->
 <h1 align="center">
+  <img src="https://i.ibb.co/rKVk8xDm/logo-aea153ca0521f26f9487364e1a11dc2e.png" alt="Domits" width="500"/>
 </h1>
   <!-- Website links -->
   <div align="center">
