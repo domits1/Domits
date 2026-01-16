@@ -1,21 +1,16 @@
 import { useParams } from "react-router-dom";
-
 import OnboardingButton from "../components/OnboardingButton";
 import { useAddressInput } from "../hooks/usePropertyLocation";
 import { useBuilder } from "../../../context/propertyBuilderContext";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import AddressFormFields from "../components/AddressFormFields";
 import { useState } from "react";
-
-// Step 3 - Add the address of the accommodation you want to list on the platform
 function AddressInputView() {
   const [location, setLocation] = useState({});
   const builder = useBuilder();
   const form = useFormStoreHostOnboarding();
   const { type: accommodationType } = useParams();
-
   const { options, details, handleChange } = useAddressInput(accommodationType);
-
   return (
     <div className="onboarding-host-div">
       <main className="page-body">
@@ -27,7 +22,6 @@ function AddressInputView() {
               : "Where can we find your accommodation?"}
         </h2>
         <p className="onboardingSectionSubtitle">We only share your address with guests after they have booked.</p>
-
         <section className="acco-location">
           <section className="location-left">
             <AddressFormFields
@@ -40,7 +34,6 @@ function AddressInputView() {
             />
           </section>
         </section>
-
         <nav className="onboarding-button-box">
           <OnboardingButton routePath={`/hostonboarding/${accommodationType}`} btnText="Go back" />
           <OnboardingButton

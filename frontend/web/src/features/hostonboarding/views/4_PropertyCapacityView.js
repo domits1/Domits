@@ -1,21 +1,15 @@
-// Desc: Step 4 - Add the number of guests that can stay in the accommodation you want to list on the platform
-
 import GuestAmountItem from "../components/GuestAmountItem";
 import { useParams } from "react-router-dom";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import { accommodationFields } from "../constants/propertyAmountofGuestData";
 import OnboardingButton from "../components/OnboardingButton";
 import { useBuilder } from "../../../context/propertyBuilderContext";
-
 function PropertyCapacityView() {
   const builder = useBuilder();
   const { type: accommodationType } = useParams();
-
   const accommodationCapacity = useFormStoreHostOnboarding((state) => state.accommodationDetails.accommodationCapacity);
   const setAccommodationCapacity = useFormStoreHostOnboarding((state) => state.setAccommodationCapacity);
-
   const fields = accommodationFields;
-
   const incrementAmount = (key, max) => {
     if (accommodationCapacity[key] < max) {
       setAccommodationCapacity(key, accommodationCapacity[key] + 1);
