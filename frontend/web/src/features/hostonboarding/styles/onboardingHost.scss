@@ -1,4 +1,4 @@
-$domits-guest-green: #0D9813;
+$domits-guest-green: #0d9813;
 $domits-host-blue: #003366;
 
 $border-radius: 8px;
@@ -8,8 +8,6 @@ $white: #fff;
 $off-white: #f0f0f0;
 
 .onboarding-host-div {
-
-  /* Headings */
   h2 {
     text-align: center;
     flex-wrap: wrap;
@@ -32,26 +30,29 @@ $off-white: #f0f0f0;
     color: #333;
   }
 
-  /* Main content area styling */
-  .page-body, .container {
+  .page-body,
+  .container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem;
-    max-width: 800px;
+
+    max-width: 1200px;
     margin: 0 auto;
     width: 100%;
+
+    padding: 2rem 2rem 3rem;
+    box-sizing: border-box;
   }
 
-  /* Form and content sections */
-  .guest-access, .accommodation-types, .boat-types {
+  .guest-access,
+  .accommodation-types,
+  .boat-types {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
 
-  /* Divs */
   .map-section {
     min-width: 45%;
   }
@@ -89,7 +90,6 @@ $off-white: #f0f0f0;
 
     margin-bottom: 15px;
     position: relative;
-
   }
 
   .file-image {
@@ -100,8 +100,21 @@ $off-white: #f0f0f0;
 
   .amenity-groups {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 2.5rem;
+    grid-template-columns: repeat(4, 1fr);
     grid-gap: 2rem;
+    width: 100%;
+  }
+
+  @media (max-width: 1200px) {
+    .amenity-groups {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 900px) {
+    .amenity-groups {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .listing-calendar {
@@ -136,7 +149,6 @@ $off-white: #f0f0f0;
     justify-content: space-between;
     gap: 1.5vw;
   }
-
 
   .check-box {
     display: grid;
@@ -199,7 +211,6 @@ $off-white: #f0f0f0;
     }
   }
 
-
   .form-row {
     justify-content: space-between;
     flex-wrap: nowrap;
@@ -217,7 +228,6 @@ $off-white: #f0f0f0;
     flex-wrap: wrap;
     margin: auto;
   }
-
 
   .loading {
     display: flex;
@@ -289,15 +299,17 @@ $off-white: #f0f0f0;
 
   .onboarding-button-box {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    margin-top: 40px;
-    padding: 0 2rem;
+    gap: 2.5rem;
+
     width: 100%;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 700px;
+
+    margin-top: 0.75rem;
+    margin-bottom: 2rem;
+
+    padding: 0;
   }
 
   .onboarding-button {
@@ -308,15 +320,17 @@ $off-white: #f0f0f0;
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    margin-top: 20px;
+
+    margin-top: 0;
+
     cursor: pointer;
-    border-radius: 25px; /* Pill shape */
+    border-radius: 25px;
     font-size: 16px;
     font-weight: 500;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     min-width: 120px;
-    
+
     &:hover {
       background-color: darken($domits-host-blue, 10%);
       transform: translateY(-2px);
@@ -325,15 +339,11 @@ $off-white: #f0f0f0;
 
     &.back-button {
       background-color: #6c757d;
-      margin-right: auto;
-      
-      &:hover {
-        background-color: darken(#6c757d, 10%);
-      }
+      margin-right: 0;
     }
 
     &.proceed-button {
-      margin-left: auto;
+      margin-left: 0;
     }
   }
 
@@ -474,14 +484,17 @@ $off-white: #f0f0f0;
     align-items: center;
   }
 
-  .accommodation-title, .accommodation-specification {
+  .accommodation-title,
+  .accommodation-specification {
     align-self: center;
   }
 
   .accommodation-specification {
     max-width: 50%;
 
-    .radioBtn-box, .radioBtn-box-vertical, input {
+    .radioBtn-box,
+    .radioBtn-box-vertical,
+    input {
       margin-bottom: 5%;
     }
 
@@ -505,7 +518,6 @@ $off-white: #f0f0f0;
   }
 
   .summary {
-    //text-align: left; probably not intentional but was assigned to .container before, and .summary was class=container
     margin: 5rem 7rem 0 7rem;
 
     h3 {
@@ -544,13 +556,13 @@ $off-white: #f0f0f0;
     border-radius: 8px;
     margin-bottom: 1rem;
     transition: border-color 0.3s ease;
-    
+
     &:focus {
       outline: none;
       border-color: $domits-host-blue;
       box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
     }
-    
+
     &::placeholder {
       color: #999;
     }
@@ -624,7 +636,8 @@ $off-white: #f0f0f0;
       grid-template-columns: repeat(2, 1fr);
     }
 
-    .file-image, .accommodation-thumbnail {
+    .file-image,
+    .accommodation-thumbnail {
       width: 30%;
       height: 30%;
     }
@@ -640,7 +653,8 @@ $off-white: #f0f0f0;
     .acco-location {
       flex-direction: column;
     }
-    .location-left, .location-right {
+    .location-left,
+    .location-right {
       width: 70vw !important;
     }
 
@@ -717,7 +731,6 @@ $off-white: #f0f0f0;
     background: $domits-host-blue;
   }
 
-
   .toggle-checkbox:checked + .toggle-switch:before {
     left: 30px;
   }
@@ -727,11 +740,10 @@ $off-white: #f0f0f0;
     visibility: hidden;
   }
 
-
-  .toggle-switch:before, .toggle-switch:after {
+  .toggle-switch:before,
+  .toggle-switch:after {
     content: "";
   }
-
 
   .Check {
     display: flex;
@@ -739,7 +751,6 @@ $off-white: #f0f0f0;
     flex-wrap: wrap;
     align-items: center;
     margin-top: 30px;
-
   }
 
   input[type="time"] {
@@ -751,7 +762,6 @@ $off-white: #f0f0f0;
     margin-left: 10px;
     margin-right: 10px;
   }
-
 
   .verifyCheck {
     width: 60vw;
@@ -767,6 +777,7 @@ $off-white: #f0f0f0;
       grid-template-columns: 1fr;
     }
   }
+
   @media (max-width: 400px) {
     .check-box {
       grid-template-columns: 1fr;
@@ -775,6 +786,140 @@ $off-white: #f0f0f0;
     .check-box label {
       display: block;
       margin-bottom: 0.5rem;
+    }
+  }
+
+  .paginator {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+
+    margin: 1.25rem 0 0.75rem;
+  }
+
+  .pager-btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .pager-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .pager-info {
+    font-weight: 600;
+    color: #333;
+  }
+
+  .onboarding-host-div {
+    @media (max-width: 900px) {
+      .page-body,
+      .container {
+        padding: 1.5rem 1rem 2rem;
+      }
+
+      .onboardingSectionTitle {
+        font-size: 24px;
+      }
+
+      .onboardingSectionSubtitle {
+        font-size: 15px;
+        margin-bottom: 1.5rem;
+      }
+
+      .amenity-groups {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .check-box {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+
+      .paginator {
+        max-width: 100%;
+        margin: 1rem 0 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .onboarding-button-box {
+        max-width: 100%;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .page-body,
+      .container {
+        padding: 1.25rem 0.9rem 1.5rem;
+      }
+
+      h2,
+      .onboardingSectionTitle {
+        font-size: 22px;
+        margin-bottom: 0.5rem;
+      }
+
+      .onboardingSectionSubtitle {
+        font-size: 14px;
+        margin-bottom: 1.25rem;
+      }
+
+      .amenity-groups {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+      }
+
+      .check-box {
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+      }
+
+      .textInput,
+      .textInput-field {
+        width: 100% !important;
+      }
+
+      .onboarding-button-box {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        max-width: 100%;
+      }
+
+      .onboarding-button {
+        width: 100%;
+        min-width: 0;
+        padding: 14px 16px;
+        font-size: 16px;
+      }
+
+      .pager-btn {
+        padding: 10px 14px;
+        width: auto;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .page-body,
+      .container {
+        padding: 1rem 0.75rem 1.25rem;
+      }
+
+      .onboardingSectionTitle {
+        font-size: 20px;
+      }
     }
   }
 }
