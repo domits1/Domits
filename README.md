@@ -1,6 +1,16 @@
   <!-- Hero 1 -->
 <h1 align="center">
-  <img src="https://i.ibb.co/rKVk8xDm/logo-aea153ca0521f26f9487364e1a11dc2e.png" alt="Domits" width="500"/>
+  <table role="presentation" cellspacing="0" cellpadding="16" border="0" align="center" style="border-radius:12px; overflow:hidden;">
+    <tr>
+      <td bgcolor="#ffffff" align="center" style="border-radius:12px; overflow:hidden;">
+        <img
+          src="https://i.ibb.co/rKVk8xDm/logo-aea153ca0521f26f9487364e1a11dc2e.png"
+          alt="Domits"
+          width="500"
+        />
+      </td>
+    </tr>
+  </table>
 </h1>
   <!-- Website links -->
   <div align="center">
