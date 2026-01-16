@@ -425,7 +425,6 @@ const Homepage = () => {
             ))}
           </div>
         </div>
-        {/* Updated Review Section */}
         <div className="review-container">
           <button className="arrow-button" onClick={handlePreviousReview}>
             &lt;
