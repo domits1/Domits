@@ -361,22 +361,22 @@
 
     .booking-container {
         background: white;
-        padding: 20px;
+        padding: 24px;
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
-        flex: 0 0 360px;
-        width: 360px;
-        max-width: 360px;
+        flex: 0 0 400px;
+        width: 400px;
+        max-width: 400px;
         align-self: flex-start;
 
         position: sticky;
         top: 20px;
 
         @media (max-width: 1100px) {
-            flex-basis: 320px;
-            width: 320px;
-            max-width: 320px;
+            flex-basis: 360px;
+            width: 360px;
+            max-width: 360px;
         }
 
         @media (max-width: 768px) {
@@ -402,7 +402,7 @@
         .date-container {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 32px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
             font-weight: 300;
             background: linear-gradient(135deg, rgba(20, 200, 90, 0.05) 0%, rgba(20, 200, 90, 0.01) 100%);
@@ -422,16 +422,16 @@
                 display: flex;
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 6px;
-                background: white;
-                padding: 12px;
-                border-radius: 10px;
-                border: 1px solid rgba(20, 200, 90, 0.15);
+                gap: 4px;
+                background: transparent;
+                padding: 0;
+                border-radius: 0;
+                border: none;
                 transition: all 0.3s ease;
 
                 &:hover {
-                    border-color: rgba(20, 200, 90, 0.3);
-                    box-shadow: 0 2px 8px rgba(20, 200, 90, 0.08);
+                    border-color: transparent;
+                    box-shadow: none;
                 }
 
                 @media (max-width: 768px) {
@@ -442,7 +442,7 @@
                     font-size: 12px;
                     font-weight: 600;
                     color: var(--primary-color);
-                    margin-bottom: 4px;
+                    margin-bottom: 2px;
                     text-transform: uppercase;
                     letter-spacing: 0.6px;
 
@@ -450,14 +450,14 @@
                         font-size: 11px;
                     }
                 }
-
                 .inputField {
                     width: 100%;
-                    padding: 8px 0;
-                    border: none;
-                    background: transparent;
-                    border-bottom: 2px solid rgba(20, 200, 90, 0.2);
-                    font-size: 16px;
+                    padding: 8px 12px;
+                    border: 2px solid rgba(20, 200, 90, 0.2);
+                    background: linear-gradient(135deg, rgba(20, 200, 90, 0.04) 0%, rgba(20, 200, 90, 0.01) 100%);
+                    border-radius: 10px;
+                    box-shadow: 0 2px 6px rgba(20, 200, 90, 0.08);
+                    font-size: 15px;
                     color: #1a1a1a;
                     font-weight: 600;
                     outline: none;
@@ -471,7 +471,9 @@
                     }
 
                     &:hover {
-                        border-bottom-color: rgba(20, 200, 90, 0.4);
+                        border-color: rgba(20, 200, 90, 0.4);
+                        box-shadow: 0 4px 12px rgba(20, 200, 90, 0.15);
+                        background: linear-gradient(135deg, rgba(20, 200, 90, 0.08) 0%, rgba(20, 200, 90, 0.03) 100%);
 
                         &::-webkit-calendar-picker-indicator {
                             opacity: 0.9;
@@ -479,8 +481,9 @@
                     }
 
                     &:focus {
-                        border-bottom-color: var(--primary-color);
-                        background: rgba(20, 200, 90, 0.02);
+                        border-color: var(--primary-color);
+                        background: linear-gradient(135deg, rgba(20, 200, 90, 0.1) 0%, rgba(20, 200, 90, 0.04) 100%);
+                        box-shadow: 0 0 0 3px rgba(20, 200, 90, 0.2);
                     }
                 }
 
@@ -552,32 +555,33 @@
                 }
 
                 .inputField {
-                    background-color: white;
-                    padding: 10px 12px;
-                    border: 1px solid rgba(20, 200, 90, 0.2);
+                    position: relative;
+                    background: linear-gradient(135deg, rgba(20, 200, 90, 0.04) 0%, rgba(20, 200, 90, 0.01) 100%);
+                    padding: 8px 12px;
+                    border: 2px solid rgba(20, 200, 90, 0.2);
                     border-radius: 10px;
-                    box-shadow: 0 2px 6px rgba(20, 200, 90, 0.06);
+                    box-shadow: 0 2px 6px rgba(20, 200, 90, 0.08);
                     font-size: 15px;
                     color: #1a1a1a;
                     font-weight: 600;
                     text-align: center;
-                    width: 70px;
-                    height: 40px;
-                    transition: all 0.3s ease;
+                    width: auto;
+                    height: auto;
+                    transition: all 0.2s ease;
                     font-family: inherit;
                     cursor: pointer;
+                    outline: none;
 
                     &:hover {
-                        border-color: rgba(20, 200, 90, 0.35);
-                        box-shadow: 0 3px 10px rgba(20, 200, 90, 0.12);
-                        transform: translateY(-1px);
+                        border-color: rgba(20, 200, 90, 0.4);
+                        box-shadow: 0 4px 12px rgba(20, 200, 90, 0.15);
+                        background: linear-gradient(135deg, rgba(20, 200, 90, 0.08) 0%, rgba(20, 200, 90, 0.03) 100%);
                     }
 
                     &:focus {
-                        outline: none;
                         border-color: var(--primary-color);
-                        background: rgba(20, 200, 90, 0.02);
-                        box-shadow: 0 0 0 3px rgba(20, 200, 90, 0.1);
+                        background: linear-gradient(135deg, rgba(20, 200, 90, 0.1) 0%, rgba(20, 200, 90, 0.04) 100%);
+                        box-shadow: 0 0 0 3px rgba(20, 200, 90, 0.2);
                     }
 
                     @media (max-width: 768px) {
