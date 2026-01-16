@@ -11,7 +11,8 @@ function PropertyDescriptionView() {
   const builder = useBuilder();
   const form = useFormStoreHostOnboarding();
   const technicalDetails = useFormStoreHostOnboarding((state) => state.technicalDetails);
-  const type = builder?.propertyType?.property_type ?? null;
+  const type = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
+  
   const {
     description,
     boatSpecifications,
@@ -27,6 +28,7 @@ function PropertyDescriptionView() {
       : type === "Camper"
       ? camperSpecifications
       : null;
+      
   const updateSpecification =
     type === "Boat"
       ? updateBoatSpecification
@@ -59,7 +61,7 @@ function PropertyDescriptionView() {
             btnText="Go back"
           />
           <OnboardingButton
-            onClick={()=> {
+            onClick={() => {
               if (type === "Camper" || type === "Boat") {
                 builder.addTechnicalDetails({
                   length: technicalDetails.length,
@@ -72,6 +74,7 @@ function PropertyDescriptionView() {
                   fourWheelDrive: technicalDetails.fourWheelDrive,
                 })
               }
+              console.log("Builder state:", builder);
             }}
             routePath={`/hostonboarding/${type}/pricing`}
             btnText="Proceed"

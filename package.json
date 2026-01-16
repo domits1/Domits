@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "dotenv": "^17.2.2"
+  },
+  "devDependencies": {
+    "eslint-plugin-react-hooks": "^7.0.1"
   }
 }
