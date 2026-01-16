@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
-import "./OccupancyRate.scss";
+import "./KpiCard.scss";          
+import "./OccupancyRate.scss";    
 import { OccupancyRateService } from "../services/OccupancyRateService.js";
 
 const OccupancyRate = ({ refreshKey }) => {
@@ -13,8 +14,8 @@ const OccupancyRate = ({ refreshKey }) => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
 
   const isMountedRef = useRef(false);
-
   const lastRateRef = useRef(null);
+  const fetchingRef = useRef(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -22,8 +23,7 @@ const OccupancyRate = ({ refreshKey }) => {
     const fetchUserId = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
-        if (!isMountedRef.current) return;
-        setCognitoUserId(user.attributes.sub);
+        if (isMountedRef.current) setCognitoUserId(user.attributes.sub);
       } catch (err) {
         console.error("Error fetching Cognito User ID:", err);
         if (isMountedRef.current) setError("User not logged in.");
@@ -46,12 +46,23 @@ const OccupancyRate = ({ refreshKey }) => {
   const fetchOccupancyRate = useCallback(
     async ({ silent = false } = {}) => {
       if (!canFetch()) return;
+      if (!isMountedRef.current) return;
+      if (fetchingRef.current) return;
 
-      if (!silent) setLoading(true);
-      if (!silent) setError(null);
+      fetchingRef.current = true;
+
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
 
       try {
-        const rate = await OccupancyRateService.fetchOccupancyRate(cognitoUserId, periodType, startDate, endDate);
+        const rate = await OccupancyRateService.fetchOccupancyRate(
+          cognitoUserId,
+          periodType,
+          startDate,
+          endDate
+        );
 
         if (!isMountedRef.current) return;
 
@@ -61,6 +72,8 @@ const OccupancyRate = ({ refreshKey }) => {
           setOccupancyRate(nextRate);
           lastRateRef.current = nextRate;
         }
+
+        if (!silent) setError(null);
       } catch (err) {
         console.error("Error fetching occupancy rate:", err);
         if (!isMountedRef.current) return;
@@ -70,6 +83,7 @@ const OccupancyRate = ({ refreshKey }) => {
         setOccupancyRate(0);
         lastRateRef.current = 0;
       } finally {
+        fetchingRef.current = false;
         if (!silent && isMountedRef.current) setLoading(false);
       }
     },
@@ -87,41 +101,53 @@ const OccupancyRate = ({ refreshKey }) => {
   }, [refreshKey, canFetch, fetchOccupancyRate]);
 
   return (
-    <div className="booked-nights-card-container">
-      <div className="booked-nights-card occupancy-rate-card">
-        <h3>Occupancy Rate</h3>
+    <div className="kpi-card occupancy-rate-card">
+      <h3>Occupancy Rate</h3>
 
-        <div className="time-filter">
-          <label htmlFor="periodType">Time Filter:</label>
-          <select id="periodType" value={periodType} onChange={(e) => setPeriodType(e.target.value)}>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="custom">Custom</option>
-          </select>
-        </div>
+      <div className="time-filter">
+        <label htmlFor="periodType">Time Filter:</label>
+        <select
+          id="periodType"
+          value={periodType}
+          onChange={(e) => setPeriodType(e.target.value)}
+        >
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
 
-        {periodType === "custom" && (
-          <div className="custom-date-filter">
-            <div>
-              <label>Start Date:</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div>
-              <label>End Date:</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
+      {periodType === "custom" && (
+        <div className="custom-date-filter">
+          <div>
+            <label>Start Date:</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
           </div>
-        )}
-
-        <div className="booked-nights-details">
-          {loading ? (
-            <p>Loading...</p>
-          ) : error ? (
-            <p style={{ color: "red" }}>Error: {error}</p>
-          ) : (
-            <p className="hr-card-value">{occupancyRate}%</p>
-          )}
+          <div>
+            <label>End Date:</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
         </div>
+      )}
+
+      <div className="kpi-body">
+        {loading ? (
+          <p>Loading...</p>
+        ) : error ? (
+          <p style={{ color: "red" }}>Error: {error}</p>
+        ) : (
+          <p className="occupancy-rate-value">
+            <strong>{Number(occupancyRate).toLocaleString()}%</strong>
+          </p>
+        )}
       </div>
     </div>
   );
