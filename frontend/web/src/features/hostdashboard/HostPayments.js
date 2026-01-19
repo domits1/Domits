@@ -1,194 +1,201 @@
-import React, { useState, useEffect } from 'react';
-import Pages from "./Pages.js";
-import './HostRevenueStyle.scss';
-import { gql, useQuery } from '@apollo/client';
-import RevenueOverview from './HostRevenueCards/RevenueOverview.jsx';
-import axios from "axios";
-import MonthlyComparison from './HostRevenueCards/MonthlyComparison.jsx';
-import OccupancyRateCard from './HostRevenueCards/OccupancyRate.jsx';
-import RevPARCard from './HostRevenueCards/RevPAR.jsx';
-import ADRCard from './HostRevenueCards/ADRCard.jsx';
-import { Auth } from 'aws-amplify';
-import ClipLoader from 'react-spinners/ClipLoader';
-// import BookingTrends from './HostDashboard/HostRevenueCards/BookingTrends.jsx';
-import BookedNights from './HostRevenueCards/BookedNights.jsx';
-// import NightsAvailable from './HostRevenueCards/NightsAvailable.jsx';
-// import ALOSCard from './HostRevenueCards/ALOSCard.jsx';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Auth } from "aws-amplify";
+import { HostRevenueService } from "../hostdashboard/services/HostRevenueService.js";
+import ClipLoader from "react-spinners/ClipLoader";
 
-const GET_REVENUE = gql`
-    query GetRevenue {
-        getRevenue {
-            totalRevenue
-            totalRevenueThisMonth
-            yearToDateRevenue
-        }
-    }
-`;
+import RevenueOverview from "./HostRevenueCards/RevenueOverview.jsx";
+import OccupancyRateCard from "./HostRevenueCards/OccupancyRate.jsx";
+import RevPARCard from "./HostRevenueCards/RevPAR.jsx";
+import ADRCard from "./HostRevenueCards/ADRCard.jsx";
+import BookedNights from "./HostRevenueCards/BookedNights.jsx";
+import ALOSCard from "./HostRevenueCards/ALOSCard.jsx";
+import MonthlyComparison from "./HostRevenueCards/MonthlyComparison.jsx";
+
+import "./HostRevenueStyle.scss";
+
+const POLL_MS = 2000;
 
 const HostRevenues = () => {
-    const [cognitoUserId, setCognitoUserId] = useState(null);
-    const [stripeStatus, setStripeStatus] = useState('');
-    const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
-    const [monthlyRevenueData, setMonthlyRevenueData] = useState([]);
-    const [occupancyData] = useState({
-        occupancyRate: 0,
-        numberOfProperties: 0,
-        vsLastMonth: 0,
-    });
-    const [bookedNights, setBookedNights] = useState(null);
-    const [loadingStates, setLoadingStates] = useState({
-        user: true,
-        occupancy: false,
-        bookedNights: false,
-        monthlyRevenue: false,
-    });
+  const [cognitoUserId, setCognitoUserId] = useState(null);
 
-    const { loading: revenueLoading, data } = useQuery(GET_REVENUE);
+  const [bookedNights, setBookedNights] = useState(0);
+  const [availableNights, setAvailableNights] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [propertyCount, setPropertyCount] = useState(0);
 
-    const updateLoadingState = (key, value) => {
-        setLoadingStates((prev) => ({ ...prev, [key]: value }));
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const isMountedRef = useRef(false);
+
+  const lastRef = useRef({
+    revenue: null,
+    nights: null,
+    available: null,
+    properties: null,
+  });
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    (async () => {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        if (!isMountedRef.current) return;
+        setCognitoUserId(user.attributes.sub);
+      } catch (err) {
+        if (isMountedRef.current) {
+          setError("Authentication failed");
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const fetchAllData = useCallback(
+    async (silent = false) => {
+      if (!cognitoUserId) return;
+
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
+
+      try {
+        await Auth.currentSession();
+
+        const [revenue, nights, available, properties] = await Promise.all([
+          HostRevenueService.getRevenue(cognitoUserId),
+          HostRevenueService.getBookedNights(cognitoUserId),
+          HostRevenueService.getAvailableNights(cognitoUserId),
+          HostRevenueService.getPropertyCount(cognitoUserId),
+        ]);
+
+        if (!isMountedRef.current) return;
+
+        const nextRevenue = revenue ?? 0;
+        const nextNights = nights ?? 0;
+        const nextAvailable = available ?? 0;
+        const nextProperties = properties ?? 0;
+
+        const changed =
+          lastRef.current.revenue !== nextRevenue ||
+          lastRef.current.nights !== nextNights ||
+          lastRef.current.available !== nextAvailable ||
+          lastRef.current.properties !== nextProperties;
+
+        if (lastRef.current.revenue !== nextRevenue) {
+          setTotalRevenue(nextRevenue);
+          lastRef.current.revenue = nextRevenue;
+        }
+        if (lastRef.current.nights !== nextNights) {
+          setBookedNights(nextNights);
+          lastRef.current.nights = nextNights;
+        }
+        if (lastRef.current.available !== nextAvailable) {
+          setAvailableNights(nextAvailable);
+          lastRef.current.available = nextAvailable;
+        }
+        if (lastRef.current.properties !== nextProperties) {
+          setPropertyCount(nextProperties);
+          lastRef.current.properties = nextProperties;
+        }
+
+        if (changed) setRefreshKey((k) => k + 1);
+      } catch (err) {
+        if (isMountedRef.current && !silent) {
+          setError("Failed to fetch revenue data");
+        }
+      } finally {
+        if (isMountedRef.current && !silent) {
+          setLoading(false);
+        }
+      }
+    },
+    [cognitoUserId]
+  );
+
+  useEffect(() => {
+    if (!cognitoUserId) return;
+    fetchAllData(false);
+  }, [cognitoUserId, fetchAllData]);
+
+  useEffect(() => {
+    const onFocus = () => fetchAllData(true);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchAllData(true);
     };
 
-    useEffect(() => {
-        const fetchUserInfo = async () => {
-            updateLoadingState('user', true);
-            try {
-                const userInfo = await Auth.currentUserInfo();
-                if (!userInfo?.attributes?.sub) throw new Error("Invalid Cognito User Info");
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
 
-                setCognitoUserId(userInfo.attributes.sub);
-
-                const response = await axios.post(
-                    'https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists',
-                    { sub: userInfo.attributes.sub },
-                    { headers: { 'Content-Type': 'application/json' } }
-                );
-
-                const parsedBody = JSON.parse(response.data.body);
-                if (parsedBody.hasStripeAccount) {
-                    setStripeLoginUrl(parsedBody.loginLinkUrl);
-                    setStripeStatus(parsedBody.bankDetailsProvided ? 'complete' : 'incomplete');
-                } else {
-                    setStripeStatus('none');
-                }
-            } catch (error) {
-                console.error("Error fetching user info:", error);
-            } finally {
-                updateLoadingState('user', false);
-            }
-        };
-
-        fetchUserInfo();
-    }, []);
-
-
-    const fetchBookedNights = async () => {
-        if (!cognitoUserId) return console.error("Cognito User ID is missing.");
-
-        updateLoadingState('bookedNights', true);
-        try {
-            const response = await axios.post(
-                'https://yjzk78t2u0.execute-api.eu-north-1.amazonaws.com/prod/Host-Revenues-Production-Read-BookedNights',
-                { hostId: cognitoUserId, periodType: "monthly" },
-                { headers: { 'Content-Type': 'application/json' } }
-            );
-            setBookedNights(response.data.bookedNights || 0);
-        } catch (error) {
-            console.error("Error fetching booked nights:", error);
-        } finally {
-            updateLoadingState('bookedNights', false);
-        }
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
+  }, [fetchAllData]);
 
-    const fetchMonthlyRevenueData = async () => {
-        if (!cognitoUserId) return console.error("Cognito User ID is missing.");
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!document.hidden) fetchAllData(true);
+    }, POLL_MS);
 
-        updateLoadingState('monthlyRevenue', true);
-        try {
-            const response = await axios.post(
-                'https://dcp1zwsq7c.execute-api.eu-north-1.amazonaws.com/default/GetMonthlyComparison',
-                { hostId: cognitoUserId },
-                { headers: { 'Content-Type': 'application/json' } }
-            );
-            setMonthlyRevenueData(response.data);
-        } catch (error) {
-            console.error("Error fetching monthly revenue data:", error);
-        } finally {
-            updateLoadingState('monthlyRevenue', false);
-        }
-    };
+    return () => clearInterval(id);
+  }, [fetchAllData]);
 
-    useEffect(() => {
-        if (cognitoUserId) {
-            fetchBookedNights();
-            fetchMonthlyRevenueData();
-        }
-    }, [cognitoUserId]);
+  const occupancyRate = availableNights > 0 ? (bookedNights / availableNights) * 100 : 0;
 
+  if (loading) {
     return (
-        
-        <main className="hr-page-body hr-container">
-            <h2>Revenues</h2>
-            <h2>Revenues</h2>
-
-            <section className="hr-host-revenues">
-
-                <div className="hr-pages">
-                    <Pages />
-                </div>
-                <div className="hr-content">
-                    {loadingStates.user || revenueLoading ? (
-                        <div className="hr-revenue-spinner-container">
-                            <ClipLoader size={100} color="#3498db" loading={true} />
-                        </div>
-                    ) : (
-                        <>
-                            {stripeStatus === 'none' && (
-                                <div>
-                                    <h3>No Stripe Account Found</h3>
-                                    <button onClick={() => window.open(stripeLoginUrl, '_blank')}>
-                                        Connect Stripe
-                                    </button>
-                                </div>
-                            )}
-                            {stripeStatus === 'complete' && (
-                                <>
-                                    <div className="hr-revenue-overview">
-                                        <h3>Revenue Overview</h3>
-                                        <RevenueOverview
-                                            title="Total Revenue This Month"
-                                            value={`$${data?.getRevenue?.totalRevenueThisMonth || 0}`}
-                                        />
-                                        <RevenueOverview
-                                            title="Year-To-Date Revenue"
-                                            value={`$${data?.getRevenue?.yearToDateRevenue || 0}`}
-                                        />
-                                        <RevenueOverview
-                                            title="Total Revenue"
-                                            value={`$${data?.getRevenue?.totalRevenue || 0}`}
-                                        />
-                                    </div>
-                                    <div className="hr-monthly-comparison">
-                                        <h3>Monthly Comparison</h3>
-                                        <MonthlyComparison data={monthlyRevenueData} />
-                                    </div>
-                                    <div className="hr-cards">
-                                        <OccupancyRateCard {...occupancyData} />
-                                        <ADRCard hostId={cognitoUserId} />
-                                        <RevPARCard />
-                                        <BookedNights/>
-                                        {/* <NightsAvailable/> */}
-                                        {/* <ALOSCard /> */}
-                                        {/*<BookingTrends />*/}
-                                    </div>
-                                </>
-                            )}
-                        </>
-                    )}
-                </div>
-            </section>
-        </main>
+      <div className="hr-revenue-spinner-container">
+        <ClipLoader size={100} color="#3498db" />
+      </div>
     );
+  }
+
+  if (error) {
+    return <div style={{ color: "red" }}>{error}</div>;
+  }
+
+  return (
+    <main className="hr-page-body hr-container">
+      <h2>Yearly Report</h2>
+
+      <section className="hr-host-revenues">
+        <div className="hr-content">
+          <div className="hr-revenue-overview">
+            <RevenueOverview title="Total Revenue" value={`€${totalRevenue.toLocaleString()}`} />
+            <RevenueOverview title="Booked Nights" value={bookedNights.toLocaleString()} />
+            <RevenueOverview title="Available Nights" value={availableNights.toLocaleString()} />
+            <RevenueOverview title="Total Properties" value={propertyCount.toLocaleString()} />
+          </div>
+
+          <div className="hr-monthly-comparison">
+            <MonthlyComparison hostId={cognitoUserId} refreshKey={refreshKey} />
+          </div>
+
+          <div className="hr-cards">
+            <OccupancyRateCard
+              occupancyRate={occupancyRate.toFixed(2)}
+              numberOfProperties={propertyCount}
+              refreshKey={refreshKey}
+            />
+
+            <ADRCard refreshKey={refreshKey} />
+            <RevPARCard refreshKey={refreshKey} />
+            <BookedNights refreshKey={refreshKey} />
+            <ALOSCard hostId={cognitoUserId} refreshKey={refreshKey} />
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 };
 
 export default HostRevenues;

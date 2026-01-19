@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "chart.js": "^4.5.0",
-    "react-chartjs-2": "^5.3.0"
+    "dotenv": "^17.2.2"
+  },
+  "devDependencies": {
+    "eslint-plugin-react-hooks": "^7.0.1"
   }
 }

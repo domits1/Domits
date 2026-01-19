@@ -1,0 +1,211 @@
+// Custom styles for react-toastify to look like real notifications
+
+// Variables
+$border-radius: 9999px; // fully oval/ pill shape on desktop
+$border-radius-mobile: 9999px; // fully oval/ pill shape on mobile
+$shadow-light: 0 8px 24px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+$shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+$transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-fast: all 0.2s ease;
+
+// Colors
+$color-info: #0d6efd;
+$color-success: #198754;
+$color-error: #dc3545;
+$color-warning: #ffc107;
+$color-text-dark: #212529;
+$color-text-light: #6c757d;
+$color-bg-light: #ffffff;
+$color-bg-light-alt: #f8f9fa;
+$color-bg-dark: #2d2d2d;
+$color-bg-dark-alt: #1a1a1a;
+
+.Toastify__toast-container {
+  padding: 12px;
+}
+
+.Toastify__toast {
+  border-radius: $border-radius;
+  box-shadow: $shadow-light;
+  padding: 8px 14px;
+  min-height: 40px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: $transition-smooth;
+
+  &:hover {
+    box-shadow: $shadow-hover;
+    transform: translateY(-2px);
+  }
+
+  &--info {
+    background: linear-gradient(135deg, $color-bg-light 0%, $color-bg-light-alt 100%);
+    color: $color-text-dark;
+  }
+
+  &--success {
+    background: linear-gradient(135deg, $color-bg-light 0%, $color-bg-light-alt 100%);
+    color: $color-text-dark;
+  }
+
+  &--error {
+    background: linear-gradient(135deg, $color-bg-light 0%, $color-bg-light-alt 100%);
+    color: $color-text-dark;
+  }
+
+  &--warning {
+    background: linear-gradient(135deg, $color-bg-light 0%, $color-bg-light-alt 100%);
+    color: $color-text-dark;
+  }
+
+  &--rtl {
+    direction: rtl;
+  }
+}
+
+.Toastify__toast-body {
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &::before {
+    content: '';
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+}
+
+// Custom message toast styling
+.message-toast-custom {
+  .Toastify__toast-body {
+    padding: 0;
+    margin: 0;
+    
+    &::before {
+      display: none !important;
+      content: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  }
+  
+  > .Toastify__toast-icon,
+  .Toastify__toast-icon {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+.message-toast-custom.Toastify__toast--info .Toastify__toast-body::before,
+.Toastify__toast--info.message-toast-custom .Toastify__toast-body::before {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  background-color: transparent !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+// Hide icon for message toasts with any toast type
+.message-toast-custom.Toastify__toast--info .Toastify__toast-icon,
+.Toastify__toast--info.message-toast-custom .Toastify__toast-icon {
+  display: none !important;
+}
+
+.Toastify__toast--info:not(.message-toast-custom) .Toastify__toast-body::before {
+  content: '💬';
+  font-size: 18px;
+}
+
+.Toastify__toast--success .Toastify__toast-body::before {
+  content: '✓';
+  background: $color-success;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.Toastify__toast--error .Toastify__toast-body::before {
+  content: '✕';
+  background: $color-error;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.Toastify__toast--warning .Toastify__toast-body::before {
+  content: '⚠';
+  font-size: 18px;
+}
+
+.Toastify__progress-bar {
+  display: none !important;
+}
+
+.Toastify__close-button {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.Toastify__toast-container--top-right {
+  top: 20px;
+  right: 20px;
+}
+
+// Mobile responsiveness
+@media (max-width: 480px) {
+  .Toastify__toast {
+    border-radius: $border-radius-mobile;
+    padding: 8px 12px;
+    min-height: 38px;
+    font-size: 14px;
+    width: 100%;
+  }
+
+  .Toastify__toast-container--top-right {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    width: calc(100% - 20px);
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .Toastify__toast {
+    &--info,
+    &--success,
+    &--error,
+    &--warning {
+      background: linear-gradient(135deg, $color-bg-dark 0%, $color-bg-dark-alt 100%);
+      color: #ffffff;
+    }
+  }
+
+  .Toastify__close-button {
+    color: #adb5bd;
+
+    &:hover {
+      color: #ffffff;
+    }
+  }
+}
+
+

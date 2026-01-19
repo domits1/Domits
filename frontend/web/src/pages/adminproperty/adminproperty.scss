@@ -1,0 +1,244 @@
+$primary-color: #0d9813;
+$secondary-color: #333;
+$background-color: #fff;
+$border-radius: 10px;
+$field-radius: 6px;
+$font-size-title: 1.4rem;
+$font-size-label: 0.95rem;
+$font-size-input: 1rem;
+$spacing-form: 1.5rem;
+$spacing-group: 1rem;
+$spacing-radio: 0.4rem;
+$button-padding: 0.8rem;
+
+.adminproperty-form {
+  max-width: 900px;
+  margin: 5vh auto;
+  padding: $spacing-form;
+  background: $background-color;
+  border: 1px solid $primary-color;
+  border-radius: $border-radius;
+  font-family: Arial, sans-serif;
+
+  .adminproperty-title {
+    font-size: $font-size-title;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    text-align: center;
+    color: $primary-color;
+  }
+
+  .adminproperty-group {
+    margin-bottom: $spacing-group;
+    display: flex;
+    flex-direction: column;
+
+    label {
+      margin-bottom: $spacing-radio;
+      font-size: $font-size-label;
+      color: $secondary-color;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="time"],
+    textarea {
+      padding: 0.6rem;
+      border: 1px solid $primary-color;
+      border-radius: $field-radius;
+      font-size: $font-size-input;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+      }
+    }
+
+    textarea {
+      resize: vertical;
+    }
+  }
+
+  .field-wrapper {
+    display: flex;
+    flex-direction: column;
+
+    .error-text {
+      color: #d32f2f;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      display: block;
+    }
+
+    .test-yes,
+    .test-no {
+      padding: 0.45rem 0.75rem;
+      border-radius: $field-radius;
+      border: 1px solid $primary-color;
+      background: transparent;
+      color: $primary-color;
+      font-weight: 600;
+      cursor: pointer;
+      transition:
+        background 120ms ease,
+        color 120ms ease,
+        opacity 120ms ease;
+    }
+
+    .test-yes.active,
+    .test-no.active {
+      background: $primary-color;
+      color: #fff;
+      border-color: $primary-color;
+    }
+
+    .test-yes:hover,
+    .test-no:hover {
+      opacity: 0.95;
+    }
+  }
+
+  .adminproperty-options {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-radio;
+  }
+
+  .adminproperty-radio {
+    display: flex;
+    align-items: center;
+    gap: $spacing-radio;
+    font-size: $font-size-label;
+    color: $secondary-color;
+
+    input[type="radio"],
+    input[type="checkbox"] {
+      accent-color: $primary-color;
+    }
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+
+  .amenities-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    .amenity-block {
+      border: 1px solid #e7e7e7;
+      border-radius: $field-radius;
+      padding: 0.75rem;
+
+      .amenity-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: $secondary-color;
+      }
+
+      .amenity-items {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.35rem;
+
+        .amenity-check {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+
+          input[type="checkbox"] {
+            accent-color: $primary-color;
+          }
+        }
+      }
+    }
+  }
+
+  .thumbs {
+    margin-top: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+
+    .thumb {
+      position: relative;
+      border: 1px solid #e7e7e7;
+      border-radius: $field-radius;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        display: block;
+      }
+
+      button {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        border: none;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        cursor: pointer;
+        line-height: 22px;
+        text-align: center;
+      }
+    }
+  }
+
+  .adminproperty-submit {
+    margin-top: $spacing-group;
+    width: 100%;
+    padding: $button-padding;
+    background: $primary-color;
+    color: #fff;
+    font-size: $font-size-input;
+    font-weight: 600;
+    border: none;
+    border-radius: $field-radius;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  .error-text {
+    color: #d32f2f;
+    font-size: 0.875rem;
+    display: block;
+  }
+
+  input.error,
+  textarea.error {
+    border-color: #d32f2f;
+  }
+
+  .adminproperty-helper {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+}

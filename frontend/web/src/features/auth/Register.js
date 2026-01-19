@@ -21,6 +21,7 @@ const Register = () => {
   };
 
   const [formData, setFormData] = useState({
+    // prefferedName: '', // do not remove this yet it might become usefull later if you have questions: ask Chant
     email: "",
     password: "",
     repeatPassword: "",
@@ -30,19 +31,11 @@ const Register = () => {
     phone: "",
   });
 
-  // error states
-  const [errorMessage, setErrorMessage] = useState("");
-  const [errorMessageFirstName, setErrorMessageFirstName] = useState("");
-  const [errorMessageLastName, setErrorMessageLastName] = useState("");
-  const [errorMessageEmail, setErrorMessageEmail] = useState("");
-  const [errorMessagePhone, setErrorMessagePhone] = useState("");
-  const [errorMessagePassword, setErrorMessagePassword] = useState("");
-  const [errorMessageRepeatPassword, setErrorMessageRepeatPassword] = useState("");
-
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [signUpClicked, setSignUpClicked] = useState(false);
   const [shouldShake, setShouldShake] = useState(false);
   const [passwordShake, setPasswordShake] = useState(false);
-
   const [requirements, setRequirements] = useState({
     length: false,
     uppercase: false,
@@ -50,18 +43,18 @@ const Register = () => {
     specialChar: false,
   });
   const [isPasswordStrong, setIsPasswordStrong] = useState(false);
-
-  // show / hide password states
-  const [showPassword, setShowPassword] = useState(false);
-
   const passwordRef = useRef(null);
   const strengthBarRef = useRef(null);
   const strengthTextRef = useRef(null);
-  const strengthContainerRef = useRef(null);
+  const strengthContainerRef = useRef(null); // Declare the strengthContainerRef
+
+  const location = useLocation();
+  const queryRedirect = new URLSearchParams(location.search).get("redirect");
+  const redirectToUse = queryRedirect || encodeURIComponent(location.pathname + location.search);
 
   const handleLoginClick = (e) => {
     e.preventDefault();
-    navigate("/login");
+    navigate(`/login?redirect=${redirectToUse}`);
   };
 
   const handleHostChange = (e) => {
@@ -82,7 +75,16 @@ const Register = () => {
     }
   };
 
+  const handleCountryCodeChange = (e) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      countryCode: e.target.value,
+    }));
+  };
+
   const checkPasswordStrength = (password) => {
+    let strength = 0;
+
     const newRequirements = {
       length: password.length >= 8,
       uppercase: /[A-Z]/.test(password),
@@ -92,14 +94,18 @@ const Register = () => {
 
     setRequirements(newRequirements);
 
-    const strength = Object.values(newRequirements).filter(Boolean).length;
+    for (const key in newRequirements) {
+      if (newRequirements[key]) strength++;
+    }
 
     const strengthBar = strengthBarRef.current;
+    const strengthText = strengthTextRef.current;
 
     if (strengthBar) {
-      const strengthPercentage = (strength / 4) * 100;
+      const strengthPercentage = (strength / 4) * 100; // Calculate percentage based on 4 criteria
       strengthBar.style.width = strengthPercentage + "%";
 
+      // Update password strength based on the number of requirements met
       if (strength < 2) {
         setColorAndText("red", "Bad");
         setIsPasswordStrong(false);
@@ -115,20 +121,38 @@ const Register = () => {
       }
     }
 
+    // Show the strength container when typing the password
     if (strengthContainerRef.current) {
       strengthContainerRef.current.style.display = "block";
     }
   };
 
   const setColorAndText = (color, text) => {
-    if (strengthBarRef.current) {
-      strengthBarRef.current.style.backgroundColor = color;
+    const strengthBar = strengthBarRef.current;
+    const strengthText = strengthTextRef.current;
+
+    if (strengthBar) {
+      strengthBar.style.backgroundColor = color;
     }
-    if (strengthTextRef.current) {
-      strengthTextRef.current.textContent = text;
-      strengthTextRef.current.style.color = color;
+    if (strengthText) {
+      strengthText.textContent = text;
+      strengthText.style.color = color;
     }
   };
+
+  // do not remove this yet it might become usefull later if you have questions: ask Chant
+  // const isPreferredNameUnique = async (prefferedName) => {
+  //     try {
+  //         const result = await Auth.adminListUsers({
+  //             UserPoolId: 'eu-north-1:6776b3c3-e6ff-4025-9651-4ad94e7eb98e', // replace with your User Pool ID
+  //             Filter: `preferred_username = \"${prefferedName}\"`,
+  //         });
+  //         return result.Users.length === 0; // If no user is found, the name is unique
+  //     } catch (error) {
+  //         console.error('Error fetching users:', error);
+  //         return false;
+  //     }
+  // };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -232,20 +256,31 @@ try {
       try {
         await Auth.currentAuthenticatedUser();
         setIsAuthenticated(true);
-      } catch {
+      } catch (error) {
         setIsAuthenticated(false);
       }
     };
+
     checkAuth();
   }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setShouldShake(false);
-      setPasswordShake(false);
+      if (!errorMessage.includes("Username")) {
+        setShouldShake(false);
+      }
+      if (!errorMessage.includes("Password")) {
+        setPasswordShake(false);
+      }
     }, 300);
     return () => clearTimeout(timeout);
   }, [errorMessage]);
+
+  useEffect(() => {
+    if (signUpClicked) {
+      setSignUpClicked(false);
+    }
+  }, [signUpClicked]);
 
   return (
     <>

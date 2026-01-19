@@ -14,6 +14,11 @@ export const styles = StyleSheet.create({
     color: 'rgba(70,70,70,0.7)',
     marginBottom: 20,
   },
+  onboardingPageHeading1: {
+    fontSize: 24,
+    marginTop: 20,
+    color: 'rgb(75,75,75)',
+  },
   // Navigation
   navButtonContainer: {
     flexDirection: "row",
@@ -41,6 +46,39 @@ export const styles = StyleSheet.create({
   },
   contentContainer: {
     marginHorizontal: 20,
+  },
+  // Modal
+  modalOverlay: {
+    width: "100%",
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: 'white',
+    paddingHorizontal: 32,
+    paddingVertical: 24,
+    borderRadius: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  // Specific modals
+  amenityContainer: {
+    flexDirection: 'row',
+    width: '95%',
+    marginBottom: 10,
+    alignItems: 'center'
   },
   // Error
   errorText: {
@@ -140,6 +178,40 @@ export const styles = StyleSheet.create({
   selectedGridItemText: {
     color: 'white',
   },
+  // Counter
+  counterGroupContainer: {
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
+    marginBottom: 50,
+  },
+  counterItemContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: '100%',
+    marginVertical: 5,
+  },
+  counterLabel: {
+    flex: 1,
+  },
+  counterLabelText: {
+    fontSize: 20,
+  },
+  counterGroup: {
+    flex: 1,
+    alignItems: 'center',
+    flexDirection: 'row-reverse',
+  },
+  counterGroupItem: {
+    marginHorizontal: 5,
+  },
+  counterGroupText: {
+    fontSize: 20,
+  },
+  numericInput: {
+    fontSize: 20,
+    borderBottomWidth: 1,
+  },
   // Check screen table
   table: {
     alignSelf: 'center',
@@ -197,6 +269,7 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginTop: 10,
+    flexDirection: 'row',
   },
   completeButtonDisabled: {
     backgroundColor: 'rgba(128,128,128,0.5)',
@@ -205,10 +278,59 @@ export const styles = StyleSheet.create({
     fontSize: 24,
     color: "white",
   },
-  // Check screen checkboxes
+  // Checkboxes
   checkboxContainer: {
     flexDirection: 'row',
     width: '95%',
     marginBottom: 10,
+    alignItems: 'center'
+  },
+  // Switch
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(128,128,128,0.25)',
+  },
+  // Time
+  timeSlotItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    padding: 3,
+    marginVertical: 5,
+    display: 'flex',
+    alignSelf: 'flex-start',
+  },
+  timeItem: {
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: 'rgba(128,128,128,0.5)',
+    padding: 3,
+  },
+  // Image
+  addImageButton: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  addImageButtonText: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 5,
+    backgroundColor: COLORS.domitsHostBlue,
+    color: 'white',
+  },
+  addImageButtonTextDisabled: {
+    backgroundColor: 'rgba(0,50,101,0.5)',
+    borderWidth: 0,
+  },
+  imageSlider: {
+    marginVertical: 10,
+  },
+  image: {
+    height: 200,
+    width: 200,
+    marginHorizontal: 5,
   },
 })

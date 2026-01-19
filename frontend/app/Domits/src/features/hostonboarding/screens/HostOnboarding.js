@@ -1,7 +1,7 @@
 import {Alert, SafeAreaView, Text, TouchableOpacity, View} from "react-native";
 import OnboardingHeader from "../components/OnboardingHeader";
 import {useEffect, useState} from "react";
-import propertyFormData from "../utils/propertyFormData";
+import propertyFormDataTemplate from "../utils/propertyFormDataTemplate";
 import {produce} from "immer";
 import {steps} from "../utils/pageStepsConfig";
 import TranslatedText from "../../translation/components/TranslatedText";
@@ -9,10 +9,13 @@ import {styles} from "../styles/HostOnboardingStyles";
 import {useTranslation} from "react-i18next";
 import OnboardingSpace from "../views/onboardingspacetype/screens/OnboardingSpace";
 import {HOST_ONBOARDING_CHECK_SCREEN} from "../../../navigation/utils/NavigationNameConstants";
+import {useAuth} from "../../../context/AuthContext";
 
 const HostOnboarding = ({navigation}) => {
   const {t} = useTranslation();
-  const [formData, setFormData] = useState(propertyFormData);
+  const {userAttributes} = useAuth();
+  const userId = userAttributes.sub;
+  const [formData, setFormData] = useState(propertyFormDataTemplate);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const currentStep = steps[currentStepIndex];
   const CurrentComponent = currentStep.component;
@@ -22,6 +25,11 @@ const HostOnboarding = ({navigation}) => {
     propertyName: {visited: false, valid: false},
     propertyLocation: {visited: false, valid: false},
     propertyDescription: {visited: false, valid: false},
+    propertyAmountOfGuests: {visited: false, valid: false},
+    propertyAmenities: {visited: false, valid: false},
+    propertyHouseRules: {visited: false, valid: false},
+    propertyPhotos: {visited: false, valid: false},
+    propertyRegistrationNumber: {visited: false, valid: false}
   });
 
   const updateFormData = (updaterFn) => {
@@ -113,6 +121,12 @@ const HostOnboarding = ({navigation}) => {
     );
   }
 
+  useEffect(() => {
+    updateFormData(draft => {
+      draft.property.hostId = userId;
+    })
+  }, [])
+
   /**
    * Reset space type when different property type is selected.
    */
@@ -120,7 +134,7 @@ const HostOnboarding = ({navigation}) => {
     const step = steps.find(item => item.component === OnboardingSpace);
     updatePageStatus(step.key, {valid: false})
     updateFormData((draft) => {
-      draft.propertyType.propertySpace = "";
+      draft.propertyType.spaceType = "";
     });
   }, [formData.propertyType.property_type])
 
