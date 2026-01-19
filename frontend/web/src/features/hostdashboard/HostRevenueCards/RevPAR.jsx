@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
-import "./ADRCard.scss";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import "./KpiCard.scss"; 
+import "./RevPAR.scss"; 
 import { RevPARService } from "../services/RevParService.js";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const RevPARCard = ({ refreshKey }) => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
+
   const [revPAR, setRevPAR] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [availableNights, setAvailableNights] = useState(0);
@@ -54,7 +65,6 @@ const RevPARCard = ({ refreshKey }) => {
     const temp = new Date(date);
     temp.setHours(0, 0, 0, 0);
     temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-
     const yearStart = new Date(temp.getFullYear(), 0, 1);
     return Math.ceil(((temp - yearStart) / MS_PER_DAY + 1) / 7);
   };
@@ -123,15 +133,13 @@ const RevPARCard = ({ refreshKey }) => {
 
           const value = Math.max(0, parseFloat(res.revPAR) || 0);
 
-          results.push({
-            label: p.label,
-            revPAR: value,
-          });
+          results.push({ label: p.label, revPAR: value });
         } catch (err) {
           console.warn(`Failed for ${p.label}:`, err);
           results.push({ label: p.label, revPAR: 0 });
         }
       }
+
       return results;
     },
     [timeFilter]
@@ -151,18 +159,17 @@ const RevPARCard = ({ refreshKey }) => {
       }
 
       try {
-        let summary;
-
-        if (timeFilter === "custom") {
-          summary = await RevPARService.getRevPARMetrics(cognitoUserId, "custom", startDate, endDate);
-        } else {
-          summary = await RevPARService.getRevPARMetrics(cognitoUserId, timeFilter);
-        }
+        const summary =
+          timeFilter === "custom"
+            ? await RevPARService.getRevPARMetrics(cognitoUserId, "custom", startDate, endDate)
+            : await RevPARService.getRevPARMetrics(cognitoUserId, timeFilter);
 
         if (!isMountedRef.current) return;
 
         const nextTotalRev =
-          typeof summary.totalRevenue === "object" ? summary.totalRevenue.totalRevenue : summary.totalRevenue;
+          typeof summary.totalRevenue === "object"
+            ? summary.totalRevenue.totalRevenue
+            : summary.totalRevenue;
 
         const nextAvailable =
           typeof summary.availableNights === "object"
@@ -198,6 +205,7 @@ const RevPARCard = ({ refreshKey }) => {
         if (!silent) setError(null);
       } catch (err) {
         console.error("Error fetching RevPAR metrics:", err);
+
         if (!silent && isMountedRef.current) setError("Failed to fetch RevPAR metrics");
 
         if (!silent && isMountedRef.current) {
@@ -221,13 +229,6 @@ const RevPARCard = ({ refreshKey }) => {
   );
 
   useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
     if (!canFetch()) return;
     fetchMetrics({ silent: false });
   }, [canFetch, fetchMetrics]);
@@ -241,12 +242,12 @@ const RevPARCard = ({ refreshKey }) => {
   const displayData = allZero ? [{ label: "No Data", revPAR: 1 }] : chartData;
 
   return (
-    <div className="adr-card card-base">
+    <div className="kpi-card revpar-card">
       <h3>RevPAR</h3>
 
       <div className="time-filter">
         <label>Time Filter:</label>
-        <select className="timeFilter" value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
+        <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
           <option value="custom">Custom</option>
@@ -266,49 +267,63 @@ const RevPARCard = ({ refreshKey }) => {
         </div>
       )}
 
-      <div className="adr-details">
-        {loading ? (
-          <p>Loading...</p>
-        ) : error ? (
-          <p style={{ color: "red" }}>Error: {error}</p>
-        ) : (
-          <>
-            <p>
-              <strong>Total Revenue:</strong> €{Number(totalRevenue).toLocaleString()}
-            </p>
-            <p>
-              <strong>Available Nights:</strong> {Number(availableNights).toLocaleString()}
-            </p>
-            <p>
-              <strong>RevPAR:</strong> €{Number(revPAR).toLocaleString()}
-            </p>
-          </>
+      <div className="kpi-body">
+        <div className="adr-details">
+          {loading ? (
+            <p>Loading...</p>
+          ) : error ? (
+            <p style={{ color: "red" }}>Error: {error}</p>
+          ) : (
+            <>
+              <p>
+                <strong>Total Revenue:</strong> €{Number(totalRevenue).toLocaleString()}
+              </p>
+              <p>
+                <strong>Available Nights:</strong> {Number(availableNights).toLocaleString()}
+              </p>
+              <p>
+                <strong>RevPAR:</strong> €{Number(revPAR).toLocaleString()}
+              </p>
+            </>
+          )}
+        </div>
+
+        {!loading && !error && (
+          <div className="revpar-barchart">
+            <div className="bar-wrapper">
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={displayData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  {!allZero && <Legend />}
+
+                  <Bar
+                    dataKey="revPAR"
+                    fill={allZero ? "#ccc" : "#0d9813"}
+                    radius={[6, 6, 0, 0]}
+                    barSize={25}
+                  />
+
+                  {allZero && (
+                    <text
+                      x="50%"
+                      y="50%"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize="14"
+                      fill="#999"
+                    >
+                      No Data
+                    </text>
+                  )}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         )}
       </div>
-
-      {!loading && !error && (
-        <div className="revpar-barchart">
-          <div className="bar-wrapper">
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={displayData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                {!allZero && <Legend />}
-
-                <Bar dataKey="revPAR" fill={allZero ? "#ccc" : "#0d9813"} radius={[6, 6, 0, 0]} barSize={25} />
-
-                {allZero && (
-                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="14" fill="#999">
-                    No Data
-                  </text>
-                )}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
