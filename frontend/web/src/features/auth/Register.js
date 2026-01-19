@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import FlowContext from "../../services/FlowContext";
 import PhoneInput from "react-phone-input-2";
-// import 'react-phone-input-2/lib/style.css';
+import "react-phone-input-2/lib/style.css";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -19,7 +19,6 @@ const Register = () => {
   };
 
   const [formData, setFormData] = useState({
-    // prefferedName: '', // do not remove this yet it might become usefull later if you have questions: ask Chant
     email: "",
     password: "",
     repeatPassword: "",
@@ -27,6 +26,15 @@ const Register = () => {
     firstName: "",
     lastName: "",
     phone: "",
+  });
+
+  const [fieldErrors, setFieldErrors] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    phone: false,
+    password: false,
+    repeatPassword: false,
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -44,7 +52,7 @@ const Register = () => {
   const passwordRef = useRef(null);
   const strengthBarRef = useRef(null);
   const strengthTextRef = useRef(null);
-  const strengthContainerRef = useRef(null); // Declare the strengthContainerRef
+  const strengthContainerRef = useRef(null);
 
   const location = useLocation();
   const queryRedirect = new URLSearchParams(location.search).get("redirect");
@@ -64,20 +72,25 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
+
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: false }));
+    }
+
     if (name === "password") {
       checkPasswordStrength(value);
     }
-  };
 
-  const handleCountryCodeChange = (e) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      countryCode: e.target.value,
-    }));
+    if (name === "password" || name === "repeatPassword") {
+      if (fieldErrors.repeatPassword) {
+        setFieldErrors((prev) => ({ ...prev, repeatPassword: false }));
+      }
+    }
   };
 
   const checkPasswordStrength = (password) => {
@@ -97,13 +110,11 @@ const Register = () => {
     }
 
     const strengthBar = strengthBarRef.current;
-    const strengthText = strengthTextRef.current;
 
     if (strengthBar) {
-      const strengthPercentage = (strength / 4) * 100; // Calculate percentage based on 4 criteria
+      const strengthPercentage = (strength / 4) * 100;
       strengthBar.style.width = strengthPercentage + "%";
 
-      // Update password strength based on the number of requirements met
       if (strength < 2) {
         setColorAndText("red", "Bad");
         setIsPasswordStrong(false);
@@ -119,7 +130,6 @@ const Register = () => {
       }
     }
 
-    // Show the strength container when typing the password
     if (strengthContainerRef.current) {
       strengthContainerRef.current.style.display = "block";
     }
@@ -129,107 +139,89 @@ const Register = () => {
     const strengthBar = strengthBarRef.current;
     const strengthText = strengthTextRef.current;
 
-    if (strengthBar) {
-      strengthBar.style.backgroundColor = color;
-    }
+    if (strengthBar) strengthBar.style.backgroundColor = color;
     if (strengthText) {
       strengthText.textContent = text;
       strengthText.style.color = color;
     }
   };
 
-  // do not remove this yet it might become usefull later if you have questions: ask Chant
-  // const isPreferredNameUnique = async (prefferedName) => {
-  //     try {
-  //         const result = await Auth.adminListUsers({
-  //             UserPoolId: 'eu-north-1:6776b3c3-e6ff-4025-9651-4ad94e7eb98e', // replace with your User Pool ID
-  //             Filter: `preferred_username = \"${prefferedName}\"`,
-  //         });
-  //         return result.Users.length === 0; // If no user is found, the name is unique
-  //     } catch (error) {
-  //         console.error('Error fetching users:', error);
-  //         return false;
-  //     }
-  // };
-
   const onSubmit = async (e) => {
     e.preventDefault();
-    const { username, email, password, firstName, lastName, phone, countryCode } = formData;
 
-    if (!isPasswordStrong) {
-      setErrorMessage("Password must be strong to submit.");
-      setPasswordShake(true);
-    }
-    if (firstName.length < 1) {
+    const { username, email, password, repeatPassword, firstName, lastName, phone } = formData;
+
+    const nextErrors = {
+      firstName: !firstName,
+      lastName: !lastName,
+      email: !email,
+      phone: !phone,
+      password: !password || !isPasswordStrong,
+      repeatPassword: !repeatPassword || password !== repeatPassword,
+    };
+
+    setFieldErrors(nextErrors);
+
+    if (!firstName) {
       setErrorMessage("First name cannot be empty.");
       return;
     }
-    if (lastName.length < 1) {
+    if (!lastName) {
       setErrorMessage("Last name cannot be empty.");
       return;
     }
-    if (phone.length < 1) {
-      setErrorMessage("Phone number cannot be empty.");
-      return;
-    }
-    if (password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters long.");
-      setPasswordShake(true);
-      return;
-    }
-
-    if (password.length > 64) {
-      setErrorMessage("Password must be less than 64 characters.");
-      setPasswordShake(true);
-      return;
-    }
-
-    const hasUppercase = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-
-    if (!hasUppercase && !hasNumber) {
-      setErrorMessage("Password must contain at least one uppercase letter or one number.");
-      setPasswordShake(true);
-      return;
-    }
-
     if (!email) {
       setErrorMessage("Email can't be empty!");
       return;
     }
-
-    if (!password) {
-      setErrorMessage("Password can't be empty!");
+    if (!phone) {
+      setErrorMessage("Phone number cannot be empty.");
       return;
     }
-    try {
-      // do not remove this yet it might become usefull later if you have questions: ask Chant
-      // const isUnique = await isPreferredNameUnique(prefferedName);
-      // if (!isUnique) {
-      //     setErrorMessage('Preferred name already exists!');
-      //     return;
-      // }
+    if (!password) {
+      setErrorMessage("Password can't be empty!");
+      setPasswordShake(true);
+      return;
+    }
+    if (!isPasswordStrong) {
+      setErrorMessage("Password must be strong to submit.");
+      setPasswordShake(true);
+      return;
+    }
+    if (!repeatPassword) {
+      setErrorMessage("Confirm Password can't be empty!");
+      setPasswordShake(true);
+      return;
+    }
+    if (password !== repeatPassword) {
+      setErrorMessage("Passwords do not match.");
+      setPasswordShake(true);
+      return;
+    }
 
-      //const emailName = email.split('@')[0];
+    try {
       const groupName = flowState.isHost ? "Host" : "Traveler";
+
       await Auth.signUp({
         username: email,
         password,
         attributes: {
           "custom:group": groupName,
           "custom:username": username,
-          // 'preferred_username': prefferedName, // do not remove this yet it might become usefull later if you have questions: ask Chant
           given_name: firstName,
           family_name: lastName,
           phone_number: `+${phone}`,
         },
       });
+
       navigate("/confirm-email", {
         state: { email, password, redirect: queryRedirect },
       });
     } catch (error) {
       console.log("Sign-up failed:", error);
+
       if (error.code === "UsernameExistsException") {
+        setFieldErrors((prev) => ({ ...prev, email: true }));
         setErrorMessage("Email already exists!");
       } else {
         setErrorMessage(error.message || "An unexpected error occurred");
@@ -265,7 +257,11 @@ const Register = () => {
       if (!errorMessage.includes("Username")) {
         setShouldShake(false);
       }
-      if (!errorMessage.includes("Password")) {
+      if (
+        !errorMessage.includes("Password") &&
+        !errorMessage.includes("Confirm Password") &&
+        !errorMessage.includes("match")
+      ) {
         setPasswordShake(false);
       }
     }, 300);
@@ -290,24 +286,6 @@ const Register = () => {
         <div className="registerContainer">
           <div className="registerTitle">Create an account on Domits</div>
           <form onSubmit={onSubmit} className="registerForm">
-            {/*// do not remove this yet it might become usefull later if you have questions: ask Chant*/}
-            {/*<label>Username:</label>*/}
-            {/*<input*/}
-            {/*    className={`registerInput ${errorMessage.includes('Username') ? 'inputError' : ''} ${shouldShake ? 'inputShake' : ''}`}*/}
-            {/*    type="text"*/}
-            {/*    name="username"*/}
-            {/*    value={formData.username}*/}
-            {/*    onChange={handleChange}*/}
-            {/*    style={{ borderColor: errorMessage.includes('Username') ? 'red' : 'var(--secondary-color)' }}*/}
-            {/*/>*/}
-            {/*<label>User Name:</label>*/}
-            {/*<input*/}
-            {/*    className="registerInput"*/}
-            {/*    type="text"*/}
-            {/*    name="prefferedName"*/}
-            {/*    value={formData.prefferedName}*/}
-            {/*    onChange={handleChange}*/}
-            {/*/>*/}
             <label>First Name*</label>
             <input
               className="registerInput"
@@ -315,6 +293,7 @@ const Register = () => {
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
+              style={{ borderColor: fieldErrors.firstName ? "red" : "var(--secondary-color)" }}
             />
 
             <label>Last Name*</label>
@@ -324,16 +303,29 @@ const Register = () => {
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
+              style={{ borderColor: fieldErrors.lastName ? "red" : "var(--secondary-color)" }}
             />
 
             <label>Email*</label>
-            <input className="registerInput" type="email" name="email" value={formData.email} onChange={handleChange} />
-            <label>Phone Number*</label>
+            <input
+              className="registerInput"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              style={{ borderColor: fieldErrors.email ? "red" : "var(--secondary-color)" }}
+            />
 
+            <label>Phone Number*</label>
             <PhoneInput
               country={"nl"}
               value={formData.phone}
-              onChange={(phone) => setFormData((prevState) => ({ ...prevState, phone }))}
+              onChange={(phone) => {
+                setFormData((prevState) => ({ ...prevState, phone }));
+                if (fieldErrors.phone) {
+                  setFieldErrors((prev) => ({ ...prev, phone: false }));
+                }
+              }}
             />
 
             <label>Password*</label>
@@ -341,7 +333,7 @@ const Register = () => {
               <input
                 id="password"
                 ref={passwordRef}
-                className={`registerInput ${errorMessage.includes("Password") ? "inputError" : ""} ${passwordShake ? "inputShake" : ""}`}
+                className={`registerInput ${passwordShake ? "inputShake" : ""}`}
                 type="password"
                 name="password"
                 value={formData.password}
@@ -351,9 +343,20 @@ const Register = () => {
                     strengthContainerRef.current.style.display = "block";
                   }
                 }}
-                style={{ borderColor: errorMessage.includes("Password") ? "red" : "var(--secondary-color)" }}
+                style={{ borderColor: fieldErrors.password ? "red" : "var(--secondary-color)" }}
               />
             </div>
+
+            <label>Confirm Password*</label>
+            <input
+              className={`registerInput ${passwordShake ? "inputShake" : ""}`}
+              type="password"
+              name="repeatPassword"
+              value={formData.repeatPassword}
+              onChange={handleChange}
+              style={{ borderColor: fieldErrors.repeatPassword ? "red" : "var(--secondary-color)" }}
+            />
+
             <div ref={strengthContainerRef} className="strength-container" style={{ display: "none" }}>
               <div id="strength-bar" ref={strengthBarRef}></div>
               <div className="strength-text" ref={strengthTextRef}></div>
@@ -376,16 +379,20 @@ const Register = () => {
                 </label>
               </div>
             </div>
+
             <label className="hostCheckbox">
               <input type="checkbox" checked={flowState.isHost} onChange={handleHostChange} /> Become a Host
             </label>
+
             <div className="alreadyAccountText">
               Already have an account?{" "}
               <a onClick={handleLoginClick} href={`/login?redirect=${redirectToUse}`}>
                 Log in here
               </a>
             </div>
+
             {errorMessage && <div className="errorText">{errorMessage}</div>}
+
             <button type="submit" className="registerButton" onClick={() => setShouldShake(true)}>
               Sign Up
             </button>
