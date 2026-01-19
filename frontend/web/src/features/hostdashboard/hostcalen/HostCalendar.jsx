@@ -14,12 +14,11 @@ import { getMonthMatrix, startOfMonthUTC, addMonthsUTC, subMonthsUTC } from "./u
 import { getCognitoUserId } from "../../../services/getAccessToken";
 import { retrieveExternalCalendar } from "../../../utils/icalRetrieveHost";
 import { buildBlockedSetFromIcsEvents } from "../../../utils/icalConvert";
-import {
-  loadIcalSources,
-  saveIcalSources,
-  loadExternalBlockedDates,
-  saveExternalBlockedDates,
-} from "../../../utils/externalCalendarStorage";
+import { loadIcalSources,
+          saveIcalSources,
+          loadExternalBlockedDates,
+          saveExternalBlockedDates,
+      } from "../../../utils/externalCalenderStorage";
 
 const initialBlocks = {
   booked: new Set(),
