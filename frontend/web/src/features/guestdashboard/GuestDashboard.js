@@ -8,8 +8,7 @@ import { getGuestBookings, buildListingDetailsUrl } from "./services/bookingAPI"
 import GuestInfoRow from "./components/GuestInfoRow";
 import GuestFamilyRow from "./components/GuestFamilyRow";
 
-
-import { placeholderImage, normalizeImageUrl } from "./utils/image";
+import { normalizeImageUrl } from "./utils/image";
 
 import {
   isValidPhoneE164,
@@ -22,23 +21,18 @@ import {
   formatDate,
 } from "./utils/guestDashboardUtils";
 
+const isWithinNext7Days = (dateValue) => {
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  const in7 = new Date();
+  in7.setDate(now.getDate() + 7);
+  return d >= now && d <= in7;
+};
+
 const GuestDashboard = () => {
-  const [user, setUser] = useState({
-    email: "",
-    name: "",
-    address: "",
-    phone: "",
-    family: "",
-  });
-
-  const [temp, setTemp] = useState({
-    email: "",
-    name: "",
-    address: "",
-    phone: "",
-    family: "",
-  });
-
+  const [user, setUser] = useState({ email: "", name: "", address: "", phone: "", family: "" });
+  const [temp, setTemp] = useState({ email: "", name: "", address: "", phone: "", family: "" });
   const [editing, setEditing] = useState({
     email: false,
     name: false,
@@ -54,7 +48,7 @@ const GuestDashboard = () => {
 
   const [guestId, setGuestId] = useState(null);
   const [currentBooking, setCurrentBooking] = useState(null);
-  const [currentBookingImage, setCurrentBookingImage] = useState(placeholderImage);
+  const [currentBookingImage, setCurrentBookingImage] = useState("");
   const [currentBookingTitle, setCurrentBookingTitle] = useState("Current booking");
   const [currentBookingCity, setCurrentBookingCity] = useState("");
   const [hostName, setHostName] = useState("—");
@@ -105,11 +99,7 @@ const GuestDashboard = () => {
 
       const resp = await fetch(
         "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-CustomerIAM-Production-Update-UserEmail",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(params),
-        }
+        { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
       );
 
       const json = await resp.json().catch(() => ({}));
@@ -137,11 +127,7 @@ const GuestDashboard = () => {
 
       const resp = await fetch(
         "https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-UserName",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(params),
-        }
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
       );
 
       const json = await resp.json().catch(() => ({}));
@@ -162,7 +148,6 @@ const GuestDashboard = () => {
       const authUser = await Auth.currentAuthenticatedUser();
       const newAddress = (temp.address || "").trim();
       const res = await Auth.updateUserAttributes(authUser, { address: newAddress });
-
       if (res === "SUCCESS") {
         setUser((prev) => ({ ...prev, address: newAddress }));
         cancelEdit("address");
@@ -181,10 +166,8 @@ const GuestDashboard = () => {
         alert("Phone must be in international format, e.g., +31612345678");
         return;
       }
-
       const authUser = await Auth.currentAuthenticatedUser();
       const res = await Auth.updateUserAttributes(authUser, { phone_number: newPhone });
-
       if (res === "SUCCESS") {
         setUser((prev) => ({ ...prev, phone: newPhone }));
         setAskPhoneVerify(true);
@@ -216,18 +199,15 @@ const GuestDashboard = () => {
 
   const fetchCurrentBooking = useCallback(async () => {
     if (!guestId) return;
-
     setBookingLoading(true);
     setBookingError("");
     setCurrentBooking(null);
-    setCurrentBookingImage(placeholderImage);
+    setCurrentBookingImage("");
     setHostName("—");
     setCurrentBookingTitle("Current booking");
     setCurrentBookingCity("");
-
     try {
       const bookingData = await getGuestBookings(guestId);
-
       let normalizedBookings = [];
       if (Array.isArray(bookingData)) normalizedBookings = bookingData;
       else if (Array.isArray(bookingData?.data)) normalizedBookings = bookingData.data;
@@ -243,11 +223,13 @@ const GuestDashboard = () => {
       const paidBookings = normalizedBookings.filter(
         (b) => String(b?.status ?? b?.Status ?? "").toLowerCase() === "paid"
       );
-
       if (!paidBookings.length) return;
 
       const { currentBookings, upcomingBookings } = splitBookingsByTime(paidBookings);
-      const selectedBooking = currentBookings[0] || upcomingBookings[0] || paidBookings[0];
+      const upcomingWithinWeek = (upcomingBookings || []).filter((b) =>
+        isWithinNext7Days(getArrivalDate(b))
+      );
+      const selectedBooking = (currentBookings && currentBookings[0]) || upcomingWithinWeek[0];
       if (!selectedBooking) return;
 
       setCurrentBooking(selectedBooking);
@@ -297,7 +279,7 @@ const GuestDashboard = () => {
       setCurrentBookingTitle(title);
 
       const firstImageKey = images[0]?.key || null;
-      setCurrentBookingImage(normalizeImageUrl(firstImageKey));
+      setCurrentBookingImage(firstImageKey ? normalizeImageUrl(firstImageKey) : "");
 
       const subtitle = property.subtitle || "";
       const cityFromLocation = location.city || null;
@@ -359,68 +341,69 @@ const GuestDashboard = () => {
         <div className="guest-dashboard-dashboards">
           <div className="guest-dashboard-content">
             <div className="guest-dashboard-accomodation-side">
-              <article className="booking-details">
-                <div className="booking-details__media">
-                  <img
-                    className="booking-details__image"
-                    src={currentBookingImage}
-                    alt={currentBookingTitle}
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src = placeholderImage;
-                    }}
-                  />
-                </div>
-
-                <div className="booking-details__content">
-                  <h4 className="booking-details__title">{currentBookingTitle}</h4>
-
-                  {bookingLoading && <div className="booking-details__host">Loading booking…</div>}
-
-                  {!bookingLoading && !currentBooking && !bookingError && (
-                    <div className="booking-details__host">You have no current or upcoming paid bookings.</div>
+              <article className={`booking-details ${!currentBooking ? "booking-details--empty" : ""}`}>
+                  {currentBooking && !!currentBookingImage && (
+                    <div className="booking-details__media">
+                      <img
+                        className="booking-details__image"
+                        src={currentBookingImage}
+                        alt={currentBookingTitle}
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    </div>
                   )}
 
-                  {bookingError && <div className="booking-details__host error">{bookingError}</div>}
+                  <div className="booking-details__content">
+                    <h4 className="booking-details__title">Current booking</h4>
 
-                  {currentBooking && !bookingLoading && (
-                    <>
-                      <div className="booking-details__host">Host: {hostName || "—"}</div>
-                      <div className="booking-details__host">{currentBookingCity}</div>
+                    {bookingLoading && <div className="booking-details__meta">Loading booking…</div>}
 
-                      <div className="booking-details__pi">
-                        <div className="booking-details__row">
-                          <div className="booking-details__label">Check-in</div>
-                          <div className="booking-details__value">
-                            {formatDate(getArrivalDate(currentBooking))}
+                    {!bookingLoading && !currentBooking && !bookingError && (
+                      <div className="booking-details__meta">You have no current or upcoming paid bookings.</div>
+                    )}
+
+                    {bookingError && <div className="booking-details__meta error">{bookingError}</div>}
+
+                    {currentBooking && !bookingLoading && (
+                      <>
+                        <h4 className="booking-details__title">{currentBookingTitle}</h4>
+
+                        <div className="booking-details__meta">Host: {hostName || "—"}</div>
+                        <div className="booking-details__meta">{currentBookingCity}</div>
+
+                        <div className="booking-details__pi">
+                          <div className="booking-details__row">
+                            <div className="booking-details__label">Check-in</div>
+                            <div className="booking-details__value">{formatDate(getArrivalDate(currentBooking))}</div>
+                          </div>
+                          <div className="booking-details__row">
+                            <div className="booking-details__label">Check-out</div>
+                            <div className="booking-details__value">{formatDate(getDepartureDate(currentBooking))}</div>
+                          </div>
+                          <div className="booking-details__row">
+                            <div className="booking-details__label">Status</div>
+                            <div className="booking-details__value">
+                              {String(currentBooking?.status ?? currentBooking?.Status ?? "") || "—"}
+                            </div>
                           </div>
                         </div>
-                        <div className="booking-details__row">
-                          <div className="booking-details__label">Check-out</div>
-                          <div className="booking-details__value">
-                            {formatDate(getDepartureDate(currentBooking))}
-                          </div>
-                        </div>
-                        <div className="booking-details__row">
-                          <div className="booking-details__label">Status</div>
-                          <div className="booking-details__value">
-                            {String(currentBooking?.status ?? currentBooking?.Status ?? "") || "—"}
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="booking-details__actions">
-                        <Link to="/Bookings" className="btn">
-                          Manage
-                        </Link>
-                        <button className="btn btn--ghost" type="button">
-                          Invoice
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                        <div className="booking-details__actions">
+                          <Link to="/bookings" className="btn">
+                            Manage
+                          </Link>
+                          <button className="btn btn--ghost" type="button">
+                            Invoice
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
               </article>
+
 
               <section className="messages-section">
                 <div className="messages-section__header">
@@ -429,7 +412,8 @@ const GuestDashboard = () => {
                     9+
                   </span>
                 </div>
-                <a className="messages-section__cta" href="#">
+
+                <Link className="messages-section__cta" to="/guestdashboard/messages">
                   <span>Go to message centre</span>
                   <span className="messages-section__icon" aria-hidden="true">
                     <svg
@@ -445,7 +429,7 @@ const GuestDashboard = () => {
                       <path d="M21 15a4 4 0 0 1-4 4H8l-4 4v-8a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h13a4 4 0 0 1 4 4z" />
                     </svg>
                   </span>
-                </a>
+                </Link>
               </section>
             </div>
 

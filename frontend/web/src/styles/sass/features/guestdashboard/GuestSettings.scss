@@ -19,14 +19,6 @@ $border: #e5e7eb;
     color: $text;
   }
 
-  &__content {
-    display: grid;
-    grid-template-columns: 420px 1fr;
-    gap: 22px;
-    align-items: start;
-  }
-
-  /* Tiles */
   &__grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -41,12 +33,18 @@ $border: #e5e7eb;
     text-decoration: none;
     color: $text;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-    transition: 180ms ease;
+    transition: border-color 180ms ease, transform 180ms ease,
+      box-shadow 180ms ease;
 
     &:hover {
-      border-color: rgba(33, 163, 59, 0.35);
+      border-color: rgba(20, 223, 61);
       transform: translateY(-1px);
       box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+
+      .guest-settings__card-icon {
+        background: rgba(17, 240, 61, 0.08);
+        border-color: rgba(33, 163, 59);
+      }
     }
   }
 
@@ -65,12 +63,18 @@ $border: #e5e7eb;
     place-items: center;
     background: rgba(33, 163, 59, 0.12);
     border: 1px solid rgba(33, 163, 59, 0.2);
-    font-size: 16px;
+    flex-shrink: 0;
+
+    svg {
+      font-size: 18px;
+      color: $brand;
+    }
   }
 
   &__card-title {
     font-weight: 700;
     font-size: 14px;
+    line-height: 1.2;
   }
 
   &__card-desc {
@@ -78,15 +82,10 @@ $border: #e5e7eb;
     color: $text-muted;
     font-size: 13px;
     line-height: 1.5;
-    max-width: 50ch;
+    max-width: 52ch;
   }
 
-  /* Responsive */
   @media (max-width: 980px) {
-    &__content {
-      grid-template-columns: 1fr;
-    }
-
     &__grid {
       grid-template-columns: 1fr;
     }

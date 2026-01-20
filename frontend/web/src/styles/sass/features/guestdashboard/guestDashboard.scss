@@ -1,5 +1,5 @@
-$brand: #21a33b;               
-$link: #007bff;                
+$brand: #21a33b;
+$link: #007bff;
 $text: #111827;
 $text-muted: #555;
 $card-bg: #ffffff;
@@ -23,15 +23,15 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
 
     .guest-dashboard-content {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 420px; 
+      grid-template-columns: minmax(0, 1fr) 420px;
       gap: 24px;
       margin-top: 20px;
-     
+
       .guest-dashboard-accomodation-side {
         display: grid;
         align-content: start;
-        gap: 16px; 
-        
+        gap: 16px;
+
         .guest-dashboard-viewAllBooking {
           display: inline-flex;
           align-items: center;
@@ -50,20 +50,23 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
         }
 
         .booking-details {
-          background: $card-bg;         
-          border: 1px solid $border;      
+          background: $card-bg;
+          border: 1px solid $border;
           box-shadow: $shadow-md;
           padding: 12px;
           display: grid;
-          grid-template-columns: 320px 1fr; 
+          grid-template-columns: 320px 1fr;
           gap: 16px;
           align-items: start;
         }
-       
+        .booking-details--empty {
+           grid-template-columns: 1fr;
+        }
+
         .booking-details__media {
           position: relative;
           width: 100%;
-          aspect-ratio: 4 / 3;           
+          aspect-ratio: 4 / 3;
           overflow: hidden;
           border-radius: 10px;
           background: #eef2f7;
@@ -91,11 +94,15 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           margin: 0;
         }
 
-        .booking-details__host {
+        .booking-details__meta {
           font-size: 14px;
           color: #64748b;
+
+          &.error {
+            color: #dc2626;
+          }
         }
-       
+
         .booking-details__pi {
           display: grid;
           gap: 10px;
@@ -103,7 +110,7 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
 
         .booking-details__row {
           display: grid;
-          grid-template-columns: 140px 1fr;   
+          grid-template-columns: 140px 1fr;
           gap: 10px;
           align-items: center;
         }
@@ -139,6 +146,7 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           gap: 8px;
           flex-wrap: wrap;
         }
+
         .messages-section {
           background: $card-bg;
           border: 1px solid $border;
@@ -180,7 +188,7 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           border-radius: 10px;
           transition: background-color .12s ease, transform .12s ease;
 
-          &:hover   { background: rgba(0,0,0,.02); transform: translateY(-1px); }
+          &:hover { background: rgba(0,0,0,.02); transform: translateY(-1px); }
           &:focus-visible {
             outline: 2px solid rgba($brand, .28);
             outline-offset: 2px;
@@ -197,11 +205,11 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           justify-content: center;
         }
       }
-      
+
       .guest-dashboard-personalInfoContent {
         width: 100%;
         height: auto;
-       
+
         .pi-card {
           background: $card-bg;
           border: 1px solid $border;
@@ -267,12 +275,15 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           }
         }
 
-        .pi-right   { display: flex; align-items: center; gap: 8px; }
+        .pi-right { display: flex; align-items: center; gap: 8px; }
         .pi-actions { display: flex; align-items: center; gap: 6px; }
 
         .pi-action {
-          width: 36px; height: 36px;
-          display: inline-flex; align-items: center; justify-content: center;
+          width: 36px;
+          height: 36px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           background: $brand;
           border: none;
           border-radius: 10px;
@@ -282,7 +293,7 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
 
           img { width: 18px; height: 18px; }
 
-          &:hover  { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+          &:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
           &:active { transform: scale(.98); }
 
           &.cancel {
@@ -297,7 +308,7 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           margin-bottom: 15px;
 
           span { font-weight: 700; display: block; margin-bottom: 5px; }
-          p    { font-size: 16px; color: $text-muted; }
+          p { font-size: 16px; color: $text-muted; }
 
           .guest-dashboard-guest-edit-input {
             width: 100%;
@@ -305,6 +316,7 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
             font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 4px;
+
             &:focus { border-color: $link; outline: none; }
           }
         }
@@ -313,24 +325,27 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
   }
 }
 
-/* ---------- Shared buttons ---------- */
 .btn {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: .5rem;
   padding: .65rem 1rem;
   border: 1px solid transparent;
   border-radius: 999px;
   background: $brand;
-  color: #fff; text-decoration: none; cursor: pointer;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
   font-weight: 600;
 }
+
 .btn--ghost {
   background: transparent;
   color: $brand;
   border-color: $brand;
 }
 
-/* -------- Tablet (<= 1024px) -------- */
 @media (max-width: 1024px) {
   .guest-dashboard-page-body {
     > h2 {
@@ -342,7 +357,7 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
       padding: 0 14px;
 
       .guest-dashboard-content {
-        grid-template-columns: minmax(0, 1fr) 360px; 
+        grid-template-columns: minmax(0, 1fr) 360px;
         gap: 18px;
 
         .guest-dashboard-accomodation-side {
@@ -354,9 +369,7 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
             gap: 14px;
           }
 
-          .booking-details__title {
-            font-size: 17px;
-          }
+          .booking-details__title { font-size: 17px; }
 
           .booking-details__row {
             grid-template-columns: 120px 1fr;
@@ -365,27 +378,15 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
         }
 
         .guest-dashboard-personalInfoContent {
-          .pi-card {
-            padding: 14px;
-            border-radius: 14px;
-          }
-
-          .pi-row {
-            padding: 10px 10px 10px 12px;
-          }
-
-          .pi-input {
-            max-width: 420px;
-          }
+          .pi-card { padding: 14px; border-radius: 14px; }
+          .pi-row { padding: 10px 10px 10px 12px; }
+          .pi-input { max-width: 420px; }
 
           .pi-action {
             width: 34px;
             height: 34px;
 
-            img {
-              width: 17px;
-              height: 17px;
-            }
+            img { width: 17px; height: 17px; }
           }
         }
       }
@@ -393,7 +394,6 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
   }
 }
 
-/* -------- Small Tablet / Large Mobile (<= 900px) -------- */
 @media (max-width: 900px) {
   .guest-dashboard-page-body {
     .guest-dashboard-dashboards {
@@ -415,13 +415,8 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
           border-radius: 12px;
         }
 
-        .booking-details__content {
-          gap: 10px;
-        }
-
-        .booking-details__title {
-          font-size: 16px;
-        }
+        .booking-details__content { gap: 10px; }
+        .booking-details__title { font-size: 16px; }
 
         .booking-details__row {
           grid-template-columns: 130px 1fr;
@@ -429,28 +424,22 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
       }
 
       .guest-dashboard-personalInfoContent {
-        .pi-card {
-          padding: 14px;
-        }
-
-        .pi-input {
-          max-width: 100%;
-        }
+        .pi-card { padding: 14px; }
+        .pi-input { max-width: 100%; }
       }
     }
   }
 }
 
-/* -------- Mobile (<= 640px) -------- */
 @media (max-width: 640px) {
   .guest-dashboard-page-body {
     margin-left: 50px;
     padding: 5px;
+
     > h2 {
       font-size: 20px;
       margin: 16px 0 6px;
     }
-    
 
     .guest-dashboard-dashboards {
       padding: 0 10px;
@@ -458,94 +447,84 @@ $shadow-md: 0 2px 10px rgba(0,0,0,.06);
       .guest-dashboard-content {
         margin-top: 14px;
         gap: 14px;
-      
 
-      .guest-dashboard-accomodation-side {
-        gap: 12px;
+        .guest-dashboard-accomodation-side {
+          gap: 12px;
 
-        .booking-details {
-          grid-template-columns: none;
-          padding: 10px;
-          border-radius: 14px;
+          .booking-details {
+            grid-template-columns: none;
+            padding: 10px;
+            border-radius: 14px;
+          }
+
+          .booking-details__media {
+            border-radius: 12px;
+            aspect-ratio: 4 / 3;
+          }
+
+          .booking-details__title { font-size: 15px; }
+          .booking-details__meta { font-size: 13px; }
+
+          .booking-details__row {
+            grid-template-columns: 1fr;
+            gap: 6px;
+            align-items: start;
+          }
+
+          .booking-details__label {
+            font-size: 13px;
+            opacity: 0.9;
+          }
+
+          .booking-details__input {
+            font-size: 14px;
+            padding: 8px 10px;
+          }
+
+          .booking-details__actions { gap: 6px; }
+
+          .messages-section {
+            padding: 10px 12px;
+            border-radius: 14px;
+          }
+
+          .messages-section__icon {
+            width: 34px;
+            height: 34px;
+          }
         }
 
-        .booking-details__media {
-          border-radius: 12px;
-          aspect-ratio: 4 / 3;
-        }
+        .guest-dashboard-personalInfoContent {
+          .pi-card {
+            padding: 12px;
+            border-radius: 14px;
+          }
 
-        .booking-details__title {
-          font-size: 15px;
-        }
+          .pi-header h3 { font-size: 16px; }
 
-        .booking-details__host {
-          font-size: 13px;
-        }
+          .pi-row {
+            grid-template-columns: 1fr;
+            gap: 10px;
+            align-items: start;
+          }
 
-        .booking-details__row {
-          grid-template-columns: 1fr;
-          gap: 6px;
-          align-items: start;
-        }
+          .pi-right {
+            width: 100%;
+            justify-content: flex-end;
+          }
 
-        .booking-details__label {
-          font-size: 13px;
-          opacity: 0.9;
-        }
+          .pi-value {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+          }
 
-        .booking-details__input {
-          font-size: 14px;
-          padding: 8px 10px;
-        }
-
-        .booking-details__actions {
-          gap: 6px;
-        }
-
-        .messages-section {
-          padding: 10px 12px;
-          border-radius: 14px;
-        }
-
-        .messages-section__icon {
-          width: 34px;
-          height: 34px;
-        }
-      }
-
-      .guest-dashboard-personalInfoContent {
-        .pi-card {
-          padding: 12px;
-          border-radius: 14px;
-        }
-
-        .pi-header h3 {
-          font-size: 16px;
-        }
-
-        .pi-row {
-          grid-template-columns: 1fr;
-          gap: 10px;
-          align-items: start;
-        }
-
-        .pi-right {
-          width: 100%;
-          justify-content: flex-end;
-        }
-
-        .pi-value {
-          white-space: normal;
-          overflow: visible;
-          text-overflow: clip;
-        }
-
-        .pi-action {
-          width: 34px;
-          height: 34px;
+          .pi-action {
+            width: 34px;
+            height: 34px;
+          }
         }
       }
     }
   }
-}
 }
