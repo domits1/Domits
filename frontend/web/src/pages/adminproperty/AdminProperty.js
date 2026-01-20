@@ -228,7 +228,7 @@ export default function AdminProperty() {
     const description = fd.get("description")?.toString()?.trim() || "";
 
     const isTestPropertyRaw = fd.get("testProperty");
-    const isTest = isTestPropertyRaw === "true" || false;
+    const isTest = isTestPropertyRaw === "true";
 
     const guests = Number(fd.get("guests") || 0);
     const bedrooms = Number(fd.get("bedrooms") || 0);
@@ -482,7 +482,13 @@ export default function AdminProperty() {
       <div className="adminproperty-group">
         <label>How many people can stay here</label>
         <div className="grid-4">
-          <NumberField name="guests" placeholder="Guests" handleBlur={handleBlur} hasError={hasError} errors={errors} />
+          <NumberField
+            name="guests"
+            placeholder="Guests"
+            handleBlur={handleBlur}
+            hasError={hasError}
+            errors={errors}
+          />
           <NumberField
             name="bedrooms"
             placeholder="Bedrooms"
@@ -490,7 +496,13 @@ export default function AdminProperty() {
             hasError={hasError}
             errors={errors}
           />
-          <NumberField name="beds" placeholder="Beds" handleBlur={handleBlur} hasError={hasError} errors={errors} />
+          <NumberField
+            name="beds"
+            placeholder="Beds"
+            handleBlur={handleBlur}
+            hasError={hasError}
+            errors={errors}
+          />
           <NumberField
             name="bathrooms"
             placeholder="Bathrooms"
