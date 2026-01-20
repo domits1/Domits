@@ -228,7 +228,7 @@ export default function AdminProperty() {
     const description = fd.get("description")?.toString()?.trim() || "";
 
     const isTestPropertyRaw = fd.get("testProperty");
-    const isTest = isTestPropertyRaw === "true" || false;
+    const isTest = isTestPropertyRaw === "true";
 
     const guests = Number(fd.get("guests") || 0);
     const bedrooms = Number(fd.get("bedrooms") || 0);
