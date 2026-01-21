@@ -1,16 +1,35 @@
-// Variables
 $host-blue: var(--secondary-color);
 $hover-blue: #4a86c3;
 $text-color: black;
 $font-main: "Kanit", sans-serif;
+
 $input-padding: 8px 15px;
 $border-radius: 5px;
-$button-font-size: 18px;
+
 $title-font-size: 30px;
+$button-font-size: 18px;
 $small-font-size: 14px;
+
 $shake-color: red;
 
-// Nesting Styles
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 .registerContainer {
   display: flex;
   flex-direction: column;
@@ -18,55 +37,90 @@ $shake-color: red;
   align-items: center;
 
   .registerTitle {
-    color: $text-color;
-    font-size: $title-font-size;
+    margin-top: 30px;
     font-family: $font-main;
+    font-size: $title-font-size;
     font-weight: 400;
     line-height: 54px;
-    word-wrap: break-word;
-    margin-top: 30px;
+    color: $text-color;
+  }
+
+  .fieldError {
+    margin-top: 4px;
+    font-size: 12px;
+    color: red;
+  }
+
+  .registerInput {
+    border: 1px solid var(--secondary-color);
+
+    &:focus {
+      outline: none;
+    }
+
+    &.inputError {
+      border-color: $shake-color;
+      animation: shake 0.3s linear;
+    }
+
+    &.inputShake {
+      animation: shake 0.3s;
+    }
+  }
+
+  .requirements {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    label {
+      font-size: 13px;
+      color: #333;
+    }
   }
 
   .registerForm {
-    margin-top: 20px;
-    min-width: 300px;
     width: 25%;
+    min-width: 300px;
+    margin: 20px 0 50px;
     padding: 10px 30px;
-    margin-bottom: 50px;
     box-sizing: border-box;
 
     label {
       font-size: $button-font-size;
     }
 
+    .registerInput:focus {
+      outline: none;
+      box-shadow: none;
+    }
+
+    .react-tel-input .form-control:focus {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+
     .registerInput {
       width: 98.5%;
-      height: auto;
-      // padding: $input-padding;
-      line-height: 25px;
       margin: 5px 0 12px;
+      line-height: 25px;
       background: white;
-      box-shadow: none;
       border-radius: $border-radius;
       border: 1px solid #999;
       display: inline-flex;
-      justify-content: flex-start;
       align-items: center;
     }
 
     .registerButton {
       width: 100%;
-      padding: $input-padding;
       margin-top: 15px;
+      padding: $input-padding;
       background: $host-blue;
-      box-shadow: none;
       border-radius: $border-radius;
       border: none;
       color: white;
       font-size: $button-font-size;
-      display: block;
-      text-align: center;
-      text-decoration: none;
       cursor: pointer;
 
       &:hover {
@@ -75,29 +129,18 @@ $shake-color: red;
     }
 
     .alreadyAccountText {
-      color: $text-color;
       margin-top: 10px;
       font-size: $small-font-size;
       font-family: $font-main;
-      font-weight: 400;
       line-height: 18px;
-      word-wrap: break-word;
+      color: $text-color;
       align-self: flex-start;
     }
 
     .errorText {
-      color: white;
-      font-size: 16px;
       margin-top: 5px;
-    }
-
-    .inputError {
-      animation: shake 0.3s linear;
-      border-color: $shake-color;
-    }
-
-    .inputShake {
-      animation: shake 0.5s;
+      font-size: 16px;
+      color: white;
     }
 
     .requirements {
@@ -115,8 +158,8 @@ $shake-color: red;
       display: none;
       margin-top: 10px;
       padding: 10px;
-      border: 1px solid #ccc;
       border-radius: $border-radius;
+      border: 1px solid #ccc;
       background-color: #f9f9f9;
 
       #strength-bar {
@@ -133,22 +176,19 @@ $shake-color: red;
 
       .bad {
         width: 10%;
-        background-color: red;
+        background: red;
       }
-
       .weak {
         width: 33%;
-        background-color: red;
+        background: red;
       }
-
       .medium {
         width: 66%;
-        background-color: orange;
+        background: orange;
       }
-
       .strong {
         width: 100%;
-        background-color: green;
+        background: green;
       }
     }
   }
@@ -157,15 +197,12 @@ $shake-color: red;
 .react-tel-input {
   .form-control {
     width: 100% !important;
-    height: auto !important;
     background: white !important;
-    box-shadow: none !important;
     border-radius: $border-radius !important;
     border: 1px solid #999 !important;
-    display: inline-flex !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
     box-sizing: border-box;
+    display: inline-flex !important;
+    align-items: center !important;
   }
 
   .selected-flag {
@@ -175,45 +212,28 @@ $shake-color: red;
 
 .signOutDiv {
   display: flex;
-  width: 100%;
   justify-content: center;
+  width: 100%;
   padding: 4% 0;
 
   .signOutButton {
-    background-color: #003366;
-    color: #fff;
-    height: 45px;
     width: 150px;
-    border-radius: $border-radius;
-    box-shadow: none;
-    padding: 10px;
+    height: 45px;
     margin: 0 10px;
+    padding: 10px;
+    border-radius: $border-radius;
+    background-color: #003366;
+    color: white;
     border: none;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
 
     &:hover {
       background-color: #335e89;
       cursor: pointer;
       transition: background-color 0.3s ease-out;
     }
-  }
-}
-
-// Keyframes
-@keyframes shake {
-  0% {
-    margin-left: 0px;
-  }
-  25% {
-    margin-left: 5px;
-  }
-  75% {
-    margin-left: -5px;
-  }
-  100% {
-    margin-left: 0px;
   }
 }
