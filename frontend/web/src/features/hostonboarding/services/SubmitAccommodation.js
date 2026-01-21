@@ -26,7 +26,7 @@ export async function submitAccommodation(navigate, builder) {
   }
   payload.propertyTestStatus = {
     ...(payload.propertyTestStatus || {}),
-    isTest: true,
+    isTest: false,
   };
   try {
     const res = await fetch(API_URL, {
