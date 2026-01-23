@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import EventIcon from "@mui/icons-material/Event";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
@@ -16,6 +17,7 @@ const HostReservations = () => {
   const [bookings, setBooking] = useState(null);
   const [sortedBookings, setSortedBookings] = useState(null);
   const authToken = getAccessToken();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -149,7 +151,11 @@ const HostReservations = () => {
                   <tbody>
                     {userHasReservations && sortedBookings && sortedBookings.length > 0 ? (
                       sortedBookings.map((booking) => (
-                        <tr key={booking.id}>
+                        <tr
+                          key={booking.id}
+                          className={styles.clickableRow}
+                          onClick={() => navigate(`/reservation-details?id=${booking.id}`)}
+                        >
                           <td className={styles.singleReservationRow}>{booking.id}</td>
                           <td className={styles.singleReservationRow}>{booking.title}</td>
                           <td className={styles.singleReservationRow}>

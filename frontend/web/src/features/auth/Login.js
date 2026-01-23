@@ -1,5 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react';
-import { Auth } from 'aws-amplify';
+import { Amplify, Auth } from 'aws-amplify';
+import awsExports from '../../aws-exports';
+Amplify.configure(awsExports);
 import { useNavigate } from 'react-router-dom';
 import logo from "../../images/logo.svg";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';

@@ -1,6 +1,8 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Auth } from 'aws-amplify';
+import { Amplify, Auth } from 'aws-amplify';
+import awsExports from '../../aws-exports';
+Amplify.configure(awsExports);
 import FlowContext from '../../services/FlowContext';
 import PhoneInput from 'react-phone-input-2';
 // import 'react-phone-input-2/lib/style.css';

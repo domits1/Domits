@@ -14,62 +14,62 @@ import 'swiper/css';
 import 'swiper/css/pagination';    
 import 'swiper/css/effect-fade'; 
 import Header from "../../components/base/Header";
-import greece from "./Images/greece.webp";
-import netherlands from "./Images/netherlands.webp";
-import france from "./Images/france.webp";
-import spain from "./Images/spain.webp";
-import italy from "./Images/italy.webp";
-import belgium from "./Images/belgium.webp";
-import germany from "./Images/germany.webp";
-import uk from "./Images/unitedkingdom.webp";
-import portugal from "./Images/portugal.webp";
-import croatia from "./Images/croatia.webp";
-import poland from "./Images/poland.webp";
-import austria from "./Images/austria.webp";
-import czech from "./Images/czech.webp";
-import philippines from "./Images/philippines.webp";
-import thailand from "./Images/thailand.webp";
-import indonesia from "./Images/indonesia.webp";
-import india from "./Images/india.webp";
-import malaysia from "./Images/malaysia.webp";
-import vietnam from "./Images/vietnam.webp";
-import turkey from "./Images/turkey.webp";
-import singapore from "./Images/singapore.webp";
-import aruba from "./Images/aruba.webp";
-import bonaire from "./Images/bonaire.webp";
-import curacao from "./Images/curacao.webp";
-import saintBarthelemy from "./Images/saintbarthelemy.webp";
-import costaRica from "./Images/costarica.webp";
-import dominicanRepublic from "./Images/dominicanrepublic.webp";
-import puertroRico from "./Images/puertrorico.webp";
-import stMaarten from "./Images/stmaarten.webp";
-import frenchalps from "./Images/frenchalps.webp";
-import switzerland from "./Images/switzerland.webp";
-import chamonix from "./Images/Chamonix-Mont-Blanc.webp";
-import blackforest from "./Images/blackforest.webp";
-import italyTrentino from "./Images/italytretinio.webp";
-import spring from "./Images/spring.webp";
-import summer from "./Images/summer.webp";
-import fall from "./Images/fall.webp";
-import winter from "./Images/winter.webp";
-import luxury from "./Images/luxury.webp";
-import beach from "./Images/beach.webp";
-import lastMinute from "./Images/lastminute.webp";
-import wellness from "./Images/wellness.webp";
-import romantic from "./Images/romantic.webp";
-import adventure from "./Images/adventure.webp";
-import nature from "./Images/nature.webp";
-import culture from "./Images/culture.webp";
-import culinary from "./Images/culinary.webp";
-import waterman from "./Images/waterman.webp";
-import sleutelvrouw from "./Images/sleutelvrouw.webp";
+import greece from "./Images/optimized/greece-1600.webp";
+import netherlands from "./Images/optimized/netherlands-1600.webp";
+import france from "./Images/optimized/france-1600.webp";
+import spain from "./Images/optimized/spain-1600.webp";
+import italy from "./Images/optimized/italy-1600.webp";
+import belgium from "./Images/optimized/belgium-1600.webp";
+import germany from "./Images/optimized/germany-1600.webp";
+import uk from "./Images/optimized/unitedkingdom-1600.webp";
+import portugal from "./Images/optimized/portugal-1600.webp";
+import croatia from "./Images/optimized/croatia-1600.webp";
+import poland from "./Images/optimized/poland-1600.webp";
+import austria from "./Images/optimized/austria-1600.webp";
+import czech from "./Images/optimized/czech-1600.webp";
+import philippines from "./Images/optimized/philippines-1600.webp";
+import thailand from "./Images/optimized/thailand-1600.webp";
+import indonesia from "./Images/optimized/indonesia-1600.webp";
+import india from "./Images/optimized/india-1600.webp";
+import malaysia from "./Images/optimized/malaysia-1600.webp";
+import vietnam from "./Images/optimized/vietnam-1600.webp";
+import turkey from "./Images/optimized/turkey-1600.webp";
+import singapore from "./Images/optimized/singapore-1600.webp";
+import aruba from "./Images/optimized/aruba-1600.webp";
+import bonaire from "./Images/optimized/bonaire-1600.webp";
+import curacao from "./Images/optimized/curacao-1600.webp";
+import saintBarthelemy from "./Images/optimized/saintbarthelemy-1600.webp";
+import costaRica from "./Images/optimized/costarica-1600.webp";
+import dominicanRepublic from "./Images/optimized/dominicanrepublic-1600.webp";
+import puertroRico from "./Images/optimized/puertrorico-1600.webp";
+import stMaarten from "./Images/optimized/stmaarten-1600.webp";
+import frenchalps from "./Images/optimized/frenchalps-1600.webp";
+import switzerland from "./Images/optimized/switzerland-1600.webp";
+import chamonix from "./Images/optimized/Chamonix-Mont-Blanc-1600.webp";
+import blackforest from "./Images/optimized/blackforest-1600.webp";
+import italyTrentino from "./Images/optimized/italytretinio-1600.webp";
+import spring from "./Images/optimized/spring-1600.webp";
+import summer from "./Images/optimized/summer-1600.webp";
+import fall from "./Images/optimized/fall-1600.webp";
+import winter from "./Images/optimized/winter-1600.webp";
+import luxury from "./Images/optimized/luxury-1600.webp";
+import beach from "./Images/optimized/beach-1600.webp";
+import lastMinute from "./Images/optimized/lastminute-1600.webp";
+import wellness from "./Images/optimized/wellness-1600.webp";
+import romantic from "./Images/optimized/romantic-1600.webp";
+import adventure from "./Images/optimized/adventure-1600.webp";
+import nature from "./Images/optimized/nature-1600.webp";
+import culture from "./Images/optimized/culture-1600.webp";
+import culinary from "./Images/optimized/culinary-1600.webp";
+import waterman from "./Images/optimized/waterman-1600.webp";
+import sleutelvrouw from "./Images/optimized/sleutelvrouw-1600.webp";
 import { FetchAllPropertyTypes, FetchPropertyType } from "./services/fetchProperties";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
-import villaBackground from "../../images/villaHomepage.jpg";
+import villaBackground from "../../images/optimized/villaHomepage-1600.webp";
 
 const contentByLanguage = {
   en,
@@ -465,19 +465,19 @@ const Homepage = () => {
         <div className="domits-iconsContainer">
           <div className="domits-iconsContainerText">
             <div className="domits-iconTextGroup">
-              <img src={bill} alt="bill" />
+              <img src={bill} loading="lazy" alt="bill" />
               <p>{homePageContent.features.securePayments}</p>
             </div>
             <div className="domits-iconTextGroup">
-              <img src={verifiedLogo} alt="verified logo" />
+              <img src={verifiedLogo} loading="lazy" alt="verified logo" />
               <p>{homePageContent.features.verifiedGuest}</p>
             </div>
             <div className="domits-iconTextGroup">
-              <img src={question} alt="question" />
+              <img src={question} loading="lazy"  alt="question" />
               <p>{homePageContent.features.quickPhone}</p>
             </div>
             <div className="domits-iconTextGroup">
-              <img src={checkMark} alt="checkMark" />
+              <img src={checkMark} loading="lazy" alt="checkMark" />
               <p>{homePageContent.features.qualityGuarantee}</p>
             </div>
           </div>
@@ -584,7 +584,7 @@ const Homepage = () => {
           </div>
           <div className="host-images">
             {hostImages.map((image, index) => (
-              <img key={index} src={image.src} alt={image.alt} className="host-image" />
+              <img key={index} src={image.src} loading="lazy" alt={image.alt} className="host-image" />
             ))}
           </div>
         </div>
@@ -594,7 +594,7 @@ const Homepage = () => {
           {countries.map((country, index) => (
             <div className="country-card" key={index}>
               <Link to="/home">
-                <img src={country.img} alt={country.name} />
+                <img src={country.img} loading="lazy" alt={country.name} />
               </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
@@ -605,7 +605,7 @@ const Homepage = () => {
           {smallCountries.map((country, index) => (
             <div className="country-card small-country-card" key={index}>
               <Link to="/home">
-                <img src={country.img} alt={country.name} />
+                <img src={country.img} loading="lazy" alt={country.name} />
               </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
@@ -617,7 +617,7 @@ const Homepage = () => {
           {asiaCountries.map((country, index) => (
             <div className="country-card asia-country-card" key={index}>
               <Link to="/home">
-                <img src={country.img} alt={country.name} />
+                <img src={country.img} loading="lazy" alt={country.name} />
               </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
@@ -628,7 +628,7 @@ const Homepage = () => {
           {smallAsiaCountries.map((country, index) => (
             <div className="country-card small-asia-country-card" key={index}>
               <Link to="/home">
-                <img src={country.img} alt={country.name} />
+                <img src={country.img} loading="lazy" alt={country.name} />
               </Link>
               <h3>{country.name}</h3>
             </div>
@@ -639,7 +639,7 @@ const Homepage = () => {
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
               <Link to="/home">
-                <img src={country.img} alt={country.name} />
+                <img src={country.img} loading="lazy" alt={country.name} />
               </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
@@ -650,7 +650,7 @@ const Homepage = () => {
           {smallCaribbeanCountries.map((country, index) => (
             <div className="country-card small-caribbean-country-card" key={index}>
               <Link to="/home">
-                <img src={country.img} alt={country.name} />
+                <img src={country.img} loading="lazy" alt={country.name} />
               </Link>
               <h3>{country.name}</h3>
             </div>
@@ -661,7 +661,7 @@ const Homepage = () => {
           {skiCountries.map((country, index) => (
             <div className="country-card ski-country-card" key={index}>
               <Link to="/home">
-                <img src={country.img} alt={country.name} />
+                <img src={country.img} loading="lazy" alt={country.name} />
               </Link>
               <h3>{country.name}</h3>
               <p>{country.description}</p>
@@ -673,7 +673,7 @@ const Homepage = () => {
           {seasons.map((season, index) => (
             <div className="season-card" key={index}>
               <Link to="/home">
-                <img src={season.img} alt={season.name} />
+                <img src={season.img} loading="lazy" alt={season.name} />
               </Link>
               <h3>{season.name}</h3>
             </div>
@@ -684,7 +684,7 @@ const Homepage = () => {
           {interests.map((interest, index) => (
             <div className="interest-card" key={index}>
               <Link to="/home">
-                <img src={interest.img} alt={interest.name} />
+                <img src={interest.img} loading="lazy" alt={interest.name} />
               </Link>
               <h3>{interest.name}</h3>
               <p>{interest.description}</p>
@@ -696,7 +696,7 @@ const Homepage = () => {
           {groups.map((group, index) => (
             <div className="group-card" key={index}>
               <Link to="/home">
-                <img src={group.img} alt={group.name} />
+                <img src={group.img} loading="lazy" alt={group.name} />
               </Link>
               <h3>{group.name}</h3>
               <p>{group.description}</p>
@@ -712,7 +712,7 @@ const Homepage = () => {
         <div className="review-list">
           {visibleReviews.map((review, index) => (
             <div className="review-card" key={index}>
-              <img src={review.img} alt={review.name} className="review-profile-pic" />
+              <img src={review.img} loading="lazy" alt={review.name} className="review-profile-pic" />
               <h3>{review.name}</h3>
               <p className="review-location">Host from The Netherlands</p>
               <div className="review-stars">★★★★★</div>

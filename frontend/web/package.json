@@ -41,7 +41,8 @@
     "test": "react-scripts test --transformIgnorePatterns 'node_modules/(?!axios)/'",
     "eject": "react-scripts eject",
     "build-sass": "sass src/styles/sass/app.scss src/index.css",
-    "cypress:open": "src/tests/cypress open"
+    "cypress:open": "src/tests/cypress open",
+    "optimize:images": "node scripts/optimize-images.js"
   },
   "devDependencies": {
     "@babel/core": "^7.24.5",
