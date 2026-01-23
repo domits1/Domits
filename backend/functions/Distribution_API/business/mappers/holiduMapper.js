@@ -1,4 +1,3 @@
-// Maps a full property payload (as returned by PropertyService) into a Holidu-friendly shape.
 export const toHoliduFull = (fullPropertyPayload) => {
   if (!fullPropertyPayload || !fullPropertyPayload.property) {
     return fullPropertyPayload;
@@ -50,7 +49,7 @@ export const toHoliduFull = (fullPropertyPayload) => {
       description: property.description,
     },
   ];
-  f;
+
   const images =
     fullPropertyPayload.images?.map((img, index) => ({
       url: img.key,
