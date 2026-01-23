@@ -238,31 +238,58 @@ export class PropertyController {
     }
   }
 
-  // -------------------------
-  // GET /property/bookingEngine/listingDetails
-  // -------------------------
-  async getFullActivePropertyById(event) {
-    try {
-      const propertyId = event.queryStringParameters.property;
-      const property = await this.propertyService.getFullActivePropertyById(propertyId);
-      const hostId = property.property.hostId;
-      const userInfo = await this.authManager.getUserInfoFromId(hostId);
-      property.property.username = userInfo.userName;
-      property.property.familyname = userInfo.familyName;
-      const format = event.queryStringParameters.format;
+    // -------------------------
+    // GET /property/bookingEngine/set
+    // -------------------------
+    async getActivePropertiesCardById(event) {
+        try {
+            const propertyIds = event.queryStringParameters.properties.split(",");
+            if (propertyIds.length > 12) {
+                throw new Error("You may only request 12 properties.")
+            }
+            const properties = await Promise.all(
+                propertyIds.map(async propertyId => await this.propertyService.getActivePropertyCardById(propertyId))
+            );
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(properties)
+            }
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
 
-      return {
-        statusCode: 200,
-        headers: responseHeaders,
-        body: JSON.stringify(property),
-      };
-    } catch (error) {
-      console.error(error);
-      return {
-        statusCode: error.statusCode || 500,
-        headers: responseHeaders,
-        body: JSON.stringify(error.message || "Something went wrong, please contact support."),
-      };
+    // -------------------------
+    // GET /property/bookingEngine/listingDetails
+    // -------------------------
+    async getFullActivePropertyById(event) {
+        try {
+            const propertyId = event.queryStringParameters.property;
+            const property = await this.propertyService.getFullActivePropertyById(propertyId)
+            const hostId = property.property.hostId
+            const userInfo = await this.authManager.getUserInfoFromId(hostId);
+            property.property.username = userInfo.userName;
+            property.property.familyname = userInfo.familyName;
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(property)
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
     }
   }
   // -------------------------

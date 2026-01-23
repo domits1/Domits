@@ -1,14 +1,13 @@
 import { Repository } from "../../data/repository.js";
-import StripeAccountRepository from "../../../General-Payments-Production-CRUD-fetchHostPayout/data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
 import Stripe from "stripe";
 import { PaymentsService } from "./paymentService.js";
+import "dotenv/config";
 
 export class Service {
   constructor() {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     this.repository = new Repository();
-    this.stripeAccountRepository = new StripeAccountRepository();
     this.authManager = new AuthManager();
     this.paymentsService = new PaymentsService();
   }
