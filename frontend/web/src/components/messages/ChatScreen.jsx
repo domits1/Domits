@@ -21,6 +21,7 @@ const ChatScreen = ({
   contactImage,
   threadId,
   handleContactListMessage,
+  onThreadIdUpdate,
   onBack,
   dashboardType,
 }) => {
@@ -143,26 +144,42 @@ const ChatScreen = ({
     const hasContent = newMessage.trim() || uploadedFileUrls.length > 0;
     if (!hasContent) return;
     try {
-      const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
+      // Get propertyId from booking details if available
+      const propertyId = bookingDetails?.propertyId || bookingDetails?.AccoId || null;
+      
+      const response = await sendMessage(contactId, newMessage, uploadedFileUrls, threadId, propertyId);
       if (!response || !response.success) {
         alert(`Error while sending: ${response?.error || "Please try again later."}`);
         return;
       }
 
+      // Use the actual message from the response if available
+      const savedMessage = response.message;
       const tempSentMessage = {
-        id: uuidv4(),
+        id: savedMessage?.id || uuidv4(),
         userId,
         recipientId: contactId,
         text: newMessage,
         fileUrls: uploadedFileUrls,
-        createdAt: new Date().toISOString(),
+        createdAt: savedMessage?.createdAt ? new Date(savedMessage.createdAt).toISOString() : new Date().toISOString(),
         isSent: true,
+        threadId: response.threadId || threadId,
       };
 
       addNewMessage(tempSentMessage);
       handleContactListMessage?.(tempSentMessage);
       setNewMessage("");
       setUploadedFileUrls([]);
+
+      // Update threadId if a new one was created
+      if (response.threadId && response.threadId !== threadId) {
+        onThreadIdUpdate?.(response.threadId);
+      }
+
+      // Refresh messages to get the latest from the database
+      if (response.threadId || threadId) {
+        fetchMessages(contactId, response.threadId || threadId);
+      }
 
       try {
         const el = chatContainerRef.current;
