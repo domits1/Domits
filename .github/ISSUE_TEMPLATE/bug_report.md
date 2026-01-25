@@ -1,42 +1,67 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
+name: Bug Report
+about: Report a reproducible bug or unexpected behavior
+title: "[Bug]: "
+labels: bug, needs-triage
+assignees: ""
+---
+
+> **Security notice**  
+> If this is a security vulnerability, **do not open an issue**.  
+> Please report it responsibly via **SECURITY.md**.
 
 ---
 
-**Is there an existing issue for this?**
-- [ ] no
+## Bug Summary
+Clear and concise description of the bug.
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+---
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Expected Behavior
+Describe what you expected to happen.
 
-**To Reproduce**
+---
+
+## Actual Behavior
+Describe what actually happened.
+
+---
+
+## Steps to Reproduce
 Steps to reproduce the behavior:
-0. clone, install, serve app locally
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+1. Go to `...`
+2. Click `...`
+3. Enter `...`
+4. Observe `...`
 
-**Logs, Screenshots, Video**
-If applicable, add information, like logs, screenshots, video to help explain your problem.
+---
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+## Environment
+Select the environment where the issue occurs:
+- [ ] Production
+- [ ] Staging
+- [ ] Development
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+---
 
-**Additional context**
-Add any other context about the problem here.
+## Severity
+Select one:
+- [ ] Low (minor UI issue)
+- [ ] Medium (feature degraded)
+- [ ] High (core feature broken)
+- [ ] Critical (system outage / data risk)
+
+---
+
+## Security & Data Considerations
+Check all that apply:
+- [ ] Authentication / authorization involved
+- [ ] Personal or sensitive data involved
+- [ ] Could be exploitable
+- [ ] No security implications identified
+
+---
+
+## App / Service
+Which part of the system is affected?  
+Example: Web / API / Mobile / Background job

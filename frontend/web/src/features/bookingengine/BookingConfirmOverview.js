@@ -207,8 +207,8 @@ const BookingConfirmationOverview = () => {
                     </div>
                 </div>
 
-                <button className="view-booking-button" onClick={() => navigate("/guestdashboard/bookings")}>
-                    View Booking
+                <button className="view-booking-button" onClick={() => navigate("/guestdashboard/messages")}>
+                    Go to Inbox
                 </button>
             </div>
         </main>

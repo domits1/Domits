@@ -1,10 +1,15 @@
 import { Repository } from "../../data/repository.js";
 import AuthManager from "../../auth/authManager.js";
+import Stripe from "stripe";
+import { PaymentsService } from "./paymentService.js";
+import "dotenv/config";
 
 export class Service {
   constructor() {
+    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     this.repository = new Repository();
     this.authManager = new AuthManager();
+    this.paymentsService = new PaymentsService();
   }
 
   async getKpiMetric(event, kpiMetric) {
@@ -19,7 +24,8 @@ export class Service {
     const { filterType, startDate, endDate } = event.queryStringParameters || event.body || {};
     const { startDate: start, endDate: end } = this.getDateRange(filterType, startDate, endDate);
 
-    const totalRevenue = await this.repository.getTotalRevenue(userId, start, end);
+    const totalRevenue = await this.paymentsService.getTotalHostRevenue(event);
+
     const bookedNights = await this.repository.getBookedNights(userId, start, end);
     const availableNights = await this.repository.getAvailableNights(userId, start, end);
     const propertyCount = await this.repository.getProperties(userId, start, end);
@@ -49,7 +55,7 @@ export class Service {
         return occupancyRate.toFixed(2);
       case "averageLengthOfStay":
         return averageLengthOfStay;
-        case "ratesApi":
+      case "ratesApi":
         return this.repository.getBaseRate(userId);
       default:
         throw new Error(`Unknown metric: ${kpiMetric}`);
