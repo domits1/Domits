@@ -12,12 +12,63 @@ import { hostImages, reviews, categories as groups, buildHomepageLists, S3_URL }
 import 'swiper/css';                
 import 'swiper/css/pagination';    
 import 'swiper/css/effect-fade'; 
+import Header from "../../components/base/Header";
+import greece from "./Images/optimized/greece-1600.webp";
+import netherlands from "./Images/optimized/netherlands-1600.webp";
+import france from "./Images/optimized/france-1600.webp";
+import spain from "./Images/optimized/spain-1600.webp";
+import italy from "./Images/optimized/italy-1600.webp";
+import belgium from "./Images/optimized/belgium-1600.webp";
+import germany from "./Images/optimized/germany-1600.webp";
+import uk from "./Images/optimized/unitedkingdom-1600.webp";
+import portugal from "./Images/optimized/portugal-1600.webp";
+import croatia from "./Images/optimized/croatia-1600.webp";
+import poland from "./Images/optimized/poland-1600.webp";
+import austria from "./Images/optimized/austria-1600.webp";
+import czech from "./Images/optimized/czech-1600.webp";
+import philippines from "./Images/optimized/philippines-1600.webp";
+import thailand from "./Images/optimized/thailand-1600.webp";
+import indonesia from "./Images/optimized/indonesia-1600.webp";
+import india from "./Images/optimized/india-1600.webp";
+import malaysia from "./Images/optimized/malaysia-1600.webp";
+import vietnam from "./Images/optimized/vietnam-1600.webp";
+import turkey from "./Images/optimized/turkey-1600.webp";
+import singapore from "./Images/optimized/singapore-1600.webp";
+import aruba from "./Images/optimized/aruba-1600.webp";
+import bonaire from "./Images/optimized/bonaire-1600.webp";
+import curacao from "./Images/optimized/curacao-1600.webp";
+import saintBarthelemy from "./Images/optimized/saintbarthelemy-1600.webp";
+import costaRica from "./Images/optimized/costarica-1600.webp";
+import dominicanRepublic from "./Images/optimized/dominicanrepublic-1600.webp";
+import puertroRico from "./Images/optimized/puertrorico-1600.webp";
+import stMaarten from "./Images/optimized/stmaarten-1600.webp";
+import frenchalps from "./Images/optimized/frenchalps-1600.webp";
+import switzerland from "./Images/optimized/switzerland-1600.webp";
+import chamonix from "./Images/optimized/Chamonix-Mont-Blanc-1600.webp";
+import blackforest from "./Images/optimized/blackforest-1600.webp";
+import italyTrentino from "./Images/optimized/italytretinio-1600.webp";
+import spring from "./Images/optimized/spring-1600.webp";
+import summer from "./Images/optimized/summer-1600.webp";
+import fall from "./Images/optimized/fall-1600.webp";
+import winter from "./Images/optimized/winter-1600.webp";
+import luxury from "./Images/optimized/luxury-1600.webp";
+import beach from "./Images/optimized/beach-1600.webp";
+import lastMinute from "./Images/optimized/lastminute-1600.webp";
+import wellness from "./Images/optimized/wellness-1600.webp";
+import romantic from "./Images/optimized/romantic-1600.webp";
+import adventure from "./Images/optimized/adventure-1600.webp";
+import nature from "./Images/optimized/nature-1600.webp";
+import culture from "./Images/optimized/culture-1600.webp";
+import culinary from "./Images/optimized/culinary-1600.webp";
+import waterman from "./Images/optimized/waterman-1600.webp";
+import sleutelvrouw from "./Images/optimized/sleutelvrouw-1600.webp";
 import { FetchAllPropertyTypes, FetchPropertyType } from "./services/fetchProperties";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import villaBackground from "../../images/optimized/villaHomepage-1600.webp";
 
 const contentByLanguage = {
   en,
@@ -367,67 +418,154 @@ const Homepage = () => {
               </div>
             ))}
           </div>
-          <div className="small-caribbean-countries-container">
-            {smallCaribbeanCountries.map((country, index) => (
-              <div className="country-card small-caribbean-country-card" key={index}>
-                <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy" />
-                </Link>
-                <h3>{country.name}</h3>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.destinations.ski.title}</h1>
-          <div className="ski-countries-container">
-            {skiCountries.map((country, index) => (
-              <div className="country-card ski-country-card" key={index}>
-                <Link to="/home">
-                  <img src={country.img} alt={country.name} loading="lazy" />
-                </Link>
-                <h3>{country.name}</h3>
-                <p>{country.description}</p>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.filters.season.title}</h1>
-          <div className="seasons-container">
-            {seasons.map((season, index) => (
-              <div className="season-card" key={index}>
-                <Link to="/home">
-                  <img src={season.img} alt={season.name} loading="lazy" />
-                </Link>
-                <h3>{season.name}</h3>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.filters.interest.title}</h1>
-          <div className="interests-container">
-            {interests.map((interest, index) => (
-              <div className="interest-card" key={index}>
-                <Link to="/home">
-                  <img src={interest.img} alt={interest.name} loading="lazy" />
-                </Link>
-                <h3>{interest.name}</h3>
-                <p>{interest.description}</p>
-              </div>
-            ))}
-          </div>
-          <h1 className="Places-text">{homePageContent.filters.groups.title}</h1>
-          <div className="groups-container">
-            {groups.map((group, index) => (
-              <div className="group-card" key={index}>
-                <Link to="/home">
-                  <img src={group.img} alt={group.name} loading="lazy" />
-                </Link>
-                <h3>{group.name}</h3>
-                <p>{group.description}</p>
-              </div>
+          <div className="host-images">
+            {hostImages.map((image, index) => (
+              <img key={index} src={image.src} loading="lazy" alt={image.alt} className="host-image" />
             ))}
           </div>
         </div>
-        <div className="review-container">
-          <button className="arrow-button" onClick={handlePreviousReview}>
-            &lt;
+
+        <h1 className="Places-text">{homePageContent.destinations.europe.title}</h1>
+        <div className="countries-container">
+          {countries.map((country, index) => (
+            <div className="country-card" key={index}>
+              <Link to="/home">
+                <img src={country.img} loading="lazy" alt={country.name} />
+              </Link>
+              <h3>{country.name}</h3>
+              <p>{country.description}</p>
+            </div>
+          ))}
+        </div>
+        <div className="small-countries-container">
+          {smallCountries.map((country, index) => (
+            <div className="country-card small-country-card" key={index}>
+              <Link to="/home">
+                <img src={country.img} loading="lazy" alt={country.name} />
+              </Link>
+              <h3>{country.name}</h3>
+              <p>{country.description}</p>
+            </div>
+          ))}
+        </div>
+        <h1 className="Places-text">{homePageContent.destinations.asia.title}</h1>
+        <div className="asia-countries-container">
+          {asiaCountries.map((country, index) => (
+            <div className="country-card asia-country-card" key={index}>
+              <Link to="/home">
+                <img src={country.img} loading="lazy" alt={country.name} />
+              </Link>
+              <h3>{country.name}</h3>
+              <p>{country.description}</p>
+            </div>
+          ))}
+        </div>
+        <div className="small-asia-countries-container">
+          {smallAsiaCountries.map((country, index) => (
+            <div className="country-card small-asia-country-card" key={index}>
+              <Link to="/home">
+                <img src={country.img} loading="lazy" alt={country.name} />
+              </Link>
+              <h3>{country.name}</h3>
+            </div>
+          ))}
+        </div>
+        <h1 className="Places-text">{homePageContent.destinations.caribbean.title}</h1>
+        <div className="caribbean-countries-container">
+          {caribbeanCountries.map((country, index) => (
+            <div className="country-card caribbean-country-card" key={index}>
+              <Link to="/home">
+                <img src={country.img} loading="lazy" alt={country.name} />
+              </Link>
+              <h3>{country.name}</h3>
+              <p>{country.description}</p>
+            </div>
+          ))}
+        </div>
+        <div className="small-caribbean-countries-container">
+          {smallCaribbeanCountries.map((country, index) => (
+            <div className="country-card small-caribbean-country-card" key={index}>
+              <Link to="/home">
+                <img src={country.img} loading="lazy" alt={country.name} />
+              </Link>
+              <h3>{country.name}</h3>
+            </div>
+          ))}
+        </div>
+        <h1 className="Places-text">{homePageContent.destinations.ski.title}</h1>
+        <div className="ski-countries-container">
+          {skiCountries.map((country, index) => (
+            <div className="country-card ski-country-card" key={index}>
+              <Link to="/home">
+                <img src={country.img} loading="lazy" alt={country.name} />
+              </Link>
+              <h3>{country.name}</h3>
+              <p>{country.description}</p>
+            </div>
+          ))}
+        </div>
+        <h1 className="Places-text">{homePageContent.filters.season.title}</h1>
+        <div className="seasons-container">
+          {seasons.map((season, index) => (
+            <div className="season-card" key={index}>
+              <Link to="/home">
+                <img src={season.img} loading="lazy" alt={season.name} />
+              </Link>
+              <h3>{season.name}</h3>
+            </div>
+          ))}
+        </div>
+        <h1 className="Places-text">{homePageContent.filters.interest.title}</h1>
+        <div className="interests-container">
+          {interests.map((interest, index) => (
+            <div className="interest-card" key={index}>
+              <Link to="/home">
+                <img src={interest.img} loading="lazy" alt={interest.name} />
+              </Link>
+              <h3>{interest.name}</h3>
+              <p>{interest.description}</p>
+            </div>
+          ))}
+        </div>
+        <h1 className="Places-text">{homePageContent.filters.groups.title}</h1>
+        <div className="groups-container">
+          {groups.map((group, index) => (
+            <div className="group-card" key={index}>
+              <Link to="/home">
+                <img src={group.img} loading="lazy" alt={group.name} />
+              </Link>
+              <h3>{group.name}</h3>
+              <p>{group.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Updated Review Section */}
+      <div className="review-container">
+        <button className="arrow-button" onClick={handlePreviousReview}>
+          &lt;
+        </button>
+        <div className="review-list">
+          {visibleReviews.map((review, index) => (
+            <div className="review-card" key={index}>
+              <img src={review.img} loading="lazy" alt={review.name} className="review-profile-pic" />
+              <h3>{review.name}</h3>
+              <p className="review-location">Host from The Netherlands</p>
+              <div className="review-stars">★★★★★</div>
+              <p className="review-text">{review.text}</p>
+            </div>
+          ))}
+        </div>
+        <button className="arrow-button" onClick={handleNextReview}>
+          &gt;
+        </button>
+      </div>
+      <div className="domits-communityContainer">
+        <h2 className="domits-communityHead">{homePageContent.sections.community.title}</h2>
+        <p className="domits-communityGroup">{homePageContent.sections.community.description}</p>
+        <div className="domits-communityButtons">
+          <button className="domits-hostButton">
+            <a href="/landing">{homePageContent.sections.becomeHost.title}</a>
           </button>
           <div className="review-list">
             {visibleReviews.map((review, index) => (

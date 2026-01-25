@@ -28,7 +28,9 @@ describe('Guest Login Flow', () => {
 
         cy.get('.reserve-btn').should('be.visible').click();
 
-        cy.get('.confirm-pay-button').should('be.visible').click();
+        cy.get('#login').click();
 
+        cy.get('.confirm-pay-button').should('be.visible').click();
+        
     });
 });
