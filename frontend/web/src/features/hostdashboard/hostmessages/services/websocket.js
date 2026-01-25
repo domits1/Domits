@@ -26,10 +26,19 @@ export const connectWebSocket = (userId, onMessageReceived) => {
         const data = JSON.parse(event.data);
         onMessageReceived(data);
     };
-    socket.onclose = () => {
+    socket.onclose = (event) => {
         clearInterval(pingInterval);
+        // Log only if it wasn't a normal closure
+        if (event.code !== 1000 && event.code !== 1001) {
+            console.warn("WebSocket closed unexpectedly. Code:", event.code, "Reason:", event.reason);
+        }
     };
-    socket.onerror = (error) => console.error("⚠️ WebSocket error:", error);
+    socket.onerror = (error) => {
+        // Only log if it's not a connection error (500 during handshake is expected if backend is down)
+        if (socket.readyState !== WebSocket.CONNECTING) {
+            console.warn("⚠️ WebSocket error:", error);
+        }
+    };
 };
 
 export const sendMessage = (message) => {

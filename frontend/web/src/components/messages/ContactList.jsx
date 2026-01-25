@@ -157,34 +157,71 @@ const ContactList = ({
   };
 
   useEffect(() => {
-    if (wsMessages?.length === 0) return;
+    if (!wsMessages || wsMessages.length === 0) return;
+    if (!Array.isArray(wsMessages)) return;
+    
     setContacts((prevContacts) => {
       const updatedContacts = [...prevContacts];
+      if (updatedContacts.length === 0) return updatedContacts;
+      
       wsMessages.forEach((msg) => {
-        const contact = updatedContacts.find((c) => c.recipientId === msg.userId || c.recipientId === msg.recipientId);
+        // Skip invalid messages
+        if (!msg || typeof msg !== 'object') return;
+        if (!msg.userId && !msg.recipientId) return;
+        
+        // Match contact by checking recipientId and userId to handle both sent and received messages
+        const contact = updatedContacts.find((c) => 
+          c.recipientId === msg.userId || 
+          c.recipientId === msg.recipientId ||
+          c.userId === msg.recipientId ||
+          c.userId === msg.userId
+        );
+        
         if (contact) {
-          let displayText = msg.text;
-          if (msg.fileUrls && msg.fileUrls.length > 0) {
+          let displayText = msg.text || msg.content || '';
+          if (msg.fileUrls && Array.isArray(msg.fileUrls) && msg.fileUrls.length > 0) {
             displayText = "attachment sent";
           }
 
           contact.latestMessage = {
             ...msg,
             text: displayText,
+            createdAt: msg.createdAt || new Date().toISOString(),
           };
         }
       });
+      
+      // Sort by latest message time
+      updatedContacts.sort(
+        (a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
+      );
       return updatedContacts;
     });
   }, [wsMessages, setContacts]);
 
   useEffect(() => {
-    if (!message) return;
+    // Skip if message is null, undefined, empty array, or not an object
+    if (!message || Array.isArray(message) || typeof message !== 'object') return;
+    
+    // Validate message has required fields
+    if (!message.recipientId && !message.userId) return;
+    
     setContacts((prevContacts) => {
       const updatedContacts = [...prevContacts];
-      const index = updatedContacts.findIndex((c) => c.recipientId === message.recipientId);
+      
+      // Skip if no contacts available
+      if (updatedContacts.length === 0) return updatedContacts;
+      
+      // Match contact by checking both recipientId and userId to handle both sent and received messages
+      const index = updatedContacts.findIndex((c) => 
+        c.recipientId === message.recipientId || 
+        c.recipientId === message.userId ||
+        c.userId === message.recipientId ||
+        c.userId === message.userId
+      );
+      
       if (index !== -1) {
-        let displayText = message.text;
+        let displayText = message.text || message.content || '';
         if (message.fileUrls && message.fileUrls.length > 0) {
           displayText = "attachment sent";
         }
@@ -193,13 +230,14 @@ const ContactList = ({
           ...updatedContacts[index],
           latestMessage: {
             text: displayText,
-            createdAt: message.createdAt,
+            createdAt: message.createdAt || new Date().toISOString(),
             fileUrls: message.fileUrls,
             userId: message.userId,
             recipientId: message.recipientId,
           },
         };
       }
+      
       updatedContacts.sort(
         (a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
       );

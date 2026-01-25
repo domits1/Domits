@@ -25,7 +25,7 @@ const MessagesContent = ({ dashboardType }) => {
     const [selectedContactName, setSelectedContactName] = useState(null);
     const [selectedContactImage, setSelectedContactImage] = useState(null);
     const [selectedThreadId, setSelectedThreadId] = useState(null);
-    const [message, setMessage] = useState([]);
+    const [message, setMessage] = useState(null);
     const [screenWidth, setScreenWidth] = useState(window.innerWidth);
     const isMobile = screenWidth < 768;
     const isTablet = screenWidth >= 768 && screenWidth < 1440;
@@ -42,6 +42,12 @@ const MessagesContent = ({ dashboardType }) => {
         setSelectedContactName(contactName);
         setSelectedContactImage(contactImage || null);
         setSelectedThreadId(threadId);
+    };
+
+    const handleThreadIdUpdate = (newThreadId) => {
+        if (newThreadId && newThreadId !== selectedThreadId) {
+            setSelectedThreadId(newThreadId);
+        }
     };
 
     const handleBackToContacts = () => {
@@ -101,6 +107,7 @@ const MessagesContent = ({ dashboardType }) => {
                                 contactName={selectedContactName}
                                 contactImage={selectedContactImage}
                                 threadId={selectedThreadId}
+                                onThreadIdUpdate={handleThreadIdUpdate}
                                 onBack={isTablet ? handleBackToContacts : null}
                                 dashboardType={dashboardType}
 
