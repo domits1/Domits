@@ -15,20 +15,21 @@ const RulesContainer = ({ rules, checkIn }) => {
     return `${attributes} ${allowedText}`;
   };
 
-  const formatHour = (hour) => {
-    const padded = hour.toString().padStart(2, "0");
-    return `${padded}:00`;
+  const formatHour = (value) => {
+    if (!value) return "";
+    const parts = value.toString().split(":");
+    const hour = parts[0] || "00";
+    const minute = parts[1] || "00";
+    return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
   };
 
   return (
     <div className="rules-container">
       <p className="rules-title">House rules:</p>
-      <p className="rules">
-        {rules.map((rule) => formatRule(rule)).join(" - ")}
-      </p>
+      <p className="rules">{rules.map((rule) => formatRule(rule)).join(" - ")}</p>
       <div className="rules-check-in-check-out-container">
-        <p>Check-in from: {formatHour(checkIn.checkIn.from)} till: {formatHour(checkIn.checkIn.till)}</p>
-        <p>Check-out from: {formatHour(checkIn.checkOut.from)} till: {formatHour(checkIn.checkOut.till)}</p>
+        <p>Check-in from: {formatHour(checkIn.checkIn.from)}</p>
+        <p>Check-out from: {formatHour(checkIn.checkOut.from)}</p>
       </div>
     </div>
   );

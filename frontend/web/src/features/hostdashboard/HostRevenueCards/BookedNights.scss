@@ -9,10 +9,23 @@
     text-align: center;
     height: 440px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: #0D9813;
+    
   
     &:hover {
       transform: scale(1.02);
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    select {
+      color: #0D9813;
+      :hover {
+        color: #0D9813;
+      }
+    }
+
+    .periodType {
+      color: #0D9813;
     }
   
     h3 {
@@ -26,11 +39,11 @@
       margin: 20px 10px;
       font-size: 20px;
       font-weight: normal;
-      color: #444;
+      color:  #0D9813;
   
       &.large {
         font-size: 120px;
-        color: #003366;
+        color:  #0D9813;
       }
     }
   
@@ -49,6 +62,7 @@
         color: #2c3e50;
       }
     }
+    
   
     .timeFilter {
       appearance: none;
@@ -79,7 +93,7 @@
   
       &:focus {
         outline: none;
-        border-color: #2196f3;
+        border-color: #0D9813;
         background-color: #ffffff;
         box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
       }
@@ -97,7 +111,7 @@
         &:hover,
         &:focus {
           background-color: #f1f8ff;
-          color: #2196f3;
+          color: #0D9813;
         }
       }
     }

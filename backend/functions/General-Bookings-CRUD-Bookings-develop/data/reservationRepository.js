@@ -30,7 +30,7 @@ class ReservationRepository {
         hostid: hostId,
         hostname: "WIP-Host",
         guests: requestBody.general.guests.toString(),
-        guestname: "WIP-Guest",
+        guestname: requestBody.general.guestName,
         latepayment: false,
         paymentid: "FAILED: ",
         tempPaymentId,
@@ -149,10 +149,12 @@ class ReservationRepository {
     // Fetches user's property first, throws error if not found
     this.lambdaRepository = new LambdaRepository();
     const propertiesOutput = await this.lambdaRepository.getPropertiesFromHostId(host_Id);
-    const properties = propertiesOutput.id.map((_, i) => ({
-      id: propertiesOutput.id[i],
-      title: propertiesOutput.title[i],
-      rate: propertiesOutput.rate[i],
+    const properties = propertiesOutput.map((item) => ({
+      id: item.id,
+      title: item.title,
+      rate: item.rate,
+      city: item.city,
+      country: item.country,
     }));
 
     // Proceeds to send a request for every id returning their respective data

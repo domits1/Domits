@@ -1,171 +1,227 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    Tooltip,
-    CartesianGrid,
-    ResponsiveContainer,
-} from "recharts";
-import "./ADRCard.scss";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import "./KpiCard.scss";      
+import "./ADRCard.scss";      
+import { ADRCardService as ADRService } from "../services/ADRCardService.js";
 
-const ADRCard = () => {
-    const [adr, setAdr] = useState(null);
-    const [totalRevenue, setTotalRevenue] = useState(null);
-    const [roomsSold, setRoomsSold] = useState(null);
-    const [chartData, setChartData] = useState([]);
-    const [timeFilter, setTimeFilter] = useState("monthly");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+const ADRCard = ({ refreshKey }) => {
+  const [cognitoUserId, setCognitoUserId] = useState(null);
 
-    const fetchHostId = async () => {
-        try {
-            const userInfo = await Auth.currentUserInfo();
-            return userInfo.attributes.sub;
-        } catch (error) {
-            console.error("Error fetching Host ID:", error);
-            throw new Error("Failed to fetch Host ID.");
-        }
+  const [adr, setAdr] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [bookedNights, setBookedNights] = useState(0);
+
+  const [timeFilter, setTimeFilter] = useState("monthly");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const isMountedRef = useRef(false);
+  const fetchingRef = useRef(false);
+
+  const lastRef = useRef({
+    adr: null,
+    totalRevenue: null,
+    bookedNights: null,
+    chartKey: "",
+  });
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    Auth.currentAuthenticatedUser()
+      .then((user) => {
+        if (isMountedRef.current) setCognitoUserId(user.attributes.sub);
+      })
+      .catch(() => {
+        if (isMountedRef.current) setError("Failed to authenticate user");
+      });
+
+    return () => {
+      isMountedRef.current = false;
     };
+  }, []);
 
-    const fetchADRData = async (filter) => {
+  const canFetch = useCallback(() => {
+    if (!cognitoUserId) return false;
+    if (timeFilter === "custom" && (!startDate || !endDate)) return false;
+    return true;
+  }, [cognitoUserId, timeFilter, startDate, endDate]);
+
+  const safeValue = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+  const buildChartKey = (data) => {
+    if (!Array.isArray(data)) return "";
+    return data.map((d) => `${d?.name ?? ""}:${Number(d?.value ?? 0)}`).join("|");
+  };
+
+  const fetchMetrics = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!canFetch() || !isMountedRef.current) return;
+      if (fetchingRef.current) return;
+
+      fetchingRef.current = true;
+
+      if (!silent) {
         setLoading(true);
-        setError(null); // Reset error before fetch
-        try {
-            const hostId = await fetchHostId();
-            if (!hostId) throw new Error("Host ID is required but not found.");
+        setError(null);
+      }
 
-            const payload = {
-                hostId,
-                periodType: filter,
-                ...(filter === "custom" && { startDate, endDate }),
-            };
+      try {
+        const results = await ADRService.getADRMetrics(
+          cognitoUserId,
+          timeFilter,
+          startDate,
+          endDate
+        );
 
+        if (!isMountedRef.current || !results) return;
 
-            const response = await axios.post(
-                "https://2ab5eb6gs6.execute-api.eu-north-1.amazonaws.com/prod/calculateADR",
-                payload,
-                { headers: { "Content-Type": "application/json" } }
-            );
+        const nextAdr = safeValue(results.adr);
+        const nextTotalRevenue = safeValue(results.totalRevenue);
+        const nextBookedNights = safeValue(results.bookedNights);
 
+        const nextChartData = Array.isArray(results.chartData) ? results.chartData : [];
+        const nextChartKey = buildChartKey(nextChartData);
 
-            const { ADR, totalRevenue, roomsSold, dailyMetrics } = response.data;
-
-            setAdr(ADR ?? 0);
-            setTotalRevenue(totalRevenue ?? 0);
-            setRoomsSold(roomsSold ?? 0);
-
-            if (dailyMetrics?.length) {
-                setChartData(
-                    dailyMetrics.map((item) => ({
-                        date: item.date,
-                        adr: item.adr,
-                    }))
-                );
-            } else {
-                setChartData([]);
-            }
-        } catch (err) {
-            console.error("Error fetching ADR data:", err.message || err);
-            setError(err.message || "An error occurred while fetching ADR data.");
-        } finally {
-            setLoading(false);
+        if (lastRef.current.adr !== nextAdr) {
+          setAdr(nextAdr);
+          lastRef.current.adr = nextAdr;
         }
-    };
 
-    useEffect(() => {
-        if (timeFilter === "monthly") {
-            fetchADRData("monthly");
-        } else if (timeFilter === "custom" && startDate && endDate) {
-            fetchADRData("custom");
+        if (lastRef.current.totalRevenue !== nextTotalRevenue) {
+          setTotalRevenue(nextTotalRevenue);
+          lastRef.current.totalRevenue = nextTotalRevenue;
         }
-    }, [timeFilter, startDate, endDate]);
 
-    return (
-        <div className="adr-card-container">
-            <div>
+        if (lastRef.current.bookedNights !== nextBookedNights) {
+          setBookedNights(nextBookedNights);
+          lastRef.current.bookedNights = nextBookedNights;
+        }
 
-                <div className="adr-card">
-                    <h3>Average Daily Rate</h3>
-                    <div className="time-filter">
-                        <label htmlFor="timeFilter">Time Filter:</label>
-                        <select
-                            id="timeFilter"
-                            value={timeFilter}
-                            className="timeFilter"
-                            onChange={(e) => setTimeFilter(e.target.value)}
-                        >
-                            <option value="monthly">Monthly</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                    {timeFilter === "custom" && (
-                        <div className="custom-date-filter">
-                            <div>
-                                <label>Start Date : </label>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label>End Date : </label>
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    )}
-                    <div className="adr-details">
-                        {loading ? (
-                            <p>Loading...</p>
-                        ) : error ? (
-                            <p style={{color: "red"}}>Error: {error}</p>
-                        ) : (
-                            <>
-                                <p>
-                                    <strong>ADR:</strong> ${adr}
-                                </p>
-                                <p>
-                                    <strong>Total Revenue:</strong> ${totalRevenue}
-                                </p>
-                                <p>
-                                    <strong>Rooms Sold:</strong> {roomsSold}
-                                </p>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
-            {chartData.length > 0 && (
-                <div className="adr-graph">
-                    <h3>ADR Trend</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3"/>
-                            <XAxis dataKey="date"/>
-                            <YAxis/>
-                            <Tooltip/>
-                            <Line
-                                type="monotone"
-                                dataKey="adr"
-                                stroke="#8884d8"
-                                strokeWidth={2}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-            )}
+        if (lastRef.current.chartKey !== nextChartKey) {
+          lastRef.current.chartKey = nextChartKey;
+        }
+
+        if (!silent) setError(null);
+      } catch (e) {
+        if (!silent && isMountedRef.current) setError("Failed to fetch ADR metrics");
+      } finally {
+        fetchingRef.current = false;
+        if (!silent && isMountedRef.current) setLoading(false);
+      }
+    },
+    [canFetch, cognitoUserId, timeFilter, startDate, endDate]
+  );
+
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchMetrics({ silent: false });
+  }, [canFetch, fetchMetrics]);
+
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchMetrics({ silent: true });
+  }, [refreshKey, canFetch, fetchMetrics]);
+
+  const donutData = [
+    { name: "ADR", value: safeValue(adr) },
+    { name: "Total Revenue", value: safeValue(totalRevenue) },
+    { name: "Booked Nights", value: safeValue(bookedNights) },
+  ];
+
+  const allZero = donutData.every((i) => i.value === 0);
+  const displayData = allZero ? [{ name: "No Data", value: 1 }] : donutData;
+
+  const COLORS = ["#0d9813", "#82ca9d", "#ffc658"];
+
+  return (
+    <div className="kpi-card adr-card">
+      <h3>Average Daily Rate</h3>
+
+      <div className="time-filter">
+        <label>Time Filter:</label>
+        <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      {timeFilter === "custom" && (
+        <div className="custom-date-filter">
+          <div>
+            <label>Start Date:</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label>End Date:</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
         </div>
-    );
+      )}
+
+      <div className="kpi-body">
+        <div className="adr-details">
+          {loading ? (
+            <p>Loading…</p>
+          ) : error ? (
+            <p style={{ color: "red" }}>Error: {error}</p>
+          ) : (
+            <>
+              <p>
+                <strong>ADR:</strong> €{safeValue(adr).toLocaleString()}
+              </p>
+              <p>
+                <strong>Total Revenue:</strong> €{safeValue(totalRevenue).toLocaleString()}
+              </p>
+              <p>
+                <strong>Booked Nights:</strong> {safeValue(bookedNights).toLocaleString()}
+              </p>
+            </>
+          )}
+        </div>
+
+        {!loading && !error && (
+          <div className="adr-donut-chart">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={displayData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={3}
+                  isAnimationActive={true}
+                >
+                  {displayData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={allZero ? "#ccc" : COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default ADRCard;

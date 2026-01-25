@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import verifiedLogo from "../../images/icons/verify-icon.png";
 import checkMark from "../../images/icons/checkMark.png";
@@ -7,9 +7,8 @@ import bill from "../../images/icons/bill.png";
 import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
-import { reviews } from "./store/constants";
-import { categories as groups } from "./store/constants";
-import { img } from "./store/constants";
+import { hostImages, reviews, categories as groups, buildHomepageLists, S3_URL } from "./store/constants";
+
 import 'swiper/css';                
 import 'swiper/css/pagination';    
 import 'swiper/css/effect-fade'; 
@@ -96,9 +95,20 @@ const Homepage = () => {
 
   const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
   const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
-  // const groups = useCategories();
   const {language} = useContext(LanguageContext);
   const homePageContent = contentByLanguage[language]?.homepage;
+
+  const {
+    countries,
+    smallCountries,
+    asiaCountries,
+    smallAsiaCountries,
+    caribbeanCountries,
+    smallCaribbeanCountries,
+    skiCountries,
+    seasons,
+    interests,
+  } = buildHomepageLists(homePageContent);
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
@@ -135,262 +145,6 @@ const Homepage = () => {
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
   };
-
-  const hostImages = [
-    { src: waterman, alt: "Waterman" },
-    { src: sleutelvrouw, alt: "Sleutelvrouw" },
-  ];
-
-  const countries = [
-    {
-      name: `${homePageContent.destinations.europe.countries.netherlands}`,
-      img: netherlands,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.france}`,
-      img: france,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.spain}`,
-      img: spain,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const smallCountries = [
-    {
-      name: `${homePageContent.destinations.europe.countries.italy}`,
-      img: italy,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.belgium}`,
-      img: belgium,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.germany}`,
-      img: germany,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.greece}`,
-      img: greece,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.unitedKingdom}`,
-      img: uk,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.portugal}`,
-      img: portugal,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.croatia}`,
-      img: croatia,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.poland}`,
-      img: poland,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.austria}`,
-      img: austria,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.europe.countries.czech}`,
-      img: czech,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const asiaCountries = [
-    {
-      name: `${homePageContent.destinations.asia.countries.philippines}`,
-      img: philippines,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.thailand}`,
-      img: thailand,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.indonesia}`,
-      img: indonesia,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const smallAsiaCountries = [
-    {
-      name: `${homePageContent.destinations.asia.countries.india}`,
-      img: india,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.malaysia}`,
-      img: malaysia,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.vietnam}`,
-      img: vietnam,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.turkey}`,
-      img: turkey,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.asia.countries.singapore}`,
-      img: singapore,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const caribbeanCountries = [
-    {
-      name: `${homePageContent.destinations.caribbean.locations.aruba}`,
-      img: aruba,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.bonaire}`,
-      img: bonaire,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.curacao}`,
-      img: curacao,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const smallCaribbeanCountries = [
-    {
-      name: `${homePageContent.destinations.caribbean.locations.saintBarthelemy}`,
-      img: saintBarthelemy,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.costaRica}`,
-      img: costaRica,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.dominicanRepublic}`,
-      img: dominicanRepublic,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.puertoRico}`,
-      img: puertroRico,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.caribbean.locations.stMaarten}`,
-      img: stMaarten,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const skiCountries = [
-    {
-      name: `${homePageContent.destinations.ski.locations.austria}`,
-      img: austria,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.frenchAlps}`,
-      img: frenchalps,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.switzerland}`,
-      img: switzerland,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.chamonix}`,
-      img: chamonix,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.blackForest}`,
-      img: blackforest,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.destinations.ski.locations.italyTrentino}`,
-      img: italyTrentino,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
-
-  const seasons = [
-    { name: `${homePageContent.filters.season.spring}`, img: spring },
-    { name: `${homePageContent.filters.season.summer}`, img: summer },
-    { name: `${homePageContent.filters.season.fall}`, img: fall },
-    { name: `${homePageContent.filters.season.winter}`, img: winter },
-  ];
-
-  const interests = [
-    {
-      name: `${homePageContent.filters.interest.luxury}`,
-      img: luxury,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.beach}`,
-      img: beach,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.lastMinute}`,
-      img: lastMinute,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.wellness}`,
-      img: wellness,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.romantic}`,
-      img: romantic,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.adventure}`,
-      img: adventure,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.nature}`,
-      img: nature,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.culture}`,
-      img: culture,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-    {
-      name: `${homePageContent.filters.interest.culinary}`,
-      img: culinary,
-      description: `${homePageContent.filters.groups.description}`,
-    },
-  ];
 
   const handleScroll = () => {
     if (!searchBarRef.current) return;
@@ -446,141 +200,223 @@ const Homepage = () => {
 
   return (
     <>
-    <div className="homePage-container">
-      <div className="domits-homepage">
-        <div className="domits-searchContainer"  style={{ "--villa-background": `url(${villaBackground})` }}>
-          <div className="domits-searchTextCon">
-            <h3 className="domits-searchText">{homePageContent.hero.title}</h3>
-          </div>
-          <div className="domits-searchbarCon">
-            <SearchBar
-              setSearchResults={setSearchResults}
-              setLoading={setLoading}
-              placeholderText="Search for holiday homes, boats, or campers..."
-              toggleBar={toggleBar}
-            />
-          </div>
-        </div>
-
-        <div className="domits-iconsContainer">
-          <div className="domits-iconsContainerText">
-            <div className="domits-iconTextGroup">
-              <img src={bill} loading="lazy" alt="bill" />
-              <p>{homePageContent.features.securePayments}</p>
+      <div className="homePage-container">
+        <div className="domits-homepage">
+          <div className="domits-searchContainer" style={{ "--villa-background": `url(${S3_URL}/Images/villaHomepage.webp)` }}>
+            <div className="domits-searchTextCon">
+              <h3 className="domits-searchText">{homePageContent.hero.title}</h3>
             </div>
-            <div className="domits-iconTextGroup">
-              <img src={verifiedLogo} loading="lazy" alt="verified logo" />
-              <p>{homePageContent.features.verifiedGuest}</p>
-            </div>
-            <div className="domits-iconTextGroup">
-              <img src={question} loading="lazy"  alt="question" />
-              <p>{homePageContent.features.quickPhone}</p>
-            </div>
-            <div className="domits-iconTextGroup">
-              <img src={checkMark} loading="lazy" alt="checkMark" />
-              <p>{homePageContent.features.qualityGuarantee}</p>
+            <div className="domits-searchbarCon">
+              <SearchBar
+                setSearchResults={setSearchResults}
+                setLoading={setLoading}
+                placeholderText="Search for holiday homes, boats, or campers..."
+                toggleBar={toggleBar}
+              />
             </div>
           </div>
-        </div>
 
-        <div className="domits-boatContainer">
-          <div className="domits-boatText">
-            <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
+          <div className="domits-iconsContainer">
+            <div className="domits-iconsContainerText">
+              <div className="domits-iconTextGroup">
+                <img
+                  src={bill}
+                  // srcSet={`${bill_400} 400w, ${bill_800} 800w, ${bill_1200} 1200w`}
+                  // sizes="(max-width: 600px) 400px, (max-width: 1200px) 800px, 1200px"
+                  alt="bill"
+                  loading="lazy"
+                />
 
-            <div className="domits-trendingContainer">
-              {[
-                {
-                  emoji: "🎖️",
-                  title: `${homePageContent.features.bestPrice}`,
-                  text: "We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.",
-                },
-                {
-                  emoji: "✅",
-                  title: `${homePageContent.features.bookingGuarantee}`,
-                  text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.",
-                },
-                {
-                  emoji: "🤝",
-                  title: `${homePageContent.features.stayGuarantee}`,
-                  text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
-                },
-              ].map((item, index) => (
-                <div key={index} className="popup-trigger" onClick={() => handlePopupClick(item.text)}>
-                  {item.emoji} {item.title}
-                  {activePopup === item.text && <div className="
-                  ">{item.text}</div>}
-                </div>
+                <p>{homePageContent.features.securePayments}</p>
+              </div>
+              <div className="domits-iconTextGroup">
+                <img src={verifiedLogo} alt="verified logo" loading="lazy" />
+                <p>{homePageContent.features.verifiedGuest}</p>
+              </div>
+              <div className="domits-iconTextGroup">
+                <img src={question} alt="question" loading="lazy" />
+                <p>{homePageContent.features.quickPhone}</p>
+              </div>
+              <div className="domits-iconTextGroup">
+                <img src={checkMark} alt="checkMark" loading="lazy" />
+                <p>{homePageContent.features.qualityGuarantee}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="domits-boatContainer">
+            <div className="domits-boatText">
+              <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
+
+              <div className="domits-trendingContainer">
+                {[
+                  {
+                    emoji: "🎖️",
+                    title: `${homePageContent.features.bestPrice}`,
+                    text: "We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.",
+                  },
+                  {
+                    emoji: "✅",
+                    title: `${homePageContent.features.bookingGuarantee}`,
+                    text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.",
+                  },
+                  {
+                    emoji: "🤝",
+                    title: `${homePageContent.features.stayGuarantee}`,
+                    text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
+                  },
+                ].map((item, index) => (
+                  <div key={index} className="popup-trigger" onClick={() => handlePopupClick(item.text)}>
+                    {item.emoji} {item.title}
+                    {activePopup === item.text && (
+                      <div
+                        className="
+                  ">
+                        {item.text}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="domits-accommodationGroup">
+              {propertyLoading === false ? (
+                allAccommodations.length > 0 ? (
+                  allAccommodations.map((property) => (
+                    <AccommodationCard key={property.property.id} accommodation={property} onClick={handleClick} />
+                  ))
+                ) : (
+                  <div>No trending properties available.</div>
+                )
+              ) : (
+                Array(3)
+                  .fill()
+                  .map((_, index) => <SkeletonLoader key={index} />)
+              )}
+            </div>
+          </div>
+
+          <div className="domits-boatContainer">
+            <div className="domits-boatText">
+              <h3 className="domits-subHead">{homePageContent.sections.rentBoat}</h3>
+            </div>
+            <div className="domits-accommodationGroup">
+              {boatLoading === false ? (
+                boatAccommodations.length > 0 ? (
+                  boatAccommodations.map((boat) => (
+                    <AccommodationCard key={boat.property.id} accommodation={boat} onClick={handleClick} />
+                  ))
+                ) : (
+                  <div>No boats available.</div>
+                )
+              ) : (
+                Array(3)
+                  .fill()
+                  .map((_, index) => <SkeletonLoader key={index} />)
+              )}
+            </div>
+          </div>
+
+          <div className="domits-boatContainer">
+            <div className="domits-boatText">
+              <h3 className="domits-subHead">{homePageContent.sections.discoverCampers}</h3>
+            </div>
+            <div className="domits-accommodationGroup">
+              {boatLoading === false ? (
+                camperAccommodations.length > 0 ? (
+                  camperAccommodations.map((camperAccommodations) => (
+                    <AccommodationCard
+                      key={camperAccommodations.property.id}
+                      accommodation={camperAccommodations}
+                      onClick={handleClick}
+                    />
+                  ))
+                ) : (
+                  <div>No boats available.</div>
+                )
+              ) : (
+                Array(3)
+                  .fill()
+                  .map((_, index) => <SkeletonLoader key={index} />)
+              )}
+            </div>
+          </div>
+
+          <div className="become-host-section">
+            <div className="become-host-content">
+              <h1 className="BH">{homePageContent.sections.becomeHost.title}</h1>
+              <ul>
+                <li>{homePageContent.sections.becomeHost.points[0]}</li>
+                <li>{homePageContent.sections.becomeHost.points[1]}</li>
+                <li>{homePageContent.sections.becomeHost.points[2]}</li>
+              </ul>
+              <button className="list-property-button" onClick={() => navigate("/landing")}>
+                {homePageContent.sections.becomeHost.button}
+              </button>
+            </div>
+            <div className="host-images">
+              {hostImages.map((image, index) => (
+                <img key={index} src={image.src} alt={image.alt} className="host-image" loading="lazy" />
               ))}
             </div>
           </div>
-          <div className="domits-accommodationGroup">
-            {propertyLoading === false ? (
-              allAccommodations.length > 0 ? (
-                allAccommodations.map((property) => (
-                  <AccommodationCard key={property.property.id} accommodation={property} onClick={handleClick} />
-                ))
-              ) : (
-                <div>No trending properties available.</div>
-              )
-            ) : (
-              Array(3)
-                .fill()
-                .map((_, index) => <SkeletonLoader key={index} />)
-            )}
-          </div>
-        </div>
 
-        <div className="domits-boatContainer">
-          <div className="domits-boatText">
-            <h3 className="domits-subHead">{homePageContent.sections.rentBoat}</h3>
+          <h1 className="Places-text">{homePageContent.destinations.europe.title}</h1>
+          <div className="countries-container">
+            {countries.map((country, index) => (
+              <div className="country-card" key={index}>
+                <Link to="/home">
+                  <img src={country.img} alt={country.name} loading="lazy" />
+                </Link>
+                <h3>{country.name}</h3>
+                <p>{country.description}</p>
+              </div>
+            ))}
           </div>
-          <div className="domits-accommodationGroup">
-            {boatLoading === false ? (
-              boatAccommodations.length > 0 ? (
-                boatAccommodations.map((boat) => (
-                  <AccommodationCard key={boat.property.id} accommodation={boat} onClick={handleClick} />
-                ))
-              ) : (
-                <div>No boats available.</div>
-              )
-            ) : (
-              Array(3)
-                .fill()
-                .map((_, index) => <SkeletonLoader key={index} />)
-            )}
+          <div className="small-countries-container">
+            {smallCountries.map((country, index) => (
+              <div className="country-card small-country-card" key={index}>
+                <Link to="/home">
+                  <img src={country.img} alt={country.name} loading="lazy" />
+                </Link>
+                <h3>{country.name}</h3>
+                <p>{country.description}</p>
+              </div>
+            ))}
           </div>
-        </div>
-
-        <div className="domits-boatContainer">
-           <div className="domits-boatText">
-          <h3 className="domits-subHead">{homePageContent.sections.discoverCampers}</h3>
+          <h1 className="Places-text">{homePageContent.destinations.asia.title}</h1>
+          <div className="asia-countries-container">
+            {asiaCountries.map((country, index) => (
+              <div className="country-card asia-country-card" key={index}>
+                <Link to="/home">
+                  <img src={country.img} alt={country.name} loading="lazy" />
+                </Link>
+                <h3>{country.name}</h3>
+                <p>{country.description}</p>
+              </div>
+            ))}
           </div>
-          <div className="domits-accommodationGroup">
-            {boatLoading === false ? (
-              boatAccommodations.length > 0 ? (
-                boatAccommodations.map((boat) => (
-                  <AccommodationCard key={boat.property.id} accommodation={boat} onClick={handleClick} />
-                ))
-              ) : (
-                <div>No boats available.</div>
-              )
-            ) : (
-              Array(3)
-                .fill()
-                .map((_, index) => <SkeletonLoader key={index} />)
-            )}
+          <div className="small-asia-countries-container">
+            {smallAsiaCountries.map((country, index) => (
+              <div className="country-card small-asia-country-card" key={index}>
+                <Link to="/home">
+                  <img src={country.img} alt={country.name} loading="lazy" />
+                </Link>
+                <h3>{country.name}</h3>
+              </div>
+            ))}
           </div>
-        </div>
-
-        <div className="become-host-section">
-          <div className="become-host-content">
-            <h1 className="BH">{homePageContent.sections.becomeHost.title}</h1>
-            <ul>
-              <li>{homePageContent.sections.becomeHost.points[0]}</li>
-              <li>{homePageContent.sections.becomeHost.points[1]}</li>
-              <li>{homePageContent.sections.becomeHost.points[2]}</li>
-            </ul>
-            <button className="list-property-button" onClick={() => navigate('/landing')}>{homePageContent.sections.becomeHost.button}</button>
+          <h1 className="Places-text">{homePageContent.destinations.caribbean.title}</h1>
+          <div className="caribbean-countries-container">
+            {caribbeanCountries.map((country, index) => (
+              <div className="country-card caribbean-country-card" key={index}>
+                <Link to="/home">
+                  <img src={country.img} alt={country.name} loading="lazy" />
+                </Link>
+                <h3>{country.name}</h3>
+                <p>{country.description}</p>
+              </div>
+            ))}
           </div>
           <div className="host-images">
             {hostImages.map((image, index) => (
@@ -731,11 +567,33 @@ const Homepage = () => {
           <button className="domits-hostButton">
             <a href="/landing">{homePageContent.sections.becomeHost.title}</a>
           </button>
-          <button className="domits-SearchButton">
-            <a href="/home">{homePageContent.sections.community.button}</a>
+          <div className="review-list">
+            {visibleReviews.map((review, index) => (
+              <div className="review-card" key={index}>
+                <img src={review.img} alt={review.name} className="review-profile-pic" loading="lazy" />
+                <h3>{review.name}</h3>
+                <p className="review-location">Host from The Netherlands</p>
+                <div className="review-stars">★★★★★</div>
+                <p className="review-text">{review.text}</p>
+              </div>
+            ))}
+          </div>
+          <button className="arrow-button" onClick={handleNextReview}>
+            &gt;
           </button>
         </div>
-      </div>
+        <div className="domits-communityContainer">
+          <h2 className="domits-communityHead">{homePageContent.sections.community.title}</h2>
+          <p className="domits-communityGroup">{homePageContent.sections.community.description}</p>
+          <div className="domits-communityButtons">
+            <button className="domits-hostButton">
+              <a href="/landing">{homePageContent.sections.becomeHost.title}</a>
+            </button>
+            <button className="domits-SearchButton">
+              <a href="/home">{homePageContent.sections.community.button}</a>
+            </button>
+          </div>
+        </div>
       </div>
     </>
   );

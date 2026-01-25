@@ -1,59 +1,69 @@
-/* guestdashboard/styles/Hamburger.scss */
 :root {
-  --gd-sidebar-w: 280px;
-  --gd-z-overlay: 1090;
-  --gd-z-sidebar: 950;
+  --gd-sidebar-w: 200px;
+  --gd-z-overlay: 900;   
+  --gd-z-sidebar: 1100;  
+  --gd-z-navbar: 1300;   
+
   --gd-border: 1px solid #e5e7eb;
   --gd-bg: #ffffff;
   --gd-surface: #fff;
   --gd-tint: rgba(0,0,0,.04);
   --gd-brand: #21a33b;
-  --gd-nav-h: 64px;      
-  --gd-z-navbar: 1200;     
-
+  --gd-nav-h: 64px;
 }
-
 
 .gd-shell {
   display: grid;
-  grid-template-columns: 1fr; /* mobile */
+  grid-template-columns: 1fr;
   gap: 24px;
 
   @media (min-width: 1024px) {
-    grid-template-columns: var(--gd-sidebar-w) 1fr; /* left column = menu */
+    grid-template-columns: var(--gd-sidebar-w) 1fr;
   }
 }
 
 .gd-main { min-height: 60vh; }
 
-/* Sidebar component */
+
 .sidebar {
-  /* mobile/tablet: off-canvas drawer */
   position: fixed;
   top: 0; left: 0;
-  height: 100dvh;
+  height: 120dvh; 
   width: var(--gd-sidebar-w);
   background: var(--gd-bg);
   border-right: var(--gd-border);
   box-shadow: 2px 0 20px rgba(0,0,0,.08);
   transform: translateX(-100%);
   transition: transform .28s ease;
+  will-change: transform;
   z-index: var(--gd-z-sidebar);
   padding: 16px;
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
   &.open { transform: translateX(0); }
 
   .menu-content { display: grid; gap: 12px; }
-  .sidebar-title { font-weight: 700; font-size: 1rem; margin: 4px 0 8px; }
-
-  .menu-list {
-    list-style: none; margin: 0; padding: 0;
-    display: grid; gap: 6px;
+  .sidebar-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin: 4px 0 8px;
+    align-content: center;
   }
 
+  .menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+
+  .label { margin: 5px; }
+
   .menu-item {
-    width: 100%;
+    width: 100%;                
+    width: -webkit-fill-available;
     display: grid;
     grid-template-columns: 28px 1fr;
     align-items: center;
@@ -64,28 +74,39 @@
     background: var(--gd-surface);
     cursor: pointer;
     text-align: left;
-    transition: background-color .2s ease, box-shadow .2s ease, color .2s ease, border-color .2s ease;
+    transition:
+      background-color .2s ease,
+      box-shadow .2s ease,
+      color .2s ease,
+      border-color .2s ease;
 
-    .icon :global(svg) { width: 22px; height: 22px; }
+    
+    .icon svg { width: 22px; height: 22px; }
 
-    &:hover { background: var(--gd-tint); box-shadow: 0 2px 10px rgba(0,0,0,.06); color: var(--gd-brand); }
+    &:hover {
+      background: var(--gd-tint);
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      color: var(--gd-brand);
+    }
     &:focus-visible { outline: 2px solid rgba(33,163,59,.25); outline-offset: 2px; }
   }
 
-  /* desktop: pinned left column inside .gd-shell */
   @media (min-width: 1024px) {
     position: sticky;
-    top: 24px;                         
-    transform: none;                  
+    top: 24px;
+    transform: none;
     box-shadow: none;
+    height: calc(120dvh - 24px); 
+    z-index: auto; 
   }
 }
 
-/* Hamburger toggle (hidden on desktop) */
+
 .hamburger-btn {
   position: fixed;
-  top: 100px; left: 16px;
-  z-index: var(--gd-z-sidebar);
+  top: 100px; 
+  left: 16px; 
+  z-index: calc(var(--gd-z-sidebar) + 50);
   display: inline-flex; align-items: center; justify-content: center;
   width: 44px; height: 44px;
   border-radius: 10px; border: var(--gd-border);
@@ -96,23 +117,32 @@
   &:hover { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
   &:active { transform: scale(.98); }
 
-  @media (min-width: 1024px) { display: none; } /* PC: hide hamburger */
+  @media (min-width: 1024px) { display: none; }
 }
-
-/* Dark overlay (mobile/tablet only) */
+.hamburger-btn[aria-expanded="true"] {
+  top: 10px;
+  left: 180px;
+  }
 .sidebar-overlay {
-  position: fixed; inset: 0;
+  position: fixed;
+  inset: 0;
   background: rgba(0,0,0,.4);
-  opacity: 0; pointer-events: none;
+  opacity: 0;
+  pointer-events: none;
   transition: opacity .25s ease;
-  z-index: var(--gd-z-overlay);
+  z-index: var(--gd-z-overlay); 
+  scroll-behavior: auto;
 
-  &.open { opacity: 1; pointer-events: auto; }
+  &.open {
+    opacity: 1;
+    pointer-events: auto; 
+  }
 
   @media (min-width: 1024px) { display: none; }
 }
 
-/* Motion safety */
 @media (prefers-reduced-motion: reduce) {
-  .sidebar, .sidebar-overlay, .hamburger-btn, .menu-item { transition: none !important; }
+  .sidebar, .sidebar-overlay, .hamburger-btn, .menu-item {
+    transition: none !important;
+  }
 }
