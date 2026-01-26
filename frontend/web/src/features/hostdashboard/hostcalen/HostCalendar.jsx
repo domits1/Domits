@@ -14,11 +14,14 @@ import { getMonthMatrix, startOfMonthUTC, addMonthsUTC, subMonthsUTC } from "./u
 import { getCognitoUserId } from "../../../services/getAccessToken";
 import { retrieveExternalCalendar } from "../../../utils/icalRetrieveHost";
 import { buildBlockedSetFromIcsEvents } from "../../../utils/icalConvert";
-import { loadIcalSources,
-          saveIcalSources,
-          loadExternalBlockedDates,
-          saveExternalBlockedDates,
-      } from "../../../utils/externalCalenderStorage";
+import {
+  loadIcalSources,
+  saveIcalSources,
+  loadExternalBlockedDates,
+  saveExternalBlockedDates,
+} from "../../../utils/externalCalenderStorage";
+
+import { generateExportUrl } from "../../../utils/icalGenerateHost";
 
 const initialBlocks = {
   booked: new Set(),
@@ -51,6 +54,10 @@ export default function HostCalendar() {
   const [userId, setUserId] = useState(null);
   const [sources, setSources] = useState([]);
   const [externalBlocked, setExternalBlocked] = useState(new Set());
+
+  const [exportUrl, setExportUrl] = useState("");
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportError, setExportError] = useState(null);
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
 
@@ -85,6 +92,31 @@ export default function HostCalendar() {
       return nextSel;
     });
   }, [externalBlocked]);
+
+  const refreshExport = async () => {
+    if (!userId) return;
+    setExportLoading(true);
+    setExportError(null);
+    try {
+      const url = await generateExportUrl({
+        propertyId: String(userId),
+        calendarName: "Domits",
+        selections,
+        prices,
+      });
+      setExportUrl(url);
+    } catch (e) {
+      setExportUrl("");
+      setExportError(e?.message || "Failed to generate export link");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+    refreshExport().catch(() => {});
+  }, [userId]);
 
   const isExternallyBlocked = (key) => externalBlocked?.has(key);
 
@@ -211,6 +243,7 @@ export default function HostCalendar() {
     if (userId) saveIcalSources(userId, nextSources);
 
     await rebuildFromSources(nextSources);
+    await refreshExport().catch(() => {});
   };
 
   const removeSource = async (sourceId) => {
@@ -218,6 +251,7 @@ export default function HostCalendar() {
     setSources(nextSources);
     if (userId) saveIcalSources(userId, nextSources);
     await rebuildFromSources(nextSources);
+    await refreshExport().catch(() => {});
   };
 
   const refreshAll = async () => {
@@ -242,6 +276,10 @@ export default function HostCalendar() {
           onAddSource={addOrUpdateSource}
           onRemoveSource={removeSource}
           onRefreshAll={refreshAll}
+          exportUrl={exportUrl}
+          exportLoading={exportLoading}
+          exportError={exportError}
+          onGenerateExport={refreshExport}
         />
       </div>
 
