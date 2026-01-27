@@ -1,24 +1,24 @@
 # API Template
 
 ## Description
-The iCal Retrieve API downloads an external iCal (.ics) calendar from a given URL (for example Airbnb/Booking) and converts it into a simple JSON list of events.
+The iCal Retrieve API downloads an external iCal (.ics) calendar from a given URL (for example Airbnb or Booking) and converts it into a simple JSON list of events.
 
-This is used for importing blocked or reserved periods from external channels into Domits.
+Domits uses this to import blocked or reserved periods from external channels, so these dates can be shown as blocked in the Domits host calendar.
 
 ## Metadata
 Lambda Function: Ical-retrieve
 Status: In Development
 
-Related Issue: ...
+Related Issue: 587
 
-Status: **In Development** (Active | Deprecated | In Development)
+Status: **In Development** (In Development)
 
 ## Working Endpoints
 Use https://tabletomarkdown.com/generate-markdown-table/ to simply make your own table.
 
-| Action | Description          | Auth Required                   | Endpoint |
-| ------ | -------------------- | ------------------------------- | -------- |
-| POST   | Create new resource  | Yes                             | /Ical-retrieve|
+| Action | Description                          | Auth Required                   | Endpoint |
+| ------ | ------------------------------------ | ------------------------------- | -------- |
+| POST   | Download and parse an external iCal  | Yes                             | /Ical-retrieve|
 
 ## Base URL 
 ```
@@ -39,25 +39,25 @@ Recommended next steps:
     •   Add rate limiting (API Gateway usage plan) to protect from excessive external calendar fetches.
 
 ## Calculation / Logic Overview
+
 High-level flow:
-	1.	Client sends a POST request with calendarUrl
+1.	Frontend (utils/icalRetrieveHost.js)
+Sends a POST request to /Ical-retrieve with an action (example: RETRIEVE_EXTERNAL) and a calendarUrl.
 
-	2.	Lambda checks that an authorization token exists (401 if missing)
+2.	Controller (controller/controller.js)
+Reads the token, checks authorization, parses the JSON body, and routes the request based on the action.
 
-	3.	Lambda validates calendarUrl (400 if invalid)
+3.	Auth (auth/authManager.js)
+Checks if an authorization token is present and throws a 401 error if missing.
 
-	4.	The service downloads the external .ics file using fetch()
-	if the response is not OK: 400 with the HTTP status
-	if fetch fails: 400 "Could not download external calendar URL"
+4.	Service (business/service/service.js)
+Validates the input URL, downloads the .ics file using fetch(), and converts the iCal content into JSON events.
 
-	5.	The .ics text is parsed into events by scanning:
-	BEGIN:VEVENT → start event
-	END:VEVENT → finish event
+5.	Parser (inside business/service/service.js)
+Scans the .ics text for BEGIN:VEVENT and END:VEVENT and extracts key fields into a simple event format.
 
-	6.	Only a small set of fields is extracted:
-	UID, DTSTAMP, DTSTART, DTEND, SUMMARY, LOCATION, STATUS
-
-    7. API returns JSON with events
+6.	Response (util/http.js)
+Returns a JSON response with events or an error message with the correct status code.
 
 ## Class Diagram
 Show your class in a Diagram. Use [Mermaid Flow](https://mermaid.live/). Github supports mermaid chart in .md
@@ -74,11 +74,7 @@ Example:
 ### POST 
 ```json
 {
-  "httpMethod": "POST",
-  "headers": {
-    "Authorization": "Bearer <access-token>"
-  },
-  "body": "{\"calendarUrl\":\"https://example.com/calendar.ics\"}"
+  "calendarUrl": "https://www.calendarlabs.com/ical-calendar/ics/76/US_Holidays.ics"
 }
 
 ```
@@ -124,12 +120,8 @@ Use https://tabletomarkdown.com/generate-markdown-table/ to simply make your own
 
 
 ## Todo & Improvements
-   	•	Add real JWT validation (Cognito / JWKS, issuer + audience)
-	•	Add rate limiting to prevent abuse (external fetching)
-	•	Improve parsing:
-	•	Support DESCRIPTION, SEQUENCE, LAST-MODIFIED
-	•	Better timezone handling (DTSTART;TZID=...)
-	•	Add support for recurring events (RRULE)
-	•	Add logging/metrics for fetch failures and parsing results
+•	Improve error messages so it is clearer why an external calendar cannot be loaded.
+•	Handle more common iCal fields so more external calendars work without issues.
+
 
 
