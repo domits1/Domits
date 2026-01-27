@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DateSelectionContainer from "./dateSelectionContainer";
 import GuestSelectionContainer from "./guestSelectionContainer";
 import Pricing from "../components/pricing";
@@ -14,8 +14,35 @@ const BookingContainer = ({ property }) => {
   const [nights, setNights] = useState();
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
+  
+  const [priceData, setPriceData] = useState(null);
 
   const handleReservePress = useHandleReservePress();
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      if (!nights || nights < 1) return;
+
+      console.log("Fetching price for:", checkInDate, "to", checkOutDate);
+
+      await new Promise(r => setTimeout(r, 300));
+
+      const mockResponse = {
+         totalPriceCents: 96000, 
+         basePriceCents: 66000, 
+         breakdown: {
+             cleaningCents: 5000,
+             serviceFeeCents: 15000,
+             taxesCents: 10000
+         }
+      };
+      
+      console.log("Price calculated:", mockResponse);
+      setPriceData(mockResponse);
+    };
+
+    fetchPrice();
+  }, [checkInDate, checkOutDate, nights, property]);
 
   return (
     <div className="booking-container">
@@ -50,7 +77,12 @@ const BookingContainer = ({ property }) => {
       </button>
       <p className="note">*You won’t be charged yet</p>
       <hr />
-      <Pricing pricing={property.pricing} nights={nights} />
+      
+      <Pricing 
+        pricing={property.pricing}
+        priceData={priceData}      
+        nights={nights} 
+      />
     </div>
   );
 };
