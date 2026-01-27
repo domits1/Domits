@@ -21,28 +21,60 @@ const BookingContainer = ({ property }) => {
 
   useEffect(() => {
     const fetchPrice = async () => {
-      if (!nights || nights < 1) return;
+      if (!nights || nights < 1) {
+          setPriceData(null);
+          return;
+      }
 
-      console.log("Fetching price for:", checkInDate, "to", checkOutDate);
+      console.log("Fetching REAL price from AWS...");
 
-      await new Promise(r => setTimeout(r, 300));
+      try {
+          const API_URL = "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Bookings-CRUD-Bookings-develop"; 
+          
+          const response = await fetch(API_URL, {
+              method: 'POST',
+              headers: { 
+                "Content-Type": "application/json" 
+              },
+              body: JSON.stringify({
+                  action: "calculatePrice", 
+                  
+                  propertyId: property.property.id, 
+                  startDate: checkInDate,
+                  endDate: checkOutDate,
+                  guests: adults + kids
+              })
+          });
 
-      const mockResponse = {
-         totalPriceCents: 96000, 
-         basePriceCents: 66000, 
-         breakdown: {
-             cleaningCents: 5000,
-             serviceFeeCents: 15000,
-             taxesCents: 10000
-         }
-      };
-      
-      console.log("Price calculated:", mockResponse);
-      setPriceData(mockResponse);
+          if(response.ok) {
+              const json = await response.json();
+              
+              let data = json.data || json;
+              
+              if (json.body && typeof json.body === 'string') {
+                  try {
+                      const parsedBody = JSON.parse(json.body);
+                      data = parsedBody.data || parsedBody;
+                  } catch(e) { console.error("Parse error", e); }
+              }
+
+              console.log("💰 AWS Response:", data);
+              setPriceData(data); 
+          } else {
+              console.error("AWS Error:", response.status, response.statusText);
+              setPriceData(null); 
+          }
+      } catch (e) {
+          console.error("Network/Pricing failed", e);
+          setPriceData(null); 
+      }
     };
+    
+    const timeoutId = setTimeout(() => fetchPrice(), 500);
+    
+    return () => clearTimeout(timeoutId);
 
-    fetchPrice();
-  }, [checkInDate, checkOutDate, nights, property]);
+  }, [checkInDate, checkOutDate, nights, adults, kids, property]);
 
   return (
     <div className="booking-container">
