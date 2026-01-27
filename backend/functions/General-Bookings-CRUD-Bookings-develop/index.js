@@ -1,24 +1,33 @@
 import ReservationController from "./controller/reservationController.js";
-import ParseEvent from "./business/parseEvent.js"
+import ParseEvent from "./business/parseEvent.js";
 import { handler as calculatePriceHandler } from "./calculatePriceHandler.js"; 
 
 const controller = new ReservationController();
 const eventparser = new ParseEvent();
 
 export const handler = async (event) => {
-  let returnedResponse = {};
-
   const headers = {
     "Access-Control-Allow-Origin": "*", 
     "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
     "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PATCH,DELETE"
   };
 
+  if (event.httpMethod === "OPTIONS") {
+      return {
+        statusCode: 200,
+        headers: headers,
+        body: JSON.stringify({ message: "CORS Allowed" }),
+      };
+  }
+
+  let returnedResponse = {};
+
   try {
       let parsedEvent = null;
       try {
         parsedEvent = await eventparser.handleEvent(event);
       } catch (e) {
+        console.warn("Event parsing warning:", e);
       }
 
       if (event.httpMethod === "POST" && parsedEvent && parsedEvent.action === "calculatePrice") {
@@ -47,14 +56,6 @@ export const handler = async (event) => {
         case "DELETE":
           console.log("DELETE request called");
           break;
-          
-        case "OPTIONS":
-          return {
-            statusCode: 200,
-            headers: headers,
-            body: JSON.stringify({ message: "CORS Allowed" }),
-          };
-
         default:
           throw new Error(`Unsupported method "${event.httpMethod}"`);
       }
@@ -62,7 +63,7 @@ export const handler = async (event) => {
       return {
         statusCode: returnedResponse?.statusCode || 200,
         headers: {
-            ...headers, 
+            ...headers,
             ...(returnedResponse?.headers || {})
         },
         body: JSON.stringify(returnedResponse?.response),
@@ -72,7 +73,7 @@ export const handler = async (event) => {
       console.error("Handler Error:", error);
       return {
           statusCode: 500,
-          headers: headers, 
+          headers: headers,
           body: JSON.stringify({ message: error.message })
       };
   }
