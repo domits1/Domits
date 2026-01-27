@@ -1,6 +1,5 @@
 import ReservationController from "./controller/reservationController.js";
-import ParseEvent from "./business/parseEvent.js";
-import { handler as calculatePriceHandler } from "./calculatePriceHandler.js"; 
+import ParseEvent from "./business/parseEvent.js"
 
 const controller = new ReservationController();
 const eventparser = new ParseEvent();
@@ -27,20 +26,37 @@ export const handler = async (event) => {
       try {
         parsedEvent = await eventparser.handleEvent(event);
       } catch (e) {
-        console.warn("Event parsing warning:", e);
+
       }
 
       if (event.httpMethod === "POST" && parsedEvent && parsedEvent.action === "calculatePrice") {
           console.log("🚀 Redirecting to CalculatePriceHandler");
-          const priceResponse = await calculatePriceHandler(event);
           
-          return {
-              ...priceResponse,
-              headers: {
-                  ...headers,
-                  ...(priceResponse.headers || {})
-              }
-          };
+          try {
+              const module = await import("./calculatePriceHandler.js");
+              const calculatePriceHandler = module.handler;
+              
+              const priceResponse = await calculatePriceHandler(event);
+              
+              return {
+                  ...priceResponse,
+                  headers: {
+                      ...headers,
+                      ...(priceResponse.headers || {})
+                  }
+              };
+          } catch (importError) {
+              console.error("❌ Błąd ładowania CalculatePriceHandler:", importError);
+              return {
+                  statusCode: 500,
+                  headers: headers,
+                  body: JSON.stringify({ 
+                      message: "Error loading pricing logic", 
+                      error: importError.message,
+                      stack: importError.stack 
+                  })
+              };
+          }
       }
 
       switch(event.httpMethod){
