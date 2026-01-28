@@ -1,9 +1,15 @@
-import LambdaRepository from "../data/lambdaRepository.js";
-import CalculateDifferenceInNights from "./calculateDifferenceInNights.js";
+import LambdaRepository from "../data/lambdaRepository.js"; 
+// import CalculateDifferenceInNights from "./calculateDifferenceInNights.js";
 
 async function CalculateTotalRate(propertyId, dates) {
   const pricing = await new LambdaRepository().getPropertyPricingById(propertyId);
-  const differenceInDays = CalculateDifferenceInNights(dates.arrivalDate, dates.departureDate);
+  
+  const oneDay = 24 * 60 * 60 * 1000;
+  const start = new Date(dates.arrivalDate);
+  const end = new Date(dates.departureDate);
+  const diffTime = Math.abs(end - start);
+  const differenceInDays = Math.round(diffTime / oneDay);
+
   const basepricing = pricing.pricing[0];
   const hostCents = (basepricing.roomrate + basepricing.cleaning) * differenceInDays;
   const platformCents = hostCents * 0.1;

@@ -4,6 +4,7 @@ module.exports = {
     setupNodeEvents(on, config) {
       // Implement node event listeners here
     },
-    specPattern: "src/tests/cypress/**/*.cy.js" // Corrected to match your new path
+    specPattern: "src/tests/cypress/**/*.cy.js", // Corrected to match your new path
+    supportFile: false, // 👈 disables the requirement
   },
 };

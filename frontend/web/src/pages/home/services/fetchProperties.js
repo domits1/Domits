@@ -19,16 +19,32 @@ export const FetchAllPropertyTypes = async (lastEvaluatedKeyCreatedAt, lastEvalu
 };
 
 export const FetchPropertyType = async (type) => {
-  const encodedType = encodeURIComponent(type ?? '');
+  const encodedType = encodeURIComponent(type ?? "");
   const url = `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byType?type=${encodedType}`;
-  const response = await fetch(url);
-  if (!response.ok) {
-    let details = '';
-    try {
-      const text = await response.text();
-      details = text?.slice(0, 500);
-    } catch (_) { /* ignore */ }
-    throw new Error(`Something went wrong while fetching PropertyType: ${response.status} ${response.statusText}${details ? ` - ${details}` : ''}`);
+
+  try {
+    const response = await fetch(url);
+    
+    if (response.status === 404) {
+      return [];
+    }
+
+    if (!response.ok) {
+      let details = "";
+      try {
+        const text = await response.text();
+        details = text?.slice(0, 500);
+      } catch (_) {}
+      throw new Error(
+        `Something went wrong while fetching PropertyType: ${response.status} ${response.statusText}${
+          details ? ` - ${details}` : ""
+        }`
+      );
+    }
+
+    return await response.json();
+  } catch (e) {
+    console.error("Unexpected error while fetching PropertyType:", e);
+    return [];
   }
-  return await response.json();
 };

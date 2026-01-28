@@ -5,29 +5,87 @@ const controller = new ReservationController();
 const eventparser = new ParseEvent();
 
 export const handler = async (event) => {
-  let returnedResponse = {};
-  let parsedEvent = await eventparser.handleEvent(event);
-  switch(event.httpMethod){
-    case "POST":
-      returnedResponse = await controller.create(parsedEvent);
-      break;
-    case "GET":
-      returnedResponse = await controller.read(parsedEvent);
-      break;
-    case "PATCH":
-      returnedResponse = await controller.patch(event);
-      break;
-    case "DELETE":
-      console.log("DELETE request called");
-      break;
-    default:
-      throw new Error("Unable to determine request type. Please contact the Admin.");
+  const headers = {
+    "Access-Control-Allow-Origin": "*", 
+    "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+    "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PATCH,DELETE"
+  };
+
+  if (event.httpMethod === "OPTIONS") {
+      return {
+        statusCode: 200,
+        headers: headers,
+        body: JSON.stringify({ message: "CORS Allowed" }),
+      };
   }
 
-  return {
-    statusCode: returnedResponse?.statusCode || 200,
-    headers: returnedResponse?.headers || null,
-    body: JSON.stringify(returnedResponse?.response),
-    //body: JSON.stringify(event), 
-  };
-};  
+  let returnedResponse = {};
+
+  try {
+      let parsedEvent = null;
+      try {
+        parsedEvent = await eventparser.handleEvent(event);
+      } catch (e) {
+      }
+
+      if (event.httpMethod === "POST" && parsedEvent && parsedEvent.action === "calculatePrice") {
+          console.log("🚀 Pricing Request Detected");
+          
+          try {
+              const module = await import("./calculatePriceHandler.js");
+              const calculatePriceHandler = module.handler;
+              
+              const priceResponse = await calculatePriceHandler(event);
+              
+              return {
+                  ...priceResponse,
+                  headers: {
+                      ...headers,
+                      ...(priceResponse.headers || {})
+                  }
+              };
+          } catch (importError) {
+              console.error("❌ Error loading pricing module:", importError);
+              return {
+                  statusCode: 500,
+                  headers: headers,
+                  body: JSON.stringify({ message: "Internal Pricing Error" })
+              };
+          }
+      }
+
+      switch(event.httpMethod){
+        case "POST":
+          returnedResponse = await controller.create(parsedEvent);
+          break;
+        case "GET":
+          returnedResponse = await controller.read(parsedEvent);
+          break;
+        case "PATCH":
+          returnedResponse = await controller.patch(event);
+          break;
+        case "DELETE":
+          console.log("DELETE request called");
+          break;
+        default:
+          throw new Error(`Unsupported method "${event.httpMethod}"`);
+      }
+
+      return {
+        statusCode: returnedResponse?.statusCode || 200,
+        headers: {
+            ...headers,
+            ...(returnedResponse?.headers || {})
+        },
+        body: JSON.stringify(returnedResponse?.response),
+      };
+
+  } catch (error) {
+      console.error("Handler Error:", error);
+      return {
+          statusCode: 500,
+          headers: headers,
+          body: JSON.stringify({ message: error.message })
+      };
+  }
+};
