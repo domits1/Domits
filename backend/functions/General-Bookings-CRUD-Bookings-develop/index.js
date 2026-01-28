@@ -1,12 +1,10 @@
-// import ReservationController from "./controller/reservationController.js";
-// import ParseEvent from "./business/parseEvent.js"
+import ReservationController from "./controller/reservationController.js";
+import ParseEvent from "./business/parseEvent.js"
 
-// const controller = new ReservationController();
-// const eventparser = new ParseEvent();
+const controller = new ReservationController();
+const eventparser = new ParseEvent();
 
 export const handler = async (event) => {
-  console.log("🔥 Lambda started. Method:", event.httpMethod);
-
   const headers = {
     "Access-Control-Allow-Origin": "*", 
     "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -17,20 +15,21 @@ export const handler = async (event) => {
       return {
         statusCode: 200,
         headers: headers,
-        body: JSON.stringify({ message: "CORS Allowed - Test Mode" }),
+        body: JSON.stringify({ message: "CORS Allowed" }),
       };
   }
 
+  let returnedResponse = {};
+
   try {
-      let parsedBody = {};
-      if (event.body) {
-          try {
-              parsedBody = JSON.parse(event.body);
-          } catch (e) { console.error("Body parse error", e); }
+      let parsedEvent = null;
+      try {
+        parsedEvent = await eventparser.handleEvent(event);
+      } catch (e) {
       }
 
-      if (event.httpMethod === "POST" && parsedBody && parsedBody.action === "calculatePrice") {
-          console.log("🚀 Redirecting to CalculatePriceHandler");
+      if (event.httpMethod === "POST" && parsedEvent && parsedEvent.action === "calculatePrice") {
+          console.log("🚀 Pricing Request Detected");
           
           try {
               const module = await import("./calculatePriceHandler.js");
@@ -46,29 +45,43 @@ export const handler = async (event) => {
                   }
               };
           } catch (importError) {
-              console.error("❌ handler error:", importError);
+              console.error("❌ Error loading pricing module:", importError);
               return {
                   statusCode: 500,
                   headers: headers,
-                  body: JSON.stringify({ 
-                      message: "Error loading CalculatePriceHandler", 
-                      error: importError.message 
-                  })
+                  body: JSON.stringify({ message: "Internal Pricing Error" })
               };
           }
       }
 
+      switch(event.httpMethod){
+        case "POST":
+          returnedResponse = await controller.create(parsedEvent);
+          break;
+        case "GET":
+          returnedResponse = await controller.read(parsedEvent);
+          break;
+        case "PATCH":
+          returnedResponse = await controller.patch(event);
+          break;
+        case "DELETE":
+          console.log("DELETE request called");
+          break;
+        default:
+          throw new Error(`Unsupported method "${event.httpMethod}"`);
+      }
+
       return {
-          statusCode: 200,
-          headers: headers,
-          body: JSON.stringify({
-              message: "Pricing API is working! Legacy Controller is disabled.",
-              receivedAction: parsedBody.action
-          })
+        statusCode: returnedResponse?.statusCode || 200,
+        headers: {
+            ...headers,
+            ...(returnedResponse?.headers || {})
+        },
+        body: JSON.stringify(returnedResponse?.response),
       };
 
   } catch (error) {
-      console.error("Global Handler Error:", error);
+      console.error("Handler Error:", error);
       return {
           statusCode: 500,
           headers: headers,
