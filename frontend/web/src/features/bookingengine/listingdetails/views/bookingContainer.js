@@ -19,6 +19,73 @@ const BookingContainer = ({ property }) => {
 
   const handleReservePress = useHandleReservePress();
 
+// // --- REAL API MODE ---
+//   useEffect(() => {
+//     const fetchPrice = async () => {
+//       if (!nights || nights < 1) {
+//           setPriceData(null);
+//           return;
+//       }
+
+//       console.log("🌍 Fetching REAL price from AWS...");
+
+//       try {
+//           const API_URL = "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Bookings-CRUD-Bookings-develop"; 
+          
+//           const response = await fetch(API_URL, {
+//               method: 'POST',
+//               headers: { 
+//                 "Content-Type": "application/json" 
+//               },
+//               body: JSON.stringify({
+//                   action: "calculatePrice", 
+                  
+//                   propertyId: property.property.id, 
+//                   startDate: checkInDate,
+//                   endDate: checkOutDate,
+//                   guests: adults + kids
+//               })
+//           });
+
+//           if(response.ok) {
+//               const json = await response.json();
+              
+//               let data = json.data || json;
+              
+//               if (json.body && typeof json.body === 'string') {
+//                   try {
+//                       const parsedBody = JSON.parse(json.body);
+//                       data = parsedBody.data || parsedBody;
+//                   } catch(e) { console.warn("Body parse warn", e); }
+//               }
+
+//               console.log("💰 AWS Response:", data);
+//               setPriceData(data); 
+
+//           } else {
+//               console.error("❌ AWS Error:", response.status, response.statusText);
+//               try {
+//                   const errJson = await response.json();
+//                   console.error("Error details:", errJson);
+//               } catch(e) {}
+              
+//               setPriceData(null); 
+//           }
+//       } catch (e) {
+//           console.error("❌ Network failed (CORS or Offline):", e);
+//           setPriceData(null); 
+//       }
+//     };
+    
+//     // Debounce 500ms
+//     const timeoutId = setTimeout(() => fetchPrice(), 500);
+//     return () => clearTimeout(timeoutId);
+
+//   }, [checkInDate, checkOutDate, nights, adults, kids, property]);
+
+// TODO: Uncomment REAL API fetching after backend merge & deploy.
+
+// --- MOCK MODE ---
   useEffect(() => {
     const fetchPrice = async () => {
       if (!nights || nights < 1) {
@@ -26,54 +93,28 @@ const BookingContainer = ({ property }) => {
           return;
       }
 
-      console.log("Fetching REAL price from AWS...");
+      console.log("Mocking price fetch for:", checkInDate, "to", checkOutDate);
 
-      try {
-          const API_URL = "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Bookings-CRUD-Bookings-develop"; 
-          
-          const response = await fetch(API_URL, {
-              method: 'POST',
-              headers: { 
-                "Content-Type": "application/json" 
-              },
-              body: JSON.stringify({
-                  action: "calculatePrice", 
-                  
-                  propertyId: property.property.id, 
-                  startDate: checkInDate,
-                  endDate: checkOutDate,
-                  guests: adults + kids
-              })
-          });
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-          if(response.ok) {
-              const json = await response.json();
-              
-              let data = json.data || json;
-              
-              if (json.body && typeof json.body === 'string') {
-                  try {
-                      const parsedBody = JSON.parse(json.body);
-                      data = parsedBody.data || parsedBody;
-                  } catch(e) { console.error("Parse error", e); }
-              }
-
-              console.log("💰 AWS Response:", data);
-              setPriceData(data); 
-          } else {
-              console.error("AWS Error:", response.status, response.statusText);
-              setPriceData(null); 
-          }
-      } catch (e) {
-          console.error("Network/Pricing failed", e);
-          setPriceData(null); 
-      }
+      const mockTotal = 100 * nights * 1.1 + 50;
+      
+      const mockResponse = {
+         totalPriceCents: Math.round(mockTotal * 100),
+         basePriceCents: Math.round(100 * nights * 100),
+         breakdown: {
+             cleaningCents: 5000,
+             serviceFeeCents: Math.round(100 * nights * 0.1 * 100),
+             taxesCents: 0
+         },
+         currency: "EUR"
+      };
+      
+      console.log("💰 Mock Response:", mockResponse);
+      setPriceData(mockResponse);
     };
-    
-    const timeoutId = setTimeout(() => fetchPrice(), 500);
-    
-    return () => clearTimeout(timeoutId);
 
+    fetchPrice();
   }, [checkInDate, checkOutDate, nights, adults, kids, property]);
 
   return (
