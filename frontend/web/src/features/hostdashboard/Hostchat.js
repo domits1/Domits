@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import "../guestdashboard/chat/chat.css";
 import styles from "../guestdashboard/chat/ChatPage.module.css";
 import { API, graphqlOperation } from "aws-amplify";
@@ -12,6 +12,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ContactItem from "../guestdashboard/chat/ContactItem";
 import spinner from "../../images/spinnner.gif";
 import ContactModal from "./contactModal";
+import { messageTemplates as initialMessageTemplates } from "./hostmessages/store/templates";
+import TemplateManager from "./hostmessages/components/TemplateManager";
 
 
 const Chat = ({ user }) => {
@@ -40,12 +42,23 @@ const Chat = ({ user }) => {
     const chatContainerRef = useRef(null);
     const [isContactModalOpen, setContactModalOpen] = useState(false);
     const [pendingRequest, setPendingRequest] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedTemplateId, setSelectedTemplateId] = useState("");
+    const [avgResponseMinutes, setAvgResponseMinutes] = useState(null);
+    const [hasUnansweredOlderThan24h, setHasUnansweredOlderThan24h] = useState(false);
+
+    const [templates, setTemplates] = useState(initialMessageTemplates);
+    const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
+
+    const handleSaveTemplates = (updatedTemplates) => {
+        setTemplates(updatedTemplates);
+    };
 
     const getUUIDForUser = (userId) => {
         let uuid = localStorage.getItem(`${userId}_uuid`);
         if (!uuid) {
             uuid = generateUUID();
-            localStorage.setItem(`${userId}_uuid`, uuid); // Corrected this line
+            localStorage.setItem(`${userId}_uuid`, uuid); 
         }
         return uuid;
     };
@@ -64,13 +77,15 @@ const Chat = ({ user }) => {
 
     useEffect(() => {
         if (displayType) {
-            if (displayType === 'My contacts') {
-                setItemsDisplay(chatUsers);
+            const base = displayType === 'My contacts' ? chatUsers : pendingContacts;
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                setItemsDisplay(base.filter(u => (u.userId || "").toLowerCase().includes(q)));
             } else {
-                setItemsDisplay(pendingContacts);
+                setItemsDisplay(base);
             }
         }
-    }, [displayType]);
+    }, [displayType, searchQuery, chatUsers, pendingContacts]);
 
     const fetchHostContacts = async () => {
         setLoading(true);
@@ -113,6 +128,49 @@ const Chat = ({ user }) => {
             fetchAccommodation(accoId);
         }
     }, [accoId]);
+
+    useEffect(() => {
+        if (!chats || chats.length === 0) {
+            setAvgResponseMinutes(null);
+            setHasUnansweredOlderThan24h(false);
+            return;
+        }
+
+        let totalResponseMs = 0;
+        let responsePairs = 0;
+        let lastIncomingTs = null;
+        let unansweredOlderThan24h = false;
+
+        const DAY_MS = 24 * 60 * 60 * 1000;
+        const now = Date.now();
+
+        chats
+            .slice()
+            .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+            .forEach((chat) => {
+                const ts = new Date(chat.createdAt).getTime();
+                const isIncoming = chat.userId !== userId; // guest -> host
+                const isOutgoing = chat.userId === userId; // host -> guest
+
+                if (isIncoming) {
+                    lastIncomingTs = ts;
+                } else if (isOutgoing && lastIncomingTs) {
+                    totalResponseMs += ts - lastIncomingTs;
+                    responsePairs += 1;
+                    lastIncomingTs = null;
+                }
+
+                if (isIncoming && now - ts > DAY_MS) {
+                    const repliedAfter = chats.find(c => new Date(c.createdAt).getTime() > ts && c.userId === userId);
+                    if (!repliedAfter) {
+                        unansweredOlderThan24h = true;
+                    }
+                }
+            });
+
+        setAvgResponseMinutes(responsePairs ? Math.round(totalResponseMs / responsePairs / 60000) : null);
+        setHasUnansweredOlderThan24h(unansweredOlderThan24h);
+    }, [chats, userId]);
     useEffect(() => {
         const subscription = API.graphql(
             graphqlOperation(subscriptions.onCreateChat)
@@ -359,6 +417,14 @@ const Chat = ({ user }) => {
         }
     };
 
+    const handleInsertTemplate = (templateId) => {
+        setSelectedTemplateId(templateId);
+        const template = templates.find(t => t.id === templateId);
+        if (!template) return;
+        const merged = (newMessage ? newMessage + "\n\n" : "") + template.content;
+        setNewMessage(merged);
+    };
+
     const generateUUID = () => {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
@@ -499,6 +565,15 @@ const Chat = ({ user }) => {
                                 ({pendingContacts.length})
                             </button>
                         </section>
+                        <section className={styles.displayBody} style={{padding: '8px'}}>
+                            <input
+                                type="text"
+                                placeholder="Search by guest ID or keyword"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                style={{width: '100%', padding: '8px'}}
+                            />
+                        </section>
                         <section className={styles.displayBody}>
                             {loading ? (
                                 <div>
@@ -535,6 +610,12 @@ const Chat = ({ user }) => {
                                     <article className="chat__figure">
                                         <aside className="chat__aside">
                                             <h2>{selectedUserName}</h2>
+                                            {avgResponseMinutes !== null && (
+                                                <p className="chat__meta">Avg response: {avgResponseMinutes} min</p>
+                                            )}
+                                            {hasUnansweredOlderThan24h && (
+                                                <p className="chat__meta" style={{color: '#c00'}}>Reminder: You have messages older than 24h awaiting reply</p>
+                                            )}
                                         </aside>
                                         <article className="chat__chatContainer" ref={chatContainerRef}>
                                             {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
@@ -561,6 +642,30 @@ const Chat = ({ user }) => {
                                                               style={{maxWidth: "100%", maxHeight: "200px"}}/>}
                                         </article>
                                         <div className="chat__inputContainer">
+                                            <div style={{display: 'flex', gap: 8, width: '100%', marginBottom: 8}}>
+                                                <select
+                                                    value={selectedTemplateId}
+                                                    onChange={(e) => handleInsertTemplate(e.target.value)}
+                                                    style={{flex: 1, padding: 8}}
+                                                >
+                                                    <option value="">Insert template…</option>
+                                                    {templates.map(t => (
+                                                        <option key={t.id} value={t.id}>{t.title}</option>
+                                                    ))}
+                                                </select>
+                                                <button 
+                                                    onClick={() => setIsTemplateManagerOpen(true)}
+                                                    style={{
+                                                        padding: '0 15px',
+                                                        background: '#f0f0f0',
+                                                        border: '1px solid #ccc',
+                                                        borderRadius: '4px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    Manage
+                                                </button>
+                                            </div>
                                             <input
                                                 className="chat__input"
                                                 type="text"
@@ -613,6 +718,12 @@ const Chat = ({ user }) => {
                 onConfirm={handleConfirmReject}
                 title="Confirm Rejection"
                 message="Are you sure you want to reject this contact request?"
+            />
+            <TemplateManager
+                isOpen={isTemplateManagerOpen}
+                onClose={() => setIsTemplateManagerOpen(false)}
+                templates={templates}
+                onSave={handleSaveTemplates}
             />
         </main>
     );

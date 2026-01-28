@@ -47,6 +47,39 @@ export const styles = StyleSheet.create({
   contentContainer: {
     marginHorizontal: 20,
   },
+  // Modal
+  modalOverlay: {
+    width: "100%",
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: 'white',
+    paddingHorizontal: 32,
+    paddingVertical: 24,
+    borderRadius: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  // Specific modals
+  amenityContainer: {
+    flexDirection: 'row',
+    width: '95%',
+    marginBottom: 10,
+    alignItems: 'center'
+  },
   // Error
   errorText: {
     color: 'red',
@@ -236,6 +269,7 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginTop: 10,
+    flexDirection: 'row',
   },
   completeButtonDisabled: {
     backgroundColor: 'rgba(128,128,128,0.5)',

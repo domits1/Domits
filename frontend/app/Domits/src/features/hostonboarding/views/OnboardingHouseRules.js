@@ -15,9 +15,9 @@ const OnboardingHouseRules = ({formData, updateFormData, reportValidity, markVis
   const [showCheckoutTillModal, setShowCheckoutTillModal] = useState(false);
 
   const ruleOptions = [
-    {key: 'allowSmoking', label: 'Allow smoking'},
-    {key: 'allowPets', label: 'Allow pets'},
-    {key: 'allowParties', label: 'Allow parties'},
+    {key: 'SmokingAllowed', label: 'Allow smoking'},
+    {key: 'PetsAllowed', label: 'Allow pets'},
+    {key: 'Parties/EventsAllowed', label: 'Allow parties/events'},
   ];
 
   const timeStringToDate = (timeStr) => {

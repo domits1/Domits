@@ -1,28 +1,31 @@
 const propertyFormDataTemplate = {
     property: {
         id: "",
-        hostId: "",
+        hostId: "aab76a75-d16f-4960-a261-63d5ee41dce6",
         title: "",
         subtitle: "",
         description: "",
         guestCapacity: "", //Number
         registrationNumber: "",
         status: "",
-        createdAt: -1,
-        updatedAt: -1
+        createdAt: 0,
+        updatedAt: 0
     },
     propertyAmenities: [
 
     ],
     propertyAvailability: [
+      //fixme hard-coded dates
         {
-            property_id: "",
-            availableStartDate: -1,
-            availableEndDate: -1
+            "availableStartDate": 1786185200000,
+            "availableEndDate": 1808863600000
+        },
+        {
+            "availableStartDate": 1774316000000,
+            "availableEndDate": 1781801200000
         }
     ],
     propertyCheckIn: {
-        property_id: "",
         checkIn: {
             from: "00:00",
             till: "00:00",
@@ -51,7 +54,6 @@ const propertyFormDataTemplate = {
         },
     ],
     propertyLocation: {
-        property_id: "",
         country: "",
         city: "",
         street: "",
@@ -60,29 +62,22 @@ const propertyFormDataTemplate = {
         postalCode: ""
     },
     propertyPricing: {
-        property_id: "",
-        roomRate: -1,
-        cleaning: -1,
+        roomRate: 2,
+        cleaning: 0,
     },
     propertyRules: [
-        {rule: "allowSmoking", value: false},
-        {rule: "allowParties", value: false},
-        {rule: "allowPets", value: false},
+        {rule: "PetsAllowed", value: false},
+        {rule: "SmokingAllowed", value: false},
+        {rule: "Parties/EventsAllowed", value: false},
     ],
     propertyType: {
-        property_id: "",
         property_type: "",
         spaceType: ""
     },
     propertyImages: [
-        {
-            property_id: "",
-            key: "",
-            image: ""
-        }
+
     ],
     propertyTechnicalDetails: {
-        property_id: "",
         length: -1,
         height: -1,
         fuelConsumption: -1,

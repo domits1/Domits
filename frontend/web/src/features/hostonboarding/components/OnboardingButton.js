@@ -2,7 +2,7 @@
 
 import { useNavigate } from 'react-router-dom';
 
-export default function OnboardingButton({ btnText, onClick, routePath }) {
+export default function OnboardingButton({ btnText, onClick, routePath, buttonType = 'proceed' }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -10,8 +10,10 @@ export default function OnboardingButton({ btnText, onClick, routePath }) {
     if (routePath) navigate(routePath);
   };
 
+  const buttonClass = `onboarding-button ${buttonType}-button`;
+
   return (
-    <button onClick={handleClick} className="onboarding-button">
+    <button onClick={handleClick} className={buttonClass}>
       {btnText}
     </button>
   );
