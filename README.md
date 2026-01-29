@@ -99,7 +99,20 @@ Table of Contents
       - content/ # Translation files
       - context/ # Context for global state management
       - features/ # Base folder (unless global or otherwise)
-        - guestdashboard/ # Example folder chosen to show structure. Most features folder follow this structure
+        - auth/
+        - bookingengine/
+        - hostonboarding/ # Example folder chosen to show structure. Most features folder follow this structure
+        - hostdashboard/
+          - hostcalendar/
+          - hostreservations/
+          - hostmessages/
+          - hostrevenue/
+          - hosttasks/
+          - hostfinance/
+          - hostsettings/
+          - hostdistribution/
+          - HostListing.js
+        - guestdashboard/
           - chat/ # Chat files
           - components/ # Re-usable react components
           - context/ # Context for global state management
