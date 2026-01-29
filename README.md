@@ -184,8 +184,8 @@ Get familar with code conventions to write clean code. Become aware of our serve
 * Learn and improve [Programming/Clean Code: Quick Reference Guide](https://github.com/domits1/Domits/wiki/Programming)
 * Become familiar with our [Code Conventions](https://github.com/domits1/Domits/wiki/Code-conventions) to maintain a consistent and readable codebase.
 * Get to know why we use SCSS compared to css and its benefits [here](https://www.youtube.com/watch?v=akDIJa0AP5c)
-* [Backend Setup](./docs/internal/onboarding/backend_setup.md) The createlambda function will create a template lambda for you. Familiarize yourself with the structure [here](./docs/internal/tools/backend_development_flow.md) before starting to code.
-* Understand the development workflow from finished work to deployment on acceptance [here](https://github.com/domits1/Domits/blob/docs/2377-frontend-backend-connection/docs/internal/onboarding/development_workflow.md)
+* [Backend Setup](./docs/internal/onboarding/backend_setup.md) The createlambda function will create a template lambda for you. Familiarize yourself with the structure [here](./docs/internal/onboarding/backend_development_flow.md) before starting to code.
+* Understand the development workflow from finished work to deployment on acceptance [here](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/development_workflow.md)
 * Understand the code pipeline (CI/CD)
 
 ### Web/App Setup
@@ -198,7 +198,7 @@ Web Development Setup:
 
 **App**
 
-> [!Note]
+> [!Note]d
 > IOS development requires macOS. On windows, consider using AWS EC2 or a VM for testing.
 
 App Development Setup:
@@ -224,9 +224,8 @@ Here's what you can do next:
 
 Get a basic understanding of every AWS service we use [here](/docs/internal/services/overview.md).
 
-Inside Domits, we have different API's used as key modules for powering Domits. We will devide the following API's into two API sections: 
+Inside Domits, we have different API's used as key modules for powering Domits.
 
----
 
 ### Connectivity API's
 APIs that give access to data and services in Domits and supports multiple use cases.
@@ -262,7 +261,6 @@ APIs that give access to data and services in Domits and supports multiple use c
 * Responsible for: Handling messages
 * Used for: Host/Guest messages
 
----
 
 ### Distribution API 
 
