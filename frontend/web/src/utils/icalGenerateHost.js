@@ -2,6 +2,8 @@ import { getAccessToken, getCognitoUserId } from "../services/getAccessToken";
 
 const ICAL_GENERATE_URL = "https://rphw3xutc9.execute-api.eu-north-1.amazonaws.com/default/Ical-generate";
 
+const isYmd = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
 async function callGenerateApi(payload) {
   const token = getAccessToken();
 
@@ -45,11 +47,13 @@ function toIsoMiddayUtc(ymd) {
 }
 
 export function buildExportEvents({ selections, propertyId, prices }) {
-  const blockedKeys = new Set([
+  const blockedKeysRaw = new Set([
     ...(selections?.blocked ? Array.from(selections.blocked) : []),
     ...(selections?.booked ? Array.from(selections.booked) : []),
     ...(selections?.maintenance ? Array.from(selections.maintenance) : []),
   ]);
+
+  const blockedKeys = Array.from(blockedKeysRaw).filter(isYmd);
 
   const events = [];
   for (const day of blockedKeys) {
