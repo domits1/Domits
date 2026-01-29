@@ -9,6 +9,33 @@ const CALENDAR_OPTIONS = [
   { value: "AIRBNB", label: "Airbnb" },
 ];
 
+function getNiceExportDisplayUrl(exportUrl) {
+  const raw = String(exportUrl || "").trim();
+  if (!raw) return "";
+
+  try {
+    const u = new URL(raw);
+    const path = u.pathname || "/";
+
+    const parts = path.split("/").filter(Boolean);
+    const file = parts[parts.length - 1] || "calendar.ics";
+
+    const hostIdx = parts.indexOf("host");
+    let tail = "";
+    if (hostIdx >= 0) {
+      const afterHost = parts.slice(hostIdx);
+      tail = "/" + afterHost.join("/");
+    } else {
+      tail = path.startsWith("/") ? path : `/${path}`;
+    }
+
+    return `https://domits${tail}`.replace(/\/+$/, "") || `https://domits/${file}`;
+  } catch {
+    const last = raw.split("/").filter(Boolean).pop() || raw;
+    return `https://domits/${last}`;
+  }
+}
+
 export default function IcalSyncForm({ onImport, exportUrl, submitting, onGenerateExport }) {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoadingAcc, setIsLoadingAcc] = useState(false);
@@ -90,6 +117,8 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting, onGenera
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const displayExportUrl = useMemo(() => getNiceExportDisplayUrl(exportUrl), [exportUrl]);
 
   return (
     <form className="adminproperty-form ical-sync-form" onSubmit={handleSubmit}>
@@ -181,16 +210,18 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting, onGenera
           <label htmlFor="exportUrl">Domits iCal address</label>
 
           <div className="ical-export-row">
-            <input id="exportUrl" type="text" value={exportUrl || ""} readOnly />
+            <input id="exportUrl" type="text" value={displayExportUrl || ""} readOnly />
             <button type="button" className={`ical-copy-btn ${copied ? "copied" : ""}`} onClick={handleCopyExportUrl} disabled={!exportUrl}>
               {copied ? "Copied ✓" : "Copy"}
             </button>
           </div>
-        </div>
 
-        <button type="button" className="adminproperty-submit" onClick={() => onGenerateExport?.()} disabled={!userId}>
-          Generate new export link
-        </button>
+          {exportUrl && (
+            <div style={{ marginTop: 6, fontSize: 12, opacity: 0.65, wordBreak: "break-all" }}>
+              Copies the real URL: {exportUrl}
+            </div>
+          )}
+        </div>
       </div>
     </form>
   );

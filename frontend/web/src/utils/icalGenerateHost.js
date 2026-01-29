@@ -85,10 +85,5 @@ export async function generateExportUrl({ propertyId, calendarName, selections, 
 
   if (data?.url) return data.url;
 
-  if (data?.icsText) {
-    const blob = new Blob([data.icsText], { type: "text/calendar" });
-    return URL.createObjectURL(blob);
-  }
-
-  throw new Error("No export URL returned");
+  throw new Error("No public export URL returned by API");
 }
