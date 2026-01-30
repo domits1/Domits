@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Modal from "react-modal";
 import IcalSyncForm from "../../../../../pages/icalsync/IcalSyncForm";
 
-export default function ExternalCalendarsCard({ sources, onAddSource, onRemoveSource, onRefreshAll }) {
+export default function ExternalCalendarsCard({ sources, onAddSource, onRemoveSource, onRefreshAll, exportUrl, onGenerateExport }) {
   const [isIcalModalOpen, setIsIcalModalOpen] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState(null);
@@ -94,7 +94,7 @@ export default function ExternalCalendarsCard({ sources, onAddSource, onRemoveSo
 
         {importError && <div className="ical-error-banner">{importError}</div>}
 
-        <IcalSyncForm exportUrl={""} onImport={handleImport} submitting={importLoading} />
+        <IcalSyncForm exportUrl={exportUrl} onImport={handleImport} submitting={importLoading} onGenerateExport={onGenerateExport} />
       </Modal>
     </>
   );
