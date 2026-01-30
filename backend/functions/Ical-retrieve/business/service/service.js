@@ -1,9 +1,14 @@
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { Repository } from "../../data/repository.js";
 
 const MAX_ICS_BYTES = 2_000_000;
 const MAX_EXPAND_DAYS = 365;
 
 export class Service {
+  constructor() {
+    this.repository = new Repository();
+  }
+
   async retrieveFromExternalCalendar(calendarUrl) {
     if (!calendarUrl || typeof calendarUrl !== "string") {
       throw new BadRequestException("calendarUrl is required");
@@ -38,13 +43,226 @@ export class Service {
       }
       icsText = new TextDecoder("utf-8").decode(buf);
     } catch (e) {
-      console.error("Error fetching external calendar:", e);
       throw new BadRequestException("Could not download external calendar URL");
     }
 
     const events = parseIcsToEvents(icsText);
     return { events, meta: { etag, lastModified } };
   }
+
+  async listSources(propertyId) {
+    if (!propertyId || typeof propertyId !== "string") {
+      throw new BadRequestException("propertyId is required");
+    }
+
+    const sources = await this.repository.listSources(propertyId);
+    const blockedDates = unionBlockedDatesFromRows(sources);
+
+    return {
+      sources: sources.map((r) => ({
+        propertyId: r.propertyId,
+        sourceId: r.sourceId,
+        calendarName: r.calendarName,
+        calendarUrl: r.calendarUrl,
+        lastSyncAt: r.lastSyncAt,
+        updatedAt: r.updatedAt,
+        etag: r.etag,
+        lastModified: r.lastModified,
+      })),
+      blockedDates,
+    };
+  }
+
+  async upsertSource({ propertyId, calendarUrl, calendarName }) {
+    if (!propertyId || typeof propertyId !== "string") throw new BadRequestException("propertyId is required");
+    if (!calendarUrl || typeof calendarUrl !== "string") throw new BadRequestException("calendarUrl is required");
+    if (!calendarName || typeof calendarName !== "string") throw new BadRequestException("calendarName is required");
+
+    const url = calendarUrl.trim();
+    const name = calendarName.trim();
+
+    const sourceId = hashSourceId(url);
+    const { events, meta } = await this.retrieveFromExternalCalendar(url);
+    const blockedDates = buildBlockedDatesFromEvents(events);
+    const blockedDatesText = JSON.stringify(blockedDates);
+
+    await this.repository.upsertSource({
+      propertyId,
+      sourceId,
+      calendarName: name,
+      calendarUrl: url,
+      blockedDatesText,
+      lastSyncAt: new Date().toISOString(),
+      etag: meta?.etag || null,
+      lastModified: meta?.lastModified || null,
+    });
+
+    return await this.listSources(propertyId);
+  }
+
+  async deleteSource({ propertyId, sourceId }) {
+    if (!propertyId || typeof propertyId !== "string") throw new BadRequestException("propertyId is required");
+    if (!sourceId || typeof sourceId !== "string") throw new BadRequestException("sourceId is required");
+
+    await this.repository.deleteSource(propertyId, sourceId);
+    return await this.listSources(propertyId);
+  }
+
+  async refreshAll(propertyId) {
+    if (!propertyId || typeof propertyId !== "string") throw new BadRequestException("propertyId is required");
+
+    const sources = await this.repository.listSources(propertyId);
+
+    for (const s of sources) {
+      const url = String(s?.calendarUrl || "").trim();
+      if (!url) continue;
+
+      try {
+        const { events, meta } = await this.retrieveFromExternalCalendar(url);
+        const blockedDates = buildBlockedDatesFromEvents(events);
+        await this.repository.upsertSource({
+          propertyId,
+          sourceId: s.sourceId,
+          calendarName: s.calendarName || "EXTERNAL",
+          calendarUrl: url,
+          blockedDatesText: JSON.stringify(blockedDates),
+          lastSyncAt: new Date().toISOString(),
+          etag: meta?.etag || null,
+          lastModified: meta?.lastModified || null,
+        });
+      } catch {}
+    }
+
+    return await this.listSources(propertyId);
+  }
+}
+
+function hashSourceId(url) {
+  const s = String(url || "").trim();
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return `src_${(h >>> 0).toString(16)}`;
+}
+
+function unionBlockedDatesFromRows(rows) {
+  const out = new Set();
+  const arr = Array.isArray(rows) ? rows : [];
+
+  for (const r of arr) {
+    const raw = r?.blockedDates;
+    if (!raw) continue;
+
+    const parsed = safeParseJson(raw);
+    const list = Array.isArray(parsed) ? parsed : [];
+    for (const k of list) {
+      if (typeof k === "string" && /^\d{4}-\d{2}-\d{2}$/.test(k)) out.add(k);
+    }
+  }
+
+  return Array.from(out);
+}
+
+function safeParseJson(v) {
+  if (v == null) return null;
+  if (typeof v === "object") return v;
+  try {
+    return JSON.parse(String(v));
+  } catch {
+    return null;
+  }
+}
+
+const pad = (n) => String(n).padStart(2, "0");
+
+function toYmd(d, useUTC) {
+  const dt = d instanceof Date ? d : new Date(d);
+  if (useUTC) return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+}
+
+function addDays(d, n, useUTC) {
+  const x = new Date(d);
+  if (useUTC) x.setUTCDate(x.getUTCDate() + n);
+  else x.setDate(x.getDate() + n);
+  return x;
+}
+
+function parseIcsDate(raw) {
+  if (!raw) return { date: null, useUTC: false };
+  const v = String(raw).trim();
+
+  if (/^\d{8}$/.test(v)) {
+    const y = Number(v.slice(0, 4));
+    const m = Number(v.slice(4, 6));
+    const d = Number(v.slice(6, 8));
+    return { date: new Date(y, m - 1, d), useUTC: false };
+  }
+
+  if (/^\d{8}T\d{6}Z$/.test(v)) {
+    const y = Number(v.slice(0, 4));
+    const m = Number(v.slice(4, 6));
+    const d = Number(v.slice(6, 8));
+    const hh = Number(v.slice(9, 11));
+    const mm = Number(v.slice(11, 13));
+    const ss = Number(v.slice(13, 15));
+    return { date: new Date(Date.UTC(y, m - 1, d, hh, mm, ss)), useUTC: true };
+  }
+
+  if (/^\d{8}T\d{6}$/.test(v)) {
+    const y = Number(v.slice(0, 4));
+    const m = Number(v.slice(4, 6));
+    const d = Number(v.slice(6, 8));
+    const hh = Number(v.slice(9, 11));
+    const mm = Number(v.slice(11, 13));
+    const ss = Number(v.slice(13, 15));
+    return { date: new Date(y, m - 1, d, hh, mm, ss), useUTC: false };
+  }
+
+  const d = new Date(v);
+  return { date: isNaN(d.getTime()) ? null : d, useUTC: false };
+}
+
+function buildBlockedDatesFromEvents(events) {
+  const set = new Set();
+  const arr = Array.isArray(events) ? events : [];
+
+  for (const e of arr) {
+    const { date: start, useUTC: startUTC } = parseIcsDate(e?.Dtstart);
+    const { date: end, useUTC: endUTC } = parseIcsDate(e?.Dtend);
+
+    if (!start) continue;
+
+    if (!end) {
+      set.add(toYmd(start, startUTC));
+      continue;
+    }
+
+    const useUTC = Boolean(startUTC || endUTC);
+
+    const startDay = useUTC
+      ? new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()))
+      : new Date(start.getFullYear(), start.getMonth(), start.getDate());
+
+    const endDay = useUTC
+      ? new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()))
+      : new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+    if (endDay.getTime() <= startDay.getTime()) {
+      set.add(toYmd(startDay, useUTC));
+      continue;
+    }
+
+    let cur = startDay;
+    while (cur.getTime() < endDay.getTime()) {
+      set.add(toYmd(cur, useUTC));
+      cur = addDays(cur, 1, useUTC);
+    }
+  }
+
+  return Array.from(set);
 }
 
 function parseIcsToEvents(icsText) {
@@ -56,6 +274,7 @@ function parseIcsToEvents(icsText) {
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
+
     if (line === "BEGIN:VEVENT") {
       current = { _params: {} };
       continue;
@@ -76,6 +295,7 @@ function parseIcsToEvents(icsText) {
     const parts = left.split(";");
     const key = (parts[0] || "").trim().toUpperCase();
     const params = {};
+
     for (let i = 1; i < parts.length; i++) {
       const p = parts[i];
       const eq = p.indexOf("=");
@@ -133,12 +353,10 @@ function parseIcsToEvents(icsText) {
   }
 
   const expanded = expandRecurringEvents(events);
-  const filtered = expanded.filter((e) => {
+  return expanded.filter((e) => {
     const s = String(e?.Status || "").trim().toUpperCase();
     return s !== "CANCELLED" && s !== "CANCELED";
   });
-
-  return filtered;
 }
 
 function mergeCsvDates(prev, value) {
@@ -230,10 +448,7 @@ function parseRrule(rrule) {
 function expandRecurringEvents(events) {
   const base = Array.isArray(events) ? events : [];
   const now = new Date();
-  const windowEnd = addDaysUTC(
-    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())),
-    MAX_EXPAND_DAYS
-  );
+  const windowEnd = addDaysUTC(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())), MAX_EXPAND_DAYS);
 
   const out = [];
 
@@ -260,9 +475,7 @@ function expandRecurringEvents(events) {
     const count = rule.COUNT ? Math.max(0, Number(rule.COUNT)) : null;
 
     let until = null;
-    if (rule.UNTIL) {
-      until = parseIcsDateUTC(rule.UNTIL, {});
-    }
+    if (rule.UNTIL) until = parseIcsDateUTC(rule.UNTIL, {});
 
     const exdates = new Set(
       (Array.isArray(e.Exdate) ? e.Exdate : e.Exdate ? [e.Exdate] : [])
@@ -278,11 +491,7 @@ function expandRecurringEvents(events) {
     const pushInstance = (s, ed) => {
       const k = ymdUTC(s);
       if (exdates.has(k)) return;
-      out.push({
-        ...e,
-        Dtstart: toIcsUtcString(s),
-        Dtend: ed ? toIcsUtcString(ed) : e.Dtend,
-      });
+      out.push({ ...e, Dtstart: toIcsUtcString(s), Dtend: ed ? toIcsUtcString(ed) : e.Dtend });
     };
 
     for (const rd of rdates) {
