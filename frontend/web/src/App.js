@@ -1,8 +1,20 @@
 import "./styles/sass/app.scss";
-import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
+import {
+  ApolloClient,
+  ApolloProvider,
+  InMemoryCache,
+  HttpLink,
+} from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./styles/toast-notifications.scss";
@@ -83,21 +95,36 @@ Modal.setAppElement("#root");
 
 function RedirectHostOnboardingCatchAll() {
   const location = useLocation();
-  const newPath = location.pathname.replace(/^\/hostonboarding/, "/hostdashboard/hostonboarding");
-  return <Navigate to={`${newPath}${location.search}${location.hash}`} replace />;
+  const newPath = location.pathname.replace(
+    /^\/hostonboarding/,
+    "/hostdashboard/hostonboarding"
+  );
+  return (
+    <Navigate to={`${newPath}${location.search}${location.hash}`} replace />
+  );
 }
 
 function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [setLoading] = useState(false);
 
-  // Apollo Client
+  // ✅ Apollo Client (fixed for Apollo Client v3.14+)
+  const httpLink = new HttpLink({
+    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql",
+  });
+
+  const authLink = setContext((_, { headers }) => {
+    return {
+      headers: {
+        ...headers,
+        "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",
+      },
+    };
+  });
+
   const client = new ApolloClient({
-    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql", //
+    link: authLink.concat(httpLink),
     cache: new InMemoryCache(),
-    headers: {
-      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm", // Replace with your AppSync API key
-    },
   });
 
   useEffect(() => {
@@ -112,7 +139,9 @@ function App() {
 
   const renderFooter = () => {
     if (
-      ["/admin", "/bookingoverview", "/bookingpayment", "/validatepayment"].includes(currentPath) ||
+      ["/admin", "/bookingoverview", "/bookingpayment", "/validatepayment"].includes(
+        currentPath
+      ) ||
       currentPath.startsWith("/verify")
     ) {
       return null;
@@ -131,8 +160,6 @@ function App() {
 
   return (
     <ApolloProvider client={client}>
-      {" "}
-      {/* ApolloProvider */}
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -152,7 +179,12 @@ function App() {
           <AuthProvider>
             <UserProvider>
               <div className="App">
-                {currentPath !== "/admin" && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
+                {currentPath !== "/admin" && (
+                  <Header
+                    setSearchResults={setSearchResults}
+                    setLoading={setLoading}
+                  />
+                )}
                 <Routes>
                   <Route path="/home" element={<Home searchResults={searchResults} />} />
                   <Route path="/" element={<Homepage />} />
@@ -176,14 +208,10 @@ function App() {
                   <Route path="/performance" element={<Performance />} />
                   <Route path="/security" element={<Security />} />
 
-                  {/* Chat */}
-                  {/*<Route path="/chat" element={<Chat/>}/>*/}
                   <Route path="/employeechat" element={<EmployeeChat />} />
 
-                  {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
 
-                  {/* Guest Dashboard */}
                   <Route
                     path="/guestdashboard/messages"
                     element={
@@ -209,15 +237,10 @@ function App() {
                     }
                   />
 
-                  {/* Host Management */}
-                  {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
-
-                  {/* Verification */}
                   <Route path="/verify" element={<HostVerificationView />} />
                   <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                   <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
 
-                  {/* Payment Logic */}
                   <Route
                     path="/validatepayment"
                     element={
@@ -238,7 +261,6 @@ function App() {
 
                   <Route path="/stripe/callback" element={<StripeCallback />} />
 
-                  {/* Career, Policies, and Terms */}
                   <Route path="/career" element={<Careers />} />
                   <Route path="/job/:id" element={<JobDetails />} />
                   <Route path="/policy" element={<Policy />} />
@@ -248,10 +270,8 @@ function App() {
                   <Route path="/channelmanager" element={<ChannelManager />} />
                   <Route path="/admin/property" element={<AdminProperty />} />
 
-                  {/* Legacy deep links: /hostonboarding/* -> /hostdashboard/hostonboarding/* */}
                   <Route path="/hostonboarding/*" element={<RedirectHostOnboardingCatchAll />} />
 
-                  {/* 404 */}
                   <Route path="/*" element={<PageNotFound />} />
                 </Routes>
                 {renderFooter()}
