@@ -147,23 +147,6 @@ const Homepage = () => {
     setActivePopup(activePopup === text ? null : text);
   };
 
-  useEffect(() => {
-    if (!activePopup) return;
-
-    const handleOutsideClick = (event) => {
-      if (event.target.closest(".popup-trigger")) return;
-      setActivePopup(null);
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("touchstart", handleOutsideClick);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("touchstart", handleOutsideClick);
-    };
-  }, [activePopup]);
-
   return (
     <>
       <div className="homePage-container">
@@ -231,42 +214,18 @@ const Homepage = () => {
                     title: `${homePageContent.features.stayGuarantee}`,
                     text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
                   },
-                ].map((item, index) => {
-                  const isOpen = activePopup === item.text;
-                  return (
-                    <div
-                      key={index}
-                      className={`popup-trigger${isOpen ? " is-open" : ""}`}
-                      onClick={() => handlePopupClick(item.text)}
-                      onPointerEnter={(event) => {
-                        if (event.pointerType !== "mouse") return;
-                        setActivePopup(item.text);
-                      }}
-                      onPointerLeave={(event) => {
-                        if (event.pointerType !== "mouse") return;
-                        if (activePopup === item.text) {
-                          setActivePopup(null);
-                        }
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          handlePopupClick(item.text);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      aria-expanded={isOpen}>
-                      <span className="popup-header">
-                        <span className="popup-emoji" aria-hidden="true">
-                          {item.emoji}
-                        </span>
-                        <span className="popup-title">{item.title}</span>
-                      </span>
-                      <div className="popup-content">{item.text}</div>
-                    </div>
-                  );
-                })}
+                ].map((item, index) => (
+                  <div key={index} className="popup-trigger" onClick={() => handlePopupClick(item.text)}>
+                    {item.emoji} {item.title}
+                    {activePopup === item.text && (
+                      <div
+                        className="
+                  ">
+                        {item.text}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
             <div className="domits-accommodationGroup">
