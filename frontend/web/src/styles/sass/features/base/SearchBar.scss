@@ -104,6 +104,9 @@ $primary-domits-color: #0d9813;
 
   .search-location {
     width: 36%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     @include mobile {
       background-color: #f0f0f0;
@@ -116,14 +119,17 @@ $primary-domits-color: #0d9813;
 
     .search-places-input {
       @include reset-input;
-      @include flex-center;
-      margin: 0.6rem auto 0;
+      margin: 0 auto;
       padding: 10px 5px;
       width: 85%;
+      height: 100%;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 500;
+      text-align: center;
 
       &::placeholder {
-        font-family: $primary-font;
-        text-align: center;
+        font-family: inherit;
         color: $primary-domits-color;
         font-size: 1rem;
         font-weight: 500;
