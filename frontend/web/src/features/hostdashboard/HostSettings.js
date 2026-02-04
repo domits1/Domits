@@ -631,9 +631,16 @@ const HostSettings = () => {
         }
     };
 
-    const saveUserPlaceOfBirth = () => {
-        setUser({...user, placeOfBirth: tempUser.placeOfBirth});
-        toggleEditState('placeOfBirth');
+    const saveUserPlaceOfBirth = async () => {
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { "custom:place_of_birth": tempUser.placeOfBirth });
+            setUser({...user, placeOfBirth: tempUser.placeOfBirth});
+            toggleEditState('placeOfBirth');
+        } catch (error) {
+            console.error("Error updating place of birth:", error);
+            alert("Failed to update place of birth. Please try again.");
+        }
     };
 
     const saveUserNationality = async () => {
@@ -696,7 +703,7 @@ const HostSettings = () => {
                 family: "2 adults - 2 kids",
                 title: '',
                 dateOfBirth: formatBirthdateForDisplay(userInfo.attributes.birthdate || ''),
-                placeOfBirth: '',
+                placeOfBirth: userInfo.attributes["custom:place_of_birth"] || '',
                 sex: userInfo.attributes.gender || '',
                 picture: userInfo.attributes.picture || '',
                 nationality: userInfo.attributes["custom:nationality"] || '',
