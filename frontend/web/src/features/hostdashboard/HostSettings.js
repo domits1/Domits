@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from "react";
 import editIcon from "../../images/icons/edit-05.png";
+import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
 import {confirmEmailChange} from "../guestdashboard/emailSettings";
 import './settingshostdashboard.css';
@@ -460,7 +461,7 @@ const HostSettings = () => {
                                     onClick={editState.name ? saveUserName : undefined}
                                     className={`host-icon-background save-button${editState.name ? "" : " is-hidden"}`}
                                     role="button">
-                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                    <img src={checkIcon} alt="Save Name" className="save-check-icon" />
                                 </div>
                                 <div
                                     onClick={() => toggleEditState('name')}
@@ -513,7 +514,7 @@ const HostSettings = () => {
                                     onClick={editState.email ? saveUserEmail : undefined}
                                     className={`host-icon-background save-button${editState.email ? "" : " is-hidden"}`}
                                     role="button">
-                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                    <img src={checkIcon} alt="Save Email" className="save-check-icon" />
                                 </div>
                                 <div
                                     onClick={() => toggleEditState('email')}
@@ -562,7 +563,7 @@ const HostSettings = () => {
                                     onClick={editState.phone ? saveUserPhone : undefined}
                                     className={`host-icon-background save-button${editState.phone ? "" : " is-hidden"}`}
                                     role="button">
-                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                    <img src={checkIcon} alt="Save Phone number" className="save-check-icon" />
                                 </div>
                                 <div
                                     onClick={() => toggleEditState('phone')}
@@ -621,7 +622,7 @@ const HostSettings = () => {
                                     onClick={editState.dateOfBirth ? saveUserDateOfBirth : undefined}
                                     className={`host-icon-background save-button${editState.dateOfBirth ? "" : " is-hidden"}`}
                                     role="button">
-                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                    <img src={checkIcon} alt="Save Date of Birth" className="save-check-icon" />
                                 </div>
                                 <div
                                     onClick={() => toggleEditState('dateOfBirth')}
@@ -658,7 +659,7 @@ const HostSettings = () => {
                                     onClick={editState.placeOfBirth ? saveUserPlaceOfBirth : undefined}
                                     className={`host-icon-background save-button${editState.placeOfBirth ? "" : " is-hidden"}`}
                                     role="button">
-                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                    <img src={checkIcon} alt="Save Place of Birth" className="save-check-icon" />
                                 </div>
                                 <div
                                     onClick={() => toggleEditState('placeOfBirth')}
