@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import editIcon from "../../images/icons/edit-05.png";
 import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
@@ -39,6 +39,8 @@ const HostSettings = () => {
     const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
     const [selectedCountryCode, setSelectedCountryCode] = useState("+1");
     const [stripPhone, setStripPhone] = useState("");
+    const [dateOfBirthError, setDateOfBirthError] = useState("");
+    const previousDobRef = useRef("");
 
     const countryCodes = [
         {code: "+1", name: "United States/Canada"},
@@ -162,16 +164,65 @@ const HostSettings = () => {
         setTempUser({...tempUser, [name]: value});
     };
 
+    const formatDateOfBirth = (digits) => {
+        if (!digits) return "";
+        const day = digits.slice(0, 2);
+        const month = digits.slice(2, 4);
+        const year = digits.slice(4, 8);
+
+        if (digits.length <= 2) {
+            return digits.length === 2 ? `${day}-` : day;
+        }
+        if (digits.length <= 4) {
+            return digits.length === 4 ? `${day}-${month}-` : `${day}-${month}`;
+        }
+        return `${day}-${month}-${year}`;
+    };
+
+    const handleDateOfBirthChange = (e) => {
+        const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+        const prevValue = previousDobRef.current || "";
+        const prevDigits = prevValue.replace(/\D/g, "");
+        const isDeleting = e.target.value.length < prevValue.length;
+        let nextDigits = digits;
+
+        if (isDeleting && prevDigits.length === digits.length) {
+            const cursor = e.target.selectionStart ?? e.target.value.length;
+            if (prevValue[cursor] === "-") {
+                const digitsBefore = prevValue.slice(0, cursor).replace(/\D/g, "").length;
+                const removeIndex = Math.max(digitsBefore - 1, 0);
+                nextDigits = prevDigits.slice(0, removeIndex) + prevDigits.slice(removeIndex + 1);
+            }
+        }
+
+        const formatted = formatDateOfBirth(nextDigits);
+        previousDobRef.current = formatted;
+        setTempUser({...tempUser, dateOfBirth: formatted});
+        if (dateOfBirthError) {
+            setDateOfBirthError("");
+        }
+    };
+
     const handleTitleChange = (e) => {
         const value = e.target.value;
         setTempUser((prevState) => ({...prevState, title: value}));
         setUser((prevState) => ({...prevState, title: value}));
     };
 
-    const handleSexChange = (e) => {
+    const handleSexChange = async (e) => {
         const value = e.target.value;
         setTempUser((prevState) => ({...prevState, sex: value}));
         setUser((prevState) => ({...prevState, sex: value}));
+
+        if (!value) return;
+
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { gender: value });
+        } catch (error) {
+            console.error("Error updating gender:", error);
+            alert("Failed to update gender. Please try again.");
+        }
     };
 
     const handleCountryCodeChange = (e) => {
@@ -208,6 +259,9 @@ const HostSettings = () => {
         setIsVerifyingUsername(false);
         if (!editState[field]) {
             setTempUser({...tempUser, [field]: user[field]});
+        }
+        if (field === "dateOfBirth") {
+            setDateOfBirthError("");
         }
     };
     const saveUserEmail = async () => {
@@ -352,9 +406,60 @@ const HostSettings = () => {
         }
     };
 
-    const saveUserDateOfBirth = () => {
+    const validateDateOfBirth = (value) => {
+        if (!value) {
+            return "Please enter a date of birth.";
+        }
+        const match = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (!match) {
+            return "Use format DD-MM-YYYY.";
+        }
+        const day = Number(match[1]);
+        const month = Number(match[2]);
+        if (day < 1 || day > 31) {
+            return "Day must be between 01 and 31.";
+        }
+        if (month < 1 || month > 12) {
+            return "Month must be between 01 and 12.";
+        }
+        return "";
+    };
+
+    const formatBirthdateForStorage = (value) => {
+        const match = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (!match) return value;
+        return `${match[3]}-${match[2]}-${match[1]}`;
+    };
+
+    const formatBirthdateForDisplay = (value) => {
+        if (!value) return value;
+        if (/^\d{2}-\d{2}-\d{4}$/.test(value)) return value;
+        const parts = value.split("-");
+        if (parts.length !== 3 || parts[0].length !== 4) return value;
+        const [year, month, day] = parts;
+        const paddedMonth = month.padStart(2, "0");
+        const paddedDay = day.padStart(2, "0");
+        return `${paddedDay}-${paddedMonth}-${year}`;
+    };
+
+    const saveUserDateOfBirth = async () => {
+        const error = validateDateOfBirth(tempUser.dateOfBirth);
+        if (error) {
+            setDateOfBirthError(error);
+            return;
+        }
+
+        const birthdateForStorage = formatBirthdateForStorage(tempUser.dateOfBirth);
         setUser({...user, dateOfBirth: tempUser.dateOfBirth});
         toggleEditState('dateOfBirth');
+
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { birthdate: birthdateForStorage });
+        } catch (error) {
+            console.error("Error updating birthdate:", error);
+            alert("Failed to update birthdate. Please try again.");
+        }
     };
 
     const saveUserPlaceOfBirth = () => {
@@ -380,6 +485,10 @@ const HostSettings = () => {
     }, []);
 
     useEffect(() => {
+        previousDobRef.current = tempUser.dateOfBirth || "";
+    }, [tempUser.dateOfBirth]);
+
+    useEffect(() => {
         setStripPhone(user.phone)
     }, [user]);
 
@@ -393,9 +502,9 @@ const HostSettings = () => {
                 phone: userInfo.attributes.phone_number,
                 family: "2 adults - 2 kids",
                 title: '',
-                dateOfBirth: '',
+                dateOfBirth: formatBirthdateForDisplay(userInfo.attributes.birthdate || ''),
                 placeOfBirth: '',
-                sex: '',
+                sex: userInfo.attributes.gender || '',
             });
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -607,14 +716,19 @@ const HostSettings = () => {
                                             name="dateOfBirth"
                                             placeholder="DD-MM-YYYY"
                                             value={tempUser.dateOfBirth}
-                                            onChange={handleInputChange}
+                                            onChange={handleDateOfBirthChange}
                                             className="guest-edit-input"
                                             onKeyPress={handleKeyPressDateOfBirth}
                                             inputMode="numeric"
                                         />
+                                        {dateOfBirthError && (
+                                            <p className="field-error">{dateOfBirthError}</p>
+                                        )}
                                     </div>
+                                ) : user.dateOfBirth ? (
+                                    <p>{user.dateOfBirth}</p>
                                 ) : (
-                                    <p>{user.dateOfBirth || "-"}</p>
+                                    <p className="placeholder-text">DD-MM-YYYY</p>
                                 )}
                             </div>
                             <div className="infoBoxActions">
@@ -644,14 +758,17 @@ const HostSettings = () => {
                                         <input
                                             type="text"
                                             name="placeOfBirth"
+                                            placeholder="Country"
                                             value={tempUser.placeOfBirth}
                                             onChange={handleInputChange}
                                             className="guest-edit-input"
                                             onKeyPress={handleKeyPressPlaceOfBirth}
                                         />
                                     </div>
+                                ) : user.placeOfBirth ? (
+                                    <p>{user.placeOfBirth}</p>
                                 ) : (
-                                    <p>{user.placeOfBirth || "-"}</p>
+                                    <p className="placeholder-text">Country</p>
                                 )}
                             </div>
                             <div className="infoBoxActions">

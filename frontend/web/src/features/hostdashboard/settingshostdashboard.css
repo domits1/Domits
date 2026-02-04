@@ -175,6 +175,23 @@
     margin: 0;
 }
 
+.host-settings-page .placeholder-text {
+    font-style: italic;
+    color: #6b7280;
+}
+
+.host-settings-page .guest-edit-input::placeholder {
+    font-style: italic;
+    color: #6b7280;
+}
+
+.host-settings-page .field-error {
+    margin: 4px 0 0;
+    color: #dc2626;
+    font-size: 0.78rem;
+    flex-basis: 100%;
+}
+
 .host-settings-page .host-icon-background {
     margin-left: 0;
 }
