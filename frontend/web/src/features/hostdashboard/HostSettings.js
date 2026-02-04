@@ -1,15 +1,38 @@
 import React, {useEffect, useState} from "react";
 import editIcon from "../../images/icons/edit-05.png";
-import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
 import {confirmEmailChange} from "../guestdashboard/emailSettings";
 import './settingshostdashboard.css';
 
 
 const HostSettings = () => {
-    const [tempUser, setTempUser] = useState({email: '', name: '', phone: ''});
-    const [user, setUser] = useState({email: '', name: '', address: '', phone: '', family: ''});
-    const [editState, setEditState] = useState({email: false, name: false, phone: false});
+    const [tempUser, setTempUser] = useState({
+        email: '',
+        name: '',
+        phone: '',
+        title: '',
+        dateOfBirth: '',
+        placeOfBirth: '',
+        sex: '',
+    });
+    const [user, setUser] = useState({
+        email: '',
+        name: '',
+        address: '',
+        phone: '',
+        family: '',
+        title: '',
+        dateOfBirth: '',
+        placeOfBirth: '',
+        sex: '',
+    });
+    const [editState, setEditState] = useState({
+        email: false,
+        name: false,
+        phone: false,
+        dateOfBirth: false,
+        placeOfBirth: false,
+    });
     const [verificationCode, setVerificationCode] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
     const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
@@ -130,10 +153,24 @@ const HostSettings = () => {
         {code: "+996", name: "Kyrgyzstan"},
         {code: "+998", name: "Uzbekistan"},
     ];
+    const titleOptions = ["", "Dr.", "Mr.", "Mrs.", "Ms.", "Prof."];
+    const sexOptions = ["", "Female", "Male"];
 
     const handleInputChange = (e) => {
         const {name, value} = e.target;
         setTempUser({...tempUser, [name]: value});
+    };
+
+    const handleTitleChange = (e) => {
+        const value = e.target.value;
+        setTempUser((prevState) => ({...prevState, title: value}));
+        setUser((prevState) => ({...prevState, title: value}));
+    };
+
+    const handleSexChange = (e) => {
+        const value = e.target.value;
+        setTempUser((prevState) => ({...prevState, sex: value}));
+        setUser((prevState) => ({...prevState, sex: value}));
     };
 
     const handleCountryCodeChange = (e) => {
@@ -314,6 +351,28 @@ const HostSettings = () => {
         }
     };
 
+    const saveUserDateOfBirth = () => {
+        setUser({...user, dateOfBirth: tempUser.dateOfBirth});
+        toggleEditState('dateOfBirth');
+    };
+
+    const saveUserPlaceOfBirth = () => {
+        setUser({...user, placeOfBirth: tempUser.placeOfBirth});
+        toggleEditState('placeOfBirth');
+    };
+
+    const handleKeyPressDateOfBirth = (e) => {
+        if (e.key === 'Enter') {
+            saveUserDateOfBirth();
+        }
+    };
+
+    const handleKeyPressPlaceOfBirth = (e) => {
+        if (e.key === 'Enter') {
+            saveUserPlaceOfBirth();
+        }
+    };
+
     useEffect(() => {
         fetchAccommodations();
         fetchUserData();
@@ -331,7 +390,11 @@ const HostSettings = () => {
                 name: userInfo.attributes['given_name'],
                 address: userInfo.attributes.address,
                 phone: userInfo.attributes.phone_number,
-                family: "2 adults - 2 kids"
+                family: "2 adults - 2 kids",
+                title: '',
+                dateOfBirth: '',
+                placeOfBirth: '',
+                sex: '',
             });
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -348,113 +411,264 @@ const HostSettings = () => {
     };
 
     return (
-        <div className="page-body">
+        <div className="page-body host-settings-page">
             <h2>Settings</h2>
             <div className="dashboards">
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
                         <div className="InfoBox">
-                            <span>Email:</span>
-                            {editState.email ? (
-                                <div style={{display: 'flex'}}>
-                                    {!isVerifying ? (
-                                        <>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={tempUser.email}
-                                                onChange={handleInputChange}
-                                                className="guest-edit-input"
-                                                onKeyPress={handleKeyPressEmail}
-                                            />
-                                            <div onClick={saveUserEmail} className="host-icon-background">
-                                                <img src={checkIcon} alt="Save Email" className="guest-check-icon"/>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <input
-                                                type="text"
-                                                name="verificationCode"
-                                                value={verificationCode}
-                                                onChange={handleVerificationInputChange}
-                                                placeholder="Code sent to your email!"
-                                                className="guest-edit-input"
-                                                onKeyPress={handleKeyPressEmail}
-                                            />
-                                            <div onClick={saveUserEmail} className="host-icon-background">
-                                                <img src={checkIcon} alt="Confirm Verification Code"
-                                                     className="guest-check-icon"/>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            ) : (
-                                <p>{user.email}</p>
-                            )}
-                            <div onClick={() => toggleEditState('email')} className="host-icon-background">
-                                <img src={editIcon} alt="Edit Email" className="guest-edit-icon"/>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <span>Name:</span>
-                            {editState.name ? (
-                                <div style={{display: 'flex'}}>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={tempUser.name}
-                                        onChange={handleInputChange}
-                                        className="guest-edit-input"
-                                        onKeyPress={handleKeyPressName}
-                                    />
-                                    <div onClick={saveUserName} className="host-icon-background">
-                                        <img src={checkIcon} alt="Save Name" className="guest-check-icon"/>
-                                    </div>
-                                </div>
-                            ) : (
-                                <p>{user.name}</p>
-                            )}
-                            <div onClick={() => toggleEditState('name')} className="host-icon-background">
-                                <img src={editIcon} alt="Edit Name" className="guest-edit-icon"/>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <span>Phone:</span>
-                            {editState.phone ? (
-                                <div style={{display: 'flex', gap: '5px', alignItems: 'center'}}>
+                            <div className="infoBoxText">
+                                <span>Title:</span>
+                                <div className="infoBoxEditRow">
                                     <select
-                                        value={selectedCountryCode}
-                                        onChange={handleCountryCodeChange}
-                                        className="countryCodeDropdown"
+                                        name="title"
+                                        value={user.title}
+                                        onChange={handleTitleChange}
+                                        className="guest-edit-input"
                                     >
-                                        {countryCodes.map((country, index) => (
-                                            <option key={index} value={country.code}>
-                                                {country.name} ({country.code})
+                                        {titleOptions.map((option) => (
+                                            <option key={option || "empty"} value={option}>
+                                                {option || "Select title"}
                                             </option>
                                         ))}
                                     </select>
-                                    <input
-                                        type="text"
-                                        name="phone"
-                                        placeholder="Phone Number"
-                                        value={stripPhone}
-                                        onChange={handlePhoneChange}
-                                        className="guest-edit-input"
-                                        onKeyPress={handleKeyPressPhone}
-                                    />
-                                    <div onClick={saveUserPhone} className="host-icon-background">
-                                        <img src={checkIcon} alt="Save Number" className="guest-check-icon"/>
-                                    </div>
                                 </div>
-                            ) : (
-                                <p>{user.phone}</p>
-                            )}
-                            <div onClick={() => toggleEditState('phone')} className="host-icon-background">
-                                <img src={editIcon} alt="Edit Phone number" className="guest-edit-icon"/>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Full name:</span>
+                                {editState.name ? (
+                                    <div className="infoBoxEditRow">
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={tempUser.name}
+                                            onChange={handleInputChange}
+                                            className="guest-edit-input"
+                                            onKeyPress={handleKeyPressName}
+                                        />
+                                    </div>
+                                ) : (
+                                    <p>{user.name || "-"}</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.name ? saveUserName : undefined}
+                                    className={`host-icon-background save-button${editState.name ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('name')}
+                                    className={`host-icon-background edit-button${editState.name ? " is-active" : ""}`}>
+                                    {editState.name ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Name" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Email:</span>
+                                {editState.email ? (
+                                    <div className="infoBoxEditRow">
+                                        {!isVerifying ? (
+                                            <>
+                                                <input
+                                                    type="email"
+                                                    name="email"
+                                                    value={tempUser.email}
+                                                    onChange={handleInputChange}
+                                                    className="guest-edit-input"
+                                                    onKeyPress={handleKeyPressEmail}
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    name="verificationCode"
+                                                    value={verificationCode}
+                                                    onChange={handleVerificationInputChange}
+                                                    placeholder="Code sent to your email!"
+                                                    className="guest-edit-input"
+                                                    onKeyPress={handleKeyPressEmail}
+                                                />
+                                            </>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p>{user.email || "-"}</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.email ? saveUserEmail : undefined}
+                                    className={`host-icon-background save-button${editState.email ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('email')}
+                                    className={`host-icon-background edit-button${editState.email ? " is-active" : ""}`}>
+                                    {editState.email ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Email" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Phone:</span>
+                                {editState.phone ? (
+                                    <div className="infoBoxEditRow">
+                                        <select
+                                            value={selectedCountryCode}
+                                            onChange={handleCountryCodeChange}
+                                            className="countryCodeDropdown"
+                                        >
+                                            {countryCodes.map((country, index) => (
+                                                <option key={index} value={country.code}>
+                                                    {country.name} ({country.code})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="text"
+                                            name="phone"
+                                            placeholder="Phone Number"
+                                            value={stripPhone}
+                                            onChange={handlePhoneChange}
+                                            className="guest-edit-input"
+                                            onKeyPress={handleKeyPressPhone}
+                                        />
+                                    </div>
+                                ) : (
+                                    <p>{user.phone || "-"}</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.phone ? saveUserPhone : undefined}
+                                    className={`host-icon-background save-button${editState.phone ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('phone')}
+                                    className={`host-icon-background edit-button${editState.phone ? " is-active" : ""}`}>
+                                    {editState.phone ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Phone number" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Sex:</span>
+                                <div className="infoBoxEditRow">
+                                    <select
+                                        name="sex"
+                                        value={user.sex}
+                                        onChange={handleSexChange}
+                                        className="guest-edit-input"
+                                    >
+                                        {sexOptions.map((option) => (
+                                            <option key={option || "empty"} value={option}>
+                                                {option || "Select sex"}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Date of birth:</span>
+                                {editState.dateOfBirth ? (
+                                    <div className="infoBoxEditRow">
+                                        <input
+                                            type="text"
+                                            name="dateOfBirth"
+                                            placeholder="DD-MM-YYYY"
+                                            value={tempUser.dateOfBirth}
+                                            onChange={handleInputChange}
+                                            className="guest-edit-input"
+                                            onKeyPress={handleKeyPressDateOfBirth}
+                                            inputMode="numeric"
+                                        />
+                                    </div>
+                                ) : (
+                                    <p>{user.dateOfBirth || "-"}</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.dateOfBirth ? saveUserDateOfBirth : undefined}
+                                    className={`host-icon-background save-button${editState.dateOfBirth ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('dateOfBirth')}
+                                    className={`host-icon-background edit-button${editState.dateOfBirth ? " is-active" : ""}`}>
+                                    {editState.dateOfBirth ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Date of Birth" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Place of birth:</span>
+                                {editState.placeOfBirth ? (
+                                    <div className="infoBoxEditRow">
+                                        <input
+                                            type="text"
+                                            name="placeOfBirth"
+                                            value={tempUser.placeOfBirth}
+                                            onChange={handleInputChange}
+                                            className="guest-edit-input"
+                                            onKeyPress={handleKeyPressPlaceOfBirth}
+                                        />
+                                    </div>
+                                ) : (
+                                    <p>{user.placeOfBirth || "-"}</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.placeOfBirth ? saveUserPlaceOfBirth : undefined}
+                                    className={`host-icon-background save-button${editState.placeOfBirth ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <span className="check-emoji" aria-hidden="true">✅</span>
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('placeOfBirth')}
+                                    className={`host-icon-background edit-button${editState.placeOfBirth ? " is-active" : ""}`}>
+                                    {editState.placeOfBirth ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Place of Birth" className="guest-edit-icon"/>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         {/* Voorlopig gecommend samen met Stefan aangezien we nu nog geen need hebben (misschien later) */}

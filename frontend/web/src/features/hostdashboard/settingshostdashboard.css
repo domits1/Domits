@@ -98,6 +98,114 @@
     text-align: left; 
 }
 
+.host-settings-page .personalInfoContent {
+    width: min(520px, 100%);
+    max-width: 100%;
+    align-items: flex-start;
+    margin-left: 0;
+}
+
+.host-settings-page {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.page-body.host-settings-page {
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.host-settings-page > h2 {
+    align-self: center;
+    text-align: center;
+    width: 100%;
+    margin: 0 auto 16px;
+}
+
+.host-settings-page .dashboards,
+.host-settings-page .content {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.host-settings-page .content {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.host-settings-page .InfoBox {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    align-self: flex-start;
+}
+
+.host-settings-page .infoBoxText {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.host-settings-page .infoBoxEditRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.host-settings-page .infoBoxActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+    min-width: calc(4rem + 8px);
+}
+
+.host-settings-page .InfoBox span {
+    flex: 0 0 auto;
+}
+
+.host-settings-page .InfoBox p {
+    margin: 0;
+}
+
+.host-settings-page .host-icon-background {
+    margin-left: 0;
+}
+
+.host-settings-page .save-button.is-hidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.host-settings-page .check-emoji {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.host-settings-page .edit-x {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .host-icon-background {
     background-color: var(--domits-host-blue);
     border-radius: 15px;
@@ -112,6 +220,22 @@
 
 .host-icon-background:hover {
     background-color: #5a9bc7;
+}
+
+.host-settings-page .save-button {
+    background-color: #16a34a;
+}
+
+.host-settings-page .save-button:hover {
+    background-color: #15803d;
+}
+
+.host-settings-page .edit-button.is-active {
+    background-color: #dc2626;
+}
+
+.host-settings-page .edit-button.is-active:hover {
+    background-color: #b91c1c;
 }
 
 @media (max-width: 768px) {
@@ -195,5 +319,19 @@
         font-size: 0.8em;
         width: 90%;
         flex-wrap: wrap;
+    }
+
+    .host-settings-page .personalInfoContent {
+        width: 100%;
+    }
+
+    .host-settings-page .InfoBox {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .host-settings-page .InfoBox span,
+    .host-settings-page .InfoBox p {
+        white-space: normal;
     }
 }
