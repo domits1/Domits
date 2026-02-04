@@ -115,6 +115,9 @@
 .page-body.host-settings-page {
     align-items: flex-start;
     justify-content: flex-start;
+    height: auto;
+    min-height: 100vh;
+    padding-bottom: 48px;
 }
 
 .host-settings-page > h2 {
@@ -159,12 +162,95 @@
     flex-wrap: wrap;
 }
 
+.host-settings-page .infoBoxText--row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 16px;
+}
+
+.host-settings-page .infoBoxText--row .infoBoxEditRow {
+    margin-left: auto;
+}
+
+.host-settings-page .infoBoxText--row .guest-edit-input {
+    min-width: 220px;
+}
+
+.host-settings-page .profile-photo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.host-settings-page .profile-photo-image {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #e5e7eb;
+    background-color: #f3f4f6;
+}
+
+.host-settings-page .profile-photo-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.host-settings-page .photo-action {
+    border: 1px solid #d1d5db;
+    background-color: #fff;
+    color: #111827;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.host-settings-page .photo-action.primary {
+    background-color: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
+}
+
+.host-settings-page .photo-action.primary:hover {
+    background-color: #15803d;
+}
+
+.host-settings-page .photo-action.danger {
+    background-color: #dc2626;
+    border-color: #dc2626;
+    color: #fff;
+}
+
+.host-settings-page .photo-action.danger:hover {
+    background-color: #b91c1c;
+}
+
+.host-settings-page .photo-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .host-settings-page .infoBoxActions {
     display: flex;
     align-items: center;
     gap: 8px;
     justify-content: flex-end;
     min-width: calc(4rem + 8px);
+}
+
+.host-settings-page .preferencesSection {
+    margin-top: 24px;
+    width: 100%;
+}
+
+.host-settings-page .preferencesSection h3 {
+    margin: 0 0 12px;
 }
 
 .host-settings-page .InfoBox span {
@@ -355,5 +441,11 @@
 
     .host-settings-page .infoBoxActions {
         margin-right: 4px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .page-body.host-settings-page {
+        padding-bottom: 110px;
     }
 }

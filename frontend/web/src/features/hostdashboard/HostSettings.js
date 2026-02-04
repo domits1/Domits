@@ -1,12 +1,16 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import editIcon from "../../images/icons/edit-05.png";
 import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
 import {confirmEmailChange} from "../guestdashboard/emailSettings";
+import {normalizeImageUrl} from "../guestdashboard/utils/image";
+import standardAvatar from "../../images/standard.png";
+import {LanguageContext} from "../../context/LanguageContext";
 import './settingshostdashboard.css';
 
 
 const HostSettings = () => {
+    const {language, setLanguage} = useContext(LanguageContext);
     const [tempUser, setTempUser] = useState({
         email: '',
         name: '',
@@ -15,6 +19,8 @@ const HostSettings = () => {
         dateOfBirth: '',
         placeOfBirth: '',
         sex: '',
+        picture: '',
+        nationality: '',
     });
     const [user, setUser] = useState({
         email: '',
@@ -26,6 +32,8 @@ const HostSettings = () => {
         dateOfBirth: '',
         placeOfBirth: '',
         sex: '',
+        picture: '',
+        nationality: '',
     });
     const [editState, setEditState] = useState({
         email: false,
@@ -33,6 +41,7 @@ const HostSettings = () => {
         phone: false,
         dateOfBirth: false,
         placeOfBirth: false,
+        nationality: false,
     });
     const [verificationCode, setVerificationCode] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
@@ -40,7 +49,31 @@ const HostSettings = () => {
     const [selectedCountryCode, setSelectedCountryCode] = useState("+1");
     const [stripPhone, setStripPhone] = useState("");
     const [dateOfBirthError, setDateOfBirthError] = useState("");
+    const [photoError, setPhotoError] = useState("");
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const [nationalityError, setNationalityError] = useState("");
     const previousDobRef = useRef("");
+    const photoInputRef = useRef(null);
+    const [dateFormat, setDateFormat] = useState(localStorage.getItem("dateFormat") || "en");
+    const [priceFormat, setPriceFormat] = useState(localStorage.getItem("priceFormat") || "usd");
+
+    const PROFILE_PHOTO_MAX_SIZE = 5 * 1024 * 1024;
+    const PROFILE_UPLOAD_URL_ENDPOINT = "https://d141hj02ed.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Create-UploadUrl";
+    const languageOptions = [
+        {value: "en", label: "English"},
+        {value: "nl", label: "Nederlands"},
+        {value: "de", label: "Deutsch"},
+        {value: "es", label: "Español"},
+    ];
+    const dateFormatOptions = [
+        {value: "en", label: "English (MM/DD/YYYY)"},
+        {value: "nl", label: "Dutch (DD-MM-YYYY)"},
+    ];
+    const priceFormatOptions = [
+        {value: "usd", label: "Dollar ($)"},
+        {value: "eur", label: "Euro (€)"},
+        {value: "other", label: "Other"},
+    ];
 
     const countryCodes = [
         {code: "+1", name: "United States/Canada"},
@@ -162,6 +195,125 @@ const HostSettings = () => {
     const handleInputChange = (e) => {
         const {name, value} = e.target;
         setTempUser({...tempUser, [name]: value});
+        if (name === "nationality" && nationalityError) {
+            setNationalityError("");
+        }
+    };
+
+    const handleLanguageChange = (e) => {
+        setLanguage(e.target.value);
+    };
+
+    const handleDateFormatChange = (e) => {
+        const value = e.target.value;
+        setDateFormat(value);
+        localStorage.setItem("dateFormat", value);
+    };
+
+    const handlePriceFormatChange = (e) => {
+        const value = e.target.value;
+        setPriceFormat(value);
+        localStorage.setItem("priceFormat", value);
+    };
+
+    const getProfileUploadUrl = async (fileType) => {
+        const response = await fetch(PROFILE_UPLOAD_URL_ENDPOINT, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ fileType }),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to get upload URL");
+        }
+
+        return await response.json();
+    };
+
+    const handlePhotoButtonClick = () => {
+        if (photoInputRef.current) {
+            photoInputRef.current.value = "";
+            photoInputRef.current.click();
+        }
+    };
+
+    const handlePhotoInputChange = async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            setPhotoError("Please select an image file.");
+            return;
+        }
+
+        if (file.size > PROFILE_PHOTO_MAX_SIZE) {
+            setPhotoError("Image must be 5MB or smaller.");
+            return;
+        }
+
+        setIsUploadingPhoto(true);
+        setPhotoError("");
+
+        try {
+            const uploadData = await getProfileUploadUrl(file.type);
+
+            if (!uploadData.uploadUrl || !uploadData.fields || !uploadData.fileUrl) {
+                throw new Error("Invalid upload response.");
+            }
+
+            const formData = new FormData();
+            Object.entries(uploadData.fields).forEach(([key, value]) => {
+                formData.append(key, value);
+            });
+            formData.append("file", file);
+
+            const uploadResponse = await fetch(uploadData.uploadUrl, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error("Failed to upload image.");
+            }
+
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { picture: uploadData.fileUrl });
+            setUser((prevState) => ({
+                ...prevState,
+                picture: uploadData.fileUrl,
+            }));
+        } catch (error) {
+            console.error("Error uploading profile photo:", error);
+            setPhotoError("Failed to upload photo. Please try again.");
+        } finally {
+            setIsUploadingPhoto(false);
+            if (photoInputRef.current) {
+                photoInputRef.current.value = "";
+            }
+        }
+    };
+
+    const handlePhotoRemove = async () => {
+        if (!user.picture) return;
+
+        setIsUploadingPhoto(true);
+        setPhotoError("");
+
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { picture: "" });
+            setUser((prevState) => ({
+                ...prevState,
+                picture: "",
+            }));
+        } catch (error) {
+            console.error("Error removing profile photo:", error);
+            setPhotoError("Failed to remove photo. Please try again.");
+        } finally {
+            setIsUploadingPhoto(false);
+        }
     };
 
     const formatDateOfBirth = (digits) => {
@@ -262,6 +414,9 @@ const HostSettings = () => {
         }
         if (field === "dateOfBirth") {
             setDateOfBirthError("");
+        }
+        if (field === "nationality") {
+            setNationalityError("");
         }
     };
     const saveUserEmail = async () => {
@@ -425,6 +580,20 @@ const HostSettings = () => {
         return "";
     };
 
+    const validateNationality = (value) => {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            return "Please enter a nationality.";
+        }
+        if (trimmed.length < 2 || trimmed.length > 64) {
+            return "Nationality must be 2 to 64 characters.";
+        }
+        if (!/^[A-Za-z][A-Za-z\s'-]*$/.test(trimmed)) {
+            return "Use letters, spaces, hyphens, or apostrophes.";
+        }
+        return "";
+    };
+
     const formatBirthdateForStorage = (value) => {
         const match = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
         if (!match) return value;
@@ -467,6 +636,24 @@ const HostSettings = () => {
         toggleEditState('placeOfBirth');
     };
 
+    const saveUserNationality = async () => {
+        const error = validateNationality(tempUser.nationality || "");
+        if (error) {
+            setNationalityError(error);
+            return;
+        }
+
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { "custom:nationality": tempUser.nationality.trim() });
+            setUser({...user, nationality: tempUser.nationality.trim()});
+            toggleEditState('nationality');
+        } catch (error) {
+            console.error("Error updating nationality:", error);
+            setNationalityError("Failed to update nationality. Please try again.");
+        }
+    };
+
     const handleKeyPressDateOfBirth = (e) => {
         if (e.key === 'Enter') {
             saveUserDateOfBirth();
@@ -476,6 +663,12 @@ const HostSettings = () => {
     const handleKeyPressPlaceOfBirth = (e) => {
         if (e.key === 'Enter') {
             saveUserPlaceOfBirth();
+        }
+    };
+
+    const handleKeyPressNationality = (e) => {
+        if (e.key === 'Enter') {
+            saveUserNationality();
         }
     };
 
@@ -505,6 +698,8 @@ const HostSettings = () => {
                 dateOfBirth: formatBirthdateForDisplay(userInfo.attributes.birthdate || ''),
                 placeOfBirth: '',
                 sex: userInfo.attributes.gender || '',
+                picture: userInfo.attributes.picture || '',
+                nationality: userInfo.attributes["custom:nationality"] || '',
             });
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -527,8 +722,48 @@ const HostSettings = () => {
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
-                        <div className="InfoBox">
+                        <div className="InfoBox profile-photo-box">
                             <div className="infoBoxText">
+                                <span>Profile photo:</span>
+                                <div className="profile-photo-row">
+                                    <img
+                                        src={user.picture ? normalizeImageUrl(user.picture) : standardAvatar}
+                                        alt="Profile"
+                                        className="profile-photo-image"
+                                    />
+                                    <div className="profile-photo-actions">
+                                        <button
+                                            type="button"
+                                            onClick={handlePhotoButtonClick}
+                                            className="photo-action primary"
+                                            disabled={isUploadingPhoto}
+                                        >
+                                            {isUploadingPhoto ? "Working..." : "Upload"}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handlePhotoRemove}
+                                            className="photo-action danger"
+                                            disabled={isUploadingPhoto || !user.picture}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                {photoError && (
+                                    <p className="field-error">{photoError}</p>
+                                )}
+                            </div>
+                        </div>
+                        <input
+                            ref={photoInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoInputChange}
+                            style={{ display: "none" }}
+                        />
+                        <div className="InfoBox">
+                            <div className="infoBoxText infoBoxText--row">
                                 <span>Title:</span>
                                 <div className="infoBoxEditRow">
                                     <select
@@ -687,7 +922,7 @@ const HostSettings = () => {
                         </div>
 
                         <div className="InfoBox">
-                            <div className="infoBoxText">
+                            <div className="infoBoxText infoBoxText--row">
                                 <span>Sex:</span>
                                 <div className="infoBoxEditRow">
                                     <select
@@ -786,6 +1021,113 @@ const HostSettings = () => {
                                     ) : (
                                         <img src={editIcon} alt="Edit Place of Birth" className="guest-edit-icon"/>
                                     )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Nationality:</span>
+                                {editState.nationality ? (
+                                    <div className="infoBoxEditRow">
+                                        <input
+                                            type="text"
+                                            name="nationality"
+                                            placeholder="e.g. Dutch"
+                                            value={tempUser.nationality}
+                                            onChange={handleInputChange}
+                                            className="guest-edit-input"
+                                            onKeyPress={handleKeyPressNationality}
+                                        />
+                                        {nationalityError && (
+                                            <p className="field-error">{nationalityError}</p>
+                                        )}
+                                    </div>
+                                ) : user.nationality ? (
+                                    <p>{user.nationality}</p>
+                                ) : (
+                                    <p className="placeholder-text">Nationality</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.nationality ? saveUserNationality : undefined}
+                                    className={`host-icon-background save-button${editState.nationality ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <img src={checkIcon} alt="Save Nationality" className="save-check-icon" />
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('nationality')}
+                                    className={`host-icon-background edit-button${editState.nationality ? " is-active" : ""}`}>
+                                    {editState.nationality ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Nationality" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="preferencesSection">
+                            <h3>Preferences</h3>
+
+                            <div className="InfoBox">
+                                <div className="infoBoxText infoBoxText--row">
+                                    <span>Default language:</span>
+                                    <div className="infoBoxEditRow">
+                                        <select
+                                            name="defaultLanguage"
+                                            value={language}
+                                            onChange={handleLanguageChange}
+                                            className="guest-edit-input"
+                                        >
+                                            {languageOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="InfoBox">
+                                <div className="infoBoxText infoBoxText--row">
+                                    <span>Date format:</span>
+                                    <div className="infoBoxEditRow">
+                                        <select
+                                            name="dateFormat"
+                                            value={dateFormat}
+                                            onChange={handleDateFormatChange}
+                                            className="guest-edit-input"
+                                        >
+                                            {dateFormatOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="InfoBox">
+                                <div className="infoBoxText infoBoxText--row">
+                                    <span>Price format:</span>
+                                    <div className="infoBoxEditRow">
+                                        <select
+                                            name="priceFormat"
+                                            value={priceFormat}
+                                            onChange={handlePriceFormatChange}
+                                            className="guest-edit-input"
+                                        >
+                                            {priceFormatOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
