@@ -253,6 +253,40 @@
     margin: 0 0 12px;
 }
 
+.host-settings-page .infoBoxTextRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.host-settings-page .status-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.host-settings-page .status-pill.is-active {
+    background-color: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.host-settings-page .status-pill.is-inactive {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.host-settings-page .auth-subtext {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
 .host-settings-page .InfoBox span {
     flex: 0 0 auto;
 }

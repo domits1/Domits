@@ -52,6 +52,11 @@ const HostSettings = () => {
     const [photoError, setPhotoError] = useState("");
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
     const [nationalityError, setNationalityError] = useState("");
+    const [authStatus, setAuthStatus] = useState({
+        emailVerified: false,
+        phoneVerified: false,
+        preferredMFA: "NOMFA",
+    });
     const previousDobRef = useRef("");
     const photoInputRef = useRef(null);
     const [dateFormat, setDateFormat] = useState(localStorage.getItem("dateFormat") || "en");
@@ -214,6 +219,13 @@ const HostSettings = () => {
         const value = e.target.value;
         setPriceFormat(value);
         localStorage.setItem("priceFormat", value);
+    };
+
+    const normalizePreferredMfa = (value) => {
+        if (!value) return "NOMFA";
+        if (value === "SOFTWARE_TOKEN_MFA") return "TOTP";
+        if (value === "SMS_MFA") return "SMS";
+        return value;
     };
 
     const getProfileUploadUrl = async (fileType) => {
@@ -694,19 +706,33 @@ const HostSettings = () => {
 
     const fetchUserData = async () => {
         try {
-            const userInfo = await Auth.currentUserInfo();
+            const currentUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
+            const attributes = currentUser?.attributes || {};
+            let preferredMFA = "NOMFA";
+            try {
+                preferredMFA = normalizePreferredMfa(await Auth.getPreferredMFA(currentUser));
+            } catch (error) {
+                console.warn("Unable to load preferred MFA:", error);
+            }
+            const emailVerified = attributes.email_verified === true || attributes.email_verified === "true";
+            const phoneVerified = attributes.phone_number_verified === true || attributes.phone_number_verified === "true";
             setUser({
-                email: userInfo.attributes.email,
-                name: userInfo.attributes['given_name'],
-                address: userInfo.attributes.address,
-                phone: userInfo.attributes.phone_number,
+                email: attributes.email,
+                name: attributes['given_name'],
+                address: attributes.address,
+                phone: attributes.phone_number,
                 family: "2 adults - 2 kids",
                 title: '',
-                dateOfBirth: formatBirthdateForDisplay(userInfo.attributes.birthdate || ''),
-                placeOfBirth: userInfo.attributes["custom:place_of_birth"] || '',
-                sex: userInfo.attributes.gender || '',
-                picture: userInfo.attributes.picture || '',
-                nationality: userInfo.attributes["custom:nationality"] || '',
+                dateOfBirth: formatBirthdateForDisplay(attributes.birthdate || ''),
+                placeOfBirth: attributes["custom:place_of_birth"] || '',
+                sex: attributes.gender || '',
+                picture: attributes.picture || '',
+                nationality: attributes["custom:nationality"] || '',
+            });
+            setAuthStatus({
+                emailVerified,
+                phoneVerified,
+                preferredMFA,
             });
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -1135,6 +1161,50 @@ const HostSettings = () => {
                                             ))}
                                         </select>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="preferencesSection authSection">
+                            <h3>Authentication</h3>
+
+                            <div className="InfoBox">
+                                <div className="infoBoxText">
+                                    <div className="infoBoxTextRow">
+                                        <span>Email</span>
+                                        <span className={`status-pill ${authStatus.emailVerified ? "is-active" : "is-inactive"}`}>
+                                            {authStatus.emailVerified ? "Active" : "Inactive"}
+                                        </span>
+                                    </div>
+                                    <p className="auth-subtext">
+                                        {authStatus.emailVerified ? "Verified" : "Not verified"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="InfoBox">
+                                <div className="infoBoxText">
+                                    <div className="infoBoxTextRow">
+                                        <span>SMS</span>
+                                        <span className={`status-pill ${authStatus.preferredMFA === "SMS" ? "is-active" : "is-inactive"}`}>
+                                            {authStatus.preferredMFA === "SMS" ? "Active" : "Inactive"}
+                                        </span>
+                                    </div>
+                                    <p className="auth-subtext">
+                                        Phone verified: {authStatus.phoneVerified ? "Yes" : "No"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="InfoBox">
+                                <div className="infoBoxText">
+                                    <div className="infoBoxTextRow">
+                                        <span>Authenticator app</span>
+                                        <span className={`status-pill ${authStatus.preferredMFA === "TOTP" ? "is-active" : "is-inactive"}`}>
+                                            {authStatus.preferredMFA === "TOTP" ? "Active" : "Inactive"}
+                                        </span>
+                                    </div>
+                                    <p className="auth-subtext">App-based codes (TOTP)</p>
                                 </div>
                             </div>
                         </div>
