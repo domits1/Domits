@@ -43,30 +43,48 @@ export const useFetchMessages = (userId) => {
                     signal: controller.signal,
                 });
             } else {
-                const threadId1 = `${userId}-${recipientId}`;
-                const threadId2 = `${recipientId}-${userId}`;
-                
-                console.log('Trying threadId1:', threadId1);
-                response = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId1}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    signal: controller.signal,
-                });
-
-                console.log('ThreadId1 response status:', response.status);
-
-                if (!response.ok) {
-                    console.log('Trying threadId2:', threadId2);
-                    response = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId2}`, {
+                // If no threadId provided, try to get threads for the user and find the matching one
+                try {
+                    const threadsResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads?userId=${userId}`, {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         signal: controller.signal,
                     });
-                    console.log('ThreadId2 response status:', response.status);
+
+                    if (threadsResponse.ok) {
+                        const threads = await threadsResponse.json();
+                        const matchingThread = Array.isArray(threads) 
+                            ? threads.find(t => 
+                                (t.hostId === userId && t.guestId === recipientId) ||
+                                (t.hostId === recipientId && t.guestId === userId)
+                              )
+                            : null;
+
+                        if (matchingThread && matchingThread.id) {
+                            console.log('Found matching thread:', matchingThread.id);
+                            response = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${matchingThread.id}`, {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                signal: controller.signal,
+                            });
+                        }
+                    }
+                } catch (threadError) {
+                    console.warn('Failed to fetch threads, trying fallback:', threadError);
+                }
+
+                // Fallback: if still no response, return empty array (thread will be created on first message)
+                if (!response || !response.ok) {
+                    console.log('No existing thread found, will be created on first message');
+                    setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: [] }));
+                    setMessagesByThread((prev) => ({ ...prev, [cacheKey]: [] }));
+                    cacheRef.current[cacheKey] = [];
+                    setLoading(false);
+                    return;
                 }
             }
 

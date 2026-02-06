@@ -46,46 +46,71 @@ const useFetchContacts = (userId, role) => {
         };
       };
 
-      const fetchLatestMessage = async (recipientIdToSend) => {
+      const fetchLatestMessage = async (recipientIdToSend, threadId = null) => {
         try {
-          const threadId1 = `${userId}-${recipientIdToSend}`;
-          const threadId2 = `${recipientIdToSend}-${userId}`;
-          
-          let unifiedResponse = await fetch("https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-
-          if (!unifiedResponse.ok) {
-            unifiedResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId1}`, {
+          // If threadId is provided, use it directly
+          if (threadId) {
+            const unifiedResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId}`, {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
               },
             });
-          }
 
-          if (!unifiedResponse.ok) {
-            unifiedResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId2}`, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-          }
-
-          if (unifiedResponse.ok) {
-            const messages = await unifiedResponse.json();
-            if (messages && messages.length > 0) {
-              const latestMessage = messages[messages.length - 1];
-              return {
-                text: latestMessage.content,
-                createdAt: new Date(latestMessage.createdAt).toISOString(),
-                isAutomated: latestMessage.metadata?.isAutomated || false,
-              };
+            if (unifiedResponse.ok) {
+              const messages = await unifiedResponse.json();
+              if (messages && Array.isArray(messages) && messages.length > 0) {
+                const latestMessage = messages[messages.length - 1];
+                return {
+                  text: latestMessage.content || latestMessage.text || '',
+                  createdAt: latestMessage.createdAt ? new Date(latestMessage.createdAt).toISOString() : new Date().toISOString(),
+                  isAutomated: latestMessage.metadata?.isAutomated || false,
+                };
+              }
             }
+          }
+
+          // Fallback: try to find thread by userId and recipientId
+          try {
+            const threadsResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads?userId=${userId}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            if (threadsResponse.ok) {
+              const threads = await threadsResponse.json();
+              const matchingThread = Array.isArray(threads) 
+                ? threads.find(t => 
+                    (t.hostId === userId && t.guestId === recipientIdToSend) ||
+                    (t.hostId === recipientIdToSend && t.guestId === userId)
+                  )
+                : null;
+
+              if (matchingThread && matchingThread.id) {
+                const messagesResponse = await fetch(`https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${matchingThread.id}`, {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                });
+
+                if (messagesResponse.ok) {
+                  const messages = await messagesResponse.json();
+                  if (messages && Array.isArray(messages) && messages.length > 0) {
+                    const latestMessage = messages[messages.length - 1];
+                    return {
+                      text: latestMessage.content || latestMessage.text || '',
+                      createdAt: latestMessage.createdAt ? new Date(latestMessage.createdAt).toISOString() : new Date().toISOString(),
+                      isAutomated: latestMessage.metadata?.isAutomated || false,
+                    };
+                  }
+                }
+              }
+            }
+          } catch (threadError) {
+            console.warn("Failed to fetch thread for latest message:", threadError);
           }
         } catch (unifiedError) {
           console.warn("Failed to fetch from UnifiedMessaging:", unifiedError);
@@ -133,7 +158,8 @@ const useFetchContacts = (userId, role) => {
             contacts.map(async (contact) => {
               const recipientId = contact[idField];
               const userInfo = await fetchUserInfo(recipientId);
-              const latestMessage = await fetchLatestMessage(recipientId);
+              // Pass threadId to fetchLatestMessage if available
+              const latestMessage = await fetchLatestMessage(recipientId, contact.threadId);
 
               const hostId = role === "host" ? userId : contact.hostId;
               const guestId = role === "host" ? contact.userId : userId;
@@ -212,7 +238,8 @@ const useFetchContacts = (userId, role) => {
           contacts.map(async (contact) => {
             const recipientId = contact[idField];
             const userInfo = await fetchUserInfo(recipientId);
-            const latestMessage = await fetchLatestMessage(recipientId);
+            // Pass threadId to fetchLatestMessage if available (legacy contacts might not have it)
+            const latestMessage = await fetchLatestMessage(recipientId, contact.threadId);
 
             const hostId = role === "host" ? userId : contact.hostId;
             const guestId = role === "host" ? contact.userId : userId;
