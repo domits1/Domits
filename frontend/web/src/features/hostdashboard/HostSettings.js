@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useRef, useState} from "react";
+import React, {useContext, useEffect, useMemo, useRef, useState} from "react";
 import editIcon from "../../images/icons/edit-05.png";
 import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
@@ -6,6 +6,7 @@ import {confirmEmailChange} from "../guestdashboard/emailSettings";
 import {normalizeImageUrl} from "../guestdashboard/utils/image";
 import standardAvatar from "../../images/standard.png";
 import {LanguageContext} from "../../context/LanguageContext";
+import countryList from "react-select-country-list";
 import './settingshostdashboard.css';
 
 
@@ -82,6 +83,14 @@ const HostSettings = () => {
         {value: "eur", label: "Euro (€)"},
         {value: "other", label: "Other"},
     ];
+
+    const countryOptions = useMemo(() => countryList().getLabels(), []);
+    const placeOfBirthOptions = useMemo(() => {
+        if (user.placeOfBirth && !countryOptions.includes(user.placeOfBirth)) {
+            return [user.placeOfBirth, ...countryOptions];
+        }
+        return countryOptions;
+    }, [countryOptions, user.placeOfBirth]);
 
     const countryCodes = [
         {code: "+1", name: "United States/Canada"},
@@ -597,6 +606,8 @@ const HostSettings = () => {
 
     const validateNationality = (value) => {
         const trimmed = value.trim();
+        const current = (user.nationality || "").trim();
+        if (trimmed === current) return "";
         if (!trimmed) {
             return "Please enter a nationality.";
         }
@@ -1026,15 +1037,19 @@ const HostSettings = () => {
                                 <span>Place of birth:</span>
                                 {editState.placeOfBirth ? (
                                     <div className="infoBoxEditRow">
-                                        <input
-                                            type="text"
+                                        <select
                                             name="placeOfBirth"
-                                            placeholder="Country"
                                             value={tempUser.placeOfBirth}
                                             onChange={handleInputChange}
                                             className="guest-edit-input"
-                                            onKeyPress={handleKeyPressPlaceOfBirth}
-                                        />
+                                        >
+                                            <option value="">Select country</option>
+                                            {placeOfBirthOptions.map((country) => (
+                                                <option key={country} value={country}>
+                                                    {country}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 ) : user.placeOfBirth ? (
                                     <p>{user.placeOfBirth}</p>
