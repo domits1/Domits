@@ -37,6 +37,7 @@ export function buildICS(events) {
 }
 
 export function icsKeyForOwner(ownerId, prefix = "availability") {
-  const ts = new Date().toISOString().replace(/[:.]/g,"-");
-  return `host/${ownerId}/${prefix}-${ts}.ics`;
+  const safeOwner = String(ownerId || "public").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const safePrefix = String(prefix || "availability").replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `host/${safeOwner}/${safePrefix}.ics`;
 }

@@ -9,7 +9,34 @@ const CALENDAR_OPTIONS = [
   { value: "AIRBNB", label: "Airbnb" },
 ];
 
-export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
+function getNiceExportDisplayUrl(exportUrl) {
+  const raw = String(exportUrl || "").trim();
+  if (!raw) return "";
+
+  try {
+    const u = new URL(raw);
+    const path = u.pathname || "/";
+
+    const parts = path.split("/").filter(Boolean);
+    const file = parts[parts.length - 1] || "calendar.ics";
+
+    const hostIdx = parts.indexOf("host");
+    let tail = "";
+    if (hostIdx >= 0) {
+      const afterHost = parts.slice(hostIdx);
+      tail = "/" + afterHost.join("/");
+    } else {
+      tail = path.startsWith("/") ? path : `/${path}`;
+    }
+
+    return `https://domits${tail}`.replace(/\/+$/, "") || `https://domits/${file}`;
+  } catch {
+    const last = raw.split("/").filter(Boolean).pop() || raw;
+    return `https://domits/${last}`;
+  }
+}
+
+export default function IcalSyncForm({ onImport, exportUrl, submitting, onGenerateExport }) {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoadingAcc, setIsLoadingAcc] = useState(false);
   const [userId, setUserId] = useState(null);
@@ -31,16 +58,11 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
     const fetchAccommodations = async () => {
       setIsLoadingAcc(true);
       try {
-        const url = new URL(
-          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byHostId"
-        );
+        const url = new URL("https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byHostId");
         url.searchParams.set("hostId", userId);
 
         const token = getAccessToken();
-        const res = await fetch(url.toString(), {
-          method: "GET",
-          headers: { Authorization: token },
-        });
+        const res = await fetch(url.toString(), { method: "GET", headers: { Authorization: token } });
 
         if (!res.ok) throw new Error(`Failed to fetch (${res.status})`);
         const data = await res.json();
@@ -75,9 +97,7 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
     const newErrors = {};
 
     if (!userId) newErrors.userId = "No userId available.";
-    if (!propertyId || !String(propertyId).trim()) {
-      newErrors.propertyId = "Select an accommodation first.";
-    }
+    if (!propertyId || !String(propertyId).trim()) newErrors.propertyId = "Select an accommodation first.";
     if (!calendarUrl.trim()) newErrors.calendarUrl = "Calendar URL is required.";
     if (!calendarName) newErrors.calendarName = "Calendar name is required.";
 
@@ -98,15 +118,15 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const displayExportUrl = useMemo(() => getNiceExportDisplayUrl(exportUrl), [exportUrl]);
+
   return (
     <form className="adminproperty-form ical-sync-form" onSubmit={handleSubmit}>
       <h2 className="adminproperty-title">iCal &amp; synchronization</h2>
 
       <div className="ical-section">
         <h3 className="ical-section-heading">1. Import</h3>
-        <p className="ical-section-description">
-          Connect an external calendar so Domits can import your bookings.
-        </p>
+        <p className="ical-section-description">Connect an external calendar so Domits can import your bookings.</p>
 
         {errors.userId && <div className="ical-error-banner">{errors.userId}</div>}
 
@@ -148,9 +168,7 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
               className={errors.calendarUrl ? "error" : ""}
               disabled={!userId}
             />
-            {errors.calendarUrl && (
-              <span className="error-text">{errors.calendarUrl}</span>
-            )}
+            {errors.calendarUrl && <span className="error-text">{errors.calendarUrl}</span>}
           </div>
         </div>
 
@@ -175,41 +193,34 @@ export default function IcalSyncForm({ onImport, exportUrl, submitting }) {
               ))}
             </select>
 
-            {errors.calendarName && (
-              <span className="error-text">{errors.calendarName}</span>
-            )}
+            {errors.calendarName && <span className="error-text">{errors.calendarName}</span>}
           </div>
         </div>
 
-        <button
-          type="submit"
-          className="adminproperty-submit"
-          disabled={submitting || !userId}
-        >
+        <button type="submit" className="adminproperty-submit" disabled={submitting || !userId}>
           {submitting ? "Saving…" : "Save calendar connection"}
         </button>
       </div>
 
       <div className="ical-section ical-section-export">
         <h3 className="ical-section-heading">2. Export</h3>
-        <p className="ical-section-description">
-          Use this Domits iCal address to sync your calendar with external platforms.
-        </p>
+        <p className="ical-section-description">Use this Domits iCal address to sync your calendar with external platforms.</p>
 
         <div className="adminproperty-group">
           <label htmlFor="exportUrl">Domits iCal address</label>
 
           <div className="ical-export-row">
-            <input id="exportUrl" type="text" value={exportUrl || ""} readOnly />
-            <button
-              type="button"
-              className={`ical-copy-btn ${copied ? "copied" : ""}`}
-              onClick={handleCopyExportUrl}
-              disabled={!exportUrl}
-            >
+            <input id="exportUrl" type="text" value={displayExportUrl || ""} readOnly />
+            <button type="button" className={`ical-copy-btn ${copied ? "copied" : ""}`} onClick={handleCopyExportUrl} disabled={!exportUrl}>
               {copied ? "Copied ✓" : "Copy"}
             </button>
           </div>
+
+          {exportUrl && (
+            <div style={{ marginTop: 6, fontSize: 12, opacity: 0.65, wordBreak: "break-all" }}>
+              Copies the real URL: {exportUrl}
+            </div>
+          )}
         </div>
       </div>
     </form>

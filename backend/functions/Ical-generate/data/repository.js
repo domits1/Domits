@@ -1,20 +1,25 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({ region: process.env.REGION || "eu-north-1" });
 const BUCKET = process.env.S3_BUCKET;
-const EXPIRES = parseInt(process.env.PRESIGN_EXPIRES_SECONDS || "3600", 10);
+const REGION = process.env.REGION || "eu-north-1";
 
 export class Repository {
   async uploadIcsAndPresign(Key, Body) {
-    await s3.send(new PutObjectCommand({
-      Bucket: BUCKET,
-      Key,
-      Body,
-      ContentType: "text/calendar; charset=utf-8",
-      CacheControl: "no-cache"
-    }));
-    const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket: BUCKET, Key }), { expiresIn: EXPIRES });
+    if (!BUCKET) throw new Error("S3_BUCKET env is missing");
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: BUCKET,
+        Key,
+        Body,
+        ContentType: "text/calendar; charset=utf-8",
+        CacheControl: "no-cache, no-store, must-revalidate",
+      })
+    );
+
+    const encodedKey = encodeURIComponent(Key).replace(/%2F/g, "/");
+    const url = `https://${BUCKET}.s3.${REGION}.amazonaws.com/${encodedKey}`;
     return url;
   }
 }
