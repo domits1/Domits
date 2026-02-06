@@ -1,20 +1,96 @@
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useMemo, useRef, useState} from "react";
 import editIcon from "../../images/icons/edit-05.png";
 import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
 import {confirmEmailChange} from "../guestdashboard/emailSettings";
+import {normalizeImageUrl} from "../guestdashboard/utils/image";
+import standardAvatar from "../../images/standard.png";
+import {LanguageContext} from "../../context/LanguageContext";
+import countryList from "react-select-country-list";
 import './settingshostdashboard.css';
 
 
 const HostSettings = () => {
-    const [tempUser, setTempUser] = useState({email: '', name: '', phone: ''});
-    const [user, setUser] = useState({email: '', name: '', address: '', phone: '', family: ''});
-    const [editState, setEditState] = useState({email: false, name: false, phone: false});
+    const {language, setLanguage} = useContext(LanguageContext);
+    const SHOW_PREF_FORMATS = false;
+    const SHOW_AUTH_MFA = false;
+    const [tempUser, setTempUser] = useState({
+        email: '',
+        name: '',
+        phone: '',
+        title: '',
+        dateOfBirth: '',
+        placeOfBirth: '',
+        sex: '',
+        picture: '',
+        nationality: '',
+    });
+    const [user, setUser] = useState({
+        email: '',
+        name: '',
+        address: '',
+        phone: '',
+        family: '',
+        title: '',
+        dateOfBirth: '',
+        placeOfBirth: '',
+        sex: '',
+        picture: '',
+        nationality: '',
+    });
+    const [editState, setEditState] = useState({
+        email: false,
+        name: false,
+        phone: false,
+        dateOfBirth: false,
+        placeOfBirth: false,
+        nationality: false,
+    });
     const [verificationCode, setVerificationCode] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
     const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
     const [selectedCountryCode, setSelectedCountryCode] = useState("+1");
     const [stripPhone, setStripPhone] = useState("");
+    const [dateOfBirthError, setDateOfBirthError] = useState("");
+    const [photoError, setPhotoError] = useState("");
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const [nationalityError, setNationalityError] = useState("");
+    const [authStatus, setAuthStatus] = useState({
+        emailVerified: false,
+        phoneVerified: false,
+        preferredMFA: "NOMFA",
+    });
+    const [dateFormat, setDateFormat] = useState(localStorage.getItem("dateFormat") || "en");
+    const [priceFormat, setPriceFormat] = useState(localStorage.getItem("priceFormat") || "usd");
+    const previousDobRef = useRef("");
+    const photoInputRef = useRef(null);
+
+    const PROFILE_PHOTO_MAX_SIZE = 5 * 1024 * 1024;
+    const PROFILE_UPLOAD_URL_ENDPOINT = "https://d141hj02ed.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Create-UploadUrl";
+    const languageOptions = [
+        {value: "en", label: "English"},
+        {value: "nl", label: "Nederlands"},
+        {value: "de", label: "Deutsch"},
+        {value: "es", label: "Español"},
+    ];
+
+    const dateFormatOptions = [
+        {value: "en", label: "English (MM/DD/YYYY)"},
+        {value: "nl", label: "Dutch (DD-MM-YYYY)"},
+    ];
+    const priceFormatOptions = [
+        {value: "usd", label: "Dollar ($)"},
+        {value: "eur", label: "Euro (€)"},
+        {value: "other", label: "Other"},
+    ];
+
+    const countryOptions = useMemo(() => countryList().getLabels(), []);
+    const placeOfBirthOptions = useMemo(() => {
+        if (user.placeOfBirth && !countryOptions.includes(user.placeOfBirth)) {
+            return [user.placeOfBirth, ...countryOptions];
+        }
+        return countryOptions;
+    }, [countryOptions, user.placeOfBirth]);
 
     const countryCodes = [
         {code: "+1", name: "United States/Canada"},
@@ -130,10 +206,199 @@ const HostSettings = () => {
         {code: "+996", name: "Kyrgyzstan"},
         {code: "+998", name: "Uzbekistan"},
     ];
+    const titleOptions = ["", "Dr.", "Mr.", "Mrs.", "Ms.", "Prof."];
+    const sexOptions = ["", "Female", "Male"];
 
     const handleInputChange = (e) => {
         const {name, value} = e.target;
         setTempUser({...tempUser, [name]: value});
+        if (name === "nationality" && nationalityError) {
+            setNationalityError("");
+        }
+    };
+
+    const handleLanguageChange = (e) => {
+        setLanguage(e.target.value);
+    };
+
+    const handleDateFormatChange = (e) => {
+        const value = e.target.value;
+        setDateFormat(value);
+        localStorage.setItem("dateFormat", value);
+    };
+
+    const handlePriceFormatChange = (e) => {
+        const value = e.target.value;
+        setPriceFormat(value);
+        localStorage.setItem("priceFormat", value);
+    };
+
+    const normalizePreferredMfa = (value) => {
+        if (!value) return "NOMFA";
+        if (value === "SOFTWARE_TOKEN_MFA") return "TOTP";
+        if (value === "SMS_MFA") return "SMS";
+        return value;
+    };
+
+    const getProfileUploadUrl = async (fileType) => {
+        const response = await fetch(PROFILE_UPLOAD_URL_ENDPOINT, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ fileType }),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to get upload URL");
+        }
+
+        return await response.json();
+    };
+
+    const handlePhotoButtonClick = () => {
+        if (photoInputRef.current) {
+            photoInputRef.current.value = "";
+            photoInputRef.current.click();
+        }
+    };
+
+    const handlePhotoInputChange = async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            setPhotoError("Please select an image file.");
+            return;
+        }
+
+        if (file.size > PROFILE_PHOTO_MAX_SIZE) {
+            setPhotoError("Image must be 5MB or smaller.");
+            return;
+        }
+
+        setIsUploadingPhoto(true);
+        setPhotoError("");
+
+        try {
+            const uploadData = await getProfileUploadUrl(file.type);
+
+            if (!uploadData.uploadUrl || !uploadData.fields || !uploadData.fileUrl) {
+                throw new Error("Invalid upload response.");
+            }
+
+            const formData = new FormData();
+            Object.entries(uploadData.fields).forEach(([key, value]) => {
+                formData.append(key, value);
+            });
+            formData.append("file", file);
+
+            const uploadResponse = await fetch(uploadData.uploadUrl, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error("Failed to upload image.");
+            }
+
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { picture: uploadData.fileUrl });
+            setUser((prevState) => ({
+                ...prevState,
+                picture: uploadData.fileUrl,
+            }));
+        } catch (error) {
+            console.error("Error uploading profile photo:", error);
+            setPhotoError("Failed to upload photo. Please try again.");
+        } finally {
+            setIsUploadingPhoto(false);
+            if (photoInputRef.current) {
+                photoInputRef.current.value = "";
+            }
+        }
+    };
+
+    const handlePhotoRemove = async () => {
+        if (!user.picture) return;
+
+        setIsUploadingPhoto(true);
+        setPhotoError("");
+
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { picture: "" });
+            setUser((prevState) => ({
+                ...prevState,
+                picture: "",
+            }));
+        } catch (error) {
+            console.error("Error removing profile photo:", error);
+            setPhotoError("Failed to remove photo. Please try again.");
+        } finally {
+            setIsUploadingPhoto(false);
+        }
+    };
+
+    const formatDateOfBirth = (digits) => {
+        if (!digits) return "";
+        const day = digits.slice(0, 2);
+        const month = digits.slice(2, 4);
+        const year = digits.slice(4, 8);
+
+        if (digits.length <= 2) {
+            return digits.length === 2 ? `${day}-` : day;
+        }
+        if (digits.length <= 4) {
+            return digits.length === 4 ? `${day}-${month}-` : `${day}-${month}`;
+        }
+        return `${day}-${month}-${year}`;
+    };
+
+    const handleDateOfBirthChange = (e) => {
+        const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+        const prevValue = previousDobRef.current || "";
+        const prevDigits = prevValue.replace(/\D/g, "");
+        const isDeleting = e.target.value.length < prevValue.length;
+        let nextDigits = digits;
+
+        if (isDeleting && prevDigits.length === digits.length) {
+            const cursor = e.target.selectionStart ?? e.target.value.length;
+            if (prevValue[cursor] === "-") {
+                const digitsBefore = prevValue.slice(0, cursor).replace(/\D/g, "").length;
+                const removeIndex = Math.max(digitsBefore - 1, 0);
+                nextDigits = prevDigits.slice(0, removeIndex) + prevDigits.slice(removeIndex + 1);
+            }
+        }
+
+        const formatted = formatDateOfBirth(nextDigits);
+        previousDobRef.current = formatted;
+        setTempUser({...tempUser, dateOfBirth: formatted});
+        if (dateOfBirthError) {
+            setDateOfBirthError("");
+        }
+    };
+
+    const handleTitleChange = (e) => {
+        const value = e.target.value;
+        setTempUser((prevState) => ({...prevState, title: value}));
+        setUser((prevState) => ({...prevState, title: value}));
+    };
+
+    const handleSexChange = async (e) => {
+        const value = e.target.value;
+        setTempUser((prevState) => ({...prevState, sex: value}));
+        setUser((prevState) => ({...prevState, sex: value}));
+
+        if (!value) return;
+
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { gender: value });
+        } catch (error) {
+            console.error("Error updating gender:", error);
+            alert("Failed to update gender. Please try again.");
+        }
     };
 
     const handleCountryCodeChange = (e) => {
@@ -170,6 +435,12 @@ const HostSettings = () => {
         setIsVerifyingUsername(false);
         if (!editState[field]) {
             setTempUser({...tempUser, [field]: user[field]});
+        }
+        if (field === "dateOfBirth") {
+            setDateOfBirthError("");
+        }
+        if (field === "nationality") {
+            setNationalityError("");
         }
     };
     const saveUserEmail = async () => {
@@ -314,10 +585,134 @@ const HostSettings = () => {
         }
     };
 
+    const validateDateOfBirth = (value) => {
+        if (!value) {
+            return "Please enter a date of birth.";
+        }
+        const match = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (!match) {
+            return "Use format DD-MM-YYYY.";
+        }
+        const day = Number(match[1]);
+        const month = Number(match[2]);
+        if (day < 1 || day > 31) {
+            return "Day must be between 01 and 31.";
+        }
+        if (month < 1 || month > 12) {
+            return "Month must be between 01 and 12.";
+        }
+        return "";
+    };
+
+    const validateNationality = (value) => {
+        const trimmed = value.trim();
+        const current = (user.nationality || "").trim();
+        if (trimmed === current) return "";
+        if (!trimmed) {
+            return "Please enter a nationality.";
+        }
+        if (trimmed.length < 2 || trimmed.length > 64) {
+            return "Nationality must be 2 to 64 characters.";
+        }
+        if (!/^[A-Za-z][A-Za-z\s'-]*$/.test(trimmed)) {
+            return "Use letters, spaces, hyphens, or apostrophes.";
+        }
+        return "";
+    };
+
+    const formatBirthdateForStorage = (value) => {
+        const match = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (!match) return value;
+        return `${match[3]}-${match[2]}-${match[1]}`;
+    };
+
+    const formatBirthdateForDisplay = (value) => {
+        if (!value) return value;
+        if (/^\d{2}-\d{2}-\d{4}$/.test(value)) return value;
+        const parts = value.split("-");
+        if (parts.length !== 3 || parts[0].length !== 4) return value;
+        const [year, month, day] = parts;
+        const paddedMonth = month.padStart(2, "0");
+        const paddedDay = day.padStart(2, "0");
+        return `${paddedDay}-${paddedMonth}-${year}`;
+    };
+
+    const saveUserDateOfBirth = async () => {
+        const error = validateDateOfBirth(tempUser.dateOfBirth);
+        if (error) {
+            setDateOfBirthError(error);
+            return;
+        }
+
+        const birthdateForStorage = formatBirthdateForStorage(tempUser.dateOfBirth);
+        setUser({...user, dateOfBirth: tempUser.dateOfBirth});
+        toggleEditState('dateOfBirth');
+
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { birthdate: birthdateForStorage });
+        } catch (error) {
+            console.error("Error updating birthdate:", error);
+            alert("Failed to update birthdate. Please try again.");
+        }
+    };
+
+    const saveUserPlaceOfBirth = async () => {
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { "custom:place_of_birth": tempUser.placeOfBirth });
+            setUser({...user, placeOfBirth: tempUser.placeOfBirth});
+            toggleEditState('placeOfBirth');
+        } catch (error) {
+            console.error("Error updating place of birth:", error);
+            alert("Failed to update place of birth. Please try again.");
+        }
+    };
+
+    const saveUserNationality = async () => {
+        const error = validateNationality(tempUser.nationality || "");
+        if (error) {
+            setNationalityError(error);
+            return;
+        }
+
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { "custom:nationality": tempUser.nationality.trim() });
+            setUser({...user, nationality: tempUser.nationality.trim()});
+            toggleEditState('nationality');
+        } catch (error) {
+            console.error("Error updating nationality:", error);
+            setNationalityError("Failed to update nationality. Please try again.");
+        }
+    };
+
+    const handleKeyPressDateOfBirth = (e) => {
+        if (e.key === 'Enter') {
+            saveUserDateOfBirth();
+        }
+    };
+
+    const handleKeyPressPlaceOfBirth = (e) => {
+        if (e.key === 'Enter') {
+            saveUserPlaceOfBirth();
+        }
+    };
+
+    const handleKeyPressNationality = (e) => {
+        if (e.key === 'Enter') {
+            saveUserNationality();
+        }
+    };
+
     useEffect(() => {
         fetchAccommodations();
         fetchUserData();
     }, []);
+
+    useEffect(() => {
+        previousDobRef.current = tempUser.dateOfBirth || "";
+    }, [tempUser.dateOfBirth]);
 
     useEffect(() => {
         setStripPhone(user.phone)
@@ -325,13 +720,33 @@ const HostSettings = () => {
 
     const fetchUserData = async () => {
         try {
-            const userInfo = await Auth.currentUserInfo();
+            const currentUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
+            const attributes = currentUser?.attributes || {};
+            let preferredMFA = "NOMFA";
+            try {
+                preferredMFA = normalizePreferredMfa(await Auth.getPreferredMFA(currentUser));
+            } catch (error) {
+                console.warn("Unable to load preferred MFA:", error);
+            }
+            const emailVerified = attributes.email_verified === true || attributes.email_verified === "true";
+            const phoneVerified = attributes.phone_number_verified === true || attributes.phone_number_verified === "true";
             setUser({
-                email: userInfo.attributes.email,
-                name: userInfo.attributes['given_name'],
-                address: userInfo.attributes.address,
-                phone: userInfo.attributes.phone_number,
-                family: "2 adults - 2 kids"
+                email: attributes.email,
+                name: attributes['given_name'],
+                address: attributes.address,
+                phone: attributes.phone_number,
+                family: "2 adults - 2 kids",
+                title: '',
+                dateOfBirth: formatBirthdateForDisplay(attributes.birthdate || ''),
+                placeOfBirth: attributes["custom:place_of_birth"] || '',
+                sex: attributes.gender || '',
+                picture: attributes.picture || '',
+                nationality: attributes["custom:nationality"] || '',
+            });
+            setAuthStatus({
+                emailVerified,
+                phoneVerified,
+                preferredMFA,
             });
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -348,114 +763,476 @@ const HostSettings = () => {
     };
 
     return (
-        <div className="page-body">
+        <div className="page-body host-settings-page">
             <h2>Settings</h2>
             <div className="dashboards">
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
-                        <div className="InfoBox">
-                            <span>Email:</span>
-                            {editState.email ? (
-                                <div style={{display: 'flex'}}>
-                                    {!isVerifying ? (
-                                        <>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={tempUser.email}
-                                                onChange={handleInputChange}
-                                                className="guest-edit-input"
-                                                onKeyPress={handleKeyPressEmail}
-                                            />
-                                            <div onClick={saveUserEmail} className="host-icon-background">
-                                                <img src={checkIcon} alt="Save Email" className="guest-check-icon"/>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <input
-                                                type="text"
-                                                name="verificationCode"
-                                                value={verificationCode}
-                                                onChange={handleVerificationInputChange}
-                                                placeholder="Code sent to your email!"
-                                                className="guest-edit-input"
-                                                onKeyPress={handleKeyPressEmail}
-                                            />
-                                            <div onClick={saveUserEmail} className="host-icon-background">
-                                                <img src={checkIcon} alt="Confirm Verification Code"
-                                                     className="guest-check-icon"/>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            ) : (
-                                <p>{user.email}</p>
-                            )}
-                            <div onClick={() => toggleEditState('email')} className="host-icon-background">
-                                <img src={editIcon} alt="Edit Email" className="guest-edit-icon"/>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <span>Name:</span>
-                            {editState.name ? (
-                                <div style={{display: 'flex'}}>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={tempUser.name}
-                                        onChange={handleInputChange}
-                                        className="guest-edit-input"
-                                        onKeyPress={handleKeyPressName}
+                        <div className="InfoBox profile-photo-box">
+                            <div className="infoBoxText">
+                                <span>Profile photo:</span>
+                                <div className="profile-photo-row">
+                                    <img
+                                        src={user.picture ? normalizeImageUrl(user.picture) : standardAvatar}
+                                        alt="Profile"
+                                        className="profile-photo-image"
                                     />
-                                    <div onClick={saveUserName} className="host-icon-background">
-                                        <img src={checkIcon} alt="Save Name" className="guest-check-icon"/>
+                                    <div className="profile-photo-actions">
+                                        <button
+                                            type="button"
+                                            onClick={handlePhotoButtonClick}
+                                            className="photo-action primary"
+                                            disabled={isUploadingPhoto}
+                                        >
+                                            {isUploadingPhoto ? "Working..." : "Upload"}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handlePhotoRemove}
+                                            className="photo-action danger"
+                                            disabled={isUploadingPhoto || !user.picture}
+                                        >
+                                            Remove
+                                        </button>
                                     </div>
                                 </div>
-                            ) : (
-                                <p>{user.name}</p>
-                            )}
-                            <div onClick={() => toggleEditState('name')} className="host-icon-background">
-                                <img src={editIcon} alt="Edit Name" className="guest-edit-icon"/>
+                                {photoError && (
+                                    <p className="field-error">{photoError}</p>
+                                )}
                             </div>
                         </div>
-
+                        <input
+                            ref={photoInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoInputChange}
+                            style={{ display: "none" }}
+                        />
                         <div className="InfoBox">
-                            <span>Phone:</span>
-                            {editState.phone ? (
-                                <div style={{display: 'flex', gap: '5px', alignItems: 'center'}}>
+                            <div className="infoBoxText infoBoxText--row">
+                                <span>Title:</span>
+                                <div className="infoBoxEditRow">
                                     <select
-                                        value={selectedCountryCode}
-                                        onChange={handleCountryCodeChange}
-                                        className="countryCodeDropdown"
+                                        name="title"
+                                        value={user.title}
+                                        onChange={handleTitleChange}
+                                        className="guest-edit-input"
                                     >
-                                        {countryCodes.map((country, index) => (
-                                            <option key={index} value={country.code}>
-                                                {country.name} ({country.code})
+                                        {titleOptions.map((option) => (
+                                            <option key={option || "empty"} value={option}>
+                                                {option || "Select title"}
                                             </option>
                                         ))}
                                     </select>
-                                    <input
-                                        type="text"
-                                        name="phone"
-                                        placeholder="Phone Number"
-                                        value={stripPhone}
-                                        onChange={handlePhoneChange}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Full name:</span>
+                                {editState.name ? (
+                                    <div className="infoBoxEditRow">
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={tempUser.name}
+                                            onChange={handleInputChange}
+                                            className="guest-edit-input"
+                                            onKeyPress={handleKeyPressName}
+                                        />
+                                    </div>
+                                ) : (
+                                    <p>{user.name || "-"}</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.name ? saveUserName : undefined}
+                                    className={`host-icon-background save-button${editState.name ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <img src={checkIcon} alt="Save Name" className="save-check-icon" />
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('name')}
+                                    className={`host-icon-background edit-button${editState.name ? " is-active" : ""}`}>
+                                    {editState.name ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Name" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Email:</span>
+                                {editState.email ? (
+                                    <div className="infoBoxEditRow">
+                                        {!isVerifying ? (
+                                            <>
+                                                <input
+                                                    type="email"
+                                                    name="email"
+                                                    value={tempUser.email}
+                                                    onChange={handleInputChange}
+                                                    className="guest-edit-input"
+                                                    onKeyPress={handleKeyPressEmail}
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    name="verificationCode"
+                                                    value={verificationCode}
+                                                    onChange={handleVerificationInputChange}
+                                                    placeholder="Code sent to your email!"
+                                                    className="guest-edit-input"
+                                                    onKeyPress={handleKeyPressEmail}
+                                                />
+                                            </>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p>{user.email || "-"}</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.email ? saveUserEmail : undefined}
+                                    className={`host-icon-background save-button${editState.email ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <img src={checkIcon} alt="Save Email" className="save-check-icon" />
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('email')}
+                                    className={`host-icon-background edit-button${editState.email ? " is-active" : ""}`}>
+                                    {editState.email ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Email" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Phone:</span>
+                                {editState.phone ? (
+                                    <div className="infoBoxEditRow">
+                                        <select
+                                            value={selectedCountryCode}
+                                            onChange={handleCountryCodeChange}
+                                            className="countryCodeDropdown"
+                                        >
+                                            {countryCodes.map((country, index) => (
+                                                <option key={index} value={country.code}>
+                                                    {country.name} ({country.code})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="text"
+                                            name="phone"
+                                            placeholder="Phone Number"
+                                            value={stripPhone}
+                                            onChange={handlePhoneChange}
+                                            className="guest-edit-input"
+                                            onKeyPress={handleKeyPressPhone}
+                                        />
+                                    </div>
+                                ) : (
+                                    <p>{user.phone || "-"}</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.phone ? saveUserPhone : undefined}
+                                    className={`host-icon-background save-button${editState.phone ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <img src={checkIcon} alt="Save Phone number" className="save-check-icon" />
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('phone')}
+                                    className={`host-icon-background edit-button${editState.phone ? " is-active" : ""}`}>
+                                    {editState.phone ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Phone number" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText infoBoxText--row">
+                                <span>Sex:</span>
+                                <div className="infoBoxEditRow">
+                                    <select
+                                        name="sex"
+                                        value={user.sex}
+                                        onChange={handleSexChange}
                                         className="guest-edit-input"
-                                        onKeyPress={handleKeyPressPhone}
-                                    />
-                                    <div onClick={saveUserPhone} className="host-icon-background">
-                                        <img src={checkIcon} alt="Save Number" className="guest-check-icon"/>
+                                    >
+                                        {sexOptions.map((option) => (
+                                            <option key={option || "empty"} value={option}>
+                                                {option || "Select sex"}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Date of birth:</span>
+                                {editState.dateOfBirth ? (
+                                    <div className="infoBoxEditRow">
+                                        <input
+                                            type="text"
+                                            name="dateOfBirth"
+                                            placeholder="DD-MM-YYYY"
+                                            value={tempUser.dateOfBirth}
+                                            onChange={handleDateOfBirthChange}
+                                            className="guest-edit-input"
+                                            onKeyPress={handleKeyPressDateOfBirth}
+                                            inputMode="numeric"
+                                        />
+                                        {dateOfBirthError && (
+                                            <p className="field-error">{dateOfBirthError}</p>
+                                        )}
+                                    </div>
+                                ) : user.dateOfBirth ? (
+                                    <p>{user.dateOfBirth}</p>
+                                ) : (
+                                    <p className="placeholder-text">DD-MM-YYYY</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.dateOfBirth ? saveUserDateOfBirth : undefined}
+                                    className={`host-icon-background save-button${editState.dateOfBirth ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <img src={checkIcon} alt="Save Date of Birth" className="save-check-icon" />
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('dateOfBirth')}
+                                    className={`host-icon-background edit-button${editState.dateOfBirth ? " is-active" : ""}`}>
+                                    {editState.dateOfBirth ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Date of Birth" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Place of birth:</span>
+                                {editState.placeOfBirth ? (
+                                    <div className="infoBoxEditRow">
+                                        <select
+                                            name="placeOfBirth"
+                                            value={tempUser.placeOfBirth}
+                                            onChange={handleInputChange}
+                                            className="guest-edit-input"
+                                        >
+                                            <option value="">Select country</option>
+                                            {placeOfBirthOptions.map((country) => (
+                                                <option key={country} value={country}>
+                                                    {country}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                ) : user.placeOfBirth ? (
+                                    <p>{user.placeOfBirth}</p>
+                                ) : (
+                                    <p className="placeholder-text">Country</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.placeOfBirth ? saveUserPlaceOfBirth : undefined}
+                                    className={`host-icon-background save-button${editState.placeOfBirth ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <img src={checkIcon} alt="Save Place of Birth" className="save-check-icon" />
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('placeOfBirth')}
+                                    className={`host-icon-background edit-button${editState.placeOfBirth ? " is-active" : ""}`}>
+                                    {editState.placeOfBirth ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Place of Birth" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="InfoBox">
+                            <div className="infoBoxText">
+                                <span>Nationality:</span>
+                                {editState.nationality ? (
+                                    <div className="infoBoxEditRow">
+                                        <input
+                                            type="text"
+                                            name="nationality"
+                                            placeholder="e.g. Dutch"
+                                            value={tempUser.nationality}
+                                            onChange={handleInputChange}
+                                            className="guest-edit-input"
+                                            onKeyPress={handleKeyPressNationality}
+                                        />
+                                        {nationalityError && (
+                                            <p className="field-error">{nationalityError}</p>
+                                        )}
+                                    </div>
+                                ) : user.nationality ? (
+                                    <p>{user.nationality}</p>
+                                ) : (
+                                    <p className="placeholder-text">Nationality</p>
+                                )}
+                            </div>
+                            <div className="infoBoxActions">
+                                <div
+                                    onClick={editState.nationality ? saveUserNationality : undefined}
+                                    className={`host-icon-background save-button${editState.nationality ? "" : " is-hidden"}`}
+                                    role="button">
+                                    <img src={checkIcon} alt="Save Nationality" className="save-check-icon" />
+                                </div>
+                                <div
+                                    onClick={() => toggleEditState('nationality')}
+                                    className={`host-icon-background edit-button${editState.nationality ? " is-active" : ""}`}>
+                                    {editState.nationality ? (
+                                        <span className="edit-x" aria-hidden="true">X</span>
+                                    ) : (
+                                        <img src={editIcon} alt="Edit Nationality" className="guest-edit-icon"/>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="preferencesSection">
+                            <h3>Preferences</h3>
+
+                            <div className="InfoBox">
+                                <div className="infoBoxText infoBoxText--row">
+                                    <span>Default language:</span>
+                                    <div className="infoBoxEditRow">
+                                        <select
+                                            name="defaultLanguage"
+                                            value={language}
+                                            onChange={handleLanguageChange}
+                                            className="guest-edit-input"
+                                        >
+                                            {languageOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
-                            ) : (
-                                <p>{user.phone}</p>
-                            )}
-                            <div onClick={() => toggleEditState('phone')} className="host-icon-background">
-                                <img src={editIcon} alt="Edit Phone number" className="guest-edit-icon"/>
                             </div>
+
+                            {SHOW_PREF_FORMATS && (
+                                <>
+                                    <div className="InfoBox">
+                                        <div className="infoBoxText infoBoxText--row">
+                                            <span>Date format:</span>
+                                            <div className="infoBoxEditRow">
+                                                <select
+                                                    name="dateFormat"
+                                                    value={dateFormat}
+                                                    onChange={handleDateFormatChange}
+                                                    className="guest-edit-input"
+                                                >
+                                                    {dateFormatOptions.map((option) => (
+                                                        <option key={option.value} value={option.value}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="InfoBox">
+                                        <div className="infoBoxText infoBoxText--row">
+                                            <span>Price format:</span>
+                                            <div className="infoBoxEditRow">
+                                                <select
+                                                    name="priceFormat"
+                                                    value={priceFormat}
+                                                    onChange={handlePriceFormatChange}
+                                                    className="guest-edit-input"
+                                                >
+                                                    {priceFormatOptions.map((option) => (
+                                                        <option key={option.value} value={option.value}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="preferencesSection authSection">
+                            <h3>Authentication</h3>
+
+                            <div className="InfoBox">
+                                <div className="infoBoxText">
+                                    <div className="infoBoxTextRow">
+                                        <span>Email</span>
+                                        <span className={`status-pill ${authStatus.emailVerified ? "is-active" : "is-inactive"}`}>
+                                            {authStatus.emailVerified ? "Active" : "Inactive"}
+                                        </span>
+                                    </div>
+                                    <p className="auth-subtext">
+                                        {authStatus.emailVerified ? "Verified" : "Not verified"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {SHOW_AUTH_MFA && (
+                                <>
+                                    <div className="InfoBox">
+                                        <div className="infoBoxText">
+                                            <div className="infoBoxTextRow">
+                                                <span>SMS</span>
+                                                <span className={`status-pill ${authStatus.preferredMFA === "SMS" ? "is-active" : "is-inactive"}`}>
+                                                    {authStatus.preferredMFA === "SMS" ? "Active" : "Inactive"}
+                                                </span>
+                                            </div>
+                                            <p className="auth-subtext">
+                                                Phone verified: {authStatus.phoneVerified ? "Yes" : "No"}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="InfoBox">
+                                        <div className="infoBoxText">
+                                            <div className="infoBoxTextRow">
+                                                <span>Authenticator app</span>
+                                                <span className={`status-pill ${authStatus.preferredMFA === "TOTP" ? "is-active" : "is-inactive"}`}>
+                                                    {authStatus.preferredMFA === "TOTP" ? "Active" : "Inactive"}
+                                                </span>
+                                            </div>
+                                            <p className="auth-subtext">App-based codes (TOTP)</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                         {/* Voorlopig gecommend samen met Stefan aangezien we nu nog geen need hebben (misschien later) */}
                         {/*<div className="InfoBox">*/}

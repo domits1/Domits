@@ -98,6 +98,247 @@
     text-align: left; 
 }
 
+.host-settings-page .personalInfoContent {
+    width: min(520px, 100%);
+    max-width: 100%;
+    align-items: flex-start;
+    margin-left: 0;
+}
+
+.host-settings-page {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.page-body.host-settings-page {
+    align-items: flex-start;
+    justify-content: flex-start;
+    height: auto;
+    min-height: 100vh;
+    padding-bottom: 48px;
+}
+
+.host-settings-page > h2 {
+    align-self: center;
+    text-align: center;
+    width: 100%;
+    margin: 0 auto 16px;
+}
+
+.host-settings-page .dashboards,
+.host-settings-page .content {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.host-settings-page .content {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.host-settings-page .InfoBox {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    align-self: flex-start;
+}
+
+.host-settings-page .infoBoxText {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.host-settings-page .infoBoxEditRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.host-settings-page .infoBoxText--row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 16px;
+}
+
+.host-settings-page .infoBoxText--row .infoBoxEditRow {
+    margin-left: auto;
+}
+
+.host-settings-page .infoBoxText--row .guest-edit-input {
+    min-width: 220px;
+}
+
+.host-settings-page .profile-photo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.host-settings-page .profile-photo-image {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #e5e7eb;
+    background-color: #f3f4f6;
+}
+
+.host-settings-page .profile-photo-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.host-settings-page .photo-action {
+    border: 1px solid #d1d5db;
+    background-color: #fff;
+    color: #111827;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.host-settings-page .photo-action.primary {
+    background-color: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
+}
+
+.host-settings-page .photo-action.primary:hover {
+    background-color: #15803d;
+}
+
+.host-settings-page .photo-action.danger {
+    background-color: #dc2626;
+    border-color: #dc2626;
+    color: #fff;
+}
+
+.host-settings-page .photo-action.danger:hover {
+    background-color: #b91c1c;
+}
+
+.host-settings-page .photo-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.host-settings-page .infoBoxActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+    min-width: calc(4rem + 8px);
+}
+
+.host-settings-page .preferencesSection {
+    margin-top: 24px;
+    width: 100%;
+}
+
+.host-settings-page .preferencesSection h3 {
+    margin: 0 0 12px;
+}
+
+.host-settings-page .infoBoxTextRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.host-settings-page .status-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.host-settings-page .status-pill.is-active {
+    background-color: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.host-settings-page .status-pill.is-inactive {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.host-settings-page .auth-subtext {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.host-settings-page .InfoBox span {
+    flex: 0 0 auto;
+}
+
+.host-settings-page .InfoBox p {
+    margin: 0;
+}
+
+.host-settings-page .placeholder-text {
+    font-style: italic;
+    color: #6b7280;
+}
+
+.host-settings-page .guest-edit-input::placeholder {
+    font-style: italic;
+    color: #6b7280;
+}
+
+.host-settings-page .field-error {
+    margin: 4px 0 0;
+    color: #dc2626;
+    font-size: 0.78rem;
+    flex-basis: 100%;
+}
+
+.host-settings-page .host-icon-background {
+    margin-left: 0;
+}
+
+.host-settings-page .save-button.is-hidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.host-settings-page .save-check-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.host-settings-page .edit-x {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .host-icon-background {
     background-color: var(--domits-host-blue);
     border-radius: 15px;
@@ -112,6 +353,22 @@
 
 .host-icon-background:hover {
     background-color: #5a9bc7;
+}
+
+.host-settings-page .save-button {
+    background-color: #16a34a;
+}
+
+.host-settings-page .save-button:hover {
+    background-color: #15803d;
+}
+
+.host-settings-page .edit-button.is-active {
+    background-color: #dc2626;
+}
+
+.host-settings-page .edit-button.is-active:hover {
+    background-color: #b91c1c;
 }
 
 @media (max-width: 768px) {
@@ -195,5 +452,34 @@
         font-size: 0.8em;
         width: 90%;
         flex-wrap: wrap;
+    }
+
+    .host-settings-page .personalInfoContent {
+        width: 100%;
+        padding: 0 12px;
+        box-sizing: border-box;
+    }
+
+    .host-settings-page .InfoBox {
+        width: 100%;
+        flex-wrap: wrap;
+        padding-left: 16px;
+        padding-right: 16px;
+        box-sizing: border-box;
+    }
+
+    .host-settings-page .InfoBox span,
+    .host-settings-page .InfoBox p {
+        white-space: normal;
+    }
+
+    .host-settings-page .infoBoxActions {
+        margin-right: 4px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .page-body.host-settings-page {
+        padding-bottom: 110px;
     }
 }
