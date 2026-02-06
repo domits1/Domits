@@ -11,6 +11,8 @@ import './settingshostdashboard.css';
 
 const HostSettings = () => {
     const {language, setLanguage} = useContext(LanguageContext);
+    const SHOW_PREF_FORMATS = false;
+    const SHOW_AUTH_MFA = false;
     const [tempUser, setTempUser] = useState({
         email: '',
         name: '',
@@ -57,10 +59,10 @@ const HostSettings = () => {
         phoneVerified: false,
         preferredMFA: "NOMFA",
     });
-    const previousDobRef = useRef("");
-    const photoInputRef = useRef(null);
     const [dateFormat, setDateFormat] = useState(localStorage.getItem("dateFormat") || "en");
     const [priceFormat, setPriceFormat] = useState(localStorage.getItem("priceFormat") || "usd");
+    const previousDobRef = useRef("");
+    const photoInputRef = useRef(null);
 
     const PROFILE_PHOTO_MAX_SIZE = 5 * 1024 * 1024;
     const PROFILE_UPLOAD_URL_ENDPOINT = "https://d141hj02ed.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Create-UploadUrl";
@@ -70,6 +72,7 @@ const HostSettings = () => {
         {value: "de", label: "Deutsch"},
         {value: "es", label: "Español"},
     ];
+
     const dateFormatOptions = [
         {value: "en", label: "English (MM/DD/YYYY)"},
         {value: "nl", label: "Dutch (DD-MM-YYYY)"},
@@ -1124,45 +1127,49 @@ const HostSettings = () => {
                                 </div>
                             </div>
 
-                            <div className="InfoBox">
-                                <div className="infoBoxText infoBoxText--row">
-                                    <span>Date format:</span>
-                                    <div className="infoBoxEditRow">
-                                        <select
-                                            name="dateFormat"
-                                            value={dateFormat}
-                                            onChange={handleDateFormatChange}
-                                            className="guest-edit-input"
-                                        >
-                                            {dateFormatOptions.map((option) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
+                            {SHOW_PREF_FORMATS && (
+                                <>
+                                    <div className="InfoBox">
+                                        <div className="infoBoxText infoBoxText--row">
+                                            <span>Date format:</span>
+                                            <div className="infoBoxEditRow">
+                                                <select
+                                                    name="dateFormat"
+                                                    value={dateFormat}
+                                                    onChange={handleDateFormatChange}
+                                                    className="guest-edit-input"
+                                                >
+                                                    {dateFormatOptions.map((option) => (
+                                                        <option key={option.value} value={option.value}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div className="InfoBox">
-                                <div className="infoBoxText infoBoxText--row">
-                                    <span>Price format:</span>
-                                    <div className="infoBoxEditRow">
-                                        <select
-                                            name="priceFormat"
-                                            value={priceFormat}
-                                            onChange={handlePriceFormatChange}
-                                            className="guest-edit-input"
-                                        >
-                                            {priceFormatOptions.map((option) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
+                                    <div className="InfoBox">
+                                        <div className="infoBoxText infoBoxText--row">
+                                            <span>Price format:</span>
+                                            <div className="infoBoxEditRow">
+                                                <select
+                                                    name="priceFormat"
+                                                    value={priceFormat}
+                                                    onChange={handlePriceFormatChange}
+                                                    className="guest-edit-input"
+                                                >
+                                                    {priceFormatOptions.map((option) => (
+                                                        <option key={option.value} value={option.value}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                </>
+                            )}
                         </div>
 
                         <div className="preferencesSection authSection">
@@ -1182,31 +1189,35 @@ const HostSettings = () => {
                                 </div>
                             </div>
 
-                            <div className="InfoBox">
-                                <div className="infoBoxText">
-                                    <div className="infoBoxTextRow">
-                                        <span>SMS</span>
-                                        <span className={`status-pill ${authStatus.preferredMFA === "SMS" ? "is-active" : "is-inactive"}`}>
-                                            {authStatus.preferredMFA === "SMS" ? "Active" : "Inactive"}
-                                        </span>
+                            {SHOW_AUTH_MFA && (
+                                <>
+                                    <div className="InfoBox">
+                                        <div className="infoBoxText">
+                                            <div className="infoBoxTextRow">
+                                                <span>SMS</span>
+                                                <span className={`status-pill ${authStatus.preferredMFA === "SMS" ? "is-active" : "is-inactive"}`}>
+                                                    {authStatus.preferredMFA === "SMS" ? "Active" : "Inactive"}
+                                                </span>
+                                            </div>
+                                            <p className="auth-subtext">
+                                                Phone verified: {authStatus.phoneVerified ? "Yes" : "No"}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p className="auth-subtext">
-                                        Phone verified: {authStatus.phoneVerified ? "Yes" : "No"}
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className="InfoBox">
-                                <div className="infoBoxText">
-                                    <div className="infoBoxTextRow">
-                                        <span>Authenticator app</span>
-                                        <span className={`status-pill ${authStatus.preferredMFA === "TOTP" ? "is-active" : "is-inactive"}`}>
-                                            {authStatus.preferredMFA === "TOTP" ? "Active" : "Inactive"}
-                                        </span>
+                                    <div className="InfoBox">
+                                        <div className="infoBoxText">
+                                            <div className="infoBoxTextRow">
+                                                <span>Authenticator app</span>
+                                                <span className={`status-pill ${authStatus.preferredMFA === "TOTP" ? "is-active" : "is-inactive"}`}>
+                                                    {authStatus.preferredMFA === "TOTP" ? "Active" : "Inactive"}
+                                                </span>
+                                            </div>
+                                            <p className="auth-subtext">App-based codes (TOTP)</p>
+                                        </div>
                                     </div>
-                                    <p className="auth-subtext">App-based codes (TOTP)</p>
-                                </div>
-                            </div>
+                                </>
+                            )}
                         </div>
                         {/* Voorlopig gecommend samen met Stefan aangezien we nu nog geen need hebben (misschien later) */}
                         {/*<div className="InfoBox">*/}
