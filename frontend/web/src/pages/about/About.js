@@ -19,6 +19,7 @@ import Jared from "../../images/about-img/Jared.jpg";
 import Sander from "../../images/about-img/Sander.png";
 import Bekir from "../../images/about-img/Bekir.png";
 import Kacper from "../../images/about-img/Kacper.png";
+import Valentijn from "../../images/about-img/valentijn.png";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -69,6 +70,7 @@ function About() {
     { name: "Moncef", src: standard, role: aboutContent.crew.developer },
     { name: "Stephanie", src: standard, role: aboutContent.crew.developer },
     { name: "Tom", src: standard, role: aboutContent.crew.developer },
+    { name: "Valentijn", src: Valentijn, role: aboutContent.crew.developer },
     { name: "Yusuf", src: standard, role: aboutContent.crew.developer },
    
   ]
