@@ -3,6 +3,20 @@ import Database from "database";
 import { Property_Pricing } from "database/models/Property_Pricing";
 class LambdaRepository {
   async getPropertiesFromHostId(host_Id) {
+    // TEST mode: Return mock properties
+    if (process.env.TEST === "true") {
+      return [
+        {
+          id: "test-property-1",
+          title: "Test Property",
+          rate: 100,
+          city: "Test City",
+          country: "Test Country",
+        },
+      ];
+    }
+
+    // PROD mode: Call real API
     const response = await fetch(
       `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byHostId?hostId=${host_Id}`
     );
@@ -24,6 +38,20 @@ class LambdaRepository {
   }
 
   async getPropertyPricingById(id) {
+    // TEST mode: Return mock pricing data
+    if (process.env.TEST === "true") {
+      return {
+        pricing: [
+          {
+            property_id: id,
+            roomRate: 100,
+            cleaning: 0,
+          },
+        ],
+      };
+    }
+
+    // PROD mode: Query real database
     const client = await Database.getInstance();
     const result = await client
       .getRepository(Property_Pricing)

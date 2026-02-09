@@ -11,6 +11,20 @@ import StripeRepository from "../data/stripeRepository.js";
 import CognitoRepository from "../data/cognitoRepository.js";
 import PropertyRepository from "../data/propertyRepository.js";
 import getHostEmailById from "./getHostEmailById.js";
+import ConflictException from "../util/exception/ConflictException.js";
+
+/**
+ * Concurrency Note:
+ * This implementation prevents most double-bookings via a transactional overlap check
+ * in ReservationRepository.addBookingToTable (one DB transaction per booking create).
+ *
+ * A small race condition window remains under extreme concurrency where two transactions
+ * can both evaluate the overlap query before either commits.
+ *
+ * Future hardening: Add a PostgreSQL exclusion constraint (e.g. using GIST + tstzrange
+ * on (property_id, [arrivaldate, departuredate))) so the database rejects overlapping
+ * inserts, and map that constraint error back to HTTP 409.
+ */
 
 class BookingService {
   constructor() {
@@ -22,13 +36,28 @@ class BookingService {
     this.getParamsModel = new GetParamsModel();
   }
 
+  /**
+   * Booking create flow:
+   * 1) Auth guest (Cognito)
+   * 2) Fetch property + host
+   * 3) Send email
+   * 4) Create booking (transactional + overlap check)
+   * 5) Create Stripe payment intent (outside DB transaction)
+   * 6) On Stripe success: status updated later via PATCH/confirmPayment
+   *    On Stripe immediate failure: booking can be marked Failed via markBookingFailedById
+   */
   async create(event) {
     //await this.verifyEventDataTypes(event);
+
+    // 1) Authenticate user
     const authenticatedUser = await this.authManager.authenticateUser(event.Authorization);
     const userEmail = authenticatedUser.email;
+
+    // 2) Fetch property and host email
     const fetchedProperty = await this.propertyRepository.getPropertyById(event.identifiers.property_Id);
     const hostEmail = await getHostEmailById(fetchedProperty.hostId);
 
+    // 3) Send email (pre-booking info)
     const bookingInfo = {
       guests: event.general.guests,
       propertyName: fetchedProperty.title,
@@ -37,7 +66,19 @@ class BookingService {
     };
     await sendEmail(userEmail, hostEmail, bookingInfo);
 
-    return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
+    // 4) Transactional booking create with overlap check
+    //    This will throw ConflictException on overlap (statusCode 409).
+    const bookingResult = await this.reservationRepository.addBookingToTable(
+      event,
+      authenticatedUser.sub,
+      fetchedProperty.hostId
+    );
+
+    // Stripe/payment logic is orchestrated in the controller (PaymentService)
+    // to keep it clearly outside the DB transaction. We still provide a helper
+    // to mark a booking as Failed by ID if an immediate Stripe error occurs.
+
+    return bookingResult;
   }
 
   async confirmPayment(paymentid) {
@@ -60,6 +101,16 @@ class BookingService {
       await this.reservationRepository.updateBookingStatus(booking.id, "Failed");
       return true;
     }
+  }
+
+  /**
+   * Mark booking as Failed by booking ID (used when Stripe create call fails immediately).
+   */
+  async markBookingFailedById(bookingId) {
+    if (!bookingId) {
+      throw new TypeException("markBookingFailedById - bookingId is required");
+    }
+    await this.reservationRepository.updateBookingStatus(bookingId, "Failed");
   }
 
   async read(event) {

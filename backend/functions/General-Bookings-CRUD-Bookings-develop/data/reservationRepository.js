@@ -4,56 +4,101 @@ import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
 import UnableToSearch from "../util/exception/UnableToSearch.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
+import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 
 class ReservationRepository {
   // ---------
-  // Booking Create (auth)
+  // Booking Create (auth) + availability check
   // ---------
   async addBookingToTable(requestBody, userId, hostId) {
-    const date = CreateDate.createUnixTime();
+    const client = await Database.getInstance();
+
+    // Normalize incoming dates to epoch ms (schema uses BIGINT)
+    const arrivalDateMs = new Date(requestBody.general.arrivalDate).getTime();
+    const departureDateMs = new Date(requestBody.general.departureDate).getTime();
+
+    if (Number.isNaN(arrivalDateMs) || Number.isNaN(departureDateMs)) {
+      const err = new Error("Invalid arrivalDate or departureDate");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (arrivalDateMs >= departureDateMs) {
+      const err = new Error("arrivalDate must be before departureDate");
+      err.statusCode = 400;
+      throw err;
+    }
+
     const id = randomUUID();
     const tempPaymentId = randomUUID();
-    const arrivalDate = new Date(requestBody.general.arrivalDate).getTime();
-    const departureDate = new Date(requestBody.general.departureDate).getTime();
-    const client = await Database.getInstance();
-    await client
-      .createQueryBuilder()
-      .insert()
-      .into(Booking)
-      .values({
-        id: id,
-        arrivaldate: parseFloat(arrivalDate),
-        createdat: date,
-        departuredate: parseFloat(departureDate),
-        guestid: userId,
-        hostid: hostId,
-        hostname: "WIP-Host",
-        guests: requestBody.general.guests.toString(),
-        guestname: requestBody.general.guestName,
-        latepayment: false,
-        paymentid: "FAILED: ",
-        tempPaymentId,
-        property_id: requestBody.identifiers.property_Id,
-        status: "Awaiting Payment",
-      })
-      .execute();
-    try {
-      await this.getBookingById(id);
-    } catch (error) {
-      console.error(`During creation of the booking, verifying if the property exists failed. ${error}`);
-      throw new NotFoundException("Failed to validate if booking exits.");
-    }
-    return {
-      statusCode: 201,
-      hostId: hostId,
-      bookingId: id,
-      propertyId: requestBody.identifiers.property_Id,
-      dates: {
-        arrivalDate: requestBody.general.arrivalDate,
-        departureDate: requestBody.general.departureDate,
-      },
-    };
+    const createdAt = CreateDate.createUnixTime();
+
+    // Only statuses that still block inventory
+    const blockingStatuses = ["Awaiting Payment", "Paid"];
+
+    // ONE transaction: availability check + insert
+    const result = await client.transaction(async (manager) => {
+      // 1) Overlap check
+      const overlapping = await manager
+        .getRepository(Booking)
+        .createQueryBuilder("booking")
+        .where("booking.property_id = :propertyId", {
+          propertyId: requestBody.identifiers.property_Id,
+        })
+        .andWhere("booking.arrivaldate < :requestedDeparture", {
+          requestedDeparture: departureDateMs,
+        })
+        .andWhere("booking.departuredate > :requestedArrival", {
+          requestedArrival: arrivalDateMs,
+        })
+        .andWhere("booking.status IN (:...blockingStatuses)", {
+          blockingStatuses,
+        })
+        .getOne();
+
+      if (overlapping) {
+        throw new ConflictException(
+          "Selected dates are no longer available for this property."
+        );
+      }
+
+      // 2) Insert booking
+      await manager
+        .createQueryBuilder()
+        .insert()
+        .into(Booking)
+        .values({
+          id,
+          arrivaldate: arrivalDateMs,
+          createdat: createdAt,
+          departuredate: departureDateMs,
+          guestid: userId,
+          hostid: hostId,
+          hostname: "WIP-Host",
+          guests: requestBody.general.guests.toString(),
+          guestname: requestBody.general.guestName,
+          latepayment: false,
+          paymentid: "FAILED: ", // updated after Stripe success
+          tempPaymentId,
+          property_id: requestBody.identifiers.property_Id,
+          status: "Awaiting Payment", // holds inventory until payment finishes
+        })
+        .execute();
+
+      return {
+        statusCode: 201,
+        hostId: hostId,
+        bookingId: id,
+        propertyId: requestBody.identifiers.property_Id,
+        dates: {
+          arrivalDate: requestBody.general.arrivalDate,
+          departureDate: requestBody.general.departureDate,
+        },
+      };
+    });
+
+    return result;
   }
   // ---------
   // Read bookings by propertyID
