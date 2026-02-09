@@ -55,6 +55,8 @@ const useFormStoreHostOnboarding = create((set) => ({
       SmokingAllowed: false,
       PetsAllowed: false,
       "Parties/EventsAllowed": false,
+      SuitableForChildren: false,
+      SuitableForInfants: false,
     },
 
     checkIn: {
@@ -63,6 +65,7 @@ const useFormStoreHostOnboarding = create((set) => ({
     },
 
     images: {},
+    imageList: [],
     description: "",
     boatSpecifications: {},
     camperSpecifications: {},
@@ -124,6 +127,11 @@ const useFormStoreHostOnboarding = create((set) => ({
         ...state.accommodationDetails,
         address: { ...state.accommodationDetails.address, ...details },
       },
+    })),
+
+  setLocation: (details) =>
+    set((state) => ({
+      location: { ...state.location, ...details },
     })),
 
   // ------- Nested Setters -------
@@ -224,6 +232,11 @@ const useFormStoreHostOnboarding = create((set) => ({
       }
     }),
 
+  setImageList: (imageList) =>
+    set((state) => ({
+      accommodationDetails: { ...state.accommodationDetails, imageList },
+    })),
+
   // ------- Field Setters -------
   updateAccommodationDetail: (key, value) =>
     set((state) => ({
@@ -272,12 +285,19 @@ const useFormStoreHostOnboarding = create((set) => ({
     })),
 
   updatePricing: (field, value) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        [field]: parseFloat(value) || 0, // Ensure it's always a number
-      },
-    })),
+    set((state) => {
+      let nextValue = ""
+      if (value !== "" && value !== null && value !== undefined) {
+        const parsed = typeof value === "number" ? value : Number(value)
+        nextValue = Number.isFinite(parsed) ? parsed : ""
+      }
+      return {
+        accommodationDetails: {
+          ...state.accommodationDetails,
+          [field]: nextValue,
+        },
+      }
+    }),
 
   calculateServiceFee: () =>
     set((state) => {

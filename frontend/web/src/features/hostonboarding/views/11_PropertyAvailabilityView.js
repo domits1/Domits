@@ -1,45 +1,53 @@
 import React from "react";
 import CalendarComponent from "../../hostdashboard/hostcalendar/views/Calender";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
 import OnboardingButton from "../components/OnboardingButton";
-import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import { useBuilder } from "../../../context/propertyBuilderContext";
+import OnboardingProgress from "../components/OnboardingProgress";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
 function PropertyAvailabilityView() {
   const form = useFormStoreHostOnboarding();
   const builder = useBuilder();
+  const { flowKey, prevPath, nextPath } = useOnboardingFlow();
   const selectedType = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
-
-  const navigate = useNavigate();
-
   const { type: accommodationType } = useParams();
   const { availability, updateSelectedDates } = useAvailability();
 
-  const { handleProceedToLegal } = useHandleLegalProceed();
-
   return (
-    <div className="onboarding-host-div">
+    <div className="onboarding-host-div availability-onboarding">
       <main className="container">
-        <h2 className="onboardingSectionTitle">Share your first availability</h2>
-        <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within your dashboard</p>
+        <OnboardingProgress />
+        <h2 className="onboardingSectionTitle">Share your availability</h2>
+        <p className="onboardingSectionSubtitle">
+          When is your property available for guests to book? You can update this anytime later within the calendar.
+        </p>
 
-        <CalendarComponent
-          passedProp={availability}
-          isNew={true}
-          updateDates={updateSelectedDates}
-          calenderType="host"
-          builder = {builder}
-        />
+        <div className="availability-calendar">
+          <CalendarComponent
+            passedProp={availability}
+            isNew={true}
+            updateDates={updateSelectedDates}
+            calenderType="guest"
+            builder={builder}
+            selectionMode="range"
+            showOptions={false}
+            allowSingleDeselect={true}
+          />
+        </div>
+
+        <p className="availability-note">You can change this later.</p>
 
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath={`/hostonboarding/${accommodationType}/pricing`} btnText="Go back" />
+          <OnboardingButton
+            routePath={prevPath || `/hostonboarding/${accommodationType}/pricing`}
+            btnText="Go back"
+          />
           <OnboardingButton
             onClick={() => {
-              if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) {
-                navigate("/hostonboarding/legal/registrationnumber");
-              } else {
+              if (flowKey !== "accommodation") {
                 builder.addProperty({
                   title: form.accommodationDetails.title,
                   subtitle: form.accommodationDetails.subtitle,
@@ -51,9 +59,10 @@ function PropertyAvailabilityView() {
                   createdAt: Date.now(),
                   updatedAt: Date.now()
                 });
-                navigate("/hostonboarding/summary");
               }
+              return true;
             }}
+            routePath={nextPath || "/hostonboarding/summary"}
             btnText="Proceed"
           />
         </nav>

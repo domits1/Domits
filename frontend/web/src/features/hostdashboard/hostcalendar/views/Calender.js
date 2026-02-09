@@ -18,6 +18,7 @@ import "../styles/Calender.scss";
 
 let selectedDate = null;
 let selectedDates = [];
+let lastClickedDate = null;
 let selectedMonth = new Date().getMonth();
 let selectedYear = new Date().getFullYear();
 let editMode = false;
@@ -31,10 +32,23 @@ let editMode = false;
  * @param {*} props.updateDates
  * @param {"host" | "guest"} props.calenderType
  * @param {1 | 2} props.displayMonths
+ * @param {"range" | "toggle"} props.selectionMode
+ * @param {boolean} props.showOptions
+ * @param {boolean} props.allowSingleDeselect
  * 
  * @returns {JSX.Element}
  */
-function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builder, displayMonths = 1 }) {
+function CalendarComponent({
+    passedProp,
+    isNew,
+    updateDates,
+    calenderType,
+    builder,
+    displayMonths = 1,
+    selectionMode = "range",
+    showOptions = true,
+    allowSingleDeselect = false,
+}) {
     const [selectedMonthState, setSelectedMonth] = useState(selectedMonth);
     const [selectedYearState, setSelectedYear] = useState(selectedYear);
     const [calenderGridObject, setGrid] = useState(
@@ -53,29 +67,60 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
         const anchorElement = e.currentTarget;
         let date = Number(anchorElement.getAttribute("dateNumber"));
 
-        if (selectedDate == null) {
-            selectedDate = date;
-        } else {
-            if (editMode) {
-                if (selectedDate > date) {
-                    deleteDate([date, selectedDate], selectedDates);
+        if (selectionMode === "toggle") {
+            if (e.shiftKey && lastClickedDate != null && lastClickedDate !== date) {
+                if (lastClickedDate > date) {
+                    newDate([date, lastClickedDate], selectedDates);
                 } else {
-                    deleteDate([selectedDate, date], selectedDates);
+                    newDate([lastClickedDate, date], selectedDates);
                 }
             } else {
-                if (selectedDate > date) {
-                    newDate([date, selectedDate], selectedDates);
+                const isSelected = selectedDates.some(
+                    (range) => date >= range[0] && date <= range[1],
+                );
+                if (isSelected) {
+                    deleteDate([date, date], selectedDates);
                 } else {
-                    newDate([selectedDate, date], selectedDates);
+                    newDate([date, date], selectedDates);
                 }
             }
+
+            lastClickedDate = date;
             selectedDate = null;
+        } else {
+            const isSelected = selectedDates.some(
+                (range) => date >= range[0] && date <= range[1],
+            );
+
+            if (allowSingleDeselect && selectedDate == null && isSelected) {
+                deleteDate([date, date], selectedDates);
+                selectedDate = null;
+            } else if (selectedDate == null) {
+                selectedDate = date;
+            } else {
+                if (editMode) {
+                    if (selectedDate > date) {
+                        deleteDate([date, selectedDate], selectedDates);
+                    } else {
+                        deleteDate([selectedDate, date], selectedDates);
+                    }
+                } else {
+                    if (selectedDate > date) {
+                        newDate([date, selectedDate], selectedDates);
+                    } else {
+                        newDate([selectedDate, date], selectedDates);
+                    }
+                }
+                selectedDate = null;
+            }
         }
 
         setDates(getDatesObject(selectedDates));
         setGrid(getGridObject(selectedMonth, selectedYear));
 
-        builder.addAvailability(convertDatesToDBDates(selectedDates));
+        if (builder && builder.addAvailability) {
+            builder.addAvailability(convertDatesToDBDates(selectedDates));
+        }
     }
 
     /**
@@ -92,7 +137,7 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
             dayClass += "other-month";
         }
 
-        if (date == selectedDate) {
+        if (selectionMode === "range" && date == selectedDate) {
             dayClass += " day-selected";
         }
 
@@ -278,16 +323,18 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType,builde
                     </div>
                 )}
             </div>
-            <div className="options-column">
-                <div className="option">
-                    <h4>Switch edit mode</h4>
-                    <a
-                        className={editModeClass}
-                        onClick={switchBtn}
-                        href="#switch-edit-mode"
-                    ></a>
+            {showOptions && (
+                <div className="options-column">
+                    <div className="option">
+                        <h4>Switch edit mode</h4>
+                        <a
+                            className={editModeClass}
+                            onClick={switchBtn}
+                            href="#switch-edit-mode"
+                        ></a>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

@@ -5,20 +5,21 @@ function PricingRow({
   type = "number",
   readonly = false,
   placeholder,
+  displayValue,
 }) {
   return (
     <div className="pricing-row">
       <label>{label}</label>
       {readonly ? (
         <p className="pricing-input">
-          €{Number.isFinite(value) ? value.toFixed(2) : "0.00"}
+          {displayValue ?? `EUR ${Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "0.00"}`}
         </p>
       ) : (
         <input
           className="pricing-input"
           type={type}
           value={value}
-          onChange={(value) => updatePricing("Rent", parseFloat(value))}
+          onChange={(event) => onChange?.(event.target.value)}
           placeholder={placeholder}
           min={1}
           step={0.1}

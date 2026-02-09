@@ -1,8 +1,8 @@
 import React from "react";
 
-function TextAreaField({ label, value, onChange, maxLength, placeholder }) {
+function TextAreaField({ label, value, onChange, maxLength, placeholder, className = "" }) {
   return (
-    <section className="accommodation-title">
+    <section className={`accommodation-title ${className}`.trim()}>
       <label>{label}</label>
       <textarea
         className="textInput locationText"

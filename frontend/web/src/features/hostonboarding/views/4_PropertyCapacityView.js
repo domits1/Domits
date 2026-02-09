@@ -4,8 +4,11 @@ import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import { accommodationFields } from "../constants/propertyAmountofGuestData";
 import OnboardingButton from "../components/OnboardingButton";
 import { useBuilder } from "../../../context/propertyBuilderContext";
+import OnboardingProgress from "../components/OnboardingProgress";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 function PropertyCapacityView() {
   const builder = useBuilder();
+  const { prevPath, nextPath } = useOnboardingFlow();
   const { type: accommodationType } = useParams();
   const accommodationCapacity = useFormStoreHostOnboarding((state) => state.accommodationDetails.accommodationCapacity);
   const setAccommodationCapacity = useFormStoreHostOnboarding((state) => state.setAccommodationCapacity);
@@ -24,6 +27,7 @@ function PropertyCapacityView() {
   return (
     <div className="onboarding-host-div">
       <main className="container">
+        <OnboardingProgress />
         <h2 className="onboardingSectionTitle">How many people can stay here?</h2>
         <section className="guest-amount">
           {fields.map(({ key, label, max }) => (
@@ -37,8 +41,12 @@ function PropertyCapacityView() {
             />
           ))}
         </section>
+        <p className="guest-amount-note">You can change this later.</p>
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath={`/hostonboarding/${accommodationType}/address`} btnText="Go back" />
+          <OnboardingButton
+            routePath={prevPath || `/hostonboarding/${accommodationType}/address`}
+            btnText="Go back"
+          />
           <OnboardingButton
             onClick={() => {
               builder.addGeneralDetails(
@@ -49,7 +57,7 @@ function PropertyCapacityView() {
               );
               console.log(builder);
             }}
-            routePath={`/hostonboarding/${accommodationType}/amenities`}
+            routePath={nextPath || `/hostonboarding/${accommodationType}/amenities`}
             btnText="Proceed"
           />
         </nav>

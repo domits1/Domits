@@ -6,11 +6,13 @@ import DeclarationSection from "../components/DeclarationSection";
 import FetchUserId from "../utils/FetchUserId";
 import { useNavigate } from "react-router-dom";
 import { submitAccommodation } from "../services/SubmitAccommodation.js";
-import useFormStore from "../stores/formStoreHostOnboarding";
 import { useBuilder } from "../../../context/propertyBuilderContext";
+import OnboardingProgress from "../components/OnboardingProgress";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
 function SummaryViewAndSubmit() {
   const builder = useBuilder();
+  const { prevPath } = useOnboardingFlow();
   const { data, toggleDrafted } = useSummary();
   const type = data.type;
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ function SummaryViewAndSubmit() {
   return (
     <div className="onboarding-host-div">
       <div className="summary">
+        <OnboardingProgress />
         <FetchUserId />
         <h2>Please check if everything is correct</h2>
         <SummaryTable data={data} type={type} />
@@ -33,7 +36,10 @@ function SummaryViewAndSubmit() {
         {/* <FeatureTable features={data.Features} /> */}
         <DeclarationSection drafted={data.Drafted} toggleDrafted={toggleDrafted} />
         <div className="onboarding-button-box">
-          <button className="onboarding-button" onClick={() => console.log("Go back")}>
+          <button
+            className="onboarding-button"
+            onClick={() => (prevPath ? navigate(prevPath) : navigate(-1))}
+          >
             Go back to change
           </button>
           <button className="onboarding-button" onClick={handleSubmit}>

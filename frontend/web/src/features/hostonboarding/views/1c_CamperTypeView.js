@@ -5,9 +5,12 @@ import { camperData } from "../constants/camperData"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import OnboardingButton from "../components/OnboardingButton"
 import { useBuilder } from "../../../context/propertyBuilderContext";
+import OnboardingProgress from "../components/OnboardingProgress";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
 function CamperTypeView() {
   const builder = useBuilder();
+  const { prevPath, nextPath } = useOnboardingFlow();
   const setCamperType = useFormStoreHostOnboarding(
     (state) => state.setCamperType,
   )
@@ -17,6 +20,7 @@ function CamperTypeView() {
   return (
     <div className="onboarding-host-div">
       <main className="page-body">
+        <OnboardingProgress />
         <h2 className="onboardingSectionTitle">
           What type of camper do you own?
         </h2>
@@ -27,13 +31,13 @@ function CamperTypeView() {
           onSelectType={setCamperType}
         />
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath="/hostonboarding" btnText="Back" />
+          <OnboardingButton routePath={prevPath || "/hostonboarding"} btnText="Back" />
           <OnboardingButton
             onClick={ () => {
               builder.addPropertyType({type: "Camper", spaceType: selectedCamperType});
               console.log(builder);
             }}
-            routePath="/hostonboarding/camper/address"
+            routePath={nextPath || "/hostonboarding/camper/address"}
             btnText="Proceed"
           />
         </nav>

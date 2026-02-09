@@ -6,8 +6,12 @@ export default function OnboardingButton({ btnText, onClick, routePath, buttonTy
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (onClick) onClick();
-    if (routePath) navigate(routePath);
+    let shouldNavigate = true;
+    if (onClick) {
+      const result = onClick();
+      if (result === false) shouldNavigate = false;
+    }
+    if (routePath && shouldNavigate) navigate(routePath);
   };
 
   const buttonClass = `onboarding-button ${buttonType}-button`;
