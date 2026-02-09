@@ -10,6 +10,7 @@ import nick from "../../images/nick.png";
 
 import Ales from "../../images/about-img/Ales.jpg";
 import Chant from "../../images/about-img/Chant.jpg";
+import Chiel from "../../images/about-img/Chiel.png";
 import Justin from "../../images/about-img/Justin.jpg";
 import Robert from "../../images/about-img/Robert.jpg";
 import Robin from "../../images/about-img/Robin.jpg";
@@ -62,6 +63,7 @@ function About() {
     { name: "Alessio", src: standard, role: aboutContent.crew.developer },
     { name: "Asif", src: standard, role: aboutContent.crew.developer },
     { name: "Burak", src: standard, role: aboutContent.crew.developer },
+    { name: "Chiel", src: Chiel, role: aboutContent.crew.developer},
     { name: "Gurpreet", src: standard, role: aboutContent.crew.developer },
     { name: "Ho Tin", src: standard, role: aboutContent.crew.developer },
     { name: "Ken", src: standard, role: aboutContent.crew.developer },
