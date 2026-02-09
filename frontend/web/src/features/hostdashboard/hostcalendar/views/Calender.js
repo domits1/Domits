@@ -3,7 +3,7 @@
  *
  * If you do not understand what is happening here, do not change anything. If something needs to be adjusted, contact me via discord --@marijn3--
  */
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import convertDatesToDBDates from "../utils/convertToDBDates";
 import decodeDateNumber from "../utils/decodeDateNumber";
 import convertDateToHTML from "../utils/convertDateToHTML";
@@ -23,6 +23,21 @@ let selectedMonth = new Date().getMonth();
 let selectedYear = new Date().getFullYear();
 let editMode = false;
 
+function getDateNumber(date) {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+    return Number(`${year}${month}${day}`);
+}
+
+function getSelectAllRange(daysAhead) {
+    const safeDays = Number.isFinite(daysAhead) && daysAhead > 0 ? daysAhead : 365;
+    const start = new Date();
+    const end = new Date();
+    end.setDate(end.getDate() + safeDays);
+    return [getDateNumber(start), getDateNumber(end)];
+}
+
 /**
  * CalendarComponent is a component that displays a calendar
  * 
@@ -35,6 +50,9 @@ let editMode = false;
  * @param {"range" | "toggle"} props.selectionMode
  * @param {boolean} props.showOptions
  * @param {boolean} props.allowSingleDeselect
+ * @param {boolean} props.selectAll
+ * @param {number} props.selectAllDays
+ * @param {(payload: { ranges: [number, number][], isAllSelected: boolean }) => void} props.onSelectionChange
  * 
  * @returns {JSX.Element}
  */
@@ -48,6 +66,9 @@ function CalendarComponent({
     selectionMode = "range",
     showOptions = true,
     allowSingleDeselect = false,
+    selectAll = false,
+    selectAllDays = 365,
+    onSelectionChange,
 }) {
     const [selectedMonthState, setSelectedMonth] = useState(selectedMonth);
     const [selectedYearState, setSelectedYear] = useState(selectedYear);
@@ -56,6 +77,62 @@ function CalendarComponent({
     );
     const [datesGridObject, setDates] = useState(getDatesObject(selectedDates));
     const [editModeClass, setEditMode] = useState("switch-btn");
+    const manualSelectionRef = useRef([]);
+    const lastSelectAllRef = useRef(false);
+    const exitSelectAllWithCurrentSelectionRef = useRef(false);
+    const selectAllRange = getSelectAllRange(selectAllDays);
+
+    const emitSelectionChange = () => {
+        if (!onSelectionChange) return;
+        const isAllSelected =
+            selectedDates.length === 1 &&
+            selectedDates[0][0] === selectAllRange[0] &&
+            selectedDates[0][1] === selectAllRange[1];
+        onSelectionChange({
+            ranges: selectedDates.map((range) => [...range]),
+            isAllSelected,
+        });
+    };
+
+    const syncSelection = () => {
+        setDates(getDatesObject(selectedDates));
+        setGrid(getGridObject(selectedMonth, selectedYear));
+        if (builder && builder.addAvailability) {
+            builder.addAvailability(convertDatesToDBDates(selectedDates));
+        }
+        if (!selectAll) {
+            manualSelectionRef.current = selectedDates.map((range) => [...range]);
+        }
+        emitSelectionChange();
+    };
+
+    useEffect(() => {
+        const wasSelectAll = lastSelectAllRef.current;
+
+        if (selectAll && !wasSelectAll) {
+            manualSelectionRef.current = selectedDates.map((range) => [...range]);
+            exitSelectAllWithCurrentSelectionRef.current = false;
+            selectedDates = [[selectAllRange[0], selectAllRange[1]]];
+            selectedDate = null;
+            lastClickedDate = null;
+            syncSelection();
+        } else if (selectAll && wasSelectAll) {
+            selectedDates = [[selectAllRange[0], selectAllRange[1]]];
+            selectedDate = null;
+            lastClickedDate = null;
+            syncSelection();
+        } else if (!selectAll && wasSelectAll) {
+            if (!exitSelectAllWithCurrentSelectionRef.current) {
+                selectedDates = manualSelectionRef.current.map((range) => [...range]);
+            }
+            exitSelectAllWithCurrentSelectionRef.current = false;
+            selectedDate = null;
+            lastClickedDate = null;
+            syncSelection();
+        }
+
+        lastSelectAllRef.current = selectAll;
+    }, [selectAll, selectAllDays]);
 
     /**
      * this function handles the interaction when a day is clicked, it selects a new date
@@ -66,6 +143,14 @@ function CalendarComponent({
         e.preventDefault();
         const anchorElement = e.currentTarget;
         let date = Number(anchorElement.getAttribute("dateNumber"));
+
+        const wasSelectAll = selectAll;
+        if (wasSelectAll) {
+            selectedDates = manualSelectionRef.current.map((range) => [...range]);
+            selectedDate = null;
+            lastClickedDate = null;
+            exitSelectAllWithCurrentSelectionRef.current = true;
+        }
 
         if (selectionMode === "toggle") {
             if (e.shiftKey && lastClickedDate != null && lastClickedDate !== date) {
@@ -115,12 +200,10 @@ function CalendarComponent({
             }
         }
 
-        setDates(getDatesObject(selectedDates));
-        setGrid(getGridObject(selectedMonth, selectedYear));
-
-        if (builder && builder.addAvailability) {
-            builder.addAvailability(convertDatesToDBDates(selectedDates));
+        if (wasSelectAll) {
+            manualSelectionRef.current = selectedDates.map((range) => [...range]);
         }
+        syncSelection();
     }
 
     /**
@@ -170,8 +253,7 @@ function CalendarComponent({
         const index =
             anchorElement.parentElement.parentElement.getAttribute("index");
         selectedDates.splice(index, 1);
-        setDates(getDatesObject(selectedDates));
-        setGrid(getGridObject(selectedMonth, selectedYear));
+        syncSelection();
     }
 
     /**

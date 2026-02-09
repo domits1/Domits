@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import CalendarComponent from "../../hostdashboard/hostcalendar/views/Calender";
 import { useParams } from "react-router-dom";
 import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
@@ -7,6 +7,7 @@ import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import { useBuilder } from "../../../context/propertyBuilderContext";
 import OnboardingProgress from "../components/OnboardingProgress";
 import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
+import HouseRuleCheckbox from "../components/HouseRuleCheckbox";
 
 function PropertyAvailabilityView() {
   const form = useFormStoreHostOnboarding();
@@ -15,6 +16,7 @@ function PropertyAvailabilityView() {
   const selectedType = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
   const { type: accommodationType } = useParams();
   const { availability, updateSelectedDates } = useAvailability();
+  const [selectAll, setSelectAll] = useState(false);
 
   return (
     <div className="onboarding-host-div availability-onboarding">
@@ -24,6 +26,14 @@ function PropertyAvailabilityView() {
         <p className="onboardingSectionSubtitle">
           When is your property available for guests to book? You can update this anytime later within the calendar.
         </p>
+
+        <div className="availability-select-all">
+          <HouseRuleCheckbox
+            label="Select all"
+            value={selectAll}
+            onChange={(event) => setSelectAll(event.target.checked)}
+          />
+        </div>
 
         <div className="availability-calendar">
           <CalendarComponent
@@ -35,6 +45,12 @@ function PropertyAvailabilityView() {
             selectionMode="range"
             showOptions={false}
             allowSingleDeselect={true}
+            selectAll={selectAll}
+            onSelectionChange={({ isAllSelected }) => {
+              if (selectAll && !isAllSelected) {
+                setSelectAll(false);
+              }
+            }}
           />
         </div>
 
