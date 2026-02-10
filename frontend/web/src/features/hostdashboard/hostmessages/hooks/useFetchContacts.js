@@ -19,32 +19,54 @@ const useFetchContacts = (userId, role) => {
       const isHost = role === "host";
 
       const fetchUserInfo = async (userId) => {
-        const userResponse = await fetch(
-          "https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ UserId: userId }),
-          }
-        );
+  const userResponse = await fetch(
+    "https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ UserId: userId }),
+    }
+  );
 
-        if (!userResponse.ok) {
-          throw new Error("Failed to fetch user information");
-        }
+  if (!userResponse.ok) {
+    throw new Error("Failed to fetch user information");
+  }
 
-        const userData = await userResponse.json();
-        const parsedData = JSON.parse(userData.body)[0];
+  const userData = await userResponse.json();
 
-        const attributes = parsedData.Attributes.reduce((acc, attribute) => {
-          acc[attribute.Name] = attribute.Value;
-          return acc;
-        }, {});
+  const body =
+    typeof userData?.body === "string"
+      ? userData.body
+      : JSON.stringify(userData?.body ?? userData);
 
-        return {
-          givenName: attributes["given_name"],
-          userId: parsedData.Attributes[2].Value,
-        };
-      };
+  let parsed;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    parsed = [];
+  }
+
+  const first = Array.isArray(parsed) ? parsed[0] : parsed;
+  const attrs = first?.Attributes;
+
+  if (!Array.isArray(attrs)) {
+    return {
+      givenName: "Unknown",
+      userId,
+    };
+  }
+
+  const attributes = attrs.reduce((acc, attribute) => {
+    acc[attribute.Name] = attribute.Value;
+    return acc;
+  }, {});
+
+  return {
+    givenName: attributes["given_name"] || "Unknown",
+    userId: first?.Attributes?.[2]?.Value || userId,
+  };
+};
+
 
       const fetchLatestMessage = async (recipientIdToSend) => {
         try {
