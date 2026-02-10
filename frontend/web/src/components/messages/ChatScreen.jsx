@@ -30,13 +30,13 @@ const ChatScreen = ({
   const { bookingDetails } = isHost
     ? useFetchBookingDetails(userId, contactId)
     : useFetchBookingDetails(contactId, userId);
+
   const { sendMessage, sending, error: sendError } = useSendMessage(userId);
 
   const [newMessage, setNewMessage] = useState("");
   const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
   const [messageSearch, setMessageSearch] = useState("");
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
-
   const wsMessages = socket?.messages || [];
   const addedMessageIds = useRef(new Set());
   const chatContainerRef = useRef(null);
@@ -144,59 +144,38 @@ const ChatScreen = ({
     const hasContent = newMessage.trim() || uploadedFileUrls.length > 0;
     if (!hasContent) return;
 
-    const propertyId =
-      bookingDetails?.property_id || bookingDetails?.propertyId || bookingDetails?.propertyId || null;
-
     try {
-      const response = await sendMessage(contactId, newMessage, uploadedFileUrls, {
-        threadId: threadId || null,
-        propertyId,
-        metadata: { isAutomated: false },
-      });
+      const response = await sendMessage(
+        contactId,
+        newMessage,
+        uploadedFileUrls,
+        threadId || null,
+        bookingDetails?.property_id || bookingDetails?.propertyId || null
+      );
 
       if (!response || !response.success) {
         alert(`Error while sending: ${response?.error || "Please try again later."}`);
         return;
       }
 
-      const saved = response.data;
+      const saved = response?.data;
 
-      const savedMessage = saved
-        ? {
-            id: saved.id,
-            userId: saved.senderId,
-            recipientId: saved.recipientId,
-            text: saved.content || "",
-            fileUrls: (() => {
-              const at = saved.attachments;
-              if (!at) return uploadedFileUrls;
-              if (Array.isArray(at)) return at.map((x) => x?.url).filter(Boolean);
-              if (typeof at === "string") {
-                try {
-                  const parsed = JSON.parse(at);
-                  return Array.isArray(parsed) ? parsed.map((x) => x?.url).filter(Boolean) : uploadedFileUrls;
-                } catch {
-                  return uploadedFileUrls;
-                }
-              }
-              return uploadedFileUrls;
-            })(),
-            createdAt:
-              typeof saved.createdAt === "number" ? new Date(saved.createdAt).toISOString() : new Date().toISOString(),
-            isSent: true,
-          }
-        : {
-            id: uuidv4(),
-            userId,
-            recipientId: contactId,
-            text: newMessage,
-            fileUrls: uploadedFileUrls,
-            createdAt: new Date().toISOString(),
-            isSent: true,
-          };
+      const sentMessage = {
+        id: saved?.id || uuidv4(),
+        threadId: saved?.threadId || threadId || null,
+        senderId: saved?.senderId || userId,
+        recipientId: saved?.recipientId || contactId,
+        userId: saved?.senderId || userId,
+        text: saved?.content ?? newMessage,
+        content: saved?.content ?? newMessage,
+        fileUrls: uploadedFileUrls,
+        createdAt: saved?.createdAt || Date.now(),
+        isSent: true,
+      };
 
-      addNewMessage(savedMessage);
-      handleContactListMessage?.(savedMessage);
+      addNewMessage(sentMessage);
+      handleContactListMessage?.(sentMessage);
+
       setNewMessage("");
       setUploadedFileUrls([]);
 
@@ -204,8 +183,9 @@ const ChatScreen = ({
         const el = chatContainerRef.current;
         if (el) el.scrollTop = el.scrollHeight;
       } catch {}
-    } catch (error) {
-      console.error("Unexpected error while sending:", error);
+    } catch (err) {
+      console.error("Unexpected error while sending:", err);
+      alert("Unexpected error while sending. Please try again.");
     }
   };
 
@@ -288,7 +268,7 @@ const ChatScreen = ({
                 className="message-input-textarea"
                 placeholder="Type a message..."
                 onKeyUp={(e) => {
-                  if (e.key === "Enter") {
+                  if (event.key === "Enter") {
                     if ((newMessage?.length || 0) <= 200) {
                       handleSendMessage();
                     }
@@ -335,7 +315,7 @@ const ChatScreen = ({
           )}
         </div>
 
-        {sendError && <p className="error-message">{sendError}</p>}
+        {sendError && <p className="error-message">{sendError.message}</p>}
       </div>
     </div>
   );
