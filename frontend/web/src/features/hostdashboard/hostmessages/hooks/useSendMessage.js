@@ -1,61 +1,57 @@
 import { useState } from "react";
 import { getAccessToken } from "../../../../services/getAccessToken";
-
-const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+import { sendUnifiedMessage } from "../services/messagingService";
 
 export const useSendMessage = (userId) => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const token = getAccessToken(userId);
 
-  const sendMessageHandler = async (recipientId, text, fileUrls = [], threadId = null) => {
-    if (!userId || !recipientId || (!text.trim() && fileUrls.length === 0)) {
+  const sendMessageHandler = async (
+    recipientId,
+    text,
+    fileUrls = [],
+    { threadId = null, propertyId = null, metadata = {} } = {}
+  ) => {
+    if (!userId || !recipientId || (!text?.trim() && (!Array.isArray(fileUrls) || fileUrls.length === 0))) {
       const errorMsg = "Invalid message parameters";
       setError(errorMsg);
       return { success: false, error: errorMsg };
     }
 
+    const attachments =
+      Array.isArray(fileUrls) && fileUrls.length > 0
+        ? fileUrls.map((url) => ({
+            url,
+            type: url.endsWith(".mp4") ? "video/mp4" : "image",
+            name: "",
+          }))
+        : null;
+
     setSending(true);
     setError(null);
 
     try {
-      const payload = {
+      const saved = await sendUnifiedMessage({
         senderId: userId,
         recipientId,
-        content: text,
+        propertyId,
+        content: text || "",
         platform: "DOMITS",
-        threadId: threadId || undefined,
-        metadata: { isAutomated: false },
-        attachments:
-          Array.isArray(fileUrls) && fileUrls.length > 0
-            ? fileUrls.map((url) => ({
-                url,
-                type: url.endsWith(".mp4") ? "video" : "image",
-                name: url.split("/").pop() || "attachment",
-              }))
-            : undefined,
-      };
-
-      const res = await fetch(`${UNIFIED_MESSAGING_API}/send`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: token } : {}),
+        metadata: {
+          isAutomated: false,
+          ...metadata,
         },
-        body: JSON.stringify(payload),
+        attachments,
+        threadId,
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`UnifiedMessaging send failed: ${res.status} - ${errText}`);
-      }
-
-      const created = await res.json();
-      return { success: true, data: created };
+      return { success: true, data: saved, accessToken: token };
     } catch (err) {
       console.error("⚠️ Error sending message:", err);
-      setError(err);
-      return { success: false, error: err.message };
+      const msg = err?.message || "Failed to send";
+      setError(msg);
+      return { success: false, error: msg };
     } finally {
       setSending(false);
     }

@@ -31,10 +31,12 @@ const ChatScreen = ({
     ? useFetchBookingDetails(userId, contactId)
     : useFetchBookingDetails(contactId, userId);
   const { sendMessage, sending, error: sendError } = useSendMessage(userId);
+
   const [newMessage, setNewMessage] = useState("");
   const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
   const [messageSearch, setMessageSearch] = useState("");
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
+
   const wsMessages = socket?.messages || [];
   const addedMessageIds = useRef(new Set());
   const chatContainerRef = useRef(null);
@@ -99,7 +101,7 @@ const ChatScreen = ({
         id: `auto-${uuidv4()}`,
         userId: contactId,
         recipientId: userId,
-        text: `📶 Wi‑Fi details will be in the guidebook on arrival.`,
+        text: `📶 Wi-Fi details will be in the guidebook on arrival.`,
         createdAt: new Date(baseTime + 1000).toISOString(),
         isSent: false,
         isAutomated: true,
@@ -130,7 +132,6 @@ const ChatScreen = ({
       addNewMessage(msg);
       addedMessageIds.current.add(msg.id);
 
-      // Show toast for incoming messages (from contact, not from current user)
       if (msg.userId === contactId && msg.recipientId === userId && msg.text) {
         toast.info(<MessageToast contactName={contactName} contactImage={contactImage} message={msg.text} />, {
           className: "message-toast-custom",
@@ -142,25 +143,60 @@ const ChatScreen = ({
   const handleSendMessage = async () => {
     const hasContent = newMessage.trim() || uploadedFileUrls.length > 0;
     if (!hasContent) return;
+
+    const propertyId =
+      bookingDetails?.property_id || bookingDetails?.propertyId || bookingDetails?.propertyId || null;
+
     try {
-      const response = await sendMessage(contactId, newMessage, uploadedFileUrls, threadId);
+      const response = await sendMessage(contactId, newMessage, uploadedFileUrls, {
+        threadId: threadId || null,
+        propertyId,
+        metadata: { isAutomated: false },
+      });
+
       if (!response || !response.success) {
         alert(`Error while sending: ${response?.error || "Please try again later."}`);
         return;
       }
 
-      const tempSentMessage = {
-        id: uuidv4(),
-        userId,
-        recipientId: contactId,
-        text: newMessage,
-        fileUrls: uploadedFileUrls,
-        createdAt: new Date().toISOString(),
-        isSent: true,
-      };
+      const saved = response.data;
 
-      addNewMessage(tempSentMessage);
-      handleContactListMessage?.(tempSentMessage);
+      const savedMessage = saved
+        ? {
+            id: saved.id,
+            userId: saved.senderId,
+            recipientId: saved.recipientId,
+            text: saved.content || "",
+            fileUrls: (() => {
+              const at = saved.attachments;
+              if (!at) return uploadedFileUrls;
+              if (Array.isArray(at)) return at.map((x) => x?.url).filter(Boolean);
+              if (typeof at === "string") {
+                try {
+                  const parsed = JSON.parse(at);
+                  return Array.isArray(parsed) ? parsed.map((x) => x?.url).filter(Boolean) : uploadedFileUrls;
+                } catch {
+                  return uploadedFileUrls;
+                }
+              }
+              return uploadedFileUrls;
+            })(),
+            createdAt:
+              typeof saved.createdAt === "number" ? new Date(saved.createdAt).toISOString() : new Date().toISOString(),
+            isSent: true,
+          }
+        : {
+            id: uuidv4(),
+            userId,
+            recipientId: contactId,
+            text: newMessage,
+            fileUrls: uploadedFileUrls,
+            createdAt: new Date().toISOString(),
+            isSent: true,
+          };
+
+      addNewMessage(savedMessage);
+      handleContactListMessage?.(savedMessage);
       setNewMessage("");
       setUploadedFileUrls([]);
 
@@ -183,6 +219,7 @@ const ChatScreen = ({
         return text.includes(term) || urls.includes(term);
       })
     : messages;
+
   return (
     <div className={`${dashboardType}-chat`}>
       <div className="chat-screen-container">
@@ -251,7 +288,7 @@ const ChatScreen = ({
                 className="message-input-textarea"
                 placeholder="Type a message..."
                 onKeyUp={(e) => {
-                  if (event.key === "Enter") {
+                  if (e.key === "Enter") {
                     if ((newMessage?.length || 0) <= 200) {
                       handleSendMessage();
                     }
@@ -298,7 +335,7 @@ const ChatScreen = ({
           )}
         </div>
 
-        {sendError && <p className="error-message">{sendError.message}</p>}
+        {sendError && <p className="error-message">{sendError}</p>}
       </div>
     </div>
   );
