@@ -143,7 +143,7 @@ const ChatScreen = ({
     const hasContent = newMessage.trim() || uploadedFileUrls.length > 0;
     if (!hasContent) return;
     try {
-      const response = await sendMessage(contactId, newMessage, uploadedFileUrls);
+      const response = await sendMessage(contactId, newMessage, uploadedFileUrls, threadId);
       if (!response || !response.success) {
         alert(`Error while sending: ${response?.error || "Please try again later."}`);
         return;
