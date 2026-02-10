@@ -2,6 +2,7 @@ import React, {useContext, useEffect, useMemo, useRef, useState} from "react";
 import PropTypes from "prop-types";
 import editIcon from "../../images/icons/edit-05.png";
 import checkIcon from "../../images/icons/checkPng.png";
+import crossIcon from "../../images/icons/cross.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
 import {confirmEmailChange} from "../guestdashboard/emailSettings";
 import {normalizeImageUrl} from "../guestdashboard/utils/image";
@@ -76,23 +77,27 @@ const HostSettingsLayout = ({children}) => (
 
 const EditActionButtons = ({isEditing, onSave, onToggle, saveAlt, editAlt}) => (
     <div className="infoBoxActions">
-        <div
+        <button
+            type="button"
             onClick={isEditing ? onSave : undefined}
             className={`host-icon-background save-button${isEditing ? "" : " is-hidden"}`}
-            role="button"
+            aria-label={saveAlt}
+            disabled={!isEditing}
         >
-            <img src={checkIcon} alt={saveAlt} className="save-check-icon" />
-        </div>
-        <div
+            <img src={checkIcon} alt="" className="save-check-icon" aria-hidden="true" />
+        </button>
+        <button
+            type="button"
             onClick={onToggle}
             className={`host-icon-background edit-button${isEditing ? " is-active" : ""}`}
+            aria-label={isEditing ? "Cancel edit" : editAlt}
         >
             {isEditing ? (
-                <span className="edit-x" aria-hidden="true">X</span>
+                <img src={crossIcon} alt="" className="cancel-icon" aria-hidden="true" />
             ) : (
-                <img src={editIcon} alt={editAlt} className="guest-edit-icon" />
+                <img src={editIcon} alt="" className="guest-edit-icon" aria-hidden="true" />
             )}
-        </div>
+        </button>
     </div>
 );
 
@@ -1287,10 +1292,18 @@ const HostSettings = () => {
         }
     };
 
-    const handleTitleChange = (e) => {
+    const handleTitleChange = async (e) => {
         const value = e.target.value;
+        if (value === user.title) return;
         setTempUser((prevState) => ({...prevState, title: value}));
         setUser((prevState) => ({...prevState, title: value}));
+        try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            await Auth.updateUserAttributes(currentUser, { "custom:title": value || "" });
+        } catch (error) {
+            console.error("Error updating title:", error);
+            alert("Failed to update title. Please try again.");
+        }
     };
 
     const handleSexChange = async (e) => {
@@ -1637,7 +1650,7 @@ const HostSettings = () => {
                 address: attributes.address,
                 phone: attributes.phone_number,
                 family: "2 adults - 2 kids",
-                title: '',
+                title: attributes["custom:title"] || '',
                 dateOfBirth: formatBirthdateForDisplay(attributes.birthdate || ''),
                 placeOfBirth: attributes["custom:place_of_birth"] || '',
                 sex: attributes.gender || '',

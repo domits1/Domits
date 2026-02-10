@@ -212,13 +212,13 @@
 }
 
 .host-settings-page .photo-action.primary {
-    background-color: #16a34a;
-    border-color: #16a34a;
+    background-color: #15803d;
+    border-color: #15803d;
     color: #fff;
 }
 
 .host-settings-page .photo-action.primary:hover {
-    background-color: #15803d;
+    background-color: #166534;
 }
 
 .host-settings-page .photo-action.danger {
@@ -314,6 +314,11 @@
 
 .host-settings-page .host-icon-background {
     margin-left: 0;
+    background-color: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
 .host-settings-page .save-button.is-hidden {
@@ -322,21 +327,15 @@
 }
 
 .host-settings-page .save-check-icon {
-    width: 100%;
-    height: 100%;
+    width: 1.9rem;
+    height: 1.9rem;
     object-fit: contain;
 }
 
-.host-settings-page .edit-x {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    color: #fff;
-    font-size: 1.1rem;
-    font-weight: 700;
-    line-height: 1;
+.host-settings-page .cancel-icon {
+    width: 1.9rem;
+    height: 1.9rem;
+    object-fit: contain;
 }
 
 .host-icon-background {
@@ -356,19 +355,27 @@
 }
 
 .host-settings-page .save-button {
-    background-color: #16a34a;
-}
-
-.host-settings-page .save-button:hover {
     background-color: #15803d;
 }
 
+.host-settings-page .save-button:hover {
+    background-color: #166534;
+}
+
+.host-settings-page .edit-button {
+    background-color: var(--domits-host-blue);
+}
+
+.host-settings-page .edit-button:hover {
+    background-color: #5a9bc7;
+}
+
 .host-settings-page .edit-button.is-active {
-    background-color: #dc2626;
+    background-color: transparent;
 }
 
 .host-settings-page .edit-button.is-active:hover {
-    background-color: #b91c1c;
+    background-color: transparent;
 }
 
 @media (max-width: 768px) {
