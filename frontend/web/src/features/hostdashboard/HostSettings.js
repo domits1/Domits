@@ -1,4 +1,5 @@
 import React, {useContext, useEffect, useMemo, useRef, useState} from "react";
+import PropTypes from "prop-types";
 import editIcon from "../../images/icons/edit-05.png";
 import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
@@ -8,6 +9,61 @@ import standardAvatar from "../../images/standard.png";
 import {LanguageContext} from "../../context/LanguageContext";
 import countryList from "react-select-country-list";
 import './settingshostdashboard.css';
+
+const optionShape = PropTypes.shape({
+    value: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+});
+
+const countryCodeShape = PropTypes.shape({
+    code: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+});
+
+const authStatusShape = PropTypes.shape({
+    emailVerified: PropTypes.bool.isRequired,
+    phoneVerified: PropTypes.bool.isRequired,
+    preferredMFA: PropTypes.string.isRequired,
+});
+
+const userShape = PropTypes.shape({
+    email: PropTypes.string,
+    name: PropTypes.string,
+    address: PropTypes.string,
+    phone: PropTypes.string,
+    family: PropTypes.string,
+    title: PropTypes.string,
+    dateOfBirth: PropTypes.string,
+    placeOfBirth: PropTypes.string,
+    sex: PropTypes.string,
+    picture: PropTypes.string,
+    nationality: PropTypes.string,
+});
+
+const tempUserShape = PropTypes.shape({
+    email: PropTypes.string,
+    name: PropTypes.string,
+    phone: PropTypes.string,
+    title: PropTypes.string,
+    dateOfBirth: PropTypes.string,
+    placeOfBirth: PropTypes.string,
+    sex: PropTypes.string,
+    picture: PropTypes.string,
+    nationality: PropTypes.string,
+});
+
+const editStateShape = PropTypes.shape({
+    email: PropTypes.bool,
+    name: PropTypes.bool,
+    phone: PropTypes.bool,
+    dateOfBirth: PropTypes.bool,
+    placeOfBirth: PropTypes.bool,
+    nationality: PropTypes.bool,
+});
+
+const refShape = PropTypes.shape({
+    current: PropTypes.any,
+});
 
 const HostSettingsLayout = ({children}) => (
     <div className="page-body host-settings-page">
@@ -677,6 +733,190 @@ const HostSettingsContent = ({
         <AuthenticationSection authStatus={authStatus} showAuthMfa={showAuthMfa} />
     </div>
 );
+
+HostSettingsLayout.propTypes = {
+    children: PropTypes.node.isRequired,
+};
+
+EditActionButtons.propTypes = {
+    isEditing: PropTypes.bool.isRequired,
+    onSave: PropTypes.func,
+    onToggle: PropTypes.func.isRequired,
+    saveAlt: PropTypes.string.isRequired,
+    editAlt: PropTypes.string.isRequired,
+};
+
+EditableInfoBox.propTypes = {
+    label: PropTypes.string.isRequired,
+    isEditing: PropTypes.bool.isRequired,
+    editContent: PropTypes.node.isRequired,
+    displayContent: PropTypes.node.isRequired,
+    onSave: PropTypes.func,
+    onToggle: PropTypes.func.isRequired,
+    saveAlt: PropTypes.string.isRequired,
+    editAlt: PropTypes.string.isRequired,
+};
+
+ProfilePhotoBox.propTypes = {
+    userPicture: PropTypes.string,
+    isUploadingPhoto: PropTypes.bool.isRequired,
+    photoError: PropTypes.string,
+    onPhotoButtonClick: PropTypes.func.isRequired,
+    onPhotoRemove: PropTypes.func.isRequired,
+    onPhotoInputChange: PropTypes.func.isRequired,
+    photoInputRef: refShape.isRequired,
+};
+
+TitleField.propTypes = {
+    value: PropTypes.string,
+    options: PropTypes.arrayOf(PropTypes.string).isRequired,
+    onChange: PropTypes.func.isRequired,
+};
+
+NameField.propTypes = {
+    isEditing: PropTypes.bool.isRequired,
+    value: PropTypes.string,
+    tempValue: PropTypes.string,
+    onChange: PropTypes.func.isRequired,
+    onKeyPress: PropTypes.func.isRequired,
+    onSave: PropTypes.func.isRequired,
+    onToggle: PropTypes.func.isRequired,
+};
+
+EmailField.propTypes = {
+    isEditing: PropTypes.bool.isRequired,
+    isVerifying: PropTypes.bool.isRequired,
+    value: PropTypes.string,
+    tempValue: PropTypes.string,
+    verificationCode: PropTypes.string,
+    onChange: PropTypes.func.isRequired,
+    onVerificationChange: PropTypes.func.isRequired,
+    onKeyPress: PropTypes.func.isRequired,
+    onSave: PropTypes.func.isRequired,
+    onToggle: PropTypes.func.isRequired,
+};
+
+PhoneField.propTypes = {
+    isEditing: PropTypes.bool.isRequired,
+    value: PropTypes.string,
+    countryCodes: PropTypes.arrayOf(countryCodeShape).isRequired,
+    selectedCountryCode: PropTypes.string.isRequired,
+    stripPhone: PropTypes.string.isRequired,
+    onCountryCodeChange: PropTypes.func.isRequired,
+    onPhoneChange: PropTypes.func.isRequired,
+    onKeyPress: PropTypes.func.isRequired,
+    onSave: PropTypes.func.isRequired,
+    onToggle: PropTypes.func.isRequired,
+};
+
+SexField.propTypes = {
+    value: PropTypes.string,
+    options: PropTypes.arrayOf(PropTypes.string).isRequired,
+    onChange: PropTypes.func.isRequired,
+};
+
+DateOfBirthField.propTypes = {
+    isEditing: PropTypes.bool.isRequired,
+    value: PropTypes.string,
+    tempValue: PropTypes.string,
+    error: PropTypes.string,
+    onChange: PropTypes.func.isRequired,
+    onKeyPress: PropTypes.func.isRequired,
+    onSave: PropTypes.func.isRequired,
+    onToggle: PropTypes.func.isRequired,
+};
+
+PlaceOfBirthField.propTypes = {
+    isEditing: PropTypes.bool.isRequired,
+    value: PropTypes.string,
+    tempValue: PropTypes.string,
+    options: PropTypes.arrayOf(PropTypes.string).isRequired,
+    onChange: PropTypes.func.isRequired,
+    onSave: PropTypes.func.isRequired,
+    onToggle: PropTypes.func.isRequired,
+};
+
+NationalityField.propTypes = {
+    isEditing: PropTypes.bool.isRequired,
+    value: PropTypes.string,
+    tempValue: PropTypes.string,
+    error: PropTypes.string,
+    onChange: PropTypes.func.isRequired,
+    onKeyPress: PropTypes.func.isRequired,
+    onSave: PropTypes.func.isRequired,
+    onToggle: PropTypes.func.isRequired,
+};
+
+PreferencesSection.propTypes = {
+    language: PropTypes.string.isRequired,
+    languageOptions: PropTypes.arrayOf(optionShape).isRequired,
+    onLanguageChange: PropTypes.func.isRequired,
+    showPrefFormats: PropTypes.bool.isRequired,
+    dateFormat: PropTypes.string.isRequired,
+    priceFormat: PropTypes.string.isRequired,
+    dateFormatOptions: PropTypes.arrayOf(optionShape).isRequired,
+    priceFormatOptions: PropTypes.arrayOf(optionShape).isRequired,
+    onDateFormatChange: PropTypes.func.isRequired,
+    onPriceFormatChange: PropTypes.func.isRequired,
+};
+
+AuthenticationSection.propTypes = {
+    authStatus: authStatusShape.isRequired,
+    showAuthMfa: PropTypes.bool.isRequired,
+};
+
+HostSettingsContent.propTypes = {
+    user: userShape.isRequired,
+    tempUser: tempUserShape.isRequired,
+    editState: editStateShape.isRequired,
+    verificationCode: PropTypes.string.isRequired,
+    isVerifying: PropTypes.bool.isRequired,
+    selectedCountryCode: PropTypes.string.isRequired,
+    stripPhone: PropTypes.string.isRequired,
+    dateOfBirthError: PropTypes.string,
+    photoError: PropTypes.string,
+    isUploadingPhoto: PropTypes.bool.isRequired,
+    nationalityError: PropTypes.string,
+    authStatus: authStatusShape.isRequired,
+    language: PropTypes.string.isRequired,
+    dateFormat: PropTypes.string.isRequired,
+    priceFormat: PropTypes.string.isRequired,
+    photoInputRef: refShape.isRequired,
+    languageOptions: PropTypes.arrayOf(optionShape).isRequired,
+    dateFormatOptions: PropTypes.arrayOf(optionShape).isRequired,
+    priceFormatOptions: PropTypes.arrayOf(optionShape).isRequired,
+    countryCodes: PropTypes.arrayOf(countryCodeShape).isRequired,
+    titleOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
+    sexOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
+    placeOfBirthOptions: PropTypes.arrayOf(PropTypes.string).isRequired,
+    onPhotoButtonClick: PropTypes.func.isRequired,
+    onPhotoRemove: PropTypes.func.isRequired,
+    onPhotoInputChange: PropTypes.func.isRequired,
+    onTitleChange: PropTypes.func.isRequired,
+    onInputChange: PropTypes.func.isRequired,
+    onVerificationInputChange: PropTypes.func.isRequired,
+    onKeyPressName: PropTypes.func.isRequired,
+    onKeyPressEmail: PropTypes.func.isRequired,
+    onKeyPressPhone: PropTypes.func.isRequired,
+    onKeyPressDateOfBirth: PropTypes.func.isRequired,
+    onKeyPressNationality: PropTypes.func.isRequired,
+    onCountryCodeChange: PropTypes.func.isRequired,
+    onPhoneChange: PropTypes.func.isRequired,
+    onSexChange: PropTypes.func.isRequired,
+    onDateOfBirthChange: PropTypes.func.isRequired,
+    onLanguageChange: PropTypes.func.isRequired,
+    onDateFormatChange: PropTypes.func.isRequired,
+    onPriceFormatChange: PropTypes.func.isRequired,
+    onSaveUserName: PropTypes.func.isRequired,
+    onSaveUserEmail: PropTypes.func.isRequired,
+    onSaveUserPhone: PropTypes.func.isRequired,
+    onSaveUserDateOfBirth: PropTypes.func.isRequired,
+    onSaveUserPlaceOfBirth: PropTypes.func.isRequired,
+    onSaveUserNationality: PropTypes.func.isRequired,
+    onToggleEditState: PropTypes.func.isRequired,
+    showPrefFormats: PropTypes.bool.isRequired,
+    showAuthMfa: PropTypes.bool.isRequired,
+};
 
 
 const HostSettings = () => {
