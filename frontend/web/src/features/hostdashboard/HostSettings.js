@@ -9,6 +9,675 @@ import {LanguageContext} from "../../context/LanguageContext";
 import countryList from "react-select-country-list";
 import './settingshostdashboard.css';
 
+const HostSettingsLayout = ({children}) => (
+    <div className="page-body host-settings-page">
+        <h2>Settings</h2>
+        <div className="dashboards">
+            <div className="content">{children}</div>
+        </div>
+    </div>
+);
+
+const EditActionButtons = ({isEditing, onSave, onToggle, saveAlt, editAlt}) => (
+    <div className="infoBoxActions">
+        <div
+            onClick={isEditing ? onSave : undefined}
+            className={`host-icon-background save-button${isEditing ? "" : " is-hidden"}`}
+            role="button"
+        >
+            <img src={checkIcon} alt={saveAlt} className="save-check-icon" />
+        </div>
+        <div
+            onClick={onToggle}
+            className={`host-icon-background edit-button${isEditing ? " is-active" : ""}`}
+        >
+            {isEditing ? (
+                <span className="edit-x" aria-hidden="true">X</span>
+            ) : (
+                <img src={editIcon} alt={editAlt} className="guest-edit-icon" />
+            )}
+        </div>
+    </div>
+);
+
+const EditableInfoBox = ({
+    label,
+    isEditing,
+    editContent,
+    displayContent,
+    onSave,
+    onToggle,
+    saveAlt,
+    editAlt,
+}) => (
+    <div className="InfoBox">
+        <div className="infoBoxText">
+            <span>{label}</span>
+            {isEditing ? editContent : displayContent}
+        </div>
+        <EditActionButtons
+            isEditing={isEditing}
+            onSave={onSave}
+            onToggle={onToggle}
+            saveAlt={saveAlt}
+            editAlt={editAlt}
+        />
+    </div>
+);
+
+const ProfilePhotoBox = ({
+    userPicture,
+    isUploadingPhoto,
+    photoError,
+    onPhotoButtonClick,
+    onPhotoRemove,
+    onPhotoInputChange,
+    photoInputRef,
+}) => (
+    <>
+        <div className="InfoBox profile-photo-box">
+            <div className="infoBoxText">
+                <span>Profile photo:</span>
+                <div className="profile-photo-row">
+                    <img
+                        src={userPicture ? normalizeImageUrl(userPicture) : standardAvatar}
+                        alt="Profile"
+                        className="profile-photo-image"
+                    />
+                    <div className="profile-photo-actions">
+                        <button
+                            type="button"
+                            onClick={onPhotoButtonClick}
+                            className="photo-action primary"
+                            disabled={isUploadingPhoto}
+                        >
+                            {isUploadingPhoto ? "Working..." : "Upload"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onPhotoRemove}
+                            className="photo-action danger"
+                            disabled={isUploadingPhoto || !userPicture}
+                        >
+                            Remove
+                        </button>
+                    </div>
+                </div>
+                {photoError && (
+                    <p className="field-error">{photoError}</p>
+                )}
+            </div>
+        </div>
+        <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            onChange={onPhotoInputChange}
+            style={{ display: "none" }}
+        />
+    </>
+);
+
+const TitleField = ({value, options, onChange}) => (
+    <div className="InfoBox">
+        <div className="infoBoxText infoBoxText--row">
+            <span>Title:</span>
+            <div className="infoBoxEditRow">
+                <select
+                    name="title"
+                    value={value}
+                    onChange={onChange}
+                    className="guest-edit-input"
+                >
+                    {options.map((option) => (
+                        <option key={option || "empty"} value={option}>
+                            {option || "Select title"}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        </div>
+    </div>
+);
+
+const NameField = ({
+    isEditing,
+    value,
+    tempValue,
+    onChange,
+    onKeyPress,
+    onSave,
+    onToggle,
+}) => (
+    <EditableInfoBox
+        label="Full name:"
+        isEditing={isEditing}
+        onSave={onSave}
+        onToggle={onToggle}
+        saveAlt="Save Name"
+        editAlt="Edit Name"
+        editContent={(
+            <div className="infoBoxEditRow">
+                <input
+                    type="text"
+                    name="name"
+                    value={tempValue}
+                    onChange={onChange}
+                    className="guest-edit-input"
+                    onKeyPress={onKeyPress}
+                />
+            </div>
+        )}
+        displayContent={<p>{value || "-"}</p>}
+    />
+);
+
+const EmailField = ({
+    isEditing,
+    isVerifying,
+    value,
+    tempValue,
+    verificationCode,
+    onChange,
+    onVerificationChange,
+    onKeyPress,
+    onSave,
+    onToggle,
+}) => (
+    <EditableInfoBox
+        label="Email:"
+        isEditing={isEditing}
+        onSave={onSave}
+        onToggle={onToggle}
+        saveAlt="Save Email"
+        editAlt="Edit Email"
+        editContent={(
+            <div className="infoBoxEditRow">
+                {isVerifying ? (
+                    <input
+                        type="text"
+                        name="verificationCode"
+                        value={verificationCode}
+                        onChange={onVerificationChange}
+                        placeholder="Code sent to your email!"
+                        className="guest-edit-input"
+                        onKeyPress={onKeyPress}
+                    />
+                ) : (
+                    <input
+                        type="email"
+                        name="email"
+                        value={tempValue}
+                        onChange={onChange}
+                        className="guest-edit-input"
+                        onKeyPress={onKeyPress}
+                    />
+                )}
+            </div>
+        )}
+        displayContent={<p>{value || "-"}</p>}
+    />
+);
+
+const PhoneField = ({
+    isEditing,
+    value,
+    countryCodes,
+    selectedCountryCode,
+    stripPhone,
+    onCountryCodeChange,
+    onPhoneChange,
+    onKeyPress,
+    onSave,
+    onToggle,
+}) => (
+    <EditableInfoBox
+        label="Phone:"
+        isEditing={isEditing}
+        onSave={onSave}
+        onToggle={onToggle}
+        saveAlt="Save Phone number"
+        editAlt="Edit Phone number"
+        editContent={(
+            <div className="infoBoxEditRow">
+                <select
+                    value={selectedCountryCode}
+                    onChange={onCountryCodeChange}
+                    className="countryCodeDropdown"
+                >
+                    {countryCodes.map((country, index) => (
+                        <option key={index} value={country.code}>
+                            {country.name} ({country.code})
+                        </option>
+                    ))}
+                </select>
+                <input
+                    type="text"
+                    name="phone"
+                    placeholder="Phone Number"
+                    value={stripPhone}
+                    onChange={onPhoneChange}
+                    className="guest-edit-input"
+                    onKeyPress={onKeyPress}
+                />
+            </div>
+        )}
+        displayContent={<p>{value || "-"}</p>}
+    />
+);
+
+const SexField = ({value, options, onChange}) => (
+    <div className="InfoBox">
+        <div className="infoBoxText infoBoxText--row">
+            <span>Sex:</span>
+            <div className="infoBoxEditRow">
+                <select
+                    name="sex"
+                    value={value}
+                    onChange={onChange}
+                    className="guest-edit-input"
+                >
+                    {options.map((option) => (
+                        <option key={option || "empty"} value={option}>
+                            {option || "Select sex"}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        </div>
+    </div>
+);
+
+const DateOfBirthField = ({
+    isEditing,
+    value,
+    tempValue,
+    error,
+    onChange,
+    onKeyPress,
+    onSave,
+    onToggle,
+}) => (
+    <EditableInfoBox
+        label="Date of birth:"
+        isEditing={isEditing}
+        onSave={onSave}
+        onToggle={onToggle}
+        saveAlt="Save Date of Birth"
+        editAlt="Edit Date of Birth"
+        editContent={(
+            <div className="infoBoxEditRow">
+                <input
+                    type="text"
+                    name="dateOfBirth"
+                    placeholder="DD-MM-YYYY"
+                    value={tempValue}
+                    onChange={onChange}
+                    className="guest-edit-input"
+                    onKeyPress={onKeyPress}
+                    inputMode="numeric"
+                />
+                {error && (
+                    <p className="field-error">{error}</p>
+                )}
+            </div>
+        )}
+        displayContent={value ? <p>{value}</p> : <p className="placeholder-text">DD-MM-YYYY</p>}
+    />
+);
+
+const PlaceOfBirthField = ({
+    isEditing,
+    value,
+    tempValue,
+    options,
+    onChange,
+    onSave,
+    onToggle,
+}) => (
+    <EditableInfoBox
+        label="Place of birth:"
+        isEditing={isEditing}
+        onSave={onSave}
+        onToggle={onToggle}
+        saveAlt="Save Place of Birth"
+        editAlt="Edit Place of Birth"
+        editContent={(
+            <div className="infoBoxEditRow">
+                <select
+                    name="placeOfBirth"
+                    value={tempValue}
+                    onChange={onChange}
+                    className="guest-edit-input"
+                >
+                    <option value="">Select country</option>
+                    {options.map((country) => (
+                        <option key={country} value={country}>
+                            {country}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        )}
+        displayContent={
+            value ? <p>{value}</p> : <p className="placeholder-text">Country</p>
+        }
+    />
+);
+
+const NationalityField = ({
+    isEditing,
+    value,
+    tempValue,
+    error,
+    onChange,
+    onKeyPress,
+    onSave,
+    onToggle,
+}) => (
+    <EditableInfoBox
+        label="Nationality:"
+        isEditing={isEditing}
+        onSave={onSave}
+        onToggle={onToggle}
+        saveAlt="Save Nationality"
+        editAlt="Edit Nationality"
+        editContent={(
+            <div className="infoBoxEditRow">
+                <input
+                    type="text"
+                    name="nationality"
+                    placeholder="e.g. Dutch"
+                    value={tempValue}
+                    onChange={onChange}
+                    className="guest-edit-input"
+                    onKeyPress={onKeyPress}
+                />
+                {error && (
+                    <p className="field-error">{error}</p>
+                )}
+            </div>
+        )}
+        displayContent={
+            value ? <p>{value}</p> : <p className="placeholder-text">Nationality</p>
+        }
+    />
+);
+
+const PreferencesSection = ({
+    language,
+    languageOptions,
+    onLanguageChange,
+    showPrefFormats,
+    dateFormat,
+    priceFormat,
+    dateFormatOptions,
+    priceFormatOptions,
+    onDateFormatChange,
+    onPriceFormatChange,
+}) => (
+    <div className="preferencesSection">
+        <h3>Preferences</h3>
+
+        <div className="InfoBox">
+            <div className="infoBoxText infoBoxText--row">
+                <span>Default language:</span>
+                <div className="infoBoxEditRow">
+                    <select
+                        name="defaultLanguage"
+                        value={language}
+                        onChange={onLanguageChange}
+                        className="guest-edit-input"
+                    >
+                        {languageOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {showPrefFormats && (
+            <>
+                <div className="InfoBox">
+                    <div className="infoBoxText infoBoxText--row">
+                        <span>Date format:</span>
+                        <div className="infoBoxEditRow">
+                            <select
+                                name="dateFormat"
+                                value={dateFormat}
+                                onChange={onDateFormatChange}
+                                className="guest-edit-input"
+                            >
+                                {dateFormatOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="InfoBox">
+                    <div className="infoBoxText infoBoxText--row">
+                        <span>Price format:</span>
+                        <div className="infoBoxEditRow">
+                            <select
+                                name="priceFormat"
+                                value={priceFormat}
+                                onChange={onPriceFormatChange}
+                                className="guest-edit-input"
+                            >
+                                {priceFormatOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </>
+        )}
+    </div>
+);
+
+const AuthenticationSection = ({authStatus, showAuthMfa}) => (
+    <div className="preferencesSection authSection">
+        <h3>Authentication</h3>
+
+        <div className="InfoBox">
+            <div className="infoBoxText">
+                <div className="infoBoxTextRow">
+                    <span>Email</span>
+                    <span className={`status-pill ${authStatus.emailVerified ? "is-active" : "is-inactive"}`}>
+                        {authStatus.emailVerified ? "Active" : "Inactive"}
+                    </span>
+                </div>
+                <p className="auth-subtext">
+                    {authStatus.emailVerified ? "Verified" : "Not verified"}
+                </p>
+            </div>
+        </div>
+
+        {showAuthMfa && (
+            <>
+                <div className="InfoBox">
+                    <div className="infoBoxText">
+                        <div className="infoBoxTextRow">
+                            <span>SMS</span>
+                            <span className={`status-pill ${authStatus.preferredMFA === "SMS" ? "is-active" : "is-inactive"}`}>
+                                {authStatus.preferredMFA === "SMS" ? "Active" : "Inactive"}
+                            </span>
+                        </div>
+                        <p className="auth-subtext">
+                            Phone verified: {authStatus.phoneVerified ? "Yes" : "No"}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="InfoBox">
+                    <div className="infoBoxText">
+                        <div className="infoBoxTextRow">
+                            <span>Authenticator app</span>
+                            <span className={`status-pill ${authStatus.preferredMFA === "TOTP" ? "is-active" : "is-inactive"}`}>
+                                {authStatus.preferredMFA === "TOTP" ? "Active" : "Inactive"}
+                            </span>
+                        </div>
+                        <p className="auth-subtext">App-based codes (TOTP)</p>
+                    </div>
+                </div>
+            </>
+        )}
+    </div>
+);
+
+const HostSettingsContent = ({
+    user,
+    tempUser,
+    editState,
+    verificationCode,
+    isVerifying,
+    selectedCountryCode,
+    stripPhone,
+    dateOfBirthError,
+    photoError,
+    isUploadingPhoto,
+    nationalityError,
+    authStatus,
+    language,
+    dateFormat,
+    priceFormat,
+    photoInputRef,
+    languageOptions,
+    dateFormatOptions,
+    priceFormatOptions,
+    countryCodes,
+    titleOptions,
+    sexOptions,
+    placeOfBirthOptions,
+    onPhotoButtonClick,
+    onPhotoRemove,
+    onPhotoInputChange,
+    onTitleChange,
+    onInputChange,
+    onVerificationInputChange,
+    onKeyPressName,
+    onKeyPressEmail,
+    onKeyPressPhone,
+    onKeyPressDateOfBirth,
+    onKeyPressNationality,
+    onCountryCodeChange,
+    onPhoneChange,
+    onSexChange,
+    onDateOfBirthChange,
+    onLanguageChange,
+    onDateFormatChange,
+    onPriceFormatChange,
+    onSaveUserName,
+    onSaveUserEmail,
+    onSaveUserPhone,
+    onSaveUserDateOfBirth,
+    onSaveUserPlaceOfBirth,
+    onSaveUserNationality,
+    onToggleEditState,
+    showPrefFormats,
+    showAuthMfa,
+}) => (
+    <div className="personalInfoContent">
+        <h3>Personal Information</h3>
+        <ProfilePhotoBox
+            userPicture={user.picture}
+            isUploadingPhoto={isUploadingPhoto}
+            photoError={photoError}
+            onPhotoButtonClick={onPhotoButtonClick}
+            onPhotoRemove={onPhotoRemove}
+            onPhotoInputChange={onPhotoInputChange}
+            photoInputRef={photoInputRef}
+        />
+        <TitleField value={user.title} options={titleOptions} onChange={onTitleChange} />
+        <NameField
+            isEditing={editState.name}
+            value={user.name}
+            tempValue={tempUser.name}
+            onChange={onInputChange}
+            onKeyPress={onKeyPressName}
+            onSave={onSaveUserName}
+            onToggle={() => onToggleEditState("name")}
+        />
+        <EmailField
+            isEditing={editState.email}
+            isVerifying={isVerifying}
+            value={user.email}
+            tempValue={tempUser.email}
+            verificationCode={verificationCode}
+            onChange={onInputChange}
+            onVerificationChange={onVerificationInputChange}
+            onKeyPress={onKeyPressEmail}
+            onSave={onSaveUserEmail}
+            onToggle={() => onToggleEditState("email")}
+        />
+        <PhoneField
+            isEditing={editState.phone}
+            value={user.phone}
+            countryCodes={countryCodes}
+            selectedCountryCode={selectedCountryCode}
+            stripPhone={stripPhone}
+            onCountryCodeChange={onCountryCodeChange}
+            onPhoneChange={onPhoneChange}
+            onKeyPress={onKeyPressPhone}
+            onSave={onSaveUserPhone}
+            onToggle={() => onToggleEditState("phone")}
+        />
+        <SexField value={user.sex} options={sexOptions} onChange={onSexChange} />
+        <DateOfBirthField
+            isEditing={editState.dateOfBirth}
+            value={user.dateOfBirth}
+            tempValue={tempUser.dateOfBirth}
+            error={dateOfBirthError}
+            onChange={onDateOfBirthChange}
+            onKeyPress={onKeyPressDateOfBirth}
+            onSave={onSaveUserDateOfBirth}
+            onToggle={() => onToggleEditState("dateOfBirth")}
+        />
+        <PlaceOfBirthField
+            isEditing={editState.placeOfBirth}
+            value={user.placeOfBirth}
+            tempValue={tempUser.placeOfBirth}
+            options={placeOfBirthOptions}
+            onChange={onInputChange}
+            onSave={onSaveUserPlaceOfBirth}
+            onToggle={() => onToggleEditState("placeOfBirth")}
+        />
+        <NationalityField
+            isEditing={editState.nationality}
+            value={user.nationality}
+            tempValue={tempUser.nationality}
+            error={nationalityError}
+            onChange={onInputChange}
+            onKeyPress={onKeyPressNationality}
+            onSave={onSaveUserNationality}
+            onToggle={() => onToggleEditState("nationality")}
+        />
+        <PreferencesSection
+            language={language}
+            languageOptions={languageOptions}
+            onLanguageChange={onLanguageChange}
+            showPrefFormats={showPrefFormats}
+            dateFormat={dateFormat}
+            priceFormat={priceFormat}
+            dateFormatOptions={dateFormatOptions}
+            priceFormatOptions={priceFormatOptions}
+            onDateFormatChange={onDateFormatChange}
+            onPriceFormatChange={onPriceFormatChange}
+        />
+        <AuthenticationSection authStatus={authStatus} showAuthMfa={showAuthMfa} />
+    </div>
+);
+
 
 const HostSettings = () => {
     const {language, setLanguage} = useContext(LanguageContext);
@@ -48,7 +717,6 @@ const HostSettings = () => {
     });
     const [verificationCode, setVerificationCode] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
-    const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
     const [selectedCountryCode, setSelectedCountryCode] = useState("+1");
     const [stripPhone, setStripPhone] = useState("");
     const [dateOfBirthError, setDateOfBirthError] = useState("");
@@ -432,7 +1100,6 @@ const HostSettings = () => {
 
         setEditState((prevState) => ({...prevState, [field]: !prevState[field]}));
         setIsVerifying(false);
-        setIsVerifyingUsername(false);
         if (!editState[field]) {
             setTempUser({...tempUser, [field]: user[field]});
         }
@@ -693,12 +1360,6 @@ const HostSettings = () => {
         }
     };
 
-    const handleKeyPressPlaceOfBirth = (e) => {
-        if (e.key === 'Enter') {
-            saveUserPlaceOfBirth();
-        }
-    };
-
     const handleKeyPressNationality = (e) => {
         if (e.key === 'Enter') {
             saveUserNationality();
@@ -763,506 +1424,60 @@ const HostSettings = () => {
     };
 
     return (
-        <div className="page-body host-settings-page">
-            <h2>Settings</h2>
-            <div className="dashboards">
-                <div className="content">
-                    <div className="personalInfoContent">
-                        <h3>Personal Information</h3>
-                        <div className="InfoBox profile-photo-box">
-                            <div className="infoBoxText">
-                                <span>Profile photo:</span>
-                                <div className="profile-photo-row">
-                                    <img
-                                        src={user.picture ? normalizeImageUrl(user.picture) : standardAvatar}
-                                        alt="Profile"
-                                        className="profile-photo-image"
-                                    />
-                                    <div className="profile-photo-actions">
-                                        <button
-                                            type="button"
-                                            onClick={handlePhotoButtonClick}
-                                            className="photo-action primary"
-                                            disabled={isUploadingPhoto}
-                                        >
-                                            {isUploadingPhoto ? "Working..." : "Upload"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handlePhotoRemove}
-                                            className="photo-action danger"
-                                            disabled={isUploadingPhoto || !user.picture}
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                </div>
-                                {photoError && (
-                                    <p className="field-error">{photoError}</p>
-                                )}
-                            </div>
-                        </div>
-                        <input
-                            ref={photoInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handlePhotoInputChange}
-                            style={{ display: "none" }}
-                        />
-                        <div className="InfoBox">
-                            <div className="infoBoxText infoBoxText--row">
-                                <span>Title:</span>
-                                <div className="infoBoxEditRow">
-                                    <select
-                                        name="title"
-                                        value={user.title}
-                                        onChange={handleTitleChange}
-                                        className="guest-edit-input"
-                                    >
-                                        {titleOptions.map((option) => (
-                                            <option key={option || "empty"} value={option}>
-                                                {option || "Select title"}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <div className="infoBoxText">
-                                <span>Full name:</span>
-                                {editState.name ? (
-                                    <div className="infoBoxEditRow">
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            value={tempUser.name}
-                                            onChange={handleInputChange}
-                                            className="guest-edit-input"
-                                            onKeyPress={handleKeyPressName}
-                                        />
-                                    </div>
-                                ) : (
-                                    <p>{user.name || "-"}</p>
-                                )}
-                            </div>
-                            <div className="infoBoxActions">
-                                <div
-                                    onClick={editState.name ? saveUserName : undefined}
-                                    className={`host-icon-background save-button${editState.name ? "" : " is-hidden"}`}
-                                    role="button">
-                                    <img src={checkIcon} alt="Save Name" className="save-check-icon" />
-                                </div>
-                                <div
-                                    onClick={() => toggleEditState('name')}
-                                    className={`host-icon-background edit-button${editState.name ? " is-active" : ""}`}>
-                                    {editState.name ? (
-                                        <span className="edit-x" aria-hidden="true">X</span>
-                                    ) : (
-                                        <img src={editIcon} alt="Edit Name" className="guest-edit-icon"/>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <div className="infoBoxText">
-                                <span>Email:</span>
-                                {editState.email ? (
-                                    <div className="infoBoxEditRow">
-                                        {!isVerifying ? (
-                                            <>
-                                                <input
-                                                    type="email"
-                                                    name="email"
-                                                    value={tempUser.email}
-                                                    onChange={handleInputChange}
-                                                    className="guest-edit-input"
-                                                    onKeyPress={handleKeyPressEmail}
-                                                />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <input
-                                                    type="text"
-                                                    name="verificationCode"
-                                                    value={verificationCode}
-                                                    onChange={handleVerificationInputChange}
-                                                    placeholder="Code sent to your email!"
-                                                    className="guest-edit-input"
-                                                    onKeyPress={handleKeyPressEmail}
-                                                />
-                                            </>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p>{user.email || "-"}</p>
-                                )}
-                            </div>
-                            <div className="infoBoxActions">
-                                <div
-                                    onClick={editState.email ? saveUserEmail : undefined}
-                                    className={`host-icon-background save-button${editState.email ? "" : " is-hidden"}`}
-                                    role="button">
-                                    <img src={checkIcon} alt="Save Email" className="save-check-icon" />
-                                </div>
-                                <div
-                                    onClick={() => toggleEditState('email')}
-                                    className={`host-icon-background edit-button${editState.email ? " is-active" : ""}`}>
-                                    {editState.email ? (
-                                        <span className="edit-x" aria-hidden="true">X</span>
-                                    ) : (
-                                        <img src={editIcon} alt="Edit Email" className="guest-edit-icon"/>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <div className="infoBoxText">
-                                <span>Phone:</span>
-                                {editState.phone ? (
-                                    <div className="infoBoxEditRow">
-                                        <select
-                                            value={selectedCountryCode}
-                                            onChange={handleCountryCodeChange}
-                                            className="countryCodeDropdown"
-                                        >
-                                            {countryCodes.map((country, index) => (
-                                                <option key={index} value={country.code}>
-                                                    {country.name} ({country.code})
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <input
-                                            type="text"
-                                            name="phone"
-                                            placeholder="Phone Number"
-                                            value={stripPhone}
-                                            onChange={handlePhoneChange}
-                                            className="guest-edit-input"
-                                            onKeyPress={handleKeyPressPhone}
-                                        />
-                                    </div>
-                                ) : (
-                                    <p>{user.phone || "-"}</p>
-                                )}
-                            </div>
-                            <div className="infoBoxActions">
-                                <div
-                                    onClick={editState.phone ? saveUserPhone : undefined}
-                                    className={`host-icon-background save-button${editState.phone ? "" : " is-hidden"}`}
-                                    role="button">
-                                    <img src={checkIcon} alt="Save Phone number" className="save-check-icon" />
-                                </div>
-                                <div
-                                    onClick={() => toggleEditState('phone')}
-                                    className={`host-icon-background edit-button${editState.phone ? " is-active" : ""}`}>
-                                    {editState.phone ? (
-                                        <span className="edit-x" aria-hidden="true">X</span>
-                                    ) : (
-                                        <img src={editIcon} alt="Edit Phone number" className="guest-edit-icon"/>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <div className="infoBoxText infoBoxText--row">
-                                <span>Sex:</span>
-                                <div className="infoBoxEditRow">
-                                    <select
-                                        name="sex"
-                                        value={user.sex}
-                                        onChange={handleSexChange}
-                                        className="guest-edit-input"
-                                    >
-                                        {sexOptions.map((option) => (
-                                            <option key={option || "empty"} value={option}>
-                                                {option || "Select sex"}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <div className="infoBoxText">
-                                <span>Date of birth:</span>
-                                {editState.dateOfBirth ? (
-                                    <div className="infoBoxEditRow">
-                                        <input
-                                            type="text"
-                                            name="dateOfBirth"
-                                            placeholder="DD-MM-YYYY"
-                                            value={tempUser.dateOfBirth}
-                                            onChange={handleDateOfBirthChange}
-                                            className="guest-edit-input"
-                                            onKeyPress={handleKeyPressDateOfBirth}
-                                            inputMode="numeric"
-                                        />
-                                        {dateOfBirthError && (
-                                            <p className="field-error">{dateOfBirthError}</p>
-                                        )}
-                                    </div>
-                                ) : user.dateOfBirth ? (
-                                    <p>{user.dateOfBirth}</p>
-                                ) : (
-                                    <p className="placeholder-text">DD-MM-YYYY</p>
-                                )}
-                            </div>
-                            <div className="infoBoxActions">
-                                <div
-                                    onClick={editState.dateOfBirth ? saveUserDateOfBirth : undefined}
-                                    className={`host-icon-background save-button${editState.dateOfBirth ? "" : " is-hidden"}`}
-                                    role="button">
-                                    <img src={checkIcon} alt="Save Date of Birth" className="save-check-icon" />
-                                </div>
-                                <div
-                                    onClick={() => toggleEditState('dateOfBirth')}
-                                    className={`host-icon-background edit-button${editState.dateOfBirth ? " is-active" : ""}`}>
-                                    {editState.dateOfBirth ? (
-                                        <span className="edit-x" aria-hidden="true">X</span>
-                                    ) : (
-                                        <img src={editIcon} alt="Edit Date of Birth" className="guest-edit-icon"/>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <div className="infoBoxText">
-                                <span>Place of birth:</span>
-                                {editState.placeOfBirth ? (
-                                    <div className="infoBoxEditRow">
-                                        <select
-                                            name="placeOfBirth"
-                                            value={tempUser.placeOfBirth}
-                                            onChange={handleInputChange}
-                                            className="guest-edit-input"
-                                        >
-                                            <option value="">Select country</option>
-                                            {placeOfBirthOptions.map((country) => (
-                                                <option key={country} value={country}>
-                                                    {country}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                ) : user.placeOfBirth ? (
-                                    <p>{user.placeOfBirth}</p>
-                                ) : (
-                                    <p className="placeholder-text">Country</p>
-                                )}
-                            </div>
-                            <div className="infoBoxActions">
-                                <div
-                                    onClick={editState.placeOfBirth ? saveUserPlaceOfBirth : undefined}
-                                    className={`host-icon-background save-button${editState.placeOfBirth ? "" : " is-hidden"}`}
-                                    role="button">
-                                    <img src={checkIcon} alt="Save Place of Birth" className="save-check-icon" />
-                                </div>
-                                <div
-                                    onClick={() => toggleEditState('placeOfBirth')}
-                                    className={`host-icon-background edit-button${editState.placeOfBirth ? " is-active" : ""}`}>
-                                    {editState.placeOfBirth ? (
-                                        <span className="edit-x" aria-hidden="true">X</span>
-                                    ) : (
-                                        <img src={editIcon} alt="Edit Place of Birth" className="guest-edit-icon"/>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="InfoBox">
-                            <div className="infoBoxText">
-                                <span>Nationality:</span>
-                                {editState.nationality ? (
-                                    <div className="infoBoxEditRow">
-                                        <input
-                                            type="text"
-                                            name="nationality"
-                                            placeholder="e.g. Dutch"
-                                            value={tempUser.nationality}
-                                            onChange={handleInputChange}
-                                            className="guest-edit-input"
-                                            onKeyPress={handleKeyPressNationality}
-                                        />
-                                        {nationalityError && (
-                                            <p className="field-error">{nationalityError}</p>
-                                        )}
-                                    </div>
-                                ) : user.nationality ? (
-                                    <p>{user.nationality}</p>
-                                ) : (
-                                    <p className="placeholder-text">Nationality</p>
-                                )}
-                            </div>
-                            <div className="infoBoxActions">
-                                <div
-                                    onClick={editState.nationality ? saveUserNationality : undefined}
-                                    className={`host-icon-background save-button${editState.nationality ? "" : " is-hidden"}`}
-                                    role="button">
-                                    <img src={checkIcon} alt="Save Nationality" className="save-check-icon" />
-                                </div>
-                                <div
-                                    onClick={() => toggleEditState('nationality')}
-                                    className={`host-icon-background edit-button${editState.nationality ? " is-active" : ""}`}>
-                                    {editState.nationality ? (
-                                        <span className="edit-x" aria-hidden="true">X</span>
-                                    ) : (
-                                        <img src={editIcon} alt="Edit Nationality" className="guest-edit-icon"/>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="preferencesSection">
-                            <h3>Preferences</h3>
-
-                            <div className="InfoBox">
-                                <div className="infoBoxText infoBoxText--row">
-                                    <span>Default language:</span>
-                                    <div className="infoBoxEditRow">
-                                        <select
-                                            name="defaultLanguage"
-                                            value={language}
-                                            onChange={handleLanguageChange}
-                                            className="guest-edit-input"
-                                        >
-                                            {languageOptions.map((option) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {SHOW_PREF_FORMATS && (
-                                <>
-                                    <div className="InfoBox">
-                                        <div className="infoBoxText infoBoxText--row">
-                                            <span>Date format:</span>
-                                            <div className="infoBoxEditRow">
-                                                <select
-                                                    name="dateFormat"
-                                                    value={dateFormat}
-                                                    onChange={handleDateFormatChange}
-                                                    className="guest-edit-input"
-                                                >
-                                                    {dateFormatOptions.map((option) => (
-                                                        <option key={option.value} value={option.value}>
-                                                            {option.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="InfoBox">
-                                        <div className="infoBoxText infoBoxText--row">
-                                            <span>Price format:</span>
-                                            <div className="infoBoxEditRow">
-                                                <select
-                                                    name="priceFormat"
-                                                    value={priceFormat}
-                                                    onChange={handlePriceFormatChange}
-                                                    className="guest-edit-input"
-                                                >
-                                                    {priceFormatOptions.map((option) => (
-                                                        <option key={option.value} value={option.value}>
-                                                            {option.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        <div className="preferencesSection authSection">
-                            <h3>Authentication</h3>
-
-                            <div className="InfoBox">
-                                <div className="infoBoxText">
-                                    <div className="infoBoxTextRow">
-                                        <span>Email</span>
-                                        <span className={`status-pill ${authStatus.emailVerified ? "is-active" : "is-inactive"}`}>
-                                            {authStatus.emailVerified ? "Active" : "Inactive"}
-                                        </span>
-                                    </div>
-                                    <p className="auth-subtext">
-                                        {authStatus.emailVerified ? "Verified" : "Not verified"}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {SHOW_AUTH_MFA && (
-                                <>
-                                    <div className="InfoBox">
-                                        <div className="infoBoxText">
-                                            <div className="infoBoxTextRow">
-                                                <span>SMS</span>
-                                                <span className={`status-pill ${authStatus.preferredMFA === "SMS" ? "is-active" : "is-inactive"}`}>
-                                                    {authStatus.preferredMFA === "SMS" ? "Active" : "Inactive"}
-                                                </span>
-                                            </div>
-                                            <p className="auth-subtext">
-                                                Phone verified: {authStatus.phoneVerified ? "Yes" : "No"}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="InfoBox">
-                                        <div className="infoBoxText">
-                                            <div className="infoBoxTextRow">
-                                                <span>Authenticator app</span>
-                                                <span className={`status-pill ${authStatus.preferredMFA === "TOTP" ? "is-active" : "is-inactive"}`}>
-                                                    {authStatus.preferredMFA === "TOTP" ? "Active" : "Inactive"}
-                                                </span>
-                                            </div>
-                                            <p className="auth-subtext">App-based codes (TOTP)</p>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                        {/* Voorlopig gecommend samen met Stefan aangezien we nu nog geen need hebben (misschien later) */}
-                        {/*<div className="InfoBox">*/}
-                        {/*    <span>Address:</span>*/}
-                        {/*    <p>{user.address}</p>*/}
-                        {/*    <div className="edit-icon-background">*/}
-                        {/*        <img src={editIcon} alt="Edit Address" className="guest-edit-icon" />*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-
-                        {/*<div className="InfoBox">*/}
-                        {/*    <span>Phone:</span>*/}
-                        {/*    <p>{user.phone}</p>*/}
-                        {/*    <div className="edit-icon-background">*/}
-                        {/*        <img src={editIcon} alt="Edit Phone" className="guest-edit-icon" />*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-
-                        {/*<div className="InfoBox">*/}
-                        {/*    <span>Family:</span>*/}
-                        {/*    <p>{user.family}</p>*/}
-                        {/*    <div className="edit-icon-background">*/}
-                        {/*        <img src={editIcon} alt="Edit Family" className="guest-edit-icon" />*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-
-                    </div>
-                </div>
-            </div>
-        </div>
+        <HostSettingsLayout>
+            <HostSettingsContent
+                user={user}
+                tempUser={tempUser}
+                editState={editState}
+                verificationCode={verificationCode}
+                isVerifying={isVerifying}
+                selectedCountryCode={selectedCountryCode}
+                stripPhone={stripPhone}
+                dateOfBirthError={dateOfBirthError}
+                photoError={photoError}
+                isUploadingPhoto={isUploadingPhoto}
+                nationalityError={nationalityError}
+                authStatus={authStatus}
+                language={language}
+                dateFormat={dateFormat}
+                priceFormat={priceFormat}
+                photoInputRef={photoInputRef}
+                languageOptions={languageOptions}
+                dateFormatOptions={dateFormatOptions}
+                priceFormatOptions={priceFormatOptions}
+                countryCodes={countryCodes}
+                titleOptions={titleOptions}
+                sexOptions={sexOptions}
+                placeOfBirthOptions={placeOfBirthOptions}
+                onPhotoButtonClick={handlePhotoButtonClick}
+                onPhotoRemove={handlePhotoRemove}
+                onPhotoInputChange={handlePhotoInputChange}
+                onTitleChange={handleTitleChange}
+                onInputChange={handleInputChange}
+                onVerificationInputChange={handleVerificationInputChange}
+                onKeyPressName={handleKeyPressName}
+                onKeyPressEmail={handleKeyPressEmail}
+                onKeyPressPhone={handleKeyPressPhone}
+                onKeyPressDateOfBirth={handleKeyPressDateOfBirth}
+                onKeyPressNationality={handleKeyPressNationality}
+                onCountryCodeChange={handleCountryCodeChange}
+                onPhoneChange={handlePhoneChange}
+                onSexChange={handleSexChange}
+                onDateOfBirthChange={handleDateOfBirthChange}
+                onLanguageChange={handleLanguageChange}
+                onDateFormatChange={handleDateFormatChange}
+                onPriceFormatChange={handlePriceFormatChange}
+                onSaveUserName={saveUserName}
+                onSaveUserEmail={saveUserEmail}
+                onSaveUserPhone={saveUserPhone}
+                onSaveUserDateOfBirth={saveUserDateOfBirth}
+                onSaveUserPlaceOfBirth={saveUserPlaceOfBirth}
+                onSaveUserNationality={saveUserNationality}
+                onToggleEditState={toggleEditState}
+                showPrefFormats={SHOW_PREF_FORMATS}
+                showAuthMfa={SHOW_AUTH_MFA}
+            />
+        </HostSettingsLayout>
     );
 }
 
