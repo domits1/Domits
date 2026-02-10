@@ -41,6 +41,7 @@ function BoatTypeView() {
             }}
             routePath={nextPath || "/hostonboarding/boat/address"}
             btnText="Proceed"
+            disabled={!selectedBoatType}
           />
         </nav>
       </main>

@@ -6,6 +6,7 @@ import OnboardingButton from "../components/OnboardingButton";
 import { useBuilder } from "../../../context/propertyBuilderContext";
 import OnboardingProgress from "../components/OnboardingProgress";
 import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
+import { toast } from "react-toastify";
 
 // Step 6
 function PropertyHouseRulesView() {
@@ -18,6 +19,13 @@ function PropertyHouseRulesView() {
     const [hourStr] = timeString.split(":");
     return parseInt(hourStr, 10);
   }
+
+  const isValidCheckInGap = () => {
+    const checkInStart = checkIn?.CheckIn?.from;
+    const checkOutEnd = checkIn?.CheckOut?.till;
+    if (!Number.isFinite(checkInStart) || !Number.isFinite(checkOutEnd)) return false;
+    return checkInStart - checkOutEnd >= 1;
+  };
 
   return (
     <div className="onboarding-host-div">
@@ -70,6 +78,11 @@ function PropertyHouseRulesView() {
           />
           <OnboardingButton
             onClick={() => {
+              if (!isValidCheckInGap()) {
+                toast.error("Check-in must start at least 1 hour after check-out ends.");
+                return false;
+              }
+
               const allowedRules = ["SmokingAllowed", "PetsAllowed", "Parties/EventsAllowed"];
               const houseRulesArray = allowedRules.map((rule) => ({
                 rule,
@@ -81,6 +94,7 @@ function PropertyHouseRulesView() {
                 checkOut: { from: checkIn.CheckOut.from, till: checkIn.CheckOut.till },
               });
               console.log(builder);
+              return true;
             }}
             routePath={nextPath || `/hostonboarding/${accommodationType}/photos`}
             btnText="Proceed"

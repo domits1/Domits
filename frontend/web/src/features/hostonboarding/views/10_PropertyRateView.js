@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { usePricing } from "../hooks/useProperyRate";
 import OnboardingButton from "../components/OnboardingButton";
 import { useBuilder } from "../../../context/propertyBuilderContext";
-import { toast } from "react-toastify";
 import OnboardingProgress from "../components/OnboardingProgress";
 import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
@@ -62,7 +61,6 @@ function PropertyRateView() {
                 placeholder="0"
                 min={0}
                 step={10}
-                required
               />
             </div>
             {pricing.Features.ExtraServices.includes(
@@ -106,10 +104,7 @@ function PropertyRateView() {
           />
           <OnboardingButton
             onClick={() => {
-              if (!Number.isFinite(rentValue) || rentValue <= 0) {
-                toast.error("Please enter a valid base rate.");
-                return false;
-              }
+              if (!hasValidRent) return false;
               builder.addPricing({
                 roomRate: rentValue,
                 cleaning: Number(pricing.CleaningFee) || 0,
@@ -119,6 +114,7 @@ function PropertyRateView() {
             }}
             routePath={nextPath || `/hostonboarding/${accommodationType}/availability`}
             btnText="Proceed"
+            disabled={!hasValidRent}
           />
         </nav>
       </main>

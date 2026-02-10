@@ -1,11 +1,18 @@
 // Desc: OnboardingButton component for onboarding
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-export default function OnboardingButton({ btnText, onClick, routePath, buttonType = 'proceed' }) {
+export default function OnboardingButton({
+  btnText,
+  onClick,
+  routePath,
+  buttonType = "proceed",
+  disabled = false,
+}) {
   const navigate = useNavigate();
 
   const handleClick = () => {
+    if (disabled) return;
     let shouldNavigate = true;
     if (onClick) {
       const result = onClick();
@@ -14,10 +21,17 @@ export default function OnboardingButton({ btnText, onClick, routePath, buttonTy
     if (routePath && shouldNavigate) navigate(routePath);
   };
 
-  const buttonClass = `onboarding-button ${buttonType}-button`;
+  const buttonClass = `onboarding-button ${buttonType}-button${
+    disabled ? " is-disabled" : ""
+  }`;
 
   return (
-    <button onClick={handleClick} className={buttonClass}>
+    <button
+      type="button"
+      onClick={handleClick}
+      className={buttonClass}
+      disabled={disabled}
+    >
       {btnText}
     </button>
   );

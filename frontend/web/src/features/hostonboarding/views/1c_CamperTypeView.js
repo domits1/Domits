@@ -39,6 +39,7 @@ function CamperTypeView() {
             }}
             routePath={nextPath || "/hostonboarding/camper/address"}
             btnText="Proceed"
+            disabled={!selectedCamperType}
           />
         </nav>
       </main>

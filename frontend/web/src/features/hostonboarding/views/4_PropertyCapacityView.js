@@ -13,6 +13,7 @@ function PropertyCapacityView() {
   const accommodationCapacity = useFormStoreHostOnboarding((state) => state.accommodationDetails.accommodationCapacity);
   const setAccommodationCapacity = useFormStoreHostOnboarding((state) => state.setAccommodationCapacity);
   const fields = accommodationFields;
+  const hasGuestCapacity = accommodationCapacity.GuestAmount > 0;
   const incrementAmount = (key, max) => {
     if (accommodationCapacity[key] < max) {
       setAccommodationCapacity(key, accommodationCapacity[key] + 1);
@@ -59,6 +60,7 @@ function PropertyCapacityView() {
             }}
             routePath={nextPath || `/hostonboarding/${accommodationType}/amenities`}
             btnText="Proceed"
+            disabled={!hasGuestCapacity}
           />
         </nav>
       </main>

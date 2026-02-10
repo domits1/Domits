@@ -13,6 +13,11 @@ function PropertyTitleView() {
   const { flowKey, prevPath, nextPath } = useOnboardingFlow();
   const { title, subtitle, handleInputChange } = useAccommodationTitle();
   const { description, updateDescription } = useDescription();
+  const hasValue = (value) => String(value || "").trim().length > 0;
+  const isTitleComplete =
+    hasValue(title) &&
+    hasValue(subtitle) &&
+    (flowKey !== "accommodation" || hasValue(description));
 
   return (
     <div className="onboarding-host-div">
@@ -67,6 +72,7 @@ function PropertyTitleView() {
                 : `/hostonboarding/${accommodationType}/description`)
             }
             btnText="Proceed"
+            disabled={!isTitleComplete}
           />
         </nav>
       </main>

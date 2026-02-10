@@ -10,6 +10,14 @@ function AddressInputView() {
   const { prevPath, nextPath } = useOnboardingFlow();
   const { type: accommodationType } = useParams();
   const { options, details: location, handleChange } = useAddressInput(accommodationType);
+  const postalCodeValue = location.postalCode || location.zipCode || "";
+  const hasAddressValue = (value) => String(value || "").trim().length > 0;
+  const isAddressComplete =
+    hasAddressValue(location.country) &&
+    hasAddressValue(location.city) &&
+    hasAddressValue(location.street) &&
+    hasAddressValue(location.houseNumber) &&
+    hasAddressValue(postalCodeValue);
   return (
     <div className="onboarding-host-div">
       <main className="page-body">
@@ -56,12 +64,13 @@ function AddressInputView() {
                 street: location.street,
                 houseNumber: Number.isFinite(Number(houseNumber)) ? Number(houseNumber) : 0,
                 houseNumberExtension: houseNumberExtension,
-                postalCode: location.postalCode,
+                postalCode: postalCodeValue,
               })
               console.log(builder);
             }}
             routePath={nextPath || `/hostonboarding/${accommodationType}/capacity`}
             btnText="Proceed"
+            disabled={!isAddressComplete}
           />
         </nav>
       </main>

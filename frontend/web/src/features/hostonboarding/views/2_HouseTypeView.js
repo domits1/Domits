@@ -51,6 +51,7 @@ export default function HouseTypeView() {
             routePath={nextPath || "/hostonboarding/accommodation/address"}
             btnText="Proceed"
             buttonType="proceed"
+            disabled={!selectedType}
           />
         </nav>
       </main>

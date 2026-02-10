@@ -33,7 +33,12 @@ export default function AccommodationTypeView() {
           onSelectType={setAccommodationType}
         />
         <nav className="onboarding-button-box">
-          <OnboardingButton onClick={handleProceed} btnText="Proceed" buttonType="proceed" />
+          <OnboardingButton
+            onClick={handleProceed}
+            btnText="Proceed"
+            buttonType="proceed"
+            disabled={!selectedAccommodationType}
+          />
         </nav>
       </main>
     </div>
