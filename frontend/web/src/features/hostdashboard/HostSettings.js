@@ -1269,16 +1269,16 @@ const HostSettings = () => {
     };
 
     const handleDateOfBirthChange = (e) => {
-        const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+        const digits = e.target.value.replaceAll(/\D/g, "").slice(0, 8);
         const prevValue = previousDobRef.current || "";
-        const prevDigits = prevValue.replace(/\D/g, "");
+        const prevDigits = prevValue.replaceAll(/\D/g, "");
         const isDeleting = e.target.value.length < prevValue.length;
         let nextDigits = digits;
 
         if (isDeleting && prevDigits.length === digits.length) {
             const cursor = e.target.selectionStart ?? e.target.value.length;
             if (prevValue[cursor] === "-") {
-                const digitsBefore = prevValue.slice(0, cursor).replace(/\D/g, "").length;
+                const digitsBefore = prevValue.slice(0, cursor).replaceAll(/\D/g, "").length;
                 const removeIndex = Math.max(digitsBefore - 1, 0);
                 nextDigits = prevDigits.slice(0, removeIndex) + prevDigits.slice(removeIndex + 1);
             }
