@@ -41,7 +41,6 @@ function About() {
   const founderMembers = [
     { name: "Stefan", src: stefan, role: aboutContent.crew.founder },
     { name: "Robert", src: Robert, role: aboutContent.crew.engineeringManager },
-
   ];
 
   const developerMembers = [
