@@ -72,7 +72,6 @@ function About() {
     { name: "Tom", src: standard, role: aboutContent.crew.developer },
     { name: "Yusuf", src: standard, role: aboutContent.crew.developer },
     { name: "Sakhi", src: Sakhi, role: aboutContent.crew.developer },
-
   ]
     .sort((a, b) => a.name.localeCompare(b.name));
 
