@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
 import EventIcon from "@mui/icons-material/Event";
-import SwapVertIcon from "@mui/icons-material/SwapVert";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import getReservationsFromToken from "./services/getReservationsFromToken.js";
-import BooleanToString from "./services/booleanToString.js";
-import { getAccessToken } from "../../services/getAccessToken.js";
+import SwapVertIcon from "@mui/icons-material/SwapVert";
+import { useEffect, useState, useMemo } from "react";
+import { toast } from "react-toastify";
 import spinner from "../../images/spinnner.gif";
+import { getAccessToken } from "../../services/getAccessToken.js";
+import styles from "../../styles/sass/hostdashboard/hostreservations.module.scss";
+import BooleanToString from "./services/booleanToString.js";
+import getReservationsFromToken from "./services/getReservationsFromToken.js";
+import { calculateTotalPayment } from "./utils/reservationCalculations.js";
+import { usePagination } from "./hooks/usePagination.js";
+import filterReservations from "./utils/filterReservations.js";
 
 const HostReservations = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -15,7 +18,18 @@ const HostReservations = () => {
   const [userHasReservations, setUserHasReservations] = useState(false);
   const [bookings, setBooking] = useState(null);
   const [sortedBookings, setSortedBookings] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const authToken = getAccessToken();
+  const itemsPerPage = 10;
+  const handleSearchChange = (e) => setSearchTerm(e.target.value);
+
+  const filteredBookings = useMemo(
+    () => filterReservations(sortedBookings || [], searchTerm),
+    [sortedBookings, searchTerm]
+  );
+
+  const { currentPage, totalPages, paginatedItems, pageRange, goToPage, goToNextPage, goToPreviousPage } =
+    usePagination(filteredBookings || [], itemsPerPage);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -26,13 +40,15 @@ const HostReservations = () => {
           setUserHasReservations(false);
         } else {
           setBooking(bookings);
-          setSortedBookings(  );
+          setSortedBookings();
           setUserHasReservations(true);
           sortBookings(null, bookings);
         }
-       } catch (error) {
+      } catch (error) {
         console.error("Error fetching properties:", error);
-        toast.error("Something unexpected happenend. You possibly don't have any reservations. Please refresh the page to try again.")
+        toast.error(
+          "Something unexpected happened. You possibly don't have any reservations. Please refresh the page to try again."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -46,29 +62,47 @@ const HostReservations = () => {
       setSortedBookings([]);
       return;
     }
-    
+
     let bookingArray = [];
 
     bookings.forEach((property) => {
-
       const reservations = Array.isArray(property.res?.response) ? property.res.response : [];
 
-      reservations.forEach((item) =>{
+      reservations.forEach((item) => {
         bookingArray.push({
+          property_id: property.id,
           title: property.title,
           rate: property.rate,
-          id: property.id,
-          ...item
-        })
-      })
-
-    })
+          city: property.city,
+          country: property.country,
+          ...item,
+        });
+      });
+    });
     if (type === null) {
       setSortedBookings(bookingArray);
     } else {
       setSortedBookings(bookingArray.filter((booking) => booking.status === type));
     }
+    goToPage(1);
   };
+
+  const mapStatusToClass = (status) => {
+    if (!status) return "statusOther";
+    const normalized = String(status).toLowerCase();
+    if (normalized === "paid") return "statusPaid";
+    if (normalized === "awaiting payment" || normalized === "awaiting_payment") return "statusAwaitingPayment";
+    if (normalized === "failed") return "statusFailed";
+    return "statusOther";
+  };
+
+  const shouldShowPagination = userHasReservations && sortedBookings && sortedBookings.length > 0;
+
+  const pageNumbers = useMemo(() => {
+    if (!shouldShowPagination) return [];
+    const count = pageRange.endPage - pageRange.startPage + 1;
+    return Array.from({ length: count }, (_, i) => pageRange.startPage + i);
+  }, [shouldShowPagination, pageRange]);
 
   return (
     <main className="page-body">
@@ -76,7 +110,6 @@ const HostReservations = () => {
         <img src={spinner} className={styles.CenterMe}></img>
       ) : (
         <>
-          <h2>Reservations</h2>
           <section className={styles.reservationContainer}>
             <section className={styles.reservationContent}>
               <div className={styles.reservationInfo}>
@@ -86,60 +119,67 @@ const HostReservations = () => {
                   You can manage your reservations on your properties here.
                 </p>
               </div>
-              <div className={styles.reservationButtons}>
-                <button onClick={() => sortBookings(null, bookings)}>All</button>
-                <button onClick={() => sortBookings("Paid", bookings)}>Paid</button>
-                <button onClick={() => sortBookings("Awaiting Payment", bookings)}>Awaiting Payment</button>
-                <button onClick={() => sortBookings("Failed", bookings)}>Failed</button>
+              <div className={styles.controlsRow}>
+                <div className={styles.reservationButtons}>
+                  <button onClick={() => sortBookings(null, bookings)}>All</button>
+                  <button onClick={() => sortBookings("Paid", bookings)}>Paid</button>
+                  <button onClick={() => sortBookings("Awaiting Payment", bookings)}>Awaiting Payment</button>
+                  <button onClick={() => sortBookings("Failed", bookings)}>Failed</button>
+                </div>
+                <div className={styles.searchWrap}>
+                  <input
+                    type="search"
+                    placeholder="Search by property, city, guest or id..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className={styles.searchInput}
+                  />
+                </div>
               </div>
               <section className={styles.reservationData}>
                 <table className={styles.reservationTable}>
                   <thead>
                     <tr>
                       <th>
-                        Reservation Id
-                        <span className={styles.reservationIcons}>
-                          <SwapVertIcon />
-                        </span>
+                        Property ID
+                        <span className={styles.reservationIcons}></span>
                       </th>
                       <th>
-                        Accommodation name
-                        <span className={styles.reservationIcons}>
-                          <SwapVertIcon />
-                        </span>
+                        Accommodation Name
+                        <span className={styles.reservationIcons}></span>
                       </th>
                       <th>
-                        Reserved dates
-                        <span className={styles.reservationIcons}>
-                          <FilterListIcon />
-                        </span>
+                        Location
+                        <span className={styles.reservationIcons}></span>
                       </th>
                       <th>
-                        Requested on
-                        <span className={styles.reservationIcons}>
-                          <FilterListIcon />
-                        </span>
+                        Guest Name
+                        <span className={styles.reservationIcons}></span>
                       </th>
                       <th>
-                        Guest name
-                        <span className={styles.reservationIcons}>
-                          <SwapVertIcon />
-                        </span>
-                      </th>
-                      <th>
-                        Rate
-                        <span className={styles.reservationIcons}>
-                          <SwapVertIcon />
-                        </span>
-                      </th>
-                      <th>
-                        Payed
+                        Check In - Check Out
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
                       </th>
                       <th>
                         Status
+                        <span className={styles.reservationIcons}></span>
+                      </th>
+                      <th>
+                        Total Payment
+                        <span className={styles.reservationIcons}></span>
+                      </th>
+                      <th>
+                        Commission
+                        <span className={styles.reservationIcons}></span>
+                      </th>
+                      <th>
+                        Reservation Number
+                        <span className={styles.reservationIcons}></span>
+                      </th>
+                      <th>
+                        Booked On
                         <span className={styles.reservationIcons}>
                           <SwapVertIcon />
                         </span>
@@ -147,32 +187,94 @@ const HostReservations = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {userHasReservations && sortedBookings && sortedBookings.length > 0 ? (
-                      sortedBookings.map((booking) => (
+                    {shouldShowPagination ? (
+                      paginatedItems.map((booking) => (
                         <tr key={booking.id}>
-                          <td className={styles.singleReservationRow}>{booking.id}</td>
-                          <td className={styles.singleReservationRow}>{booking.title}</td>
                           <td className={styles.singleReservationRow}>
-                            {new Date(booking.arrivaldate).toLocaleDateString()} -{" "}
-                            {new Date(booking.departuredate).toLocaleDateString()}
+                            <span className={styles.cellContent}>{booking.property_id}</span>
                           </td>
                           <td className={styles.singleReservationRow}>
-                            {new Date(booking.createdat).toLocaleDateString()}
+                            <span className={styles.cellContent}>{booking.title}</span>
                           </td>
-                          <td className={styles.singleReservationRow}>{booking.guestname}</td>
-                          <td className={styles.singleReservationRow}>€{booking.rate}</td>
-                          <td className={styles.singleReservationRow}>{BooleanToString(booking.latePayment)}</td>
-                          <td className={styles.singleReservationRow}>{booking.status}</td>
+                          <td className={styles.singleReservationRow}>
+                            <span className={styles.cellContent}>
+                              {booking.city}, {booking.country}
+                            </span>
+                          </td>
+                          <td className={styles.singleReservationRow}>
+                            <span className={styles.cellContent}>{booking.guestname}</span>
+                          </td>
+                          <td className={styles.singleReservationRow}>
+                            <span className={styles.cellContent}>
+                              {new Date(booking.arrivaldate).toLocaleDateString()} -{" "}
+                              {new Date(booking.departuredate).toLocaleDateString()}
+                            </span>
+                          </td>
+                          <td className={styles.singleReservationRow}>
+                            <span className={`${styles.status} ${styles[mapStatusToClass(booking.status)]}`}>
+                              {booking.status}
+                            </span>
+                          </td>
+                          <td className={styles.singleReservationRow}>
+                            <span className={styles.cellContent}>
+                              €{calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate)}
+                            </span>
+                          </td>
+                          <td className={styles.singleReservationRow}>
+                            <span className={styles.cellContent}>
+                              €
+                              {(
+                                calculateTotalPayment(booking.rate, booking.arrivaldate, booking.departuredate) * 0.1
+                              ).toFixed(2)}
+                            </span>
+                          </td>
+                          <td className={styles.singleReservationRow}>
+                            <span className={styles.cellContent}>{booking.id}</span>
+                          </td>
+                          <td className={styles.singleReservationRow}>
+                            <span className={styles.cellContent}>
+                              {new Date(booking.createdat).toLocaleDateString()}
+                            </span>
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td className={styles.noData} colSpan={8}>You currently have no reservations for your accommodation(s). Refresh the page to try again.</td>
+                        <td className={styles.noData} colSpan={10}>
+                          You currently have no reservations for your accommodation(s). Refresh the page to try again.
+                        </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
               </section>
+              {shouldShowPagination && (
+                <div className={styles.paginationControls}>
+                  <button
+                    className={styles.paginationButton}
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    aria-label="Previous page">
+                    Previous
+                  </button>
+                  {pageNumbers.map((pageIndex) => (
+                    <button
+                      key={pageIndex}
+                      className={`${styles.paginationButton} ${currentPage === pageIndex ? styles.activePage : ""}`}
+                      onClick={() => goToPage(pageIndex)}
+                      aria-label={`Go to page ${pageIndex}`}>
+                      {pageIndex}
+                    </button>
+                  ))}
+                  <button
+                    className={styles.paginationButton}
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    aria-label="Next page">
+                    Next
+                  </button>
+                </div>
+              )}
             </section>
           </section>
         </>

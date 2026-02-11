@@ -3,7 +3,6 @@ import { Auth } from "aws-amplify";
 import { useLocation, useNavigate } from "react-router-dom";
 import FlowContext from "../../../services/FlowContext";
 
-
 export function useConfirmEmailLogic() {
   const inputRef = useRef([]);
   const [isComplete, setIsComplete] = useState(false);
@@ -43,17 +42,25 @@ export function useConfirmEmailLogic() {
       code += input.value;
     });
 
+    const redirect = location.state?.redirect;
+
     Auth.confirmSignUp(userEmail, code)
       .then(() => {
         return Auth.signIn(userEmail, userPassword);
       })
       .then(() => {
-        if (isHost) {
+        window.dispatchEvent(new Event("authChanged"));
+        if (redirect) {
+          try {
+            navigate(decodeURIComponent(redirect));
+          } catch (e) {
+            // fallback in case decode fails
+            navigate("/");
+          }
+        } else if (isHost) {
           navigate("/hostdashboard");
-          window.location.reload();
         } else {
           navigate("/");
-          window.location.reload();
         }
       })
       .catch((error) => {

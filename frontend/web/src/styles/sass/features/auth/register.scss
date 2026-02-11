@@ -2,7 +2,7 @@
 $host-blue: var(--secondary-color);
 $hover-blue: #4a86c3;
 $text-color: black;
-$font-main: 'Kanit', sans-serif;
+$font-main: "Kanit", sans-serif;
 $input-padding: 8px 15px;
 $border-radius: 5px;
 $button-font-size: 18px;
@@ -171,10 +171,6 @@ $shake-color: red;
   .selected-flag {
     background-color: white;
   }
-
-  .flag-dropdown {
-    border: 5px solid #cacaca;
-  }
 }
 
 .signOutDiv {
@@ -208,8 +204,16 @@ $shake-color: red;
 
 // Keyframes
 @keyframes shake {
-  0% { margin-left: 0px; }
-  25% { margin-left: 5px; }
-  75% { margin-left: -5px; }
-  100% { margin-left: 0px; }
+  0% {
+    margin-left: 0px;
+  }
+  25% {
+    margin-left: 5px;
+  }
+  75% {
+    margin-left: -5px;
+  }
+  100% {
+    margin-left: 0px;
+  }
 }

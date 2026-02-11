@@ -1,0 +1,33 @@
+.booking-details__pi {
+  display: grid;
+  gap: 8px;
+}
+
+.booking-details__row {
+  display: grid;
+  grid-template-columns: 140px auto;
+  align-items: center;
+}
+
+.booking-details__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pi-input {
+  width: 90px;
+  text-align: center;
+}
+
+.pi-action.increment {
+  font-size: 18px;
+  line-height: 1;
+}
+
+@media (max-width: 600px) {
+  .booking-details__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

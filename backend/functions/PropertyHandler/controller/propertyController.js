@@ -246,6 +246,11 @@ export class PropertyController {
         try {
             const propertyId = event.queryStringParameters.property;
             const property = await this.propertyService.getFullActivePropertyById(propertyId)
+            const hostId = property.property.hostId
+            const userInfo = await this.authManager.getUserInfoFromId(hostId);
+            property.property.username = userInfo.userName;
+            property.property.familyname = userInfo.familyName;
+
             return {
                 statusCode: 200,
                 headers: responseHeaders,
@@ -319,7 +324,8 @@ export class PropertyController {
             .addLocation(body.propertyLocation)
             .addPricing(body.propertyPricing)
             .addImages(body.propertyImages)
-            .addPropertyType(body.propertyType);
+            .addPropertyType(body.propertyType)
+            .addPropertyTestStatus(body.propertyTestStatus);
 
         builder = await builder.addAmenities(body.propertyAmenities);
         builder = await builder.addGeneralDetails(body.propertyGeneralDetails);

@@ -1,166 +1,156 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import "./OccupancyRate.scss";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
-import { PieChart, Pie, Cell, Tooltip } from "recharts";
+import "./KpiCard.scss";          
+import "./OccupancyRate.scss";    
+import { OccupancyRateService } from "../services/OccupancyRateService.js";
 
-const OccupancyDashboard = () => {
-    const [hostId, setHostId] = useState(null);
-    const [occupancyData, setOccupancyData] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [timeFilter, setTimeFilter] = useState("weekly");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
+const OccupancyRate = ({ refreshKey }) => {
+  const [occupancyRate, setOccupancyRate] = useState(0);
+  const [periodType, setPeriodType] = useState("monthly");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [cognitoUserId, setCognitoUserId] = useState(null);
 
-    const fetchHostId = async () => {
-        try {
-            const userInfo = await Auth.currentUserInfo();
-            return userInfo.attributes.sub;
-        } catch (err) {
-            console.error("Error fetching Host ID:", err);
-            setError("Failed to fetch Host ID.");
-        }
+  const isMountedRef = useRef(false);
+  const lastRateRef = useRef(null);
+  const fetchingRef = useRef(false);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    const fetchUserId = async () => {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        if (isMountedRef.current) setCognitoUserId(user.attributes.sub);
+      } catch (err) {
+        console.error("Error fetching Cognito User ID:", err);
+        if (isMountedRef.current) setError("User not logged in.");
+      }
     };
 
-    const fetchOccupancyData = async () => {
-        if (!hostId) return;
+    fetchUserId();
 
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const canFetch = useCallback(() => {
+    if (!cognitoUserId) return false;
+    if (periodType === "custom" && (!startDate || !endDate)) return false;
+    return true;
+  }, [cognitoUserId, periodType, startDate, endDate]);
+
+  const fetchOccupancyRate = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!canFetch()) return;
+      if (!isMountedRef.current) return;
+      if (fetchingRef.current) return;
+
+      fetchingRef.current = true;
+
+      if (!silent) {
         setLoading(true);
         setError(null);
+      }
 
-        try {
-            const payload = {
-                hostId,
-                rangeType: timeFilter,
-                ...(timeFilter === "custom" && { startDate, endDate }),
-            };
+      try {
+        const rate = await OccupancyRateService.fetchOccupancyRate(
+          cognitoUserId,
+          periodType,
+          startDate,
+          endDate
+        );
 
+        if (!isMountedRef.current) return;
 
-            const response = await axios.post(
-                "https://nnppsahbzi.execute-api.eu-north-1.amazonaws.com/prod/occupancy-rate",
-                payload,
-                {
-                    headers: { "Content-Type": "application/json" },
-                    withCredentials: false,
-                }
-            );
+        const nextRate = Number(rate) || 0;
 
-            setOccupancyData(response.data);
-        } catch (err) {
-            console.error("Error fetching Occupancy data:", err.message || err);
-            if (err.response) {
-                setError(`API Error: ${err.response.data.error || err.response.statusText}`);
-            } else if (err.request) {
-                setError("Network Error: Unable to reach the server.");
-            } else {
-                setError("An unexpected error occurred.");
-            }
-        } finally {
-            setLoading(false);
+        if (lastRateRef.current !== nextRate) {
+          setOccupancyRate(nextRate);
+          lastRateRef.current = nextRate;
         }
-    };
 
-    useEffect(() => {
-        const initializeHostId = async () => {
-            const fetchedHostId = await fetchHostId();
-            if (fetchedHostId) setHostId(fetchedHostId);
-        };
+        if (!silent) setError(null);
+      } catch (err) {
+        console.error("Error fetching occupancy rate:", err);
+        if (!isMountedRef.current) return;
 
-        initializeHostId();
-    }, []);
+        if (!silent) setError(err.message || "Failed to fetch occupancy rate.");
 
-    useEffect(() => {
-        if (timeFilter === "custom" && (!startDate || !endDate)) return;
-        fetchOccupancyData();
-    }, [timeFilter, startDate, endDate, hostId]);
+        setOccupancyRate(0);
+        lastRateRef.current = 0;
+      } finally {
+        fetchingRef.current = false;
+        if (!silent && isMountedRef.current) setLoading(false);
+      }
+    },
+    [canFetch, cognitoUserId, periodType, startDate, endDate]
+  );
 
-    return (
-        <div className="or-occupancy-rate-card">
-            <h3>Occupancy Rate</h3>
-            <div className="occupancy-rate-card"></div>
-                <div className="time-filter">
-                    <label htmlFor="timeFilter">Time Filter:</label>
-                    <select
-                        id="timeFilter"
-                        value={timeFilter}
-                        className="timeFilter"
-                        onChange={(e) => setTimeFilter(e.target.value)}
-                    >
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                </div>
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchOccupancyRate({ silent: false });
+  }, [canFetch, fetchOccupancyRate]);
 
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchOccupancyRate({ silent: true });
+  }, [refreshKey, canFetch, fetchOccupancyRate]);
 
-                {timeFilter === "custom" && (
-                    <div className="or-custom-date-filter">
-                        <div>
-                            <label>Start Date :  </label>
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label>End Date :  </label>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                )}
+  return (
+    <div className="kpi-card occupancy-rate-card">
+      <h3>Occupancy Rate</h3>
 
-                {loading && <p>Loading...</p>}
-                {error && <p style={{color: "red"}}>Error: {error}</p>}
+      <div className="time-filter">
+        <label htmlFor="periodType">Time Filter:</label>
+        <select
+          id="periodType"
+          value={periodType}
+          onChange={(e) => setPeriodType(e.target.value)}
+        >
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
 
-                {occupancyData && (
-                    <div className="occupancy-rate-card">
-                        <p>Number of Properties: {occupancyData.totalProperties}</p>
-                        <p>vs Last Month: {occupancyData.vsLastMonth}%</p>
-                        <div className="or-pie-chart-wrapper">
-                            <PieChart width={150} height={150}>
-                                <Pie
-                                    data={[
-                                        {name: "Occupied", value: occupancyData.occupancyRate},
-                                        {name: "Available", value: 100 - occupancyData.occupancyRate},
-                                    ]}
-                                    dataKey="value"
-                                    nameKey="name"
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={40}
-                                    outerRadius={50}
-                                    paddingAngle={5}
-                                    labelLine={false}
-                                    label={({cx, cy}) => (
-                                        <text
-                                            x={cx}
-                                            y={cy}
-                                            textAnchor="middle"
-                                            dominantBaseline="middle"
-                                            style={{fontSize: "16px", fontWeight: "normal"}}
-                                        >
-                                            {`${occupancyData.occupancyRate}%`}
-                                        </text>
-                                    )}
-                                >
-                                    <Cell key="cell-0" fill="#003366"/>
-                                    <Cell key="cell-1" fill="#f9f9f9"/>
-                                </Pie>
-                                <Tooltip/>
-                            </PieChart>
+      {periodType === "custom" && (
+        <div className="custom-date-filter">
+          <div>
+            <label>Start Date:</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label>End Date:</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
 
-                        </div>
-                        </div>
-                        )}
+      <div className="kpi-body">
+        {loading ? (
+          <p>Loading...</p>
+        ) : error ? (
+          <p style={{ color: "red" }}>Error: {error}</p>
+        ) : (
+          <p className="occupancy-rate-value">
+            <strong>{Number(occupancyRate).toLocaleString()}%</strong>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
 
-                    </div>
-                );
-                };
-
-            export default OccupancyDashboard;
+export default OccupancyRate;

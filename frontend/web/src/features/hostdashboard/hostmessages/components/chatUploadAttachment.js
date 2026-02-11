@@ -1,6 +1,5 @@
 import React, { useState} from "react";
 import { useUploadUrl } from "../hooks/useUploadURL";
-import { FaImages } from 'react-icons/fa';
 
 const ChatUploadAttachment = ({ onUploadComplete }) => {
     const [files, setFiles] = useState([]);
@@ -67,33 +66,7 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
         }
     };
 
-    const renderPreviews = () => {
-        return files.map((file, index) => {
-
-            if (file.type.startsWith("image")) {
-                return (
-                    <div key={index} className="file-preview">
-                        <img src={file.url} alt={`Preview-${index}`} width="100" height="100" />
-                    </div>
-                );
-            } else if (file.type.startsWith("video")) {
-                return (
-                    <div key={index} className="file-preview">
-                        <video width="100" height="100" controls>
-                            <source src={file.url} type={file.type} />
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
-                );
-            } else {
-                return (
-                    <div key={index} className="file-preview">
-                        <a href={file.url} target="_blank" rel="noopener noreferrer">{file.name}</a>
-                    </div>
-                );
-            }
-        });
-    };
+    // Previews are rendered in ChatScreen; this component only handles selection & upload
 
     return (
         <div className="add-attachment">
@@ -103,7 +76,7 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
                 onDrop={handleDrop}
                 className="add-file-button"
             >
-                <FaImages />
+                +
             </button>
 
             <input
@@ -113,7 +86,6 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
                 style={{ display: "none" }}
                 onChange={handleFileInputChange}
             />
-            {renderPreviews()}
         </div>
 
 
