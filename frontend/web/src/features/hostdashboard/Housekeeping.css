@@ -1,92 +1,120 @@
-.host-pc-property {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
+.page-body {
+    padding: 20px;
+    font-family: 'Kanit', sans-serif;
+    color: #333;
 }
 
-.property-content {
+.tasks-header {
     display: flex;
-    flex-direction: column;
-    padding: 15px;
-    margin-left: 5vw;
-    max-width: 800px; 
-    align-items: flex-start;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-.property-span {
-    color: blue;
-    text-decoration: underline;
+.btn-add-task {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-add-task:hover {
+    background-color: #0056b3;
+}
+
+/* FORM STYLES */
+.task-form-container {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+}
+
+.task-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 100px;
+    gap: 10px;
+}
+
+.task-form input, .task-form select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.btn-save {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
 }
 
-.property-h3 {
+/* TABLE STYLES */
+.tasks-list-container {
+    overflow-x: auto;
+}
+
+.tasks-table {
     width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+.tasks-table th, .tasks-table td {
+    text-align: left;
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.tasks-table th {
+    background-color: #f1f1f1;
+    font-weight: 600;
+}
+
+/* STATUS BADGES */
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+.status-to-do { background-color: #ffeeba; color: #856404; }
+.status-in-progress { background-color: #b8daff; color: #004085; }
+.status-done { background-color: #c3e6cb; color: #155724; }
+
+/* PRIORITY COLORS */
+.priority-high { color: #dc3545; font-weight: bold; }
+.priority-medium { color: #ffc107; font-weight: bold; }
+.priority-low { color: #28a745; font-weight: bold; }
+
+/* DELETE BUTTON */
+.btn-delete {
+    background-color: transparent;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.btn-delete:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* RESPONSIVE */
 @media (max-width: 768px) {
-    .page-body {
-        flex-direction: column;
-    }
-
-    .host-pc-property {
-        flex-direction: column;
-    }
-
-    .property-content {
-        display: grid;
+    .task-form {
         grid-template-columns: 1fr;
-        gap: 10px;
-        padding: 15px;
-        margin-left: 5%;
-        max-width: 100%;
-        align-items: center;
-    }
-}
-
-@media (min-width: 768px) and (max-width: 1024px) {
-    .page-body {
-        flex-direction: column;
-    }
-
-    .host-pc-property {
-        flex-direction: column;
-        gap: 2rem;
-        width: 100%;
-    }
-
-    .property-content {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        padding: 15px;
-        margin-left: 5vw;
-        max-width: 80%;
-        align-items: center;
-    }
-
-    .property-h3 {
-        width: 80%;
-    }
-}
-
-@media (min-width: 1024px) {
-    .page-body {
-        flex-direction: row;
-    }
-
-    .host-pc-property {
-        display: flex;
-        flex-direction: row;
-        gap: 2rem;
-        width: 100%;
-    }
-
-    .property-content {
-        display: flex;
-        flex-direction: column;
-        padding: 20px;
-        margin-left: 5vw;
-        max-width: 100%;
-        align-items: flex-start;
     }
 }
