@@ -36,15 +36,15 @@ const Accommodations = ({ searchResults }) => {
     };
 
     const handleNextPage = async () => {
-        const targetCount = (currentPage + 1) * itemsPerPage; 
-
-        if (accolist.length >= targetCount) {
+        const nextPageIndex = currentPage * itemsPerPage; 
+        if (accolist.length > nextPageIndex) {
             setCurrentPage(prev => prev + 1);
             return;
         }
 
         setPaginationLoading(true);
 
+        const targetCount = (currentPage + 1) * itemsPerPage;
         let currentTotal = accolist.length;
         let tempKeyId = lastEvaluatedKeyId;
         let tempKeyCreatedAt = lastEvaluatedKeyCreatedAt;
@@ -76,13 +76,12 @@ const Accommodations = ({ searchResults }) => {
         } finally {
             setLastEvaluatedKeyCreatedAt(tempKeyCreatedAt);
             setLastEvaluatedKeyId(tempKeyId);
-
             if (incomingItems.length > 0) {
                 setAccolist(prev => [...prev, ...incomingItems]);
                 setCurrentPage(prev => prev + 1);
             } 
             else {
-                console.log("Checked, but no more accommodations found. Staying on this page.");
+                console.log("Checked AWS, found nothing new. Staying here.");
                 if (!incomingItems.length && !tempKeyId) {
                     setLastEvaluatedKeyId(null);
                 }
