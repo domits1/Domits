@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
-import "../../../styles/sass/features/booking-engine/bookingoverview.scss"
+import "../../../styles/sass/features/booking-engine/bookingoverview.scss";
 
 const SetupForm = ({bookingId}) => {
   const stripe = useStripe();
@@ -14,6 +14,7 @@ const SetupForm = ({bookingId}) => {
         console.error(`Stripe/Elements not loaded yet. Refresh the page and try again.`);
         return;
       }
+
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -30,8 +31,10 @@ const SetupForm = ({bookingId}) => {
   };
   return (
     <form onSubmit={handleSubmit}>
-      <PaymentElement />
-      <button className="confirm-pay-button" disabled={!stripe}>Submit</button>
+      <PaymentElement/>
+      <button className="confirm-pay-button" disabled={!stripe}>
+        Submit
+      </button>
       {errorMessage && <div>{errorMessage}</div>}
     </form>
   );

@@ -28,16 +28,18 @@ function PropertyHouseRulesView() {
               value={houseRules.SmokingAllowed}
               onChange={(e) => handleCheckboxChange("SmokingAllowed", e.target.checked)}
             />
-            <HouseRuleCheckbox
+             <HouseRuleCheckbox
               label="Allow pets"
               value={houseRules.PetsAllowed}
-              onChange={(e) => handleCheckboxChange("PetAllowed", e.target.checked)}
+              onChange={(e) => handleCheckboxChange("PetsAllowed", e.target.checked)}
             />
             <HouseRuleCheckbox
               label="Allow parties/events"
               value={houseRules["Parties/EventsAllowed"]}
               onChange={(e) => handleCheckboxChange("Parties/EventsAllowed", e.target.checked)}
             />
+           
+            
           </div>
           <hr />
           <TimeSelector

@@ -1,19 +1,56 @@
 import { getAccessToken } from "../../../services/getAccessToken";
-import { toast } from "react-toastify";
-
-export async function submitAccommodation(navigate, builder) {
-  const response = await fetch("https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property", {
-    method: "POST",
-    headers: {
-      Authorization: getAccessToken(),
-    },
-    body: JSON.stringify(builder.build())
-  });
-
-  if (!response.ok) {
-    alert(response.statusMessage);
-  } else {
-    navigate("/hostdashboard");
+function toTimeString(value) {
+  if (typeof value === "number") {
+    return String(value).padStart(2, "0") + ":00";
   }
-  console.log(builder.build());
+  if (typeof value === "string" && /^\d{1,2}$/.test(value)) {
+    return value.padStart(2, "0") + ":00";
+  }
+  return value;
+}
+export async function submitAccommodation(navigate, builder) {
+  const API_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
+  const payload = builder.build();
+  if (payload.propertyCheckIn) {
+    payload.propertyCheckIn = {
+      ...payload.propertyCheckIn,
+      checkIn: {
+        from: toTimeString(payload.propertyCheckIn.checkIn.from),
+        till: toTimeString(payload.propertyCheckIn.checkIn.till),
+      },
+      checkOut: {
+        from: toTimeString(payload.propertyCheckIn.checkOut.from),
+        till: toTimeString(payload.propertyCheckIn.checkOut.till),
+      },
+    };
+  }
+  payload.propertyTestStatus = {
+    ...(payload.propertyTestStatus || {}),
+    isTest: false,
+  };
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: getAccessToken(),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      let msg = text;
+      try {
+        const j = JSON.parse(text);
+        msg = j.message || j.error || JSON.stringify(j);
+      } catch (_) {}
+      alert(`Request failed (${res.status}): ${msg}`);
+      console.error("POST failed", { status: res.status, body: msg, url: API_URL });
+      return;
+    }
+    navigate("/hostdashboard");
+  } catch (err) {
+    alert(`Network error: ${err?.message || err}`);
+    console.error("Network error", err);
+  }
 }

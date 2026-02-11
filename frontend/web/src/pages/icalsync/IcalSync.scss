@@ -1,0 +1,108 @@
+@import "../adminproperty/adminproperty.scss";
+
+.ical-sync-form {
+  .ical-section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba($primary-color, 0.2);
+  }
+
+  .ical-section-heading {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: $primary-color;
+    margin-bottom: 0.25rem;
+  }
+
+  .ical-section-description {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+  }
+
+  select {
+    padding: 0.6rem;
+    border: 1px solid $primary-color;
+    border-radius: $field-radius;
+    font-size: $font-size-input;
+    background-color: #fff;
+  }
+
+  .ical-export-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+
+    input[type="text"] {
+      padding: 0.6rem;
+      border: 1px solid $primary-color;
+      border-radius: $field-radius;
+      font-size: $font-size-input;
+      background-color: #f9fafb;
+    }
+  }
+
+  .ical-copy-btn {
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: $field-radius;
+    background: $primary-color;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .ical-copy-btn.copied {
+    opacity: 0.9;
+  }
+
+  .adminproperty-submit {
+    margin-top: 1.2rem;
+  }
+}
+
+.hc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.hc-modal {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid $primary-color;
+  max-width: 720px;
+  width: 90%;
+  max-height: calc(100vh - 8rem);
+  margin-top: 5rem;
+  margin-bottom: 5rem;
+  padding: 1.5rem;
+  padding-top: 2.2rem;
+  padding-bottom: 6rem;
+  position: relative;
+}
+
+.ical-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ical-modal-header {
+  text-align: center;
+  margin-bottom: 1rem;
+
+  h2 {
+    font-size: 1.2rem;
+    color: $primary-color;
+    margin: 0;
+  }
+}

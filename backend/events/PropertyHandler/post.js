@@ -1,6 +1,6 @@
-import {handler} from "../../functions/PropertyHandler/index.js";
-import {getHostAuthToken} from "../../test/util/getHostAuthToken.js";
-import {image} from "../../test/PropertyHandler/events/approvedImage.js";
+import { handler } from "../../functions/PropertyHandler/index.js";
+import { getHostAuthToken } from "../../test/util/getHostAuthToken.js";
+import { image } from "../../test/PropertyHandler/events/approvedImage.js";
 
 async function main() {
     console.log(await handler({
@@ -16,7 +16,7 @@ async function main() {
                 "subtitle": "Relaxing way to eat",
                 "description": "a historic windmill built on the remnants of a medieval castle, offering a perfect blend of old-world charm and modern comfort. Fully renovated in 2006, this stunning windmill features spacious living areas, two cozy bedrooms, and two modern bathrooms. Enjoy breathtaking garden views and unwind in the tranquil surroundings. Whether you're cycling, hiking, or just relaxing on your private patio, Maurik offers a peaceful retreat with easy access to Utrecht, Den Bosch, Arnhem, and Nijmegen. Ideal for families or small groups looking to explore the beauty of the Dutch countryside.",
                 "guestCapacity": 6,
-                "registrationNumber": "99999",
+                "registrationNumber": "99797787798798787978789877987999",
                 "status": "ACTIVE",
                 "propertyType": "House",
                 "createdAt": Date.now() + 100000,

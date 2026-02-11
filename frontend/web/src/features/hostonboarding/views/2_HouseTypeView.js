@@ -31,7 +31,7 @@ export default function HouseTypeView() {
         </section>
 
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath="/hostonboarding" btnText="Go back" />
+          <OnboardingButton routePath="/hostonboarding" btnText="Go back" buttonType="back" />
           <OnboardingButton
             onClick={ () => {
               builder.addPropertyType({type: "House", spaceType: selectedType});
@@ -39,6 +39,7 @@ export default function HouseTypeView() {
             }}
             routePath="/hostonboarding/accommodation/address"
             btnText="Proceed"
+            buttonType="proceed"
           />
         </nav>
       </main>

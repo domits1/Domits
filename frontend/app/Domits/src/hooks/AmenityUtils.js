@@ -8,6 +8,9 @@ const amenityUtils = {
     },
     getAmenityByName(name) {
         return amenities.find(item => item.amenity === name);
+    },
+    getAmenityById(id) {
+        return amenities.find(item => item.id === id);
     }
 }
 

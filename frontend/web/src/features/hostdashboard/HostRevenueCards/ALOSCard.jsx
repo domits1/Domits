@@ -1,89 +1,170 @@
-import React, { useState, useEffect } from 'react';
-import { Auth } from 'aws-amplify';
-import './ALOSCard.scss';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { ResponsiveContainer, LineChart, Line, Tooltip, CartesianGrid, YAxis } from "recharts";
+import "./KpiCard.scss";     
+import "./ALOSCard.scss";    
+import { HostRevenueService } from "../services/HostRevenueService";
 
-const ALOSCard = () => {
-  const [averageLengthOfStay, setAverageLengthOfStay] = useState(0);
-  const [loading, setLoading] = useState(true);
+const ALOSCard = ({ hostId, refreshKey }) => {
+  const [alos, setAlos] = useState(0);
+  const [trendData, setTrendData] = useState([]);
+
+  const [filterType, setFilterType] = useState("monthly");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const isMountedRef = useRef(false);
+  const fetchingRef = useRef(false);
+
+  const lastAlosRef = useRef(null);
+  const lastTrendKeyRef = useRef("");
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const userInfo = await Auth.currentUserInfo();
-        if (!userInfo?.attributes?.sub) {
-          throw new Error('User ID not found');
-        }
-        const userId = userInfo.attributes.sub;
-
-        const session = await Auth.currentSession();
-        const idToken = session.getIdToken().getJwtToken(); 
-
-
-        const response = await fetch(
-          'https://wsoz1pj35e.execute-api.eu-north-1.amazonaws.com/default/',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': idToken,
-            },
-            body: JSON.stringify({ UserId: userId })
-          }
-        );
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API error:', errorText);
-          throw new Error(
-            `Request failed: ${response.status}`
-          );
-        }
-
-        const data = await response.json();
-
-        if (!data.body) {
-          throw new Error('No data received from API');
-        }
-
-        let parsedData;
-        try {
-          parsedData = JSON.parse(data.body);
-        } catch (e) {
-          console.error('JSON Parse Error:', e);
-          throw new Error('Invalid data format');
-        }
-
-        if (typeof parsedData.averageLengthOfStay !== 'number') {
-          throw new Error('Invalid average length of stay data');
-        }
-
-        setAverageLengthOfStay(parsedData.averageLengthOfStay);
-      } catch (error) {
-        console.error('Error fetching average length of stay:', error);
-        setError(error.message || 'An error occurred while fetching data.');
-      } finally {
-        setLoading(false);
-      }
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
     };
-
-    fetchData();
   }, []);
 
+  const canFetch = useCallback(() => {
+    if (!hostId) return false;
+    if (filterType === "custom" && (!startDate || !endDate)) return false;
+    return true;
+  }, [hostId, filterType, startDate, endDate]);
+
+  const parseResponse = (data) => {
+    let value = 0;
+
+    if (typeof data === "number") value = data;
+    else if (data?.averageLengthOfStay) {
+      value = Number(data.averageLengthOfStay.averageLengthOfStay ?? data.averageLengthOfStay);
+    } else if (data?.value != null) {
+      value = Number(data.value);
+    }
+
+    const parsedAlos = Number(Number(value).toFixed(2));
+
+    const parsedTrend = (data?.trend ?? []).map((t, i) => ({
+      name: t.label || `P${i + 1}`,
+      alos: Number(t.value),
+    }));
+
+    const trendKey = parsedTrend.map((p) => `${p.name}:${p.alos}`).join("|");
+    return { parsedAlos, parsedTrend, trendKey };
+  };
+
+  const fetchALOS = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!canFetch()) return;
+      if (!isMountedRef.current) return;
+      if (fetchingRef.current) return;
+
+      fetchingRef.current = true;
+
+      if (!silent) {
+        setError(null);
+        setLoading(true);
+      }
+
+      try {
+        const data = await HostRevenueService.fetchMetricData(
+          hostId,
+          "averageLengthOfStay",
+          filterType,
+          startDate,
+          endDate
+        );
+
+        if (!isMountedRef.current) return;
+
+        const { parsedAlos, parsedTrend, trendKey } = parseResponse(data);
+
+        if (lastAlosRef.current !== parsedAlos) {
+          setAlos(parsedAlos);
+          lastAlosRef.current = parsedAlos;
+        }
+
+        if (lastTrendKeyRef.current !== trendKey) {
+          setTrendData(parsedTrend);
+          lastTrendKeyRef.current = trendKey;
+        }
+
+        if (!silent) setError(null);
+      } catch (err) {
+        if (!isMountedRef.current) return;
+
+        if (!silent) setError("Failed to fetch ALOS");
+
+        setAlos(0);
+        setTrendData([]);
+        lastAlosRef.current = 0;
+        lastTrendKeyRef.current = "";
+      } finally {
+        fetchingRef.current = false;
+        if (!silent && isMountedRef.current) setLoading(false);
+      }
+    },
+    [canFetch, hostId, filterType, startDate, endDate]
+  );
+
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchALOS({ silent: false });
+  }, [canFetch, fetchALOS]);
+
+  useEffect(() => {
+    if (!canFetch()) return;
+    fetchALOS({ silent: true });
+  }, [refreshKey, canFetch, fetchALOS]);
+
   return (
-    <div className="alos-card">
+    <div className="kpi-card alos-card">
       <h3>Average Length of Stay</h3>
-      <div className="alos-details">
+
+      <div className="time-filter">
+        <label>Time Filter:</label>
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      {filterType === "custom" && (
+        <div className="custom-date-filter">
+          <div>
+            <label>Start Date:</label>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </div>
+          <div>
+            <label>End Date:</label>
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          </div>
+        </div>
+      )}
+
+      <div className="kpi-body">
         {loading ? (
           <p>Loading...</p>
         ) : error ? (
-          <p>Error: {error}</p>
+          <p style={{ color: "red" }}>{error}</p>
         ) : (
-          <p>{averageLengthOfStay} nights</p>
+          <p className="alos-value">
+            <strong>{Number(alos).toLocaleString()}</strong> nights
+          </p>
+        )}
+
+        {!loading && !error && trendData.length > 0 && (
+          <ResponsiveContainer width="100%" height={120}>
+            <LineChart data={trendData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <YAxis hide />
+              <Tooltip formatter={(v) => `${v} nights`} />
+              <Line type="monotone" dataKey="alos" stroke="#0d9813" strokeWidth={3} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
         )}
       </div>
     </div>
@@ -91,4 +172,3 @@ const ALOSCard = () => {
 };
 
 export default ALOSCard;
-

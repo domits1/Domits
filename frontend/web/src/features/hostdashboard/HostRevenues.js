@@ -70,7 +70,7 @@ const HostRevenues = () => {
     fetchUserInfo();
   }, []);
 
-  // Fetch total revenue via GET request
+  
   const fetchRevenueData = async () => {
   if (!cognitoUserId) return console.error("Cognito User ID is missing.");
 
