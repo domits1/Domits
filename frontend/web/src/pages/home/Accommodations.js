@@ -72,7 +72,7 @@ const Accommodations = ({ searchResults }) => {
             }
 
         } catch (error) {
-            console.error("Błąd podczas pętli pobierania:", error);
+            console.error("Error during fetch loop:", error);
         } finally {
             setLastEvaluatedKeyCreatedAt(tempKeyCreatedAt);
             setLastEvaluatedKeyId(tempKeyId);
@@ -82,7 +82,7 @@ const Accommodations = ({ searchResults }) => {
                 setCurrentPage(prev => prev + 1);
             } 
             else {
-                console.log("Sprawdziliśmy, ale nie ma więcej domków. Zostajemy na tej stronie.");
+                console.log("Checked, but no more accommodations found. Staying on this page.");
                 if (!incomingItems.length && !tempKeyId) {
                     setLastEvaluatedKeyId(null);
                 }
@@ -180,7 +180,7 @@ const Accommodations = ({ searchResults }) => {
                     align-items: start;
                     margin-top: 20px;
                 }
-                /* Responsywność */
+                /* Responsiveness */
                 @media (max-width: 1200px) { #card-visibility { grid-template-columns: repeat(3, 1fr); } }
                 @media (max-width: 900px) { #card-visibility { grid-template-columns: repeat(2, 1fr); } }
                 @media (max-width: 600px) { #card-visibility { grid-template-columns: 1fr; } }
