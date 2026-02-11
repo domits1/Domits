@@ -8,14 +8,11 @@ import { FetchAllPropertyTypes } from "./services/fetchProperties";
 
 const Accommodations = ({ searchResults }) => {
     const [accolist, setAccolist] = useState([]);
-
     const [lastEvaluatedKeyCreatedAt, setLastEvaluatedKeyCreatedAt] = useState(null);
     const [lastEvaluatedKeyId, setLastEvaluatedKeyId] = useState(null);
-
     const [filterLoading, setFilterLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
     const [paginationLoading, setPaginationLoading] = useState(false);
-
     const [currentPage, setCurrentPage] = useState(1);
     
     const itemsPerPage = 12; 
@@ -37,6 +34,7 @@ const Accommodations = ({ searchResults }) => {
 
     const handleNextPage = async () => {
         const nextPageIndex = currentPage * itemsPerPage; 
+
         if (accolist.length > nextPageIndex) {
             setCurrentPage(prev => prev + 1);
             return;
@@ -70,23 +68,21 @@ const Accommodations = ({ searchResults }) => {
                     tempKeyId = null;
                 }
             }
-
         } catch (error) {
-            console.error("Error during fetch loop:", error);
+            console.error(error);
         } finally {
             setLastEvaluatedKeyCreatedAt(tempKeyCreatedAt);
             setLastEvaluatedKeyId(tempKeyId);
+
             if (incomingItems.length > 0) {
                 setAccolist(prev => [...prev, ...incomingItems]);
                 setCurrentPage(prev => prev + 1);
             } 
             else {
-                console.log("Checked AWS, found nothing new. Staying here.");
                 if (!incomingItems.length && !tempKeyId) {
                     setLastEvaluatedKeyId(null);
                 }
             }
-            
             setPaginationLoading(false);
         }
     };
@@ -105,6 +101,7 @@ const Accommodations = ({ searchResults }) => {
     useEffect(() => {
         async function loadData() {
             setSearchLoading(true);
+            
             if (searchResults && searchResults.length > 0) {
                 setTimeout(() => {
                     setAccolist(searchResults);
@@ -121,7 +118,7 @@ const Accommodations = ({ searchResults }) => {
                     setLastEvaluatedKeyCreatedAt(null);
                     setLastEvaluatedKeyId(null);
                 }
-                setAccolist(result.properties);
+                setAccolist(result.properties || []);
                 setSearchLoading(false);
             }
         }
@@ -179,7 +176,6 @@ const Accommodations = ({ searchResults }) => {
                     align-items: start;
                     margin-top: 20px;
                 }
-                /* Responsiveness */
                 @media (max-width: 1200px) { #card-visibility { grid-template-columns: repeat(3, 1fr); } }
                 @media (max-width: 900px) { #card-visibility { grid-template-columns: repeat(2, 1fr); } }
                 @media (max-width: 600px) { #card-visibility { grid-template-columns: 1fr; } }
