@@ -36,36 +36,59 @@ const Accommodations = ({ searchResults }) => {
     };
 
     const handleNextPage = async () => {
-        const nextPageIndex = currentPage * itemsPerPage; 
-        
-        if (accolist.length > nextPageIndex) {
+        const targetCount = (currentPage + 1) * itemsPerPage; 
+
+        if (accolist.length >= targetCount) {
             setCurrentPage(prev => prev + 1);
             return;
         }
 
-        if (lastEvaluatedKeyId) {
-            setPaginationLoading(true);
-            
-            try {
-                const result = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
+        setPaginationLoading(true);
+
+        let currentTotal = accolist.length;
+        let tempKeyId = lastEvaluatedKeyId;
+        let tempKeyCreatedAt = lastEvaluatedKeyCreatedAt;
+        let incomingItems = [];
+        let attempts = 0;
+        const MAX_ATTEMPTS = 3;
+
+        try {
+            while (currentTotal < targetCount && tempKeyId && attempts < MAX_ATTEMPTS) {
+                attempts++;
+                const result = await FetchAllPropertyTypes(tempKeyCreatedAt, tempKeyId);
                 
-                if (result.lastEvaluatedKey) {
-                    setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
-                    setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
-                } else {
-                    setLastEvaluatedKeyCreatedAt(null);
-                    setLastEvaluatedKeyId(null);
+                if (result.properties && result.properties.length > 0) {
+                    incomingItems = [...incomingItems, ...result.properties];
+                    currentTotal += result.properties.length;
                 }
 
-                if (result.properties.length > 0) {
-                    setAccolist(prev => [...prev, ...result.properties]);
-                    setCurrentPage(prev => prev + 1);
+                if (result.lastEvaluatedKey) {
+                    tempKeyCreatedAt = result.lastEvaluatedKey.createdAt;
+                    tempKeyId = result.lastEvaluatedKey.id;
+                } else {
+                    tempKeyCreatedAt = null;
+                    tempKeyId = null;
                 }
-            } catch (error) {
-                console.error("Error fetching next page:", error);
-            } finally {
-                setPaginationLoading(false);
             }
+
+        } catch (error) {
+            console.error("Błąd podczas pętli pobierania:", error);
+        } finally {
+            setLastEvaluatedKeyCreatedAt(tempKeyCreatedAt);
+            setLastEvaluatedKeyId(tempKeyId);
+
+            if (incomingItems.length > 0) {
+                setAccolist(prev => [...prev, ...incomingItems]);
+                setCurrentPage(prev => prev + 1);
+            } 
+            else {
+                console.log("Sprawdziliśmy, ale nie ma więcej domków. Zostajemy na tej stronie.");
+                if (!incomingItems.length && !tempKeyId) {
+                    setLastEvaluatedKeyId(null);
+                }
+            }
+            
+            setPaginationLoading(false);
         }
     };
 
@@ -110,9 +133,30 @@ const Accommodations = ({ searchResults }) => {
         window.scrollTo({ top: 0, behavior: 'instant' });
     }, [currentPage]);
 
+    const handleClick = (e, ID) => {
+        if (!e || !e.target) return;
+        if (e.target.closest('.swiper-button-next') || e.target.closest('.swiper-button-prev')) {
+            e.stopPropagation();
+            return;
+        }
+        navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
+    };
+
     if (filterLoading || searchLoading) {
         return (
             <div id="container">
+                <style>{`
+                    #card-visibility {
+                        display: grid;
+                        grid-template-columns: repeat(4, 1fr);
+                        gap: 20px;
+                        width: 100%;
+                        align-items: start;
+                    }
+                    @media (max-width: 1200px) { #card-visibility { grid-template-columns: repeat(3, 1fr); } }
+                    @media (max-width: 900px) { #card-visibility { grid-template-columns: repeat(2, 1fr); } }
+                    @media (max-width: 600px) { #card-visibility { grid-template-columns: 1fr; } }
+                `}</style>
                 <div id="filters-sidebar">
                     <FilterUi onFilterApplied={handleFilterApplied} />
                 </div>
@@ -125,26 +169,30 @@ const Accommodations = ({ searchResults }) => {
         );
     }
 
-    const handleClick = (e, ID) => {
-        if (!e || !e.target) return;
-        if (e.target.closest('.swiper-button-next') || e.target.closest('.swiper-button-prev')) {
-            e.stopPropagation();
-            return;
-        }
-        navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
-    };
-
     return (
         <>
+            <style>{`
+                #card-visibility {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 20px;
+                    width: 100%;
+                    align-items: start;
+                    margin-top: 20px;
+                }
+                /* Responsywność */
+                @media (max-width: 1200px) { #card-visibility { grid-template-columns: repeat(3, 1fr); } }
+                @media (max-width: 900px) { #card-visibility { grid-template-columns: repeat(2, 1fr); } }
+                @media (max-width: 600px) { #card-visibility { grid-template-columns: 1fr; } }
+            `}</style>
+
             <div id="container">
                 <div id="filters-sidebar">
                     <FilterUi onFilterApplied={handleFilterApplied} />
                 </div>
                 <div id="card-visibility">
                     {paginationLoading ? (
-                         <div style={{display: 'flex', gap: '20px', flexWrap: 'wrap'}}>
-                            {Array(4).fill().map((_, index) => <SkeletonLoader key={index} />)}
-                         </div>
+                        Array(4).fill().map((_, index) => <SkeletonLoader key={index} />)
                     ) : (
                         displayedAccolist.length > 0 ? (
                             displayedAccolist.map((accommodation) => (
