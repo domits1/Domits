@@ -14,30 +14,68 @@ const Accommodations = ({ searchResults }) => {
 
     const [filterLoading, setFilterLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [paginationLoading, setPaginationLoading] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 15; // Number of items per page
+    
+    const itemsPerPage = 12; 
+    
     const navigate = useNavigate();
 
-    const totalPages = Math.ceil(accolist.length / itemsPerPage);
+    const totalLoadedPages = Math.ceil(accolist.length / itemsPerPage);
+    
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
     const displayedAccolist = accolist.slice(startIndex, endIndex);
 
-    const handlePageChange = (page) => {
-        if (page >= 1 && page <= totalPages) {
+    const handlePageNumberClick = (page) => {
+        if (page >= 1 && page <= totalLoadedPages) {
             setCurrentPage(page);
+        }
+    };
+
+    const handleNextPage = async () => {
+        const nextPageIndex = currentPage * itemsPerPage; 
+        
+        if (accolist.length > nextPageIndex) {
+            setCurrentPage(prev => prev + 1);
+            return;
+        }
+
+        if (lastEvaluatedKeyId) {
+            setPaginationLoading(true);
+            
+            try {
+                const result = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
+                
+                if (result.lastEvaluatedKey) {
+                    setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
+                    setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
+                } else {
+                    setLastEvaluatedKeyCreatedAt(null);
+                    setLastEvaluatedKeyId(null);
+                }
+
+                if (result.properties.length > 0) {
+                    setAccolist(prev => [...prev, ...result.properties]);
+                    setCurrentPage(prev => prev + 1);
+                }
+            } catch (error) {
+                console.error("Error fetching next page:", error);
+            } finally {
+                setPaginationLoading(false);
+            }
         }
     };
 
     const handleFilterApplied = (filteredResults) => {
         setFilterLoading(true);
-
-        // Small timeout to ensure the loader is displayed
         setTimeout(() => {
             setAccolist(filteredResults);
             setCurrentPage(1);
+            setLastEvaluatedKeyCreatedAt(null);
+            setLastEvaluatedKeyId(null);
             setFilterLoading(false);
         }, 500);
     };
@@ -45,7 +83,6 @@ const Accommodations = ({ searchResults }) => {
     useEffect(() => {
         async function loadData() {
             setSearchLoading(true);
-            // If there are search results, update the list, otherwise fetch all accommodations
             if (searchResults && searchResults.length > 0) {
                 setTimeout(() => {
                     setAccolist(searchResults);
@@ -53,13 +90,14 @@ const Accommodations = ({ searchResults }) => {
                     setSearchLoading(false);
                 }, 500);
             } else {
-                const result = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
+                const result = await FetchAllPropertyTypes(null, null);
+                
                 if (result.lastEvaluatedKey) {
                     setLastEvaluatedKeyCreatedAt(result.lastEvaluatedKey.createdAt);
                     setLastEvaluatedKeyId(result.lastEvaluatedKey.id);
                 } else {
                     setLastEvaluatedKeyCreatedAt(null);
-                    setLastEvaluatedKeyId(null)
+                    setLastEvaluatedKeyId(null);
                 }
                 setAccolist(result.properties);
                 setSearchLoading(false);
@@ -79,72 +117,77 @@ const Accommodations = ({ searchResults }) => {
                     <FilterUi onFilterApplied={handleFilterApplied} />
                 </div>
                 <div id="card-visibility">
-                    {Array(12)
-                        .fill()
-                        .map((_, index) => (
-                            <SkeletonLoader key={index} />
-                        ))}
+                    {Array(12).fill().map((_, index) => (
+                        <SkeletonLoader key={index} />
+                    ))}
                 </div>
             </div>
         );
     }
 
     const handleClick = (e, ID) => {
-        if (!e || !e.target) {
-            console.error('Event or event target is undefined.');
-            return;
-        }
+        if (!e || !e.target) return;
         if (e.target.closest('.swiper-button-next') || e.target.closest('.swiper-button-prev')) {
             e.stopPropagation();
             return;
         }
         navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
     };
-    return <>
-        <div id="container">
-            <div id="filters-sidebar">
-                <FilterUi onFilterApplied={handleFilterApplied} />
+
+    return (
+        <>
+            <div id="container">
+                <div id="filters-sidebar">
+                    <FilterUi onFilterApplied={handleFilterApplied} />
+                </div>
+                <div id="card-visibility">
+                    {paginationLoading ? (
+                         <div style={{display: 'flex', gap: '20px', flexWrap: 'wrap'}}>
+                            {Array(4).fill().map((_, index) => <SkeletonLoader key={index} />)}
+                         </div>
+                    ) : (
+                        displayedAccolist.length > 0 ? (
+                            displayedAccolist.map((accommodation) => (
+                                <AccommodationCard
+                                    key={accommodation.ID}
+                                    accommodation={accommodation}
+                                    onClick={handleClick}
+                                />
+                            ))
+                        ) : (
+                            <div>No accommodations found.</div>
+                        )
+                    )}
+                </div>
             </div>
-            <div id="card-visibility">
-                {displayedAccolist.length > 0 ? (
-                    displayedAccolist.map((accommodation) => {
-                        return (
-                            <AccommodationCard
-                                key={accommodation.ID}
-                                accommodation={accommodation}
-                                onClick={handleClick}
-                            />
-                        );
-                    })
-                ) : (
-                    null
-                )}
-            </div>
-        </div>
-        <div className={PageSwitcher.pagination}>
-            <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-            >
-                &lt; Previous
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => (
+            
+            <div className={PageSwitcher.pagination}>
                 <button
-                    key={i}
-                    onClick={() => handlePageChange(i + 1)}
-                    className={`${currentPage === i + 1 ? PageSwitcher.active : ''}`}
+                    onClick={() => handlePageNumberClick(currentPage - 1)}
+                    disabled={currentPage === 1}
                 >
-                    {i + 1}
+                    &lt; Previous
                 </button>
-            ))}
-            <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-            >
-                Next &gt;
-            </button>
-        </div>
-    </>
+                
+                {Array.from({ length: totalLoadedPages }, (_, i) => (
+                    <button
+                        key={i}
+                        onClick={() => handlePageNumberClick(i + 1)}
+                        className={`${currentPage === i + 1 ? PageSwitcher.active : ''}`}
+                    >
+                        {i + 1}
+                    </button>
+                ))}
+
+                <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalLoadedPages && !lastEvaluatedKeyId}
+                >
+                    Next &gt;
+                </button>
+            </div>
+        </>
+    );
 };
 
 export default Accommodations;
