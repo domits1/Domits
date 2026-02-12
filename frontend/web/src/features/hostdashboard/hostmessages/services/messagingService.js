@@ -42,34 +42,58 @@ export async function getAccommodationByPropertyId(accommodationEndpoint, proper
   return response.json();
 }
 
+const guessFileType = (url = "") => {
+  const lower = String(url).toLowerCase();
+  if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp") || lower.endsWith(".gif")) {
+    return "image";
+  }
+  if (lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".webm")) {
+    return "video";
+  }
+  if (lower.endsWith(".pdf")) {
+    return "document";
+  }
+  return "file";
+};
+
 export async function sendUnifiedMessage({
   senderId,
   recipientId,
-  threadId = null,
-  propertyId = null,
   content,
-  attachments = null,
-  platform = "DOMITS",
-  metadata = {},
+  propertyId = null,
+  threadId = null,
+  fileUrls = [],
+  metadata = { isAutomated: false },
 }) {
+  const attachments =
+    Array.isArray(fileUrls) && fileUrls.length > 0
+      ? fileUrls.map((url) => ({
+          url,
+          type: guessFileType(url),
+          name: null,
+        }))
+      : null;
+
+  const payload = {
+    senderId,
+    recipientId,
+    propertyId,
+    threadId,
+    content,
+    platform: "DOMITS",
+    metadata,
+    attachments,
+  };
+
   const res = await fetch(`${UNIFIED_MESSAGING_API}/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      senderId,
-      recipientId,
-      threadId,
-      propertyId,
-      content,
-      attachments,
-      platform,
-      metadata,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
-    throw new Error(`UnifiedMessaging send failed: ${res.status} ${txt}`);
+    throw new Error(`UnifiedMessaging /send failed: ${res.status} ${txt}`);
   }
 
   return res.json();
