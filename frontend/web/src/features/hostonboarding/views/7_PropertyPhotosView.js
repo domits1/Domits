@@ -72,7 +72,7 @@ function PhotosView() {
                 <img src={cloudIcon} alt="" />
               </div>
               <p className="drag-drop-title">Choose a file or drag &amp; drop it here</p>
-              <p className="drag-drop-subtitle">JPEG, PNG, WEBP up to 500 KB</p>
+              <p className="drag-drop-subtitle">JPEG, PNG, WEBP total up to 5 MB</p>
             </div>
             <input
               ref={fileInputRef}
@@ -110,7 +110,7 @@ function PhotosView() {
                     <img src={cloudIcon} alt="" />
                   </div>
                   <p className="drag-drop-title">Choose a file or drag &amp; drop it here</p>
-                  <p className="drag-drop-subtitle">JPEG, PNG, WEBP up to 500 KB</p>
+                  <p className="drag-drop-subtitle">JPEG, PNG, WEBP total up to 5 MB</p>
                 </div>
               </div>
             )}

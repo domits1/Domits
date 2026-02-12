@@ -10,7 +10,7 @@ export default function usePhotos() {
 
   const MIN_WIDTH = 500;
   const MIN_HEIGHT = 500;
-  const MAX_TOTAL_SIZE = 500 * 1024;
+  const MAX_TOTAL_SIZE = 5 * 1024 * 1024;
   const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
   const MAX_IMAGES = 10;
 
@@ -58,7 +58,7 @@ export default function usePhotos() {
 
     Array.from(files).forEach((file) => {
       if (totalSize + file.size > MAX_TOTAL_SIZE) {
-        toast.error("❌ Totaal bestandsgrootte mag niet groter zijn dan 500 KB.");
+        toast.error("❌ Totaal bestandsgrootte mag niet groter zijn dan 5 MB.");
         return;
       }
       if (newImages.length < MAX_IMAGES) {

@@ -223,7 +223,7 @@ CREATE INDEX ASYNC fk_property_generaldetail_general_details_idx ON main.propert
 CREATE INDEX ASYNC fk_property_generaldetail_property_idx ON main.property_generaldetail (property_id);
 
 -- -----------------------------------------------------
--- Table main.property_image
+-- Table main.property_image (legacy)
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS main.property_image;
 
@@ -232,7 +232,45 @@ CREATE TABLE IF NOT EXISTS main.property_image (
   "key" VARCHAR(255) NOT NULL,
   PRIMARY KEY (property_id, "key")
 );
-CREATE UNIQUE INDEX ASYNC fk_property_image_property_idx ON main.property_image (property_id);
+CREATE UNIQUE INDEX ASYNC fk_property_image_legacy_property_idx ON main.property_image (property_id);
+
+-- -----------------------------------------------------
+-- Table main.property_image_v2
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_image_v2;
+
+CREATE TABLE IF NOT EXISTS main.property_image_v2 (
+  id VARCHAR(255) NOT NULL,
+  property_id VARCHAR(255) NOT NULL,
+  sort_order INT NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (id)
+);
+CREATE INDEX ASYNC property_image_v2_property_idx ON main.property_image_v2 (property_id);
+ALTER TABLE main.property_image_v2
+  ADD CONSTRAINT property_image_v2_status_check
+  CHECK (status IN ('UPLOADING', 'READY', 'FAILED'));
+
+-- -----------------------------------------------------
+-- Table main.property_image_variant
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_image_variant;
+
+CREATE TABLE IF NOT EXISTS main.property_image_variant (
+  id VARCHAR(255) NOT NULL,
+  image_id VARCHAR(255) NOT NULL,
+  variant VARCHAR(32) NOT NULL,
+  s3_key VARCHAR(255) NOT NULL,
+  content_type VARCHAR(128) NOT NULL,
+  bytes INT,
+  width INT,
+  height INT,
+  PRIMARY KEY (id),
+  UNIQUE (image_id, variant)
+);
+CREATE INDEX ASYNC property_image_variant_image_idx ON main.property_image_variant (image_id);
 
 -- -----------------------------------------------------
 -- Table main.property_location

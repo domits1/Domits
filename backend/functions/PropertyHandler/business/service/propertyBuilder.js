@@ -184,6 +184,19 @@ export class PropertyBuilder {
     } else if (images.length > 30) {
       throw new TypeException("Maximum of 30 images allowed.");
     }
+    const maxTotalKiloBytes = 5 * 1024;
+    const totalKiloBytes = images.reduce((sum, image) => {
+      const dataUrl = image?.image || "";
+      const dataStructures = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+      if (!dataStructures) return sum;
+      const imageData = dataStructures[2];
+      const padding = (imageData.match(/=+$/) || [""])[0].length;
+      const imageDataBytes = (imageData.length * 3 / 4) - padding;
+      return sum + (imageDataBytes / 1024);
+    }, 0);
+    if (totalKiloBytes > maxTotalKiloBytes) {
+      throw new TypeException("Total image size must be less than 5MB.");
+    }
     const imageArray = [];
     for (const image of images) {
       imageArray.push(new PropertyImage(this.property.id, image.key, image.image));
