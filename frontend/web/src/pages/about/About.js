@@ -10,6 +10,7 @@ import nick from "../../images/nick.png";
 
 import Ales from "../../images/about-img/Ales.jpg";
 import Chant from "../../images/about-img/Chant.jpg";
+import Chiel from "../../images/about-img/Chiel.png";
 import Justin from "../../images/about-img/Justin.jpg";
 import Robert from "../../images/about-img/Robert.jpg";
 import Robin from "../../images/about-img/Robin.jpg";
@@ -19,6 +20,9 @@ import Sander from "../../images/about-img/Sander.png";
 import Bekir from "../../images/about-img/Bekir.png";
 import Kacper from "../../images/about-img/Kacper.png";
 import Denisa from "../../images/about-img/Denisa.jpeg";
+import Omer from "../../images/about-img/Omer.jpg";
+import Ameen from "../../images/about-img/Ameen.jpg";
+
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
@@ -61,6 +65,7 @@ function About() {
     { name: "Alessio", src: standard, role: aboutContent.crew.developer },
     { name: "Asif", src: standard, role: aboutContent.crew.developer },
     { name: "Burak", src: standard, role: aboutContent.crew.developer },
+    { name: "Chiel", src: Chiel, role: aboutContent.crew.developer},
     { name: "Gurpreet", src: standard, role: aboutContent.crew.developer },
     { name: "Ho Tin", src: standard, role: aboutContent.crew.developer },
     { name: "Ken", src: standard, role: aboutContent.crew.developer },
@@ -69,6 +74,9 @@ function About() {
     { name: "Tom", src: standard, role: aboutContent.crew.developer },
     { name: "Yusuf", src: standard, role: aboutContent.crew.developer },
     { name: "Denisa", src: Denisa, role: aboutContent.crew.designer },
+    { name: "Omer", src: Omer, role: aboutContent.crew.developer },
+    { name: "Ameen", src: Ameen, role: aboutContent.crew.developer },
+   
   ]
     .sort((a, b) => a.name.localeCompare(b.name));
 
