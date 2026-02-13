@@ -1,4 +1,5 @@
 function ImagePreview({ image, index, onDelete, onDragStart, onDrop }) {
+  const src = typeof image === "string" ? image : image?.preview;
   return (
     <div
       className={index === 0 ? "large-photo" : "small-photo"}
@@ -10,10 +11,10 @@ function ImagePreview({ image, index, onDelete, onDragStart, onDrop }) {
       }}
       onDragOver={(e) => e.preventDefault()}
     >
-      {image ? (
+      {src ? (
         <>
           <img
-            src={image}
+            src={src}
             alt={`Preview ${index + 1}`}
             className={index === 0 ? "accommodation-thumbnail" : "file-image"}
           />

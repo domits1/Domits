@@ -73,7 +73,7 @@ function PhotosView() {
                 <img src={cloudIcon} alt="" />
               </div>
               <p className="drag-drop-title">Choose a file or drag &amp; drop it here</p>
-              <p className="drag-drop-subtitle">JPEG, PNG, WEBP total up to 5 MB</p>
+              <p className="drag-drop-subtitle">JPEG, PNG, WEBP up to 5 MB each</p>
             </div>
             <input
               ref={fileInputRef}
@@ -112,7 +112,7 @@ function PhotosView() {
                     <img src={cloudIcon} alt="" />
                   </div>
                   <p className="drag-drop-title">Choose a file or drag &amp; drop it here</p>
-                  <p className="drag-drop-subtitle">JPEG, PNG, WEBP total up to 5 MB</p>
+                  <p className="drag-drop-subtitle">JPEG, PNG, WEBP up to 5 MB each</p>
                 </div>
               </button>
             )}
@@ -139,7 +139,6 @@ function PhotosView() {
                 toast.error(`Upload at least ${MIN_IMAGES} photos to continue.`);
                 return false;
               }
-              builder.addImages(images);
               return true;
             }}
             routePath={nextPath || `/hostonboarding/${accommodationType}/title`}

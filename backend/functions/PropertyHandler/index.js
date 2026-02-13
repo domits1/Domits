@@ -22,6 +22,12 @@ export const handler = async (event) => {
                     ) {
                         return await controller.confirmImageUploads(event);
                     }
+                    if (
+                        event.resource === "/property/draft" ||
+                        event.path === "/property/draft"
+                    ) {
+                        return await controller.createDraft(event);
+                    }
                     return await controller.create(event);
                 case "PATCH":
                     if (
@@ -77,6 +83,12 @@ export const handler = async (event) => {
                     }
                     // TODO add functionality
                 case "DELETE":
+                    if (
+                        event.resource === "/property/draft" ||
+                        event.path === "/property/draft"
+                    ) {
+                        return await controller.deleteDraft(event);
+                    }
                     return await controller.delete(event);
                 default:
                     return {

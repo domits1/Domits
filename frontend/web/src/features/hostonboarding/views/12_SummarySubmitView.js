@@ -23,12 +23,9 @@ function SummaryViewAndSubmit() {
   const navigate = useNavigate();
 
   const handleSubmit = () => {
-    if (Array.isArray(imageList)) {
-      if (imageList.length < 5) {
-        toast.error("Upload at least 5 photos to continue.");
-        return;
-      }
-      builder.addImages(imageList);
+    if (Array.isArray(imageList) && imageList.length < 5) {
+      toast.error("Upload at least 5 photos to continue.");
+      return;
     }
     submitAccommodation(navigate, builder);
   };
