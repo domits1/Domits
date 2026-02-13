@@ -15,6 +15,7 @@ module.exports = (async () => {
             },
             general: {
                 guests: 1,
+                guestName: "Test Guest",
                 arrivalDate: 1747094400000,
                 departureDate: 1747180800000
             }

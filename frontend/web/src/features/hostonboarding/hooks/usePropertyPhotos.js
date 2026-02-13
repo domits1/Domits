@@ -1,16 +1,33 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 
 export default function usePhotos() {
-  const [images, setImages] = useState([]);
+  const images = useFormStoreHostOnboarding((state) => state.accommodationDetails.imageList);
+  const setImageList = useFormStoreHostOnboarding((state) => state.setImageList);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const MIN_WIDTH = 500;
   const MIN_HEIGHT = 500;
-  const MIN_SIZE = 50000;
+  const MAX_TOTAL_SIZE = 5 * 1024 * 1024;
   const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
   const MAX_IMAGES = 10;
+
+  const getDataUrlSize = (dataUrl) => {
+    if (!dataUrl) return 0;
+    const marker = "base64,";
+    const idx = dataUrl.indexOf(marker);
+    if (idx === -1) return 0;
+    const base64 = dataUrl.slice(idx + marker.length);
+    let padding = 0;
+    if (base64.endsWith("==")) {
+      padding = 2;
+    } else if (base64.endsWith("=")) {
+      padding = 1;
+    }
+    return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
+  };
 
   const validateImage = (file, callback) => {
     if (!file) return;
@@ -20,10 +37,6 @@ export default function usePhotos() {
       return;
     }
 
-    if (file.size < MIN_SIZE) {
-      toast.error("❌ Afbeelding is te klein (min. 50 KB).");
-      return;
-    }
 
     const img = new Image();
     img.src = URL.createObjectURL(file);
@@ -46,14 +59,20 @@ export default function usePhotos() {
     }
 
     let newImages = [...images];
+    let totalSize = images.reduce((sum, image) => sum + getDataUrlSize(image), 0);
 
     Array.from(files).forEach((file) => {
+      if (totalSize + file.size > MAX_TOTAL_SIZE) {
+        toast.error("❌ Totaal bestandsgrootte mag niet groter zijn dan 5 MB.");
+        return;
+      }
       if (newImages.length < MAX_IMAGES) {
         validateImage(file, (validFile) => {
           const reader = new FileReader();
           reader.onload = () => {
             newImages = [...newImages, reader.result];
-            setImages(newImages);
+            totalSize += validFile.size;
+            setImageList(newImages);
             toast.success("✅ Afbeelding toegevoegd!");
           };
           reader.readAsDataURL(validFile);
@@ -66,20 +85,16 @@ export default function usePhotos() {
   
 
   const deleteImage = (index) => {
-    setImages((prev) => {
-      const updatedImages = prev.filter((_, i) => i !== index);
-      return updatedImages;
-    });
+    const updatedImages = images.filter((_, i) => i !== index);
+    setImageList(updatedImages);
     toast.info("🗑️ Afbeelding verwijderd.");
   };
 
   const reorderImages = (fromIndex, toIndex) => {
-    setImages((prev) => {
-      const newImages = [...prev];
-      const [movedImage] = newImages.splice(fromIndex, 1);
-      newImages.splice(toIndex, 0, movedImage);
-      return newImages;
-    });
+    const newImages = [...images];
+    const [movedImage] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, movedImage);
+    setImageList(newImages);
     toast.info("🔄 Afbeeldingen opnieuw gerangschikt.");
   };
   

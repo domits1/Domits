@@ -1,4 +1,5 @@
 import { getAccessToken } from "../../../services/getAccessToken";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 function toTimeString(value) {
   if (typeof value === "number") {
     return String(value).padStart(2, "0") + ":00";
@@ -11,6 +12,14 @@ function toTimeString(value) {
 export async function submitAccommodation(navigate, builder) {
   const API_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
   const payload = builder.build();
+  const storeState = useFormStoreHostOnboarding.getState();
+  const imageList = storeState?.accommodationDetails?.imageList;
+  if (Array.isArray(imageList) && imageList.length > 0) {
+    payload.propertyImages = imageList.map((image, index) => ({
+      key: `image-${index + 1}`,
+      image,
+    }));
+  }
   if (payload.propertyCheckIn) {
     payload.propertyCheckIn = {
       ...payload.propertyCheckIn,

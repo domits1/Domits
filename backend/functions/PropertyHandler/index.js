@@ -10,8 +10,26 @@ export const handler = async (event) => {
         return await (async () => {
             switch (event.httpMethod) {
                 case "POST":
+                    if (
+                        event.resource === "/property/images/presign" ||
+                        event.path === "/property/images/presign"
+                    ) {
+                        return await controller.createImageUploadUrls(event);
+                    }
+                    if (
+                        event.resource === "/property/images/confirm" ||
+                        event.path === "/property/images/confirm"
+                    ) {
+                        return await controller.confirmImageUploads(event);
+                    }
                     return await controller.create(event);
                 case "PATCH":
+                    if (
+                        event.resource === "/property/images/order" ||
+                        event.path === "/property/images/order"
+                    ) {
+                        return await controller.updateImageOrder(event);
+                    }
                     return await controller.activateProperty(event);
                 case "GET":
                     const path = event.resource;

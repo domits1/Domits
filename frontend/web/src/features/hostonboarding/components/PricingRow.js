@@ -1,3 +1,5 @@
+import PropTypes from "prop-types"
+
 function PricingRow({
   label,
   value,
@@ -5,20 +7,21 @@ function PricingRow({
   type = "number",
   readonly = false,
   placeholder,
+  displayValue,
 }) {
   return (
     <div className="pricing-row">
       <label>{label}</label>
       {readonly ? (
         <p className="pricing-input">
-          €{Number.isFinite(value) ? value.toFixed(2) : "0.00"}
+          {displayValue ?? `EUR ${Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "0.00"}`}
         </p>
       ) : (
         <input
           className="pricing-input"
           type={type}
           value={value}
-          onChange={(value) => updatePricing("Rent", parseFloat(value))}
+          onChange={(event) => onChange?.(event.target.value)}
           placeholder={placeholder}
           min={1}
           step={0.1}
@@ -30,3 +33,21 @@ function PricingRow({
 }
 
 export default PricingRow
+
+PricingRow.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onChange: PropTypes.func,
+  type: PropTypes.string,
+  readonly: PropTypes.bool,
+  placeholder: PropTypes.string,
+  displayValue: PropTypes.string,
+}
+
+PricingRow.defaultProps = {
+  onChange: null,
+  type: "number",
+  readonly: false,
+  placeholder: "",
+  displayValue: null,
+}
