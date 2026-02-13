@@ -8,95 +8,130 @@ const useFetchContacts = (userId, role) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (userId) {
-      fetchContacts();
+    if (userId) fetchContacts();
+    else {
+      setContacts([]);
+      setPendingContacts([]);
     }
-  }, [userId]);
+  }, [userId, role]);
 
   const fetchContacts = async () => {
     setLoading(true);
+    setError(null);
+
     try {
       const isHost = role === "host";
 
-      const fetchUserInfo = async (uId) => {
-        const userResponse = await fetch("https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ UserId: uId }),
-        });
+      const fetchUserInfo = async (targetUserId) => {
+        try {
+          const userResponse = await fetch(
+            "https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ UserId: targetUserId }),
+            }
+          );
 
-        if (!userResponse.ok) {
-          throw new Error("Failed to fetch user information");
+          if (!userResponse.ok) {
+            return { givenName: "Unknown", userId: targetUserId };
+          }
+
+          const userData = await userResponse.json();
+
+          let parsed = null;
+          try {
+            parsed = typeof userData?.body === "string" ? JSON.parse(userData.body) : userData?.body;
+          } catch (e) {
+            parsed = null;
+          }
+
+          const first = Array.isArray(parsed) ? parsed[0] : parsed;
+          const attrsArr = first?.Attributes;
+
+          if (!Array.isArray(attrsArr)) {
+            return { givenName: "Unknown", userId: targetUserId };
+          }
+
+          const attributes = attrsArr.reduce((acc, attribute) => {
+            if (attribute?.Name) acc[attribute.Name] = attribute.Value;
+            return acc;
+          }, {});
+
+          const resolvedUserId =
+            attributes["sub"] ||
+            attributes["userId"] ||
+            attrsArr.find((a) => a?.Name === "sub")?.Value ||
+            targetUserId;
+
+          return {
+            givenName: attributes["given_name"] || attributes["name"] || "Unknown",
+            userId: resolvedUserId,
+          };
+        } catch (e) {
+          return { givenName: "Unknown", userId: targetUserId };
         }
-
-        const userData = await userResponse.json();
-        const parsed = JSON.parse(userData.body);
-        const first = Array.isArray(parsed) ? parsed[0] : null;
-
-        if (!first?.Attributes) {
-          return { givenName: "Unknown", userId: uId };
-        }
-
-        const attributes = first.Attributes.reduce((acc, attribute) => {
-          acc[attribute.Name] = attribute.Value;
-          return acc;
-        }, {});
-
-        return {
-          givenName: attributes["given_name"] || "Unknown",
-          userId: first.Attributes?.[2]?.Value || uId,
-        };
       };
 
-      const fetchLatestMessageByThreadId = async (threadId) => {
-        if (!threadId) return null;
+      const fetchLatestMessage = async (recipientIdToSend) => {
         try {
-          const res = await fetch(
-            `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId}`,
+          const threadId1 = `${userId}-${recipientIdToSend}`;
+          const threadId2 = `${recipientIdToSend}-${userId}`;
+
+          let unifiedResponse = await fetch(
+            "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages",
             {
               method: "GET",
               headers: { "Content-Type": "application/json" },
             }
           );
 
-          if (!res.ok) return null;
-
-          const messages = await res.json();
-          if (!Array.isArray(messages) || messages.length === 0) return null;
-
-          const latest = messages[messages.length - 1];
-
-          let metadata = latest?.metadata || {};
-          if (typeof metadata === "string") {
-            try {
-              metadata = JSON.parse(metadata);
-            } catch {
-              metadata = {};
-            }
+          if (!unifiedResponse.ok) {
+            unifiedResponse = await fetch(
+              `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId1}`,
+              { method: "GET", headers: { "Content-Type": "application/json" } }
+            );
           }
 
-          return {
-            text: latest.content || "",
-            createdAt:
-              typeof latest.createdAt === "number"
-                ? new Date(latest.createdAt).toISOString()
-                : new Date().toISOString(),
-            isAutomated: metadata?.isAutomated || false,
-          };
+          if (!unifiedResponse.ok) {
+            unifiedResponse = await fetch(
+              `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId2}`,
+              { method: "GET", headers: { "Content-Type": "application/json" } }
+            );
+          }
+
+          if (unifiedResponse.ok) {
+            const messages = await unifiedResponse.json();
+            if (Array.isArray(messages) && messages.length > 0) {
+              const latestMessage = messages[messages.length - 1];
+
+              let metadata = latestMessage?.metadata || {};
+              if (typeof metadata === "string") {
+                try {
+                  metadata = JSON.parse(metadata);
+                } catch (e) {
+                  metadata = {};
+                }
+              }
+
+              return {
+                text: latestMessage?.content || latestMessage?.text || "",
+                createdAt: new Date(latestMessage?.createdAt || Date.now()).toISOString(),
+                isAutomated: metadata?.isAutomated || false,
+              };
+            }
+          }
         } catch (e) {
-          console.warn("Failed to fetch latest message by thread:", e);
-          return null;
+          console.warn("Failed to fetch latest message:", e);
         }
+        return null;
       };
 
       let unifiedContacts = [];
       try {
         const threadsResponse = await fetch(
           `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads?userId=${userId}`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          }
+          { method: "GET", headers: { "Content-Type": "application/json" } }
         );
 
         if (threadsResponse.ok) {
@@ -104,78 +139,82 @@ const useFetchContacts = (userId, role) => {
           const threads = Array.isArray(threadsData) ? threadsData : [];
 
           unifiedContacts = threads
-            .filter((thread) => thread?.hostId && thread?.guestId && thread.hostId !== thread.guestId)
-            .map((thread) => ({
-              userId: isHost ? thread.guestId : thread.hostId,
-              hostId: thread.hostId,
+            .filter((t) => t?.hostId && t?.guestId && t.hostId !== t.guestId)
+            .map((t) => ({
+              userId: isHost ? t.guestId : t.hostId,
+              hostId: t.hostId,
               Status: "accepted",
-              AccoId: thread.propertyId,
-              threadId: thread.id,
+              AccoId: t.propertyId,
+              threadId: t.id,
               isFromUnified: true,
             }))
-            .filter((contact, index, self) => index === self.findIndex((c) => c.userId === contact.userId));
+            .filter((c, i, self) => i === self.findIndex((x) => x.userId === c.userId));
         }
       } catch (e) {
         console.warn("Failed to fetch unified threads:", e);
       }
 
+      const fetchUserInfoForContacts = async (contactsList, idField) => {
+        const safeContacts = Array.isArray(contactsList) ? contactsList : [];
+        return await Promise.all(
+          safeContacts.map(async (contact) => {
+            const recipientId = contact?.[idField] || contact?.userId || contact?.hostId;
+
+            const userInfo = recipientId
+              ? await fetchUserInfo(recipientId)
+              : { givenName: "Unknown", userId: null };
+
+            const latestMessage = recipientId ? await fetchLatestMessage(recipientId) : null;
+
+            const hostId = role === "host" ? userId : contact.hostId;
+            const guestId = role === "host" ? contact.userId : userId;
+
+            let accoImage = null;
+            let bookingStatus = null;
+            let arrivalDate = null;
+            let departureDate = null;
+            let propertyId = contact?.AccoId || null;
+            let propertyTitle = null;
+
+            try {
+              const bookingInfo = await fetchBookingDetailsAndAccommodation({
+                hostId,
+                guestId,
+                withAuth: role !== "guest",
+                accommodationEndpoint:
+                  role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
+              });
+
+              accoImage = bookingInfo?.accoImage || null;
+              bookingStatus = bookingInfo?.bookingStatus || null;
+              arrivalDate = bookingInfo?.arrivalDate || null;
+              departureDate = bookingInfo?.departureDate || null;
+              propertyId = bookingInfo?.propertyId || propertyId;
+              propertyTitle = bookingInfo?.propertyTitle || null;
+            } catch (e) {
+              console.warn("Failed to fetch booking/accommodation:", e);
+            }
+
+            return {
+              ...(contact || {}),
+              ...(userInfo || {}),
+              latestMessage,
+              recipientId,
+              accoImage,
+              bookingStatus,
+              arrivalDate,
+              departureDate,
+              propertyId,
+              propertyTitle,
+            };
+          })
+        );
+      };
+
       if (unifiedContacts.length > 0) {
-        const fetchUserInfoForContacts = async (contactsArr, idField) => {
-          return await Promise.all(
-            contactsArr.map(async (contact) => {
-              const recipientId = contact[idField];
-              const userInfo = await fetchUserInfo(recipientId);
-              const latestMessage = await fetchLatestMessageByThreadId(contact.threadId);
-
-              const hostId = role === "host" ? userId : contact.hostId;
-              const guestId = role === "host" ? contact.userId : userId;
-
-              let accoImage = null;
-              let bookingStatus = null;
-              let arrivalDate = null;
-              let departureDate = null;
-              let propertyId = contact.AccoId;
-              let propertyTitle = null;
-
-              try {
-                const bookingInfo = await fetchBookingDetailsAndAccommodation({
-                  hostId,
-                  guestId,
-                  withAuth: role !== "guest",
-                  accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
-                });
-
-                accoImage = bookingInfo.accoImage;
-                bookingStatus = bookingInfo.bookingStatus;
-                arrivalDate = bookingInfo.arrivalDate || null;
-                departureDate = bookingInfo.departureDate || null;
-                propertyId = bookingInfo.propertyId || propertyId;
-                propertyTitle = bookingInfo.propertyTitle || null;
-              } catch (e) {
-                console.warn("Failed to fetch booking or accommodation", e);
-              }
-
-              return {
-                ...contact,
-                ...userInfo,
-                latestMessage,
-                recipientId,
-                accoImage,
-                bookingStatus,
-                arrivalDate,
-                departureDate,
-                propertyId,
-                propertyTitle,
-              };
-            })
-          );
-        };
-
         const acceptedContacts = await fetchUserInfoForContacts(unifiedContacts, isHost ? "userId" : "hostId");
-
         setContacts(acceptedContacts);
         setPendingContacts([]);
-        setLoading(false);
         return;
       }
 
@@ -190,73 +229,31 @@ const useFetchContacts = (userId, role) => {
         body: JSON.stringify(requestData),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch contacts");
-      }
+      if (!response.ok) throw new Error("Failed to fetch contacts");
 
       const responseData = await response.json();
-      const JSONData = JSON.parse(responseData.body);
 
-      const fetchUserInfoForContacts = async (contactsArr, idField) => {
-        return await Promise.all(
-          contactsArr.map(async (contact) => {
-            const recipientId = contact[idField];
-            const userInfo = await fetchUserInfo(recipientId);
+      let JSONData = { accepted: [], pending: [] };
+      try {
+        JSONData = typeof responseData?.body === "string" ? JSON.parse(responseData.body) : responseData?.body || JSONData;
+      } catch (e) {
+        JSONData = { accepted: [], pending: [] };
+      }
 
-            const hostId = role === "host" ? userId : contact.hostId;
-            const guestId = role === "host" ? contact.userId : userId;
+      const acceptedRaw = Array.isArray(JSONData?.accepted) ? JSONData.accepted : [];
+      const pendingRaw = Array.isArray(JSONData?.pending) ? JSONData.pending : [];
 
-            let accoImage = null;
-            let bookingStatus = null;
-            let arrivalDate = null;
-            let departureDate = null;
-            let propertyId = null;
-            let propertyTitle = null;
+      const acceptedContacts = await fetchUserInfoForContacts(acceptedRaw, isHost ? "userId" : "hostId");
 
-            try {
-              const bookingInfo = await fetchBookingDetailsAndAccommodation({
-                hostId,
-                guestId,
-                withAuth: role !== "guest",
-                accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
-              });
-
-              accoImage = bookingInfo.accoImage;
-              bookingStatus = bookingInfo.bookingStatus;
-              arrivalDate = bookingInfo.arrivalDate || null;
-              departureDate = bookingInfo.departureDate || null;
-              propertyId = bookingInfo.propertyId || null;
-              propertyTitle = bookingInfo.propertyTitle || null;
-            } catch (e) {
-              console.warn("Failed to fetch booking or accommodation", e);
-            }
-
-            return {
-              ...contact,
-              ...userInfo,
-              latestMessage: null,
-              recipientId,
-              accoImage,
-              bookingStatus,
-              arrivalDate,
-              departureDate,
-              propertyId,
-              propertyTitle,
-            };
-          })
-        );
-      };
-
-      const acceptedContacts = await fetchUserInfoForContacts(JSONData.accepted, isHost ? "userId" : "hostId");
-
-      const filteredPending = isHost ? JSONData.pending.filter((contact) => contact.userId !== userId) : JSONData.pending;
-      const pending = await fetchUserInfoForContacts(filteredPending, isHost ? "userId" : "hostId");
+      const filteredPending = isHost ? pendingRaw.filter((c) => c?.userId !== userId) : pendingRaw;
+      const pendingContactsRes = await fetchUserInfoForContacts(filteredPending, isHost ? "userId" : "hostId");
 
       setContacts(acceptedContacts);
-      setPendingContacts(pending);
-    } catch (e) {
-      setError("Error fetching contacts: " + e.message);
-      console.error("Error fetching contacts:", e);
+      setPendingContacts(pendingContactsRes);
+    } catch (err) {
+      setError("Error fetching contacts: " + (err?.message || String(err)));
+      setContacts([]);
+      setPendingContacts([]);
     } finally {
       setLoading(false);
     }
