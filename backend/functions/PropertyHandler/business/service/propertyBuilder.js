@@ -190,7 +190,12 @@ export class PropertyBuilder {
       const dataStructures = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
       if (!dataStructures) return sum;
       const imageData = dataStructures[2];
-      const padding = (imageData.match(/=+$/) || [""])[0].length;
+      let padding = 0;
+      if (imageData.endsWith("==")) {
+        padding = 2;
+      } else if (imageData.endsWith("=")) {
+        padding = 1;
+      }
       const imageDataBytes = (imageData.length * 3 / 4) - padding;
       return sum + (imageDataBytes / 1024);
     }, 0);
