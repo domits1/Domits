@@ -1,5 +1,6 @@
 // Desc: OnboardingButton component for onboarding
 
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
 export default function OnboardingButton({
@@ -36,3 +37,18 @@ export default function OnboardingButton({
     </button>
   );
 }
+
+OnboardingButton.propTypes = {
+  btnText: PropTypes.string.isRequired,
+  onClick: PropTypes.func,
+  routePath: PropTypes.string,
+  buttonType: PropTypes.string,
+  disabled: PropTypes.bool,
+};
+
+OnboardingButton.defaultProps = {
+  onClick: null,
+  routePath: null,
+  buttonType: "proceed",
+  disabled: false,
+};

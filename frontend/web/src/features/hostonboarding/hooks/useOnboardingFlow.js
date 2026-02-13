@@ -17,7 +17,7 @@ export const useOnboardingFlow = () => {
   const steps = ONBOARDING_FLOW_STEPS[flowKey]
   const currentPath = normalizeOnboardingPath(location.pathname)
   const stepIndexRaw = findStepIndex(steps, currentPath, flowKey)
-  const safeIndex = stepIndexRaw >= 0 ? stepIndexRaw : 0
+  const safeIndex = Math.max(0, stepIndexRaw)
   const totalSteps = steps.length
   const stepIndex = Math.min(safeIndex + 1, totalSteps)
   const prevPath = steps[safeIndex - 1]?.path || null

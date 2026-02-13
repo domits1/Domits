@@ -278,10 +278,6 @@ $off-white: #f0f0f0;
     flex-wrap: wrap;
   }
 
-  .Check-checkbox {
-    width: 10rem;
-  }
-
   .delete-button {
     position: absolute;
     top: 5px;
@@ -772,6 +768,9 @@ $off-white: #f0f0f0;
     border-radius: 6px;
     overflow: hidden;
     background: #fff;
+    margin: 0;
+    padding: 0;
+    min-inline-size: 0;
   }
 
   .guest-amount-btn,
@@ -798,8 +797,8 @@ $off-white: #f0f0f0;
 
     &:disabled {
       cursor: not-allowed;
-      color: #bdbdbd;
-      background: #f7f7f7;
+      color: #5c636d;
+      background: #eef2f7;
     }
   }
 
@@ -812,8 +811,8 @@ $off-white: #f0f0f0;
     }
 
     &:disabled {
-      background: #c7d0dd;
-      color: #fff;
+      background: #d0d7e2;
+      color: #2f3b4a;
     }
   }
 
@@ -1506,6 +1505,7 @@ $off-white: #f0f0f0;
   }
 
   .Check-checkbox {
+    width: 10rem;
     border: 1px solid #d6dbe3;
     border-radius: 6px;
     padding: 4px 6px;

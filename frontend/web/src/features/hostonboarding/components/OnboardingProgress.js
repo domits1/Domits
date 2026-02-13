@@ -1,3 +1,4 @@
+import PropTypes from "prop-types"
 import { useOnboardingFlow } from "../hooks/useOnboardingFlow"
 
 function OnboardingProgress({ step, total }) {
@@ -19,3 +20,13 @@ function OnboardingProgress({ step, total }) {
 }
 
 export default OnboardingProgress;
+
+OnboardingProgress.propTypes = {
+  step: PropTypes.number,
+  total: PropTypes.number,
+};
+
+OnboardingProgress.defaultProps = {
+  step: null,
+  total: null,
+};

@@ -1,3 +1,5 @@
+import PropTypes from "prop-types"
+
 function PricingRow({
   label,
   value,
@@ -31,3 +33,21 @@ function PricingRow({
 }
 
 export default PricingRow
+
+PricingRow.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onChange: PropTypes.func,
+  type: PropTypes.string,
+  readonly: PropTypes.bool,
+  placeholder: PropTypes.string,
+  displayValue: PropTypes.string,
+}
+
+PricingRow.defaultProps = {
+  onChange: null,
+  type: "number",
+  readonly: false,
+  placeholder: "",
+  displayValue: null,
+}
