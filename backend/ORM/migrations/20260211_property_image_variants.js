@@ -8,7 +8,7 @@ export class PropertyImageVariants20260211 {
       );
     `);
     await queryRunner.query(
-      `CREATE INDEX IF NOT EXISTS property_image_legacy_property_idx ON main.property_image (property_id);`
+      `CREATE INDEX ASYNC property_image_legacy_property_idx ON main.property_image (property_id);`
     );
 
     await queryRunner.query(`
@@ -23,12 +23,7 @@ export class PropertyImageVariants20260211 {
       );
     `);
     await queryRunner.query(
-      `CREATE INDEX IF NOT EXISTS property_image_v2_property_idx ON main.property_image_v2 (property_id);`
-    );
-    await queryRunner.query(
-      `ALTER TABLE main.property_image_v2
-       ADD CONSTRAINT property_image_v2_status_check
-       CHECK (status IN ('UPLOADING', 'READY', 'FAILED'));`
+      `CREATE INDEX ASYNC property_image_v2_property_idx ON main.property_image_v2 (property_id);`
     );
 
     await queryRunner.query(`
@@ -46,7 +41,7 @@ export class PropertyImageVariants20260211 {
       );
     `);
     await queryRunner.query(
-      `CREATE INDEX IF NOT EXISTS property_image_variant_image_idx ON main.property_image_variant (image_id);`
+      `CREATE INDEX ASYNC property_image_variant_image_idx ON main.property_image_variant (image_id);`
     );
   }
 

@@ -249,9 +249,6 @@ CREATE TABLE IF NOT EXISTS main.property_image_v2 (
   PRIMARY KEY (id)
 );
 CREATE INDEX ASYNC property_image_v2_property_idx ON main.property_image_v2 (property_id);
-ALTER TABLE main.property_image_v2
-  ADD CONSTRAINT property_image_v2_status_check
-  CHECK (status IN ('UPLOADING', 'READY', 'FAILED'));
 
 -- -----------------------------------------------------
 -- Table main.property_image_variant
