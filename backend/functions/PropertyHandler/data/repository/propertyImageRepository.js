@@ -47,20 +47,34 @@ export class PropertyImageRepository {
 
     async getImagesByPropertyId(id) {
         const client = await Database.getInstance();
-        const images = await client
-            .getRepository(Property_Image)
-            .createQueryBuilder("property_image")
-            .where("property_id = :id", { id })
-            .orderBy("sort_order", "ASC")
-            .getMany();
+        let images = [];
+        try {
+            images = await client
+                .getRepository(Property_Image)
+                .createQueryBuilder("property_image")
+                .where("property_id = :id", { id })
+                .orderBy("sort_order", "ASC")
+                .getMany();
+        } catch (error) {
+            if (error?.code !== "42P01") {
+                throw error;
+            }
+        }
 
         if (images.length > 0) {
             const imageIds = images.map((image) => image.id);
-            const variants = await client
-                .getRepository(Property_Image_Variant)
-                .createQueryBuilder("variant")
-                .where("image_id IN (:...imageIds)", { imageIds })
-                .getMany();
+            let variants = [];
+            try {
+                variants = await client
+                    .getRepository(Property_Image_Variant)
+                    .createQueryBuilder("variant")
+                    .where("image_id IN (:...imageIds)", { imageIds })
+                    .getMany();
+            } catch (error) {
+                if (error?.code !== "42P01") {
+                    throw error;
+                }
+            }
 
             const variantsByImage = variants.reduce((acc, variant) => {
                 if (!acc[variant.image_id]) acc[variant.image_id] = {};
@@ -101,11 +115,18 @@ export class PropertyImageRepository {
 
     async getImageCountByPropertyId(propertyId) {
         const client = await Database.getInstance();
-        const newCount = await client
-            .getRepository(Property_Image)
-            .createQueryBuilder("property_image")
-            .where("property_id = :propertyId", { propertyId })
-            .getCount();
+        let newCount = 0;
+        try {
+            newCount = await client
+                .getRepository(Property_Image)
+                .createQueryBuilder("property_image")
+                .where("property_id = :propertyId", { propertyId })
+                .getCount();
+        } catch (error) {
+            if (error?.code !== "42P01") {
+                throw error;
+            }
+        }
         const legacyCount = await client
             .getRepository(Property_Image_Legacy)
             .createQueryBuilder("property_image_legacy")
