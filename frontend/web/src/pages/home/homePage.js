@@ -194,7 +194,7 @@ const Homepage = () => {
           </div>
 
           <div className="domits-populairAccomodation">
-            <div className="domits-populairAccomodationText">
+            <div className="domits-populairAccommodationText">
               <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
 
               <div className="domits-trendingContainer">

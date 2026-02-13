@@ -602,11 +602,7 @@ $primary-domits-color: #0d9813;
     }
   }
 
-  @include mobile {
-    .search-bar-main {
-      display: none;
-    }
-  }
+  // search bar is now always visible on mobile
 
   @include mobile {
     .search-bar-main > div::before {

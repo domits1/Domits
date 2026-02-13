@@ -54,6 +54,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  z-index: 1000;
 }
 
 @media (max-width: 1024px) {
@@ -66,20 +68,20 @@
     font-size: 2.5em;
     padding-top: 20vh;
   }
-  .homePage-container .domits-homepage .domits-searchbarCon {
-    display: none;
-  }
   .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
     font-size: 1em;
   }
 }
 @media (max-width: 480px) {
   .homePage-container .domits-homepage .domits-searchContainer {
-    height: 50vh;
+    height: auto;
+    min-height: 50vh;
+    padding-bottom: 1rem;
   }
   .homePage-container .domits-homepage .domits-searchTextCon {
-    height: 50vh;
+    height: auto;
     font-size: 2em;
+    padding-top: 15vh;
   }
   .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
     font-size: 1em;
@@ -149,7 +151,7 @@
   }
 }
 
-.homePage-container .domits-homepage .domits-populairAccomodationText h3 {
+.homePage-container .domits-homepage .domits-populairAccommodationText h3 {
   font-size: 2.5rem;
   font-weight: bold;
   text-align: center;
@@ -157,13 +159,13 @@
 }
 
 @media (max-width: 768px) {
-  .homePage-container .domits-homepage .domits-populairAccomodationText h3 {
+  .homePage-container .domits-homepage .domits-populairAccommodationText h3 {
     font-size: 2rem;
     margin-left: 2vw;
   }
 }
 @media (max-width: 480px) {
-  .homePage-container .domits-homepage .domits-populairAccomodationText h3 {
+  .homePage-container .domits-homepage .domits-populairAccommodationText h3 {
     font-size: 1.5rem;
     margin: 20px auto;
   }
@@ -926,10 +928,6 @@
     font-size: 1.1rem;
     padding-bottom: 10px;
   }
-  .homePage-container .domits-homepage .domits-searchbarCon {
-    display: none;
-  }
-
   .homePage-container .domits-homepage .domits-iconsContainer {
     flex-direction: column;
     height: auto;
