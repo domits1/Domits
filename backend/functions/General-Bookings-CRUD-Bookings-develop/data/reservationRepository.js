@@ -1,5 +1,5 @@
 import Database from "database";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
 import UnableToSearch from "../util/exception/UnableToSearch.js";

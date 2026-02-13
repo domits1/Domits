@@ -11,14 +11,15 @@ import PricingCard from "./components/Sidebar/PricingCard";
 import ExternalCalendarsCard from "./components/Sidebar/ExternalCalendarsCard";
 
 import { getMonthMatrix, startOfMonthUTC, addMonthsUTC, subMonthsUTC } from "./utils/date";
-import { getCognitoUserId } from "../../../services/getAccessToken";
-import { retrieveExternalCalendar } from "../../../utils/icalRetrieveHost";
+import { getAccessToken, getCognitoUserId } from "../../../services/getAccessToken";
 import { buildBlockedSetFromIcsEvents } from "../../../utils/icalConvert";
-import { loadIcalSources,
-          saveIcalSources,
-          loadExternalBlockedDates,
-          saveExternalBlockedDates,
-      } from "../../../utils/externalCalenderStorage";
+import {
+  retrieveExternalCalendar,
+  dbListIcalSources,
+  dbUpsertIcalSource,
+  dbDeleteIcalSource,
+  dbRefreshAllIcalSources,
+} from "../../../utils/icalRetrieveHost";
 
 const initialBlocks = {
   booked: new Set(),
@@ -31,16 +32,6 @@ const initialPrices = {};
 
 const isYmd = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
-const hashSourceId = (url) => {
-  const s = String(url || "").trim();
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return `src_${(h >>> 0).toString(16)}`;
-};
-
 export default function HostCalendar() {
   const [view, setView] = useState("month");
   const [cursor, setCursor] = useState(startOfMonthUTC(new Date()));
@@ -49,6 +40,7 @@ export default function HostCalendar() {
   const [tempPrice, setTempPrice] = useState("");
 
   const [userId, setUserId] = useState(null);
+  const [propertyId, setPropertyId] = useState("");
   const [sources, setSources] = useState([]);
   const [externalBlocked, setExternalBlocked] = useState(new Set());
 
@@ -64,9 +56,41 @@ export default function HostCalendar() {
 
   useEffect(() => {
     if (!userId) return;
-    setSources(loadIcalSources(userId));
-    setExternalBlocked(loadExternalBlockedDates({ userId }));
+
+    const fetchFirstProperty = async () => {
+      try {
+        const url = new URL("https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byHostId");
+        url.searchParams.set("hostId", userId);
+
+        const token = getAccessToken();
+        const res = await fetch(url.toString(), { method: "GET", headers: { Authorization: token } });
+        if (!res.ok) throw new Error(`Failed to fetch (${res.status})`);
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : [];
+        const pid = arr?.[0]?.property?.id ? String(arr[0].property.id) : "";
+        if (pid) setPropertyId(pid);
+      } catch {
+        setPropertyId("");
+      }
+    };
+
+    fetchFirstProperty().catch(() => setPropertyId(""));
   }, [userId]);
+
+  useEffect(() => {
+    if (!propertyId) return;
+
+    const load = async () => {
+      const { sources: s, blockedDates } = await dbListIcalSources(propertyId);
+      setSources(s);
+      setExternalBlocked(new Set(blockedDates));
+    };
+
+    load().catch(() => {
+      setSources([]);
+      setExternalBlocked(new Set());
+    });
+  }, [propertyId]);
 
   useEffect(() => {
     setSelections((prev) => {
@@ -76,12 +100,14 @@ export default function HostCalendar() {
         blocked: new Set(prev.blocked),
         maintenance: new Set(prev.maintenance),
       };
+
       externalBlocked.forEach((k) => nextSel.blocked.add(k));
       externalBlocked.forEach((k) => {
         nextSel.available.delete(k);
         nextSel.booked.delete(k);
         nextSel.maintenance.delete(k);
       });
+
       return nextSel;
     });
   }, [externalBlocked]);
@@ -162,72 +188,31 @@ export default function HostCalendar() {
     setTempPrice("");
   };
 
-  const rebuildFromSources = async (nextSources) => {
-    const allBlocked = new Set();
-
-    for (const s of nextSources) {
-      const url = String(s?.calendarUrl || "").trim();
-      if (!url) continue;
-
-      try {
-        const events = await retrieveExternalCalendar(url);
-        const blocked = buildBlockedSetFromIcsEvents(events);
-        blocked.forEach((k) => allBlocked.add(k));
-      } catch (e) {
-        console.error("Failed source sync:", url, e);
-      }
-    }
-
-    setExternalBlocked(allBlocked);
-    if (userId) saveExternalBlockedDates({ userId, blockedSet: allBlocked });
-  };
-
-  const addOrUpdateSource = async ({ calendarUrl, calendarName }) => {
-    const url = String(calendarUrl || "").trim();
-    const name = String(calendarName || "").trim();
-    if (!url) return;
-
-    const sourceId = hashSourceId(url);
-
-    const nextSources = (() => {
-      const prev = Array.isArray(sources) ? sources : [];
-      const existingIdx = prev.findIndex((x) => x?.sourceId === sourceId);
-      const next = [...prev];
-
-      const item = {
-        sourceId,
-        calendarUrl: url,
-        calendarName: name || "EXTERNAL",
-        lastSyncAt: new Date().toISOString(),
-      };
-
-      if (existingIdx >= 0) next[existingIdx] = item;
-      else next.push(item);
-
-      return next;
-    })();
-
-    setSources(nextSources);
-    if (userId) saveIcalSources(userId, nextSources);
-
-    await rebuildFromSources(nextSources);
+  const addOrUpdateSource = async ({ propertyId: pid, calendarUrl, calendarName }) => {
+    if (!pid) throw new Error("No property selected.");
+    const { sources: s, blockedDates } = await dbUpsertIcalSource({ propertyId: pid, calendarUrl, calendarName });
+    setSources(s);
+    setExternalBlocked(new Set(blockedDates));
   };
 
   const removeSource = async (sourceId) => {
-    const nextSources = (Array.isArray(sources) ? sources : []).filter((s) => s?.sourceId !== sourceId);
-    setSources(nextSources);
-    if (userId) saveIcalSources(userId, nextSources);
-    await rebuildFromSources(nextSources);
+    if (!propertyId) return;
+    const { sources: s, blockedDates } = await dbDeleteIcalSource({ propertyId, sourceId });
+    setSources(s);
+    setExternalBlocked(new Set(blockedDates));
   };
 
   const refreshAll = async () => {
-    await rebuildFromSources(sources);
+    if (!propertyId) return;
+    const { sources: s, blockedDates } = await dbRefreshAllIcalSources(propertyId);
+    setSources(s);
+    setExternalBlocked(new Set(blockedDates));
   };
 
   return (
     <div className="hc-container">
       <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>
-        External blocked: {externalBlocked?.size || 0}
+        Property: {propertyId || "-"} · External blocked: {externalBlocked?.size || 0}
       </div>
 
       <div className="hc-header-row">
@@ -237,12 +222,7 @@ export default function HostCalendar() {
       <div className="hc-top-cards">
         <AvailabilityCard onBlock={() => {}} onMaintenance={() => {}} onUndo={() => setSelections(initialBlocks)} />
         <PricingCard tempPrice={tempPrice} setTempPrice={setTempPrice} onSetPrice={setPriceForSelection} />
-        <ExternalCalendarsCard
-          sources={sources}
-          onAddSource={addOrUpdateSource}
-          onRemoveSource={removeSource}
-          onRefreshAll={refreshAll}
-        />
+        <ExternalCalendarsCard sources={sources} onAddSource={addOrUpdateSource} onRemoveSource={removeSource} onRefreshAll={refreshAll} />
       </div>
 
       <Legend />

@@ -9,36 +9,40 @@ function TimeSelector({ label, time, onChange }) {
   return (
     <label className="Check">
       <div className="Check-label">{label}</div>
-      <span>From</span>
-      <select
-        className="Check-checkbox"
-        value={numberToTimeString(time.from)}
-        onChange={(e) => onChange("from", e.target.value)}
-      >
-        {Array.from({ length: 24 }, (_, i) => {
-          const time = i.toString().padStart(2, "0") + ":00";
-          return (
-            <option key={time} value={time}>
-              {time}
-            </option>
-          );
-        })}
-      </select>
-      <span>Til</span>
-      <select
-        className="Check-checkbox"
-        value={numberToTimeString(time.till)}
-        onChange={(e) => onChange("till", e.target.value)}
-      >
-        {Array.from({ length: 24 }, (_, i) => {
-          const time = i.toString().padStart(2, "0") + ":00";
-          return (
-            <option key={time} value={time}>
-              {time}
-            </option>
-          );
-        })}
-      </select>
+      <div className="check-time-row">
+        <span className="check-time-label">From</span>
+        <select
+          className="Check-checkbox"
+          value={numberToTimeString(time.from)}
+          onChange={(e) => onChange("from", e.target.value)}
+        >
+          {Array.from({ length: 24 }, (_, i) => {
+            const time = i.toString().padStart(2, "0") + ":00";
+            return (
+              <option key={time} value={time}>
+                {time}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+      <div className="check-time-row">
+        <span className="check-time-label">Til</span>
+        <select
+          className="Check-checkbox"
+          value={numberToTimeString(time.till)}
+          onChange={(e) => onChange("till", e.target.value)}
+        >
+          {Array.from({ length: 24 }, (_, i) => {
+            const time = i.toString().padStart(2, "0") + ":00";
+            return (
+              <option key={time} value={time}>
+                {time}
+              </option>
+            );
+          })}
+        </select>
+      </div>
     </label>
   );
 }

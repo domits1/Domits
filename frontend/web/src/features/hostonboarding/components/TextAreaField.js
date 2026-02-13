@@ -1,8 +1,9 @@
 import React from "react";
+import PropTypes from "prop-types";
 
-function TextAreaField({ label, value, onChange, maxLength, placeholder }) {
+function TextAreaField({ label, value, onChange, maxLength, placeholder, className = "" }) {
   return (
-    <section className="accommodation-title">
+    <section className={`accommodation-title ${className}`.trim()}>
       <label>{label}</label>
       <textarea
         className="textInput locationText"
@@ -18,3 +19,17 @@ function TextAreaField({ label, value, onChange, maxLength, placeholder }) {
 }
 
 export default TextAreaField;
+
+TextAreaField.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  maxLength: PropTypes.number.isRequired,
+  placeholder: PropTypes.string,
+  className: PropTypes.string,
+};
+
+TextAreaField.defaultProps = {
+  placeholder: "",
+  className: "",
+};

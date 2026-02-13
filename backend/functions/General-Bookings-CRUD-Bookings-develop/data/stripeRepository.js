@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { randomUUID } from "node:crypto";
 import { DynamoDBClient, QueryCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import NotFoundException from "../util/exception/NotFoundException.js";
@@ -10,24 +11,19 @@ import { Booking } from "database/models/Booking";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 
 const systemManagerRepository = new SystemManagerRepository();
-
-// TEST mode: Create mock Stripe instance, PROD mode: Use real Stripe
 const stripePromise = process.env.TEST === "true"
   ? Promise.resolve({
-      paymentIntents: {
-        create: async () => ({
-          id: "pi_test_123",
-          client_secret: "pi_test_123_secret_test",
-        }),
-        retrieve: async () => ({
-          id: "pi_test_123",
-          status: "succeeded",
-        }),
-      },
-    })
+    paymentIntents: {
+      create: async () => ({
+        id: `test_${randomUUID()}`,
+        client_secret: `test_secret_${randomUUID()}`,
+      }),
+    },
+  })
   : systemManagerRepository
-      .getSystemManagerParameter("/stripe/keys/secret/live")
-      .then((secret) => new Stripe(secret));
+    .getSystemManagerParameter("/stripe/keys/secret/live")
+    .then((secret) => new Stripe(secret));
+
 
 // TEST mode: Skip DynamoDB client initialization
 const client = process.env.TEST === "true" ? null : new DynamoDBClient({ region: "eu-north-1" });

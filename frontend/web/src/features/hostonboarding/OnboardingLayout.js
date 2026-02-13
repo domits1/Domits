@@ -5,9 +5,11 @@ import "./styles/onboardingHost.scss";
 function OnboardingLayout() {
 
   return (
-    <div className="main-dashboard-guest">
-      <div className="main-dashboard-content">
-        <Outlet />
+    <div className="onboarding-shell">
+      <div className="onboarding-shell-content">
+        <div className="onboarding-card">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
