@@ -173,7 +173,8 @@ export class PropertyBuilder {
   }
 
   addPropertyTestStatus(params) {
-    const testStatus = new PropertyTestStatus(this.property.id, params.isTest);
+    const isTest = params?.isTest ?? false;
+    const testStatus = new PropertyTestStatus(this.property.id, isTest);
     this.propertyTestStatus = testStatus;
     return this;
   }
