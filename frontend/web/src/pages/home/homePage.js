@@ -9,9 +9,9 @@ import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
 import { hostImages, reviews, categories as groups, buildHomepageLists, S3_URL } from "./store/constants";
 
-import 'swiper/css';                
-import 'swiper/css/pagination';    
-import 'swiper/css/effect-fade'; 
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-fade';
 import { FetchAllPropertyTypes, FetchPropertyType } from "./services/fetchProperties";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -193,8 +193,8 @@ const Homepage = () => {
             </div>
           </div>
 
-          <div className="domits-boatContainer">
-            <div className="domits-boatText">
+          <div className="domits-populairAccomodation">
+            <div className="domits-populairAccomodationText">
               <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
 
               <div className="domits-trendingContainer">
@@ -236,52 +236,6 @@ const Homepage = () => {
                   ))
                 ) : (
                   <div>No trending properties available.</div>
-                )
-              ) : (
-                Array(3)
-                  .fill()
-                  .map((_, index) => <SkeletonLoader key={index} />)
-              )}
-            </div>
-          </div>
-
-          <div className="domits-boatContainer">
-            <div className="domits-boatText">
-              <h3 className="domits-subHead">{homePageContent.sections.rentBoat}</h3>
-            </div>
-            <div className="domits-accommodationGroup">
-              {boatLoading === false ? (
-                boatAccommodations.length > 0 ? (
-                  boatAccommodations.map((boat) => (
-                    <AccommodationCard key={boat.property.id} accommodation={boat} onClick={handleClick} />
-                  ))
-                ) : (
-                  <div>No boats available.</div>
-                )
-              ) : (
-                Array(3)
-                  .fill()
-                  .map((_, index) => <SkeletonLoader key={index} />)
-              )}
-            </div>
-          </div>
-
-          <div className="domits-boatContainer">
-            <div className="domits-boatText">
-              <h3 className="domits-subHead">{homePageContent.sections.discoverCampers}</h3>
-            </div>
-            <div className="domits-accommodationGroup">
-              {boatLoading === false ? (
-                camperAccommodations.length > 0 ? (
-                  camperAccommodations.map((camperAccommodations) => (
-                    <AccommodationCard
-                      key={camperAccommodations.property.id}
-                      accommodation={camperAccommodations}
-                      onClick={handleClick}
-                    />
-                  ))
-                ) : (
-                  <div>No boats available.</div>
                 )
               ) : (
                 Array(3)
