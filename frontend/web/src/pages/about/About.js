@@ -20,6 +20,8 @@ import Sander from "../../images/about-img/Sander.png";
 import Bekir from "../../images/about-img/Bekir.png";
 import Kacper from "../../images/about-img/Kacper.png";
 import Sakhi from "../../images/about-img/Sakhi.png";
+import Omer from "../../images/about-img/Omer.jpg";
+import Ameen from "../../images/about-img/Ameen.jpg";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -71,6 +73,9 @@ function About() {
     { name: "Tom", src: standard, role: aboutContent.crew.developer },
     { name: "Yusuf", src: standard, role: aboutContent.crew.developer },
     { name: "Sakhi", src: Sakhi, role: aboutContent.crew.developer },
+    { name: "Omer", src: Omer, role: aboutContent.crew.developer },
+    { name: "Ameen", src: Ameen, role: aboutContent.crew.developer },
+   
   ]
     .sort((a, b) => a.name.localeCompare(b.name));
 
