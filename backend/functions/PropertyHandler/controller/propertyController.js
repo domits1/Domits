@@ -4,7 +4,7 @@ import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { PropertyImageRepository } from "../data/repository/propertyImageRepository.js";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";

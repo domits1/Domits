@@ -4,6 +4,7 @@
  * If you do not understand what is happening here, do not change anything. If something needs to be adjusted, contact me via discord --@marijn3--
  */
 import React, { useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import convertDatesToDBDates from "../utils/convertToDBDates";
 import decodeDateNumber from "../utils/decodeDateNumber";
 import convertDateToHTML from "../utils/convertDateToHTML";
@@ -142,62 +143,62 @@ function CalendarComponent({
     function dayClick(e) {
         e.preventDefault();
         const anchorElement = e.currentTarget;
-        let date = Number(anchorElement.getAttribute("dateNumber"));
+        const date = Number(anchorElement.getAttribute("dateNumber"));
 
-        const wasSelectAll = selectAll;
-        if (wasSelectAll) {
+        const isDateSelected = (targetDate) =>
+            selectedDates.some((range) => targetDate >= range[0] && targetDate <= range[1]);
+
+        const applyRange = (start, end, action) => {
+            const range = start > end ? [end, start] : [start, end];
+            action(range, selectedDates);
+        };
+
+        const exitSelectAll = () => {
             selectedDates = manualSelectionRef.current.map((range) => [...range]);
             selectedDate = null;
             lastClickedDate = null;
             exitSelectAllWithCurrentSelectionRef.current = true;
+        };
+
+        const handleToggleSelection = (targetDate, isShiftPressed) => {
+            if (isShiftPressed && lastClickedDate != null && lastClickedDate !== targetDate) {
+                applyRange(lastClickedDate, targetDate, newDate);
+            } else if (isDateSelected(targetDate)) {
+                deleteDate([targetDate, targetDate], selectedDates);
+            } else {
+                newDate([targetDate, targetDate], selectedDates);
+            }
+
+            lastClickedDate = targetDate;
+            selectedDate = null;
+        };
+
+        const handleRangeSelection = (targetDate) => {
+            if (allowSingleDeselect && selectedDate == null && isDateSelected(targetDate)) {
+                deleteDate([targetDate, targetDate], selectedDates);
+                selectedDate = null;
+                return;
+            }
+
+            if (selectedDate == null) {
+                selectedDate = targetDate;
+                return;
+            }
+
+            const action = editMode ? deleteDate : newDate;
+            applyRange(selectedDate, targetDate, action);
+            selectedDate = null;
+        };
+
+        const wasSelectAll = selectAll;
+        if (wasSelectAll) {
+            exitSelectAll();
         }
 
         if (selectionMode === "toggle") {
-            if (e.shiftKey && lastClickedDate != null && lastClickedDate !== date) {
-                if (lastClickedDate > date) {
-                    newDate([date, lastClickedDate], selectedDates);
-                } else {
-                    newDate([lastClickedDate, date], selectedDates);
-                }
-            } else {
-                const isSelected = selectedDates.some(
-                    (range) => date >= range[0] && date <= range[1],
-                );
-                if (isSelected) {
-                    deleteDate([date, date], selectedDates);
-                } else {
-                    newDate([date, date], selectedDates);
-                }
-            }
-
-            lastClickedDate = date;
-            selectedDate = null;
+            handleToggleSelection(date, e.shiftKey);
         } else {
-            const isSelected = selectedDates.some(
-                (range) => date >= range[0] && date <= range[1],
-            );
-
-            if (allowSingleDeselect && selectedDate == null && isSelected) {
-                deleteDate([date, date], selectedDates);
-                selectedDate = null;
-            } else if (selectedDate == null) {
-                selectedDate = date;
-            } else {
-                if (editMode) {
-                    if (selectedDate > date) {
-                        deleteDate([date, selectedDate], selectedDates);
-                    } else {
-                        deleteDate([selectedDate, date], selectedDates);
-                    }
-                } else {
-                    if (selectedDate > date) {
-                        newDate([date, selectedDate], selectedDates);
-                    } else {
-                        newDate([selectedDate, date], selectedDates);
-                    }
-                }
-                selectedDate = null;
-            }
+            handleRangeSelection(date);
         }
 
         if (wasSelectAll) {
@@ -422,3 +423,18 @@ function CalendarComponent({
 }
 
 export default CalendarComponent;
+
+CalendarComponent.propTypes = {
+    passedProp: PropTypes.any,
+    isNew: PropTypes.bool,
+    updateDates: PropTypes.func,
+    calenderType: PropTypes.oneOf(["host", "guest"]),
+    builder: PropTypes.any,
+    displayMonths: PropTypes.oneOf([1, 2]),
+    selectionMode: PropTypes.oneOf(["range", "toggle"]),
+    showOptions: PropTypes.bool,
+    allowSingleDeselect: PropTypes.bool,
+    selectAll: PropTypes.bool,
+    selectAllDays: PropTypes.number,
+    onSelectionChange: PropTypes.func,
+};

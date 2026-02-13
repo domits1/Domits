@@ -1,6 +1,6 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { ImageMapping } from "../../util/mapping/image.js";
 import Database from "database";
@@ -10,7 +10,7 @@ import { Property_Image_Variant } from "database/models/Property_Image_Variant";
 
 const BUCKET = process.env.S3_BUCKET || "accommodation";
 const MAX_ORIGINAL_BYTES = 5 * 1024 * 1024;
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const WEB_MAX_WIDTH = 1920;
 const WEB_QUALITY = 82;
 const THUMB_MAX_WIDTH = 600;
@@ -155,7 +155,7 @@ export class PropertyImageRepository {
     }
 
     async createPresignedOriginalUpload(propertyId, imageId, contentType) {
-        if (!ALLOWED_MIME_TYPES.includes(contentType)) {
+        if (!ALLOWED_MIME_TYPES.has(contentType)) {
             throw new Error("Invalid image content type.");
         }
         const ext = this.getOriginalExtension(contentType);
@@ -304,7 +304,7 @@ export class PropertyImageRepository {
 
         try {
             const head = await this.headObject(originalKey);
-            if (!ALLOWED_MIME_TYPES.includes(head.contentType)) {
+            if (!ALLOWED_MIME_TYPES.has(head.contentType)) {
                 throw new Error("Invalid image content type.");
             }
             if (!head.contentLength || head.contentLength > MAX_ORIGINAL_BYTES) {

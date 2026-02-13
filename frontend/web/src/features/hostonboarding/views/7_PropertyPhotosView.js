@@ -53,7 +53,8 @@ function PhotosView() {
         <h2 className="photo-gallery-title">Choose at least {MIN_IMAGES} photos</h2>
 
         {!images.length ? (
-          <div
+          <button
+            type="button"
             className={`drag-drop-area ${isDragOver ? "drag-over" : ""}`}
             onClick={handleBoxClick}
             onDragOver={(e) => {
@@ -81,7 +82,7 @@ function PhotosView() {
               onChange={(e) => handleFileChange(e.target.files)}
               style={{ display: "none" }}
             />
-          </div>
+          </button>
         ) : (
           <section className="photo-gallery-section">
             <section className="photo-gallery-images">
@@ -96,7 +97,8 @@ function PhotosView() {
                 />
               ))}
             {images.length < 10 && (
-              <div
+              <button
+                type="button"
                 className="small-photo add-more-box"
                 onClick={handleBoxClick}
                 onDragOver={(e) => e.preventDefault()}
@@ -112,7 +114,7 @@ function PhotosView() {
                   <p className="drag-drop-title">Choose a file or drag &amp; drop it here</p>
                   <p className="drag-drop-subtitle">JPEG, PNG, WEBP total up to 5 MB</p>
                 </div>
-              </div>
+              </button>
             )}
             </section>
             <input

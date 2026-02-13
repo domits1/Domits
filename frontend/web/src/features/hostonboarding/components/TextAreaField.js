@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 function TextAreaField({ label, value, onChange, maxLength, placeholder, className = "" }) {
   return (
@@ -18,3 +19,17 @@ function TextAreaField({ label, value, onChange, maxLength, placeholder, classNa
 }
 
 export default TextAreaField;
+
+TextAreaField.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  maxLength: PropTypes.number.isRequired,
+  placeholder: PropTypes.string,
+  className: PropTypes.string,
+};
+
+TextAreaField.defaultProps = {
+  placeholder: "",
+  className: "",
+};

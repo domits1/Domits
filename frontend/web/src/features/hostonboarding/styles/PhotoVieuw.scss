@@ -121,6 +121,10 @@ $border-hover-color: #007bff;
   text-align: center;
   border-style: dashed;
   color: #8c8c8c;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  appearance: none;
 
   .drag-drop-content {
     max-width: 90%;
@@ -168,11 +172,20 @@ $border-hover-color: #007bff;
   color: #8c8c8c;
   cursor: pointer;
   transition: border-color 0.3s ease, background-color 0.3s ease;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  appearance: none;
 
   &.drag-over {
     border-color: $border-hover-color;
     background-color: #f0f8ff;
     color: $border-hover-color;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $border-hover-color;
+    outline-offset: 2px;
   }
 }
 

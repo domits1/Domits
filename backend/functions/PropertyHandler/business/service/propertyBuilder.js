@@ -3,7 +3,7 @@ import { SystemManagerRepository } from "../../data/repository/systemManagerRepo
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { TypeException } from "../../util/exception/TypeException.js";
 
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 import { PropertyAmenityRepository } from "../../data/repository/propertyAmenityRepository.js";
 import { PropertyAvailabilityRestrictionRepository } from "../../data/repository/propertyAvailabilityRestrictionRepository.js";
