@@ -17,7 +17,7 @@ function PropertyCapacityView() {
 
   const setAmount = (key, nextValue, max) => {
     const rawValue = String(nextValue ?? "");
-    const digitsOnly = rawValue.replace(/\D/g, "");
+    const digitsOnly = rawValue.replaceAll(/\D/g, "");
     const normalizedInput = digitsOnly.replace(/^0+(\d)/, "$1");
 
     if (normalizedInput === "") {

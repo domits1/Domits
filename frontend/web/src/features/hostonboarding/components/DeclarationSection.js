@@ -11,7 +11,7 @@ function DeclarationSection({
     <div className="declaration-section">
       <label>
         <input type="checkbox" checked disabled readOnly />
-        Mark as draft (always enabled while creating a new listing)
+        <span>Mark as draft (always enabled while creating a new listing)</span>
       </label>
       <div className="declarations-section">
         <label>
@@ -20,10 +20,12 @@ function DeclarationSection({
             checked={hasDeclaredLegitimacy}
             onChange={onToggleDeclaredLegitimacy}
           />
-          I declare that this property is legitimate, complete with required
-          licenses and permits, which can be displayed upon request. Domits B.V.
-          reserves the right to verify and investigate your registration
-          information.
+          <span>
+            I declare that this property is legitimate, complete with required
+            licenses and permits, which can be displayed upon request. Domits B.V.
+            reserves the right to verify and investigate your registration
+            information.
+          </span>
         </label>
       </div>
       <div className="declarations-section">
@@ -33,8 +35,10 @@ function DeclarationSection({
             checked={hasAcceptedTerms}
             onChange={onToggleAcceptedTerms}
           />
-          I confirm that I have read and accept the General Terms and
-          Conditions.
+          <span>
+            I confirm that I have read and accept the General Terms and
+            Conditions.
+          </span>
         </label>
       </div>
     </div>
