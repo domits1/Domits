@@ -1,3 +1,4 @@
+import { KpiCalculator } from "./kpiCalculator.js";
 import { Repository } from "../../data/repository.js";
 import AuthManager from "../../auth/authManager.js";
 import Stripe from "stripe";
@@ -31,12 +32,15 @@ export class Service {
     const propertyCount = await this.repository.getProperties(userId, start, end);
     const averageLengthOfStay = await this.repository.getAverageLengthOfStay(userId, start, end);
 
-    const averageDailyRate = bookedNights.bookedNights > 0 ? totalRevenue.totalRevenue / bookedNights.bookedNights : 0;
+   // 1) haal "echte" nummers uit de objecten
+    const revenueValue = totalRevenue?.totalRevenue ?? 0;
+    const bookedValue = bookedNights?.bookedNights ?? 0;
+    const availableValue = availableNights?.availableNights ?? 0;
 
-    const occupancyRate =
-      availableNights.availableNights > 0 ? (bookedNights.bookedNights / availableNights.availableNights) * 100 : 0;
-
-    const revenuePerAvailableRoom = averageDailyRate * (occupancyRate / 100);
+    // 2) laat KpiCalculator rekenen
+    const averageDailyRate = KpiCalculator.calculateADR(revenueValue, bookedValue);
+    const occupancyRate = KpiCalculator.calculateOccupancyRate(bookedValue, availableValue);
+    const revenuePerAvailableRoom = KpiCalculator.calculateRevPAR(revenueValue, bookedValue, availableValue);
 
     switch (kpiMetric) {
       case "revenue":
