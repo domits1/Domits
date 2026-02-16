@@ -4,7 +4,6 @@ import usePhotos from "../hooks/usePropertyPhotos";
 import OnboardingButton from "../components/OnboardingButton";
 import { useRef, useState } from "react";
 import "../styles/PhotoVieuw.scss";
-import { useBuilder } from "../../../context/propertyBuilderContext";
 import { toast } from "react-toastify";
 import cloudIcon from "../../../images/icons/cloud-01.png";
 import OnboardingProgress from "../components/OnboardingProgress";
@@ -12,10 +11,12 @@ import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
 // step 7
 function PhotosView() {
-  const builder = useBuilder();
   const { prevPath, nextPath } = useOnboardingFlow();
   const { type: accommodationType } = useParams();
-  const MIN_IMAGES = 2;
+  const MIN_IMAGES = 5;
+  const MAX_IMAGES = 30;
+  const ACCEPTED_FILE_TYPES = "JPG, JPEG, PNG, WEBP";
+  const MAX_FILE_SIZE_MB = 5;
   const {
     images,
     handleFileChange,
@@ -50,7 +51,21 @@ function PhotosView() {
     <div className="onboarding-host-div">
       <main className="photo-gallery-container">
         <OnboardingProgress />
-        <h2 className="photo-gallery-title">Choose at least {MIN_IMAGES} photos</h2>
+        <header className="photo-gallery-header">
+          <h2 className="photo-gallery-title">Choose at least {MIN_IMAGES} photos</h2>
+          <a
+            className="photo-gallery-header-link"
+            href="https://bookdomits.com/how-to-take-great-photos-vacation-rentals/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Read full photo tips / photo policies
+          </a>
+        </header>
+        <p className="photo-gallery-subtitle">
+          Upload up to {MAX_IMAGES} photos. Accepted file types: {ACCEPTED_FILE_TYPES}. Max {MAX_FILE_SIZE_MB} MB
+          per file.
+        </p>
 
         {!images.length ? (
           <button
@@ -73,13 +88,16 @@ function PhotosView() {
                 <img src={cloudIcon} alt="" />
               </div>
               <p className="drag-drop-title">Choose a file or drag &amp; drop it here</p>
-              <p className="drag-drop-subtitle">JPEG, PNG, WEBP up to 5 MB each</p>
+              <p className="drag-drop-subtitle">
+                {ACCEPTED_FILE_TYPES} up to {MAX_FILE_SIZE_MB} MB each, minimum 1024 x 683 px
+              </p>
             </div>
             <input
               ref={fileInputRef}
               type="file"
               multiple
               onChange={(e) => handleFileChange(e.target.files)}
+              accept=".jpg,.jpeg,.png,.webp"
               style={{ display: "none" }}
             />
           </button>
@@ -96,7 +114,7 @@ function PhotosView() {
                   onDrop={handleDrop}
                 />
               ))}
-            {images.length < 10 && (
+            {images.length < MAX_IMAGES && (
               <button
                 type="button"
                 className="small-photo add-more-box"
@@ -112,7 +130,9 @@ function PhotosView() {
                     <img src={cloudIcon} alt="" />
                   </div>
                   <p className="drag-drop-title">Choose a file or drag &amp; drop it here</p>
-                  <p className="drag-drop-subtitle">JPEG, PNG, WEBP up to 5 MB each</p>
+                  <p className="drag-drop-subtitle">
+                    {ACCEPTED_FILE_TYPES} up to {MAX_FILE_SIZE_MB} MB each, minimum 1024 x 683 px
+                  </p>
                 </div>
               </button>
             )}
@@ -122,11 +142,31 @@ function PhotosView() {
               type="file"
               multiple
               onChange={(e) => handleFileChange(e.target.files)}
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,.webp"
               style={{ display: "none" }}
             />
           </section>
         )}
+        <section className="photo-guidelines">
+          <h3>Photo Guidelines</h3>
+          <ul>
+            <li>
+              Camera: Use a DSLR or a high-quality smartphone (latest iPhones or flagship Android devices).
+            </li>
+            <li>
+              Lighting: Use natural daylight. Open curtains and switch on interior lights.
+            </li>
+            <li>Orientation: Always shoot in landscape (horizontal) mode.</li>
+            <li>
+              Staging: Declutter, clean, and add cozy touches (fresh towels, plants, wine glasses).
+            </li>
+            <li>
+              Editing: Light edits only (brightness, contrast, warmth). Do not use heavy filters that distort reality.
+            </li>
+            <li>Minimum resolution: 1024 x 683 px (3:2 aspect ratio).</li>
+            <li>Ideal resolution: 3840 x 2560 px (4K) or 1920 x 1280 px.</li>
+          </ul>
+        </section>
 
         <nav className="photo-gallery-navigation">
           <OnboardingButton

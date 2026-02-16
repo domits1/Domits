@@ -1,24 +1,38 @@
 import React from "react";
+import PropTypes from "prop-types";
 
-function DeclarationSection({ drafted, toggleDrafted, declare, toggleDeclareDrafted, confirm, toggleConfirmDrafted }) {
+function DeclarationSection({
+  hasDeclaredLegitimacy,
+  onToggleDeclaredLegitimacy,
+  hasAcceptedTerms,
+  onToggleAcceptedTerms,
+}) {
   return (
     <div className="declaration-section">
       <label>
-        <input type="checkbox" checked={drafted} onChange={toggleDrafted} />
-        Mark as draft
+        <input type="checkbox" checked disabled readOnly />
+        Mark as draft (always enabled while creating a new listing)
       </label>
       <div className="declarations-section">
         <label>
-      <input type="checkbox" checked={declare} onChange={toggleDeclareDrafted} />
+          <input
+            type="checkbox"
+            checked={hasDeclaredLegitimacy}
+            onChange={onToggleDeclaredLegitimacy}
+          />
           I declare that this property is legitimate, complete with required
           licenses and permits, which can be displayed upon request. Domits B.V.
           reserves the right to verify and investigate your registration
           information.
         </label>
-        </div>
-        <div className="declarations-section">
+      </div>
+      <div className="declarations-section">
         <label>
-        <input type="checkbox" checked={confirm} onChange={toggleConfirmDrafted} />
+          <input
+            type="checkbox"
+            checked={hasAcceptedTerms}
+            onChange={onToggleAcceptedTerms}
+          />
           I confirm that I have read and accept the General Terms and
           Conditions.
         </label>
@@ -26,4 +40,12 @@ function DeclarationSection({ drafted, toggleDrafted, declare, toggleDeclareDraf
     </div>
   );
 }
+
+DeclarationSection.propTypes = {
+  hasDeclaredLegitimacy: PropTypes.bool.isRequired,
+  onToggleDeclaredLegitimacy: PropTypes.func.isRequired,
+  hasAcceptedTerms: PropTypes.bool.isRequired,
+  onToggleAcceptedTerms: PropTypes.func.isRequired,
+};
+
 export default DeclarationSection;

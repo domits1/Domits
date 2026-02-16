@@ -8,8 +8,8 @@ export default function usePhotos() {
   const setImageList = useFormStoreHostOnboarding((state) => state.setImageList);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const MIN_WIDTH = 500;
-  const MIN_HEIGHT = 500;
+  const MIN_WIDTH = 1024;
+  const MIN_HEIGHT = 683;
   const MAX_PER_IMAGE = 5 * 1024 * 1024;
   const MAX_TOTAL_SIZE = 5 * 1024 * 1024 * 30;
   const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
