@@ -36,7 +36,7 @@ export const connectWebSocket = (userId, onMessageReceived) => {
   };
 
   socket.onerror = () => {
-    // SILENCE: websocket can fail (offline / not authenticated / env mismatch). REST still works.
+    // websocket can fail (offline / not authenticated / env mismatch). REST still works.
   };
 };
 

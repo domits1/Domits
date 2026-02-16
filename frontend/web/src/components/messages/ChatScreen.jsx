@@ -27,6 +27,7 @@ const ChatScreen = ({
   const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
   const socket = useContext(WebSocketContext);
   const isHost = dashboardType === "host";
+
   const { bookingDetails } = isHost
     ? useFetchBookingDetails(userId, contactId)
     : useFetchBookingDetails(contactId, userId);
@@ -37,6 +38,7 @@ const ChatScreen = ({
   const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
   const [messageSearch, setMessageSearch] = useState("");
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
+
   const wsMessages = socket?.messages || [];
   const addedMessageIds = useRef(new Set());
   const chatContainerRef = useRef(null);
@@ -145,20 +147,22 @@ const ChatScreen = ({
     if (!hasContent) return;
 
     try {
-      const response = await sendMessage(
-        contactId,
-        newMessage,
-        uploadedFileUrls,
-        threadId || null,
-        bookingDetails?.property_id || bookingDetails?.propertyId || null
-      );
+      const response = await sendMessage(contactId, newMessage, uploadedFileUrls, {
+        threadId: threadId || null,
+        propertyId: bookingDetails?.property_id || bookingDetails?.propertyId || null,
+      });
 
       if (!response || !response.success) {
         alert(`Error while sending: ${response?.error || "Please try again later."}`);
         return;
       }
 
-      const saved = response?.data;
+      const saved = response?.data || response?.saved;
+
+      const savedCreatedAt =
+        typeof saved?.createdAt === "number"
+          ? new Date(saved.createdAt).toISOString()
+          : saved?.createdAt || new Date().toISOString();
 
       const sentMessage = {
         id: saved?.id || uuidv4(),
@@ -169,7 +173,7 @@ const ChatScreen = ({
         text: saved?.content ?? newMessage,
         content: saved?.content ?? newMessage,
         fileUrls: uploadedFileUrls,
-        createdAt: saved?.createdAt || Date.now(),
+        createdAt: savedCreatedAt,
         isSent: true,
       };
 
@@ -260,6 +264,7 @@ const ChatScreen = ({
               </button>
             )}
           </div>
+
           <div className="message-input-container">
             <div className="message-input-wrapper">
               <textarea
@@ -267,11 +272,11 @@ const ChatScreen = ({
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="message-input-textarea"
                 placeholder="Type a message..."
-                onKeyUp={(e) => {
-                  if (event.key === "Enter") {
-                    if ((newMessage?.length || 0) <= 200) {
-                      handleSendMessage();
-                    }
+                onKeyDown={(e) => {
+                  // Enter sends; Shift+Enter makes newline
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if ((newMessage?.length || 0) <= 200) handleSendMessage();
                   }
                 }}
               />
@@ -284,6 +289,7 @@ const ChatScreen = ({
               </button>
             </div>
           </div>
+
           {(newMessage?.length || 0) > 0 && (
             <div className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? "over" : ""}`} aria-live="polite">
               {newMessage?.length || 0}/200

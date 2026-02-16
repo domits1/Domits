@@ -17,7 +17,7 @@ export const useSendMessage = (userId) => {
     setSending(true);
     setError(null);
 
-    const token = getAccessToken(); 
+    const token = getAccessToken();
     const channelID = [userId, recipientId].sort().join("_");
 
     try {
@@ -52,7 +52,8 @@ export const useSendMessage = (userId) => {
         console.warn("WebSocket send failed (message is still saved):", wsErr);
       }
 
-      return { success: true, saved };
+      // IMPORTANT: keep compatibility with existing UI that expects response.data
+      return { success: true, data: saved, saved };
     } catch (err) {
       console.error("Error sending message:", err);
       setError(err);
