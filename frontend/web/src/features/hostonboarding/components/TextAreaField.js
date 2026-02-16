@@ -1,7 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-function TextAreaField({ label, value, onChange, maxLength, placeholder, className = "" }) {
+function TextAreaField({
+  label,
+  value,
+  onChange,
+  maxLength,
+  placeholder,
+  className = "",
+  required = true,
+}) {
   return (
     <section className={`accommodation-title ${className}`.trim()}>
       <label>{label}</label>
@@ -11,7 +19,7 @@ function TextAreaField({ label, value, onChange, maxLength, placeholder, classNa
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         maxLength={maxLength}
-        required
+        required={required}
       />
       <p>{value.length}/{maxLength}</p>
     </section>
@@ -27,9 +35,11 @@ TextAreaField.propTypes = {
   maxLength: PropTypes.number.isRequired,
   placeholder: PropTypes.string,
   className: PropTypes.string,
+  required: PropTypes.bool,
 };
 
 TextAreaField.defaultProps = {
   placeholder: "",
   className: "",
+  required: true,
 };
