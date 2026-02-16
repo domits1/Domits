@@ -14,16 +14,31 @@ function PropertyCapacityView() {
   const setAccommodationCapacity = useFormStoreHostOnboarding((state) => state.setAccommodationCapacity);
   const fields = accommodationFields;
   const hasGuestCapacity = accommodationCapacity.GuestAmount > 0;
-  const incrementAmount = (key, max) => {
-    if (accommodationCapacity[key] < max) {
-      setAccommodationCapacity(key, accommodationCapacity[key] + 1);
+
+  const setAmount = (key, nextValue, max) => {
+    const rawValue = String(nextValue ?? "");
+    const digitsOnly = rawValue.replaceAll(/\D/g, "");
+    const normalizedInput = digitsOnly.replace(/^0+(\d)/, "$1");
+
+    if (normalizedInput === "") {
+      setAccommodationCapacity(key, 0);
+      return;
     }
+
+    const parsedValue = Number(normalizedInput);
+    if (!Number.isFinite(parsedValue)) {
+      return;
+    }
+    const normalizedValue = Math.max(0, Math.min(max, Math.trunc(parsedValue)));
+    setAccommodationCapacity(key, normalizedValue);
   };
 
-  const decrementAmount = (key) => {
-    if (accommodationCapacity[key] > 0) {
-      setAccommodationCapacity(key, accommodationCapacity[key] - 1);
-    }
+  const incrementAmount = (key, max) => {
+    setAmount(key, accommodationCapacity[key] + 1, max);
+  };
+
+  const decrementAmount = (key, max) => {
+    setAmount(key, accommodationCapacity[key] - 1, max);
   };
   return (
     <div className="onboarding-host-div">
@@ -37,7 +52,8 @@ function PropertyCapacityView() {
               label={label}
               value={accommodationCapacity[key]}
               increment={() => incrementAmount(key, max)}
-              decrement={() => decrementAmount(key)}
+              decrement={() => decrementAmount(key, max)}
+              setValue={(value) => setAmount(key, value, max)}
               max={max}
             />
           ))}
@@ -56,7 +72,6 @@ function PropertyCapacityView() {
                   value: accommodationCapacity[field.key],
                 }))
               );
-              console.log(builder);
             }}
             routePath={nextPath || `/hostonboarding/${accommodationType}/amenities`}
             btnText="Proceed"

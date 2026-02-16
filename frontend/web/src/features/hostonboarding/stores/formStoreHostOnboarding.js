@@ -66,6 +66,7 @@ const useFormStoreHostOnboarding = create((set) => ({
 
     images: {},
     imageList: [],
+    propertyId: "",
     description: "",
     boatSpecifications: {},
     camperSpecifications: {},
@@ -235,6 +236,11 @@ const useFormStoreHostOnboarding = create((set) => ({
   setImageList: (imageList) =>
     set((state) => ({
       accommodationDetails: { ...state.accommodationDetails, imageList },
+    })),
+
+  setPropertyId: (propertyId) =>
+    set((state) => ({
+      accommodationDetails: { ...state.accommodationDetails, propertyId },
     })),
 
   // ------- Field Setters -------

@@ -135,6 +135,31 @@ export class PropertyImageRepository {
         return Number(newCount || 0) + Number(legacyCount || 0);
     }
 
+    async getReadyImageCountByPropertyId(propertyId) {
+        const client = await Database.getInstance();
+        let newCount = 0;
+        try {
+            newCount = await client
+                .getRepository(Property_Image)
+                .createQueryBuilder("property_image")
+                .where("property_id = :propertyId", { propertyId })
+                .andWhere("status = :status", { status: "READY" })
+                .getCount();
+        } catch (error) {
+            if (error?.code !== "42P01") {
+                throw error;
+            }
+        }
+
+        const legacyCount = await client
+            .getRepository(Property_Image_Legacy)
+            .createQueryBuilder("property_image_legacy")
+            .where("property_id = :propertyId", { propertyId })
+            .getCount();
+
+        return Number(newCount || 0) + Number(legacyCount || 0);
+    }
+
     async getImageByPropertyIdAndKey(id, key) {
         const client = await Database.getInstance();
         const result = await client
@@ -424,5 +449,75 @@ export class PropertyImageRepository {
                 })
                 .execute();
         }
+    }
+
+    async deleteImagesByPropertyId(propertyId) {
+        const client = await Database.getInstance();
+        const keys = new Set();
+        let imageIds = [];
+
+        try {
+            const newImages = await client
+                .getRepository(Property_Image)
+                .createQueryBuilder("property_image")
+                .select(["property_image.id"])
+                .where("property_id = :propertyId", { propertyId })
+                .getMany();
+            imageIds = newImages.map((image) => image.id);
+        } catch (error) {
+            if (error?.code !== "42P01") {
+                throw error;
+            }
+        }
+
+        if (imageIds.length > 0) {
+            try {
+                const variants = await client
+                    .getRepository(Property_Image_Variant)
+                    .createQueryBuilder("variant")
+                    .select(["variant.s3_key"])
+                    .where("image_id IN (:...imageIds)", { imageIds })
+                    .getMany();
+                variants.forEach((variant) => keys.add(variant.s3_key));
+            } catch (error) {
+                if (error?.code !== "42P01") {
+                    throw error;
+                }
+            }
+        }
+
+        const legacy = await client
+            .getRepository(Property_Image_Legacy)
+            .createQueryBuilder("property_image_legacy")
+            .where("property_id = :propertyId", { propertyId })
+            .getMany();
+        legacy.forEach((item) => keys.add(item.key));
+
+        if (keys.size > 0) {
+            await this.deleteObjects(Array.from(keys));
+        }
+
+        if (imageIds.length > 0) {
+            await client
+                .createQueryBuilder()
+                .delete()
+                .from(Property_Image_Variant)
+                .where("image_id IN (:...imageIds)", { imageIds })
+                .execute();
+
+            await client
+                .createQueryBuilder()
+                .delete()
+                .from(Property_Image)
+                .where("property_id = :propertyId", { propertyId })
+                .execute();
+        }
+
+        await client
+            .createQueryBuilder()
+            .delete()
+            .from(Property_Image_Legacy)
+            .where("property_id = :propertyId", { propertyId })
+            .execute();
     }
 }
