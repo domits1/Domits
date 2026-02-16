@@ -1,5 +1,4 @@
 import Database from "database";
-import { Property_Draft } from "database/models/Property_Draft";
 import { randomUUID } from "node:crypto";
 
 export class PropertyDraftRepository {
@@ -11,46 +10,42 @@ export class PropertyDraftRepository {
     const client = await Database.getInstance();
     const propertyId = randomUUID();
     const now = Date.now();
-    await client
-      .createQueryBuilder()
-      .insert()
-      .into(Property_Draft)
-      .values({
-        property_id: propertyId,
-        host_id: hostId,
-        created_at: now,
-        last_activity_at: now,
-      })
-      .execute();
+    await client.query(
+      `INSERT INTO property_draft (property_id, host_id, created_at, last_activity_at)
+       VALUES ($1, $2, $3, $4)`,
+      [propertyId, hostId, now, now]
+    );
     return propertyId;
   }
 
   async getDraftById(propertyId) {
     const client = await Database.getInstance();
-    return client
-      .getRepository(Property_Draft)
-      .createQueryBuilder("property_draft")
-      .where("property_id = :propertyId", { propertyId })
-      .getOne();
+    const rows = await client.query(
+      `SELECT property_id, host_id, created_at, last_activity_at
+       FROM property_draft
+       WHERE property_id = $1
+       LIMIT 1`,
+      [propertyId]
+    );
+    return rows[0] || null;
   }
 
   async touchDraft(propertyId) {
     const client = await Database.getInstance();
-    await client
-      .createQueryBuilder()
-      .update(Property_Draft)
-      .set({ last_activity_at: Date.now() })
-      .where("property_id = :propertyId", { propertyId })
-      .execute();
+    await client.query(
+      `UPDATE property_draft
+       SET last_activity_at = $2
+       WHERE property_id = $1`,
+      [propertyId, Date.now()]
+    );
   }
 
   async deleteDraft(propertyId) {
     const client = await Database.getInstance();
-    await client
-      .createQueryBuilder()
-      .delete()
-      .from(Property_Draft)
-      .where("property_id = :propertyId", { propertyId })
-      .execute();
+    await client.query(
+      `DELETE FROM property_draft
+       WHERE property_id = $1`,
+      [propertyId]
+    );
   }
 }
