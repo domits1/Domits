@@ -5,7 +5,7 @@ const resolveSchema = (client) => {
   const configuredSchema = client?.options?.schema;
   if (
     typeof configuredSchema === "string" &&
-    /^[A-Za-z_][A-Za-z0-9_]*$/.test(configuredSchema)
+    /^[A-Za-z_]\w*$/.test(configuredSchema)
   ) {
     return configuredSchema;
   }
