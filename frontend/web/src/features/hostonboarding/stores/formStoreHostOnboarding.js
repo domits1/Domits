@@ -60,8 +60,8 @@ const useFormStoreHostOnboarding = create((set) => ({
     },
 
     checkIn: {
-      CheckIn: { from: 0, till: 0 },
-      CheckOut: { from: 0, till: 0 },
+      CheckIn: { from: 9, till: 18 },
+      CheckOut: { from: 7, till: 8 },
     },
 
     images: {},

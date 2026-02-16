@@ -1,16 +1,33 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import "./styles/onboardingHost.scss";
 import useFormStoreHostOnboarding from "./stores/formStoreHostOnboarding";
 import { getAccessToken } from "../../services/getAccessToken";
 
+const ONBOARDING_ROOT_PATH = "/hostdashboard/hostonboarding";
+
 
 function OnboardingLayout() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const selectedType = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
   const propertyId = useFormStoreHostOnboarding((state) => state.accommodationDetails.propertyId);
   const setPropertyId = useFormStoreHostOnboarding((state) => state.setPropertyId);
 
   useEffect(() => {
+    const normalizedPath = location.pathname.replace(/\/+$/, "") || ONBOARDING_ROOT_PATH;
+    const isOnboardingRoute = normalizedPath.startsWith(ONBOARDING_ROOT_PATH);
+    const isRootStep = normalizedPath === ONBOARDING_ROOT_PATH;
+
+    if (isOnboardingRoute && !isRootStep && !selectedType) {
+      sessionStorage.removeItem("propertyBuilder");
+      navigate(ONBOARDING_ROOT_PATH, { replace: true });
+    }
+  }, [location.pathname, navigate, selectedType]);
+
+  useEffect(() => {
     const ensureDraft = async () => {
+      if (!selectedType) return;
       if (propertyId) return;
       try {
         const res = await fetch(
@@ -37,7 +54,7 @@ function OnboardingLayout() {
     };
 
     ensureDraft();
-  }, [propertyId, setPropertyId]);
+  }, [propertyId, selectedType, setPropertyId]);
 
   return (
     <div className="onboarding-shell">
