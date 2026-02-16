@@ -14,6 +14,36 @@ import profileImage from "./domits-logo.jpg";
 import { toast } from "react-toastify";
 import MessageToast from "./MessageToast";
 
+const ensureId = (msg) => {
+  if (msg?.id) return msg;
+  const sender = msg?.userId || msg?.senderId || "unknown";
+  const recipient = msg?.recipientId || "unknown";
+  const createdAt = msg?.createdAt || new Date().toISOString();
+  const text = msg?.text || msg?.content || "";
+  return { ...msg, id: `${sender}:${recipient}:${createdAt}:${String(text).slice(0, 40)}` };
+};
+
+const normalizeForChat = (msg, userId) => {
+  const m = ensureId(msg);
+  const senderId = m?.userId || m?.senderId || null;
+
+  let createdAt = m?.createdAt;
+  if (typeof createdAt === "number") createdAt = new Date(createdAt).toISOString();
+  if (!createdAt) createdAt = new Date().toISOString();
+
+  return {
+    ...m,
+    userId: senderId || m?.userId,
+    senderId: m?.senderId || senderId,
+    recipientId: m?.recipientId,
+    text: m?.text ?? m?.content ?? "",
+    content: m?.content ?? m?.text ?? "",
+    isSent: senderId ? senderId === userId : !!m?.isSent,
+    createdAt,
+    fileUrls: Array.isArray(m?.fileUrls) ? m.fileUrls : [],
+  };
+};
+
 const ChatScreen = ({
   userId,
   contactId,
@@ -27,7 +57,6 @@ const ChatScreen = ({
   const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
   const socket = useContext(WebSocketContext);
   const isHost = dashboardType === "host";
-
   const { bookingDetails } = isHost
     ? useFetchBookingDetails(userId, contactId)
     : useFetchBookingDetails(contactId, userId);
@@ -38,7 +67,6 @@ const ChatScreen = ({
   const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
   const [messageSearch, setMessageSearch] = useState("");
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
-
   const wsMessages = socket?.messages || [];
   const addedMessageIds = useRef(new Set());
   const chatContainerRef = useRef(null);
@@ -123,18 +151,25 @@ const ChatScreen = ({
   };
 
   useEffect(() => {
-    wsMessages.forEach((msg) => {
-      const isRelevant =
-        (msg.userId === userId && msg.recipientId === contactId) ||
-        (msg.userId === contactId && msg.recipientId === userId);
+    wsMessages.forEach((raw) => {
+      const msg = normalizeForChat(raw, userId);
 
-      if (!isRelevant || !msg?.id) return;
-      if (addedMessageIds.current.has(msg.id)) return;
+      const sender = msg?.userId || msg?.senderId || null;
+      const recipient = msg?.recipientId || null;
+
+      const isRelevant =
+        (sender === userId && recipient === contactId) ||
+        (sender === contactId && recipient === userId);
+
+      if (!isRelevant) return;
+
+      const id = msg?.id;
+      if (id && addedMessageIds.current.has(id)) return;
 
       addNewMessage(msg);
-      addedMessageIds.current.add(msg.id);
+      if (id) addedMessageIds.current.add(id);
 
-      if (msg.userId === contactId && msg.recipientId === userId && msg.text) {
+      if (sender === contactId && recipient === userId && msg.text) {
         toast.info(<MessageToast contactName={contactName} contactImage={contactImage} message={msg.text} />, {
           className: "message-toast-custom",
         });
@@ -157,12 +192,7 @@ const ChatScreen = ({
         return;
       }
 
-      const saved = response?.data || response?.saved;
-
-      const savedCreatedAt =
-        typeof saved?.createdAt === "number"
-          ? new Date(saved.createdAt).toISOString()
-          : saved?.createdAt || new Date().toISOString();
+      const saved = response?.saved || response?.data || null;
 
       const sentMessage = {
         id: saved?.id || uuidv4(),
@@ -173,7 +203,7 @@ const ChatScreen = ({
         text: saved?.content ?? newMessage,
         content: saved?.content ?? newMessage,
         fileUrls: uploadedFileUrls,
-        createdAt: savedCreatedAt,
+        createdAt: saved?.createdAt || Date.now(),
         isSent: true,
       };
 
@@ -272,11 +302,11 @@ const ChatScreen = ({
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="message-input-textarea"
                 placeholder="Type a message..."
-                onKeyDown={(e) => {
-                  // Enter sends; Shift+Enter makes newline
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    if ((newMessage?.length || 0) <= 200) handleSendMessage();
+                onKeyUp={(e) => {
+                  if (e.key === "Enter") {
+                    if ((newMessage?.length || 0) <= 200) {
+                      handleSendMessage();
+                    }
                   }
                 }}
               />

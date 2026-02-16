@@ -21,6 +21,7 @@ export const useSendMessage = (userId) => {
     const channelID = [userId, recipientId].sort().join("_");
 
     try {
+      // REST source-of-truth
       const saved = await sendUnifiedMessage({
         senderId: userId,
         recipientId,
@@ -28,34 +29,26 @@ export const useSendMessage = (userId) => {
         fileUrls,
         propertyId: options.propertyId ?? null,
         threadId: options.threadId ?? null,
-        metadata: {
-          isAutomated: false,
-          ...(options.metadata || {}),
-        },
+        metadata: { isAutomated: false, ...(options.metadata || {}) },
       });
 
+      // WS push (backend will persist too, but even if WS fails, REST already saved)
       try {
-        const wsPayload = {
+        sendWebSocketMessage({
           action: "sendMessage",
           accessToken: token,
           recipientId,
           text,
           fileUrls,
           channelId: channelID,
-          unified: {
-            id: saved?.id || null,
-            threadId: saved?.threadId || null,
-          },
-        };
-        sendWebSocketMessage(wsPayload);
-      } catch (wsErr) {
-        console.warn("WebSocket send failed (message is still saved):", wsErr);
-      }
+          threadId: saved?.threadId || options.threadId || null,
+          propertyId: options.propertyId ?? null,
+          metadata: { isAutomated: false, ...(options.metadata || {}) },
+        });
+      } catch (wsErr) {}
 
-      // IMPORTANT: keep compatibility with existing UI that expects response.data
-      return { success: true, data: saved, saved };
+      return { success: true, saved };
     } catch (err) {
-      console.error("Error sending message:", err);
       setError(err);
       return { success: false, error: err?.message || String(err) };
     } finally {
@@ -63,9 +56,5 @@ export const useSendMessage = (userId) => {
     }
   };
 
-  return {
-    sendMessage: sendMessageHandler,
-    sending,
-    error,
-  };
+  return { sendMessage: sendMessageHandler, sending, error };
 };
