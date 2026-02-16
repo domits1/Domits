@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 function ImagePreview({ image, index, onDelete, onDragStart, onDrop }) {
   const src = typeof image === "string" ? image : image?.preview;
 
@@ -27,5 +29,18 @@ function ImagePreview({ image, index, onDelete, onDragStart, onDrop }) {
     </div>
   );
 }
+
+ImagePreview.propTypes = {
+  image: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({
+      preview: PropTypes.string,
+    }),
+  ]).isRequired,
+  index: PropTypes.number.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onDragStart: PropTypes.func.isRequired,
+  onDrop: PropTypes.func.isRequired,
+};
 
 export default ImagePreview;
