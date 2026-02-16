@@ -147,7 +147,7 @@ export class PropertyService {
 
   async getFullPropertiesByHostId(hostId) {
     const propertyIdentifiers = await this.propertyRepository.getPropertiesByHostId(hostId);
-    return await Promise.all(propertyIdentifiers.map(async (property) => this.getFullPropertyAttributes(property)));
+    return await this.mapWithConcurrency(propertyIdentifiers, (property) => this.getFullPropertyAttributes(property));
   }
 
   async getActivePropertyCardsByHostId(hostId) {
@@ -447,5 +447,26 @@ export class PropertyService {
 
   async createPropertyTestStatus(testStatus) {
     return await this.propertyTestStatusRepository.create(testStatus);
+  }
+
+  async mapWithConcurrency(items, mapper, concurrency = 4) {
+    if (!Array.isArray(items) || items.length === 0) {
+      return [];
+    }
+
+    const limit = Math.max(1, Math.min(concurrency, items.length));
+    const results = new Array(items.length);
+    let nextIndex = 0;
+
+    const worker = async () => {
+      while (nextIndex < items.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+      }
+    };
+
+    await Promise.all(Array.from({ length: limit }, () => worker()));
+    return results;
   }
 }

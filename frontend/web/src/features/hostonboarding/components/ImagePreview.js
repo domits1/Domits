@@ -1,5 +1,6 @@
 function ImagePreview({ image, index, onDelete, onDragStart, onDrop }) {
   const src = typeof image === "string" ? image : image?.preview;
+
   return (
     <div
       className={index === 0 ? "large-photo" : "small-photo"}
@@ -19,7 +20,7 @@ function ImagePreview({ image, index, onDelete, onDragStart, onDrop }) {
             className={index === 0 ? "accommodation-thumbnail" : "file-image"}
           />
           <button className="image-delete-button" onClick={() => onDelete(index)}>
-            ❌
+            X
           </button>
         </>
       ) : null}

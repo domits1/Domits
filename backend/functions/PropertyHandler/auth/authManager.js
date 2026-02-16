@@ -21,13 +21,18 @@ export class AuthManager {
         this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
     }
 
-    async authorizeGroupRequest(accessToken, group) {
-        let user;
+    async getAuthorizedUser(accessToken) {
         try {
-            user = await this.cognitoRepository.getUserByAccessToken(accessToken);
+            return await this.cognitoRepository.getUserByAccessToken(accessToken);
         } catch (error) {
-            throw new Unauthorized("You must be logged in.");
+            const unauthorized = new Unauthorized("You must be logged in.");
+            unauthorized.cause = error;
+            throw unauthorized;
         }
+    }
+
+    async authorizeGroupRequest(accessToken, group) {
+        const user = await this.getAuthorizedUser(accessToken);
         const groupAttribute = user.UserAttributes.find((attribute) => attribute.Name === "custom:group");
         if (groupAttribute.Value !== group) {
             throw new Forbidden(`You must be a ${group}.`);
@@ -36,12 +41,7 @@ export class AuthManager {
     }
 
     async authorizeOwnerRequest(accessToken, id) {
-        let user;
-        try {
-            user = await this.cognitoRepository.getUserByAccessToken(accessToken);
-        } catch (error) {
-            throw new Unauthorized("You must be logged in.");
-        }
+        const user = await this.getAuthorizedUser(accessToken);
         const property = await this.propertyRepository.getPropertyById(id)
         if (!property) {
             throw new NotFoundException("Property not found.")
@@ -52,12 +52,7 @@ export class AuthManager {
     }
 
     async authorizeDraftOwnerRequest(accessToken, draftId) {
-        let user;
-        try {
-            user = await this.cognitoRepository.getUserByAccessToken(accessToken);
-        } catch (error) {
-            throw new Unauthorized("You must be logged in.");
-        }
+        const user = await this.getAuthorizedUser(accessToken);
         const draft = await this.propertyDraftRepository.getDraftById(draftId);
         if (!draft) {
             throw new NotFoundException("Property draft not found.");
@@ -69,12 +64,7 @@ export class AuthManager {
     }
 
     async authorizePropertyOrDraftOwnerRequest(accessToken, id) {
-        let user;
-        try {
-            user = await this.cognitoRepository.getUserByAccessToken(accessToken);
-        } catch (error) {
-            throw new Unauthorized("You must be logged in.");
-        }
+        const user = await this.getAuthorizedUser(accessToken);
         const property = await this.propertyRepository.getPropertyById(id);
         if (property) {
             if (property.hostId !== user.Username) {
@@ -94,12 +84,7 @@ export class AuthManager {
     }
 
     async authorizeBookingGuestRequest(accessToken, bookingId) {
-        let user;
-        try {
-            user = await this.cognitoRepository.getUserByAccessToken(accessToken);
-        } catch (error) {
-            throw new Unauthorized("You must be logged in.");
-        }
+        const user = await this.getAuthorizedUser(accessToken);
         let booking;
         try {
             booking = await this.bookingRepository.getBookingById(bookingId)
