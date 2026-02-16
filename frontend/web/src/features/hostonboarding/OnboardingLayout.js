@@ -6,6 +6,15 @@ import { getAccessToken } from "../../services/getAccessToken";
 
 const ONBOARDING_ROOT_PATH = "/hostdashboard/hostonboarding";
 
+const trimTrailingSlashes = (path) => {
+  if (!path) return "";
+  let end = path.length;
+  while (end > 1 && path.charCodeAt(end - 1) === 47) {
+    end -= 1;
+  }
+  return path.slice(0, end);
+};
+
 
 function OnboardingLayout() {
   const location = useLocation();
@@ -15,7 +24,7 @@ function OnboardingLayout() {
   const setPropertyId = useFormStoreHostOnboarding((state) => state.setPropertyId);
 
   useEffect(() => {
-    const normalizedPath = location.pathname.replace(/\/+$/, "") || ONBOARDING_ROOT_PATH;
+    const normalizedPath = trimTrailingSlashes(location.pathname) || ONBOARDING_ROOT_PATH;
     const isOnboardingRoute = normalizedPath.startsWith(ONBOARDING_ROOT_PATH);
     const isRootStep = normalizedPath === ONBOARDING_ROOT_PATH;
 
