@@ -1,6 +1,25 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { PropertyBuilder } from "../features/hostonboarding/stores/propertyBuilder";
 const BuilderContext = createContext(null);
+const STORAGE_KEY = "propertyBuilder";
+
+const sanitizeBuilderForStorage = (builder) => {
+  if (!builder || typeof builder !== "object") return builder;
+  const snapshot = { ...builder };
+  if (snapshot.propertyImages) {
+    snapshot.propertyImages = [];
+  }
+  return snapshot;
+};
+
+const persistBuilder = (builder) => {
+  try {
+    const snapshot = sanitizeBuilderForStorage(builder);
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  } catch (e) {
+    console.error("Failed to save builder:", e);
+  }
+};
 export const useBuilder = () => {
   const context = useContext(BuilderContext);
   if (!context) {
@@ -11,7 +30,7 @@ export const useBuilder = () => {
 
 export const BuilderProvider = ({ children }) => {
   const [builder] = useState(() => {
-    const saved = sessionStorage.getItem('propertyBuilder');
+    const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -25,14 +44,7 @@ export const BuilderProvider = ({ children }) => {
     return new PropertyBuilder();
   });
   useEffect(() => {
-    const saveBuilder = () => {
-      try {
-        sessionStorage.setItem('propertyBuilder', JSON.stringify(builder));
-      } catch (e) {
-        console.error('Failed to save builder:', e);
-      }
-    };
-    const timer = setTimeout(saveBuilder, 500);
+    const timer = setTimeout(() => persistBuilder(builder), 500);
     return () => clearTimeout(timer);
   }, [builder]);
   const wrappedBuilder = new Proxy(builder, {
@@ -41,7 +53,7 @@ export const BuilderProvider = ({ children }) => {
       if (typeof value === 'function' && prop.startsWith('add')) {
         return function(...args) {
           const result = value.apply(target, args);
-          sessionStorage.setItem('propertyBuilder', JSON.stringify(target));
+          persistBuilder(target);
           return result;
         };
       }

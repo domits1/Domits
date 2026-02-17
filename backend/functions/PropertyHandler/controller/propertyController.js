@@ -3,6 +3,9 @@ import { PropertyService } from "../business/service/propertyService.js";
 import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { PropertyImageRepository } from "../data/repository/propertyImageRepository.js";
+import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
+import { randomUUID } from "node:crypto";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { NotFoundException } from "../util/exception/NotFoundException.js";
@@ -15,6 +18,8 @@ export class PropertyController {
     constructor(dynamoDbClient = new DynamoDBClient({}), systemManagerRepository = new SystemManagerRepository()) {
         this.authManager = new AuthManager(dynamoDbClient, systemManagerRepository);
         this.propertyService = new PropertyService(dynamoDbClient, systemManagerRepository);
+        this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
+        this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
     }
 
     // -------------------------
@@ -25,13 +30,247 @@ export class PropertyController {
             const accessToken = event.headers.Authorization;
             const userId = await this.authManager.authorizeGroupRequest(accessToken, "Host")
             const eventBody = JSON.parse(event.body);
-            const property = await this.createPropertyObject(new PropertyBuilder(), eventBody, userId);
-            await this.propertyService.create(property);
+            const imageUploadMode = eventBody?.imageUploadMode || "legacy";
+            const propertyId = eventBody?.propertyId;
+
+            if (imageUploadMode === "presigned") {
+                if (!propertyId) {
+                    return {
+                        statusCode: 400,
+                        headers: responseHeaders,
+                        body: JSON.stringify({ message: "Missing propertyId." })
+                    };
+                }
+                await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+                const readyCount = await this.propertyImageRepository.getReadyImageCountByPropertyId(propertyId);
+                if (readyCount < 5) {
+                    return {
+                        statusCode: 400,
+                        headers: responseHeaders,
+                        body: JSON.stringify({ message: "Minimum of 5 images required." })
+                    };
+                }
+                if (eventBody?.property) {
+                    eventBody.property.id = propertyId;
+                }
+            }
+
+            const property = await this.createPropertyObject(
+                new PropertyBuilder(),
+                eventBody,
+                userId,
+                { skipImages: imageUploadMode === "presigned" }
+            );
+
+            await this.propertyService.create(property, { skipImages: imageUploadMode === "presigned" });
+
+            if (imageUploadMode === "presigned" && propertyId) {
+                await this.propertyDraftRepository.deleteDraft(propertyId);
+            }
             return {
                 statusCode: 201,
                 headers: responseHeaders,
                 body: property.property.id
             }
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // POST /property/images/presign
+    // -------------------------
+    async createImageUploadUrls(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId;
+            const files = Array.isArray(eventBody.files) ? eventBody.files : [];
+
+            if (!propertyId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+
+            await this.authManager.authorizePropertyOrDraftOwnerRequest(accessToken, propertyId);
+            await this.propertyDraftRepository.touchDraft(propertyId);
+
+            if (files.length === 0) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "No files provided." })
+                };
+            }
+
+            if (files.length > 30) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Maximum of 30 images allowed." })
+                };
+            }
+
+            const existingCount = await this.propertyImageRepository.getImageCountByPropertyId(propertyId);
+            if (existingCount + files.length > 30) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Maximum of 30 images allowed." })
+                };
+            }
+
+            const uploads = [];
+            for (const file of files) {
+                const contentType = file?.contentType || "";
+                const sizeBytes = Number(file?.size || 0);
+                if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
+                    throw new Error("Invalid file size.");
+                }
+                if (sizeBytes > 5 * 1024 * 1024) {
+                    throw new Error("Image exceeds maximum upload size.");
+                }
+                const imageId = randomUUID();
+                const presign = await this.propertyImageRepository.createPresignedOriginalUpload(
+                    propertyId,
+                    imageId,
+                    contentType
+                );
+                uploads.push({
+                    imageId,
+                    key: presign.key,
+                    url: presign.url,
+                    contentType,
+                    size: sizeBytes,
+                });
+            }
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({ uploads })
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // POST /property/images/confirm
+    // -------------------------
+    async confirmImageUploads(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId;
+            const images = Array.isArray(eventBody.images) ? eventBody.images : [];
+
+            if (!propertyId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+            await this.authManager.authorizePropertyOrDraftOwnerRequest(accessToken, propertyId);
+            await this.propertyDraftRepository.touchDraft(propertyId);
+
+            if (images.length === 0) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "No images provided." })
+                };
+            }
+
+            const processed = [];
+            for (const image of images) {
+                const imageId = image?.imageId;
+                const originalKey = image?.originalKey;
+                const sortOrder = Number(image?.sortOrder || 0);
+                if (!imageId || !originalKey) {
+                    throw new Error("Missing imageId or originalKey.");
+                }
+                const result = await this.propertyImageRepository.processUploadedImage({
+                    propertyId,
+                    imageId,
+                    originalKey,
+                    sortOrder
+                });
+                processed.push(result);
+            }
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({ images: processed })
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // PATCH /property/images/order
+    // -------------------------
+    async updateImageOrder(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId;
+            const images = Array.isArray(eventBody.images) ? eventBody.images : [];
+
+            if (!propertyId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+            if (images.length === 0) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "No images provided." })
+                };
+            }
+
+            const normalized = images.map((image, index) => ({
+                image_id: image.imageId,
+                sort_order: Number.isFinite(Number(image.sortOrder))
+                    ? Number(image.sortOrder)
+                    : index,
+            }));
+
+            await this.propertyImageRepository.updateImageOrder(propertyId, normalized);
+
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
         } catch (error) {
             console.error(error);
             return {
@@ -312,9 +551,74 @@ export class PropertyController {
     }
 
     // -------------------------
+    // POST /property/draft
+    // -------------------------
+    async createDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const userId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const propertyId = await this.propertyDraftRepository.createDraft(userId);
+            return {
+                statusCode: 201,
+                headers: responseHeaders,
+                body: JSON.stringify({ propertyId }),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // DELETE /property/draft
+    // -------------------------
+    async deleteDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId;
+            if (!propertyId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            const existingProperty = await this.propertyService.getBasePropertyInfo(propertyId);
+            if (existingProperty) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Property already exists." })
+                };
+            }
+
+            await this.propertyImageRepository.deleteImagesByPropertyId(propertyId);
+            await this.propertyDraftRepository.deleteDraft(propertyId);
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
     // Helper method (internal only)
     // -------------------------
-    async createPropertyObject(propertyBuilder, body, userId) {
+    async createPropertyObject(propertyBuilder, body, userId, { skipImages = false } = {}) {
         let builder =
             await propertyBuilder.addBasePropertyInfo(body.property, body.propertyType.property_type, userId);
 
@@ -323,9 +627,11 @@ export class PropertyController {
             .addCheckIn(body.propertyCheckIn)
             .addLocation(body.propertyLocation)
             .addPricing(body.propertyPricing)
-            .addImages(body.propertyImages)
             .addPropertyType(body.propertyType)
             .addPropertyTestStatus(body.propertyTestStatus);
+        if (!skipImages) {
+            builder = builder.addImages(body.propertyImages);
+        }
 
         builder = await builder.addAmenities(body.propertyAmenities);
         builder = await builder.addGeneralDetails(body.propertyGeneralDetails);

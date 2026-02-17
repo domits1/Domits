@@ -2,6 +2,8 @@ import HouseTypeSelector from "../components/HouseTypeSelector"
 import OnboardingButton from "../components/OnboardingButton"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import { useBuilder } from "../../../context/propertyBuilderContext";
+import OnboardingProgress from "../components/OnboardingProgress";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
 // Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
 export default function HouseTypeView() {
@@ -9,37 +11,47 @@ export default function HouseTypeView() {
   const selectedType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.guestAccessType,
   )
+  const { prevPath, nextPath } = useOnboardingFlow();
   return (
     <div className="onboarding-host-div">
       <main className="container">
         <section className="guest-access">
+          <OnboardingProgress />
           <h2 className="onboardingSectionTitle">
             What kind of space do your guests have access to?
           </h2>
-          <HouseTypeSelector
-            header="Entire house"
-            description="Guests have the entire space to themselves"
-          />
-          <HouseTypeSelector
-            header="Private room"
-            description="Guests have their own private room for sleeping"
-          />
-          <HouseTypeSelector
-            header="Shared room"
-            description="Guests sleep in a room or common area that they may share with you or others"
-          />
+          <div className="guest-access-options">
+            <HouseTypeSelector
+              header="Entire house"
+              description="Guests have the entire space to themselves"
+            />
+            <HouseTypeSelector
+              header="Private room"
+              description="Guests have their own private room for sleeping"
+            />
+            <HouseTypeSelector
+              header="Shared room"
+              description="Guests sleep in a room or common area that they may share with you or others"
+            />
+          </div>
+          <p className="guest-access-note">You can change this later.</p>
         </section>
 
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath="/hostonboarding" btnText="Go back" buttonType="back" />
+          <OnboardingButton
+            routePath={prevPath || "/hostonboarding"}
+            btnText="Go back"
+            buttonType="back"
+          />
           <OnboardingButton
             onClick={ () => {
               builder.addPropertyType({type: "House", spaceType: selectedType});
               console.log(builder);
             }}
-            routePath="/hostonboarding/accommodation/address"
+            routePath={nextPath || "/hostonboarding/accommodation/address"}
             btnText="Proceed"
             buttonType="proceed"
+            disabled={!selectedType}
           />
         </nav>
       </main>

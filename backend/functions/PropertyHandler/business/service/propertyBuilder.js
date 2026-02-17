@@ -3,7 +3,7 @@ import { SystemManagerRepository } from "../../data/repository/systemManagerRepo
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { TypeException } from "../../util/exception/TypeException.js";
 
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 import { PropertyAmenityRepository } from "../../data/repository/propertyAmenityRepository.js";
 import { PropertyAvailabilityRestrictionRepository } from "../../data/repository/propertyAvailabilityRestrictionRepository.js";
@@ -38,7 +38,9 @@ export class PropertyBuilder {
 
   async addBasePropertyInfo(requestParams, propertyType, userId) {
     let propertyParams = requestParams;
-    propertyParams.id = randomUUID();
+    if (!propertyParams.id) {
+      propertyParams.id = randomUUID();
+    }
     propertyParams.hostId = userId;
     propertyParams.createdAt = Date.now();
     propertyParams.status = "INACTIVE";
@@ -173,7 +175,8 @@ export class PropertyBuilder {
   }
 
   addPropertyTestStatus(params) {
-    const testStatus = new PropertyTestStatus(this.property.id, params.isTest);
+    const isTest = params?.isTest ?? false;
+    const testStatus = new PropertyTestStatus(this.property.id, isTest);
     this.propertyTestStatus = testStatus;
     return this;
   }
@@ -183,6 +186,24 @@ export class PropertyBuilder {
       throw new TypeException("Minimum of 5 images required.");
     } else if (images.length > 30) {
       throw new TypeException("Maximum of 30 images allowed.");
+    }
+    const maxTotalKiloBytes = 5 * 1024;
+    const totalKiloBytes = images.reduce((sum, image) => {
+      const dataUrl = image?.image || "";
+      const dataStructures = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+      if (!dataStructures) return sum;
+      const imageData = dataStructures[2];
+      let padding = 0;
+      if (imageData.endsWith("==")) {
+        padding = 2;
+      } else if (imageData.endsWith("=")) {
+        padding = 1;
+      }
+      const imageDataBytes = (imageData.length * 3 / 4) - padding;
+      return sum + (imageDataBytes / 1024);
+    }, 0);
+    if (totalKiloBytes > maxTotalKiloBytes) {
+      throw new TypeException("Total image size must be less than 5MB.");
     }
     const imageArray = [];
     for (const image of images) {
