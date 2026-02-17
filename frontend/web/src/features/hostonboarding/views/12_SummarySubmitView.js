@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { useSummary } from "../hooks/useSummary";
 import SummaryTable from "../components/SummaryTable";
 import SpecificationsTable from "../components/SpecificationsTable";
@@ -15,27 +15,27 @@ import { toast } from "react-toastify";
 function SummaryViewAndSubmit() {
   const builder = useBuilder();
   const { prevPath } = useOnboardingFlow();
-  const { data, toggleDrafted } = useSummary();
+  const { data } = useSummary();
   const imageList = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.imageList
   );
+  const [hasDeclaredLegitimacy, setHasDeclaredLegitimacy] = useState(false);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  const canProceed = hasDeclaredLegitimacy && hasAcceptedTerms;
   const type = data.type;
   const navigate = useNavigate();
 
   const handleSubmit = () => {
-    if (Array.isArray(imageList)) {
-      if (imageList.length < 5) {
-        toast.error("Upload at least 5 photos to continue.");
-        return;
-      }
-      builder.addImages(imageList);
+    if (!hasDeclaredLegitimacy || !hasAcceptedTerms) {
+      toast.error("Please accept all declarations and terms to continue.");
+      return;
+    }
+    if (Array.isArray(imageList) && imageList.length < 5) {
+      toast.error("Upload at least 5 photos to continue.");
+      return;
     }
     submitAccommodation(navigate, builder);
   };
-
-  useEffect(() => {
-    console.log(builder.build());
-  }, []);
 
   return (
     <div className="onboarding-host-div">
@@ -46,7 +46,12 @@ function SummaryViewAndSubmit() {
         <SummaryTable data={data} type={type} />
         <SpecificationsTable data={data} type={type} />
         {/* <FeatureTable features={data.Features} /> */}
-        <DeclarationSection drafted={data.Drafted} toggleDrafted={toggleDrafted} />
+        <DeclarationSection
+          hasDeclaredLegitimacy={hasDeclaredLegitimacy}
+          onToggleDeclaredLegitimacy={() => setHasDeclaredLegitimacy((current) => !current)}
+          hasAcceptedTerms={hasAcceptedTerms}
+          onToggleAcceptedTerms={() => setHasAcceptedTerms((current) => !current)}
+        />
         <div className="onboarding-button-box">
           <button
             className="onboarding-button"
@@ -54,7 +59,11 @@ function SummaryViewAndSubmit() {
           >
             Go back to change
           </button>
-          <button className="onboarding-button" onClick={handleSubmit}>
+          <button
+            className="onboarding-button"
+            onClick={handleSubmit}
+            disabled={!canProceed}
+          >
             Confirm and proceed
           </button>
         </div>

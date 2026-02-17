@@ -2,95 +2,97 @@ import { PropertyController } from "./controller/propertyController.js";
 
 let controller = new PropertyController();
 
+const notFound = (body) => ({
+  statusCode: 404,
+  body,
+});
+
+const isPath = (event, route) => event.resource === route || event.path === route;
+
+const handlePost = async (event) => {
+  if (isPath(event, "/property/images/presign")) {
+    return controller.createImageUploadUrls(event);
+  }
+  if (isPath(event, "/property/images/confirm")) {
+    return controller.confirmImageUploads(event);
+  }
+  if (isPath(event, "/property/draft")) {
+    return controller.createDraft(event);
+  }
+  return controller.create(event);
+};
+
+const handlePatch = async (event) => {
+  if (isPath(event, "/property/images/order")) {
+    return controller.updateImageOrder(event);
+  }
+  return controller.activateProperty(event);
+};
+
+const hostDashboardHandlers = {
+  all: (event) => controller.getFullOwnedProperties(event),
+  single: (event) => controller.getFullOwnedPropertyById(event),
+};
+
+const bookingEngineHandlers = {
+  byType: (event) => controller.getActivePropertiesCardByType(event),
+  all: (event) => controller.getActivePropertiesCard(event),
+  byCountry: (event) => controller.getActivePropertiesCardByCountry(event),
+  byHostId: (event) => controller.getActivePropertiesCardByHostId(event),
+  set: (event) => controller.getActivePropertiesCardById(event),
+  listingDetails: (event) => controller.getFullActivePropertyById(event),
+  booking: (event) => controller.getFullPropertyByBookingId(event),
+};
+
+const handleGet = async (event) => {
+  const subResource = event.pathParameters?.subResource;
+  if (event.resource === "/property/hostDashboard/{subResource}") {
+    const handler = hostDashboardHandlers[subResource];
+    return handler
+      ? handler(event)
+      : notFound("Sub-resource for '/property/hostDashboard' not found.");
+  }
+
+  if (event.resource === "/property/bookingEngine/{subResource}") {
+    const handler = bookingEngineHandlers[subResource];
+    return handler
+      ? handler(event)
+      : notFound("Sub-resource for '/property/bookingEngine' not found.");
+  }
+
+  return notFound("Path not found.");
+};
+
+const handleDelete = async (event) => {
+  if (isPath(event, "/property/draft")) {
+    return controller.deleteDraft(event);
+  }
+  return controller.delete(event);
+};
+
+const methodHandlers = {
+  POST: handlePost,
+  PATCH: handlePatch,
+  GET: handleGet,
+  DELETE: handleDelete,
+};
+
 export const handler = async (event) => {
-    if (!controller) {
-        controller = new PropertyController();
+  if (!controller) {
+    controller = new PropertyController();
+  }
+
+  try {
+    const methodHandler = methodHandlers[event.httpMethod];
+    if (!methodHandler) {
+      return notFound("Method not found.");
     }
-    try {
-        return await (async () => {
-            switch (event.httpMethod) {
-                case "POST":
-                    if (
-                        event.resource === "/property/images/presign" ||
-                        event.path === "/property/images/presign"
-                    ) {
-                        return await controller.createImageUploadUrls(event);
-                    }
-                    if (
-                        event.resource === "/property/images/confirm" ||
-                        event.path === "/property/images/confirm"
-                    ) {
-                        return await controller.confirmImageUploads(event);
-                    }
-                    return await controller.create(event);
-                case "PATCH":
-                    if (
-                        event.resource === "/property/images/order" ||
-                        event.path === "/property/images/order"
-                    ) {
-                        return await controller.updateImageOrder(event);
-                    }
-                    return await controller.activateProperty(event);
-                case "GET":
-                    const path = event.resource;
-                    const subResource = event.pathParameters.subResource;
-                    switch (path) {
-                        case "/property/hostDashboard/{subResource}":
-                            switch (subResource) {
-                                case "all":
-                                    return await controller.getFullOwnedProperties(event);
-                                case "single":
-                                    return await controller.getFullOwnedPropertyById(event);
-                                default:
-                                    return {
-                                        statusCode: 404,
-                                        body: "Sub-resource for '/property/hostDashboard' not found."
-                                    }
-                            }
-                        case "/property/bookingEngine/{subResource}":
-                            switch (subResource) {
-                                case "byType":
-                                    return await controller.getActivePropertiesCardByType(event);
-                                case "all":
-                                    return await controller.getActivePropertiesCard(event);
-                                case "byCountry":
-                                    return await controller.getActivePropertiesCardByCountry(event);
-                                case "byHostId":
-                                    return await controller.getActivePropertiesCardByHostId(event);
-                                case "set":
-                                    return await controller.getActivePropertiesCardById(event);
-                                case "listingDetails":
-                                    return await controller.getFullActivePropertyById(event);
-                                case "booking":
-                                    return await controller.getFullPropertyByBookingId(event);
-                                default:
-                                    return {
-                                        statusCode: 404,
-                                        body: "Sub-resource for '/property/bookingEngine' not found."
-                                    }
-                            }
-                        default:
-                            return {
-                                statusCode: 404,
-                                body: "Path not found."
-                            }
-                    }
-                    // TODO add functionality
-                case "DELETE":
-                    return await controller.delete(event);
-                default:
-                    return {
-                        statusCode: 404,
-                        body: "Method not found."
-                    }
-            }
-        }
-        )();
-    } catch (error) {
-        console.error(error);
-        return {
-            statusCode: 500,
-            body: "Something went wrong, please contact support."
-        }
-    }
-}
+    return await methodHandler(event);
+  } catch (error) {
+    console.error(error);
+    return {
+      statusCode: 500,
+      body: "Something went wrong, please contact support.",
+    };
+  }
+};

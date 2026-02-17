@@ -4,6 +4,7 @@ import { AuthManager } from "../auth/authManager.js";
 import { SystemManagerRepository } from "../data/repository/systemManagerRepository.js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { PropertyImageRepository } from "../data/repository/propertyImageRepository.js";
+import { PropertyDraftRepository } from "../data/repository/propertyDraftRepository.js";
 import { randomUUID } from "node:crypto";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
@@ -18,6 +19,7 @@ export class PropertyController {
         this.authManager = new AuthManager(dynamoDbClient, systemManagerRepository);
         this.propertyService = new PropertyService(dynamoDbClient, systemManagerRepository);
         this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
+        this.propertyDraftRepository = new PropertyDraftRepository(systemManagerRepository);
     }
 
     // -------------------------
@@ -28,8 +30,43 @@ export class PropertyController {
             const accessToken = event.headers.Authorization;
             const userId = await this.authManager.authorizeGroupRequest(accessToken, "Host")
             const eventBody = JSON.parse(event.body);
-            const property = await this.createPropertyObject(new PropertyBuilder(), eventBody, userId);
-            await this.propertyService.create(property);
+            const imageUploadMode = eventBody?.imageUploadMode || "legacy";
+            const propertyId = eventBody?.propertyId;
+
+            if (imageUploadMode === "presigned") {
+                if (!propertyId) {
+                    return {
+                        statusCode: 400,
+                        headers: responseHeaders,
+                        body: JSON.stringify({ message: "Missing propertyId." })
+                    };
+                }
+                await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+                const readyCount = await this.propertyImageRepository.getReadyImageCountByPropertyId(propertyId);
+                if (readyCount < 5) {
+                    return {
+                        statusCode: 400,
+                        headers: responseHeaders,
+                        body: JSON.stringify({ message: "Minimum of 5 images required." })
+                    };
+                }
+                if (eventBody?.property) {
+                    eventBody.property.id = propertyId;
+                }
+            }
+
+            const property = await this.createPropertyObject(
+                new PropertyBuilder(),
+                eventBody,
+                userId,
+                { skipImages: imageUploadMode === "presigned" }
+            );
+
+            await this.propertyService.create(property, { skipImages: imageUploadMode === "presigned" });
+
+            if (imageUploadMode === "presigned" && propertyId) {
+                await this.propertyDraftRepository.deleteDraft(propertyId);
+            }
             return {
                 statusCode: 201,
                 headers: responseHeaders,
@@ -64,7 +101,8 @@ export class PropertyController {
                 };
             }
 
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            await this.authManager.authorizePropertyOrDraftOwnerRequest(accessToken, propertyId);
+            await this.propertyDraftRepository.touchDraft(propertyId);
 
             if (files.length === 0) {
                 return {
@@ -149,7 +187,8 @@ export class PropertyController {
                     body: JSON.stringify({ message: "Missing propertyId." })
                 };
             }
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            await this.authManager.authorizePropertyOrDraftOwnerRequest(accessToken, propertyId);
+            await this.propertyDraftRepository.touchDraft(propertyId);
 
             if (images.length === 0) {
                 return {
@@ -512,9 +551,74 @@ export class PropertyController {
     }
 
     // -------------------------
+    // POST /property/draft
+    // -------------------------
+    async createDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const userId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const propertyId = await this.propertyDraftRepository.createDraft(userId);
+            return {
+                statusCode: 201,
+                headers: responseHeaders,
+                body: JSON.stringify({ propertyId }),
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
+    // DELETE /property/draft
+    // -------------------------
+    async deleteDraft(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId;
+            if (!propertyId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+
+            await this.authManager.authorizeDraftOwnerRequest(accessToken, propertyId);
+            const existingProperty = await this.propertyService.getBasePropertyInfo(propertyId);
+            if (existingProperty) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Property already exists." })
+                };
+            }
+
+            await this.propertyImageRepository.deleteImagesByPropertyId(propertyId);
+            await this.propertyDraftRepository.deleteDraft(propertyId);
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
     // Helper method (internal only)
     // -------------------------
-    async createPropertyObject(propertyBuilder, body, userId) {
+    async createPropertyObject(propertyBuilder, body, userId, { skipImages = false } = {}) {
         let builder =
             await propertyBuilder.addBasePropertyInfo(body.property, body.propertyType.property_type, userId);
 
@@ -523,9 +627,11 @@ export class PropertyController {
             .addCheckIn(body.propertyCheckIn)
             .addLocation(body.propertyLocation)
             .addPricing(body.propertyPricing)
-            .addImages(body.propertyImages)
             .addPropertyType(body.propertyType)
             .addPropertyTestStatus(body.propertyTestStatus);
+        if (!skipImages) {
+            builder = builder.addImages(body.propertyImages);
+        }
 
         builder = await builder.addAmenities(body.propertyAmenities);
         builder = await builder.addGeneralDetails(body.propertyGeneralDetails);

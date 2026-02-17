@@ -38,7 +38,9 @@ export class PropertyBuilder {
 
   async addBasePropertyInfo(requestParams, propertyType, userId) {
     let propertyParams = requestParams;
-    propertyParams.id = randomUUID();
+    if (!propertyParams.id) {
+      propertyParams.id = randomUUID();
+    }
     propertyParams.hostId = userId;
     propertyParams.createdAt = Date.now();
     propertyParams.status = "INACTIVE";

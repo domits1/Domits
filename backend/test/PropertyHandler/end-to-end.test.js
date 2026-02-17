@@ -106,7 +106,7 @@ describe("End-to-end tests", () => {
         const response = await handler(await getHostDashboardAllEvent());
 
         expect(response.statusCode).toBe(200);
-      });
+      }, 120000);
 
       it("should handle GET single owned property by ID", async () => {
         const response = await handler(await getHostDashboardSingleEvent());

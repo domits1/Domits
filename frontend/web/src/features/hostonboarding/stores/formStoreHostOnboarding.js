@@ -60,12 +60,13 @@ const useFormStoreHostOnboarding = create((set) => ({
     },
 
     checkIn: {
-      CheckIn: { from: 0, till: 0 },
-      CheckOut: { from: 0, till: 0 },
+      CheckIn: { from: 9, till: 18 },
+      CheckOut: { from: 7, till: 8 },
     },
 
     images: {},
     imageList: [],
+    propertyId: "",
     description: "",
     boatSpecifications: {},
     camperSpecifications: {},
@@ -235,6 +236,11 @@ const useFormStoreHostOnboarding = create((set) => ({
   setImageList: (imageList) =>
     set((state) => ({
       accommodationDetails: { ...state.accommodationDetails, imageList },
+    })),
+
+  setPropertyId: (propertyId) =>
+    set((state) => ({
+      accommodationDetails: { ...state.accommodationDetails, propertyId },
     })),
 
   // ------- Field Setters -------
