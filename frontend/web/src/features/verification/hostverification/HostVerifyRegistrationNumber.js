@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React from "react"
 import styles from "./hostverification.module.css"
 import useFormStoreHostOnboarding from "../../hostonboarding/stores/formStoreHostOnboarding"
 import OnboardingButton from "../../hostonboarding/components/OnboardingButton"
@@ -16,8 +16,12 @@ const RegistrationNumber = () => {
   const location = useFormStoreHostOnboarding(
     (state) => state.location,
   )
-
-  const [registrationNumber, setRegistrationNumber] = useState("");
+  const registrationNumber = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.registrationNumber,
+  )
+  const setRegistrationNumber = useFormStoreHostOnboarding(
+    (state) => state.setRegistrationNumber,
+  )
   return (
     <div className="onboarding-host-div">
       <main className="container">
@@ -56,12 +60,14 @@ const RegistrationNumber = () => {
             />
             <OnboardingButton
               onClick={() => {
+                const normalizedRegistrationNumber = registrationNumber.trim();
+                setRegistrationNumber(normalizedRegistrationNumber);
                 builder.addProperty({
                   title: form.accommodationDetails.title,
                   subtitle: form.accommodationDetails.subtitle,
                   description: form.accommodationDetails.description,
                   guestCapacity: form.accommodationDetails.accommodationCapacity.GuestAmount,
-                  registrationNumber: registrationNumber.trim(),
+                  registrationNumber: normalizedRegistrationNumber,
                   status: "",
                   propertyType: accommodationType,
                   createdAt: Date.now(),
