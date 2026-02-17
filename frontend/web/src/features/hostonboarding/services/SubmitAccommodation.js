@@ -155,19 +155,17 @@ export async function submitAccommodation(navigate, builder, options = {}) {
         await uploadToS3(uploads, pendingImageFiles);
         await confirmUploads(draftId, uploads, pendingSortOrders);
 
-        if (typeof setImageList === "function") {
-          const updatedImages = [...imageList];
-          pendingImages.forEach(({ index }, uploadIndex) => {
-            updatedImages[index] = {
-              ...updatedImages[index],
-              uploaded: true,
-              imageId: uploads[uploadIndex].imageId,
-              originalKey: uploads[uploadIndex].key,
-              file: null,
-            };
-          });
-          setImageList(updatedImages);
-        }
+        const updatedImages = [...imageList];
+        pendingImages.forEach(({ index }, uploadIndex) => {
+          updatedImages[index] = {
+            ...updatedImages[index],
+            uploaded: true,
+            imageId: uploads[uploadIndex].imageId,
+            originalKey: uploads[uploadIndex].key,
+            file: null,
+          };
+        });
+        setImageList?.(updatedImages);
       }
 
       payload.propertyId = draftId;
@@ -197,12 +195,8 @@ export async function submitAccommodation(navigate, builder, options = {}) {
     }
 
     setSubmitState("finalizing");
-    if (typeof builder?.reset === "function") {
-      builder.reset();
-    }
-    if (typeof resetOnboardingState === "function") {
-      resetOnboardingState();
-    }
+    builder?.reset?.();
+    resetOnboardingState?.();
     sessionStorage.removeItem("propertyBuilder");
     navigate(onSuccessPath);
     return true;

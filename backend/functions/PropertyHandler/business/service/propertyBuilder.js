@@ -45,10 +45,10 @@ export class PropertyBuilder {
       typeof propertyParams.registrationNumber === "string"
         ? propertyParams.registrationNumber.trim()
         : "";
-    if (!normalizedRegistrationNumber) {
-      propertyParams.registrationNumber = `AUTO-${propertyParams.id}`;
-    } else {
+    if (normalizedRegistrationNumber) {
       propertyParams.registrationNumber = normalizedRegistrationNumber;
+    } else {
+      propertyParams.registrationNumber = `AUTO-${propertyParams.id}`;
     }
     propertyParams.hostId = userId;
     propertyParams.createdAt = Date.now();
