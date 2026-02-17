@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React from "react"
 import styles from "./hostverification.module.css"
 import useFormStoreHostOnboarding from "../../hostonboarding/stores/formStoreHostOnboarding"
 import OnboardingButton from "../../hostonboarding/components/OnboardingButton"
@@ -16,8 +16,12 @@ const RegistrationNumber = () => {
   const location = useFormStoreHostOnboarding(
     (state) => state.location,
   )
-
-  const [registrationNumber, setRegistrationNumber] = useState("");
+  const registrationNumber = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.registrationNumber,
+  )
+  const setRegistrationNumber = useFormStoreHostOnboarding(
+    (state) => state.setRegistrationNumber,
+  )
   return (
     <div className="onboarding-host-div">
       <main className="container">
@@ -27,7 +31,7 @@ const RegistrationNumber = () => {
             <h1>Add your registration number</h1>
             <p>
               Your registration number will appear on your listing page, so that
-              guests know that your accommodation is registered in {address.city}.
+              guests know that your accommodation is registered in {location.city || "your city"}.
             </p>
           </div>
           <hr></hr>
@@ -56,12 +60,14 @@ const RegistrationNumber = () => {
             />
             <OnboardingButton
               onClick={() => {
+                const normalizedRegistrationNumber = registrationNumber.trim();
+                setRegistrationNumber(normalizedRegistrationNumber);
                 builder.addProperty({
                   title: form.accommodationDetails.title,
                   subtitle: form.accommodationDetails.subtitle,
                   description: form.accommodationDetails.description,
                   guestCapacity: form.accommodationDetails.accommodationCapacity.GuestAmount,
-                  registrationNumber: registrationNumber.trim(),
+                  registrationNumber: normalizedRegistrationNumber,
                   status: "",
                   propertyType: accommodationType,
                   createdAt: Date.now(),

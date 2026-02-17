@@ -318,7 +318,8 @@ export class PropertyService {
   }
 
   async createAvailability(availabilities) {
-    for (const availability of availabilities) {
+    const availabilityList = Array.isArray(availabilities) ? availabilities : [];
+    for (const availability of availabilityList) {
       const result = await this.propertyAvailabilityRepository.create(availability);
       if (!result) {
         throw new DatabaseException(`Failed to register property availability.`);
