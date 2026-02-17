@@ -1,8 +1,5 @@
-import {
-    CognitoIdentityProviderClient,
-    AdminInitiateAuthCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
 import { isTestMode } from "../../util/isTestMode.js";
+
 
 // Deterministic test tokens
 export const TEST_HOST_TOKEN = "dummy-host-token";
@@ -24,6 +21,7 @@ export function getTestAuthToken(userType) {
 /**
  * Get the host auth token - used for testing.
  * @returns {Promise<string>} The host auth token
+ * @throws {Error} If not in TEST mode
  */
 export async function getHostAuthToken() {
     // In test mode, avoid real AWS calls and return a dummy token.
@@ -31,29 +29,17 @@ export async function getHostAuthToken() {
         return TEST_HOST_TOKEN;
     }
 
-    try {
-        const client = new CognitoIdentityProviderClient({ region: "eu-north-1" });
-        const command = new AdminInitiateAuthCommand({
-            UserPoolId: "eu-north-1_mPxNhvSFX",
-            ClientId: "3mbk6j5phshnmnc8nljued41qt",
-            AuthFlow: "ADMIN_NO_SRP_AUTH",
-            AuthParameters: {
-                USERNAME: "xasici5246@cigidea.com",
-                PASSWORD: "Test.123",
-            },
-        });
-
-        const response = await client.send(command);
-        return response.AuthenticationResult?.AccessToken;
-    } catch (error) {
-        console.error("Unable to get a auth token,", error);
-        throw new Error("Unable to get a auth token.");
-    }
+    throw new Error(
+        "Authentication helpers are only available in TEST mode. " +
+        "Set process.env.TEST='true' to use test tokens."
+    );
 }
+
 
 /**
  * Get the guest auth token - used for testing.
  * @returns {Promise<string>} The guest auth token
+ * @throws {Error} If not in TEST mode
  */
 export async function getGuestAuthToken() {
     // In test mode, avoid real AWS calls and return a dummy token.
@@ -61,22 +47,8 @@ export async function getGuestAuthToken() {
         return TEST_GUEST_TOKEN;
     }
 
-    try {
-        const client = new CognitoIdentityProviderClient({ region: "eu-north-1" });
-        const command = new AdminInitiateAuthCommand({
-            UserPoolId: "eu-north-1_mPxNhvSFX",
-            ClientId: "3mbk6j5phshnmnc8nljued41qt",
-            AuthFlow: "ADMIN_NO_SRP_AUTH",
-            AuthParameters: {
-                USERNAME: "hayebab362@cristout.com",
-                PASSWORD: "Test.123",
-            },
-        });
-
-        const response = await client.send(command);
-        return response.AuthenticationResult?.AccessToken;
-    } catch (error) {
-        console.error("Unable to get a auth token,", error);
-        throw new Error("Unable to get a auth token.");
-    }
+    throw new Error(
+        "Authentication helpers are only available in TEST mode. " +
+        "Set process.env.TEST='true' to use test tokens."
+    );
 }
