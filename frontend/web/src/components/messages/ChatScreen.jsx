@@ -14,22 +14,28 @@ import profileImage from "./domits-logo.jpg";
 import { toast } from "react-toastify";
 import MessageToast from "./MessageToast";
 
+const toIso = (v) => {
+  if (!v) return new Date().toISOString();
+  if (typeof v === "number") return new Date(v).toISOString();
+  const d = new Date(v);
+  if (!isNaN(d.getTime())) return d.toISOString();
+  return new Date().toISOString();
+};
+
 const ensureId = (msg) => {
   if (msg?.id) return msg;
   const sender = msg?.userId || msg?.senderId || "unknown";
   const recipient = msg?.recipientId || "unknown";
   const createdAt = msg?.createdAt || new Date().toISOString();
   const text = msg?.text || msg?.content || "";
-  return { ...msg, id: `${sender}:${recipient}:${createdAt}:${String(text).slice(0, 40)}` };
+  return { ...msg, id: `${sender}:${recipient}:${toIso(createdAt)}:${String(text).slice(0, 40)}` };
 };
 
 const normalizeForChat = (msg, userId) => {
   const m = ensureId(msg);
   const senderId = m?.userId || m?.senderId || null;
 
-  let createdAt = m?.createdAt;
-  if (typeof createdAt === "number") createdAt = new Date(createdAt).toISOString();
-  if (!createdAt) createdAt = new Date().toISOString();
+  const createdAt = toIso(m?.createdAt);
 
   return {
     ...m,
@@ -57,9 +63,25 @@ const ChatScreen = ({
   const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
   const socket = useContext(WebSocketContext);
   const isHost = dashboardType === "host";
-  const { bookingDetails } = isHost
-    ? useFetchBookingDetails(userId, contactId)
-    : useFetchBookingDetails(contactId, userId);
+  const { bookingDetails } = isHost ? useFetchBookingDetails(userId, contactId) : useFetchBookingDetails(contactId, userId);
+
+  const resolvedContactId = useMemo(() => {
+    if (contactId && contactId !== userId) return contactId;
+
+    const candidate =
+      bookingDetails?.guestId ||
+      bookingDetails?.guest_id ||
+      bookingDetails?.tenantId ||
+      bookingDetails?.tenant_id ||
+      bookingDetails?.renterId ||
+      bookingDetails?.renter_id ||
+      bookingDetails?.userId ||
+      bookingDetails?.user_id ||
+      null;
+
+    if (candidate && candidate !== userId) return candidate;
+    return contactId;
+  }, [contactId, userId, bookingDetails]);
 
   const { sendMessage, sending, error: sendError } = useSendMessage(userId);
 
@@ -74,18 +96,18 @@ const ChatScreen = ({
 
   const isDemoConversation = useMemo(() => {
     const isDemoId = (id) => typeof id === "string" && (id.startsWith("test-") || id.startsWith("demo-"));
-    return isDemoId(userId) || isDemoId(contactId);
-  }, [userId, contactId]);
+    return isDemoId(userId) || isDemoId(resolvedContactId);
+  }, [userId, resolvedContactId]);
 
   const handleUploadComplete = (url) => {
     setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
   };
 
   useEffect(() => {
-    if (contactId) {
-      fetchMessages(contactId, threadId);
+    if (resolvedContactId) {
+      fetchMessages(resolvedContactId, threadId);
     }
-  }, [userId, contactId, threadId, fetchMessages]);
+  }, [userId, resolvedContactId, threadId, fetchMessages]);
 
   useEffect(() => {
     if (!loading) {
@@ -94,22 +116,22 @@ const ChatScreen = ({
     }
     const t = setTimeout(() => setForceStopLoading(true), 12000);
     return () => clearTimeout(t);
-  }, [loading, contactId]);
+  }, [loading, resolvedContactId]);
 
   useEffect(() => {
     try {
       const el = chatContainerRef.current;
       if (el) el.scrollTop = el.scrollHeight;
     } catch {}
-  }, [messages, contactId]);
+  }, [messages, resolvedContactId]);
 
   const handleSendAutomatedTestMessages = () => {
-    if (!contactId) return;
+    if (!resolvedContactId) return;
     const baseTime = Date.now();
     const automated = [
       {
         id: `auto-${uuidv4()}`,
-        userId: contactId,
+        userId: resolvedContactId,
         recipientId: userId,
         text: `👋 Welcome! Thanks for booking. I'm here to help with anything you need.`,
         createdAt: new Date(baseTime).toISOString(),
@@ -119,7 +141,7 @@ const ChatScreen = ({
       },
       {
         id: `auto-${uuidv4()}`,
-        userId: contactId,
+        userId: resolvedContactId,
         recipientId: userId,
         text: `📍 Check-in is flexible. Share your ETA and I’ll prepare accordingly.`,
         createdAt: new Date(baseTime + 500).toISOString(),
@@ -129,7 +151,7 @@ const ChatScreen = ({
       },
       {
         id: `auto-${uuidv4()}`,
-        userId: contactId,
+        userId: resolvedContactId,
         recipientId: userId,
         text: `📶 Wi-Fi details will be in the guidebook on arrival.`,
         createdAt: new Date(baseTime + 1000).toISOString(),
@@ -140,6 +162,7 @@ const ChatScreen = ({
     ];
     automated.forEach((m, i) => {
       addNewMessage(m);
+      if (m?.id) addedMessageIds.current.add(m.id);
       setTimeout(() => {
         if (m?.text) {
           toast.info(<MessageToast contactName={contactName} contactImage={contactImage} message={m.text} />, {
@@ -158,8 +181,7 @@ const ChatScreen = ({
       const recipient = msg?.recipientId || null;
 
       const isRelevant =
-        (sender === userId && recipient === contactId) ||
-        (sender === contactId && recipient === userId);
+        (sender === userId && recipient === resolvedContactId) || (sender === resolvedContactId && recipient === userId);
 
       if (!isRelevant) return;
 
@@ -169,20 +191,25 @@ const ChatScreen = ({
       addNewMessage(msg);
       if (id) addedMessageIds.current.add(id);
 
-      if (sender === contactId && recipient === userId && msg.text) {
+      if (sender === resolvedContactId && recipient === userId && msg.text) {
         toast.info(<MessageToast contactName={contactName} contactImage={contactImage} message={msg.text} />, {
           className: "message-toast-custom",
         });
       }
     });
-  }, [wsMessages, userId, contactId, addNewMessage, contactName, contactImage]);
+  }, [wsMessages, userId, resolvedContactId, addNewMessage, contactName, contactImage]);
 
   const handleSendMessage = async () => {
     const hasContent = newMessage.trim() || uploadedFileUrls.length > 0;
     if (!hasContent) return;
 
+    if (!resolvedContactId || resolvedContactId === userId) {
+      alert("Recipient is invalid (contactId matches your userId).");
+      return;
+    }
+
     try {
-      const response = await sendMessage(contactId, newMessage, uploadedFileUrls, {
+      const response = await sendMessage(resolvedContactId, newMessage, uploadedFileUrls, {
         threadId: threadId || null,
         propertyId: bookingDetails?.property_id || bookingDetails?.propertyId || null,
       });
@@ -194,19 +221,30 @@ const ChatScreen = ({
 
       const saved = response?.saved || response?.data || null;
 
-      const sentMessage = {
-        id: saved?.id || uuidv4(),
-        threadId: saved?.threadId || threadId || null,
-        senderId: saved?.senderId || userId,
-        recipientId: saved?.recipientId || contactId,
-        userId: saved?.senderId || userId,
-        text: saved?.content ?? newMessage,
-        content: saved?.content ?? newMessage,
-        fileUrls: uploadedFileUrls,
-        createdAt: saved?.createdAt || Date.now(),
-        isSent: true,
-      };
+      const resolvedId = saved?.id || saved?.messageId || saved?.message?.id || uuidv4();
+      const resolvedCreatedAt = toIso(saved?.createdAt || saved?.message?.createdAt || Date.now());
 
+      const sentMessage = normalizeForChat(
+        {
+          id: resolvedId,
+          threadId: saved?.threadId || saved?.message?.threadId || threadId || null,
+          senderId: saved?.senderId || saved?.message?.senderId || userId,
+          recipientId: saved?.recipientId || saved?.message?.recipientId || resolvedContactId,
+          userId: saved?.senderId || saved?.message?.senderId || userId,
+          text: saved?.content ?? saved?.message?.content ?? newMessage,
+          content: saved?.content ?? saved?.message?.content ?? newMessage,
+          fileUrls: Array.isArray(saved?.fileUrls)
+            ? saved.fileUrls
+            : Array.isArray(saved?.message?.fileUrls)
+              ? saved.message.fileUrls
+              : uploadedFileUrls,
+          createdAt: resolvedCreatedAt,
+          isSent: true,
+        },
+        userId
+      );
+
+      if (sentMessage?.id) addedMessageIds.current.add(sentMessage.id);
       addNewMessage(sentMessage);
       handleContactListMessage?.(sentMessage);
 
@@ -223,7 +261,7 @@ const ChatScreen = ({
     }
   };
 
-  if (!contactId) return null;
+  if (!resolvedContactId) return null;
 
   const visibleMessages = messageSearch
     ? messages.filter((m) => {

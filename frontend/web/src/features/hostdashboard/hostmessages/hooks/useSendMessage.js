@@ -3,6 +3,8 @@ import { sendMessage as sendWebSocketMessage } from "../services/websocket";
 import { sendUnifiedMessage } from "../services/messagingService";
 import { getAccessToken } from "../../../../services/getAccessToken";
 
+const pick = (...vals) => vals.find((v) => v !== undefined && v !== null);
+
 export const useSendMessage = (userId) => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
@@ -14,14 +16,26 @@ export const useSendMessage = (userId) => {
       return { success: false, error: errorMsg };
     }
 
+    if (recipientId === userId) {
+      const errorMsg = "BUG: recipientId equals senderId (sending to yourself).";
+      console.error("[useSendMessage]", errorMsg, { userId, recipientId, options });
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+
     setSending(true);
     setError(null);
 
-    const token = getAccessToken();
+    let token = null;
+    try {
+      token = await Promise.resolve(getAccessToken(userId));
+    } catch {
+      token = null;
+    }
+
     const channelID = [userId, recipientId].sort().join("_");
 
     try {
-      // REST source-of-truth
       const saved = await sendUnifiedMessage({
         senderId: userId,
         recipientId,
@@ -32,20 +46,28 @@ export const useSendMessage = (userId) => {
         metadata: { isAutomated: false, ...(options.metadata || {}) },
       });
 
-      // WS push (backend will persist too, but even if WS fails, REST already saved)
+      const savedId = pick(saved?.id, saved?.messageId, saved?.message?.id);
+      const savedCreatedAt = pick(saved?.createdAt, saved?.message?.createdAt);
+
       try {
         sendWebSocketMessage({
           action: "sendMessage",
-          accessToken: token,
+          senderId: userId,
+          userId: userId,
           recipientId,
           text,
+          content: text,
           fileUrls,
           channelId: channelID,
-          threadId: saved?.threadId || options.threadId || null,
+          threadId: pick(saved?.threadId, saved?.message?.threadId, options.threadId, null),
           propertyId: options.propertyId ?? null,
           metadata: { isAutomated: false, ...(options.metadata || {}) },
+          accessToken: token || undefined,
+          id: savedId || undefined,
+          createdAt: savedCreatedAt || undefined,
+          type: "message",
         });
-      } catch (wsErr) {}
+      } catch {}
 
       return { success: true, saved };
     } catch (err) {

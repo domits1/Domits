@@ -1,6 +1,5 @@
 import { createContext, useEffect, useMemo, useRef, useState } from "react";
-import { sendMessage } from "../services/websocket"; // KEEP your existing sender
-import { connectWebSocketRealtime, disconnectWebSocketRealtime } from "../services/websocketRealtime";
+import { connectWebSocket, sendMessage, disconnectWebSocket } from "../services/websocket";
 
 export const WebSocketContext = createContext();
 
@@ -14,13 +13,11 @@ const toIso = (v) => {
 const normalizeIncoming = (raw) => {
   if (!raw) return null;
 
-  // unwrap { action:"messageSent", message:{...} } and similar envelopes
   const msg = raw?.message && typeof raw.message === "object" ? raw.message : raw;
 
   const senderId = msg?.userId || msg?.senderId || null;
   const recipientId = msg?.recipientId || null;
 
-  // ignore non-message events (ping/connected/etc)
   if (!senderId || !recipientId) return null;
 
   const text = msg?.text ?? msg?.content ?? "";
@@ -30,22 +27,21 @@ const normalizeIncoming = (raw) => {
   const fileUrls = Array.isArray(msg?.fileUrls)
     ? msg.fileUrls
     : Array.isArray(msg?.attachments)
-      ? msg.attachments.map((a) => a?.url).filter(Boolean)
-      : (() => {
-          const at = msg?.attachments;
-          if (!at) return [];
-          if (typeof at === "string") {
-            try {
-              const parsed = JSON.parse(at);
-              return Array.isArray(parsed) ? parsed.map((x) => x?.url).filter(Boolean) : [];
-            } catch {
-              return [];
-            }
+    ? msg.attachments.map((a) => a?.url).filter(Boolean)
+    : (() => {
+        const at = msg?.attachments;
+        if (!at) return [];
+        if (typeof at === "string") {
+          try {
+            const parsed = JSON.parse(at);
+            return Array.isArray(parsed) ? parsed.map((x) => x?.url).filter(Boolean) : [];
+          } catch {
+            return [];
           }
-          return [];
-        })();
+        }
+        return [];
+      })();
 
-  // ensure we ALWAYS have an id for dedupe
   const id =
     msg?.id ||
     `${senderId}:${recipientId}:${createdAt}:${String(text).slice(0, 40)}:${fileUrls.length}`;
@@ -53,7 +49,7 @@ const normalizeIncoming = (raw) => {
   return {
     ...msg,
     id,
-    userId: senderId, // IMPORTANT: ChatScreen expects msg.userId as sender
+    userId: senderId,
     senderId: msg?.senderId || senderId,
     recipientId,
     text,
@@ -63,61 +59,18 @@ const normalizeIncoming = (raw) => {
   };
 };
 
-const getTokenSomehow = () => {
-  // try common keys used in apps
-  const candidates = [
-    "accessToken",
-    "token",
-    "jwt",
-    "idToken",
-    "authToken",
-    "Authorization",
-  ];
-
-  for (const k of candidates) {
-    const v = window?.localStorage?.getItem(k);
-    if (v && typeof v === "string") {
-      // allow either "Bearer xxx" or raw jwt
-      return v.startsWith("Bearer ") ? v.slice("Bearer ".length) : v;
-    }
-  }
-
-  // sometimes apps store a JSON object
-  const jsonKeys = ["user", "session", "auth"];
-  for (const k of jsonKeys) {
-    const raw = window?.localStorage?.getItem(k);
-    if (!raw) continue;
-    try {
-      const parsed = JSON.parse(raw);
-      const maybe =
-        parsed?.accessToken ||
-        parsed?.token ||
-        parsed?.jwt ||
-        parsed?.idToken ||
-        parsed?.session?.accessToken;
-      if (maybe) return String(maybe).startsWith("Bearer ") ? String(maybe).slice(7) : String(maybe);
-    } catch {}
-  }
-
-  return null;
-};
-
-export const WebSocketProvider = ({ userId, children }) => {
+export const WebSocketProvider = ({ userId, children, token }) => {
   const [messages, setMessages] = useState([]);
   const seenRef = useRef(new Set());
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId && !token) return;
 
-    const token = getTokenSomehow();
-
-    connectWebSocketRealtime({
+    connectWebSocket(
       userId,
-      token,
-      onMessage: (incoming) => {
+      (incoming) => {
         const normalized = normalizeIncoming(incoming);
 
-        // debug hook (optional)
         try {
           window.__domitsWsLast = incoming;
           window.__domitsWsLastNormalized = normalized;
@@ -130,21 +83,20 @@ export const WebSocketProvider = ({ userId, children }) => {
         if (key) seenRef.current.add(key);
 
         setMessages((prev) => [...prev, normalized]);
-      },
-      onStatus: (s) => {
-        // optional debug
+
         try {
-          window.__domitsWsStatus = s;
+          window.dispatchEvent(new CustomEvent("domits:ws-message", { detail: normalized }));
         } catch {}
       },
-    });
+      token
+    );
 
     return () => {
-      disconnectWebSocketRealtime();
+      disconnectWebSocket();
       seenRef.current.clear();
       setMessages([]);
     };
-  }, [userId]);
+  }, [userId, token]);
 
   const value = useMemo(() => ({ messages, sendMessage }), [messages]);
 

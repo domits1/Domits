@@ -1,10 +1,28 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo } from "react";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import useFetchContacts from "../../features/hostdashboard/hostmessages/hooks/useFetchContacts";
 import ContactItem from "./ContactItem";
 import "../../features/hostdashboard/hostmessages/styles/sass/contactlist/hostContactList.scss";
-import { FaCog, FaSearch, FaBars, FaPlus } from "react-icons/fa";
+import { FaCog, FaBars, FaPlus } from "react-icons/fa";
 import AutomatedSettings from "./AutomatedSettings";
+
+const resolvePartnerId = (contact, selfUserId) => {
+  if (!contact) return null;
+
+  const candidates = [
+    contact.recipientId,
+    contact.userId,
+    contact.guestId,
+    contact.guestID,
+    contact.hostId,
+    contact.hostID,
+    contact.contactId,
+    contact.contactID,
+  ].filter(Boolean);
+
+  const picked = candidates.find((id) => id && id !== selfUserId);
+  return picked || candidates[0] || null;
+};
 
 const ContactList = ({
   userId,
@@ -25,6 +43,7 @@ const ContactList = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactId: null });
+
   useEffect(() => {
     setSelectedContactId(activeContactId || null);
   }, [activeContactId]);
@@ -79,15 +98,14 @@ const ContactList = ({
       }
     };
 
-    // Handle overlay click to close modal
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) {
+    overlay.addEventListener("click", (e2) => {
+      if (e2.target === overlay) {
         removeModal();
       }
     });
 
-    const handleEscape = (e) => {
-      if (e.key === "Escape") {
+    const handleEscape = (e2) => {
+      if (e2.key === "Escape") {
         removeModal();
         document.removeEventListener("keydown", handleEscape);
       }
@@ -113,7 +131,6 @@ const ContactList = ({
         return;
       }
 
-      // Disable button to prevent double clicks
       saveBtn.disabled = true;
       saveBtn.textContent = "Adding...";
 
@@ -156,38 +173,102 @@ const ContactList = ({
     setTimeout(() => nameInput.focus(), 100);
   };
 
-  useEffect(() => {
-    if (wsMessages?.length === 0) return;
-    setContacts((prevContacts) => {
-      const updatedContacts = [...prevContacts];
-      wsMessages.forEach((msg) => {
-        const contact = updatedContacts.find((c) => c.recipientId === msg.userId || c.recipientId === msg.recipientId);
-        if (contact) {
-          let displayText = msg.text;
-          if (msg.fileUrls && msg.fileUrls.length > 0) {
-            displayText = "attachment sent";
-          }
+  const visibleListRaw = displayType === "contacts" ? contacts : pendingContacts;
 
-          contact.latestMessage = {
+  const contactList = useMemo(() => {
+    let list = Array.isArray(visibleListRaw) ? [...visibleListRaw] : [];
+
+    if (searchTerm) {
+      list = list.filter((contact) => (contact.givenName || "").toLowerCase().includes(searchTerm));
+    }
+
+    if (sortAlphabetically) {
+      list.sort((a, b) => (a.givenName || "").localeCompare(b.givenName || ""));
+    } else {
+      list.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
+    }
+
+    return list;
+  }, [visibleListRaw, searchTerm, sortAlphabetically]);
+
+  const noContactsMessage = displayType === "contacts" ? labels.noContacts : labels.noPending;
+
+  const handleClick = (contact, threadId = null) => {
+    const partnerId = resolvePartnerId(contact, userId);
+    if (!partnerId) return;
+
+    setSelectedContactId(partnerId);
+    onContactClick?.(partnerId, contact?.givenName, contact?.profileImage, threadId);
+  };
+
+  const handleContextMenu = (event, contact) => {
+    if (displayType === "pendingContacts") return;
+    event.preventDefault();
+
+    const partnerId = resolvePartnerId(contact, userId);
+    if (!partnerId) return;
+
+    setContextMenu({
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      contactId: partnerId,
+    });
+  };
+
+  const handleCloseSelectedChat = () => {
+    if (contextMenu.contactId) {
+      onCloseChat?.(contextMenu.contactId);
+    }
+    setContextMenu({ visible: false, x: 0, y: 0, contactId: null });
+  };
+
+  useEffect(() => {
+    if (!wsMessages?.length) return;
+
+    setContacts((prevContacts) => {
+      const updatedContacts = Array.isArray(prevContacts) ? [...prevContacts] : [];
+
+      wsMessages.forEach((msg) => {
+        const partnerId = msg?.userId === userId ? msg?.recipientId : msg?.userId;
+        if (!partnerId) return;
+
+        const idx = updatedContacts.findIndex((c) => resolvePartnerId(c, userId) === partnerId);
+        if (idx === -1) return;
+
+        let displayText = msg.text;
+        if (msg.fileUrls && msg.fileUrls.length > 0) displayText = "attachment sent";
+
+        updatedContacts[idx] = {
+          ...updatedContacts[idx],
+          latestMessage: {
             ...msg,
             text: displayText,
-          };
-        }
+          },
+        };
       });
+
+      updatedContacts.sort(
+        (a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
+      );
+
       return updatedContacts;
     });
-  }, [wsMessages, setContacts]);
+  }, [wsMessages, setContacts, userId]);
 
   useEffect(() => {
     if (!message) return;
+
     setContacts((prevContacts) => {
-      const updatedContacts = [...prevContacts];
-      const index = updatedContacts.findIndex((c) => c.recipientId === message.recipientId);
+      const updatedContacts = Array.isArray(prevContacts) ? [...prevContacts] : [];
+
+      const partnerId = message?.userId === userId ? message?.recipientId : message?.userId;
+      if (!partnerId) return updatedContacts;
+
+      const index = updatedContacts.findIndex((c) => resolvePartnerId(c, userId) === partnerId);
       if (index !== -1) {
         let displayText = message.text;
-        if (message.fileUrls && message.fileUrls.length > 0) {
-          displayText = "attachment sent";
-        }
+        if (message.fileUrls && message.fileUrls.length > 0) displayText = "attachment sent";
 
         updatedContacts[index] = {
           ...updatedContacts[index],
@@ -200,55 +281,19 @@ const ContactList = ({
           },
         };
       }
+
       updatedContacts.sort(
         (a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
       );
+
       return updatedContacts;
     });
-  }, [message, setContacts]);
-
-  let contactList = displayType === "contacts" ? contacts : pendingContacts;
-
-  if (searchTerm) {
-    contactList = contactList.filter((contact) => contact.givenName?.toLowerCase().includes(searchTerm));
-  }
-
-  if (sortAlphabetically) {
-    contactList = [...contactList].sort((a, b) => (a.givenName || "").localeCompare(b.givenName || ""));
-  } else {
-    contactList = [...contactList].sort(
-      (a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
-    );
-  }
-
-  const noContactsMessage = displayType === "contacts" ? labels.noContacts : labels.noPending;
-
-  const handleClick = (contactId, contactName, contactImage, threadId = null) => {
-    setSelectedContactId(contactId);
-    onContactClick?.(contactId, contactName, contactImage, threadId);
-  };
-
-  const handleContextMenu = (event, contact) => {
-    if (displayType === "pendingContacts") return;
-    event.preventDefault();
-    setContextMenu({
-      visible: true,
-      x: event.clientX,
-      y: event.clientY,
-      contactId: contact.recipientId,
-    });
-  };
-
-  const handleCloseSelectedChat = () => {
-    if (contextMenu.contactId) {
-      onCloseChat?.(contextMenu.contactId);
-    }
-    setContextMenu({ visible: false, x: 0, y: 0, contactId: null });
-  };
+  }, [message, setContacts, userId]);
 
   return (
     <div className={`${dashboardType}-contact-list-modal`}>
       <h3>Message dashboard</h3>
+
       <div style={{ marginTop: "-0.25rem" }}>
         <input
           type="text"
@@ -302,27 +347,30 @@ const ContactList = ({
         ) : contactList.length === 0 ? (
           <p className={`contact-list-empty-text`}>{noContactsMessage}</p>
         ) : (
-          contactList.map((contact) => (
-            <li
-              key={contact.userId}
-              className={`contact-list-list-item ${displayType === "pendingContacts" ? "disabled" : ""}`}
-              onClick={() =>
-                displayType !== "pendingContacts" &&
-                handleClick(contact.recipientId, contact.givenName, contact.profileImage, contact.threadId)
-              }
-              onContextMenu={(event) => handleContextMenu(event, contact)}>
-              <ContactItem
-                contact={contact}
-                isPending={displayType === "pendingContacts"}
-                setContacts={setContacts}
-                userId={userId}
-                selected={selectedContactId === contact.recipientId}
-                dashboardType={dashboardType}
-              />
-            </li>
-          ))
+          contactList.map((contact, i) => {
+            const partnerId = resolvePartnerId(contact, userId) || `${contact?.userId || "u"}-${i}`;
+
+            return (
+              <li
+                key={partnerId}
+                className={`contact-list-list-item ${displayType === "pendingContacts" ? "disabled" : ""}`}
+                onClick={() => displayType !== "pendingContacts" && handleClick(contact, contact.threadId)}
+                onContextMenu={(event) => handleContextMenu(event, contact)}
+              >
+                <ContactItem
+                  contact={contact}
+                  isPending={displayType === "pendingContacts"}
+                  setContacts={setContacts}
+                  userId={userId}
+                  selected={selectedContactId === partnerId}
+                  dashboardType={dashboardType}
+                />
+              </li>
+            );
+          })
         )}
       </ul>
+
       {contextMenu.visible && (
         <div className="contact-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} role="menu">
           <button type="button" onClick={handleCloseSelectedChat}>

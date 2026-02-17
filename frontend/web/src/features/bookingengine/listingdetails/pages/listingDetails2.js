@@ -26,7 +26,6 @@ const ListingDetails2 = () => {
         const fetchedProperty = await FetchPropertyById(id);
         setProperty(fetchedProperty);
 
-        // hostId expected on fetchedProperty.property.hostId based on your screenshot
         const hostData = await fetchHostInfo(fetchedProperty?.property?.hostId);
         setHost(hostData);
 

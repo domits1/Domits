@@ -1,15 +1,24 @@
 let socket = null;
 let pingInterval = null;
 
-export const connectWebSocket = (userId, onMessageReceived) => {
-  if (!userId) return;
+const getWsUrl = ({ token, userId }) => {
+  const base = "wss://opehkmyi44.execute-api.eu-north-1.amazonaws.com/production";
+  if (token) return `${base}?token=${encodeURIComponent(token)}`;
+  return `${base}?userId=${encodeURIComponent(userId)}`; // dev fallback
+};
 
-  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+export const connectWebSocket = (userId, onMessageReceived, token) => {
+  if (!userId && !token) return;
+
+  if (
+    socket &&
+    (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)
+  ) {
     console.log("[WS] already open/connecting", socket.readyState);
     return;
   }
 
-  const wsUrl = `wss://opehkmyi44.execute-api.eu-north-1.amazonaws.com/production/?userId=${encodeURIComponent(userId)}`;
+  const wsUrl = getWsUrl({ token, userId });
   console.log("[WS] connecting:", wsUrl);
 
   socket = new WebSocket(wsUrl);
