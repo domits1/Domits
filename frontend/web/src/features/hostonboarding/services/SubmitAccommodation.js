@@ -9,7 +9,15 @@ function toTimeString(value) {
   }
   return value;
 }
-export async function submitAccommodation(navigate, builder) {
+
+export async function submitAccommodation(navigate, builder, options = {}) {
+  const { onStateChange, onSuccessPath = "/hostdashboard" } = options;
+  const setSubmitState = (nextState) => {
+    if (typeof onStateChange === "function") {
+      onStateChange(nextState);
+    }
+  };
+
   const API_BASE = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default";
   const API_URL = `${API_BASE}/property`;
   const PRESIGN_URL = `${API_BASE}/property/images/presign`;
@@ -20,9 +28,12 @@ export async function submitAccommodation(navigate, builder) {
   const storeState = useFormStoreHostOnboarding.getState();
   const imageList = storeState?.accommodationDetails?.imageList || [];
   let propertyId = storeState?.accommodationDetails?.propertyId;
+  const setImageList = storeState?.setImageList;
+  const resetOnboardingState = storeState?.resetOnboardingState;
 
   const ensureDraft = async () => {
     if (propertyId) return propertyId;
+    setSubmitState("creating-draft");
     const res = await fetch(DRAFT_URL, {
       method: "POST",
       headers: {
@@ -41,6 +52,7 @@ export async function submitAccommodation(navigate, builder) {
   };
 
   const presignUploads = async (draftId, images) => {
+    setSubmitState("presigning-images");
     const res = await fetch(PRESIGN_URL, {
       method: "POST",
       headers: {
@@ -64,20 +76,25 @@ export async function submitAccommodation(navigate, builder) {
   };
 
   const uploadToS3 = async (uploads, images) => {
+    setSubmitState("uploading-images");
     await Promise.all(
-      uploads.map((upload, index) =>
-        fetch(upload.url, {
+      uploads.map(async (upload, index) => {
+        const res = await fetch(upload.url, {
           method: "PUT",
           headers: {
             "Content-Type": upload.contentType,
           },
           body: images[index].file,
-        })
-      )
+        });
+        if (!res.ok) {
+          throw new Error(`Failed to upload image (${res.status}).`);
+        }
+      })
     );
   };
 
-  const confirmUploads = async (draftId, uploads) => {
+  const confirmUploads = async (draftId, uploads, sortOrders) => {
+    setSubmitState("confirming-images");
     const res = await fetch(CONFIRM_URL, {
       method: "POST",
       headers: {
@@ -89,7 +106,7 @@ export async function submitAccommodation(navigate, builder) {
         images: uploads.map((upload, index) => ({
           imageId: upload.imageId,
           originalKey: upload.key,
-          sortOrder: index,
+          sortOrder: sortOrders[index] ?? index,
         })),
       }),
     });
@@ -99,6 +116,7 @@ export async function submitAccommodation(navigate, builder) {
     }
     return res.json();
   };
+
   if (payload.propertyCheckIn) {
     payload.propertyCheckIn = {
       ...payload.propertyCheckIn,
@@ -112,20 +130,51 @@ export async function submitAccommodation(navigate, builder) {
       },
     };
   }
+  if (!Array.isArray(payload.propertyAvailability)) {
+    payload.propertyAvailability = [];
+  }
   payload.propertyTestStatus = {
     ...(payload.propertyTestStatus || {}),
     isTest: false,
   };
 
   try {
+    setSubmitState("preparing");
+    const indexedImages = Array.isArray(imageList)
+      ? imageList.map((image, index) => ({ image, index }))
+      : [];
+    const pendingImages = indexedImages.filter(({ image }) => image?.file);
+
     if (Array.isArray(imageList) && imageList.length > 0) {
       const draftId = await ensureDraft();
-      const uploads = await presignUploads(draftId, imageList);
-      await uploadToS3(uploads, imageList);
-      await confirmUploads(draftId, uploads);
+
+      if (pendingImages.length > 0) {
+        const pendingImageFiles = pendingImages.map(({ image }) => image);
+        const pendingSortOrders = pendingImages.map(({ index }) => index);
+        const uploads = await presignUploads(draftId, pendingImageFiles);
+        await uploadToS3(uploads, pendingImageFiles);
+        await confirmUploads(draftId, uploads, pendingSortOrders);
+
+        if (typeof setImageList === "function") {
+          const updatedImages = [...imageList];
+          pendingImages.forEach(({ index }, uploadIndex) => {
+            updatedImages[index] = {
+              ...updatedImages[index],
+              uploaded: true,
+              imageId: uploads[uploadIndex].imageId,
+              originalKey: uploads[uploadIndex].key,
+              file: null,
+            };
+          });
+          setImageList(updatedImages);
+        }
+      }
+
       payload.propertyId = draftId;
       payload.imageUploadMode = "presigned";
     }
+
+    setSubmitState("creating-property");
     const res = await fetch(API_URL, {
       method: "POST",
       headers: {
@@ -143,11 +192,24 @@ export async function submitAccommodation(navigate, builder) {
       } catch (_) {}
       alert(`Request failed (${res.status}): ${msg}`);
       console.error("POST failed", { status: res.status, body: msg, url: API_URL });
-      return;
+      setSubmitState("idle");
+      return false;
     }
-    navigate("/hostdashboard");
+
+    setSubmitState("finalizing");
+    if (typeof builder?.reset === "function") {
+      builder.reset();
+    }
+    if (typeof resetOnboardingState === "function") {
+      resetOnboardingState();
+    }
+    sessionStorage.removeItem("propertyBuilder");
+    navigate(onSuccessPath);
+    return true;
   } catch (err) {
+    setSubmitState("idle");
     alert(`Network error: ${err?.message || err}`);
     console.error("Network error", err);
+    return false;
   }
 }

@@ -56,6 +56,8 @@ function PropertyTitleView() {
               maxLength={500}
               placeholder="Enter your description here..."
               className="text-area-description"
+              textareaClassName="hostonboarding-description-textarea"
+              rows={4}
             />
           )}
 

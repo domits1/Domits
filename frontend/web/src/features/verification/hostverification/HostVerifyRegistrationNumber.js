@@ -27,7 +27,7 @@ const RegistrationNumber = () => {
             <h1>Add your registration number</h1>
             <p>
               Your registration number will appear on your listing page, so that
-              guests know that your accommodation is registered in {address.city}.
+              guests know that your accommodation is registered in {location.city || "your city"}.
             </p>
           </div>
           <hr></hr>
