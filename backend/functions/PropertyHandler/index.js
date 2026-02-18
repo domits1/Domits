@@ -26,6 +26,9 @@ const handlePatch = async (event) => {
   if (isPath(event, "/property/images/order")) {
     return controller.updateImageOrder(event);
   }
+  if (isPath(event, "/property/overview")) {
+    return controller.updatePropertyOverview(event);
+  }
   return controller.activateProperty(event);
 };
 

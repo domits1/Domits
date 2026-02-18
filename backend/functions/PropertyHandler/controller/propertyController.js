@@ -282,6 +282,74 @@ export class PropertyController {
     }
 
     // -------------------------
+    // PATCH /property/overview
+    // -------------------------
+    async updatePropertyOverview(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId || eventBody.property;
+            const title = eventBody.title;
+            const description = eventBody.description;
+            const subtitle = eventBody.subtitle;
+
+            if (!propertyId) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." }),
+                };
+            }
+
+            if (typeof title !== "string" || typeof description !== "string") {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Title and description must be strings." }),
+                };
+            }
+            if (subtitle !== undefined && typeof subtitle !== "string") {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Subtitle must be a string." }),
+                };
+            }
+
+            const normalizedTitle = title.trim();
+            const normalizedDescription = description.trim();
+            const normalizedSubtitle = typeof subtitle === "string" ? subtitle.trim() : undefined;
+            if (!normalizedTitle || !normalizedDescription) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Title and description cannot be empty." }),
+                };
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            await this.propertyService.updatePropertyOverview(
+                propertyId,
+                normalizedTitle,
+                normalizedDescription,
+                normalizedSubtitle
+            );
+
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
     // PATCH /property
     // -------------------------
     async activateProperty(event) {

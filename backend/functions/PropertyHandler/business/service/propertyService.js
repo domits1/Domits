@@ -77,6 +77,24 @@ export class PropertyService {
     }
   }
 
+  async updatePropertyOverview(propertyId, title, description, subtitle = undefined) {
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+    const resolvedSubtitle = typeof subtitle === "string" ? subtitle : property.subtitle;
+    const updatedProperty = await this.propertyRepository.updatePropertyOverview(
+      propertyId,
+      title,
+      resolvedSubtitle,
+      description
+    );
+    if (!updatedProperty) {
+      throw new DatabaseException("Something went wrong while updating the property overview.");
+    }
+    return updatedProperty;
+  }
+
   async getActivePropertyCards(lastEvaluatedKey) {
     const propertyIdentifiers = await this.propertyRepository.getActiveProperties(lastEvaluatedKey);
     const properties = await Promise.all(
