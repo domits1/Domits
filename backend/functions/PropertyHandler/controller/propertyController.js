@@ -292,6 +292,8 @@ export class PropertyController {
             const title = eventBody.title;
             const description = eventBody.description;
             const subtitle = eventBody.subtitle;
+            const capacity = eventBody.capacity;
+            const location = eventBody.location;
 
             if (!propertyId) {
                 return {
@@ -315,6 +317,20 @@ export class PropertyController {
                     body: JSON.stringify({ message: "Subtitle must be a string." }),
                 };
             }
+            if (capacity !== undefined && (typeof capacity !== "object" || capacity === null || Array.isArray(capacity))) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Capacity must be an object." }),
+                };
+            }
+            if (location !== undefined && (typeof location !== "object" || location === null || Array.isArray(location))) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Location must be an object." }),
+                };
+            }
 
             const normalizedTitle = title.trim();
             const normalizedDescription = description.trim();
@@ -327,12 +343,95 @@ export class PropertyController {
                 };
             }
 
+            const normalizeCapacityNumber = (value, field) => {
+                if (value === undefined || value === null) {
+                    return undefined;
+                }
+                const parsed = Number(value);
+                if (!Number.isFinite(parsed) || parsed < 0) {
+                    throw new Error(`Invalid capacity field: ${field}.`);
+                }
+                return Math.trunc(parsed);
+            };
+
+            const normalizeLocationPayload = (locationPayload) => {
+                if (!locationPayload) {
+                    return undefined;
+                }
+                const street = typeof locationPayload.street === "string" ? locationPayload.street.trim() : "";
+                const postalCode = typeof locationPayload.postalCode === "string" ? locationPayload.postalCode.trim() : "";
+                const city = typeof locationPayload.city === "string" ? locationPayload.city.trim() : "";
+                const country = typeof locationPayload.country === "string" ? locationPayload.country.trim() : "";
+                const extensionFromBody =
+                    typeof locationPayload.houseNumberExtension === "string"
+                        ? locationPayload.houseNumberExtension.trim()
+                        : "";
+
+                const houseNumberRaw = locationPayload.houseNumber;
+                let houseNumber = null;
+                let houseNumberExtension = extensionFromBody;
+                if (typeof houseNumberRaw === "number" && Number.isFinite(houseNumberRaw)) {
+                    houseNumber = Math.trunc(houseNumberRaw);
+                } else if (typeof houseNumberRaw === "string") {
+                    const match = houseNumberRaw.trim().match(/^(\d+)\s*(.*)$/);
+                    if (!match) {
+                        throw new Error("Location houseNumber must start with a number.");
+                    }
+                    houseNumber = Number(match[1]);
+                    if (!houseNumberExtension) {
+                        houseNumberExtension = (match[2] || "").trim();
+                    }
+                }
+
+                if (!street || !postalCode || !city || !country || !Number.isFinite(houseNumber)) {
+                    throw new Error("Location requires street, houseNumber, postalCode, city and country.");
+                }
+
+                return {
+                    street,
+                    houseNumber,
+                    houseNumberExtension,
+                    postalCode,
+                    city,
+                    country,
+                };
+            };
+
+            let normalizedCapacity = undefined;
+            if (capacity) {
+                const normalizedSpaceType = typeof capacity.spaceType === "string" ? capacity.spaceType.trim() : undefined;
+                if (capacity.spaceType !== undefined && !normalizedSpaceType) {
+                    return {
+                        statusCode: 400,
+                        headers: responseHeaders,
+                        body: JSON.stringify({ message: "Capacity spaceType cannot be empty." }),
+                    };
+                }
+
+                normalizedCapacity = {
+                    spaceType: normalizedSpaceType,
+                    guests: normalizeCapacityNumber(capacity.guests, "guests"),
+                    bedrooms: normalizeCapacityNumber(capacity.bedrooms, "bedrooms"),
+                    beds: normalizeCapacityNumber(capacity.beds, "beds"),
+                    bathrooms: normalizeCapacityNumber(capacity.bathrooms, "bathrooms"),
+                };
+            }
+
+            let normalizedLocation = undefined;
+            if (location) {
+                normalizedLocation = normalizeLocationPayload(location);
+            }
+
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
             await this.propertyService.updatePropertyOverview(
                 propertyId,
                 normalizedTitle,
                 normalizedDescription,
-                normalizedSubtitle
+                normalizedSubtitle,
+                {
+                    capacity: normalizedCapacity,
+                    location: normalizedLocation,
+                }
             );
 
             return {
@@ -341,6 +440,13 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
+            if (error?.message?.startsWith("Invalid capacity field:") || error?.message?.startsWith("Location ")) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: error.message }),
+                };
+            }
             return {
                 statusCode: error.statusCode || 500,
                 headers: responseHeaders,

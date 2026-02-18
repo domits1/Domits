@@ -77,7 +77,7 @@ export class PropertyService {
     }
   }
 
-  async updatePropertyOverview(propertyId, title, description, subtitle = undefined) {
+  async updatePropertyOverview(propertyId, title, description, subtitle = undefined, updates = {}) {
     const property = await this.getBasePropertyInfo(propertyId);
     if (!property) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
@@ -92,6 +92,15 @@ export class PropertyService {
     if (!updatedProperty) {
       throw new DatabaseException("Something went wrong while updating the property overview.");
     }
+
+    if (updates?.capacity) {
+      await this.updateCapacity(propertyId, updates.capacity);
+    }
+
+    if (updates?.location) {
+      await this.updateLocation(propertyId, updates.location);
+    }
+
     return updatedProperty;
   }
 
@@ -148,7 +157,7 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getFullPropertyAttributes(propertyId);
+    return await this.getFullPropertyAttributesWithFullLocation(propertyId);
   }
 
   async getFullPropertyByBookingId(bookingId) {
@@ -386,10 +395,34 @@ export class PropertyService {
     return await this.propertyGeneralDetailRepository.getPropertyGeneralDetailsByPropertyId(property);
   }
 
+  async updateCapacity(propertyId, capacity) {
+    const detailUpdates = [
+      { detail: "Guests", value: capacity.guests },
+      { detail: "Bedrooms", value: capacity.bedrooms },
+      { detail: "Beds", value: capacity.beds },
+      { detail: "Bathrooms", value: capacity.bathrooms },
+    ].filter((item) => item.value !== undefined);
+
+    if (typeof capacity.spaceType === "string" && capacity.spaceType.trim()) {
+      await this.propertyTypeRepository.updatePropertySpaceTypeByPropertyId(propertyId, capacity.spaceType.trim());
+    }
+
+    if (detailUpdates.length > 0) {
+      await this.propertyGeneralDetailRepository.upsertPropertyGeneralDetailsByPropertyId(propertyId, detailUpdates);
+    }
+  }
+
   async createLocation(location) {
     const result = await this.propertyLocationRepository.create(location);
     if (!result) {
       throw new DatabaseException(`Failed to register property location.`);
+    }
+  }
+
+  async updateLocation(propertyId, location) {
+    const result = await this.propertyLocationRepository.updatePropertyLocationById(propertyId, location);
+    if (!result) {
+      throw new DatabaseException("Failed to update property location.");
     }
   }
 
