@@ -4,6 +4,11 @@ import {
   Channel,
   ReservationStatus,
 } from "../../functions/General-Bookings-CRUD-Bookings-develop/business/bookingComCanonicalModel.js";
+import {
+  createMockManager,
+  createCanonicalReservation,
+} from "../util/bookingComFixtures.js";
+
 
 describe("Booking.com persistence service", () => {
   beforeEach(() => {
@@ -12,70 +17,9 @@ describe("Booking.com persistence service", () => {
 
   it("should persist canonical reservation, guest, financial and optional cancellation using a provided manager", async () => {
     const inserts = [];
+    const mockManager = createMockManager(inserts);
+    const canonical = createCanonicalReservation();
 
-    const mockManager = {
-      createQueryBuilder: () => ({
-        insert: () => ({
-          into: (table) => ({
-            values: (value) => ({
-              execute: async () => {
-                inserts.push({
-                  // In tests we don't rely on TypeORM metadata; just capture the raw value
-                  table,
-                  value,
-                });
-              },
-            }),
-          }),
-        }),
-      }),
-    };
-
-    const canonical = {
-      reservation: {
-        externalId: "R123",
-        channel: Channel.BOOKING_COM,
-        version: "1.0",
-        propertyId: "prop-1",
-        bookingId: null,
-        checkInDate: "2025-01-01T00:00:00.000Z",
-        checkOutDate: "2025-01-05T00:00:00.000Z",
-        status: ReservationStatus.CONFIRMED,
-        units: [],
-        ratePlan: null,
-        availabilityWindows: [],
-        createdAt: "2024-12-01T00:00:00.000Z",
-        updatedAt: "2024-12-02T00:00:00.000Z",
-        meta: { warnings: [] },
-      },
-      guest: {
-        fullName: "John Doe",
-        email: "john@example.com",
-        phone: "+49123",
-        country: "DE",
-        raw: { some: "guest" },
-      },
-      financialTransaction: {
-        totalAmount: 100,
-        currency: "EUR",
-        taxAmount: 10,
-        feesAmount: 5,
-        multiCurrency: false,
-        originalCurrency: null,
-        originalAmount: null,
-        raw: { some: "financial" },
-      },
-      cancellation: {
-        type: "FULL",
-        effectiveDate: "2024-12-31T00:00:00.000Z",
-        reason: "Guest cancelled",
-        raw: { some: "cancellation" },
-      },
-      units: [],
-      ratePlans: [],
-      availabilityWindows: [],
-      meta: { warnings: [] },
-    };
 
     const result = await persistBookingComCanonicalReservation(canonical, {
       transactionManager: mockManager,
@@ -117,64 +61,12 @@ describe("Booking.com persistence service", () => {
 
   it("should not insert cancellation when canonical.cancellation is null", async () => {
     const inserts = [];
-
-    const mockManager = {
-      createQueryBuilder: () => ({
-        insert: () => ({
-          into: (table) => ({
-            values: (value) => ({
-              execute: async () => {
-                inserts.push({
-                  table,
-                  value,
-                });
-              },
-            }),
-          }),
-        }),
-      }),
-    };
-
-    const canonical = {
-      reservation: {
-        externalId: "R123",
-        channel: Channel.BOOKING_COM,
-        version: "1.0",
-        propertyId: null,
-        bookingId: null,
-        checkInDate: "2025-01-01T00:00:00.000Z",
-        checkOutDate: "2025-01-05T00:00:00.000Z",
-        status: ReservationStatus.CONFIRMED,
-        units: [],
-        ratePlan: null,
-        availabilityWindows: [],
-        createdAt: "2024-12-01T00:00:00.000Z",
-        updatedAt: "2024-12-02T00:00:00.000Z",
-        meta: { warnings: [] },
-      },
-      guest: {
-        fullName: "John Doe",
-        email: "john@example.com",
-        phone: "+49123",
-        country: "DE",
-        raw: { some: "guest" },
-      },
-      financialTransaction: {
-        totalAmount: 100,
-        currency: "EUR",
-        taxAmount: 10,
-        feesAmount: 5,
-        multiCurrency: false,
-        originalCurrency: null,
-        originalAmount: null,
-        raw: { some: "financial" },
-      },
+    const mockManager = createMockManager(inserts);
+    const canonical = createCanonicalReservation({
+      reservation: { propertyId: null },
       cancellation: null,
-      units: [],
-      ratePlans: [],
-      availabilityWindows: [],
-      meta: { warnings: [] },
-    };
+    });
+
 
     await persistBookingComCanonicalReservation(canonical, {
       transactionManager: mockManager,
@@ -186,4 +78,3 @@ describe("Booking.com persistence service", () => {
     expect(cancellationInsert).toBeUndefined();
   });
 });
-
