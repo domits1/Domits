@@ -9,7 +9,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Security: Disable X-Powered-By header to prevent framework version disclosure
+app.disable('x-powered-by');
+
 // Middleware
+
 // CORS Configuration - Security: Using centralized CORS config with origin whitelist
 app.use(cors(createCorsOptions()));
 
