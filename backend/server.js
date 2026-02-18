@@ -1,15 +1,20 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { createCorsOptions } from './util/corsConfig.js';
 
 dotenv.config();
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+// CORS Configuration - Security: Using centralized CORS config with origin whitelist
+app.use(cors(createCorsOptions()));
+
 app.use(express.json());
+
 
 // Health Check Route
 app.get('/health', (req, res) => {
