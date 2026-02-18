@@ -10,6 +10,14 @@ import {
 } from "../../functions/General-Bookings-CRUD-Bookings-develop/business/bookingComCanonicalModel.js";
 import { validateBookingComPayload } from "../../functions/General-Bookings-CRUD-Bookings-develop/business/bookingComValidation.js";
 import TypeException from "../../functions/General-Bookings-CRUD-Bookings-develop/util/exception/TypeException.js";
+import { createBasePayload } from "../util/bookingComFixtures.js";
+
+// Helper to reduce duplication in mapper tests
+const createAndMapPayload = (overrides = {}) => {
+  const payload = createBasePayload(overrides);
+  const validated = validateBookingComPayload(payload);
+  return mapBookingComPayloadToCanonical(validated);
+};
 
 describe("Booking.com mapper - status normalization", () => {
   it("should normalize known statuses", () => {
@@ -26,36 +34,8 @@ describe("Booking.com mapper - status normalization", () => {
 });
 
 describe("Booking.com mapper - happy path", () => {
-  const basePayload = {
-    reservation_id: "R123",
-    arrival_date: "2025-01-01",
-    departure_date: "2025-01-05",
-    status: "BOOKED",
-    total_price: "150.00",
-    currency_code: "EUR",
-    guest_name: "John Doe",
-    guest_email: "john@example.com",
-    guest_phone: "+4912345",
-    guest_country: "DE",
-    rooms: [
-      {
-        id: "ROOM1",
-        name: "Standard Room",
-        occupancy: 2,
-      },
-    ],
-    rate_plans: [
-      {
-        id: "RP1",
-        name: "Standard Rate",
-        type: "STANDARD",
-      },
-    ],
-  };
-
   it("should map a full Booking.com payload to canonical mapping", () => {
-    const validated = validateBookingComPayload(basePayload);
-    const canonical = mapBookingComPayloadToCanonical(validated);
+    const canonical = createAndMapPayload();
 
     expect(canonical.reservation.externalId).toBe("R123");
     expect(canonical.reservation.channel).toBe(Channel.BOOKING_COM);
@@ -84,48 +64,34 @@ describe("Booking.com mapper - happy path", () => {
 
 describe("Booking.com mapper - edge cases", () => {
   it("should handle missing guest information", () => {
-    const payload = {
-      reservation_id: "R123",
-      arrival_date: "2025-01-01",
-      departure_date: "2025-01-05",
-      status: "BOOKED",
+    const canonical = createAndMapPayload({
+      guest_name: undefined,
+      guest_email: undefined,
+      guest_phone: undefined,
+      guest_country: undefined,
       total_price: "100",
       currency_code: "USD",
-    };
-
-    const validated = validateBookingComPayload(payload);
-    const canonical = mapBookingComPayloadToCanonical(validated);
+    });
 
     expect(canonical.guest.fullName).toBe("Unknown Guest");
     expect(canonical.meta.warnings.some((w) => w.includes("Unknown Guest"))).toBe(true);
   });
 
   it("should detect multi-currency reservations", () => {
-    const payload = {
-      reservation_id: "R123",
-      arrival_date: "2025-01-01",
-      departure_date: "2025-01-05",
-      status: "BOOKED",
+    const canonical = createAndMapPayload({
       total_price: "200",
       currency_code: "USD",
       original_currency: "EUR",
       original_amount: "180",
-    };
+    });
 
-    const validated = validateBookingComPayload(payload);
-    const canonical = mapBookingComPayloadToCanonical(validated);
-
-      expect(canonical.financialTransaction.multiCurrency).toBe(true);
-      expect(canonical.financialTransaction.originalCurrency).toBe("EUR");
-      expect(canonical.meta.warnings.some((w) => w.toLowerCase().includes("multi-currency"))).toBe(true);
+    expect(canonical.financialTransaction.multiCurrency).toBe(true);
+    expect(canonical.financialTransaction.originalCurrency).toBe("EUR");
+    expect(canonical.meta.warnings.some((w) => w.toLowerCase().includes("multi-currency"))).toBe(true);
   });
 
   it("should detect partial cancellations without flipping status", () => {
-    const payload = {
-      reservation_id: "R123",
-      arrival_date: "2025-01-01",
-      departure_date: "2025-01-05",
-      status: "BOOKED",
+    const canonical = createAndMapPayload({
       total_price: "100",
       currency_code: "USD",
       cancellation: {
@@ -133,10 +99,7 @@ describe("Booking.com mapper - edge cases", () => {
         effective_date: "2024-12-31T00:00:00.000Z",
         reason: "Partial room cancellation",
       },
-    };
-
-    const validated = validateBookingComPayload(payload);
-    const canonical = mapBookingComPayloadToCanonical(validated);
+    });
 
     expect(canonical.cancellation).not.toBeNull();
     expect(canonical.cancellation.type).toBe(CancellationType.PARTIAL);
@@ -146,58 +109,30 @@ describe("Booking.com mapper - edge cases", () => {
 
 describe("Booking.com validation - enum & date validation", () => {
   it("should coerce invalid status to UNKNOWN in mapper", () => {
-    const payload = {
-      reservation_id: "R123",
-      arrival_date: "2025-01-01",
-      departure_date: "2025-01-05",
-      status: "WEIRD_STATUS",
-      total_price: "100",
-      currency_code: "USD",
-    };
-
-    const validated = validateBookingComPayload(payload);
-    const canonical = mapBookingComPayloadToCanonical(validated);
-
+    const canonical = createAndMapPayload({ status: "WEIRD_STATUS" });
     expect(canonical.reservation.status).toBe(ReservationStatus.UNKNOWN);
   });
 
+  // Helper to reduce duplication in validation error tests
+  const expectValidationError = (overrides) => {
+    expect(() => validateBookingComPayload(createBasePayload(overrides))).toThrow(TypeException);
+  };
+
   it("should throw when arrival_date >= departure_date", () => {
-    const payload = {
-      reservation_id: "R123",
+    expectValidationError({
       arrival_date: "2025-01-05",
       departure_date: "2025-01-05",
-      status: "BOOKED",
-      total_price: "100",
-      currency_code: "USD",
-    };
-
-    expect(() => validateBookingComPayload(payload)).toThrow(TypeException);
+    });
   });
 
   it("should throw when dates are invalid", () => {
-    const payload = {
-      reservation_id: "R123",
+    expectValidationError({
       arrival_date: "invalid-date",
       departure_date: "also-invalid",
-      status: "BOOKED",
-      total_price: "100",
-      currency_code: "USD",
-    };
-
-    expect(() => validateBookingComPayload(payload)).toThrow(TypeException);
+    });
   });
 
   it("should throw when currency is invalid", () => {
-    const payload = {
-      reservation_id: "R123",
-      arrival_date: "2025-01-01",
-      departure_date: "2025-01-05",
-      status: "BOOKED",
-      total_price: "100",
-      currency_code: "BADCURR",
-    };
-
-    expect(() => validateBookingComPayload(payload)).toThrow(TypeException);
+    expectValidationError({ currency_code: "BADCURR" });
   });
 });
-
