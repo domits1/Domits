@@ -1,3 +1,5 @@
+// /Users/mh/Domits/frontend/web/src/components/messages/ChatScreen.jsx
+
 import { useEffect, useMemo, useState, useRef, useContext } from "react";
 
 import useFetchMessages from "../../features/hostdashboard/hostmessages/hooks/useFetchMessages";
@@ -7,9 +9,12 @@ import { useSendMessage } from "../../features/hostdashboard/hostmessages/hooks/
 import ChatMessage from "./ChatMessage";
 import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/components/chatUploadAttachment";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
+
+// Keep existing styles for now (safe). The new look comes from messagesV2.scss (scoped by .messages-v2)
 import "../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss";
+
 import { v4 as uuidv4 } from "uuid";
-import { FaPaperPlane, FaArrowLeft, FaTimes } from "react-icons/fa";
+import { FaPaperPlane, FaArrowLeft, FaTimes, FaEllipsisH } from "react-icons/fa";
 import profileImage from "./domits-logo.jpg";
 import { toast } from "react-toastify";
 import MessageToast from "./MessageToast";
@@ -34,7 +39,6 @@ const ensureId = (msg) => {
 const normalizeForChat = (msg, userId) => {
   const m = ensureId(msg);
   const senderId = m?.userId || m?.senderId || null;
-
   const createdAt = toIso(m?.createdAt);
 
   return {
@@ -50,6 +54,16 @@ const normalizeForChat = (msg, userId) => {
   };
 };
 
+const formatChipDate = (isoLike) => {
+  if (!isoLike) return "";
+  const d = new Date(isoLike);
+  if (Number.isNaN(d.getTime())) return "";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = String(d.getFullYear());
+  return `${dd}/${mm}/${yyyy}`;
+};
+
 const ChatScreen = ({
   userId,
   contactId,
@@ -63,7 +77,10 @@ const ChatScreen = ({
   const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
   const socket = useContext(WebSocketContext);
   const isHost = dashboardType === "host";
-  const { bookingDetails } = isHost ? useFetchBookingDetails(userId, contactId) : useFetchBookingDetails(contactId, userId);
+
+  const { bookingDetails } = isHost
+    ? useFetchBookingDetails(userId, contactId)
+    : useFetchBookingDetails(contactId, userId);
 
   const resolvedContactId = useMemo(() => {
     if (contactId && contactId !== userId) return contactId;
@@ -87,8 +104,8 @@ const ChatScreen = ({
 
   const [newMessage, setNewMessage] = useState("");
   const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
-  const [messageSearch, setMessageSearch] = useState("");
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
+
   const wsMessages = socket?.messages || [];
   const addedMessageIds = useRef(new Set());
   const chatContainerRef = useRef(null);
@@ -104,9 +121,7 @@ const ChatScreen = ({
   };
 
   useEffect(() => {
-    if (resolvedContactId) {
-      fetchMessages(resolvedContactId, threadId);
-    }
+    if (resolvedContactId) fetchMessages(resolvedContactId, threadId);
   }, [userId, resolvedContactId, threadId, fetchMessages]);
 
   useEffect(() => {
@@ -128,6 +143,7 @@ const ChatScreen = ({
   const handleSendAutomatedTestMessages = () => {
     if (!resolvedContactId) return;
     const baseTime = Date.now();
+
     const automated = [
       {
         id: `auto-${uuidv4()}`,
@@ -160,9 +176,11 @@ const ChatScreen = ({
         messageType: "wifi_info",
       },
     ];
+
     automated.forEach((m, i) => {
       addNewMessage(m);
       if (m?.id) addedMessageIds.current.add(m.id);
+
       setTimeout(() => {
         if (m?.text) {
           toast.info(<MessageToast contactName={contactName} contactImage={contactImage} message={m.text} />, {
@@ -181,7 +199,8 @@ const ChatScreen = ({
       const recipient = msg?.recipientId || null;
 
       const isRelevant =
-        (sender === userId && recipient === resolvedContactId) || (sender === resolvedContactId && recipient === userId);
+        (sender === userId && recipient === resolvedContactId) ||
+        (sender === resolvedContactId && recipient === userId);
 
       if (!isRelevant) return;
 
@@ -220,7 +239,6 @@ const ChatScreen = ({
       }
 
       const saved = response?.saved || response?.data || null;
-
       const resolvedId = saved?.id || saved?.messageId || saved?.message?.id || uuidv4();
       const resolvedCreatedAt = toIso(saved?.createdAt || saved?.message?.createdAt || Date.now());
 
@@ -263,14 +281,12 @@ const ChatScreen = ({
 
   if (!resolvedContactId) return null;
 
-  const visibleMessages = messageSearch
-    ? messages.filter((m) => {
-        const text = (m.text || "").toLowerCase();
-        const urls = (m.fileUrls || []).join(" ").toLowerCase();
-        const term = messageSearch.toLowerCase();
-        return text.includes(term) || urls.includes(term);
-      })
-    : messages;
+  const headerProperty =
+    bookingDetails?.propertyTitle ||
+    bookingDetails?.property_name ||
+    bookingDetails?.propertyName ||
+    bookingDetails?.accoTitle ||
+    "";
 
   return (
     <div className={`${dashboardType}-chat`}>
@@ -281,20 +297,30 @@ const ChatScreen = ({
               <FaArrowLeft />
             </button>
           )}
+
           <img src={contactImage || profileImage} alt={contactName} className="profile-img" />
+
           <div className="chat-header-info">
             <h3>{contactName}</h3>
-            <input
-              type="text"
-              value={messageSearch}
-              onChange={(e) => setMessageSearch(e.target.value)}
-              placeholder="Search messages"
-              className="chat-message-search"
-            />
+            <div className="chat-subline">
+              <span className="pill">{dashboardType === "host" ? "Guest" : "Host"}</span>
+
+              {headerProperty ? <span className="pill">{headerProperty}</span> : null}
+
+              {bookingDetails?.arrivalDate && bookingDetails?.departureDate ? (
+                <span className="pill">
+                  Check-in {bookingDetails.arrivalDate} – Check-out {bookingDetails.departureDate}
+                </span>
+              ) : null}
+            </div>
           </div>
+
           <div className="chat-header-actions">
             <button onClick={handleSendAutomatedTestMessages} className="test-messages-button">
               Test messages
+            </button>
+            <button className="dots" type="button" title="More">
+              <FaEllipsisH />
             </button>
           </div>
         </div>
@@ -304,29 +330,50 @@ const ChatScreen = ({
             <p>Loading messages...</p>
           ) : error && !isDemoConversation ? (
             <p>{String(error)}</p>
-          ) : visibleMessages.length === 0 ? (
+          ) : messages.length === 0 ? (
             <p>No messages yet. Say hello 👋</p>
           ) : (
-            visibleMessages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                userId={userId}
-                contactName={contactName}
-                dashboardType={dashboardType}
-              />
-            ))
+            (() => {
+              let lastDay = null;
+
+              return messages.map((m) => {
+                const iso = m?.createdAt || "";
+                const dayKey = iso ? String(iso).slice(0, 10) : null;
+                const showDay = dayKey && dayKey !== lastDay;
+                if (showDay) lastDay = dayKey;
+
+                return (
+                  <div key={m.id}>
+                    {showDay && (
+                      <div className="chat-date-separator">
+                        {formatChipDate(iso)}
+                      </div>
+                    )}
+
+                    <ChatMessage
+                      message={m}
+                      userId={userId}
+                      contactName={contactName}
+                      contactImage={contactImage}
+                      dashboardType={dashboardType}
+                    />
+                  </div>
+                );
+              });
+            })()
           )}
         </div>
 
         <div className="chat-input">
           <div className="attachment-area">
             <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+
             {uploadedFileUrls.length > 0 && (
               <button
                 className="inline-upload-preview"
                 onClick={() => setShowPreviewPopover((s) => !s)}
-                title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}>
+                title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
+              >
                 <img src={uploadedFileUrls[0]} alt="First attachment preview" />
                 {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
               </button>
@@ -342,9 +389,7 @@ const ChatScreen = ({
                 placeholder="Type a message..."
                 onKeyUp={(e) => {
                   if (e.key === "Enter") {
-                    if ((newMessage?.length || 0) <= 200) {
-                      handleSendMessage();
-                    }
+                    if ((newMessage?.length || 0) <= 200) handleSendMessage();
                   }
                 }}
               />
@@ -352,7 +397,8 @@ const ChatScreen = ({
                 onClick={handleSendMessage}
                 className="message-input-send-button"
                 disabled={sending || (newMessage?.length || 0) > 200}
-                title="Send">
+                title="Send"
+              >
                 <FaPaperPlane />
               </button>
             </div>
@@ -372,6 +418,7 @@ const ChatScreen = ({
                   <FaTimes />
                 </button>
               </div>
+
               <div className="preview-grid">
                 {uploadedFileUrls.map((url, index) => (
                   <div className="preview-item" key={`${url}-${index}`}>
@@ -379,7 +426,8 @@ const ChatScreen = ({
                     <button
                       className="remove-thumb"
                       title="Remove"
-                      onClick={() => setUploadedFileUrls((prev) => prev.filter((u) => u !== url))}>
+                      onClick={() => setUploadedFileUrls((prev) => prev.filter((u) => u !== url))}
+                    >
                       <FaTimes />
                     </button>
                   </div>

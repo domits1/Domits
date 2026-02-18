@@ -4,11 +4,15 @@ import { WebSocketProvider } from "../../features/hostdashboard/hostmessages/con
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
 import { useUser } from "../../features/hostdashboard/hostmessages/context/AuthContext";
 
+import useFetchContacts from "../../features/hostdashboard/hostmessages/hooks/useFetchContacts";
+
 import ContactList from "./ContactList";
 import ChatScreen from "./ChatScreen";
 import BookingTab from "./BookingTab";
+import NewContactModal from "./NewContactModal";
 
 import "../../features/hostdashboard/hostmessages/styles/sass/hostMessages.scss";
+import "./messagesV2.scss";
 
 const Messages = ({ dashboardType }) => {
   return (
@@ -29,8 +33,12 @@ const MessagesContent = ({ dashboardType }) => {
   const [message, setMessage] = useState([]);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
+  const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
+
   const isMobile = screenWidth < 768;
-  const isTablet = screenWidth >= 768 && screenWidth < 1440;
+  const isTablet = screenWidth >= 768 && screenWidth < 1280;
+
+  const { contacts, pendingContacts, loading: contactsLoading, setContacts } = useFetchContacts(userId, dashboardType);
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -64,56 +72,73 @@ const MessagesContent = ({ dashboardType }) => {
     setMessage(sentMessage);
   };
 
-  const showContactList = isMobile ? !selectedContactId : isTablet ? !selectedContactId : true;
-  const showChatScreen = isMobile ? !!selectedContactId : isTablet ? !!selectedContactId : true;
+  const showContactList = isMobile ? !selectedContactId : true;
+  const showChatScreen = isMobile ? !!selectedContactId : true;
+
+  const showDetailsPanel = !isMobile && !isTablet; // desktop only
 
   return (
-    <div className={`${dashboardType}-dashboard-page-body`}>
+    <div className={`${dashboardType}-dashboard-page-body messages-v2`}>
       <WebSocketProvider userId={userId} token={accessToken}>
         {userId ? (
-          <div className={`${dashboardType}-chat-components`}>
-            {showContactList && (
-              <ContactList
-                userId={userId}
-                onContactClick={handleContactClick}
-                onCloseChat={handleCloseChat}
-                message={message}
-                dashboardType={dashboardType}
-                isChatOpen={!!selectedContactId}
-                activeContactId={selectedContactId}
-              />
-            )}
-
-            {isMobile && selectedContactId && (
-              <button onClick={handleBackToContacts} className="ContactsBack-button">
-                ← Back to contacts
+          <>
+            <div className="messages-v2-header">
+              <div />
+              <h1 className="messages-v2-title">Messages</h1>
+              <button className="messages-v2-new" onClick={() => setIsNewMessageOpen(true)}>
+                + New Message
               </button>
-            )}
+            </div>
 
-            {showChatScreen && (
-              <ChatScreen
-                userId={userId}
-                handleContactListMessage={handleContactListMessage}
-                contactId={selectedContactId}
-                contactName={selectedContactName}
-                contactImage={selectedContactImage}
-                threadId={selectedThreadId}
-                onBack={isTablet ? handleBackToContacts : null}
-                dashboardType={dashboardType}
-              />
-            )}
+            <NewContactModal
+              isOpen={isNewMessageOpen}
+              onClose={() => setIsNewMessageOpen(false)}
+              onCreate={(newContact) => setContacts((prev) => [newContact, ...(Array.isArray(prev) ? prev : [])])}
+              userId={userId}
+              dashboardType={dashboardType}
+            />
 
-            {showChatScreen && (
-              <div className={`${dashboardType}-booking-tab-overlay`}>
-                <BookingTab
-                  userId={userId}
-                  contactId={selectedContactId}
-                  contactName={selectedContactName}
-                  dashboardType={dashboardType}
-                />
-              </div>
-            )}
-          </div>
+            <div className="messages-v2-grid">
+              {showContactList && (
+                <div className="messages-v2-card messages-v2-contactlist">
+                  <ContactList
+                    userId={userId}
+                    onContactClick={handleContactClick}
+                    onCloseChat={handleCloseChat}
+                    message={message}
+                    dashboardType={dashboardType}
+                    isChatOpen={!!selectedContactId}
+                    activeContactId={selectedContactId}
+                    contacts={contacts}
+                    pendingContacts={pendingContacts}
+                    loading={contactsLoading}
+                    setContacts={setContacts}
+                  />
+                </div>
+              )}
+
+              {showChatScreen && (
+                <div className="messages-v2-card messages-v2-chat">
+                  <ChatScreen
+                    userId={userId}
+                    handleContactListMessage={handleContactListMessage}
+                    contactId={selectedContactId}
+                    contactName={selectedContactName}
+                    contactImage={selectedContactImage}
+                    threadId={selectedThreadId}
+                    onBack={isTablet ? handleBackToContacts : null}
+                    dashboardType={dashboardType}
+                  />
+                </div>
+              )}
+
+              {showDetailsPanel && (
+                <div className="messages-v2-card">
+                  <BookingTab userId={userId} contactId={selectedContactId} contactName={selectedContactName} dashboardType={dashboardType} />
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <div>Loading user info...</div>
         )}

@@ -1,61 +1,39 @@
-import useUpdateContactRequest from '../../features/hostdashboard/hostmessages/hooks/useUpdateContactRequest';
-import profileImage from './domits-logo.jpg';
+import React, { useMemo } from "react";
+import profileImage from "./domits-logo.jpg";
 
+const formatTime = (v) => {
+  if (!v) return "";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
 
-const ContactItem = ({ contact, isPending, setContacts, selected, userId, dashboardType }) => {
-    const isGuest = dashboardType === 'guest';
-    const { updateContactRequest } = useUpdateContactRequest(setContacts);
-    const accoImage = contact.accoImage;
-    const bookingStatus = contact.bookingStatus;
+const ContactItem = ({ contact, selected }) => {
+  const time = useMemo(() => formatTime(contact?.latestMessage?.createdAt), [contact?.latestMessage?.createdAt]);
+  const subtitle = contact?.latestMessage?.text ? contact.latestMessage.text : "No message history yet";
+  const meta = contact?.propertyName || contact?.accoName || contact?.bookingProperty || "";
 
-    const handleAccept = async () => {
-        try {
-            await updateContactRequest(contact.ID, 'accepted');
-        } catch (err) {
-            setError('Error accepting the contact request.');
-        }
-    };
+  return (
+    <div className={`contact-item-content ${selected ? "selected" : ""}`}>
+      <div className="contact-item-image-container">
+        <img src={contact.profileImage || profileImage} alt="Profile" className="contact-item-profile-image" />
+        <span className="contact-online-dot" />
+      </div>
 
-    const handleReject = async () => {
-        try {
-            await updateContactRequest(contact.ID, 'rejected');
-        } catch (err) {
-            setError('Error rejecting the contact request.');
-        }
-    };
-
-    return (
-        <div className={`contact-item-content ${selected ? 'selected' : ''} ${!accoImage ? 'no-accommodation-image' : ''}`}>
-            <div className="contact-item-image-container">
-                {accoImage && (
-                    <img src={accoImage} alt="Accommodation" className="contact-item-accommodation-image" />
-                )}
-                <img src={contact.profileImage || profileImage} alt="Profile" className="contact-item-profile-image" />
-            </div>
-
-            <div className="contact-item-text-container">
-                <p className="contact-item-full-name">{contact.givenName}</p>
-
-                {!isPending && (
-                    <p className="contact-item-subtitle">
-                        {bookingStatus === "Accepted" && <p id='status'>Reservation approved</p>}
-                        {bookingStatus === "Pending" && <p id='status'>Inquiry sent</p>}
-                        {bookingStatus === "Failed" && <p id='status'>Reservation unsuccessful</p>}
-                        {contact.latestMessage?.text
-                            ? contact.latestMessage.text
-                            : "No message history yet"}
-                    </p>
-                )}
-
-                {isPending && setContacts && (
-                    <div className="contact-item-buttons-container">
-                        <button onClick={handleAccept} className="accept-button">Accept</button>
-                        <button onClick={handleReject} className="reject-button">Deny</button>
-                    </div>
-                )}
-            </div>
+      <div className="contact-item-text-container">
+        <div className="contact-item-title-row">
+          <p className="contact-item-full-name">{contact.givenName || "Unknown"}</p>
+          <p className="contact-item-time">{time}</p>
         </div>
-    );
+
+        <p className="contact-item-subtitle">
+          {subtitle}
+          {meta ? <span className="contact-item-meta">{meta}</span> : null}
+          {(contact?.unreadCount || 0) > 0 ? <span className="contact-unread-badge">{contact.unreadCount}</span> : null}
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default ContactItem;
