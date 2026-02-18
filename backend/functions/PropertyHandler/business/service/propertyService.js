@@ -40,10 +40,10 @@ export class PropertyService {
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
   }
 
-  async create(property) {
+  async create(property, { skipImages = false } = {}) {
     await this.createBasePropertyInfo(property.property);
 
-    await Promise.all([
+    const tasks = [
       this.createAmenities(property.propertyAmenities),
       this.createAvailability(property.propertyAvailabilities),
       this.createCheckIn(property.propertyCheckIn),
@@ -52,10 +52,13 @@ export class PropertyService {
       this.createPricing(property.propertyPricing),
       this.createRules(property.propertyRules),
       this.createPropertyType(property.propertyType),
-      this.createImages(property.propertyImages),
       this.createAvailabilityRestrictions(property.propertyAvailabilityRestrictions),
       this.createPropertyTestStatus(property.propertyTestStatus),
-    ]);
+    ];
+    if (!skipImages) {
+      tasks.push(this.createImages(property.propertyImages));
+    }
+    await Promise.all(tasks);
     if (property.propertyType.property_type === "Boat" || property.propertyType.property_type === "Camper") {
       await this.createTechnicalDetails(property.propertyTechnicalDetails);
     }
@@ -315,7 +318,8 @@ export class PropertyService {
   }
 
   async createAvailability(availabilities) {
-    for (const availability of availabilities) {
+    const availabilityList = Array.isArray(availabilities) ? availabilities : [];
+    for (const availability of availabilityList) {
       const result = await this.propertyAvailabilityRepository.create(availability);
       if (!result) {
         throw new DatabaseException(`Failed to register property availability.`);

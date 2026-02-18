@@ -20,7 +20,34 @@ $border-hover-color: #007bff;
 .photo-gallery-title {
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
+}
+
+.photo-gallery-header {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+
+  .photo-gallery-title {
+    margin: 0;
+  }
+}
+
+.photo-gallery-header-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0056a3;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.photo-gallery-subtitle {
+  margin: 0 0 16px;
+  color: #2e3c4d;
+  font-size: 14px;
 }
 
 .photo-gallery-section {
@@ -115,12 +142,27 @@ $border-hover-color: #007bff;
 }
 
 .add-more-box {
+  display: flex;
   align-items: center;
+  justify-content: center;
   text-align: center;
+  border-style: dashed;
+  color: #8c8c8c;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  appearance: none;
 
-  p {
-    padding: 11.5vh;
-    text-align: center;
+  .drag-drop-content {
+    max-width: 90%;
+  }
+
+  .drag-drop-title {
+    font-size: 12px;
+  }
+
+  .drag-drop-subtitle {
+    font-size: 11px;
   }
 }
 
@@ -144,7 +186,9 @@ $border-hover-color: #007bff;
 }
 
 .drag-drop-area {
-  width: 30%;
+  width: 60%;
+  min-width: 280px;
+  max-width: 640px;
   height: 200px;
   border: 2px dashed $domits-host-border-color;
   border-radius: 10px;
@@ -152,14 +196,134 @@ $border-hover-color: #007bff;
   justify-content: center;
   align-items: center;
   text-align: center;
-  color: #aaa;
+  color: #8c8c8c;
   cursor: pointer;
   transition: border-color 0.3s ease, background-color 0.3s ease;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  appearance: none;
 
   &.drag-over {
     border-color: $border-hover-color;
     background-color: #f0f8ff;
     color: $border-hover-color;
   }
+
+  &:focus-visible {
+    outline: 2px solid $border-hover-color;
+    outline-offset: 2px;
+  }
 }
 
+.drag-drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.drag-drop-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg,
+  img {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+
+.drag-drop-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.drag-drop-subtitle {
+  font-size: 12px;
+  margin: 0;
+}
+
+.photo-guidelines {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  background: #f8fafd;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: #10345c;
+  }
+
+  ul {
+    margin: 0 0 10px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 6px;
+    color: #1f2d3d;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  a {
+    font-size: 13px;
+    color: #0056a3;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 768px) {
+  .photo-gallery-header {
+    align-items: flex-start;
+    flex-direction: column;
+
+    .photo-gallery-title {
+      line-height: 1.2;
+    }
+  }
+
+  .photo-gallery-header-link {
+    white-space: normal;
+  }
+
+  .photo-gallery-container .photo-gallery-section {
+    width: 100%;
+  }
+
+  .photo-gallery-images {
+    grid-template-columns: 1fr;
+  }
+
+  .photo-gallery-images .large-photo {
+    grid-column: span 1;
+  }
+
+  .photo-gallery-images .large-photo,
+  .photo-gallery-images .small-photo {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  .onboarding-host-div .photo-gallery-images .large-photo .accommodation-thumbnail,
+  .onboarding-host-div .photo-gallery-images .small-photo .file-image,
+  .onboarding-host-div .photo-gallery-images .large-photo img,
+  .onboarding-host-div .photo-gallery-images .small-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #f1f4f8;
+  }
+}

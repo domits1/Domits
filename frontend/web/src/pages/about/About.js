@@ -10,6 +10,7 @@ import nick from "../../images/nick.png";
 
 import Ales from "../../images/about-img/Ales.jpg";
 import Chant from "../../images/about-img/Chant.jpg";
+import Chiel from "../../images/about-img/Chiel.png";
 import Justin from "../../images/about-img/Justin.jpg";
 import Robert from "../../images/about-img/Robert.jpg";
 import Robin from "../../images/about-img/Robin.jpg";
@@ -18,6 +19,9 @@ import Jared from "../../images/about-img/Jared.jpg";
 import Sander from "../../images/about-img/Sander.png";
 import Bekir from "../../images/about-img/Bekir.png";
 import Kacper from "../../images/about-img/Kacper.png";
+import Sakhi from "../../images/about-img/Sakhi.png";
+import Omer from "../../images/about-img/Omer.jpg";
+import Ameen from "../../images/about-img/Ameen.jpg";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -39,7 +43,6 @@ function About() {
   const founderMembers = [
     { name: "Stefan", src: stefan, role: aboutContent.crew.founder },
     { name: "Robert", src: Robert, role: aboutContent.crew.engineeringManager },
-    
   ];
 
   const developerMembers = [
@@ -61,6 +64,7 @@ function About() {
     { name: "Alessio", src: standard, role: aboutContent.crew.developer },
     { name: "Asif", src: standard, role: aboutContent.crew.developer },
     { name: "Burak", src: standard, role: aboutContent.crew.developer },
+    { name: "Chiel", src: Chiel, role: aboutContent.crew.developer},
     { name: "Gurpreet", src: standard, role: aboutContent.crew.developer },
     { name: "Ho Tin", src: standard, role: aboutContent.crew.developer },
     { name: "Ken", src: standard, role: aboutContent.crew.developer },
@@ -68,6 +72,10 @@ function About() {
     { name: "Stephanie", src: standard, role: aboutContent.crew.developer },
     { name: "Tom", src: standard, role: aboutContent.crew.developer },
     { name: "Yusuf", src: standard, role: aboutContent.crew.developer },
+    { name: "Sakhi", src: Sakhi, role: aboutContent.crew.developer },
+    { name: "Omer", src: Omer, role: aboutContent.crew.developer },
+    { name: "Ameen", src: Ameen, role: aboutContent.crew.developer },
+   
   ]
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -218,7 +226,7 @@ function About() {
             ))}
           </div>
         </div>
-        
+
         <div className="about__footer">
           <p className="about__footer-text">{aboutContent.footerText.description}</p>
           <p className="about__footer-text">{aboutContent.footerText.description2}</p>

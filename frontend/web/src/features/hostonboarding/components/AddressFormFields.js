@@ -5,7 +5,7 @@ import LabeledInput from "./LabeledInput";
 function AddressFormFields({ location, setLocation, countryOptions }) {
 
   const handleChange = (field, value) => {
-    setLocation((prev) => ({ ...prev, [field]: value }));
+    setLocation({ [field]: value });
   };
 
   return (
@@ -37,7 +37,7 @@ function AddressFormFields({ location, setLocation, countryOptions }) {
       <LabeledInput
         label="House number + house number extension, ex: 123 a"
         name="houseNumber"
-        value={location.houseNumber}
+        value={location.houseNumber || ""}
         onChange={(e) => handleChange("houseNumber", e.target.value)}
         placeholder="Enter your house number + house number extension"
         required
