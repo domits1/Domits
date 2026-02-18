@@ -5,9 +5,12 @@ import { boatData } from "../constants/boatData"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import OnboardingButton from "../components/OnboardingButton"
 import { useBuilder } from "../../../context/propertyBuilderContext";
+import OnboardingProgress from "../components/OnboardingProgress";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
 function BoatTypeView() {
   const builder = useBuilder();
+  const { prevPath, nextPath } = useOnboardingFlow();
   const setBoatType = useFormStoreHostOnboarding((state) => state.setBoatType)
   const selectedBoatType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.boatType,
@@ -15,6 +18,7 @@ function BoatTypeView() {
   return (
     <div className="onboarding-host-div">
       <main className="page-body">
+        <OnboardingProgress />
         <h2 className="onboardingSectionTitle">
           What type of boat do you own?
         </h2>
@@ -27,7 +31,7 @@ function BoatTypeView() {
         <nav className="onboarding-button-box">
           <OnboardingButton
             class="OnboardingNextButton"
-            routePath="/hostonboarding"
+            routePath={prevPath || "/hostonboarding"}
             btnText="Back"
           />
           <OnboardingButton
@@ -35,8 +39,9 @@ function BoatTypeView() {
               builder.addPropertyType({type: "Boat", spaceType: selectedBoatType});
               console.log(builder);
             }}
-            routePath="/hostonboarding/boat/address"
+            routePath={nextPath || "/hostonboarding/boat/address"}
             btnText="Proceed"
+            disabled={!selectedBoatType}
           />
         </nav>
       </main>
