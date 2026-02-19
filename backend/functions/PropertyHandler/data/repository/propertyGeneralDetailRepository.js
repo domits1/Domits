@@ -2,7 +2,7 @@ import { GeneralDetailMapping } from "../../util/mapping/generalDetail.js";
 import Database from "database";
 import {General_Details} from "database/models/General_Details";
 import {Property_General_Detail} from "database/models/Property_General_Detail";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 export class PropertyGeneralDetailRepository {
 
@@ -63,7 +63,7 @@ export class PropertyGeneralDetailRepository {
         for (const detail of details) {
             const normalizedValue = Number(detail.value);
             if (!Number.isFinite(normalizedValue)) {
-                throw new Error(`Failed to update ${detail.detail}: value must be a number.`);
+                throw new TypeError(`Failed to update ${detail.detail}: value must be a number.`);
             }
 
             const existing = await client

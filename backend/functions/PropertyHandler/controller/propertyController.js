@@ -287,243 +287,26 @@ export class PropertyController {
     async updatePropertyOverview(event) {
         try {
             const accessToken = event.headers.Authorization || event.headers.authorization;
-            const eventBody = JSON.parse(event.body || "{}");
-            const propertyId = eventBody.propertyId || eventBody.property;
-            const title = eventBody.title;
-            const description = eventBody.description;
-            const subtitle = eventBody.subtitle;
-            const capacity = eventBody.capacity;
-            const location = eventBody.location;
-            const amenities = eventBody.amenities;
-            const rules = eventBody.rules;
-
-            if (!propertyId) {
-                return {
-                    statusCode: 400,
-                    headers: responseHeaders,
-                    body: JSON.stringify({ message: "Missing propertyId." }),
-                };
+            const rawBody = JSON.parse(event.body || "{}");
+            const overviewPayload = this.extractOverviewPayload(rawBody);
+            const requestValidationMessage = this.validateOverviewPayload(overviewPayload);
+            if (requestValidationMessage) {
+                return this.badRequest(requestValidationMessage);
             }
 
-            if (typeof title !== "string" || typeof description !== "string") {
-                return {
-                    statusCode: 400,
-                    headers: responseHeaders,
-                    body: JSON.stringify({ message: "Title and description must be strings." }),
-                };
-            }
-            if (subtitle !== undefined && typeof subtitle !== "string") {
-                return {
-                    statusCode: 400,
-                    headers: responseHeaders,
-                    body: JSON.stringify({ message: "Subtitle must be a string." }),
-                };
-            }
-            if (capacity !== undefined && (typeof capacity !== "object" || capacity === null || Array.isArray(capacity))) {
-                return {
-                    statusCode: 400,
-                    headers: responseHeaders,
-                    body: JSON.stringify({ message: "Capacity must be an object." }),
-                };
-            }
-            if (location !== undefined && (typeof location !== "object" || location === null || Array.isArray(location))) {
-                return {
-                    statusCode: 400,
-                    headers: responseHeaders,
-                    body: JSON.stringify({ message: "Location must be an object." }),
-                };
-            }
-            if (amenities !== undefined) {
-                if (!Array.isArray(amenities)) {
-                    return {
-                        statusCode: 400,
-                        headers: responseHeaders,
-                        body: JSON.stringify({ message: "Amenities must be an array." }),
-                    };
-                }
-                const hasInvalidAmenityValue = amenities.some(
-                    (amenityId) => typeof amenityId !== "string" && typeof amenityId !== "number"
-                );
-                if (hasInvalidAmenityValue) {
-                    return {
-                        statusCode: 400,
-                        headers: responseHeaders,
-                        body: JSON.stringify({ message: "Amenities must contain string or number IDs." }),
-                    };
-                }
-            }
-            if (rules !== undefined) {
-                if (!Array.isArray(rules)) {
-                    return {
-                        statusCode: 400,
-                        headers: responseHeaders,
-                        body: JSON.stringify({ message: "Rules must be an array." }),
-                    };
-                }
-                const hasInvalidRuleEntry = rules.some(
-                    (rule) =>
-                        !rule ||
-                        typeof rule !== "object" ||
-                        Array.isArray(rule) ||
-                        typeof rule.rule !== "string" ||
-                        typeof rule.value !== "boolean"
-                );
-                if (hasInvalidRuleEntry) {
-                    return {
-                        statusCode: 400,
-                        headers: responseHeaders,
-                        body: JSON.stringify({ message: "Rules must contain { rule: string, value: boolean }." }),
-                    };
-                }
-            }
+            const normalizedOverviewPayload = this.normalizeOverviewPayload(overviewPayload);
 
-            const normalizedTitle = title.trim();
-            const normalizedDescription = description.trim();
-            const normalizedSubtitle = typeof subtitle === "string" ? subtitle.trim() : undefined;
-            if (!normalizedTitle || !normalizedDescription) {
-                return {
-                    statusCode: 400,
-                    headers: responseHeaders,
-                    body: JSON.stringify({ message: "Title and description cannot be empty." }),
-                };
-            }
-
-            const normalizeCapacityNumber = (value, field) => {
-                if (value === undefined || value === null) {
-                    return undefined;
-                }
-                const parsed = Number(value);
-                if (!Number.isFinite(parsed) || parsed < 0) {
-                    throw new Error(`Invalid capacity field: ${field}.`);
-                }
-                return Math.trunc(parsed);
-            };
-
-            const normalizeLocationPayload = (locationPayload) => {
-                if (!locationPayload) {
-                    return undefined;
-                }
-                const parseHouseNumberString = (houseNumberValue) => {
-                    const normalizedValue = String(houseNumberValue || "").trim();
-                    if (!normalizedValue) {
-                        return null;
-                    }
-
-                    let digitEndIndex = 0;
-                    while (
-                        digitEndIndex < normalizedValue.length &&
-                        normalizedValue[digitEndIndex] >= "0" &&
-                        normalizedValue[digitEndIndex] <= "9"
-                    ) {
-                        digitEndIndex += 1;
-                    }
-
-                    if (digitEndIndex === 0) {
-                        return null;
-                    }
-
-                    const parsedHouseNumber = Number(normalizedValue.slice(0, digitEndIndex));
-                    if (!Number.isFinite(parsedHouseNumber)) {
-                        return null;
-                    }
-
-                    return {
-                        houseNumber: Math.trunc(parsedHouseNumber),
-                        houseNumberExtension: normalizedValue.slice(digitEndIndex).trim(),
-                    };
-                };
-
-                const street = typeof locationPayload.street === "string" ? locationPayload.street.trim() : "";
-                const postalCode = typeof locationPayload.postalCode === "string" ? locationPayload.postalCode.trim() : "";
-                const city = typeof locationPayload.city === "string" ? locationPayload.city.trim() : "";
-                const country = typeof locationPayload.country === "string" ? locationPayload.country.trim() : "";
-                const extensionFromBody =
-                    typeof locationPayload.houseNumberExtension === "string"
-                        ? locationPayload.houseNumberExtension.trim()
-                        : "";
-
-                const houseNumberRaw = locationPayload.houseNumber;
-                let houseNumber = null;
-                let houseNumberExtension = extensionFromBody;
-                if (typeof houseNumberRaw === "number" && Number.isFinite(houseNumberRaw)) {
-                    houseNumber = Math.trunc(houseNumberRaw);
-                } else if (typeof houseNumberRaw === "string") {
-                    const parsedHouseNumber = parseHouseNumberString(houseNumberRaw);
-                    if (!parsedHouseNumber) {
-                        throw new Error("Location houseNumber must start with a number.");
-                    }
-                    houseNumber = parsedHouseNumber.houseNumber;
-                    if (!houseNumberExtension) {
-                        houseNumberExtension = parsedHouseNumber.houseNumberExtension;
-                    }
-                }
-
-                if (!street || !postalCode || !city || !country || !Number.isFinite(houseNumber)) {
-                    throw new Error("Location requires street, houseNumber, postalCode, city and country.");
-                }
-
-                return {
-                    street,
-                    houseNumber,
-                    houseNumberExtension,
-                    postalCode,
-                    city,
-                    country,
-                };
-            };
-
-            let normalizedCapacity = undefined;
-            if (capacity) {
-                const normalizedSpaceType = typeof capacity.spaceType === "string" ? capacity.spaceType.trim() : undefined;
-                if (capacity.spaceType !== undefined && !normalizedSpaceType) {
-                    return {
-                        statusCode: 400,
-                        headers: responseHeaders,
-                        body: JSON.stringify({ message: "Capacity spaceType cannot be empty." }),
-                    };
-                }
-
-                normalizedCapacity = {
-                    spaceType: normalizedSpaceType,
-                    guests: normalizeCapacityNumber(capacity.guests, "guests"),
-                    bedrooms: normalizeCapacityNumber(capacity.bedrooms, "bedrooms"),
-                    beds: normalizeCapacityNumber(capacity.beds, "beds"),
-                    bathrooms: normalizeCapacityNumber(capacity.bathrooms, "bathrooms"),
-                };
-            }
-
-            let normalizedLocation = undefined;
-            if (location) {
-                normalizedLocation = normalizeLocationPayload(location);
-            }
-            const normalizedAmenities = Array.isArray(amenities)
-                ? Array.from(new Set(amenities.map((amenityId) => String(amenityId).trim()).filter((amenityId) => amenityId)))
-                : undefined;
-            const normalizedRules = Array.isArray(rules)
-                ? Array.from(
-                    new Map(
-                        rules
-                            .map((rule) => ({
-                                rule: String(rule.rule || "").trim(),
-                                value: Boolean(rule.value),
-                            }))
-                            .filter((rule) => rule.rule)
-                            .map((rule) => [rule.rule, rule])
-                    ).values()
-                )
-                : undefined;
-
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            await this.authManager.authorizeOwnerRequest(accessToken, normalizedOverviewPayload.propertyId);
             await this.propertyService.updatePropertyOverview(
-                propertyId,
-                normalizedTitle,
-                normalizedDescription,
-                normalizedSubtitle,
+                normalizedOverviewPayload.propertyId,
+                normalizedOverviewPayload.title,
+                normalizedOverviewPayload.description,
+                normalizedOverviewPayload.subtitle,
                 {
-                    capacity: normalizedCapacity,
-                    location: normalizedLocation,
-                    amenities: normalizedAmenities,
-                    rules: normalizedRules,
+                    capacity: normalizedOverviewPayload.capacity,
+                    location: normalizedOverviewPayload.location,
+                    amenities: normalizedOverviewPayload.amenities,
+                    rules: normalizedOverviewPayload.rules,
                 }
             );
 
@@ -533,17 +316,8 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            if (
-                error?.message?.startsWith("Invalid capacity field:") ||
-                error?.message?.startsWith("Location ") ||
-                error?.message?.startsWith("Unknown amenity IDs:") ||
-                error?.message?.startsWith("Unknown policy rules:")
-            ) {
-                return {
-                    statusCode: 400,
-                    headers: responseHeaders,
-                    body: JSON.stringify({ message: error.message }),
-                };
+            if (this.isOverviewClientError(error)) {
+                return this.badRequest(error.message);
             }
             return {
                 statusCode: error.statusCode || 500,
@@ -551,6 +325,235 @@ export class PropertyController {
                 body: JSON.stringify(error.message || "Something went wrong, please contact support.")
             }
         }
+    }
+
+    extractOverviewPayload(body) {
+        return {
+            propertyId: body.propertyId || body.property,
+            title: body.title,
+            description: body.description,
+            subtitle: body.subtitle,
+            capacity: body.capacity,
+            location: body.location,
+            amenities: body.amenities,
+            rules: body.rules,
+        };
+    }
+
+    validateOverviewPayload(payload) {
+        const {
+            propertyId,
+            title,
+            description,
+            subtitle,
+            capacity,
+            location,
+            amenities,
+            rules,
+        } = payload;
+
+        if (!propertyId) {
+            return "Missing propertyId.";
+        }
+
+        if (typeof title !== "string" || typeof description !== "string") {
+            return "Title and description must be strings.";
+        }
+
+        if (subtitle !== undefined && typeof subtitle !== "string") {
+            return "Subtitle must be a string.";
+        }
+
+        if (capacity !== undefined && !this.isPlainObject(capacity)) {
+            return "Capacity must be an object.";
+        }
+
+        if (location !== undefined && !this.isPlainObject(location)) {
+            return "Location must be an object.";
+        }
+
+        if (amenities !== undefined) {
+            if (!Array.isArray(amenities)) {
+                return "Amenities must be an array.";
+            }
+            const hasInvalidAmenityValue = amenities.some(
+                (amenityId) => typeof amenityId !== "string" && typeof amenityId !== "number"
+            );
+            if (hasInvalidAmenityValue) {
+                return "Amenities must contain string or number IDs.";
+            }
+        }
+
+        if (rules !== undefined) {
+            if (!Array.isArray(rules)) {
+                return "Rules must be an array.";
+            }
+            const hasInvalidRuleEntry = rules.some(
+                (rule) =>
+                    !rule ||
+                    typeof rule !== "object" ||
+                    Array.isArray(rule) ||
+                    typeof rule.rule !== "string" ||
+                    typeof rule.value !== "boolean"
+            );
+            if (hasInvalidRuleEntry) {
+                return "Rules must contain { rule: string, value: boolean }.";
+            }
+        }
+
+        if (!title.trim() || !description.trim()) {
+            return "Title and description cannot be empty.";
+        }
+
+        if (
+            capacity &&
+            capacity.spaceType !== undefined &&
+            (typeof capacity.spaceType !== "string" || !capacity.spaceType.trim())
+        ) {
+            return "Capacity spaceType cannot be empty.";
+        }
+
+        return null;
+    }
+
+    normalizeOverviewPayload(payload) {
+        return {
+            propertyId: payload.propertyId,
+            title: payload.title.trim(),
+            description: payload.description.trim(),
+            subtitle: typeof payload.subtitle === "string" ? payload.subtitle.trim() : undefined,
+            capacity: payload.capacity ? this.normalizeCapacityPayload(payload.capacity) : undefined,
+            location: payload.location ? this.normalizeLocationPayload(payload.location) : undefined,
+            amenities: Array.isArray(payload.amenities)
+                ? Array.from(new Set(payload.amenities.map((amenityId) => String(amenityId).trim()).filter((amenityId) => amenityId)))
+                : undefined,
+            rules: Array.isArray(payload.rules)
+                ? Array.from(
+                    new Map(
+                        payload.rules
+                            .map((rule) => ({
+                                rule: String(rule.rule || "").trim(),
+                                value: Boolean(rule.value),
+                            }))
+                            .filter((rule) => rule.rule)
+                            .map((rule) => [rule.rule, rule])
+                    ).values()
+                )
+                : undefined,
+        };
+    }
+
+    normalizeCapacityPayload(capacity) {
+        const normalizedSpaceType = typeof capacity.spaceType === "string" ? capacity.spaceType.trim() : undefined;
+        return {
+            spaceType: normalizedSpaceType,
+            guests: this.normalizeCapacityNumber(capacity.guests, "guests"),
+            bedrooms: this.normalizeCapacityNumber(capacity.bedrooms, "bedrooms"),
+            beds: this.normalizeCapacityNumber(capacity.beds, "beds"),
+            bathrooms: this.normalizeCapacityNumber(capacity.bathrooms, "bathrooms"),
+        };
+    }
+
+    normalizeCapacityNumber(value, field) {
+        if (value === undefined || value === null) {
+            return undefined;
+        }
+        const parsedValue = Number(value);
+        if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+            throw new Error(`Invalid capacity field: ${field}.`);
+        }
+        return Math.trunc(parsedValue);
+    }
+
+    normalizeLocationPayload(locationPayload) {
+        const street = typeof locationPayload.street === "string" ? locationPayload.street.trim() : "";
+        const postalCode = typeof locationPayload.postalCode === "string" ? locationPayload.postalCode.trim() : "";
+        const city = typeof locationPayload.city === "string" ? locationPayload.city.trim() : "";
+        const country = typeof locationPayload.country === "string" ? locationPayload.country.trim() : "";
+        const extensionFromBody =
+            typeof locationPayload.houseNumberExtension === "string"
+                ? locationPayload.houseNumberExtension.trim()
+                : "";
+
+        const houseNumberRaw = locationPayload.houseNumber;
+        let houseNumber = null;
+        let houseNumberExtension = extensionFromBody;
+        if (typeof houseNumberRaw === "number" && Number.isFinite(houseNumberRaw)) {
+            houseNumber = Math.trunc(houseNumberRaw);
+        } else if (typeof houseNumberRaw === "string") {
+            const parsedHouseNumber = this.parseHouseNumberString(houseNumberRaw);
+            if (!parsedHouseNumber) {
+                throw new Error("Location houseNumber must start with a number.");
+            }
+            houseNumber = parsedHouseNumber.houseNumber;
+            if (!houseNumberExtension) {
+                houseNumberExtension = parsedHouseNumber.houseNumberExtension;
+            }
+        }
+
+        if (!street || !postalCode || !city || !country || !Number.isFinite(houseNumber)) {
+            throw new Error("Location requires street, houseNumber, postalCode, city and country.");
+        }
+
+        return {
+            street,
+            houseNumber,
+            houseNumberExtension,
+            postalCode,
+            city,
+            country,
+        };
+    }
+
+    parseHouseNumberString(houseNumberValue) {
+        const normalizedValue = String(houseNumberValue || "").trim();
+        if (!normalizedValue) {
+            return null;
+        }
+
+        let digitEndIndex = 0;
+        while (
+            digitEndIndex < normalizedValue.length &&
+            normalizedValue[digitEndIndex] >= "0" &&
+            normalizedValue[digitEndIndex] <= "9"
+        ) {
+            digitEndIndex += 1;
+        }
+
+        if (digitEndIndex === 0) {
+            return null;
+        }
+
+        const parsedHouseNumber = Number(normalizedValue.slice(0, digitEndIndex));
+        if (!Number.isFinite(parsedHouseNumber)) {
+            return null;
+        }
+
+        return {
+            houseNumber: Math.trunc(parsedHouseNumber),
+            houseNumberExtension: normalizedValue.slice(digitEndIndex).trim(),
+        };
+    }
+
+    isPlainObject(value) {
+        return typeof value === "object" && value !== null && !Array.isArray(value);
+    }
+
+    isOverviewClientError(error) {
+        return (
+            error?.message?.startsWith("Invalid capacity field:") ||
+            error?.message?.startsWith("Location ") ||
+            error?.message?.startsWith("Unknown amenity IDs:") ||
+            error?.message?.startsWith("Unknown policy rules:")
+        );
+    }
+
+    badRequest(message) {
+        return {
+            statusCode: 400,
+            headers: responseHeaders,
+            body: JSON.stringify({ message }),
+        };
     }
 
     // -------------------------
