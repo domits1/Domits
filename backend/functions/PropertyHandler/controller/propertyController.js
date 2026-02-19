@@ -403,6 +403,36 @@ export class PropertyController {
                 if (!locationPayload) {
                     return undefined;
                 }
+                const parseHouseNumberString = (houseNumberValue) => {
+                    const normalizedValue = String(houseNumberValue || "").trim();
+                    if (!normalizedValue) {
+                        return null;
+                    }
+
+                    let digitEndIndex = 0;
+                    while (
+                        digitEndIndex < normalizedValue.length &&
+                        normalizedValue[digitEndIndex] >= "0" &&
+                        normalizedValue[digitEndIndex] <= "9"
+                    ) {
+                        digitEndIndex += 1;
+                    }
+
+                    if (digitEndIndex === 0) {
+                        return null;
+                    }
+
+                    const parsedHouseNumber = Number(normalizedValue.slice(0, digitEndIndex));
+                    if (!Number.isFinite(parsedHouseNumber)) {
+                        return null;
+                    }
+
+                    return {
+                        houseNumber: Math.trunc(parsedHouseNumber),
+                        houseNumberExtension: normalizedValue.slice(digitEndIndex).trim(),
+                    };
+                };
+
                 const street = typeof locationPayload.street === "string" ? locationPayload.street.trim() : "";
                 const postalCode = typeof locationPayload.postalCode === "string" ? locationPayload.postalCode.trim() : "";
                 const city = typeof locationPayload.city === "string" ? locationPayload.city.trim() : "";
@@ -418,13 +448,13 @@ export class PropertyController {
                 if (typeof houseNumberRaw === "number" && Number.isFinite(houseNumberRaw)) {
                     houseNumber = Math.trunc(houseNumberRaw);
                 } else if (typeof houseNumberRaw === "string") {
-                    const match = houseNumberRaw.trim().match(/^(\d+)\s*(.*)$/);
-                    if (!match) {
+                    const parsedHouseNumber = parseHouseNumberString(houseNumberRaw);
+                    if (!parsedHouseNumber) {
                         throw new Error("Location houseNumber must start with a number.");
                     }
-                    houseNumber = Number(match[1]);
+                    houseNumber = parsedHouseNumber.houseNumber;
                     if (!houseNumberExtension) {
-                        houseNumberExtension = (match[2] || "").trim();
+                        houseNumberExtension = parsedHouseNumber.houseNumberExtension;
                     }
                 }
 

@@ -265,17 +265,24 @@ export default function HostProperty() {
     if (!value) {
       return null;
     }
-    const match = value.match(/^(\d+)\s*(.*)$/);
-    if (!match) {
+
+    let digitEndIndex = 0;
+    while (digitEndIndex < value.length && value[digitEndIndex] >= "0" && value[digitEndIndex] <= "9") {
+      digitEndIndex += 1;
+    }
+
+    if (digitEndIndex === 0) {
       return null;
     }
-    const parsedHouseNumber = Number(match[1]);
+
+    const parsedHouseNumber = Number(value.slice(0, digitEndIndex));
     if (!Number.isFinite(parsedHouseNumber)) {
       return null;
     }
+
     return {
-      houseNumber: parsedHouseNumber,
-      houseNumberExtension: (match[2] || "").trim(),
+      houseNumber: Math.trunc(parsedHouseNumber),
+      houseNumberExtension: value.slice(digitEndIndex).trim(),
     };
   };
 
