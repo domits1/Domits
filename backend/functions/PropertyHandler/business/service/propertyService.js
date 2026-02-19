@@ -105,6 +105,10 @@ export class PropertyService {
       await this.updateAmenities(propertyId, updates.amenities);
     }
 
+    if (updates?.rules) {
+      await this.updateRules(propertyId, updates.rules);
+    }
+
     return updatedProperty;
   }
 
@@ -464,6 +468,10 @@ export class PropertyService {
 
   async getRules(property) {
     return await this.propertyRuleRepository.getRulesByPropertyId(property);
+  }
+
+  async updateRules(propertyId, rules) {
+    await this.propertyRuleRepository.replaceRulesByPropertyId(propertyId, rules);
   }
 
   async createPropertyType(type) {

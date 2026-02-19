@@ -292,6 +292,171 @@
   line-height: 1.35;
 }
 
+.policiesCard {
+  gap: 14px;
+}
+
+.policiesSubtitle {
+  margin: 0;
+  color: #4e4e4e;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.policiesRulesPanel {
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.policiesRulesHeader {
+  background: #f0f0f0;
+  color: #1f1f1f;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+  padding: 12px 14px;
+}
+
+.policiesRulesList {
+  display: flex;
+  flex-direction: column;
+}
+
+.policyRuleRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #ececec;
+  cursor: pointer;
+}
+
+.policyRuleRow:last-child {
+  border-bottom: none;
+}
+
+.policyRuleLabel {
+  color: #1f1f1f;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.policyRuleInput {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.policyRuleSwitch {
+  display: inline-block;
+  background: #9aa3aa;
+  border-radius: 999px;
+  width: 54px;
+  height: 28px;
+  position: relative;
+  transition: background 0.2s ease;
+  flex: 0 0 auto;
+}
+
+.policyRuleSwitch::before {
+  display: block;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  transition: left 0.2s ease;
+  content: "";
+}
+
+.policyRuleInput:checked + .policyRuleSwitch {
+  background: #0d9813;
+}
+
+.policyRuleInput:checked + .policyRuleSwitch::before {
+  left: 30px;
+}
+
+.deletePropertyPanel {
+  border: 1px solid #e3c7c7;
+  border-radius: 8px;
+  background: #f1e3e3;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.deletePropertyText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deletePropertyTitle {
+  margin: 0;
+  color: #1e1e1e;
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.deletePropertyDescription {
+  margin: 0;
+  color: #5f5f5f;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.deletePropertyButton {
+  border: none;
+  border-radius: 8px;
+  background: #e11818;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1.15;
+  font-weight: 700;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.deletePropertyButton:hover {
+  background: #c60d0d;
+}
+
+.deletePropertyButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.policiesHint {
+  margin: 2px 0 0;
+  color: #6a6a6a;
+  font-size: 13px;
+  line-height: 1.35;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.policiesHintIcon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.85;
+}
+
 .placeholderBadge {
   margin: 0;
   display: inline-flex;
@@ -557,6 +722,27 @@
   .amenityCategoryTitle {
     font-size: 15px;
   }
+
+  .policiesSubtitle,
+  .policyRuleLabel {
+    font-size: 15px;
+  }
+
+  .policiesRulesHeader {
+    font-size: 16px;
+  }
+
+  .deletePropertyTitle {
+    font-size: 18px;
+  }
+
+  .deletePropertyDescription {
+    font-size: 14px;
+  }
+
+  .deletePropertyButton {
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -585,6 +771,14 @@
 
   .amenityCheckboxGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .deletePropertyPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .deletePropertyButton {
+    width: 100%;
   }
 }
 

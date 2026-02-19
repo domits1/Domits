@@ -295,6 +295,7 @@ export class PropertyController {
             const capacity = eventBody.capacity;
             const location = eventBody.location;
             const amenities = eventBody.amenities;
+            const rules = eventBody.rules;
 
             if (!propertyId) {
                 return {
@@ -348,6 +349,30 @@ export class PropertyController {
                         statusCode: 400,
                         headers: responseHeaders,
                         body: JSON.stringify({ message: "Amenities must contain string or number IDs." }),
+                    };
+                }
+            }
+            if (rules !== undefined) {
+                if (!Array.isArray(rules)) {
+                    return {
+                        statusCode: 400,
+                        headers: responseHeaders,
+                        body: JSON.stringify({ message: "Rules must be an array." }),
+                    };
+                }
+                const hasInvalidRuleEntry = rules.some(
+                    (rule) =>
+                        !rule ||
+                        typeof rule !== "object" ||
+                        Array.isArray(rule) ||
+                        typeof rule.rule !== "string" ||
+                        typeof rule.value !== "boolean"
+                );
+                if (hasInvalidRuleEntry) {
+                    return {
+                        statusCode: 400,
+                        headers: responseHeaders,
+                        body: JSON.stringify({ message: "Rules must contain { rule: string, value: boolean }." }),
                     };
                 }
             }
@@ -444,6 +469,19 @@ export class PropertyController {
             const normalizedAmenities = Array.isArray(amenities)
                 ? Array.from(new Set(amenities.map((amenityId) => String(amenityId).trim()).filter((amenityId) => amenityId)))
                 : undefined;
+            const normalizedRules = Array.isArray(rules)
+                ? Array.from(
+                    new Map(
+                        rules
+                            .map((rule) => ({
+                                rule: String(rule.rule || "").trim(),
+                                value: Boolean(rule.value),
+                            }))
+                            .filter((rule) => rule.rule)
+                            .map((rule) => [rule.rule, rule])
+                    ).values()
+                )
+                : undefined;
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
             await this.propertyService.updatePropertyOverview(
@@ -455,6 +493,7 @@ export class PropertyController {
                     capacity: normalizedCapacity,
                     location: normalizedLocation,
                     amenities: normalizedAmenities,
+                    rules: normalizedRules,
                 }
             );
 
@@ -467,7 +506,8 @@ export class PropertyController {
             if (
                 error?.message?.startsWith("Invalid capacity field:") ||
                 error?.message?.startsWith("Location ") ||
-                error?.message?.startsWith("Unknown amenity IDs:")
+                error?.message?.startsWith("Unknown amenity IDs:") ||
+                error?.message?.startsWith("Unknown policy rules:")
             ) {
                 return {
                     statusCode: 400,

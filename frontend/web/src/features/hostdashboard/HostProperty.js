@@ -7,6 +7,7 @@ import styles from "./HostProperty.module.css";
 import amenitiesCatalogue from "../../store/amenities";
 import arrowDownIcon from "../../images/arrow-down-icon.svg";
 import arrowUpIcon from "../../images/arrow-up-icon.svg";
+import infoIcon from "../../images/icons/info.png";
 
 const PROPERTY_API_BASE = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 const TABS = ["Overview", "Photos", "Amenities", "Pricing", "Availability", "Policies"];
@@ -28,6 +29,19 @@ const AMENITY_CATEGORY_ORDER = [
   "ExtraServices",
   "EcoFriendly",
 ];
+const POLICY_RULE_CONFIG = [
+  { rule: "SmokingAllowed", label: "No smoking", invert: true },
+  { rule: "PetsAllowed", label: "No pets", invert: true },
+  { rule: "Parties/EventsAllowed", label: "No parties or events", invert: true },
+  { rule: "SuitableForChildren", label: "Suitable for children", invert: false },
+  { rule: "SuitableForInfants", label: "Suitable for infants", invert: false },
+];
+
+const createInitialPolicyRules = () =>
+  POLICY_RULE_CONFIG.reduce((accumulator, ruleConfig) => {
+    accumulator[ruleConfig.rule] = false;
+    return accumulator;
+  }, {});
 
 export default function HostProperty() {
   const navigate = useNavigate();
@@ -42,6 +56,7 @@ export default function HostProperty() {
   const [selectedTab, setSelectedTab] = useState("Overview");
   const [hostProperties, setHostProperties] = useState([]);
   const [selectedAmenityIds, setSelectedAmenityIds] = useState([]);
+  const [policyRules, setPolicyRules] = useState(createInitialPolicyRules);
   const [expandedAmenityCategories, setExpandedAmenityCategories] = useState({});
   const [form, setForm] = useState({
     title: "",
@@ -141,6 +156,7 @@ export default function HostProperty() {
           hostPropertiesData = await hostPropertiesResponse.json();
         }
         const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
+        const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
         const property = data?.property || {};
         const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
         const locationData = data?.location || {};
@@ -181,6 +197,17 @@ export default function HostProperty() {
         setSelectedAmenityIds(
           propertyAmenities.map((amenity) => String(amenity?.amenityId || "")).filter((amenityId) => amenityId)
         );
+        setPolicyRules(() => {
+          const nextRules = createInitialPolicyRules();
+          propertyRules.forEach((rule) => {
+            const ruleName = String(rule?.rule || "");
+            if (!Object.prototype.hasOwnProperty.call(nextRules, ruleName)) {
+              return;
+            }
+            nextRules[ruleName] = Boolean(rule?.value);
+          });
+          return nextRules;
+        });
 
         const mappedHostProperties = (Array.isArray(hostPropertiesData) ? hostPropertiesData : [])
           .map((accommodation) => ({
@@ -307,6 +334,7 @@ export default function HostProperty() {
 
   const saveOverview = async () => {
     const isSavingAmenities = selectedTab === "Amenities";
+    const isSavingPolicies = selectedTab === "Policies";
     const normalizedTitle = form.title.trim();
     const normalizedSubtitle = form.subtitle.trim();
     const normalizedDescription = form.description.trim();
@@ -330,6 +358,12 @@ export default function HostProperty() {
       };
       const locationPayload = getLocationPayload();
       const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map((amenityId) => String(amenityId)) : undefined;
+      const rulesPayload = isSavingPolicies
+        ? POLICY_RULE_CONFIG.map((ruleConfig) => ({
+            rule: ruleConfig.rule,
+            value: Boolean(policyRules[ruleConfig.rule]),
+          }))
+        : undefined;
 
       const response = await fetch(`${PROPERTY_API_BASE}/overview`, {
         method: "PATCH",
@@ -345,6 +379,7 @@ export default function HostProperty() {
           capacity: capacityPayload,
           location: locationPayload,
           amenities: amenitiesPayload,
+          rules: rulesPayload,
         }),
       });
 
@@ -383,12 +418,46 @@ export default function HostProperty() {
         }
       }
 
+      if (isSavingPolicies) {
+        const verificationResponse = await fetch(
+          `${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: getAccessToken(),
+            },
+          }
+        );
+        if (!verificationResponse.ok) {
+          throw new Error("Policies were not verified after save. Please try again.");
+        }
+
+        const verificationData = await verificationResponse.json();
+        const persistedRulesMap = new Map(
+          (Array.isArray(verificationData?.rules) ? verificationData.rules : [])
+            .map((rule) => [String(rule?.rule || ""), Boolean(rule?.value)])
+            .filter(([ruleName]) => ruleName)
+        );
+        const hasSamePolicies = (rulesPayload || []).every(
+          (rule) => persistedRulesMap.get(rule.rule) === Boolean(rule.value)
+        );
+
+        if (!hasSamePolicies) {
+          throw new Error("Policies could not be updated in the deployed backend yet.");
+        }
+      }
+
       setForm({
         title: normalizedTitle,
         subtitle: normalizedSubtitle,
         description: normalizedDescription,
       });
-      toast.success(isSavingAmenities ? "Amenities updated successfully." : "Property updated successfully.");
+      const saveSuccessMessage = isSavingAmenities
+        ? "Amenities updated successfully."
+        : isSavingPolicies
+          ? "Policies updated successfully."
+          : "Property updated successfully.";
+      toast.success(saveSuccessMessage);
     } catch (err) {
       console.error(err);
       const resolvedErrorMessage =
@@ -425,7 +494,12 @@ export default function HostProperty() {
   const displayedPropertyType = capacity.propertyType || "Entire house";
   const isOverviewTab = selectedTab === "Overview";
   const isAmenitiesTab = selectedTab === "Amenities";
-  const savingMessage = isAmenitiesTab ? "Saving amenities..." : "Saving property details...";
+  const isPoliciesTab = selectedTab === "Policies";
+  const savingMessage = isAmenitiesTab
+    ? "Saving amenities..."
+    : isPoliciesTab
+      ? "Saving policies..."
+      : "Saving property details...";
 
   const handlePropertyChange = (event) => {
     const nextPropertyId = event.target.value;
@@ -449,6 +523,17 @@ export default function HostProperty() {
         ? previous.filter((id) => id !== normalizedAmenityId)
         : [...previous, normalizedAmenityId]
     );
+  };
+
+  const updatePolicyRule = (ruleName, value) => {
+    setPolicyRules((previous) => ({
+      ...previous,
+      [ruleName]: value,
+    }));
+  };
+
+  const handleDeletePropertyClick = () => {
+    toast.info("Delete property flow will be enabled in the dedicated delete release.");
   };
 
   return (
@@ -821,6 +906,73 @@ export default function HostProperty() {
 
                 <p className={styles.amenitiesHint}>Listings with popular amenities like Wi-Fi receive more bookings.</p>
               </section>
+
+              {error ? <p className={styles.errorText}>{error}</p> : null}
+
+              <div className={styles.actions}>
+                <button className={styles.actionButton} onClick={() => navigate("/hostdashboard/listings")} disabled={saving}>
+                  Back to listings
+                </button>
+                <button className={styles.actionButton} onClick={saveOverview} disabled={saving}>
+                  {saving ? "Saving..." : "Save changes"}
+                </button>
+              </div>
+            </>
+          ) : isPoliciesTab ? (
+            <>
+              <section className={`${styles.card} ${styles.policiesCard}`}>
+                <h3 className={styles.sectionTitle}>Policies</h3>
+                <p className={styles.policiesSubtitle}>
+                  Add important policies that guests must follow during their stay.
+                </p>
+
+                <div className={styles.policiesRulesPanel}>
+                  <header className={styles.policiesRulesHeader}>House rules</header>
+                  <div className={styles.policiesRulesList}>
+                    {POLICY_RULE_CONFIG.map((ruleConfig) => {
+                      const currentRuleValue = Boolean(policyRules[ruleConfig.rule]);
+                      const isChecked = ruleConfig.invert ? !currentRuleValue : currentRuleValue;
+                      return (
+                        <label key={ruleConfig.rule} className={styles.policyRuleRow}>
+                          <span className={styles.policyRuleLabel}>{ruleConfig.label}</span>
+                          <input
+                            type="checkbox"
+                            className={styles.policyRuleInput}
+                            checked={isChecked}
+                            onChange={(event) => {
+                              const nextRuleValue = ruleConfig.invert ? !event.target.checked : event.target.checked;
+                              updatePolicyRule(ruleConfig.rule, nextRuleValue);
+                            }}
+                          />
+                          <span className={styles.policyRuleSwitch} aria-hidden="true" />
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
+
+              <section className={styles.deletePropertyPanel}>
+                <div className={styles.deletePropertyText}>
+                  <h4 className={styles.deletePropertyTitle}>Delete property</h4>
+                  <p className={styles.deletePropertyDescription}>
+                    This will permanently remove this listing, its calendar and related data.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={styles.deletePropertyButton}
+                  onClick={handleDeletePropertyClick}
+                  disabled={saving}
+                >
+                  Delete permanently
+                </button>
+              </section>
+
+              <p className={styles.policiesHint}>
+                <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />
+                Clear policies help set expectations and avoid misunderstandings with guests.
+              </p>
 
               {error ? <p className={styles.errorText}>{error}</p> : null}
 
