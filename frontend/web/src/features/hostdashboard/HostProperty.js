@@ -159,7 +159,7 @@ const mapHostProperties = (hostPropertiesData, property) => {
     }))
     .filter((accommodation) => Boolean(accommodation.id));
 
-  if (property?.id && !mappedHostProperties.find((accommodation) => accommodation.id === property.id)) {
+  if (property?.id && !mappedHostProperties.some((accommodation) => accommodation.id === property.id)) {
     mappedHostProperties.unshift({
       id: property.id,
       title: property.title || "Untitled listing",
@@ -173,14 +173,18 @@ const mapHostProperties = (hostPropertiesData, property) => {
 const buildHouseNumber = (locationData) => {
   const houseNumberRaw = locationData.houseNumber ?? locationData.housenumber ?? "";
   const houseNumberExtension = locationData.houseNumberExtension ?? locationData.housenumberextension ?? "";
-  return houseNumberRaw !== "" ? `${houseNumberRaw}${houseNumberExtension ? ` ${houseNumberExtension}` : ""}` : "";
+  if (houseNumberRaw === "") {
+    return "";
+  }
+  const extensionSuffix = houseNumberExtension ? ` ${houseNumberExtension}` : "";
+  return `${houseNumberRaw}${extensionSuffix}`;
 };
 
 const mapPropertyRulesToState = (propertyRules) => {
   const nextRules = createInitialPolicyRules();
   propertyRules.forEach((rule) => {
     const ruleName = String(rule?.rule || "");
-    if (!Object.prototype.hasOwnProperty.call(nextRules, ruleName)) {
+    if (!Object.hasOwn(nextRules, ruleName)) {
       return;
     }
     nextRules[ruleName] = Boolean(rule?.value);
@@ -270,7 +274,7 @@ const verifyAmenities = async (propertyId, amenitiesPayload) => {
       .map((amenity) => String(amenity?.amenityId || ""))
       .filter(Boolean)
   );
-  const expectedAmenityIds = new Set((amenitiesPayload || []).map((amenityId) => String(amenityId)));
+  const expectedAmenityIds = new Set((amenitiesPayload || []).map(String));
   const hasSameAmenities =
     persistedAmenityIds.size === expectedAmenityIds.size &&
     [...expectedAmenityIds].every((amenityId) => persistedAmenityIds.has(amenityId));
@@ -299,6 +303,16 @@ const verifyPolicies = async (propertyId, rulesPayload) => {
 
 const getSaveSuccessMessage = (selectedTab) => SAVE_SUCCESS_MESSAGE_BY_TAB[selectedTab] || "Property updated successfully.";
 
+const resolveSaveErrorMessage = (error, isDevelopment) => {
+  if (error?.name === "TypeError") {
+    if (isDevelopment) {
+      return "Could not reach the API. Check AWS deployment/CORS configuration and try again.";
+    }
+    return "Something went wrong while saving. Please try again later.";
+  }
+  return error?.message || "Saving failed. Please try again.";
+};
+
 const savePropertyChanges = async ({
   selectedTab,
   propertyId,
@@ -318,7 +332,7 @@ const savePropertyChanges = async ({
     throw new Error("Title and description cannot be empty.");
   }
 
-  const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map((amenityId) => String(amenityId)) : undefined;
+  const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map(String) : undefined;
   const rulesPayload = isSavingPolicies
     ? POLICY_RULE_CONFIG.map((ruleConfig) => ({
         rule: ruleConfig.rule,
@@ -827,6 +841,7 @@ function HostPropertyPoliciesTab({ policyRules, updatePolicyRule, handleDeletePr
 
       <p className={styles.policiesHint}>
         <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />
+        {" "}
         Clear policies help set expectations and avoid misunderstandings with guests.
       </p>
     </>
@@ -846,13 +861,17 @@ function HostPropertyPlaceholderTab({ selectedTab }) {
 }
 
 function HostPropertyActions({ onBack, onSave, saving, saveEnabled }) {
+  let saveButtonLabel = "Save changes";
+  if (saveEnabled && saving) {
+    saveButtonLabel = "Saving...";
+  }
   return (
     <div className={styles.actions}>
       <button className={styles.actionButton} onClick={onBack} disabled={saving}>
         Back to listings
       </button>
       <button className={styles.actionButton} onClick={onSave} disabled={saving || !saveEnabled}>
-        {saveEnabled ? (saving ? "Saving..." : "Save changes") : "Save changes"}
+        {saveButtonLabel}
       </button>
     </div>
   );
@@ -1186,12 +1205,7 @@ export default function HostProperty() {
       toast.success(successMessage);
     } catch (err) {
       console.error(err);
-      const resolvedErrorMessage =
-        err?.name === "TypeError"
-          ? isDevelopment
-            ? "Could not reach the API. Check AWS deployment/CORS configuration and try again."
-            : "Something went wrong while saving. Please try again later."
-          : err?.message || "Saving failed. Please try again.";
+      const resolvedErrorMessage = resolveSaveErrorMessage(err, isDevelopment);
       setError(resolvedErrorMessage);
       toast.error(resolvedErrorMessage);
     } finally {
@@ -1252,12 +1266,12 @@ export default function HostProperty() {
       <div className="page-Host-content">
         <section className={`host-pc-dashboard ${styles.editorShell}`}>
           {saving ? (
-            <div className={styles.savingOverlay} role="status" aria-live="polite">
-              <div className={styles.savingOverlayContent}>
+            <output className={styles.savingOverlay} aria-live="polite">
+              <span className={styles.savingOverlayContent}>
                 <ClipLoader size={80} color="#0D9813" loading />
-                <p className={styles.savingOverlayText}>{savingMessage}</p>
-              </div>
-            </div>
+                <span className={styles.savingOverlayText}>{savingMessage}</span>
+              </span>
+            </output>
           ) : null}
 
           <HostPropertyTabs selectedTab={selectedTab} onSelectTab={setSelectedTab} saving={saving} />
