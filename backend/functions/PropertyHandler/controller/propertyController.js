@@ -341,78 +341,94 @@ export class PropertyController {
     }
 
     validateOverviewPayload(payload) {
-        const {
-            propertyId,
-            title,
-            description,
-            subtitle,
-            capacity,
-            location,
-            amenities,
-            rules,
-        } = payload;
+        return (
+            this.validateOverviewRequiredFields(payload) ||
+            this.validateOverviewOptionalObjects(payload) ||
+            this.validateAmenitiesPayload(payload.amenities) ||
+            this.validateRulesPayload(payload.rules) ||
+            this.validateOverviewTextContent(payload) ||
+            this.validateCapacitySpaceType(payload.capacity) ||
+            null
+        );
+    }
 
-        if (!propertyId) {
+    validateOverviewRequiredFields(payload) {
+        if (!payload.propertyId) {
             return "Missing propertyId.";
         }
-
-        if (typeof title !== "string" || typeof description !== "string") {
+        if (typeof payload.title !== "string" || typeof payload.description !== "string") {
             return "Title and description must be strings.";
         }
-
-        if (subtitle !== undefined && typeof subtitle !== "string") {
+        if (payload.subtitle !== undefined && typeof payload.subtitle !== "string") {
             return "Subtitle must be a string.";
         }
+        return null;
+    }
 
-        if (capacity !== undefined && !this.isPlainObject(capacity)) {
+    validateOverviewOptionalObjects(payload) {
+        if (payload.capacity !== undefined && !this.isPlainObject(payload.capacity)) {
             return "Capacity must be an object.";
         }
-
-        if (location !== undefined && !this.isPlainObject(location)) {
+        if (payload.location !== undefined && !this.isPlainObject(payload.location)) {
             return "Location must be an object.";
         }
+        return null;
+    }
 
-        if (amenities !== undefined) {
-            if (!Array.isArray(amenities)) {
-                return "Amenities must be an array.";
-            }
-            const hasInvalidAmenityValue = amenities.some(
-                (amenityId) => typeof amenityId !== "string" && typeof amenityId !== "number"
-            );
-            if (hasInvalidAmenityValue) {
-                return "Amenities must contain string or number IDs.";
-            }
+    validateAmenitiesPayload(amenities) {
+        if (amenities === undefined) {
+            return null;
         }
-
-        if (rules !== undefined) {
-            if (!Array.isArray(rules)) {
-                return "Rules must be an array.";
-            }
-            const hasInvalidRuleEntry = rules.some(
-                (rule) =>
-                    !rule ||
-                    typeof rule !== "object" ||
-                    Array.isArray(rule) ||
-                    typeof rule.rule !== "string" ||
-                    typeof rule.value !== "boolean"
-            );
-            if (hasInvalidRuleEntry) {
-                return "Rules must contain { rule: string, value: boolean }.";
-            }
+        if (!Array.isArray(amenities)) {
+            return "Amenities must be an array.";
         }
+        const hasInvalidAmenityValue = amenities.some(
+            (amenityId) => typeof amenityId !== "string" && typeof amenityId !== "number"
+        );
+        if (hasInvalidAmenityValue) {
+            return "Amenities must contain string or number IDs.";
+        }
+        return null;
+    }
 
-        if (!title.trim() || !description.trim()) {
+    validateRulesPayload(rules) {
+        if (rules === undefined) {
+            return null;
+        }
+        if (!Array.isArray(rules)) {
+            return "Rules must be an array.";
+        }
+        const hasInvalidRuleEntry = rules.some((rule) => !this.isValidRulePayloadEntry(rule));
+        if (hasInvalidRuleEntry) {
+            return "Rules must contain { rule: string, value: boolean }.";
+        }
+        return null;
+    }
+
+    isValidRulePayloadEntry(rule) {
+        return (
+            rule &&
+            typeof rule === "object" &&
+            !Array.isArray(rule) &&
+            typeof rule.rule === "string" &&
+            typeof rule.value === "boolean"
+        );
+    }
+
+    validateOverviewTextContent(payload) {
+        if (!payload.title.trim() || !payload.description.trim()) {
             return "Title and description cannot be empty.";
         }
+        return null;
+    }
 
-        if (
-            capacity &&
-            capacity.spaceType !== undefined &&
-            (typeof capacity.spaceType !== "string" || !capacity.spaceType.trim())
-        ) {
+    validateCapacitySpaceType(capacity) {
+        if (!capacity || capacity.spaceType === undefined) {
+            return null;
+        }
+        if (typeof capacity.spaceType !== "string" || !capacity.spaceType.trim()) {
             return "Capacity spaceType cannot be empty.";
         }
-
         return null;
     }
 
@@ -425,7 +441,7 @@ export class PropertyController {
             capacity: payload.capacity ? this.normalizeCapacityPayload(payload.capacity) : undefined,
             location: payload.location ? this.normalizeLocationPayload(payload.location) : undefined,
             amenities: Array.isArray(payload.amenities)
-                ? Array.from(new Set(payload.amenities.map((amenityId) => String(amenityId).trim()).filter((amenityId) => amenityId)))
+                ? Array.from(new Set(payload.amenities.map((amenityId) => String(amenityId).trim()).filter(Boolean)))
                 : undefined,
             rules: Array.isArray(payload.rules)
                 ? Array.from(

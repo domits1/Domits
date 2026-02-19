@@ -2,7 +2,7 @@ import { AmenityMapping } from "../../util/mapping/amenity.js";
 import Database from "database";
 import {Property_Amenity} from "database/models/Property_Amenity";
 import {Amenity_And_Category} from "database/models/Amenity_And_Category";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 export class PropertyAmenityRepository {
 
@@ -58,7 +58,7 @@ export class PropertyAmenityRepository {
     async replaceAmenitiesByPropertyId(propertyId, amenityIds) {
         const client = await Database.getInstance();
         const normalizedAmenityIds = Array.from(
-            new Set((Array.isArray(amenityIds) ? amenityIds : []).map((id) => String(id).trim()).filter((id) => id))
+            new Set((Array.isArray(amenityIds) ? amenityIds : []).map((id) => String(id).trim()).filter(Boolean))
         );
 
         return await client.transaction(async (transactionManager) => {

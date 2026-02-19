@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getAccessToken } from "../../services/getAccessToken";
 import { toast } from "react-toastify";
@@ -42,6 +43,335 @@ const createInitialPolicyRules = () =>
     accumulator[ruleConfig.rule] = false;
     return accumulator;
   }, {});
+
+const SAVE_ENABLED_TABS = new Set(["Overview", "Amenities", "Policies"]);
+const SAVING_MESSAGE_BY_TAB = {
+  Amenities: "Saving amenities...",
+  Policies: "Saving policies...",
+};
+const SAVE_SUCCESS_MESSAGE_BY_TAB = {
+  Amenities: "Amenities updated successfully.",
+  Policies: "Policies updated successfully.",
+};
+
+const normalizeCapacityValue = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(MAX_CAPACITY_VALUE, Math.trunc(numeric)));
+};
+
+const parseHouseNumber = (houseNumberInput) => {
+  const value = String(houseNumberInput || "").trim();
+  if (!value) {
+    return null;
+  }
+
+  let digitEndIndex = 0;
+  while (digitEndIndex < value.length && value[digitEndIndex] >= "0" && value[digitEndIndex] <= "9") {
+    digitEndIndex += 1;
+  }
+
+  if (digitEndIndex === 0) {
+    return null;
+  }
+
+  const parsedHouseNumber = Number(value.slice(0, digitEndIndex));
+  if (!Number.isFinite(parsedHouseNumber)) {
+    return null;
+  }
+
+  return {
+    houseNumber: Math.trunc(parsedHouseNumber),
+    houseNumberExtension: value.slice(digitEndIndex).trim(),
+  };
+};
+
+const getLocationPayload = (address) => {
+  const street = address.street.trim();
+  const houseNumber = address.houseNumber.trim();
+  const postalCode = address.postalCode.trim();
+  const city = address.city.trim();
+  const country = address.country.trim();
+
+  if (!street || !houseNumber || !postalCode || !city || !country) {
+    return undefined;
+  }
+
+  const parsedHouseNumber = parseHouseNumber(houseNumber);
+  if (!parsedHouseNumber) {
+    return undefined;
+  }
+
+  return {
+    street,
+    houseNumber: parsedHouseNumber.houseNumber,
+    houseNumberExtension: parsedHouseNumber.houseNumberExtension,
+    postalCode,
+    city,
+    country,
+  };
+};
+
+const getApiErrorMessage = async (response, fallbackMessage) => {
+  try {
+    const rawBody = await response.text();
+    if (!rawBody) {
+      return fallbackMessage;
+    }
+
+    try {
+      const parsedBody = JSON.parse(rawBody);
+      if (typeof parsedBody === "string" && parsedBody.trim()) {
+        return parsedBody.trim();
+      }
+      if (typeof parsedBody?.message === "string" && parsedBody.message.trim()) {
+        return parsedBody.message.trim();
+      }
+    } catch {
+      if (rawBody.trim()) {
+        return rawBody.trim();
+      }
+    }
+
+    return fallbackMessage;
+  } catch {
+    return fallbackMessage;
+  }
+};
+
+const findDetailValue = (generalDetails, key) => {
+  const detail = generalDetails.find((item) => item?.detail === key);
+  if (!detail) {
+    return 0;
+  }
+  const value = Number(detail.value);
+  return Number.isFinite(value) ? value : 0;
+};
+
+const mapHostProperties = (hostPropertiesData, property) => {
+  const mappedHostProperties = (Array.isArray(hostPropertiesData) ? hostPropertiesData : [])
+    .map((accommodation) => ({
+      id: accommodation?.property?.id || "",
+      title: accommodation?.property?.title || "Untitled listing",
+      status: accommodation?.property?.status || "INACTIVE",
+    }))
+    .filter((accommodation) => Boolean(accommodation.id));
+
+  if (property?.id && !mappedHostProperties.find((accommodation) => accommodation.id === property.id)) {
+    mappedHostProperties.unshift({
+      id: property.id,
+      title: property.title || "Untitled listing",
+      status: property.status || "INACTIVE",
+    });
+  }
+
+  return mappedHostProperties;
+};
+
+const buildHouseNumber = (locationData) => {
+  const houseNumberRaw = locationData.houseNumber ?? locationData.housenumber ?? "";
+  const houseNumberExtension = locationData.houseNumberExtension ?? locationData.housenumberextension ?? "";
+  return houseNumberRaw !== "" ? `${houseNumberRaw}${houseNumberExtension ? ` ${houseNumberExtension}` : ""}` : "";
+};
+
+const mapPropertyRulesToState = (propertyRules) => {
+  const nextRules = createInitialPolicyRules();
+  propertyRules.forEach((rule) => {
+    const ruleName = String(rule?.rule || "");
+    if (!Object.prototype.hasOwnProperty.call(nextRules, ruleName)) {
+      return;
+    }
+    nextRules[ruleName] = Boolean(rule?.value);
+  });
+  return nextRules;
+};
+
+const extractFetchedPropertyData = (data, hostPropertiesData) => {
+  const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
+  const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
+  const property = data?.property || {};
+  const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
+  const locationData = data?.location || {};
+  const propertyType = data?.propertyType || {};
+
+  return {
+    status: property.status || "INACTIVE",
+    form: {
+      title: property.title || "",
+      subtitle: property.subtitle || "",
+      description: property.description || "",
+    },
+    capacity: {
+      propertyType: propertyType.spaceType || "",
+      guests: findDetailValue(generalDetails, "Guests"),
+      bedrooms: findDetailValue(generalDetails, "Bedrooms"),
+      beds: findDetailValue(generalDetails, "Beds"),
+      bathrooms: findDetailValue(generalDetails, "Bathrooms"),
+    },
+    address: {
+      street: locationData.street || "",
+      houseNumber: buildHouseNumber(locationData),
+      postalCode: locationData.postalCode || locationData.postalcode || "",
+      city: locationData.city || "",
+      country: locationData.country || "",
+    },
+    selectedAmenityIds: propertyAmenities.map((amenity) => String(amenity?.amenityId || "")).filter(Boolean),
+    policyRules: mapPropertyRulesToState(propertyRules),
+    hostProperties: mapHostProperties(hostPropertiesData, property),
+  };
+};
+
+const fetchPropertyAndListings = async (propertyId) => {
+  const [response, hostPropertiesResponse] = await Promise.all([
+    fetch(`${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`, {
+      method: "GET",
+      headers: {
+        Authorization: getAccessToken(),
+      },
+    }),
+    fetch(`${PROPERTY_API_BASE}/hostDashboard/all`, {
+      method: "GET",
+      headers: {
+        Authorization: getAccessToken(),
+      },
+    }),
+  ]);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch property.");
+  }
+
+  const data = await response.json();
+  const hostPropertiesData = hostPropertiesResponse.ok ? await hostPropertiesResponse.json() : [];
+  return { data, hostPropertiesData };
+};
+
+const fetchPropertySnapshot = async (propertyId) => {
+  const response = await fetch(`${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`, {
+    method: "GET",
+    headers: {
+      Authorization: getAccessToken(),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not verify saved data. Please try again.");
+  }
+
+  return response.json();
+};
+
+const verifyAmenities = async (propertyId, amenitiesPayload) => {
+  const verificationData = await fetchPropertySnapshot(propertyId);
+  const persistedAmenityIds = new Set(
+    (Array.isArray(verificationData?.amenities) ? verificationData.amenities : [])
+      .map((amenity) => String(amenity?.amenityId || ""))
+      .filter(Boolean)
+  );
+  const expectedAmenityIds = new Set((amenitiesPayload || []).map((amenityId) => String(amenityId)));
+  const hasSameAmenities =
+    persistedAmenityIds.size === expectedAmenityIds.size &&
+    [...expectedAmenityIds].every((amenityId) => persistedAmenityIds.has(amenityId));
+
+  if (!hasSameAmenities) {
+    throw new Error("Amenities could not be updated in the deployed backend yet.");
+  }
+};
+
+const verifyPolicies = async (propertyId, rulesPayload) => {
+  const verificationData = await fetchPropertySnapshot(propertyId);
+  const persistedRulesMap = new Map(
+    (Array.isArray(verificationData?.rules) ? verificationData.rules : [])
+      .map((rule) => [String(rule?.rule || ""), Boolean(rule?.value)])
+      .filter(([ruleName]) => Boolean(ruleName))
+  );
+
+  const hasSamePolicies = (rulesPayload || []).every(
+    (rule) => persistedRulesMap.get(rule.rule) === Boolean(rule.value)
+  );
+
+  if (!hasSamePolicies) {
+    throw new Error("Policies could not be updated in the deployed backend yet.");
+  }
+};
+
+const getSaveSuccessMessage = (selectedTab) => SAVE_SUCCESS_MESSAGE_BY_TAB[selectedTab] || "Property updated successfully.";
+
+const savePropertyChanges = async ({
+  selectedTab,
+  propertyId,
+  form,
+  capacity,
+  address,
+  selectedAmenityIds,
+  policyRules,
+}) => {
+  const normalizedTitle = form.title.trim();
+  const normalizedSubtitle = form.subtitle.trim();
+  const normalizedDescription = form.description.trim();
+  const isSavingAmenities = selectedTab === "Amenities";
+  const isSavingPolicies = selectedTab === "Policies";
+
+  if (!normalizedTitle || !normalizedDescription) {
+    throw new Error("Title and description cannot be empty.");
+  }
+
+  const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map((amenityId) => String(amenityId)) : undefined;
+  const rulesPayload = isSavingPolicies
+    ? POLICY_RULE_CONFIG.map((ruleConfig) => ({
+        rule: ruleConfig.rule,
+        value: Boolean(policyRules[ruleConfig.rule]),
+      }))
+    : undefined;
+
+  const response = await fetch(`${PROPERTY_API_BASE}/overview`, {
+    method: "PATCH",
+    headers: {
+      Authorization: getAccessToken(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      propertyId,
+      title: normalizedTitle,
+      subtitle: normalizedSubtitle,
+      description: normalizedDescription,
+      capacity: {
+        spaceType: capacity.propertyType || "Entire house",
+        guests: normalizeCapacityValue(capacity.guests),
+        bedrooms: normalizeCapacityValue(capacity.bedrooms),
+        beds: normalizeCapacityValue(capacity.beds),
+        bathrooms: normalizeCapacityValue(capacity.bathrooms),
+      },
+      location: getLocationPayload(address),
+      amenities: amenitiesPayload,
+      rules: rulesPayload,
+    }),
+  });
+
+  if (!response.ok) {
+    const apiErrorMessage = await getApiErrorMessage(response, "Failed to save property overview.");
+    throw new Error(apiErrorMessage);
+  }
+
+  if (isSavingAmenities) {
+    await verifyAmenities(propertyId, amenitiesPayload);
+  }
+
+  if (isSavingPolicies) {
+    await verifyPolicies(propertyId, rulesPayload);
+  }
+
+  return {
+    normalizedForm: {
+      title: normalizedTitle,
+      subtitle: normalizedSubtitle,
+      description: normalizedDescription,
+    },
+    successMessage: getSaveSuccessMessage(selectedTab),
+  };
+};
 
 function HostPropertyLoadingView() {
   return (
@@ -356,7 +686,7 @@ function HostPropertyOverviewTab({
         <p className={styles.mapPreviewLabel}>Map preview</p>
         <p className={styles.mapPreviewAddress}>
           {[address.street, address.houseNumber, address.postalCode, address.city, address.country]
-            .filter((item) => item)
+            .filter(Boolean)
             .join(", ") || "Address details are not fully available yet."}
         </p>
       </div>
@@ -528,6 +858,183 @@ function HostPropertyActions({ onBack, onSave, saving, saveEnabled }) {
   );
 }
 
+function HostPropertyTabContent({
+  selectedTab,
+  form,
+  updateField,
+  displayedPropertyType,
+  setCapacity,
+  capacity,
+  adjustCapacityField,
+  updateCapacityField,
+  address,
+  updateAddressField,
+  amenityCategoryKeys,
+  amenitiesByCategory,
+  expandedAmenityCategories,
+  selectedAmenityCountByCategory,
+  selectedAmenityIdSet,
+  toggleAmenityCategory,
+  toggleAmenitySelection,
+  policyRules,
+  updatePolicyRule,
+  handleDeletePropertyClick,
+  saving,
+}) {
+  switch (selectedTab) {
+    case "Overview":
+      return (
+        <HostPropertyOverviewTab
+          form={form}
+          updateField={updateField}
+          displayedPropertyType={displayedPropertyType}
+          setCapacity={setCapacity}
+          capacity={capacity}
+          adjustCapacityField={adjustCapacityField}
+          updateCapacityField={updateCapacityField}
+          address={address}
+          updateAddressField={updateAddressField}
+        />
+      );
+    case "Amenities":
+      return (
+        <HostPropertyAmenitiesTab
+          amenityCategoryKeys={amenityCategoryKeys}
+          amenitiesByCategory={amenitiesByCategory}
+          expandedAmenityCategories={expandedAmenityCategories}
+          selectedAmenityCountByCategory={selectedAmenityCountByCategory}
+          selectedAmenityIdSet={selectedAmenityIdSet}
+          toggleAmenityCategory={toggleAmenityCategory}
+          toggleAmenitySelection={toggleAmenitySelection}
+        />
+      );
+    case "Policies":
+      return (
+        <HostPropertyPoliciesTab
+          policyRules={policyRules}
+          updatePolicyRule={updatePolicyRule}
+          handleDeletePropertyClick={handleDeletePropertyClick}
+          saving={saving}
+        />
+      );
+    default:
+      return <HostPropertyPlaceholderTab selectedTab={selectedTab} />;
+  }
+}
+
+const hostPropertyOptionShape = PropTypes.shape({
+  id: PropTypes.string.isRequired,
+  title: PropTypes.string,
+  status: PropTypes.string,
+});
+
+const propertyFormShape = PropTypes.shape({
+  title: PropTypes.string,
+  subtitle: PropTypes.string,
+  description: PropTypes.string,
+});
+
+const propertyCapacityShape = PropTypes.shape({
+  propertyType: PropTypes.string,
+  guests: PropTypes.number,
+  bedrooms: PropTypes.number,
+  beds: PropTypes.number,
+  bathrooms: PropTypes.number,
+});
+
+const propertyAddressShape = PropTypes.shape({
+  street: PropTypes.string,
+  houseNumber: PropTypes.string,
+  postalCode: PropTypes.string,
+  city: PropTypes.string,
+  country: PropTypes.string,
+});
+
+const amenityShape = PropTypes.shape({
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  amenity: PropTypes.string,
+});
+
+HostPropertyTabs.propTypes = {
+  selectedTab: PropTypes.string.isRequired,
+  onSelectTab: PropTypes.func.isRequired,
+  saving: PropTypes.bool.isRequired,
+};
+
+HostPropertyListingSummary.propTypes = {
+  propertyId: PropTypes.string,
+  hostProperties: PropTypes.arrayOf(hostPropertyOptionShape).isRequired,
+  title: PropTypes.string,
+  statusLabel: PropTypes.string.isRequired,
+  statusDotClass: PropTypes.string.isRequired,
+  onPropertyChange: PropTypes.func.isRequired,
+  saving: PropTypes.bool.isRequired,
+};
+
+HostPropertyOverviewTab.propTypes = {
+  form: propertyFormShape.isRequired,
+  updateField: PropTypes.func.isRequired,
+  displayedPropertyType: PropTypes.string.isRequired,
+  setCapacity: PropTypes.func.isRequired,
+  capacity: propertyCapacityShape.isRequired,
+  adjustCapacityField: PropTypes.func.isRequired,
+  updateCapacityField: PropTypes.func.isRequired,
+  address: propertyAddressShape.isRequired,
+  updateAddressField: PropTypes.func.isRequired,
+};
+
+HostPropertyAmenitiesTab.propTypes = {
+  amenityCategoryKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
+  amenitiesByCategory: PropTypes.objectOf(PropTypes.arrayOf(amenityShape)).isRequired,
+  expandedAmenityCategories: PropTypes.objectOf(PropTypes.bool).isRequired,
+  selectedAmenityCountByCategory: PropTypes.objectOf(PropTypes.number).isRequired,
+  selectedAmenityIdSet: PropTypes.instanceOf(Set).isRequired,
+  toggleAmenityCategory: PropTypes.func.isRequired,
+  toggleAmenitySelection: PropTypes.func.isRequired,
+};
+
+HostPropertyPoliciesTab.propTypes = {
+  policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
+  updatePolicyRule: PropTypes.func.isRequired,
+  handleDeletePropertyClick: PropTypes.func.isRequired,
+  saving: PropTypes.bool.isRequired,
+};
+
+HostPropertyPlaceholderTab.propTypes = {
+  selectedTab: PropTypes.string.isRequired,
+};
+
+HostPropertyActions.propTypes = {
+  onBack: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
+  saving: PropTypes.bool.isRequired,
+  saveEnabled: PropTypes.bool.isRequired,
+};
+
+HostPropertyTabContent.propTypes = {
+  selectedTab: PropTypes.string.isRequired,
+  form: propertyFormShape.isRequired,
+  updateField: PropTypes.func.isRequired,
+  displayedPropertyType: PropTypes.string.isRequired,
+  setCapacity: PropTypes.func.isRequired,
+  capacity: propertyCapacityShape.isRequired,
+  adjustCapacityField: PropTypes.func.isRequired,
+  updateCapacityField: PropTypes.func.isRequired,
+  address: propertyAddressShape.isRequired,
+  updateAddressField: PropTypes.func.isRequired,
+  amenityCategoryKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
+  amenitiesByCategory: PropTypes.objectOf(PropTypes.arrayOf(amenityShape)).isRequired,
+  expandedAmenityCategories: PropTypes.objectOf(PropTypes.bool).isRequired,
+  selectedAmenityCountByCategory: PropTypes.objectOf(PropTypes.number).isRequired,
+  selectedAmenityIdSet: PropTypes.instanceOf(Set).isRequired,
+  toggleAmenityCategory: PropTypes.func.isRequired,
+  toggleAmenitySelection: PropTypes.func.isRequired,
+  policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
+  updatePolicyRule: PropTypes.func.isRequired,
+  handleDeletePropertyClick: PropTypes.func.isRequired,
+  saving: PropTypes.bool.isRequired,
+};
+
 export default function HostProperty() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -606,120 +1113,45 @@ export default function HostProperty() {
   }, [amenityCategoryKeys]);
 
   useEffect(() => {
-    const fetchProperty = async () => {
-      if (!propertyId) {
-        setError("Missing property ID.");
-        setLoading(false);
-        return;
-      }
+    if (!propertyId) {
+      setError("Missing property ID.");
+      setLoading(false);
+      return;
+    }
 
+    let isMounted = true;
+    const fetchProperty = async () => {
       setLoading(true);
       setError("");
       try {
-        const [response, hostPropertiesResponse] = await Promise.all([
-          fetch(`${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`, {
-            method: "GET",
-            headers: {
-              Authorization: getAccessToken(),
-            },
-          }),
-          fetch(`${PROPERTY_API_BASE}/hostDashboard/all`, {
-            method: "GET",
-            headers: {
-              Authorization: getAccessToken(),
-            },
-          }),
-        ]);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch property.");
+        const { data, hostPropertiesData } = await fetchPropertyAndListings(propertyId);
+        if (!isMounted) {
+          return;
         }
-
-        const data = await response.json();
-        let hostPropertiesData = [];
-        if (hostPropertiesResponse.ok) {
-          hostPropertiesData = await hostPropertiesResponse.json();
-        }
-        const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
-        const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
-        const property = data?.property || {};
-        const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
-        const locationData = data?.location || {};
-        const propertyType = data?.propertyType || {};
-        const houseNumberRaw = locationData.houseNumber ?? locationData.housenumber ?? "";
-        const houseNumberExtension = locationData.houseNumberExtension ?? locationData.housenumberextension ?? "";
-        const houseNumber = houseNumberRaw !== "" ? `${houseNumberRaw}${houseNumberExtension ? ` ${houseNumberExtension}` : ""}` : "";
-
-        const findDetailValue = (key) => {
-          const detail = generalDetails.find((item) => item?.detail === key);
-          if (!detail) {
-            return 0;
-          }
-          const value = Number(detail.value);
-          return Number.isFinite(value) ? value : 0;
-        };
-
-        setStatus(property.status || "INACTIVE");
-        setForm({
-          title: property.title || "",
-          subtitle: property.subtitle || "",
-          description: property.description || "",
-        });
-        setCapacity({
-          propertyType: propertyType.spaceType || "",
-          guests: findDetailValue("Guests"),
-          bedrooms: findDetailValue("Bedrooms"),
-          beds: findDetailValue("Beds"),
-          bathrooms: findDetailValue("Bathrooms"),
-        });
-        setAddress({
-          street: locationData.street || "",
-          houseNumber: houseNumber,
-          postalCode: locationData.postalCode || locationData.postalcode || "",
-          city: locationData.city || "",
-          country: locationData.country || "",
-        });
-        setSelectedAmenityIds(
-          propertyAmenities.map((amenity) => String(amenity?.amenityId || "")).filter((amenityId) => amenityId)
-        );
-        setPolicyRules(() => {
-          const nextRules = createInitialPolicyRules();
-          propertyRules.forEach((rule) => {
-            const ruleName = String(rule?.rule || "");
-            if (!Object.prototype.hasOwnProperty.call(nextRules, ruleName)) {
-              return;
-            }
-            nextRules[ruleName] = Boolean(rule?.value);
-          });
-          return nextRules;
-        });
-
-        const mappedHostProperties = (Array.isArray(hostPropertiesData) ? hostPropertiesData : [])
-          .map((accommodation) => ({
-            id: accommodation?.property?.id || "",
-            title: accommodation?.property?.title || "Untitled listing",
-            status: accommodation?.property?.status || "INACTIVE",
-          }))
-          .filter((accommodation) => accommodation.id);
-
-        if (property?.id && !mappedHostProperties.find((accommodation) => accommodation.id === property.id)) {
-          mappedHostProperties.unshift({
-            id: property.id,
-            title: property.title || "Untitled listing",
-            status: property.status || "INACTIVE",
-          });
-        }
-
-        setHostProperties(mappedHostProperties);
+        const fetchedPropertyData = extractFetchedPropertyData(data, hostPropertiesData);
+        setStatus(fetchedPropertyData.status);
+        setForm(fetchedPropertyData.form);
+        setCapacity(fetchedPropertyData.capacity);
+        setAddress(fetchedPropertyData.address);
+        setSelectedAmenityIds(fetchedPropertyData.selectedAmenityIds);
+        setPolicyRules(fetchedPropertyData.policyRules);
+        setHostProperties(fetchedPropertyData.hostProperties);
       } catch (err) {
         console.error(err);
-        setError("Could not load property details.");
+        if (isMounted) {
+          setError("Could not load property details.");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProperty();
+    return () => {
+      isMounted = false;
+    };
   }, [propertyId]);
 
   const updateField = (field, value) => {
@@ -727,14 +1159,6 @@ export default function HostProperty() {
   };
   const updateAddressField = (field, value) => {
     setAddress((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const normalizeCapacityValue = (value) => {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric)) {
-      return 0;
-    }
-    return Math.max(0, Math.min(MAX_CAPACITY_VALUE, Math.trunc(numeric)));
   };
 
   const updateCapacityField = (field, value) => {
@@ -745,211 +1169,21 @@ export default function HostProperty() {
     setCapacity((prev) => ({ ...prev, [field]: normalizeCapacityValue(prev[field] + delta) }));
   };
 
-  const parseHouseNumber = (houseNumberInput) => {
-    const value = String(houseNumberInput || "").trim();
-    if (!value) {
-      return null;
-    }
-
-    let digitEndIndex = 0;
-    while (digitEndIndex < value.length && value[digitEndIndex] >= "0" && value[digitEndIndex] <= "9") {
-      digitEndIndex += 1;
-    }
-
-    if (digitEndIndex === 0) {
-      return null;
-    }
-
-    const parsedHouseNumber = Number(value.slice(0, digitEndIndex));
-    if (!Number.isFinite(parsedHouseNumber)) {
-      return null;
-    }
-
-    return {
-      houseNumber: Math.trunc(parsedHouseNumber),
-      houseNumberExtension: value.slice(digitEndIndex).trim(),
-    };
-  };
-
-  const getLocationPayload = () => {
-    const street = address.street.trim();
-    const houseNumber = address.houseNumber.trim();
-    const postalCode = address.postalCode.trim();
-    const city = address.city.trim();
-    const country = address.country.trim();
-
-    if (!street || !houseNumber || !postalCode || !city || !country) {
-      return undefined;
-    }
-
-    const parsedHouseNumber = parseHouseNumber(houseNumber);
-    if (!parsedHouseNumber) {
-      return undefined;
-    }
-
-    return {
-      street,
-      houseNumber: parsedHouseNumber.houseNumber,
-      houseNumberExtension: parsedHouseNumber.houseNumberExtension,
-      postalCode,
-      city,
-      country,
-    };
-  };
-
-  const getApiErrorMessage = async (response, fallbackMessage) => {
-    try {
-      const rawBody = await response.text();
-      if (!rawBody) {
-        return fallbackMessage;
-      }
-
-      try {
-        const parsedBody = JSON.parse(rawBody);
-        if (typeof parsedBody === "string" && parsedBody.trim()) {
-          return parsedBody.trim();
-        }
-        if (typeof parsedBody?.message === "string" && parsedBody.message.trim()) {
-          return parsedBody.message.trim();
-        }
-      } catch {
-        if (rawBody.trim()) {
-          return rawBody.trim();
-        }
-      }
-
-      return fallbackMessage;
-    } catch {
-      return fallbackMessage;
-    }
-  };
-
   const saveOverview = async () => {
-    const isSavingAmenities = selectedTab === "Amenities";
-    const isSavingPolicies = selectedTab === "Policies";
-    const normalizedTitle = form.title.trim();
-    const normalizedSubtitle = form.subtitle.trim();
-    const normalizedDescription = form.description.trim();
-
-    if (!normalizedTitle || !normalizedDescription) {
-      const validationMessage = "Title and description cannot be empty.";
-      setError(validationMessage);
-      toast.error(validationMessage);
-      return;
-    }
-
     setSaving(true);
     setError("");
     try {
-      const capacityPayload = {
-        spaceType: capacity.propertyType || "Entire house",
-        guests: normalizeCapacityValue(capacity.guests),
-        bedrooms: normalizeCapacityValue(capacity.bedrooms),
-        beds: normalizeCapacityValue(capacity.beds),
-        bathrooms: normalizeCapacityValue(capacity.bathrooms),
-      };
-      const locationPayload = getLocationPayload();
-      const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map((amenityId) => String(amenityId)) : undefined;
-      const rulesPayload = isSavingPolicies
-        ? POLICY_RULE_CONFIG.map((ruleConfig) => ({
-            rule: ruleConfig.rule,
-            value: Boolean(policyRules[ruleConfig.rule]),
-          }))
-        : undefined;
-
-      const response = await fetch(`${PROPERTY_API_BASE}/overview`, {
-        method: "PATCH",
-        headers: {
-          Authorization: getAccessToken(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          propertyId,
-          title: normalizedTitle,
-          subtitle: normalizedSubtitle,
-          description: normalizedDescription,
-          capacity: capacityPayload,
-          location: locationPayload,
-          amenities: amenitiesPayload,
-          rules: rulesPayload,
-        }),
+      const { normalizedForm, successMessage } = await savePropertyChanges({
+        selectedTab,
+        propertyId,
+        form,
+        capacity,
+        address,
+        selectedAmenityIds,
+        policyRules,
       });
-
-      if (!response.ok) {
-        const apiErrorMessage = await getApiErrorMessage(response, "Failed to save property overview.");
-        throw new Error(apiErrorMessage);
-      }
-
-      if (isSavingAmenities) {
-        const verificationResponse = await fetch(
-          `${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: getAccessToken(),
-            },
-          }
-        );
-        if (!verificationResponse.ok) {
-          throw new Error("Amenities were not verified after save. Please try again.");
-        }
-
-        const verificationData = await verificationResponse.json();
-        const persistedAmenityIds = new Set(
-          (Array.isArray(verificationData?.amenities) ? verificationData.amenities : [])
-            .map((amenity) => String(amenity?.amenityId || ""))
-            .filter((amenityId) => amenityId)
-        );
-        const expectedAmenityIds = new Set((amenitiesPayload || []).map((amenityId) => String(amenityId)));
-        const hasSameAmenities =
-          persistedAmenityIds.size === expectedAmenityIds.size &&
-          [...expectedAmenityIds].every((amenityId) => persistedAmenityIds.has(amenityId));
-
-        if (!hasSameAmenities) {
-          throw new Error("Amenities could not be updated in the deployed backend yet.");
-        }
-      }
-
-      if (isSavingPolicies) {
-        const verificationResponse = await fetch(
-          `${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: getAccessToken(),
-            },
-          }
-        );
-        if (!verificationResponse.ok) {
-          throw new Error("Policies were not verified after save. Please try again.");
-        }
-
-        const verificationData = await verificationResponse.json();
-        const persistedRulesMap = new Map(
-          (Array.isArray(verificationData?.rules) ? verificationData.rules : [])
-            .map((rule) => [String(rule?.rule || ""), Boolean(rule?.value)])
-            .filter(([ruleName]) => ruleName)
-        );
-        const hasSamePolicies = (rulesPayload || []).every(
-          (rule) => persistedRulesMap.get(rule.rule) === Boolean(rule.value)
-        );
-
-        if (!hasSamePolicies) {
-          throw new Error("Policies could not be updated in the deployed backend yet.");
-        }
-      }
-
-      setForm({
-        title: normalizedTitle,
-        subtitle: normalizedSubtitle,
-        description: normalizedDescription,
-      });
-      const saveSuccessMessage = isSavingAmenities
-        ? "Amenities updated successfully."
-        : isSavingPolicies
-          ? "Policies updated successfully."
-          : "Property updated successfully.";
-      toast.success(saveSuccessMessage);
+      setForm(normalizedForm);
+      toast.success(successMessage);
     } catch (err) {
       console.error(err);
       const resolvedErrorMessage =
@@ -972,11 +1206,7 @@ export default function HostProperty() {
   const statusLabel = status === "ACTIVE" ? "Live" : "Draft";
   const statusDotClass = status === "ACTIVE" ? styles.statusDotLive : styles.statusDotDraft;
   const displayedPropertyType = capacity.propertyType || "Entire house";
-  const savingMessageByTab = {
-    Amenities: "Saving amenities...",
-    Policies: "Saving policies...",
-  };
-  const savingMessage = savingMessageByTab[selectedTab] || "Saving property details...";
+  const savingMessage = SAVING_MESSAGE_BY_TAB[selectedTab] || "Saving property details...";
 
   const handlePropertyChange = (event) => {
     const nextPropertyId = event.target.value;
@@ -1013,50 +1243,7 @@ export default function HostProperty() {
     toast.info("Delete property flow will be enabled in the dedicated delete release.");
   };
 
-  const renderTabContent = () => {
-    switch (selectedTab) {
-      case "Overview":
-        return (
-          <HostPropertyOverviewTab
-            form={form}
-            updateField={updateField}
-            displayedPropertyType={displayedPropertyType}
-            setCapacity={setCapacity}
-            capacity={capacity}
-            adjustCapacityField={adjustCapacityField}
-            updateCapacityField={updateCapacityField}
-            address={address}
-            updateAddressField={updateAddressField}
-          />
-        );
-      case "Amenities":
-        return (
-          <HostPropertyAmenitiesTab
-            amenityCategoryKeys={amenityCategoryKeys}
-            amenitiesByCategory={amenitiesByCategory}
-            expandedAmenityCategories={expandedAmenityCategories}
-            selectedAmenityCountByCategory={selectedAmenityCountByCategory}
-            selectedAmenityIdSet={selectedAmenityIdSet}
-            toggleAmenityCategory={toggleAmenityCategory}
-            toggleAmenitySelection={toggleAmenitySelection}
-          />
-        );
-      case "Policies":
-        return (
-          <HostPropertyPoliciesTab
-            policyRules={policyRules}
-            updatePolicyRule={updatePolicyRule}
-            handleDeletePropertyClick={handleDeletePropertyClick}
-            saving={saving}
-          />
-        );
-      default:
-        return <HostPropertyPlaceholderTab selectedTab={selectedTab} />;
-    }
-  };
-
-  const saveEnabledTabs = new Set(["Overview", "Amenities", "Policies"]);
-  const canSaveChanges = saveEnabledTabs.has(selectedTab);
+  const canSaveChanges = SAVE_ENABLED_TABS.has(selectedTab);
   const handleBackToListings = () => navigate("/hostdashboard/listings");
 
   return (
@@ -1084,7 +1271,29 @@ export default function HostProperty() {
             saving={saving}
           />
 
-          {renderTabContent()}
+          <HostPropertyTabContent
+            selectedTab={selectedTab}
+            form={form}
+            updateField={updateField}
+            displayedPropertyType={displayedPropertyType}
+            setCapacity={setCapacity}
+            capacity={capacity}
+            adjustCapacityField={adjustCapacityField}
+            updateCapacityField={updateCapacityField}
+            address={address}
+            updateAddressField={updateAddressField}
+            amenityCategoryKeys={amenityCategoryKeys}
+            amenitiesByCategory={amenitiesByCategory}
+            expandedAmenityCategories={expandedAmenityCategories}
+            selectedAmenityCountByCategory={selectedAmenityCountByCategory}
+            selectedAmenityIdSet={selectedAmenityIdSet}
+            toggleAmenityCategory={toggleAmenityCategory}
+            toggleAmenitySelection={toggleAmenitySelection}
+            policyRules={policyRules}
+            updatePolicyRule={updatePolicyRule}
+            handleDeletePropertyClick={handleDeletePropertyClick}
+            saving={saving}
+          />
           {error ? <p className={styles.errorText}>{error}</p> : null}
 
           <HostPropertyActions
