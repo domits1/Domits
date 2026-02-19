@@ -1,4 +1,5 @@
 .editorShell {
+  position: relative;
   width: 100%;
   max-width: 920px;
   margin: 0 auto;
@@ -6,6 +7,38 @@
   flex-direction: column;
   gap: 12px;
   padding: 6px 8px 18px;
+}
+
+.savingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(1px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.savingOverlayContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.savingOverlayText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.35;
+  color: #4a4a4a;
+  font-weight: 500;
 }
 
 .loaderWrap {
@@ -140,6 +173,123 @@
 .placeholderCard {
   min-height: 320px;
   justify-content: center;
+}
+
+.amenitiesCard {
+  gap: 14px;
+}
+
+.amenitiesSubtitle {
+  margin: 0;
+  color: #4e4e4e;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.amenitiesAccordion {
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.amenityCategoryItem + .amenityCategoryItem {
+  border-top: 1px solid #dddddd;
+}
+
+.amenityCategoryHeader {
+  width: 100%;
+  border: none;
+  background: #f6f6f6;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+}
+
+.amenityCategoryTitle {
+  color: #1d1d1d;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.amenityCategoryCount {
+  font-weight: 500;
+  color: #454545;
+}
+
+.amenityCategoryChevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.amenityCategoryChevronIcon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  opacity: 0.72;
+  filter: brightness(0) saturate(100%);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.amenityCategoryHeader:hover .amenityCategoryChevronIcon {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.amenityCategoryBody {
+  background: #ffffff;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0 14px;
+  pointer-events: none;
+  transition:
+    max-height 0.28s ease,
+    opacity 0.2s ease,
+    padding 0.24s ease;
+}
+
+.amenityCategoryBodyOpen {
+  max-height: 680px;
+  opacity: 1;
+  padding: 12px 14px 14px;
+  pointer-events: auto;
+}
+
+.amenityCheckboxGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 18px;
+}
+
+.amenityCheckboxItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #2f2f2f;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.amenityCheckboxItem input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.amenitiesHint {
+  margin: 2px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #f1e2b8;
+  background: #fffdf5;
+  color: #5a4b24;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .placeholderBadge {
@@ -283,7 +433,7 @@
 }
 
 .counterValue[type="number"] {
-  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .locationNote {
@@ -342,9 +492,33 @@
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: center;
   gap: 10px;
   padding-top: 4px;
+}
+
+.actionButton {
+  color: white;
+  background-color: var(--domits-host-blue);
+  border: none;
+  padding: 10px 25px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  min-width: 180px;
+  transition: opacity 0.2s ease;
+}
+
+.actionButton:hover {
+  opacity: 0.9;
+}
+
+.actionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 1200px) {
@@ -378,6 +552,11 @@
   .loaderText {
     font-size: 13px;
   }
+
+  .amenitiesSubtitle,
+  .amenityCategoryTitle {
+    font-size: 15px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -399,7 +578,18 @@
     flex-direction: column-reverse;
   }
 
-  .actions :global(.greenBtn) {
+  .actionButton {
     width: 100%;
+    min-width: 0;
+  }
+
+  .amenityCheckboxGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .amenityCheckboxGrid {
+    grid-template-columns: 1fr;
   }
 }

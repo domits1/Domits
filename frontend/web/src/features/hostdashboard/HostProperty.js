@@ -1,13 +1,33 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getAccessToken } from "../../services/getAccessToken";
+import { toast } from "react-toastify";
 import ClipLoader from "react-spinners/ClipLoader";
 import styles from "./HostProperty.module.css";
+import amenitiesCatalogue from "../../store/amenities";
+import arrowDownIcon from "../../images/arrow-down-icon.svg";
+import arrowUpIcon from "../../images/arrow-up-icon.svg";
 
 const PROPERTY_API_BASE = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 const TABS = ["Overview", "Photos", "Amenities", "Pricing", "Availability", "Policies"];
 const SPACE_TYPE_OPTIONS = ["Entire house", "Private room", "Shared room"];
 const MAX_CAPACITY_VALUE = 99;
+const AMENITY_CATEGORY_ORDER = [
+  "Essentials",
+  "Kitchen",
+  "Bathroom",
+  "Safety",
+  "Outdoor",
+  "Technology",
+  "Bedroom",
+  "LivingArea",
+  "Laundry",
+  "FamilyFriendly",
+  "Convenience",
+  "Accessibility",
+  "ExtraServices",
+  "EcoFriendly",
+];
 
 export default function HostProperty() {
   const navigate = useNavigate();
@@ -21,6 +41,8 @@ export default function HostProperty() {
   const [status, setStatus] = useState("INACTIVE");
   const [selectedTab, setSelectedTab] = useState("Overview");
   const [hostProperties, setHostProperties] = useState([]);
+  const [selectedAmenityIds, setSelectedAmenityIds] = useState([]);
+  const [expandedAmenityCategories, setExpandedAmenityCategories] = useState({});
   const [form, setForm] = useState({
     title: "",
     subtitle: "",
@@ -40,6 +62,48 @@ export default function HostProperty() {
     city: "",
     country: "",
   });
+  const isDevelopment = process.env.NODE_ENV === "development";
+
+  const amenitiesByCategory = useMemo(() => {
+    return amenitiesCatalogue.reduce((categories, amenity) => {
+      if (!categories[amenity.category]) {
+        categories[amenity.category] = [];
+      }
+      categories[amenity.category].push(amenity);
+      return categories;
+    }, {});
+  }, []);
+
+  const amenityCategoryKeys = useMemo(() => {
+    const categorySet = new Set(Object.keys(amenitiesByCategory));
+    const ordered = AMENITY_CATEGORY_ORDER.filter((category) => categorySet.has(category));
+    const leftovers = Object.keys(amenitiesByCategory)
+      .filter((category) => !AMENITY_CATEGORY_ORDER.includes(category))
+      .sort((left, right) => left.localeCompare(right));
+    return [...ordered, ...leftovers];
+  }, [amenitiesByCategory]);
+
+  const selectedAmenityIdSet = useMemo(() => new Set(selectedAmenityIds), [selectedAmenityIds]);
+
+  const selectedAmenityCountByCategory = useMemo(() => {
+    return amenityCategoryKeys.reduce((counts, category) => {
+      const categoryAmenities = amenitiesByCategory[category] || [];
+      counts[category] = categoryAmenities.filter((amenity) => selectedAmenityIdSet.has(String(amenity.id))).length;
+      return counts;
+    }, {});
+  }, [amenitiesByCategory, amenityCategoryKeys, selectedAmenityIdSet]);
+
+  useEffect(() => {
+    if (amenityCategoryKeys.length === 0) {
+      return;
+    }
+    setExpandedAmenityCategories((previous) => {
+      if (Object.keys(previous).length > 0) {
+        return previous;
+      }
+      return { [amenityCategoryKeys[0]]: true };
+    });
+  }, [amenityCategoryKeys]);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -76,6 +140,7 @@ export default function HostProperty() {
         if (hostPropertiesResponse.ok) {
           hostPropertiesData = await hostPropertiesResponse.json();
         }
+        const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
         const property = data?.property || {};
         const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
         const locationData = data?.location || {};
@@ -113,6 +178,9 @@ export default function HostProperty() {
           city: locationData.city || "",
           country: locationData.country || "",
         });
+        setSelectedAmenityIds(
+          propertyAmenities.map((amenity) => String(amenity?.amenityId || "")).filter((amenityId) => amenityId)
+        );
 
         const mappedHostProperties = (Array.isArray(hostPropertiesData) ? hostPropertiesData : [])
           .map((accommodation) => ({
@@ -210,13 +278,43 @@ export default function HostProperty() {
     };
   };
 
+  const getApiErrorMessage = async (response, fallbackMessage) => {
+    try {
+      const rawBody = await response.text();
+      if (!rawBody) {
+        return fallbackMessage;
+      }
+
+      try {
+        const parsedBody = JSON.parse(rawBody);
+        if (typeof parsedBody === "string" && parsedBody.trim()) {
+          return parsedBody.trim();
+        }
+        if (typeof parsedBody?.message === "string" && parsedBody.message.trim()) {
+          return parsedBody.message.trim();
+        }
+      } catch {
+        if (rawBody.trim()) {
+          return rawBody.trim();
+        }
+      }
+
+      return fallbackMessage;
+    } catch {
+      return fallbackMessage;
+    }
+  };
+
   const saveOverview = async () => {
+    const isSavingAmenities = selectedTab === "Amenities";
     const normalizedTitle = form.title.trim();
     const normalizedSubtitle = form.subtitle.trim();
     const normalizedDescription = form.description.trim();
 
     if (!normalizedTitle || !normalizedDescription) {
-      alert("Title and description cannot be empty.");
+      const validationMessage = "Title and description cannot be empty.";
+      setError(validationMessage);
+      toast.error(validationMessage);
       return;
     }
 
@@ -231,6 +329,7 @@ export default function HostProperty() {
         bathrooms: normalizeCapacityValue(capacity.bathrooms),
       };
       const locationPayload = getLocationPayload();
+      const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map((amenityId) => String(amenityId)) : undefined;
 
       const response = await fetch(`${PROPERTY_API_BASE}/overview`, {
         method: "PATCH",
@@ -245,11 +344,43 @@ export default function HostProperty() {
           description: normalizedDescription,
           capacity: capacityPayload,
           location: locationPayload,
+          amenities: amenitiesPayload,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save property overview.");
+        const apiErrorMessage = await getApiErrorMessage(response, "Failed to save property overview.");
+        throw new Error(apiErrorMessage);
+      }
+
+      if (isSavingAmenities) {
+        const verificationResponse = await fetch(
+          `${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: getAccessToken(),
+            },
+          }
+        );
+        if (!verificationResponse.ok) {
+          throw new Error("Amenities were not verified after save. Please try again.");
+        }
+
+        const verificationData = await verificationResponse.json();
+        const persistedAmenityIds = new Set(
+          (Array.isArray(verificationData?.amenities) ? verificationData.amenities : [])
+            .map((amenity) => String(amenity?.amenityId || ""))
+            .filter((amenityId) => amenityId)
+        );
+        const expectedAmenityIds = new Set((amenitiesPayload || []).map((amenityId) => String(amenityId)));
+        const hasSameAmenities =
+          persistedAmenityIds.size === expectedAmenityIds.size &&
+          [...expectedAmenityIds].every((amenityId) => persistedAmenityIds.has(amenityId));
+
+        if (!hasSameAmenities) {
+          throw new Error("Amenities could not be updated in the deployed backend yet.");
+        }
       }
 
       setForm({
@@ -257,10 +388,17 @@ export default function HostProperty() {
         subtitle: normalizedSubtitle,
         description: normalizedDescription,
       });
-      alert("Property updated successfully.");
+      toast.success(isSavingAmenities ? "Amenities updated successfully." : "Property updated successfully.");
     } catch (err) {
       console.error(err);
-      setError("Saving failed. Please try again.");
+      const resolvedErrorMessage =
+        err?.name === "TypeError"
+          ? isDevelopment
+            ? "Could not reach the API. Check AWS deployment/CORS configuration and try again."
+            : "Something went wrong while saving. Please try again later."
+          : err?.message || "Saving failed. Please try again.";
+      setError(resolvedErrorMessage);
+      toast.error(resolvedErrorMessage);
     } finally {
       setSaving(false);
     }
@@ -286,6 +424,8 @@ export default function HostProperty() {
   const statusDotClass = status === "ACTIVE" ? styles.statusDotLive : styles.statusDotDraft;
   const displayedPropertyType = capacity.propertyType || "Entire house";
   const isOverviewTab = selectedTab === "Overview";
+  const isAmenitiesTab = selectedTab === "Amenities";
+  const savingMessage = isAmenitiesTab ? "Saving amenities..." : "Saving property details...";
 
   const handlePropertyChange = (event) => {
     const nextPropertyId = event.target.value;
@@ -295,11 +435,36 @@ export default function HostProperty() {
     navigate(`/hostdashboard/property?ID=${encodeURIComponent(nextPropertyId)}`);
   };
 
+  const toggleAmenityCategory = (category) => {
+    setExpandedAmenityCategories((previous) => ({
+      ...previous,
+      [category]: !previous[category],
+    }));
+  };
+
+  const toggleAmenitySelection = (amenityId) => {
+    const normalizedAmenityId = String(amenityId);
+    setSelectedAmenityIds((previous) =>
+      previous.includes(normalizedAmenityId)
+        ? previous.filter((id) => id !== normalizedAmenityId)
+        : [...previous, normalizedAmenityId]
+    );
+  };
+
   return (
     <main className="page-Host">
       <p className="page-Host-title">Listing editor</p>
       <div className="page-Host-content">
         <section className={`host-pc-dashboard ${styles.editorShell}`}>
+          {saving ? (
+            <div className={styles.savingOverlay} role="status" aria-live="polite">
+              <div className={styles.savingOverlayContent}>
+                <ClipLoader size={80} color="#0D9813" loading />
+                <p className={styles.savingOverlayText}>{savingMessage}</p>
+              </div>
+            </div>
+          ) : null}
+
           <div className={styles.tabs} role="tablist" aria-label="Listing editor tabs">
             {TABS.map((tab) => (
               <button
@@ -309,6 +474,7 @@ export default function HostProperty() {
                 className={`${styles.tab} ${selectedTab === tab ? styles.tabActive : ""}`}
                 onClick={() => setSelectedTab(tab)}
                 aria-selected={selectedTab === tab}
+                disabled={saving}
               >
                 {tab}
               </button>
@@ -321,6 +487,7 @@ export default function HostProperty() {
               value={propertyId || ""}
               onChange={handlePropertyChange}
               className={styles.listingSelect}
+              disabled={saving}
             >
               {hostProperties.length > 0 ? (
                 hostProperties.map((accommodation) => (
@@ -578,10 +745,90 @@ export default function HostProperty() {
               {error ? <p className={styles.errorText}>{error}</p> : null}
 
               <div className={styles.actions}>
-                <button className="greenBtn" onClick={() => navigate("/hostdashboard/listings")} disabled={saving}>
+                <button className={styles.actionButton} onClick={() => navigate("/hostdashboard/listings")} disabled={saving}>
                   Back to listings
                 </button>
-                <button className="greenBtn" onClick={saveOverview} disabled={saving}>
+                <button className={styles.actionButton} onClick={saveOverview} disabled={saving}>
+                  {saving ? "Saving..." : "Save changes"}
+                </button>
+              </div>
+            </>
+          ) : isAmenitiesTab ? (
+            <>
+              <section className={`${styles.card} ${styles.amenitiesCard}`}>
+                <h3 className={styles.sectionTitle}>Amenities</h3>
+                <p className={styles.amenitiesSubtitle}>
+                  Highlight the amenities and features your property offers.
+                </p>
+
+                <div className={styles.amenitiesAccordion}>
+                  {amenityCategoryKeys.map((category) => {
+                    const categoryAmenities = amenitiesByCategory[category] || [];
+                    const isExpanded = Boolean(expandedAmenityCategories[category]);
+                    const selectedCount = selectedAmenityCountByCategory[category] || 0;
+
+                    return (
+                      <article key={category} className={styles.amenityCategoryItem}>
+                        <button
+                          type="button"
+                          className={styles.amenityCategoryHeader}
+                          onClick={() => toggleAmenityCategory(category)}
+                          aria-expanded={isExpanded}
+                        >
+                          <span className={styles.amenityCategoryTitle}>
+                            {category}{" "}
+                            <span className={styles.amenityCategoryCount}>
+                              ({selectedCount} out of {categoryAmenities.length} selected)
+                            </span>
+                          </span>
+                          <span className={styles.amenityCategoryChevron}>
+                            <img
+                              src={isExpanded ? arrowUpIcon : arrowDownIcon}
+                              alt=""
+                              aria-hidden="true"
+                              className={styles.amenityCategoryChevronIcon}
+                            />
+                          </span>
+                        </button>
+
+                        <div
+                          className={`${styles.amenityCategoryBody} ${
+                            isExpanded ? styles.amenityCategoryBodyOpen : ""
+                          }`}
+                          aria-hidden={!isExpanded}
+                        >
+                          <div className={styles.amenityCheckboxGrid}>
+                            {categoryAmenities.map((amenity) => {
+                              const amenityId = String(amenity.id);
+                              const checked = selectedAmenityIdSet.has(amenityId);
+                              return (
+                                <label key={amenityId} className={styles.amenityCheckboxItem}>
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => toggleAmenitySelection(amenityId)}
+                                  />
+                                  <span>{amenity.amenity}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+
+                <p className={styles.amenitiesHint}>Listings with popular amenities like Wi-Fi receive more bookings.</p>
+              </section>
+
+              {error ? <p className={styles.errorText}>{error}</p> : null}
+
+              <div className={styles.actions}>
+                <button className={styles.actionButton} onClick={() => navigate("/hostdashboard/listings")} disabled={saving}>
+                  Back to listings
+                </button>
+                <button className={styles.actionButton} onClick={saveOverview} disabled={saving}>
                   {saving ? "Saving..." : "Save changes"}
                 </button>
               </div>
@@ -597,10 +844,10 @@ export default function HostProperty() {
               </section>
 
               <div className={styles.actions}>
-                <button className="greenBtn" onClick={() => navigate("/hostdashboard/listings")}>
+                <button className={styles.actionButton} onClick={() => navigate("/hostdashboard/listings")} disabled={saving}>
                   Back to listings
                 </button>
-                <button className="greenBtn" disabled>
+                <button className={styles.actionButton} disabled>
                   Save changes
                 </button>
               </div>

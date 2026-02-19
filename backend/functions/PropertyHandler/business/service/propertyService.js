@@ -101,6 +101,10 @@ export class PropertyService {
       await this.updateLocation(propertyId, updates.location);
     }
 
+    if (updates?.amenities) {
+      await this.updateAmenities(propertyId, updates.amenities);
+    }
+
     return updatedProperty;
   }
 
@@ -342,6 +346,10 @@ export class PropertyService {
 
   async getAmenities(property) {
     return await this.propertyAmenityRepository.getAmenitiesByPropertyId(property);
+  }
+
+  async updateAmenities(propertyId, amenityIds) {
+    await this.propertyAmenityRepository.replaceAmenitiesByPropertyId(propertyId, amenityIds);
   }
 
   async createAvailability(availabilities) {

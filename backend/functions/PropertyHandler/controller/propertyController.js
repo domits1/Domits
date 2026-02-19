@@ -294,6 +294,7 @@ export class PropertyController {
             const subtitle = eventBody.subtitle;
             const capacity = eventBody.capacity;
             const location = eventBody.location;
+            const amenities = eventBody.amenities;
 
             if (!propertyId) {
                 return {
@@ -330,6 +331,25 @@ export class PropertyController {
                     headers: responseHeaders,
                     body: JSON.stringify({ message: "Location must be an object." }),
                 };
+            }
+            if (amenities !== undefined) {
+                if (!Array.isArray(amenities)) {
+                    return {
+                        statusCode: 400,
+                        headers: responseHeaders,
+                        body: JSON.stringify({ message: "Amenities must be an array." }),
+                    };
+                }
+                const hasInvalidAmenityValue = amenities.some(
+                    (amenityId) => typeof amenityId !== "string" && typeof amenityId !== "number"
+                );
+                if (hasInvalidAmenityValue) {
+                    return {
+                        statusCode: 400,
+                        headers: responseHeaders,
+                        body: JSON.stringify({ message: "Amenities must contain string or number IDs." }),
+                    };
+                }
             }
 
             const normalizedTitle = title.trim();
@@ -421,6 +441,9 @@ export class PropertyController {
             if (location) {
                 normalizedLocation = normalizeLocationPayload(location);
             }
+            const normalizedAmenities = Array.isArray(amenities)
+                ? Array.from(new Set(amenities.map((amenityId) => String(amenityId).trim()).filter((amenityId) => amenityId)))
+                : undefined;
 
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
             await this.propertyService.updatePropertyOverview(
@@ -431,6 +454,7 @@ export class PropertyController {
                 {
                     capacity: normalizedCapacity,
                     location: normalizedLocation,
+                    amenities: normalizedAmenities,
                 }
             );
 
@@ -440,7 +464,11 @@ export class PropertyController {
             };
         } catch (error) {
             console.error(error);
-            if (error?.message?.startsWith("Invalid capacity field:") || error?.message?.startsWith("Location ")) {
+            if (
+                error?.message?.startsWith("Invalid capacity field:") ||
+                error?.message?.startsWith("Location ") ||
+                error?.message?.startsWith("Unknown amenity IDs:")
+            ) {
                 return {
                     statusCode: 400,
                     headers: responseHeaders,
