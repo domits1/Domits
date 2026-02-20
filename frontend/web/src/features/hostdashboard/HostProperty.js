@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getAccessToken } from "../../services/getAccessToken";
@@ -9,6 +9,7 @@ import amenitiesCatalogue from "../../store/amenities";
 import arrowDownIcon from "../../images/arrow-down-icon.svg";
 import arrowUpIcon from "../../images/arrow-up-icon.svg";
 import infoIcon from "../../images/icons/info.png";
+import { normalizeImageUrl } from "../guestdashboard/utils/image";
 
 const PROPERTY_API_BASE = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 const TABS = ["Overview", "Photos", "Amenities", "Pricing", "Availability", "Policies"];
@@ -37,6 +38,16 @@ const POLICY_RULE_CONFIG = [
   { rule: "SuitableForChildren", label: "Suitable for children", invert: false },
   { rule: "SuitableForInfants", label: "Suitable for infants", invert: false },
 ];
+const PHOTO_CATEGORY_PLACEHOLDERS = ["Master Bedroom", "Living room", "Bedroom 2", "Bathroom"];
+const MAX_PROPERTY_IMAGES = 30;
+const MIN_PHOTO_WIDTH = 1024;
+const MIN_PHOTO_HEIGHT = 683;
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const MAX_TOTAL_PENDING_PHOTO_BYTES = 5 * 1024 * 1024 * 30;
+const PHOTO_REORDER_LONG_PRESS_MS = 50;
+const PHOTO_REORDER_MOVE_CANCEL_PX = 12;
+const PHOTO_ACCEPT = ".jpg,.jpeg,.png,.webp";
+const PHOTO_ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const createInitialPolicyRules = () =>
   POLICY_RULE_CONFIG.reduce((accumulator, ruleConfig) => {
@@ -44,8 +55,9 @@ const createInitialPolicyRules = () =>
     return accumulator;
   }, {});
 
-const SAVE_ENABLED_TABS = new Set(["Overview", "Amenities", "Policies"]);
+const SAVE_ENABLED_TABS = new Set(["Overview", "Photos", "Amenities", "Policies"]);
 const SAVING_MESSAGE_BY_TAB = {
+  Photos: "Uploading photos...",
   Amenities: "Saving amenities...",
   Policies: "Saving policies...",
 };
@@ -192,9 +204,123 @@ const mapPropertyRulesToState = (propertyRules) => {
   return nextRules;
 };
 
+const mapPropertyImagesToState = (images) => {
+  const safeImages = Array.isArray(images) ? images : [];
+  return safeImages
+    .map((image, index) => {
+      const webKey = String(image?.web_key || "").trim();
+      const thumbKey = String(image?.thumb_key || "").trim();
+      const originalKey = String(image?.original_key || "").trim();
+      const fallbackKey = String(image?.key || "").trim();
+      const anyKey = webKey || thumbKey || originalKey || fallbackKey;
+      if (!anyKey) {
+        return null;
+      }
+      const rawSortOrder = Number(image?.sort_order);
+      const sortOrder = Number.isFinite(rawSortOrder) ? rawSortOrder : index;
+      const imageId = String(image?.image_id || image?.id || anyKey || `legacy-${index}`);
+      return {
+        id: imageId,
+        key: fallbackKey || webKey || thumbKey || originalKey,
+        webKey: webKey || null,
+        thumbKey: thumbKey || null,
+        originalKey: originalKey || null,
+        sortOrder,
+        status: String(image?.status || "READY"),
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.sortOrder - right.sortOrder);
+};
+
+const buildDisplayedPhotos = (existingPhotos, pendingPhotos, photoOrderIds) => {
+  const existingById = new Map((Array.isArray(existingPhotos) ? existingPhotos : []).map((photo) => [photo.id, photo]));
+  const pendingById = new Map((Array.isArray(pendingPhotos) ? pendingPhotos : []).map((photo) => [photo.id, photo]));
+  const orderedIds = Array.isArray(photoOrderIds) ? photoOrderIds : [];
+  const missingIds = [
+    ...existingById.keys(),
+    ...pendingById.keys(),
+  ].filter((photoId) => !orderedIds.includes(photoId));
+  const resolvedOrder = [...orderedIds, ...missingIds];
+
+  return resolvedOrder
+    .map((photoId, index) => {
+      const existingPhoto = existingById.get(photoId);
+      if (existingPhoto) {
+        const preferredKey = index === 0
+          ? existingPhoto.webKey || existingPhoto.key || existingPhoto.thumbKey || existingPhoto.originalKey
+          : existingPhoto.thumbKey || existingPhoto.webKey || existingPhoto.key || existingPhoto.originalKey;
+        return {
+          id: photoId,
+          src: normalizeImageUrl(preferredKey),
+          isPending: false,
+        };
+      }
+
+      const pendingPhoto = pendingById.get(photoId);
+      if (pendingPhoto) {
+        return {
+          id: photoId,
+          src: pendingPhoto.previewUrl,
+          isPending: true,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+};
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(String(reader.result || ""));
+    };
+    reader.onerror = () => {
+      reject(new Error("Could not read photo file."));
+    };
+    reader.readAsDataURL(file);
+  });
+
+const readImageDimensions = (source) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      resolve({ width: image.width, height: image.height });
+    };
+    image.onerror = () => {
+      reject(new Error("Invalid image file."));
+    };
+    image.src = source;
+  });
+
+const createPendingPhotoFromFile = async (file) => {
+  if (!PHOTO_ALLOWED_TYPES.has(file.type)) {
+    throw new Error("Only JPG, PNG and WEBP are allowed.");
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    throw new Error("Each photo can be up to 5 MB.");
+  }
+
+  const previewUrl = await readFileAsDataUrl(file);
+  const dimensions = await readImageDimensions(previewUrl);
+  if (dimensions.width < MIN_PHOTO_WIDTH || dimensions.height < MIN_PHOTO_HEIGHT) {
+    throw new Error(`Photo must be at least ${MIN_PHOTO_WIDTH}x${MIN_PHOTO_HEIGHT}px.`);
+  }
+
+  return {
+    id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    previewUrl,
+    file,
+    contentType: file.type,
+    size: file.size,
+  };
+};
+
 const extractFetchedPropertyData = (data, hostPropertiesData) => {
   const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
   const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
+  const propertyImages = Array.isArray(data?.images) ? data.images : [];
   const property = data?.property || {};
   const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
   const locationData = data?.location || {};
@@ -223,6 +349,7 @@ const extractFetchedPropertyData = (data, hostPropertiesData) => {
     },
     selectedAmenityIds: propertyAmenities.map((amenity) => String(amenity?.amenityId || "")).filter(Boolean),
     policyRules: mapPropertyRulesToState(propertyRules),
+    existingPhotos: mapPropertyImagesToState(propertyImages),
     hostProperties: mapHostProperties(hostPropertiesData, property),
   };
 };
@@ -384,6 +511,159 @@ const savePropertyChanges = async ({
       description: normalizedDescription,
     },
     successMessage: getSaveSuccessMessage(selectedTab),
+  };
+};
+
+const savePropertyPhotos = async ({
+  propertyId,
+  existingPhotos,
+  pendingPhotos,
+  photoOrderIds,
+  hasPhotoOrderChanges,
+}) => {
+  const persistedPhotos = Array.isArray(existingPhotos) ? existingPhotos : [];
+  const queuedPhotos = Array.isArray(pendingPhotos) ? pendingPhotos : [];
+  const existingById = new Map(persistedPhotos.map((photo) => [photo.id, photo]));
+  const pendingById = new Map(queuedPhotos.map((photo) => [photo.id, photo]));
+  const rawOrderIds = Array.isArray(photoOrderIds) ? photoOrderIds : [];
+  const normalizedOrderIds = [
+    ...rawOrderIds.filter((photoId) => existingById.has(photoId) || pendingById.has(photoId)),
+    ...[...existingById.keys(), ...pendingById.keys()].filter((photoId) => !rawOrderIds.includes(photoId)),
+  ];
+  const orderedPendingPhotos = normalizedOrderIds
+    .filter((photoId) => pendingById.has(photoId))
+    .map((photoId) => pendingById.get(photoId));
+
+  if ((persistedPhotos.length + queuedPhotos.length) > MAX_PROPERTY_IMAGES) {
+    throw new Error(`A listing can have up to ${MAX_PROPERTY_IMAGES} photos.`);
+  }
+
+  if (orderedPendingPhotos.length === 0 && !hasPhotoOrderChanges) {
+    return {
+      nextExistingPhotos: existingPhotos,
+      nextPendingPhotos: pendingPhotos,
+      nextPhotoOrderIds: photoOrderIds,
+      successMessage: "No photo changes to save.",
+      didUpload: false,
+      didReorder: false,
+    };
+  }
+
+  let pendingIdToPersistedId = new Map();
+  const pendingOrderPosition = new Map(normalizedOrderIds.map((photoId, index) => [photoId, index]));
+
+  if (orderedPendingPhotos.length > 0) {
+    const presignResponse = await fetch(`${PROPERTY_API_BASE}/images/presign`, {
+      method: "POST",
+      headers: {
+        Authorization: getAccessToken(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        propertyId,
+        files: orderedPendingPhotos.map((photo) => ({
+          contentType: photo.contentType,
+          size: photo.size,
+        })),
+      }),
+    });
+
+    if (!presignResponse.ok) {
+      const message = await getApiErrorMessage(presignResponse, "Failed to prepare photo upload.");
+      throw new Error(message);
+    }
+
+    const presignData = await presignResponse.json();
+    const uploads = Array.isArray(presignData?.uploads) ? presignData.uploads : [];
+    if (uploads.length !== orderedPendingPhotos.length) {
+      throw new Error("Photo upload preparation returned an unexpected response.");
+    }
+
+    await Promise.all(
+      uploads.map(async (upload, index) => {
+        const uploadResponse = await fetch(upload.url, {
+          method: "PUT",
+          headers: {
+            "Content-Type": upload.contentType,
+          },
+          body: orderedPendingPhotos[index].file,
+        });
+        if (!uploadResponse.ok) {
+          throw new Error(`Failed to upload photo (${uploadResponse.status}).`);
+        }
+      })
+    );
+
+    const confirmResponse = await fetch(`${PROPERTY_API_BASE}/images/confirm`, {
+      method: "POST",
+      headers: {
+        Authorization: getAccessToken(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        propertyId,
+        images: uploads.map((upload, index) => ({
+          imageId: upload.imageId,
+          originalKey: upload.key,
+          sortOrder: pendingOrderPosition.get(orderedPendingPhotos[index].id) ?? index,
+        })),
+      }),
+    });
+
+    if (!confirmResponse.ok) {
+      const message = await getApiErrorMessage(confirmResponse, "Failed to finalize photo upload.");
+      throw new Error(message);
+    }
+
+    pendingIdToPersistedId = new Map(
+      orderedPendingPhotos.map((photo, index) => [photo.id, String(uploads[index]?.imageId || "")])
+    );
+  }
+
+  const finalPersistedOrder = normalizedOrderIds
+    .map((photoId) => {
+      if (existingById.has(photoId)) {
+        return photoId;
+      }
+      const mappedUploadedId = pendingIdToPersistedId.get(photoId);
+      return mappedUploadedId || null;
+    })
+    .filter(Boolean);
+
+  if (finalPersistedOrder.length > 0) {
+    const orderResponse = await fetch(`${PROPERTY_API_BASE}/images/order`, {
+      method: "PATCH",
+      headers: {
+        Authorization: getAccessToken(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        propertyId,
+        images: finalPersistedOrder.map((imageId, sortOrder) => ({
+          imageId,
+          sortOrder,
+        })),
+      }),
+    });
+
+    if (!orderResponse.ok) {
+      const message = await getApiErrorMessage(orderResponse, "Failed to update photo order.");
+      throw new Error(message);
+    }
+  }
+
+  const verificationData = await fetchPropertySnapshot(propertyId);
+  const refreshedPhotos = mapPropertyImagesToState(verificationData?.images);
+
+  return {
+    nextExistingPhotos: refreshedPhotos,
+    nextPendingPhotos: [],
+    nextPhotoOrderIds: refreshedPhotos.map((photo) => photo.id),
+    successMessage: orderedPendingPhotos.length > 0
+      ? `${orderedPendingPhotos.length} photo${orderedPendingPhotos.length === 1 ? "" : "s"} uploaded successfully.`
+      : "Photo order updated successfully.",
+    didUpload: orderedPendingPhotos.length > 0,
+    didReorder: hasPhotoOrderChanges,
   };
 };
 
@@ -708,6 +988,404 @@ function HostPropertyOverviewTab({
   );
 }
 
+function HostPropertyPhotosTab({
+  displayedPhotos,
+  pendingPhotoCount,
+  onOpenPhotoPicker,
+  onPhotoFilesSelected,
+  onPhotoDrop,
+  onPhotoDragOver,
+  onPhotoDragLeave,
+  isPhotoDragOver,
+  onRemovePendingPhoto,
+  onPhotoTileDragStart,
+  onPhotoTileDragEnd,
+  onPhotoTileDragOver,
+  onPhotoTileDragLeave,
+  onPhotoTileDrop,
+  draggingPhotoId,
+  photoDropTargetId,
+  saving,
+  photoInputRef,
+}) {
+  const photoTileRefs = useRef(new Map());
+  const previousTileRectsRef = useRef(new Map());
+  const touchReorderRef = useRef({
+    pointerId: null,
+    sourcePhotoId: null,
+    targetPhotoId: null,
+    started: false,
+    startX: 0,
+    startY: 0,
+    timerId: null,
+  });
+  const coverPhoto = displayedPhotos[0] || null;
+  const gridPhotos = displayedPhotos.slice(1);
+  const totalPhotoCount = displayedPhotos.length;
+
+  const clearTouchReorderTimer = () => {
+    const timerId = touchReorderRef.current.timerId;
+    if (timerId) {
+      clearTimeout(timerId);
+      touchReorderRef.current.timerId = null;
+    }
+  };
+
+  const resetTouchReorderState = () => {
+    clearTouchReorderTimer();
+    touchReorderRef.current.pointerId = null;
+    touchReorderRef.current.sourcePhotoId = null;
+    touchReorderRef.current.targetPhotoId = null;
+    touchReorderRef.current.started = false;
+    touchReorderRef.current.startX = 0;
+    touchReorderRef.current.startY = 0;
+  };
+
+  const resolveDropTargetPhotoId = (event) => {
+    if (typeof document === "undefined") {
+      return null;
+    }
+    const element = document.elementFromPoint(event.clientX, event.clientY);
+    const targetTile = element?.closest("[data-photo-id]");
+    return targetTile?.getAttribute("data-photo-id") || null;
+  };
+
+  const handlePhotoTilePointerDown = (photoId, event) => {
+    if (event.pointerType === "mouse" || saving) {
+      return;
+    }
+    if (touchReorderRef.current.pointerId !== null) {
+      return;
+    }
+    if (event.target?.closest("button, input, textarea, select, a, [role='button']")) {
+      return;
+    }
+
+    clearTouchReorderTimer();
+    touchReorderRef.current.pointerId = event.pointerId;
+    touchReorderRef.current.sourcePhotoId = photoId;
+    touchReorderRef.current.targetPhotoId = photoId;
+    touchReorderRef.current.started = false;
+    touchReorderRef.current.startX = event.clientX;
+    touchReorderRef.current.startY = event.clientY;
+    touchReorderRef.current.timerId = setTimeout(() => {
+      touchReorderRef.current.started = true;
+      onPhotoTileDragStart(photoId);
+      onPhotoTileDragOver(photoId);
+    }, PHOTO_REORDER_LONG_PRESS_MS);
+  };
+
+  const handlePhotoTilePointerMove = (event) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    const touchReorderState = touchReorderRef.current;
+    if (touchReorderState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (!touchReorderState.started) {
+      const deltaX = event.clientX - touchReorderState.startX;
+      const deltaY = event.clientY - touchReorderState.startY;
+      const distance = Math.hypot(deltaX, deltaY);
+      if (distance > PHOTO_REORDER_MOVE_CANCEL_PX) {
+        resetTouchReorderState();
+      }
+      return;
+    }
+
+    event.preventDefault();
+    const targetPhotoId = resolveDropTargetPhotoId(event) || touchReorderState.sourcePhotoId;
+    if (!targetPhotoId) {
+      return;
+    }
+    touchReorderState.targetPhotoId = targetPhotoId;
+    onPhotoTileDragOver(targetPhotoId);
+  };
+
+  const handlePhotoTilePointerUp = (event) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    const touchReorderState = touchReorderRef.current;
+    if (touchReorderState.pointerId !== event.pointerId) {
+      return;
+    }
+    clearTouchReorderTimer();
+    if (!touchReorderState.started) {
+      resetTouchReorderState();
+      return;
+    }
+
+    event.preventDefault();
+    const targetPhotoId =
+      resolveDropTargetPhotoId(event) || touchReorderState.targetPhotoId || touchReorderState.sourcePhotoId;
+    if (targetPhotoId) {
+      onPhotoTileDrop(targetPhotoId);
+    }
+    onPhotoTileDragEnd();
+    resetTouchReorderState();
+  };
+
+  const handlePhotoTilePointerCancel = (event) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    const touchReorderState = touchReorderRef.current;
+    if (touchReorderState.pointerId !== event.pointerId) {
+      return;
+    }
+    if (touchReorderState.started) {
+      onPhotoTileDragEnd();
+    }
+    resetTouchReorderState();
+  };
+
+  useLayoutEffect(() => {
+    const nextRects = new Map();
+    displayedPhotos.forEach((photo) => {
+      const node = photoTileRefs.current.get(photo.id);
+      if (node) {
+        nextRects.set(photo.id, node.getBoundingClientRect());
+      }
+    });
+
+    const previousRects = previousTileRectsRef.current;
+    nextRects.forEach((nextRect, photoId) => {
+      const previousRect = previousRects.get(photoId);
+      if (!previousRect) {
+        return;
+      }
+      const deltaX = previousRect.left - nextRect.left;
+      const deltaY = previousRect.top - nextRect.top;
+      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) {
+        return;
+      }
+      const node = photoTileRefs.current.get(photoId);
+      if (!node) {
+        return;
+      }
+
+      node.style.transition = "none";
+      node.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+      node.style.willChange = "transform";
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          node.style.transition = "transform 220ms ease";
+          node.style.transform = "translate(0, 0)";
+        });
+      });
+
+      const clearAnimationState = () => {
+        node.style.transition = "";
+        node.style.willChange = "";
+        node.removeEventListener("transitionend", clearAnimationState);
+      };
+      node.addEventListener("transitionend", clearAnimationState);
+    });
+
+    previousTileRectsRef.current = nextRects;
+  }, [displayedPhotos]);
+
+  useEffect(() => {
+    return () => {
+      const timerId = touchReorderRef.current.timerId;
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    };
+  }, []);
+
+  return (
+    <section className={`${styles.card} ${styles.photosCard}`}>
+      <h3 className={styles.sectionTitle}>Photos</h3>
+      <p className={styles.photosSubtitle}>Upload and manage photos for your listing.</p>
+
+      <div className={styles.photosLayout}>
+        <div className={styles.photosPrimaryColumn}>
+          <div
+            className={`${styles.photoTileLarge} ${
+              coverPhoto && draggingPhotoId === coverPhoto.id ? styles.photoTileDragActive : ""
+            } ${coverPhoto && photoDropTargetId === coverPhoto.id ? styles.photoTileDropTarget : ""}`}
+            data-photo-id={coverPhoto?.id || ""}
+            ref={(node) => {
+              if (!coverPhoto) {
+                return;
+              }
+              if (node) {
+                photoTileRefs.current.set(coverPhoto.id, node);
+              } else {
+                photoTileRefs.current.delete(coverPhoto.id);
+              }
+            }}
+            draggable={Boolean(coverPhoto)}
+            onDragStart={() => {
+              if (coverPhoto) {
+                onPhotoTileDragStart(coverPhoto.id);
+              }
+            }}
+            onDragEnd={onPhotoTileDragEnd}
+            onDragOver={(event) => {
+              event.preventDefault();
+              if (coverPhoto) {
+                onPhotoTileDragOver(coverPhoto.id);
+              }
+            }}
+            onDragLeave={() => {
+              if (coverPhoto) {
+                onPhotoTileDragLeave(coverPhoto.id);
+              }
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              if (coverPhoto) {
+                onPhotoTileDrop(coverPhoto.id);
+              }
+            }}
+            onPointerDown={(event) => {
+              if (coverPhoto) {
+                handlePhotoTilePointerDown(coverPhoto.id, event);
+              }
+            }}
+            onPointerMove={handlePhotoTilePointerMove}
+            onPointerUp={handlePhotoTilePointerUp}
+            onPointerCancel={handlePhotoTilePointerCancel}
+          >
+            {coverPhoto ? (
+              <>
+                <img src={coverPhoto.src} alt="Cover photo" className={styles.photoImageLarge} />
+                <span className={styles.photoCheck} aria-hidden="true">
+                  &#10003;
+                </span>
+                {coverPhoto.isPending ? (
+                  <button
+                    type="button"
+                    className={styles.photoRemoveButton}
+                    onClick={() => onRemovePendingPhoto(coverPhoto.id)}
+                    disabled={saving}
+                  >
+                    &times;
+                  </button>
+                ) : null}
+                {coverPhoto.isPending ? <span className={styles.photoPendingBadge}>New</span> : null}
+              </>
+            ) : (
+              <span className={styles.photoEmptyLabel}>No photos yet</span>
+            )}
+          </div>
+          <p className={styles.photoCoverCaption}>Cover photo</p>
+
+          <button
+            type="button"
+            className={`${styles.photoAddButton} ${isPhotoDragOver ? styles.photoAddButtonDragOver : ""}`}
+            onClick={onOpenPhotoPicker}
+            onDragOver={onPhotoDragOver}
+            onDragLeave={onPhotoDragLeave}
+            onDrop={onPhotoDrop}
+            disabled={saving}
+          >
+            <span className={styles.photoAddIcon}>+</span>
+            <span>Add photos</span>
+          </button>
+
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept={PHOTO_ACCEPT}
+            multiple
+            className={styles.photoInputHidden}
+            onChange={onPhotoFilesSelected}
+            disabled={saving}
+          />
+        </div>
+
+        <div className={styles.photosSecondaryGrid}>
+          {gridPhotos.length > 0 ? (
+            gridPhotos.map((photo, index) => (
+              <div
+                key={photo.id}
+                className={`${styles.photoTileSmall} ${
+                  draggingPhotoId === photo.id ? styles.photoTileDragActive : ""
+                } ${photoDropTargetId === photo.id ? styles.photoTileDropTarget : ""}`}
+                data-photo-id={photo.id}
+                ref={(node) => {
+                  if (node) {
+                    photoTileRefs.current.set(photo.id, node);
+                  } else {
+                    photoTileRefs.current.delete(photo.id);
+                  }
+                }}
+                draggable
+                onDragStart={() => onPhotoTileDragStart(photo.id)}
+                onDragEnd={onPhotoTileDragEnd}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  onPhotoTileDragOver(photo.id);
+                }}
+                onDragLeave={() => onPhotoTileDragLeave(photo.id)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  onPhotoTileDrop(photo.id);
+                }}
+                onPointerDown={(event) => handlePhotoTilePointerDown(photo.id, event)}
+                onPointerMove={handlePhotoTilePointerMove}
+                onPointerUp={handlePhotoTilePointerUp}
+                onPointerCancel={handlePhotoTilePointerCancel}
+              >
+                <img src={photo.src} alt={`Property photo ${index + 2}`} className={styles.photoImageSmall} />
+                <span className={styles.photoCheck} aria-hidden="true">
+                  &#10003;
+                </span>
+                {photo.isPending ? (
+                  <button
+                    type="button"
+                    className={styles.photoRemoveButton}
+                    onClick={() => onRemovePendingPhoto(photo.id)}
+                    disabled={saving}
+                  >
+                    &times;
+                  </button>
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <div className={styles.photoTileSmall}>
+              <span className={styles.photoTilePlaceholder}>Additional photos will appear here.</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className={styles.photoCategoryGrid}>
+        {PHOTO_CATEGORY_PLACEHOLDERS.map((category) => (
+          <article key={category} className={styles.photoCategoryItem}>
+            <span className={styles.photoCategoryName}>{category}</span>
+            <button
+              type="button"
+              className={styles.photoCategoryAddButton}
+              onClick={onOpenPhotoPicker}
+              disabled={saving}
+            >
+              +Add
+            </button>
+          </article>
+        ))}
+      </div>
+
+      <p className={styles.photosHint}>
+        <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />{" "}
+        Listings with 10+ high-quality photos receive 30% more bookings.
+      </p>
+
+      <p className={styles.photosMeta}>
+        {totalPhotoCount} / {MAX_PROPERTY_IMAGES} photos
+        {pendingPhotoCount > 0 ? ` (${pendingPhotoCount} pending save)` : ""}
+      </p>
+    </section>
+  );
+}
+
 function HostPropertyAmenitiesTab({
   amenityCategoryKeys,
   amenitiesByCategory,
@@ -888,6 +1566,23 @@ function HostPropertyTabContent({
   updateCapacityField,
   address,
   updateAddressField,
+  displayedPhotos,
+  pendingPhotoCount,
+  onOpenPhotoPicker,
+  onPhotoFilesSelected,
+  onPhotoDrop,
+  onPhotoDragOver,
+  onPhotoDragLeave,
+  isPhotoDragOver,
+  onRemovePendingPhoto,
+  onPhotoTileDragStart,
+  onPhotoTileDragEnd,
+  onPhotoTileDragOver,
+  onPhotoTileDragLeave,
+  onPhotoTileDrop,
+  draggingPhotoId,
+  photoDropTargetId,
+  photoInputRef,
   amenityCategoryKeys,
   amenitiesByCategory,
   expandedAmenityCategories,
@@ -913,6 +1608,29 @@ function HostPropertyTabContent({
           updateCapacityField={updateCapacityField}
           address={address}
           updateAddressField={updateAddressField}
+        />
+      );
+    case "Photos":
+      return (
+        <HostPropertyPhotosTab
+          displayedPhotos={displayedPhotos}
+          pendingPhotoCount={pendingPhotoCount}
+          onOpenPhotoPicker={onOpenPhotoPicker}
+          onPhotoFilesSelected={onPhotoFilesSelected}
+          onPhotoDrop={onPhotoDrop}
+          onPhotoDragOver={onPhotoDragOver}
+          onPhotoDragLeave={onPhotoDragLeave}
+          isPhotoDragOver={isPhotoDragOver}
+          onRemovePendingPhoto={onRemovePendingPhoto}
+          onPhotoTileDragStart={onPhotoTileDragStart}
+          onPhotoTileDragEnd={onPhotoTileDragEnd}
+          onPhotoTileDragOver={onPhotoTileDragOver}
+          onPhotoTileDragLeave={onPhotoTileDragLeave}
+          onPhotoTileDrop={onPhotoTileDrop}
+          draggingPhotoId={draggingPhotoId}
+          photoDropTargetId={photoDropTargetId}
+          saving={saving}
+          photoInputRef={photoInputRef}
         />
       );
     case "Amenities":
@@ -974,6 +1692,12 @@ const amenityShape = PropTypes.shape({
   amenity: PropTypes.string,
 });
 
+const displayedPhotoShape = PropTypes.shape({
+  id: PropTypes.string.isRequired,
+  src: PropTypes.string.isRequired,
+  isPending: PropTypes.bool.isRequired,
+});
+
 HostPropertyTabs.propTypes = {
   selectedTab: PropTypes.string.isRequired,
   onSelectTab: PropTypes.func.isRequired,
@@ -1000,6 +1724,29 @@ HostPropertyOverviewTab.propTypes = {
   updateCapacityField: PropTypes.func.isRequired,
   address: propertyAddressShape.isRequired,
   updateAddressField: PropTypes.func.isRequired,
+};
+
+HostPropertyPhotosTab.propTypes = {
+  displayedPhotos: PropTypes.arrayOf(displayedPhotoShape).isRequired,
+  pendingPhotoCount: PropTypes.number.isRequired,
+  onOpenPhotoPicker: PropTypes.func.isRequired,
+  onPhotoFilesSelected: PropTypes.func.isRequired,
+  onPhotoDrop: PropTypes.func.isRequired,
+  onPhotoDragOver: PropTypes.func.isRequired,
+  onPhotoDragLeave: PropTypes.func.isRequired,
+  isPhotoDragOver: PropTypes.bool.isRequired,
+  onRemovePendingPhoto: PropTypes.func.isRequired,
+  onPhotoTileDragStart: PropTypes.func.isRequired,
+  onPhotoTileDragEnd: PropTypes.func.isRequired,
+  onPhotoTileDragOver: PropTypes.func.isRequired,
+  onPhotoTileDragLeave: PropTypes.func.isRequired,
+  onPhotoTileDrop: PropTypes.func.isRequired,
+  draggingPhotoId: PropTypes.string,
+  photoDropTargetId: PropTypes.string,
+  saving: PropTypes.bool.isRequired,
+  photoInputRef: PropTypes.shape({
+    current: PropTypes.any,
+  }).isRequired,
 };
 
 HostPropertyAmenitiesTab.propTypes = {
@@ -1041,6 +1788,25 @@ HostPropertyTabContent.propTypes = {
   updateCapacityField: PropTypes.func.isRequired,
   address: propertyAddressShape.isRequired,
   updateAddressField: PropTypes.func.isRequired,
+  displayedPhotos: PropTypes.arrayOf(displayedPhotoShape).isRequired,
+  pendingPhotoCount: PropTypes.number.isRequired,
+  onOpenPhotoPicker: PropTypes.func.isRequired,
+  onPhotoFilesSelected: PropTypes.func.isRequired,
+  onPhotoDrop: PropTypes.func.isRequired,
+  onPhotoDragOver: PropTypes.func.isRequired,
+  onPhotoDragLeave: PropTypes.func.isRequired,
+  isPhotoDragOver: PropTypes.bool.isRequired,
+  onRemovePendingPhoto: PropTypes.func.isRequired,
+  onPhotoTileDragStart: PropTypes.func.isRequired,
+  onPhotoTileDragEnd: PropTypes.func.isRequired,
+  onPhotoTileDragOver: PropTypes.func.isRequired,
+  onPhotoTileDragLeave: PropTypes.func.isRequired,
+  onPhotoTileDrop: PropTypes.func.isRequired,
+  draggingPhotoId: PropTypes.string,
+  photoDropTargetId: PropTypes.string,
+  photoInputRef: PropTypes.shape({
+    current: PropTypes.any,
+  }).isRequired,
   amenityCategoryKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
   amenitiesByCategory: PropTypes.objectOf(PropTypes.arrayOf(amenityShape)).isRequired,
   expandedAmenityCategories: PropTypes.objectOf(PropTypes.bool).isRequired,
@@ -1059,6 +1825,7 @@ export default function HostProperty() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const propertyId = params.get("ID");
+  const photoInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1088,6 +1855,12 @@ export default function HostProperty() {
     city: "",
     country: "",
   });
+  const [existingPhotos, setExistingPhotos] = useState([]);
+  const [pendingPhotos, setPendingPhotos] = useState([]);
+  const [isPhotoDragOver, setIsPhotoDragOver] = useState(false);
+  const [photoOrderIds, setPhotoOrderIds] = useState([]);
+  const [draggingPhotoId, setDraggingPhotoId] = useState(null);
+  const [photoDropTargetId, setPhotoDropTargetId] = useState(null);
   const isDevelopment = process.env.NODE_ENV === "development";
 
   const amenitiesByCategory = useMemo(() => {
@@ -1110,6 +1883,22 @@ export default function HostProperty() {
   }, [amenitiesByCategory]);
 
   const selectedAmenityIdSet = useMemo(() => new Set(selectedAmenityIds), [selectedAmenityIds]);
+  const displayedPhotos = useMemo(
+    () => buildDisplayedPhotos(existingPhotos, pendingPhotos, photoOrderIds),
+    [existingPhotos, pendingPhotos, photoOrderIds]
+  );
+  const existingPhotoIdSet = useMemo(
+    () => new Set(existingPhotos.map((photo) => photo.id)),
+    [existingPhotos]
+  );
+  const orderedExistingPhotoIds = useMemo(
+    () => photoOrderIds.filter((photoId) => existingPhotoIdSet.has(photoId)),
+    [photoOrderIds, existingPhotoIdSet]
+  );
+  const hasPhotoOrderChanges = useMemo(
+    () => existingPhotos.map((photo) => photo.id).join(",") !== orderedExistingPhotoIds.join(","),
+    [existingPhotos, orderedExistingPhotoIds]
+  );
 
   const selectedAmenityCountByCategory = useMemo(() => {
     return amenityCategoryKeys.reduce((counts, category) => {
@@ -1154,6 +1943,12 @@ export default function HostProperty() {
         setAddress(fetchedPropertyData.address);
         setSelectedAmenityIds(fetchedPropertyData.selectedAmenityIds);
         setPolicyRules(fetchedPropertyData.policyRules);
+        setExistingPhotos(fetchedPropertyData.existingPhotos);
+        setPendingPhotos([]);
+        setIsPhotoDragOver(false);
+        setPhotoOrderIds(fetchedPropertyData.existingPhotos.map((photo) => photo.id));
+        setDraggingPhotoId(null);
+        setPhotoDropTargetId(null);
         setHostProperties(fetchedPropertyData.hostProperties);
       } catch (err) {
         console.error(err);
@@ -1188,10 +1983,159 @@ export default function HostProperty() {
     setCapacity((prev) => ({ ...prev, [field]: normalizeCapacityValue(prev[field] + delta) }));
   };
 
+  const openPhotoPicker = () => {
+    if (!photoInputRef.current) {
+      return;
+    }
+    photoInputRef.current.value = "";
+    photoInputRef.current.click();
+  };
+
+  const addPhotosToQueue = async (files) => {
+    const incomingFiles = Array.from(files || []);
+    if (incomingFiles.length === 0) {
+      return;
+    }
+
+    const availableSlots = MAX_PROPERTY_IMAGES - (existingPhotos.length + pendingPhotos.length);
+    if (availableSlots <= 0) {
+      toast.error(`A listing can have up to ${MAX_PROPERTY_IMAGES} photos.`);
+      return;
+    }
+
+    const acceptedFiles = incomingFiles.slice(0, availableSlots);
+    const preparedPhotos = [];
+    let totalPendingBytes = pendingPhotos.reduce((total, photo) => total + Number(photo?.size || 0), 0);
+    for (const file of acceptedFiles) {
+      if (totalPendingBytes + file.size > MAX_TOTAL_PENDING_PHOTO_BYTES) {
+        toast.error("Total upload size is too large.");
+        continue;
+      }
+      try {
+        const pendingPhoto = await createPendingPhotoFromFile(file);
+        preparedPhotos.push(pendingPhoto);
+        totalPendingBytes += pendingPhoto.size;
+      } catch (error) {
+        toast.error(error?.message || "Photo could not be added.");
+      }
+    }
+
+    if (preparedPhotos.length > 0) {
+      setPendingPhotos((previous) => [...previous, ...preparedPhotos]);
+      setPhotoOrderIds((previous) => [...previous, ...preparedPhotos.map((photo) => photo.id)]);
+      const pluralSuffix = preparedPhotos.length === 1 ? "" : "s";
+      toast.success(`${preparedPhotos.length} new photo${pluralSuffix} ready to upload.`);
+    }
+
+    if (incomingFiles.length > acceptedFiles.length) {
+      toast.error(`Only ${MAX_PROPERTY_IMAGES} photos are allowed per listing.`);
+    }
+  };
+
+  const handlePhotoInputChange = async (event) => {
+    await addPhotosToQueue(event.target.files);
+  };
+
+  const handlePhotoAddDragOver = (event) => {
+    event.preventDefault();
+    if (draggingPhotoId) {
+      setPhotoDropTargetId(null);
+      setIsPhotoDragOver(false);
+      return;
+    }
+    const dragTypes = Array.from(event.dataTransfer?.types || []);
+    if (dragTypes.includes("Files")) {
+      setIsPhotoDragOver(true);
+    }
+  };
+
+  const handlePhotoAddDragLeave = () => {
+    setIsPhotoDragOver(false);
+  };
+
+  const handlePhotoDrop = async (event) => {
+    event.preventDefault();
+    setIsPhotoDragOver(false);
+    if (draggingPhotoId) {
+      return;
+    }
+    const droppedFiles = event.dataTransfer?.files;
+    if (!droppedFiles || droppedFiles.length === 0) {
+      return;
+    }
+    await addPhotosToQueue(droppedFiles);
+  };
+
+  const removePendingPhoto = (photoId) => {
+    setPendingPhotos((previous) => previous.filter((photo) => photo.id !== photoId));
+    setPhotoOrderIds((previous) => previous.filter((id) => id !== photoId));
+  };
+
+  const handlePhotoTileDragStart = (photoId) => {
+    setDraggingPhotoId(photoId);
+  };
+
+  const handlePhotoTileDragEnd = () => {
+    setDraggingPhotoId(null);
+    setPhotoDropTargetId(null);
+  };
+
+  const handlePhotoTileDragOver = (targetPhotoId) => {
+    if (!draggingPhotoId || draggingPhotoId === targetPhotoId) {
+      setPhotoDropTargetId(null);
+      return;
+    }
+    setPhotoDropTargetId(targetPhotoId);
+  };
+
+  const handlePhotoTileDragLeave = (targetPhotoId) => {
+    setPhotoDropTargetId((previous) => (previous === targetPhotoId ? null : previous));
+  };
+
+  const handlePhotoTileDrop = (targetPhotoId) => {
+    if (!draggingPhotoId || draggingPhotoId === targetPhotoId) {
+      return;
+    }
+    setPhotoOrderIds((previous) => {
+      const fromIndex = previous.indexOf(draggingPhotoId);
+      const toIndex = previous.indexOf(targetPhotoId);
+      if (fromIndex === -1 || toIndex === -1) {
+        return previous;
+      }
+      const reordered = [...previous];
+      reordered.splice(fromIndex, 1);
+      reordered.splice(toIndex, 0, draggingPhotoId);
+      return reordered;
+    });
+    setDraggingPhotoId(null);
+    setPhotoDropTargetId(null);
+  };
+
   const saveOverview = async () => {
     setSaving(true);
     setError("");
     try {
+      if (selectedTab === "Photos") {
+        const photoSaveResult = await savePropertyPhotos({
+          propertyId,
+          existingPhotos,
+          pendingPhotos,
+          photoOrderIds,
+          hasPhotoOrderChanges,
+        });
+        setExistingPhotos(photoSaveResult.nextExistingPhotos);
+        setPendingPhotos(photoSaveResult.nextPendingPhotos);
+        setPhotoOrderIds(photoSaveResult.nextPhotoOrderIds);
+        if (photoSaveResult.didUpload) {
+          toast.success(photoSaveResult.successMessage);
+        } else if (photoSaveResult.didReorder) {
+          toast.success(photoSaveResult.successMessage);
+        } else {
+          toast.info(photoSaveResult.successMessage);
+        }
+        return;
+      }
+
       const { normalizedForm, successMessage } = await savePropertyChanges({
         selectedTab,
         propertyId,
@@ -1257,7 +2201,9 @@ export default function HostProperty() {
     toast.info("Delete property flow will be enabled in the dedicated delete release.");
   };
 
-  const canSaveChanges = SAVE_ENABLED_TABS.has(selectedTab);
+  const canSaveChanges = selectedTab === "Photos"
+    ? pendingPhotos.length > 0 || hasPhotoOrderChanges
+    : SAVE_ENABLED_TABS.has(selectedTab);
   const handleBackToListings = () => navigate("/hostdashboard/listings");
 
   return (
@@ -1296,6 +2242,23 @@ export default function HostProperty() {
             updateCapacityField={updateCapacityField}
             address={address}
             updateAddressField={updateAddressField}
+            displayedPhotos={displayedPhotos}
+            pendingPhotoCount={pendingPhotos.length}
+            onOpenPhotoPicker={openPhotoPicker}
+            onPhotoFilesSelected={handlePhotoInputChange}
+            onPhotoDrop={handlePhotoDrop}
+            onPhotoDragOver={handlePhotoAddDragOver}
+            onPhotoDragLeave={handlePhotoAddDragLeave}
+            isPhotoDragOver={isPhotoDragOver}
+            onRemovePendingPhoto={removePendingPhoto}
+            onPhotoTileDragStart={handlePhotoTileDragStart}
+            onPhotoTileDragEnd={handlePhotoTileDragEnd}
+            onPhotoTileDragOver={handlePhotoTileDragOver}
+            onPhotoTileDragLeave={handlePhotoTileDragLeave}
+            onPhotoTileDrop={handlePhotoTileDrop}
+            draggingPhotoId={draggingPhotoId}
+            photoDropTargetId={photoDropTargetId}
+            photoInputRef={photoInputRef}
             amenityCategoryKeys={amenityCategoryKeys}
             amenitiesByCategory={amenitiesByCategory}
             expandedAmenityCategories={expandedAmenityCategories}
