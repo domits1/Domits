@@ -90,10 +90,8 @@ function HostListings() {
   };
 
   const asyncEditAccommodation = async (accoId, accoTitle) => {
-    if (confirm(`Do you wish to edit ${accoTitle}?`)) {
-      if (accoId) {
-        navigate(`/hostdashboard/property?ID=${accoId}`);
-      }
+    if (accoId) {
+      navigate(`/hostdashboard/property?ID=${accoId}`);
     }
   };
 
@@ -330,6 +328,17 @@ function HostListings() {
                                     );
                                   }}>
                                   Set as live
+                                </button>
+                                <button
+                                  className={styles.greenBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    asyncEditAccommodation(
+                                      accommodation.property.id,
+                                      accommodation.property.title
+                                    );
+                                  }}>
+                                  Edit
                                 </button>
                               </div>
                             </div>
