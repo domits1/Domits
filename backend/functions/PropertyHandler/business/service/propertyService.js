@@ -494,6 +494,10 @@ export class PropertyService {
     return await this.propertyImageRepository.getImagesByPropertyId(property);
   }
 
+  async deleteImage(propertyId, imageId) {
+    await this.propertyImageRepository.deleteImageByPropertyId(propertyId, imageId);
+  }
+
   async createTechnicalDetails(details) {
     const result = await this.propertyTechnicalDetailRepository.create(details);
     if (!result) {

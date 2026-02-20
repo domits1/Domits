@@ -67,6 +67,9 @@ const handleGet = async (event) => {
 };
 
 const handleDelete = async (event) => {
+  if (isPath(event, "/property/images")) {
+    return controller.deletePropertyImage(event);
+  }
   if (isPath(event, "/property/draft")) {
     return controller.deleteDraft(event);
   }

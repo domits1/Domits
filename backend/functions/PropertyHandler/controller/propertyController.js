@@ -282,6 +282,50 @@ export class PropertyController {
     }
 
     // -------------------------
+    // DELETE /property/images
+    // -------------------------
+    async deletePropertyImage(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            await this.authManager.authorizeGroupRequest(accessToken, "Host");
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId;
+            const imageId = eventBody.imageId;
+
+            if (!propertyId || typeof propertyId !== "string") {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+
+            if (!imageId || typeof imageId !== "string") {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing imageId." })
+                };
+            }
+
+            await this.authManager.authorizePropertyOrDraftOwnerRequest(accessToken, propertyId);
+            await this.propertyService.deleteImage(propertyId, imageId);
+
+            return {
+                statusCode: 204,
+                headers: responseHeaders,
+            };
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
     // PATCH /property/overview
     // -------------------------
     async updatePropertyOverview(event) {
