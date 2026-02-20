@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getAccessToken } from "../../services/getAccessToken";
@@ -863,7 +863,7 @@ const animatePhotoTileToNewPosition = (node, deltaX, deltaY) => {
   node.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
   node.style.willChange = "transform";
 
-  void node.getBoundingClientRect();
+  node.getBoundingClientRect();
   requestAnimationFrame(() => {
     node.style.transition = "transform 220ms ease";
     node.style.transform = "translate(0, 0)";
@@ -2174,11 +2174,12 @@ export default function HostProperty() {
   const [photoDropTargetId, setPhotoDropTargetId] = useState(null);
   const [photoToDelete, setPhotoToDelete] = useState(null);
   const [deletingPhoto, setDeletingPhoto] = useState(false);
-  const [pendingNavigationAction, setPendingNavigationAction] = useState(null);
+  const [unsavedChangesModalOpen, setUnsavedChangesModalOpen] = useState(false);
   const savedOverviewSnapshotRef = useRef(null);
   const savedAmenityIdsRef = useRef([]);
   const savedPolicyRulesRef = useRef(buildPolicyRulesSnapshot(createInitialPolicyRules()));
   const bypassUnsavedGuardRef = useRef(false);
+  const pendingNavigationActionRef = useRef(null);
   const isDevelopment = process.env.NODE_ENV === "development";
 
   const amenitiesByCategory = useMemo(() => {
@@ -2577,23 +2578,25 @@ export default function HostProperty() {
 
   const isBusy = saving || preparingPhotos;
   const shouldBlockNavigation = hasUnsavedChanges && !isBusy && !deletingPhoto;
-  const unsavedChangesModalOpen = Boolean(pendingNavigationAction);
 
-  const requestNavigation = (navigationAction) => {
+  const requestNavigation = useCallback((navigationAction) => {
     if (bypassUnsavedGuardRef.current || !shouldBlockNavigation) {
       navigationAction();
       return;
     }
-    setPendingNavigationAction(() => navigationAction);
-  };
+    pendingNavigationActionRef.current = navigationAction;
+    setUnsavedChangesModalOpen(true);
+  }, [shouldBlockNavigation]);
 
   const stayOnUnsavedChanges = () => {
-    setPendingNavigationAction(null);
+    pendingNavigationActionRef.current = null;
+    setUnsavedChangesModalOpen(false);
   };
 
   const leaveWithUnsavedChanges = () => {
-    const navigationAction = pendingNavigationAction;
-    setPendingNavigationAction(null);
+    const navigationAction = pendingNavigationActionRef.current;
+    pendingNavigationActionRef.current = null;
+    setUnsavedChangesModalOpen(false);
     if (!navigationAction) {
       return;
     }
@@ -2674,20 +2677,21 @@ export default function HostProperty() {
       }
 
       event.preventDefault();
-      setPendingNavigationAction(() => () => navigate(nextPath));
+      requestNavigation(navigate.bind(null, nextPath));
     };
 
     document.addEventListener("click", handleDocumentNavigationClick, true);
     return () => {
       document.removeEventListener("click", handleDocumentNavigationClick, true);
     };
-  }, [navigate, shouldBlockNavigation]);
+  }, [navigate, requestNavigation, shouldBlockNavigation]);
 
   useEffect(() => {
-    if (!shouldBlockNavigation && pendingNavigationAction) {
-      setPendingNavigationAction(null);
+    if (!shouldBlockNavigation && unsavedChangesModalOpen) {
+      pendingNavigationActionRef.current = null;
+      setUnsavedChangesModalOpen(false);
     }
-  }, [shouldBlockNavigation, pendingNavigationAction]);
+  }, [shouldBlockNavigation, unsavedChangesModalOpen]);
 
   if (loading) {
     return <HostPropertyLoadingView />;
@@ -2704,7 +2708,7 @@ export default function HostProperty() {
     if (!nextPropertyId || nextPropertyId === propertyId) {
       return;
     }
-    requestNavigation(() => navigate(`/hostdashboard/property?ID=${encodeURIComponent(nextPropertyId)}`));
+    requestNavigation(navigate.bind(null, `/hostdashboard/property?ID=${encodeURIComponent(nextPropertyId)}`));
   };
 
   const toggleAmenityCategory = (category) => {
@@ -2737,7 +2741,7 @@ export default function HostProperty() {
   const canSaveChanges = selectedTab === "Photos"
     ? pendingPhotos.length > 0 || hasPhotoOrderChanges
     : SAVE_ENABLED_TABS.has(selectedTab);
-  const handleBackToListings = () => requestNavigation(() => navigate("/hostdashboard/listings"));
+  const handleBackToListings = () => requestNavigation(navigate.bind(null, "/hostdashboard/listings"));
 
   return (
     <main className="page-Host">
