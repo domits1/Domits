@@ -11,11 +11,44 @@
   padding: 18px 22px;
 }
 
+.messages-v2-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-bottom: 16px;
+
+  .messages-v2-title {
+    justify-self: center;
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .messages-v2-new {
+    justify-self: end;
+    background: var(--domits-green);
+    color: #fff;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(13, 152, 19, 0.2);
+
+    &:hover {
+      filter: brightness(0.98);
+      transform: translateY(-1px);
+    }
+  }
+}
+
 .messages-v2-grid {
   display: grid;
   grid-template-columns: 360px minmax(520px, 1fr) 340px;
   gap: 16px;
-  height: calc(100vh - 180px);
+  height: calc(100vh - 220px);
   min-height: 520px;
 
   @media (max-width: 1280px) {
@@ -39,60 +72,9 @@
 }
 
 .messages-v2 .contactlist-top {
-  padding: 14px 14px 12px 14px;
+  padding: 14px 14px 10px 14px;
   border-bottom: 1px solid var(--border);
   background: #fff;
-}
-
-.messages-v2 .contactlist-titlebar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.messages-v2 .contactlist-title {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  color: var(--text);
-}
-
-.messages-v2 .contactlist-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.messages-v2 .icon-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-
-  &:hover {
-    background: var(--bg);
-  }
-
-  &.primary {
-    background: var(--domits-green);
-    color: #fff;
-    border-color: transparent;
-
-    &:hover {
-      filter: brightness(0.98);
-      transform: translateY(-1px);
-    }
-  }
 }
 
 .messages-v2 .contactlist-search {
@@ -111,10 +93,9 @@
   }
 }
 
-/* tabs like target: All / Unread */
 .messages-v2 .contactlist-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   margin-top: 10px;
   padding: 6px;
@@ -126,9 +107,9 @@
 .messages-v2 .contactlist-tab {
   border: 0;
   background: transparent;
-  padding: 9px 10px;
+  padding: 8px 10px;
   border-radius: 10px;
-  font-weight: 800;
+  font-weight: 700;
   color: #667085;
   cursor: pointer;
   font-size: 13px;
@@ -255,7 +236,7 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
   margin-left: 8px;
 }
 
@@ -279,22 +260,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.messages-v2 .back-to-contacts-button {
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    background: var(--bg);
-  }
 }
 
 .messages-v2 .chat-header .profile-img {
@@ -336,12 +301,28 @@
 }
 
 .messages-v2 .chat-header-actions {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .test-messages-button {
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-weight: 800;
+    color: var(--text);
+
+    &:hover {
+      background: var(--bg);
+    }
+  }
 
   .dots {
     border: 1px solid var(--border);
     background: #fff;
-    border-radius: 12px;
+    border-radius: 10px;
     width: 38px;
     height: 38px;
     display: inline-flex;
@@ -351,34 +332,6 @@
 
     &:hover {
       background: var(--bg);
-    }
-  }
-
-  .chat-menu {
-    position: absolute;
-    right: 0;
-    top: 44px;
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
-    overflow: hidden;
-    min-width: 190px;
-    z-index: 50;
-
-    button {
-      width: 100%;
-      text-align: left;
-      border: 0;
-      background: transparent;
-      padding: 10px 12px;
-      cursor: pointer;
-      font-weight: 800;
-      color: var(--text);
-
-      &:hover {
-        background: var(--bg);
-      }
     }
   }
 }
@@ -402,7 +355,7 @@
   background: rgba(15, 23, 42, 0.06);
   color: rgba(15, 23, 42, 0.65);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 /* message rows + bubbles */
@@ -442,16 +395,6 @@
   border-color: rgba(13, 152, 19, 0.18);
 }
 
-.messages-v2 .automated-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 900;
-  font-size: 12px;
-  opacity: 0.85;
-  margin-bottom: 6px;
-}
-
 .messages-v2 .message-content {
   font-size: 14px;
   line-height: 1.35;
@@ -463,17 +406,10 @@
 .messages-v2 .message-footer {
   display: flex;
   justify-content: flex-end;
-  align-items: center;
-  gap: 6px;
   margin-top: 6px;
   font-size: 12px;
   color: rgba(15, 23, 42, 0.55);
-  font-weight: 800;
-}
-
-.messages-v2 .message-status {
-  font-weight: 900;
-  opacity: 0.7;
+  font-weight: 700;
 }
 
 /* input */
@@ -481,7 +417,6 @@
   border-top: 1px solid var(--border);
   background: #fff;
   padding: 12px;
-  position: relative;
 }
 
 .messages-v2 .message-input-wrapper {
@@ -524,4 +459,225 @@
     opacity: 0.55;
     cursor: not-allowed;
   }
+}
+
+/* RIGHT PANEL (BookingTab) */
+.booking-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  overflow: auto;
+}
+
+.booking-tab__header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border, #e6e8ee);
+  margin-bottom: 12px;
+}
+
+.booking-tab__title {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text, #0f172a);
+}
+
+.booking-tab__subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.booking-tab__empty {
+  margin-top: 10px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 12px;
+  border-radius: 14px;
+  color: rgba(15, 23, 42, 0.75);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.booking-tab__hint {
+  margin-top: 8px;
+  font-weight: 600;
+  color: rgba(15, 23, 42, 0.55);
+  font-size: 12px;
+}
+
+.booking-tab__card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+.booking-tab__imageWrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.booking-tab__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.booking-tab__content {
+  padding: 12px;
+}
+
+.booking-tab__propertyTitle {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--text, #0f172a);
+  margin-bottom: 10px;
+}
+
+.booking-tab__dates {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.booking-tab__dateRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.booking-tab__label {
+  color: rgba(15, 23, 42, 0.55);
+  font-weight: 800;
+}
+
+.booking-tab__value {
+  color: rgba(15, 23, 42, 0.85);
+  font-weight: 800;
+}
+
+.booking-tab__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.booking-tab__btn {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+  color: rgba(15, 23, 42, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.booking-tab__btn--primary {
+  background: var(--domits-green, #0d9813);
+  border-color: transparent;
+  color: #fff;
+}
+
+/* ---------------------------------------------------------
+   IMPORTANT: Global base chat styles (fixes listing-page modal)
+   The modal uses the same classnames but isn't wrapped in .messages-v2.
+   --------------------------------------------------------- */
+
+.chat-message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 10px 0;
+
+  &.sent {
+    justify-content: flex-end;
+  }
+  &.received {
+    justify-content: flex-start;
+  }
+}
+
+.chat-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  object-fit: cover;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.chat-message {
+  max-width: min(72%, 640px);
+  border-radius: 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+  background: #fff;
+}
+
+.chat-message.sent {
+  background: rgba(13, 152, 19, 0.16);
+  border-color: rgba(13, 152, 19, 0.18);
+}
+
+.message-content {
+  font-size: 14px;
+  line-height: 1.35;
+  color: #0f172a;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.55);
+  font-weight: 700;
+}
+
+.chat-input {
+  border-top: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fff;
+  padding: 12px;
+}
+
+.message-input-textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 999px;
+  padding: 12px 14px;
+  height: 44px;
+  line-height: 18px;
+  outline: none;
+  font-size: 14px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+}
+
+.message-input-send-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 0;
+  background: #0d9813;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

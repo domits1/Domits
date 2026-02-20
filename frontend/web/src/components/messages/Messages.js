@@ -29,6 +29,8 @@ const MessagesContent = ({ dashboardType }) => {
   const [selectedContactName, setSelectedContactName] = useState(null);
   const [selectedContactImage, setSelectedContactImage] = useState(null);
   const [selectedThreadId, setSelectedThreadId] = useState(null);
+  const [selectedThreadContext, setSelectedThreadContext] = useState(null);
+
   const [message, setMessage] = useState([]);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
@@ -45,17 +47,20 @@ const MessagesContent = ({ dashboardType }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleContactClick = (contactId, contactName, contactImage, threadId = null) => {
+  // NEW: accept optional threadContext (propertyId/title/image/dates/channel)
+  const handleContactClick = (contactId, contactName, contactImage, threadId = null, threadContext = null) => {
     setSelectedContactId(contactId);
     setSelectedContactName(contactName);
     setSelectedContactImage(contactImage || null);
     setSelectedThreadId(threadId);
+    setSelectedThreadContext(threadContext || null);
   };
 
   const handleBackToContacts = () => {
     setSelectedContactId(null);
     setSelectedContactName(null);
     setSelectedThreadId(null);
+    setSelectedThreadContext(null);
   };
 
   const handleCloseChat = (contactId = null) => {
@@ -64,6 +69,7 @@ const MessagesContent = ({ dashboardType }) => {
       setSelectedContactName(null);
       setSelectedContactImage(null);
       setSelectedThreadId(null);
+      setSelectedThreadContext(null);
     }
   };
 
@@ -73,6 +79,7 @@ const MessagesContent = ({ dashboardType }) => {
 
   const showContactList = isMobile ? !selectedContactId : true;
   const showChatScreen = isMobile ? !!selectedContactId : true;
+
   const showDetailsPanel = !isMobile && !isTablet; // desktop only
 
   return (
@@ -80,6 +87,14 @@ const MessagesContent = ({ dashboardType }) => {
       <WebSocketProvider userId={userId} token={accessToken}>
         {userId ? (
           <>
+            <div className="messages-v2-header">
+              <div />
+              <h1 className="messages-v2-title">Messages</h1>
+              <button className="messages-v2-new" onClick={() => setIsNewMessageOpen(true)}>
+                + New Message
+              </button>
+            </div>
+
             <NewContactModal
               isOpen={isNewMessageOpen}
               onClose={() => setIsNewMessageOpen(false)}
@@ -103,7 +118,6 @@ const MessagesContent = ({ dashboardType }) => {
                     pendingContacts={pendingContacts}
                     loading={contactsLoading}
                     setContacts={setContacts}
-                    onNewMessage={() => setIsNewMessageOpen(true)}
                   />
                 </div>
               )}
@@ -117,6 +131,7 @@ const MessagesContent = ({ dashboardType }) => {
                     contactName={selectedContactName}
                     contactImage={selectedContactImage}
                     threadId={selectedThreadId}
+                    threadContext={selectedThreadContext}
                     onBack={isTablet ? handleBackToContacts : null}
                     dashboardType={dashboardType}
                   />
@@ -125,7 +140,13 @@ const MessagesContent = ({ dashboardType }) => {
 
               {showDetailsPanel && (
                 <div className="messages-v2-card">
-                  <BookingTab userId={userId} contactId={selectedContactId} contactName={selectedContactName} dashboardType={dashboardType} />
+                  <BookingTab
+                    userId={userId}
+                    contactId={selectedContactId}
+                    contactName={selectedContactName}
+                    dashboardType={dashboardType}
+                    threadContext={selectedThreadContext}
+                  />
                 </div>
               )}
             </div>

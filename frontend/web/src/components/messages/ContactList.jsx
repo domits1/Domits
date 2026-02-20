@@ -1,7 +1,9 @@
 import { useState, useEffect, useContext, useMemo } from "react";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import ContactItem from "./ContactItem";
-import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
+import "../../components/messages/messagesV2.scss";
+import AutomatedSettings from "./AutomatedSettings";
+import { FaCog, FaBars } from "react-icons/fa";
 
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
@@ -21,6 +23,56 @@ const resolvePartnerId = (contact, selfUserId) => {
   return picked || candidates[0] || null;
 };
 
+const isTeamContact = (c) => {
+  const raw = `${c?.role || c?.userRole || c?.type || c?.bookingRole || ""}`.toLowerCase();
+  return ["team", "cleaner", "maintenance", "staff"].some((k) => raw.includes(k));
+};
+
+const buildThreadContext = (contact) => {
+  const latest = contact?.latestMessage || {};
+  const propertyId =
+    contact?.propertyId ||
+    contact?.property_id ||
+    contact?.accoId ||
+    contact?.listingId ||
+    latest?.propertyId ||
+    latest?.property_id ||
+    null;
+
+  const propertyTitle =
+    contact?.propertyTitle ||
+    contact?.propertyName ||
+    contact?.property_name ||
+    contact?.accoName ||
+    contact?.bookingProperty ||
+    latest?.propertyTitle ||
+    latest?.propertyName ||
+    "";
+
+  const propertyImage =
+    contact?.propertyImage ||
+    contact?.property_image ||
+    contact?.accoImage ||
+    contact?.listingImage ||
+    latest?.propertyImage ||
+    latest?.property_image ||
+    null;
+
+  const arrivalDate = contact?.arrivalDate || contact?.checkIn || contact?.arrival_date || latest?.arrivalDate || null;
+  const departureDate = contact?.departureDate || contact?.checkOut || contact?.departure_date || latest?.departureDate || null;
+
+  const channel = (contact?.channel || contact?.source || contact?.platform || latest?.channel || latest?.source || "Domits");
+
+  return {
+    propertyId,
+    propertyTitle,
+    propertyImage,
+    arrivalDate,
+    departureDate,
+    channel,
+  };
+};
+
 const ContactList = ({
   userId,
   onContactClick,
@@ -30,18 +82,18 @@ const ContactList = ({
   isChatOpen = false,
   activeContactId = null,
 
+  // NEW (from Messages.js)
   contacts,
   pendingContacts,
   loading,
   setContacts,
-
-  onNewMessage,
 }) => {
   const [selectedContactId, setSelectedContactId] = useState(null);
-  const [tab, setTab] = useState("all"); // all | unread
+  const [tab, setTab] = useState("all"); // all | guests | team | unread
   const socket = useContext(WebSocketContext);
   const wsMessages = socket?.messages || [];
-
+  const isHost = dashboardType === "host";
+  const [automatedSettings, setAutomatedSettings] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactId: null });
@@ -60,8 +112,10 @@ const ContactList = ({
     const partnerId = resolvePartnerId(contact, userId);
     if (!partnerId) return;
 
+    const ctx = buildThreadContext(contact);
+
     setSelectedContactId(partnerId);
-    onContactClick?.(partnerId, contact?.givenName, contact?.profileImage, threadId);
+    onContactClick?.(partnerId, contact?.givenName, contact?.profileImage, threadId, ctx);
   };
 
   const handleContextMenu = (event, contact) => {
@@ -97,7 +151,7 @@ const ContactList = ({
         if (idx === -1) return;
 
         let displayText = msg.text;
-        if (msg.fileUrls && msg.fileUrls.length > 0) displayText = "Attachment";
+        if (msg.fileUrls && msg.fileUrls.length > 0) displayText = "attachment sent";
 
         updatedContacts[idx] = {
           ...updatedContacts[idx],
@@ -123,7 +177,7 @@ const ContactList = ({
       const index = updatedContacts.findIndex((c) => resolvePartnerId(c, userId) === partnerId);
       if (index !== -1) {
         let displayText = message.text;
-        if (message.fileUrls && message.fileUrls.length > 0) displayText = "Attachment";
+        if (message.fileUrls && message.fileUrls.length > 0) displayText = "attachment sent";
 
         updatedContacts[index] = {
           ...updatedContacts[index],
@@ -133,6 +187,9 @@ const ContactList = ({
             fileUrls: message.fileUrls,
             userId: message.userId,
             recipientId: message.recipientId,
+            propertyId: message?.propertyId || message?.property_id || message?.property?.id || null,
+            propertyTitle: message?.propertyTitle || null,
+            propertyImage: message?.propertyImage || null,
           },
         };
       }
@@ -147,6 +204,8 @@ const ContactList = ({
 
     if (searchTerm) list = list.filter((c) => (c.givenName || "").toLowerCase().includes(searchTerm.toLowerCase()));
 
+    if (tab === "team") list = list.filter(isTeamContact);
+    if (tab === "guests") list = list.filter((c) => !isTeamContact(c));
     if (tab === "unread") list = list.filter((c) => (c.unreadCount || 0) > 0);
 
     if (sortAlphabetically) {
@@ -159,39 +218,8 @@ const ContactList = ({
   }, [contacts, searchTerm, tab, sortAlphabetically]);
 
   return (
-    <div className="messages-v2-contactlist">
+    <div className={`${dashboardType}-contact-list-modal messages-v2-contactlist`}>
       <div className="contactlist-top">
-        <div className="contactlist-titlebar">
-          <h2 className="contactlist-title">Messages</h2>
-
-          <div className="contactlist-actions">
-            <button
-              type="button"
-              className="icon-btn"
-              title="Search"
-              onClick={() => {
-                const el = document.querySelector(".contactlist-search");
-                if (el) el.focus();
-              }}
-            >
-              <FaSearch />
-            </button>
-
-            <button
-              type="button"
-              className="icon-btn"
-              title={sortAlphabetically ? "Sort by latest" : "Sort A–Z"}
-              onClick={() => setSortAlphabetically((p) => !p)}
-            >
-              <FaSlidersH />
-            </button>
-
-            <button type="button" className="icon-btn primary" title="New message" onClick={onNewMessage}>
-              <FaPlus />
-            </button>
-          </div>
-        </div>
-
         <input
           className="contactlist-search"
           type="text"
@@ -204,9 +232,21 @@ const ContactList = ({
           <button className={`contactlist-tab ${tab === "all" ? "active" : ""}`} onClick={() => setTab("all")}>
             All
           </button>
+          <button className={`contactlist-tab ${tab === "guests" ? "active" : ""}`} onClick={() => setTab("guests")}>
+            Guests
+          </button>
+          <button className={`contactlist-tab ${tab === "team" ? "active" : ""}`} onClick={() => setTab("team")}>
+            Team
+          </button>
           <button className={`contactlist-tab ${tab === "unread" ? "active" : ""}`} onClick={() => setTab("unread")}>
             Unread
           </button>
+        </div>
+
+        <div className="contact-list-side-buttons" style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
+          <FaBars className="contact-list-side-button" onClick={() => setSortAlphabetically((p) => !p)} />
+          {isHost && <FaCog className="contact-list-side-button" onClick={() => setAutomatedSettings(true)} />}
+          {automatedSettings && <AutomatedSettings setAutomatedSettings={setAutomatedSettings} hostId={userId} />}
         </div>
       </div>
 
@@ -227,7 +267,7 @@ const ContactList = ({
                 onClick={() => handleClick(contact, contact.threadId)}
                 onContextMenu={(event) => handleContextMenu(event, contact)}
               >
-                <ContactItem contact={contact} selected={isActive} />
+                <ContactItem contact={contact} setContacts={setContacts} userId={userId} selected={isActive} dashboardType={dashboardType} />
               </li>
             );
           })
