@@ -50,6 +50,12 @@ const PHOTO_REORDER_LONG_PRESS_MS = 50;
 const PHOTO_REORDER_MOVE_CANCEL_PX = 12;
 const PHOTO_ACCEPT = ".jpg,.jpeg,.png,.webp";
 const PHOTO_ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const PHOTO_REORDER_KEY_DELTAS = {
+  ArrowLeft: -1,
+  ArrowUp: -1,
+  ArrowRight: 1,
+  ArrowDown: 1,
+};
 
 const createInitialPolicyRules = () =>
   POLICY_RULE_CONFIG.reduce((accumulator, ruleConfig) => {
@@ -1414,17 +1420,12 @@ function HostPropertyPhotosTab({
     if (saving || deletingPhoto) {
       return;
     }
-
-    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-      event.preventDefault();
-      movePhotoByKeyboard(photoId, -1);
+    const delta = PHOTO_REORDER_KEY_DELTAS[event.key];
+    if (delta === undefined) {
       return;
     }
-
-    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-      event.preventDefault();
-      movePhotoByKeyboard(photoId, 1);
-    }
+    event.preventDefault();
+    movePhotoByKeyboard(photoId, delta);
   };
 
   useLayoutEffect(() => {
