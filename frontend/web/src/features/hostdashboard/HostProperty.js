@@ -899,8 +899,21 @@ function HostPropertyUnsavedChangesModal({ open, onStay, onLeave }) {
   }
 
   return (
-    <div className={styles.unsavedModalOverlay} onClick={onStay} role="dialog" aria-modal="true" aria-labelledby="unsaved-modal-title">
-      <section className={styles.unsavedModal} onClick={(event) => event.stopPropagation()}>
+    <dialog
+      open
+      className={styles.unsavedModalOverlay}
+      aria-labelledby="unsaved-modal-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onStay();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onStay();
+        }
+      }}
+    >
+      <section className={styles.unsavedModal}>
         <h4 id="unsaved-modal-title" className={styles.unsavedModalTitle}>
           You have unsaved changes
         </h4>
@@ -916,7 +929,7 @@ function HostPropertyUnsavedChangesModal({ open, onStay, onLeave }) {
           </button>
         </div>
       </section>
-    </div>
+    </dialog>
   );
 }
 
@@ -1379,6 +1392,41 @@ function HostPropertyPhotosTab({
     resetTouchReorderState();
   };
 
+  const movePhotoByKeyboard = (photoId, delta) => {
+    const fromIndex = displayedPhotos.findIndex((photo) => photo.id === photoId);
+    if (fromIndex === -1) {
+      return;
+    }
+    const toIndex = Math.max(0, Math.min(displayedPhotos.length - 1, fromIndex + delta));
+    if (toIndex === fromIndex) {
+      return;
+    }
+    const targetPhotoId = displayedPhotos[toIndex]?.id;
+    if (!targetPhotoId || targetPhotoId === photoId) {
+      return;
+    }
+    onPhotoTileDragStart(photoId);
+    onPhotoTileDrop(targetPhotoId);
+    onPhotoTileDragEnd();
+  };
+
+  const handlePhotoTileKeyDown = (photoId, event) => {
+    if (saving || deletingPhoto) {
+      return;
+    }
+
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      event.preventDefault();
+      movePhotoByKeyboard(photoId, -1);
+      return;
+    }
+
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      event.preventDefault();
+      movePhotoByKeyboard(photoId, 1);
+    }
+  };
+
   useLayoutEffect(() => {
     const nextRects = new Map();
     displayedPhotos.forEach((photo) => {
@@ -1431,6 +1479,9 @@ function HostPropertyPhotosTab({
             } ${coverPhoto && photoDropTargetId === coverPhoto.id ? styles.photoTileDropTarget : ""} ${
               coverPhoto?.isPending ? styles.photoTilePending : ""
             }`}
+            role={coverPhoto ? "button" : undefined}
+            tabIndex={coverPhoto ? 0 : undefined}
+            aria-label={coverPhoto ? "Reorder cover tile" : undefined}
             data-photo-id={coverPhoto?.id || ""}
             ref={(node) => {
               if (!coverPhoto) {
@@ -1474,15 +1525,20 @@ function HostPropertyPhotosTab({
             onPointerMove={handlePhotoTilePointerMove}
             onPointerUp={handlePhotoTilePointerUp}
             onPointerCancel={handlePhotoTilePointerCancel}
+            onKeyDown={(event) => {
+              if (coverPhoto) {
+                handlePhotoTileKeyDown(coverPhoto.id, event);
+              }
+            }}
           >
             {coverPhoto ? (
               <>
-                <img src={coverPhoto.src} alt="Cover photo" className={styles.photoImageLarge} />
-                {!coverPhoto.isPending ? (
+                <img src={coverPhoto.src} alt="Cover" className={styles.photoImageLarge} />
+                {coverPhoto.isPending ? null : (
                   <span className={styles.photoCheck} aria-hidden="true">
                     <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
                   </span>
-                ) : null}
+                )}
                 <button
                   type="button"
                   className={styles.photoRemoveButton}
@@ -1538,6 +1594,9 @@ function HostPropertyPhotosTab({
                 } ${photoDropTargetId === photo.id ? styles.photoTileDropTarget : ""} ${
                   photo.isPending ? styles.photoTilePending : ""
                 }`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Reorder listing view ${index + 2}`}
                 data-photo-id={photo.id}
                 ref={(node) => {
                   if (node) {
@@ -1562,13 +1621,14 @@ function HostPropertyPhotosTab({
                 onPointerMove={handlePhotoTilePointerMove}
                 onPointerUp={handlePhotoTilePointerUp}
                 onPointerCancel={handlePhotoTilePointerCancel}
+                onKeyDown={(event) => handlePhotoTileKeyDown(photo.id, event)}
               >
-                <img src={photo.src} alt={`Property photo ${index + 2}`} className={styles.photoImageSmall} />
-                {!photo.isPending ? (
+                <img src={photo.src} alt={`Listing view ${index + 2}`} className={styles.photoImageSmall} />
+                {photo.isPending ? null : (
                   <span className={styles.photoCheck} aria-hidden="true">
                     <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
                   </span>
-                ) : null}
+                )}
                 <button
                   type="button"
                   className={styles.photoRemoveButton}
@@ -1634,19 +1694,24 @@ function HostPropertyPhotoDeleteModal({
   }
 
   return (
-    <div
+    <dialog
+      open
       className={styles.photoDeleteModalOverlay}
-      onClick={() => {
+      aria-labelledby="photo-delete-modal-title"
+      onCancel={(event) => {
+        event.preventDefault();
         if (!deletingPhoto) {
           onCancel();
         }
       }}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="photo-delete-modal-title"
+      onClick={(event) => {
+        if (event.target === event.currentTarget && !deletingPhoto) {
+          onCancel();
+        }
+      }}
     >
-      <section className={styles.photoDeleteModal} onClick={(event) => event.stopPropagation()}>
-        <img src={photoSrc} alt="Photo to delete" className={styles.photoDeletePreview} />
+      <section className={styles.photoDeleteModal}>
+        <img src={photoSrc} alt="Selected listing preview" className={styles.photoDeletePreview} />
 
         <h4 id="photo-delete-modal-title" className={styles.photoDeleteTitle}>
           Delete this photo?
@@ -1674,7 +1739,7 @@ function HostPropertyPhotoDeleteModal({
           </button>
         </div>
       </section>
-    </div>
+    </dialog>
   );
 }
 

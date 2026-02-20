@@ -549,12 +549,22 @@
 .photoDeleteModalOverlay {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
   background: rgba(0, 0, 0, 0.56);
   z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 18px;
+}
+
+.photoDeleteModalOverlay::backdrop {
+  background: transparent;
 }
 
 .photoDeleteModal {
@@ -635,12 +645,22 @@
 .unsavedModalOverlay {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
   z-index: 1210;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 18px;
+}
+
+.unsavedModalOverlay::backdrop {
+  background: transparent;
 }
 
 .unsavedModal {
