@@ -9,6 +9,8 @@ import amenitiesCatalogue from "../../store/amenities";
 import arrowDownIcon from "../../images/arrow-down-icon.svg";
 import arrowUpIcon from "../../images/arrow-up-icon.svg";
 import infoIcon from "../../images/icons/info.png";
+import checkIcon from "../../images/icons/checkPng.png";
+import crossIcon from "../../images/icons/cross.png";
 import { normalizeImageUrl } from "../guestdashboard/utils/image";
 
 const PROPERTY_API_BASE = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
@@ -440,6 +442,35 @@ const resolveSaveErrorMessage = (error, isDevelopment) => {
   return error?.message || "Saving failed. Please try again.";
 };
 
+const resolveDeletePhotoErrorMessage = (error, isDevelopment) => {
+  if (error?.name === "TypeError") {
+    if (isDevelopment) {
+      return "Could not reach the API. Check AWS deployment/CORS configuration and try again.";
+    }
+    return "Something went wrong while deleting the photo. Please try again later.";
+  }
+
+  const errorMessage = String(error?.message || "");
+  const isNotDeployedDeleteEndpoint =
+    errorMessage.includes("Path not found.") ||
+    errorMessage.includes("Method not found.") ||
+    errorMessage.includes("Property not found.") ||
+    errorMessage.includes("Missing propertyId.") ||
+    errorMessage.includes("Photo deletion could not be confirmed");
+
+  if (isNotDeployedDeleteEndpoint) {
+    if (isDevelopment) {
+      return "Photo delete endpoint is not deployed yet for this environment.";
+    }
+    return "Photo deletion is not available right now. Please try again later.";
+  }
+
+  if (!isDevelopment) {
+    return "Something went wrong while deleting the photo. Please try again later.";
+  }
+  return errorMessage || "Photo deletion failed.";
+};
+
 const savePropertyChanges = async ({
   selectedTab,
   propertyId,
@@ -665,6 +696,33 @@ const savePropertyPhotos = async ({
     didUpload: orderedPendingPhotos.length > 0,
     didReorder: hasPhotoOrderChanges,
   };
+};
+
+const deletePropertyPhoto = async ({ propertyId, imageId }) => {
+  const response = await fetch(`${PROPERTY_API_BASE}/images`, {
+    method: "DELETE",
+    headers: {
+      Authorization: getAccessToken(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      propertyId,
+      imageId,
+    }),
+  });
+
+  if (!response.ok) {
+    const apiErrorMessage = await getApiErrorMessage(response, "Failed to delete photo.");
+    throw new Error(apiErrorMessage);
+  }
+
+  const verificationData = await fetchPropertySnapshot(propertyId);
+  const refreshedPhotos = mapPropertyImagesToState(verificationData?.images);
+  const stillExists = refreshedPhotos.some((photo) => photo.id === imageId);
+  if (stillExists) {
+    throw new Error("Photo deletion could not be confirmed on deployed backend yet.");
+  }
+  return refreshedPhotos;
 };
 
 function HostPropertyLoadingView() {
@@ -997,7 +1055,7 @@ function HostPropertyPhotosTab({
   onPhotoDragOver,
   onPhotoDragLeave,
   isPhotoDragOver,
-  onRemovePendingPhoto,
+  onRequestDeletePhoto,
   onPhotoTileDragStart,
   onPhotoTileDragEnd,
   onPhotoTileDragOver,
@@ -1006,6 +1064,7 @@ function HostPropertyPhotosTab({
   draggingPhotoId,
   photoDropTargetId,
   saving,
+  deletingPhoto,
   photoInputRef,
 }) {
   const photoTileRefs = useRef(new Map());
@@ -1207,7 +1266,9 @@ function HostPropertyPhotosTab({
           <div
             className={`${styles.photoTileLarge} ${
               coverPhoto && draggingPhotoId === coverPhoto.id ? styles.photoTileDragActive : ""
-            } ${coverPhoto && photoDropTargetId === coverPhoto.id ? styles.photoTileDropTarget : ""}`}
+            } ${coverPhoto && photoDropTargetId === coverPhoto.id ? styles.photoTileDropTarget : ""} ${
+              coverPhoto?.isPending ? styles.photoTilePending : ""
+            }`}
             data-photo-id={coverPhoto?.id || ""}
             ref={(node) => {
               if (!coverPhoto) {
@@ -1255,20 +1316,25 @@ function HostPropertyPhotosTab({
             {coverPhoto ? (
               <>
                 <img src={coverPhoto.src} alt="Cover photo" className={styles.photoImageLarge} />
-                <span className={styles.photoCheck} aria-hidden="true">
-                  &#10003;
-                </span>
-                {coverPhoto.isPending ? (
-                  <button
-                    type="button"
-                    className={styles.photoRemoveButton}
-                    onClick={() => onRemovePendingPhoto(coverPhoto.id)}
-                    disabled={saving}
-                  >
-                    &times;
-                  </button>
+                {!coverPhoto.isPending ? (
+                  <span className={styles.photoCheck} aria-hidden="true">
+                    <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
+                  </span>
                 ) : null}
-                {coverPhoto.isPending ? <span className={styles.photoPendingBadge}>New</span> : null}
+                <button
+                  type="button"
+                  className={styles.photoRemoveButton}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRequestDeletePhoto(coverPhoto);
+                  }}
+                  disabled={saving || deletingPhoto}
+                  aria-label="Delete photo"
+                >
+                  <img src={crossIcon} alt="" aria-hidden="true" className={styles.photoRemoveIcon} />
+                </button>
+                {coverPhoto.isPending ? <span className={styles.photoPendingBadge}>New - Unsaved</span> : null}
               </>
             ) : (
               <span className={styles.photoEmptyLabel}>No photos yet</span>
@@ -1307,7 +1373,9 @@ function HostPropertyPhotosTab({
                 key={photo.id}
                 className={`${styles.photoTileSmall} ${
                   draggingPhotoId === photo.id ? styles.photoTileDragActive : ""
-                } ${photoDropTargetId === photo.id ? styles.photoTileDropTarget : ""}`}
+                } ${photoDropTargetId === photo.id ? styles.photoTileDropTarget : ""} ${
+                  photo.isPending ? styles.photoTilePending : ""
+                }`}
                 data-photo-id={photo.id}
                 ref={(node) => {
                   if (node) {
@@ -1334,19 +1402,25 @@ function HostPropertyPhotosTab({
                 onPointerCancel={handlePhotoTilePointerCancel}
               >
                 <img src={photo.src} alt={`Property photo ${index + 2}`} className={styles.photoImageSmall} />
-                <span className={styles.photoCheck} aria-hidden="true">
-                  &#10003;
-                </span>
-                {photo.isPending ? (
-                  <button
-                    type="button"
-                    className={styles.photoRemoveButton}
-                    onClick={() => onRemovePendingPhoto(photo.id)}
-                    disabled={saving}
-                  >
-                    &times;
-                  </button>
+                {!photo.isPending ? (
+                  <span className={styles.photoCheck} aria-hidden="true">
+                    <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
+                  </span>
                 ) : null}
+                <button
+                  type="button"
+                  className={styles.photoRemoveButton}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRequestDeletePhoto(photo);
+                  }}
+                  disabled={saving || deletingPhoto}
+                  aria-label="Delete photo"
+                >
+                  <img src={crossIcon} alt="" aria-hidden="true" className={styles.photoRemoveIcon} />
+                </button>
+                {photo.isPending ? <span className={styles.photoPendingBadge}>New - Unsaved</span> : null}
               </div>
             ))
           ) : (
@@ -1383,6 +1457,62 @@ function HostPropertyPhotosTab({
         {pendingPhotoCount > 0 ? ` (${pendingPhotoCount} pending save)` : ""}
       </p>
     </section>
+  );
+}
+
+function HostPropertyPhotoDeleteModal({
+  open,
+  photoSrc,
+  deletingPhoto,
+  onCancel,
+  onConfirm,
+}) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div
+      className={styles.photoDeleteModalOverlay}
+      onClick={() => {
+        if (!deletingPhoto) {
+          onCancel();
+        }
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="photo-delete-modal-title"
+    >
+      <section className={styles.photoDeleteModal} onClick={(event) => event.stopPropagation()}>
+        <img src={photoSrc} alt="Photo to delete" className={styles.photoDeletePreview} />
+
+        <h4 id="photo-delete-modal-title" className={styles.photoDeleteTitle}>
+          Delete this photo?
+        </h4>
+        <p className={styles.photoDeleteDescription}>
+          This photo will be permanently removed from your listing.
+        </p>
+
+        <div className={styles.photoDeleteActions}>
+          <button
+            type="button"
+            className={styles.photoDeleteCancelButton}
+            onClick={onCancel}
+            disabled={deletingPhoto}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.photoDeleteConfirmButton}
+            onClick={onConfirm}
+            disabled={deletingPhoto}
+          >
+            {deletingPhoto ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -1574,7 +1704,7 @@ function HostPropertyTabContent({
   onPhotoDragOver,
   onPhotoDragLeave,
   isPhotoDragOver,
-  onRemovePendingPhoto,
+  onRequestDeletePhoto,
   onPhotoTileDragStart,
   onPhotoTileDragEnd,
   onPhotoTileDragOver,
@@ -1582,6 +1712,7 @@ function HostPropertyTabContent({
   onPhotoTileDrop,
   draggingPhotoId,
   photoDropTargetId,
+  deletingPhoto,
   photoInputRef,
   amenityCategoryKeys,
   amenitiesByCategory,
@@ -1621,7 +1752,7 @@ function HostPropertyTabContent({
           onPhotoDragOver={onPhotoDragOver}
           onPhotoDragLeave={onPhotoDragLeave}
           isPhotoDragOver={isPhotoDragOver}
-          onRemovePendingPhoto={onRemovePendingPhoto}
+          onRequestDeletePhoto={onRequestDeletePhoto}
           onPhotoTileDragStart={onPhotoTileDragStart}
           onPhotoTileDragEnd={onPhotoTileDragEnd}
           onPhotoTileDragOver={onPhotoTileDragOver}
@@ -1630,6 +1761,7 @@ function HostPropertyTabContent({
           draggingPhotoId={draggingPhotoId}
           photoDropTargetId={photoDropTargetId}
           saving={saving}
+          deletingPhoto={deletingPhoto}
           photoInputRef={photoInputRef}
         />
       );
@@ -1735,7 +1867,7 @@ HostPropertyPhotosTab.propTypes = {
   onPhotoDragOver: PropTypes.func.isRequired,
   onPhotoDragLeave: PropTypes.func.isRequired,
   isPhotoDragOver: PropTypes.bool.isRequired,
-  onRemovePendingPhoto: PropTypes.func.isRequired,
+  onRequestDeletePhoto: PropTypes.func.isRequired,
   onPhotoTileDragStart: PropTypes.func.isRequired,
   onPhotoTileDragEnd: PropTypes.func.isRequired,
   onPhotoTileDragOver: PropTypes.func.isRequired,
@@ -1744,9 +1876,18 @@ HostPropertyPhotosTab.propTypes = {
   draggingPhotoId: PropTypes.string,
   photoDropTargetId: PropTypes.string,
   saving: PropTypes.bool.isRequired,
+  deletingPhoto: PropTypes.bool.isRequired,
   photoInputRef: PropTypes.shape({
     current: PropTypes.any,
   }).isRequired,
+};
+
+HostPropertyPhotoDeleteModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  photoSrc: PropTypes.string,
+  deletingPhoto: PropTypes.bool.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
 };
 
 HostPropertyAmenitiesTab.propTypes = {
@@ -1796,7 +1937,7 @@ HostPropertyTabContent.propTypes = {
   onPhotoDragOver: PropTypes.func.isRequired,
   onPhotoDragLeave: PropTypes.func.isRequired,
   isPhotoDragOver: PropTypes.bool.isRequired,
-  onRemovePendingPhoto: PropTypes.func.isRequired,
+  onRequestDeletePhoto: PropTypes.func.isRequired,
   onPhotoTileDragStart: PropTypes.func.isRequired,
   onPhotoTileDragEnd: PropTypes.func.isRequired,
   onPhotoTileDragOver: PropTypes.func.isRequired,
@@ -1804,6 +1945,7 @@ HostPropertyTabContent.propTypes = {
   onPhotoTileDrop: PropTypes.func.isRequired,
   draggingPhotoId: PropTypes.string,
   photoDropTargetId: PropTypes.string,
+  deletingPhoto: PropTypes.bool.isRequired,
   photoInputRef: PropTypes.shape({
     current: PropTypes.any,
   }).isRequired,
@@ -1829,6 +1971,7 @@ export default function HostProperty() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("INACTIVE");
   const [selectedTab, setSelectedTab] = useState("Overview");
@@ -1861,6 +2004,8 @@ export default function HostProperty() {
   const [photoOrderIds, setPhotoOrderIds] = useState([]);
   const [draggingPhotoId, setDraggingPhotoId] = useState(null);
   const [photoDropTargetId, setPhotoDropTargetId] = useState(null);
+  const [photoToDelete, setPhotoToDelete] = useState(null);
+  const [deletingPhoto, setDeletingPhoto] = useState(false);
   const isDevelopment = process.env.NODE_ENV === "development";
 
   const amenitiesByCategory = useMemo(() => {
@@ -1949,6 +2094,8 @@ export default function HostProperty() {
         setPhotoOrderIds(fetchedPropertyData.existingPhotos.map((photo) => photo.id));
         setDraggingPhotoId(null);
         setPhotoDropTargetId(null);
+        setPhotoToDelete(null);
+        setDeletingPhoto(false);
         setHostProperties(fetchedPropertyData.hostProperties);
       } catch (err) {
         console.error(err);
@@ -2004,31 +2151,36 @@ export default function HostProperty() {
     }
 
     const acceptedFiles = incomingFiles.slice(0, availableSlots);
-    const preparedPhotos = [];
-    let totalPendingBytes = pendingPhotos.reduce((total, photo) => total + Number(photo?.size || 0), 0);
-    for (const file of acceptedFiles) {
-      if (totalPendingBytes + file.size > MAX_TOTAL_PENDING_PHOTO_BYTES) {
-        toast.error("Total upload size is too large.");
-        continue;
+    setPreparingPhotos(true);
+    try {
+      const preparedPhotos = [];
+      let totalPendingBytes = pendingPhotos.reduce((total, photo) => total + Number(photo?.size || 0), 0);
+      for (const file of acceptedFiles) {
+        if (totalPendingBytes + file.size > MAX_TOTAL_PENDING_PHOTO_BYTES) {
+          toast.error("Total upload size is too large.");
+          continue;
+        }
+        try {
+          const pendingPhoto = await createPendingPhotoFromFile(file);
+          preparedPhotos.push(pendingPhoto);
+          totalPendingBytes += pendingPhoto.size;
+        } catch (error) {
+          toast.error(error?.message || "Photo could not be added.");
+        }
       }
-      try {
-        const pendingPhoto = await createPendingPhotoFromFile(file);
-        preparedPhotos.push(pendingPhoto);
-        totalPendingBytes += pendingPhoto.size;
-      } catch (error) {
-        toast.error(error?.message || "Photo could not be added.");
+
+      if (preparedPhotos.length > 0) {
+        setPendingPhotos((previous) => [...previous, ...preparedPhotos]);
+        setPhotoOrderIds((previous) => [...previous, ...preparedPhotos.map((photo) => photo.id)]);
+        const pluralSuffix = preparedPhotos.length === 1 ? "" : "s";
+        toast.success(`${preparedPhotos.length} new photo${pluralSuffix} ready to upload.`);
       }
-    }
 
-    if (preparedPhotos.length > 0) {
-      setPendingPhotos((previous) => [...previous, ...preparedPhotos]);
-      setPhotoOrderIds((previous) => [...previous, ...preparedPhotos.map((photo) => photo.id)]);
-      const pluralSuffix = preparedPhotos.length === 1 ? "" : "s";
-      toast.success(`${preparedPhotos.length} new photo${pluralSuffix} ready to upload.`);
-    }
-
-    if (incomingFiles.length > acceptedFiles.length) {
-      toast.error(`Only ${MAX_PROPERTY_IMAGES} photos are allowed per listing.`);
+      if (incomingFiles.length > acceptedFiles.length) {
+        toast.error(`Only ${MAX_PROPERTY_IMAGES} photos are allowed per listing.`);
+      }
+    } finally {
+      setPreparingPhotos(false);
     }
   };
 
@@ -2069,6 +2221,56 @@ export default function HostProperty() {
   const removePendingPhoto = (photoId) => {
     setPendingPhotos((previous) => previous.filter((photo) => photo.id !== photoId));
     setPhotoOrderIds((previous) => previous.filter((id) => id !== photoId));
+  };
+
+  const handleRequestDeletePhoto = (photo) => {
+    if (!photo || saving || deletingPhoto) {
+      return;
+    }
+    if (photo.isPending) {
+      removePendingPhoto(photo.id);
+      toast.success("Photo removed.");
+      return;
+    }
+    setPhotoToDelete(photo);
+  };
+
+  const closePhotoDeleteModal = () => {
+    if (deletingPhoto) {
+      return;
+    }
+    setPhotoToDelete(null);
+  };
+
+  const confirmDeletePhoto = async () => {
+    if (!photoToDelete || !propertyId) {
+      return;
+    }
+
+    setDeletingPhoto(true);
+    setError("");
+    try {
+      if (photoToDelete.isPending) {
+        removePendingPhoto(photoToDelete.id);
+        toast.success("Photo removed.");
+      } else {
+        const refreshedPhotos = await deletePropertyPhoto({
+          propertyId,
+          imageId: photoToDelete.id,
+        });
+        setExistingPhotos(refreshedPhotos);
+        setPhotoOrderIds(refreshedPhotos.map((photo) => photo.id));
+        toast.success("Photo deleted successfully.");
+      }
+      setPhotoToDelete(null);
+    } catch (deleteError) {
+      console.error(deleteError);
+      const deleteErrorMessage = resolveDeletePhotoErrorMessage(deleteError, isDevelopment);
+      setError(deleteErrorMessage);
+      toast.error(deleteErrorMessage);
+    } finally {
+      setDeletingPhoto(false);
+    }
   };
 
   const handlePhotoTileDragStart = (photoId) => {
@@ -2112,6 +2314,9 @@ export default function HostProperty() {
   };
 
   const saveOverview = async () => {
+    if (saving || preparingPhotos) {
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -2165,6 +2370,8 @@ export default function HostProperty() {
   const statusDotClass = status === "ACTIVE" ? styles.statusDotLive : styles.statusDotDraft;
   const displayedPropertyType = capacity.propertyType || "Entire house";
   const savingMessage = SAVING_MESSAGE_BY_TAB[selectedTab] || "Saving property details...";
+  const isBusy = saving || preparingPhotos;
+  const overlayMessage = saving ? savingMessage : "Preparing photos...";
 
   const handlePropertyChange = (event) => {
     const nextPropertyId = event.target.value;
@@ -2211,16 +2418,16 @@ export default function HostProperty() {
       <p className="page-Host-title">Listing editor</p>
       <div className="page-Host-content">
         <section className={`host-pc-dashboard ${styles.editorShell}`}>
-          {saving ? (
+          {isBusy ? (
             <output className={styles.savingOverlay} aria-live="polite">
               <span className={styles.savingOverlayContent}>
                 <ClipLoader size={80} color="#0D9813" loading />
-                <span className={styles.savingOverlayText}>{savingMessage}</span>
+                <span className={styles.savingOverlayText}>{overlayMessage}</span>
               </span>
             </output>
           ) : null}
 
-          <HostPropertyTabs selectedTab={selectedTab} onSelectTab={setSelectedTab} saving={saving} />
+          <HostPropertyTabs selectedTab={selectedTab} onSelectTab={setSelectedTab} saving={isBusy} />
           <HostPropertyListingSummary
             propertyId={propertyId}
             hostProperties={hostProperties}
@@ -2228,7 +2435,7 @@ export default function HostProperty() {
             statusLabel={statusLabel}
             statusDotClass={statusDotClass}
             onPropertyChange={handlePropertyChange}
-            saving={saving}
+            saving={isBusy}
           />
 
           <HostPropertyTabContent
@@ -2250,7 +2457,7 @@ export default function HostProperty() {
             onPhotoDragOver={handlePhotoAddDragOver}
             onPhotoDragLeave={handlePhotoAddDragLeave}
             isPhotoDragOver={isPhotoDragOver}
-            onRemovePendingPhoto={removePendingPhoto}
+            onRequestDeletePhoto={handleRequestDeletePhoto}
             onPhotoTileDragStart={handlePhotoTileDragStart}
             onPhotoTileDragEnd={handlePhotoTileDragEnd}
             onPhotoTileDragOver={handlePhotoTileDragOver}
@@ -2258,6 +2465,7 @@ export default function HostProperty() {
             onPhotoTileDrop={handlePhotoTileDrop}
             draggingPhotoId={draggingPhotoId}
             photoDropTargetId={photoDropTargetId}
+            deletingPhoto={deletingPhoto}
             photoInputRef={photoInputRef}
             amenityCategoryKeys={amenityCategoryKeys}
             amenitiesByCategory={amenitiesByCategory}
@@ -2269,14 +2477,21 @@ export default function HostProperty() {
             policyRules={policyRules}
             updatePolicyRule={updatePolicyRule}
             handleDeletePropertyClick={handleDeletePropertyClick}
-            saving={saving}
+            saving={isBusy}
+          />
+          <HostPropertyPhotoDeleteModal
+            open={Boolean(photoToDelete)}
+            photoSrc={photoToDelete?.src || ""}
+            deletingPhoto={deletingPhoto}
+            onCancel={closePhotoDeleteModal}
+            onConfirm={confirmDeletePhoto}
           />
           {error ? <p className={styles.errorText}>{error}</p> : null}
 
           <HostPropertyActions
             onBack={handleBackToListings}
             onSave={saveOverview}
-            saving={saving}
+            saving={isBusy}
             saveEnabled={canSaveChanges}
           />
         </section>

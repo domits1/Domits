@@ -416,55 +416,74 @@
 
 .photoCheck {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.56);
-  color: #ffffff;
-  font-size: 14px;
-  line-height: 1;
-  font-weight: 700;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.photoCheckIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(46%) sepia(91%) saturate(838%) hue-rotate(86deg) brightness(95%) contrast(92%) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
 .photoPendingBadge {
   position: absolute;
-  left: 8px;
-  bottom: 8px;
+  left: 0;
+  bottom: 0;
   background: rgba(13, 152, 19, 0.9);
   color: #ffffff;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1;
   font-weight: 700;
-  border-radius: 999px;
-  padding: 4px 7px;
+  border-radius: 0 8px 0 8px;
+  padding: 5px 7px;
+  z-index: 2;
 }
 
 .photoRemoveButton {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 24px;
-  height: 24px;
+  top: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border: none;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.62);
-  color: #ffffff;
-  font-size: 18px;
-  line-height: 1;
+  background: transparent;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  z-index: 3;
+}
+
+.photoRemoveIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.photoRemoveButton:hover .photoRemoveIcon {
+  transform: scale(1.06);
 }
 
 .photoRemoveButton:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.photoTilePending {
+  border-color: #0d9813;
+  box-shadow: inset 0 0 0 1px rgba(13, 152, 19, 0.35);
 }
 
 .photoCategoryGrid {
@@ -525,6 +544,90 @@
   font-size: 12px;
   line-height: 1.2;
   font-weight: 500;
+}
+
+.photoDeleteModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.56);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.photoDeleteModal {
+  width: min(860px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.photoDeletePreview {
+  width: 100%;
+  max-height: 70vh;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #f3f3f3;
+  border: 1px solid #e3e3e3;
+}
+
+.photoDeleteTitle {
+  margin: 0;
+  color: #191919;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.photoDeleteDescription {
+  margin: 0;
+  color: #5f5f5f;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.photoDeleteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.photoDeleteCancelButton {
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #232323;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.photoDeleteConfirmButton {
+  border: none;
+  border-radius: 8px;
+  background: #e11818;
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+  padding: 11px 20px;
+  cursor: pointer;
+}
+
+.photoDeleteCancelButton:disabled,
+.photoDeleteConfirmButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .policiesCard {
@@ -1062,5 +1165,26 @@
   .photoCategoryAddButton {
     font-size: 13px;
     padding: 5px 9px;
+  }
+
+  .photoDeleteModal {
+    padding: 14px;
+  }
+
+  .photoDeletePreview {
+    max-height: 200px;
+  }
+
+  .photoDeleteTitle {
+    font-size: 20px;
+  }
+
+  .photoDeleteActions {
+    flex-direction: column-reverse;
+  }
+
+  .photoDeleteCancelButton,
+  .photoDeleteConfirmButton {
+    width: 100%;
   }
 }
