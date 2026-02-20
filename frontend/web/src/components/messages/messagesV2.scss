@@ -11,44 +11,11 @@
   padding: 18px 22px;
 }
 
-.messages-v2-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  margin-bottom: 16px;
-
-  .messages-v2-title {
-    justify-self: center;
-    font-size: 34px;
-    font-weight: 800;
-    color: var(--text);
-    margin: 0;
-    letter-spacing: -0.02em;
-  }
-
-  .messages-v2-new {
-    justify-self: end;
-    background: var(--domits-green);
-    color: #fff;
-    border: 0;
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 6px 18px rgba(13, 152, 19, 0.2);
-
-    &:hover {
-      filter: brightness(0.98);
-      transform: translateY(-1px);
-    }
-  }
-}
-
 .messages-v2-grid {
   display: grid;
   grid-template-columns: 360px minmax(520px, 1fr) 340px;
   gap: 16px;
-  height: calc(100vh - 220px);
+  height: calc(100vh - 180px);
   min-height: 520px;
 
   @media (max-width: 1280px) {
@@ -72,9 +39,60 @@
 }
 
 .messages-v2 .contactlist-top {
-  padding: 14px 14px 10px 14px;
+  padding: 14px 14px 12px 14px;
   border-bottom: 1px solid var(--border);
   background: #fff;
+}
+
+.messages-v2 .contactlist-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.messages-v2 .contactlist-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.messages-v2 .contactlist-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.messages-v2 .icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+
+  &:hover {
+    background: var(--bg);
+  }
+
+  &.primary {
+    background: var(--domits-green);
+    color: #fff;
+    border-color: transparent;
+
+    &:hover {
+      filter: brightness(0.98);
+      transform: translateY(-1px);
+    }
+  }
 }
 
 .messages-v2 .contactlist-search {
@@ -93,9 +111,10 @@
   }
 }
 
+/* tabs like target: All / Unread */
 .messages-v2 .contactlist-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
   margin-top: 10px;
   padding: 6px;
@@ -107,9 +126,9 @@
 .messages-v2 .contactlist-tab {
   border: 0;
   background: transparent;
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-radius: 10px;
-  font-weight: 700;
+  font-weight: 800;
   color: #667085;
   cursor: pointer;
   font-size: 13px;
@@ -236,7 +255,7 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
   margin-left: 8px;
 }
 
@@ -260,6 +279,22 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.messages-v2 .back-to-contacts-button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--bg);
+  }
 }
 
 .messages-v2 .chat-header .profile-img {
@@ -301,28 +336,12 @@
 }
 
 .messages-v2 .chat-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  .test-messages-button {
-    border: 1px solid var(--border);
-    background: #fff;
-    border-radius: 10px;
-    padding: 8px 10px;
-    cursor: pointer;
-    font-weight: 800;
-    color: var(--text);
-
-    &:hover {
-      background: var(--bg);
-    }
-  }
+  position: relative;
 
   .dots {
     border: 1px solid var(--border);
     background: #fff;
-    border-radius: 10px;
+    border-radius: 12px;
     width: 38px;
     height: 38px;
     display: inline-flex;
@@ -332,6 +351,34 @@
 
     &:hover {
       background: var(--bg);
+    }
+  }
+
+  .chat-menu {
+    position: absolute;
+    right: 0;
+    top: 44px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+    overflow: hidden;
+    min-width: 190px;
+    z-index: 50;
+
+    button {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--text);
+
+      &:hover {
+        background: var(--bg);
+      }
     }
   }
 }
@@ -355,10 +402,10 @@
   background: rgba(15, 23, 42, 0.06);
   color: rgba(15, 23, 42, 0.65);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
 }
 
-/* message rows + bubbles (uses ChatMessage markup changes below) */
+/* message rows + bubbles */
 .messages-v2 .chat-message-row {
   display: flex;
   align-items: flex-end;
@@ -395,6 +442,16 @@
   border-color: rgba(13, 152, 19, 0.18);
 }
 
+.messages-v2 .automated-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 900;
+  font-size: 12px;
+  opacity: 0.85;
+  margin-bottom: 6px;
+}
+
 .messages-v2 .message-content {
   font-size: 14px;
   line-height: 1.35;
@@ -406,10 +463,17 @@
 .messages-v2 .message-footer {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
   margin-top: 6px;
   font-size: 12px;
   color: rgba(15, 23, 42, 0.55);
-  font-weight: 700;
+  font-weight: 800;
+}
+
+.messages-v2 .message-status {
+  font-weight: 900;
+  opacity: 0.7;
 }
 
 /* input */
@@ -417,27 +481,13 @@
   border-top: 1px solid var(--border);
   background: #fff;
   padding: 12px;
+  position: relative;
 }
 
 .messages-v2 .message-input-wrapper {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.messages-v2 .add-file-button {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #fff;
-  cursor: pointer;
-  font-weight: 900;
-  font-size: 18px;
-
-  &:hover {
-    background: var(--bg);
-  }
 }
 
 .messages-v2 .message-input-textarea {
@@ -473,88 +523,5 @@
   &:disabled {
     opacity: 0.55;
     cursor: not-allowed;
-  }
-}
-
-/* New contact modal (so it looks decent) */
-.new-contact-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.new-contact-modal {
-  width: min(520px, calc(100vw - 28px));
-  background: #fff;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.25);
-  padding: 16px;
-
-  h4 {
-    margin: 0 0 12px 0;
-    font-size: 18px;
-    font-weight: 900;
-  }
-
-  .new-contact-label {
-    display: block;
-    margin-top: 10px;
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--muted);
-  }
-
-  .new-contact-input {
-    width: 100%;
-    margin-top: 6px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 12px;
-    outline: none;
-
-    &:focus {
-      border-color: rgba(13, 152, 19, 0.55);
-    }
-  }
-
-  .new-contact-preview {
-    width: 84px;
-    height: 84px;
-    border-radius: 16px;
-    margin-top: 10px;
-    object-fit: cover;
-    border: 1px solid var(--border);
-  }
-
-  .new-contact-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 14px;
-
-    button {
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-weight: 900;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: #fff;
-    }
-
-    .new-contact-create {
-      background: var(--domits-green);
-      border-color: transparent;
-      color: #fff;
-
-      &:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-      }
-    }
   }
 }

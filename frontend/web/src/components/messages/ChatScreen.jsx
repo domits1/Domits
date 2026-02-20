@@ -1,5 +1,3 @@
-// /Users/mh/Domits/frontend/web/src/components/messages/ChatScreen.jsx
-
 import { useEffect, useMemo, useState, useRef, useContext } from "react";
 
 import useFetchMessages from "../../features/hostdashboard/hostmessages/hooks/useFetchMessages";
@@ -9,9 +7,6 @@ import { useSendMessage } from "../../features/hostdashboard/hostmessages/hooks/
 import ChatMessage from "./ChatMessage";
 import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/components/chatUploadAttachment";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
-
-// Keep existing styles for now (safe). The new look comes from messagesV2.scss (scoped by .messages-v2)
-import "../../features/hostdashboard/hostmessages/styles/sass/chatscreen/hostChatScreen.scss";
 
 import { v4 as uuidv4 } from "uuid";
 import { FaPaperPlane, FaArrowLeft, FaTimes, FaEllipsisH } from "react-icons/fa";
@@ -111,6 +106,9 @@ const ChatScreen = ({
   const chatContainerRef = useRef(null);
   const [forceStopLoading, setForceStopLoading] = useState(false);
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
   const isDemoConversation = useMemo(() => {
     const isDemoId = (id) => typeof id === "string" && (id.startsWith("test-") || id.startsWith("demo-"));
     return isDemoId(userId) || isDemoId(resolvedContactId);
@@ -139,6 +137,15 @@ const ChatScreen = ({
       if (el) el.scrollTop = el.scrollHeight;
     } catch {}
   }, [messages, resolvedContactId]);
+
+  useEffect(() => {
+    const onClickAway = (e) => {
+      if (!menuOpen) return;
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    window.addEventListener("click", onClickAway);
+    return () => window.removeEventListener("click", onClickAway);
+  }, [menuOpen]);
 
   const handleSendAutomatedTestMessages = () => {
     if (!resolvedContactId) return;
@@ -289,156 +296,143 @@ const ChatScreen = ({
     "";
 
   return (
-    <div className={`${dashboardType}-chat`}>
-      <div className="chat-screen-container">
-        <div className="chat-header">
-          {onBack && (
-            <button className="back-to-contacts-button" onClick={onBack}>
-              <FaArrowLeft />
-            </button>
-          )}
+    <div className="chat-screen-container">
+      <div className="chat-header">
+        {onBack && (
+          <button className="back-to-contacts-button" onClick={onBack} aria-label="Back">
+            <FaArrowLeft />
+          </button>
+        )}
 
-          <img src={contactImage || profileImage} alt={contactName} className="profile-img" />
+        <img src={contactImage || profileImage} alt={contactName || "Contact"} className="profile-img" />
 
-          <div className="chat-header-info">
-            <h3>{contactName}</h3>
-            <div className="chat-subline">
-              <span className="pill">{dashboardType === "host" ? "Guest" : "Host"}</span>
-
-              {headerProperty ? <span className="pill">{headerProperty}</span> : null}
-
-              {bookingDetails?.arrivalDate && bookingDetails?.departureDate ? (
-                <span className="pill">
-                  Check-in {bookingDetails.arrivalDate} – Check-out {bookingDetails.departureDate}
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="chat-header-actions">
-            <button onClick={handleSendAutomatedTestMessages} className="test-messages-button">
-              Test messages
-            </button>
-            <button className="dots" type="button" title="More">
-              <FaEllipsisH />
-            </button>
+        <div className="chat-header-info">
+          <h3>{contactName || "Unknown"}</h3>
+          <div className="chat-subline">
+            <span className="pill">{dashboardType === "host" ? "Guest" : "Host"}</span>
+            {headerProperty ? <span className="pill">{headerProperty}</span> : null}
           </div>
         </div>
 
-        <div className="chat-screen" ref={chatContainerRef}>
-          {loading && !forceStopLoading ? (
-            <p>Loading messages...</p>
-          ) : error && !isDemoConversation ? (
-            <p>{String(error)}</p>
-          ) : messages.length === 0 ? (
-            <p>No messages yet. Say hello 👋</p>
-          ) : (
-            (() => {
-              let lastDay = null;
+        <div className="chat-header-actions" ref={menuRef}>
+          <button className="dots" type="button" title="More" onClick={() => setMenuOpen((s) => !s)} aria-haspopup="menu">
+            <FaEllipsisH />
+          </button>
 
-              return messages.map((m) => {
-                const iso = m?.createdAt || "";
-                const dayKey = iso ? String(iso).slice(0, 10) : null;
-                const showDay = dayKey && dayKey !== lastDay;
-                if (showDay) lastDay = dayKey;
-
-                return (
-                  <div key={m.id}>
-                    {showDay && (
-                      <div className="chat-date-separator">
-                        {formatChipDate(iso)}
-                      </div>
-                    )}
-
-                    <ChatMessage
-                      message={m}
-                      userId={userId}
-                      contactName={contactName}
-                      contactImage={contactImage}
-                      dashboardType={dashboardType}
-                    />
-                  </div>
-                );
-              });
-            })()
-          )}
-        </div>
-
-        <div className="chat-input">
-          <div className="attachment-area">
-            <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
-
-            {uploadedFileUrls.length > 0 && (
-              <button
-                className="inline-upload-preview"
-                onClick={() => setShowPreviewPopover((s) => !s)}
-                title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
-              >
-                <img src={uploadedFileUrls[0]} alt="First attachment preview" />
-                {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
-              </button>
-            )}
-          </div>
-
-          <div className="message-input-container">
-            <div className="message-input-wrapper">
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="message-input-textarea"
-                placeholder="Type a message..."
-                onKeyUp={(e) => {
-                  if (e.key === "Enter") {
-                    if ((newMessage?.length || 0) <= 200) handleSendMessage();
-                  }
-                }}
-              />
-              <button
-                onClick={handleSendMessage}
-                className="message-input-send-button"
-                disabled={sending || (newMessage?.length || 0) > 200}
-                title="Send"
-              >
-                <FaPaperPlane />
+          {menuOpen && (
+            <div className="chat-menu" role="menu">
+              <button type="button" onClick={() => { setMenuOpen(false); handleSendAutomatedTestMessages(); }}>
+                Send test messages
               </button>
             </div>
-          </div>
-
-          {(newMessage?.length || 0) > 0 && (
-            <div className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? "over" : ""}`} aria-live="polite">
-              {newMessage?.length || 0}/200
-            </div>
-          )}
-
-          {showPreviewPopover && uploadedFileUrls.length > 0 && (
-            <div className="preview-popover" role="dialog" aria-label="Attachment previews">
-              <div className="preview-popover-header">
-                <span>Attachments</span>
-                <button className="close-popover" onClick={() => setShowPreviewPopover(false)} title="Close">
-                  <FaTimes />
-                </button>
-              </div>
-
-              <div className="preview-grid">
-                {uploadedFileUrls.map((url, index) => (
-                  <div className="preview-item" key={`${url}-${index}`}>
-                    <img src={url} alt={`Attachment-${index}`} />
-                    <button
-                      className="remove-thumb"
-                      title="Remove"
-                      onClick={() => setUploadedFileUrls((prev) => prev.filter((u) => u !== url))}
-                    >
-                      <FaTimes />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
         </div>
-
-        {sendError && <p className="error-message">{sendError.message}</p>}
       </div>
+
+      <div className="chat-screen" ref={chatContainerRef}>
+        {loading && !forceStopLoading ? (
+          <p>Loading messages...</p>
+        ) : error && !isDemoConversation ? (
+          <p>{String(error)}</p>
+        ) : messages.length === 0 ? (
+          <p>No messages yet. Say hello 👋</p>
+        ) : (
+          (() => {
+            let lastDay = null;
+
+            return messages.map((m) => {
+              const iso = m?.createdAt || "";
+              const dayKey = iso ? String(iso).slice(0, 10) : null;
+              const showDay = dayKey && dayKey !== lastDay;
+              if (showDay) lastDay = dayKey;
+
+              return (
+                <div key={m.id}>
+                  {showDay && <div className="chat-date-separator">{formatChipDate(iso)}</div>}
+                  <ChatMessage message={m} userId={userId} contactName={contactName} contactImage={contactImage} />
+                </div>
+              );
+            });
+          })()
+        )}
+      </div>
+
+      <div className="chat-input">
+        <div className="attachment-area">
+          <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+
+          {uploadedFileUrls.length > 0 && (
+            <button
+              className="inline-upload-preview"
+              onClick={() => setShowPreviewPopover((s) => !s)}
+              title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
+            >
+              <img src={uploadedFileUrls[0]} alt="First attachment preview" />
+              {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
+            </button>
+          )}
+        </div>
+
+        <div className="message-input-container">
+          <div className="message-input-wrapper">
+            <textarea
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="message-input-textarea"
+              placeholder="Type a message"
+              onKeyDown={(e) => {
+                // Send on Enter (not Shift+Enter) — matches modern chat UX
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if ((newMessage?.length || 0) <= 200) handleSendMessage();
+                }
+              }}
+            />
+            <button
+              onClick={handleSendMessage}
+              className="message-input-send-button"
+              disabled={sending || (newMessage?.length || 0) > 200}
+              title="Send"
+            >
+              <FaPaperPlane />
+            </button>
+          </div>
+        </div>
+
+        {(newMessage?.length || 0) > 0 && (
+          <div className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? "over" : ""}`} aria-live="polite">
+            {newMessage?.length || 0}/200
+          </div>
+        )}
+
+        {showPreviewPopover && uploadedFileUrls.length > 0 && (
+          <div className="preview-popover" role="dialog" aria-label="Attachment previews">
+            <div className="preview-popover-header">
+              <span>Attachments</span>
+              <button className="close-popover" onClick={() => setShowPreviewPopover(false)} title="Close">
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="preview-grid">
+              {uploadedFileUrls.map((url, index) => (
+                <div className="preview-item" key={`${url}-${index}`}>
+                  <img src={url} alt={`Attachment-${index}`} />
+                  <button
+                    className="remove-thumb"
+                    title="Remove"
+                    onClick={() => setUploadedFileUrls((prev) => prev.filter((u) => u !== url))}
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {sendError && <p className="error-message">{sendError.message}</p>}
     </div>
   );
 };

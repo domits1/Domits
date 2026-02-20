@@ -11,7 +11,6 @@ import ChatScreen from "./ChatScreen";
 import BookingTab from "./BookingTab";
 import NewContactModal from "./NewContactModal";
 
-import "../../features/hostdashboard/hostmessages/styles/sass/hostMessages.scss";
 import "./messagesV2.scss";
 
 const Messages = ({ dashboardType }) => {
@@ -74,7 +73,6 @@ const MessagesContent = ({ dashboardType }) => {
 
   const showContactList = isMobile ? !selectedContactId : true;
   const showChatScreen = isMobile ? !!selectedContactId : true;
-
   const showDetailsPanel = !isMobile && !isTablet; // desktop only
 
   return (
@@ -82,14 +80,6 @@ const MessagesContent = ({ dashboardType }) => {
       <WebSocketProvider userId={userId} token={accessToken}>
         {userId ? (
           <>
-            <div className="messages-v2-header">
-              <div />
-              <h1 className="messages-v2-title">Messages</h1>
-              <button className="messages-v2-new" onClick={() => setIsNewMessageOpen(true)}>
-                + New Message
-              </button>
-            </div>
-
             <NewContactModal
               isOpen={isNewMessageOpen}
               onClose={() => setIsNewMessageOpen(false)}
@@ -113,6 +103,7 @@ const MessagesContent = ({ dashboardType }) => {
                     pendingContacts={pendingContacts}
                     loading={contactsLoading}
                     setContacts={setContacts}
+                    onNewMessage={() => setIsNewMessageOpen(true)}
                   />
                 </div>
               )}

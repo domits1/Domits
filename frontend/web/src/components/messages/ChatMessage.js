@@ -1,5 +1,3 @@
-// /Users/mh/Domits/frontend/web/src/components/messages/ChatMessage.js
-
 import React, { useState } from "react";
 import profileImage from "./domits-logo.jpg";
 import Icon from "@mdi/react";
@@ -13,7 +11,15 @@ import {
 } from "@mdi/js";
 
 const ChatMessage = ({ message, userId, contactName, contactImage }) => {
-  const { userId: senderId, text, createdAt, isSent, fileUrls, isAutomated, messageType } = message;
+  const {
+    userId: senderId,
+    text,
+    createdAt,
+    isSent,
+    fileUrls,
+    isAutomated,
+    messageType,
+  } = message;
 
   const formatTime = (v) => {
     const d = new Date(v);
@@ -21,13 +27,12 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
     return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   };
 
-  // Determine direction: prefer actual sender vs current user, fall back to legacy isSent flag
+  // Direction: prefer senderId vs current userId, fall back to legacy isSent
   const isOutgoingBySender = senderId ? senderId === userId : null;
   const isOutgoing = isOutgoingBySender !== null ? isOutgoingBySender : !!isSent;
   const directionClass = isOutgoing ? "sent" : "received";
 
   const [modalImage, setModalImage] = useState(null);
-
   const isAutomatedMessage = isAutomated === true;
 
   const getAutomatedIcon = (type) => {
@@ -58,9 +63,9 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
 
       <div className={`chat-message ${directionClass} ${isAutomatedMessage ? "automated" : ""}`}>
         {isAutomatedMessage && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 900, fontSize: 12, opacity: 0.85 }}>
+          <div className="automated-header">
             <Icon path={automatedIcon} size={0.75} aria-label="automated-icon" />
-            {senderId === userId ? "You" : contactName} (Automated)
+            <span>{senderId === userId ? "You" : contactName} (Automated)</span>
           </div>
         )}
 
@@ -93,7 +98,10 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
           </div>
         )}
 
-        <div className="message-footer">{formatTime(createdAt)}</div>
+        <div className="message-footer">
+          <span>{formatTime(createdAt)}</span>
+          {isOutgoing ? <span className="message-status">✓✓</span> : null}
+        </div>
       </div>
 
       {modalImage && (
