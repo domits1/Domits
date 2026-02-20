@@ -315,8 +315,30 @@
   gap: 8px;
 }
 
+.photoTileActionWrap {
+  position: relative;
+  width: 100%;
+}
+
+.photoTileActionWrapLarge {
+  min-height: 256px;
+}
+
+.photoTileActionWrapSmall {
+  min-height: 120px;
+  height: 100%;
+}
+
 .photoTileLarge,
 .photoTileSmall {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  font: inherit;
+  text-align: inherit;
   position: relative;
   border: 1px solid #dddddd;
   border-radius: 8px;
@@ -367,7 +389,7 @@
 .photoAddButtonDragOver {
   border-color: #0d9813;
   background: #eef9ef;
-  color: #0d9813;
+  color: #0a6510;
 }
 
 .photoAddIcon {
@@ -438,7 +460,7 @@
   position: absolute;
   left: 0;
   bottom: 0;
-  background: rgba(13, 152, 19, 0.9);
+  background: #0a6f10;
   color: #ffffff;
   font-size: 10px;
   line-height: 1;
@@ -1219,6 +1241,14 @@
     min-height: 210px;
   }
 
+  .photoTileActionWrapLarge {
+    min-height: 210px;
+  }
+
+  .photoTileActionWrapSmall {
+    min-height: 100px;
+  }
+
   .photoCategoryGrid {
     grid-template-columns: 1fr;
   }
@@ -1245,6 +1275,14 @@
 
   .photoTileLarge {
     min-height: 165px;
+  }
+
+  .photoTileActionWrapLarge {
+    min-height: 165px;
+  }
+
+  .photoTileActionWrapSmall {
+    min-height: 82px;
   }
 
   .photoCategoryGrid {

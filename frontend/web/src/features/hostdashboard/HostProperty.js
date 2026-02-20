@@ -939,7 +939,8 @@ const usePhotoTileInteractionHandlers = ({
     if (touchReorderRef.current.pointerId !== null) {
       return;
     }
-    if (event.target?.closest("button, input, textarea, select, a, [role='button']")) {
+    const interactiveTarget = event.target?.closest("button, input, textarea, select, a, [role='button']");
+    if (interactiveTarget && interactiveTarget !== event.currentTarget) {
       return;
     }
 
@@ -1496,6 +1497,145 @@ function HostPropertyPhotosTab({
     previousTileRectsRef.current = nextRects;
   }, [displayedPhotos]);
 
+  const renderCoverTile = () => {
+    if (!coverPhoto) {
+      return (
+        <div className={styles.photoTileLarge}>
+          <span className={styles.photoEmptyLabel}>No photos yet</span>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={`${styles.photoTileActionWrap} ${styles.photoTileActionWrapLarge}`}
+        data-photo-id={coverPhoto.id}
+        ref={(node) => {
+          if (node) {
+            photoTileRefs.current.set(coverPhoto.id, node);
+            return;
+          }
+          photoTileRefs.current.delete(coverPhoto.id);
+        }}
+      >
+        <button
+          type="button"
+          className={`${styles.photoTileLarge} ${
+            draggingPhotoId === coverPhoto.id ? styles.photoTileDragActive : ""
+          } ${photoDropTargetId === coverPhoto.id ? styles.photoTileDropTarget : ""} ${
+            coverPhoto.isPending ? styles.photoTilePending : ""
+          }`}
+          data-photo-id={coverPhoto.id}
+          draggable
+          onDragStart={() => onPhotoTileDragStart(coverPhoto.id)}
+          onDragEnd={onPhotoTileDragEnd}
+          onDragOver={(event) => {
+            event.preventDefault();
+            onPhotoTileDragOver(coverPhoto.id);
+          }}
+          onDragLeave={() => onPhotoTileDragLeave(coverPhoto.id)}
+          onDrop={(event) => {
+            event.preventDefault();
+            onPhotoTileDrop(coverPhoto.id);
+          }}
+          onPointerDown={(event) => handlePhotoTilePointerDown(coverPhoto.id, event)}
+          onPointerMove={handlePhotoTilePointerMove}
+          onPointerUp={handlePhotoTilePointerUp}
+          onPointerCancel={handlePhotoTilePointerCancel}
+          onKeyDown={(event) => handlePhotoTileKeyDown(coverPhoto.id, event)}
+          aria-label="Reorder cover tile"
+        >
+          <img src={coverPhoto.src} alt="Cover" className={styles.photoImageLarge} />
+          {coverPhoto.isPending ? null : (
+            <span className={styles.photoCheck} aria-hidden="true">
+              <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
+            </span>
+          )}
+          {coverPhoto.isPending ? <span className={styles.photoPendingBadge}>New - Unsaved</span> : null}
+        </button>
+        <button
+          type="button"
+          className={styles.photoRemoveButton}
+          onClick={() => onRequestDeletePhoto(coverPhoto)}
+          disabled={saving || deletingPhoto}
+          aria-label="Delete photo"
+        >
+          <img src={crossIcon} alt="" aria-hidden="true" className={styles.photoRemoveIcon} />
+        </button>
+      </div>
+    );
+  };
+
+  const renderGridTiles = () => {
+    if (gridPhotos.length === 0) {
+      return (
+        <div className={styles.photoTileSmall}>
+          <span className={styles.photoTilePlaceholder}>Additional photos will appear here.</span>
+        </div>
+      );
+    }
+
+    return gridPhotos.map((photo, index) => (
+      <div
+        key={photo.id}
+        className={`${styles.photoTileActionWrap} ${styles.photoTileActionWrapSmall}`}
+        data-photo-id={photo.id}
+        ref={(node) => {
+          if (node) {
+            photoTileRefs.current.set(photo.id, node);
+          } else {
+            photoTileRefs.current.delete(photo.id);
+          }
+        }}
+      >
+        <button
+          type="button"
+          className={`${styles.photoTileSmall} ${
+            draggingPhotoId === photo.id ? styles.photoTileDragActive : ""
+          } ${photoDropTargetId === photo.id ? styles.photoTileDropTarget : ""} ${
+            photo.isPending ? styles.photoTilePending : ""
+          }`}
+          data-photo-id={photo.id}
+          draggable
+          onDragStart={() => onPhotoTileDragStart(photo.id)}
+          onDragEnd={onPhotoTileDragEnd}
+          onDragOver={(event) => {
+            event.preventDefault();
+            onPhotoTileDragOver(photo.id);
+          }}
+          onDragLeave={() => onPhotoTileDragLeave(photo.id)}
+          onDrop={(event) => {
+            event.preventDefault();
+            onPhotoTileDrop(photo.id);
+          }}
+          onPointerDown={(event) => handlePhotoTilePointerDown(photo.id, event)}
+          onPointerMove={handlePhotoTilePointerMove}
+          onPointerUp={handlePhotoTilePointerUp}
+          onPointerCancel={handlePhotoTilePointerCancel}
+          onKeyDown={(event) => handlePhotoTileKeyDown(photo.id, event)}
+          aria-label={`Reorder listing view ${index + 2}`}
+        >
+          <img src={photo.src} alt={`Listing view ${index + 2}`} className={styles.photoImageSmall} />
+          {photo.isPending ? null : (
+            <span className={styles.photoCheck} aria-hidden="true">
+              <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
+            </span>
+          )}
+          {photo.isPending ? <span className={styles.photoPendingBadge}>New - Unsaved</span> : null}
+        </button>
+        <button
+          type="button"
+          className={styles.photoRemoveButton}
+          onClick={() => onRequestDeletePhoto(photo)}
+          disabled={saving || deletingPhoto}
+          aria-label="Delete photo"
+        >
+          <img src={crossIcon} alt="" aria-hidden="true" className={styles.photoRemoveIcon} />
+        </button>
+      </div>
+    ));
+  };
+
   return (
     <section className={`${styles.card} ${styles.photosCard}`}>
       <h3 className={styles.sectionTitle}>Photos</h3>
@@ -1503,68 +1643,7 @@ function HostPropertyPhotosTab({
 
       <div className={styles.photosLayout}>
         <div className={styles.photosPrimaryColumn}>
-          {coverPhoto ? (
-            <div
-              className={`${styles.photoTileLarge} ${
-                draggingPhotoId === coverPhoto.id ? styles.photoTileDragActive : ""
-              } ${photoDropTargetId === coverPhoto.id ? styles.photoTileDropTarget : ""} ${
-                coverPhoto.isPending ? styles.photoTilePending : ""
-              }`}
-              role="button"
-              tabIndex={0}
-              aria-label="Reorder cover tile"
-              data-photo-id={coverPhoto.id}
-              ref={(node) => {
-                if (node) {
-                  photoTileRefs.current.set(coverPhoto.id, node);
-                  return;
-                }
-                photoTileRefs.current.delete(coverPhoto.id);
-              }}
-              draggable
-              onDragStart={() => onPhotoTileDragStart(coverPhoto.id)}
-              onDragEnd={onPhotoTileDragEnd}
-              onDragOver={(event) => {
-                event.preventDefault();
-                onPhotoTileDragOver(coverPhoto.id);
-              }}
-              onDragLeave={() => onPhotoTileDragLeave(coverPhoto.id)}
-              onDrop={(event) => {
-                event.preventDefault();
-                onPhotoTileDrop(coverPhoto.id);
-              }}
-              onPointerDown={(event) => handlePhotoTilePointerDown(coverPhoto.id, event)}
-              onPointerMove={handlePhotoTilePointerMove}
-              onPointerUp={handlePhotoTilePointerUp}
-              onPointerCancel={handlePhotoTilePointerCancel}
-              onKeyDown={(event) => handlePhotoTileKeyDown(coverPhoto.id, event)}
-            >
-              <img src={coverPhoto.src} alt="Cover" className={styles.photoImageLarge} />
-              {coverPhoto.isPending ? null : (
-                <span className={styles.photoCheck} aria-hidden="true">
-                  <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
-                </span>
-              )}
-              <button
-                type="button"
-                className={styles.photoRemoveButton}
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onRequestDeletePhoto(coverPhoto);
-                }}
-                disabled={saving || deletingPhoto}
-                aria-label="Delete photo"
-              >
-                <img src={crossIcon} alt="" aria-hidden="true" className={styles.photoRemoveIcon} />
-              </button>
-              {coverPhoto.isPending ? <span className={styles.photoPendingBadge}>New - Unsaved</span> : null}
-            </div>
-          ) : (
-            <div className={styles.photoTileLarge}>
-              <span className={styles.photoEmptyLabel}>No photos yet</span>
-            </div>
-          )}
+          {renderCoverTile()}
           <p className={styles.photoCoverCaption}>Cover photo</p>
 
           <button
@@ -1592,71 +1671,7 @@ function HostPropertyPhotosTab({
         </div>
 
         <div className={styles.photosSecondaryGrid}>
-          {gridPhotos.length > 0 ? (
-            gridPhotos.map((photo, index) => (
-              <div
-                key={photo.id}
-                className={`${styles.photoTileSmall} ${
-                  draggingPhotoId === photo.id ? styles.photoTileDragActive : ""
-                } ${photoDropTargetId === photo.id ? styles.photoTileDropTarget : ""} ${
-                  photo.isPending ? styles.photoTilePending : ""
-                }`}
-                role="button"
-                tabIndex={0}
-                aria-label={`Reorder listing view ${index + 2}`}
-                data-photo-id={photo.id}
-                ref={(node) => {
-                  if (node) {
-                    photoTileRefs.current.set(photo.id, node);
-                  } else {
-                    photoTileRefs.current.delete(photo.id);
-                  }
-                }}
-                draggable
-                onDragStart={() => onPhotoTileDragStart(photo.id)}
-                onDragEnd={onPhotoTileDragEnd}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  onPhotoTileDragOver(photo.id);
-                }}
-                onDragLeave={() => onPhotoTileDragLeave(photo.id)}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  onPhotoTileDrop(photo.id);
-                }}
-                onPointerDown={(event) => handlePhotoTilePointerDown(photo.id, event)}
-                onPointerMove={handlePhotoTilePointerMove}
-                onPointerUp={handlePhotoTilePointerUp}
-                onPointerCancel={handlePhotoTilePointerCancel}
-                onKeyDown={(event) => handlePhotoTileKeyDown(photo.id, event)}
-              >
-                <img src={photo.src} alt={`Listing view ${index + 2}`} className={styles.photoImageSmall} />
-                {photo.isPending ? null : (
-                  <span className={styles.photoCheck} aria-hidden="true">
-                    <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className={styles.photoRemoveButton}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onRequestDeletePhoto(photo);
-                  }}
-                  disabled={saving || deletingPhoto}
-                  aria-label="Delete photo"
-                >
-                  <img src={crossIcon} alt="" aria-hidden="true" className={styles.photoRemoveIcon} />
-                </button>
-                {photo.isPending ? <span className={styles.photoPendingBadge}>New - Unsaved</span> : null}
-              </div>
-            ))
-          ) : (
-            <div className={styles.photoTileSmall}>
-              <span className={styles.photoTilePlaceholder}>Additional photos will appear here.</span>
-            </div>
-          )}
+          {renderGridTiles()}
         </div>
       </div>
 
@@ -2684,9 +2699,9 @@ export default function HostProperty() {
       event.returnValue = "";
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    globalThis.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      globalThis.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [shouldBlockNavigation]);
 
@@ -2731,8 +2746,8 @@ export default function HostProperty() {
         return;
       }
 
-      const nextUrl = new URL(anchor.href, window.location.href);
-      const currentUrl = new URL(window.location.href);
+      const nextUrl = new URL(anchor.href, globalThis.location.href);
+      const currentUrl = new URL(globalThis.location.href);
       if (nextUrl.origin !== currentUrl.origin) {
         return;
       }
