@@ -883,6 +883,191 @@ const animatePhotoTileToNewPosition = (node, deltaX, deltaY) => {
   node.addEventListener("transitionend", clearAnimationState);
 };
 
+const createInitialTouchReorderState = () => ({
+  pointerId: null,
+  sourcePhotoId: null,
+  targetPhotoId: null,
+  started: false,
+  startX: 0,
+  startY: 0,
+  timerId: null,
+});
+
+const usePhotoTileInteractionHandlers = ({
+  displayedPhotos,
+  onPhotoTileDragStart,
+  onPhotoTileDragOver,
+  onPhotoTileDragEnd,
+  onPhotoTileDrop,
+  saving,
+  deletingPhoto,
+}) => {
+  const touchReorderRef = useRef(createInitialTouchReorderState());
+
+  const clearTouchReorderTimer = useCallback(() => {
+    const timerId = touchReorderRef.current.timerId;
+    if (!timerId) {
+      return;
+    }
+    clearTimeout(timerId);
+    touchReorderRef.current.timerId = null;
+  }, []);
+
+  const resetTouchReorderState = useCallback(() => {
+    clearTouchReorderTimer();
+    touchReorderRef.current.pointerId = null;
+    touchReorderRef.current.sourcePhotoId = null;
+    touchReorderRef.current.targetPhotoId = null;
+    touchReorderRef.current.started = false;
+    touchReorderRef.current.startX = 0;
+    touchReorderRef.current.startY = 0;
+  }, [clearTouchReorderTimer]);
+
+  const resolveDropTargetPhotoId = useCallback((event) => {
+    if (typeof document === "undefined") {
+      return null;
+    }
+    const element = document.elementFromPoint(event.clientX, event.clientY);
+    const targetTile = element?.closest("[data-photo-id]");
+    return targetTile?.dataset?.photoId || null;
+  }, []);
+
+  const handlePhotoTilePointerDown = useCallback((photoId, event) => {
+    if (event.pointerType === "mouse" || saving) {
+      return;
+    }
+    if (touchReorderRef.current.pointerId !== null) {
+      return;
+    }
+    if (event.target?.closest("button, input, textarea, select, a, [role='button']")) {
+      return;
+    }
+
+    clearTouchReorderTimer();
+    touchReorderRef.current.pointerId = event.pointerId;
+    touchReorderRef.current.sourcePhotoId = photoId;
+    touchReorderRef.current.targetPhotoId = photoId;
+    touchReorderRef.current.started = false;
+    touchReorderRef.current.startX = event.clientX;
+    touchReorderRef.current.startY = event.clientY;
+    touchReorderRef.current.timerId = setTimeout(() => {
+      touchReorderRef.current.started = true;
+      onPhotoTileDragStart(photoId);
+      onPhotoTileDragOver(photoId);
+    }, PHOTO_REORDER_LONG_PRESS_MS);
+  }, [clearTouchReorderTimer, onPhotoTileDragOver, onPhotoTileDragStart, saving]);
+
+  const handlePhotoTilePointerMove = useCallback((event) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    const touchReorderState = touchReorderRef.current;
+    if (touchReorderState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (!touchReorderState.started) {
+      const deltaX = event.clientX - touchReorderState.startX;
+      const deltaY = event.clientY - touchReorderState.startY;
+      const distance = Math.hypot(deltaX, deltaY);
+      if (distance > PHOTO_REORDER_MOVE_CANCEL_PX) {
+        resetTouchReorderState();
+      }
+      return;
+    }
+
+    event.preventDefault();
+    const targetPhotoId = resolveDropTargetPhotoId(event) || touchReorderState.sourcePhotoId;
+    if (!targetPhotoId) {
+      return;
+    }
+    touchReorderState.targetPhotoId = targetPhotoId;
+    onPhotoTileDragOver(targetPhotoId);
+  }, [onPhotoTileDragOver, resetTouchReorderState, resolveDropTargetPhotoId]);
+
+  const handlePhotoTilePointerUp = useCallback((event) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    const touchReorderState = touchReorderRef.current;
+    if (touchReorderState.pointerId !== event.pointerId) {
+      return;
+    }
+    clearTouchReorderTimer();
+    if (!touchReorderState.started) {
+      resetTouchReorderState();
+      return;
+    }
+
+    event.preventDefault();
+    const targetPhotoId =
+      resolveDropTargetPhotoId(event) || touchReorderState.targetPhotoId || touchReorderState.sourcePhotoId;
+    if (targetPhotoId) {
+      onPhotoTileDrop(targetPhotoId);
+    }
+    onPhotoTileDragEnd();
+    resetTouchReorderState();
+  }, [clearTouchReorderTimer, onPhotoTileDragEnd, onPhotoTileDrop, resetTouchReorderState, resolveDropTargetPhotoId]);
+
+  const handlePhotoTilePointerCancel = useCallback((event) => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    const touchReorderState = touchReorderRef.current;
+    if (touchReorderState.pointerId !== event.pointerId) {
+      return;
+    }
+    if (touchReorderState.started) {
+      onPhotoTileDragEnd();
+    }
+    resetTouchReorderState();
+  }, [onPhotoTileDragEnd, resetTouchReorderState]);
+
+  const movePhotoByKeyboard = useCallback((photoId, delta) => {
+    const fromIndex = displayedPhotos.findIndex((photo) => photo.id === photoId);
+    if (fromIndex === -1) {
+      return;
+    }
+    const toIndex = Math.max(0, Math.min(displayedPhotos.length - 1, fromIndex + delta));
+    if (toIndex === fromIndex) {
+      return;
+    }
+    const targetPhotoId = displayedPhotos[toIndex]?.id;
+    if (!targetPhotoId || targetPhotoId === photoId) {
+      return;
+    }
+    onPhotoTileDragStart(photoId);
+    onPhotoTileDrop(targetPhotoId);
+    onPhotoTileDragEnd();
+  }, [displayedPhotos, onPhotoTileDragEnd, onPhotoTileDragStart, onPhotoTileDrop]);
+
+  const handlePhotoTileKeyDown = useCallback((photoId, event) => {
+    if (saving || deletingPhoto) {
+      return;
+    }
+    const delta = PHOTO_REORDER_KEY_DELTAS[event.key];
+    if (delta === undefined) {
+      return;
+    }
+    event.preventDefault();
+    movePhotoByKeyboard(photoId, delta);
+  }, [deletingPhoto, movePhotoByKeyboard, saving]);
+
+  useEffect(() => {
+    return () => {
+      clearTouchReorderTimer();
+    };
+  }, [clearTouchReorderTimer]);
+
+  return {
+    handlePhotoTilePointerDown,
+    handlePhotoTilePointerMove,
+    handlePhotoTilePointerUp,
+    handlePhotoTilePointerCancel,
+    handlePhotoTileKeyDown,
+  };
+};
+
 function HostPropertyLoadingView() {
   return (
     <main className="page-Host">
@@ -912,11 +1097,6 @@ function HostPropertyUnsavedChangesModal({ open, onStay, onLeave }) {
       onCancel={(event) => {
         event.preventDefault();
         onStay();
-      }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) {
-          onStay();
-        }
       }}
     >
       <section className={styles.unsavedModal}>
@@ -1267,166 +1447,24 @@ function HostPropertyPhotosTab({
 }) {
   const photoTileRefs = useRef(new Map());
   const previousTileRectsRef = useRef(new Map());
-  const touchReorderRef = useRef({
-    pointerId: null,
-    sourcePhotoId: null,
-    targetPhotoId: null,
-    started: false,
-    startX: 0,
-    startY: 0,
-    timerId: null,
-  });
   const coverPhoto = displayedPhotos[0] || null;
   const gridPhotos = displayedPhotos.slice(1);
   const totalPhotoCount = displayedPhotos.length;
-
-  const clearTouchReorderTimer = () => {
-    const timerId = touchReorderRef.current.timerId;
-    if (timerId) {
-      clearTimeout(timerId);
-      touchReorderRef.current.timerId = null;
-    }
-  };
-
-  const resetTouchReorderState = () => {
-    clearTouchReorderTimer();
-    touchReorderRef.current.pointerId = null;
-    touchReorderRef.current.sourcePhotoId = null;
-    touchReorderRef.current.targetPhotoId = null;
-    touchReorderRef.current.started = false;
-    touchReorderRef.current.startX = 0;
-    touchReorderRef.current.startY = 0;
-  };
-
-  const resolveDropTargetPhotoId = (event) => {
-    if (typeof document === "undefined") {
-      return null;
-    }
-    const element = document.elementFromPoint(event.clientX, event.clientY);
-    const targetTile = element?.closest("[data-photo-id]");
-    return targetTile?.dataset?.photoId || null;
-  };
-
-  const handlePhotoTilePointerDown = (photoId, event) => {
-    if (event.pointerType === "mouse" || saving) {
-      return;
-    }
-    if (touchReorderRef.current.pointerId !== null) {
-      return;
-    }
-    if (event.target?.closest("button, input, textarea, select, a, [role='button']")) {
-      return;
-    }
-
-    clearTouchReorderTimer();
-    touchReorderRef.current.pointerId = event.pointerId;
-    touchReorderRef.current.sourcePhotoId = photoId;
-    touchReorderRef.current.targetPhotoId = photoId;
-    touchReorderRef.current.started = false;
-    touchReorderRef.current.startX = event.clientX;
-    touchReorderRef.current.startY = event.clientY;
-    touchReorderRef.current.timerId = setTimeout(() => {
-      touchReorderRef.current.started = true;
-      onPhotoTileDragStart(photoId);
-      onPhotoTileDragOver(photoId);
-    }, PHOTO_REORDER_LONG_PRESS_MS);
-  };
-
-  const handlePhotoTilePointerMove = (event) => {
-    if (event.pointerType === "mouse") {
-      return;
-    }
-    const touchReorderState = touchReorderRef.current;
-    if (touchReorderState.pointerId !== event.pointerId) {
-      return;
-    }
-
-    if (!touchReorderState.started) {
-      const deltaX = event.clientX - touchReorderState.startX;
-      const deltaY = event.clientY - touchReorderState.startY;
-      const distance = Math.hypot(deltaX, deltaY);
-      if (distance > PHOTO_REORDER_MOVE_CANCEL_PX) {
-        resetTouchReorderState();
-      }
-      return;
-    }
-
-    event.preventDefault();
-    const targetPhotoId = resolveDropTargetPhotoId(event) || touchReorderState.sourcePhotoId;
-    if (!targetPhotoId) {
-      return;
-    }
-    touchReorderState.targetPhotoId = targetPhotoId;
-    onPhotoTileDragOver(targetPhotoId);
-  };
-
-  const handlePhotoTilePointerUp = (event) => {
-    if (event.pointerType === "mouse") {
-      return;
-    }
-    const touchReorderState = touchReorderRef.current;
-    if (touchReorderState.pointerId !== event.pointerId) {
-      return;
-    }
-    clearTouchReorderTimer();
-    if (!touchReorderState.started) {
-      resetTouchReorderState();
-      return;
-    }
-
-    event.preventDefault();
-    const targetPhotoId =
-      resolveDropTargetPhotoId(event) || touchReorderState.targetPhotoId || touchReorderState.sourcePhotoId;
-    if (targetPhotoId) {
-      onPhotoTileDrop(targetPhotoId);
-    }
-    onPhotoTileDragEnd();
-    resetTouchReorderState();
-  };
-
-  const handlePhotoTilePointerCancel = (event) => {
-    if (event.pointerType === "mouse") {
-      return;
-    }
-    const touchReorderState = touchReorderRef.current;
-    if (touchReorderState.pointerId !== event.pointerId) {
-      return;
-    }
-    if (touchReorderState.started) {
-      onPhotoTileDragEnd();
-    }
-    resetTouchReorderState();
-  };
-
-  const movePhotoByKeyboard = (photoId, delta) => {
-    const fromIndex = displayedPhotos.findIndex((photo) => photo.id === photoId);
-    if (fromIndex === -1) {
-      return;
-    }
-    const toIndex = Math.max(0, Math.min(displayedPhotos.length - 1, fromIndex + delta));
-    if (toIndex === fromIndex) {
-      return;
-    }
-    const targetPhotoId = displayedPhotos[toIndex]?.id;
-    if (!targetPhotoId || targetPhotoId === photoId) {
-      return;
-    }
-    onPhotoTileDragStart(photoId);
-    onPhotoTileDrop(targetPhotoId);
-    onPhotoTileDragEnd();
-  };
-
-  const handlePhotoTileKeyDown = (photoId, event) => {
-    if (saving || deletingPhoto) {
-      return;
-    }
-    const delta = PHOTO_REORDER_KEY_DELTAS[event.key];
-    if (delta === undefined) {
-      return;
-    }
-    event.preventDefault();
-    movePhotoByKeyboard(photoId, delta);
-  };
+  const {
+    handlePhotoTilePointerDown,
+    handlePhotoTilePointerMove,
+    handlePhotoTilePointerUp,
+    handlePhotoTilePointerCancel,
+    handlePhotoTileKeyDown,
+  } = usePhotoTileInteractionHandlers({
+    displayedPhotos,
+    onPhotoTileDragStart,
+    onPhotoTileDragOver,
+    onPhotoTileDragEnd,
+    onPhotoTileDrop,
+    saving,
+    deletingPhoto,
+  });
 
   useLayoutEffect(() => {
     const nextRects = new Map();
@@ -1458,15 +1496,6 @@ function HostPropertyPhotosTab({
     previousTileRectsRef.current = nextRects;
   }, [displayedPhotos]);
 
-  useEffect(() => {
-    return () => {
-      const timerId = touchReorderRef.current.timerId;
-      if (timerId) {
-        clearTimeout(timerId);
-      }
-    };
-  }, []);
-
   return (
     <section className={`${styles.card} ${styles.photosCard}`}>
       <h3 className={styles.sectionTitle}>Photos</h3>
@@ -1474,91 +1503,68 @@ function HostPropertyPhotosTab({
 
       <div className={styles.photosLayout}>
         <div className={styles.photosPrimaryColumn}>
-          <div
-            className={`${styles.photoTileLarge} ${
-              coverPhoto && draggingPhotoId === coverPhoto.id ? styles.photoTileDragActive : ""
-            } ${coverPhoto && photoDropTargetId === coverPhoto.id ? styles.photoTileDropTarget : ""} ${
-              coverPhoto?.isPending ? styles.photoTilePending : ""
-            }`}
-            role={coverPhoto ? "button" : undefined}
-            tabIndex={coverPhoto ? 0 : undefined}
-            aria-label={coverPhoto ? "Reorder cover tile" : undefined}
-            data-photo-id={coverPhoto?.id || ""}
-            ref={(node) => {
-              if (!coverPhoto) {
-                return;
-              }
-              if (node) {
-                photoTileRefs.current.set(coverPhoto.id, node);
-              } else {
+          {coverPhoto ? (
+            <div
+              className={`${styles.photoTileLarge} ${
+                draggingPhotoId === coverPhoto.id ? styles.photoTileDragActive : ""
+              } ${photoDropTargetId === coverPhoto.id ? styles.photoTileDropTarget : ""} ${
+                coverPhoto.isPending ? styles.photoTilePending : ""
+              }`}
+              role="button"
+              tabIndex={0}
+              aria-label="Reorder cover tile"
+              data-photo-id={coverPhoto.id}
+              ref={(node) => {
+                if (node) {
+                  photoTileRefs.current.set(coverPhoto.id, node);
+                  return;
+                }
                 photoTileRefs.current.delete(coverPhoto.id);
-              }
-            }}
-            draggable={Boolean(coverPhoto)}
-            onDragStart={() => {
-              if (coverPhoto) {
-                onPhotoTileDragStart(coverPhoto.id);
-              }
-            }}
-            onDragEnd={onPhotoTileDragEnd}
-            onDragOver={(event) => {
-              event.preventDefault();
-              if (coverPhoto) {
+              }}
+              draggable
+              onDragStart={() => onPhotoTileDragStart(coverPhoto.id)}
+              onDragEnd={onPhotoTileDragEnd}
+              onDragOver={(event) => {
+                event.preventDefault();
                 onPhotoTileDragOver(coverPhoto.id);
-              }
-            }}
-            onDragLeave={() => {
-              if (coverPhoto) {
-                onPhotoTileDragLeave(coverPhoto.id);
-              }
-            }}
-            onDrop={(event) => {
-              event.preventDefault();
-              if (coverPhoto) {
+              }}
+              onDragLeave={() => onPhotoTileDragLeave(coverPhoto.id)}
+              onDrop={(event) => {
+                event.preventDefault();
                 onPhotoTileDrop(coverPhoto.id);
-              }
-            }}
-            onPointerDown={(event) => {
-              if (coverPhoto) {
-                handlePhotoTilePointerDown(coverPhoto.id, event);
-              }
-            }}
-            onPointerMove={handlePhotoTilePointerMove}
-            onPointerUp={handlePhotoTilePointerUp}
-            onPointerCancel={handlePhotoTilePointerCancel}
-            onKeyDown={(event) => {
-              if (coverPhoto) {
-                handlePhotoTileKeyDown(coverPhoto.id, event);
-              }
-            }}
-          >
-            {coverPhoto ? (
-              <>
-                <img src={coverPhoto.src} alt="Cover" className={styles.photoImageLarge} />
-                {coverPhoto.isPending ? null : (
-                  <span className={styles.photoCheck} aria-hidden="true">
-                    <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className={styles.photoRemoveButton}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onRequestDeletePhoto(coverPhoto);
-                  }}
-                  disabled={saving || deletingPhoto}
-                  aria-label="Delete photo"
-                >
-                  <img src={crossIcon} alt="" aria-hidden="true" className={styles.photoRemoveIcon} />
-                </button>
-                {coverPhoto.isPending ? <span className={styles.photoPendingBadge}>New - Unsaved</span> : null}
-              </>
-            ) : (
+              }}
+              onPointerDown={(event) => handlePhotoTilePointerDown(coverPhoto.id, event)}
+              onPointerMove={handlePhotoTilePointerMove}
+              onPointerUp={handlePhotoTilePointerUp}
+              onPointerCancel={handlePhotoTilePointerCancel}
+              onKeyDown={(event) => handlePhotoTileKeyDown(coverPhoto.id, event)}
+            >
+              <img src={coverPhoto.src} alt="Cover" className={styles.photoImageLarge} />
+              {coverPhoto.isPending ? null : (
+                <span className={styles.photoCheck} aria-hidden="true">
+                  <img src={checkIcon} alt="" aria-hidden="true" className={styles.photoCheckIcon} />
+                </span>
+              )}
+              <button
+                type="button"
+                className={styles.photoRemoveButton}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onRequestDeletePhoto(coverPhoto);
+                }}
+                disabled={saving || deletingPhoto}
+                aria-label="Delete photo"
+              >
+                <img src={crossIcon} alt="" aria-hidden="true" className={styles.photoRemoveIcon} />
+              </button>
+              {coverPhoto.isPending ? <span className={styles.photoPendingBadge}>New - Unsaved</span> : null}
+            </div>
+          ) : (
+            <div className={styles.photoTileLarge}>
               <span className={styles.photoEmptyLabel}>No photos yet</span>
-            )}
-          </div>
+            </div>
+          )}
           <p className={styles.photoCoverCaption}>Cover photo</p>
 
           <button
@@ -1702,11 +1708,6 @@ function HostPropertyPhotoDeleteModal({
       onCancel={(event) => {
         event.preventDefault();
         if (!deletingPhoto) {
-          onCancel();
-        }
-      }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget && !deletingPhoto) {
           onCancel();
         }
       }}
