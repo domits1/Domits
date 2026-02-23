@@ -30,11 +30,19 @@ export const validateDateOfBirth = (value) => {
     }
     const day = Number(match[1]);
     const month = Number(match[2]);
+    const year = Number(match[3]);
     if (day < 1 || day > 31) {
         return "Day must be between 01 and 31.";
     }
     if (month < 1 || month > 12) {
         return "Month must be between 01 and 12.";
+    }
+    const date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+        return "Please enter a valid calendar date.";
+    }
+    if (date > new Date()) {
+        return "Date of birth cannot be in the future.";
     }
     return "";
 };
