@@ -50,7 +50,8 @@ const PRICING_RESTRICTION_KEYS = {
   earlyBirdDiscountDays: "EarlyBirdDiscountDaysBeforeCheckIn",
   earlyBirdDiscountPercent: "EarlyBirdDiscountPercent",
 };
-const PRICING_MIN_NIGHTLY_RATE = 2;
+const PRICING_MIN_NIGHTLY_RATE_FOR_SAVE = 2;
+const PRICING_MIN_NIGHTLY_RATE_FOR_INPUT = 0;
 const PRICING_MAX_NIGHTLY_RATE = 100000;
 const PRICING_STAY_OPTIONS = Array.from({ length: 60 }, (_, index) => index + 1);
 const PRICING_MAX_STAY_OPTIONS = [0, ...PRICING_STAY_OPTIONS];
@@ -131,7 +132,7 @@ const normalizePricingForm = (pricingForm) => {
   const nightlyRate = clampInteger(
     pricingForm?.nightlyRate,
     defaultPricingForm.nightlyRate,
-    PRICING_MIN_NIGHTLY_RATE,
+    PRICING_MIN_NIGHTLY_RATE_FOR_INPUT,
     PRICING_MAX_NIGHTLY_RATE
   );
   const minimumStay = clampInteger(pricingForm?.minimumStay, defaultPricingForm.minimumStay, 1, 365);
@@ -248,7 +249,12 @@ const mapPropertyPricingToState = (pricing, availabilityRestrictions) => {
   const defaultPricingForm = createInitialPricingForm();
   const nightlyRateRaw = Number(pricing?.roomRate ?? pricing?.roomrate);
   const nightlyRate = Number.isFinite(nightlyRateRaw)
-    ? clampInteger(nightlyRateRaw, defaultPricingForm.nightlyRate, PRICING_MIN_NIGHTLY_RATE, PRICING_MAX_NIGHTLY_RATE)
+    ? clampInteger(
+      nightlyRateRaw,
+      defaultPricingForm.nightlyRate,
+      PRICING_MIN_NIGHTLY_RATE_FOR_INPUT,
+      PRICING_MAX_NIGHTLY_RATE
+    )
     : defaultPricingForm.nightlyRate;
   const minimumStay = clampInteger(
     readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.minimumStay, defaultPricingForm.minimumStay),
@@ -864,6 +870,9 @@ const savePropertyChanges = async ({
   }
 
   const normalizedPricingForm = normalizePricingForm(pricingForm);
+  if (isSavingPricing && normalizedPricingForm.nightlyRate < PRICING_MIN_NIGHTLY_RATE_FOR_SAVE) {
+    throw new Error(`Nightly rate must be at least EUR ${PRICING_MIN_NIGHTLY_RATE_FOR_SAVE}.`);
+  }
   const pricingPayload = isSavingPricing
     ? { roomRate: normalizedPricingForm.nightlyRate }
     : undefined;
@@ -2277,12 +2286,15 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
             <input
               id="pricing-nightly-rate"
               type="number"
-              min={PRICING_MIN_NIGHTLY_RATE}
+              min={PRICING_MIN_NIGHTLY_RATE_FOR_INPUT}
               max={PRICING_MAX_NIGHTLY_RATE}
               step={1}
               className={styles.pricingRateInput}
-              value={pricingForm.nightlyRate}
-              onChange={(event) => updatePricingForm({ nightlyRate: event.target.value })}
+              value={pricingForm.nightlyRate === 0 ? "" : pricingForm.nightlyRate}
+              onChange={(event) => {
+                const nextNightlyRate = event.target.value;
+                updatePricingForm({ nightlyRate: nextNightlyRate === "" ? 0 : nextNightlyRate });
+              }}
             />
           </div>
         </div>
