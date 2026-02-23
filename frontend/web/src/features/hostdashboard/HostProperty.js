@@ -2184,7 +2184,7 @@ function HostPropertyPricingDiscountRow({
   timingOptions = [],
   onTimingChange = () => {},
 }) {
-  const toggleId = `pricing-discount-toggle-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const toggleId = `pricing-discount-toggle-${title.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-")}`;
 
   return (
     <article className={styles.pricingDiscountRow}>
@@ -2198,6 +2198,7 @@ function HostPropertyPricingDiscountRow({
           aria-label={title}
         />
         <label htmlFor={toggleId} className={styles.pricingDiscountToggleLabel}>
+          <span className={styles.srOnly}>{`Toggle ${title}`}</span>
           <span className={styles.pricingDiscountToggle} aria-hidden="true" />
           <span className={styles.pricingDiscountText}>
             <span className={styles.pricingDiscountTitle}>{title}</span>
