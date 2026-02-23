@@ -4,6 +4,7 @@ import AuthManager from "../../auth/authManager.js";
 import Stripe from "stripe";
 import { PaymentsService } from "./paymentService.js";
 import "dotenv/config";
+import crypto from "node:crypto";
 
 export class Service {
   constructor() {
@@ -13,7 +14,17 @@ export class Service {
     this.paymentsService = new PaymentsService();
   }
 
-  async getKpiMetric(event, kpiMetric) {
+    async getKpiMetric(event, kpiMetric) {
+    const startedAt = Date.now();
+    const requestId = event?.requestContext?.requestId ?? crypto.randomUUID();
+
+  try {
+    console.info("[RMS][KPI_REFRESH] start", {
+      requestId,
+      kpiMetric,
+      filterType: event?.queryStringParameters?.filterType ?? event?.body?.filterType ?? null,
+    });
+
     const token = event.headers.Authorization;
     if (!token) throw new Error("Authorization token is missing");
 
@@ -25,22 +36,34 @@ export class Service {
     const { filterType, startDate, endDate } = event.queryStringParameters || event.body || {};
     const { startDate: start, endDate: end } = this.getDateRange(filterType, startDate, endDate);
 
-    const totalRevenue = await this.paymentsService.getTotalHostRevenue(event);
+    const [
+      totalRevenue,
+      bookedNights,
+      availableNights,
+      propertyCount,
+      averageLengthOfStay,
+    ] = await Promise.all([
+    this.paymentsService.getTotalHostRevenue(event),
+    this.repository.getBookedNights(userId, start, end),
+    this.repository.getAvailableNights(userId, start, end),
+    this.repository.getProperties(userId, start, end),
+    this.repository.getAverageLengthOfStay(userId, start, end),
+    ]);
 
-    const bookedNights = await this.repository.getBookedNights(userId, start, end);
-    const availableNights = await this.repository.getAvailableNights(userId, start, end);
-    const propertyCount = await this.repository.getProperties(userId, start, end);
-    const averageLengthOfStay = await this.repository.getAverageLengthOfStay(userId, start, end);
-
-   // 1) haal "echte" nummers uit de objecten
     const revenueValue = totalRevenue?.totalRevenue ?? 0;
     const bookedValue = bookedNights?.bookedNights ?? 0;
     const availableValue = availableNights?.availableNights ?? 0;
 
-    // 2) laat KpiCalculator rekenen
     const averageDailyRate = KpiCalculator.calculateADR(revenueValue, bookedValue);
     const occupancyRate = KpiCalculator.calculateOccupancyRate(bookedValue, availableValue);
     const revenuePerAvailableRoom = KpiCalculator.calculateRevPAR(revenueValue, bookedValue, availableValue);
+
+    console.info("[RMS][KPI_REFRESH] success", {
+      requestId,
+      kpiMetric,
+      userId,
+      durationMs: Date.now() - startedAt,
+    });
 
     switch (kpiMetric) {
       case "revenue":
@@ -64,7 +87,16 @@ export class Service {
       default:
         throw new Error(`Unknown metric: ${kpiMetric}`);
     }
+  } catch (error) {
+    console.error("[RMS][KPI_REFRESH] error", {
+      requestId,
+      kpiMetric,
+      durationMs: Date.now() - startedAt,
+      message: error?.message,
+    });
+    throw error; // belangrijk: gedrag blijft hetzelfde
   }
+}
 
   getDateRange(filterType, startDate, endDate) {
     if (!filterType) return { startDate: null, endDate: null };
