@@ -1,5 +1,8 @@
 export const PROFILE_PHOTO_MAX_SIZE = 5 * 1024 * 1024;
 export const PROFILE_UPLOAD_URL_ENDPOINT = "https://d141hj02ed.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Create-UploadUrl";
+export const UPDATE_EMAIL_ENDPOINT = "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-CustomerIAM-Production-Update-UserEmail";
+export const UPDATE_NAME_ENDPOINT = "https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-UserName";
+export const UPDATE_PHONE_ENDPOINT = "https://24oly7cicg.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-PhoneNumber";
 
 export const languageOptions = [
     {value: "en", label: "English"},
