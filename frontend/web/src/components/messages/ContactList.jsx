@@ -6,19 +6,24 @@ import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
 
+  // NEW: first-class partnerId
+  const direct = contact?.partnerId;
+  if (direct && String(direct) !== String(selfUserId)) return direct;
+
+  const latest = contact?.latestMessage || null;
+
   const candidates = [
     contact.recipientId,
     contact.userId,
-    contact.guestId,
-    contact.guestID,
     contact.hostId,
-    contact.hostID,
-    contact.contactId,
-    contact.contactID,
+    contact.guestId,
+    latest?.senderId,
+    latest?.userId,
+    latest?.recipientId,
   ].filter(Boolean);
 
-  const picked = candidates.find((id) => id && id !== selfUserId);
-  return picked || candidates[0] || null;
+  const picked = candidates.find((id) => String(id) !== String(selfUserId));
+  return picked || null;
 };
 
 const ContactList = ({
@@ -58,10 +63,14 @@ const ContactList = ({
 
   const handleClick = (contact, threadId = null) => {
     const partnerId = resolvePartnerId(contact, userId);
-    if (!partnerId) return;
+
+    if (!partnerId) {
+      console.warn("[ContactList] Could not resolve partnerId for contact:", contact);
+      return;
+    }
 
     setSelectedContactId(partnerId);
-    onContactClick?.(partnerId, contact?.givenName, contact?.profileImage, threadId);
+    onContactClick?.(partnerId, contact?.givenName, contact?.profileImage, threadId || contact?.threadId || null);
   };
 
   const handleContextMenu = (event, contact) => {
@@ -91,7 +100,7 @@ const ContactList = ({
 
       wsMessages.forEach((msg) => {
         const partnerId = msg?.userId === userId ? msg?.recipientId : msg?.userId;
-        if (!partnerId) return;
+        if (!partnerId || String(partnerId) === String(userId)) return;
 
         const idx = updatedContacts.findIndex((c) => resolvePartnerId(c, userId) === partnerId);
         if (idx === -1) return;
@@ -118,7 +127,7 @@ const ContactList = ({
       const updatedContacts = Array.isArray(prevContacts) ? [...prevContacts] : [];
 
       const partnerId = message?.userId === userId ? message?.recipientId : message?.userId;
-      if (!partnerId) return updatedContacts;
+      if (!partnerId || String(partnerId) === String(userId)) return updatedContacts;
 
       const index = updatedContacts.findIndex((c) => resolvePartnerId(c, userId) === partnerId);
       if (index !== -1) {
@@ -146,7 +155,6 @@ const ContactList = ({
     let list = Array.isArray(contacts) ? [...contacts] : [];
 
     if (searchTerm) list = list.filter((c) => (c.givenName || "").toLowerCase().includes(searchTerm.toLowerCase()));
-
     if (tab === "unread") list = list.filter((c) => (c.unreadCount || 0) > 0);
 
     if (sortAlphabetically) {
@@ -217,7 +225,7 @@ const ContactList = ({
           <p className="contact-list-empty-text">No contacts found.</p>
         ) : (
           filteredContacts.map((contact, i) => {
-            const partnerId = resolvePartnerId(contact, userId) || `${contact?.userId || "u"}-${i}`;
+            const partnerId = resolvePartnerId(contact, userId) || `unknown-${i}`;
             const isActive = selectedContactId === partnerId;
 
             return (
@@ -226,6 +234,7 @@ const ContactList = ({
                 className={`contact-list-list-item ${isActive ? "active" : ""}`}
                 onClick={() => handleClick(contact, contact.threadId)}
                 onContextMenu={(event) => handleContextMenu(event, contact)}
+                style={{ cursor: "pointer" }}
               >
                 <ContactItem contact={contact} selected={isActive} />
               </li>

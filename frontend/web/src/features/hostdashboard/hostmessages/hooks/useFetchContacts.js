@@ -73,32 +73,16 @@ const useFetchContacts = (userId, role) => {
         }
       };
 
-      const fetchLatestMessage = async (recipientIdToSend) => {
+      const fetchLatestMessage = async (threadId, fallbackRecipientId) => {
         try {
-          const threadId1 = `${userId}-${recipientIdToSend}`;
-          const threadId2 = `${recipientIdToSend}-${userId}`;
+          let url = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages";
 
-          let unifiedResponse = await fetch(
-            "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages",
-            {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-            }
-          );
+          if (threadId) url += `?threadId=${encodeURIComponent(threadId)}`;
 
-          if (!unifiedResponse.ok) {
-            unifiedResponse = await fetch(
-              `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId1}`,
-              { method: "GET", headers: { "Content-Type": "application/json" } }
-            );
-          }
-
-          if (!unifiedResponse.ok) {
-            unifiedResponse = await fetch(
-              `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId2}`,
-              { method: "GET", headers: { "Content-Type": "application/json" } }
-            );
-          }
+          const unifiedResponse = await fetch(url, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          });
 
           if (unifiedResponse.ok) {
             const messages = await unifiedResponse.json();
@@ -109,7 +93,7 @@ const useFetchContacts = (userId, role) => {
               if (typeof metadata === "string") {
                 try {
                   metadata = JSON.parse(metadata);
-                } catch (e) {
+                } catch {
                   metadata = {};
                 }
               }
@@ -118,6 +102,9 @@ const useFetchContacts = (userId, role) => {
                 text: latestMessage?.content || latestMessage?.text || "",
                 createdAt: new Date(latestMessage?.createdAt || Date.now()).toISOString(),
                 isAutomated: metadata?.isAutomated || false,
+                senderId: latestMessage?.senderId || latestMessage?.userId || null,
+                recipientId: latestMessage?.recipientId || fallbackRecipientId || null,
+                threadId: latestMessage?.threadId || threadId || null,
               };
             }
           }
@@ -127,6 +114,7 @@ const useFetchContacts = (userId, role) => {
         return null;
       };
 
+      // 1) Try Unified Threads first
       let unifiedContacts = [];
       try {
         const threadsResponse = await fetch(
@@ -140,40 +128,51 @@ const useFetchContacts = (userId, role) => {
 
           unifiedContacts = threads
             .filter((t) => t?.hostId && t?.guestId && t.hostId !== t.guestId)
-            .map((t) => ({
-              userId: isHost ? t.guestId : t.hostId,
-              hostId: t.hostId,
-              Status: "accepted",
-              AccoId: t.propertyId,
-              threadId: t.id,
-              isFromUnified: true,
-            }))
-            .filter((c, i, self) => i === self.findIndex((x) => x.userId === c.userId));
+            .map((t) => {
+              const partnerId = isHost ? t.guestId : t.hostId;
+
+              return {
+                // canonical fields for UI:
+                partnerId,
+                recipientId: partnerId, // UI uses this often
+                userId: partnerId, // keep for compatibility, but it's partnerId
+                hostId: t.hostId,
+                guestId: t.guestId,
+
+                Status: "accepted",
+                AccoId: t.propertyId,
+                propertyId: t.propertyId,
+                threadId: t.id,
+                isFromUnified: true,
+              };
+            })
+            // de-dupe by partnerId
+            .filter((c, i, self) => i === self.findIndex((x) => x.partnerId === c.partnerId));
         }
       } catch (e) {
         console.warn("Failed to fetch unified threads:", e);
       }
 
-      const fetchUserInfoForContacts = async (contactsList, idField) => {
+      const hydrateContacts = async (contactsList) => {
         const safeContacts = Array.isArray(contactsList) ? contactsList : [];
+
         return await Promise.all(
           safeContacts.map(async (contact) => {
-            const recipientId = contact?.[idField] || contact?.userId || contact?.hostId;
+            const partnerId = contact?.partnerId || contact?.recipientId || contact?.userId || null;
 
-            const userInfo = recipientId
-              ? await fetchUserInfo(recipientId)
-              : { givenName: "Unknown", userId: null };
+            const userInfo = partnerId ? await fetchUserInfo(partnerId) : { givenName: "Unknown", userId: partnerId };
 
-            const latestMessage = recipientId ? await fetchLatestMessage(recipientId) : null;
+            // IMPORTANT: don't overwrite partnerId with userInfo.userId
+            const latestMessage = await fetchLatestMessage(contact?.threadId, partnerId);
 
-            const hostId = role === "host" ? userId : contact.hostId;
-            const guestId = role === "host" ? contact.userId : userId;
+            const hostId = isHost ? userId : contact.hostId;
+            const guestId = isHost ? contact.guestId : userId;
 
             let accoImage = null;
             let bookingStatus = null;
             let arrivalDate = null;
             let departureDate = null;
-            let propertyId = contact?.AccoId || null;
+            let propertyId = contact?.propertyId || contact?.AccoId || null;
             let propertyTitle = null;
 
             try {
@@ -181,8 +180,7 @@ const useFetchContacts = (userId, role) => {
                 hostId,
                 guestId,
                 withAuth: role !== "guest",
-                accommodationEndpoint:
-                  role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
+                accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
               });
 
               accoImage = bookingInfo?.accoImage || null;
@@ -196,10 +194,18 @@ const useFetchContacts = (userId, role) => {
             }
 
             return {
-              ...(contact || {}),
-              ...(userInfo || {}),
+              ...contact,
+
+              // keep canonical partner id fields stable
+              partnerId,
+              recipientId: partnerId,
+              userId: partnerId,
+
+              // display fields
+              givenName: userInfo?.givenName || contact?.givenName || "Unknown",
+              profileImage: contact?.profileImage || null,
+
               latestMessage,
-              recipientId,
               accoImage,
               bookingStatus,
               arrivalDate,
@@ -212,12 +218,13 @@ const useFetchContacts = (userId, role) => {
       };
 
       if (unifiedContacts.length > 0) {
-        const acceptedContacts = await fetchUserInfoForContacts(unifiedContacts, isHost ? "userId" : "hostId");
+        const acceptedContacts = await hydrateContacts(unifiedContacts);
         setContacts(acceptedContacts);
         setPendingContacts([]);
         return;
       }
 
+      // 2) Legacy fallback
       const requestData = isHost ? { hostID: userId } : { userID: userId };
       const endpoint = isHost
         ? "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts"
@@ -243,10 +250,23 @@ const useFetchContacts = (userId, role) => {
       const acceptedRaw = Array.isArray(JSONData?.accepted) ? JSONData.accepted : [];
       const pendingRaw = Array.isArray(JSONData?.pending) ? JSONData.pending : [];
 
-      const acceptedContacts = await fetchUserInfoForContacts(acceptedRaw, isHost ? "userId" : "hostId");
+      const normalizeLegacy = (raw) => {
+        const partnerId = isHost ? raw?.userId : raw?.hostId;
+        return {
+          ...raw,
+          partnerId,
+          recipientId: partnerId,
+          userId: partnerId,
+          hostId: raw?.hostId || (isHost ? userId : null),
+          guestId: raw?.userId || (!isHost ? userId : null),
+          Status: raw?.Status || raw?.status || "accepted",
+        };
+      };
+
+      const acceptedContacts = await hydrateContacts(acceptedRaw.map(normalizeLegacy));
 
       const filteredPending = isHost ? pendingRaw.filter((c) => c?.userId !== userId) : pendingRaw;
-      const pendingContactsRes = await fetchUserInfoForContacts(filteredPending, isHost ? "userId" : "hostId");
+      const pendingContactsRes = await hydrateContacts(filteredPending.map(normalizeLegacy));
 
       setContacts(acceptedContacts);
       setPendingContacts(pendingContactsRes);
