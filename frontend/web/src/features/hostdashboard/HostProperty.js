@@ -2184,21 +2184,27 @@ function HostPropertyPricingDiscountRow({
   timingOptions = [],
   onTimingChange = () => {},
 }) {
+  const toggleId = `pricing-discount-toggle-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
   return (
     <article className={styles.pricingDiscountRow}>
-      <label className={styles.pricingDiscountToggleWrap}>
+      <div className={styles.pricingDiscountToggleWrap}>
         <input
+          id={toggleId}
           type="checkbox"
           className={styles.pricingDiscountToggleInput}
           checked={enabled}
           onChange={(event) => onToggle(event.target.checked)}
+          aria-label={title}
         />
-        <span className={styles.pricingDiscountToggle} aria-hidden="true" />
-        <span className={styles.pricingDiscountText}>
-          <span className={styles.pricingDiscountTitle}>{title}</span>
-          <span className={styles.pricingDiscountDescription}>{description}</span>
-        </span>
-      </label>
+        <label htmlFor={toggleId} className={styles.pricingDiscountToggleLabel}>
+          <span className={styles.pricingDiscountToggle} aria-hidden="true" />
+          <span className={styles.pricingDiscountText}>
+            <span className={styles.pricingDiscountTitle}>{title}</span>
+            <span className={styles.pricingDiscountDescription}>{description}</span>
+          </span>
+        </label>
+      </div>
 
       <div className={styles.pricingDiscountControls}>
         {timingLabel ? (
