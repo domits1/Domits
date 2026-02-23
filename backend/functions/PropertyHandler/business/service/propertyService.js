@@ -40,10 +40,10 @@ export class PropertyService {
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
   }
 
-  async create(property) {
+  async create(property, { skipImages = false } = {}) {
     await this.createBasePropertyInfo(property.property);
 
-    await Promise.all([
+    const tasks = [
       this.createAmenities(property.propertyAmenities),
       this.createAvailability(property.propertyAvailabilities),
       this.createCheckIn(property.propertyCheckIn),
@@ -52,10 +52,13 @@ export class PropertyService {
       this.createPricing(property.propertyPricing),
       this.createRules(property.propertyRules),
       this.createPropertyType(property.propertyType),
-      this.createImages(property.propertyImages),
       this.createAvailabilityRestrictions(property.propertyAvailabilityRestrictions),
       this.createPropertyTestStatus(property.propertyTestStatus),
-    ]);
+    ];
+    if (!skipImages) {
+      tasks.push(this.createImages(property.propertyImages));
+    }
+    await Promise.all(tasks);
     if (property.propertyType.property_type === "Boat" || property.propertyType.property_type === "Camper") {
       await this.createTechnicalDetails(property.propertyTechnicalDetails);
     }
@@ -72,6 +75,41 @@ export class PropertyService {
     if (property === newProperty) {
       throw new DatabaseException("Something went wrong while updating the activity status");
     }
+  }
+
+  async updatePropertyOverview(propertyId, title, description, subtitle = undefined, updates = {}) {
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+    const resolvedSubtitle = typeof subtitle === "string" ? subtitle : property.subtitle;
+    const updatedProperty = await this.propertyRepository.updatePropertyOverview(
+      propertyId,
+      title,
+      resolvedSubtitle,
+      description
+    );
+    if (!updatedProperty) {
+      throw new DatabaseException("Something went wrong while updating the property overview.");
+    }
+
+    if (updates?.capacity) {
+      await this.updateCapacity(propertyId, updates.capacity);
+    }
+
+    if (updates?.location) {
+      await this.updateLocation(propertyId, updates.location);
+    }
+
+    if (updates?.amenities) {
+      await this.updateAmenities(propertyId, updates.amenities);
+    }
+
+    if (updates?.rules) {
+      await this.updateRules(propertyId, updates.rules);
+    }
+
+    return updatedProperty;
   }
 
   async getActivePropertyCards(lastEvaluatedKey) {
@@ -127,7 +165,7 @@ export class PropertyService {
     if (!basePropertyInfo) {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getFullPropertyAttributes(propertyId);
+    return await this.getFullPropertyAttributesWithFullLocation(propertyId);
   }
 
   async getFullPropertyByBookingId(bookingId) {
@@ -314,8 +352,13 @@ export class PropertyService {
     return await this.propertyAmenityRepository.getAmenitiesByPropertyId(property);
   }
 
+  async updateAmenities(propertyId, amenityIds) {
+    await this.propertyAmenityRepository.replaceAmenitiesByPropertyId(propertyId, amenityIds);
+  }
+
   async createAvailability(availabilities) {
-    for (const availability of availabilities) {
+    const availabilityList = Array.isArray(availabilities) ? availabilities : [];
+    for (const availability of availabilityList) {
       const result = await this.propertyAvailabilityRepository.create(availability);
       if (!result) {
         throw new DatabaseException(`Failed to register property availability.`);
@@ -364,10 +407,34 @@ export class PropertyService {
     return await this.propertyGeneralDetailRepository.getPropertyGeneralDetailsByPropertyId(property);
   }
 
+  async updateCapacity(propertyId, capacity) {
+    const detailUpdates = [
+      { detail: "Guests", value: capacity.guests },
+      { detail: "Bedrooms", value: capacity.bedrooms },
+      { detail: "Beds", value: capacity.beds },
+      { detail: "Bathrooms", value: capacity.bathrooms },
+    ].filter((item) => item.value !== undefined);
+
+    if (typeof capacity.spaceType === "string" && capacity.spaceType.trim()) {
+      await this.propertyTypeRepository.updatePropertySpaceTypeByPropertyId(propertyId, capacity.spaceType.trim());
+    }
+
+    if (detailUpdates.length > 0) {
+      await this.propertyGeneralDetailRepository.upsertPropertyGeneralDetailsByPropertyId(propertyId, detailUpdates);
+    }
+  }
+
   async createLocation(location) {
     const result = await this.propertyLocationRepository.create(location);
     if (!result) {
       throw new DatabaseException(`Failed to register property location.`);
+    }
+  }
+
+  async updateLocation(propertyId, location) {
+    const result = await this.propertyLocationRepository.updatePropertyLocationById(propertyId, location);
+    if (!result) {
+      throw new DatabaseException("Failed to update property location.");
     }
   }
 
@@ -403,6 +470,10 @@ export class PropertyService {
     return await this.propertyRuleRepository.getRulesByPropertyId(property);
   }
 
+  async updateRules(propertyId, rules) {
+    await this.propertyRuleRepository.replaceRulesByPropertyId(propertyId, rules);
+  }
+
   async createPropertyType(type) {
     const result = await this.propertyTypeRepository.create(type);
     if (!result) {
@@ -421,6 +492,10 @@ export class PropertyService {
 
   async getImages(property) {
     return await this.propertyImageRepository.getImagesByPropertyId(property);
+  }
+
+  async deleteImage(propertyId, imageId) {
+    await this.propertyImageRepository.deleteImageByPropertyId(propertyId, imageId);
   }
 
   async createTechnicalDetails(details) {

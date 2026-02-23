@@ -41,6 +41,23 @@ export class PropertyRepository {
             .execute();
     }
 
+    async updatePropertyOverview(propertyId, title, subtitle, description) {
+        const client = await Database.getInstance();
+        await client
+            .createQueryBuilder()
+            .update(Property)
+            .set({
+                title: title,
+                subtitle: subtitle,
+                description: description,
+                updatedat: Date.now(),
+            })
+            .where("id = :id", { id: propertyId })
+            .execute();
+
+        return await this.getPropertyById(propertyId);
+    }
+
     async getActivePropertiesByType(type) {
         const client = await Database.getInstance();
         const result = await client

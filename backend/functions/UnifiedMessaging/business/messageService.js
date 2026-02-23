@@ -1,6 +1,6 @@
 import MessageRepository from "../data/messageRepository.js";
 import ThreadRepository from "../data/threadRepository.js";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 class MessageService {
   constructor() {

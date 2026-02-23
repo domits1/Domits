@@ -84,6 +84,9 @@ const amenities = [
   { category: "Bathroom", amenity: "Hair dryer", id: "23", icon: wrap(<AirIcon />) },
   { category: "Bathroom", amenity: "Body lotion", id: "26", icon: wrap(<SoapIcon />) },
   { category: "Bathroom", amenity: "Conditioner", id: "25", icon: wrap(<SoapIcon />) },
+  { category: "Bathroom", amenity: "Bath", id: "97", icon: wrap(<BathtubIcon />) },
+  { category: "Bathroom", amenity: "Shower", id: "90", icon: wrap(<BathtubIcon />) },
+  { category: "Bathroom", amenity: "Bidet", id: "91", icon: wrap(<WcIcon />) },
 
   // Bedroom
   { category: "Bedroom", amenity: "Alarm clock", id: "31", icon: wrap(<AccessAlarmIcon />) },
@@ -115,6 +118,7 @@ const amenities = [
   { category: "Essentials", amenity: "TV with cable/satellite", id: "4", icon: wrap(<TvIcon />) },
   { category: "Essentials", amenity: "Extra pillows and blankets", id: "7", icon: wrap(<BedIcon />) },
   { category: "Essentials", amenity: "Heating", id: "3", icon: wrap(<HvacIcon />) },
+  { category: "Essentials", amenity: "Elevator", id: "94", icon: wrap(<DoorSlidingIcon />) },
 
   // ExtraServices
   {
@@ -151,13 +155,16 @@ const amenities = [
   { category: "Kitchen", amenity: "Oven", id: "12", icon: wrap(<MicrowaveIcon />) },
   { category: "Kitchen", amenity: "Basic cooking essentials", id: "17", icon: wrap(<FlatwareIcon />) },
   { category: "Kitchen", amenity: "Refrigerator", id: "10", icon: wrap(<KitchenIcon />) },
+  { category: "Kitchen", amenity: "Freezer", id: "96", icon: wrap(<KitchenIcon />) },
   { category: "Kitchen", amenity: "Coffee maker", id: "15", icon: wrap(<CoffeeMakerIcon />) },
+  { category: "Kitchen", amenity: "Airfryer", id: "95", icon: wrap(<MicrowaveIcon />) },
   { category: "Kitchen", amenity: "Dishwasher", id: "14", icon: wrap(<LocalLaundryServiceIcon />) },
 
   // Laundry
   { category: "Laundry", amenity: "Clothes drying rack", id: "54", icon: wrap(<CheckCircleIcon />) },
   { category: "Laundry", amenity: "Laundry detergent", id: "53", icon: wrap(<LocalLaundryServiceIcon />) },
-  { category: "Laundry", amenity: "Washer and dryer", id: "52", icon: wrap(<LocalLaundryServiceIcon />) },
+  { category: "Laundry", amenity: "Washing machine", id: "92", icon: wrap(<LocalLaundryServiceIcon />) },
+  { category: "Laundry", amenity: "Dryer", id: "93", icon: wrap(<LocalLaundryServiceIcon />) },
 
   // LivingArea
   { category: "LivingArea", amenity: "Board games", id: "36", icon: wrap(<ExtensionIcon />) },

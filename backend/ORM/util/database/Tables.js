@@ -14,8 +14,11 @@ import { Property_Amenity } from "../../models/Property_Amenity.js";
 import { Property_Availability } from "../../models/Property_Availability.js";
 import { Property_Availability_Restriction } from "../../models/Property_Availability_Restriction.js";
 import { Property_Check_In } from "../../models/Property_Check_In.js";
+import { Property_Draft } from "../../models/Property_Draft.js";
 import { Property_General_Detail } from "../../models/Property_General_Detail.js";
 import { Property_Image } from "../../models/Property_Image.js";
+import { Property_Image_Legacy } from "../../models/Property_Image_Legacy.js";
+import { Property_Image_Variant } from "../../models/Property_Image_Variant.js";
 import { Property_Location } from "../../models/Property_Location.js";
 import { Property_Pricing } from "../../models/Property_Pricing.js";
 import { Property_Rule } from "../../models/Property_Rule.js";
@@ -42,8 +45,11 @@ export const Tables = [
   Property_Availability,
   Property_Availability_Restriction,
   Property_Check_In,
+  Property_Draft,
   Property_General_Detail,
   Property_Image,
+  Property_Image_Legacy,
+  Property_Image_Variant,
   Property_Location,
   Property_Pricing,
   Property_Rule,

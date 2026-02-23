@@ -5,17 +5,14 @@ import AmenityCategory from "../components/AmenityCategory";
 import OnboardingButton from "../components/OnboardingButton";
 import { useBuilder } from "../../../context/propertyBuilderContext";
 import amenities from "../../../store/amenities";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
+import OnboardingProgress from "../components/OnboardingProgress";
 import "../styles/onboardingHost.scss";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
 function useCategoriesPerPage() {
   const getValue = () => {
-    const w = window.innerWidth;
-
-    if (w <= 600) return 3;
-
-    if (w <= 900) return 6;
-
-    return 8;
+    return 4;
   };
 
   const [value, setValue] = useState(getValue);
@@ -32,9 +29,13 @@ function useCategoriesPerPage() {
 
 const AmenitiesView = () => {
   const builder = useBuilder();
+  const { prevPath, nextPath } = useOnboardingFlow();
   const { type: accommodationType } = useParams();
 
-  const [selectedAmenities, setSelectedAmenities] = useState([]);
+  const selectedAmenitiesByCategory = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.selectedAmenities
+  );
+  const setAmenities = useFormStoreHostOnboarding((state) => state.setAmenities);
   const [page, setPage] = useState(1);
 
   const categoriesPerPage = useCategoriesPerPage();
@@ -62,20 +63,29 @@ const AmenitiesView = () => {
     return categoryKeys.slice(start, start + categoriesPerPage);
   }, [categoryKeys, page, categoriesPerPage]);
 
-  const handleAmenityChange = (amenity) => {
-    setSelectedAmenities((prev) => (prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity]));
-  };
+  const selectedAmenities = useMemo(() => {
+    const selectedNames = new Set();
+    Object.values(selectedAmenitiesByCategory || {}).forEach((names) => {
+      names.forEach((name) => selectedNames.add(name));
+    });
+    return amenities.filter((amenity) => selectedNames.has(amenity.amenity));
+  }, [selectedAmenitiesByCategory]);
 
-  const goPrev = () => setPage((p) => Math.max(1, p - 1));
-  const goNext = () => setPage((p) => Math.min(totalPages, p + 1));
+  const handleAmenityChange = (amenity) => {
+    const category = amenity.category;
+    const current = selectedAmenitiesByCategory?.[category] || [];
+    const next = current.includes(amenity.amenity)
+      ? current.filter((name) => name !== amenity.amenity)
+      : [...current, amenity.amenity];
+    setAmenities(category, next);
+  };
 
   return (
     <div className="onboarding-host-div">
       <div className="page-body">
+        <OnboardingProgress />
         <h2 className="onboardingSectionTitle">Select Amenities</h2>
-        <p className="onboardingSectionSubtitle">
-          Choose the amenities that your property offers. ({selectedAmenities.length} selected)
-        </p>
+        <p className="onboardingSectionSubtitle">Select amenities that guests will have access to.</p>
 
         <div className="amenity-groups">
           {pagedCategories.map((category) => (
@@ -89,27 +99,36 @@ const AmenitiesView = () => {
           ))}
         </div>
 
+        <p className="amenity-note">You can change this later.</p>
+
         {totalPages > 1 && (
-          <div className="paginator">
-            <button className="pager-btn" onClick={goPrev} disabled={page === 1}>
-              Prev
-            </button>
-
-            <div className="pager-info">
-              Page {page} / {totalPages}
-            </div>
-
-            <button className="pager-btn" onClick={goNext} disabled={page === totalPages}>
-              Next
-            </button>
+          <div className="amenity-pager" role="tablist" aria-label="Amenity pages">
+            {Array.from({ length: totalPages }, (_, index) => {
+              const pageNumber = index + 1;
+              const isActive = pageNumber === page;
+              return (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  className={`amenity-pager-btn${isActive ? " active" : ""}`}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => setPage(pageNumber)}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
           </div>
         )}
 
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Go back" />
+          <OnboardingButton
+            routePath={prevPath || `/hostonboarding/${accommodationType}/capacity`}
+            btnText="Go back"
+          />
           <OnboardingButton
             onClick={() => builder.addAmenities(selectedAmenities)}
-            routePath={`/hostonboarding/${accommodationType}/rules`}
+            routePath={nextPath || `/hostonboarding/${accommodationType}/rules`}
             btnText="Proceed"
           />
         </nav>

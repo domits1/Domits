@@ -4,26 +4,46 @@ import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import { accommodationFields } from "../constants/propertyAmountofGuestData";
 import OnboardingButton from "../components/OnboardingButton";
 import { useBuilder } from "../../../context/propertyBuilderContext";
+import OnboardingProgress from "../components/OnboardingProgress";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 function PropertyCapacityView() {
   const builder = useBuilder();
+  const { prevPath, nextPath } = useOnboardingFlow();
   const { type: accommodationType } = useParams();
   const accommodationCapacity = useFormStoreHostOnboarding((state) => state.accommodationDetails.accommodationCapacity);
   const setAccommodationCapacity = useFormStoreHostOnboarding((state) => state.setAccommodationCapacity);
   const fields = accommodationFields;
-  const incrementAmount = (key, max) => {
-    if (accommodationCapacity[key] < max) {
-      setAccommodationCapacity(key, accommodationCapacity[key] + 1);
+  const hasGuestCapacity = accommodationCapacity.GuestAmount > 0;
+
+  const setAmount = (key, nextValue, max) => {
+    const rawValue = String(nextValue ?? "");
+    const digitsOnly = rawValue.replaceAll(/\D/g, "");
+    const normalizedInput = digitsOnly.replace(/^0+(\d)/, "$1");
+
+    if (normalizedInput === "") {
+      setAccommodationCapacity(key, 0);
+      return;
     }
+
+    const parsedValue = Number(normalizedInput);
+    if (!Number.isFinite(parsedValue)) {
+      return;
+    }
+    const normalizedValue = Math.max(0, Math.min(max, Math.trunc(parsedValue)));
+    setAccommodationCapacity(key, normalizedValue);
   };
 
-  const decrementAmount = (key) => {
-    if (accommodationCapacity[key] > 0) {
-      setAccommodationCapacity(key, accommodationCapacity[key] - 1);
-    }
+  const incrementAmount = (key, max) => {
+    setAmount(key, accommodationCapacity[key] + 1, max);
+  };
+
+  const decrementAmount = (key, max) => {
+    setAmount(key, accommodationCapacity[key] - 1, max);
   };
   return (
     <div className="onboarding-host-div">
       <main className="container">
+        <OnboardingProgress />
         <h2 className="onboardingSectionTitle">How many people can stay here?</h2>
         <section className="guest-amount">
           {fields.map(({ key, label, max }) => (
@@ -32,13 +52,18 @@ function PropertyCapacityView() {
               label={label}
               value={accommodationCapacity[key]}
               increment={() => incrementAmount(key, max)}
-              decrement={() => decrementAmount(key)}
+              decrement={() => decrementAmount(key, max)}
+              setValue={(value) => setAmount(key, value, max)}
               max={max}
             />
           ))}
         </section>
+        <p className="guest-amount-note">You can change this later.</p>
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath={`/hostonboarding/${accommodationType}/address`} btnText="Go back" />
+          <OnboardingButton
+            routePath={prevPath || `/hostonboarding/${accommodationType}/address`}
+            btnText="Go back"
+          />
           <OnboardingButton
             onClick={() => {
               builder.addGeneralDetails(
@@ -47,10 +72,10 @@ function PropertyCapacityView() {
                   value: accommodationCapacity[field.key],
                 }))
               );
-              console.log(builder);
             }}
-            routePath={`/hostonboarding/${accommodationType}/amenities`}
+            routePath={nextPath || `/hostonboarding/${accommodationType}/amenities`}
             btnText="Proceed"
+            disabled={!hasGuestCapacity}
           />
         </nav>
       </main>
