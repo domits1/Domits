@@ -515,7 +515,11 @@ const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      resolve(String(reader.result || ""));
+      if (typeof reader.result !== "string") {
+        reject(new Error("Could not read photo file."));
+        return;
+      }
+      resolve(reader.result);
     };
     reader.onerror = () => {
       reject(new Error("Could not read photo file."));
