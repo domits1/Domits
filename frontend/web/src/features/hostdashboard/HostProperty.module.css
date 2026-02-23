@@ -568,6 +568,240 @@
   font-weight: 500;
 }
 
+.pricingCard {
+  gap: 14px;
+}
+
+.pricingSubtitle {
+  margin: 0;
+  color: #4e4e4e;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.pricingBasePanel {
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  background: #f8f8f8;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pricingRateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pricingRateLabel {
+  color: #1f1f1f;
+  font-size: 19px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.pricingRateInputWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 4px 8px;
+}
+
+.pricingRateCurrency {
+  color: #474747;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.pricingRateInput {
+  width: 92px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1f1f1f;
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.pricingRateInput::-webkit-outer-spin-button,
+.pricingRateInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pricingRateInput[type="number"] {
+  appearance: textfield;
+}
+
+.pricingBaseHint {
+  margin: 0;
+  color: #616161;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.pricingStayGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pricingStayField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pricingStayLabel {
+  color: #2d2d2d;
+  font-size: 17px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.pricingSelect {
+  width: 100%;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #202020;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 500;
+  padding: 9px 10px;
+  outline: none;
+}
+
+.pricingSelect:focus {
+  border-color: #0d9813;
+  box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.12);
+}
+
+.pricingSelect:disabled {
+  color: #7d7d7d;
+  background: #f6f6f6;
+}
+
+.pricingDiscountList {
+  border-top: 1px solid #ececec;
+}
+
+.pricingDiscountRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #ececec;
+  padding: 12px 0;
+}
+
+.pricingDiscountToggleWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.pricingDiscountToggleInput {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.pricingDiscountToggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 28px;
+  border-radius: 999px;
+  background: #a8b2b9;
+  transition: background-color 0.2s ease;
+}
+
+.pricingDiscountToggle::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: left 0.2s ease;
+}
+
+.pricingDiscountToggleInput:checked + .pricingDiscountToggle {
+  background: #0d9813;
+}
+
+.pricingDiscountToggleInput:checked + .pricingDiscountToggle::before {
+  left: 30px;
+}
+
+.pricingDiscountText {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pricingDiscountTitle {
+  color: #1f1f1f;
+  font-size: 17px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.pricingDiscountDescription {
+  color: #666666;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.pricingDiscountControls {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pricingDiscountSelectWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 170px;
+}
+
+.pricingDiscountSelectLabel {
+  color: #505050;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.pricingHint {
+  margin: 2px 0 0;
+  color: #6a6a6a;
+  font-size: 13px;
+  line-height: 1.35;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .photoDeleteModalOverlay {
   position: fixed;
   inset: 0;
@@ -1178,6 +1412,21 @@
     font-size: 15px;
   }
 
+  .pricingSubtitle,
+  .pricingDiscountDescription {
+    font-size: 14px;
+  }
+
+  .pricingRateLabel,
+  .pricingStayLabel,
+  .pricingDiscountTitle {
+    font-size: 15px;
+  }
+
+  .pricingRateInput {
+    font-size: 18px;
+  }
+
   .policiesSubtitle,
   .policyRuleLabel {
     font-size: 15px;
@@ -1253,6 +1502,24 @@
     grid-template-columns: 1fr;
   }
 
+  .pricingStayGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricingDiscountRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .pricingDiscountControls {
+    width: 100%;
+  }
+
+  .pricingDiscountSelectWrap {
+    min-width: 0;
+    flex: 1 1 170px;
+  }
+
   .deletePropertyPanel {
     grid-template-columns: 1fr;
   }
@@ -1293,6 +1560,16 @@
   .photoCategoryAddButton {
     font-size: 13px;
     padding: 5px 9px;
+  }
+
+  .pricingRateRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pricingDiscountControls {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .photoDeleteModal {

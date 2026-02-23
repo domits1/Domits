@@ -40,6 +40,23 @@ const POLICY_RULE_CONFIG = [
   { rule: "SuitableForChildren", label: "Suitable for children", invert: false },
   { rule: "SuitableForInfants", label: "Suitable for infants", invert: false },
 ];
+const PRICING_RESTRICTION_KEYS = {
+  minimumStay: "MinimumStay",
+  maximumStay: "MaximumStay",
+  weeklyDiscountPercent: "WeeklyDiscountPercent",
+  monthlyDiscountPercent: "MonthlyDiscountPercent",
+  lastMinuteDiscountDays: "LastMinuteDiscountDaysBeforeCheckIn",
+  lastMinuteDiscountPercent: "LastMinuteDiscountPercent",
+  earlyBirdDiscountDays: "EarlyBirdDiscountDaysBeforeCheckIn",
+  earlyBirdDiscountPercent: "EarlyBirdDiscountPercent",
+};
+const PRICING_MIN_NIGHTLY_RATE = 2;
+const PRICING_MAX_NIGHTLY_RATE = 100000;
+const PRICING_STAY_OPTIONS = Array.from({ length: 60 }, (_, index) => index + 1);
+const PRICING_MAX_STAY_OPTIONS = [0, ...PRICING_STAY_OPTIONS];
+const PRICING_DISCOUNT_PERCENT_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const PRICING_LAST_MINUTE_DAY_OPTIONS = [1, 2, 3, 5, 7, 10, 14];
+const PRICING_EARLY_BIRD_DAY_OPTIONS = [7, 14, 21, 30, 45, 60, 90];
 const PHOTO_CATEGORY_PLACEHOLDERS = ["Master Bedroom", "Living room", "Bedroom 2", "Bathroom"];
 const MAX_PROPERTY_IMAGES = 30;
 const MIN_PHOTO_WIDTH = 1024;
@@ -63,15 +80,275 @@ const createInitialPolicyRules = () =>
     return accumulator;
   }, {});
 
-const SAVE_ENABLED_TABS = new Set(["Overview", "Photos", "Amenities", "Policies"]);
+const createInitialPricingForm = () => ({
+  nightlyRate: 120,
+  minimumStay: 1,
+  maximumStay: 0,
+  weeklyDiscountEnabled: false,
+  weeklyDiscountPercent: 10,
+  monthlyDiscountEnabled: false,
+  monthlyDiscountPercent: 10,
+  lastMinuteDiscountEnabled: false,
+  lastMinuteDiscountDays: 5,
+  lastMinuteDiscountPercent: 10,
+  earlyBirdDiscountEnabled: false,
+  earlyBirdDiscountDays: 30,
+  earlyBirdDiscountPercent: 10,
+});
+
+const SAVE_ENABLED_TABS = new Set(["Overview", "Photos", "Amenities", "Pricing", "Policies"]);
 const SAVING_MESSAGE_BY_TAB = {
   Photos: "Uploading photos...",
   Amenities: "Saving amenities...",
+  Pricing: "Saving pricing...",
   Policies: "Saving policies...",
 };
 const SAVE_SUCCESS_MESSAGE_BY_TAB = {
   Amenities: "Amenities updated successfully.",
+  Pricing: "Pricing updated successfully.",
   Policies: "Policies updated successfully.",
+};
+
+const clampInteger = (value, fallback, min, max) => {
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue)) {
+    return fallback;
+  }
+  const clampedValue = Math.trunc(parsedValue);
+  if (clampedValue < min) {
+    return min;
+  }
+  if (clampedValue > max) {
+    return max;
+  }
+  return clampedValue;
+};
+
+const normalizeDiscountPercent = (value, fallback) => clampInteger(value, fallback, 0, 100);
+
+const normalizePricingForm = (pricingForm) => {
+  const defaultPricingForm = createInitialPricingForm();
+  const nightlyRate = clampInteger(
+    pricingForm?.nightlyRate,
+    defaultPricingForm.nightlyRate,
+    PRICING_MIN_NIGHTLY_RATE,
+    PRICING_MAX_NIGHTLY_RATE
+  );
+  const minimumStay = clampInteger(pricingForm?.minimumStay, defaultPricingForm.minimumStay, 1, 365);
+  const maximumStayRaw = clampInteger(pricingForm?.maximumStay, defaultPricingForm.maximumStay, 0, 365);
+  const maximumStay = maximumStayRaw === 0 ? 0 : Math.max(minimumStay, maximumStayRaw);
+  const weeklyDiscountEnabled = Boolean(pricingForm?.weeklyDiscountEnabled);
+  const monthlyDiscountEnabled = Boolean(pricingForm?.monthlyDiscountEnabled);
+  const lastMinuteDiscountEnabled = Boolean(pricingForm?.lastMinuteDiscountEnabled);
+  const earlyBirdDiscountEnabled = Boolean(pricingForm?.earlyBirdDiscountEnabled);
+
+  return {
+    nightlyRate,
+    minimumStay,
+    maximumStay,
+    weeklyDiscountEnabled,
+    weeklyDiscountPercent: normalizeDiscountPercent(
+      pricingForm?.weeklyDiscountPercent,
+      defaultPricingForm.weeklyDiscountPercent
+    ),
+    monthlyDiscountEnabled,
+    monthlyDiscountPercent: normalizeDiscountPercent(
+      pricingForm?.monthlyDiscountPercent,
+      defaultPricingForm.monthlyDiscountPercent
+    ),
+    lastMinuteDiscountEnabled,
+    lastMinuteDiscountDays: clampInteger(
+      pricingForm?.lastMinuteDiscountDays,
+      defaultPricingForm.lastMinuteDiscountDays,
+      1,
+      365
+    ),
+    lastMinuteDiscountPercent: normalizeDiscountPercent(
+      pricingForm?.lastMinuteDiscountPercent,
+      defaultPricingForm.lastMinuteDiscountPercent
+    ),
+    earlyBirdDiscountEnabled,
+    earlyBirdDiscountDays: clampInteger(
+      pricingForm?.earlyBirdDiscountDays,
+      defaultPricingForm.earlyBirdDiscountDays,
+      1,
+      365
+    ),
+    earlyBirdDiscountPercent: normalizeDiscountPercent(
+      pricingForm?.earlyBirdDiscountPercent,
+      defaultPricingForm.earlyBirdDiscountPercent
+    ),
+  };
+};
+
+const buildPricingSnapshot = (pricingForm) => normalizePricingForm(pricingForm);
+
+const buildPricingRestrictionsPayload = (pricingForm) => {
+  const normalizedPricingForm = normalizePricingForm(pricingForm);
+  return [
+    {
+      restriction: PRICING_RESTRICTION_KEYS.minimumStay,
+      value: normalizedPricingForm.minimumStay,
+    },
+    {
+      restriction: PRICING_RESTRICTION_KEYS.maximumStay,
+      value: normalizedPricingForm.maximumStay,
+    },
+    {
+      restriction: PRICING_RESTRICTION_KEYS.weeklyDiscountPercent,
+      value: normalizedPricingForm.weeklyDiscountEnabled ? normalizedPricingForm.weeklyDiscountPercent : 0,
+    },
+    {
+      restriction: PRICING_RESTRICTION_KEYS.monthlyDiscountPercent,
+      value: normalizedPricingForm.monthlyDiscountEnabled ? normalizedPricingForm.monthlyDiscountPercent : 0,
+    },
+    {
+      restriction: PRICING_RESTRICTION_KEYS.lastMinuteDiscountDays,
+      value: normalizedPricingForm.lastMinuteDiscountEnabled ? normalizedPricingForm.lastMinuteDiscountDays : 0,
+    },
+    {
+      restriction: PRICING_RESTRICTION_KEYS.lastMinuteDiscountPercent,
+      value: normalizedPricingForm.lastMinuteDiscountEnabled ? normalizedPricingForm.lastMinuteDiscountPercent : 0,
+    },
+    {
+      restriction: PRICING_RESTRICTION_KEYS.earlyBirdDiscountDays,
+      value: normalizedPricingForm.earlyBirdDiscountEnabled ? normalizedPricingForm.earlyBirdDiscountDays : 0,
+    },
+    {
+      restriction: PRICING_RESTRICTION_KEYS.earlyBirdDiscountPercent,
+      value: normalizedPricingForm.earlyBirdDiscountEnabled ? normalizedPricingForm.earlyBirdDiscountPercent : 0,
+    },
+  ];
+};
+
+const buildAvailabilityRestrictionValueMap = (availabilityRestrictions) =>
+  new Map(
+    (Array.isArray(availabilityRestrictions) ? availabilityRestrictions : [])
+      .map((entry) => {
+        const restriction = String(entry?.restriction || "").trim();
+        if (!restriction) {
+          return null;
+        }
+        const value = Number(entry?.value);
+        return [restriction, Number.isFinite(value) ? Math.trunc(value) : 0];
+      })
+      .filter(Boolean)
+  );
+
+const readRestrictionValue = (restrictionValueMap, restrictionKey, fallbackValue = 0) => {
+  if (!restrictionValueMap.has(restrictionKey)) {
+    return fallbackValue;
+  }
+  const value = Number(restrictionValueMap.get(restrictionKey));
+  return Number.isFinite(value) ? Math.trunc(value) : fallbackValue;
+};
+
+const mapPropertyPricingToState = (pricing, availabilityRestrictions) => {
+  const restrictionValueMap = buildAvailabilityRestrictionValueMap(availabilityRestrictions);
+  const defaultPricingForm = createInitialPricingForm();
+  const nightlyRateRaw = Number(pricing?.roomRate ?? pricing?.roomrate);
+  const nightlyRate = Number.isFinite(nightlyRateRaw)
+    ? clampInteger(nightlyRateRaw, defaultPricingForm.nightlyRate, PRICING_MIN_NIGHTLY_RATE, PRICING_MAX_NIGHTLY_RATE)
+    : defaultPricingForm.nightlyRate;
+  const minimumStay = clampInteger(
+    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.minimumStay, defaultPricingForm.minimumStay),
+    defaultPricingForm.minimumStay,
+    1,
+    365
+  );
+  const maximumStayRaw = clampInteger(
+    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.maximumStay, defaultPricingForm.maximumStay),
+    defaultPricingForm.maximumStay,
+    0,
+    365
+  );
+  const maximumStay = maximumStayRaw === 0 ? 0 : Math.max(minimumStay, maximumStayRaw);
+  const weeklyDiscountPercent = normalizeDiscountPercent(
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.weeklyDiscountPercent,
+      0
+    ),
+    0
+  );
+  const monthlyDiscountPercent = normalizeDiscountPercent(
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.monthlyDiscountPercent,
+      0
+    ),
+    0
+  );
+  const lastMinuteDiscountDays = clampInteger(
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.lastMinuteDiscountDays,
+      defaultPricingForm.lastMinuteDiscountDays
+    ),
+    defaultPricingForm.lastMinuteDiscountDays,
+    1,
+    365
+  );
+  const lastMinuteDiscountPercent = normalizeDiscountPercent(
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.lastMinuteDiscountPercent,
+      0
+    ),
+    0
+  );
+  const earlyBirdDiscountDays = clampInteger(
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.earlyBirdDiscountDays,
+      defaultPricingForm.earlyBirdDiscountDays
+    ),
+    defaultPricingForm.earlyBirdDiscountDays,
+    1,
+    365
+  );
+  const earlyBirdDiscountPercent = normalizeDiscountPercent(
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.earlyBirdDiscountPercent,
+      0
+    ),
+    0
+  );
+
+  return {
+    nightlyRate,
+    minimumStay,
+    maximumStay,
+    weeklyDiscountEnabled: weeklyDiscountPercent > 0,
+    weeklyDiscountPercent,
+    monthlyDiscountEnabled: monthlyDiscountPercent > 0,
+    monthlyDiscountPercent,
+    lastMinuteDiscountEnabled: lastMinuteDiscountPercent > 0 && lastMinuteDiscountDays > 0,
+    lastMinuteDiscountDays,
+    lastMinuteDiscountPercent,
+    earlyBirdDiscountEnabled: earlyBirdDiscountPercent > 0 && earlyBirdDiscountDays > 0,
+    earlyBirdDiscountDays,
+    earlyBirdDiscountPercent,
+  };
+};
+
+const getSelectOptionsWithCurrent = (options, currentValue) => {
+  const normalizedCurrentValue = Number(currentValue);
+  if (!Number.isFinite(normalizedCurrentValue)) {
+    return [...options];
+  }
+  if (options.includes(normalizedCurrentValue)) {
+    return [...options];
+  }
+  return [...options, normalizedCurrentValue].sort((left, right) => left - right);
+};
+
+const getStayOptionLabel = (value) => {
+  if (value === 0) {
+    return "No maximum";
+  }
+  return `${value} night${value === 1 ? "" : "s"}`;
 };
 
 const normalizeCapacityValue = (value) => {
@@ -387,10 +664,14 @@ const extractFetchedPropertyData = (data, hostPropertiesData) => {
   const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
   const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
   const propertyImages = Array.isArray(data?.images) ? data.images : [];
+  const availabilityRestrictions = Array.isArray(data?.availabilityRestrictions)
+    ? data.availabilityRestrictions
+    : [];
   const property = data?.property || {};
   const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
   const locationData = data?.location || {};
   const propertyType = data?.propertyType || {};
+  const propertyPricing = data?.pricing || null;
 
   return {
     status: property.status || "INACTIVE",
@@ -415,6 +696,7 @@ const extractFetchedPropertyData = (data, hostPropertiesData) => {
     },
     selectedAmenityIds: propertyAmenities.map((amenity) => String(amenity?.amenityId || "")).filter(Boolean),
     policyRules: mapPropertyRulesToState(propertyRules),
+    pricingForm: mapPropertyPricingToState(propertyPricing, availabilityRestrictions),
     existingPhotos: mapPropertyImagesToState(propertyImages),
     hostProperties: mapHostProperties(hostPropertiesData, property),
   };
@@ -494,6 +776,31 @@ const verifyPolicies = async (propertyId, rulesPayload) => {
   }
 };
 
+const verifyPricing = async (propertyId, pricingPayload, availabilityRestrictionsPayload) => {
+  const verificationData = await fetchPropertySnapshot(propertyId);
+  const persistedRoomRate = Number(verificationData?.pricing?.roomRate ?? verificationData?.pricing?.roomrate);
+  const expectedRoomRate = Number(pricingPayload?.roomRate);
+  const hasSameRoomRate = Number.isFinite(persistedRoomRate) && Number.isFinite(expectedRoomRate)
+    ? Math.trunc(persistedRoomRate) === Math.trunc(expectedRoomRate)
+    : false;
+  if (!hasSameRoomRate) {
+    throw new Error("Pricing could not be updated in the deployed backend yet.");
+  }
+
+  const persistedRestrictionValueMap = buildAvailabilityRestrictionValueMap(verificationData?.availabilityRestrictions);
+  const hasSameRestrictions = (availabilityRestrictionsPayload || []).every((restriction) => {
+    const persistedValue = Number(persistedRestrictionValueMap.get(restriction.restriction));
+    const expectedValue = Number(restriction.value);
+    if (!Number.isFinite(expectedValue)) {
+      return false;
+    }
+    return Number.isFinite(persistedValue) && Math.trunc(persistedValue) === Math.trunc(expectedValue);
+  });
+  if (!hasSameRestrictions) {
+    throw new Error("Pricing restrictions could not be updated in the deployed backend yet.");
+  }
+};
+
 const getSaveSuccessMessage = (selectedTab) => SAVE_SUCCESS_MESSAGE_BY_TAB[selectedTab] || "Property updated successfully.";
 
 const resolveSaveErrorMessage = (error, isDevelopment) => {
@@ -543,17 +850,26 @@ const savePropertyChanges = async ({
   address,
   selectedAmenityIds,
   policyRules,
+  pricingForm,
 }) => {
   const normalizedTitle = form.title.trim();
   const normalizedSubtitle = form.subtitle.trim();
   const normalizedDescription = form.description.trim();
   const isSavingAmenities = selectedTab === "Amenities";
+  const isSavingPricing = selectedTab === "Pricing";
   const isSavingPolicies = selectedTab === "Policies";
 
   if (!normalizedTitle || !normalizedDescription) {
     throw new Error("Title and description cannot be empty.");
   }
 
+  const normalizedPricingForm = normalizePricingForm(pricingForm);
+  const pricingPayload = isSavingPricing
+    ? { roomRate: normalizedPricingForm.nightlyRate }
+    : undefined;
+  const availabilityRestrictionsPayload = isSavingPricing
+    ? buildPricingRestrictionsPayload(normalizedPricingForm)
+    : undefined;
   const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map(String) : undefined;
   const rulesPayload = isSavingPolicies
     ? POLICY_RULE_CONFIG.map((ruleConfig) => ({
@@ -583,6 +899,8 @@ const savePropertyChanges = async ({
       location: getLocationPayload(address),
       amenities: amenitiesPayload,
       rules: rulesPayload,
+      pricing: pricingPayload,
+      availabilityRestrictions: availabilityRestrictionsPayload,
     }),
   });
 
@@ -599,12 +917,17 @@ const savePropertyChanges = async ({
     await verifyPolicies(propertyId, rulesPayload);
   }
 
+  if (isSavingPricing) {
+    await verifyPricing(propertyId, pricingPayload, availabilityRestrictionsPayload);
+  }
+
   return {
     normalizedForm: {
       title: normalizedTitle,
       subtitle: normalizedSubtitle,
       description: normalizedDescription,
     },
+    normalizedPricingForm,
     successMessage: getSaveSuccessMessage(selectedTab),
   };
 };
@@ -1839,6 +2162,260 @@ function HostPropertyAmenitiesTab({
   );
 }
 
+function HostPropertyPricingDiscountRow({
+  title,
+  description,
+  enabled,
+  onToggle,
+  percentValue,
+  percentOptions,
+  onPercentChange,
+  timingLabel,
+  timingValue,
+  timingOptions,
+  onTimingChange,
+}) {
+  return (
+    <article className={styles.pricingDiscountRow}>
+      <label className={styles.pricingDiscountToggleWrap}>
+        <input
+          type="checkbox"
+          className={styles.pricingDiscountToggleInput}
+          checked={enabled}
+          onChange={(event) => onToggle(event.target.checked)}
+        />
+        <span className={styles.pricingDiscountToggle} aria-hidden="true" />
+        <span className={styles.pricingDiscountText}>
+          <span className={styles.pricingDiscountTitle}>{title}</span>
+          <span className={styles.pricingDiscountDescription}>{description}</span>
+        </span>
+      </label>
+
+      <div className={styles.pricingDiscountControls}>
+        {timingLabel ? (
+          <label className={styles.pricingDiscountSelectWrap}>
+            <span className={styles.pricingDiscountSelectLabel}>{timingLabel}</span>
+            <select
+              className={styles.pricingSelect}
+              value={timingValue}
+              onChange={(event) => onTimingChange(Number(event.target.value))}
+              disabled={!enabled}
+            >
+              {timingOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option} days before check in
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
+        <label className={styles.pricingDiscountSelectWrap}>
+          <span className={styles.pricingDiscountSelectLabel}>Amount</span>
+          <select
+            className={styles.pricingSelect}
+            value={percentValue}
+            onChange={(event) => onPercentChange(Number(event.target.value))}
+            disabled={!enabled}
+          >
+            {percentOptions.map((percent) => (
+              <option key={percent} value={percent}>
+                {percent}%
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+    </article>
+  );
+}
+
+function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
+  const minimumStayOptions = getSelectOptionsWithCurrent(PRICING_STAY_OPTIONS, pricingForm.minimumStay);
+  const maximumStayOptions = getSelectOptionsWithCurrent(PRICING_MAX_STAY_OPTIONS, pricingForm.maximumStay);
+  const weeklyPercentOptions = getSelectOptionsWithCurrent(
+    PRICING_DISCOUNT_PERCENT_OPTIONS,
+    pricingForm.weeklyDiscountPercent
+  );
+  const monthlyPercentOptions = getSelectOptionsWithCurrent(
+    PRICING_DISCOUNT_PERCENT_OPTIONS,
+    pricingForm.monthlyDiscountPercent
+  );
+  const lastMinutePercentOptions = getSelectOptionsWithCurrent(
+    PRICING_DISCOUNT_PERCENT_OPTIONS,
+    pricingForm.lastMinuteDiscountPercent
+  );
+  const earlyBirdPercentOptions = getSelectOptionsWithCurrent(
+    PRICING_DISCOUNT_PERCENT_OPTIONS,
+    pricingForm.earlyBirdDiscountPercent
+  );
+  const lastMinuteDayOptions = getSelectOptionsWithCurrent(
+    PRICING_LAST_MINUTE_DAY_OPTIONS,
+    pricingForm.lastMinuteDiscountDays
+  );
+  const earlyBirdDayOptions = getSelectOptionsWithCurrent(
+    PRICING_EARLY_BIRD_DAY_OPTIONS,
+    pricingForm.earlyBirdDiscountDays
+  );
+
+  const updatePricingForm = (patch) => {
+    setPricingForm((previous) => normalizePricingForm({ ...previous, ...patch }));
+  };
+
+  return (
+    <section className={`${styles.card} ${styles.pricingCard}`}>
+      <h3 className={styles.sectionTitle}>Pricing</h3>
+      <p className={styles.pricingSubtitle}>Define the pricing settings for your listing.</p>
+
+      <div className={styles.pricingBasePanel}>
+        <div className={styles.pricingRateRow}>
+          <label htmlFor="pricing-nightly-rate" className={styles.pricingRateLabel}>
+            Nightly rate
+          </label>
+          <div className={styles.pricingRateInputWrap}>
+            <span aria-hidden="true" className={styles.pricingRateCurrency}>EUR</span>
+            <input
+              id="pricing-nightly-rate"
+              type="number"
+              min={PRICING_MIN_NIGHTLY_RATE}
+              max={PRICING_MAX_NIGHTLY_RATE}
+              step={1}
+              className={styles.pricingRateInput}
+              value={pricingForm.nightlyRate}
+              onChange={(event) => updatePricingForm({ nightlyRate: event.target.value })}
+            />
+          </div>
+        </div>
+
+        <p className={styles.pricingBaseHint}>
+          Set the base nightly rate guests will be charged.
+        </p>
+
+        <div className={styles.pricingStayGrid}>
+          <label className={styles.pricingStayField}>
+            <span className={styles.pricingStayLabel}>Minimum stay</span>
+            <select
+              className={styles.pricingSelect}
+              value={pricingForm.minimumStay}
+              onChange={(event) => {
+                const nextMinimumStay = Number(event.target.value);
+                const nextMaximumStay = pricingForm.maximumStay !== 0 && pricingForm.maximumStay < nextMinimumStay
+                  ? nextMinimumStay
+                  : pricingForm.maximumStay;
+                updatePricingForm({
+                  minimumStay: nextMinimumStay,
+                  maximumStay: nextMaximumStay,
+                });
+              }}
+            >
+              {minimumStayOptions.map((value) => (
+                <option key={value} value={value}>
+                  {getStayOptionLabel(value)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.pricingStayField}>
+            <span className={styles.pricingStayLabel}>Maximum stay</span>
+            <select
+              className={styles.pricingSelect}
+              value={pricingForm.maximumStay}
+              onChange={(event) => updatePricingForm({ maximumStay: Number(event.target.value) })}
+            >
+              {maximumStayOptions.map((value) => (
+                <option key={value} value={value}>
+                  {getStayOptionLabel(value)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <h3 className={styles.sectionTitle}>Discounts</h3>
+
+      <div className={styles.pricingDiscountList}>
+        <HostPropertyPricingDiscountRow
+          title="Weekly discount"
+          description="Discount applied to stays of 7+ nights."
+          enabled={pricingForm.weeklyDiscountEnabled}
+          onToggle={(enabled) => updatePricingForm({
+            weeklyDiscountEnabled: enabled,
+            weeklyDiscountPercent: enabled && pricingForm.weeklyDiscountPercent === 0
+              ? createInitialPricingForm().weeklyDiscountPercent
+              : pricingForm.weeklyDiscountPercent,
+          })}
+          percentValue={pricingForm.weeklyDiscountPercent}
+          percentOptions={weeklyPercentOptions}
+          onPercentChange={(value) => updatePricingForm({ weeklyDiscountPercent: value })}
+        />
+        <HostPropertyPricingDiscountRow
+          title="Monthly discount"
+          description="Discount applied to stays of 28+ nights."
+          enabled={pricingForm.monthlyDiscountEnabled}
+          onToggle={(enabled) => updatePricingForm({
+            monthlyDiscountEnabled: enabled,
+            monthlyDiscountPercent: enabled && pricingForm.monthlyDiscountPercent === 0
+              ? createInitialPricingForm().monthlyDiscountPercent
+              : pricingForm.monthlyDiscountPercent,
+          })}
+          percentValue={pricingForm.monthlyDiscountPercent}
+          percentOptions={monthlyPercentOptions}
+          onPercentChange={(value) => updatePricingForm({ monthlyDiscountPercent: value })}
+        />
+        <HostPropertyPricingDiscountRow
+          title="Last minute discount"
+          description="Discount applied to bookings made within days of check-in."
+          enabled={pricingForm.lastMinuteDiscountEnabled}
+          onToggle={(enabled) => updatePricingForm({
+            lastMinuteDiscountEnabled: enabled,
+            lastMinuteDiscountDays: enabled && pricingForm.lastMinuteDiscountDays === 0
+              ? createInitialPricingForm().lastMinuteDiscountDays
+              : pricingForm.lastMinuteDiscountDays,
+            lastMinuteDiscountPercent: enabled && pricingForm.lastMinuteDiscountPercent === 0
+              ? createInitialPricingForm().lastMinuteDiscountPercent
+              : pricingForm.lastMinuteDiscountPercent,
+          })}
+          percentValue={pricingForm.lastMinuteDiscountPercent}
+          percentOptions={lastMinutePercentOptions}
+          onPercentChange={(value) => updatePricingForm({ lastMinuteDiscountPercent: value })}
+          timingLabel="Timing"
+          timingValue={pricingForm.lastMinuteDiscountDays}
+          timingOptions={lastMinuteDayOptions}
+          onTimingChange={(value) => updatePricingForm({ lastMinuteDiscountDays: value })}
+        />
+        <HostPropertyPricingDiscountRow
+          title="Early bird discount"
+          description="Discount applied to bookings made at least selected days in advance."
+          enabled={pricingForm.earlyBirdDiscountEnabled}
+          onToggle={(enabled) => updatePricingForm({
+            earlyBirdDiscountEnabled: enabled,
+            earlyBirdDiscountDays: enabled && pricingForm.earlyBirdDiscountDays === 0
+              ? createInitialPricingForm().earlyBirdDiscountDays
+              : pricingForm.earlyBirdDiscountDays,
+            earlyBirdDiscountPercent: enabled && pricingForm.earlyBirdDiscountPercent === 0
+              ? createInitialPricingForm().earlyBirdDiscountPercent
+              : pricingForm.earlyBirdDiscountPercent,
+          })}
+          percentValue={pricingForm.earlyBirdDiscountPercent}
+          percentOptions={earlyBirdPercentOptions}
+          onPercentChange={(value) => updatePricingForm({ earlyBirdDiscountPercent: value })}
+          timingLabel="Timing"
+          timingValue={pricingForm.earlyBirdDiscountDays}
+          timingOptions={earlyBirdDayOptions}
+          onTimingChange={(value) => updatePricingForm({ earlyBirdDiscountDays: value })}
+        />
+      </div>
+
+      <p className={styles.pricingHint}>
+        <img src={infoIcon} alt="" aria-hidden="true" className={styles.policiesHintIcon} />{" "}
+        Strategic discounts can help increase occupancy and revenue.
+      </p>
+    </section>
+  );
+}
+
 function HostPropertyPoliciesTab({ policyRules, updatePolicyRule, handleDeletePropertyClick, saving }) {
   return (
     <>
@@ -1965,6 +2542,8 @@ function HostPropertyTabContent({
   selectedAmenityIdSet,
   toggleAmenityCategory,
   toggleAmenitySelection,
+  pricingForm,
+  setPricingForm,
   policyRules,
   updatePolicyRule,
   handleDeletePropertyClick,
@@ -2021,6 +2600,13 @@ function HostPropertyTabContent({
           toggleAmenitySelection={toggleAmenitySelection}
         />
       );
+    case "Pricing":
+      return (
+        <HostPropertyPricingTab
+          pricingForm={pricingForm}
+          setPricingForm={setPricingForm}
+        />
+      );
     case "Policies":
       return (
         <HostPropertyPoliciesTab
@@ -2061,6 +2647,22 @@ const propertyAddressShape = PropTypes.shape({
   postalCode: PropTypes.string,
   city: PropTypes.string,
   country: PropTypes.string,
+});
+
+const pricingFormShape = PropTypes.shape({
+  nightlyRate: PropTypes.number,
+  minimumStay: PropTypes.number,
+  maximumStay: PropTypes.number,
+  weeklyDiscountEnabled: PropTypes.bool,
+  weeklyDiscountPercent: PropTypes.number,
+  monthlyDiscountEnabled: PropTypes.bool,
+  monthlyDiscountPercent: PropTypes.number,
+  lastMinuteDiscountEnabled: PropTypes.bool,
+  lastMinuteDiscountDays: PropTypes.number,
+  lastMinuteDiscountPercent: PropTypes.number,
+  earlyBirdDiscountEnabled: PropTypes.bool,
+  earlyBirdDiscountDays: PropTypes.number,
+  earlyBirdDiscountPercent: PropTypes.number,
 });
 
 const amenityShape = PropTypes.shape({
@@ -2150,6 +2752,32 @@ HostPropertyAmenitiesTab.propTypes = {
   toggleAmenitySelection: PropTypes.func.isRequired,
 };
 
+HostPropertyPricingDiscountRow.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  enabled: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  percentValue: PropTypes.number.isRequired,
+  percentOptions: PropTypes.arrayOf(PropTypes.number).isRequired,
+  onPercentChange: PropTypes.func.isRequired,
+  timingLabel: PropTypes.string,
+  timingValue: PropTypes.number,
+  timingOptions: PropTypes.arrayOf(PropTypes.number),
+  onTimingChange: PropTypes.func,
+};
+
+HostPropertyPricingDiscountRow.defaultProps = {
+  timingLabel: "",
+  timingValue: 0,
+  timingOptions: [],
+  onTimingChange: () => {},
+};
+
+HostPropertyPricingTab.propTypes = {
+  pricingForm: pricingFormShape.isRequired,
+  setPricingForm: PropTypes.func.isRequired,
+};
+
 HostPropertyPoliciesTab.propTypes = {
   policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
   updatePolicyRule: PropTypes.func.isRequired,
@@ -2206,6 +2834,8 @@ HostPropertyTabContent.propTypes = {
   selectedAmenityIdSet: PropTypes.instanceOf(Set).isRequired,
   toggleAmenityCategory: PropTypes.func.isRequired,
   toggleAmenitySelection: PropTypes.func.isRequired,
+  pricingForm: pricingFormShape.isRequired,
+  setPricingForm: PropTypes.func.isRequired,
   policyRules: PropTypes.objectOf(PropTypes.bool).isRequired,
   updatePolicyRule: PropTypes.func.isRequired,
   handleDeletePropertyClick: PropTypes.func.isRequired,
@@ -2228,6 +2858,7 @@ export default function HostProperty() {
   const [hostProperties, setHostProperties] = useState([]);
   const [selectedAmenityIds, setSelectedAmenityIds] = useState([]);
   const [policyRules, setPolicyRules] = useState(createInitialPolicyRules);
+  const [pricingForm, setPricingForm] = useState(createInitialPricingForm);
   const [expandedAmenityCategories, setExpandedAmenityCategories] = useState({});
   const [form, setForm] = useState({
     title: "",
@@ -2260,6 +2891,7 @@ export default function HostProperty() {
   const savedOverviewSnapshotRef = useRef(null);
   const savedAmenityIdsRef = useRef([]);
   const savedPolicyRulesRef = useRef(buildPolicyRulesSnapshot(createInitialPolicyRules()));
+  const savedPricingSnapshotRef = useRef(buildPricingSnapshot(createInitialPricingForm()));
   const bypassUnsavedGuardRef = useRef(false);
   const pendingNavigationActionRef = useRef(null);
   const isDevelopment = process.env.NODE_ENV === "development";
@@ -2312,13 +2944,19 @@ export default function HostProperty() {
     () => buildPolicyRulesSnapshot(policyRules),
     [policyRules]
   );
+  const pricingSnapshot = useMemo(
+    () => buildPricingSnapshot(pricingForm),
+    [pricingForm]
+  );
   const hasOverviewChanges = savedOverviewSnapshotRef.current
     ? !areSnapshotsEqual(overviewSnapshot, savedOverviewSnapshotRef.current)
     : false;
   const hasAmenitiesChanges = !areStringArraysEqual(amenityIdsSnapshot, savedAmenityIdsRef.current);
   const hasPoliciesChanges = !areSnapshotsEqual(policyRulesSnapshot, savedPolicyRulesRef.current);
+  const hasPricingChanges = !areSnapshotsEqual(pricingSnapshot, savedPricingSnapshotRef.current);
   const hasPhotoChanges = pendingPhotos.length > 0 || hasPhotoOrderChanges;
-  const hasUnsavedChanges = !loading && (hasOverviewChanges || hasAmenitiesChanges || hasPoliciesChanges || hasPhotoChanges);
+  const hasUnsavedChanges = !loading &&
+    (hasOverviewChanges || hasAmenitiesChanges || hasPricingChanges || hasPoliciesChanges || hasPhotoChanges);
 
   const selectedAmenityCountByCategory = useMemo(() => {
     return amenityCategoryKeys.reduce((counts, category) => {
@@ -2363,6 +3001,7 @@ export default function HostProperty() {
         setAddress(fetchedPropertyData.address);
         setSelectedAmenityIds(fetchedPropertyData.selectedAmenityIds);
         setPolicyRules(fetchedPropertyData.policyRules);
+        setPricingForm(fetchedPropertyData.pricingForm);
         setExistingPhotos(fetchedPropertyData.existingPhotos);
         setPendingPhotos([]);
         setIsPhotoDragOver(false);
@@ -2379,6 +3018,7 @@ export default function HostProperty() {
         );
         savedAmenityIdsRef.current = normalizeAmenityIds(fetchedPropertyData.selectedAmenityIds);
         savedPolicyRulesRef.current = buildPolicyRulesSnapshot(fetchedPropertyData.policyRules);
+        savedPricingSnapshotRef.current = buildPricingSnapshot(fetchedPropertyData.pricingForm);
       } catch (err) {
         console.error(err);
         if (isMounted) {
@@ -2623,7 +3263,7 @@ export default function HostProperty() {
         return;
       }
 
-      const { normalizedForm, successMessage } = await savePropertyChanges({
+      const { normalizedForm, normalizedPricingForm, successMessage } = await savePropertyChanges({
         selectedTab,
         propertyId,
         form,
@@ -2631,8 +3271,10 @@ export default function HostProperty() {
         address,
         selectedAmenityIds,
         policyRules,
+        pricingForm,
       });
       setForm(normalizedForm);
+      setPricingForm(normalizedPricingForm);
       setHostProperties((previous) =>
         previous.map((accommodation) =>
           accommodation.id === propertyId
@@ -2643,6 +3285,9 @@ export default function HostProperty() {
       savedOverviewSnapshotRef.current = buildOverviewSnapshot(normalizedForm, capacity, address);
       if (selectedTab === "Amenities") {
         savedAmenityIdsRef.current = normalizeAmenityIds(selectedAmenityIds);
+      }
+      if (selectedTab === "Pricing") {
+        savedPricingSnapshotRef.current = buildPricingSnapshot(normalizedPricingForm);
       }
       if (selectedTab === "Policies") {
         savedPolicyRulesRef.current = buildPolicyRulesSnapshot(policyRules);
@@ -2886,6 +3531,8 @@ export default function HostProperty() {
             selectedAmenityIdSet={selectedAmenityIdSet}
             toggleAmenityCategory={toggleAmenityCategory}
             toggleAmenitySelection={toggleAmenitySelection}
+            pricingForm={pricingForm}
+            setPricingForm={setPricingForm}
             policyRules={policyRules}
             updatePolicyRule={updatePolicyRule}
             handleDeletePropertyClick={handleDeletePropertyClick}

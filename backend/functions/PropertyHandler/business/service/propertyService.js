@@ -101,6 +101,14 @@ export class PropertyService {
       await this.updateLocation(propertyId, updates.location);
     }
 
+    if (updates?.pricing) {
+      await this.updatePricing(propertyId, updates.pricing);
+    }
+
+    if (updates?.availabilityRestrictions) {
+      await this.updateAvailabilityRestrictions(propertyId, updates.availabilityRestrictions);
+    }
+
     if (updates?.amenities) {
       await this.updateAmenities(propertyId, updates.amenities);
     }
@@ -455,6 +463,18 @@ export class PropertyService {
 
   async getPricing(property) {
     return await this.propertyPricingRepository.getPricingById(property);
+  }
+
+  async updatePricing(propertyId, pricing) {
+    const result = await this.propertyPricingRepository.upsertPricingByPropertyId(propertyId, pricing);
+    if (!result) {
+      throw new DatabaseException("Failed to update property pricing.");
+    }
+    return result;
+  }
+
+  async updateAvailabilityRestrictions(propertyId, restrictions) {
+    return await this.propertyAvailabilityRestrictionRepository.replaceRestrictionsByPropertyId(propertyId, restrictions);
   }
 
   async createRules(rules) {
