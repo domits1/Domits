@@ -84,7 +84,7 @@ const amenities = [
   { category: "Bathroom", amenity: "Hair dryer", id: "23", icon: wrap(<AirIcon />) },
   { category: "Bathroom", amenity: "Body lotion", id: "26", icon: wrap(<SoapIcon />) },
   { category: "Bathroom", amenity: "Conditioner", id: "25", icon: wrap(<SoapIcon />) },
-  { category: "Bathroom", amenity: "Bath", id: "89", icon: wrap(<BathtubIcon />) },
+  { category: "Bathroom", amenity: "Bath", id: "97", icon: wrap(<BathtubIcon />) },
   { category: "Bathroom", amenity: "Shower", id: "90", icon: wrap(<BathtubIcon />) },
   { category: "Bathroom", amenity: "Bidet", id: "91", icon: wrap(<WcIcon />) },
 
@@ -118,7 +118,7 @@ const amenities = [
   { category: "Essentials", amenity: "TV with cable/satellite", id: "4", icon: wrap(<TvIcon />) },
   { category: "Essentials", amenity: "Extra pillows and blankets", id: "7", icon: wrap(<BedIcon />) },
   { category: "Essentials", amenity: "Heating", id: "3", icon: wrap(<HvacIcon />) },
-  { category: "Essentials", amenity: "Elevator", id: "86", icon: wrap(<DoorSlidingIcon />) },
+  { category: "Essentials", amenity: "Elevator", id: "94", icon: wrap(<DoorSlidingIcon />) },
 
   // ExtraServices
   {
@@ -155,9 +155,9 @@ const amenities = [
   { category: "Kitchen", amenity: "Oven", id: "12", icon: wrap(<MicrowaveIcon />) },
   { category: "Kitchen", amenity: "Basic cooking essentials", id: "17", icon: wrap(<FlatwareIcon />) },
   { category: "Kitchen", amenity: "Refrigerator", id: "10", icon: wrap(<KitchenIcon />) },
-  { category: "Kitchen", amenity: "Freezer", id: "88", icon: wrap(<KitchenIcon />) },
+  { category: "Kitchen", amenity: "Freezer", id: "96", icon: wrap(<KitchenIcon />) },
   { category: "Kitchen", amenity: "Coffee maker", id: "15", icon: wrap(<CoffeeMakerIcon />) },
-  { category: "Kitchen", amenity: "Airfryer", id: "87", icon: wrap(<MicrowaveIcon />) },
+  { category: "Kitchen", amenity: "Airfryer", id: "95", icon: wrap(<MicrowaveIcon />) },
   { category: "Kitchen", amenity: "Dishwasher", id: "14", icon: wrap(<LocalLaundryServiceIcon />) },
 
   // Laundry
