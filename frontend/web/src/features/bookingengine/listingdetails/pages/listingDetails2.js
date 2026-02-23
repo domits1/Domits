@@ -57,7 +57,6 @@ const ListingDetails2 = () => {
       <div className="container">
         <PropertyContainer property={property} />
 
-        {/* IMPORTANT CHANGE: pass host into BookingContainer */}
         <BookingContainer property={property} host={host} />
       </div>
     </div>

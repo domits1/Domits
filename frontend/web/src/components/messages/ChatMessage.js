@@ -27,7 +27,6 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
     return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   };
 
-  // Direction: prefer senderId vs current userId, fall back to legacy isSent
   const isOutgoingBySender = senderId ? senderId === userId : null;
   const isOutgoing = isOutgoingBySender !== null ? isOutgoingBySender : !!isSent;
   const directionClass = isOutgoing ? "sent" : "received";

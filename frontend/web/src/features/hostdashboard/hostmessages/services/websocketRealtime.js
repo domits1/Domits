@@ -5,7 +5,7 @@ const WS_BASE =
 let ws = null;
 let reconnectTimer = null;
 let shouldReconnect = true;
-let currentKey = null; // used to avoid reconnect loops
+let currentKey = null;
 let backoffMs = 500;
 
 const safeParse = (data) => {
@@ -22,7 +22,6 @@ const clearReconnect = () => {
 };
 
 const buildUrl = ({ token, userId }) => {
-  // token is REQUIRED for your $connect auth logic
   const qs = new URLSearchParams();
   if (token) qs.set("token", token);
   if (userId) qs.set("userId", userId);
@@ -42,7 +41,6 @@ export const connectWebSocketRealtime = ({ userId, token, onMessage, onStatus })
 
   const url = buildUrl({ token, userId });
 
-  // hard reset any previous socket
   try {
     ws?.close();
   } catch {}
@@ -67,7 +65,6 @@ export const connectWebSocketRealtime = ({ userId, token, onMessage, onStatus })
 
   ws.onerror = () => {
     onStatus?.("error");
-    // let onclose handle reconnect
   };
 
   ws.onclose = () => {
@@ -80,7 +77,6 @@ export const connectWebSocketRealtime = ({ userId, token, onMessage, onStatus })
     backoffMs = Math.min(backoffMs * 2, 8000);
 
     reconnectTimer = setTimeout(() => {
-      // only reconnect if still intended & key unchanged
       if (!shouldReconnect) return;
       if (currentKey !== key) return;
       connectWebSocketRealtime({ userId, token, onMessage, onStatus });

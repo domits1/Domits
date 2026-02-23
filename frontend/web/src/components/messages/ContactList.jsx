@@ -6,7 +6,6 @@ import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
 
-  // NEW: first-class partnerId
   const direct = contact?.partnerId;
   if (direct && String(direct) !== String(selfUserId)) return direct;
 
@@ -43,7 +42,7 @@ const ContactList = ({
   onNewMessage,
 }) => {
   const [selectedContactId, setSelectedContactId] = useState(null);
-  const [tab, setTab] = useState("all"); // all | unread
+  const [tab, setTab] = useState("all");
   const socket = useContext(WebSocketContext);
   const wsMessages = socket?.messages || [];
 
@@ -91,7 +90,6 @@ const ContactList = ({
     setContextMenu({ visible: false, x: 0, y: 0, contactId: null });
   };
 
-  // realtime: update latestMessage in contacts list
   useEffect(() => {
     if (!wsMessages?.length) return;
 
@@ -119,7 +117,6 @@ const ContactList = ({
     });
   }, [wsMessages, setContacts, userId]);
 
-  // optimistic sent message -> update latestMessage
   useEffect(() => {
     if (!message) return;
 

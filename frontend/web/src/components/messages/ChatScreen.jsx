@@ -381,7 +381,6 @@ const ChatScreen = ({
               className="message-input-textarea"
               placeholder="Type a message"
               onKeyDown={(e) => {
-                // Send on Enter (not Shift+Enter) — matches modern chat UX
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   if ((newMessage?.length || 0) <= 200) handleSendMessage();

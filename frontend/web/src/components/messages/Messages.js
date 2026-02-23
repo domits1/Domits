@@ -73,7 +73,7 @@ const MessagesContent = ({ dashboardType }) => {
 
   const showContactList = isMobile ? !selectedContactId : true;
   const showChatScreen = isMobile ? !!selectedContactId : true;
-  const showDetailsPanel = !isMobile && !isTablet; // desktop only
+  const showDetailsPanel = !isMobile && !isTablet;
 
   return (
     <div className={`${dashboardType}-dashboard-page-body messages-v2`}>

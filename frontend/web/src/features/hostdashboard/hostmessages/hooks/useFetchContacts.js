@@ -114,7 +114,6 @@ const useFetchContacts = (userId, role) => {
         return null;
       };
 
-      // 1) Try Unified Threads first
       let unifiedContacts = [];
       try {
         const threadsResponse = await fetch(
@@ -132,10 +131,9 @@ const useFetchContacts = (userId, role) => {
               const partnerId = isHost ? t.guestId : t.hostId;
 
               return {
-                // canonical fields for UI:
                 partnerId,
-                recipientId: partnerId, // UI uses this often
-                userId: partnerId, // keep for compatibility, but it's partnerId
+                recipientId: partnerId,
+                userId: partnerId,
                 hostId: t.hostId,
                 guestId: t.guestId,
 
@@ -146,7 +144,6 @@ const useFetchContacts = (userId, role) => {
                 isFromUnified: true,
               };
             })
-            // de-dupe by partnerId
             .filter((c, i, self) => i === self.findIndex((x) => x.partnerId === c.partnerId));
         }
       } catch (e) {
@@ -162,7 +159,6 @@ const useFetchContacts = (userId, role) => {
 
             const userInfo = partnerId ? await fetchUserInfo(partnerId) : { givenName: "Unknown", userId: partnerId };
 
-            // IMPORTANT: don't overwrite partnerId with userInfo.userId
             const latestMessage = await fetchLatestMessage(contact?.threadId, partnerId);
 
             const hostId = isHost ? userId : contact.hostId;
@@ -196,12 +192,10 @@ const useFetchContacts = (userId, role) => {
             return {
               ...contact,
 
-              // keep canonical partner id fields stable
               partnerId,
               recipientId: partnerId,
               userId: partnerId,
 
-              // display fields
               givenName: userInfo?.givenName || contact?.givenName || "Unknown",
               profileImage: contact?.profileImage || null,
 
@@ -224,7 +218,6 @@ const useFetchContacts = (userId, role) => {
         return;
       }
 
-      // 2) Legacy fallback
       const requestData = isHost ? { hostID: userId } : { userID: userId };
       const endpoint = isHost
         ? "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts"

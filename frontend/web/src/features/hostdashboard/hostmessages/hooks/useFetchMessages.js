@@ -11,13 +11,10 @@ const toIso = (v) => {
 const normalizeWs = (raw) => {
   if (!raw || typeof raw !== "object") return null;
 
-  // some payloads may come wrapped, keep it safe
   const msg = raw?.message && typeof raw.message === "object" ? raw.message : raw;
 
-  // ignore non-message payloads (ping, status, etc.)
   const type = msg?.type || raw?.type;
   if (type && type !== "message") {
-    // allow messages that don't include type but have sender/recipient
     const hasIds = !!(msg?.senderId || msg?.userId) && !!msg?.recipientId;
     if (!hasIds) return null;
   }
@@ -68,7 +65,7 @@ const normalizeWs = (raw) => {
     threadId: msg?.threadId || null,
     senderId: msg?.senderId || senderId,
     recipientId,
-    userId: senderId, // existing UI expects userId = senderId
+    userId: senderId,
     text,
     content,
     createdAt,
@@ -134,7 +131,6 @@ export const useFetchMessages = (userId) => {
     [userId]
   );
 
-  // realtime -> push into same store as REST fetch results
   useEffect(() => {
     if (!Array.isArray(wsMessages) || wsMessages.length === 0) return;
 
