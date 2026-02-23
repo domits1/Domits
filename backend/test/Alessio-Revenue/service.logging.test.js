@@ -1,6 +1,5 @@
 import { Service } from "../../functions/Alessio-Revenue/business/service/service.js";
 
-// Mock alle externe dependencies
 jest.mock("../../functions/Alessio-Revenue/business/service/paymentService.js", () => ({
   PaymentsService: jest.fn().mockImplementation(() => ({
     getTotalHostRevenue: jest.fn().mockResolvedValue({ totalRevenue: 1000 }),
