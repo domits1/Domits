@@ -2170,10 +2170,10 @@ function HostPropertyPricingDiscountRow({
   percentValue,
   percentOptions,
   onPercentChange,
-  timingLabel,
-  timingValue,
-  timingOptions,
-  onTimingChange,
+  timingLabel = "",
+  timingValue = 0,
+  timingOptions = [],
+  onTimingChange = () => {},
 }) {
   return (
     <article className={styles.pricingDiscountRow}>
@@ -2764,13 +2764,6 @@ HostPropertyPricingDiscountRow.propTypes = {
   timingValue: PropTypes.number,
   timingOptions: PropTypes.arrayOf(PropTypes.number),
   onTimingChange: PropTypes.func,
-};
-
-HostPropertyPricingDiscountRow.defaultProps = {
-  timingLabel: "",
-  timingValue: 0,
-  timingOptions: [],
-  onTimingChange: () => {},
 };
 
 HostPropertyPricingTab.propTypes = {

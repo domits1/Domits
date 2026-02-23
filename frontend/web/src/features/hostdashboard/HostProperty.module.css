@@ -1570,6 +1570,12 @@
   .pricingDiscountControls {
     flex-direction: column;
     align-items: stretch;
+    gap: 6px;
+  }
+
+  .pricingDiscountSelectWrap {
+    flex: 0 0 auto;
+    width: 100%;
   }
 
   .photoDeleteModal {
