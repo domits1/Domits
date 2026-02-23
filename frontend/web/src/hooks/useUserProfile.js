@@ -234,11 +234,15 @@ export default function useUserProfile() {
     };
 
     const saveUserName = async () => {
+        const newName = tempUser.name?.trim();
+        if (!newName) {
+            alert("Please provide a valid name.");
+            return;
+        }
+
         try {
             const userInfo = await Auth.currentAuthenticatedUser();
             const userId = userInfo.username;
-            const newName = tempUser.name;
-
             const response = await fetch(UPDATE_NAME_ENDPOINT, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
@@ -248,7 +252,7 @@ export default function useUserProfile() {
             const result = await response.json();
 
             if (result.statusCode === 200) {
-                setUser({...user, name: tempUser.name});
+                setUser({...user, name: newName});
                 toggleEditState("name");
             }
         } catch (error) {
@@ -287,12 +291,12 @@ export default function useUserProfile() {
         }
 
         const birthdateForStorage = formatBirthdateForStorage(tempUser.dateOfBirth);
-        setUser({...user, dateOfBirth: tempUser.dateOfBirth});
-        toggleEditState("dateOfBirth");
 
         try {
             const currentUser = await Auth.currentAuthenticatedUser();
             await Auth.updateUserAttributes(currentUser, {birthdate: birthdateForStorage});
+            setUser({...user, dateOfBirth: tempUser.dateOfBirth});
+            toggleEditState("dateOfBirth");
         } catch (error) {
             console.error("Error updating birthdate:", error);
             alert("Failed to update birthdate. Please try again.");
