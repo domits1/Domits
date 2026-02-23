@@ -59,6 +59,18 @@ const formatChipDate = (isoLike) => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
+const sameId = (a, b) => String(a || "") === String(b || "");
+
+const extractPartnerFromThreadId = (threadId, userId) => {
+  if (!threadId || typeof threadId !== "string") return null;
+  const parts = threadId.split("-").filter(Boolean);
+  if (parts.length !== 2) return null;
+  const [a, b] = parts;
+  if (!sameId(a, userId)) return a;
+  if (!sameId(b, userId)) return b;
+  return null;
+};
+
 const ChatScreen = ({
   userId,
   contactId,
@@ -78,22 +90,28 @@ const ChatScreen = ({
     : useFetchBookingDetails(contactId, userId);
 
   const resolvedContactId = useMemo(() => {
-    if (contactId && contactId !== userId) return contactId;
+    const candidates = [
+      contactId,
+      bookingDetails?.hostId,
+      bookingDetails?.host_id,
+      bookingDetails?.ownerId,
+      bookingDetails?.owner_id,
+      bookingDetails?.recipientId,
+      bookingDetails?.recipient_id,
+      bookingDetails?.guestId,
+      bookingDetails?.guest_id,
+      bookingDetails?.tenantId,
+      bookingDetails?.tenant_id,
+      bookingDetails?.renterId,
+      bookingDetails?.renter_id,
+      bookingDetails?.userId,
+      bookingDetails?.user_id,
+      extractPartnerFromThreadId(threadId, userId),
+    ].filter(Boolean);
 
-    const candidate =
-      bookingDetails?.guestId ||
-      bookingDetails?.guest_id ||
-      bookingDetails?.tenantId ||
-      bookingDetails?.tenant_id ||
-      bookingDetails?.renterId ||
-      bookingDetails?.renter_id ||
-      bookingDetails?.userId ||
-      bookingDetails?.user_id ||
-      null;
-
-    if (candidate && candidate !== userId) return candidate;
-    return contactId;
-  }, [contactId, userId, bookingDetails]);
+    const partner = candidates.find((id) => !sameId(id, userId));
+    return partner || null;
+  }, [contactId, userId, bookingDetails, threadId]);
 
   const { sendMessage, sending, error: sendError } = useSendMessage(userId);
 
@@ -119,8 +137,9 @@ const ChatScreen = ({
   };
 
   useEffect(() => {
-    if (resolvedContactId) fetchMessages(resolvedContactId, threadId);
-  }, [userId, resolvedContactId, threadId, fetchMessages]);
+    const fetchTarget = resolvedContactId || contactId;
+    if (fetchTarget) fetchMessages(fetchTarget, threadId);
+  }, [userId, resolvedContactId, contactId, threadId, fetchMessages]);
 
   useEffect(() => {
     if (!loading) {
@@ -206,8 +225,8 @@ const ChatScreen = ({
       const recipient = msg?.recipientId || null;
 
       const isRelevant =
-        (sender === userId && recipient === resolvedContactId) ||
-        (sender === resolvedContactId && recipient === userId);
+        (sameId(sender, userId) && sameId(recipient, resolvedContactId)) ||
+        (sameId(sender, resolvedContactId) && sameId(recipient, userId));
 
       if (!isRelevant) return;
 
@@ -217,7 +236,7 @@ const ChatScreen = ({
       addNewMessage(msg);
       if (id) addedMessageIds.current.add(id);
 
-      if (sender === resolvedContactId && recipient === userId && msg.text) {
+      if (sameId(sender, resolvedContactId) && sameId(recipient, userId) && msg.text) {
         toast.info(<MessageToast contactName={contactName} contactImage={contactImage} message={msg.text} />, {
           className: "message-toast-custom",
         });
@@ -229,7 +248,14 @@ const ChatScreen = ({
     const hasContent = newMessage.trim() || uploadedFileUrls.length > 0;
     if (!hasContent) return;
 
-    if (!resolvedContactId || resolvedContactId === userId) {
+    if (!resolvedContactId || sameId(resolvedContactId, userId)) {
+      console.warn("[ChatScreen] Invalid recipient resolution", {
+        userId,
+        contactId,
+        resolvedContactId,
+        threadId,
+        bookingDetails,
+      });
       alert("Recipient is invalid (contactId matches your userId).");
       return;
     }

@@ -5,10 +5,23 @@ import "../../components/messages/messagesV2.scss";
 import AutomatedSettings from "./AutomatedSettings";
 import { FaCog, FaBars } from "react-icons/fa";
 
+const sameId = (a, b) => String(a || "") === String(b || "");
+
+const partnerFromThreadId = (threadId, selfUserId) => {
+  if (!threadId || typeof threadId !== "string") return null;
+  const parts = threadId.split("-").filter(Boolean);
+  if (parts.length !== 2) return null;
+  const [a, b] = parts;
+  if (!sameId(a, selfUserId)) return a;
+  if (!sameId(b, selfUserId)) return b;
+  return null;
+};
+
 const resolvePartnerId = (contact, selfUserId) => {
   if (!contact) return null;
 
   const candidates = [
+    contact.partnerId,
     contact.recipientId,
     contact.userId,
     contact.guestId,
@@ -17,10 +30,11 @@ const resolvePartnerId = (contact, selfUserId) => {
     contact.hostID,
     contact.contactId,
     contact.contactID,
+    partnerFromThreadId(contact.threadId, selfUserId),
   ].filter(Boolean);
 
-  const picked = candidates.find((id) => id && id !== selfUserId);
-  return picked || candidates[0] || null;
+  const picked = candidates.find((id) => id && !sameId(id, selfUserId));
+  return picked || null;
 };
 
 const isTeamContact = (c) => {
@@ -109,7 +123,7 @@ const ContactList = ({
   }, []);
 
   const handleClick = (contact, threadId = null) => {
-    const partnerId = resolvePartnerId(contact, userId);
+    const partnerId = resolvePartnerId(contact, userId) || partnerFromThreadId(threadId, userId);
     if (!partnerId) return;
 
     const ctx = buildThreadContext(contact);
@@ -120,7 +134,7 @@ const ContactList = ({
 
   const handleContextMenu = (event, contact) => {
     event.preventDefault();
-    const partnerId = resolvePartnerId(contact, userId);
+    const partnerId = resolvePartnerId(contact, userId) || partnerFromThreadId(contact?.threadId, userId);
     if (!partnerId) return;
 
     setContextMenu({
@@ -144,10 +158,10 @@ const ContactList = ({
       const updatedContacts = Array.isArray(prevContacts) ? [...prevContacts] : [];
 
       wsMessages.forEach((msg) => {
-        const partnerId = msg?.userId === userId ? msg?.recipientId : msg?.userId;
+        const partnerId = sameId(msg?.userId, userId) ? msg?.recipientId : msg?.userId;
         if (!partnerId) return;
 
-        const idx = updatedContacts.findIndex((c) => resolvePartnerId(c, userId) === partnerId);
+        const idx = updatedContacts.findIndex((c) => sameId(resolvePartnerId(c, userId), partnerId));
         if (idx === -1) return;
 
         let displayText = msg.text;
@@ -171,10 +185,10 @@ const ContactList = ({
     setContacts?.((prevContacts) => {
       const updatedContacts = Array.isArray(prevContacts) ? [...prevContacts] : [];
 
-      const partnerId = message?.userId === userId ? message?.recipientId : message?.userId;
+      const partnerId = sameId(message?.userId, userId) ? message?.recipientId : message?.userId;
       if (!partnerId) return updatedContacts;
 
-      const index = updatedContacts.findIndex((c) => resolvePartnerId(c, userId) === partnerId);
+      const index = updatedContacts.findIndex((c) => sameId(resolvePartnerId(c, userId), partnerId));
       if (index !== -1) {
         let displayText = message.text;
         if (message.fileUrls && message.fileUrls.length > 0) displayText = "attachment sent";
@@ -258,7 +272,7 @@ const ContactList = ({
         ) : (
           filteredContacts.map((contact, i) => {
             const partnerId = resolvePartnerId(contact, userId) || `${contact?.userId || "u"}-${i}`;
-            const isActive = selectedContactId === partnerId;
+            const isActive = sameId(selectedContactId, partnerId);
 
             return (
               <li

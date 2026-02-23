@@ -8,6 +8,8 @@ const toIso = (v) => {
   return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
 };
 
+const sameId = (a, b) => String(a || "") === String(b || "");
+
 const normalizeWs = (raw) => {
   if (!raw || typeof raw !== "object") return null;
 
@@ -97,7 +99,7 @@ export const useFetchMessages = (userId) => {
       if (!newMessage || !newMessage.id) return;
 
       const partnerId =
-        newMessage.userId === userId ? newMessage.recipientId : newMessage.userId;
+        sameId(newMessage.userId, userId) ? newMessage.recipientId : newMessage.userId;
 
       if (!partnerId) return;
 
@@ -235,7 +237,7 @@ export const useFetchMessages = (userId) => {
               text: msg.content || msg.text || "",
               isAutomated: metadata.isAutomated || false,
               messageType: metadata.messageType || null,
-              isSent: metadata.isAutomated ? false : msg.senderId === userId,
+              isSent: metadata.isAutomated ? false : sameId(msg.senderId, userId),
               createdAt: toIso(msg.createdAt),
               fileUrls: (() => {
                 const at = msg.attachments;
