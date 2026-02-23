@@ -2312,18 +2312,11 @@ export default function HostProperty() {
     () => buildPolicyRulesSnapshot(policyRules),
     [policyRules]
   );
-  const hasOverviewChanges = useMemo(() => {
-    if (!savedOverviewSnapshotRef.current) {
-      return false;
-    }
-    return !areSnapshotsEqual(overviewSnapshot, savedOverviewSnapshotRef.current);
-  }, [overviewSnapshot]);
-  const hasAmenitiesChanges = useMemo(() => {
-    return !areStringArraysEqual(amenityIdsSnapshot, savedAmenityIdsRef.current);
-  }, [amenityIdsSnapshot]);
-  const hasPoliciesChanges = useMemo(() => {
-    return !areSnapshotsEqual(policyRulesSnapshot, savedPolicyRulesRef.current);
-  }, [policyRulesSnapshot]);
+  const hasOverviewChanges = savedOverviewSnapshotRef.current
+    ? !areSnapshotsEqual(overviewSnapshot, savedOverviewSnapshotRef.current)
+    : false;
+  const hasAmenitiesChanges = !areStringArraysEqual(amenityIdsSnapshot, savedAmenityIdsRef.current);
+  const hasPoliciesChanges = !areSnapshotsEqual(policyRulesSnapshot, savedPolicyRulesRef.current);
   const hasPhotoChanges = pendingPhotos.length > 0 || hasPhotoOrderChanges;
   const hasUnsavedChanges = !loading && (hasOverviewChanges || hasAmenitiesChanges || hasPoliciesChanges || hasPhotoChanges);
 
@@ -2640,6 +2633,13 @@ export default function HostProperty() {
         policyRules,
       });
       setForm(normalizedForm);
+      setHostProperties((previous) =>
+        previous.map((accommodation) =>
+          accommodation.id === propertyId
+            ? { ...accommodation, title: normalizedForm.title || "Untitled listing" }
+            : accommodation
+        )
+      );
       savedOverviewSnapshotRef.current = buildOverviewSnapshot(normalizedForm, capacity, address);
       if (selectedTab === "Amenities") {
         savedAmenityIdsRef.current = normalizeAmenityIds(selectedAmenityIds);
