@@ -57,6 +57,43 @@ const DELETE_PROPERTY_REASONS = [
   { id: "other", label: "Other" },
 ];
 
+const resolveStatusLabel = (status) => {
+  if (status === "ACTIVE") {
+    return "Live";
+  }
+  if (status === "ARCHIVED") {
+    return "Archived";
+  }
+  return "Draft";
+};
+
+const resolveStatusDotClass = (status, styleModule) => {
+  if (status === "ACTIVE") {
+    return styleModule.statusDotLive;
+  }
+  if (status === "ARCHIVED") {
+    return styleModule.statusDotArchived;
+  }
+  return styleModule.statusDotDraft;
+};
+
+const resolveOverlayMessage = ({ deletingProperty, saving, savingMessage }) => {
+  if (deletingProperty) {
+    return "Removing listing...";
+  }
+  if (saving) {
+    return savingMessage;
+  }
+  return "Preparing photos...";
+};
+
+const resolveCanSaveChanges = (selectedTab, pendingPhotosCount, hasPhotoOrderChanges) => {
+  if (selectedTab === "Photos") {
+    return pendingPhotosCount > 0 || hasPhotoOrderChanges;
+  }
+  return SAVE_ENABLED_TABS.has(selectedTab);
+};
+
 export default function HostProperty() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -643,25 +680,11 @@ export default function HostProperty() {
     return <HostPropertyLoadingView />;
   }
 
-  const statusLabel =
-    status === "ACTIVE"
-      ? "Live"
-      : status === "ARCHIVED"
-        ? "Archived"
-        : "Draft";
-  const statusDotClass =
-    status === "ACTIVE"
-      ? styles.statusDotLive
-      : status === "ARCHIVED"
-        ? styles.statusDotArchived
-        : styles.statusDotDraft;
+  const statusLabel = resolveStatusLabel(status);
+  const statusDotClass = resolveStatusDotClass(status, styles);
   const displayedPropertyType = capacity.propertyType || "Entire house";
   const savingMessage = SAVING_MESSAGE_BY_TAB[selectedTab] || "Saving property details...";
-  const overlayMessage = deletingProperty
-    ? "Removing listing..."
-    : saving
-      ? savingMessage
-      : "Preparing photos...";
+  const overlayMessage = resolveOverlayMessage({ deletingProperty, saving, savingMessage });
 
   const handlePropertyChange = (event) => {
     const nextPropertyId = event.target.value;
@@ -770,9 +793,7 @@ export default function HostProperty() {
     }
   };
 
-  const canSaveChanges = selectedTab === "Photos"
-    ? pendingPhotos.length > 0 || hasPhotoOrderChanges
-    : SAVE_ENABLED_TABS.has(selectedTab);
+  const canSaveChanges = resolveCanSaveChanges(selectedTab, pendingPhotos.length, hasPhotoOrderChanges);
   const handleBackToListings = () => requestNavigation(navigate.bind(null, "/hostdashboard/listings"));
 
   return (

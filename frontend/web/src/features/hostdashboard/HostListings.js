@@ -158,6 +158,172 @@ function HostListings() {
     }
   };
 
+  const renderListingsContent = () => {
+    if (isLoading) {
+      return (
+        <div className={styles.loader}>
+          <img src={spinner} alt="Loading..." />
+        </div>
+      );
+    }
+
+    if (visibleListings.length === 0) {
+      return (
+        <div className={styles.emptyState}>
+          <p>No listings found in this section.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.cardsGrid}>
+        {visibleListings.map((accommodation, index) => {
+          const propertyId = accommodation?.property?.id || "";
+          const propertyStatus = getListingStatus(accommodation);
+          const statusLabel = getStatusLabel(propertyStatus);
+          const propertyTitle = accommodation?.property?.title || "Untitled listing";
+          const propertyCity = accommodation?.location?.city || "Unknown city";
+          const propertyImage = getListingImage(accommodation);
+          const isBusy = processingPropertyId === propertyId;
+
+          return (
+            <div
+              key={propertyId || index}
+              className={styles.dashboardCard}
+              onClick={() => {
+                if (propertyStatus === "ACTIVE") {
+                  navigate(`/listingdetails?ID=${propertyId}`);
+                  return;
+                }
+                navigate(`/hostdashboard/property?ID=${propertyId}`);
+              }}
+            >
+              {propertyImage ? (
+                <img src={propertyImage} alt="Listing" className={styles.imgListedDashboard} />
+              ) : (
+                <div className={styles.imgListedDashboardFallback}>No image</div>
+              )}
+
+              <div className={styles.accommodationText}>
+                <p className={styles.accommodationTitle}>{propertyTitle}</p>
+                <p className={styles.accommodationLocation}>{propertyCity}</p>
+              </div>
+
+              <div className={styles.accommodationDetails}>
+                <span
+                  className={`${styles.status} ${propertyStatus === "ARCHIVED" ? styles.isArchived : ""}`}
+                >
+                  {statusLabel}
+                </span>
+                <span>On: {DateFormatterDD_MM_YYYY(accommodation?.property?.createdAt)}</span>
+              </div>
+
+              <div className={styles.buttonBox}>
+                {propertyStatus === "ACTIVE" ? (
+                  <>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        navigate(`/listingdetails?ID=${propertyId}`);
+                      }}
+                      disabled={isBusy}
+                    >
+                      Details
+                    </button>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        navigate(`/hostdashboard/property?ID=${propertyId}`);
+                      }}
+                      disabled={isBusy}
+                    >
+                      Edit
+                    </button>
+                  </>
+                ) : null}
+
+                {propertyStatus === "INACTIVE" ? (
+                  <>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        changeListingStatus({
+                          propertyId,
+                          nextStatus: "ACTIVE",
+                          successMessage: "Listing set to Live.",
+                        });
+                      }}
+                      disabled={isBusy}
+                    >
+                      Set as live
+                    </button>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        navigate(`/hostdashboard/property?ID=${propertyId}`);
+                      }}
+                      disabled={isBusy}
+                    >
+                      Edit
+                    </button>
+                  </>
+                ) : null}
+
+                {propertyStatus === "ARCHIVED" ? (
+                  <>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        changeListingStatus({
+                          propertyId,
+                          nextStatus: "INACTIVE",
+                          successMessage: "Listing restored to Draft.",
+                        });
+                      }}
+                      disabled={isBusy}
+                    >
+                      Set as draft
+                    </button>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        changeListingStatus({
+                          propertyId,
+                          nextStatus: "ACTIVE",
+                          successMessage: "Listing restored to Live.",
+                        });
+                      }}
+                      disabled={isBusy}
+                    >
+                      Set as live
+                    </button>
+                    <button
+                      className={styles.greenBtn}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        navigate(`/hostdashboard/property?ID=${propertyId}`);
+                      }}
+                      disabled={isBusy}
+                    >
+                      Edit
+                    </button>
+                  </>
+                ) : null}
+
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <main className="page-Host">
       <p className="page-Host-title">Listings</p>
@@ -197,161 +363,7 @@ function HostListings() {
 
                   <p className={styles.header}>{LISTING_FILTERS.find((item) => item.key === activeFilter)?.label}</p>
 
-                  {isLoading ? (
-                    <div className={styles.loader}>
-                      <img src={spinner} alt="Loading..." />
-                    </div>
-                  ) : visibleListings.length > 0 ? (
-                    <div className={styles.cardsGrid}>
-                      {visibleListings.map((accommodation, index) => {
-                        const propertyId = accommodation?.property?.id || "";
-                        const propertyStatus = getListingStatus(accommodation);
-                        const statusLabel = getStatusLabel(propertyStatus);
-                        const propertyTitle = accommodation?.property?.title || "Untitled listing";
-                        const propertyCity = accommodation?.location?.city || "Unknown city";
-                        const propertyImage = getListingImage(accommodation);
-                        const isBusy = processingPropertyId === propertyId;
-
-                        return (
-                          <div
-                            key={propertyId || index}
-                            className={styles.dashboardCard}
-                            onClick={() => {
-                              if (propertyStatus === "ACTIVE") {
-                                navigate(`/listingdetails?ID=${propertyId}`);
-                                return;
-                              }
-                              navigate(`/hostdashboard/property?ID=${propertyId}`);
-                            }}
-                          >
-                            {propertyImage ? (
-                              <img src={propertyImage} alt="Listing" className={styles.imgListedDashboard} />
-                            ) : (
-                              <div className={styles.imgListedDashboardFallback}>No image</div>
-                            )}
-
-                            <div className={styles.accommodationText}>
-                              <p className={styles.accommodationTitle}>{propertyTitle}</p>
-                              <p className={styles.accommodationLocation}>{propertyCity}</p>
-                            </div>
-
-                            <div className={styles.accommodationDetails}>
-                              <span
-                                className={`${styles.status} ${propertyStatus === "ARCHIVED" ? styles.isArchived : ""}`}
-                              >
-                                {statusLabel}
-                              </span>
-                              <span>On: {DateFormatterDD_MM_YYYY(accommodation?.property?.createdAt)}</span>
-                            </div>
-
-                            <div className={styles.buttonBox}>
-                              {propertyStatus === "ACTIVE" ? (
-                                <>
-                                  <button
-                                    className={styles.greenBtn}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      navigate(`/listingdetails?ID=${propertyId}`);
-                                    }}
-                                    disabled={isBusy}
-                                  >
-                                    Details
-                                  </button>
-                                  <button
-                                    className={styles.greenBtn}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      navigate(`/hostdashboard/property?ID=${propertyId}`);
-                                    }}
-                                    disabled={isBusy}
-                                  >
-                                    Edit
-                                  </button>
-                                </>
-                              ) : null}
-
-                              {propertyStatus === "INACTIVE" ? (
-                                <>
-                                  <button
-                                    className={styles.greenBtn}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      changeListingStatus({
-                                        propertyId,
-                                        nextStatus: "ACTIVE",
-                                        successMessage: "Listing set to Live.",
-                                      });
-                                    }}
-                                    disabled={isBusy}
-                                  >
-                                    Set as live
-                                  </button>
-                                  <button
-                                    className={styles.greenBtn}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      navigate(`/hostdashboard/property?ID=${propertyId}`);
-                                    }}
-                                    disabled={isBusy}
-                                  >
-                                    Edit
-                                  </button>
-                                </>
-                              ) : null}
-
-                              {propertyStatus === "ARCHIVED" ? (
-                                <>
-                                  <button
-                                    className={styles.greenBtn}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      changeListingStatus({
-                                        propertyId,
-                                        nextStatus: "INACTIVE",
-                                        successMessage: "Listing restored to Draft.",
-                                      });
-                                    }}
-                                    disabled={isBusy}
-                                  >
-                                    Set as draft
-                                  </button>
-                                  <button
-                                    className={styles.greenBtn}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      changeListingStatus({
-                                        propertyId,
-                                        nextStatus: "ACTIVE",
-                                        successMessage: "Listing restored to Live.",
-                                      });
-                                    }}
-                                    disabled={isBusy}
-                                  >
-                                    Set as live
-                                  </button>
-                                  <button
-                                    className={styles.greenBtn}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      navigate(`/hostdashboard/property?ID=${propertyId}`);
-                                    }}
-                                    disabled={isBusy}
-                                  >
-                                    Edit
-                                  </button>
-                                </>
-                              ) : null}
-
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className={styles.emptyState}>
-                      <p>No listings found in this section.</p>
-                    </div>
-                  )}
+                  {renderListingsContent()}
                 </section>
               </div>
             </div>

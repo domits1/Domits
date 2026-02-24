@@ -97,7 +97,7 @@ export class PropertyService {
 
     await this.propertyRepository.updatePropertyStatus(propertyId, normalizedStatus, metadata);
     const updatedProperty = await this.getBasePropertyInfo(propertyId);
-    if (!updatedProperty || updatedProperty.status !== normalizedStatus) {
+    if (updatedProperty?.status !== normalizedStatus) {
       throw new DatabaseException("Property status update was not completed.");
     }
     return updatedProperty;
