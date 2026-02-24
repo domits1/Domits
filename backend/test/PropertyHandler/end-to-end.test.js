@@ -50,6 +50,20 @@ describe("End-to-end tests", () => {
             expect(response.statusCode).toBe(403);
         });
 
+        it("should activate property", async () => {
+            const response = await handler({
+                httpMethod: "PATCH",
+                body: JSON.stringify({
+                    property: runtimePropertyId
+                }),
+                headers: {
+                    Authorization: await getHostAuthToken()
+                }
+            });
+
+            expect(response.statusCode).toBe(204);
+        });
+
         it("should throw a already active property exception", async () => {
             const response = await handler({
                 httpMethod: "PATCH",
