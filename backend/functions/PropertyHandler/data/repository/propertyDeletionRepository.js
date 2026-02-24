@@ -1,40 +1,145 @@
 import Database from "database";
 import { Booking } from "database/models/Booking";
-import { Guest_Favorite } from "database/models/Guest_Favorite";
-import { Property } from "database/models/Property";
-import { Property_Amenity } from "database/models/Property_Amenity";
-import { Property_Availability } from "database/models/Property_Availability";
-import { Property_Availability_Restriction } from "database/models/Property_Availability_Restriction";
-import { Property_Check_In } from "database/models/Property_Check_In";
-import { Property_Draft } from "database/models/Property_Draft";
-import { Property_General_Detail } from "database/models/Property_General_Detail";
-import { Property_Location } from "database/models/Property_Location";
-import { Property_Pricing } from "database/models/Property_Pricing";
-import { Property_Rule } from "database/models/Property_Rule";
-import { Property_Technical_Details } from "database/models/Property_Technical_Details";
-import { Property_Test_Status } from "database/models/Property_Test_Status";
-import { Property_Type } from "database/models/Property_Type";
-import { UnifiedMessage } from "database/models/UnifiedMessage";
-import { UnifiedThread } from "database/models/UnifiedThread";
 
 export class PropertyDeletionRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
   }
 
-  async deleteFromOptionalPropertyScopedTable(transactionManager, tableName, propertyColumn, propertyId) {
+  quoteIdentifier(identifier) {
+    return `"${String(identifier).replace(/"/g, '""')}"`;
+  }
+
+  quoteQualifiedName(qualifiedName) {
+    return String(qualifiedName)
+      .split(".")
+      .map((part) => this.quoteIdentifier(part))
+      .join(".");
+  }
+
+  parseQualifiedName(tableName) {
+    const normalized = String(tableName || "").trim();
+    const [maybeSchema, maybeTable] = normalized.split(".");
+    if (maybeTable) {
+      return { schema: maybeSchema, table: maybeTable };
+    }
+    return { schema: null, table: maybeSchema };
+  }
+
+  async tableExists(transactionManager, tableName) {
     const tableExistsResult = await transactionManager.query(
       "SELECT to_regclass($1) AS table_name",
       [tableName]
     );
-    const tableExists = Array.isArray(tableExistsResult) && Boolean(tableExistsResult[0]?.table_name);
-    if (!tableExists) {
+    return Array.isArray(tableExistsResult) && Boolean(tableExistsResult[0]?.table_name);
+  }
+
+  async findExistingColumn(transactionManager, tableName, columnCandidates) {
+    const { schema, table } = this.parseQualifiedName(tableName);
+    const normalizedCandidates = Array.from(
+      new Set((Array.isArray(columnCandidates) ? columnCandidates : []).map((candidate) => String(candidate)))
+    );
+
+    if (!table || normalizedCandidates.length === 0) {
+      return null;
+    }
+
+    const normalizedCandidatesLower = normalizedCandidates.map((candidate) => candidate.toLowerCase());
+    const columnPlaceholders = normalizedCandidatesLower.map((_, index) => `$${index + 2}`).join(", ");
+    const params = [table, ...normalizedCandidatesLower];
+    let schemaCondition = "table_schema = ANY(current_schemas(true))";
+
+    if (schema) {
+      params.push(schema);
+      schemaCondition = `table_schema = $${params.length}`;
+    }
+
+    const result = await transactionManager.query(
+      `SELECT column_name
+       FROM information_schema.columns
+       WHERE table_name = $1
+         AND ${schemaCondition}
+         AND lower(column_name) IN (${columnPlaceholders})`,
+      params
+    );
+
+    const rows = Array.isArray(result) ? result : [];
+    const foundByLower = new Map();
+    rows.forEach((row) => {
+      if (row?.column_name) {
+        foundByLower.set(String(row.column_name).toLowerCase(), String(row.column_name));
+      }
+    });
+
+    for (const candidate of normalizedCandidatesLower) {
+      const match = foundByLower.get(candidate);
+      if (match) {
+        return match;
+      }
+    }
+
+    return null;
+  }
+
+  async deleteByScopedColumnIfExists(transactionManager, tableName, columnCandidates, value) {
+    const exists = await this.tableExists(transactionManager, tableName);
+    if (!exists) {
       return;
     }
+
+    const columnName = await this.findExistingColumn(transactionManager, tableName, columnCandidates);
+    if (!columnName) {
+      return;
+    }
+
     await transactionManager.query(
-      `DELETE FROM ${tableName} WHERE ${propertyColumn} = $1`,
-      [propertyId]
+      `DELETE FROM ${this.quoteQualifiedName(tableName)} WHERE ${this.quoteIdentifier(columnName)} = $1`,
+      [value]
     );
+  }
+
+  async deleteRowsByScopedIdsIfExists(transactionManager, tableName, columnCandidates, values) {
+    const ids = (Array.isArray(values) ? values : []).filter(Boolean);
+    if (ids.length === 0) {
+      return;
+    }
+
+    const exists = await this.tableExists(transactionManager, tableName);
+    if (!exists) {
+      return;
+    }
+
+    const columnName = await this.findExistingColumn(transactionManager, tableName, columnCandidates);
+    if (!columnName) {
+      return;
+    }
+
+    await transactionManager.query(
+      `DELETE FROM ${this.quoteQualifiedName(tableName)} WHERE ${this.quoteIdentifier(columnName)} = ANY($1)`,
+      [ids]
+    );
+  }
+
+  async getScopedIds(transactionManager, tableName, idColumnCandidates, filterColumnCandidates, filterValue) {
+    const exists = await this.tableExists(transactionManager, tableName);
+    if (!exists) {
+      return [];
+    }
+
+    const idColumn = await this.findExistingColumn(transactionManager, tableName, idColumnCandidates);
+    const filterColumn = await this.findExistingColumn(transactionManager, tableName, filterColumnCandidates);
+    if (!idColumn || !filterColumn) {
+      return [];
+    }
+
+    const result = await transactionManager.query(
+      `SELECT ${this.quoteIdentifier(idColumn)} AS id
+       FROM ${this.quoteQualifiedName(tableName)}
+       WHERE ${this.quoteIdentifier(filterColumn)} = $1`,
+      [filterValue]
+    );
+
+    return (Array.isArray(result) ? result : []).map((row) => row?.id).filter(Boolean);
   }
 
   async getBookingCountByPropertyId(propertyId) {
@@ -48,167 +153,78 @@ export class PropertyDeletionRepository {
   }
 
   async deleteUnifiedMessagingRows(transactionManager, propertyId) {
-    let threadIds = [];
-    try {
-      const threads = await transactionManager
-        .getRepository(UnifiedThread)
-        .createQueryBuilder("thread")
-        .select("thread.id", "id")
-        .where("thread.propertyId = :propertyId", { propertyId })
-        .getRawMany();
-      threadIds = Array.isArray(threads) ? threads.map((thread) => thread.id).filter(Boolean) : [];
-    } catch (error) {
-      if (error?.code === "42P01" || error?.code === "42703") {
-        return;
-      }
-      throw error;
-    }
+    const threadIds = await this.getScopedIds(
+      transactionManager,
+      "unified_thread",
+      ["id"],
+      ["propertyid", "property_id", "propertyId"],
+      propertyId
+    );
 
-    if (threadIds.length > 0) {
-      try {
-        await transactionManager
-          .createQueryBuilder()
-          .delete()
-          .from(UnifiedMessage)
-          .where("threadId IN (:...threadIds)", { threadIds })
-          .execute();
-      } catch (error) {
-        if (error?.code !== "42P01" && error?.code !== "42703") {
-          throw error;
-        }
-      }
-    }
+    await this.deleteRowsByScopedIdsIfExists(
+      transactionManager,
+      "unified_message",
+      ["threadid", "thread_id", "threadId"],
+      threadIds
+    );
 
-    try {
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(UnifiedThread)
-        .where("propertyId = :propertyId", { propertyId })
-        .execute();
-    } catch (error) {
-      if (error?.code !== "42P01" && error?.code !== "42703") {
-        throw error;
-      }
-    }
+    await this.deleteByScopedColumnIfExists(
+      transactionManager,
+      "unified_thread",
+      ["propertyid", "property_id", "propertyId"],
+      propertyId
+    );
   }
 
   async deletePropertyById(propertyId) {
     const client = await Database.getInstance();
     await client.transaction(async (transactionManager) => {
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Guest_Favorite)
-        .where("propertyid = :propertyId", { propertyId })
-        .execute();
+      const propertyScopedTables = [
+        { tableName: "guest_favorite", propertyColumns: ["propertyid", "property_id", "propertyId"] },
+        { tableName: "property_availability", propertyColumns: ["property_id"] },
+        { tableName: "property_availabilityrestriction", propertyColumns: ["property_id"] },
+        { tableName: "property_amenity", propertyColumns: ["property_id"] },
+        { tableName: "property_checkin", propertyColumns: ["property_id"] },
+        { tableName: "property_generaldetail", propertyColumns: ["property_id"] },
+        { tableName: "property_location", propertyColumns: ["property_id"] },
+        { tableName: "property_pricing", propertyColumns: ["property_id"] },
+        { tableName: "property_rule", propertyColumns: ["property_id"] },
+        { tableName: "property_technicaldetails", propertyColumns: ["property_id"] },
+        { tableName: "property_type", propertyColumns: ["property_id"] },
+        { tableName: "property_test_status", propertyColumns: ["property_id"] },
+      ];
 
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Availability)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Availability_Restriction)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Amenity)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Check_In)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_General_Detail)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Location)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Pricing)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Rule)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Technical_Details)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Type)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
-
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Test_Status)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
+      for (const tableConfig of propertyScopedTables) {
+        await this.deleteByScopedColumnIfExists(
+          transactionManager,
+          tableConfig.tableName,
+          tableConfig.propertyColumns,
+          propertyId
+        );
+      }
 
       await this.deleteUnifiedMessagingRows(transactionManager, propertyId);
 
-      await this.deleteFromOptionalPropertyScopedTable(
+      await this.deleteByScopedColumnIfExists(
         transactionManager,
-        "main.property_calendar_price",
-        "property_id",
+        "property_calendar_price",
+        ["property_id"],
         propertyId
       );
 
-      await this.deleteFromOptionalPropertyScopedTable(
+      await this.deleteByScopedColumnIfExists(
         transactionManager,
-        "main.property_ical_source",
-        "property_id",
+        "property_ical_source",
+        ["property_id"],
         propertyId
       );
 
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property_Draft)
-        .where("property_id = :propertyId", { propertyId })
-        .execute();
+      await this.deleteByScopedColumnIfExists(transactionManager, "property_draft", ["property_id"], propertyId);
 
-      await transactionManager
-        .createQueryBuilder()
-        .delete()
-        .from(Property)
-        .where("id = :propertyId", { propertyId })
-        .execute();
+      await transactionManager.query(
+        `DELETE FROM ${this.quoteQualifiedName("property")} WHERE ${this.quoteIdentifier("id")} = $1`,
+        [propertyId]
+      );
     });
   }
 }
