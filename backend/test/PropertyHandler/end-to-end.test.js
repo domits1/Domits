@@ -93,14 +93,6 @@ describe("End-to-end tests", () => {
         });
     });
 
-    describe("Delete request", () => {
-        it("should handle a DELETE request", async () => {
-            const response = await handler(await getDeleteEvent());
-
-            expect(response.statusCode).toBe(204);
-        });
-    });
-
     describe("Host dashboard requests", () => {
       it("should handle GET all owned properties", async () => {
         const response = await handler(await getHostDashboardAllEvent());
@@ -156,5 +148,13 @@ describe("End-to-end tests", () => {
         expect(response.statusCode).toBe(200);
         expect(data.property.id).toBe("42a335b3-e72e-49ee-bc8d-ed61e9bd35e5");
       });
+    });
+
+    describe("Delete request", () => {
+        it("should handle a DELETE request", async () => {
+            const response = await handler(await getDeleteEvent());
+
+            expect(response.statusCode).toBe(204);
+        });
     });
 });
