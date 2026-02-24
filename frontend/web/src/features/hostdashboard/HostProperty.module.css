@@ -139,13 +139,100 @@
   box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.12);
 }
 
-.listingStatus {
-  margin: 0;
+.listingStatusControl {
+  position: relative;
+  min-width: 170px;
+}
+
+.listingStatusTrigger {
+  width: 100%;
+  border: 1px solid #d7d7d7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111111;
+  font-size: 15px;
+  line-height: 1.2;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  color: #232323;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.listingStatusTrigger:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.listingStatusTrigger:focus {
+  border-color: #0d9813;
+  box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.12);
+}
+
+.listingStatusValue {
+  color: #111111;
+  font-weight: 600;
+}
+
+.listingStatusIndicators {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.listingStatusChevron {
+  color: #5a5a5a;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.listingStatusMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  width: 100%;
+  min-width: 170px;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid #d7d7d7;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.listingStatusOption {
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #1b1b1b;
+  font-size: 14px;
+  line-height: 1.2;
+  text-align: left;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.listingStatusOptionLabel {
+  font-weight: 600;
+}
+
+.listingStatusOption:hover {
+  background: #f2f7f2;
+}
+
+.listingStatusOptionActive {
+  background: #ebf6ec;
 }
 
 .statusDot {
@@ -1628,8 +1715,14 @@
     font-size: 17px;
   }
 
-  .listingStatus {
-    font-size: 15px;
+  .listingStatusControl {
+    width: 100%;
+  }
+
+  .listingStatusTrigger,
+  .listingStatusMenu {
+    width: 100%;
+    min-width: 0;
   }
 
   .sectionTitle {

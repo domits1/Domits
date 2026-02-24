@@ -59,13 +59,6 @@ const LISTING_ACTIONS = {
       nextStatus: "INACTIVE",
       successMessage: "Listing restored to Draft.",
     },
-    {
-      id: "set-live",
-      label: "Set as live",
-      kind: "status",
-      nextStatus: "ACTIVE",
-      successMessage: "Listing restored to Live.",
-    },
     { id: "edit", label: "Edit", kind: "edit" },
   ],
 };
