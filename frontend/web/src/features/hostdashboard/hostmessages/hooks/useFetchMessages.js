@@ -156,7 +156,6 @@ export const useFetchMessages = (userId) => {
         const data = await res.json().catch(() => null);
         const threads = Array.isArray(data) ? data : [];
 
-        // pick most recent by lastMessageAt/updatedAt/createdAt
         const candidates = threads.filter((t) => {
           const a = String(t?.hostId || "");
           const b = String(t?.guestId || "");
@@ -193,7 +192,6 @@ export const useFetchMessages = (userId) => {
       setActiveThreadId(threadId || null);
       setError(null);
 
-      // Cache key MUST prefer threadId to prevent cross-thread mixing
       const cacheKey = threadId || recipientId;
       const cached = cacheRef.current[cacheKey];
       if (Array.isArray(cached) && cached.length > 0) {
@@ -278,7 +276,6 @@ export const useFetchMessages = (userId) => {
 
           const sorted = transformed.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-          // Store under partner AND thread
           setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: sorted }));
           setMessagesByThread((prev) => ({ ...prev, [useThreadId]: sorted }));
           cacheRef.current[recipientId] = sorted;
@@ -323,7 +320,6 @@ export const useFetchMessages = (userId) => {
     fetchMessages,
     addNewMessage,
 
-    // expose stores for ChatScreen merge logic
     messagesByRecipient,
     messagesByThread,
   };

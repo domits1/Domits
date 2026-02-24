@@ -214,7 +214,6 @@ const useFetchContacts = (userId, role) => {
               propertyId = bookingInfo?.propertyId || propertyId;
               propertyTitle = bookingInfo?.propertyTitle || null;
             } catch (e) {
-              // ok
             }
 
             return {

@@ -96,7 +96,6 @@ const ContactList = ({
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactKey: null });
 
-  // avoid repeatedly fetching same new user info
   const [hydratingIds, setHydratingIds] = useState(() => new Set());
 
   useEffect(() => {
@@ -147,7 +146,6 @@ const ContactList = ({
     setContextMenu({ visible: false, x: 0, y: 0, contactKey: null });
   };
 
-  // ✅ REALTIME: update existing contact OR create a new contact row immediately
   useEffect(() => {
     if (!wsMessages?.length) return;
 
@@ -161,7 +159,6 @@ const ContactList = ({
     let displayText = latest.text;
     if (latest.fileUrls && latest.fileUrls.length > 0) displayText = "Attachment";
 
-    // 1) Insert/update synchronously
     setContacts?.((prevContacts) => {
       const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
 
@@ -176,7 +173,6 @@ const ContactList = ({
           latestMessage: { ...latest, text: displayText },
         };
       } else {
-        // Create a placeholder contact so it appears instantly without refresh
         updated.unshift({
           partnerId,
           recipientId: partnerId,
@@ -196,7 +192,6 @@ const ContactList = ({
       return updated;
     });
 
-    // 2) Hydrate user name/profile for new contacts (async, safe)
     const hydrateKey = String(partnerId);
     if (!hydratingIds.has(hydrateKey)) {
       setHydratingIds((prev) => {
@@ -232,7 +227,6 @@ const ContactList = ({
     }
   }, [wsMessages, setContacts, userId, hydratingIds]);
 
-  // keep existing local-send updating logic
   useEffect(() => {
     if (!message) return;
 
