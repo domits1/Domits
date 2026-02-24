@@ -26,6 +26,9 @@ const handlePatch = async (event) => {
   if (isPath(event, "/property/images/order")) {
     return controller.updateImageOrder(event);
   }
+  if (isPath(event, "/property/overview")) {
+    return controller.updatePropertyOverview(event);
+  }
   return controller.activateProperty(event);
 };
 
@@ -64,6 +67,9 @@ const handleGet = async (event) => {
 };
 
 const handleDelete = async (event) => {
+  if (isPath(event, "/property/images")) {
+    return controller.deletePropertyImage(event);
+  }
   if (isPath(event, "/property/draft")) {
     return controller.deleteDraft(event);
   }

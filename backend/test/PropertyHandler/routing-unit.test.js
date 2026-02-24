@@ -26,6 +26,42 @@ describe("Routing unit tests", () => {
         expect(response.body).toBe("Deleted");
     });
 
+    it("should handle a DELETE request for property image", async () => {
+        jest.spyOn(PropertyController.prototype, "deletePropertyImage").mockResolvedValue({statusCode: 204});
+
+        const event = {
+            httpMethod: "DELETE",
+            resource: "/property/images",
+        };
+        const response = await handler(event);
+
+        expect(response.statusCode).toBe(204);
+    });
+
+    it("should handle a PATCH request for property overview", async () => {
+        jest.spyOn(PropertyController.prototype, "updatePropertyOverview").mockResolvedValue({statusCode: 204});
+
+        const event = {
+            httpMethod: "PATCH",
+            resource: "/property/overview",
+        };
+        const response = await handler(event);
+
+        expect(response.statusCode).toBe(204);
+    });
+
+    it("should handle a PATCH request for property activation", async () => {
+        jest.spyOn(PropertyController.prototype, "activateProperty").mockResolvedValue({statusCode: 204});
+
+        const event = {
+            httpMethod: "PATCH",
+            resource: "/property",
+        };
+        const response = await handler(event);
+
+        expect(response.statusCode).toBe(204);
+    });
+
     it("should handle a GET request for all properties on hostDashboard", async () => {
         jest.spyOn(PropertyController.prototype, 'getFullOwnedProperties').mockResolvedValue({statusCode: 200});
 
