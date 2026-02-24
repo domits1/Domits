@@ -10,6 +10,11 @@ const hostPropertyOptionShape = PropTypes.shape({
   status: PropTypes.string,
 });
 
+const deleteReasonShape = PropTypes.shape({
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+});
+
 export function HostPropertyLoadingView() {
   return (
     <main className="page-Host">
@@ -54,6 +59,146 @@ export function HostPropertyUnsavedChangesModal({ open, onStay, onLeave }) {
           </button>
           <button type="button" className={styles.unsavedLeaveButton} onClick={onLeave}>
             Leave
+          </button>
+        </div>
+      </section>
+    </dialog>
+  );
+}
+
+export function HostPropertyDeleteReasonsModal({
+  open,
+  reasons,
+  selectedReasonIds,
+  onToggleReason,
+  onClose,
+  onNext,
+  submitting = false,
+}) {
+  if (!open) {
+    return null;
+  }
+
+  const selectedReasonIdSet = new Set(selectedReasonIds);
+
+  return (
+    <dialog
+      open
+      className={styles.deletePropertyReasonsOverlay}
+      aria-labelledby="delete-property-reasons-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <section className={styles.deletePropertyReasonsModal}>
+        <div className={styles.deletePropertyReasonsHeader}>
+          <h4 id="delete-property-reasons-title" className={styles.deletePropertyReasonsTitle}>
+            Let us know why you&apos;re deleting this property
+          </h4>
+          <button
+            type="button"
+            className={styles.deletePropertyReasonsCloseButton}
+            onClick={onClose}
+            aria-label="Close"
+            disabled={submitting}
+          >
+            x
+          </button>
+        </div>
+
+        <p className={styles.deletePropertyReasonsSubtitle}>Choose all that apply.</p>
+
+        <div className={styles.deletePropertyReasonsList}>
+          {reasons.map((reason) => {
+            const isChecked = selectedReasonIdSet.has(reason.id);
+            return (
+              <label key={reason.id} className={styles.deletePropertyReasonRow}>
+                <input
+                  type="checkbox"
+                  className={styles.deletePropertyReasonCheckbox}
+                  checked={isChecked}
+                  onChange={() => onToggleReason(reason.id)}
+                  disabled={submitting}
+                />
+                <span>{reason.label}</span>
+              </label>
+            );
+          })}
+        </div>
+
+        <div className={styles.deletePropertyReasonsActions}>
+          <button
+            type="button"
+            className={styles.deletePropertyReasonsCancelButton}
+            onClick={onClose}
+            disabled={submitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.deletePropertyReasonsNextButton}
+            onClick={onNext}
+            disabled={submitting}
+          >
+            Next
+          </button>
+        </div>
+      </section>
+    </dialog>
+  );
+}
+
+export function HostPropertyDeleteConfirmModal({ open, onBack, onCancel, onConfirm, submitting = false }) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <dialog
+      open
+      className={styles.deletePropertyConfirmOverlay}
+      aria-labelledby="delete-property-confirm-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onCancel();
+      }}
+    >
+      <section className={styles.deletePropertyConfirmModal}>
+        <button
+          type="button"
+          className={styles.deletePropertyConfirmBackButton}
+          onClick={onBack}
+          aria-label="Back"
+          disabled={submitting}
+        >
+          Back
+        </button>
+
+        <h4 id="delete-property-confirm-title" className={styles.deletePropertyConfirmTitle}>
+          Remove this listing?
+        </h4>
+        <p className={styles.deletePropertyConfirmDescription}>
+          This is permanent - you will no longer be able to find or edit this listing.
+        </p>
+
+        <div className={styles.deletePropertyConfirmActions}>
+          <button
+            type="button"
+            className={styles.deletePropertyConfirmRemoveButton}
+            onClick={onConfirm}
+            disabled={submitting}
+          >
+            {submitting ? "Removing..." : "Yes, remove"}
+          </button>
+          <button
+            type="button"
+            className={styles.deletePropertyConfirmCancelButton}
+            onClick={onCancel}
+            disabled={submitting}
+          >
+            Cancel
           </button>
         </div>
       </section>
@@ -147,6 +292,24 @@ HostPropertyUnsavedChangesModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onStay: PropTypes.func.isRequired,
   onLeave: PropTypes.func.isRequired,
+};
+
+HostPropertyDeleteReasonsModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  reasons: PropTypes.arrayOf(deleteReasonShape).isRequired,
+  selectedReasonIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onToggleReason: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onNext: PropTypes.func.isRequired,
+  submitting: PropTypes.bool,
+};
+
+HostPropertyDeleteConfirmModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onBack: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  submitting: PropTypes.bool,
 };
 
 HostPropertyTabs.propTypes = {

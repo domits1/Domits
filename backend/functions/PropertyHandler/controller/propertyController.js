@@ -967,10 +967,20 @@ export class PropertyController {
     // -------------------------
     async delete(event) {
         try {
-            const accessToken = event.headers.Authorization;
-            const eventBody = JSON.parse(event.body);
-            const propertyId = eventBody.property;
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId || eventBody.property;
+
+            if (!propertyId || typeof propertyId !== "string") {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            await this.propertyService.deleteProperty(propertyId);
             return {
                 statusCode: 204,
                 headers: responseHeaders,

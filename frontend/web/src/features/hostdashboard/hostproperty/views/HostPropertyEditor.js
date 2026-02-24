@@ -6,6 +6,8 @@ import styles from "../../HostProperty.module.css";
 import amenitiesCatalogue from "../../../../store/amenities";
 import {
   HostPropertyActions,
+  HostPropertyDeleteConfirmModal,
+  HostPropertyDeleteReasonsModal,
   HostPropertyListingSummary,
   HostPropertyLoadingView,
   HostPropertyTabs,
@@ -16,6 +18,7 @@ import {
   HostPropertyTabContent,
 } from "../components/HostPropertyTabContent";
 import {
+  deletePropertyListing,
   deletePropertyPhoto,
   fetchPropertyAndListings,
   savePropertyChanges,
@@ -44,6 +47,15 @@ import {
   resolveDeletePhotoErrorMessage,
   resolveSaveErrorMessage,
 } from "../utils/hostPropertyUtils";
+
+const DELETE_PROPERTY_REASONS = [
+  { id: "cannot-host", label: "I am no longer able to host." },
+  { id: "not-ready", label: "I am not ready to host right now." },
+  { id: "other-platform", label: "I found another platform to list on." },
+  { id: "expected-more", label: "I expected to make more money." },
+  { id: "circumstances-changed", label: "My circumstances have changed." },
+  { id: "other", label: "Other" },
+];
 
 export default function HostProperty() {
   const navigate = useNavigate();
@@ -90,7 +102,11 @@ export default function HostProperty() {
   const [photoDropTargetId, setPhotoDropTargetId] = useState(null);
   const [photoToDelete, setPhotoToDelete] = useState(null);
   const [deletingPhoto, setDeletingPhoto] = useState(false);
+  const [deletingProperty, setDeletingProperty] = useState(false);
   const [unsavedChangesModalOpen, setUnsavedChangesModalOpen] = useState(false);
+  const [deletePropertyReasonsModalOpen, setDeletePropertyReasonsModalOpen] = useState(false);
+  const [deletePropertyConfirmModalOpen, setDeletePropertyConfirmModalOpen] = useState(false);
+  const [selectedDeletePropertyReasonIds, setSelectedDeletePropertyReasonIds] = useState([]);
   const savedOverviewSnapshotRef = useRef(null);
   const savedAmenityIdsRef = useRef([]);
   const savedPolicyRulesRef = useRef(buildPolicyRulesSnapshot(createInitialPolicyRules()));
@@ -664,8 +680,75 @@ export default function HostProperty() {
     }));
   };
 
+  const resetDeletePropertyFlow = () => {
+    setDeletePropertyReasonsModalOpen(false);
+    setDeletePropertyConfirmModalOpen(false);
+    setSelectedDeletePropertyReasonIds([]);
+  };
+
   const handleDeletePropertyClick = () => {
-    toast.info("Delete property flow will be enabled in the dedicated delete release.");
+    if (deletingProperty) {
+      return;
+    }
+    setDeletePropertyReasonsModalOpen(true);
+  };
+
+  const toggleDeletePropertyReason = (reasonId) => {
+    setSelectedDeletePropertyReasonIds((previous) =>
+      previous.includes(reasonId)
+        ? previous.filter((value) => value !== reasonId)
+        : [...previous, reasonId]
+    );
+  };
+
+  const handleDeletePropertyReasonsNext = () => {
+    if (deletingProperty) {
+      return;
+    }
+    setDeletePropertyReasonsModalOpen(false);
+    setDeletePropertyConfirmModalOpen(true);
+  };
+
+  const handleDeletePropertyConfirmBack = () => {
+    if (deletingProperty) {
+      return;
+    }
+    setDeletePropertyConfirmModalOpen(false);
+    setDeletePropertyReasonsModalOpen(true);
+  };
+
+  const handleDeletePropertyConfirm = async () => {
+    if (deletingProperty) {
+      return;
+    }
+
+    setDeletingProperty(true);
+    setError("");
+
+    let shouldResetDeletingState = true;
+    try {
+      await deletePropertyListing({
+        propertyId,
+        reasonIds: selectedDeletePropertyReasonIds,
+      });
+      toast.success("Listing deleted successfully.");
+      resetDeletePropertyFlow();
+      bypassUnsavedGuardRef.current = true;
+      shouldResetDeletingState = false;
+      navigate("/hostdashboard/listings");
+      setTimeout(() => {
+        bypassUnsavedGuardRef.current = false;
+      }, 0);
+    } catch (deleteError) {
+      console.error(deleteError);
+      const deleteErrorMessage = deleteError?.message || "Failed to delete listing.";
+      setError(deleteErrorMessage);
+      toast.error(deleteErrorMessage);
+    } finally {
+      if (shouldResetDeletingState) {
+        setDeletingProperty(false);
+      }
+    }
   };
 
   const canSaveChanges = selectedTab === "Photos"
@@ -752,6 +835,22 @@ export default function HostProperty() {
             open={unsavedChangesModalOpen}
             onStay={stayOnUnsavedChanges}
             onLeave={leaveWithUnsavedChanges}
+          />
+          <HostPropertyDeleteReasonsModal
+            open={deletePropertyReasonsModalOpen}
+            reasons={DELETE_PROPERTY_REASONS}
+            selectedReasonIds={selectedDeletePropertyReasonIds}
+            onToggleReason={toggleDeletePropertyReason}
+            onClose={resetDeletePropertyFlow}
+            onNext={handleDeletePropertyReasonsNext}
+            submitting={deletingProperty}
+          />
+          <HostPropertyDeleteConfirmModal
+            open={deletePropertyConfirmModalOpen}
+            onBack={handleDeletePropertyConfirmBack}
+            onCancel={resetDeletePropertyFlow}
+            onConfirm={handleDeletePropertyConfirm}
+            submitting={deletingProperty}
           />
           {error ? <p className={styles.errorText}>{error}</p> : null}
 

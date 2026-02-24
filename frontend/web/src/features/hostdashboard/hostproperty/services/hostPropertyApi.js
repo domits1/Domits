@@ -413,3 +413,23 @@ export const deletePropertyPhoto = async ({ propertyId, imageId }) => {
   }
   return refreshedPhotos;
 };
+
+export const deletePropertyListing = async ({ propertyId, reasonIds = [] }) => {
+  const response = await fetch(`${PROPERTY_API_BASE}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: getAccessToken(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      propertyId,
+      property: propertyId,
+      reasons: Array.isArray(reasonIds) ? reasonIds : [],
+    }),
+  });
+
+  if (!response.ok) {
+    const apiErrorMessage = await getApiErrorMessage(response, "Failed to delete property.");
+    throw new Error(apiErrorMessage);
+  }
+};

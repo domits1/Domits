@@ -15,8 +15,10 @@ import { PropertyTypeRepository } from "../../data/repository/propertyTypeReposi
 import { PropertyImageRepository } from "../../data/repository/propertyImageRepository.js";
 import { BookingRepository } from "../../data/repository/bookingRepository.js";
 import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatusRepository.js";
+import { PropertyDeletionRepository } from "../../data/repository/propertyDeletionRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
+import { ConflictException } from "../../util/exception/ConflictException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
 
@@ -38,6 +40,7 @@ export class PropertyService {
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
     this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
+    this.propertyDeletionRepository = new PropertyDeletionRepository(systemManagerRepository);
   }
 
   async create(property, { skipImages = false } = {}) {
@@ -516,6 +519,26 @@ export class PropertyService {
 
   async deleteImage(propertyId, imageId) {
     await this.propertyImageRepository.deleteImageByPropertyId(propertyId, imageId);
+  }
+
+  async deleteProperty(propertyId) {
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+
+    const hasBlockingBookings = await this.propertyDeletionRepository.hasBlockingBookings(propertyId);
+    if (hasBlockingBookings) {
+      throw new ConflictException("Property has active or future bookings and cannot be deleted.");
+    }
+
+    await this.propertyImageRepository.deleteImagesByPropertyId(propertyId);
+    await this.propertyDeletionRepository.deletePropertyById(propertyId);
+
+    const deletedProperty = await this.getBasePropertyInfo(propertyId);
+    if (deletedProperty) {
+      throw new DatabaseException("Property deletion was not completed.");
+    }
   }
 
   async createTechnicalDetails(details) {
