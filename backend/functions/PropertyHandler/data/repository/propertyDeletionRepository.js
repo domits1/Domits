@@ -58,7 +58,7 @@ export class PropertyDeletionRepository {
         .getRawMany();
       threadIds = Array.isArray(threads) ? threads.map((thread) => thread.id).filter(Boolean) : [];
     } catch (error) {
-      if (error?.code === "42P01") {
+      if (error?.code === "42P01" || error?.code === "42703") {
         return;
       }
       throw error;
@@ -73,18 +73,24 @@ export class PropertyDeletionRepository {
           .where("threadId IN (:...threadIds)", { threadIds })
           .execute();
       } catch (error) {
-        if (error?.code !== "42P01") {
+        if (error?.code !== "42P01" && error?.code !== "42703") {
           throw error;
         }
       }
     }
 
-    await transactionManager
-      .createQueryBuilder()
-      .delete()
-      .from(UnifiedThread)
-      .where("propertyId = :propertyId", { propertyId })
-      .execute();
+    try {
+      await transactionManager
+        .createQueryBuilder()
+        .delete()
+        .from(UnifiedThread)
+        .where("propertyId = :propertyId", { propertyId })
+        .execute();
+    } catch (error) {
+      if (error?.code !== "42P01" && error?.code !== "42703") {
+        throw error;
+      }
+    }
   }
 
   async deletePropertyById(propertyId) {
@@ -94,7 +100,7 @@ export class PropertyDeletionRepository {
         .createQueryBuilder()
         .delete()
         .from(Guest_Favorite)
-        .where("propertyId = :propertyId", { propertyId })
+        .where("propertyid = :propertyId", { propertyId })
         .execute();
 
       await transactionManager
