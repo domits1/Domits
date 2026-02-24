@@ -84,7 +84,7 @@ function HostPropertyStatusDropdown({ status, onStatusChange, saving }) {
         className={styles.listingStatusTrigger}
         onClick={toggleMenu}
         disabled={saving}
-        aria-haspopup="listbox"
+        aria-haspopup="menu"
         aria-expanded={menuOpen}
         aria-label="Listing status"
       >
@@ -97,11 +97,11 @@ function HostPropertyStatusDropdown({ status, onStatusChange, saving }) {
         </span>
       </button>
       {menuOpen ? (
-        <ul className={styles.listingStatusMenu} role="listbox" aria-label="Select listing status">
+        <ul className={styles.listingStatusMenu} aria-label="Select listing status">
           {PROPERTY_STATUS_OPTIONS.map((option) => {
             const isSelected = option.value === normalizedStatus;
             return (
-              <li key={option.value} role="option" aria-selected={isSelected}>
+              <li key={option.value}>
                 <button
                   type="button"
                   className={`${styles.listingStatusOption} ${isSelected ? styles.listingStatusOptionActive : ""}`}
@@ -119,6 +119,12 @@ function HostPropertyStatusDropdown({ status, onStatusChange, saving }) {
     </div>
   );
 }
+
+HostPropertyStatusDropdown.propTypes = {
+  status: PropTypes.string.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
+  saving: PropTypes.bool.isRequired,
+};
 
 export function HostPropertyLoadingView() {
   return (
