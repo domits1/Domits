@@ -29,9 +29,6 @@ const contentByLanguage = {
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingImages, setLoadingImages] = useState(false);
-  const [accommodationImages, setAccommodationImages] = useState([]);
-  const [byTypeAccommodations, setByTypeAccommodations] = useState([]);
   const [isBarActive, setIsBarActive] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
   const [activePopup, setActivePopup] = useState(null);
@@ -61,17 +58,21 @@ const Homepage = () => {
   useEffect(() => {
     async function loadData() {
       setPropertyLoading(true);
-      FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId).then((data) => {
+      try {
+        const data = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
         if (data.lastEvaluatedKey) {
           setLastEvaluatedKeyCreatedAt(data.lastEvaluatedKey.createdAt);
           setLastEvaluatedKeyId(data.lastEvaluatedKey.id);
         } else {
           setLastEvaluatedKeyCreatedAt(null);
-          setLastEvaluatedKeyId(null)
+          setLastEvaluatedKeyId(null);
         }
         setAllAccommodations(data.properties.slice(6, 9));
+      } catch (error) {
+        console.error("Failed to load accommodations:", error);
+      } finally {
         setPropertyLoading(false);
-      });
+      }
     }
 
     loadData();
