@@ -17,8 +17,7 @@ const HostPropertyCare = () => {
         bookingRef: '', 
         type: 'Cleaning', 
         assignee: '',
-        priority: 'Medium',
-        dueDate: ''
+        attachments: null
     });
 
     // --- EFFECT: LOAD DATA ---
@@ -28,10 +27,9 @@ const HostPropertyCare = () => {
 
     useEffect(() => {
         const todayStr = new Date().toISOString().split('T')[0];
-        
         const newStats = {
             total: tasks.length,
-            overdue: tasks.filter(t => t.status === 'Overdue' || (new Date(t.dueDate) < new Date() && t.status !== 'Completed')).length,
+            overdue: tasks.filter(t => t.status === 'Overdue' || (t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'Completed')).length,
             inProgress: tasks.filter(t => t.status === 'In progress').length,
             completedToday: tasks.filter(t => t.status === 'Completed' && t.completedAt === todayStr).length
         };
@@ -53,8 +51,7 @@ const HostPropertyCare = () => {
             const created = await createTask(taskPayload);
             setTasks([created, ...tasks]);
             setIsModalOpen(false);
-            // Reset form
-            setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', priority: 'Medium', dueDate: '' });
+            resetForm();
         } catch (error) {
             alert("Error creating task");
         }
@@ -65,8 +62,30 @@ const HostPropertyCare = () => {
         setNewTask(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleFileChange = (e) => {
+        setNewTask(prev => ({ ...prev, attachments: e.target.files[0] }));
+    };
+
+    const handleCancelModal = () => {
+        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.attachments;
+        
+        if (hasUnsavedChanges) {
+            const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to cancel?");
+            if (confirmLeave) {
+                setIsModalOpen(false);
+                resetForm();
+            }
+        } else {
+            setIsModalOpen(false);
+            resetForm();
+        }
+    };
+
+    const resetForm = () => {
+        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', attachments: null });
+    };
+
     // --- RENDER HELPERS ---
-    
     const renderContent = () => {
         if (isLoading) return <div className="loading">Loading...</div>;
 
@@ -115,8 +134,8 @@ const HostPropertyCare = () => {
                             <td>{task.assignee}</td>
                             <td>{task.dueDate || 'Today'}</td>
                             <td>
-                                <span className={`badge-priority ${task.priority.toLowerCase()}`}>
-                                    {task.priority}
+                                <span className={`badge-priority ${task.priority ? task.priority.toLowerCase() : 'medium'}`}>
+                                    {task.priority || 'Medium'}
                                 </span>
                             </td>
                             <td>
@@ -133,7 +152,6 @@ const HostPropertyCare = () => {
 
     return (
         <main className="task-dashboard-v2">
-            {/* HEADER */}
             <div className="top-header">
                 <h2>Tasks</h2>
                 <button className="btn-create-green" onClick={() => setIsModalOpen(true)}>
@@ -141,7 +159,6 @@ const HostPropertyCare = () => {
                 </button>
             </div>
 
-            {/* TABS NAVIGATION */}
             <div className="tabs-nav">
                 {['Overview', 'My Tasks', 'All Tasks', 'Reports', 'Settings'].map(tab => (
                     <button 
@@ -163,31 +180,9 @@ const HostPropertyCare = () => {
                             <span className="kpi-value">{stats.total}</span>
                         </div>
                     </div>
-                    <div className="kpi-card">
-                        <div className="kpi-icon error-icon">!</div>
-                        <div className="kpi-info">
-                            <span className="kpi-label">Overdue</span>
-                            <span className="kpi-value">{stats.overdue} <small>(+1 since yesterday)</small></span>
-                        </div>
-                    </div>
-                    <div className="kpi-card">
-                        <div className="kpi-icon">↻</div>
-                        <div className="kpi-info">
-                            <span className="kpi-label">In Progress</span>
-                            <span className="kpi-value">{stats.inProgress}</span>
-                        </div>
-                    </div>
-                    <div className="kpi-card">
-                        <div className="kpi-icon success-icon">✓</div>
-                        <div className="kpi-info">
-                            <span className="kpi-label">Completed Today</span>
-                            <span className="kpi-value">{stats.completedToday}</span>
-                        </div>
-                    </div>
                 </div>
             )}
 
-            {/* MAIN CONTENT AREA */}
             <div className="content-area">
                 {renderContent()}
             </div>
@@ -197,31 +192,30 @@ const HostPropertyCare = () => {
                     <div className="modal-content-large">
                         <div className="modal-header">
                             <h3>Create Task</h3>
-                            <button className="close-btn" onClick={() => setIsModalOpen(false)}>✕</button>
+                            <button className="close-btn" onClick={handleCancelModal}>✕</button>
                         </div>
                         <form onSubmit={handleCreateTask}>
                             <div className="form-group">
                                 <label>Title</label>
-                                <input type="text" name="title" value={newTask.title} onChange={handleInputChange} placeholder="e.g. Repair broken patio light" />
+                                <input type="text" name="title" value={newTask.title} onChange={handleInputChange} placeholder="Repair broken patio light" required />
                             </div>
                             <div className="form-group">
                                 <label>Description</label>
-                                <textarea name="description" value={newTask.description} onChange={handleInputChange} rows="3" />
+                                <textarea name="description" value={newTask.description} onChange={handleInputChange} placeholder="The patio light is broken and needs to be fixed as soon as possible." rows="3" required />
                             </div>
                             <div className="form-group">
                                 <label>Property</label>
-                                <select name="property" value={newTask.property} onChange={handleInputChange}>
-                                    <option value="">Select Property</option>
+                                <select name="property" value={newTask.property} onChange={handleInputChange} required>
+                                    <option value="" disabled hidden>Select Property</option>
                                     <option value="City Loft Breda">City Loft Breda</option>
                                     <option value="Beach House">Beach House</option>
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label>Booking Reference (optional)</label>
-                                <input type="text" name="bookingRef" value={newTask.bookingRef} onChange={handleInputChange} placeholder="Select booking" />
+                                <input type="text" name="bookingRef" value={newTask.bookingRef} onChange={handleInputChange} placeholder="Select booking." />
                             </div>
                             
-                            {/* TYPE - RADIO BUTTONS */}
                             <div className="form-group">
                                 <label>Type</label>
                                 <div className="radio-group">
@@ -233,15 +227,34 @@ const HostPropertyCare = () => {
 
                             <div className="form-group">
                                 <label>Assignee</label>
-                                <select name="assignee" value={newTask.assignee} onChange={handleInputChange}>
-                                    <option value="">Select Assignee</option>
-                                    <option value="Sophie Janssen">Sophie Janssen</option>
-                                    <option value="Jan de Vries">Jan de Vries</option>
+                                <select name="assignee" value={newTask.assignee} onChange={handleInputChange} required>
+                                    <option value="" disabled hidden>Select Assignee</option>
+                                    <option value="Sophie Janssen">Sophie Janssen (sophie@domits.com)</option>
+                                    <option value="Jan de Vries">Jan de Vries (jan@domits.com)</option>
                                 </select>
                             </div>
 
-                            <div className="modal-footer">
-                                <button type="button" className="btn-text" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                            <div className="form-group">
+                                <label>Attachments (optional)</label>
+                                <div className="custom-file-upload">
+                                    <input 
+                                        type="file" 
+                                        id="file-upload" 
+                                        onChange={handleFileChange} 
+                                    />
+                                    <label htmlFor="file-upload">
+                                        <svg className="upload-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5l13.732-13.732z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                        <span className="upload-text">
+                                            {newTask.attachments ? newTask.attachments.name : 'Upload file...'}
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
+                                <button type="button" className="btn-text" onClick={handleCancelModal}>Cancel</button>
                                 <button type="submit" className="btn-create-green">Create Task</button>
                             </div>
                         </form>
