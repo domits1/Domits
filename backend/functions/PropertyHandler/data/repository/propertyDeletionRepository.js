@@ -7,7 +7,7 @@ export class PropertyDeletionRepository {
   }
 
   quoteIdentifier(identifier) {
-    return `"${String(identifier).replace(/"/g, '""')}"`;
+    return `"${String(identifier).replaceAll('"', '""')}"`;
   }
 
   quoteQualifiedName(qualifiedName) {
@@ -15,6 +15,17 @@ export class PropertyDeletionRepository {
       .split(".")
       .map((part) => this.quoteIdentifier(part))
       .join(".");
+  }
+
+  getTableCandidates(tableName) {
+    const normalized = String(tableName || "").trim();
+    if (!normalized) {
+      return [];
+    }
+    if (normalized.includes(".")) {
+      return [normalized];
+    }
+    return Array.from(new Set([normalized, `main.${normalized}`, `test.${normalized}`]));
   }
 
   parseQualifiedName(tableName) {
@@ -37,7 +48,7 @@ export class PropertyDeletionRepository {
   async findExistingColumn(transactionManager, tableName, columnCandidates) {
     const { schema, table } = this.parseQualifiedName(tableName);
     const normalizedCandidates = Array.from(
-      new Set((Array.isArray(columnCandidates) ? columnCandidates : []).map((candidate) => String(candidate)))
+      new Set((Array.isArray(columnCandidates) ? columnCandidates : []).map(String))
     );
 
     if (!table || normalizedCandidates.length === 0) {
@@ -82,64 +93,78 @@ export class PropertyDeletionRepository {
   }
 
   async deleteByScopedColumnIfExists(transactionManager, tableName, columnCandidates, value) {
-    const exists = await this.tableExists(transactionManager, tableName);
-    if (!exists) {
-      return;
-    }
+    const tableCandidates = this.getTableCandidates(tableName);
+    for (const tableCandidate of tableCandidates) {
+      const exists = await this.tableExists(transactionManager, tableCandidate);
+      if (!exists) {
+        continue;
+      }
 
-    const columnName = await this.findExistingColumn(transactionManager, tableName, columnCandidates);
-    if (!columnName) {
-      return;
-    }
+      const columnName = await this.findExistingColumn(transactionManager, tableCandidate, columnCandidates);
+      if (!columnName) {
+        continue;
+      }
 
-    await transactionManager.query(
-      `DELETE FROM ${this.quoteQualifiedName(tableName)} WHERE ${this.quoteIdentifier(columnName)} = $1`,
-      [value]
-    );
+      await transactionManager.query(
+        `DELETE FROM ${this.quoteQualifiedName(tableCandidate)} WHERE ${this.quoteIdentifier(columnName)} = $1`,
+        [value]
+      );
+      return true;
+    }
+    return false;
   }
 
   async deleteRowsByScopedIdsIfExists(transactionManager, tableName, columnCandidates, values) {
     const ids = (Array.isArray(values) ? values : []).filter(Boolean);
     if (ids.length === 0) {
-      return;
+      return false;
     }
 
-    const exists = await this.tableExists(transactionManager, tableName);
-    if (!exists) {
-      return;
-    }
+    const tableCandidates = this.getTableCandidates(tableName);
+    for (const tableCandidate of tableCandidates) {
+      const exists = await this.tableExists(transactionManager, tableCandidate);
+      if (!exists) {
+        continue;
+      }
 
-    const columnName = await this.findExistingColumn(transactionManager, tableName, columnCandidates);
-    if (!columnName) {
-      return;
-    }
+      const columnName = await this.findExistingColumn(transactionManager, tableCandidate, columnCandidates);
+      if (!columnName) {
+        continue;
+      }
 
-    await transactionManager.query(
-      `DELETE FROM ${this.quoteQualifiedName(tableName)} WHERE ${this.quoteIdentifier(columnName)} = ANY($1)`,
-      [ids]
-    );
+      await transactionManager.query(
+        `DELETE FROM ${this.quoteQualifiedName(tableCandidate)} WHERE ${this.quoteIdentifier(columnName)} = ANY($1)`,
+        [ids]
+      );
+      return true;
+    }
+    return false;
   }
 
   async getScopedIds(transactionManager, tableName, idColumnCandidates, filterColumnCandidates, filterValue) {
-    const exists = await this.tableExists(transactionManager, tableName);
-    if (!exists) {
-      return [];
+    const tableCandidates = this.getTableCandidates(tableName);
+    for (const tableCandidate of tableCandidates) {
+      const exists = await this.tableExists(transactionManager, tableCandidate);
+      if (!exists) {
+        continue;
+      }
+
+      const idColumn = await this.findExistingColumn(transactionManager, tableCandidate, idColumnCandidates);
+      const filterColumn = await this.findExistingColumn(transactionManager, tableCandidate, filterColumnCandidates);
+      if (!idColumn || !filterColumn) {
+        continue;
+      }
+
+      const result = await transactionManager.query(
+        `SELECT ${this.quoteIdentifier(idColumn)} AS id
+         FROM ${this.quoteQualifiedName(tableCandidate)}
+         WHERE ${this.quoteIdentifier(filterColumn)} = $1`,
+        [filterValue]
+      );
+
+      return (Array.isArray(result) ? result : []).map((row) => row?.id).filter(Boolean);
     }
-
-    const idColumn = await this.findExistingColumn(transactionManager, tableName, idColumnCandidates);
-    const filterColumn = await this.findExistingColumn(transactionManager, tableName, filterColumnCandidates);
-    if (!idColumn || !filterColumn) {
-      return [];
-    }
-
-    const result = await transactionManager.query(
-      `SELECT ${this.quoteIdentifier(idColumn)} AS id
-       FROM ${this.quoteQualifiedName(tableName)}
-       WHERE ${this.quoteIdentifier(filterColumn)} = $1`,
-      [filterValue]
-    );
-
-    return (Array.isArray(result) ? result : []).map((row) => row?.id).filter(Boolean);
+    return [];
   }
 
   async getBookingCountByPropertyId(propertyId) {
@@ -221,10 +246,15 @@ export class PropertyDeletionRepository {
 
       await this.deleteByScopedColumnIfExists(transactionManager, "property_draft", ["property_id"], propertyId);
 
-      await transactionManager.query(
-        `DELETE FROM ${this.quoteQualifiedName("property")} WHERE ${this.quoteIdentifier("id")} = $1`,
-        [propertyId]
+      const propertyDeleted = await this.deleteByScopedColumnIfExists(
+        transactionManager,
+        "property",
+        ["id"],
+        propertyId
       );
+      if (!propertyDeleted) {
+        throw new Error("Property table could not be resolved for deletion.");
+      }
     });
   }
 }
