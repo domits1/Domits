@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import ClipLoader from "react-spinners/ClipLoader";
 import styles from "../../HostProperty.module.css";
@@ -14,6 +14,117 @@ const deleteReasonShape = PropTypes.shape({
   id: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
 });
+
+const PROPERTY_STATUS_OPTIONS = [
+  { value: "ACTIVE", label: "Live" },
+  { value: "INACTIVE", label: "Draft" },
+  { value: "ARCHIVED", label: "Archived" },
+];
+
+const resolveStatusDotClass = (status) => {
+  if (status === "ACTIVE") {
+    return styles.statusDotLive;
+  }
+  if (status === "ARCHIVED") {
+    return styles.statusDotArchived;
+  }
+  return styles.statusDotDraft;
+};
+
+function HostPropertyStatusDropdown({ status, onStatusChange, saving }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const normalizedStatus = String(status || "INACTIVE").toUpperCase();
+  const selectedOption = PROPERTY_STATUS_OPTIONS.find((option) => option.value === normalizedStatus) || PROPERTY_STATUS_OPTIONS[0];
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return undefined;
+    }
+
+    const handleOutsideClick = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    const handleEscapePress = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscapePress);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscapePress);
+    };
+  }, [menuOpen]);
+
+  const toggleMenu = () => {
+    if (saving) {
+      return;
+    }
+    setMenuOpen((previous) => !previous);
+  };
+
+  const handleOptionSelect = (nextStatus) => {
+    setMenuOpen(false);
+    if (nextStatus === normalizedStatus) {
+      return;
+    }
+    onStatusChange(nextStatus);
+  };
+
+  return (
+    <div className={styles.listingStatusControl} ref={dropdownRef}>
+      <button
+        type="button"
+        className={styles.listingStatusTrigger}
+        onClick={toggleMenu}
+        disabled={saving}
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        aria-label="Listing status"
+      >
+        <span className={styles.listingStatusValue}>{selectedOption.label}</span>
+        <span className={styles.listingStatusIndicators}>
+          <span className={`${styles.statusDot} ${resolveStatusDotClass(normalizedStatus)}`} />
+          <span className={styles.listingStatusChevron} aria-hidden="true">
+            {menuOpen ? "\u25B2" : "\u25BE"}
+          </span>
+        </span>
+      </button>
+      {menuOpen ? (
+        <ul className={styles.listingStatusMenu} aria-label="Select listing status">
+          {PROPERTY_STATUS_OPTIONS.map((option) => {
+            const isSelected = option.value === normalizedStatus;
+            return (
+              <li key={option.value}>
+                <button
+                  type="button"
+                  className={`${styles.listingStatusOption} ${isSelected ? styles.listingStatusOptionActive : ""}`}
+                  onClick={() => handleOptionSelect(option.value)}
+                  disabled={saving}
+                >
+                  <span className={styles.listingStatusOptionLabel}>{option.label}</span>
+                  <span className={`${styles.statusDot} ${resolveStatusDotClass(option.value)}`} />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+HostPropertyStatusDropdown.propTypes = {
+  status: PropTypes.string.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
+  saving: PropTypes.bool.isRequired,
+};
 
 export function HostPropertyLoadingView() {
   return (
@@ -231,9 +342,9 @@ export function HostPropertyListingSummary({
   propertyId,
   hostProperties,
   title,
-  statusLabel,
-  statusDotClass,
+  status,
   onPropertyChange,
+  onStatusChange,
   saving,
 }) {
   return (
@@ -255,10 +366,11 @@ export function HostPropertyListingSummary({
           <option value={propertyId || ""}>{title || "Untitled listing"}</option>
         )}
       </select>
-      <p className={styles.listingStatus}>
-        <span className={`${styles.statusDot} ${statusDotClass}`} />
-        {statusLabel}
-      </p>
+      <HostPropertyStatusDropdown
+        status={status}
+        onStatusChange={onStatusChange}
+        saving={saving}
+      />
     </article>
   );
 }
@@ -323,9 +435,9 @@ HostPropertyListingSummary.propTypes = {
   propertyId: PropTypes.string.isRequired,
   hostProperties: PropTypes.arrayOf(hostPropertyOptionShape).isRequired,
   title: PropTypes.string.isRequired,
-  statusLabel: PropTypes.string.isRequired,
-  statusDotClass: PropTypes.string.isRequired,
+  status: PropTypes.string.isRequired,
   onPropertyChange: PropTypes.func.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
   saving: PropTypes.bool.isRequired,
 };
 
@@ -339,3 +451,4 @@ HostPropertyActions.propTypes = {
   saving: PropTypes.bool.isRequired,
   saveEnabled: PropTypes.bool.isRequired,
 };
+

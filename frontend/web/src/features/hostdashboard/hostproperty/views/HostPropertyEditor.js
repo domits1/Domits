@@ -23,6 +23,7 @@ import {
   fetchPropertyAndListings,
   savePropertyChanges,
   savePropertyPhotos,
+  updatePropertyLifecycleStatus,
 } from "../services/hostPropertyApi";
 import {
   AMENITY_CATEGORY_ORDER,
@@ -57,29 +58,12 @@ const DELETE_PROPERTY_REASONS = [
   { id: "other", label: "Other" },
 ];
 
-const resolveStatusLabel = (status) => {
-  if (status === "ACTIVE") {
-    return "Live";
-  }
-  if (status === "ARCHIVED") {
-    return "Archived";
-  }
-  return "Draft";
-};
-
-const resolveStatusDotClass = (status, styleModule) => {
-  if (status === "ACTIVE") {
-    return styleModule.statusDotLive;
-  }
-  if (status === "ARCHIVED") {
-    return styleModule.statusDotArchived;
-  }
-  return styleModule.statusDotDraft;
-};
-
-const resolveOverlayMessage = ({ deletingProperty, saving, savingMessage }) => {
+const resolveOverlayMessage = ({ deletingProperty, statusUpdating, saving, savingMessage }) => {
   if (deletingProperty) {
     return "Removing listing...";
+  }
+  if (statusUpdating) {
+    return "Updating listing status...";
   }
   if (saving) {
     return savingMessage;
@@ -140,6 +124,7 @@ export default function HostProperty() {
   const [photoToDelete, setPhotoToDelete] = useState(null);
   const [deletingPhoto, setDeletingPhoto] = useState(false);
   const [deletingProperty, setDeletingProperty] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
   const [unsavedChangesModalOpen, setUnsavedChangesModalOpen] = useState(false);
   const [deletePropertyReasonsModalOpen, setDeletePropertyReasonsModalOpen] = useState(false);
   const [deletePropertyConfirmModalOpen, setDeletePropertyConfirmModalOpen] = useState(false);
@@ -559,7 +544,7 @@ export default function HostProperty() {
     }
   };
 
-  const isBusy = saving || preparingPhotos || deletingProperty;
+  const isBusy = saving || preparingPhotos || deletingProperty || statusUpdating;
   const shouldBlockNavigation = hasUnsavedChanges && !isBusy && !deletingPhoto;
 
   const requestNavigation = useCallback((navigationAction) => {
@@ -680,11 +665,9 @@ export default function HostProperty() {
     return <HostPropertyLoadingView />;
   }
 
-  const statusLabel = resolveStatusLabel(status);
-  const statusDotClass = resolveStatusDotClass(status, styles);
   const displayedPropertyType = capacity.propertyType || "Entire house";
   const savingMessage = SAVING_MESSAGE_BY_TAB[selectedTab] || "Saving property details...";
-  const overlayMessage = resolveOverlayMessage({ deletingProperty, saving, savingMessage });
+  const overlayMessage = resolveOverlayMessage({ deletingProperty, statusUpdating, saving, savingMessage });
 
   const handlePropertyChange = (event) => {
     const nextPropertyId = event.target.value;
@@ -793,6 +776,46 @@ export default function HostProperty() {
     }
   };
 
+  const handleStatusChange = async (nextStatusValue) => {
+    if (!propertyId || isBusy) {
+      return;
+    }
+
+    const nextStatus = String(nextStatusValue || "").toUpperCase();
+    if (!nextStatus || nextStatus === status) {
+      return;
+    }
+
+    setStatusUpdating(true);
+    setError("");
+    try {
+      await updatePropertyLifecycleStatus({ propertyId, status: nextStatus });
+      setStatus(nextStatus);
+      setHostProperties((previous) =>
+        previous.map((accommodation) =>
+          accommodation.id === propertyId
+            ? { ...accommodation, status: nextStatus }
+            : accommodation
+        )
+      );
+
+      if (nextStatus === "ACTIVE") {
+        toast.success("Listing moved to Live.");
+      } else if (nextStatus === "ARCHIVED") {
+        toast.success("Listing moved to Archived.");
+      } else {
+        toast.success("Listing moved to Draft.");
+      }
+    } catch (statusUpdateError) {
+      console.error(statusUpdateError);
+      const statusErrorMessage = statusUpdateError?.message || "Failed to update listing status.";
+      setError(statusErrorMessage);
+      toast.error(statusErrorMessage);
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
   const canSaveChanges = resolveCanSaveChanges(selectedTab, pendingPhotos.length, hasPhotoOrderChanges);
   const handleBackToListings = () => requestNavigation(navigate.bind(null, "/hostdashboard/listings"));
 
@@ -815,9 +838,9 @@ export default function HostProperty() {
             propertyId={propertyId}
             hostProperties={hostProperties}
             title={form.title}
-            statusLabel={statusLabel}
-            statusDotClass={statusDotClass}
+            status={status}
             onPropertyChange={handlePropertyChange}
+            onStatusChange={handleStatusChange}
             saving={isBusy}
           />
 
