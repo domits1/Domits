@@ -30,6 +30,14 @@ import {
   getStayOptionLabel,
   normalizePricingForm,
 } from "../utils/hostPropertyUtils";
+
+const CAPACITY_COUNTER_FIELDS = [
+  { key: "guests", label: "Guests" },
+  { key: "bedrooms", label: "Bedrooms" },
+  { key: "beds", label: "Beds" },
+  { key: "bathrooms", label: "Bathrooms" },
+];
+
 function HostPropertyOverviewTab({
   form,
   updateField,
@@ -41,6 +49,32 @@ function HostPropertyOverviewTab({
   address,
   updateAddressField,
 }) {
+  const renderCapacityCounter = ({ key, label }) => (
+    <div key={key} className={styles.counterItem}>
+      <span className={styles.counterLabel}>{label}</span>
+      <div className={styles.counterControl}>
+        <button type="button" className={styles.counterButton} onClick={() => adjustCapacityField(key, -1)}>
+          -
+        </button>
+        <input
+          type="number"
+          min={0}
+          max={MAX_CAPACITY_VALUE}
+          value={capacity[key]}
+          onChange={(event) => updateCapacityField(key, event.target.value)}
+          className={styles.counterValue}
+        />
+        <button
+          type="button"
+          className={`${styles.counterButton} ${styles.counterButtonPlus}`}
+          onClick={() => adjustCapacityField(key, 1)}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <section className={styles.card}>
       <h3 className={styles.sectionTitle}>Property Information</h3>
@@ -100,105 +134,7 @@ function HostPropertyOverviewTab({
       </div>
 
       <div className={styles.capacityGrid}>
-        <div className={styles.counterItem}>
-          <span className={styles.counterLabel}>Guests</span>
-          <div className={styles.counterControl}>
-            <button type="button" className={styles.counterButton} onClick={() => adjustCapacityField("guests", -1)}>
-              -
-            </button>
-            <input
-              type="number"
-              min={0}
-              max={MAX_CAPACITY_VALUE}
-              value={capacity.guests}
-              onChange={(event) => updateCapacityField("guests", event.target.value)}
-              className={styles.counterValue}
-            />
-            <button
-              type="button"
-              className={`${styles.counterButton} ${styles.counterButtonPlus}`}
-              onClick={() => adjustCapacityField("guests", 1)}
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.counterItem}>
-          <span className={styles.counterLabel}>Bedrooms</span>
-          <div className={styles.counterControl}>
-            <button type="button" className={styles.counterButton} onClick={() => adjustCapacityField("bedrooms", -1)}>
-              -
-            </button>
-            <input
-              type="number"
-              min={0}
-              max={MAX_CAPACITY_VALUE}
-              value={capacity.bedrooms}
-              onChange={(event) => updateCapacityField("bedrooms", event.target.value)}
-              className={styles.counterValue}
-            />
-            <button
-              type="button"
-              className={`${styles.counterButton} ${styles.counterButtonPlus}`}
-              onClick={() => adjustCapacityField("bedrooms", 1)}
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.counterItem}>
-          <span className={styles.counterLabel}>Beds</span>
-          <div className={styles.counterControl}>
-            <button type="button" className={styles.counterButton} onClick={() => adjustCapacityField("beds", -1)}>
-              -
-            </button>
-            <input
-              type="number"
-              min={0}
-              max={MAX_CAPACITY_VALUE}
-              value={capacity.beds}
-              onChange={(event) => updateCapacityField("beds", event.target.value)}
-              className={styles.counterValue}
-            />
-            <button
-              type="button"
-              className={`${styles.counterButton} ${styles.counterButtonPlus}`}
-              onClick={() => adjustCapacityField("beds", 1)}
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.counterItem}>
-          <span className={styles.counterLabel}>Bathrooms</span>
-          <div className={styles.counterControl}>
-            <button
-              type="button"
-              className={styles.counterButton}
-              onClick={() => adjustCapacityField("bathrooms", -1)}
-            >
-              -
-            </button>
-            <input
-              type="number"
-              min={0}
-              max={MAX_CAPACITY_VALUE}
-              value={capacity.bathrooms}
-              onChange={(event) => updateCapacityField("bathrooms", event.target.value)}
-              className={styles.counterValue}
-            />
-            <button
-              type="button"
-              className={`${styles.counterButton} ${styles.counterButtonPlus}`}
-              onClick={() => adjustCapacityField("bathrooms", 1)}
-            >
-              +
-            </button>
-          </div>
-        </div>
+        {CAPACITY_COUNTER_FIELDS.map((field) => renderCapacityCounter(field))}
       </div>
 
       <div className={styles.sectionDivider} />

@@ -35,6 +35,40 @@ const getStatusLabel = (status) => {
   return "Drafted";
 };
 
+const LISTING_ACTIONS = {
+  ACTIVE: [
+    { id: "details", label: "Details", kind: "details" },
+    { id: "edit", label: "Edit", kind: "edit" },
+  ],
+  INACTIVE: [
+    {
+      id: "set-live",
+      label: "Set as live",
+      kind: "status",
+      nextStatus: "ACTIVE",
+      successMessage: "Listing set to Live.",
+    },
+    { id: "edit", label: "Edit", kind: "edit" },
+  ],
+  ARCHIVED: [
+    {
+      id: "set-draft",
+      label: "Set as draft",
+      kind: "status",
+      nextStatus: "INACTIVE",
+      successMessage: "Listing restored to Draft.",
+    },
+    {
+      id: "set-live",
+      label: "Set as live",
+      kind: "status",
+      nextStatus: "ACTIVE",
+      successMessage: "Listing restored to Live.",
+    },
+    { id: "edit", label: "Edit", kind: "edit" },
+  ],
+};
+
 function HostListings() {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -158,6 +192,24 @@ function HostListings() {
     }
   };
 
+  const executeListingAction = (action, propertyId) => {
+    if (action.kind === "details") {
+      navigate(`/listingdetails?ID=${propertyId}`);
+      return;
+    }
+    if (action.kind === "edit") {
+      navigate(`/hostdashboard/property?ID=${propertyId}`);
+      return;
+    }
+    if (action.kind === "status") {
+      void changeListingStatus({
+        propertyId,
+        nextStatus: action.nextStatus,
+        successMessage: action.successMessage,
+      });
+    }
+  };
+
   const renderListingsContent = () => {
     if (isLoading) {
       return (
@@ -185,6 +237,7 @@ function HostListings() {
           const propertyCity = accommodation?.location?.city || "Unknown city";
           const propertyImage = getListingImage(accommodation);
           const isBusy = processingPropertyId === propertyId;
+          const actions = LISTING_ACTIONS[propertyStatus] || [];
 
           return (
             <div
@@ -219,103 +272,19 @@ function HostListings() {
               </div>
 
               <div className={styles.buttonBox}>
-                {propertyStatus === "ACTIVE" ? (
-                  <>
-                    <button
-                      className={styles.greenBtn}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        navigate(`/listingdetails?ID=${propertyId}`);
-                      }}
-                      disabled={isBusy}
-                    >
-                      Details
-                    </button>
-                    <button
-                      className={styles.greenBtn}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        navigate(`/hostdashboard/property?ID=${propertyId}`);
-                      }}
-                      disabled={isBusy}
-                    >
-                      Edit
-                    </button>
-                  </>
-                ) : null}
-
-                {propertyStatus === "INACTIVE" ? (
-                  <>
-                    <button
-                      className={styles.greenBtn}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        changeListingStatus({
-                          propertyId,
-                          nextStatus: "ACTIVE",
-                          successMessage: "Listing set to Live.",
-                        });
-                      }}
-                      disabled={isBusy}
-                    >
-                      Set as live
-                    </button>
-                    <button
-                      className={styles.greenBtn}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        navigate(`/hostdashboard/property?ID=${propertyId}`);
-                      }}
-                      disabled={isBusy}
-                    >
-                      Edit
-                    </button>
-                  </>
-                ) : null}
-
-                {propertyStatus === "ARCHIVED" ? (
-                  <>
-                    <button
-                      className={styles.greenBtn}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        changeListingStatus({
-                          propertyId,
-                          nextStatus: "INACTIVE",
-                          successMessage: "Listing restored to Draft.",
-                        });
-                      }}
-                      disabled={isBusy}
-                    >
-                      Set as draft
-                    </button>
-                    <button
-                      className={styles.greenBtn}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        changeListingStatus({
-                          propertyId,
-                          nextStatus: "ACTIVE",
-                          successMessage: "Listing restored to Live.",
-                        });
-                      }}
-                      disabled={isBusy}
-                    >
-                      Set as live
-                    </button>
-                    <button
-                      className={styles.greenBtn}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        navigate(`/hostdashboard/property?ID=${propertyId}`);
-                      }}
-                      disabled={isBusy}
-                    >
-                      Edit
-                    </button>
-                  </>
-                ) : null}
-
+                {actions.map((action) => (
+                  <button
+                    key={action.id}
+                    className={styles.greenBtn}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      executeListingAction(action, propertyId);
+                    }}
+                    disabled={isBusy}
+                  >
+                    {action.label}
+                  </button>
+                ))}
               </div>
             </div>
           );
