@@ -25,6 +25,50 @@ const resolvePartnerId = (contact, selfUserId) => {
   return picked || null;
 };
 
+const GetUserInfo = async (targetUserId) => {
+  if (!targetUserId) return { givenName: "Unknown", userId: targetUserId };
+
+  try {
+    const userResponse = await fetch("https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ UserId: targetUserId }),
+    });
+
+    if (!userResponse.ok) return { givenName: "Unknown", userId: targetUserId };
+
+    const userData = await userResponse.json();
+
+    let parsed = null;
+    try {
+      parsed = typeof userData?.body === "string" ? JSON.parse(userData.body) : userData?.body;
+    } catch {
+      parsed = null;
+    }
+
+    const first = Array.isArray(parsed) ? parsed[0] : parsed;
+    const attrsArr = first?.Attributes;
+
+    if (!Array.isArray(attrsArr)) return { givenName: "Unknown", userId: targetUserId };
+
+    const attributes = attrsArr.reduce((acc, attribute) => {
+      if (attribute?.Name) acc[attribute.Name] = attribute.Value;
+      return acc;
+    }, {});
+
+    const resolvedUserId =
+      attributes["sub"] || attributes["userId"] || attrsArr.find((a) => a?.Name === "sub")?.Value || targetUserId;
+
+    return {
+      givenName: attributes["given_name"] || attributes["name"] || "Unknown",
+      userId: resolvedUserId,
+      profileImage: attributes["picture"] || null,
+    };
+  } catch {
+    return { givenName: "Unknown", userId: targetUserId };
+  }
+};
+
 const ContactList = ({
   userId,
   onContactClick,
@@ -52,6 +96,9 @@ const ContactList = ({
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactKey: null });
 
+  // avoid repeatedly fetching same new user info
+  const [hydratingIds, setHydratingIds] = useState(() => new Set());
+
   useEffect(() => {
     const key = activeThreadId || activeContactId || null;
     setSelectedKey(key);
@@ -65,14 +112,9 @@ const ContactList = ({
 
   const handleClick = (contact) => {
     const partnerId = resolvePartnerId(contact, userId);
-    if (!partnerId) {
-      console.warn("[ContactList] Could not resolve partnerId for contact:", contact);
-      return;
-    }
+    if (!partnerId) return;
 
     const threadId = contact?.threadId || null;
-
-    // selection key prefers threadId to prevent cross-thread mixing
     setSelectedKey(threadId || partnerId);
 
     onContactClick?.(
@@ -101,43 +143,96 @@ const ContactList = ({
   };
 
   const handleCloseSelectedChat = () => {
-    // Close by contactId if possible (keeps behavior)
     if (contextMenu.contactKey) onCloseChat?.(activeContactId);
     setContextMenu({ visible: false, x: 0, y: 0, contactKey: null });
   };
 
+  // ✅ REALTIME: update existing contact OR create a new contact row immediately
   useEffect(() => {
     if (!wsMessages?.length) return;
 
+    const latest = wsMessages[wsMessages.length - 1];
+    if (!latest) return;
+
+    const threadId = latest?.threadId || null;
+    const partnerId = latest?.userId === userId ? latest?.recipientId : latest?.userId;
+    if (!partnerId || String(partnerId) === String(userId)) return;
+
+    let displayText = latest.text;
+    if (latest.fileUrls && latest.fileUrls.length > 0) displayText = "Attachment";
+
+    // 1) Insert/update synchronously
     setContacts?.((prevContacts) => {
-      const updatedContacts = Array.isArray(prevContacts) ? [...prevContacts] : [];
+      const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
 
-      wsMessages.forEach((msg) => {
-        const threadId = msg?.threadId || null;
-
-        const partnerId = msg?.userId === userId ? msg?.recipientId : msg?.userId;
-        if (!partnerId || String(partnerId) === String(userId)) return;
-
-        const idx = updatedContacts.findIndex((c) => {
-          if (threadId && c?.threadId) return String(c.threadId) === String(threadId);
-          return resolvePartnerId(c, userId) === partnerId;
-        });
-        if (idx === -1) return;
-
-        let displayText = msg.text;
-        if (msg.fileUrls && msg.fileUrls.length > 0) displayText = "Attachment";
-
-        updatedContacts[idx] = {
-          ...updatedContacts[idx],
-          latestMessage: { ...msg, text: displayText },
-        };
+      const idx = updated.findIndex((c) => {
+        if (threadId && c?.threadId) return String(c.threadId) === String(threadId);
+        return resolvePartnerId(c, userId) === partnerId;
       });
 
-      updatedContacts.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
-      return updatedContacts;
-    });
-  }, [wsMessages, setContacts, userId]);
+      if (idx !== -1) {
+        updated[idx] = {
+          ...updated[idx],
+          latestMessage: { ...latest, text: displayText },
+        };
+      } else {
+        // Create a placeholder contact so it appears instantly without refresh
+        updated.unshift({
+          partnerId,
+          recipientId: partnerId,
+          userId: partnerId,
+          threadId: threadId || null,
+          propertyId: latest?.propertyId || null,
+          propertyTitle: null,
+          accoImage: null,
+          givenName: "New message",
+          profileImage: null,
+          latestMessage: { ...latest, text: displayText },
+          isFromRealtime: true,
+        });
+      }
 
+      updated.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
+      return updated;
+    });
+
+    // 2) Hydrate user name/profile for new contacts (async, safe)
+    const hydrateKey = String(partnerId);
+    if (!hydratingIds.has(hydrateKey)) {
+      setHydratingIds((prev) => {
+        const next = new Set(prev);
+        next.add(hydrateKey);
+        return next;
+      });
+
+      (async () => {
+        const info = await GetUserInfo(partnerId);
+
+        setContacts?.((prevContacts) => {
+          const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
+
+          const idx = updated.findIndex((c) => String(resolvePartnerId(c, userId)) === String(partnerId));
+          if (idx === -1) return updated;
+
+          updated[idx] = {
+            ...updated[idx],
+            givenName: info?.givenName || updated[idx]?.givenName || "Unknown",
+            profileImage: updated[idx]?.profileImage || info?.profileImage || null,
+          };
+
+          return updated;
+        });
+
+        setHydratingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(hydrateKey);
+          return next;
+        });
+      })();
+    }
+  }, [wsMessages, setContacts, userId, hydratingIds]);
+
+  // keep existing local-send updating logic
   useEffect(() => {
     if (!message) return;
 
@@ -168,6 +263,23 @@ const ContactList = ({
             threadId: message.threadId || updatedContacts[index]?.threadId || null,
           },
         };
+      } else {
+        updatedContacts.unshift({
+          partnerId,
+          recipientId: partnerId,
+          userId: partnerId,
+          threadId: message?.threadId || null,
+          propertyId: message?.propertyId || null,
+          givenName: "New message",
+          profileImage: null,
+          latestMessage: {
+            text: message.text || "",
+            createdAt: message.createdAt,
+            userId: message.userId,
+            recipientId: message.recipientId,
+            threadId: message.threadId || null,
+          },
+        });
       }
 
       updatedContacts.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
