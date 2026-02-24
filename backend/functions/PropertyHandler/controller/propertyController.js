@@ -349,6 +349,8 @@ export class PropertyController {
                 {
                     capacity: normalizedOverviewPayload.capacity,
                     location: normalizedOverviewPayload.location,
+                    pricing: normalizedOverviewPayload.pricing,
+                    availabilityRestrictions: normalizedOverviewPayload.availabilityRestrictions,
                     amenities: normalizedOverviewPayload.amenities,
                     rules: normalizedOverviewPayload.rules,
                 }
@@ -379,6 +381,8 @@ export class PropertyController {
             subtitle: body.subtitle,
             capacity: body.capacity,
             location: body.location,
+            pricing: body.pricing,
+            availabilityRestrictions: body.availabilityRestrictions,
             amenities: body.amenities,
             rules: body.rules,
         };
@@ -388,6 +392,8 @@ export class PropertyController {
         return (
             this.validateOverviewRequiredFields(payload) ||
             this.validateOverviewOptionalObjects(payload) ||
+            this.validatePricingPayload(payload.pricing) ||
+            this.validateAvailabilityRestrictionsPayload(payload.availabilityRestrictions) ||
             this.validateAmenitiesPayload(payload.amenities) ||
             this.validateRulesPayload(payload.rules) ||
             this.validateOverviewTextContent(payload) ||
@@ -417,6 +423,56 @@ export class PropertyController {
             return "Location must be an object.";
         }
         return null;
+    }
+
+    validatePricingPayload(pricing) {
+        if (pricing === undefined) {
+            return null;
+        }
+        if (!this.isPlainObject(pricing)) {
+            return "Pricing must be an object.";
+        }
+        if (pricing.roomRate === undefined) {
+            return "Pricing roomRate is required.";
+        }
+        const roomRate = Number(pricing.roomRate);
+        if (!Number.isFinite(roomRate) || roomRate < 2) {
+            return "Pricing roomRate must be a number greater than or equal to 2.";
+        }
+        if (pricing.cleaning !== undefined && pricing.cleaning !== null) {
+            const cleaning = Number(pricing.cleaning);
+            if (!Number.isFinite(cleaning) || cleaning < 0) {
+                return "Pricing cleaning must be a number greater than or equal to 0.";
+            }
+        }
+        return null;
+    }
+
+    validateAvailabilityRestrictionsPayload(availabilityRestrictions) {
+        if (availabilityRestrictions === undefined) {
+            return null;
+        }
+        if (!Array.isArray(availabilityRestrictions)) {
+            return "Availability restrictions must be an array.";
+        }
+        const hasInvalidRestriction = availabilityRestrictions.some(
+            (restriction) => !this.isValidAvailabilityRestrictionEntry(restriction)
+        );
+        if (hasInvalidRestriction) {
+            return "Availability restrictions must contain { restriction: string, value: number }.";
+        }
+        return null;
+    }
+
+    isValidAvailabilityRestrictionEntry(restriction) {
+        if (!restriction || typeof restriction !== "object" || Array.isArray(restriction)) {
+            return false;
+        }
+        if (typeof restriction.restriction !== "string" || !restriction.restriction.trim()) {
+            return false;
+        }
+        const value = Number(restriction.value);
+        return Number.isFinite(value) && value >= 0;
     }
 
     validateAmenitiesPayload(amenities) {
@@ -484,6 +540,10 @@ export class PropertyController {
             subtitle: typeof payload.subtitle === "string" ? payload.subtitle.trim() : undefined,
             capacity: payload.capacity ? this.normalizeCapacityPayload(payload.capacity) : undefined,
             location: payload.location ? this.normalizeLocationPayload(payload.location) : undefined,
+            pricing: payload.pricing ? this.normalizePricingPayload(payload.pricing) : undefined,
+            availabilityRestrictions: Array.isArray(payload.availabilityRestrictions)
+                ? this.normalizeAvailabilityRestrictionsPayload(payload.availabilityRestrictions)
+                : undefined,
             amenities: Array.isArray(payload.amenities)
                 ? Array.from(new Set(payload.amenities.map((amenityId) => String(amenityId).trim()).filter(Boolean)))
                 : undefined,
@@ -501,6 +561,44 @@ export class PropertyController {
                 )
                 : undefined,
         };
+    }
+
+    normalizePricingPayload(pricing) {
+        const roomRate = Number(pricing.roomRate);
+        if (!Number.isFinite(roomRate) || roomRate < 2) {
+            throw new Error("Pricing roomRate must be a number greater than or equal to 2.");
+        }
+        const normalizedPricing = {
+            roomRate: Math.trunc(roomRate),
+        };
+        if (pricing.cleaning !== undefined && pricing.cleaning !== null) {
+            const cleaning = Number(pricing.cleaning);
+            if (!Number.isFinite(cleaning) || cleaning < 0) {
+                throw new Error("Pricing cleaning must be a number greater than or equal to 0.");
+            }
+            normalizedPricing.cleaning = Math.trunc(cleaning);
+        }
+        return normalizedPricing;
+    }
+
+    normalizeAvailabilityRestrictionsPayload(availabilityRestrictions) {
+        return Array.from(
+            new Map(
+                availabilityRestrictions
+                    .map((restriction) => ({
+                        restriction: String(restriction.restriction || "").trim(),
+                        value: Number(restriction.value),
+                    }))
+                    .filter((restriction) => restriction.restriction && Number.isFinite(restriction.value))
+                    .map((restriction) => [
+                        restriction.restriction,
+                        {
+                            restriction: restriction.restriction,
+                            value: Math.max(0, Math.trunc(restriction.value)),
+                        },
+                    ])
+            ).values()
+        );
     }
 
     normalizeCapacityPayload(capacity) {
@@ -603,6 +701,8 @@ export class PropertyController {
         return (
             error?.message?.startsWith("Invalid capacity field:") ||
             error?.message?.startsWith("Location ") ||
+            error?.message?.startsWith("Pricing ") ||
+            error?.message?.startsWith("Unknown availability restrictions:") ||
             error?.message?.startsWith("Unknown amenity IDs:") ||
             error?.message?.startsWith("Unknown policy rules:")
         );
@@ -621,11 +721,33 @@ export class PropertyController {
     // -------------------------
     async activateProperty(event) {
         try {
-            const accessToken = event.headers.Authorization;
-            const eventBody = JSON.parse(event.body);
-            const propertyId = eventBody.property
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId)
-            await this.propertyService.activateProperty(propertyId);
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId || eventBody.property;
+            const requestedStatus = typeof eventBody.status === "string" ? eventBody.status.toUpperCase() : null;
+            const allowedStatuses = new Set(["ACTIVE", "INACTIVE", "ARCHIVED"]);
+
+            if (!propertyId || typeof propertyId !== "string") {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+            if (requestedStatus && !allowedStatuses.has(requestedStatus)) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Invalid property status." })
+                };
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            if (requestedStatus) {
+                await this.propertyService.updatePropertyStatus(propertyId, requestedStatus);
+            } else {
+                await this.propertyService.activateProperty(propertyId);
+            }
             return {
                 statusCode: 204,
                 headers: responseHeaders
@@ -867,14 +989,39 @@ export class PropertyController {
     // -------------------------
     async delete(event) {
         try {
-            const accessToken = event.headers.Authorization;
-            const eventBody = JSON.parse(event.body);
-            const propertyId = eventBody.property;
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId || eventBody.property;
+            const reasons = Array.isArray(eventBody.reasons) ? eventBody.reasons : [];
+
+            if (!propertyId || typeof propertyId !== "string") {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+
+            const ownerId = await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const deletionResult = await this.propertyService.deleteProperty(propertyId, {
+                reasons,
+                actorId: ownerId,
+            });
+            if (deletionResult?.result === "archived") {
+                return {
+                    statusCode: 200,
+                    headers: responseHeaders,
+                    body: JSON.stringify({
+                        result: "archived",
+                        propertyId,
+                        message: "Listing has booking history and was archived.",
+                    }),
+                };
+            }
             return {
                 statusCode: 204,
                 headers: responseHeaders,
-            }
+            };
         } catch (error) {
             console.error(error);
             return {
