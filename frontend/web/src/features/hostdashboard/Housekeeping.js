@@ -12,7 +12,7 @@ const HostPropertyCare = () => {
 
     const [newTask, setNewTask] = useState({
         title: '', description: '', property: '', bookingRef: '', 
-        type: 'Cleaning', assignee: '', attachments: null
+        type: 'Cleaning', assignee: '', dueDate: '', attachments: null
     });
 
     const [filters, setFilters] = useState({
@@ -82,7 +82,7 @@ const HostPropertyCare = () => {
     };
 
     const handleCancelModal = () => {
-        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.attachments;
+        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.dueDate || newTask.attachments;
         if (hasUnsavedChanges) {
             const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to cancel?");
             if (confirmLeave) {
@@ -96,7 +96,7 @@ const HostPropertyCare = () => {
     };
 
     const resetForm = () => {
-        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', attachments: null });
+        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', dueDate: '', attachments: null });
     };
     // --- FILTER LOGIC ---
     const handleClearFilters = () => {
@@ -378,6 +378,16 @@ const HostPropertyCare = () => {
                                     <option value="Sophie Janssen">Sophie Janssen (sophie@domits.com)</option>
                                     <option value="Jan de Vries">Jan de Vries (jan@domits.com)</option>
                                 </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Due Date</label>
+                                <input 
+                                    type="date" 
+                                    name="dueDate" 
+                                    value={newTask.dueDate} 
+                                    onChange={handleInputChange} 
+                                    required 
+                                />
                             </div>
                             <div className="form-group">
                                 <label>Attachments (optional)</label>

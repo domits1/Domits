@@ -295,6 +295,7 @@
 }
 
 .form-group input[type="text"],
+.form-group input[type="date"], 
 .form-group select,
 .form-group textarea {
     width: 100%;
@@ -306,9 +307,11 @@
     transition: border-color 0.15s;
     box-sizing: border-box; 
     font-family: inherit;
+    background-color: #fff; 
 }
 
-.form-group input:focus,
+.form-group input[type="text"]:focus,
+.form-group input[type="date"]:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
