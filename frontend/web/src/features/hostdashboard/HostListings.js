@@ -69,6 +69,28 @@ const LISTING_ACTIONS = {
   ],
 };
 
+const createListingActionClickHandler = (action, onActionClick) => (event) => {
+  event.stopPropagation();
+  onActionClick(action);
+};
+
+function HostListingCardActions({ actions, isBusy, onActionClick }) {
+  return (
+    <div className={styles.buttonBox}>
+      {actions.map((action) => (
+        <button
+          key={action.id}
+          className={styles.greenBtn}
+          onClick={createListingActionClickHandler(action, onActionClick)}
+          disabled={isBusy}
+        >
+          {action.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function HostListings() {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -238,6 +260,7 @@ function HostListings() {
           const propertyImage = getListingImage(accommodation);
           const isBusy = processingPropertyId === propertyId;
           const actions = LISTING_ACTIONS[propertyStatus] || [];
+          const handleListingActionClick = (action) => executeListingAction(action, propertyId);
 
           return (
             <div
@@ -271,21 +294,11 @@ function HostListings() {
                 <span>On: {DateFormatterDD_MM_YYYY(accommodation?.property?.createdAt)}</span>
               </div>
 
-              <div className={styles.buttonBox}>
-                {actions.map((action) => (
-                  <button
-                    key={action.id}
-                    className={styles.greenBtn}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      executeListingAction(action, propertyId);
-                    }}
-                    disabled={isBusy}
-                  >
-                    {action.label}
-                  </button>
-                ))}
-              </div>
+              <HostListingCardActions
+                actions={actions}
+                isBusy={isBusy}
+                onActionClick={handleListingActionClick}
+              />
             </div>
           );
         })}
