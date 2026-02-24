@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Auth } from "aws-amplify";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import styles from "./HostDashboard.module.scss";
@@ -90,6 +91,20 @@ function HostListingCardActions({ actions, isBusy, onActionClick }) {
     </div>
   );
 }
+
+HostListingCardActions.propTypes = {
+  actions: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+      kind: PropTypes.oneOf(["details", "edit", "status"]).isRequired,
+      nextStatus: PropTypes.string,
+      successMessage: PropTypes.string,
+    })
+  ).isRequired,
+  isBusy: PropTypes.bool.isRequired,
+  onActionClick: PropTypes.func.isRequired,
+};
 
 function HostListings() {
   const [accommodations, setAccommodations] = useState([]);
