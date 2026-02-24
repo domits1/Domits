@@ -1,25 +1,10 @@
 import React, { useState } from "react";
 import profileImage from "./domits-logo.jpg";
 import Icon from "@mdi/react";
-import {
-  mdiPartyPopper,
-  mdiClipboardTextOutline,
-  mdiDoor,
-  mdiWifi,
-  mdiStarOutline,
-  mdiRobotOutline,
-} from "@mdi/js";
+import { mdiPartyPopper, mdiClipboardTextOutline, mdiDoor, mdiWifi, mdiStarOutline, mdiRobotOutline } from "@mdi/js";
 
 const ChatMessage = ({ message, userId, contactName, contactImage }) => {
-  const {
-    userId: senderId,
-    text,
-    createdAt,
-    isSent,
-    fileUrls,
-    isAutomated,
-    messageType,
-  } = message;
+  const { userId: senderId, text, createdAt, isSent, fileUrls, isAutomated, messageType } = message;
 
   const formatTime = (v) => {
     const d = new Date(v);
@@ -57,7 +42,14 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
   return (
     <div className={`chat-message-row ${directionClass} ${isAutomatedMessage ? "automated-message" : ""}`}>
       {!isOutgoing && (
-        <img className="chat-avatar" src={contactImage || profileImage} alt={contactName || "Contact"} />
+        <img
+          className="chat-message-avatar"
+          src={contactImage || profileImage}
+          alt={contactName || "Contact"}
+          onError={(e) => {
+            e.currentTarget.src = profileImage;
+          }}
+        />
       )}
 
       <div className={`chat-message ${directionClass} ${isAutomatedMessage ? "automated" : ""}`}>

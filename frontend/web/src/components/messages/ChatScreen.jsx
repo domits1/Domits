@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import ChatMessage from "./ChatMessage";
 import BookingTab from "./BookingTab";
 import MessageToast from "./MessageToast";
@@ -8,13 +8,15 @@ import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/comp
 import { FaPaperPlane, FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
 
-const getOtherPartyName = (selfUserId, contactId, contactName) => {
+import fallbackAvatar from "./domits-logo.jpg"; 
 
+const getOtherPartyName = (selfUserId, contactId, contactName) => {
   if (!contactName) return "Unknown";
   if (!selfUserId || !contactId) return contactName;
-
   return contactName;
 };
+
+const NEAR_BOTTOM_PX = 40;
 
 const ChatScreen = ({
   userId,
@@ -24,6 +26,7 @@ const ChatScreen = ({
   threadId,
   propertyId,
   onBack,
+  onClose,
   dashboardType,
   handleContactListMessage,
   testMessages = [],
@@ -32,7 +35,6 @@ const ChatScreen = ({
 
   const [newMessage, setNewMessage] = useState("");
   const [error, setError] = useState("");
-  const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
   const [showToast, setShowToast] = useState(false);
   const [toastText, setToastText] = useState("");
   const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
@@ -43,9 +45,10 @@ const ChatScreen = ({
   const { sendMessage, sending } = useSendMessage(userId, accessToken);
   const { fetchMessages, messagesByRecipient, messagesByThread } = useFetchMessages(userId);
 
-  const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const lastFetchKeyRef = useRef("");
+  const isNearBottomRef = useRef(true);
 
   const resolvedContactId = contactId || null;
 
@@ -84,18 +87,25 @@ const ChatScreen = ({
     return uniq.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
   }, [messagesByRecipient, messagesByThread, resolvedContactId, threadId, localMessages, testMessages]);
 
-  useEffect(() => {
-    if (isScrolledToBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [mergedMessages, isScrolledToBottom]);
-
-  const handleScroll = () => {
+  const computeNearBottom = useCallback(() => {
     const el = scrollContainerRef.current;
-    if (!el) return;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
-    setIsScrolledToBottom(atBottom);
-  };
+    if (!el) return true;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    return distance < NEAR_BOTTOM_PX;
+  }, []);
+
+  const scrollToBottom = useCallback((behavior = "auto") => {
+    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    isNearBottomRef.current = computeNearBottom();
+  }, [computeNearBottom]);
+
+  useEffect(() => {
+    if (!resolvedContactId) return;
+    if (isNearBottomRef.current) requestAnimationFrame(() => scrollToBottom("auto"));
+  }, [mergedMessages, resolvedContactId, scrollToBottom]);
 
   const handleSendMessage = async () => {
     if (!resolvedContactId) return;
@@ -109,6 +119,7 @@ const ChatScreen = ({
 
     const nowIso = new Date().toISOString();
     const optimisticId = `tmp-${nowIso}-${Math.random()}`;
+
     const optimistic = {
       id: optimisticId,
       userId,
@@ -123,6 +134,7 @@ const ChatScreen = ({
       isSent: true,
     };
 
+    isNearBottomRef.current = true;
     setLocalMessages((prev) => [...prev, optimistic]);
 
     try {
@@ -137,7 +149,6 @@ const ChatScreen = ({
       if (!result?.success) throw new Error(result?.error || "send failed");
 
       const saved = result?.saved || {};
-
       const finalMsg = {
         ...optimistic,
         id: saved?.id || optimisticId,
@@ -151,7 +162,7 @@ const ChatScreen = ({
       setNewMessage("");
       setUploadedFileUrls([]);
       setShowPreviewPopover(false);
-    } catch (err) {
+    } catch {
       setLocalMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setError("Failed to send message.");
       setToastText("Message failed to send");
@@ -159,9 +170,7 @@ const ChatScreen = ({
     }
   };
 
-  const handleUploadComplete = (url) => {
-    setUploadedFileUrls((prev) => [...prev, url]);
-  };
+  const handleUploadComplete = (url) => setUploadedFileUrls((prev) => [...prev, url]);
 
   if (!resolvedContactId) {
     return (
@@ -175,35 +184,58 @@ const ChatScreen = ({
   }
 
   const headerName = getOtherPartyName(userId, resolvedContactId, contactName);
+  const hasMessages = mergedMessages.length > 0;
 
   return (
     <div className="chat-screen">
       <div className="chat-header">
-        {onBack && (
-          <button className="chat-back" onClick={onBack} aria-label="Back">
-            <FaArrowLeft />
-          </button>
-        )}
-
         <div className="chat-header-left">
-          <img src={contactImage || "https://via.placeholder.com/40"} alt="Profile" className="chat-avatar" />
-          <div>
+          {onBack && (
+            <button className="chat-back" onClick={onBack} aria-label="Back">
+              <FaArrowLeft />
+            </button>
+          )}
+
+          {}
+          <img
+            src={contactImage || fallbackAvatar}
+            alt="Profile"
+            className="chat-header-avatar"
+            onError={(e) => {
+              e.currentTarget.src = fallbackAvatar;
+            }}
+          />
+
+          <div className="chat-header-text">
             <h3>{headerName}</h3>
             <p className="chat-status">Active now</p>
           </div>
         </div>
+
+        {onClose && (
+          <button className="chat-close" onClick={onClose} aria-label="Close" type="button">
+            ✕
+          </button>
+        )}
       </div>
 
       <div className="chat-body" ref={scrollContainerRef} onScroll={handleScroll}>
-        {mergedMessages.map((message, index) => (
-          <ChatMessage
-            key={message.id || index}
-            message={message}
-            userId={userId}
-            contactName={headerName}
-            contactImage={contactImage}
-          />
-        ))}
+        {!hasMessages ? (
+          <div className="chat-thread-empty">
+            <h4>No messages yet</h4>
+            <p>Say hi to start the conversation.</p>
+          </div>
+        ) : (
+          mergedMessages.map((message, index) => (
+            <ChatMessage
+              key={message.id || index}
+              message={message}
+              userId={userId}
+              contactName={headerName}
+              contactImage={contactImage}
+            />
+          ))
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -219,6 +251,7 @@ const ChatScreen = ({
                 className="inline-upload-preview"
                 onClick={() => setShowPreviewPopover((s) => !s)}
                 title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
+                type="button"
               >
                 <img src={uploadedFileUrls[0]} alt="First attachment preview" />
                 {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
@@ -240,7 +273,7 @@ const ChatScreen = ({
                   }
                 }}
               />
-              <button onClick={handleSendMessage} className="message-input-send-button" disabled={sending} title="Send">
+              <button onClick={handleSendMessage} className="message-input-send-button" disabled={sending} title="Send" type="button">
                 <FaPaperPlane />
               </button>
             </div>
@@ -250,7 +283,7 @@ const ChatScreen = ({
             <div className="preview-popover" role="dialog" aria-label="Attachment previews">
               <div className="preview-popover-header">
                 <h4>Attachments</h4>
-                <button onClick={() => setShowPreviewPopover(false)} aria-label="Close">
+                <button onClick={() => setShowPreviewPopover(false)} aria-label="Close" type="button">
                   ✕
                 </button>
               </div>

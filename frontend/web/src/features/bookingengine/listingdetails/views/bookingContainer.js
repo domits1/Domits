@@ -9,6 +9,8 @@ import { WebSocketProvider } from "../../../hostdashboard/hostmessages/context/w
 import { useAuth } from "../../../hostdashboard/hostmessages/hooks/useAuth";
 import ChatScreen from "../../../../components/messages/ChatScreen";
 
+import "../../../../components/messages/messagesV2.scss";
+
 const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
 const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyId }) => {
@@ -32,8 +34,7 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
       const list = Array.isArray(threads) ? threads : [];
       const matches = list.filter((t) => {
         const isMatch =
-          ((t?.hostId === hostId && t?.guestId === userId) ||
-            (t?.hostId === userId && t?.guestId === hostId)) &&
+          ((t?.hostId === hostId && t?.guestId === userId) || (t?.hostId === userId && t?.guestId === hostId)) &&
           String(t?.propertyId || "") === String(propertyId || "");
         return isMatch;
       });
@@ -65,13 +66,9 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
         const threads = await res.json();
         const found = findThreadIdForListing(threads);
 
-        if (!cancelled) {
-          setResolvedThreadId(found);
-        }
+        if (!cancelled) setResolvedThreadId(found);
       } catch {
-        if (!cancelled) {
-          setResolvedThreadId(null);
-        }
+        if (!cancelled) setResolvedThreadId(null);
       } finally {
         inFlightRef.current = false;
       }
@@ -85,10 +82,10 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
 
   if (!userId) {
     return (
-      <div className="message-host-modal">
+      <div className="message-host-modal" role="dialog" aria-modal="true" aria-label="Message host">
         <div className="message-host-modal__backdrop" onClick={onClose} />
         <div className="message-host-modal__content">
-          <div style={{ padding: 16 }}>Loading user…</div>
+          <div className="message-host-modal__loading">Loading user…</div>
         </div>
       </div>
     );
@@ -99,16 +96,18 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
       <div className="message-host-modal" role="dialog" aria-modal="true" aria-label="Message host">
         <div className="message-host-modal__backdrop" onClick={onClose} />
         <div className="message-host-modal__content">
-          <ChatScreen
-            userId={userId}
-            contactId={hostId}
-            contactName={hostName || "Host"}
-            contactImage={hostImage || null}
-            threadId={resolvedThreadId}
-            propertyId={propertyId || null}
-            onBack={onClose}
-            dashboardType="guest"
-          />
+          <div className="messages-v2 message-host-modal__shell">
+            <ChatScreen
+              userId={userId}
+              contactId={hostId}
+              contactName={hostName || "Host"}
+              contactImage={hostImage || null}
+              threadId={resolvedThreadId}
+              propertyId={propertyId || null}
+              onClose={onClose}
+              dashboardType="guest"
+            />
+          </div>
         </div>
       </div>
     </WebSocketProvider>
@@ -129,6 +128,24 @@ const BookingContainer = ({ property, host, propertyId }) => {
   const hostName = host?.givenName || host?.name || "Host";
   const hostImage = host?.profileImage || null;
   const resolvedPropertyId = propertyId || property?.property?.id || property?.property?.ID || null;
+
+
+  useEffect(() => {
+    if (!showMessageHost) return;
+
+    const body = document.body;
+    const prevOverflow = body.style.overflow;
+    const prevPaddingRight = body.style.paddingRight;
+
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    body.style.overflow = "hidden";
+    if (scrollBarWidth > 0) body.style.paddingRight = `${scrollBarWidth}px`;
+
+    return () => {
+      body.style.overflow = prevOverflow;
+      body.style.paddingRight = prevPaddingRight;
+    };
+  }, [showMessageHost]);
 
   return (
     <div className="booking-container">
@@ -165,21 +182,7 @@ const BookingContainer = ({ property, host, propertyId }) => {
 
       <p className="note">*You won’t be charged yet</p>
 
-      <button
-        className="message-host-btn"
-        disabled={!hostId}
-        onClick={() => setShowMessageHost(true)}
-        style={{
-          width: "100%",
-          marginTop: 12,
-          borderRadius: 12,
-          padding: "12px 14px",
-          fontWeight: 600,
-          border: "1px solid #ddd",
-          background: "#fff",
-          cursor: hostId ? "pointer" : "not-allowed",
-        }}
-      >
+      <button className="message-host-btn" disabled={!hostId} onClick={() => setShowMessageHost(true)}>
         Message host
       </button>
 
@@ -198,51 +201,6 @@ const BookingContainer = ({ property, host, propertyId }) => {
           />
         </UserProvider>
       )}
-
-      <style>{`
-        .message-host-modal {
-          position: fixed;
-          inset: 0;
-          z-index: 999999;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .message-host-modal__backdrop {
-          position: absolute;
-          inset: 0;
-          background: rgba(0,0,0,0.55);
-        }
-        .message-host-modal__content {
-          position: relative;
-          width: min(980px, 96vw);
-          height: min(86vh, 920px);
-          background: #fff;
-          border-radius: 16px;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-        .message-host-modal__content .guest-chat,
-        .message-host-modal__content .host-chat {
-          height: 100%;
-        }
-        .message-host-modal__content .chat-screen-container {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-        }
-        .message-host-modal__content .chat-screen {
-          flex: 1;
-          min-height: 0;
-          overflow: auto;
-        }
-        .message-host-modal__content .chat-input {
-          flex-shrink: 0;
-          border-top: 1px solid #eee;
-          background: #fff;
-        }
-      `}</style>
     </div>
   );
 };
