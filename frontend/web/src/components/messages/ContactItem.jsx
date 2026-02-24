@@ -10,8 +10,16 @@ const formatTime = (v) => {
 
 const ContactItem = ({ contact, selected }) => {
   const time = useMemo(() => formatTime(contact?.latestMessage?.createdAt), [contact?.latestMessage?.createdAt]);
+
   const subtitle = contact?.latestMessage?.text ? contact.latestMessage.text : "No message history yet";
-  const meta = contact?.propertyName || contact?.accoName || contact?.bookingProperty || "";
+
+  const meta =
+    contact?.propertyTitle ||
+    contact?.propertyName ||
+    contact?.accoName ||
+    contact?.bookingProperty ||
+    contact?.property?.title ||
+    "";
 
   return (
     <div className={`contact-item-content ${selected ? "selected" : ""}`}>

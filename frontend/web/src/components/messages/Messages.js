@@ -8,8 +8,8 @@ import useFetchContacts from "../../features/hostdashboard/hostmessages/hooks/us
 
 import ContactList from "./ContactList";
 import ChatScreen from "./ChatScreen";
-import BookingTab from "./BookingTab";
 import NewContactModal from "./NewContactModal";
+import ListingPanel from "./ListingPanel";
 
 import "./messagesV2.scss";
 
@@ -29,6 +29,11 @@ const MessagesContent = ({ dashboardType }) => {
   const [selectedContactName, setSelectedContactName] = useState(null);
   const [selectedContactImage, setSelectedContactImage] = useState(null);
   const [selectedThreadId, setSelectedThreadId] = useState(null);
+
+  const [selectedPropertyId, setSelectedPropertyId] = useState(null);
+  const [selectedPropertyTitle, setSelectedPropertyTitle] = useState(null);
+  const [selectedAccoImage, setSelectedAccoImage] = useState(null);
+
   const [message, setMessage] = useState([]);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
@@ -45,17 +50,33 @@ const MessagesContent = ({ dashboardType }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleContactClick = (contactId, contactName, contactImage, threadId = null) => {
+  const handleContactClick = (
+    contactId,
+    contactName,
+    contactImage,
+    threadId = null,
+    propertyId = null,
+    propertyTitle = null,
+    accoImage = null
+  ) => {
     setSelectedContactId(contactId);
     setSelectedContactName(contactName);
     setSelectedContactImage(contactImage || null);
     setSelectedThreadId(threadId);
+
+    setSelectedPropertyId(propertyId || null);
+    setSelectedPropertyTitle(propertyTitle || null);
+    setSelectedAccoImage(accoImage || null);
   };
 
   const handleBackToContacts = () => {
     setSelectedContactId(null);
     setSelectedContactName(null);
     setSelectedThreadId(null);
+
+    setSelectedPropertyId(null);
+    setSelectedPropertyTitle(null);
+    setSelectedAccoImage(null);
   };
 
   const handleCloseChat = (contactId = null) => {
@@ -64,6 +85,10 @@ const MessagesContent = ({ dashboardType }) => {
       setSelectedContactName(null);
       setSelectedContactImage(null);
       setSelectedThreadId(null);
+
+      setSelectedPropertyId(null);
+      setSelectedPropertyTitle(null);
+      setSelectedAccoImage(null);
     }
   };
 
@@ -73,7 +98,7 @@ const MessagesContent = ({ dashboardType }) => {
 
   const showContactList = isMobile ? !selectedContactId : true;
   const showChatScreen = isMobile ? !!selectedContactId : true;
-  const showDetailsPanel = !isMobile && !isTablet;
+  const showDetailsPanel = !isMobile && !isTablet; // desktop only
 
   return (
     <div className={`${dashboardType}-dashboard-page-body messages-v2`}>
@@ -124,9 +149,12 @@ const MessagesContent = ({ dashboardType }) => {
               )}
 
               {showDetailsPanel && (
-                <div className="messages-v2-card">
-                  <BookingTab userId={userId} contactId={selectedContactId} contactName={selectedContactName} dashboardType={dashboardType} />
-                </div>
+                <ListingPanel
+                  dashboardType={dashboardType}
+                  propertyId={selectedPropertyId}
+                  propertyTitle={selectedPropertyTitle}
+                  accoImage={selectedAccoImage}
+                />
               )}
             </div>
           </>
