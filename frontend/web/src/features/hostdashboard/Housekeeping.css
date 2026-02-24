@@ -5,6 +5,10 @@
     background-color: #ffffff;
     min-height: 100vh;
     color: #333;
+    max-width: 1400px;
+    margin: 0 auto;
+    box-sizing: border-box; 
+    overflow-x: hidden;
 }
 
 /* --- HEADER --- */
@@ -39,7 +43,7 @@
     background-color: #218838;
 }
 
-/* --- TABS (ZAKŁADKI) --- */
+/* --- TABS --- */
 .tabs-nav {
     display: flex;
     gap: 30px;
@@ -74,46 +78,48 @@
     border-radius: 3px 3px 0 0;
 }
 
-/* --- KPI CARDS (STATYSTYKI) --- */
-.kpi-row {
+/* --- OVERVIEW STATS CARDS --- */
+.overview-stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 30px;
+    gap: 15px;
+    margin-bottom: 25px;
 }
 
-.kpi-card {
+.overview-stat-card {
     background: white;
     border: 1px solid #e1e4e8;
     border-radius: 8px;
-    padding: 20px;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.kpi-icon {
-    font-size: 24px;
+.overview-stat-icon {
+    font-size: 18px;
     color: #6c757d;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #f8f9fa;
     border-radius: 50%;
+    flex-shrink: 0;
 }
 
-.kpi-icon.error-icon { color: #dc3545; background-color: #fde8e8; font-weight: bold; }
-.kpi-icon.success-icon { color: #28a745; background-color: #e6f9ec; font-weight: bold; }
+.overview-stat-icon.error-icon { color: #dc3545; background-color: #fde8e8; font-weight: bold; }
+.overview-stat-icon.info-icon { color: #007bff; background-color: #e6f2ff; font-weight: bold; }
+.overview-stat-icon.success-icon { color: #28a745; background-color: #e6f9ec; font-weight: bold; }
 
-.kpi-info {
+.overview-stat-info {
     display: flex;
     flex-direction: column;
 }
 
-.kpi-label {
+.overview-stat-label {
     font-size: 12px;
     color: #6c757d;
     text-transform: uppercase;
@@ -121,13 +127,13 @@
     margin-bottom: 4px;
 }
 
-.kpi-value {
-    font-size: 22px;
+.overview-stat-value {
+    font-size: 18px;
     font-weight: 700;
     color: #212529;
 }
 
-.kpi-value small {
+.overview-stat-value small {
     font-size: 11px;
     color: #6c757d;
     font-weight: normal;
@@ -151,14 +157,14 @@
 .tasks-table th {
     background-color: #f8f9fa;
     text-align: left;
-    padding: 15px 20px;
+    padding: 10px 15px; 
     font-weight: 600;
     color: #495057;
     border-bottom: 1px solid #e1e4e8;
 }
 
 .tasks-table td {
-    padding: 15px 20px;
+    padding: 10px 15px;
     border-bottom: 1px solid #f1f1f1;
     vertical-align: middle;
     color: #212529;
@@ -396,4 +402,160 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* --- OVERVIEW MODULE (Filter Bar) --- */
+.filters-bar {
+    border: 1px solid rgba(0, 0, 0, 0.19); 
+    border-radius: 12px; 
+    padding: 20px 25px; 
+    margin-bottom: 25px;
+    background-color: #ffffff;
+}
+
+.filters-dropdowns {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.filters-dropdowns select {
+    padding: 8px 30px 8px 15px; 
+    border: 1px solid rgba(0, 0, 0, 0.04); 
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    font-size: 13px;
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+    appearance: none; 
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 8px auto;
+    transition: box-shadow 0.2s ease, transform 0.2s ease; 
+}
+
+.filters-dropdowns select:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px); 
+}
+
+.search-box {
+    margin-left: auto; 
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    padding: 0 15px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.2s ease;
+}
+
+.search-box:focus-within {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.search-box input {
+    border: none;
+    background: transparent;
+    padding: 8px 0;
+    font-size: 13px;
+    outline: none;
+    width: 150px;
+}
+
+.search-box svg {
+    color: #6c757d;
+}
+
+/* --- ACTIVE FILTER TAGS --- */
+.active-filters-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-top: 20px;
+    padding-top: 15px;
+}
+
+.status-tags {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.status-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    background-color: #f8f9fa; 
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.dot-pending { background-color: #adb5bd; }
+.dot-inprogress { background-color: #fd7e14; }
+.dot-completed { background-color: #28a745; }
+.dot-overdue { background-color: #dc3545; }
+.dot-cancelled { background-color: #343a40; }
+
+.btn-clear-filters {
+    position: absolute;
+    right: 0;
+    background: none;
+    border: none;
+    color: #adb5bd;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.btn-clear-filters:hover {
+    text-decoration: underline;
+    color: #6c757d;
+}
+
+/* --- DYNAMIC ROW COLORS --- */
+.tasks-table tr {
+    border-bottom: 1px solid white; 
+}
+
+.tasks-table tr.row-overdue {
+    background-color: #fff0f0; 
+}
+.tasks-table tr.row-completed {
+    background-color: #f0fdf4; 
+}
+.tasks-table tr.row-in-progress {
+    background-color: #f0f7ff; 
+}
+.tasks-table tr.row-pending {
+    background-color: #f8f9fa; 
+}
+
+.tasks-table tr.row-pending:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.kpi-icon.info-icon { color: #007bff; background-color: #e6f2ff; font-weight: bold; }
+
+/* Action buttons below table */
+.table-footer-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 20px;
 }
