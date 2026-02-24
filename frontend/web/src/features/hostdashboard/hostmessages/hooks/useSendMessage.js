@@ -16,7 +16,7 @@ export const useSendMessage = (userId) => {
       return { success: false, error: errorMsg };
     }
 
-    if (recipientId === userId) {
+    if (String(recipientId) === String(userId)) {
       const errorMsg = "BUG: recipientId equals senderId (sending to yourself).";
       console.error("[useSendMessage]", errorMsg, { userId, recipientId, options });
       setError(errorMsg);
@@ -43,11 +43,14 @@ export const useSendMessage = (userId) => {
         fileUrls,
         propertyId: options.propertyId ?? null,
         threadId: options.threadId ?? null,
+        hostId: options.hostId ?? null,
+        guestId: options.guestId ?? null,
         metadata: { isAutomated: false, ...(options.metadata || {}) },
       });
 
       const savedId = pick(saved?.id, saved?.messageId, saved?.message?.id);
       const savedCreatedAt = pick(saved?.createdAt, saved?.message?.createdAt);
+      const savedThreadId = pick(saved?.threadId, saved?.message?.threadId, options.threadId, null);
 
       try {
         sendWebSocketMessage({
@@ -59,8 +62,10 @@ export const useSendMessage = (userId) => {
           content: text,
           fileUrls,
           channelId: channelID,
-          threadId: pick(saved?.threadId, saved?.message?.threadId, options.threadId, null),
+          threadId: savedThreadId,
           propertyId: options.propertyId ?? null,
+          hostId: options.hostId ?? null,
+          guestId: options.guestId ?? null,
           metadata: { isAutomated: false, ...(options.metadata || {}) },
           accessToken: token || undefined,
           id: savedId || undefined,
@@ -69,7 +74,7 @@ export const useSendMessage = (userId) => {
         });
       } catch {}
 
-      return { success: true, saved };
+      return { success: true, saved: { ...saved, threadId: savedThreadId } };
     } catch (err) {
       setError(err);
       return { success: false, error: err?.message || String(err) };

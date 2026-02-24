@@ -98,7 +98,7 @@ const MessagesContent = ({ dashboardType }) => {
 
   const showContactList = isMobile ? !selectedContactId : true;
   const showChatScreen = isMobile ? !!selectedContactId : true;
-  const showDetailsPanel = !isMobile && !isTablet; // desktop only
+  const showDetailsPanel = !isMobile && !isTablet;
 
   return (
     <div className={`${dashboardType}-dashboard-page-body messages-v2`}>
@@ -129,6 +129,7 @@ const MessagesContent = ({ dashboardType }) => {
                     loading={contactsLoading}
                     setContacts={setContacts}
                     onNewMessage={() => setIsNewMessageOpen(true)}
+                    activeThreadId={selectedThreadId}
                   />
                 </div>
               )}
@@ -142,6 +143,7 @@ const MessagesContent = ({ dashboardType }) => {
                     contactName={selectedContactName}
                     contactImage={selectedContactImage}
                     threadId={selectedThreadId}
+                    propertyId={selectedPropertyId}
                     onBack={isTablet ? handleBackToContacts : null}
                     dashboardType={dashboardType}
                   />

@@ -13,6 +13,8 @@ const ContactItem = ({ contact, selected }) => {
 
   const subtitle = contact?.latestMessage?.text ? contact.latestMessage.text : "No message history yet";
 
+  const displayName = contact?.givenName || "Unknown";
+
   const meta =
     contact?.propertyTitle ||
     contact?.propertyName ||
@@ -30,7 +32,7 @@ const ContactItem = ({ contact, selected }) => {
 
       <div className="contact-item-text-container">
         <div className="contact-item-title-row">
-          <p className="contact-item-full-name">{contact.givenName || "Unknown"}</p>
+          <p className="contact-item-full-name">{displayName}</p>
           <p className="contact-item-time">{time}</p>
         </div>
 

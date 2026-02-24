@@ -1,5 +1,3 @@
-// /Users/mh/Domits/frontend/web/src/features/bookingengine/listingdetails/views/bookingContainer.js
-
 import React, { useEffect, useRef, useState } from "react";
 import DateSelectionContainer from "./dateSelectionContainer";
 import GuestSelectionContainer from "./guestSelectionContainer";
@@ -13,11 +11,10 @@ import ChatScreen from "../../../../components/messages/ChatScreen";
 
 const UNIFIED_MESSAGING_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
-const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage }) => {
+const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyId }) => {
   const { userId } = useAuth();
   const [resolvedThreadId, setResolvedThreadId] = useState(null);
 
-  const lastGoodThreadIdRef = useRef(null);
   const inFlightRef = useRef(false);
 
   useEffect(() => {
@@ -31,14 +28,17 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage }) => {
   useEffect(() => {
     let cancelled = false;
 
-    const pickNewestThreadId = (threads) => {
+    const findThreadIdForListing = (threads) => {
       const list = Array.isArray(threads) ? threads : [];
       const matches = list.filter((t) => {
-        return (
-          (t?.hostId === hostId && t?.guestId === userId) ||
-          (t?.hostId === userId && t?.guestId === hostId)
-        );
+        const isMatch =
+          ((t?.hostId === hostId && t?.guestId === userId) ||
+            (t?.hostId === userId && t?.guestId === hostId)) &&
+          String(t?.propertyId || "") === String(propertyId || "");
+        return isMatch;
       });
+
+      if (!matches.length) return null;
 
       matches.sort((a, b) => {
         const aTime = Number(a?.lastMessageAt ?? a?.updatedAt ?? a?.createdAt ?? 0);
@@ -50,7 +50,7 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage }) => {
     };
 
     const run = async () => {
-      if (!userId || !hostId) return;
+      if (!userId || !hostId || !propertyId) return;
       if (inFlightRef.current) return;
       inFlightRef.current = true;
 
@@ -63,17 +63,14 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage }) => {
         if (!res.ok) throw new Error(`threads fetch failed ${res.status}`);
 
         const threads = await res.json();
-        const newest = pickNewestThreadId(threads);
+        const found = findThreadIdForListing(threads);
 
-        if (!cancelled && newest) {
-          lastGoodThreadIdRef.current = newest;
-          setResolvedThreadId(newest);
-        } else if (!cancelled && !resolvedThreadId && lastGoodThreadIdRef.current) {
-          setResolvedThreadId(lastGoodThreadIdRef.current);
+        if (!cancelled) {
+          setResolvedThreadId(found);
         }
       } catch {
-        if (!cancelled && !resolvedThreadId && lastGoodThreadIdRef.current) {
-          setResolvedThreadId(lastGoodThreadIdRef.current);
+        if (!cancelled) {
+          setResolvedThreadId(null);
         }
       } finally {
         inFlightRef.current = false;
@@ -84,7 +81,7 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage }) => {
     return () => {
       cancelled = true;
     };
-  }, [userId, hostId, resolvedThreadId]);
+  }, [userId, hostId, propertyId]);
 
   if (!userId) {
     return (
@@ -108,6 +105,7 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage }) => {
             contactName={hostName || "Host"}
             contactImage={hostImage || null}
             threadId={resolvedThreadId}
+            propertyId={propertyId || null}
             onBack={onClose}
             dashboardType="guest"
           />
@@ -117,7 +115,7 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage }) => {
   );
 };
 
-const BookingContainer = ({ property, host }) => {
+const BookingContainer = ({ property, host, propertyId }) => {
   const [checkInDate, setCheckInDate] = useState(new Date(Date.now() + 86400000).toISOString().split("T")[0]);
   const [checkOutDate, setCheckOutDate] = useState(new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0]);
   const [nights, setNights] = useState();
@@ -130,6 +128,7 @@ const BookingContainer = ({ property, host }) => {
   const hostId = property?.property?.hostId || property?.property?.hostID || null;
   const hostName = host?.givenName || host?.name || "Host";
   const hostImage = host?.profileImage || null;
+  const resolvedPropertyId = propertyId || property?.property?.id || property?.property?.ID || null;
 
   return (
     <div className="booking-container">
@@ -195,6 +194,7 @@ const BookingContainer = ({ property, host }) => {
             hostId={hostId}
             hostName={hostName}
             hostImage={hostImage}
+            propertyId={resolvedPropertyId}
           />
         </UserProvider>
       )}

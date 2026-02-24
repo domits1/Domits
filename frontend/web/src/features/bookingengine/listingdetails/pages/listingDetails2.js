@@ -56,8 +56,7 @@ const ListingDetails2 = () => {
 
       <div className="container">
         <PropertyContainer property={property} />
-
-        <BookingContainer property={property} host={host} />
+        <BookingContainer property={property} host={host} propertyId={id} />
       </div>
     </div>
   );

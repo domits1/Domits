@@ -20,8 +20,6 @@ const useFetchContacts = (userId, role) => {
     setError(null);
 
     try {
-      const isHost = role === "host";
-
       const fetchUserInfo = async (targetUserId) => {
         try {
           const userResponse = await fetch(
@@ -42,7 +40,7 @@ const useFetchContacts = (userId, role) => {
           let parsed = null;
           try {
             parsed = typeof userData?.body === "string" ? JSON.parse(userData.body) : userData?.body;
-          } catch (e) {
+          } catch {
             parsed = null;
           }
 
@@ -68,7 +66,7 @@ const useFetchContacts = (userId, role) => {
             givenName: attributes["given_name"] || attributes["name"] || "Unknown",
             userId: resolvedUserId,
           };
-        } catch (e) {
+        } catch {
           return { givenName: "Unknown", userId: targetUserId };
         }
       };
@@ -76,7 +74,6 @@ const useFetchContacts = (userId, role) => {
       const fetchLatestMessage = async (threadId, fallbackRecipientId) => {
         try {
           let url = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages";
-
           if (threadId) url += `?threadId=${encodeURIComponent(threadId)}`;
 
           const unifiedResponse = await fetch(url, {
@@ -126,14 +123,20 @@ const useFetchContacts = (userId, role) => {
           const threads = Array.isArray(threadsData) ? threadsData : [];
 
           unifiedContacts = threads
-            .filter((t) => t?.hostId && t?.guestId && t.hostId !== t.guestId)
+            .filter((t) => t?.hostId && t?.guestId && String(t.hostId) !== String(t.guestId))
             .map((t) => {
-              const partnerId = isHost ? t.guestId : t.hostId;
+              let partnerId = null;
+              if (String(t.hostId) === String(userId)) partnerId = t.guestId;
+              else if (String(t.guestId) === String(userId)) partnerId = t.hostId;
+              else {
+                partnerId = role === "host" ? t.guestId : t.hostId;
+              }
 
               return {
                 partnerId,
                 recipientId: partnerId,
                 userId: partnerId,
+
                 hostId: t.hostId,
                 guestId: t.guestId,
 
@@ -144,7 +147,7 @@ const useFetchContacts = (userId, role) => {
                 isFromUnified: true,
               };
             })
-            .filter((c, i, self) => i === self.findIndex((x) => x.partnerId === c.partnerId));
+            .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));
         }
       } catch (e) {
         console.warn("Failed to fetch unified threads:", e);
@@ -157,12 +160,37 @@ const useFetchContacts = (userId, role) => {
           safeContacts.map(async (contact) => {
             const partnerId = contact?.partnerId || contact?.recipientId || contact?.userId || null;
 
-            const userInfo = partnerId ? await fetchUserInfo(partnerId) : { givenName: "Unknown", userId: partnerId };
+            const userInfo = partnerId
+              ? await fetchUserInfo(partnerId)
+              : { givenName: "Unknown", userId: partnerId };
 
             const latestMessage = await fetchLatestMessage(contact?.threadId, partnerId);
 
-            const hostId = isHost ? userId : contact.hostId;
-            const guestId = isHost ? contact.guestId : userId;
+
+            const threadHostId = contact?.hostId || null;
+            const threadGuestId = contact?.guestId || null;
+
+            let hostIdForLookup = null;
+            let guestIdForLookup = null;
+
+            if (threadHostId && threadGuestId) {
+
+              if (String(threadHostId) === String(userId)) {
+                hostIdForLookup = threadHostId;
+                guestIdForLookup = threadGuestId;
+              } else if (String(threadGuestId) === String(userId)) {
+                hostIdForLookup = threadHostId;
+                guestIdForLookup = threadGuestId;
+              } else {
+
+                hostIdForLookup = role === "guest" ? partnerId : userId;
+                guestIdForLookup = role === "guest" ? userId : partnerId;
+              }
+            } else {
+
+              hostIdForLookup = role === "guest" ? partnerId : userId;
+              guestIdForLookup = role === "guest" ? userId : partnerId;
+            }
 
             let accoImage = null;
             let bookingStatus = null;
@@ -173,8 +201,8 @@ const useFetchContacts = (userId, role) => {
 
             try {
               const bookingInfo = await fetchBookingDetailsAndAccommodation({
-                hostId,
-                guestId,
+                hostId: hostIdForLookup,
+                guestId: guestIdForLookup,
                 withAuth: role !== "guest",
                 accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
               });
@@ -186,7 +214,7 @@ const useFetchContacts = (userId, role) => {
               propertyId = bookingInfo?.propertyId || propertyId;
               propertyTitle = bookingInfo?.propertyTitle || null;
             } catch (e) {
-              console.warn("Failed to fetch booking/accommodation:", e);
+              // ok
             }
 
             return {
@@ -218,8 +246,9 @@ const useFetchContacts = (userId, role) => {
         return;
       }
 
-      const requestData = isHost ? { hostID: userId } : { userID: userId };
-      const endpoint = isHost
+      const isHostLegacy = role === "host";
+      const requestData = isHostLegacy ? { hostID: userId } : { userID: userId };
+      const endpoint = isHostLegacy
         ? "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts"
         : "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts_Guest";
 
@@ -236,7 +265,7 @@ const useFetchContacts = (userId, role) => {
       let JSONData = { accepted: [], pending: [] };
       try {
         JSONData = typeof responseData?.body === "string" ? JSON.parse(responseData.body) : responseData?.body || JSONData;
-      } catch (e) {
+      } catch {
         JSONData = { accepted: [], pending: [] };
       }
 
@@ -244,21 +273,21 @@ const useFetchContacts = (userId, role) => {
       const pendingRaw = Array.isArray(JSONData?.pending) ? JSONData.pending : [];
 
       const normalizeLegacy = (raw) => {
-        const partnerId = isHost ? raw?.userId : raw?.hostId;
+        const partnerId = isHostLegacy ? raw?.userId : raw?.hostId;
         return {
           ...raw,
           partnerId,
           recipientId: partnerId,
           userId: partnerId,
-          hostId: raw?.hostId || (isHost ? userId : null),
-          guestId: raw?.userId || (!isHost ? userId : null),
+          hostId: raw?.hostId || (isHostLegacy ? userId : null),
+          guestId: raw?.userId || (!isHostLegacy ? userId : null),
           Status: raw?.Status || raw?.status || "accepted",
         };
       };
 
       const acceptedContacts = await hydrateContacts(acceptedRaw.map(normalizeLegacy));
 
-      const filteredPending = isHost ? pendingRaw.filter((c) => c?.userId !== userId) : pendingRaw;
+      const filteredPending = isHostLegacy ? pendingRaw.filter((c) => c?.userId !== userId) : pendingRaw;
       const pendingContactsRes = await hydrateContacts(filteredPending.map(normalizeLegacy));
 
       setContacts(acceptedContacts);

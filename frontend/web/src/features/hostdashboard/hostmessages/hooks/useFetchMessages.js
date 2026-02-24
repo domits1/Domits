@@ -74,6 +74,8 @@ const normalizeWs = (raw) => {
   };
 };
 
+const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+
 export const useFetchMessages = (userId) => {
   const wsCtx = useContext(WebSocketContext);
   const wsMessages = wsCtx?.messages || [];
@@ -93,9 +95,7 @@ export const useFetchMessages = (userId) => {
     (newMessage) => {
       if (!newMessage || !newMessage.id) return;
 
-      const partnerId =
-        newMessage.userId === userId ? newMessage.recipientId : newMessage.userId;
-
+      const partnerId = newMessage.userId === userId ? newMessage.recipientId : newMessage.userId;
       if (!partnerId) return;
 
       const threadKey = newMessage.threadId || null;
@@ -104,9 +104,7 @@ export const useFetchMessages = (userId) => {
         const current = prev[partnerId] || [];
         if (current.some((m) => m.id === newMessage.id)) return prev;
 
-        const nextForPartner = [...current, newMessage].sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-        );
+        const nextForPartner = [...current, newMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
         const next = { ...prev, [partnerId]: nextForPartner };
         cacheRef.current[partnerId] = nextForPartner;
@@ -118,9 +116,7 @@ export const useFetchMessages = (userId) => {
           const current = prev[threadKey] || [];
           if (current.some((m) => m.id === newMessage.id)) return prev;
 
-          const nextForThread = [...current, newMessage].sort(
-            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-          );
+          const nextForThread = [...current, newMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
           const next = { ...prev, [threadKey]: nextForThread };
           cacheRef.current[threadKey] = nextForThread;
@@ -146,6 +142,46 @@ export const useFetchMessages = (userId) => {
     }
   }, [wsMessages, upsertIntoStores]);
 
+  const resolveThreadIdForPartner = useCallback(
+    async (partnerId) => {
+      if (!userId || !partnerId) return null;
+
+      try {
+        const res = await fetch(`${UNIFIED_API}/threads?userId=${encodeURIComponent(userId)}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!res.ok) return null;
+        const data = await res.json().catch(() => null);
+        const threads = Array.isArray(data) ? data : [];
+
+        // pick most recent by lastMessageAt/updatedAt/createdAt
+        const candidates = threads.filter((t) => {
+          const a = String(t?.hostId || "");
+          const b = String(t?.guestId || "");
+          const u = String(userId);
+          const p = String(partnerId);
+          return (a === u && b === p) || (a === p && b === u);
+        });
+
+        if (!candidates.length) return null;
+
+        const score = (t) =>
+          Number(t?.lastMessageAt || 0) ||
+          Number(t?.updatedAt || 0) ||
+          Number(t?.createdAt || 0) ||
+          0;
+
+        candidates.sort((x, y) => score(y) - score(x));
+        return candidates[0]?.id || null;
+      } catch {
+        return null;
+      }
+    },
+    [userId]
+  );
+
   const fetchMessages = useCallback(
     async (recipientId, threadId = null) => {
       if (!recipientId) {
@@ -157,6 +193,7 @@ export const useFetchMessages = (userId) => {
       setActiveThreadId(threadId || null);
       setError(null);
 
+      // Cache key MUST prefer threadId to prevent cross-thread mixing
       const cacheKey = threadId || recipientId;
       const cached = cacheRef.current[cacheKey];
       if (Array.isArray(cached) && cached.length > 0) {
@@ -169,41 +206,25 @@ export const useFetchMessages = (userId) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        let response;
-
-        if (threadId) {
-          response = await fetch(
-            `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId}`,
-            {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-              signal: controller.signal,
-            }
-          );
-        } else {
-          const threadId1 = `${userId}-${recipientId}`;
-          const threadId2 = `${recipientId}-${userId}`;
-
-          response = await fetch(
-            `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId1}`,
-            {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-              signal: controller.signal,
-            }
-          );
-
-          if (!response.ok) {
-            response = await fetch(
-              `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages?threadId=${threadId2}`,
-              {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
-                signal: controller.signal,
-              }
-            );
-          }
+        let useThreadId = threadId || null;
+        if (!useThreadId) {
+          useThreadId = await resolveThreadIdForPartner(recipientId);
+          setActiveThreadId(useThreadId || null);
         }
+
+        if (!useThreadId) {
+          clearTimeout(timeoutId);
+          setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: [] }));
+          cacheRef.current[cacheKey] = [];
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${UNIFIED_API}/messages?threadId=${encodeURIComponent(useThreadId)}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+        });
 
         clearTimeout(timeoutId);
 
@@ -227,8 +248,12 @@ export const useFetchMessages = (userId) => {
 
             return {
               ...msg,
+              threadId: msg.threadId || useThreadId,
               userId: msg.senderId,
+              senderId: msg.senderId,
+              recipientId: msg.recipientId,
               text: msg.content || msg.text || "",
+              content: msg.content || msg.text || "",
               isAutomated: metadata.isAutomated || false,
               messageType: metadata.messageType || null,
               isSent: metadata.isAutomated ? false : msg.senderId === userId,
@@ -253,9 +278,11 @@ export const useFetchMessages = (userId) => {
 
           const sorted = transformed.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
+          // Store under partner AND thread
           setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: sorted }));
-          setMessagesByThread((prev) => ({ ...prev, [cacheKey]: sorted }));
-          cacheRef.current[cacheKey] = sorted;
+          setMessagesByThread((prev) => ({ ...prev, [useThreadId]: sorted }));
+          cacheRef.current[recipientId] = sorted;
+          cacheRef.current[useThreadId] = sorted;
         } else {
           setError("Unexpected response format");
         }
@@ -263,13 +290,14 @@ export const useFetchMessages = (userId) => {
         console.error("Error fetching messages:", err);
         setError(err);
         setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: prev[recipientId] || [] }));
-        setMessagesByThread((prev) => ({ ...prev, [cacheKey]: [] }));
-        cacheRef.current[cacheKey] = [];
+        if (threadId) {
+          setMessagesByThread((prev) => ({ ...prev, [threadId]: prev[threadId] || [] }));
+        }
       } finally {
         setLoading(false);
       }
     },
-    [userId]
+    [userId, resolveThreadIdForPartner]
   );
 
   const addNewMessage = useCallback(
@@ -294,6 +322,10 @@ export const useFetchMessages = (userId) => {
     error,
     fetchMessages,
     addNewMessage,
+
+    // expose stores for ChatScreen merge logic
+    messagesByRecipient,
+    messagesByThread,
   };
 };
 

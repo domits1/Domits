@@ -63,6 +63,8 @@ export async function sendUnifiedMessage({
   propertyId = null,
   threadId = null,
   fileUrls = [],
+  hostId = null,
+  guestId = null,
   metadata = { isAutomated: false },
 }) {
   const attachments =
@@ -79,6 +81,8 @@ export async function sendUnifiedMessage({
     recipientId,
     propertyId,
     threadId,
+    hostId,
+    guestId,
     content,
     platform: "DOMITS",
     metadata,

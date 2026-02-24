@@ -7,72 +7,22 @@ class MessageService {
     this.threadRepository = new ThreadRepository();
   }
 
-  /**
-   * Determine correct hostId/guestId.
-   * Preferred sources:
-   *  - payload.hostId / payload.guestId (best)
-   *  - payload.metadata.hostId / guestId
-   *  - payload.metadata.senderGroup ("Host"|"Guest") as heuristic
-   * Fallback:
-   *  - If senderGroup missing: assume recipient is host when platform is DOMITS (guest initiates from listing)
-   */
-  normalizeParticipants(payload) {
-    const senderId = payload?.senderId;
-    const recipientId = payload?.recipientId;
-
-    const meta = payload?.metadata && typeof payload.metadata === "string"
-      ? (() => {
-          try { return JSON.parse(payload.metadata); } catch { return {}; }
-        })()
-      : (payload?.metadata || {});
-
-    const explicitHostId = payload?.hostId || meta?.hostId || null;
-    const explicitGuestId = payload?.guestId || meta?.guestId || null;
-
-    if (explicitHostId && explicitGuestId) {
-      return { hostId: explicitHostId, guestId: explicitGuestId };
-    }
-
-    const senderGroup = meta?.senderGroup || meta?.role || null; // "Host" | "Guest" (frontend can send)
-    if (senderGroup === "Host") {
-      return { hostId: senderId, guestId: recipientId };
-    }
-    if (senderGroup === "Guest") {
-      return { hostId: recipientId, guestId: senderId };
-    }
-
-    // Fallback heuristic:
-    // In your product, the guest usually initiates from listing -> recipient is host.
-    // This avoids creating reversed threads when the first message comes from a guest.
-    return { hostId: recipientId, guestId: senderId };
-  }
-
   async sendMessage(payload) {
-    if (!payload?.senderId || !payload?.recipientId) {
-      return { statusCode: 400, response: { error: "senderId and recipientId are required" } };
-    }
+    let threadId = payload.threadId || null;
 
-    if (payload.senderId === payload.recipientId) {
-      return { statusCode: 400, response: { error: "senderId and recipientId cannot be the same" } };
-    }
+    const senderId = payload.senderId;
+    const recipientId = payload.recipientId;
 
-    // ✅ Strongly recommended: propertyId should be provided for DOMITS listing context
-    // If you want to hard-enforce it, uncomment the block below.
-    /*
-    if ((payload.platform || "DOMITS") === "DOMITS" && !payload.propertyId) {
-      return { statusCode: 400, response: { error: "propertyId is required for DOMITS messages" } };
-    }
-    */
-
-    const { hostId, guestId } = this.normalizeParticipants(payload);
-
-    let threadId = payload.threadId;
+    const explicitHostId = payload.hostId || null;
+    const explicitGuestId = payload.guestId || null;
 
     if (!threadId) {
-      // ✅ Find exact thread for (host, guest, propertyId) with auto-heal if swapped exists
-      let thread = await this.threadRepository.findThreadNormalized(hostId, guestId, payload.propertyId);
+      let thread = await this.threadRepository.findThread(senderId, recipientId, payload.propertyId);
 
       if (!thread) {
+        const hostId = explicitHostId || senderId;
+        const guestId = explicitGuestId || recipientId;
+
         thread = await this.threadRepository.createThread({
           hostId,
           guestId,
@@ -86,32 +36,56 @@ class MessageService {
     }
 
     const message = await this.messageRepository.createMessage({
-      threadId,
-      senderId: payload.senderId,
-      recipientId: payload.recipientId,
+      threadId: threadId,
+      senderId: senderId,
+      recipientId: recipientId,
       content: payload.content,
       platformMessageId: payload.platformMessageId,
       metadata: payload.metadata,
       attachments: payload.attachments,
-      deliveryStatus: (payload.platform || "DOMITS") === "DOMITS" ? "delivered" : "pending",
+      deliveryStatus: payload.platform === "DOMITS" ? "delivered" : "pending",
     });
 
     await this.threadRepository.updateLastMessageAt(threadId, Date.now());
 
     return {
       statusCode: 201,
-      response: message,
+      response: {
+        ...message,
+        threadId,
+      },
     };
   }
 
   async getThreads(userId) {
     const threads = await this.threadRepository.getThreadsForUser(userId);
-    return { statusCode: 200, response: threads };
+    return {
+      statusCode: 200,
+      response: threads,
+    };
   }
 
   async getMessages(threadId) {
     const messages = await this.messageRepository.getMessagesByThreadId(threadId);
-    return { statusCode: 200, response: messages };
+    return {
+      statusCode: 200,
+      response: messages,
+    };
+  }
+
+  async getMessagesByUsers(userId, recipientId, propertyId) {
+    const thread = await this.threadRepository.findThread(userId, recipientId, propertyId);
+    if (!thread) {
+      return {
+        statusCode: 200,
+        response: [],
+      };
+    }
+    const messages = await this.messageRepository.getMessagesByThreadId(thread.id);
+    return {
+      statusCode: 200,
+      response: messages,
+    };
   }
 }
 

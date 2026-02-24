@@ -1,62 +1,19 @@
-import { useEffect, useMemo, useState, useRef, useContext } from "react";
-
-import useFetchMessages from "../../features/hostdashboard/hostmessages/hooks/useFetchMessages";
-import useFetchBookingDetails from "../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails";
-import { useSendMessage } from "../../features/hostdashboard/hostmessages/hooks/useSendMessage";
-
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import ChatMessage from "./ChatMessage";
-import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/components/chatUploadAttachment";
-import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
-
-import { v4 as uuidv4 } from "uuid";
-import { FaPaperPlane, FaArrowLeft, FaTimes, FaEllipsisH } from "react-icons/fa";
-import profileImage from "./domits-logo.jpg";
-import { toast } from "react-toastify";
+import BookingTab from "./BookingTab";
 import MessageToast from "./MessageToast";
+import { useSendMessage } from "../../features/hostdashboard/hostmessages/hooks/useSendMessage";
+import { useFetchMessages } from "../../features/hostdashboard/hostmessages/hooks/useFetchMessages";
+import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/components/chatUploadAttachment";
+import { FaPaperPlane, FaArrowLeft } from "react-icons/fa";
+import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
 
-const toIso = (v) => {
-  if (!v) return new Date().toISOString();
-  if (typeof v === "number") return new Date(v).toISOString();
-  const d = new Date(v);
-  if (!isNaN(d.getTime())) return d.toISOString();
-  return new Date().toISOString();
-};
+const getOtherPartyName = (selfUserId, contactId, contactName) => {
 
-const ensureId = (msg) => {
-  if (msg?.id) return msg;
-  const sender = msg?.userId || msg?.senderId || "unknown";
-  const recipient = msg?.recipientId || "unknown";
-  const createdAt = msg?.createdAt || new Date().toISOString();
-  const text = msg?.text || msg?.content || "";
-  return { ...msg, id: `${sender}:${recipient}:${toIso(createdAt)}:${String(text).slice(0, 40)}` };
-};
+  if (!contactName) return "Unknown";
+  if (!selfUserId || !contactId) return contactName;
 
-const normalizeForChat = (msg, userId) => {
-  const m = ensureId(msg);
-  const senderId = m?.userId || m?.senderId || null;
-  const createdAt = toIso(m?.createdAt);
-
-  return {
-    ...m,
-    userId: senderId || m?.userId,
-    senderId: m?.senderId || senderId,
-    recipientId: m?.recipientId,
-    text: m?.text ?? m?.content ?? "",
-    content: m?.content ?? m?.text ?? "",
-    isSent: senderId ? senderId === userId : !!m?.isSent,
-    createdAt,
-    fileUrls: Array.isArray(m?.fileUrls) ? m.fileUrls : [],
-  };
-};
-
-const formatChipDate = (isoLike) => {
-  if (!isoLike) return "";
-  const d = new Date(isoLike);
-  if (Number.isNaN(d.getTime())) return "";
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = String(d.getFullYear());
-  return `${dd}/${mm}/${yyyy}`;
+  return contactName;
 };
 
 const ChatScreen = ({
@@ -65,373 +22,251 @@ const ChatScreen = ({
   contactName,
   contactImage,
   threadId,
-  handleContactListMessage,
+  propertyId,
   onBack,
   dashboardType,
+  handleContactListMessage,
+  testMessages = [],
 }) => {
-  const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
-  const socket = useContext(WebSocketContext);
-  const isHost = dashboardType === "host";
-
-  const { bookingDetails } = isHost
-    ? useFetchBookingDetails(userId, contactId)
-    : useFetchBookingDetails(contactId, userId);
-
-  const resolvedContactId = useMemo(() => {
-    if (contactId && contactId !== userId) return contactId;
-
-    const candidate =
-      bookingDetails?.guestId ||
-      bookingDetails?.guest_id ||
-      bookingDetails?.tenantId ||
-      bookingDetails?.tenant_id ||
-      bookingDetails?.renterId ||
-      bookingDetails?.renter_id ||
-      bookingDetails?.userId ||
-      bookingDetails?.user_id ||
-      null;
-
-    if (candidate && candidate !== userId) return candidate;
-    return contactId;
-  }, [contactId, userId, bookingDetails]);
-
-  const { sendMessage, sending, error: sendError } = useSendMessage(userId);
+  const { accessToken } = useAuth();
 
   const [newMessage, setNewMessage] = useState("");
+  const [error, setError] = useState("");
+  const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
+  const [showToast, setShowToast] = useState(false);
+  const [toastText, setToastText] = useState("");
   const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
 
-  const wsMessages = socket?.messages || [];
-  const addedMessageIds = useRef(new Set());
-  const chatContainerRef = useRef(null);
-  const [forceStopLoading, setForceStopLoading] = useState(false);
+  const [localMessages, setLocalMessages] = useState([]);
 
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const { sendMessage, sending } = useSendMessage(userId, accessToken);
+  const { fetchMessages, messagesByRecipient, messagesByThread } = useFetchMessages(userId);
 
-  const isDemoConversation = useMemo(() => {
-    const isDemoId = (id) => typeof id === "string" && (id.startsWith("test-") || id.startsWith("demo-"));
-    return isDemoId(userId) || isDemoId(resolvedContactId);
-  }, [userId, resolvedContactId]);
+  const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+  const lastFetchKeyRef = useRef("");
 
-  const handleUploadComplete = (url) => {
-    setUploadedFileUrls((prev) => (!prev.includes(url) ? [...prev, url] : prev));
-  };
+  const resolvedContactId = contactId || null;
 
   useEffect(() => {
-    if (resolvedContactId) fetchMessages(resolvedContactId, threadId);
-  }, [userId, resolvedContactId, threadId, fetchMessages]);
-
-  useEffect(() => {
-    if (!loading) {
-      setForceStopLoading(false);
+    if (!resolvedContactId) {
+      setLocalMessages([]);
+      lastFetchKeyRef.current = "";
       return;
     }
-    const t = setTimeout(() => setForceStopLoading(true), 12000);
-    return () => clearTimeout(t);
-  }, [loading, resolvedContactId]);
+
+    const key = `${resolvedContactId}::${threadId || ""}`;
+    if (lastFetchKeyRef.current === key) return;
+    lastFetchKeyRef.current = key;
+
+    fetchMessages(resolvedContactId, threadId || null);
+  }, [resolvedContactId, threadId, fetchMessages]);
+
+  const mergedMessages = useMemo(() => {
+    const base = threadId ? messagesByThread?.[threadId] : messagesByRecipient?.[resolvedContactId];
+    const baseArr = Array.isArray(base) ? base : [];
+
+    const extras = Array.isArray(testMessages) ? testMessages : [];
+    const merged = [...baseArr, ...localMessages, ...extras];
+
+    const uniq = [];
+    const seen = new Set();
+    for (const m of merged) {
+      const id =
+        m.id ||
+        `${m.userId || m.senderId}-${m.recipientId}-${m.createdAt || m.time}-${m.text || m.content || ""}`.slice(0, 140);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      uniq.push(m);
+    }
+
+    return uniq.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+  }, [messagesByRecipient, messagesByThread, resolvedContactId, threadId, localMessages, testMessages]);
 
   useEffect(() => {
-    try {
-      const el = chatContainerRef.current;
-      if (el) el.scrollTop = el.scrollHeight;
-    } catch {}
-  }, [messages, resolvedContactId]);
+    if (isScrolledToBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [mergedMessages, isScrolledToBottom]);
 
-  useEffect(() => {
-    const onClickAway = (e) => {
-      if (!menuOpen) return;
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
-    };
-    window.addEventListener("click", onClickAway);
-    return () => window.removeEventListener("click", onClickAway);
-  }, [menuOpen]);
-
-  const handleSendAutomatedTestMessages = () => {
-    if (!resolvedContactId) return;
-    const baseTime = Date.now();
-
-    const automated = [
-      {
-        id: `auto-${uuidv4()}`,
-        userId: resolvedContactId,
-        recipientId: userId,
-        text: `👋 Welcome! Thanks for booking. I'm here to help with anything you need.`,
-        createdAt: new Date(baseTime).toISOString(),
-        isSent: false,
-        isAutomated: true,
-        messageType: "host_property_welcome",
-      },
-      {
-        id: `auto-${uuidv4()}`,
-        userId: resolvedContactId,
-        recipientId: userId,
-        text: `📍 Check-in is flexible. Share your ETA and I’ll prepare accordingly.`,
-        createdAt: new Date(baseTime + 500).toISOString(),
-        isSent: false,
-        isAutomated: true,
-        messageType: "checkin_instructions",
-      },
-      {
-        id: `auto-${uuidv4()}`,
-        userId: resolvedContactId,
-        recipientId: userId,
-        text: `📶 Wi-Fi details will be in the guidebook on arrival.`,
-        createdAt: new Date(baseTime + 1000).toISOString(),
-        isSent: false,
-        isAutomated: true,
-        messageType: "wifi_info",
-      },
-    ];
-
-    automated.forEach((m, i) => {
-      addNewMessage(m);
-      if (m?.id) addedMessageIds.current.add(m.id);
-
-      setTimeout(() => {
-        if (m?.text) {
-          toast.info(<MessageToast contactName={contactName} contactImage={contactImage} message={m.text} />, {
-            className: "message-toast-custom",
-          });
-        }
-      }, i * 200);
-    });
+  const handleScroll = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+    setIsScrolledToBottom(atBottom);
   };
-
-  useEffect(() => {
-    wsMessages.forEach((raw) => {
-      const msg = normalizeForChat(raw, userId);
-
-      const sender = msg?.userId || msg?.senderId || null;
-      const recipient = msg?.recipientId || null;
-
-      const isRelevant =
-        (sender === userId && recipient === resolvedContactId) ||
-        (sender === resolvedContactId && recipient === userId);
-
-      if (!isRelevant) return;
-
-      const id = msg?.id;
-      if (id && addedMessageIds.current.has(id)) return;
-
-      addNewMessage(msg);
-      if (id) addedMessageIds.current.add(id);
-
-      if (sender === resolvedContactId && recipient === userId && msg.text) {
-        toast.info(<MessageToast contactName={contactName} contactImage={contactImage} message={msg.text} />, {
-          className: "message-toast-custom",
-        });
-      }
-    });
-  }, [wsMessages, userId, resolvedContactId, addNewMessage, contactName, contactImage]);
 
   const handleSendMessage = async () => {
-    const hasContent = newMessage.trim() || uploadedFileUrls.length > 0;
-    if (!hasContent) return;
+    if (!resolvedContactId) return;
+    if (!newMessage.trim() && uploadedFileUrls.length === 0) return;
 
-    if (!resolvedContactId || resolvedContactId === userId) {
-      alert("Recipient is invalid (contactId matches your userId).");
-      return;
-    }
+    const effectivePropertyId = propertyId ?? null;
+
+    const isGuest = dashboardType === "guest";
+    const hostId = isGuest ? resolvedContactId : userId;
+    const guestId = isGuest ? userId : resolvedContactId;
+
+    const nowIso = new Date().toISOString();
+    const optimisticId = `tmp-${nowIso}-${Math.random()}`;
+    const optimistic = {
+      id: optimisticId,
+      userId,
+      senderId: userId,
+      recipientId: resolvedContactId,
+      text: newMessage.trim(),
+      content: newMessage.trim(),
+      createdAt: nowIso,
+      fileUrls: uploadedFileUrls,
+      threadId: threadId || null,
+      propertyId: effectivePropertyId,
+      isSent: true,
+    };
+
+    setLocalMessages((prev) => [...prev, optimistic]);
 
     try {
-      const response = await sendMessage(resolvedContactId, newMessage, uploadedFileUrls, {
+      const result = await sendMessage(resolvedContactId, newMessage.trim(), uploadedFileUrls, {
         threadId: threadId || null,
-        propertyId: bookingDetails?.property_id || bookingDetails?.propertyId || null,
+        propertyId: effectivePropertyId,
+        hostId,
+        guestId,
+        metadata: { isAutomated: false },
       });
 
-      if (!response || !response.success) {
-        alert(`Error while sending: ${response?.error || "Please try again later."}`);
-        return;
-      }
+      if (!result?.success) throw new Error(result?.error || "send failed");
 
-      const saved = response?.saved || response?.data || null;
-      const resolvedId = saved?.id || saved?.messageId || saved?.message?.id || uuidv4();
-      const resolvedCreatedAt = toIso(saved?.createdAt || saved?.message?.createdAt || Date.now());
+      const saved = result?.saved || {};
 
-      const sentMessage = normalizeForChat(
-        {
-          id: resolvedId,
-          threadId: saved?.threadId || saved?.message?.threadId || threadId || null,
-          senderId: saved?.senderId || saved?.message?.senderId || userId,
-          recipientId: saved?.recipientId || saved?.message?.recipientId || resolvedContactId,
-          userId: saved?.senderId || saved?.message?.senderId || userId,
-          text: saved?.content ?? saved?.message?.content ?? newMessage,
-          content: saved?.content ?? saved?.message?.content ?? newMessage,
-          fileUrls: Array.isArray(saved?.fileUrls)
-            ? saved.fileUrls
-            : Array.isArray(saved?.message?.fileUrls)
-              ? saved.message.fileUrls
-              : uploadedFileUrls,
-          createdAt: resolvedCreatedAt,
-          isSent: true,
-        },
-        userId
-      );
+      const finalMsg = {
+        ...optimistic,
+        id: saved?.id || optimisticId,
+        createdAt: saved?.createdAt ? new Date(saved.createdAt).toISOString() : nowIso,
+        threadId: saved?.threadId || optimistic.threadId,
+      };
 
-      if (sentMessage?.id) addedMessageIds.current.add(sentMessage.id);
-      addNewMessage(sentMessage);
-      handleContactListMessage?.(sentMessage);
+      setLocalMessages((prev) => prev.map((m) => (m.id === optimisticId ? finalMsg : m)));
+      handleContactListMessage?.(finalMsg);
 
       setNewMessage("");
       setUploadedFileUrls([]);
-
-      try {
-        const el = chatContainerRef.current;
-        if (el) el.scrollTop = el.scrollHeight;
-      } catch {}
+      setShowPreviewPopover(false);
     } catch (err) {
-      console.error("Unexpected error while sending:", err);
-      alert("Unexpected error while sending. Please try again.");
+      setLocalMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+      setError("Failed to send message.");
+      setToastText("Message failed to send");
+      setShowToast(true);
     }
   };
 
-  if (!resolvedContactId) return null;
+  const handleUploadComplete = (url) => {
+    setUploadedFileUrls((prev) => [...prev, url]);
+  };
 
-  const headerProperty =
-    bookingDetails?.propertyTitle ||
-    bookingDetails?.property_name ||
-    bookingDetails?.propertyName ||
-    bookingDetails?.accoTitle ||
-    "";
+  if (!resolvedContactId) {
+    return (
+      <div className="chat-screen">
+        <div className="chat-empty-state">
+          <h3>Select a conversation</h3>
+          <p>Choose a contact to start chatting.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const headerName = getOtherPartyName(userId, resolvedContactId, contactName);
 
   return (
-    <div className="chat-screen-container">
+    <div className="chat-screen">
       <div className="chat-header">
         {onBack && (
-          <button className="back-to-contacts-button" onClick={onBack} aria-label="Back">
+          <button className="chat-back" onClick={onBack} aria-label="Back">
             <FaArrowLeft />
           </button>
         )}
 
-        <img src={contactImage || profileImage} alt={contactName || "Contact"} className="profile-img" />
-
-        <div className="chat-header-info">
-          <h3>{contactName || "Unknown"}</h3>
-          <div className="chat-subline">
-            <span className="pill">{dashboardType === "host" ? "Guest" : "Host"}</span>
-            {headerProperty ? <span className="pill">{headerProperty}</span> : null}
+        <div className="chat-header-left">
+          <img src={contactImage || "https://via.placeholder.com/40"} alt="Profile" className="chat-avatar" />
+          <div>
+            <h3>{headerName}</h3>
+            <p className="chat-status">Active now</p>
           </div>
         </div>
+      </div>
 
-        <div className="chat-header-actions" ref={menuRef}>
-          <button className="dots" type="button" title="More" onClick={() => setMenuOpen((s) => !s)} aria-haspopup="menu">
-            <FaEllipsisH />
-          </button>
+      <div className="chat-body" ref={scrollContainerRef} onScroll={handleScroll}>
+        {mergedMessages.map((message, index) => (
+          <ChatMessage
+            key={message.id || index}
+            message={message}
+            userId={userId}
+            contactName={headerName}
+            contactImage={contactImage}
+          />
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
 
-          {menuOpen && (
-            <div className="chat-menu" role="menu">
-              <button type="button" onClick={() => { setMenuOpen(false); handleSendAutomatedTestMessages(); }}>
-                Send test messages
+      <div className="chat-footer">
+        <BookingTab userId={userId} contactId={resolvedContactId} contactName={headerName} dashboardType={dashboardType} />
+
+        <div className="chat-input">
+          <div className="attachment-area">
+            <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+
+            {uploadedFileUrls.length > 0 && (
+              <button
+                className="inline-upload-preview"
+                onClick={() => setShowPreviewPopover((s) => !s)}
+                title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
+              >
+                <img src={uploadedFileUrls[0]} alt="First attachment preview" />
+                {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
               </button>
+            )}
+          </div>
+
+          <div className="message-input-container">
+            <div className="message-input-wrapper">
+              <textarea
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="message-input-textarea"
+                placeholder="Type a message"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if ((newMessage?.length || 0) <= 200) handleSendMessage();
+                  }
+                }}
+              />
+              <button onClick={handleSendMessage} className="message-input-send-button" disabled={sending} title="Send">
+                <FaPaperPlane />
+              </button>
+            </div>
+          </div>
+
+          {showPreviewPopover && uploadedFileUrls.length > 0 && (
+            <div className="preview-popover" role="dialog" aria-label="Attachment previews">
+              <div className="preview-popover-header">
+                <h4>Attachments</h4>
+                <button onClick={() => setShowPreviewPopover(false)} aria-label="Close">
+                  ✕
+                </button>
+              </div>
+              <div className="preview-popover-body">
+                {uploadedFileUrls.map((url, idx) => (
+                  <div key={url} className="preview-item">
+                    <img src={url} alt={`Attachment ${idx + 1}`} />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="chat-screen" ref={chatContainerRef}>
-        {loading && !forceStopLoading ? (
-          <p>Loading messages...</p>
-        ) : error && !isDemoConversation ? (
-          <p>{String(error)}</p>
-        ) : messages.length === 0 ? (
-          <p>No messages yet. Say hello 👋</p>
-        ) : (
-          (() => {
-            let lastDay = null;
-
-            return messages.map((m) => {
-              const iso = m?.createdAt || "";
-              const dayKey = iso ? String(iso).slice(0, 10) : null;
-              const showDay = dayKey && dayKey !== lastDay;
-              if (showDay) lastDay = dayKey;
-
-              return (
-                <div key={m.id}>
-                  {showDay && <div className="chat-date-separator">{formatChipDate(iso)}</div>}
-                  <ChatMessage message={m} userId={userId} contactName={contactName} contactImage={contactImage} />
-                </div>
-              );
-            });
-          })()
-        )}
-      </div>
-
-      <div className="chat-input">
-        <div className="attachment-area">
-          <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
-
-          {uploadedFileUrls.length > 0 && (
-            <button
-              className="inline-upload-preview"
-              onClick={() => setShowPreviewPopover((s) => !s)}
-              title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
-            >
-              <img src={uploadedFileUrls[0]} alt="First attachment preview" />
-              {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
-            </button>
-          )}
-        </div>
-
-        <div className="message-input-container">
-          <div className="message-input-wrapper">
-            <textarea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              className="message-input-textarea"
-              placeholder="Type a message"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  if ((newMessage?.length || 0) <= 200) handleSendMessage();
-                }
-              }}
-            />
-            <button
-              onClick={handleSendMessage}
-              className="message-input-send-button"
-              disabled={sending || (newMessage?.length || 0) > 200}
-              title="Send"
-            >
-              <FaPaperPlane />
-            </button>
-          </div>
-        </div>
-
-        {(newMessage?.length || 0) > 0 && (
-          <div className={`char-limit-indicator ${(newMessage?.length || 0) > 200 ? "over" : ""}`} aria-live="polite">
-            {newMessage?.length || 0}/200
-          </div>
-        )}
-
-        {showPreviewPopover && uploadedFileUrls.length > 0 && (
-          <div className="preview-popover" role="dialog" aria-label="Attachment previews">
-            <div className="preview-popover-header">
-              <span>Attachments</span>
-              <button className="close-popover" onClick={() => setShowPreviewPopover(false)} title="Close">
-                <FaTimes />
-              </button>
-            </div>
-
-            <div className="preview-grid">
-              {uploadedFileUrls.map((url, index) => (
-                <div className="preview-item" key={`${url}-${index}`}>
-                  <img src={url} alt={`Attachment-${index}`} />
-                  <button
-                    className="remove-thumb"
-                    title="Remove"
-                    onClick={() => setUploadedFileUrls((prev) => prev.filter((u) => u !== url))}
-                  >
-                    <FaTimes />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {sendError && <p className="error-message">{sendError.message}</p>}
+      {error && showToast && <MessageToast message={toastText} type="error" onClose={() => setShowToast(false)} />}
     </div>
   );
 };

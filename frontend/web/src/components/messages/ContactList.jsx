@@ -40,19 +40,22 @@ const ContactList = ({
   setContacts,
 
   onNewMessage,
+
+  activeThreadId = null,
 }) => {
-  const [selectedContactId, setSelectedContactId] = useState(null);
+  const [selectedKey, setSelectedKey] = useState(null);
   const [tab, setTab] = useState("all");
   const socket = useContext(WebSocketContext);
   const wsMessages = socket?.messages || [];
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
-  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactId: null });
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactKey: null });
 
   useEffect(() => {
-    setSelectedContactId(activeContactId || null);
-  }, [activeContactId]);
+    const key = activeThreadId || activeContactId || null;
+    setSelectedKey(key);
+  }, [activeContactId, activeThreadId]);
 
   useEffect(() => {
     const handleClickAway = () => setContextMenu((prev) => (prev.visible ? { ...prev, visible: false } : prev));
@@ -60,34 +63,47 @@ const ContactList = ({
     return () => window.removeEventListener("click", handleClickAway);
   }, []);
 
-  const handleClick = (contact, threadId = null) => {
+  const handleClick = (contact) => {
     const partnerId = resolvePartnerId(contact, userId);
-
     if (!partnerId) {
       console.warn("[ContactList] Could not resolve partnerId for contact:", contact);
       return;
     }
 
-    setSelectedContactId(partnerId);
-    onContactClick?.(partnerId, contact?.givenName, contact?.profileImage, threadId || contact?.threadId || null);
+    const threadId = contact?.threadId || null;
+
+    // selection key prefers threadId to prevent cross-thread mixing
+    setSelectedKey(threadId || partnerId);
+
+    onContactClick?.(
+      partnerId,
+      contact?.givenName,
+      contact?.profileImage,
+      threadId,
+      contact?.propertyId || contact?.AccoId || null,
+      contact?.propertyTitle || contact?.propertyName || null,
+      contact?.accoImage || null
+    );
   };
 
   const handleContextMenu = (event, contact) => {
     event.preventDefault();
     const partnerId = resolvePartnerId(contact, userId);
     if (!partnerId) return;
+    const key = contact?.threadId || partnerId;
 
     setContextMenu({
       visible: true,
       x: event.clientX,
       y: event.clientY,
-      contactId: partnerId,
+      contactKey: key,
     });
   };
 
   const handleCloseSelectedChat = () => {
-    if (contextMenu.contactId) onCloseChat?.(contextMenu.contactId);
-    setContextMenu({ visible: false, x: 0, y: 0, contactId: null });
+    // Close by contactId if possible (keeps behavior)
+    if (contextMenu.contactKey) onCloseChat?.(activeContactId);
+    setContextMenu({ visible: false, x: 0, y: 0, contactKey: null });
   };
 
   useEffect(() => {
@@ -97,10 +113,15 @@ const ContactList = ({
       const updatedContacts = Array.isArray(prevContacts) ? [...prevContacts] : [];
 
       wsMessages.forEach((msg) => {
+        const threadId = msg?.threadId || null;
+
         const partnerId = msg?.userId === userId ? msg?.recipientId : msg?.userId;
         if (!partnerId || String(partnerId) === String(userId)) return;
 
-        const idx = updatedContacts.findIndex((c) => resolvePartnerId(c, userId) === partnerId);
+        const idx = updatedContacts.findIndex((c) => {
+          if (threadId && c?.threadId) return String(c.threadId) === String(threadId);
+          return resolvePartnerId(c, userId) === partnerId;
+        });
         if (idx === -1) return;
 
         let displayText = msg.text;
@@ -123,10 +144,15 @@ const ContactList = ({
     setContacts?.((prevContacts) => {
       const updatedContacts = Array.isArray(prevContacts) ? [...prevContacts] : [];
 
+      const threadId = message?.threadId || null;
       const partnerId = message?.userId === userId ? message?.recipientId : message?.userId;
       if (!partnerId || String(partnerId) === String(userId)) return updatedContacts;
 
-      const index = updatedContacts.findIndex((c) => resolvePartnerId(c, userId) === partnerId);
+      const index = updatedContacts.findIndex((c) => {
+        if (threadId && c?.threadId) return String(c.threadId) === String(threadId);
+        return resolvePartnerId(c, userId) === partnerId;
+      });
+
       if (index !== -1) {
         let displayText = message.text;
         if (message.fileUrls && message.fileUrls.length > 0) displayText = "Attachment";
@@ -139,6 +165,7 @@ const ContactList = ({
             fileUrls: message.fileUrls,
             userId: message.userId,
             recipientId: message.recipientId,
+            threadId: message.threadId || updatedContacts[index]?.threadId || null,
           },
         };
       }
@@ -223,13 +250,14 @@ const ContactList = ({
         ) : (
           filteredContacts.map((contact, i) => {
             const partnerId = resolvePartnerId(contact, userId) || `unknown-${i}`;
-            const isActive = selectedContactId === partnerId;
+            const key = contact?.threadId || partnerId || `fallback-${i}`;
+            const isActive = selectedKey === key;
 
             return (
               <li
-                key={partnerId}
+                key={key}
                 className={`contact-list-list-item ${isActive ? "active" : ""}`}
-                onClick={() => handleClick(contact, contact.threadId)}
+                onClick={() => handleClick(contact)}
                 onContextMenu={(event) => handleContextMenu(event, contact)}
                 style={{ cursor: "pointer" }}
               >

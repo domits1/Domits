@@ -18,8 +18,6 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
   const [loading, setLoading] = useState(false);
   const [acco, setAcco] = useState(null);
 
-  if (!propertyId) return null;
-
   const endpoint = isGuest ? "bookingEngine/listingDetails" : "hostDashboard/single";
   const needsAuth = !isGuest;
 
@@ -27,6 +25,12 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
     let cancelled = false;
 
     const run = async () => {
+      if (!propertyId) {
+        setAcco(null);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
         const token = needsAuth ? accessToken : null;
@@ -46,33 +50,35 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
   }, [propertyId, endpoint, needsAuth, accessToken]);
 
   const title = useMemo(() => {
-    return (
-      propertyTitle ||
-      acco?.property?.title ||
-      acco?.property?.name ||
-      `Listing #${propertyId}`
-    );
+    return propertyTitle || acco?.property?.title || acco?.property?.name || (propertyId ? `Listing #${propertyId}` : "");
   }, [propertyTitle, acco, propertyId]);
 
   const imageUrl = useMemo(() => {
     if (isHttp(accoImage)) return accoImage;
     const key = acco?.images?.[0]?.key || acco?.property?.images?.[0]?.key || null;
     if (key) return `${S3_ACCO_BASE}${key}`;
-
     return null;
   }, [accoImage, acco]);
 
+  if (!propertyId) return null;
+
   return (
     <div className="messages-v2-card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "14px 16px", borderBottom: "1px solid #e6e8ee", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div
+        style={{
+          padding: "14px 16px",
+          borderBottom: "1px solid #e6e8ee",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <div style={{ fontWeight: 900, fontSize: 16 }}>Listing</div>
         {loading ? <div style={{ fontSize: 12, color: "#64748b" }}>Loading…</div> : null}
       </div>
 
       <div style={{ padding: 16, overflow: "auto" }}>
-        <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 10, color: "#0f172a" }}>
-          {title}
-        </div>
+        <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 10, color: "#0f172a" }}>{title}</div>
 
         {imageUrl ? (
           <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid #e6e8ee" }}>
