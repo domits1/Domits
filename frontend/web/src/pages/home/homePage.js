@@ -12,7 +12,7 @@ import { hostImages, reviews, categories as groups, buildHomepageLists, S3_URL }
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
-import { FetchAllPropertyTypes, FetchPropertyType } from "./services/fetchProperties";
+import { FetchAllPropertyTypes } from "./services/fetchProperties";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
@@ -30,15 +30,11 @@ const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingImages, setLoadingImages] = useState(false);
-  const [boatAccommodations, setBoatAccommodations] = useState([]);
-  const [camperAccommodations, setCamperAccommodations] = useState([]);
   const [accommodationImages, setAccommodationImages] = useState([]);
   const [byTypeAccommodations, setByTypeAccommodations] = useState([]);
   const [isBarActive, setIsBarActive] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
   const [activePopup, setActivePopup] = useState(null);
-  const [boatLoading, setBoatLoading] = useState(false);
-  const [camperLoading, setCamperLoading] = useState(false);
   const [propertyLoading, setPropertyLoading] = useState(false);
   const [allAccommodations, setAllAccommodations] = useState([]);
 
@@ -65,16 +61,6 @@ const Homepage = () => {
   useEffect(() => {
     async function loadData() {
       setPropertyLoading(true);
-      setBoatLoading(true);
-      setCamperLoading(true);
-      FetchPropertyType("Boat").then((data) => {
-        setBoatAccommodations(data.slice(0, 3));
-        setBoatLoading(false);
-      });
-      FetchPropertyType("Camper").then((data) => {
-        setCamperAccommodations(data.slice(0, 3));
-        setCamperLoading(false);
-      });
       FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId).then((data) => {
         if (data.lastEvaluatedKey) {
           setLastEvaluatedKeyCreatedAt(data.lastEvaluatedKey.createdAt);
