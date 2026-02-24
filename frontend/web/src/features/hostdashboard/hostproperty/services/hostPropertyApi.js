@@ -432,4 +432,47 @@ export const deletePropertyListing = async ({ propertyId, reasonIds = [] }) => {
     const apiErrorMessage = await getApiErrorMessage(response, "Failed to delete property.");
     throw new Error(apiErrorMessage);
   }
+
+  const rawBody = await response.text();
+  if (!rawBody) {
+    return {
+      result: "deleted",
+      propertyId,
+    };
+  }
+
+  try {
+    const parsedBody = JSON.parse(rawBody);
+    if (parsedBody && typeof parsedBody === "object") {
+      return parsedBody;
+    }
+  } catch {
+    // No-op: default to deleted result below.
+  }
+
+  return {
+    result: "deleted",
+    propertyId,
+  };
+};
+
+export const updatePropertyLifecycleStatus = async ({ propertyId, status }) => {
+  const normalizedStatus = String(status || "").toUpperCase();
+  const response = await fetch(`${PROPERTY_API_BASE}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: getAccessToken(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      propertyId,
+      property: propertyId,
+      status: normalizedStatus,
+    }),
+  });
+
+  if (!response.ok) {
+    const apiErrorMessage = await getApiErrorMessage(response, "Failed to update listing status.");
+    throw new Error(apiErrorMessage);
+  }
 };

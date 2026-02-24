@@ -17,8 +17,6 @@ import { Property_Type } from "database/models/Property_Type";
 import { UnifiedMessage } from "database/models/UnifiedMessage";
 import { UnifiedThread } from "database/models/UnifiedThread";
 
-const BLOCKING_BOOKING_STATUSES = ["Paid", "Awaiting Payment"];
-
 export class PropertyDeletionRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
@@ -39,16 +37,14 @@ export class PropertyDeletionRepository {
     );
   }
 
-  async hasBlockingBookings(propertyId, nowUnixMs = Date.now()) {
+  async getBookingCountByPropertyId(propertyId) {
     const client = await Database.getInstance();
-    const blockingBookingCount = await client
+    const bookingCount = await client
       .getRepository(Booking)
       .createQueryBuilder("booking")
       .where("booking.property_id = :propertyId", { propertyId })
-      .andWhere("booking.departuredate >= :nowUnixMs", { nowUnixMs })
-      .andWhere("booking.status IN (:...statuses)", { statuses: BLOCKING_BOOKING_STATUSES })
       .getCount();
-    return blockingBookingCount > 0;
+    return Number(bookingCount || 0);
   }
 
   async deleteUnifiedMessagingRows(transactionManager, propertyId) {

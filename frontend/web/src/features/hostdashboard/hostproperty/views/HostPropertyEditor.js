@@ -522,7 +522,7 @@ export default function HostProperty() {
     }
   };
 
-  const isBusy = saving || preparingPhotos;
+  const isBusy = saving || preparingPhotos || deletingProperty;
   const shouldBlockNavigation = hasUnsavedChanges && !isBusy && !deletingPhoto;
 
   const requestNavigation = useCallback((navigationAction) => {
@@ -643,11 +643,25 @@ export default function HostProperty() {
     return <HostPropertyLoadingView />;
   }
 
-  const statusLabel = status === "ACTIVE" ? "Live" : "Draft";
-  const statusDotClass = status === "ACTIVE" ? styles.statusDotLive : styles.statusDotDraft;
+  const statusLabel =
+    status === "ACTIVE"
+      ? "Live"
+      : status === "ARCHIVED"
+        ? "Archived"
+        : "Draft";
+  const statusDotClass =
+    status === "ACTIVE"
+      ? styles.statusDotLive
+      : status === "ARCHIVED"
+        ? styles.statusDotArchived
+        : styles.statusDotDraft;
   const displayedPropertyType = capacity.propertyType || "Entire house";
   const savingMessage = SAVING_MESSAGE_BY_TAB[selectedTab] || "Saving property details...";
-  const overlayMessage = saving ? savingMessage : "Preparing photos...";
+  const overlayMessage = deletingProperty
+    ? "Removing listing..."
+    : saving
+      ? savingMessage
+      : "Preparing photos...";
 
   const handlePropertyChange = (event) => {
     const nextPropertyId = event.target.value;
@@ -727,11 +741,16 @@ export default function HostProperty() {
 
     let shouldResetDeletingState = true;
     try {
-      await deletePropertyListing({
+      const deletionResult = await deletePropertyListing({
         propertyId,
         reasonIds: selectedDeletePropertyReasonIds,
       });
-      toast.success("Listing deleted successfully.");
+      const deletionMode = String(deletionResult?.result || "deleted").toLowerCase();
+      if (deletionMode === "archived") {
+        toast.info("Listing has booking history and was moved to Archived.");
+      } else {
+        toast.success("Listing deleted successfully.");
+      }
       resetDeletePropertyFlow();
       bypassUnsavedGuardRef.current = true;
       shouldResetDeletingState = false;

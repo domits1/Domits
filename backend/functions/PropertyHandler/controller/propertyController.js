@@ -721,11 +721,33 @@ export class PropertyController {
     // -------------------------
     async activateProperty(event) {
         try {
-            const accessToken = event.headers.Authorization;
-            const eventBody = JSON.parse(event.body);
-            const propertyId = eventBody.property
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId)
-            await this.propertyService.activateProperty(propertyId);
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const eventBody = JSON.parse(event.body || "{}");
+            const propertyId = eventBody.propertyId || eventBody.property;
+            const requestedStatus = typeof eventBody.status === "string" ? eventBody.status.toUpperCase() : null;
+            const allowedStatuses = new Set(["ACTIVE", "INACTIVE", "ARCHIVED"]);
+
+            if (!propertyId || typeof propertyId !== "string") {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Missing propertyId." })
+                };
+            }
+            if (requestedStatus && !allowedStatuses.has(requestedStatus)) {
+                return {
+                    statusCode: 400,
+                    headers: responseHeaders,
+                    body: JSON.stringify({ message: "Invalid property status." })
+                };
+            }
+
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            if (requestedStatus) {
+                await this.propertyService.updatePropertyStatus(propertyId, requestedStatus);
+            } else {
+                await this.propertyService.activateProperty(propertyId);
+            }
             return {
                 statusCode: 204,
                 headers: responseHeaders
@@ -970,6 +992,7 @@ export class PropertyController {
             const accessToken = event.headers.Authorization || event.headers.authorization;
             const eventBody = JSON.parse(event.body || "{}");
             const propertyId = eventBody.propertyId || eventBody.property;
+            const reasons = Array.isArray(eventBody.reasons) ? eventBody.reasons : [];
 
             if (!propertyId || typeof propertyId !== "string") {
                 return {
@@ -979,12 +1002,26 @@ export class PropertyController {
                 };
             }
 
-            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-            await this.propertyService.deleteProperty(propertyId);
+            const ownerId = await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+            const deletionResult = await this.propertyService.deleteProperty(propertyId, {
+                reasons,
+                actorId: ownerId,
+            });
+            if (deletionResult?.result === "archived") {
+                return {
+                    statusCode: 200,
+                    headers: responseHeaders,
+                    body: JSON.stringify({
+                        result: "archived",
+                        propertyId,
+                        message: "Listing has booking history and was archived.",
+                    }),
+                };
+            }
             return {
                 statusCode: 204,
                 headers: responseHeaders,
-            }
+            };
         } catch (error) {
             console.error(error);
             return {

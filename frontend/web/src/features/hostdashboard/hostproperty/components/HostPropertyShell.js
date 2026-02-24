@@ -80,6 +80,7 @@ export function HostPropertyDeleteReasonsModal({
   }
 
   const selectedReasonIdSet = new Set(selectedReasonIds);
+  const hasSelectedReason = selectedReasonIdSet.size > 0;
 
   return (
     <dialog
@@ -140,7 +141,7 @@ export function HostPropertyDeleteReasonsModal({
             type="button"
             className={styles.deletePropertyReasonsNextButton}
             onClick={onNext}
-            disabled={submitting}
+            disabled={submitting || !hasSelectedReason}
           >
             Next
           </button>

@@ -18,7 +18,6 @@ import { PropertyTestStatusRepository } from "../../data/repository/propertyTest
 import { PropertyDeletionRepository } from "../../data/repository/propertyDeletionRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
-import { ConflictException } from "../../util/exception/ConflictException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { Forbidden } from "../../util/exception/Forbidden.js";
 
@@ -78,6 +77,30 @@ export class PropertyService {
     if (property === newProperty) {
       throw new DatabaseException("Something went wrong while updating the activity status");
     }
+  }
+
+  async updatePropertyStatus(propertyId, nextStatus, metadata = {}) {
+    const allowedStatuses = new Set(["ACTIVE", "INACTIVE", "ARCHIVED"]);
+    const normalizedStatus = String(nextStatus || "").toUpperCase();
+    if (!allowedStatuses.has(normalizedStatus)) {
+      throw new DatabaseException("Invalid property status update.");
+    }
+
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+
+    if (property.status === normalizedStatus) {
+      return property;
+    }
+
+    await this.propertyRepository.updatePropertyStatus(propertyId, normalizedStatus, metadata);
+    const updatedProperty = await this.getBasePropertyInfo(propertyId);
+    if (!updatedProperty || updatedProperty.status !== normalizedStatus) {
+      throw new DatabaseException("Property status update was not completed.");
+    }
+    return updatedProperty;
   }
 
   async updatePropertyOverview(propertyId, title, description, subtitle = undefined, updates = {}) {
@@ -521,15 +544,26 @@ export class PropertyService {
     await this.propertyImageRepository.deleteImageByPropertyId(propertyId, imageId);
   }
 
-  async deleteProperty(propertyId) {
+  async deleteProperty(propertyId, options = {}) {
     const property = await this.getBasePropertyInfo(propertyId);
     if (!property) {
       throw new NotFoundException(`Property ${propertyId} not found.`);
     }
 
-    const hasBlockingBookings = await this.propertyDeletionRepository.hasBlockingBookings(propertyId);
-    if (hasBlockingBookings) {
-      throw new ConflictException("Property has active or future bookings and cannot be deleted.");
+    const bookingCount = await this.propertyDeletionRepository.getBookingCountByPropertyId(propertyId);
+    if (bookingCount > 0) {
+      const normalizedReasons = Array.isArray(options.reasons)
+        ? options.reasons.map((reason) => String(reason || "").trim()).filter(Boolean)
+        : [];
+      await this.updatePropertyStatus(propertyId, "ARCHIVED", {
+        archivedBy: options.actorId || "",
+        archiveReason: normalizedReasons.join(","),
+      });
+      return {
+        result: "archived",
+        propertyId,
+        bookingCount,
+      };
     }
 
     await this.propertyImageRepository.deleteImagesByPropertyId(propertyId);
@@ -539,6 +573,12 @@ export class PropertyService {
     if (deletedProperty) {
       throw new DatabaseException("Property deletion was not completed.");
     }
+
+    return {
+      result: "deleted",
+      propertyId,
+      bookingCount: 0,
+    };
   }
 
   async createTechnicalDetails(details) {

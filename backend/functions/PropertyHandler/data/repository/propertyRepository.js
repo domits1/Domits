@@ -41,6 +41,79 @@ export class PropertyRepository {
             .execute();
     }
 
+    async getArchiveMetadataColumns(client) {
+        const result = await client.query(
+            `SELECT column_name
+             FROM information_schema.columns
+             WHERE table_schema = current_schema()
+               AND table_name = 'property'
+               AND column_name IN ('archivedat', 'archivedby', 'archivereason')`
+        );
+        const columns = new Set();
+        (Array.isArray(result) ? result : []).forEach((row) => {
+            if (row?.column_name) {
+                columns.add(String(row.column_name).toLowerCase());
+            }
+        });
+        return columns;
+    }
+
+    async updatePropertyStatus(propertyId, status, metadata = {}) {
+        const client = await Database.getInstance();
+        const now = Date.now();
+        await client
+            .createQueryBuilder()
+            .update(Property)
+            .set({
+                status,
+                updatedat: now,
+            })
+            .where("id = :id", { id: propertyId })
+            .execute();
+
+        const archiveColumns = await this.getArchiveMetadataColumns(client);
+        if (archiveColumns.size === 0) {
+            return;
+        }
+
+        const metadataUpdates = [];
+        const metadataParams = [propertyId];
+
+        if (status === "ARCHIVED") {
+            if (archiveColumns.has("archivedat")) {
+                metadataParams.push(now);
+                metadataUpdates.push(`archivedat = $${metadataParams.length}`);
+            }
+            if (archiveColumns.has("archivedby")) {
+                metadataParams.push(String(metadata.archivedBy || ""));
+                metadataUpdates.push(`archivedby = $${metadataParams.length}`);
+            }
+            if (archiveColumns.has("archivereason")) {
+                metadataParams.push(String(metadata.archiveReason || ""));
+                metadataUpdates.push(`archivereason = $${metadataParams.length}`);
+            }
+        } else {
+            if (archiveColumns.has("archivedat")) {
+                metadataUpdates.push("archivedat = NULL");
+            }
+            if (archiveColumns.has("archivedby")) {
+                metadataUpdates.push("archivedby = NULL");
+            }
+            if (archiveColumns.has("archivereason")) {
+                metadataUpdates.push("archivereason = NULL");
+            }
+        }
+
+        if (metadataUpdates.length === 0) {
+            return;
+        }
+
+        await client.query(
+            `UPDATE property SET ${metadataUpdates.join(", ")} WHERE id = $1`,
+            metadataParams
+        );
+    }
+
     async updatePropertyOverview(propertyId, title, subtitle, description) {
         const client = await Database.getInstance();
         await client

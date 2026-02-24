@@ -14,7 +14,7 @@
   inset: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 1190;
+  z-index: 1300;
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(1px);
   display: flex;
@@ -160,6 +160,10 @@
 
 .statusDotDraft {
   background-color: #f39c12;
+}
+
+.statusDotArchived {
+  background-color: #777777;
 }
 
 .card {
@@ -1002,8 +1006,10 @@
 .deletePropertyConfirmOverlay {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
+  width: auto;
+  height: auto;
+  box-sizing: border-box;
+  min-height: 100dvh;
   max-width: none;
   max-height: none;
   margin: 0;
@@ -1014,6 +1020,8 @@
   align-items: center;
   justify-content: center;
   padding: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .deletePropertyReasonsOverlay::backdrop,
@@ -1023,6 +1031,7 @@
 
 .deletePropertyReasonsModal {
   width: min(640px, calc(100vw - 36px));
+  box-sizing: border-box;
   border-radius: 28px;
   background: #ffffff;
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
@@ -1031,6 +1040,9 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+  margin: auto;
 }
 
 .deletePropertyReasonsHeader {
@@ -1140,6 +1152,7 @@
 
 .deletePropertyConfirmModal {
   width: min(640px, calc(100vw - 36px));
+  box-sizing: border-box;
   border-radius: 28px;
   background: #ffffff;
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
@@ -1148,6 +1161,9 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+  margin: auto;
 }
 
 .deletePropertyConfirmBackButton {
@@ -1853,9 +1869,15 @@
     width: 100%;
   }
 
+  .deletePropertyReasonsOverlay,
+  .deletePropertyConfirmOverlay {
+    padding: 12px;
+  }
+
   .deletePropertyReasonsModal,
   .deletePropertyConfirmModal {
-    width: min(100%, calc(100vw - 24px));
+    width: 100%;
+    max-width: 100%;
     border-radius: 16px;
     padding: 16px;
     gap: 12px;
