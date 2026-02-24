@@ -92,6 +92,47 @@ export class PropertyDeletionRepository {
     return null;
   }
 
+  async valueExistsInTableColumn(transactionManager, tableName, columnName, value) {
+    const result = await transactionManager.query(
+      `SELECT 1 AS exists_flag
+       FROM ${this.quoteQualifiedName(tableName)}
+       WHERE ${this.quoteIdentifier(columnName)} = $1
+       LIMIT 1`,
+      [value]
+    );
+    return Array.isArray(result) && result.length > 0;
+  }
+
+  async deleteAcrossScopedTableCandidates(transactionManager, tableName, columnCandidates, value) {
+    const tableCandidates = this.getTableCandidates(tableName);
+    let deletedAny = false;
+
+    for (const tableCandidate of tableCandidates) {
+      const exists = await this.tableExists(transactionManager, tableCandidate);
+      if (!exists) {
+        continue;
+      }
+
+      const columnName = await this.findExistingColumn(transactionManager, tableCandidate, columnCandidates);
+      if (!columnName) {
+        continue;
+      }
+
+      const hasMatchingRows = await this.valueExistsInTableColumn(transactionManager, tableCandidate, columnName, value);
+      if (!hasMatchingRows) {
+        continue;
+      }
+
+      await transactionManager.query(
+        `DELETE FROM ${this.quoteQualifiedName(tableCandidate)} WHERE ${this.quoteIdentifier(columnName)} = $1`,
+        [value]
+      );
+      deletedAny = true;
+    }
+
+    return deletedAny;
+  }
+
   async deleteByScopedColumnIfExists(transactionManager, tableName, columnCandidates, value) {
     const tableCandidates = this.getTableCandidates(tableName);
     for (const tableCandidate of tableCandidates) {
@@ -246,7 +287,7 @@ export class PropertyDeletionRepository {
 
       await this.deleteByScopedColumnIfExists(transactionManager, "property_draft", ["property_id"], propertyId);
 
-      const propertyDeleted = await this.deleteByScopedColumnIfExists(
+      const propertyDeleted = await this.deleteAcrossScopedTableCandidates(
         transactionManager,
         "property",
         ["id"],
