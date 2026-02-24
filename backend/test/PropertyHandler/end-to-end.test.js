@@ -174,13 +174,18 @@ describe("End-to-end tests", () => {
 
     describe("Delete request", () => {
         it("should handle a DELETE request", async () => {
+            const createResponse = await handler(await getPostEvent());
+            expect(createResponse.statusCode).toBe(201);
+            const propertyIdToDelete = String(createResponse.body || "");
+            expect(propertyIdToDelete).toBeTruthy();
+
             const response = await handler({
                 httpMethod: "DELETE",
                 headers: {
                     Authorization: await getHostAuthToken(),
                 },
                 body: JSON.stringify({
-                    property: runtimePropertyId,
+                    property: propertyIdToDelete,
                 }),
             });
 
