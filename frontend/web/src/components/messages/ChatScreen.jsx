@@ -8,7 +8,7 @@ import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/comp
 import { FaPaperPlane, FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
 
-import fallbackAvatar from "./domits-logo.jpg"; 
+import fallbackAvatar from "./domits-logo.jpg";
 
 const getOtherPartyName = (selfUserId, contactId, contactName) => {
   if (!contactName) return "Unknown";
@@ -78,7 +78,10 @@ const ChatScreen = ({
     for (const m of merged) {
       const id =
         m.id ||
-        `${m.userId || m.senderId}-${m.recipientId}-${m.createdAt || m.time}-${m.text || m.content || ""}`.slice(0, 140);
+        `${m.userId || m.senderId}-${m.recipientId}-${m.createdAt || m.time}-${m.text || m.content || ""}`.slice(
+          0,
+          140
+        );
       if (seen.has(id)) continue;
       seen.add(id);
       uniq.push(m);
@@ -118,7 +121,17 @@ const ChatScreen = ({
     const guestId = isGuest ? userId : resolvedContactId;
 
     const nowIso = new Date().toISOString();
-    const optimisticId = `tmp-${nowIso}-${Math.random()}`;
+    const makeClientId = () => {
+      if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        return crypto.randomUUID();
+      }
+      if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+      }
+      return String(Date.now());
+    };
 
     const optimistic = {
       id: optimisticId,
@@ -240,7 +253,12 @@ const ChatScreen = ({
       </div>
 
       <div className="chat-footer">
-        <BookingTab userId={userId} contactId={resolvedContactId} contactName={headerName} dashboardType={dashboardType} />
+        <BookingTab
+          userId={userId}
+          contactId={resolvedContactId}
+          contactName={headerName}
+          dashboardType={dashboardType}
+        />
 
         <div className="chat-input">
           <div className="attachment-area">
@@ -251,8 +269,7 @@ const ChatScreen = ({
                 className="inline-upload-preview"
                 onClick={() => setShowPreviewPopover((s) => !s)}
                 title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
-                type="button"
-              >
+                type="button">
                 <img src={uploadedFileUrls[0]} alt="First attachment preview" />
                 {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
               </button>
@@ -273,7 +290,12 @@ const ChatScreen = ({
                   }
                 }}
               />
-              <button onClick={handleSendMessage} className="message-input-send-button" disabled={sending} title="Send" type="button">
+              <button
+                onClick={handleSendMessage}
+                className="message-input-send-button"
+                disabled={sending}
+                title="Send"
+                type="button">
                 <FaPaperPlane />
               </button>
             </div>
