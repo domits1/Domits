@@ -14,9 +14,7 @@ export const useSendMessage = (userId) => {
             return { success: false, error: errorMsg };
         }
         
-        const channelID = [userId, recipientId]
-            .sort((a, b) => String(a).localeCompare(String(b)))
-            .join("_");
+        const channelID = [userId, recipientId].sort().join("_");
 
         const message = {
             action: "sendMessage",

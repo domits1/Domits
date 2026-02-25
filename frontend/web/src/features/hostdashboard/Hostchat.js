@@ -64,7 +64,7 @@ const Chat = ({ user }) => {
     };
 
     const generateChannelName = (userId, recipientId) => {
-        const sortedIds = [userId, recipientId].sort((a, b) => String(a).localeCompare(String(b)));
+        const sortedIds = [userId, recipientId].sort();
         return sortedIds.join('_');
     };
 
@@ -427,7 +427,7 @@ const Chat = ({ user }) => {
 
     const generateUUID = () => {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.trunc(Math.random() * 16),
+            var r = Math.random() * 16 | 0,
                 v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });

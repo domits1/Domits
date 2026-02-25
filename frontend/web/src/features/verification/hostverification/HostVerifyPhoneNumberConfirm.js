@@ -138,7 +138,14 @@ function PhoneNumberConfirmView() {
           </button>
           <p>
             Didn't receive the code?{" "}<span
-              onClick={handleResendCode}
+              onClick={() =>
+                  handleResendCode(
+                      {userId}, // Replace with actual user ID
+                      {phoneNumber}, // Replace with actual phone number
+                      setToastMessage, // Pass the toast message setter
+                      setIsLoading // Pass the loading state setter
+                  )
+              }
               disabled={isLoading} > Resend Code </span>
           </p>
         </div>
