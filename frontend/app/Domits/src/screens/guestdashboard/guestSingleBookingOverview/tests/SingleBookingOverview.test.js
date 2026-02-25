@@ -77,8 +77,8 @@ describe('BookingDetailsView Component', () => {
         expect(getByText('Booking')).toBeTruthy();
         expect(getByText('Status: Awaiting Payment')).toBeTruthy();
 
-        const arrivalDate = new Date(Number.parseFloat(mockBooking.arrivalDate.N)).toISOString().split('T')[0];
-        const departureDate = new Date(Number.parseFloat(mockBooking.departureDate.N)).toISOString().split('T')[0];
+        const arrivalDate = new Date(parseFloat(mockBooking.arrivalDate.N)).toISOString().split('T')[0];
+        const departureDate = new Date(parseFloat(mockBooking.departureDate.N)).toISOString().split('T')[0];
         expect(getByText(`Period: ${arrivalDate} - ${departureDate}`)).toBeTruthy();
     });
 });

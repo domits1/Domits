@@ -29,12 +29,12 @@ function PropertyRateView() {
   }, [pricing.Rent, pricing.CleaningFee, calculateServiceFee]);
 
   const totalGuestPrice =
-    (Number.parseFloat(pricing.Rent) || 0) +
-    (Number.parseFloat(pricing.CleaningFee) || 0) +
-    (Number.parseFloat(pricing.ServiceFee) || 0);
+    (parseFloat(pricing.Rent) || 0) +
+    (parseFloat(pricing.CleaningFee) || 0) +
+    (parseFloat(pricing.ServiceFee) || 0);
 
   const totalEarnings =
-    (Number.parseFloat(pricing.Rent) || 0) + (Number.parseFloat(pricing.CleaningFee) || 0);
+    (parseFloat(pricing.Rent) || 0) + (parseFloat(pricing.CleaningFee) || 0);
 
   const rentValue = Number(pricing.Rent);
   const hasValidRent = Number.isFinite(rentValue) && rentValue > 0;

@@ -17,7 +17,7 @@ const RenderAmenities = ({propertyAmenities, categoriesToSlice}) => {
 
     const categoriesToShow = Object.keys(amenitiesByType).slice(0, categoriesToSlice);
 
-    return categoriesToShow.sort((a, b) => a.localeCompare(b)).map((category) => {
+    return categoriesToShow.sort().map((category) => {
         const items = amenitiesByType[category];
         return (
             <View key={category}>

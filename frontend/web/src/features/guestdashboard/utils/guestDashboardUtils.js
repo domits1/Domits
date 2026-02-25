@@ -64,11 +64,11 @@ export const toDate = (rawValue) => {
     const ms = isSeconds ? numericValue * 1000 : numericValue;
 
     const date = new Date(ms);
-    return Number.isNaN(date.getTime()) ? null : date;
+    return isNaN(date) ? null : date;
   }
 
   const date = new Date(rawValue);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return isNaN(date) ? null : date;
 };
 
 export const getArrivalDate = (booking) => toDate(pickFirst(booking, ARRIVAL_KEYS));

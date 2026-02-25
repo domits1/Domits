@@ -173,7 +173,7 @@ export default function HostCalendar() {
   };
 
   const setPriceForSelection = () => {
-    const value = Number.parseFloat(tempPrice);
+    const value = parseFloat(tempPrice);
     if (Number.isNaN(value)) return;
 
     setPrices((prev) => {

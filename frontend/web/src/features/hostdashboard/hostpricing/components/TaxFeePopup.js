@@ -4,40 +4,40 @@ import { vatRates, touristTaxRates } from '../../../../utils/CountryVATRatesAndT
 
 const TaxFeePopup = ({ accommodation, onClose, editedRates, editedCleaningFees, index }) => {
   const countryVAT = vatRates.find(rate => rate.country === accommodation.Country?.S)?.vat || "0";
-  const vatRate = Number.parseFloat(countryVAT) / 100;
+  const vatRate = parseFloat(countryVAT) / 100;
   const countryTouristTax = touristTaxRates.find(rate => rate.country === accommodation.Country?.S)?.touristTax || "0";
 
-  const rent = Number.parseFloat(
+  const rent = parseFloat(
     editedRates[index] || accommodation.Rent?.N || accommodation.Rent?.S || 0
   ).toFixed(2);
 
-  const cleaningFee = Number.parseFloat(
+  const cleaningFee = parseFloat(
     editedCleaningFees[index] || accommodation.CleaningFee?.N || accommodation.CleaningFee?.S || 0
   ).toFixed(2);
 
-  const domitsFee = (Number.parseFloat(rent) * 0.15).toFixed(2);
-  const vatTax = (Number.parseFloat(rent) * vatRate).toFixed(2);
+  const domitsFee = (parseFloat(rent) * 0.15).toFixed(2);
+  const vatTax = (parseFloat(rent) * vatRate).toFixed(2);
 
   let touristTax;
   if (countryTouristTax.includes('%')) {
-    const taxRate = Number.parseFloat(countryTouristTax.replace('%', '')) / 100;
-    touristTax = (Number.parseFloat(rent) * taxRate).toFixed(2);
+    const taxRate = parseFloat(countryTouristTax.replace('%', '')) / 100;
+    touristTax = (parseFloat(rent) * taxRate).toFixed(2);
   } else if (
     countryTouristTax.includes('EUR') ||
     countryTouristTax.includes('USD') ||
     countryTouristTax.includes('GBP')
   ) {
-    touristTax = Number.parseFloat(countryTouristTax.replace(/[^\d.]/g, '') || 0).toFixed(2);
+    touristTax = parseFloat(countryTouristTax.replace(/[^\d.]/g, '') || 0).toFixed(2);
   } else {
     touristTax = "0.00";
   }
 
   const totalCost = (
-    Number.parseFloat(rent) +
-    Number.parseFloat(cleaningFee) +
-    Number.parseFloat(domitsFee) +
-    Number.parseFloat(vatTax) +
-    Number.parseFloat(touristTax)
+    parseFloat(rent) +
+    parseFloat(cleaningFee) +
+    parseFloat(domitsFee) +
+    parseFloat(vatTax) +
+    parseFloat(touristTax)
   ).toFixed(2);
 
   return (

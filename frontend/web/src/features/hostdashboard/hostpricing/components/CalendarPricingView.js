@@ -64,8 +64,8 @@ const CalendarPricingView = ({ priceHistory, onPriceUpdate }) => {
   };
 
   const handlePriceSubmit = (date) => {
-    const newPrice = Number.parseFloat(editValue);
-    if (!Number.isNaN(newPrice) && newPrice >= 0) {
+    const newPrice = parseFloat(editValue);
+    if (!isNaN(newPrice) && newPrice >= 0) {
       onPriceUpdate(date, newPrice);
     }
     setEditingCell(null);

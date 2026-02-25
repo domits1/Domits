@@ -34,10 +34,10 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
           value={technicalDetails.speed}
           onChange={(event) => {
             const value = event.target.value;
-            if (Number.isNaN(Number.parseFloat(value))) {
+            if (isNaN(parseFloat(value))) {
               toast.error("Top speed must be a number");
             } else {
-              updateTechnicalDetails("speed", Number.parseFloat(value));
+              updateTechnicalDetails("speed", parseFloat(value));
               console.log(technicalDetails)
             }
           }}
@@ -49,10 +49,10 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
           value={technicalDetails.length}
           onChange={(event) => {
             const value = event.target.value;
-            if (Number.isNaN(Number.parseFloat(value))) {
+            if (isNaN(parseFloat(value))) {
               toast.error("Length must be a number");
             } else {
-              updateTechnicalDetails("length", Number.parseFloat(value));
+              updateTechnicalDetails("length", parseFloat(value));
             }
           }}
           placeholder="0"
@@ -63,10 +63,10 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
           value={technicalDetails.height}
           onChange={(event) => {
             const value = event.target.value;
-            if (Number.isNaN(Number.parseFloat(value))) {
+            if (isNaN(parseFloat(value))) {
               toast.error("Height must be a number");
             } else {
-              updateTechnicalDetails("height", Number.parseFloat(value));
+              updateTechnicalDetails("height", parseFloat(value));
             }
           }}
           placeholder="0"
@@ -77,10 +77,10 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
           value={technicalDetails.fuelConsumption}
           onChange={(event) => {
             const value = event.target.value;
-            if (Number.isNaN(Number.parseFloat(value))) {
+            if (isNaN(parseFloat(value))) {
               toast.error("Fuel consumption must be a number");
             } else {
-              updateTechnicalDetails("fuelConsumption", Number.parseFloat(value));
+              updateTechnicalDetails("fuelConsumption", parseFloat(value));
             }
           }}
           placeholder="0"
@@ -91,10 +91,10 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
           value={technicalDetails.renovationYear}
           onChange={(event) => {
             const value = event.target.value;
-            if (Number.isNaN(Number.parseFloat(value))) {
+            if (isNaN(parseFloat(value))) {
               toast.error("Renovation year must be a number");
             } else {
-              updateTechnicalDetails("renovationYear", Number.parseFloat(value));
+              updateTechnicalDetails("renovationYear", parseFloat(value));
             }
           }}
           min={1900}

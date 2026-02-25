@@ -50,7 +50,7 @@ const Chat = ({ user }) => {
     };
 
     const generateChannelName = (userId, recipientId) => {
-        const sortedIds = [userId, recipientId].sort((a, b) => String(a).localeCompare(String(b)));
+        const sortedIds = [userId, recipientId].sort();
         return sortedIds.join('_');
     };
 

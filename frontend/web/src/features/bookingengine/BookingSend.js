@@ -40,10 +40,10 @@ const BookingSend = () => {
         property_Id: accommodationId,
       },
       general: {
-        guests: Number.parseFloat(amountOfGuest),
+        guests: parseFloat(amountOfGuest),
         latePayment: false,
-        arrivalDate: Number.parseFloat(startDate),
-        departureDate: Number.parseFloat(endDate),
+        arrivalDate: parseFloat(startDate),
+        departureDate: parseFloat(endDate),
       },
     };
 

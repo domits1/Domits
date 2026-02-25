@@ -304,8 +304,8 @@ const useFormStoreHostOnboarding = create((set) => ({
 
   calculateServiceFee: () =>
     set((state) => {
-      const rent = Number.parseFloat(state.accommodationDetails.Rent) || 0
-      const cleaning = Number.parseFloat(state.accommodationDetails.CleaningFee) || 0
+      const rent = parseFloat(state.accommodationDetails.Rent) || 0
+      const cleaning = parseFloat(state.accommodationDetails.CleaningFee) || 0
       const fee = (rent + cleaning) * 0.1
       return {
         accommodationDetails: {

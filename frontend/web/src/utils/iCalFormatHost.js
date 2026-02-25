@@ -35,7 +35,7 @@ export function formatDate(dateString) {
 }
 
 function formatICalDateTime(dateTime) {
-    if (!dateTime || Number.isNaN(new Date(dateTime).getTime())) {
+    if (!dateTime || isNaN(new Date(dateTime).getTime())) {
         console.error("Invalid date provided:", dateTime);
         return '';
     }

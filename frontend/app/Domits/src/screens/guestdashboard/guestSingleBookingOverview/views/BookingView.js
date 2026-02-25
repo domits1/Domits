@@ -3,7 +3,7 @@ import { styles } from '../styles/singleBooking';
 import TranslatedText from "../../../../features/translation/components/TranslatedText";
 
 const formatDate = (timestamp) =>
-    new Date(Number.parseFloat(timestamp)).toISOString().split('T')[0];
+    new Date(parseFloat(timestamp)).toISOString().split('T')[0];
 
 const BookingDetailsView = ({ booking }) => (
     <View style={styles.bookingContainer}>
