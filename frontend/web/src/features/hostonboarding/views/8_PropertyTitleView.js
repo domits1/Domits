@@ -16,7 +16,6 @@ function PropertyTitleView() {
   const hasValue = (value) => String(value || "").trim().length > 0;
   const isTitleComplete =
     hasValue(title) &&
-    hasValue(subtitle) &&
     (flowKey !== "accommodation" || hasValue(description));
 
   return (
@@ -40,12 +39,13 @@ function PropertyTitleView() {
           <h2 className="onboardingSectionTitle">Give it a suitable subtitle</h2>
 
           <TextAreaField
-              label="Subtitle"
+              label="Subtitle (optional)"
               value={subtitle}
               onChange={(value) => handleInputChange("subtitle", value)}
               maxLength={128}
               placeholder="Enter your subtitle here..."
               className="text-area-compact"
+              required={false}
           />
 
           {flowKey === "accommodation" && (
@@ -56,6 +56,8 @@ function PropertyTitleView() {
               maxLength={500}
               placeholder="Enter your description here..."
               className="text-area-description"
+              textareaClassName="hostonboarding-description-textarea"
+              rows={4}
             />
           )}
 

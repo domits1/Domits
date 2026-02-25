@@ -38,7 +38,18 @@ export class PropertyBuilder {
 
   async addBasePropertyInfo(requestParams, propertyType, userId) {
     let propertyParams = requestParams;
-    propertyParams.id = randomUUID();
+    if (!propertyParams.id) {
+      propertyParams.id = randomUUID();
+    }
+    const normalizedRegistrationNumber =
+      typeof propertyParams.registrationNumber === "string"
+        ? propertyParams.registrationNumber.trim()
+        : "";
+    if (normalizedRegistrationNumber) {
+      propertyParams.registrationNumber = normalizedRegistrationNumber;
+    } else {
+      propertyParams.registrationNumber = `AUTO-${propertyParams.id}`;
+    }
     propertyParams.hostId = userId;
     propertyParams.createdAt = Date.now();
     propertyParams.status = "INACTIVE";
@@ -64,8 +75,9 @@ export class PropertyBuilder {
   }
 
   addAvailability(availabilities) {
+    const availabilityList = Array.isArray(availabilities) ? availabilities : [];
     let availabilityArray = [];
-    for (const availability of availabilities) {
+    for (const availability of availabilityList) {
       if (availability.availableStartDate < Date.now()) {
         throw new Error("Available start date can not be in the past.");
       }

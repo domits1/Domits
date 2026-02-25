@@ -1,7 +1,5 @@
-import React, { useState } from "react"
+import React from "react"
 import styles from "./hostverification.module.css"
-import Loading from "./components/Loading"
-import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired"
 import useFormStoreHostOnboarding from "../../hostonboarding/stores/formStoreHostOnboarding"
 import OnboardingButton from "../../hostonboarding/components/OnboardingButton"
 import { useBuilder } from "../../../context/propertyBuilderContext";
@@ -15,23 +13,15 @@ const RegistrationNumber = () => {
   const accommodationType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.type,
   )
-  const address = useFormStoreHostOnboarding(
-    (state) => state.accommodationDetails.address,
+  const location = useFormStoreHostOnboarding(
+    (state) => state.location,
   )
-
-  const [registrationNumber, setRegistrationNumber] = useState("");
-
-  const { isRegistrationNumberRequired, loading, error } =
-    useIsRegistrationNumberRequired(address)
-
-  const [isCheckboxChecked, setIsCheckboxChecked] = useState(false)
-
-  if (loading) {
-    return <Loading />
-  }
-  if (error) {
-    return <p>Something went wrong {error.message}</p>
-  }
+  const registrationNumber = useFormStoreHostOnboarding(
+    (state) => state.accommodationDetails.registrationNumber,
+  )
+  const setRegistrationNumber = useFormStoreHostOnboarding(
+    (state) => state.setRegistrationNumber,
+  )
   return (
     <div className="onboarding-host-div">
       <main className="container">
@@ -41,17 +31,13 @@ const RegistrationNumber = () => {
             <h1>Add your registration number</h1>
             <p>
               Your registration number will appear on your listing page, so that
-              guests know that your accommodation is registered in {address.city}.
+              guests know that your accommodation is registered in {location.city || "your city"}.
             </p>
           </div>
           <hr></hr>
           <div className={styles["registrationnumber-container"]}>
             <div className={styles["registrationnumber-inputfield"]}>
-              {isRegistrationNumberRequired ? (
-                <h2>Registration number *</h2>
-              ) : (
-                <h2>Registration number (optional)</h2>
-              )}
+              <h2>Registration number (optional)</h2>
               <input
                 type="text"
                 placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
@@ -61,27 +47,10 @@ const RegistrationNumber = () => {
             <div className={styles["registrationnumber-address"]}>
               <h2>Listing address</h2>
               <p>
-                {address.street}, {address.city}, {address.zipCode},{" "}
-                {address.country}
+                {location.street}, {location.city}, {location.postalCode},{" "}
+                {location.country}
               </p>
             </div>
-            {isRegistrationNumberRequired && (
-              <div className={styles["registrationnumber-legal"]}>
-                <input
-                  type="checkbox"
-                  name="example"
-                  id="exampleCheckbox"
-                  checked={isCheckboxChecked}
-                  onChange={(e) => setIsCheckboxChecked(e.target.checked)}
-                />
-                <p>
-                  I declare that the data I have entered is complete and correct. I
-                  also agree that this data may be shared with local authorities to
-                  confirm that the information is accurate and meets legal
-                  requirements.
-                </p>
-              </div>
-            )}
           </div>
           <hr></hr>
           <div className={styles["bottom-container"]}>
@@ -91,12 +60,14 @@ const RegistrationNumber = () => {
             />
             <OnboardingButton
               onClick={() => {
+                const normalizedRegistrationNumber = registrationNumber.trim();
+                setRegistrationNumber(normalizedRegistrationNumber);
                 builder.addProperty({
                   title: form.accommodationDetails.title,
                   subtitle: form.accommodationDetails.subtitle,
                   description: form.accommodationDetails.description,
                   guestCapacity: form.accommodationDetails.accommodationCapacity.GuestAmount,
-                  registrationNumber: registrationNumber,
+                  registrationNumber: normalizedRegistrationNumber,
                   status: "",
                   propertyType: accommodationType,
                   createdAt: Date.now(),
