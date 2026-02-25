@@ -65,8 +65,8 @@ export const useAccommodations = () => {
           throw new Error(`CleaningFee is missing or empty for accommodation: ${acc.Title?.S}`);
         }
 
-        const rent = parseFloat(editedRates[i]);
-        const cleaningFee = cleaningFeeIncluded ? parseFloat(editedCleaningFees[i]) : 0;
+        const rent = Number.parseFloat(editedRates[i]);
+        const cleaningFee = cleaningFeeIncluded ? Number.parseFloat(editedCleaningFees[i]) : 0;
 
         if (rent < 0 || cleaningFee < 0) {
           throw new Error(
@@ -79,7 +79,7 @@ export const useAccommodations = () => {
           OwnerId: acc.OwnerId.S,
           Rent: Math.max(0, rent).toFixed(2),
           CleaningFee: Math.max(0, cleaningFee).toFixed(2),
-          ServiceFee: Math.max(0, 0.15 * parseFloat(rent)).toFixed(2)
+          ServiceFee: Math.max(0, 0.15 * Number.parseFloat(rent)).toFixed(2)
         };
       });
 

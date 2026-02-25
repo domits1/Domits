@@ -45,9 +45,9 @@ const useSelfLearningPricingModel = (historicalData, userAdjustments, setDynamic
     const inputTensor = tf.tensor2d([input]);
     const prediction = model.predict(inputTensor);
     const price = (await prediction.data())[0];
-    setDynamicPrice(parseFloat(price.toFixed(2)));
+    setDynamicPrice(Number.parseFloat(price.toFixed(2)));
     updatePriceHistory(price);
-    return parseFloat(price.toFixed(2));
+    return Number.parseFloat(price.toFixed(2));
   };
 
   const updatePriceHistory = (newPrice) => {
@@ -58,7 +58,7 @@ const useSelfLearningPricingModel = (historicalData, userAdjustments, setDynamic
   };
 
   const integrateWithUI = (accommodation, setBasePrice, setPredictedPrice, setIsModalOpen) => {
-    setBasePrice(accommodation.Rent ? parseFloat(accommodation.Rent) : 100);
+    setBasePrice(accommodation.Rent ? Number.parseFloat(accommodation.Rent) : 100);
     predictPrice([
       1.1,
       0.8,

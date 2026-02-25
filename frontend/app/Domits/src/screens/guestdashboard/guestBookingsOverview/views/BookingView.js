@@ -40,13 +40,13 @@ const BookingView = ({property, booking, onPress}) => {
         <View style={styles.row}>
           <Text style={styles.dates}>
             {
-              new Date(parseFloat(booking.arrivalDate.N))
+              new Date(Number.parseFloat(booking.arrivalDate.N))
                 .toISOString()
                 .split('T')[0]
             }{' '}
             -{' '}
             {
-              new Date(parseFloat(booking.departureDate.N))
+              new Date(Number.parseFloat(booking.departureDate.N))
                 .toISOString()
                 .split('T')[0]
             }

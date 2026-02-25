@@ -31,9 +31,9 @@ export const OccupancyRateService = {
 
     let rate = 0;
     if (typeof data === "number") rate = data;
-    else if (data?.occupancyRate) rate = parseFloat(data.occupancyRate);
-    else if (data?.occupancy_rate) rate = parseFloat(data.occupancy_rate);
-    else if (data?.value) rate = parseFloat(data.value);
+    else if (data?.occupancyRate) rate = Number.parseFloat(data.occupancyRate);
+    else if (data?.occupancy_rate) rate = Number.parseFloat(data.occupancy_rate);
+    else if (data?.value) rate = Number.parseFloat(data.value);
 
     if (!Number.isFinite(rate)) rate = 0;
 

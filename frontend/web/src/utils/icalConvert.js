@@ -48,7 +48,7 @@ const parseIcsDate = (raw) => {
   }
 
   const d = new Date(v);
-  return { date: isNaN(d.getTime()) ? null : d, useUTC: false };
+  return { date: Number.isNaN(d.getTime()) ? null : d, useUTC: false };
 };
 
 export function buildBlockedSetFromIcsEvents(events) {

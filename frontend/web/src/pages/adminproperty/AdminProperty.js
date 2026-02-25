@@ -88,7 +88,7 @@ export default function AdminProperty() {
         return value.trim().length >= 2 ? "" : "Street is required";
       case "houseNumber": {
         const num = Number(value);
-        return !isNaN(num) && num > 0 ? "" : "Valid house number is required";
+        return !Number.isNaN(num) && num > 0 ? "" : "Valid house number is required";
       }
       case "postalCode":
         return value.trim().length >= 2 ? "" : "Postal code is required";
@@ -103,11 +103,11 @@ export default function AdminProperty() {
       case "beds":
       case "bathrooms": {
         const val = Number(value);
-        return !isNaN(val) && val >= 0 ? "" : "Must be a valid number";
+        return !Number.isNaN(val) && val >= 0 ? "" : "Must be a valid number";
       }
       case "rate": {
         const rate = Number(value);
-        return !isNaN(rate) && rate > 0 ? "" : "Rate must be greater than 0";
+        return !Number.isNaN(rate) && rate > 0 ? "" : "Rate must be greater than 0";
       }
       default:
         return "";

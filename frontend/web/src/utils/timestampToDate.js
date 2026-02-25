@@ -8,9 +8,9 @@ export function timestampToDate(value) {
         ? numericValue * 1000
         : numericValue;
     const parsed = new Date(milliseconds);
-    return isNaN(parsed) ? null : parsed;
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   const parsed = new Date(value);
-  return isNaN(parsed) ? null : parsed;
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }

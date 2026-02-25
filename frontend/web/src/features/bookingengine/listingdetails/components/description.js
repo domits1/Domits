@@ -8,7 +8,7 @@ const Description = ({ description }) => {
   useEffect(() => {
     const currentDescRef = descRef.current;
     if (currentDescRef) {
-      const lineHeight = parseFloat(
+      const lineHeight = Number.parseFloat(
         getComputedStyle(currentDescRef).lineHeight,
       );
       const lines = currentDescRef.scrollHeight / lineHeight;

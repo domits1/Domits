@@ -40,11 +40,11 @@ const GuestBookings = ({navigation}) => {
       user.username,
     );
     const upcomingBookings = bookingsResponse.Items.filter(
-      booking => parseFloat(booking.departureDate.N) > Date.now(),
+      booking => Number.parseFloat(booking.departureDate.N) > Date.now(),
     );
     const sortedBookings = upcomingBookings
       .sort(
-        (a, b) => parseFloat(a.departureDate.N) - parseFloat(b.departureDate.N),
+        (a, b) => Number.parseFloat(a.departureDate.N) - Number.parseFloat(b.departureDate.N),
       )
       .slice(0, 11);
     setBookings(sortedBookings);

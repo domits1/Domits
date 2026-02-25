@@ -131,7 +131,7 @@ const RevPARCard = ({ refreshKey }) => {
             p.end.toISOString().split("T")[0]
           );
 
-          const value = Math.max(0, parseFloat(res.revPAR) || 0);
+          const value = Math.max(0, Number.parseFloat(res.revPAR) || 0);
 
           results.push({ label: p.label, revPAR: value });
         } catch (err) {
@@ -176,7 +176,7 @@ const RevPARCard = ({ refreshKey }) => {
             ? summary.availableNights.availableNights
             : summary.availableNights;
 
-        const nextRevparVal = parseFloat(summary.revPAR) || 0;
+        const nextRevparVal = Number.parseFloat(summary.revPAR) || 0;
 
         if (lastRef.current.totalRevenue !== (nextTotalRev || 0)) {
           setTotalRevenue(nextTotalRev || 0);

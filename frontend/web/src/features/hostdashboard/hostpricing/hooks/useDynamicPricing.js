@@ -15,7 +15,7 @@ function smoothPrices(prices, windowSize = 7) {
     let avg = sum / subset.length;
     smoothed.push({
       date: prices[i].date,
-      price: parseFloat(avg.toFixed(2))
+      price: Number.parseFloat(avg.toFixed(2))
     });
   }
   return smoothed;
@@ -82,7 +82,7 @@ export const useDynamicPricing = () => {
         eventFactor,
         occupancyRate,
         localAttractionsPopularity,
-        price: parseFloat(finalPrice.toFixed(2))
+        price: Number.parseFloat(finalPrice.toFixed(2))
       });
     }
     return data;
@@ -244,7 +244,7 @@ export const useDynamicPricing = () => {
 
       future.push({
         date: day,
-        price: parseFloat(finalPredictedPrice.toFixed(2))
+        price: Number.parseFloat(finalPredictedPrice.toFixed(2))
       });
     }
 
@@ -257,7 +257,7 @@ export const useDynamicPricing = () => {
       return;
     }
 
-    const storedRent = parseFloat(
+    const storedRent = Number.parseFloat(
       accommodation?.Rent?.N ?? accommodation?.Rent?.S
     ) || 100;
 

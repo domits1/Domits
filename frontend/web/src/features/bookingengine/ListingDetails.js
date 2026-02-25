@@ -127,7 +127,7 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
 
   function generateUUID() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-      var r = (Math.random() * 16) | 0,
+      var r = Math.trunc(Math.random() * 16),
         v = c == "x" ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
@@ -642,27 +642,27 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
 
       const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
       const basePrice = nights * accommodation.Rent * 100;
-      const cleaningFee = accommodation.CleaningFee ? parseFloat(accommodation.CleaningFee * 100) : 0;
+      const cleaningFee = accommodation.CleaningFee ? Number.parseFloat(accommodation.CleaningFee * 100) : 0;
       const calculatedServiceFee = basePrice * 0.15;
 
       const countryVAT = vatRates.find((rate) => rate.country === accommodation?.Country)?.vat || "0";
-      const vatRate = parseFloat(countryVAT);
+      const vatRate = Number.parseFloat(countryVAT);
 
       const countryTouristTax =
         touristTaxRates.find((rate) => rate.country === accommodation?.Country)?.touristTax || "0";
 
-      const calculatedVatRate = parseFloat((basePrice * vatRate) / 100);
+      const calculatedVatRate = Number.parseFloat((basePrice * vatRate) / 100);
 
       let calculatedTouristTaxRate;
       if (countryTouristTax.includes("%")) {
-        const taxRate = parseFloat(countryTouristTax.replace("%", ""));
-        calculatedTouristTaxRate = parseFloat((basePrice * taxRate) / 100);
+        const taxRate = Number.parseFloat(countryTouristTax.replace("%", ""));
+        calculatedTouristTaxRate = Number.parseFloat((basePrice * taxRate) / 100);
       } else if (
         countryTouristTax.includes("EUR") ||
         countryTouristTax.includes("USD") ||
         countryTouristTax.includes("GBP")
       ) {
-        calculatedTouristTaxRate = parseFloat(((countryTouristTax.replace(/[^\d.]/g, "") || 0) * basePrice) / 100);
+        calculatedTouristTaxRate = Number.parseFloat(((countryTouristTax.replace(/[^\d.]/g, "") || 0) * basePrice) / 100);
       } else {
         calculatedTouristTaxRate = 0;
       }
@@ -820,7 +820,7 @@ import { touristTaxRates, vatRates } from "../../utils/CountryVATRatesAndTourist
   const renderStars = (review) => {
     if (review.rating) {
       const numStars = parseInt(review.rating);
-      if (!isNaN(numStars)) {
+      if (!Number.isNaN(numStars)) {
         const stars = Array.from({ length: numStars }, (_, index) => <span key={index}>★</span>);
         return stars;
       } else {

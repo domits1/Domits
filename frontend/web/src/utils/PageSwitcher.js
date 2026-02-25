@@ -60,11 +60,11 @@ function PageSwitcher({ accommodations, bankDetailsProvided, amount, onEdit, onD
                     <section className={styles.accommodationRight}>
                         <p>Subtitle: {accommodation.property.subtitle}</p>
                         <p>Listed on: {" "}
-                            {isNaN(new Date(accommodation.createdAt).getTime())
+                            {Number.isNaN(new Date(accommodation.createdAt).getTime())
                                 ? formatDate(accommodation.updatedAt)
                                 : formatDate(accommodation.createdAt)}</p>
                         <p>Last change:{" "}
-                            {isNaN(new Date(accommodation.updatedAt).getTime())
+                            {Number.isNaN(new Date(accommodation.updatedAt).getTime())
                                 ? formatDate(accommodation.createdAt)
                                 : formatDate(accommodation.updatedAt)}</p>
                         <p>Features: {accommodation.Features.length > 0 ? (

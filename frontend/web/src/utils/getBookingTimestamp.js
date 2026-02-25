@@ -21,5 +21,5 @@ export function getBookingTimestamp(bookingItem) {
     bookingItem?.arrival_date;
 
   const parsedDate = dateString ? new Date(dateString) : null;
-  return parsedDate && !isNaN(parsedDate) ? parsedDate.getTime() : 0;
+  return parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.getTime() : 0;
 }

@@ -72,7 +72,7 @@ export function Messages({ route, navigation }) {
   }, [channelUUID, user]);
 
   const generateChannelName = (userEmail, recipientEmail) => {
-    const sortedEmails = [userEmail, recipientEmail].sort();
+    const sortedEmails = [userEmail, recipientEmail].sort((a, b) => String(a).localeCompare(String(b)));
     return sortedEmails.join('_');
   };
 

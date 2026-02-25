@@ -98,7 +98,7 @@ function iCalFormat(event) {
   function formatICalDateTime(dateTime) {
     if (!dateTime) return "";
     const dt = new Date(dateTime);
-    if (isNaN(dt.getTime())) {
+    if (Number.isNaN(dt.getTime())) {
       console.error("Invalid date provided:", dateTime);
       return "";
     }

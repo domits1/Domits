@@ -56,7 +56,7 @@ const ReservationItem = ({ reservation, selectedOption, selectedReservations, ha
                     {reservation.Status}
                 </td>
             )}
-            <td>€ {parseFloat(reservation.Price).toFixed(2)}</td>
+            <td>€ {Number.parseFloat(reservation.Price).toFixed(2)}</td>
         </tr>
     );
 };

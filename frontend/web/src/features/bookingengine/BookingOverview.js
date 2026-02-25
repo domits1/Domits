@@ -103,10 +103,10 @@ const BookingOverview = () => {
         property_Id: propertyId,
       },
       general: {
-        guests: parseFloat(bookingDetails.guests),
+        guests: Number.parseFloat(bookingDetails.guests),
         latePayment: false,
-        arrivalDate: parseFloat(bookingDetails.checkInDate),
-        departureDate: parseFloat(bookingDetails.checkOutDate),
+        arrivalDate: Number.parseFloat(bookingDetails.checkInDate),
+        departureDate: Number.parseFloat(bookingDetails.checkOutDate),
         guestName: userName,
       },
     };
@@ -185,8 +185,8 @@ const BookingOverview = () => {
                 <Calender /> Date:
               </span>
               <span className="detail-value">
-                {DateFormatterDD_MM_YYYY(parseFloat(bookingDetails.checkInDate))} -{" "}
-                {DateFormatterDD_MM_YYYY(parseFloat(bookingDetails.checkOutDate))}
+                {DateFormatterDD_MM_YYYY(Number.parseFloat(bookingDetails.checkInDate))} -{" "}
+                {DateFormatterDD_MM_YYYY(Number.parseFloat(bookingDetails.checkOutDate))}
               </span>
             </div>
             <div className="detail-row">

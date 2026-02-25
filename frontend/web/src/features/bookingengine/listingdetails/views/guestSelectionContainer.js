@@ -15,8 +15,8 @@ const GuestSelectionContainer = ({ setAdultsParent, setKidsParent }) => {
             style={{ width: "30px" }}
             min="1"
             onChange={(event) => {
-              setAdults(parseFloat(event.target.value));
-              setAdultsParent(parseFloat(event.target.value));
+              setAdults(Number.parseFloat(event.target.value));
+              setAdultsParent(Number.parseFloat(event.target.value));
             }}
           />{" "}
           adults
@@ -31,8 +31,8 @@ const GuestSelectionContainer = ({ setAdultsParent, setKidsParent }) => {
             style={{ width: "30px" }}
             min="0"
             onChange={(event) => {
-              setKids(parseFloat(event.target.value));
-              setKidsParent(parseFloat(event.target.value));
+              setKids(Number.parseFloat(event.target.value));
+              setKidsParent(Number.parseFloat(event.target.value));
             }}
           />{" "}
           kids
