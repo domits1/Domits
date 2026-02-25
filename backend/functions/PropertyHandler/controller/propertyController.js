@@ -841,7 +841,7 @@ export class PropertyController {
     async getActivePropertiesCard(event) {
         try {
             const lastEvaluatedKey = {
-                createdAt: parseFloat(event.queryStringParameters?.lastEvaluatedKeyCreatedAt),
+                createdAt: Number.parseFloat(event.queryStringParameters?.lastEvaluatedKeyCreatedAt),
                 id: event.queryStringParameters?.lastEvaluatedKeyId
             }
             const properties = await this.propertyService.getActivePropertyCards(lastEvaluatedKey);

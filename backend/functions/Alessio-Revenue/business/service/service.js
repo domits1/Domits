@@ -101,7 +101,7 @@ export class Service {
         start = parseDate(startDate);
         end = parseDate(endDate);
 
-        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
           throw new Error("Invalid date(s) provided");
         }
 

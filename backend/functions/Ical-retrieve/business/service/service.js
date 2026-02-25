@@ -222,7 +222,7 @@ function parseIcsDate(raw) {
   }
 
   const d = new Date(v);
-  return { date: isNaN(d.getTime()) ? null : d, useUTC: false };
+  return { date: Number.isNaN(d.getTime()) ? null : d, useUTC: false };
 }
 
 function buildBlockedDatesFromEvents(events) {
@@ -418,7 +418,7 @@ function parseIcsDateUTC(raw, params = {}) {
   }
 
   const d = new Date(v);
-  return isNaN(d.getTime()) ? null : d;
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function ymdUTC(date) {

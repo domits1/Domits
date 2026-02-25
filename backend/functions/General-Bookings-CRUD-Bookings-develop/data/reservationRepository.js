@@ -23,9 +23,9 @@ class ReservationRepository {
       .into(Booking)
       .values({
         id: id,
-        arrivaldate: parseFloat(arrivalDate),
+        arrivaldate: Number.parseFloat(arrivalDate),
         createdat: date,
-        departuredate: parseFloat(departureDate),
+        departuredate: Number.parseFloat(departureDate),
         guestid: userId,
         hostid: hostId,
         hostname: "WIP-Host",

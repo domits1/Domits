@@ -9,7 +9,7 @@ class CreateDate {
     }
 
     static modifyUnixTime(input){
-        const date = new Date(parseFloat(input));
+        const date = new Date(Number.parseFloat(input));
         date.setHours(0, 0, 0, 0);
         return date.getTime();
     }
