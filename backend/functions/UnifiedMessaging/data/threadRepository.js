@@ -1,6 +1,6 @@
 import Database from "database";
 import { UnifiedThread } from "database/models/UnifiedThread";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 class ThreadRepository {
   async createThread(data) {

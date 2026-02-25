@@ -1,6 +1,6 @@
 import Database from "database";
 import { UnifiedMessage } from "database/models/UnifiedMessage";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 class MessageRepository {
   async createMessage(data) {

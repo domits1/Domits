@@ -50,6 +50,25 @@ export class PropertyLocationRepository {
         return result ? result : null;
     }
 
+    async updatePropertyLocationById(propertyId, location) {
+        const client = await Database.getInstance();
+        await client
+            .createQueryBuilder()
+            .update(Property_Location)
+            .set({
+                city: location.city,
+                country: location.country,
+                housenumber: location.houseNumber,
+                housenumberextension: location.houseNumberExtension || "",
+                postalcode: location.postalCode,
+                street: location.street,
+            })
+            .where("property_id = :propertyId", { propertyId })
+            .execute();
+
+        return await this.getFullPropertyLocationById(propertyId);
+    }
+
     async getActivePropertiesByCountry(country, lastEvaluatedKey) {
         const client = await Database.getInstance();
         const query = await client
