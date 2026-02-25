@@ -1,3 +1,5 @@
+// frontend/web/src/components/messages/ChatScreen.jsx
+
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import ChatMessage from "./ChatMessage";
 import BookingTab from "./BookingTab";
@@ -121,6 +123,7 @@ const ChatScreen = ({
     const guestId = isGuest ? userId : resolvedContactId;
 
     const nowIso = new Date().toISOString();
+
     const makeClientId = () => {
       if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
         return crypto.randomUUID();
@@ -132,6 +135,8 @@ const ChatScreen = ({
       }
       return String(Date.now());
     };
+
+    const optimisticId = `tmp-${nowIso}-${makeClientId()}`;
 
     const optimistic = {
       id: optimisticId,
@@ -204,12 +209,11 @@ const ChatScreen = ({
       <div className="chat-header">
         <div className="chat-header-left">
           {onBack && (
-            <button className="chat-back" onClick={onBack} aria-label="Back">
+            <button className="chat-back" onClick={onBack} aria-label="Back" type="button">
               <FaArrowLeft />
             </button>
           )}
 
-          {}
           <img
             src={contactImage || fallbackAvatar}
             alt="Profile"
@@ -253,12 +257,7 @@ const ChatScreen = ({
       </div>
 
       <div className="chat-footer">
-        <BookingTab
-          userId={userId}
-          contactId={resolvedContactId}
-          contactName={headerName}
-          dashboardType={dashboardType}
-        />
+        <BookingTab userId={userId} contactId={resolvedContactId} contactName={headerName} dashboardType={dashboardType} />
 
         <div className="chat-input">
           <div className="attachment-area">
@@ -269,7 +268,8 @@ const ChatScreen = ({
                 className="inline-upload-preview"
                 onClick={() => setShowPreviewPopover((s) => !s)}
                 title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
-                type="button">
+                type="button"
+              >
                 <img src={uploadedFileUrls[0]} alt="First attachment preview" />
                 {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
               </button>
@@ -295,7 +295,8 @@ const ChatScreen = ({
                 className="message-input-send-button"
                 disabled={sending}
                 title="Send"
-                type="button">
+                type="button"
+              >
                 <FaPaperPlane />
               </button>
             </div>
