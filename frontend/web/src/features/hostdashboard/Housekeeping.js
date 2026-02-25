@@ -12,7 +12,7 @@ const HostPropertyCare = () => {
 
     const [newTask, setNewTask] = useState({
         title: '', description: '', property: '', bookingRef: '', 
-        type: 'Cleaning', assignee: '', dueDate: '', attachments: null
+        type: 'Cleaning', assignee: '', dueDate: '', priority: '', attachments: null
     });
 
     const [filters, setFilters] = useState({
@@ -50,7 +50,17 @@ const HostPropertyCare = () => {
     const loadData = async () => {
         setIsLoading(true);
         const data = await fetchTasks();
-        setTasks(data);
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        const processedTasks = data.map(task => {
+            if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
+                return { ...task, status: 'Overdue' };
+            }
+            return task; 
+        });
+
+        setTasks(processedTasks);
         setIsLoading(false);
     };
 
@@ -58,7 +68,13 @@ const HostPropertyCare = () => {
         e.preventDefault();
         try {
             const taskPayload = { ...newTask, status: 'Pending' }; 
-            const created = await createTask(taskPayload);
+            let created = await createTask(taskPayload);
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
+                created = { ...created, status: 'Overdue' };
+            }
+
             setTasks([created, ...tasks]);
             setIsModalOpen(false);
             resetForm();
@@ -82,7 +98,7 @@ const HostPropertyCare = () => {
     };
 
     const handleCancelModal = () => {
-        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.dueDate || newTask.attachments;
+        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.dueDate || newTask.priority !== 'Medium' || newTask.attachments;
         if (hasUnsavedChanges) {
             const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to cancel?");
             if (confirmLeave) {
@@ -96,7 +112,7 @@ const HostPropertyCare = () => {
     };
 
     const resetForm = () => {
-        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', dueDate: '', attachments: null });
+        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', dueDate: '', priority: 'Medium', attachments: null });
     };
     // --- FILTER LOGIC ---
     const handleClearFilters = () => {
@@ -388,6 +404,15 @@ const HostPropertyCare = () => {
                                     onChange={handleInputChange} 
                                     required 
                                 />
+                            </div>
+                            <div className="form-group">
+                                <label>Priority</label>
+                                <select name="priority" value={newTask.priority} onChange={handleInputChange} required>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Urgent">Urgent</option>
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label>Attachments (optional)</label>
