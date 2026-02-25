@@ -1,4 +1,3 @@
-/* --- GLOBAL LAYOUT --- */
 .task-dashboard-v2 {
     padding: 30px 40px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -11,7 +10,6 @@
     overflow-x: hidden;
 }
 
-/* --- HEADER --- */
 .top-header {
     display: flex;
     justify-content: space-between;
@@ -27,7 +25,7 @@
 
 
 .btn-create-green {
-    background-color: #28a745; /* Domits Green */
+    background-color: #28a745; 
     color: white;
     border: none;
     padding: 10px 20px;
@@ -43,7 +41,6 @@
     background-color: #218838;
 }
 
-/* --- TABS --- */
 .tabs-nav {
     display: flex;
     gap: 30px;
@@ -78,7 +75,6 @@
     border-radius: 3px 3px 0 0;
 }
 
-/* --- OVERVIEW STATS CARDS --- */
 .overview-stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -140,7 +136,6 @@
     margin-left: 5px;
 }
 
-/* --- TABLE STYLES --- */
 .table-container {
     background: white;
     border: 1px solid #e1e4e8;
@@ -187,8 +182,6 @@
     cursor: pointer;
 }
 
-/* --- BADGES (PRIORITY & STATUS) --- */
-/* Base Badge */
 .badge-priority, .badge-status {
     padding: 6px 12px;
     border-radius: 4px;
@@ -199,14 +192,13 @@
     min-width: 80px;
 }
 
-/* Priority Colors */
 .badge-priority.urgent { background-color: #dc3545; color: white; }
 .badge-priority.high { background-color: #fd7e14; color: white; }
 .badge-priority.medium { background-color: #ffc107; color: #333; } 
 .badge-priority.low { background-color: #6c757d; color: white; }
 
 .badge-status {
-    border-radius: 50px; /* Pill shape */
+    border-radius: 50px; 
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -219,7 +211,6 @@
 .badge-status.overdue { background-color: #dc3545; color: white; }
 .badge-status.cancelled { background-color: #343a40; color: white; }
 
-/* --- MODAL (CREATE TASK) - SIDE DRAWER --- */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -281,7 +272,6 @@
 }
 
 
-/* Form Groups */
 .form-group {
     margin-bottom: 20px;
 }
@@ -315,11 +305,10 @@
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #28a745; /* Green focus */
+    border-color: #28a745;
     box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
 }
 
-/* Radio Group (Type) */
 .radio-group {
     display: flex;
     gap: 20px;
@@ -339,7 +328,6 @@
     height: 16px;
 }
 
-/* Modal Footer */
 .modal-footer {
     display: flex;
     justify-content: space-between;
@@ -361,7 +349,6 @@
     color: #333;
 }
 
-/* --- CUSTOM FILE UPLOAD (Attachments) --- */
 .custom-file-upload {
     position: relative;
     width: 100%;
@@ -398,7 +385,7 @@
 .upload-icon {
     width: 16px;
     height: 16px;
-    color: #28a745; /* Domits Green */
+    color: #28a745; 
 }
 
 .upload-text {
@@ -407,7 +394,6 @@
     white-space: nowrap;
 }
 
-/* --- OVERVIEW MODULE (Filter Bar) --- */
 .filters-bar {
     border: 1px solid rgba(0, 0, 0, 0.19); 
     border-radius: 12px; 
@@ -474,7 +460,6 @@
     color: #6c757d;
 }
 
-/* --- ACTIVE FILTER TAGS --- */
 .active-filters-row {
     display: flex;
     justify-content: center;
@@ -496,8 +481,9 @@
     gap: 6px;
     font-size: 12px;
     font-weight: 600;
-    color: #495057;
-    background-color: #f8f9fa; 
+    color: #515861;
+    background-color: #f7f7f7; 
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.361);
     padding: 4px 12px;
     border-radius: 20px;
 }
@@ -531,7 +517,6 @@
     color: #6c757d;
 }
 
-/* --- DYNAMIC ROW COLORS --- */
 .tasks-table tr {
     border-bottom: 1px solid white; 
 }
@@ -555,10 +540,82 @@
 
 .kpi-icon.info-icon { color: #007bff; background-color: #e6f2ff; font-weight: bold; }
 
-/* Action buttons below table */
 .table-footer-actions {
     display: flex;
     justify-content: flex-end;
     gap: 15px;
     margin-top: 20px;
+}
+
+.confirm-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); 
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    z-index: 2000; 
+    backdrop-filter: blur(4px); 
+    animation: fadeIn 0.2s ease-out;
+}
+
+.confirm-modal-content {
+    background: #ffffff;
+    width: 400px;
+    max-width: 90vw;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    animation: popIn 0.2s ease-out;
+}
+
+.confirm-modal-icon {
+    font-size: 32px;
+    margin-bottom: 15px;
+}
+
+.confirm-modal-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    color: #212529;
+    font-weight: 700;
+}
+
+.confirm-modal-content p {
+    margin: 0 0 25px 0;
+    font-size: 14px;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+.confirm-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.confirm-modal-actions .btn-text {
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 10px 20px;
+    color: #495057;
+    transition: background-color 0.2s;
+}
+
+.confirm-modal-actions .btn-text:hover {
+    background-color: #e9ecef;
+    color: #212529;
+    text-decoration: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }

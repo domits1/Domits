@@ -24,7 +24,21 @@ const HostPropertyCare = () => {
         search: ''
     });
 
-    // --- EFFECT: LOAD DATA ---
+    const [selectedTaskIds, setSelectedTaskIds] = useState([]);
+    
+    const [confirmDialog, setConfirmDialog] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        confirmText: 'Confirm',
+        cancelText: 'Cancel',
+        onConfirm: null
+    });
+
+    const closeConfirmDialog = () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+    };
+    
     useEffect(() => {
         loadData();
     }, []);
@@ -37,12 +51,14 @@ const HostPropertyCare = () => {
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
 
+        const activeTasks = tasks.filter(t => !t.isLegacy);
+
         const newStats = {
-            total: tasks.length,
-            overdue: tasks.filter(t => t.status === 'Overdue' || (t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'Completed')).length,
-            overdueIncrease: tasks.filter(t => t.dueDate === yesterdayStr && t.status !== 'Completed').length,
-            inProgress: tasks.filter(t => t.status === 'In progress').length,
-            completedToday: tasks.filter(t => t.status === 'Completed' && t.completedAt === todayStr).length
+            total: activeTasks.length,
+            overdue: activeTasks.filter(t => t.status === 'Overdue' || (t.dueDate && t.dueDate < todayStr && t.status !== 'Completed')).length,
+            overdueIncrease: activeTasks.filter(t => t.dueDate === yesterdayStr && t.status !== 'Completed').length,
+            inProgress: activeTasks.filter(t => t.status === 'In progress').length,
+            completedToday: activeTasks.filter(t => t.status === 'Completed' && t.completedAt === todayStr).length
         };
         setStats(newStats);
     }, [tasks]);
@@ -98,13 +114,20 @@ const HostPropertyCare = () => {
     };
 
     const handleCancelModal = () => {
-        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.dueDate || newTask.priority !== 'Medium' || newTask.attachments;
+        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.dueDate || newTask.priority !== 'Low' || newTask.attachments;
         if (hasUnsavedChanges) {
-            const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to cancel?");
-            if (confirmLeave) {
-                setIsModalOpen(false);
-                resetForm();
-            }
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Discard unsaved changes?',
+                message: 'You have unsaved changes in your new task. Are you sure you want to cancel and lose your progress?',
+                confirmText: 'Discard Task',
+                cancelText: 'Keep Editing',
+                onConfirm: () => {
+                    setIsModalOpen(false);
+                    resetForm();
+                    closeConfirmDialog();
+                }
+            });
         } else {
             setIsModalOpen(false);
             resetForm();
@@ -112,9 +135,9 @@ const HostPropertyCare = () => {
     };
 
     const resetForm = () => {
-        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', dueDate: '', priority: 'Medium', attachments: null });
+        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', dueDate: '', priority: 'Low', attachments: null });
     };
-    // --- FILTER LOGIC ---
+
     const handleClearFilters = () => {
         setFilters({
             property: 'All properties',
@@ -125,9 +148,52 @@ const HostPropertyCare = () => {
             search: ''
         });
     };
+    
+    const handleSelectTask = (id) => {
+        setSelectedTaskIds(prev => 
+            prev.includes(id) ? prev.filter(taskId => taskId !== id) : [...prev, id]
+        );
+    };
+
+    const handleDeleteSelected = () => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Delete Tasks?',
+            message: `Are you sure you want to delete ${selectedTaskIds.length} task(s)? They will be moved to your Legacy Tasks list.`,
+            confirmText: 'Yes, Delete',
+            cancelText: 'Cancel',
+            onConfirm: async () => {
+                for (const id of selectedTaskIds) {
+                    // await deleteTask(id); 
+                }
+                
+                setTasks(tasks.map(t => 
+                    selectedTaskIds.includes(t.id) ? { ...t, isLegacy: true } : t
+                ));
+                setSelectedTaskIds([]);
+                closeConfirmDialog();
+            }
+        });
+    };
+
+    const handleCancelSelection = () => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Clear Selection?',
+            message: 'Are you sure you want to cancel your current selection?',
+            confirmText: 'Clear Selection',
+            cancelText: 'Go Back',
+            onConfirm: () => {
+                setSelectedTaskIds([]);
+                closeConfirmDialog();
+            }
+        });
+    };
 
     const getFilteredTasks = () => {
         return tasks.filter(task => {
+            if (task.isLegacy || task.status === 'Completed') return false;
+
             const matchProperty = filters.property === 'All properties' || task.property === filters.property;
             const matchStatus = filters.status === 'All statuses' || task.status === filters.status;
             const matchAssignee = filters.assignee === 'Anyone' || task.assignee === filters.assignee;
@@ -158,7 +224,6 @@ const HostPropertyCare = () => {
 
     const filteredTasks = getFilteredTasks();
 
-    // --- RENDER HELPERS ---
     const renderContent = () => {
         if (isLoading) return <div className="loading">Loading...</div>;
 
@@ -234,6 +299,7 @@ const HostPropertyCare = () => {
                 <table className="tasks-table">
                     <thead>
                         <tr>
+                            <th style={{ width: '40px' }}></th>
                             <th>Task</th>
                             <th>Property ▾</th>
                             <th>Type</th>
@@ -246,45 +312,60 @@ const HostPropertyCare = () => {
                     <tbody>
                         {filteredTasks.length === 0 ? (
                             <tr>
-                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#6c757d'}}>
-                                    No tasks match your filters.
+                                <td colSpan="8" style={{textAlign: 'center', padding: '30px', color: '#6c757d'}}>
+                                    No tasks match your filters (or all are completed/deleted).
                                 </td>
                             </tr>
                         ) : (
                             filteredTasks.map(task => (
                                 <tr key={task.id} className={`row-${task.status.toLowerCase().replace(' ', '-')}`}>
-                                <td>
-                                    <div className="task-title-cell">
-                                        <span className="task-arrow">▶</span> 
-                                        <div>
-                                            <strong>{task.title}</strong>
+                                    <td>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedTaskIds.includes(task.id)}
+                                            onChange={() => handleSelectTask(task.id)}
+                                            style={{ cursor: 'pointer', accentColor: '#28a745' }}
+                                        />
+                                    </td>
+                                    <td>
+                                        <div className="task-title-cell">
+                                            <span className="task-arrow">▶</span> 
+                                            <div>
+                                                <strong>{task.title}</strong>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>{task.property}</td>
-                                <td>{task.type}</td>
-                                <td>{task.assignee}</td>
-                                <td>{task.dueDate || 'Today'}</td>
-                                <td>
-                                    <span className={`badge-priority ${task.priority ? task.priority.toLowerCase() : 'medium'}`}>
-                                        {task.priority || 'Medium'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span className={`badge-status ${task.status.toLowerCase().replace(' ', '-')}`}>
-                                        ● {task.status}
-                                    </span>
-                                </td>
-                            </tr>
-                        )))}
+                                    </td>
+                                    <td>{task.property}</td>
+                                    <td>{task.type}</td>
+                                    <td>{task.assignee}</td>
+                                    <td>{task.dueDate || 'Today'}</td>
+                                    <td>
+                                        <span className={`badge-priority ${task.priority ? task.priority.toLowerCase() : 'medium'}`}>
+                                            {task.priority || 'Medium'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className={`badge-status ${task.status.toLowerCase().replace(' ', '-')}`}>
+                                            ● {task.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
             
-            <div className="table-footer-actions">
-                <button className="btn-text">Cancel</button>
-                <button className="btn-create-green" style={{backgroundColor: '#28a745'}}>Delete</button>
-            </div>
+            {selectedTaskIds.length > 0 && (
+                <div className="table-footer-actions">
+                    <button className="btn-text" onClick={handleCancelSelection} style={{ backgroundColor: 'white', border: '1px solid #ced4da', padding: '10px 20px', borderRadius: '6px' }}>
+                        Cancel
+                    </button>
+                    <button className="btn-create-green" onClick={handleDeleteSelected}>
+                        Delete {selectedTaskIds.length} Task(s)
+                    </button>
+                </div>
+            )}
         </div>
     );
 
@@ -436,8 +517,24 @@ const HostPropertyCare = () => {
                     </div>
                 </div>
             )}
+            {confirmDialog.isOpen && (
+                <div className="confirm-modal-overlay">
+                    <div className="confirm-modal-content">
+                        <div className="confirm-modal-icon">⚠️</div>
+                        <h3>{confirmDialog.title}</h3>
+                        <p>{confirmDialog.message}</p>
+                        <div className="confirm-modal-actions">
+                            <button className="btn-text" onClick={closeConfirmDialog}>
+                                {confirmDialog.cancelText}
+                            </button>
+                            <button className="btn-create-green" onClick={confirmDialog.onConfirm}>
+                                {confirmDialog.confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 };
-
 export default HostPropertyCare;
