@@ -8,7 +8,7 @@ import { PROFILE_PHOTO_MAX_SIZE } from "../../components/settings/constants";
 jest.mock("aws-amplify");
 jest.mock("../../components/settings/api/profileUpload");
 
-describe.skip("usePhotoUpload", () => {
+describe("usePhotoUpload", () => {
   let mockSetUser;
 
   beforeEach(() => {
