@@ -101,7 +101,7 @@ export default function useUserProfile() {
 
         const formatted = formatDateOfBirth(nextDigits);
         previousDobRef.current = formatted;
-        setTempUser({...tempUser, dateOfBirth: formatted});
+        setTempUser((prev) => ({...prev, dateOfBirth: formatted}));
         if (dateOfBirthError) {
             setDateOfBirthError("");
         }
@@ -164,7 +164,7 @@ export default function useUserProfile() {
         setEditState((prevState) => ({...prevState, [field]: !prevState[field]}));
         setIsVerifying(false);
         if (!editState[field]) {
-            setTempUser({...tempUser, [field]: user[field]});
+            setTempUser((prev) => ({...prev, [field]: user[field]}));
         }
         if (field === "dateOfBirth") {
             setDateOfBirthError("");
