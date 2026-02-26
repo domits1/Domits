@@ -1,14 +1,10 @@
-import {
-  CognitoIdentityProviderClient,
-  AdminInitiateAuthCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
-
-let cachedHostToken = null;
-let hostTokenExpiresAt = 0;
-let hostTokenRequest = null;
-
 // The hardcoded credentials below are for testing purposes only.
 export async function getHostAuthToken() {
+  // TEST mode: avoid real AWS calls
+  if (process.env.TEST === "true") {
+    return "dummy-host-token";
+  }
+
   const now = Date.now();
   if (cachedHostToken && now < hostTokenExpiresAt) {
     return cachedHostToken;
@@ -33,13 +29,18 @@ export async function getHostAuthToken() {
 
       const response = await client.send(command);
       const accessToken = response.AuthenticationResult?.AccessToken;
-      const expiresInSeconds = Number(response.AuthenticationResult?.ExpiresIn || 3600);
+      const expiresInSeconds = Number(
+        response.AuthenticationResult?.ExpiresIn || 3600
+      );
+
       cachedHostToken = accessToken || null;
-      hostTokenExpiresAt = Date.now() + Math.max(60, expiresInSeconds - 60) * 1000;
+      hostTokenExpiresAt =
+        Date.now() + Math.max(60, expiresInSeconds - 60) * 1000;
+
       return cachedHostToken;
     } catch (error) {
-      console.error("Unable to get a auth token,", error);
-      throw new Error("Unable to get a auth token.");
+      console.error("Unable to get an auth token,", error);
+      throw new Error("Unable to get an auth token.");
     } finally {
       hostTokenRequest = null;
     }

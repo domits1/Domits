@@ -1,8 +1,15 @@
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
-const lambdaClient = new LambdaClient({ region: "eu-north-1" });
+// TEST mode: Skip Lambda client initialization
+const lambdaClient = process.env.TEST === "true" ? null : new LambdaClient({ region: "eu-north-1" });
 
 const getHostEmailById = async (hostId) => {
+    // TEST mode: Return mock email
+    if (process.env.TEST === "true") {
+        return "test-host@example.com";
+    }
+
+    // PROD mode: Call real AWS Lambda
     const payload = {
         UserId: hostId
     };

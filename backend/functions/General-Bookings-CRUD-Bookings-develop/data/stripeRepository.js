@@ -24,7 +24,9 @@ const stripePromise = process.env.TEST === "true"
     .getSystemManagerParameter("/stripe/keys/secret/live")
     .then((secret) => new Stripe(secret));
 
-const client = new DynamoDBClient({ region: "eu-north-1" });
+
+// TEST mode: Skip DynamoDB client initialization
+const client = process.env.TEST === "true" ? null : new DynamoDBClient({ region: "eu-north-1" });
 
 class StripeRepository {
   async createPaymentIntent(account_id, propertyId, dates, bookingId) {
@@ -75,6 +77,11 @@ class StripeRepository {
   // stripe account_id, and give it back.
   // --------
   async getStripeAccountId(userId) {
+    // TEST mode: Return mock account ID
+    if (process.env.TEST === "true") {
+      return "acct_test_123";
+    }
+
     const client = await Database.getInstance();
     const query = await client
       .getRepository(Stripe_Connected_Accounts)

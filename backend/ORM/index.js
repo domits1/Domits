@@ -35,6 +35,85 @@ export default class Database {
     }
 
     static async _getInstanceInternal() {
+        // TEST mode: Return a mock DataSource that doesn't require AWS credentials
+        if (process.env.TEST === "true") {
+            // Return a mock DataSource with transaction support for unit tests
+            // Tests should mock the repository layer, not use real DB
+            if (!Database.pool) {
+                // Mock repository factory
+                const createMockRepository = (entityClass) => {
+                    // Return a mock repository that supports all TypeORM operations
+                    return {
+                        createQueryBuilder: (alias) => {
+                            const builder = {
+                                where: (condition, params) => builder,
+                                andWhere: (condition, params) => builder,
+                                select: (fields) => builder,
+                                setLock: (lock) => builder,
+                                getOne: async () => null, // Default: no results
+                                getMany: async () => [], // Default: empty array
+                                getRawOne: async () => ({}), // Default: empty object
+                                setParameters: (params) => builder,
+                                execute: async () => ({ affected: 0 }),
+                            };
+                            return builder;
+                        },
+                        create: (entity) => entity,
+                        save: async (entity) => entity,
+                        find: async () => [],
+                        findOne: async () => null,
+                    };
+                };
+
+                Database.pool = {
+                    isInitialized: true,
+                    getRepository: (entity) => createMockRepository(),
+                    createQueryBuilder: () => ({
+                        update: (entity) => ({
+                            set: (values) => ({
+                                where: (condition, params) => ({
+                                    execute: async () => ({ affected: 1 }), // Mock successful update
+                                }),
+                            }),
+                        }),
+                        insert: () => ({
+                            into: () => ({
+                                values: () => ({
+                                    execute: async () => ({}),
+                                }),
+                            }),
+                        }),
+                    }),
+                    transaction: async (fn) => {
+                        // Mock transaction that just executes the function
+                        const mockManager = {
+                            getRepository: (entity) => createMockRepository(),
+                            createQueryBuilder: () => ({
+                                insert: () => ({
+                                    into: () => ({
+                                        values: () => ({
+                                            execute: async () => ({}),
+                                        }),
+                                    }),
+                                }),
+                                update: () => ({
+                                    set: () => ({
+                                        where: () => ({
+                                            execute: async () => ({ affected: 1 }),
+                                        }),
+                                    }),
+                                }),
+                            }),
+                        };
+                        return await fn(mockManager);
+                    },
+                    destroy: async () => {},
+                };
+            }
+            return Database.pool;
+        }
+
+        // PROD mode: Use real AWS DSQL signer
         if (Database.systemManager == null) {
             Database.systemManager = new SystemManagerRepository();
         }
@@ -78,6 +157,13 @@ export default class Database {
     }
 
     static async initializeDatabase() {
+        // TEST mode: Skip real database initialization
+        if (process.env.TEST === "true") {
+            // Already handled in _getInstanceInternal
+            return;
+        }
+
+        // PROD mode: Initialize real database with AWS DSQL signer
         try {
             Database.region = await this.systemManager.getSystemManagerParameter("/aurora/dsql/region");
             Database.host = await this.systemManager.getSystemManagerParameter("/aurora/dsql/host");

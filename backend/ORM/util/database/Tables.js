@@ -29,6 +29,10 @@ import { Property_Type } from "../../models/Property_Type.js";
 import { Stripe_Connected_Accounts } from "../../models/Stripe_Connected_Accounts.js";
 import { UnifiedThread } from "../../models/UnifiedThread.js";
 import { UnifiedMessage } from "../../models/UnifiedMessage.js";
+import { Channel_Reservation } from "../../models/Channel_Reservation.js";
+import { Channel_Guest } from "../../models/Channel_Guest.js";
+import { Channel_Financial_Transaction } from "../../models/Channel_Financial_Transaction.js";
+import { Channel_Cancellation } from "../../models/Channel_Cancellation.js";
 
 export const Tables = [
   Amenities,
@@ -61,5 +65,9 @@ export const Tables = [
   Stripe_Connected_Accounts,
   UnifiedThread,
   UnifiedMessage,
+  Channel_Reservation,
+  Channel_Guest,
+  Channel_Financial_Transaction,
+  Channel_Cancellation,
   User_Table,
 ];
