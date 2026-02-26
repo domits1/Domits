@@ -1,25 +1,37 @@
 import React from "react";
 
-export default function PricingCard({ tempPrice, setTempPrice, onSetPrice }) {
+const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("en-US")}`;
+
+export default function PricingCard({
+  nightlyRate,
+  weekendRate,
+  weeklyDiscountPercent,
+  onOpenSettings,
+}) {
+  const discountLine =
+    Number(weeklyDiscountPercent) > 0
+      ? `${weeklyDiscountPercent}% weekly discount`
+      : "No weekly discount";
+
   return (
-    <div className="hc-card">
-      <div className="hc-card-title">Add Price</div>
+    <section className="hc-info-card" aria-label="Pricing summary">
+      <header className="hc-info-card-header">
+        <h3 className="hc-info-card-title">Price</h3>
+        <button
+          type="button"
+          className="hc-info-card-chevron hc-info-card-chevron-btn"
+          aria-label="Open price settings"
+          onClick={() => onOpenSettings?.()}
+        >
+          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2" />
+          </svg>
+        </button>
+      </header>
 
-      <div className="hc-price-row">
-        <label className="hc-input-label">Price €</label>
-        <input
-          className="hc-input"
-          inputMode="decimal"
-          placeholder="e.g. 120"
-          value={tempPrice}
-          onChange={(e) => setTempPrice(e.target.value)}
-        />
-        <button className="hc-btn primary" onClick={onSetPrice}>Set price</button>
-      </div>
-
-      <div className="hc-note">
-        Seasonal & specific-day pricing supported
-      </div>
-    </div>
+      <p className="hc-info-card-line">{formatEuroAmount(nightlyRate)} per night</p>
+      <p className="hc-info-card-line">{formatEuroAmount(weekendRate)} weekend price</p>
+      <p className="hc-info-card-line">{discountLine}</p>
+    </section>
   );
 }

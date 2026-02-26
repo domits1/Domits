@@ -1,86 +1,148 @@
-import React, { useEffect, useState } from "react";
-import { formatYearMonth } from "../utils/date";
-import { Auth } from "aws-amplify";
-import { getAccessToken } from "../utils/getAccessToken";
-export default function Toolbar({ view, setView, cursor, onPrev, onNext }) {
-  const [accommodations, setAccommodations] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [userId, setUserId] = useState(null);
-  useEffect(() => {
-    (async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        const hostId = user?.attributes?.["custom:hostId"] || user?.attributes?.sub || null;
-        setUserId(hostId);
-      } catch (err) {
-        console.error("Auth error fetching user id:", err);
-      }
-    })();
-  }, []);
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import PulseBarsLoader from "./PulseBarsLoader";
+
+const resolveStatusDotClass = (status) => {
+  const normalizedStatus = String(status || "INACTIVE").toUpperCase();
+  if (normalizedStatus === "ACTIVE") {
+    return "hc-status-dot--active";
+  }
+  if (normalizedStatus === "ARCHIVED") {
+    return "hc-status-dot--archived";
+  }
+  return "hc-status-dot--inactive";
+};
+
+export default function Toolbar({
+  view,
+  onViewChange,
+  onToday,
+  listingOptions,
+  selectedPropertyId,
+  onSelectProperty,
+  isLoadingListings,
+}) {
+  const options = Array.isArray(listingOptions) ? listingOptions : [];
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const selectedOption = useMemo(() => {
+    if (!options.length) {
+      return null;
+    }
+    const match = options.find((option) => option.value === selectedPropertyId);
+    return match || options[0];
+  }, [options, selectedPropertyId]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!menuOpen) {
+      return undefined;
+    }
 
-    const fetchAccommodations = async () => {
-      setIsLoading(true);
-      try {
-        const url = new URL(
-          "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byHostId"
-        );
-        url.searchParams.set("hostId", userId);
-        const token = getAccessToken();
-        const res = await fetch(url.toString(), {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
-        });
-        if (!res.ok) throw new Error(`Failed to fetch (${res.status})`);
-        const data = await res.json();
-        setAccommodations(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Unexpected fetch error:", error);
-      } finally {
-        setIsLoading(false);
+    const handleOutsideClick = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMenuOpen(false);
       }
     };
 
-    fetchAccommodations().catch(console.error);
-  }, [userId]);
+    const handleEscapePress = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscapePress);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscapePress);
+    };
+  }, [menuOpen]);
+
+  const toggleListingMenu = () => {
+    if (isLoadingListings || options.length === 0) {
+      return;
+    }
+    setMenuOpen((previous) => !previous);
+  };
+
+  const handleListingSelect = (nextPropertyId) => {
+    setMenuOpen(false);
+    if (!nextPropertyId || nextPropertyId === selectedPropertyId) {
+      return;
+    }
+    onSelectProperty(nextPropertyId);
+  };
 
   return (
-    <div className="hc-toolbar">
-      <div className="hc-toolbar-left">
-        <button className="hc-icon-btn" onClick={onPrev} aria-label="Previous">
-          <svg width="18" height="18" viewBox="0 0 24 24">
-            <path d="M15 6l-6 6 6 6" stroke="currentColor" fill="none" strokeWidth="2" />
-          </svg>
+    <div className="hc-toolbar" role="group" aria-label="Calendar controls">
+      <div className="hc-listing-dropdown" ref={dropdownRef}>
+        <button
+          type="button"
+          className="hc-listing-trigger"
+          onClick={toggleListingMenu}
+          disabled={isLoadingListings || options.length === 0}
+          aria-haspopup="listbox"
+          aria-expanded={menuOpen}
+          aria-label="Select listing"
+        >
+          {isLoadingListings ? (
+            <PulseBarsLoader
+              inline
+              className="hc-listing-trigger-loader"
+              message="Loading accommodations..."
+            />
+          ) : selectedOption ? (
+            <>
+              <span className={`hc-status-dot ${resolveStatusDotClass(selectedOption.status)}`} />
+              <span className="hc-listing-trigger-label">{selectedOption.label}</span>
+            </>
+          ) : (
+            <span className="hc-listing-trigger-label">No listings found</span>
+          )}
+          <span className="hc-listing-trigger-chevron" aria-hidden="true">
+            {menuOpen ? "\u25B2" : "\u25BE"}
+          </span>
         </button>
-        <select className="hc-select" value={view} onChange={(e) => setView(e.target.value)}>
-          <option value="month">Month</option>
-        </select>
 
-        <div className="hc-toolbar-center">
-          <div className="hc-month-pill">{formatYearMonth(cursor)}</div>
-        </div>
-
-        <button className="hc-icon-btn" onClick={onNext} aria-label="Next">
-          <svg width="18" height="18" viewBox="0 0 24 24">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" fill="none" strokeWidth="2" />
-          </svg>
-        </button>
+        {menuOpen && (
+          <ul className="hc-listing-menu" role="listbox" aria-label="Choose listing">
+            {options.map((option) => {
+              const isSelected = option.value === selectedPropertyId;
+              return (
+                <li key={option.value} role="option" aria-selected={isSelected}>
+                  <button
+                    type="button"
+                    className={`hc-listing-option ${isSelected ? "is-selected" : ""}`}
+                    onClick={() => handleListingSelect(option.value)}
+                  >
+                    <span className={`hc-status-dot ${resolveStatusDotClass(option.status)}`} />
+                    <span className="hc-listing-option-label">{option.label}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
-      <div className="hc-toolbar-right">
-        <span>Select your property</span>
-        <select className="hc-select" disabled={isLoading}>
-          {isLoading && <option>Loading…</option>}
-          {!isLoading &&
-            accommodations.map((a) => (
-              <option key={a?.property?.id} value={a?.property?.id}>
-                {a?.property?.title ?? a?.property?.id}
-              </option>
-            ))}
-        </select>
+
+      <div className="hc-toolbar-actions">
+        <button type="button" className="hc-today-button" onClick={onToday}>
+          Today
+        </button>
+
+        <label className="hc-select-wrap hc-select-wrap--compact" htmlFor="host-calendar-view">
+          <span className="hc-sr-only">Calendar view</span>
+          <select
+            id="host-calendar-view"
+            className="hc-select hc-select--compact"
+            value={view}
+            onChange={(event) => onViewChange(event.target.value)}
+          >
+            <option value="month">Month</option>
+            <option value="year">Year</option>
+          </select>
+        </label>
       </div>
     </div>
   );

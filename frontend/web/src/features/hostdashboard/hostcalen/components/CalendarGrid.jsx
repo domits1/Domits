@@ -1,84 +1,175 @@
-import React, { useRef, useState } from "react";
-import { toKey, isSameMonthUTC, dayNames, monthNames } from "../utils/date";
+import React from "react";
+import { dayNames, formatYearMonth, isSameMonthUTC } from "../utils/date";
 import { cx } from "../utils/classNames";
+import PulseBarsLoader from "./PulseBarsLoader";
+import checkPng from "../../../../images/icons/checkPng.png";
+import calendarUnavailablePng from "../../../../images/icons/calendar-unavailable.png";
+
+const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("en-US")}`;
+
+const toDateNumber = (date) => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return Number(`${year}${month}${day}`);
+};
+
+const isDateWithinAvailability = (dateNumber, ranges) => {
+  const safeRanges = Array.isArray(ranges) ? ranges : [];
+  if (safeRanges.length === 0) {
+    return true;
+  }
+  return safeRanges.some((range) => dateNumber >= range.start && dateNumber <= range.end);
+};
+
+const readOverrideAvailability = (availabilityOverrides, key) => {
+  if (!availabilityOverrides || typeof availabilityOverrides !== "object") {
+    return null;
+  }
+  if (!Object.hasOwn(availabilityOverrides, key)) {
+    return null;
+  }
+  return Boolean(availabilityOverrides[key]);
+};
 
 export default function CalendarGrid({
   view,
   cursor,
   monthGrid,
-  selections,
-  prices,
-  onToggle,
-  onDragSelect,
+  onPrev,
+  onNext,
+  availabilityRanges,
+  externalBlockedDates,
+  nightlyRate,
+  weekendRate,
+  isLoading,
+  selectedDateKeys,
+  pendingSelectionStartKey,
+  availabilityOverrides,
+  priceOverrides,
+  bookedDateKeys,
+  onDateSelect,
+  loadingMessage,
 }) {
-  // basic drag select (desktop)
-  const dragging = useRef(false);
-  const [range, setRange] = useState(new Set());
-
-  const handleMouseDown = (key) => {
-    dragging.current = true;
-    setRange(new Set([key]));
-  };
-  const handleEnter = (key) => {
-    if (!dragging.current) return;
-    setRange((prev) => new Set(prev).add(key));
-  };
-  const handleUp = () => {
-    if (dragging.current && range.size) onDragSelect([...range]);
-    dragging.current = false;
-    setRange(new Set());
-  };
-
-  if (view !== "month") {
-    return (
-      <div className="hc-calendar hc-calendar--placeholder">
-        {view === "week" ? "Week view (placeholder)" : "Day view (placeholder)"}
-      </div>
-    );
-  }
+  const safeGrid = Array.isArray(monthGrid) ? monthGrid : [];
+  const blockedDates = externalBlockedDates instanceof Set ? externalBlockedDates : new Set();
+  const selectedSet = new Set(Array.isArray(selectedDateKeys) ? selectedDateKeys : []);
+  const bookedSet = bookedDateKeys instanceof Set ? bookedDateKeys : new Set();
+  const dayPriceOverrides = priceOverrides && typeof priceOverrides === "object" ? priceOverrides : {};
 
   return (
-    <div className="hc-calendar" onMouseLeave={handleUp} onMouseUp={handleUp}>
-      <div className="hc-grid-head">
-        {dayNames.map((d) => (
-          <div key={d} className="hc-grid-head-cell">{d}</div>
-        ))}
-      </div>
+    <section className="hc-calendar-panel" aria-label="Calendar and nightly prices">
+      <header className="hc-calendar-head">
+        <h2 className="hc-calendar-title">{formatYearMonth(cursor)}</h2>
+        <div className="hc-calendar-nav" role="group" aria-label="Month navigation">
+          <button type="button" className="hc-nav-button" onClick={onPrev} aria-label="Previous month">
+            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          </button>
+          <button type="button" className="hc-nav-button" onClick={onNext} aria-label="Next month">
+            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+              <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          </button>
+        </div>
+      </header>
 
-      <div className="hc-grid-body">
-        {monthGrid.map((week, wi) => (
-          <div className="hc-grid-row" key={wi}>
-            {week.map((date) => {
-              const key = toKey(date);
-              const inMonth = isSameMonthUTC(date, cursor);
-              const isDrag = range.has(key);
+      {view !== "month" ? (
+        <div className="hc-calendar-placeholder">Year view will be added in a follow-up iteration.</div>
+      ) : (
+        <>
+          <div className="hc-week-header" role="presentation">
+            {dayNames.map((dayName) => (
+              <div key={dayName} className="hc-week-header-cell">
+                {dayName}
+              </div>
+            ))}
+          </div>
 
-              const state =
-                selections.booked.has(key) ? "booked" :
-                selections.blocked.has(key) ? "blocked" :
-                selections.maintenance.has(key) ? "maintenance" :
-                "available";
+          <div className="hc-calendar-grid">
+            {safeGrid.flat().map((date) => {
+              const dateNumber = toDateNumber(date);
+              const inCurrentMonth = isSameMonthUTC(date, cursor);
+              const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
+                date.getUTCDate()
+              ).padStart(2, "0")}`;
+
+              const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6;
+              const isBlocked = blockedDates.has(key);
+              const isBooked = bookedSet.has(key);
+              const overrideAvailability = readOverrideAvailability(availabilityOverrides, key);
+              const isAvailable =
+                !isBlocked &&
+                !isBooked &&
+                (overrideAvailability ?? isDateWithinAvailability(dateNumber, availabilityRanges));
+              const isForcedUnavailable = overrideAvailability === false;
+              const isSelected = selectedSet.has(key);
+              const isPending = pendingSelectionStartKey === key;
+
+              const today = new Date();
+              const isToday =
+                today.getUTCFullYear() === date.getUTCFullYear() &&
+                today.getUTCMonth() === date.getUTCMonth() &&
+                today.getUTCDate() === date.getUTCDate();
+
+              const overridePrice = Number(dayPriceOverrides[key]);
+              const defaultPrice = isWeekend ? weekendRate : nightlyRate;
+              const displayPrice = !isBlocked
+                ? Number.isFinite(overridePrice) && overridePrice > 0
+                  ? Math.trunc(overridePrice)
+                  : defaultPrice
+                : null;
+
+              const showUnavailableBadge = inCurrentMonth && !isBooked && (isBlocked || !isAvailable);
+              const showBookedBadge = inCurrentMonth && isBooked;
 
               return (
-                <div
+                <article
                   key={key}
-                  className={cx("hc-cell", !inMonth && "muted", state, isDrag && "dragging")}
-                  onMouseDown={() => handleMouseDown(key)}
-                  onMouseEnter={() => handleEnter(key)}
-                  onClick={() => onToggle(state === "available" ? "blocked" : "available", key)}
+                  className={cx(
+                    "hc-cell",
+                    !inCurrentMonth && "hc-cell--outside",
+                    isToday && "hc-cell--today",
+                    isBlocked && "hc-cell--blocked",
+                    isBooked && "hc-cell--booked",
+                    isAvailable && "hc-cell--available",
+                    !isBlocked && !isAvailable && "hc-cell--unavailable",
+                    isForcedUnavailable && "hc-cell--forced-unavailable",
+                    isPending && "hc-cell--pending",
+                    isSelected && isAvailable && "hc-cell--selected",
+                    isSelected && !isAvailable && "hc-cell--selected-unavailable",
+                    isSelected && "hc-cell--selected-outline"
+                  )}
+                  aria-label={`${date.toUTCString()}${displayPrice !== null ? `, ${formatEuroAmount(displayPrice)} per night` : ""}${isSelected ? ", selected" : ""}${isPending ? ", pending selection" : ""}`}
+                  onClick={() => onDateSelect?.({ key })}
                 >
-                  <div className="hc-cell-top">
-                    <span className="hc-date">{date.getUTCDate()}</span>
-                    {prices[key] != null && (
-                      <span className="hc-price">€{prices[key]}</span>
-                    )}
-                  </div>
-                </div>
+                  {showUnavailableBadge && (
+                    <span className="hc-cell-badge hc-cell-badge--unavailable" aria-label="Unavailable">
+                      <img src={calendarUnavailablePng} alt="" />
+                    </span>
+                  )}
+
+                  {showBookedBadge && (
+                    <span className="hc-cell-badge hc-cell-badge--booked" aria-label="Booked">
+                      <img src={checkPng} alt="" />
+                    </span>
+                  )}
+
+                  <span className="hc-cell-date">{date.getUTCDate()}</span>
+                  {displayPrice !== null && <span className="hc-cell-price">{formatEuroAmount(displayPrice)}</span>}
+                </article>
               );
             })}
           </div>
-        ))}
-      </div>
-    </div>
+        </>
+      )}
+
+      {isLoading && (
+        <div className="hc-calendar-loading">
+          <PulseBarsLoader message={loadingMessage || "Fetching accommodation info..."} />
+        </div>
+      )}
+    </section>
   );
 }
