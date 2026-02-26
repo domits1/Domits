@@ -7,7 +7,7 @@ import {
   validateNationality,
 } from "../../components/settings/utils/settingsFormatters";
 
-describe.skip("settingsFormatters", () => {
+describe("settingsFormatters", () => {
   describe("normalizePreferredMfa", () => {
     test.each([
       [null, "NOMFA"],

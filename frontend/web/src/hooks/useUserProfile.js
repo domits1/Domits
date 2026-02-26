@@ -152,7 +152,9 @@ export default function useUserProfile() {
     const toggleEditState = (field) => {
         if (field === "phone" && !editState.phone) {
             const phone = user.phone || "";
-            const matchingCountryCode = countryCodes.find(({code}) => phone.startsWith(code));
+            const matchingCountryCode = [...countryCodes]
+                .sort((a, b) => b.code.length - a.code.length)
+                .find(({code}) => phone.startsWith(code));
             const countryCode = matchingCountryCode ? matchingCountryCode.code : "+1";
             const strippedPhone = phone.replace(countryCode, "").trim();
 
