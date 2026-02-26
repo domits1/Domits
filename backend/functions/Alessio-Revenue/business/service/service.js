@@ -45,7 +45,17 @@ export class Service {
       propertyCount,
       averageLengthOfStay,
     ] = await Promise.all([
-      this.paymentsService.getTotalHostRevenue(event),
+      (async () => {
+       try {
+        return await this.paymentsService.getTotalHostRevenue(event);
+      } catch (e) {
+      console.warn("[RMS][KPI_REFRESH] revenue unavailable", {
+        userId,
+        message: e?.message,
+      });
+      return { totalRevenue: 0 };
+    }
+      })(),
       this.repository.getBookedNights(userId, start, end),
       this.repository.getAvailableNights(userId, start, end),
       this.repository.getProperties(userId, start, end),
