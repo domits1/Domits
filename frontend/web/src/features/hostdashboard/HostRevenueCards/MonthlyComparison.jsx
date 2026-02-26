@@ -2,10 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import "./MonthlyComparison.scss";
 
-import { RevPARService } from "../services/RevParService";
-import { ADRCardService } from "../services/ADRCardService";
-import { HostRevenueService } from "../services/HostRevenueService";
-import { OccupancyRateService } from "../services/OccupancyRateService";
+import { HostKpiAllService } from "../services/HostKpiAllService";
 
 const MonthlyComparison = ({ hostId, refreshKey }) => {
   const [selectedMetric, setSelectedMetric] = useState("OCC");
@@ -79,29 +76,18 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
           const { start, end } = getMonthRange(year, i);
           const monthLabel = shortMonths[i];
 
-          const [adrRaw, revparRaw, alosRaw, occRaw] = await Promise.all([
-            ADRCardService.fetchMetric(hostId, "averageDailyRate", "custom", start, end),
-            RevPARService.fetchMetric(hostId, "revenuePerAvailableRoom", "custom", start, end),
-            HostRevenueService.fetchMetricData(hostId, "averageLengthOfStay", "custom", start, end),
-            OccupancyRateService.fetchOccupancyRate(hostId, "custom", start, end),
-          ]);
+          const allRaw = await HostKpiAllService.fetchAll(hostId, "custom", start, end);
 
-          const adrVal = typeof adrRaw === "number" ? adrRaw : Number(adrRaw?.averageDailyRate ?? adrRaw?.value ?? 0);
+        const adrVal = Number(allRaw?.averageDailyRate ?? 0);
+        const revparVal = Number(allRaw?.revenuePerAvailableRoom ?? 0);
 
-          const revparVal =
-            typeof revparRaw === "number"
-              ? revparRaw
-              : Number(revparRaw?.revenuePerAvailableRoom ?? revparRaw?.value ?? 0);
-
-          const alosValRaw =
-            alosRaw?.averageLengthOfStay?.averageLengthOfStay ??
-            alosRaw?.averageLengthOfStay ??
-            alosRaw?.value ??
-            alosRaw ??
-            0;
+        const alosValRaw =
+          allRaw?.averageLengthOfStay?.averageLengthOfStay ??
+          allRaw?.averageLengthOfStay ??
+          0;
 
           const alosVal = Number(alosValRaw) || 0;
-          const occVal = typeof occRaw === "number" ? occRaw : Number(occRaw ?? 0);
+          const occVal = Number(allRaw?.occupancyRate ?? 0);
 
           adrRes.push({ month: monthLabel, thisYear: adrVal, lastYear: adrVal * 0.9 });
           revparRes.push({ month: monthLabel, thisYear: revparVal, lastYear: revparVal * 0.9 });
