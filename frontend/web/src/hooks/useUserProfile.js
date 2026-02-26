@@ -163,7 +163,7 @@ export default function useUserProfile() {
 
         setEditState((prevState) => ({...prevState, [field]: !prevState[field]}));
         setIsVerifying(false);
-        if (!editState[field]) {
+        if (!editState[field] && field !== "phone") {
             setTempUser((prev) => ({...prev, [field]: user[field]}));
         }
         if (field === "dateOfBirth") {
