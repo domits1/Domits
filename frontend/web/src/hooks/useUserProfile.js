@@ -294,9 +294,12 @@ export default function useUserProfile() {
             if (result.statusCode === 200) {
                 setUser({...user, phone: newPhone});
                 toggleEditState("phone");
+            } else {
+                alert("Failed to update phone number. Please try again.");
             }
         } catch (error) {
             console.error("Error updating phone number:", error);
+            alert("Failed to update phone number. Please try again.");
             alert("Failed to update phone number. Please try again.");
         }
     };
