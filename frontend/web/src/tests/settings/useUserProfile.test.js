@@ -35,7 +35,7 @@ const MOCK_COGNITO_USER = {
 
 const flushEffects = () => act(async () => { await Promise.resolve(); });
 
-describe.skip("useUserProfile", () => {
+describe("useUserProfile", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn();
