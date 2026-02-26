@@ -70,9 +70,10 @@ const ProfilePhotoBox = ({
 const TitleField = ({value, options, onChange}) => (
     <div className="InfoBox">
         <div className="infoBoxText infoBoxText--row">
-            <span>Title:</span>
+            <label htmlFor="title-select">Title:</label>
             <div className="infoBoxEditRow">
                 <select
+                    id="title-select"
                     name="title"
                     value={value}
                     onChange={onChange}
@@ -218,9 +219,10 @@ const PhoneField = ({
 const SexField = ({value, options, onChange}) => (
     <div className="InfoBox">
         <div className="infoBoxText infoBoxText--row">
-            <span>Sex:</span>
+            <label htmlFor="sex-select">Sex:</label>
             <div className="infoBoxEditRow">
                 <select
+                    id="sex-select"
                     name="sex"
                     value={value}
                     onChange={onChange}

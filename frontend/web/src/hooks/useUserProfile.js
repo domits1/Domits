@@ -19,7 +19,7 @@ import {
     validateNationality,
 } from "../components/settings/utils/settingsFormatters";
 
-const SAFE_EMAIL_REGEX = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,63}$/;
+const SAFE_EMAIL_REGEX = /^[^\s@]{1,64}@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
 
 export default function useUserProfile() {
     const [tempUser, setTempUser] = useState({
@@ -77,7 +77,7 @@ export default function useUserProfile() {
 
     const handleInputChange = (e) => {
         const {name, value} = e.target;
-        setTempUser({...tempUser, [name]: value});
+        setTempUser((prev) => ({...prev, [name]: value}));
         if (name === "nationality" && nationalityError) {
             setNationalityError("");
         }
@@ -258,14 +258,30 @@ export default function useUserProfile() {
             }
         } catch (error) {
             console.error("Error updating username:", error);
+            alert("Failed to update name. Please try again.");
         }
     };
 
     const saveUserPhone = async () => {
+        const trimmedPhone = stripPhone?.trim();
+        if (!trimmedPhone) {
+            alert("Please enter a phone number.");
+            return;
+        }
+        if (!/^[\d\s\-]+$/.test(trimmedPhone)) {
+            alert("Phone number may only contain digits, spaces, or hyphens.");
+            return;
+        }
+        const digitCount = trimmedPhone.replace(/[\s\-]/g, "").length;
+        if (digitCount < 4 || digitCount > 13) {
+            alert("Phone number must be between 4 and 13 digits.");
+            return;
+        }
+
         try {
             const userInfo = await Auth.currentAuthenticatedUser();
             const userId = userInfo.username;
-            const newPhone = `${selectedCountryCode}${stripPhone}`;
+            const newPhone = `${selectedCountryCode}${trimmedPhone}`;
 
             const response = await fetch(UPDATE_PHONE_ENDPOINT, {
                 method: "POST",
@@ -281,6 +297,7 @@ export default function useUserProfile() {
             }
         } catch (error) {
             console.error("Error updating phone number:", error);
+            alert("Failed to update phone number. Please try again.");
         }
     };
 
