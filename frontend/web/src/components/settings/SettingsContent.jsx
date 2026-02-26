@@ -62,6 +62,7 @@ const ProfilePhotoBox = ({
             accept="image/*"
             onChange={onPhotoInputChange}
             style={{ display: "none" }}
+            aria-label="Upload profile photo"
         />
     </>
 );
@@ -193,8 +194,8 @@ const PhoneField = ({
                     onChange={onCountryCodeChange}
                     className="countryCodeDropdown"
                 >
-                    {countryCodes.map((country, index) => (
-                        <option key={index} value={country.code}>
+                    {countryCodes.map((country) => (
+                        <option key={country.code} value={country.code}>
                             {country.name} ({country.code})
                         </option>
                     ))}

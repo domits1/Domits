@@ -192,6 +192,7 @@ export default function useUserProfile() {
                     alert("Incorrect verification code");
                 }
             } catch (error) {
+                console.error("Error confirming email change:", error);
                 alert("An error occurred during verification. Please try again.");
             }
             return;
