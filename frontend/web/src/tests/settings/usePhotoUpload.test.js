@@ -14,7 +14,7 @@ describe("usePhotoUpload", () => {
   beforeEach(() => {
     mockSetUser = jest.fn();
     jest.clearAllMocks();
-    global.fetch = jest.fn();
+    globalThis.fetch = jest.fn();
   });
 
   test("initial state: photoError is empty and isUploadingPhoto is false", () => {
@@ -61,7 +61,7 @@ describe("usePhotoUpload", () => {
       fields: { key: "profile/user-123.jpg", "Content-Type": "image/jpeg" },
       fileUrl: "https://s3.example.com/profile/user-123.jpg",
     });
-    global.fetch.mockResolvedValue({ ok: true });
+    globalThis.fetch.mockResolvedValue({ ok: true });
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img-data"], "photo.jpg", { type: "image/jpeg" });
@@ -71,7 +71,7 @@ describe("usePhotoUpload", () => {
     });
 
     expect(profileUpload.getProfileUploadUrl).toHaveBeenCalledWith("image/jpeg");
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       "https://s3.example.com/upload",
       expect.objectContaining({ method: "POST" })
     );
@@ -104,7 +104,7 @@ describe("usePhotoUpload", () => {
       fields: { key: "some-key" },
       fileUrl: "https://s3.example.com/photo.jpg",
     });
-    global.fetch.mockResolvedValue({ ok: false });
+    globalThis.fetch.mockResolvedValue({ ok: false });
 
     const { result } = renderHook(() => usePhotoUpload(mockSetUser));
     const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
