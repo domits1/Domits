@@ -15,6 +15,7 @@ import { PropertyTypeRepository } from "../../data/repository/propertyTypeReposi
 import { PropertyImageRepository } from "../../data/repository/propertyImageRepository.js";
 import { BookingRepository } from "../../data/repository/bookingRepository.js";
 import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatusRepository.js";
+import { PropertyDeletionRepository } from "../../data/repository/propertyDeletionRepository.js";
 
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
@@ -38,6 +39,7 @@ export class PropertyService {
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
     this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
+    this.propertyDeletionRepository = new PropertyDeletionRepository(systemManagerRepository);
   }
 
   async create(property, { skipImages = false } = {}) {
@@ -77,6 +79,30 @@ export class PropertyService {
     }
   }
 
+  async updatePropertyStatus(propertyId, nextStatus, metadata = {}) {
+    const allowedStatuses = new Set(["ACTIVE", "INACTIVE", "ARCHIVED"]);
+    const normalizedStatus = String(nextStatus || "").toUpperCase();
+    if (!allowedStatuses.has(normalizedStatus)) {
+      throw new DatabaseException("Invalid property status update.");
+    }
+
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+
+    if (property.status === normalizedStatus) {
+      return property;
+    }
+
+    await this.propertyRepository.updatePropertyStatus(propertyId, normalizedStatus, metadata);
+    const updatedProperty = await this.getBasePropertyInfo(propertyId);
+    if (updatedProperty?.status !== normalizedStatus) {
+      throw new DatabaseException("Property status update was not completed.");
+    }
+    return updatedProperty;
+  }
+
   async updatePropertyOverview(propertyId, title, description, subtitle = undefined, updates = {}) {
     const property = await this.getBasePropertyInfo(propertyId);
     if (!property) {
@@ -99,6 +125,14 @@ export class PropertyService {
 
     if (updates?.location) {
       await this.updateLocation(propertyId, updates.location);
+    }
+
+    if (updates?.pricing) {
+      await this.updatePricing(propertyId, updates.pricing);
+    }
+
+    if (updates?.availabilityRestrictions) {
+      await this.updateAvailabilityRestrictions(propertyId, updates.availabilityRestrictions);
     }
 
     if (updates?.amenities) {
@@ -457,6 +491,18 @@ export class PropertyService {
     return await this.propertyPricingRepository.getPricingById(property);
   }
 
+  async updatePricing(propertyId, pricing) {
+    const result = await this.propertyPricingRepository.upsertPricingByPropertyId(propertyId, pricing);
+    if (!result) {
+      throw new DatabaseException("Failed to update property pricing.");
+    }
+    return result;
+  }
+
+  async updateAvailabilityRestrictions(propertyId, restrictions) {
+    return await this.propertyAvailabilityRestrictionRepository.replaceRestrictionsByPropertyId(propertyId, restrictions);
+  }
+
   async createRules(rules) {
     for (const rule of rules) {
       const result = await this.propertyRuleRepository.create(rule);
@@ -496,6 +542,43 @@ export class PropertyService {
 
   async deleteImage(propertyId, imageId) {
     await this.propertyImageRepository.deleteImageByPropertyId(propertyId, imageId);
+  }
+
+  async deleteProperty(propertyId, options = {}) {
+    const property = await this.getBasePropertyInfo(propertyId);
+    if (!property) {
+      throw new NotFoundException(`Property ${propertyId} not found.`);
+    }
+
+    const bookingCount = await this.propertyDeletionRepository.getBookingCountByPropertyId(propertyId);
+    if (bookingCount > 0) {
+      const normalizedReasons = Array.isArray(options.reasons)
+        ? options.reasons.map((reason) => String(reason || "").trim()).filter(Boolean)
+        : [];
+      await this.updatePropertyStatus(propertyId, "ARCHIVED", {
+        archivedBy: options.actorId || "",
+        archiveReason: normalizedReasons.join(","),
+      });
+      return {
+        result: "archived",
+        propertyId,
+        bookingCount,
+      };
+    }
+
+    await this.propertyImageRepository.deleteImagesByPropertyId(propertyId);
+    await this.propertyDeletionRepository.deletePropertyById(propertyId);
+
+    const deletedProperty = await this.getBasePropertyInfo(propertyId);
+    if (deletedProperty) {
+      throw new DatabaseException("Property deletion was not completed.");
+    }
+
+    return {
+      result: "deleted",
+      propertyId,
+      bookingCount: 0,
+    };
   }
 
   async createTechnicalDetails(details) {

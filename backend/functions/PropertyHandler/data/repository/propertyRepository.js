@@ -41,6 +41,87 @@ export class PropertyRepository {
             .execute();
     }
 
+    async getArchiveMetadataColumns(client) {
+        const result = await client.query(
+            `SELECT column_name
+             FROM information_schema.columns
+             WHERE table_schema = current_schema()
+               AND table_name = 'property'
+               AND column_name IN ('archivedat', 'archivedby', 'archivereason')`
+        );
+        const columns = new Set();
+        (Array.isArray(result) ? result : []).forEach((row) => {
+            if (row?.column_name) {
+                columns.add(String(row.column_name).toLowerCase());
+            }
+        });
+        return columns;
+    }
+
+    buildArchiveMetadataUpdateClauses(status, archiveColumns, metadata, now, metadataParams) {
+        if (status !== "ARCHIVED") {
+            return ["archivedat", "archivedby", "archivereason"]
+                .filter((column) => archiveColumns.has(column))
+                .map((column) => `${column} = NULL`);
+        }
+
+        const updates = [];
+        const columnDefinitions = [
+            { column: "archivedat", value: now },
+            { column: "archivedby", value: String(metadata.archivedBy || "") },
+            { column: "archivereason", value: String(metadata.archiveReason || "") },
+        ];
+
+        columnDefinitions.forEach(({ column, value }) => {
+            if (!archiveColumns.has(column)) {
+                return;
+            }
+            metadataParams.push(value);
+            updates.push(`${column} = $${metadataParams.length}`);
+        });
+
+        return updates;
+    }
+
+    async updatePropertyStatus(propertyId, status, metadata = {}) {
+        const client = await Database.getInstance();
+        const now = Date.now();
+        await client
+            .createQueryBuilder()
+            .update(Property)
+            .set({
+                status,
+                updatedat: now,
+            })
+            .where("id = :id", { id: propertyId })
+            .execute();
+
+        const archiveColumns = await this.getArchiveMetadataColumns(client);
+        if (archiveColumns.size === 0) {
+            return;
+        }
+
+        const metadataParams = [];
+        const metadataUpdates = this.buildArchiveMetadataUpdateClauses(
+            status,
+            archiveColumns,
+            metadata,
+            now,
+            metadataParams
+        );
+
+        if (metadataUpdates.length === 0) {
+            return;
+        }
+
+        metadataParams.push(propertyId);
+
+        await client.query(
+            `UPDATE property SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
+            metadataParams
+        );
+    }
+
     async updatePropertyOverview(propertyId, title, subtitle, description) {
         const client = await Database.getInstance();
         await client

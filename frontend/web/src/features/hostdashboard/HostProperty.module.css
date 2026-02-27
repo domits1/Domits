@@ -10,15 +10,17 @@
 }
 
 .savingOverlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 20;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1300;
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(1px);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  padding: 18px;
 }
 
 .savingOverlayContent {
@@ -137,13 +139,100 @@
   box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.12);
 }
 
-.listingStatus {
-  margin: 0;
+.listingStatusControl {
+  position: relative;
+  min-width: 170px;
+}
+
+.listingStatusTrigger {
+  width: 100%;
+  border: 1px solid #d7d7d7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111111;
+  font-size: 15px;
+  line-height: 1.2;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  color: #232323;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.listingStatusTrigger:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.listingStatusTrigger:focus {
+  border-color: #0d9813;
+  box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.12);
+}
+
+.listingStatusValue {
+  color: #111111;
+  font-weight: 600;
+}
+
+.listingStatusIndicators {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.listingStatusChevron {
+  color: #5a5a5a;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.listingStatusMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  width: 100%;
+  min-width: 170px;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid #d7d7d7;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.listingStatusOption {
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #1b1b1b;
+  font-size: 14px;
+  line-height: 1.2;
+  text-align: left;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.listingStatusOptionLabel {
+  font-weight: 600;
+}
+
+.listingStatusOption:hover {
+  background: #f2f7f2;
+}
+
+.listingStatusOptionActive {
+  background: #ebf6ec;
 }
 
 .statusDot {
@@ -158,6 +247,10 @@
 
 .statusDotDraft {
   background-color: #f39c12;
+}
+
+.statusDotArchived {
+  background-color: #777777;
 }
 
 .card {
@@ -568,6 +661,260 @@
   font-weight: 500;
 }
 
+.pricingCard {
+  gap: 14px;
+}
+
+.pricingSubtitle {
+  margin: 0;
+  color: #4e4e4e;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.pricingBasePanel {
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  background: #f8f8f8;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pricingRateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pricingRateLabel {
+  color: #1f1f1f;
+  font-size: 19px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.pricingRateInputWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 4px 8px;
+}
+
+.pricingRateCurrency {
+  color: #474747;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.pricingRateInput {
+  width: 92px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1f1f1f;
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.pricingRateInput::-webkit-outer-spin-button,
+.pricingRateInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pricingRateInput[type="number"] {
+  appearance: textfield;
+}
+
+.pricingBaseHint {
+  margin: 0;
+  color: #616161;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.pricingStayGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pricingStayField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pricingStayLabel {
+  color: #2d2d2d;
+  font-size: 17px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.pricingSelect {
+  width: 100%;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #202020;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 500;
+  padding: 9px 10px;
+  outline: none;
+}
+
+.pricingSelect:focus {
+  border-color: #0d9813;
+  box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.12);
+}
+
+.pricingSelect:disabled {
+  color: #555555;
+  background: #efefef;
+}
+
+.pricingDiscountList {
+  border-top: 1px solid #ececec;
+}
+
+.pricingDiscountRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #ececec;
+  padding: 12px 0;
+}
+
+.pricingDiscountToggleWrap {
+  display: inline-flex;
+}
+
+.pricingDiscountToggleLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.pricingDiscountToggleInput {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.pricingDiscountToggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 28px;
+  border-radius: 999px;
+  background: #a8b2b9;
+  transition: background-color 0.2s ease;
+}
+
+.pricingDiscountToggle::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: left 0.2s ease;
+}
+
+.pricingDiscountToggleInput:checked + .pricingDiscountToggleLabel .pricingDiscountToggle {
+  background: #0d9813;
+}
+
+.pricingDiscountToggleInput:checked + .pricingDiscountToggleLabel .pricingDiscountToggle::before {
+  left: 30px;
+}
+
+.pricingDiscountToggleInput:focus-visible + .pricingDiscountToggleLabel .pricingDiscountToggle {
+  box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.25);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pricingDiscountText {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pricingDiscountTitle {
+  color: #1f1f1f;
+  font-size: 17px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.pricingDiscountDescription {
+  color: #666666;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.pricingDiscountControls {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pricingDiscountSelectWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 170px;
+}
+
+.pricingDiscountSelectLabel {
+  color: #505050;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.pricingHint {
+  margin: 2px 0 0;
+  color: #6a6a6a;
+  font-size: 13px;
+  line-height: 1.35;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .photoDeleteModalOverlay {
   position: fixed;
   inset: 0;
@@ -738,6 +1085,233 @@
   font-size: 15px;
   line-height: 1.2;
   font-weight: 700;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+
+.deletePropertyReasonsOverlay,
+.deletePropertyConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  box-sizing: border-box;
+  min-height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
+  z-index: 1220;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.deletePropertyReasonsOverlay::backdrop,
+.deletePropertyConfirmOverlay::backdrop {
+  background: transparent;
+}
+
+.deletePropertyReasonsModal {
+  width: min(640px, calc(100vw - 36px));
+  box-sizing: border-box;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+  border: 1px solid #e7e7e7;
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+  margin: auto;
+}
+
+.deletePropertyReasonsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.deletePropertyReasonsTitle {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 30px;
+  line-height: 1.12;
+  font-weight: 700;
+}
+
+.deletePropertyReasonsCloseButton {
+  border: none;
+  background: transparent;
+  color: #5a5a5a;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.deletePropertyReasonsCloseButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.deletePropertyReasonsSubtitle {
+  margin: 0;
+  color: #7a7a7a;
+  font-size: 16px;
+  line-height: 1.28;
+  font-weight: 500;
+}
+
+.deletePropertyReasonsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.deletePropertyReasonRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #292929;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.deletePropertyReasonCheckbox {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  accent-color: #0d9813;
+}
+
+.deletePropertyReasonsActions {
+  border-top: 1px solid #d4d4d4;
+  margin-top: 8px;
+  padding-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.deletePropertyReasonsCancelButton {
+  border: none;
+  background: transparent;
+  color: #292929;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 500;
+  padding: 0;
+  cursor: pointer;
+}
+
+.deletePropertyReasonsNextButton {
+  border: none;
+  border-radius: 8px;
+  background: #087c0d;
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 600;
+  padding: 9px 20px;
+  cursor: pointer;
+}
+
+.deletePropertyReasonsCancelButton:disabled,
+.deletePropertyReasonsNextButton:disabled,
+.deletePropertyConfirmBackButton:disabled,
+.deletePropertyConfirmRemoveButton:disabled,
+.deletePropertyConfirmCancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.deletePropertyConfirmModal {
+  width: min(640px, calc(100vw - 36px));
+  box-sizing: border-box;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+  border: 1px solid #e7e7e7;
+  padding: 24px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+  margin: auto;
+}
+
+.deletePropertyConfirmBackButton {
+  width: fit-content;
+  height: auto;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #4f4f4f;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.deletePropertyConfirmTitle {
+  margin: 80px 0 0;
+  color: #181818;
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.deletePropertyConfirmDescription {
+  margin: -12px 0 0;
+  color: #666666;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.deletePropertyConfirmActions {
+  border-top: 1px solid #e1e1e1;
+  margin-top: 120px;
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deletePropertyConfirmRemoveButton {
+  border: none;
+  border-radius: 6px;
+  background: #e11818;
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1.15;
+  font-weight: 600;
+  padding: 12px 18px;
+  cursor: pointer;
+}
+
+.deletePropertyConfirmCancelButton {
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #292929;
+  font-size: 20px;
+  line-height: 1.15;
+  font-weight: 500;
   padding: 10px 18px;
   cursor: pointer;
 }
@@ -1141,8 +1715,14 @@
     font-size: 17px;
   }
 
-  .listingStatus {
-    font-size: 15px;
+  .listingStatusControl {
+    width: 100%;
+  }
+
+  .listingStatusTrigger,
+  .listingStatusMenu {
+    width: 100%;
+    min-width: 0;
   }
 
   .sectionTitle {
@@ -1176,6 +1756,21 @@
   .photosSubtitle,
   .photoCategoryName {
     font-size: 15px;
+  }
+
+  .pricingSubtitle,
+  .pricingDiscountDescription {
+    font-size: 14px;
+  }
+
+  .pricingRateLabel,
+  .pricingStayLabel,
+  .pricingDiscountTitle {
+    font-size: 15px;
+  }
+
+  .pricingRateInput {
+    font-size: 18px;
   }
 
   .policiesSubtitle,
@@ -1253,6 +1848,24 @@
     grid-template-columns: 1fr;
   }
 
+  .pricingStayGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricingDiscountRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .pricingDiscountControls {
+    width: 100%;
+  }
+
+  .pricingDiscountSelectWrap {
+    min-width: 0;
+    flex: 1 1 170px;
+  }
+
   .deletePropertyPanel {
     grid-template-columns: 1fr;
   }
@@ -1295,6 +1908,22 @@
     padding: 5px 9px;
   }
 
+  .pricingRateRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pricingDiscountControls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .pricingDiscountSelectWrap {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
   .photoDeleteModal {
     padding: 14px;
   }
@@ -1331,5 +1960,70 @@
   .unsavedStayButton,
   .unsavedLeaveButton {
     width: 100%;
+  }
+
+  .deletePropertyReasonsOverlay,
+  .deletePropertyConfirmOverlay {
+    padding: 12px;
+  }
+
+  .deletePropertyReasonsModal,
+  .deletePropertyConfirmModal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .deletePropertyReasonsTitle {
+    font-size: 26px;
+  }
+
+  .deletePropertyReasonsCloseButton {
+    font-size: 22px;
+  }
+
+  .deletePropertyReasonsSubtitle {
+    font-size: 16px;
+  }
+
+  .deletePropertyReasonRow {
+    font-size: 16px;
+  }
+
+  .deletePropertyReasonCheckbox {
+    width: 18px;
+    height: 18px;
+  }
+
+  .deletePropertyReasonsCancelButton,
+  .deletePropertyReasonsNextButton {
+    font-size: 18px;
+  }
+
+  .deletePropertyConfirmBackButton {
+    font-size: 16px;
+  }
+
+  .deletePropertyConfirmTitle {
+    margin-top: 18px;
+    font-size: 28px;
+  }
+
+  .deletePropertyConfirmDescription {
+    margin-top: -8px;
+    font-size: 16px;
+  }
+
+  .deletePropertyConfirmActions {
+    margin-top: 16px;
+    padding-top: 14px;
+  }
+
+  .deletePropertyConfirmRemoveButton,
+  .deletePropertyConfirmCancelButton {
+    width: 100%;
+    font-size: 18px;
   }
 }
