@@ -205,69 +205,55 @@ export class Service {
     let start, end;
 
     switch (filterType) {
-      case "weekly":
-        const day = now.getDay();
-        const diffToMonday =
-          (day === 0 ? -6 : 1) - day;
+      case "weekly": {
+      const day = now.getDay();
+      const diffToMonday = (day === 0 ? -6 : 1) - day;
 
-        start = new Date(now);
-        start.setDate(now.getDate() + diffToMonday);
-        start.setHours(0, 0, 0, 0);
+      start = new Date(now);
+      start.setDate(now.getDate() + diffToMonday);
+      start.setHours(0, 0, 0, 0);
 
-        end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        end.setHours(23, 59, 59, 999);
-        break;
+     end = new Date(start);
+     end.setDate(start.getDate() + 6);
+     end.setHours(23, 59, 59, 999);
+      break;
+      } 
 
-      case "monthly":
-        start = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          1
-        );
+    case "monthly": {
+     start = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        end = new Date(
-          now.getFullYear(),
-          now.getMonth() + 1,
-          0
-        );
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      end.setHours(23, 59, 59, 999);
+      break;
+    }
 
-        end.setHours(23, 59, 59, 999);
-        break;
+    case "custom": {
+     if (!startDate || !endDate) {
+      throw new Error("Custom filter requires startDate and endDate");
+    }
 
-      case "custom":
-        if (!startDate || !endDate)
-          throw new Error(
-            "Custom filter requires startDate and endDate"
-          );
+      const parseDate = (str) => {
+      const [day, month, year] = str.split("-").map(Number);
+       if (!day || !month || !year) {
+        throw new Error(`Invalid date format: ${str}`);
+      }
+      return new Date(year, month - 1, day);
+    };
 
-        const parseDate = (str) => {
-          const [day, month, year] =
-            str.split("-").map(Number);
-          if (!day || !month || !year)
-            throw new Error(
-              `Invalid date format: ${str}`
-            );
-          return new Date(year, month - 1, day);
-        };
+      start = parseDate(startDate);
+      end = parseDate(endDate);
 
-        start = parseDate(startDate);
-        end = parseDate(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      throw new Error("Invalid date(s) provided");
+    }
 
-        if (
-          isNaN(start.getTime()) ||
-          isNaN(end.getTime())
-        )
-          throw new Error("Invalid date(s) provided");
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    break;
+    }
 
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-        break;
-
-      default:
-        throw new Error(
-          `Invalid filter type: ${filterType}`
-        );
+     default:
+      throw new Error(`Invalid filter type: ${filterType}`);
     }
 
     return { startDate: start, endDate: end };
