@@ -4,6 +4,7 @@ import { cx } from "../utils/classNames";
 import PulseBarsLoader from "./PulseBarsLoader";
 import checkPng from "../../../../images/icons/checkPng.png";
 import calendarUnavailablePng from "../../../../images/icons/calendar-unavailable.png";
+import externalLinkIcon from "../../../../images/icons/external-link-icon.png";
 import arrowLeftIcon from "../../../../images/arrow-left-icon.svg";
 import arrowRightIcon from "../../../../images/arrow-right-icon.svg";
 
@@ -119,8 +120,18 @@ export default function CalendarGrid({
                   : defaultPrice
                 : null;
 
-              const showUnavailableBadge = !isBooked && (isBlocked || !isAvailable);
+              const showExternalBlockedOverlay = inCurrentMonth && isBlocked && !isBooked;
+              const showUnavailableBadge = !showExternalBlockedOverlay && !isBooked && (isBlocked || !isAvailable);
               const showBookedBadge = inCurrentMonth && isBooked;
+              const cellAriaLabel = [
+                date.toUTCString(),
+                displayPrice !== null ? `${formatEuroAmount(displayPrice)} per night` : null,
+                showExternalBlockedOverlay ? "external booking" : null,
+                isSelected ? "selected" : null,
+                isPending ? "pending selection" : null,
+              ]
+                .filter(Boolean)
+                .join(", ");
 
               return (
                 <article
@@ -130,6 +141,7 @@ export default function CalendarGrid({
                     !inCurrentMonth && "hc-cell--outside",
                     isToday && "hc-cell--today",
                     isBlocked && "hc-cell--blocked",
+                    showExternalBlockedOverlay && "hc-cell--external-booking",
                     isBooked && "hc-cell--booked",
                     isAvailable && "hc-cell--available",
                     !isBlocked && !isAvailable && "hc-cell--unavailable",
@@ -139,9 +151,18 @@ export default function CalendarGrid({
                     isSelected && !isAvailable && "hc-cell--selected-unavailable",
                     isSelected && "hc-cell--selected-outline"
                   )}
-                  aria-label={`${date.toUTCString()}${displayPrice !== null ? `, ${formatEuroAmount(displayPrice)} per night` : ""}${isSelected ? ", selected" : ""}${isPending ? ", pending selection" : ""}`}
+                  aria-label={cellAriaLabel}
                   onClick={() => onDateSelect?.({ key })}
                 >
+                  {showExternalBlockedOverlay && (
+                    <div className="hc-cell-external-booking" aria-label="External booking">
+                      <span className="hc-cell-external-booking-icon" aria-hidden="true">
+                        <img src={externalLinkIcon} alt="" />
+                      </span>
+                      <span className="hc-cell-external-booking-label">External booking</span>
+                    </div>
+                  )}
+
                   {showUnavailableBadge && (
                     <span className="hc-cell-badge hc-cell-badge--unavailable" aria-label="Unavailable">
                       <img src={calendarUnavailablePng} alt="" />
