@@ -270,11 +270,11 @@ export default function useUserProfile() {
             alert("Please enter a phone number.");
             return;
         }
-        if (!/^[\d\s\-]+$/.test(trimmedPhone)) {
+      if (!/^[\d\s-]+$/.test(trimmedPhone)) {
             alert("Phone number may only contain digits, spaces, or hyphens.");
             return;
         }
-        const digitCount = trimmedPhone.replace(/[\s\-]/g, "").length;
+      const digitCount = trimmedPhone.replaceAll(/[\s-]/g, "").length;
         if (digitCount < 4 || digitCount > 13) {
             alert("Phone number must be between 4 and 13 digits.");
             return;
