@@ -38,8 +38,8 @@ const flushEffects = () => act(async () => { await Promise.resolve(); });
 describe.skip("useUserProfile", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    global.fetch = jest.fn();
-    global.alert = jest.fn();
+    globalThis.fetch = jest.fn();
+    globalThis.alert = jest.fn();
     Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     Auth.getPreferredMFA.mockResolvedValue("NOMFA");
     Auth.updateUserAttributes.mockResolvedValue({});
@@ -195,8 +195,8 @@ describe.skip("useUserProfile", () => {
     await act(async () => {
       await result.current.onSaveUserName();
     });
-    expect(global.alert).toHaveBeenCalledWith("Please provide a valid name.");
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(globalThis.alert).toHaveBeenCalledWith("Please provide a valid name.");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   test("onSaveUserName: shows alert and skips fetch when name is whitespace-only", async () => {
@@ -207,11 +207,11 @@ describe.skip("useUserProfile", () => {
     await act(async () => {
       await result.current.onSaveUserName();
     });
-    expect(global.alert).toHaveBeenCalledWith("Please provide a valid name.");
+    expect(globalThis.alert).toHaveBeenCalledWith("Please provide a valid name.");
   });
 
   test("onSaveUserName: sends POST and updates user.name on success", async () => {
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       json: () => Promise.resolve({ statusCode: 200 }),
     });
     const { result } = renderHook(() => useUserProfile());
@@ -221,7 +221,7 @@ describe.skip("useUserProfile", () => {
     await act(async () => {
       await result.current.onSaveUserName();
     });
-    expect(global.fetch).toHaveBeenCalled();
+    expect(globalThis.fetch).toHaveBeenCalled();
     expect(result.current.user.name).toBe("Jane Doe");
   });
 
@@ -232,7 +232,7 @@ describe.skip("useUserProfile", () => {
     await act(async () => {
       await result.current.onSaveUserEmail();
     });
-    expect(global.alert).toHaveBeenCalledWith("Please provide a valid email address.");
+    expect(globalThis.alert).toHaveBeenCalledWith("Please provide a valid email address.");
   });
 
   test("onSaveUserEmail: shows alert for malformed email", async () => {
@@ -243,11 +243,11 @@ describe.skip("useUserProfile", () => {
     await act(async () => {
       await result.current.onSaveUserEmail();
     });
-    expect(global.alert).toHaveBeenCalledWith("Please provide a valid email address.");
+    expect(globalThis.alert).toHaveBeenCalledWith("Please provide a valid email address.");
   });
 
   test("onSaveUserEmail: sets isVerifying to true when API returns verification message", async () => {
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       json: () =>
         Promise.resolve({ message: "Email update successful, please verify your new email." }),
@@ -263,7 +263,7 @@ describe.skip("useUserProfile", () => {
   });
 
   test("onSaveUserEmail: shows alert when API reports email already in use", async () => {
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ message: "This email address is already in use." }),
     });
@@ -274,11 +274,11 @@ describe.skip("useUserProfile", () => {
     await act(async () => {
       await result.current.onSaveUserEmail();
     });
-    expect(global.alert).toHaveBeenCalledWith("This email address is already in use.");
+    expect(globalThis.alert).toHaveBeenCalledWith("This email address is already in use.");
   });
 
   test("onSaveUserEmail in verifying state: calls confirmEmailChange with the entered code", async () => {
-    global.fetch.mockResolvedValueOnce({
+    globalThis.fetch.mockResolvedValueOnce({
       ok: true,
       json: () =>
         Promise.resolve({ message: "Email update successful, please verify your new email." }),
@@ -391,7 +391,7 @@ describe.skip("useUserProfile", () => {
   // ─── Key-press handlers ───────────────────────────────────────────────────
 
   test("onKeyPressName: triggers save on Enter key", async () => {
-    global.fetch.mockResolvedValue({ json: () => Promise.resolve({ statusCode: 200 }) });
+    globalThis.fetch.mockResolvedValue({ json: () => Promise.resolve({ statusCode: 200 }) });
     const { result } = renderHook(() => useUserProfile());
     act(() => {
       result.current.onInputChange({ target: { name: "name", value: "Alice" } });
@@ -400,7 +400,7 @@ describe.skip("useUserProfile", () => {
       result.current.onKeyPressName({ key: "Enter" });
       await Promise.resolve();
     });
-    expect(global.fetch).toHaveBeenCalled();
+    expect(globalThis.fetch).toHaveBeenCalled();
   });
 
   test("onKeyPressName: does not trigger save for non-Enter keys", async () => {
@@ -408,6 +408,6 @@ describe.skip("useUserProfile", () => {
     act(() => {
       result.current.onKeyPressName({ key: "a" });
     });
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 });
