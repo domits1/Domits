@@ -753,6 +753,368 @@ $accent: #2f6fed;
   cursor: not-allowed;
 }
 
+.hc-availability-settings-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.hc-availability-settings-header {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.hc-availability-settings-back {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 0;
+  background: #eef1f4;
+  color: #3f4651;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.hc-availability-settings-back svg {
+  width: 14px;
+  height: 14px;
+}
+
+.hc-availability-settings-title {
+  margin: 0 0 4px;
+  font-size: 36px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.hc-availability-settings-copy {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.45;
+}
+
+.hc-availability-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hc-availability-settings-section {
+  margin-top: 12px;
+}
+
+.hc-availability-settings-section-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.hc-availability-settings-item {
+  margin-bottom: 8px;
+  border: 1px solid #dde3ea;
+  border-radius: 9px;
+  background: #ffffff;
+  padding: 8px 10px;
+}
+
+.hc-availability-settings-item-label {
+  margin: 0;
+  display: block;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.hc-availability-settings-input,
+.hc-availability-settings-select {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 15px;
+  color: #111827;
+  background: #ffffff;
+}
+
+.hc-availability-settings-input:focus,
+.hc-availability-settings-select:focus {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.16);
+}
+
+.hc-availability-connect-btn {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111827;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.hc-availability-connect-btn:hover {
+  background: #f8fafc;
+}
+
+.hc-availability-connect-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hc-availability-connect-btn-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hc-availability-connect-btn-icon {
+  width: 18px;
+  height: 18px;
+  color: #16a34a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hc-availability-connect-btn-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hc-availability-settings-error {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #8c1d18;
+}
+
+.hc-availability-settings-save-btn {
+  margin-top: 4px;
+  border: 1px solid #16a34a;
+  border-radius: 8px;
+  padding: 7px 14px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.hc-availability-settings-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hc-sync-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.hc-sync-header {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.hc-sync-back {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 0;
+  background: #eef1f4;
+  color: #3f4651;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.hc-sync-back svg {
+  width: 14px;
+  height: 14px;
+}
+
+.hc-sync-title {
+  margin: 0 0 6px;
+  font-size: 36px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.hc-sync-copy {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.45;
+}
+
+.hc-sync-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hc-sync-step-title {
+  margin: 0 0 6px;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.hc-sync-step-copy {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.hc-sync-link-box,
+.hc-sync-fields {
+  border: 1px solid #dde3ea;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.hc-sync-field-label {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.hc-sync-copy-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hc-sync-input {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 11px;
+  font-size: 14px;
+  color: #111827;
+  background: #ffffff;
+}
+
+.hc-sync-input + .hc-sync-input {
+  margin-top: 8px;
+}
+
+.hc-sync-input--readonly {
+  background: #f9fafb;
+}
+
+.hc-sync-input:focus {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.16);
+}
+
+.hc-sync-copy-btn {
+  flex: 0 0 auto;
+  border: 1px solid #16a34a;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hc-sync-copy-btn.is-copied {
+  background: #0f8a3d;
+  border-color: #0f8a3d;
+}
+
+.hc-sync-copy-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hc-sync-add-btn {
+  margin-top: 8px;
+  width: 100%;
+  border: 1px solid #16a34a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hc-sync-add-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hc-sync-error {
+  margin: 0;
+  font-size: 13px;
+  color: #8c1d18;
+}
+
+.hc-sync-connected {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 10px;
+}
+
+.hc-sync-connected-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.hc-sync-connected-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hc-sync-connected-item {
+  border: 1px solid #d5dbe4;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #374151;
+  background: #f9fafb;
+}
+
+.hc-sync-meta {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.hc-sync-meta a {
+  color: #217a2f;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .hc-selection-card {
   background: $surface;
   border: 1px solid $border;
@@ -998,6 +1360,14 @@ $accent: #2f6fed;
   .hc-pricing-settings-input {
     font-size: 22px;
     width: 112px;
+  }
+
+  .hc-availability-settings-title {
+    font-size: 28px;
+  }
+
+  .hc-sync-title {
+    font-size: 28px;
   }
 
   .hc-sidebar {

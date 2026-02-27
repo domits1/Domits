@@ -7,6 +7,8 @@ import PulseBarsLoader from "./components/PulseBarsLoader";
 import AvailabilityCard from "./components/Sidebar/AvailabilityCard";
 import PricingCard from "./components/Sidebar/PricingCard";
 import PricingSettingsCard from "./components/Sidebar/PricingSettingsCard";
+import AvailabilitySettingsCard from "./components/Sidebar/AvailabilitySettingsCard";
+import CalendarSyncCard from "./components/Sidebar/CalendarSyncCard";
 import SelectionCard from "./components/Sidebar/SelectionCard";
 
 import {
@@ -16,7 +18,7 @@ import {
   subMonthsUTC,
 } from "./utils/date";
 import { getAccessToken, getCognitoUserId } from "../../../services/getAccessToken";
-import { dbListIcalSources } from "../../../utils/icalRetrieveHost";
+import { dbListIcalSources, dbUpsertIcalSource } from "../../../utils/icalRetrieveHost";
 import {
   PRICING_MIN_NIGHTLY_RATE_FOR_SAVE,
   PRICING_RESTRICTION_KEYS,
@@ -36,6 +38,31 @@ const ADVANCE_NOTICE_RESTRICTION_KEYS = [
   "MinimumAdvanceNoticeDays",
   "MinimumAdvanceBookingDays",
 ];
+const DEFAULT_ADVANCE_NOTICE_RESTRICTION_KEY = "MinimumAdvanceReservation";
+
+const MAX_ADVANCE_NOTICE_RESTRICTION_KEYS = [
+  "MaximumAdvanceReservation",
+  "MaximumAdvanceNoticeDays",
+  "MaximumAdvanceBookingDays",
+];
+const DEFAULT_MAX_ADVANCE_NOTICE_RESTRICTION_KEY = "MaximumAdvanceReservation";
+
+const PREPARATION_TIME_RESTRICTION_KEYS = [
+  "PreparationTimeDays",
+  "PreparationDays",
+  "TurnoverDays",
+];
+const DEFAULT_PREPARATION_TIME_RESTRICTION_KEY = "PreparationTimeDays";
+
+const AVAILABILITY_WINDOW_OPTIONS = [
+  { label: "3 months", value: 90 },
+  { label: "6 months", value: 180 },
+  { label: "9 months", value: 270 },
+  { label: "12 months", value: 365 },
+  { label: "24 months", value: 730 },
+];
+const ICAL_EXPORT_BUCKET = "icalender";
+const ICAL_EXPORT_REGION = "eu-north-1";
 
 const WEEKEND_PRICE_KEYS = ["weekendRate", "weekendrate", "weekendPrice", "weekendprice"];
 const BOOKING_EXCLUDED_STATUSES = new Set(["failed", "cancelled", "canceled", "denied", "rejected"]);
@@ -78,6 +105,16 @@ const readFirstRestrictionValue = (restrictionMap, keys, fallback = 0) => {
   for (const key of safeKeys) {
     if (restrictionMap.has(key)) {
       return toInteger(restrictionMap.get(key), fallback);
+    }
+  }
+  return fallback;
+};
+
+const resolveFirstRestrictionKey = (restrictionMap, keys, fallback = null) => {
+  const safeKeys = Array.isArray(keys) ? keys : [];
+  for (const key of safeKeys) {
+    if (restrictionMap.has(key)) {
+      return key;
     }
   }
   return fallback;
@@ -342,6 +379,14 @@ const buildPricingSnapshot = (propertyDetails) => {
       0,
       readFirstRestrictionValue(restrictionMap, ADVANCE_NOTICE_RESTRICTION_KEYS, 0)
     ),
+    maximumAdvanceDays: Math.max(
+      0,
+      readFirstRestrictionValue(restrictionMap, MAX_ADVANCE_NOTICE_RESTRICTION_KEYS, 365)
+    ),
+    preparationTimeDays: Math.max(
+      0,
+      readFirstRestrictionValue(restrictionMap, PREPARATION_TIME_RESTRICTION_KEYS, 0)
+    ),
   };
 };
 
@@ -381,6 +426,61 @@ const mergeAvailabilityRestrictions = (existingRestrictions, updates) => {
   return Array.from(nextByRestriction.values());
 };
 
+const clampInteger = (value, fallback, minimum, maximum) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return fallback;
+  }
+
+  const truncated = Math.trunc(numeric);
+  if (truncated < minimum) {
+    return minimum;
+  }
+  if (truncated > maximum) {
+    return maximum;
+  }
+  return truncated;
+};
+
+const normalizeAvailabilitySettingsForm = (form) => {
+  const minimumStay = clampInteger(form?.minimumStay, 1, 1, 365);
+  const maximumStayRaw = clampInteger(form?.maximumStay, 0, 0, 365);
+  const maximumStay = maximumStayRaw === 0 ? 0 : Math.max(minimumStay, maximumStayRaw);
+  const advanceNoticeDays = clampInteger(form?.advanceNoticeDays, 0, 0, 365);
+  const preparationTimeDays = clampInteger(form?.preparationTimeDays, 0, 0, 30);
+  const availabilityWindowDays = clampInteger(form?.availabilityWindowDays, 365, 1, 730);
+
+  return {
+    minimumStay,
+    maximumStay,
+    advanceNoticeDays,
+    preparationTimeDays,
+    availabilityWindowDays,
+  };
+};
+
+const getAvailabilityWindowOptionsWithCurrent = (currentValue) => {
+  const normalizedCurrentValue = Number(currentValue);
+  if (!Number.isFinite(normalizedCurrentValue)) {
+    return AVAILABILITY_WINDOW_OPTIONS;
+  }
+  const hasCurrentValue = AVAILABILITY_WINDOW_OPTIONS.some(
+    (option) => option.value === Math.trunc(normalizedCurrentValue)
+  );
+  if (hasCurrentValue) {
+    return AVAILABILITY_WINDOW_OPTIONS;
+  }
+
+  const currentDays = Math.max(1, Math.trunc(normalizedCurrentValue));
+  return [
+    ...AVAILABILITY_WINDOW_OPTIONS,
+    {
+      label: currentDays === 1 ? "1 day" : `${currentDays} days`,
+      value: currentDays,
+    },
+  ].sort((left, right) => left.value - right.value);
+};
+
 export default function HostCalendar() {
   const [view, setView] = useState("month");
   const [cursor, setCursor] = useState(startOfMonthUTC(new Date()));
@@ -411,6 +511,34 @@ export default function HostCalendar() {
   const [pricingSettingsSaveError, setPricingSettingsSaveError] = useState("");
   const [weekendRateInput, setWeekendRateInput] = useState("");
   const [weekendRateSavedSnapshot, setWeekendRateSavedSnapshot] = useState(0);
+  const [availabilitySettingsForm, setAvailabilitySettingsForm] = useState(
+    normalizeAvailabilitySettingsForm({
+      minimumStay: 1,
+      maximumStay: 0,
+      advanceNoticeDays: 0,
+      preparationTimeDays: 0,
+      availabilityWindowDays: 365,
+    })
+  );
+  const [availabilitySettingsSavedSnapshot, setAvailabilitySettingsSavedSnapshot] = useState(
+    normalizeAvailabilitySettingsForm({
+      minimumStay: 1,
+      maximumStay: 0,
+      advanceNoticeDays: 0,
+      preparationTimeDays: 0,
+      availabilityWindowDays: 365,
+    })
+  );
+  const [isSavingAvailabilitySettings, setIsSavingAvailabilitySettings] = useState(false);
+  const [availabilitySettingsSaveError, setAvailabilitySettingsSaveError] = useState("");
+  const [calendarSources, setCalendarSources] = useState([]);
+  const [calendarSyncForm, setCalendarSyncForm] = useState({
+    calendarUrl: "",
+    calendarName: "",
+  });
+  const [calendarSyncError, setCalendarSyncError] = useState("");
+  const [isSavingCalendarSync, setIsSavingCalendarSync] = useState(false);
+  const [domitsCalendarLinkCopied, setDomitsCalendarLinkCopied] = useState(false);
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
   const availabilityRanges = useMemo(
@@ -421,6 +549,41 @@ export default function HostCalendar() {
   const pricingSnapshot = useMemo(
     () => buildPricingSnapshot(propertyDetails),
     [propertyDetails]
+  );
+
+  const restrictionValueMap = useMemo(
+    () => buildRestrictionValueMap(propertyDetails?.availabilityRestrictions),
+    [propertyDetails?.availabilityRestrictions]
+  );
+
+  const advanceNoticeRestrictionKey = useMemo(
+    () =>
+      resolveFirstRestrictionKey(
+        restrictionValueMap,
+        ADVANCE_NOTICE_RESTRICTION_KEYS,
+        DEFAULT_ADVANCE_NOTICE_RESTRICTION_KEY
+      ),
+    [restrictionValueMap]
+  );
+
+  const maxAdvanceRestrictionKey = useMemo(
+    () =>
+      resolveFirstRestrictionKey(
+        restrictionValueMap,
+        MAX_ADVANCE_NOTICE_RESTRICTION_KEYS,
+        DEFAULT_MAX_ADVANCE_NOTICE_RESTRICTION_KEY
+      ),
+    [restrictionValueMap]
+  );
+
+  const preparationTimeRestrictionKey = useMemo(
+    () =>
+      resolveFirstRestrictionKey(
+        restrictionValueMap,
+        PREPARATION_TIME_RESTRICTION_KEYS,
+        DEFAULT_PREPARATION_TIME_RESTRICTION_KEY
+      ),
+    [restrictionValueMap]
   );
 
   const listingOptions = useMemo(
@@ -552,6 +715,46 @@ export default function HostCalendar() {
     Boolean(selectedPropertyId) &&
     !isSavingPricingSettings;
 
+  const normalizedAvailabilitySettingsForm = useMemo(
+    () => normalizeAvailabilitySettingsForm(availabilitySettingsForm),
+    [availabilitySettingsForm]
+  );
+
+  const hasAvailabilitySettingsChanges = useMemo(
+    () =>
+      JSON.stringify(normalizedAvailabilitySettingsForm) !==
+      JSON.stringify(availabilitySettingsSavedSnapshot),
+    [normalizedAvailabilitySettingsForm, availabilitySettingsSavedSnapshot]
+  );
+
+  const canSaveAvailabilitySettings =
+    hasAvailabilitySettingsChanges &&
+    Boolean(selectedPropertyId) &&
+    !isSavingAvailabilitySettings &&
+    normalizedAvailabilitySettingsForm.minimumStay >= 1 &&
+    (normalizedAvailabilitySettingsForm.maximumStay === 0 ||
+      normalizedAvailabilitySettingsForm.maximumStay >= normalizedAvailabilitySettingsForm.minimumStay);
+
+  const availabilityWindowOptions = useMemo(
+    () => getAvailabilityWindowOptionsWithCurrent(normalizedAvailabilitySettingsForm.availabilityWindowDays),
+    [normalizedAvailabilitySettingsForm.availabilityWindowDays]
+  );
+  const hostCalendarExportUrl = useMemo(() => {
+    const hostUserId = String(getCognitoUserId() || "").trim();
+    if (!hostUserId) {
+      return "";
+    }
+    return `https://${ICAL_EXPORT_BUCKET}.s3.${ICAL_EXPORT_REGION}.amazonaws.com/hosts/${hostUserId}/${hostUserId}.ics`;
+  }, []);
+
+  const calendarUrlInput = String(calendarSyncForm.calendarUrl || "");
+  const calendarNameInput = String(calendarSyncForm.calendarName || "");
+  const canAddCalendarSource =
+    Boolean(selectedPropertyId) &&
+    !isSavingCalendarSync &&
+    calendarUrlInput.trim().length > 0 &&
+    calendarNameInput.trim().length > 0;
+
   const prev = () => setCursor((currentCursor) => subMonthsUTC(currentCursor, 1));
   const next = () => setCursor((currentCursor) => addMonthsUTC(currentCursor, 1));
   const today = () => setCursor(startOfMonthUTC(new Date()));
@@ -680,9 +883,16 @@ export default function HostCalendar() {
         if (mounted) {
           setPropertyDetails(null);
           setExternalBlockedDates(new Set());
+          setCalendarSources([]);
           setAvailabilityOverrides({});
           setPendingSelectionStartKey(null);
           setSelectedDateKeys([]);
+          setCalendarSyncForm({
+            calendarUrl: "",
+            calendarName: "",
+          });
+          setCalendarSyncError("");
+          setDomitsCalendarLinkCopied(false);
           setSidebarMode("summary");
           setDetailsError("");
         }
@@ -694,9 +904,16 @@ export default function HostCalendar() {
         if (mounted) {
           setPropertyDetails(null);
           setExternalBlockedDates(new Set());
+          setCalendarSources([]);
           setAvailabilityOverrides({});
           setPendingSelectionStartKey(null);
           setSelectedDateKeys([]);
+          setCalendarSyncForm({
+            calendarUrl: "",
+            calendarName: "",
+          });
+          setCalendarSyncError("");
+          setDomitsCalendarLinkCopied(false);
           setSidebarMode("summary");
           setDetailsError("Could not load property details. Please sign in again.");
         }
@@ -714,7 +931,7 @@ export default function HostCalendar() {
               Authorization: token,
             },
           }),
-          dbListIcalSources(selectedPropertyId).catch(() => ({ blockedDates: [] })),
+          dbListIcalSources(selectedPropertyId).catch(() => ({ sources: [], blockedDates: [] })),
         ]);
 
         if (!detailsResponse.ok) {
@@ -723,6 +940,7 @@ export default function HostCalendar() {
 
         const details = await detailsResponse.json();
         const blockedDates = Array.isArray(icalData?.blockedDates) ? icalData.blockedDates : [];
+        const sources = Array.isArray(icalData?.sources) ? icalData.sources : [];
 
         if (!mounted) {
           return;
@@ -730,11 +948,18 @@ export default function HostCalendar() {
 
         setPropertyDetails(details || null);
         setExternalBlockedDates(new Set(blockedDates));
+        setCalendarSources(sources);
         setAvailabilityOverrides({});
         setSelectionPriceInput("");
         setSelectionPriceDirty(false);
         setPendingSelectionStartKey(null);
         setSelectedDateKeys([]);
+        setCalendarSyncForm({
+          calendarUrl: "",
+          calendarName: "",
+        });
+        setCalendarSyncError("");
+        setDomitsCalendarLinkCopied(false);
         setSidebarMode("summary");
       } catch (error) {
         if (!mounted) {
@@ -742,11 +967,18 @@ export default function HostCalendar() {
         }
         setPropertyDetails(null);
         setExternalBlockedDates(new Set());
+        setCalendarSources([]);
         setAvailabilityOverrides({});
         setSelectionPriceInput("");
         setSelectionPriceDirty(false);
         setPendingSelectionStartKey(null);
         setSelectedDateKeys([]);
+        setCalendarSyncForm({
+          calendarUrl: "",
+          calendarName: "",
+        });
+        setCalendarSyncError("");
+        setDomitsCalendarLinkCopied(false);
         setSidebarMode("summary");
         setDetailsError(error?.message || "Could not load listing details.");
       } finally {
@@ -779,11 +1011,21 @@ export default function HostCalendar() {
   useEffect(() => {
     if (!propertyDetails) {
       const fallbackPricingForm = createInitialPricingForm();
+      const fallbackAvailabilityForm = normalizeAvailabilitySettingsForm({
+        minimumStay: fallbackPricingForm.minimumStay,
+        maximumStay: fallbackPricingForm.maximumStay,
+        advanceNoticeDays: 0,
+        preparationTimeDays: 0,
+        availabilityWindowDays: 365,
+      });
       setPricingSettingsForm(fallbackPricingForm);
       setPricingSettingsSavedSnapshot(normalizePricingForm(fallbackPricingForm));
       setWeekendRateInput(String(fallbackPricingForm.nightlyRate));
       setWeekendRateSavedSnapshot(fallbackPricingForm.nightlyRate);
+      setAvailabilitySettingsForm(fallbackAvailabilityForm);
+      setAvailabilitySettingsSavedSnapshot(fallbackAvailabilityForm);
       setPricingSettingsSaveError("");
+      setAvailabilitySettingsSaveError("");
       return;
     }
 
@@ -791,12 +1033,22 @@ export default function HostCalendar() {
       propertyDetails?.pricing || {},
       propertyDetails?.availabilityRestrictions || []
     );
+    const nextAvailabilityForm = normalizeAvailabilitySettingsForm({
+      minimumStay: pricingSnapshot.minimumStay,
+      maximumStay: pricingSnapshot.maximumStay,
+      advanceNoticeDays: pricingSnapshot.advanceNoticeDays,
+      preparationTimeDays: pricingSnapshot.preparationTimeDays,
+      availabilityWindowDays: pricingSnapshot.maximumAdvanceDays || 365,
+    });
     setPricingSettingsForm(nextPricingForm);
     setPricingSettingsSavedSnapshot(normalizePricingForm(nextPricingForm));
     setWeekendRateInput(String(pricingSnapshot.weekendRate));
     setWeekendRateSavedSnapshot(pricingSnapshot.weekendRate);
+    setAvailabilitySettingsForm(nextAvailabilityForm);
+    setAvailabilitySettingsSavedSnapshot(nextAvailabilityForm);
     setPricingSettingsSaveError("");
-  }, [propertyDetails, pricingSnapshot.weekendRate]);
+    setAvailabilitySettingsSaveError("");
+  }, [propertyDetails, pricingSnapshot]);
 
   const handleDateSelect = (dateContext) => {
     const key = String(dateContext?.key || "");
@@ -881,6 +1133,182 @@ export default function HostCalendar() {
       ...previous,
       ...partialForm,
     }));
+  };
+
+  const updateAvailabilitySettingsForm = (partialForm) => {
+    if (!partialForm || typeof partialForm !== "object") {
+      return;
+    }
+    setAvailabilitySettingsForm((previous) => ({
+      ...previous,
+      ...partialForm,
+    }));
+  };
+
+  const updateCalendarSyncForm = (partialForm) => {
+    if (!partialForm || typeof partialForm !== "object") {
+      return;
+    }
+    setCalendarSyncError("");
+    setCalendarSyncForm((previous) => ({
+      ...previous,
+      ...partialForm,
+    }));
+  };
+
+  const handleCopyDomitsCalendarLink = async () => {
+    if (!hostCalendarExportUrl || !navigator?.clipboard) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(hostCalendarExportUrl);
+      setDomitsCalendarLinkCopied(true);
+      setTimeout(() => setDomitsCalendarLinkCopied(false), 1800);
+    } catch {
+      setCalendarSyncError("Could not copy calendar link. Please copy it manually.");
+    }
+  };
+
+  const handleAddCalendarSource = async () => {
+    const calendarUrl = calendarUrlInput.trim();
+    const calendarName = calendarNameInput.trim();
+    if (!selectedPropertyId) {
+      setCalendarSyncError("Select a listing first.");
+      return;
+    }
+    if (!calendarUrl || !calendarName) {
+      setCalendarSyncError("Both the calendar link and calendar name are required.");
+      return;
+    }
+    if (!calendarUrl.toLowerCase().includes(".ics")) {
+      setCalendarSyncError("The external calendar link must contain a .ics file URL.");
+      return;
+    }
+
+    setIsSavingCalendarSync(true);
+    setCalendarSyncError("");
+
+    try {
+      const data = await dbUpsertIcalSource({
+        propertyId: selectedPropertyId,
+        calendarUrl,
+        calendarName,
+      });
+      const sources = Array.isArray(data?.sources) ? data.sources : [];
+      const blockedDates = Array.isArray(data?.blockedDates) ? data.blockedDates : [];
+
+      setCalendarSources(sources);
+      setExternalBlockedDates(new Set(blockedDates));
+      setCalendarSyncForm({
+        calendarUrl: "",
+        calendarName: "",
+      });
+    } catch (error) {
+      setCalendarSyncError(error?.message || "Could not add calendar connection.");
+    } finally {
+      setIsSavingCalendarSync(false);
+    }
+  };
+
+  const handleSaveAvailabilitySettings = async () => {
+    if (!canSaveAvailabilitySettings) {
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      setAvailabilitySettingsSaveError("Could not save availability. Please sign in again.");
+      return;
+    }
+
+    const propertyTitle = String(propertyDetails?.property?.title || "").trim();
+    const propertyDescription = String(propertyDetails?.property?.description || "").trim();
+    const propertySubtitle = String(propertyDetails?.property?.subtitle || "").trim();
+    if (!propertyTitle || !propertyDescription) {
+      setAvailabilitySettingsSaveError(
+        "Could not save availability because listing details are incomplete."
+      );
+      return;
+    }
+
+    const normalizedForm = normalizeAvailabilitySettingsForm(availabilitySettingsForm);
+
+    const availabilityRestrictionsPayload = [
+      {
+        restriction: PRICING_RESTRICTION_KEYS.minimumStay,
+        value: normalizedForm.minimumStay,
+      },
+      {
+        restriction: PRICING_RESTRICTION_KEYS.maximumStay,
+        value: normalizedForm.maximumStay,
+      },
+      advanceNoticeRestrictionKey
+        ? {
+            restriction: advanceNoticeRestrictionKey,
+            value: normalizedForm.advanceNoticeDays,
+          }
+        : null,
+      maxAdvanceRestrictionKey
+        ? {
+            restriction: maxAdvanceRestrictionKey,
+            value: normalizedForm.availabilityWindowDays,
+          }
+        : null,
+      preparationTimeRestrictionKey
+        ? {
+            restriction: preparationTimeRestrictionKey,
+            value: normalizedForm.preparationTimeDays,
+          }
+        : null,
+    ].filter(Boolean);
+
+    setIsSavingAvailabilitySettings(true);
+    setAvailabilitySettingsSaveError("");
+
+    try {
+      const response = await fetch(`${PROPERTY_API_BASE}/overview`, {
+        method: "PATCH",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          propertyId: selectedPropertyId,
+          title: propertyTitle,
+          subtitle: propertySubtitle,
+          description: propertyDescription,
+          availabilityRestrictions: availabilityRestrictionsPayload,
+        }),
+      });
+
+      if (!response.ok) {
+        const apiError = await getApiErrorMessage(response, "Could not save availability settings.");
+        throw new Error(apiError);
+      }
+
+      setAvailabilitySettingsForm(normalizedForm);
+      setAvailabilitySettingsSavedSnapshot(normalizedForm);
+
+      setPropertyDetails((previousDetails) => {
+        if (!previousDetails || typeof previousDetails !== "object") {
+          return previousDetails;
+        }
+
+        const nextRestrictions = mergeAvailabilityRestrictions(
+          previousDetails.availabilityRestrictions,
+          availabilityRestrictionsPayload
+        );
+
+        return {
+          ...previousDetails,
+          availabilityRestrictions: nextRestrictions,
+        };
+      });
+    } catch (error) {
+      setAvailabilitySettingsSaveError(error?.message || "Could not save availability settings.");
+    } finally {
+      setIsSavingAvailabilitySettings(false);
+    }
   };
 
   const handleSavePricingSettings = async () => {
@@ -1108,6 +1536,63 @@ export default function HostCalendar() {
               onSave={handleSavePricingSettings}
               onBack={() => setSidebarMode("summary")}
             />
+          ) : sidebarMode === "availability-settings" ? (
+            <AvailabilitySettingsCard
+              minimumStayInput={availabilitySettingsForm.minimumStay}
+              maximumStayInput={availabilitySettingsForm.maximumStay}
+              advanceNoticeDaysInput={availabilitySettingsForm.advanceNoticeDays}
+              preparationTimeDaysInput={availabilitySettingsForm.preparationTimeDays}
+              availabilityWindowDaysInput={availabilitySettingsForm.availabilityWindowDays}
+              availabilityWindowOptions={availabilityWindowOptions}
+              onMinimumStayChange={(value) => {
+                const nextValue = String(value).trim();
+                updateAvailabilitySettingsForm({
+                  minimumStay: nextValue === "" ? "" : Number(nextValue),
+                });
+              }}
+              onMaximumStayChange={(value) => {
+                const nextValue = String(value).trim();
+                updateAvailabilitySettingsForm({
+                  maximumStay: nextValue === "" ? "" : Number(nextValue),
+                });
+              }}
+              onAdvanceNoticeChange={(value) =>
+                updateAvailabilitySettingsForm({ advanceNoticeDays: Number(value) || 0 })
+              }
+              onPreparationTimeChange={(value) =>
+                updateAvailabilitySettingsForm({ preparationTimeDays: Number(value) || 0 })
+              }
+              onAvailabilityWindowChange={(value) =>
+                updateAvailabilitySettingsForm({ availabilityWindowDays: Number(value) || 365 })
+              }
+              showSaveButton={hasAvailabilitySettingsChanges}
+              canSave={canSaveAvailabilitySettings}
+              saving={isSavingAvailabilitySettings}
+              saveError={availabilitySettingsSaveError}
+              onSave={handleSaveAvailabilitySettings}
+              onBack={() => setSidebarMode("summary")}
+              onConnectCalendars={() => setSidebarMode("calendar-sync")}
+            />
+          ) : sidebarMode === "calendar-sync" ? (
+            <CalendarSyncCard
+              domitsCalendarLink={hostCalendarExportUrl}
+              externalCalendarUrlInput={calendarUrlInput}
+              calendarNameInput={calendarNameInput}
+              onExternalCalendarUrlChange={(value) =>
+                updateCalendarSyncForm({ calendarUrl: String(value || "") })
+              }
+              onCalendarNameChange={(value) =>
+                updateCalendarSyncForm({ calendarName: String(value || "") })
+              }
+              onCopyDomitsCalendarLink={handleCopyDomitsCalendarLink}
+              domitsCalendarLinkCopied={domitsCalendarLinkCopied}
+              onAddCalendar={handleAddCalendarSource}
+              canAddCalendar={canAddCalendarSource}
+              addingCalendar={isSavingCalendarSync}
+              addCalendarError={calendarSyncError}
+              connectedSources={calendarSources}
+              onBack={() => setSidebarMode("availability-settings")}
+            />
           ) : (
             <>
               <PricingCard
@@ -1120,6 +1605,7 @@ export default function HostCalendar() {
                 minimumStay={pricingSnapshot.minimumStay}
                 maximumStay={pricingSnapshot.maximumStay}
                 advanceNoticeDays={pricingSnapshot.advanceNoticeDays}
+                onOpenSettings={() => setSidebarMode("availability-settings")}
               />
             </>
           )}

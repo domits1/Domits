@@ -22,16 +22,26 @@ const getAdvanceNoticeText = (advanceNoticeDays) => {
   return `${days} days advance notice`;
 };
 
-export default function AvailabilityCard({ minimumStay, maximumStay, advanceNoticeDays }) {
+export default function AvailabilityCard({
+  minimumStay,
+  maximumStay,
+  advanceNoticeDays,
+  onOpenSettings,
+}) {
   return (
     <section className="hc-info-card" aria-label="Availability summary">
       <header className="hc-info-card-header">
         <h3 className="hc-info-card-title">Availability</h3>
-        <span className="hc-info-card-chevron" aria-hidden="true">
+        <button
+          type="button"
+          className="hc-info-card-chevron hc-info-card-chevron-btn"
+          aria-label="Open availability settings"
+          onClick={() => onOpenSettings?.()}
+        >
           <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
             <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2" />
           </svg>
-        </span>
+        </button>
       </header>
 
       <p className="hc-info-card-line">{getStayText(minimumStay, maximumStay)}</p>
