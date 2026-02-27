@@ -6,6 +6,7 @@ import CalendarGrid from "./components/CalendarGrid";
 import PulseBarsLoader from "./components/PulseBarsLoader";
 import AvailabilityCard from "./components/Sidebar/AvailabilityCard";
 import PricingCard from "./components/Sidebar/PricingCard";
+import CalendarLinkCard from "./components/Sidebar/CalendarLinkCard";
 import PricingSettingsCard from "./components/Sidebar/PricingSettingsCard";
 import AvailabilitySettingsCard from "./components/Sidebar/AvailabilitySettingsCard";
 import CalendarSyncCard from "./components/Sidebar/CalendarSyncCard";
@@ -582,6 +583,7 @@ export default function HostCalendar() {
   const [calendarSyncError, setCalendarSyncError] = useState("");
   const [isSavingCalendarSync, setIsSavingCalendarSync] = useState(false);
   const [domitsCalendarLinkCopied, setDomitsCalendarLinkCopied] = useState(false);
+  const [calendarSyncReturnMode, setCalendarSyncReturnMode] = useState("summary");
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
   const availabilityRanges = useMemo(
@@ -812,6 +814,19 @@ export default function HostCalendar() {
   const prev = () => setCursor((currentCursor) => subMonthsUTC(currentCursor, 1));
   const next = () => setCursor((currentCursor) => addMonthsUTC(currentCursor, 1));
   const today = () => setCursor(startOfMonthUTC(new Date()));
+
+  const openCalendarSync = (returnMode = "summary") => {
+    const normalizedReturnMode =
+      returnMode === "availability-settings" ? "availability-settings" : "summary";
+    setCalendarSyncReturnMode(normalizedReturnMode);
+    setSidebarMode("calendar-sync");
+  };
+
+  const handleCalendarSyncBack = () => {
+    const normalizedReturnMode =
+      calendarSyncReturnMode === "availability-settings" ? "availability-settings" : "summary";
+    setSidebarMode(normalizedReturnMode);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -1642,7 +1657,7 @@ export default function HostCalendar() {
               saveError={availabilitySettingsSaveError}
               onSave={handleSaveAvailabilitySettings}
               onBack={() => setSidebarMode("summary")}
-              onConnectCalendars={() => setSidebarMode("calendar-sync")}
+              onConnectCalendars={() => openCalendarSync("availability-settings")}
             />
           ) : sidebarMode === "calendar-sync" ? (
             <CalendarSyncCard
@@ -1662,7 +1677,7 @@ export default function HostCalendar() {
               addingCalendar={isSavingCalendarSync}
               addCalendarError={calendarSyncError}
               connectedSources={calendarSources}
-              onBack={() => setSidebarMode("availability-settings")}
+              onBack={handleCalendarSyncBack}
             />
           ) : (
             <>
@@ -1677,6 +1692,10 @@ export default function HostCalendar() {
                 maximumStay={pricingSnapshot.maximumStay}
                 advanceNoticeDays={pricingSnapshot.advanceNoticeDays}
                 onOpenSettings={() => setSidebarMode("availability-settings")}
+              />
+              <CalendarLinkCard
+                connectedCount={calendarSources.length}
+                onOpenSettings={() => openCalendarSync("summary")}
               />
             </>
           )}
