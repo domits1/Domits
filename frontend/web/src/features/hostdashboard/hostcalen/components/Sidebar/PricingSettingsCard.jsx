@@ -2,6 +2,9 @@ import React from "react";
 
 const DISCOUNT_PERCENT_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("en-US")}`;
+const AVERAGE_DAYS_PER_MONTH = 365 / 12;
+const WEEKDAY_SHARE = 5 / 7;
+const WEEKEND_SHARE = 2 / 7;
 
 const normalizePercent = (value) => {
   const numeric = Number(value);
@@ -16,6 +19,24 @@ const getAveragePriceAfterDiscount = (amount, discountPercent) => {
   const safeDiscountPercent = normalizePercent(discountPercent);
   const discountedAmount = safeAmount * (1 - safeDiscountPercent / 100);
   return Math.max(0, Math.round(discountedAmount));
+};
+
+const getWeightedBaseRate = (nightlyRate, weekendRate, weekdayNights, weekendNights) => {
+  const safeNightlyRate = Number(nightlyRate) || 0;
+  const safeWeekendRate =
+    Number.isFinite(Number(weekendRate)) && Number(weekendRate) > 0
+      ? Number(weekendRate)
+      : safeNightlyRate;
+  const safeWeekdayNights = Math.max(0, Number(weekdayNights) || 0);
+  const safeWeekendNights = Math.max(0, Number(weekendNights) || 0);
+  const totalNights = safeWeekdayNights + safeWeekendNights;
+  if (totalNights <= 0) {
+    return 0;
+  }
+
+  const totalRevenue =
+    safeWeekdayNights * safeNightlyRate + safeWeekendNights * safeWeekendRate;
+  return totalRevenue / totalNights;
 };
 
 export default function PricingSettingsCard({
@@ -42,8 +63,15 @@ export default function PricingSettingsCard({
   onSave,
   onBack,
 }) {
-  const weeklyAverage = getAveragePriceAfterDiscount(nightlyRate, weeklyDiscountPercent);
-  const monthlyAverage = getAveragePriceAfterDiscount(nightlyRate, monthlyDiscountPercent);
+  const weeklyBaseRate = getWeightedBaseRate(nightlyRate, weekendRate, 5, 2);
+  const monthlyBaseRate = getWeightedBaseRate(
+    nightlyRate,
+    weekendRate,
+    AVERAGE_DAYS_PER_MONTH * WEEKDAY_SHARE,
+    AVERAGE_DAYS_PER_MONTH * WEEKEND_SHARE
+  );
+  const weeklyAverage = getAveragePriceAfterDiscount(weeklyBaseRate, weeklyDiscountPercent);
+  const monthlyAverage = getAveragePriceAfterDiscount(monthlyBaseRate, monthlyDiscountPercent);
 
   return (
     <section className="hc-pricing-settings-card" aria-label="Price settings">
@@ -147,7 +175,10 @@ export default function PricingSettingsCard({
                 ))}
               </select>
               <span className="hc-pricing-settings-item-meta">
-                Weekly average = {formatEuroAmount(weeklyAverage)}
+                Weekly average ={" "}
+                <span className="hc-pricing-settings-average-value">
+                  {formatEuroAmount(weeklyAverage)}
+                </span>
               </span>
             </div>
           </article>
@@ -179,7 +210,10 @@ export default function PricingSettingsCard({
                 ))}
               </select>
               <span className="hc-pricing-settings-item-meta">
-                Monthly average = {formatEuroAmount(monthlyAverage)}
+                Monthly average ={" "}
+                <span className="hc-pricing-settings-average-value">
+                  {formatEuroAmount(monthlyAverage)}
+                </span>
               </span>
             </div>
           </article>

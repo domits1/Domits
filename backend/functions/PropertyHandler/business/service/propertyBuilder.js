@@ -161,7 +161,12 @@ export class PropertyBuilder {
   }
 
   addPricing(params) {
-    this.propertyPricing = new PropertyPricing(this.property.id, params.roomRate, params.cleaning);
+    this.propertyPricing = new PropertyPricing(
+      this.property.id,
+      params.roomRate,
+      params.cleaning,
+      params.weekendRate ?? params.weekendrate
+    );
     return this;
   }
 

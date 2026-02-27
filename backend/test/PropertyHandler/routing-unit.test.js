@@ -50,6 +50,18 @@ describe("Routing unit tests", () => {
         expect(response.statusCode).toBe(204);
     });
 
+    it("should handle a PATCH request for property calendar overrides", async () => {
+        jest.spyOn(PropertyController.prototype, "updatePropertyCalendarOverrides").mockResolvedValue({statusCode: 200});
+
+        const event = {
+            httpMethod: "PATCH",
+            resource: "/property/calendar/overrides",
+        };
+        const response = await handler(event);
+
+        expect(response.statusCode).toBe(200);
+    });
+
     it("should handle a PATCH request for property activation", async () => {
         jest.spyOn(PropertyController.prototype, "activateProperty").mockResolvedValue({statusCode: 204});
 
@@ -71,6 +83,18 @@ describe("Routing unit tests", () => {
             pathParameters: {subResource: "all"},
         };
         const response = await handler(event);
+        expect(response.statusCode).toBe(200);
+    });
+
+    it("should handle a GET request for property calendar overrides", async () => {
+        jest.spyOn(PropertyController.prototype, "getPropertyCalendarOverrides").mockResolvedValue({statusCode: 200});
+
+        const event = {
+            httpMethod: "GET",
+            resource: "/property/calendar/overrides",
+        };
+        const response = await handler(event);
+
         expect(response.statusCode).toBe(200);
     });
 

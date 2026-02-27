@@ -66,6 +66,37 @@ const ICAL_EXPORT_REGION = "eu-north-1";
 
 const WEEKEND_PRICE_KEYS = ["weekendRate", "weekendrate", "weekendPrice", "weekendprice"];
 const BOOKING_EXCLUDED_STATUSES = new Set(["failed", "cancelled", "canceled", "denied", "rejected"]);
+const SELECTED_PROPERTY_STORAGE_PREFIX = "host-calendar:selected-property";
+
+const getSelectedPropertyStorageKey = (hostId) =>
+  `${SELECTED_PROPERTY_STORAGE_PREFIX}:${String(hostId || "").trim()}`;
+
+const readPersistedSelectedPropertyId = (hostId) => {
+  const key = getSelectedPropertyStorageKey(hostId);
+  if (!key || typeof window === "undefined" || !window?.localStorage) {
+    return "";
+  }
+  try {
+    return String(window.localStorage.getItem(key) || "").trim();
+  } catch {
+    return "";
+  }
+};
+
+const persistSelectedPropertyId = (hostId, propertyId) => {
+  const key = getSelectedPropertyStorageKey(hostId);
+  if (!key || typeof window === "undefined" || !window?.localStorage) {
+    return;
+  }
+  try {
+    const normalizedPropertyId = String(propertyId || "").trim();
+    if (normalizedPropertyId) {
+      window.localStorage.setItem(key, normalizedPropertyId);
+    } else {
+      window.localStorage.removeItem(key);
+    }
+  } catch {}
+};
 
 const toInteger = (value, fallback = 0) => {
   const numeric = Number(value);
@@ -459,6 +490,18 @@ const normalizeAvailabilitySettingsForm = (form) => {
   };
 };
 
+const buildComparablePricingSettings = (form) => ({
+  nightlyRate: toInteger(form?.nightlyRate, 0),
+  weeklyDiscountEnabled: Boolean(form?.weeklyDiscountEnabled),
+  weeklyDiscountPercent: Boolean(form?.weeklyDiscountEnabled)
+    ? Math.max(0, toInteger(form?.weeklyDiscountPercent, 0))
+    : 0,
+  monthlyDiscountEnabled: Boolean(form?.monthlyDiscountEnabled),
+  monthlyDiscountPercent: Boolean(form?.monthlyDiscountEnabled)
+    ? Math.max(0, toInteger(form?.monthlyDiscountPercent, 0))
+    : 0,
+});
+
 const getAvailabilityWindowOptionsWithCurrent = (currentValue) => {
   const normalizedCurrentValue = Number(currentValue);
   if (!Number.isFinite(normalizedCurrentValue)) {
@@ -694,11 +737,21 @@ export default function HostCalendar() {
     [pricingSettingsForm]
   );
 
+  const comparablePricingSettingsForm = useMemo(
+    () => buildComparablePricingSettings(normalizedPricingSettingsForm),
+    [normalizedPricingSettingsForm]
+  );
+
+  const comparablePricingSettingsSnapshot = useMemo(
+    () => buildComparablePricingSettings(pricingSettingsSavedSnapshot),
+    [pricingSettingsSavedSnapshot]
+  );
+
   const hasPricingSettingsChanges = useMemo(
     () =>
-      JSON.stringify(normalizedPricingSettingsForm) !==
-      JSON.stringify(pricingSettingsSavedSnapshot),
-    [normalizedPricingSettingsForm, pricingSettingsSavedSnapshot]
+      JSON.stringify(comparablePricingSettingsForm) !==
+      JSON.stringify(comparablePricingSettingsSnapshot),
+    [comparablePricingSettingsForm, comparablePricingSettingsSnapshot]
   );
 
   const parsedWeekendRateInput = Number(weekendRateInput);
@@ -741,11 +794,12 @@ export default function HostCalendar() {
   );
   const hostCalendarExportUrl = useMemo(() => {
     const hostUserId = String(getCognitoUserId() || "").trim();
-    if (!hostUserId) {
+    const propertyId = String(selectedPropertyId || "").trim();
+    if (!hostUserId || !propertyId) {
       return "";
     }
-    return `https://${ICAL_EXPORT_BUCKET}.s3.${ICAL_EXPORT_REGION}.amazonaws.com/hosts/${hostUserId}/${hostUserId}.ics`;
-  }, []);
+    return `https://${ICAL_EXPORT_BUCKET}.s3.${ICAL_EXPORT_REGION}.amazonaws.com/hosts/${hostUserId}/${propertyId}.ics`;
+  }, [selectedPropertyId]);
 
   const calendarUrlInput = String(calendarSyncForm.calendarUrl || "");
   const calendarNameInput = String(calendarSyncForm.calendarName || "");
@@ -815,12 +869,20 @@ export default function HostCalendar() {
         }
 
         setAccommodations(listings);
+        const persistedPropertyId = readPersistedSelectedPropertyId(hostId);
         setSelectedPropertyId((currentPropertyId) => {
           if (
             currentPropertyId &&
             listings.some((listing) => String(listing?.property?.id) === currentPropertyId)
           ) {
             return currentPropertyId;
+          }
+
+          if (
+            persistedPropertyId &&
+            listings.some((listing) => String(listing?.property?.id) === persistedPropertyId)
+          ) {
+            return persistedPropertyId;
           }
 
           return String(listings?.[0]?.property?.id || "");
@@ -845,6 +907,15 @@ export default function HostCalendar() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const hostId = String(getCognitoUserId() || "").trim();
+    const propertyId = String(selectedPropertyId || "").trim();
+    if (!hostId || !propertyId) {
+      return;
+    }
+    persistSelectedPropertyId(hostId, propertyId);
+  }, [selectedPropertyId]);
 
   useEffect(() => {
     let mounted = true;

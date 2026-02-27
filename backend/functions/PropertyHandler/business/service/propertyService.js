@@ -13,6 +13,7 @@ import { PropertyRuleRepository } from "../../data/repository/propertyRuleReposi
 import { PropertyTechnicalDetailRepository } from "../../data/repository/propertyTechnicalDetailRepository.js";
 import { PropertyTypeRepository } from "../../data/repository/propertyTypeRepository.js";
 import { PropertyImageRepository } from "../../data/repository/propertyImageRepository.js";
+import { PropertyCalendarOverrideRepository } from "../../data/repository/propertyCalendarOverrideRepository.js";
 import { BookingRepository } from "../../data/repository/bookingRepository.js";
 import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatusRepository.js";
 import { PropertyDeletionRepository } from "../../data/repository/propertyDeletionRepository.js";
@@ -36,6 +37,7 @@ export class PropertyService {
     this.propertyRuleRepository = new PropertyRuleRepository(systemManagerRepository);
     this.propertyTypeRepository = new PropertyTypeRepository(systemManagerRepository);
     this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
+    this.propertyCalendarOverrideRepository = new PropertyCalendarOverrideRepository(systemManagerRepository);
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
     this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
@@ -501,6 +503,14 @@ export class PropertyService {
 
   async updateAvailabilityRestrictions(propertyId, restrictions) {
     return await this.propertyAvailabilityRestrictionRepository.replaceRestrictionsByPropertyId(propertyId, restrictions);
+  }
+
+  async getPropertyCalendarOverrides(propertyId, range = {}) {
+    return await this.propertyCalendarOverrideRepository.getOverridesByPropertyId(propertyId, range);
+  }
+
+  async updatePropertyCalendarOverrides(propertyId, overrides, range = {}) {
+    return await this.propertyCalendarOverrideRepository.upsertOverridesByPropertyId(propertyId, overrides, range);
   }
 
   async createRules(rules) {

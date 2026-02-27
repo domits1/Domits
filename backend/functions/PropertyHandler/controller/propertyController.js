@@ -373,6 +373,93 @@ export class PropertyController {
         }
     }
 
+    // -------------------------
+    // GET /property/calendar/overrides
+    // -------------------------
+    async getPropertyCalendarOverrides(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const query = event.queryStringParameters || {};
+            const propertyId = String(query.propertyId || query.property || "").trim();
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+
+            const normalizedRange = this.normalizeCalendarOverrideRangePayload(query);
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+            const overrides = await this.propertyService.getPropertyCalendarOverrides(propertyId, normalizedRange);
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({
+                    propertyId,
+                    overrides,
+                }),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isCalendarOverrideClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
+    // -------------------------
+    // PATCH /property/calendar/overrides
+    // -------------------------
+    async updatePropertyCalendarOverrides(event) {
+        try {
+            const accessToken = event.headers.Authorization || event.headers.authorization;
+            const body = JSON.parse(event.body || "{}");
+            const propertyId = String(body.propertyId || body.property || "").trim();
+            if (!propertyId) {
+                return this.badRequest("Missing propertyId.");
+            }
+            if (!Array.isArray(body.overrides)) {
+                return this.badRequest("Calendar overrides must be an array.");
+            }
+
+            const normalizedOverrides = this.normalizeCalendarOverridesPayload(body.overrides);
+            if (normalizedOverrides.length < 1) {
+                return this.badRequest("Calendar overrides array is empty.");
+            }
+
+            const normalizedRange = this.normalizeCalendarOverrideRangePayload(body);
+            await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
+
+            const overrides = await this.propertyService.updatePropertyCalendarOverrides(
+                propertyId,
+                normalizedOverrides,
+                normalizedRange
+            );
+
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({
+                    propertyId,
+                    overrides,
+                }),
+            };
+        } catch (error) {
+            console.error(error);
+            if (this.isCalendarOverrideClientError(error)) {
+                return this.badRequest(error.message);
+            }
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            };
+        }
+    }
+
     extractOverviewPayload(body) {
         return {
             propertyId: body.propertyId || body.property,
@@ -439,6 +526,16 @@ export class PropertyController {
         if (!Number.isFinite(roomRate) || roomRate < 2) {
             return "Pricing roomRate must be a number greater than or equal to 2.";
         }
+
+        const weekendRateRaw =
+            pricing.weekendRate ?? pricing.weekendrate ?? pricing.weekendPrice ?? pricing.weekendprice;
+        if (weekendRateRaw !== undefined && weekendRateRaw !== null && weekendRateRaw !== "") {
+            const weekendRate = Number(weekendRateRaw);
+            if (!Number.isFinite(weekendRate) || weekendRate < 2) {
+                return "Pricing weekendRate must be a number greater than or equal to 2.";
+            }
+        }
+
         if (pricing.cleaning !== undefined && pricing.cleaning !== null) {
             const cleaning = Number(pricing.cleaning);
             if (!Number.isFinite(cleaning) || cleaning < 0) {
@@ -571,6 +668,17 @@ export class PropertyController {
         const normalizedPricing = {
             roomRate: Math.trunc(roomRate),
         };
+
+        const weekendRateRaw =
+            pricing.weekendRate ?? pricing.weekendrate ?? pricing.weekendPrice ?? pricing.weekendprice;
+        if (weekendRateRaw !== undefined && weekendRateRaw !== null && weekendRateRaw !== "") {
+            const weekendRate = Number(weekendRateRaw);
+            if (!Number.isFinite(weekendRate) || weekendRate < 2) {
+                throw new Error("Pricing weekendRate must be a number greater than or equal to 2.");
+            }
+            normalizedPricing.weekendRate = Math.trunc(weekendRate);
+        }
+
         if (pricing.cleaning !== undefined && pricing.cleaning !== null) {
             const cleaning = Number(pricing.cleaning);
             if (!Number.isFinite(cleaning) || cleaning < 0) {
@@ -579,6 +687,192 @@ export class PropertyController {
             normalizedPricing.cleaning = Math.trunc(cleaning);
         }
         return normalizedPricing;
+    }
+
+    normalizeCalendarOverrideRangePayload(payload) {
+        const startDateRaw = payload?.startDate ?? payload?.fromDate ?? payload?.dateFrom;
+        const endDateRaw = payload?.endDate ?? payload?.toDate ?? payload?.dateTo;
+
+        const startDate =
+            startDateRaw === undefined || startDateRaw === null || startDateRaw === ""
+                ? null
+                : this.normalizeCalendarDateValue(startDateRaw, "startDate");
+        const endDate =
+            endDateRaw === undefined || endDateRaw === null || endDateRaw === ""
+                ? null
+                : this.normalizeCalendarDateValue(endDateRaw, "endDate");
+
+        if (startDate && endDate) {
+            return {
+                startDate: Math.min(startDate, endDate),
+                endDate: Math.max(startDate, endDate),
+            };
+        }
+
+        if (startDate) {
+            return { startDate };
+        }
+        if (endDate) {
+            return { endDate };
+        }
+        return {};
+    }
+
+    normalizeCalendarOverridesPayload(overrides) {
+        const normalizedOverrides = Array.from(
+            new Map(
+                (Array.isArray(overrides) ? overrides : [])
+                    .map((entry) => {
+                        if (!this.isPlainObject(entry)) {
+                            throw new Error("Calendar overrides must contain objects.");
+                        }
+
+                        const dateRaw = entry.date ?? entry.calendarDate ?? entry.day;
+                        const calendarDate = this.normalizeCalendarDateValue(dateRaw, "date");
+
+                        const nightlyPriceRaw =
+                            entry.nightlyPrice ??
+                            entry.nightly_rate ??
+                            entry.price;
+
+                        let nightlyPrice = null;
+                        if (
+                            nightlyPriceRaw !== undefined &&
+                            nightlyPriceRaw !== null &&
+                            nightlyPriceRaw !== ""
+                        ) {
+                            const parsedNightlyPrice = Number(nightlyPriceRaw);
+                            if (!Number.isFinite(parsedNightlyPrice) || parsedNightlyPrice < 2) {
+                                throw new Error(
+                                    "Calendar override nightlyPrice must be a number greater than or equal to 2."
+                                );
+                            }
+                            nightlyPrice = Math.trunc(parsedNightlyPrice);
+                        }
+
+                        const isAvailable = this.normalizeCalendarOverrideBoolean(
+                            entry.isAvailable,
+                            "isAvailable"
+                        );
+
+                        return [
+                            calendarDate,
+                            {
+                                calendarDate,
+                                isAvailable,
+                                nightlyPrice,
+                            },
+                        ];
+                    })
+                    .filter(Boolean)
+            ).values()
+        );
+
+        return normalizedOverrides;
+    }
+
+    normalizeCalendarOverrideBoolean(value, fieldName) {
+        if (value === undefined || value === null || value === "") {
+            return null;
+        }
+        if (typeof value === "boolean") {
+            return value;
+        }
+        if (typeof value === "number") {
+            if (value === 1) {
+                return true;
+            }
+            if (value === 0) {
+                return false;
+            }
+        }
+        if (typeof value === "string") {
+            const normalized = value.trim().toLowerCase();
+            if (normalized === "true" || normalized === "1") {
+                return true;
+            }
+            if (normalized === "false" || normalized === "0") {
+                return false;
+            }
+        }
+        throw new Error(`Calendar override ${fieldName} must be a boolean.`);
+    }
+
+    normalizeCalendarDateValue(value, fieldName) {
+        if (value === undefined || value === null || value === "") {
+            throw new Error(`Calendar override ${fieldName} is required.`);
+        }
+
+        if (typeof value === "string") {
+            const trimmed = value.trim();
+            const ymdParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+            if (ymdParts) {
+                const year = Number(ymdParts[1]);
+                const month = Number(ymdParts[2]);
+                const day = Number(ymdParts[3]);
+                return this.normalizeCalendarDateParts(year, month, day, fieldName);
+            }
+
+            if (/^\d{8}$/.test(trimmed)) {
+                const numericDate = Number(trimmed);
+                return this.normalizeCalendarDateInteger(numericDate, fieldName);
+            }
+        }
+
+        const numericValue = Number(value);
+        if (!Number.isFinite(numericValue) || numericValue <= 0) {
+            throw new Error(`Calendar override ${fieldName} is invalid.`);
+        }
+
+        const truncatedValue = Math.trunc(numericValue);
+        if (truncatedValue >= 10000101 && truncatedValue <= 99991231) {
+            return this.normalizeCalendarDateInteger(truncatedValue, fieldName);
+        }
+
+        const milliseconds = truncatedValue > 1000000000000 ? truncatedValue : truncatedValue * 1000;
+        const date = new Date(milliseconds);
+        if (Number.isNaN(date.getTime())) {
+            throw new Error(`Calendar override ${fieldName} is invalid.`);
+        }
+
+        return this.normalizeCalendarDateParts(
+            date.getUTCFullYear(),
+            date.getUTCMonth() + 1,
+            date.getUTCDate(),
+            fieldName
+        );
+    }
+
+    normalizeCalendarDateInteger(value, fieldName) {
+        const year = Math.trunc(value / 10000);
+        const month = Math.trunc((value % 10000) / 100);
+        const day = value % 100;
+        return this.normalizeCalendarDateParts(year, month, day, fieldName);
+    }
+
+    normalizeCalendarDateParts(year, month, day, fieldName) {
+        if (
+            !Number.isFinite(year) ||
+            !Number.isFinite(month) ||
+            !Number.isFinite(day) ||
+            month < 1 ||
+            month > 12 ||
+            day < 1 ||
+            day > 31
+        ) {
+            throw new Error(`Calendar override ${fieldName} is invalid.`);
+        }
+
+        const normalizedDate = new Date(Date.UTC(year, month - 1, day));
+        const isExactDate =
+            normalizedDate.getUTCFullYear() === year &&
+            normalizedDate.getUTCMonth() + 1 === month &&
+            normalizedDate.getUTCDate() === day;
+        if (!isExactDate) {
+            throw new Error(`Calendar override ${fieldName} is invalid.`);
+        }
+
+        return year * 10000 + month * 100 + day;
     }
 
     normalizeAvailabilityRestrictionsPayload(availabilityRestrictions) {
@@ -705,6 +999,14 @@ export class PropertyController {
             error?.message?.startsWith("Unknown availability restrictions:") ||
             error?.message?.startsWith("Unknown amenity IDs:") ||
             error?.message?.startsWith("Unknown policy rules:")
+        );
+    }
+
+    isCalendarOverrideClientError(error) {
+        return (
+            error?.message?.startsWith("Calendar override") ||
+            error?.message?.startsWith("Calendar overrides") ||
+            error?.statusCode === 400
         );
     }
 
