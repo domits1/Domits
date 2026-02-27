@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { Auth } from "aws-amplify";
 import useUserProfile from "../../hooks/useUserProfile";
@@ -33,14 +33,12 @@ const MOCK_COGNITO_USER = {
   },
 };
 
-const flushEffects = () => act(async () => { await Promise.resolve(); });
-
 describe("useUserProfile", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     globalThis.fetch = jest.fn();
     globalThis.alert = jest.fn();
-    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    Auth.currentAuthenticatedUser.mockImplementation(() => new Promise(() => {}));
     Auth.getPreferredMFA.mockResolvedValue("NOMFA");
     Auth.updateUserAttributes.mockResolvedValue({});
   });
@@ -71,10 +69,10 @@ describe("useUserProfile", () => {
   // ─── Data fetching ────────────────────────────────────────────────────────
 
   test("fetches user data on mount and populates user state from Cognito attributes", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     const { result } = renderHook(() => useUserProfile());
-    await flushEffects();
 
-    expect(result.current.user.email).toBe("test@example.com");
+    await waitFor(() => expect(result.current.user.email).toBe("test@example.com"));
     expect(result.current.user.name).toBe("John");
     expect(result.current.user.phone).toBe("+31612345678");
     expect(result.current.user.title).toBe("Mr.");
@@ -84,9 +82,9 @@ describe("useUserProfile", () => {
   });
 
   test("populates authStatus correctly from Cognito attributes", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     const { result } = renderHook(() => useUserProfile());
-    await flushEffects();
-
+    await waitFor(() => expect(result.current.authStatus.emailVerified).toBe(true));
     expect(result.current.authStatus.emailVerified).toBe(true);
     expect(result.current.authStatus.phoneVerified).toBe(false);
     expect(result.current.authStatus.preferredMFA).toBe("NOMFA");
@@ -95,8 +93,7 @@ describe("useUserProfile", () => {
   test("handles Auth fetch failure gracefully without throwing", async () => {
     Auth.currentAuthenticatedUser.mockRejectedValue(new Error("Not signed in"));
     const { result } = renderHook(() => useUserProfile());
-    await flushEffects();
-
+    await waitFor(() => expect(result.current.user.email).toBe(""));
     expect(result.current.user.email).toBe("");
   });
 
@@ -211,6 +208,7 @@ describe("useUserProfile", () => {
   });
 
   test("onSaveUserName: sends POST and updates user.name on success", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     globalThis.fetch.mockResolvedValue({
       json: () => Promise.resolve({ statusCode: 200 }),
     });
@@ -228,6 +226,7 @@ describe("useUserProfile", () => {
   // ─── Save email ───────────────────────────────────────────────────────────
 
   test("onSaveUserEmail: shows alert when tempUser email is empty", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     const { result } = renderHook(() => useUserProfile());
     await act(async () => {
       await result.current.onSaveUserEmail();
@@ -236,6 +235,7 @@ describe("useUserProfile", () => {
   });
 
   test("onSaveUserEmail: shows alert for malformed email", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     const { result } = renderHook(() => useUserProfile());
     act(() => {
       result.current.onInputChange({ target: { name: "email", value: "not-an-email" } });
@@ -247,6 +247,7 @@ describe("useUserProfile", () => {
   });
 
   test("onSaveUserEmail: sets isVerifying to true when API returns verification message", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     globalThis.fetch.mockResolvedValue({
       ok: true,
       json: () =>
@@ -263,6 +264,7 @@ describe("useUserProfile", () => {
   });
 
   test("onSaveUserEmail: shows alert when API reports email already in use", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     globalThis.fetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ message: "This email address is already in use." }),
@@ -278,6 +280,7 @@ describe("useUserProfile", () => {
   });
 
   test("onSaveUserEmail in verifying state: calls confirmEmailChange with the entered code", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     globalThis.fetch.mockResolvedValueOnce({
       ok: true,
       json: () =>
@@ -329,6 +332,7 @@ describe("useUserProfile", () => {
   });
 
   test("onSaveUserDateOfBirth: calls Auth with ISO date and updates user on success", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     const { result } = renderHook(() => useUserProfile());
     act(() => {
       result.current.onInputChange({ target: { name: "dateOfBirth", value: "01-01-1990" } });
@@ -370,9 +374,8 @@ describe("useUserProfile", () => {
   });
 
   test("onSaveUserNationality: saves valid nationality and updates user state", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     const { result } = renderHook(() => useUserProfile());
-    await flushEffects();
-
     act(() => {
       result.current.onInputChange({ target: { name: "nationality", value: "German" } });
     });
@@ -391,6 +394,7 @@ describe("useUserProfile", () => {
   // ─── Key-press handlers ───────────────────────────────────────────────────
 
   test("onKeyPressName: triggers save on Enter key", async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
     globalThis.fetch.mockResolvedValue({ json: () => Promise.resolve({ statusCode: 200 }) });
     const { result } = renderHook(() => useUserProfile());
     act(() => {
