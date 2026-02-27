@@ -3,6 +3,50 @@ import { Repository } from "../../data/repository.js";
 
 const MAX_ICS_BYTES = 2_000_000;
 const MAX_EXPAND_DAYS = 365;
+const CALENDAR_PROVIDER = {
+  AIRBNB: "airbnb",
+  BOOKING: "booking",
+  GENERIC: "generic",
+};
+
+const normalizeCalendarProvider = (provider) => {
+  const normalized = String(provider || "").trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  if (normalized === CALENDAR_PROVIDER.AIRBNB || normalized === CALENDAR_PROVIDER.BOOKING) {
+    return normalized;
+  }
+  return CALENDAR_PROVIDER.GENERIC;
+};
+
+const resolveCalendarProvider = ({ calendarProvider, calendarUrl, calendarName }) => {
+  const explicitProvider = normalizeCalendarProvider(calendarProvider);
+  if (explicitProvider) {
+    return explicitProvider;
+  }
+
+  const url = String(calendarUrl || "").trim().toLowerCase();
+  const name = String(calendarName || "").trim().toLowerCase();
+  let hostname = "";
+  if (url) {
+    try {
+      hostname = String(new URL(url).hostname || "").toLowerCase();
+    } catch {
+      hostname = "";
+    }
+  }
+
+  if (hostname.includes("airbnb") || url.includes("airbnb") || name.includes("airbnb")) {
+    return CALENDAR_PROVIDER.AIRBNB;
+  }
+
+  if (hostname.includes("booking.com") || url.includes("booking.com") || name.includes("booking")) {
+    return CALENDAR_PROVIDER.BOOKING;
+  }
+
+  return CALENDAR_PROVIDER.GENERIC;
+};
 
 export class Service {
   constructor() {
@@ -64,6 +108,11 @@ export class Service {
         sourceId: r.sourceId,
         calendarName: r.calendarName,
         calendarUrl: r.calendarUrl,
+        calendarProvider: resolveCalendarProvider({
+          calendarProvider: r.provider,
+          calendarUrl: r.calendarUrl,
+          calendarName: r.calendarName,
+        }),
         lastSyncAt: r.lastSyncAt,
         updatedAt: r.updatedAt,
         etag: r.etag,
@@ -73,13 +122,18 @@ export class Service {
     };
   }
 
-  async upsertSource({ propertyId, calendarUrl, calendarName }) {
+  async upsertSource({ propertyId, calendarUrl, calendarName, calendarProvider }) {
     if (!propertyId || typeof propertyId !== "string") throw new BadRequestException("propertyId is required");
     if (!calendarUrl || typeof calendarUrl !== "string") throw new BadRequestException("calendarUrl is required");
     if (!calendarName || typeof calendarName !== "string") throw new BadRequestException("calendarName is required");
 
     const url = calendarUrl.trim();
     const name = calendarName.trim();
+    const provider = resolveCalendarProvider({
+      calendarProvider,
+      calendarUrl: url,
+      calendarName: name,
+    });
 
     const sourceId = hashSourceId(url);
     const { events, meta } = await this.retrieveFromExternalCalendar(url);
@@ -91,6 +145,7 @@ export class Service {
       sourceId,
       calendarName: name,
       calendarUrl: url,
+      provider,
       blockedDatesText,
       lastSyncAt: new Date().toISOString(),
       etag: meta?.etag || null,
@@ -125,6 +180,11 @@ export class Service {
           sourceId: s.sourceId,
           calendarName: s.calendarName || "EXTERNAL",
           calendarUrl: url,
+          provider: resolveCalendarProvider({
+            calendarProvider: s.provider,
+            calendarUrl: url,
+            calendarName: s.calendarName || "EXTERNAL",
+          }),
           blockedDatesText: JSON.stringify(blockedDates),
           lastSyncAt: new Date().toISOString(),
           etag: meta?.etag || null,

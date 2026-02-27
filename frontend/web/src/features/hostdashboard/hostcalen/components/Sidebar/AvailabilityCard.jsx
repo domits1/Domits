@@ -29,18 +29,27 @@ export default function AvailabilityCard({
   advanceNoticeDays,
   onOpenSettings,
 }) {
+  const openSettings = () => onOpenSettings?.();
+
   return (
-    <section className="hc-info-card" aria-label="Availability summary">
+    <section
+      className="hc-info-card hc-info-card--interactive"
+      aria-label="Open availability settings"
+      role="button"
+      tabIndex={0}
+      onClick={openSettings}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openSettings();
+        }
+      }}
+    >
       <header className="hc-info-card-header">
         <h3 className="hc-info-card-title">Availability</h3>
-        <button
-          type="button"
-          className="hc-info-card-chevron hc-info-card-chevron-btn"
-          aria-label="Open availability settings"
-          onClick={() => onOpenSettings?.()}
-        >
+        <span className="hc-info-card-chevron" aria-hidden="true">
           <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
-        </button>
+        </span>
       </header>
 
       <p className="hc-info-card-line">{getStayText(minimumStay, maximumStay)}</p>

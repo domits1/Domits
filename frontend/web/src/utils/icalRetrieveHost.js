@@ -39,8 +39,14 @@ export async function dbListIcalSources(propertyId) {
   };
 }
 
-export async function dbUpsertIcalSource({ propertyId, calendarUrl, calendarName }) {
-  const data = await callIcalApi({ action: "UPSERT_SOURCE", propertyId, calendarUrl, calendarName });
+export async function dbUpsertIcalSource({ propertyId, calendarUrl, calendarName, calendarProvider }) {
+  const data = await callIcalApi({
+    action: "UPSERT_SOURCE",
+    propertyId,
+    calendarUrl,
+    calendarName,
+    ...(calendarProvider ? { calendarProvider } : {}),
+  });
   return {
     sources: Array.isArray(data.sources) ? data.sources : [],
     blockedDates: Array.isArray(data.blockedDates) ? data.blockedDates : [],

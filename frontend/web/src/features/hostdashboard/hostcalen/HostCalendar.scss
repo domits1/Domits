@@ -650,6 +650,33 @@ $accent: #2f6fed;
   padding: 14px;
 }
 
+.hc-info-card--interactive {
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.hc-info-card--interactive:hover {
+  background: #f8fafc;
+  border-color: #c4ccd7;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.12);
+  transform: translateY(-1px);
+}
+
+.hc-info-card--interactive:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.hc-info-card--interactive:focus-visible {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.16);
+}
+
 .hc-info-card-header {
   display: flex;
   align-items: center;
@@ -674,31 +701,6 @@ $accent: #2f6fed;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.hc-info-card-chevron-btn {
-  border: 0;
-  cursor: pointer;
-  transition:
-    background-color 0.16s ease,
-    box-shadow 0.16s ease,
-    transform 0.16s ease;
-}
-
-.hc-info-card-chevron-btn:hover:not(:disabled) {
-  background: #e7edf4;
-  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.12);
-  transform: translateY(-1px);
-}
-
-.hc-info-card-chevron-btn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
-.hc-info-card-chevron-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.16);
 }
 
 .hc-info-card-line {
@@ -1129,7 +1131,7 @@ $accent: #2f6fed;
 
 .hc-listing-trigger:hover:not(:disabled) .hc-chevron-icon,
 .hc-nav-button:hover:not(:disabled) .hc-chevron-icon,
-.hc-info-card-chevron-btn:hover:not(:disabled) .hc-chevron-icon,
+.hc-info-card--interactive:hover .hc-chevron-icon,
 .hc-pricing-settings-back:hover:not(:disabled) .hc-chevron-icon,
 .hc-availability-settings-back:hover:not(:disabled) .hc-chevron-icon,
 .hc-sync-back:hover:not(:disabled) .hc-chevron-icon,
@@ -1210,6 +1212,16 @@ $accent: #2f6fed;
   background: #f9fafb;
 }
 
+.hc-sync-input--select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
+    linear-gradient(135deg, #6b7280 50%, transparent 50%);
+  background-position: calc(100% - 16px) calc(50% - 3px), calc(100% - 10px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
+}
+
 .hc-sync-input:focus {
   outline: none;
   border-color: #16a34a;
@@ -1256,6 +1268,74 @@ $accent: #2f6fed;
   cursor: not-allowed;
 }
 
+.hc-sync-cancel-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hc-sync-cancel-btn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.hc-sync-cancel-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hc-sync-edit-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: rgba(15, 23, 42, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.hc-sync-edit-modal {
+  width: min(460px, 100%);
+  border: 1px solid #d6d9df;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: 0 24px 58px rgba(15, 23, 42, 0.24);
+}
+
+.hc-sync-edit-modal-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #111827;
+}
+
+.hc-sync-edit-modal-copy {
+  margin: 6px 0 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #4b5563;
+}
+
+.hc-sync-edit-modal-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hc-sync-edit-modal-actions .hc-sync-add-btn {
+  margin-top: 0;
+  width: auto;
+  min-width: 140px;
+}
+
 .hc-sync-error {
   margin: 0;
   font-size: 13px;
@@ -1268,9 +1348,9 @@ $accent: #2f6fed;
 }
 
 .hc-sync-connected-title {
-  margin: 0 0 6px;
-  font-size: 13px;
-  color: #6b7280;
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #111827;
   font-weight: 700;
 }
 
@@ -1279,17 +1359,111 @@ $accent: #2f6fed;
   padding: 0;
   list-style: none;
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hc-sync-connected-card {
+  border: 1px solid #dde3ea;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.hc-sync-connected-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.hc-sync-connected-card-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hc-sync-connected-card-icon-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: brightness(0) saturate(100%) invert(43%) sepia(87%) saturate(689%) hue-rotate(84deg) brightness(92%)
+    contrast(90%);
+}
+
+.hc-sync-connected-card-icon-image--provider {
+  filter: none;
+  object-fit: contain;
+}
+
+.hc-sync-connected-card-copy {
+  min-width: 0;
+}
+
+.hc-sync-connected-card-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.hc-sync-connected-card-status {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.hc-sync-connected-card-meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.hc-sync-connected-card-actions {
+  margin-top: 9px;
+  display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.hc-sync-connected-item {
-  border: 1px solid #d5dbe4;
+.hc-sync-source-action {
+  border: 1px solid #d1d5db;
   border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: 4px 9px;
+  background: #ffffff;
   color: #374151;
-  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hc-sync-source-action:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.hc-sync-source-action.is-active {
+  border-color: #16a34a;
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.hc-sync-source-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hc-sync-source-action--danger {
+  border-color: #ef4444;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.hc-sync-source-action--danger:hover:not(:disabled) {
+  background: #fee2e2;
 }
 
 .hc-sync-meta {

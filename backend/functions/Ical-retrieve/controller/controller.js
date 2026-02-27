@@ -44,11 +44,17 @@ export class Controller {
         const propertyId = body?.propertyId ? String(body.propertyId).trim() : "";
         const calendarUrl = body?.calendarUrl ? String(body.calendarUrl).trim() : "";
         const calendarName = body?.calendarName ? String(body.calendarName).trim() : "";
+        const calendarProvider = body?.calendarProvider ? String(body.calendarProvider).trim() : "";
         if (!propertyId) return err(400, "propertyId is required");
         if (!calendarUrl) return err(400, "calendarUrl is required");
         if (!calendarName) return err(400, "calendarName is required");
         await this.authManager.authorizePropertyOwnerForUser(user, propertyId);
-        const data = await this.service.upsertSource({ propertyId, calendarUrl, calendarName });
+        const data = await this.service.upsertSource({
+          propertyId,
+          calendarUrl,
+          calendarName,
+          calendarProvider,
+        });
         return ok(data);
       }
 

@@ -14,18 +14,27 @@ export default function PricingCard({
       ? `${weeklyDiscountPercent}% weekly discount`
       : "No weekly discount";
 
+  const openSettings = () => onOpenSettings?.();
+
   return (
-    <section className="hc-info-card" aria-label="Pricing summary">
+    <section
+      className="hc-info-card hc-info-card--interactive"
+      aria-label="Open price settings"
+      role="button"
+      tabIndex={0}
+      onClick={openSettings}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openSettings();
+        }
+      }}
+    >
       <header className="hc-info-card-header">
         <h3 className="hc-info-card-title">Price</h3>
-        <button
-          type="button"
-          className="hc-info-card-chevron hc-info-card-chevron-btn"
-          aria-label="Open price settings"
-          onClick={() => onOpenSettings?.()}
-        >
-          <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
-        </button>
+        <span className="hc-info-card-chevron" aria-hidden="true">
+          <img src={arrowRightIcon} alt="" className="hc-chevron-icon" />
+        </span>
       </header>
 
       <p className="hc-info-card-line">{formatEuroAmount(nightlyRate)} per night</p>

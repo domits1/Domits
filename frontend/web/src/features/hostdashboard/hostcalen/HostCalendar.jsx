@@ -19,7 +19,7 @@ import {
   subMonthsUTC,
 } from "./utils/date";
 import { getAccessToken, getCognitoUserId } from "../../../services/getAccessToken";
-import { dbListIcalSources, dbUpsertIcalSource } from "../../../utils/icalRetrieveHost";
+import { dbDeleteIcalSource, dbListIcalSources, dbUpsertIcalSource } from "../../../utils/icalRetrieveHost";
 import {
   PRICING_MIN_NIGHTLY_RATE_FOR_SAVE,
   PRICING_RESTRICTION_KEYS,
@@ -68,6 +68,21 @@ const ICAL_EXPORT_REGION = "eu-north-1";
 const WEEKEND_PRICE_KEYS = ["weekendRate", "weekendrate", "weekendPrice", "weekendprice"];
 const BOOKING_EXCLUDED_STATUSES = new Set(["failed", "cancelled", "canceled", "denied", "rejected"]);
 const SELECTED_PROPERTY_STORAGE_PREFIX = "host-calendar:selected-property";
+const INITIAL_CALENDAR_SYNC_FORM = {
+  calendarUrl: "",
+  calendarName: "",
+  calendarProvider: "auto",
+};
+
+const normalizeCalendarProviderForForm = (value) => {
+  const normalized = String(value || "auto")
+    .trim()
+    .toLowerCase();
+  if (normalized === "airbnb" || normalized === "booking" || normalized === "generic") {
+    return normalized;
+  }
+  return "auto";
+};
 
 const getSelectedPropertyStorageKey = (hostId) =>
   `${SELECTED_PROPERTY_STORAGE_PREFIX}:${String(hostId || "").trim()}`;
@@ -576,12 +591,11 @@ export default function HostCalendar() {
   const [isSavingAvailabilitySettings, setIsSavingAvailabilitySettings] = useState(false);
   const [availabilitySettingsSaveError, setAvailabilitySettingsSaveError] = useState("");
   const [calendarSources, setCalendarSources] = useState([]);
-  const [calendarSyncForm, setCalendarSyncForm] = useState({
-    calendarUrl: "",
-    calendarName: "",
-  });
+  const [calendarSyncForm, setCalendarSyncForm] = useState(INITIAL_CALENDAR_SYNC_FORM);
   const [calendarSyncError, setCalendarSyncError] = useState("");
   const [isSavingCalendarSync, setIsSavingCalendarSync] = useState(false);
+  const [removingCalendarSourceId, setRemovingCalendarSourceId] = useState("");
+  const [editingCalendarSourceId, setEditingCalendarSourceId] = useState("");
   const [domitsCalendarLinkCopied, setDomitsCalendarLinkCopied] = useState(false);
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
@@ -804,11 +818,65 @@ export default function HostCalendar() {
 
   const calendarUrlInput = String(calendarSyncForm.calendarUrl || "");
   const calendarNameInput = String(calendarSyncForm.calendarName || "");
+  const calendarProviderInput = String(calendarSyncForm.calendarProvider || "auto")
+    .trim()
+    .toLowerCase();
+  const isEditingCalendarSource = Boolean(String(editingCalendarSourceId || "").trim());
+  const calendarSourceById = useMemo(() => {
+    const map = new Map();
+    const sourceList = Array.isArray(calendarSources) ? calendarSources : [];
+    sourceList.forEach((source, index) => {
+      const sourceId = String(source?.sourceId || source?.id || `${index}`).trim();
+      if (sourceId) {
+        map.set(sourceId, source);
+      }
+    });
+    return map;
+  }, [calendarSources]);
+  const editingCalendarSource = useMemo(() => {
+    if (!isEditingCalendarSource) {
+      return null;
+    }
+    return calendarSourceById.get(String(editingCalendarSourceId || "").trim()) || null;
+  }, [calendarSourceById, editingCalendarSourceId, isEditingCalendarSource]);
+  const hasCalendarEditChanges = useMemo(() => {
+    if (!isEditingCalendarSource || !editingCalendarSource) {
+      return false;
+    }
+
+    const initialUrl = String(
+      editingCalendarSource?.calendarUrl || editingCalendarSource?.url || ""
+    ).trim();
+    const initialName = String(
+      editingCalendarSource?.calendarName || editingCalendarSource?.name || ""
+    ).trim();
+    const initialProvider = normalizeCalendarProviderForForm(
+      editingCalendarSource?.calendarProvider || editingCalendarSource?.provider || ""
+    );
+
+    const currentUrl = String(calendarUrlInput || "").trim();
+    const currentName = String(calendarNameInput || "").trim();
+    const currentProvider = normalizeCalendarProviderForForm(calendarProviderInput);
+
+    return (
+      currentUrl !== initialUrl ||
+      currentName !== initialName ||
+      currentProvider !== initialProvider
+    );
+  }, [
+    calendarNameInput,
+    calendarProviderInput,
+    calendarUrlInput,
+    editingCalendarSource,
+    isEditingCalendarSource,
+  ]);
   const canAddCalendarSource =
     Boolean(selectedPropertyId) &&
     !isSavingCalendarSync &&
+    !removingCalendarSourceId &&
     calendarUrlInput.trim().length > 0 &&
-    calendarNameInput.trim().length > 0;
+    calendarNameInput.trim().length > 0 &&
+    (!isEditingCalendarSource || hasCalendarEditChanges);
 
   const prev = () => setCursor((currentCursor) => subMonthsUTC(currentCursor, 1));
   const next = () => setCursor((currentCursor) => addMonthsUTC(currentCursor, 1));
@@ -962,11 +1030,10 @@ export default function HostCalendar() {
           setAvailabilityOverrides({});
           setPendingSelectionStartKey(null);
           setSelectedDateKeys([]);
-          setCalendarSyncForm({
-            calendarUrl: "",
-            calendarName: "",
-          });
+          setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
           setCalendarSyncError("");
+          setRemovingCalendarSourceId("");
+          setEditingCalendarSourceId("");
           setDomitsCalendarLinkCopied(false);
           setSidebarMode("summary");
           setDetailsError("");
@@ -983,11 +1050,10 @@ export default function HostCalendar() {
           setAvailabilityOverrides({});
           setPendingSelectionStartKey(null);
           setSelectedDateKeys([]);
-          setCalendarSyncForm({
-            calendarUrl: "",
-            calendarName: "",
-          });
+          setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
           setCalendarSyncError("");
+          setRemovingCalendarSourceId("");
+          setEditingCalendarSourceId("");
           setDomitsCalendarLinkCopied(false);
           setSidebarMode("summary");
           setDetailsError("Could not load property details. Please sign in again.");
@@ -1029,11 +1095,10 @@ export default function HostCalendar() {
         setSelectionPriceDirty(false);
         setPendingSelectionStartKey(null);
         setSelectedDateKeys([]);
-        setCalendarSyncForm({
-          calendarUrl: "",
-          calendarName: "",
-        });
+        setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
         setCalendarSyncError("");
+        setRemovingCalendarSourceId("");
+        setEditingCalendarSourceId("");
         setDomitsCalendarLinkCopied(false);
         setSidebarMode("summary");
       } catch (error) {
@@ -1048,11 +1113,10 @@ export default function HostCalendar() {
         setSelectionPriceDirty(false);
         setPendingSelectionStartKey(null);
         setSelectedDateKeys([]);
-        setCalendarSyncForm({
-          calendarUrl: "",
-          calendarName: "",
-        });
+        setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
         setCalendarSyncError("");
+        setRemovingCalendarSourceId("");
+        setEditingCalendarSourceId("");
         setDomitsCalendarLinkCopied(false);
         setSidebarMode("summary");
         setDetailsError(error?.message || "Could not load listing details.");
@@ -1244,19 +1308,78 @@ export default function HostCalendar() {
     }
   };
 
+  const handleEditCalendarSource = (sourceId) => {
+    const normalizedSourceId = String(sourceId || "").trim();
+    if (!normalizedSourceId) {
+      setCalendarSyncError("Could not edit calendar connection.");
+      return;
+    }
+
+    const source = calendarSourceById.get(normalizedSourceId);
+    if (!source) {
+      setCalendarSyncError("Could not load calendar connection.");
+      return;
+    }
+
+    const persistedProvider = String(source?.calendarProvider || source?.provider || "")
+      .trim()
+      .toLowerCase();
+    const editableProvider = ["airbnb", "booking", "generic"].includes(persistedProvider)
+      ? persistedProvider
+      : "auto";
+
+    setEditingCalendarSourceId(normalizedSourceId);
+    setCalendarSyncError("");
+    setCalendarSyncForm({
+      calendarUrl: String(source?.calendarUrl || source?.url || "").trim(),
+      calendarName: String(source?.calendarName || source?.name || "").trim(),
+      calendarProvider: editableProvider,
+    });
+  };
+
+  const handleCancelEditCalendarSource = () => {
+    setEditingCalendarSourceId("");
+    setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
+    setCalendarSyncError("");
+  };
+
   const handleAddCalendarSource = async () => {
     const calendarUrl = calendarUrlInput.trim();
     const calendarName = calendarNameInput.trim();
+    const calendarProvider = calendarProviderInput === "auto" ? "" : calendarProviderInput;
+    const normalizedEditingSourceId = String(editingCalendarSourceId || "").trim();
+    const sourceBeingEdited = normalizedEditingSourceId
+      ? calendarSourceById.get(normalizedEditingSourceId) || null
+      : null;
+    const previousSourceUrl = String(sourceBeingEdited?.calendarUrl || sourceBeingEdited?.url || "").trim();
+    const hasSourceUrlChangedWhileEditing =
+      Boolean(normalizedEditingSourceId) &&
+      Boolean(previousSourceUrl) &&
+      previousSourceUrl !== calendarUrl;
+
     if (!selectedPropertyId) {
       setCalendarSyncError("Select a listing first.");
+      return;
+    }
+    if (normalizedEditingSourceId && !sourceBeingEdited) {
+      setCalendarSyncError("Could not update calendar connection. Please retry.");
       return;
     }
     if (!calendarUrl || !calendarName) {
       setCalendarSyncError("Both the calendar link and calendar name are required.");
       return;
     }
-    if (!calendarUrl.toLowerCase().includes(".ics")) {
-      setCalendarSyncError("The external calendar link must contain a .ics file URL.");
+
+    let parsedCalendarUrl;
+    try {
+      parsedCalendarUrl = new URL(calendarUrl);
+    } catch {
+      setCalendarSyncError("Enter a valid public iCal URL (http/https).");
+      return;
+    }
+
+    if (parsedCalendarUrl.protocol !== "http:" && parsedCalendarUrl.protocol !== "https:") {
+      setCalendarSyncError("Enter a valid public iCal URL (http/https).");
       return;
     }
 
@@ -1264,24 +1387,76 @@ export default function HostCalendar() {
     setCalendarSyncError("");
 
     try {
-      const data = await dbUpsertIcalSource({
+      let data = await dbUpsertIcalSource({
         propertyId: selectedPropertyId,
         calendarUrl,
         calendarName,
+        calendarProvider,
+      });
+
+      if (hasSourceUrlChangedWhileEditing) {
+        try {
+          data = await dbDeleteIcalSource({
+            propertyId: selectedPropertyId,
+            sourceId: normalizedEditingSourceId,
+          });
+        } catch {
+          setCalendarSyncError(
+            "Calendar updated, but old source could not be removed. Remove it manually."
+          );
+          const latestData = await dbListIcalSources(selectedPropertyId);
+          data = {
+            sources: Array.isArray(latestData?.sources) ? latestData.sources : [],
+            blockedDates: Array.isArray(latestData?.blockedDates) ? latestData.blockedDates : [],
+          };
+        }
+      }
+      const sources = Array.isArray(data?.sources) ? data.sources : [];
+      const blockedDates = Array.isArray(data?.blockedDates) ? data.blockedDates : [];
+
+      setCalendarSources(sources);
+      setExternalBlockedDates(new Set(blockedDates));
+      setEditingCalendarSourceId("");
+      setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
+    } catch (error) {
+      setCalendarSyncError(error?.message || "Could not save calendar connection.");
+    } finally {
+      setIsSavingCalendarSync(false);
+    }
+  };
+
+  const handleRemoveCalendarSource = async (sourceId) => {
+    const normalizedSourceId = String(sourceId || "").trim();
+    if (!selectedPropertyId) {
+      setCalendarSyncError("Select a listing first.");
+      return;
+    }
+    if (!normalizedSourceId) {
+      setCalendarSyncError("Could not remove calendar connection.");
+      return;
+    }
+
+    setRemovingCalendarSourceId(normalizedSourceId);
+    setCalendarSyncError("");
+
+    try {
+      const data = await dbDeleteIcalSource({
+        propertyId: selectedPropertyId,
+        sourceId: normalizedSourceId,
       });
       const sources = Array.isArray(data?.sources) ? data.sources : [];
       const blockedDates = Array.isArray(data?.blockedDates) ? data.blockedDates : [];
 
       setCalendarSources(sources);
       setExternalBlockedDates(new Set(blockedDates));
-      setCalendarSyncForm({
-        calendarUrl: "",
-        calendarName: "",
-      });
+      if (normalizedSourceId === String(editingCalendarSourceId || "").trim()) {
+        setEditingCalendarSourceId("");
+        setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
+      }
     } catch (error) {
-      setCalendarSyncError(error?.message || "Could not add calendar connection.");
+      setCalendarSyncError(error?.message || "Could not remove calendar connection.");
     } finally {
-      setIsSavingCalendarSync(false);
+      setRemovingCalendarSourceId("");
     }
   };
 
@@ -1652,11 +1827,17 @@ export default function HostCalendar() {
               domitsCalendarLink={hostCalendarExportUrl}
               externalCalendarUrlInput={calendarUrlInput}
               calendarNameInput={calendarNameInput}
+              calendarProviderInput={calendarProviderInput}
               onExternalCalendarUrlChange={(value) =>
                 updateCalendarSyncForm({ calendarUrl: String(value || "") })
               }
               onCalendarNameChange={(value) =>
                 updateCalendarSyncForm({ calendarName: String(value || "") })
+              }
+              onCalendarProviderChange={(value) =>
+                updateCalendarSyncForm({
+                  calendarProvider: String(value || "auto").trim().toLowerCase(),
+                })
               }
               onCopyDomitsCalendarLink={handleCopyDomitsCalendarLink}
               domitsCalendarLinkCopied={domitsCalendarLinkCopied}
@@ -1664,7 +1845,13 @@ export default function HostCalendar() {
               canAddCalendar={canAddCalendarSource}
               addingCalendar={isSavingCalendarSync}
               addCalendarError={calendarSyncError}
+              isEditingCalendar={isEditingCalendarSource}
               connectedSources={calendarSources}
+              onEditSource={handleEditCalendarSource}
+              editingSourceId={editingCalendarSourceId}
+              onCancelEdit={handleCancelEditCalendarSource}
+              onRemoveSource={handleRemoveCalendarSource}
+              removingSourceId={removingCalendarSourceId}
               onBack={handleCalendarSyncBack}
             />
           ) : (

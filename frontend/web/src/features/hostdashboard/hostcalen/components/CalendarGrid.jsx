@@ -119,7 +119,7 @@ export default function CalendarGrid({
                   : defaultPrice
                 : null;
 
-              const showUnavailableBadge = inCurrentMonth && !isBooked && (isBlocked || !isAvailable);
+              const showUnavailableBadge = !isBooked && (isBlocked || !isAvailable);
               const showBookedBadge = inCurrentMonth && isBooked;
 
               return (
