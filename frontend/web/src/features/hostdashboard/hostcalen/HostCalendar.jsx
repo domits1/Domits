@@ -583,7 +583,6 @@ export default function HostCalendar() {
   const [calendarSyncError, setCalendarSyncError] = useState("");
   const [isSavingCalendarSync, setIsSavingCalendarSync] = useState(false);
   const [domitsCalendarLinkCopied, setDomitsCalendarLinkCopied] = useState(false);
-  const [calendarSyncReturnMode, setCalendarSyncReturnMode] = useState("summary");
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
   const availabilityRanges = useMemo(
@@ -815,18 +814,8 @@ export default function HostCalendar() {
   const next = () => setCursor((currentCursor) => addMonthsUTC(currentCursor, 1));
   const today = () => setCursor(startOfMonthUTC(new Date()));
 
-  const openCalendarSync = (returnMode = "summary") => {
-    const normalizedReturnMode =
-      returnMode === "availability-settings" ? "availability-settings" : "summary";
-    setCalendarSyncReturnMode(normalizedReturnMode);
-    setSidebarMode("calendar-sync");
-  };
-
-  const handleCalendarSyncBack = () => {
-    const normalizedReturnMode =
-      calendarSyncReturnMode === "availability-settings" ? "availability-settings" : "summary";
-    setSidebarMode(normalizedReturnMode);
-  };
+  const openCalendarSync = () => setSidebarMode("calendar-sync");
+  const handleCalendarSyncBack = () => setSidebarMode("summary");
 
   useEffect(() => {
     let mounted = true;
@@ -1657,7 +1646,6 @@ export default function HostCalendar() {
               saveError={availabilitySettingsSaveError}
               onSave={handleSaveAvailabilitySettings}
               onBack={() => setSidebarMode("summary")}
-              onConnectCalendars={() => openCalendarSync("availability-settings")}
             />
           ) : sidebarMode === "calendar-sync" ? (
             <CalendarSyncCard
@@ -1695,7 +1683,7 @@ export default function HostCalendar() {
               />
               <CalendarLinkCard
                 connectedCount={calendarSources.length}
-                onOpenSettings={() => openCalendarSync("summary")}
+                onOpenSettings={openCalendarSync}
               />
             </>
           )}

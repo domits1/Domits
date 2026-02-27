@@ -43,7 +43,6 @@ export default function AvailabilitySettingsCard({
   saveError,
   onSave,
   onBack,
-  onConnectCalendars,
 }) {
   const windowOptions = Array.isArray(availabilityWindowOptions)
     ? availabilityWindowOptions
@@ -167,32 +166,6 @@ export default function AvailabilitySettingsCard({
               ))}
             </select>
           </article>
-        </section>
-
-        <section className="hc-availability-settings-section">
-          <h4 className="hc-availability-settings-section-title">Connect calendars</h4>
-          <p className="hc-availability-settings-copy">
-            Sync all your hosting calendars so they stay up to date.
-          </p>
-          <button
-            type="button"
-            className="hc-availability-connect-btn"
-            disabled={!onConnectCalendars}
-            onClick={() => onConnectCalendars?.()}
-          >
-            <span className="hc-availability-connect-btn-label">
-              <span className="hc-availability-connect-btn-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                  <path
-                    d="M7 3h2v2h6V3h2v2h2a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a2 2 0 0 1 2-2h2V3zm12 8H5v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </span>
-              <span>Connect to another website</span>
-            </span>
-            <span aria-hidden="true">&gt;</span>
-          </button>
         </section>
 
         {saveError ? <p className="hc-availability-settings-error">{saveError}</p> : null}

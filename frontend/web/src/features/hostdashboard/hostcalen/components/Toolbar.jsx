@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PulseBarsLoader from "./PulseBarsLoader";
+import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
+import arrowUpIcon from "../../../../images/arrow-up-icon.svg";
 
 const resolveStatusDotClass = (status) => {
   const normalizedStatus = String(status || "INACTIVE").toUpperCase();
@@ -101,7 +103,11 @@ export default function Toolbar({
             <span className="hc-listing-trigger-label">No listings found</span>
           )}
           <span className="hc-listing-trigger-chevron" aria-hidden="true">
-            {menuOpen ? "\u25B2" : "\u25BE"}
+            <img
+              src={menuOpen ? arrowUpIcon : arrowDownIcon}
+              alt=""
+              className="hc-chevron-icon hc-listing-trigger-chevron-icon"
+            />
           </span>
         </button>
 
@@ -142,6 +148,9 @@ export default function Toolbar({
             <option value="month">Month</option>
             <option value="year">Year</option>
           </select>
+          <span className="hc-select-wrap-icon" aria-hidden="true">
+            <img src={arrowDownIcon} alt="" className="hc-chevron-icon hc-select-wrap-icon-image" />
+          </span>
         </label>
       </div>
     </div>
