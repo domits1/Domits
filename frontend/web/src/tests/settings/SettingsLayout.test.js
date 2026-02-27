@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import SettingsLayout from "../../components/settings/SettingsLayout";
 
-describe.skip("SettingsLayout Component", () => {
+describe("SettingsLayout Component", () => {
   test("renders the Settings heading", () => {
     render(
       <SettingsLayout>
