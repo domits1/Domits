@@ -156,7 +156,9 @@ export default function useUserProfile() {
                 .sort((a, b) => b.code.length - a.code.length)
                 .find(({code}) => phone.startsWith(code));
             const countryCode = matchingCountryCode ? matchingCountryCode.code : "+1";
-            const strippedPhone = phone.replace(countryCode, "").trim();
+      const strippedPhone = phone.startsWith(countryCode)
+        ? phone.slice(countryCode.length).trim()
+        : phone.trim();
 
             setSelectedCountryCode(countryCode);
             setTempUser((prevState) => ({...prevState, phone: strippedPhone}));
