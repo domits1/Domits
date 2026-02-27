@@ -16,7 +16,7 @@ export default function usePhotoUpload(setUser) {
     };
 
     const handlePhotoInputChange = async (e) => {
-        const file = e.target.files && e.target.files[0];
+        const file = e.target.files?.[0];
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {

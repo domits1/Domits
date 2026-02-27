@@ -62,6 +62,7 @@ const ProfilePhotoBox = ({
             accept="image/*"
             onChange={onPhotoInputChange}
             style={{ display: "none" }}
+            aria-label="Upload profile photo"
         />
     </>
 );
@@ -69,9 +70,10 @@ const ProfilePhotoBox = ({
 const TitleField = ({value, options, onChange}) => (
     <div className="InfoBox">
         <div className="infoBoxText infoBoxText--row">
-            <span>Title:</span>
+            <label htmlFor="title-select">Title:</label>
             <div className="infoBoxEditRow">
                 <select
+                    id="title-select"
                     name="title"
                     value={value}
                     onChange={onChange}
@@ -193,8 +195,8 @@ const PhoneField = ({
                     onChange={onCountryCodeChange}
                     className="countryCodeDropdown"
                 >
-                    {countryCodes.map((country, index) => (
-                        <option key={index} value={country.code}>
+                    {countryCodes.map((country) => (
+                        <option key={country.code} value={country.code}>
                             {country.name} ({country.code})
                         </option>
                     ))}
@@ -217,9 +219,10 @@ const PhoneField = ({
 const SexField = ({value, options, onChange}) => (
     <div className="InfoBox">
         <div className="infoBoxText infoBoxText--row">
-            <span>Sex:</span>
+            <label htmlFor="sex-select">Sex:</label>
             <div className="infoBoxEditRow">
                 <select
+                    id="sex-select"
                     name="sex"
                     value={value}
                     onChange={onChange}

@@ -69,6 +69,9 @@ export const validateNationality = (value) => {
     if (!trimmed) {
         return "Please enter a nationality.";
     }
+    if (value !== trimmed) {
+        return "Use letters, spaces, hyphens, or apostrophes.";
+    }
     if (trimmed.length < 2 || trimmed.length > 64) {
         return "Nationality must be 2 to 64 characters.";
     }
