@@ -4,6 +4,8 @@ import { cx } from "../utils/classNames";
 import PulseBarsLoader from "./PulseBarsLoader";
 import checkPng from "../../../../images/icons/checkPng.png";
 import calendarUnavailablePng from "../../../../images/icons/calendar-unavailable.png";
+import arrowLeftIcon from "../../../../images/arrow-left-icon.svg";
+import arrowRightIcon from "../../../../images/arrow-right-icon.svg";
 
 const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("en-US")}`;
 
@@ -63,14 +65,10 @@ export default function CalendarGrid({
         <h2 className="hc-calendar-title">{formatYearMonth(cursor)}</h2>
         <div className="hc-calendar-nav" role="group" aria-label="Month navigation">
           <button type="button" className="hc-nav-button" onClick={onPrev} aria-label="Previous month">
-            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-              <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" strokeWidth="2" />
-            </svg>
+            <img src={arrowLeftIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
           </button>
           <button type="button" className="hc-nav-button" onClick={onNext} aria-label="Next month">
-            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-              <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2" />
-            </svg>
+            <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
           </button>
         </div>
       </header>

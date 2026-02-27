@@ -1,4 +1,5 @@
 import React from "react";
+import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 
 const getStayText = (minimumStay, maximumStay) => {
   const min = Math.max(1, Number(minimumStay) || 1);
@@ -38,9 +39,7 @@ export default function AvailabilityCard({
           aria-label="Open availability settings"
           onClick={() => onOpenSettings?.()}
         >
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2" />
-          </svg>
+          <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
         </button>
       </header>
 

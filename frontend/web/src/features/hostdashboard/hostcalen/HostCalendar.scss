@@ -158,6 +158,14 @@ $accent: #2f6fed;
   line-height: 1;
 }
 
+.hc-chevron-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  filter: brightness(0) saturate(100%) invert(25%) sepia(12%) saturate(476%) hue-rotate(176deg) brightness(93%)
+    contrast(87%);
+}
+
 .hc-listing-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -291,7 +299,7 @@ $accent: #2f6fed;
   cursor: pointer;
 }
 
-.hc-nav-button svg {
+.hc-nav-button .hc-chevron-icon {
   width: 16px;
   height: 16px;
 }
@@ -571,11 +579,6 @@ $accent: #2f6fed;
   cursor: pointer;
 }
 
-.hc-info-card-chevron svg {
-  width: 14px;
-  height: 14px;
-}
-
 .hc-info-card-line {
   margin: 5px 0;
   color: #4b5563;
@@ -606,11 +609,6 @@ $accent: #2f6fed;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-}
-
-.hc-pricing-settings-back svg {
-  width: 14px;
-  height: 14px;
 }
 
 .hc-pricing-settings-title {
@@ -782,11 +780,6 @@ $accent: #2f6fed;
   cursor: pointer;
 }
 
-.hc-availability-settings-back svg {
-  width: 14px;
-  height: 14px;
-}
-
 .hc-availability-settings-title {
   margin: 0 0 4px;
   font-size: 36px;
@@ -944,11 +937,6 @@ $accent: #2f6fed;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-}
-
-.hc-sync-back svg {
-  width: 14px;
-  height: 14px;
 }
 
 .hc-sync-title {

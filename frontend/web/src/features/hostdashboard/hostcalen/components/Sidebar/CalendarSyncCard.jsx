@@ -1,4 +1,5 @@
 import React from "react";
+import arrowLeftIcon from "../../../../../images/arrow-left-icon.svg";
 
 export default function CalendarSyncCard({
   domitsCalendarLink,
@@ -26,9 +27,7 @@ export default function CalendarSyncCard({
           onClick={() => onBack?.()}
           aria-label="Back to availability settings"
         >
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" strokeWidth="2" />
-          </svg>
+          <img src={arrowLeftIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
         </button>
       </header>
 
