@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useMemo } from "react";
+import PropTypes from "prop-types";
 import { renderHook, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { LanguageContext } from "../../context/LanguageContext";
@@ -6,12 +7,22 @@ import usePreferences from "../../hooks/usePreferences";
 
 const mockSetLanguage = jest.fn();
 
-const createWrapper = (language = "en") =>
-  ({ children }) => (
-    <LanguageContext.Provider value={{ language, setLanguage: mockSetLanguage }}>
-      {children}
-    </LanguageContext.Provider>
-  );
+const createWrapper = (language = "en") => {
+  const Wrapper = ({ children }) => {
+    const contextValue = useMemo(
+      () => ({ language, setLanguage: mockSetLanguage }),
+      [language]
+    );
+
+    return <LanguageContext.Provider value={contextValue}>{children}</LanguageContext.Provider>;
+  };
+
+  Wrapper.propTypes = {
+    children: PropTypes.node,
+  };
+
+  return Wrapper;
+};
 
 describe.skip("usePreferences", () => {
   beforeEach(() => {
