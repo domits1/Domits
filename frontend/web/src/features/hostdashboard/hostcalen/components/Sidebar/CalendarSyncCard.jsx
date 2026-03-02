@@ -12,6 +12,19 @@ const CALENDAR_PROVIDER = {
   GENERIC: "generic",
 };
 
+const REMOVE_SOURCE_FLOW_STEP = {
+  REASON: "reason",
+  CONFIRM: "confirm",
+};
+
+const REMOVE_SOURCE_REASONS = [
+  { id: "sync-not-needed", label: "I no longer need this sync connection." },
+  { id: "wrong-calendar", label: "I linked the wrong calendar." },
+  { id: "sync-issues", label: "The imported availability does not look right." },
+  { id: "managing-manually", label: "I prefer to manage availability manually." },
+  { id: "other", label: "Other" },
+];
+
 const normalizeCalendarProvider = (value) => {
   const normalized = String(value || "").trim().toLowerCase();
   if (!normalized || normalized === CALENDAR_PROVIDER.AUTO) {
@@ -123,37 +136,149 @@ export default function CalendarSyncCard({
   onEditSource,
   editingSourceId,
   onCancelEdit,
+  onRefreshSource,
+  refreshingSourceId,
   onRemoveSource,
   removingSourceId,
   onBack,
 }) {
   const [isConnectionSetupOpen, setIsConnectionSetupOpen] = React.useState(false);
+  const [pendingRemoveSourceId, setPendingRemoveSourceId] = React.useState("");
+  const [removeSourceFlowStep, setRemoveSourceFlowStep] = React.useState(REMOVE_SOURCE_FLOW_STEP.REASON);
+  const [selectedRemoveReasonIds, setSelectedRemoveReasonIds] = React.useState([]);
   const sources = Array.isArray(connectedSources) ? connectedSources : [];
   const hasConnections = sources.length > 0;
   const showConnectionSetup = !hasConnections || isConnectionSetupOpen;
+  const hasRefreshInProgress = Boolean(String(refreshingSourceId || "").trim());
+  const isConfirmingRemoval = Boolean(String(pendingRemoveSourceId || "").trim());
+  const isRemovingPendingSource =
+    String(removingSourceId || "").trim() === String(pendingRemoveSourceId || "").trim();
+
+  const pendingRemoveSource = React.useMemo(() => {
+    const normalizedPendingSourceId = String(pendingRemoveSourceId || "").trim();
+    if (!normalizedPendingSourceId) {
+      return null;
+    }
+
+    return (
+      sources.find((source, index) => {
+        const sourceId = String(source?.sourceId || source?.id || `${index}`);
+        return sourceId === normalizedPendingSourceId;
+      }) || null
+    );
+  }, [pendingRemoveSourceId, sources]);
+
+  const pendingRemoveSourceName = String(
+    pendingRemoveSource?.calendarName || pendingRemoveSource?.name || "this calendar"
+  ).trim();
+  const selectedRemoveReasonIdSet = React.useMemo(
+    () => new Set(selectedRemoveReasonIds),
+    [selectedRemoveReasonIds]
+  );
+  const hasSelectedRemoveReason = selectedRemoveReasonIdSet.size > 0;
+  const isRemoveReasonStep = removeSourceFlowStep === REMOVE_SOURCE_FLOW_STEP.REASON;
+
+  const resetRemoveSourceFlow = React.useCallback(() => {
+    setPendingRemoveSourceId("");
+    setRemoveSourceFlowStep(REMOVE_SOURCE_FLOW_STEP.REASON);
+    setSelectedRemoveReasonIds([]);
+  }, []);
+
+  const handleOpenRemoveSourceFlow = React.useCallback((sourceId) => {
+    setPendingRemoveSourceId(sourceId);
+    setRemoveSourceFlowStep(REMOVE_SOURCE_FLOW_STEP.REASON);
+    setSelectedRemoveReasonIds([]);
+  }, []);
+
+  const handleToggleRemoveReason = React.useCallback((reasonId) => {
+    setSelectedRemoveReasonIds((previous) =>
+      previous.includes(reasonId)
+        ? previous.filter((value) => value !== reasonId)
+        : [...previous, reasonId]
+    );
+  }, []);
+
+  const handleRemoveReasonsNext = () => {
+    if (isRemovingPendingSource || !hasSelectedRemoveReason) {
+      return;
+    }
+    setRemoveSourceFlowStep(REMOVE_SOURCE_FLOW_STEP.CONFIRM);
+  };
 
   React.useEffect(() => {
-    if (!isEditingCalendar) {
+    if (!isEditingCalendar && !isConfirmingRemoval) {
       return undefined;
     }
     const handleKeyDown = (event) => {
-      if (event.key === "Escape" && !addingCalendar) {
-        onCancelEdit?.();
+      if (event.key === "Escape" && !addingCalendar && !isRemovingPendingSource) {
+        if (isEditingCalendar) {
+          onCancelEdit?.();
+          return;
+        }
+        resetRemoveSourceFlow();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isEditingCalendar, onCancelEdit, addingCalendar]);
+  }, [
+    isEditingCalendar,
+    onCancelEdit,
+    addingCalendar,
+    isConfirmingRemoval,
+    isRemovingPendingSource,
+    resetRemoveSourceFlow,
+  ]);
+
+  React.useEffect(() => {
+    const normalizedPendingSourceId = String(pendingRemoveSourceId || "").trim();
+    if (!normalizedPendingSourceId || isRemovingPendingSource) {
+      return;
+    }
+
+    const sourceStillExists = sources.some((source, index) => {
+      const sourceId = String(source?.sourceId || source?.id || `${index}`);
+      return sourceId === normalizedPendingSourceId;
+    });
+
+    if (!sourceStillExists) {
+      resetRemoveSourceFlow();
+    }
+  }, [pendingRemoveSourceId, sources, isRemovingPendingSource, resetRemoveSourceFlow]);
+
+  React.useEffect(() => {
+    if (!isConfirmingRemoval) {
+      setRemoveSourceFlowStep(REMOVE_SOURCE_FLOW_STEP.REASON);
+      setSelectedRemoveReasonIds([]);
+    }
+  }, [isConfirmingRemoval]);
+
+  const handleConfirmRemoveSource = async () => {
+    if (!onRemoveSource || !pendingRemoveSourceId || isRemovingPendingSource) {
+      return;
+    }
+    await onRemoveSource(pendingRemoveSourceId);
+  };
 
   const handleBack = () => {
+    if (isConfirmingRemoval && !isRemovingPendingSource) {
+      resetRemoveSourceFlow();
+      return;
+    }
     if (hasConnections && isConnectionSetupOpen) {
       setIsConnectionSetupOpen(false);
       return;
     }
     onBack?.();
   };
+
+  let removeConfirmButtonLabel = "Remove calendar";
+  if (isRemoveReasonStep) {
+    removeConfirmButtonLabel = "Next";
+  } else if (isRemovingPendingSource) {
+    removeConfirmButtonLabel = "Removing...";
+  }
 
   const renderConnectedSection = () => (
     <section className="hc-sync-connected">
@@ -163,6 +288,7 @@ export default function CalendarSyncCard({
           const sourceId = String(source?.sourceId || source?.id || `${index}`);
           const sourceName = String(source?.calendarName || source?.name || "External calendar");
           const isRemoving = String(removingSourceId || "") === sourceId;
+          const isRefreshing = String(refreshingSourceId || "") === sourceId;
           const isEditing = String(editingSourceId || "") === sourceId;
           const provider = resolveCalendarProvider(source);
           const providerIcon = getProviderIcon(provider);
@@ -188,13 +314,24 @@ export default function CalendarSyncCard({
                 </div>
               </div>
               <div className="hc-sync-connected-card-actions">
-                <button type="button" className="hc-sync-source-action" disabled>
-                  Sync now
+                <button
+                  type="button"
+                  className={`hc-sync-source-action ${isRefreshing ? "is-active" : ""}`}
+                  disabled={
+                    !onRefreshSource ||
+                    addingCalendar ||
+                    hasRefreshInProgress ||
+                    isRemoving ||
+                    isConfirmingRemoval
+                  }
+                  onClick={() => onRefreshSource?.(sourceId)}
+                >
+                  {isRefreshing ? "Syncing..." : "Sync now"}
                 </button>
                 <button
                   type="button"
                   className={`hc-sync-source-action ${isEditing ? "is-active" : ""}`}
-                  disabled={!onEditSource || addingCalendar || isRemoving}
+                  disabled={!onEditSource || addingCalendar || hasRefreshInProgress || isRemoving}
                   onClick={() => {
                     onEditSource?.(sourceId);
                   }}
@@ -204,8 +341,14 @@ export default function CalendarSyncCard({
                 <button
                   type="button"
                   className="hc-sync-source-action hc-sync-source-action--danger"
-                  disabled={!onRemoveSource || isRemoving || addingCalendar}
-                  onClick={() => onRemoveSource?.(sourceId)}
+                  disabled={
+                    !onRemoveSource ||
+                    isRemoving ||
+                    hasRefreshInProgress ||
+                    addingCalendar ||
+                    isConfirmingRemoval
+                  }
+                  onClick={() => handleOpenRemoveSourceFlow(sourceId)}
                 >
                   {isRemoving ? "Removing..." : "Remove"}
                 </button>
@@ -402,6 +545,86 @@ export default function CalendarSyncCard({
                 onClick={() => onAddCalendar?.()}
               >
                 {addingCalendar ? "Saving..." : "Save changes"}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isConfirmingRemoval ? (
+        <div
+          className="hc-sync-remove-modal-backdrop"
+          role="presentation"
+          onClick={() => {
+            if (!isRemovingPendingSource) {
+              resetRemoveSourceFlow();
+            }
+          }}
+        >
+          <section
+            className="hc-sync-remove-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Remove calendar connection"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {isRemoveReasonStep ? (
+              <>
+                <h4 className="hc-sync-remove-modal-title">Why are you disconnecting this calendar?</h4>
+                <p className="hc-sync-remove-modal-copy">Choose all reasons that apply.</p>
+                <div className="hc-sync-remove-reasons-list">
+                  {REMOVE_SOURCE_REASONS.map((reason) => (
+                    <label key={reason.id} className="hc-sync-remove-reason-row">
+                      <input
+                        type="checkbox"
+                        className="hc-sync-remove-reason-checkbox"
+                        checked={selectedRemoveReasonIdSet.has(reason.id)}
+                        onChange={() => handleToggleRemoveReason(reason.id)}
+                        disabled={isRemovingPendingSource}
+                      />
+                      <span>{reason.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <h4 className="hc-sync-remove-modal-title">Remove calendar connection?</h4>
+                <p className="hc-sync-remove-modal-copy">
+                  This will disconnect <strong>{pendingRemoveSourceName}</strong> from this accommodation.
+                </p>
+                <p className="hc-sync-remove-modal-copy">
+                  You can re-add it later, but imported blocked dates from this source will stop syncing.
+                </p>
+              </>
+            )}
+
+            {addCalendarError ? <p className="hc-sync-error">{addCalendarError}</p> : null}
+
+            <div className="hc-sync-remove-modal-actions">
+              <button
+                type="button"
+                className="hc-sync-cancel-btn"
+                disabled={isRemovingPendingSource}
+                onClick={() => {
+                  if (!isRemoveReasonStep) {
+                    setRemoveSourceFlowStep(REMOVE_SOURCE_FLOW_STEP.REASON);
+                    return;
+                  }
+                  resetRemoveSourceFlow();
+                }}
+              >
+                {isRemoveReasonStep ? "Cancel" : "Back"}
+              </button>
+              <button
+                type="button"
+                className="hc-sync-remove-confirm-btn"
+                disabled={
+                  isRemovingPendingSource || (isRemoveReasonStep && !hasSelectedRemoveReason)
+                }
+                onClick={isRemoveReasonStep ? handleRemoveReasonsNext : handleConfirmRemoveSource}
+              >
+                {removeConfirmButtonLabel}
               </button>
             </div>
           </section>

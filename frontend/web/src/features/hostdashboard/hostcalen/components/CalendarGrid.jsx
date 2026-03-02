@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { dayNames, formatYearMonth, isSameMonthUTC } from "../utils/date";
+import { dayNames, formatYearMonth, getMonthMatrix, isSameMonthUTC, monthNames } from "../utils/date";
 import { cx } from "../utils/classNames";
 import PulseBarsLoader from "./PulseBarsLoader";
 import checkPng from "../../../../images/icons/checkPng.png";
@@ -16,6 +16,13 @@ const toDateNumber = (date) => {
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
   return Number(`${year}${month}${day}`);
+};
+
+const toDateKey = (date) => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 const isDateWithinAvailability = (dateNumber, ranges) => {
@@ -61,16 +68,107 @@ export default function CalendarGrid({
   const selectedSet = new Set(Array.isArray(selectedDateKeys) ? selectedDateKeys : []);
   const bookedSet = bookedDateKeys instanceof Set ? bookedDateKeys : new Set();
   const dayPriceOverrides = priceOverrides && typeof priceOverrides === "object" ? priceOverrides : {};
+  const currentYear = cursor.getUTCFullYear();
+
+  const yearMonthViews = React.useMemo(() => {
+    return monthNames.map((monthName, monthIndex) => {
+      const monthCursor = new Date(Date.UTC(currentYear, monthIndex, 1));
+      const rawMonthGrid = getMonthMatrix(monthCursor);
+      const trimmedMonthGrid = rawMonthGrid.filter((weekRow) =>
+        weekRow.some((date) => isSameMonthUTC(date, monthCursor))
+      );
+      return {
+        monthName,
+        monthCursor,
+        monthGrid: trimmedMonthGrid.length > 0 ? trimmedMonthGrid : rawMonthGrid,
+      };
+    });
+  }, [currentYear]);
+
+  const getDayPresentation = (date, monthCursor) => {
+    const dateNumber = toDateNumber(date);
+    const inCurrentMonth = isSameMonthUTC(date, monthCursor);
+    const key = toDateKey(date);
+    const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6;
+    const isBlocked = blockedDates.has(key);
+    const isBooked = bookedSet.has(key);
+    const isNotBlocked = isBlocked === false;
+    const isNotBooked = isBooked === false;
+    const isOutsideMonth = inCurrentMonth === false;
+    const overrideAvailability = readOverrideAvailability(availabilityOverrides, key);
+    const isAvailable =
+      isNotBlocked && isNotBooked && (overrideAvailability ?? isDateWithinAvailability(dateNumber, availabilityRanges));
+    const isUnavailable = isAvailable === false;
+    const isForcedUnavailable = overrideAvailability === false;
+    const isSelected = selectedSet.has(key);
+    const isPending = pendingSelectionStartKey === key;
+
+    const today = new Date();
+    const isToday =
+      today.getUTCFullYear() === date.getUTCFullYear() &&
+      today.getUTCMonth() === date.getUTCMonth() &&
+      today.getUTCDate() === date.getUTCDate();
+
+    const overridePrice = Number(dayPriceOverrides[key]);
+    const defaultPrice = isWeekend ? weekendRate : nightlyRate;
+    const hasValidOverridePrice = Number.isFinite(overridePrice) && overridePrice > 0;
+    const displayPrice = isBlocked ? null : hasValidOverridePrice ? Math.trunc(overridePrice) : defaultPrice;
+
+    const showExternalBlockedOverlay = inCurrentMonth && isBlocked && isNotBooked;
+    const canShowUnavailableBadge = showExternalBlockedOverlay === false && isNotBooked;
+    const showUnavailableBadge = canShowUnavailableBadge && (isBlocked || isUnavailable);
+    const showBookedBadge = inCurrentMonth && isBooked;
+    const showExternalBlockedYearIcon = isBlocked && isNotBooked;
+    const showUnavailableYearIcon =
+      showExternalBlockedYearIcon === false && isNotBooked && (isBlocked || isUnavailable);
+    const showBookedYearIcon = isBooked;
+    const cellAriaLabel = [
+      date.toUTCString(),
+      displayPrice !== null ? `${formatEuroAmount(displayPrice)} per night` : null,
+      showExternalBlockedOverlay ? "external booking" : null,
+      isSelected ? "selected" : null,
+      isPending ? "pending selection" : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    return {
+      key,
+      isOutsideMonth,
+      isToday,
+      isBlocked,
+      isBooked,
+      isAvailable,
+      isUnavailable,
+      isForcedUnavailable,
+      isSelected,
+      isPending,
+      showExternalBlockedOverlay,
+      showUnavailableBadge,
+      showBookedBadge,
+      showExternalBlockedYearIcon,
+      showUnavailableYearIcon,
+      showBookedYearIcon,
+      displayPrice,
+      cellAriaLabel,
+      dayNumber: date.getUTCDate(),
+    };
+  };
+
+  const headerTitle = isMonthView ? formatYearMonth(cursor) : String(currentYear);
+  const previousPeriodLabel = isMonthView ? "Previous month" : "Previous year";
+  const nextPeriodLabel = isMonthView ? "Next month" : "Next year";
+  const navigationGroupLabel = isMonthView ? "Month navigation" : "Year navigation";
 
   return (
     <section className="hc-calendar-panel" aria-label="Calendar and nightly prices">
       <header className="hc-calendar-head">
-        <h2 className="hc-calendar-title">{formatYearMonth(cursor)}</h2>
-        <div className="hc-calendar-nav" role="group" aria-label="Month navigation">
-          <button type="button" className="hc-nav-button" onClick={onPrev} aria-label="Previous month">
+        <h2 className="hc-calendar-title">{headerTitle}</h2>
+        <div className="hc-calendar-nav" role="group" aria-label={navigationGroupLabel}>
+          <button type="button" className="hc-nav-button" onClick={onPrev} aria-label={previousPeriodLabel}>
             <img src={arrowLeftIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
           </button>
-          <button type="button" className="hc-nav-button" onClick={onNext} aria-label="Next month">
+          <button type="button" className="hc-nav-button" onClick={onNext} aria-label={nextPeriodLabel}>
             <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
           </button>
         </div>
@@ -88,82 +186,36 @@ export default function CalendarGrid({
 
           <div className="hc-calendar-grid">
             {safeGrid.flat().map((date) => {
-              const dateNumber = toDateNumber(date);
-              const inCurrentMonth = isSameMonthUTC(date, cursor);
-              const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
-                date.getUTCDate()
-              ).padStart(2, "0")}`;
-
-              const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6;
-              const isBlocked = blockedDates.has(key);
-              const isBooked = bookedSet.has(key);
-              const isNotBlocked = isBlocked === false;
-              const isNotBooked = isBooked === false;
-              const isOutsideMonth = inCurrentMonth === false;
-              const overrideAvailability = readOverrideAvailability(availabilityOverrides, key);
-              const isAvailable =
-                isNotBlocked &&
-                isNotBooked &&
-                (overrideAvailability ?? isDateWithinAvailability(dateNumber, availabilityRanges));
-              const isUnavailable = isAvailable === false;
-              const isForcedUnavailable = overrideAvailability === false;
-              const isSelected = selectedSet.has(key);
-              const isPending = pendingSelectionStartKey === key;
-
-              const today = new Date();
-              const isToday =
-                today.getUTCFullYear() === date.getUTCFullYear() &&
-                today.getUTCMonth() === date.getUTCMonth() &&
-                today.getUTCDate() === date.getUTCDate();
-
-              const overridePrice = Number(dayPriceOverrides[key]);
-              const defaultPrice = isWeekend ? weekendRate : nightlyRate;
-              const hasValidOverridePrice = Number.isFinite(overridePrice) && overridePrice > 0;
-              const displayPrice = isBlocked
-                ? null
-                : hasValidOverridePrice
-                  ? Math.trunc(overridePrice)
-                  : defaultPrice;
-
-              const showExternalBlockedOverlay = inCurrentMonth && isBlocked && isNotBooked;
-              const canShowUnavailableBadge =
-                showExternalBlockedOverlay === false && isBooked === false;
-              const showUnavailableBadge = canShowUnavailableBadge && (isBlocked || isUnavailable);
-              const showBookedBadge = inCurrentMonth && isBooked;
-              const cellAriaLabel = [
-                date.toUTCString(),
-                displayPrice !== null ? `${formatEuroAmount(displayPrice)} per night` : null,
-                showExternalBlockedOverlay ? "external booking" : null,
-                isSelected ? "selected" : null,
-                isPending ? "pending selection" : null,
-              ]
-                .filter(Boolean)
-                .join(", ");
+              const dayPresentation = getDayPresentation(date, cursor);
 
               return (
                 <button
                   type="button"
-                  key={key}
+                  key={dayPresentation.key}
                   className={cx(
                     "hc-cell",
-                    isOutsideMonth && "hc-cell--outside",
-                    isToday && "hc-cell--today",
-                    isBlocked && "hc-cell--blocked",
-                    showExternalBlockedOverlay && "hc-cell--external-booking",
-                    isBooked && "hc-cell--booked",
-                    isAvailable && "hc-cell--available",
-                    isNotBlocked && isUnavailable && "hc-cell--unavailable",
-                    isForcedUnavailable && "hc-cell--forced-unavailable",
-                    isPending && "hc-cell--pending",
-                    isSelected && isAvailable && "hc-cell--selected",
-                    isSelected && isUnavailable && "hc-cell--selected-unavailable",
-                    isSelected && "hc-cell--selected-outline"
+                    dayPresentation.isOutsideMonth && "hc-cell--outside",
+                    dayPresentation.isToday && "hc-cell--today",
+                    dayPresentation.isBlocked && "hc-cell--blocked",
+                    dayPresentation.showExternalBlockedOverlay && "hc-cell--external-booking",
+                    dayPresentation.isBooked && "hc-cell--booked",
+                    dayPresentation.isAvailable && "hc-cell--available",
+                    dayPresentation.isBlocked === false &&
+                      dayPresentation.isUnavailable &&
+                      "hc-cell--unavailable",
+                    dayPresentation.isForcedUnavailable && "hc-cell--forced-unavailable",
+                    dayPresentation.isPending && "hc-cell--pending",
+                    dayPresentation.isSelected && dayPresentation.isAvailable && "hc-cell--selected",
+                    dayPresentation.isSelected &&
+                      dayPresentation.isUnavailable &&
+                      "hc-cell--selected-unavailable",
+                    dayPresentation.isSelected && "hc-cell--selected-outline"
                   )}
-                  aria-label={cellAriaLabel}
-                  aria-pressed={isSelected}
-                  onClick={() => onDateSelect?.({ key })}
+                  aria-label={dayPresentation.cellAriaLabel}
+                  aria-pressed={dayPresentation.isSelected}
+                  onClick={() => onDateSelect?.({ key: dayPresentation.key })}
                 >
-                  {showExternalBlockedOverlay && (
+                  {dayPresentation.showExternalBlockedOverlay && (
                     <div className="hc-cell-external-booking" aria-label="External booking">
                       <span className="hc-cell-external-booking-icon" aria-hidden="true">
                         <img src={externalLinkIcon} alt="" />
@@ -172,27 +224,86 @@ export default function CalendarGrid({
                     </div>
                   )}
 
-                  {showUnavailableBadge && (
+                  {dayPresentation.showUnavailableBadge && (
                     <span className="hc-cell-badge hc-cell-badge--unavailable" aria-label="Unavailable">
                       <img src={calendarUnavailablePng} alt="" />
                     </span>
                   )}
 
-                  {showBookedBadge && (
+                  {dayPresentation.showBookedBadge && (
                     <span className="hc-cell-badge hc-cell-badge--booked" aria-label="Booked">
                       <img src={checkPng} alt="" />
                     </span>
                   )}
 
-                  <span className="hc-cell-date">{date.getUTCDate()}</span>
-                  {displayPrice !== null && <span className="hc-cell-price">{formatEuroAmount(displayPrice)}</span>}
+                  <span className="hc-cell-date">{dayPresentation.dayNumber}</span>
+                  {dayPresentation.displayPrice !== null && (
+                    <span className="hc-cell-price">{formatEuroAmount(dayPresentation.displayPrice)}</span>
+                  )}
                 </button>
               );
             })}
           </div>
         </>
       ) : (
-        <div className="hc-calendar-placeholder">Year view will be added in a follow-up iteration.</div>
+        <div className="hc-year-grid" aria-label={`Year ${currentYear} overview`}>
+          {yearMonthViews.map((monthView) => (
+            <section key={monthView.monthName} className="hc-year-month">
+              <h3 className="hc-year-month-title">{monthView.monthName}</h3>
+              <div className="hc-year-week-header" role="presentation">
+                {dayNames.map((dayName) => (
+                  <span key={`${monthView.monthName}-${dayName}`} className="hc-year-week-header-cell">
+                    {dayName.slice(0, 1)}
+                  </span>
+                ))}
+              </div>
+              <div className="hc-year-days">
+                {monthView.monthGrid.flat().map((date) => {
+                  const dayPresentation = getDayPresentation(date, monthView.monthCursor);
+                  return (
+                    <div
+                      key={`${monthView.monthName}-${dayPresentation.key}`}
+                      className={cx(
+                        "hc-year-day",
+                        dayPresentation.isOutsideMonth && "hc-year-day--outside",
+                        dayPresentation.isToday && "hc-year-day--today",
+                        dayPresentation.showExternalBlockedOverlay && "hc-year-day--external-booking",
+                        dayPresentation.isBooked && "hc-year-day--booked",
+                        dayPresentation.isForcedUnavailable && "hc-year-day--forced-unavailable",
+                        dayPresentation.isBlocked === false &&
+                          dayPresentation.isUnavailable &&
+                          "hc-year-day--unavailable",
+                        dayPresentation.isAvailable && "hc-year-day--available",
+                        dayPresentation.isSelected && "hc-year-day--selected"
+                      )}
+                      aria-label={dayPresentation.cellAriaLabel}
+                    >
+                      <span className="hc-year-day-number">{dayPresentation.dayNumber}</span>
+
+                      {dayPresentation.showExternalBlockedYearIcon && (
+                        <span className="hc-year-day-icon hc-year-day-icon--external" aria-hidden="true">
+                          <img src={externalLinkIcon} alt="" />
+                        </span>
+                      )}
+
+                      {dayPresentation.showUnavailableYearIcon && (
+                        <span className="hc-year-day-icon hc-year-day-icon--unavailable" aria-hidden="true">
+                          <img src={calendarUnavailablePng} alt="" />
+                        </span>
+                      )}
+
+                      {dayPresentation.showBookedYearIcon && (
+                        <span className="hc-year-day-icon hc-year-day-icon--booked" aria-hidden="true">
+                          <img src={checkPng} alt="" />
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
       )}
 
       {isLoading && (

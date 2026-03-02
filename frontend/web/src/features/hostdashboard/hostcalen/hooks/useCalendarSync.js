@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { getCognitoUserId } from "../../../../services/getAccessToken";
-import { dbDeleteIcalSource, dbListIcalSources, dbUpsertIcalSource } from "../../../../utils/icalRetrieveHost";
+import {
+  dbDeleteIcalSource,
+  dbListIcalSources,
+  dbRefreshAllIcalSources,
+  dbUpsertIcalSource,
+} from "../../../../utils/icalRetrieveHost";
 import {
   ICAL_EXPORT_BUCKET,
   ICAL_EXPORT_REGION,
@@ -17,6 +22,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
   const [isSavingCalendarSync, setIsSavingCalendarSync] = useState(false);
   const [isLoadingCalendarSync, setIsLoadingCalendarSync] = useState(false);
   const [removingCalendarSourceId, setRemovingCalendarSourceId] = useState("");
+  const [refreshingCalendarSourceId, setRefreshingCalendarSourceId] = useState("");
   const [editingCalendarSourceId, setEditingCalendarSourceId] = useState("");
   const [domitsCalendarLinkCopied, setDomitsCalendarLinkCopied] = useState(false);
 
@@ -33,6 +39,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
           setIsSavingCalendarSync(false);
           setIsLoadingCalendarSync(false);
           setRemovingCalendarSourceId("");
+          setRefreshingCalendarSourceId("");
           setEditingCalendarSourceId("");
           setDomitsCalendarLinkCopied(false);
         }
@@ -55,6 +62,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
         setExternalBlockedDates(new Set(blockedDates));
         setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
         setRemovingCalendarSourceId("");
+        setRefreshingCalendarSourceId("");
         setEditingCalendarSourceId("");
         setDomitsCalendarLinkCopied(false);
       } catch (error) {
@@ -326,6 +334,49 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     }
   };
 
+  const handleRefreshCalendarSource = async (sourceId) => {
+    const normalizedSourceId = String(sourceId || "").trim();
+    if (!selectedPropertyId) {
+      setCalendarSyncError("Select a listing first.");
+      return;
+    }
+    if (!normalizedSourceId) {
+      setCalendarSyncError("Could not refresh calendar connection.");
+      return;
+    }
+    if (isSavingCalendarSync || removingCalendarSourceId || refreshingCalendarSourceId) {
+      return;
+    }
+
+    setRefreshingCalendarSourceId(normalizedSourceId);
+    setCalendarSyncError("");
+
+    try {
+      const data = await dbRefreshAllIcalSources(selectedPropertyId);
+      const sources = Array.isArray(data?.sources) ? data.sources : [];
+      const blockedDates = Array.isArray(data?.blockedDates) ? data.blockedDates : [];
+
+      setCalendarSources(sources);
+      setExternalBlockedDates(new Set(blockedDates));
+
+      if (editingCalendarSourceId) {
+        const normalizedEditingSourceId = String(editingCalendarSourceId || "").trim();
+        const editingSourceStillExists = sources.some((source, index) => {
+          const currentSourceId = String(source?.sourceId || source?.id || `${index}`).trim();
+          return currentSourceId === normalizedEditingSourceId;
+        });
+        if (!editingSourceStillExists) {
+          setEditingCalendarSourceId("");
+          setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
+        }
+      }
+    } catch (error) {
+      setCalendarSyncError(error?.message || "Could not refresh calendar connections.");
+    } finally {
+      setRefreshingCalendarSourceId("");
+    }
+  };
+
   return {
     externalBlockedDates,
     calendarSources,
@@ -334,6 +385,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     isSavingCalendarSync,
     isLoadingCalendarSync,
     removingCalendarSourceId,
+    refreshingCalendarSourceId,
     editingCalendarSourceId,
     domitsCalendarLinkCopied,
     hostCalendarExportUrl,
@@ -348,5 +400,6 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     handleCancelEditCalendarSource,
     handleAddCalendarSource,
     handleRemoveCalendarSource,
+    handleRefreshCalendarSource,
   };
 };

@@ -57,6 +57,7 @@ export default function HostCalendar() {
     isSavingCalendarSync,
     isLoadingCalendarSync,
     removingCalendarSourceId,
+    refreshingCalendarSourceId,
     editingCalendarSourceId,
     domitsCalendarLinkCopied,
     hostCalendarExportUrl,
@@ -71,6 +72,7 @@ export default function HostCalendar() {
     handleCancelEditCalendarSource,
     handleAddCalendarSource,
     handleRemoveCalendarSource,
+    handleRefreshCalendarSource,
   } = useCalendarSync({ selectedPropertyId });
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
@@ -139,8 +141,10 @@ export default function HostCalendar() {
     pricingSnapshot,
   });
 
-  const prev = () => setCursor((currentCursor) => subMonthsUTC(currentCursor, 1));
-  const next = () => setCursor((currentCursor) => addMonthsUTC(currentCursor, 1));
+  const prev = () =>
+    setCursor((currentCursor) => subMonthsUTC(currentCursor, view === "year" ? 12 : 1));
+  const next = () =>
+    setCursor((currentCursor) => addMonthsUTC(currentCursor, view === "year" ? 12 : 1));
   const today = () => setCursor(startOfMonthUTC(new Date()));
 
   const openCalendarSync = () => setSidebarMode("calendar-sync");
@@ -354,6 +358,8 @@ export default function HostCalendar() {
               onEditSource={handleEditCalendarSource}
               editingSourceId={editingCalendarSourceId}
               onCancelEdit={handleCancelEditCalendarSource}
+              onRefreshSource={handleRefreshCalendarSource}
+              refreshingSourceId={refreshingCalendarSourceId}
               onRemoveSource={handleRemoveCalendarSource}
               removingSourceId={removingCalendarSourceId}
               onBack={handleCalendarSyncBack}
