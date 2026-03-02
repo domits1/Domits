@@ -148,7 +148,7 @@ export const useFetchMessages = (userId) => {
 
   const upsertIntoStores = useCallback(
     (newMessage) => {
-      if (!newMessage || !newMessage.id) return;
+      if (!newMessage?.id) return;
 
       const partnerId = newMessage.userId === userId ? newMessage.recipientId : newMessage.userId;
       if (!partnerId) return;

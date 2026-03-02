@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import PropTypes from "prop-types";
 import profileImage from "./domits-logo.jpg";
 
 const formatTime = (v) => {
@@ -13,7 +14,15 @@ const ContactItem = ({ contact, selected }) => {
 
   const subtitle = contact?.latestMessage?.text ? contact.latestMessage.text : "No message history yet";
 
-  const displayName = contact?.givenName || "Unknown";
+  const displayName = (() => {
+    if (!contact) return "Unknown";
+    const direct = contact.givenName || contact.name || contact.fullName || contact.displayName || contact.contactName;
+    if (direct) return direct;
+    const first = contact.firstName || contact.first_name;
+    const last = contact.lastName || contact.last_name;
+    if (first && last) return `${first} ${last}`;
+    return first || last || "Unknown";
+  })();
 
   const meta =
     contact?.propertyTitle ||
@@ -44,6 +53,34 @@ const ContactItem = ({ contact, selected }) => {
       </div>
     </div>
   );
+};
+
+ContactItem.propTypes = {
+  selected: PropTypes.bool,
+  contact: PropTypes.shape({
+    givenName: PropTypes.string,
+    name: PropTypes.string,
+    fullName: PropTypes.string,
+    displayName: PropTypes.string,
+    contactName: PropTypes.string,
+    firstName: PropTypes.string,
+    first_name: PropTypes.string,
+    lastName: PropTypes.string,
+    last_name: PropTypes.string,
+    profileImage: PropTypes.string,
+    unreadCount: PropTypes.number,
+    propertyTitle: PropTypes.string,
+    propertyName: PropTypes.string,
+    accoName: PropTypes.string,
+    bookingProperty: PropTypes.string,
+    property: PropTypes.shape({
+      title: PropTypes.string,
+    }),
+    latestMessage: PropTypes.shape({
+      createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
+      text: PropTypes.string,
+    }),
+  }).isRequired,
 };
 
 export default ContactItem;

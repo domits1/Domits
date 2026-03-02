@@ -1,4 +1,5 @@
 import { createContext, useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { connectWebSocket, sendMessage, disconnectWebSocket } from "../services/websocket";
 
 export const WebSocketContext = createContext();
@@ -24,23 +25,21 @@ const normalizeIncoming = (raw) => {
   const content = msg?.content ?? msg?.text ?? "";
   const createdAt = toIso(msg?.createdAt);
 
-  const fileUrls = Array.isArray(msg?.fileUrls)
-    ? msg.fileUrls
-    : Array.isArray(msg?.attachments)
-    ? msg.attachments.map((a) => a?.url).filter(Boolean)
-    : (() => {
-        const at = msg?.attachments;
-        if (!at) return [];
-        if (typeof at === "string") {
-          try {
-            const parsed = JSON.parse(at);
-            return Array.isArray(parsed) ? parsed.map((x) => x?.url).filter(Boolean) : [];
-          } catch {
-            return [];
-          }
-        }
+  const extractFileUrls = (attachments) => {
+    if (!attachments) return [];
+    if (Array.isArray(attachments)) return attachments.map((a) => a?.url).filter(Boolean);
+    if (typeof attachments === "string") {
+      try {
+        const parsed = JSON.parse(attachments);
+        return Array.isArray(parsed) ? parsed.map((x) => x?.url).filter(Boolean) : [];
+      } catch {
         return [];
-      })();
+      }
+    }
+    return [];
+  };
+
+  const fileUrls = Array.isArray(msg?.fileUrls) ? msg.fileUrls : extractFileUrls(msg?.attachments);
 
   const id =
     msg?.id ||
@@ -101,4 +100,10 @@ export const WebSocketProvider = ({ userId, children, token }) => {
   const value = useMemo(() => ({ messages, sendMessage }), [messages]);
 
   return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>;
+};
+
+WebSocketProvider.propTypes = {
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  token: PropTypes.string,
+  children: PropTypes.node,
 };

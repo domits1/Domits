@@ -8,19 +8,14 @@ class MessageRepository {
     const id = randomUUID();
     const createdAt = Date.now();
 
-    const metadataValue =
-      data.metadata == null
-        ? null
-        : typeof data.metadata === "string"
-          ? data.metadata
-          : JSON.stringify(data.metadata);
+    const toNullableJsonString = (value) => {
+      if (value == null) return null;
+      if (typeof value === "string") return value;
+      return JSON.stringify(value);
+    };
 
-    const attachmentsValue =
-      data.attachments == null
-        ? null
-        : typeof data.attachments === "string"
-          ? data.attachments
-          : JSON.stringify(data.attachments);
+    const metadataValue = toNullableJsonString(data.metadata);
+    const attachmentsValue = toNullableJsonString(data.attachments);
 
     await client
       .createQueryBuilder()

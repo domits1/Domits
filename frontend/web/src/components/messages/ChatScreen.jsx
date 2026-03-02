@@ -1,6 +1,7 @@
 // frontend/web/src/components/messages/ChatScreen.jsx
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import PropTypes from "prop-types";
 import ChatMessage from "./ChatMessage";
 import BookingTab from "./BookingTab";
 import MessageToast from "./MessageToast";
@@ -19,6 +20,17 @@ const getOtherPartyName = (selfUserId, contactId, contactName) => {
 };
 
 const NEAR_BOTTOM_PX = 40;
+
+const getMessageKey = (message) => {
+  if (!message) return "message-unknown";
+  if (message.id) return String(message.id);
+  if (message.clientId) return String(message.clientId);
+  const sender = message.userId || message.senderId || "unknown";
+  const recipient = message.recipientId || "unknown";
+  const time = message.createdAt || message.time || "";
+  const text = String(message.text || message.content || "").slice(0, 40);
+  return `${sender}-${recipient}-${time}-${text}`;
+};
 
 const ChatScreen = ({
   userId,
@@ -243,9 +255,9 @@ const ChatScreen = ({
             <p>Say hi to start the conversation.</p>
           </div>
         ) : (
-          mergedMessages.map((message, index) => (
+          mergedMessages.map((message) => (
             <ChatMessage
-              key={message.id || index}
+              key={getMessageKey(message)}
               message={message}
               userId={userId}
               contactName={headerName}
@@ -325,6 +337,20 @@ const ChatScreen = ({
       {error && showToast && <MessageToast message={toastText} type="error" onClose={() => setShowToast(false)} />}
     </div>
   );
+};
+
+ChatScreen.propTypes = {
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  contactId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  contactName: PropTypes.string,
+  contactImage: PropTypes.string,
+  threadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onBack: PropTypes.func,
+  onClose: PropTypes.func,
+  dashboardType: PropTypes.string,
+  handleContactListMessage: PropTypes.func,
+  testMessages: PropTypes.arrayOf(PropTypes.object),
 };
 
 export default ChatScreen;

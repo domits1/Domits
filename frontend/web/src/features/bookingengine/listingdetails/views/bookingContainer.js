@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import DateSelectionContainer from "./dateSelectionContainer";
 import GuestSelectionContainer from "./guestSelectionContainer";
 import Pricing from "../components/pricing";
@@ -82,7 +83,7 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
 
   if (!userId) {
     return (
-      <div className="message-host-modal" role="dialog" aria-modal="true" aria-label="Message host">
+      <dialog className="message-host-modal" open aria-label="Message host">
         <button
           type="button"
           className="message-host-modal__backdrop"
@@ -92,13 +93,13 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
         <div className="message-host-modal__content">
           <div className="message-host-modal__loading">Loading user…</div>
         </div>
-      </div>
+      </dialog>
     );
   }
 
   return (
     <WebSocketProvider userId={userId}>
-      <div className="message-host-modal" role="dialog" aria-modal="true" aria-label="Message host">
+      <dialog className="message-host-modal" open aria-label="Message host">
         <button
           type="button"
           className="message-host-modal__backdrop"
@@ -119,7 +120,7 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
             />
           </div>
         </div>
-      </div>
+      </dialog>
     </WebSocketProvider>
   );
 };
@@ -211,6 +212,32 @@ const BookingContainer = ({ property, host, propertyId }) => {
       )}
     </div>
   );
+};
+
+MessageHostModalInner.propTypes = {
+  onClose: PropTypes.func,
+  hostId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  hostName: PropTypes.string,
+  hostImage: PropTypes.string,
+  propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
+
+BookingContainer.propTypes = {
+  property: PropTypes.shape({
+    pricing: PropTypes.object,
+    property: PropTypes.shape({
+      hostId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      hostID: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      ID: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+  }).isRequired,
+  host: PropTypes.shape({
+    givenName: PropTypes.string,
+    name: PropTypes.string,
+    profileImage: PropTypes.string,
+  }),
+  propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default BookingContainer;

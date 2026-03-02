@@ -55,6 +55,7 @@ export const pushToUser = async (userId, payload) => {
               .promise();
           } catch {}
         } else {
+          console.warn("Failed to deliver realtime message", { userId, connectionId, err });
         }
       }
     })

@@ -1,4 +1,5 @@
-import { useState, useEffect, useContext, useMemo } from "react";
+import { useState, useEffect, useContext, useMemo, useCallback } from "react";
+import PropTypes from "prop-types";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import ContactItem from "./ContactItem";
 import { FaSearch, FaSlidersH, FaPlus } from "react-icons/fa";
@@ -23,6 +24,16 @@ const resolvePartnerId = (contact, selfUserId) => {
 
   const picked = candidates.find((id) => String(id) !== String(selfUserId));
   return picked || null;
+};
+
+const resolveContactName = (contact) => {
+  if (!contact) return "Unknown";
+  const direct = contact.givenName || contact.name || contact.fullName || contact.displayName || contact.contactName;
+  if (direct) return direct;
+  const first = contact.firstName || contact.first_name;
+  const last = contact.lastName || contact.last_name;
+  if (first && last) return `${first} ${last}`;
+  return first || last || "Unknown";
 };
 
 const fetchUserInfo = async (targetUserId) => {
@@ -116,9 +127,10 @@ const hydratePartnerInContacts = ({ setContacts, selfUserId, partnerId, info }) 
     const idx = updated.findIndex((c) => String(resolvePartnerId(c, selfUserId)) === String(partnerId));
     if (idx === -1) return updated;
 
+    const existingName = resolveContactName(updated[idx]);
     updated[idx] = {
       ...updated[idx],
-      givenName: info?.givenName || updated[idx]?.givenName || "Unknown",
+      givenName: info?.givenName || existingName || "Unknown",
       profileImage: updated[idx]?.profileImage || info?.profileImage || null,
     };
 
@@ -155,6 +167,40 @@ const ContactList = ({
 
   const [hydratingIds, setHydratingIds] = useState(() => new Set());
 
+  const processIncomingMessage = useCallback(
+    (incoming) => {
+      if (!incoming) return;
+
+      const partnerId = incoming?.userId === userId ? incoming?.recipientId : incoming?.userId;
+      if (!partnerId || String(partnerId) === String(userId)) return;
+
+      setContacts?.((prevContacts) => upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming }));
+
+      const hydrateKey = String(partnerId);
+      if (hydratingIds.has(hydrateKey)) return;
+
+      setHydratingIds((prev) => {
+        const next = new Set(prev);
+        next.add(hydrateKey);
+        return next;
+      });
+
+      const runHydrate = async () => {
+        const info = await fetchUserInfo(partnerId);
+        hydratePartnerInContacts({ setContacts, selfUserId: userId, partnerId, info });
+
+        setHydratingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(hydrateKey);
+          return next;
+        });
+      };
+
+      runHydrate();
+    },
+    [hydratingIds, setContacts, userId]
+  );
+
   useEffect(() => {
     const key = activeThreadId || activeContactId || null;
     setSelectedKey(key);
@@ -175,7 +221,7 @@ const ContactList = ({
 
     onContactClick?.(
       partnerId,
-      contact?.givenName,
+      resolveContactName(contact),
       contact?.profileImage,
       threadId,
       contact?.propertyId || contact?.AccoId || null,
@@ -203,74 +249,24 @@ const ContactList = ({
 
     const latest = wsMessages[wsMessages.length - 1];
     if (!latest) return;
-
-    const partnerId = latest?.userId === userId ? latest?.recipientId : latest?.userId;
-    if (!partnerId || String(partnerId) === String(userId)) return;
-
-    setContacts?.((prevContacts) => upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming: latest }));
-
-    const hydrateKey = String(partnerId);
-    if (hydratingIds.has(hydrateKey)) return;
-
-    setHydratingIds((prev) => {
-      const next = new Set(prev);
-      next.add(hydrateKey);
-      return next;
-    });
-
-    const runHydrate = async () => {
-      const info = await fetchUserInfo(partnerId);
-      hydratePartnerInContacts({ setContacts, selfUserId: userId, partnerId, info });
-
-      setHydratingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(hydrateKey);
-        return next;
-      });
-    };
-
-    runHydrate();
-  }, [wsMessages, setContacts, userId, hydratingIds]);
+    processIncomingMessage(latest);
+  }, [wsMessages, processIncomingMessage]);
 
   useEffect(() => {
     if (!message) return;
-
-    const partnerId = message?.userId === userId ? message?.recipientId : message?.userId;
-    if (!partnerId || String(partnerId) === String(userId)) return;
-
-    setContacts?.((prevContacts) => upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming: message }));
-
-    const hydrateKey = String(partnerId);
-    if (hydratingIds.has(hydrateKey)) return;
-
-    setHydratingIds((prev) => {
-      const next = new Set(prev);
-      next.add(hydrateKey);
-      return next;
-    });
-
-    const runHydrate = async () => {
-      const info = await fetchUserInfo(partnerId);
-      hydratePartnerInContacts({ setContacts, selfUserId: userId, partnerId, info });
-
-      setHydratingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(hydrateKey);
-        return next;
-      });
-    };
-
-    runHydrate();
-  }, [message, setContacts, userId, hydratingIds]);
+    processIncomingMessage(message);
+  }, [message, processIncomingMessage]);
 
   const filteredContacts = useMemo(() => {
     let list = Array.isArray(contacts) ? [...contacts] : [];
 
-    if (searchTerm) list = list.filter((c) => (c.givenName || "").toLowerCase().includes(searchTerm.toLowerCase()));
+    if (searchTerm) {
+      list = list.filter((c) => resolveContactName(c).toLowerCase().includes(searchTerm.toLowerCase()));
+    }
     if (tab === "unread") list = list.filter((c) => (c.unreadCount || 0) > 0);
 
     if (sortAlphabetically) {
-      list.sort((a, b) => (a.givenName || "").localeCompare(b.givenName || ""));
+      list.sort((a, b) => resolveContactName(a).localeCompare(resolveContactName(b)));
     } else {
       list.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
     }
@@ -336,9 +332,13 @@ const ContactList = ({
         ) : filteredContacts.length === 0 ? (
           <p className="contact-list-empty-text">No contacts found.</p>
         ) : (
-          filteredContacts.map((contact, i) => {
-            const partnerId = resolvePartnerId(contact, userId) || `unknown-${i}`;
-            const key = contact?.threadId || partnerId || `fallback-${i}`;
+          filteredContacts.map((contact) => {
+            const partnerId = resolvePartnerId(contact, userId);
+            const fallbackKey =
+              contact?.id ||
+              contact?.latestMessage?.id ||
+              `${contact?.latestMessage?.createdAt || "unknown"}-${resolveContactName(contact)}`;
+            const key = contact?.threadId || partnerId || fallbackKey;
             const isActive = selectedKey === key;
 
             return (
@@ -365,6 +365,31 @@ const ContactList = ({
       )}
     </div>
   );
+};
+
+ContactList.propTypes = {
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onContactClick: PropTypes.func,
+  onCloseChat: PropTypes.func,
+  message: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    senderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
+    text: PropTypes.string,
+    content: PropTypes.string,
+    fileUrls: PropTypes.arrayOf(PropTypes.string),
+  }),
+  dashboardType: PropTypes.string,
+  isChatOpen: PropTypes.bool,
+  activeContactId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  contacts: PropTypes.arrayOf(PropTypes.object),
+  pendingContacts: PropTypes.arrayOf(PropTypes.object),
+  loading: PropTypes.bool,
+  setContacts: PropTypes.func,
+  onNewMessage: PropTypes.func,
+  activeThreadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default ContactList;

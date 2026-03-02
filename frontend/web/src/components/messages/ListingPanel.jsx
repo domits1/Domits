@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { getAccommodationByPropertyId } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { useUser } from "../../features/hostdashboard/hostmessages/context/AuthContext";
 
@@ -128,6 +129,13 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
       </div>
     </div>
   );
+};
+
+ListingPanel.propTypes = {
+  dashboardType: PropTypes.string,
+  propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  propertyTitle: PropTypes.string,
+  accoImage: PropTypes.string,
 };
 
 export default ListingPanel;

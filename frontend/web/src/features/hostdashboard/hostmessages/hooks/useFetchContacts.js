@@ -191,7 +191,14 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
     recipientId: partnerId,
     userId: partnerId,
 
-    givenName: userInfo?.givenName || contact?.givenName || "Unknown",
+    givenName:
+      userInfo?.givenName ||
+      contact?.givenName ||
+      contact?.name ||
+      contact?.fullName ||
+      contact?.displayName ||
+      contact?.contactName ||
+      "Unknown",
     profileImage: contact?.profileImage || null,
 
     latestMessage,

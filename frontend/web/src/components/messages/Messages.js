@@ -34,7 +34,7 @@ const MessagesContent = ({ dashboardType }) => {
   const [selectedPropertyTitle, setSelectedPropertyTitle] = useState(null);
   const [selectedAccoImage, setSelectedAccoImage] = useState(null);
 
-  const [message, setMessage] = useState([]);
+  const [message, setMessage] = useState(null);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
   const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);

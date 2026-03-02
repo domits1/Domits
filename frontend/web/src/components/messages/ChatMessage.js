@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import profileImage from "./domits-logo.jpg";
 import Icon from "@mdi/react";
 import {
@@ -48,13 +49,6 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
 
   const openImage = (url) => setModalImage(url);
 
-  const onImageKeyDown = (e, url) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      openImage(url);
-    }
-  };
-
   return (
     <div className={`chat-message-row ${directionClass} ${isAutomatedMessage ? "automated-message" : ""}`}>
       {!isOutgoing && (
@@ -84,25 +78,26 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
 
         {fileUrls?.length > 0 && (
           <div className="message-attachments">
-            {fileUrls.map((fileUrl, index) => {
+            {fileUrls.map((fileUrl) => {
               const isVideo = fileUrl.endsWith(".mp4");
+              const attachmentKeyBase = message?.id || `${senderId || "unknown"}-${createdAt || ""}`;
+              const attachmentKey = `${attachmentKeyBase}-${fileUrl}`;
               return isVideo ? (
-                <video key={index} controls className="message-video">
+                <video key={attachmentKey} controls className="message-video">
                   <source src={fileUrl} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               ) : (
-                <img
-                  key={index}
-                  src={fileUrl}
-                  alt="Attachment"
-                  className="message-image"
-                  role="button"
-                  tabIndex={0}
+                <button
+                  key={attachmentKey}
+                  type="button"
+                  className="message-image-button"
                   onClick={() => openImage(fileUrl)}
-                  onKeyDown={(e) => onImageKeyDown(e, fileUrl)}
-                  style={{ cursor: "pointer" }}
-                />
+                  aria-label="Open attachment"
+                  style={{ background: "transparent", border: 0, padding: 0, cursor: "pointer" }}
+                >
+                  <img src={fileUrl} alt="Attachment" className="message-image" />
+                </button>
               );
             })}
           </div>
@@ -115,10 +110,9 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
       </div>
 
       {modalImage && (
-        <div
+        <button
           className="image-modal"
-          role="button"
-          tabIndex={0}
+          type="button"
           aria-label="Close image preview"
           onClick={() => setModalImage(null)}
           onKeyDown={(e) => {
@@ -127,12 +121,32 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
               setModalImage(null);
             }
           }}
+          style={{ border: 0, padding: 0, background: "transparent" }}
         >
           <img src={modalImage} alt="Enlarged attachment" className="image-modal-content" />
-        </div>
+        </button>
       )}
     </div>
   );
+};
+
+ChatMessage.propTypes = {
+  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  contactName: PropTypes.string,
+  contactImage: PropTypes.string,
+  message: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    senderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    text: PropTypes.string,
+    content: PropTypes.string,
+    createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.instanceOf(Date)]),
+    isSent: PropTypes.bool,
+    fileUrls: PropTypes.arrayOf(PropTypes.string),
+    isAutomated: PropTypes.bool,
+    messageType: PropTypes.string,
+  }).isRequired,
 };
 
 export default ChatMessage;
