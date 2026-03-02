@@ -83,7 +83,12 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
   if (!userId) {
     return (
       <div className="message-host-modal" role="dialog" aria-modal="true" aria-label="Message host">
-        <div className="message-host-modal__backdrop" onClick={onClose} />
+        <button
+          type="button"
+          className="message-host-modal__backdrop"
+          onClick={onClose}
+          aria-label="Close message host modal"
+        />
         <div className="message-host-modal__content">
           <div className="message-host-modal__loading">Loading user…</div>
         </div>
@@ -94,7 +99,12 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
   return (
     <WebSocketProvider userId={userId}>
       <div className="message-host-modal" role="dialog" aria-modal="true" aria-label="Message host">
-        <div className="message-host-modal__backdrop" onClick={onClose} />
+        <button
+          type="button"
+          className="message-host-modal__backdrop"
+          onClick={onClose}
+          aria-label="Close message host modal"
+        />
         <div className="message-host-modal__content">
           <div className="messages-v2 message-host-modal__shell">
             <ChatScreen
@@ -128,7 +138,6 @@ const BookingContainer = ({ property, host, propertyId }) => {
   const hostName = host?.givenName || host?.name || "Host";
   const hostImage = host?.profileImage || null;
   const resolvedPropertyId = propertyId || property?.property?.id || property?.property?.ID || null;
-
 
   useEffect(() => {
     if (!showMessageHost) return;
@@ -175,8 +184,7 @@ const BookingContainer = ({ property, host, propertyId }) => {
             new Date(checkOutDate).getTime(),
             adults + kids
           );
-        }}
-      >
+        }}>
         Reserve
       </button>
 

@@ -96,7 +96,18 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
       </div>
 
       {modalImage && (
-        <div className="image-modal" onClick={() => setModalImage(null)}>
+        <div
+          className="image-modal"
+          role="button"
+          tabIndex={0}
+          aria-label="Close image preview"
+          onClick={() => setModalImage(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+              e.preventDefault();
+              setModalImage(null);
+            }
+          }}>
           <img src={modalImage} alt="Enlarged attachment" className="image-modal-content" />
         </div>
       )}

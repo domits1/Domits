@@ -7,7 +7,7 @@ const toIso = (v) => {
   if (!v) return new Date().toISOString();
   if (typeof v === "number") return new Date(v).toISOString();
   const d = new Date(v);
-  return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+  return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
 };
 
 const normalizeIncoming = (raw) => {
