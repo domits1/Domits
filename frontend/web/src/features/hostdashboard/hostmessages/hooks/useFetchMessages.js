@@ -1,11 +1,42 @@
+// frontend/web/src/features/hostdashboard/hostmessages/hooks/useFetchMessages.js
+
 import { useState, useCallback, useRef, useEffect, useContext } from "react";
 import { WebSocketContext } from "../context/webSocketContext";
+
+const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
 const toIso = (v) => {
   if (!v) return new Date().toISOString();
   if (typeof v === "number") return new Date(v).toISOString();
   const d = new Date(v);
   return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+};
+
+const safeJsonParse = (v) => {
+  try {
+    return JSON.parse(v);
+  } catch {
+    return null;
+  }
+};
+
+const normalizeMetadata = (metadata) => {
+  if (!metadata) return {};
+  if (typeof metadata === "string") return safeJsonParse(metadata) || {};
+  return metadata;
+};
+
+const extractFileUrlsFromAttachments = (attachments) => {
+  if (!attachments) return [];
+  if (Array.isArray(attachments)) return attachments.map((x) => x?.url).filter(Boolean);
+
+  if (typeof attachments === "string") {
+    const parsed = safeJsonParse(attachments);
+    if (Array.isArray(parsed)) return parsed.map((x) => x?.url).filter(Boolean);
+    return [];
+  }
+
+  return [];
 };
 
 const normalizeWs = (raw) => {
@@ -26,38 +57,14 @@ const normalizeWs = (raw) => {
   const text = msg?.text ?? msg?.content ?? "";
   const content = msg?.content ?? msg?.text ?? "";
 
-  const fileUrls = Array.isArray(msg?.fileUrls)
-    ? msg.fileUrls
-    : Array.isArray(msg?.attachments)
-    ? msg.attachments.map((a) => a?.url).filter(Boolean)
-    : (() => {
-        const at = msg?.attachments;
-        if (!at) return [];
-        if (typeof at === "string") {
-          try {
-            const parsed = JSON.parse(at);
-            return Array.isArray(parsed) ? parsed.map((x) => x?.url).filter(Boolean) : [];
-          } catch {
-            return [];
-          }
-        }
-        return [];
-      })();
-
+  const fileUrls = Array.isArray(msg?.fileUrls) ? msg.fileUrls : extractFileUrlsFromAttachments(msg?.attachments);
   const createdAt = toIso(msg?.createdAt);
 
   const id =
     msg?.id ||
     `${senderId}:${recipientId}:${createdAt}:${String(text).slice(0, 40)}:${fileUrls.length}`;
 
-  let metadata = msg?.metadata || {};
-  if (typeof metadata === "string") {
-    try {
-      metadata = JSON.parse(metadata);
-    } catch {
-      metadata = {};
-    }
-  }
+  const metadata = normalizeMetadata(msg?.metadata);
 
   return {
     ...msg,
@@ -74,7 +81,63 @@ const normalizeWs = (raw) => {
   };
 };
 
-const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const resolveThreadIdForPartner = async (userId, partnerId) => {
+  if (!userId || !partnerId) return null;
+
+  try {
+    const res = await fetch(`${UNIFIED_API}/threads?userId=${encodeURIComponent(userId)}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json().catch(() => null);
+    const threads = Array.isArray(data) ? data : [];
+
+    const u = String(userId);
+    const p = String(partnerId);
+
+    const candidates = threads.filter((t) => {
+      const a = String(t?.hostId || "");
+      const b = String(t?.guestId || "");
+      return (a === u && b === p) || (a === p && b === u);
+    });
+
+    if (!candidates.length) return null;
+
+    const score = (t) =>
+      Number(t?.lastMessageAt || 0) ||
+      Number(t?.updatedAt || 0) ||
+      Number(t?.createdAt || 0) ||
+      0;
+
+    candidates.sort((x, y) => score(y) - score(x));
+    return candidates[0]?.id || null;
+  } catch {
+    return null;
+  }
+};
+
+const transformApiMessage = (msg, selfUserId, threadIdFallback) => {
+  const metadata = normalizeMetadata(msg?.metadata);
+
+  return {
+    ...msg,
+    threadId: msg?.threadId || threadIdFallback || null,
+    userId: msg?.senderId,
+    senderId: msg?.senderId,
+    recipientId: msg?.recipientId,
+    text: msg?.content || msg?.text || "",
+    content: msg?.content || msg?.text || "",
+    isAutomated: metadata?.isAutomated || false,
+    messageType: metadata?.messageType || null,
+    isSent: metadata?.isAutomated ? false : msg?.senderId === selfUserId,
+    createdAt: toIso(msg?.createdAt),
+    fileUrls: extractFileUrlsFromAttachments(msg?.attachments),
+    metadata,
+  };
+};
 
 export const useFetchMessages = (userId) => {
   const wsCtx = useContext(WebSocketContext);
@@ -105,7 +168,6 @@ export const useFetchMessages = (userId) => {
         if (current.some((m) => m.id === newMessage.id)) return prev;
 
         const nextForPartner = [...current, newMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
         const next = { ...prev, [partnerId]: nextForPartner };
         cacheRef.current[partnerId] = nextForPartner;
         return next;
@@ -117,7 +179,6 @@ export const useFetchMessages = (userId) => {
           if (current.some((m) => m.id === newMessage.id)) return prev;
 
           const nextForThread = [...current, newMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
           const next = { ...prev, [threadKey]: nextForThread };
           cacheRef.current[threadKey] = nextForThread;
           return next;
@@ -142,45 +203,6 @@ export const useFetchMessages = (userId) => {
     }
   }, [wsMessages, upsertIntoStores]);
 
-  const resolveThreadIdForPartner = useCallback(
-    async (partnerId) => {
-      if (!userId || !partnerId) return null;
-
-      try {
-        const res = await fetch(`${UNIFIED_API}/threads?userId=${encodeURIComponent(userId)}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!res.ok) return null;
-        const data = await res.json().catch(() => null);
-        const threads = Array.isArray(data) ? data : [];
-
-        const candidates = threads.filter((t) => {
-          const a = String(t?.hostId || "");
-          const b = String(t?.guestId || "");
-          const u = String(userId);
-          const p = String(partnerId);
-          return (a === u && b === p) || (a === p && b === u);
-        });
-
-        if (!candidates.length) return null;
-
-        const score = (t) =>
-          Number(t?.lastMessageAt || 0) ||
-          Number(t?.updatedAt || 0) ||
-          Number(t?.createdAt || 0) ||
-          0;
-
-        candidates.sort((x, y) => score(y) - score(x));
-        return candidates[0]?.id || null;
-      } catch {
-        return null;
-      }
-    },
-    [userId]
-  );
-
   const fetchMessages = useCallback(
     async (recipientId, threadId = null) => {
       if (!recipientId) {
@@ -200,13 +222,14 @@ export const useFetchMessages = (userId) => {
       }
 
       setLoading(true);
+
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         let useThreadId = threadId || null;
         if (!useThreadId) {
-          useThreadId = await resolveThreadIdForPartner(recipientId);
+          useThreadId = await resolveThreadIdForPartner(userId, recipientId);
           setActiveThreadId(useThreadId || null);
         }
 
@@ -234,50 +257,12 @@ export const useFetchMessages = (userId) => {
         const result = await response.json();
 
         if (Array.isArray(result)) {
-          const transformed = result.map((msg) => {
-            let metadata = msg.metadata || {};
-            if (typeof metadata === "string") {
-              try {
-                metadata = JSON.parse(metadata);
-              } catch {
-                metadata = {};
-              }
-            }
-
-            return {
-              ...msg,
-              threadId: msg.threadId || useThreadId,
-              userId: msg.senderId,
-              senderId: msg.senderId,
-              recipientId: msg.recipientId,
-              text: msg.content || msg.text || "",
-              content: msg.content || msg.text || "",
-              isAutomated: metadata.isAutomated || false,
-              messageType: metadata.messageType || null,
-              isSent: metadata.isAutomated ? false : msg.senderId === userId,
-              createdAt: toIso(msg.createdAt),
-              fileUrls: (() => {
-                const at = msg.attachments;
-                if (!at) return [];
-                if (Array.isArray(at)) return at.map((x) => x?.url).filter(Boolean);
-                if (typeof at === "string") {
-                  try {
-                    const parsed = JSON.parse(at);
-                    return Array.isArray(parsed) ? parsed.map((x) => x?.url).filter(Boolean) : [];
-                  } catch {
-                    return [];
-                  }
-                }
-                return [];
-              })(),
-              metadata,
-            };
-          });
-
+          const transformed = result.map((m) => transformApiMessage(m, userId, useThreadId));
           const sorted = transformed.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
           setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: sorted }));
           setMessagesByThread((prev) => ({ ...prev, [useThreadId]: sorted }));
+
           cacheRef.current[recipientId] = sorted;
           cacheRef.current[useThreadId] = sorted;
         } else {
@@ -294,7 +279,7 @@ export const useFetchMessages = (userId) => {
         setLoading(false);
       }
     },
-    [userId, resolveThreadIdForPartner]
+    [userId]
   );
 
   const addNewMessage = useCallback(
@@ -319,7 +304,6 @@ export const useFetchMessages = (userId) => {
     error,
     fetchMessages,
     addNewMessage,
-
     messagesByRecipient,
     messagesByThread,
   };
