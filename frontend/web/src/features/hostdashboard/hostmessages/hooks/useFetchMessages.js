@@ -1,5 +1,3 @@
-// frontend/web/src/features/hostdashboard/hostmessages/hooks/useFetchMessages.js
-
 import { useState, useCallback, useRef, useEffect, useContext } from "react";
 import { WebSocketContext } from "../context/webSocketContext";
 
@@ -60,9 +58,7 @@ const normalizeWs = (raw) => {
   const fileUrls = Array.isArray(msg?.fileUrls) ? msg.fileUrls : extractFileUrlsFromAttachments(msg?.attachments);
   const createdAt = toIso(msg?.createdAt);
 
-  const id =
-    msg?.id ||
-    `${senderId}:${recipientId}:${createdAt}:${String(text).slice(0, 40)}:${fileUrls.length}`;
+  const id = msg?.id || `${senderId}:${recipientId}:${createdAt}:${String(text).slice(0, 40)}:${fileUrls.length}`;
 
   const metadata = normalizeMetadata(msg?.metadata);
 
@@ -106,11 +102,7 @@ const resolveThreadIdForPartner = async (userId, partnerId) => {
 
     if (!candidates.length) return null;
 
-    const score = (t) =>
-      Number(t?.lastMessageAt || 0) ||
-      Number(t?.updatedAt || 0) ||
-      Number(t?.createdAt || 0) ||
-      0;
+    const score = (t) => Number(t?.lastMessageAt || 0) || Number(t?.updatedAt || 0) || Number(t?.createdAt || 0) || 0;
 
     candidates.sort((x, y) => score(y) - score(x));
     return candidates[0]?.id || null;

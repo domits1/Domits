@@ -1,5 +1,227 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import fetchBookingDetailsAndAccommodation from "../utils/FetchBookingDetails";
+
+const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const GET_USER_INFO_API = "https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo";
+
+const LEGACY_HOST_CONTACTS_API = "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts";
+const LEGACY_GUEST_CONTACTS_API = "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts_Guest";
+
+const safeJsonParse = (v) => {
+  try {
+    return typeof v === "string" ? JSON.parse(v) : v;
+  } catch {
+    return null;
+  }
+};
+
+const toIso = (v) => {
+  const d = new Date(v ?? Date.now());
+  return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+};
+
+const parseCognitoAttributes = (attrsArr) => {
+  if (!Array.isArray(attrsArr)) return null;
+
+  return attrsArr.reduce((acc, a) => {
+    if (a?.Name) acc[a.Name] = a.Value;
+    return acc;
+  }, {});
+};
+
+const fetchUserInfo = async (targetUserId) => {
+  if (!targetUserId) return { givenName: "Unknown", userId: targetUserId };
+
+  try {
+    const res = await fetch(GET_USER_INFO_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ UserId: targetUserId }),
+    });
+
+    if (!res.ok) return { givenName: "Unknown", userId: targetUserId };
+
+    const userData = await res.json();
+    const parsed = safeJsonParse(userData?.body) ?? userData?.body ?? userData;
+    const first = Array.isArray(parsed) ? parsed[0] : parsed;
+
+    const attrsArr = first?.Attributes;
+    const attrs = parseCognitoAttributes(attrsArr);
+    if (!attrs) return { givenName: "Unknown", userId: targetUserId };
+
+    const resolvedUserId =
+      attrs["sub"] || attrs["userId"] || attrsArr?.find?.((a) => a?.Name === "sub")?.Value || targetUserId;
+
+    return {
+      givenName: attrs["given_name"] || attrs["name"] || "Unknown",
+      userId: resolvedUserId,
+    };
+  } catch {
+    return { givenName: "Unknown", userId: targetUserId };
+  }
+};
+
+const fetchLatestMessage = async (threadId, fallbackRecipientId) => {
+  if (!threadId) return null;
+
+  try {
+    const url = `${UNIFIED_API}/messages?threadId=${encodeURIComponent(threadId)}`;
+    const res = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json" } });
+
+    if (!res.ok) return null;
+
+    const messages = await res.json();
+    if (!Array.isArray(messages) || messages.length === 0) return null;
+
+    const latest = messages[messages.length - 1];
+    let metadata = latest?.metadata || {};
+    if (typeof metadata === "string") metadata = safeJsonParse(metadata) || {};
+
+    return {
+      text: latest?.content || latest?.text || "",
+      createdAt: toIso(latest?.createdAt),
+      isAutomated: metadata?.isAutomated || false,
+      senderId: latest?.senderId || latest?.userId || null,
+      recipientId: latest?.recipientId || fallbackRecipientId || null,
+      threadId: latest?.threadId || threadId || null,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const getPartnerIdFromThread = ({ thread, userId, role }) => {
+  const hostId = thread?.hostId;
+  const guestId = thread?.guestId;
+  if (!hostId || !guestId) return null;
+
+  if (String(hostId) === String(userId)) return guestId;
+  if (String(guestId) === String(userId)) return hostId;
+
+  return role === "host" ? guestId : hostId;
+};
+
+const buildUnifiedContactsFromThreads = ({ threads, userId, role }) => {
+  const list = Array.isArray(threads) ? threads : [];
+
+  return list
+    .filter((t) => t?.hostId && t?.guestId && String(t.hostId) !== String(t.guestId))
+    .map((t) => {
+      const partnerId = getPartnerIdFromThread({ thread: t, userId, role });
+
+      return {
+        partnerId,
+        recipientId: partnerId,
+        userId: partnerId,
+
+        hostId: t.hostId,
+        guestId: t.guestId,
+
+        Status: "accepted",
+        AccoId: t.propertyId,
+        propertyId: t.propertyId,
+        threadId: t.id,
+        isFromUnified: true,
+      };
+    })
+    .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));
+};
+
+const computeLookupIds = ({ threadHostId, threadGuestId, userId, partnerId, role }) => {
+  const fallbackHost = role === "guest" ? partnerId : userId;
+  const fallbackGuest = role === "guest" ? userId : partnerId;
+
+  if (!threadHostId || !threadGuestId) {
+    return { hostIdForLookup: fallbackHost, guestIdForLookup: fallbackGuest };
+  }
+
+  if (String(threadHostId) === String(userId) || String(threadGuestId) === String(userId)) {
+    return { hostIdForLookup: threadHostId, guestIdForLookup: threadGuestId };
+  }
+
+  return { hostIdForLookup: fallbackHost, guestIdForLookup: fallbackGuest };
+};
+
+const hydrateOneContact = async ({ contact, userId, role }) => {
+  const partnerId = contact?.partnerId || contact?.recipientId || contact?.userId || null;
+
+  const [userInfo, latestMessage] = await Promise.all([
+    partnerId ? fetchUserInfo(partnerId) : Promise.resolve({ givenName: "Unknown", userId: partnerId }),
+    contact?.threadId ? fetchLatestMessage(contact.threadId, partnerId) : Promise.resolve(null),
+  ]);
+
+  const threadHostId = contact?.hostId || null;
+  const threadGuestId = contact?.guestId || null;
+
+  const { hostIdForLookup, guestIdForLookup } = computeLookupIds({
+    threadHostId,
+    threadGuestId,
+    userId,
+    partnerId,
+    role,
+  });
+
+  let accoImage = null;
+  let bookingStatus = null;
+  let arrivalDate = null;
+  let departureDate = null;
+  let propertyId = contact?.propertyId || contact?.AccoId || null;
+  let propertyTitle = null;
+
+  try {
+    const bookingInfo = await fetchBookingDetailsAndAccommodation({
+      hostId: hostIdForLookup,
+      guestId: guestIdForLookup,
+      withAuth: role !== "guest",
+      accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
+    });
+
+    accoImage = bookingInfo?.accoImage || null;
+    bookingStatus = bookingInfo?.bookingStatus || null;
+    arrivalDate = bookingInfo?.arrivalDate || null;
+    departureDate = bookingInfo?.departureDate || null;
+    propertyId = bookingInfo?.propertyId || propertyId;
+    propertyTitle = bookingInfo?.propertyTitle || null;
+  } catch {}
+
+  return {
+    ...contact,
+
+    partnerId,
+    recipientId: partnerId,
+    userId: partnerId,
+
+    givenName: userInfo?.givenName || contact?.givenName || "Unknown",
+    profileImage: contact?.profileImage || null,
+
+    latestMessage,
+    accoImage,
+    bookingStatus,
+    arrivalDate,
+    departureDate,
+    propertyId,
+    propertyTitle,
+  };
+};
+
+const hydrateContacts = async ({ contactsList, userId, role }) => {
+  const safeContacts = Array.isArray(contactsList) ? contactsList : [];
+  return Promise.all(safeContacts.map((c) => hydrateOneContact({ contact: c, userId, role })));
+};
+
+const normalizeLegacy = ({ raw, isHostLegacy, userId }) => {
+  const partnerId = isHostLegacy ? raw?.userId : raw?.hostId;
+
+  return {
+    ...raw,
+    partnerId,
+    recipientId: partnerId,
+    userId: partnerId,
+    hostId: raw?.hostId || (isHostLegacy ? userId : null),
+    guestId: raw?.userId || (!isHostLegacy ? userId : null),
+    Status: raw?.Status || raw?.status || "accepted",
+  };
+};
 
 const useFetchContacts = (userId, role) => {
   const [contacts, setContacts] = useState([]);
@@ -7,290 +229,65 @@ const useFetchContacts = (userId, role) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (userId) fetchContacts();
-    else {
+  const fetchContacts = useCallback(async () => {
+    if (!userId) {
       setContacts([]);
       setPendingContacts([]);
+      return;
     }
-  }, [userId, role]);
 
-  const fetchContacts = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const fetchUserInfo = async (targetUserId) => {
-        try {
-          const userResponse = await fetch(
-            "https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ UserId: targetUserId }),
-            }
-          );
-
-          if (!userResponse.ok) {
-            return { givenName: "Unknown", userId: targetUserId };
-          }
-
-          const userData = await userResponse.json();
-
-          let parsed = null;
-          try {
-            parsed = typeof userData?.body === "string" ? JSON.parse(userData.body) : userData?.body;
-          } catch {
-            parsed = null;
-          }
-
-          const first = Array.isArray(parsed) ? parsed[0] : parsed;
-          const attrsArr = first?.Attributes;
-
-          if (!Array.isArray(attrsArr)) {
-            return { givenName: "Unknown", userId: targetUserId };
-          }
-
-          const attributes = attrsArr.reduce((acc, attribute) => {
-            if (attribute?.Name) acc[attribute.Name] = attribute.Value;
-            return acc;
-          }, {});
-
-          const resolvedUserId =
-            attributes["sub"] ||
-            attributes["userId"] ||
-            attrsArr.find((a) => a?.Name === "sub")?.Value ||
-            targetUserId;
-
-          return {
-            givenName: attributes["given_name"] || attributes["name"] || "Unknown",
-            userId: resolvedUserId,
-          };
-        } catch {
-          return { givenName: "Unknown", userId: targetUserId };
-        }
-      };
-
-      const fetchLatestMessage = async (threadId, fallbackRecipientId) => {
-        try {
-          let url = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/messages";
-          if (threadId) url += `?threadId=${encodeURIComponent(threadId)}`;
-
-          const unifiedResponse = await fetch(url, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          });
-
-          if (unifiedResponse.ok) {
-            const messages = await unifiedResponse.json();
-            if (Array.isArray(messages) && messages.length > 0) {
-              const latestMessage = messages[messages.length - 1];
-
-              let metadata = latestMessage?.metadata || {};
-              if (typeof metadata === "string") {
-                try {
-                  metadata = JSON.parse(metadata);
-                } catch {
-                  metadata = {};
-                }
-              }
-
-              return {
-                text: latestMessage?.content || latestMessage?.text || "",
-                createdAt: new Date(latestMessage?.createdAt || Date.now()).toISOString(),
-                isAutomated: metadata?.isAutomated || false,
-                senderId: latestMessage?.senderId || latestMessage?.userId || null,
-                recipientId: latestMessage?.recipientId || fallbackRecipientId || null,
-                threadId: latestMessage?.threadId || threadId || null,
-              };
-            }
-          }
-        } catch (e) {
-          console.warn("Failed to fetch latest message:", e);
-        }
-        return null;
-      };
-
       let unifiedContacts = [];
       try {
-        const threadsResponse = await fetch(
-          `https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/threads?userId=${userId}`,
-          { method: "GET", headers: { "Content-Type": "application/json" } }
-        );
+        const threadsRes = await fetch(`${UNIFIED_API}/threads?userId=${encodeURIComponent(userId)}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
 
-        if (threadsResponse.ok) {
-          const threadsData = await threadsResponse.json();
-          const threads = Array.isArray(threadsData) ? threadsData : [];
-
-          unifiedContacts = threads
-            .filter((t) => t?.hostId && t?.guestId && String(t.hostId) !== String(t.guestId))
-            .map((t) => {
-              let partnerId = null;
-              if (String(t.hostId) === String(userId)) partnerId = t.guestId;
-              else if (String(t.guestId) === String(userId)) partnerId = t.hostId;
-              else {
-                partnerId = role === "host" ? t.guestId : t.hostId;
-              }
-
-              return {
-                partnerId,
-                recipientId: partnerId,
-                userId: partnerId,
-
-                hostId: t.hostId,
-                guestId: t.guestId,
-
-                Status: "accepted",
-                AccoId: t.propertyId,
-                propertyId: t.propertyId,
-                threadId: t.id,
-                isFromUnified: true,
-              };
-            })
-            .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));
+        if (threadsRes.ok) {
+          const threadsData = await threadsRes.json();
+          unifiedContacts = buildUnifiedContactsFromThreads({ threads: threadsData, userId, role });
         }
-      } catch (e) {
-        console.warn("Failed to fetch unified threads:", e);
-      }
-
-      const hydrateContacts = async (contactsList) => {
-        const safeContacts = Array.isArray(contactsList) ? contactsList : [];
-
-        return await Promise.all(
-          safeContacts.map(async (contact) => {
-            const partnerId = contact?.partnerId || contact?.recipientId || contact?.userId || null;
-
-            const userInfo = partnerId
-              ? await fetchUserInfo(partnerId)
-              : { givenName: "Unknown", userId: partnerId };
-
-            const latestMessage = await fetchLatestMessage(contact?.threadId, partnerId);
-
-
-            const threadHostId = contact?.hostId || null;
-            const threadGuestId = contact?.guestId || null;
-
-            let hostIdForLookup = null;
-            let guestIdForLookup = null;
-
-            if (threadHostId && threadGuestId) {
-
-              if (String(threadHostId) === String(userId)) {
-                hostIdForLookup = threadHostId;
-                guestIdForLookup = threadGuestId;
-              } else if (String(threadGuestId) === String(userId)) {
-                hostIdForLookup = threadHostId;
-                guestIdForLookup = threadGuestId;
-              } else {
-
-                hostIdForLookup = role === "guest" ? partnerId : userId;
-                guestIdForLookup = role === "guest" ? userId : partnerId;
-              }
-            } else {
-
-              hostIdForLookup = role === "guest" ? partnerId : userId;
-              guestIdForLookup = role === "guest" ? userId : partnerId;
-            }
-
-            let accoImage = null;
-            let bookingStatus = null;
-            let arrivalDate = null;
-            let departureDate = null;
-            let propertyId = contact?.propertyId || contact?.AccoId || null;
-            let propertyTitle = null;
-
-            try {
-              const bookingInfo = await fetchBookingDetailsAndAccommodation({
-                hostId: hostIdForLookup,
-                guestId: guestIdForLookup,
-                withAuth: role !== "guest",
-                accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
-              });
-
-              accoImage = bookingInfo?.accoImage || null;
-              bookingStatus = bookingInfo?.bookingStatus || null;
-              arrivalDate = bookingInfo?.arrivalDate || null;
-              departureDate = bookingInfo?.departureDate || null;
-              propertyId = bookingInfo?.propertyId || propertyId;
-              propertyTitle = bookingInfo?.propertyTitle || null;
-            } catch (e) {
-            }
-
-            return {
-              ...contact,
-
-              partnerId,
-              recipientId: partnerId,
-              userId: partnerId,
-
-              givenName: userInfo?.givenName || contact?.givenName || "Unknown",
-              profileImage: contact?.profileImage || null,
-
-              latestMessage,
-              accoImage,
-              bookingStatus,
-              arrivalDate,
-              departureDate,
-              propertyId,
-              propertyTitle,
-            };
-          })
-        );
-      };
+      } catch {}
 
       if (unifiedContacts.length > 0) {
-        const acceptedContacts = await hydrateContacts(unifiedContacts);
-        setContacts(acceptedContacts);
+        const accepted = await hydrateContacts({ contactsList: unifiedContacts, userId, role });
+        setContacts(accepted);
         setPendingContacts([]);
         return;
       }
 
       const isHostLegacy = role === "host";
+      const endpoint = isHostLegacy ? LEGACY_HOST_CONTACTS_API : LEGACY_GUEST_CONTACTS_API;
       const requestData = isHostLegacy ? { hostID: userId } : { userID: userId };
-      const endpoint = isHostLegacy
-        ? "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts"
-        : "https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts_Guest";
 
-      const response = await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
       });
 
-      if (!response.ok) throw new Error("Failed to fetch contacts");
+      if (!res.ok) throw new Error("Failed to fetch contacts");
 
-      const responseData = await response.json();
+      const responseData = await res.json();
+      const parsed = safeJsonParse(responseData?.body) ?? responseData?.body ?? { accepted: [], pending: [] };
 
-      let JSONData = { accepted: [], pending: [] };
-      try {
-        JSONData = typeof responseData?.body === "string" ? JSON.parse(responseData.body) : responseData?.body || JSONData;
-      } catch {
-        JSONData = { accepted: [], pending: [] };
-      }
+      const acceptedRaw = Array.isArray(parsed?.accepted) ? parsed.accepted : [];
+      const pendingRaw = Array.isArray(parsed?.pending) ? parsed.pending : [];
 
-      const acceptedRaw = Array.isArray(JSONData?.accepted) ? JSONData.accepted : [];
-      const pendingRaw = Array.isArray(JSONData?.pending) ? JSONData.pending : [];
+      const acceptedNormalized = acceptedRaw.map((r) => normalizeLegacy({ raw: r, isHostLegacy, userId }));
+      const pendingNormalized = (isHostLegacy ? pendingRaw.filter((c) => c?.userId !== userId) : pendingRaw).map((r) =>
+        normalizeLegacy({ raw: r, isHostLegacy, userId })
+      );
 
-      const normalizeLegacy = (raw) => {
-        const partnerId = isHostLegacy ? raw?.userId : raw?.hostId;
-        return {
-          ...raw,
-          partnerId,
-          recipientId: partnerId,
-          userId: partnerId,
-          hostId: raw?.hostId || (isHostLegacy ? userId : null),
-          guestId: raw?.userId || (!isHostLegacy ? userId : null),
-          Status: raw?.Status || raw?.status || "accepted",
-        };
-      };
+      const accepted = await hydrateContacts({ contactsList: acceptedNormalized, userId, role });
+      const pending = await hydrateContacts({ contactsList: pendingNormalized, userId, role });
 
-      const acceptedContacts = await hydrateContacts(acceptedRaw.map(normalizeLegacy));
-
-      const filteredPending = isHostLegacy ? pendingRaw.filter((c) => c?.userId !== userId) : pendingRaw;
-      const pendingContactsRes = await hydrateContacts(filteredPending.map(normalizeLegacy));
-
-      setContacts(acceptedContacts);
-      setPendingContacts(pendingContactsRes);
+      setContacts(accepted);
+      setPendingContacts(pending);
     } catch (err) {
       setError("Error fetching contacts: " + (err?.message || String(err)));
       setContacts([]);
@@ -298,7 +295,11 @@ const useFetchContacts = (userId, role) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, role]);
+
+  useEffect(() => {
+    fetchContacts();
+  }, [fetchContacts]);
 
   return { contacts, pendingContacts, loading, error, setContacts };
 };
