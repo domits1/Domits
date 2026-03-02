@@ -1,4 +1,4 @@
-jest.mock('crypto', () => ({
+jest.mock('node:crypto', () => ({
     randomUUID: jest.fn(() => "test"),
 }));
 jest.mock("../../ORM/index.js", () => ({
