@@ -58,6 +58,8 @@ export default function HostCalendar() {
     isLoadingCalendarSync,
     removingCalendarSourceId,
     refreshingCalendarSourceId,
+    sourceSyncStateById,
+    isRefreshingAllCalendarSources,
     editingCalendarSourceId,
     domitsCalendarLinkCopied,
     hostCalendarExportUrl,
@@ -73,6 +75,7 @@ export default function HostCalendar() {
     handleAddCalendarSource,
     handleRemoveCalendarSource,
     handleRefreshCalendarSource,
+    handleRefreshAllCalendarSources,
   } = useCalendarSync({ selectedPropertyId });
 
   const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
@@ -360,6 +363,9 @@ export default function HostCalendar() {
               onCancelEdit={handleCancelEditCalendarSource}
               onRefreshSource={handleRefreshCalendarSource}
               refreshingSourceId={refreshingCalendarSourceId}
+              sourceSyncStateById={sourceSyncStateById}
+              onRefreshAllSources={handleRefreshAllCalendarSources}
+              refreshingAllSources={isRefreshingAllCalendarSources}
               onRemoveSource={handleRemoveCalendarSource}
               removingSourceId={removingCalendarSourceId}
               onBack={handleCalendarSyncBack}

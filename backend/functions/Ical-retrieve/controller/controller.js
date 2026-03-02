@@ -76,6 +76,16 @@ export class Controller {
         return ok(data);
       }
 
+      if (action === "REFRESH_SOURCE") {
+        const propertyId = body?.propertyId ? String(body.propertyId).trim() : "";
+        const sourceId = body?.sourceId ? String(body.sourceId).trim() : "";
+        if (!propertyId) return err(400, "propertyId is required");
+        if (!sourceId) return err(400, "sourceId is required");
+        await this.authManager.authorizePropertyOwnerForUser(user, propertyId);
+        const data = await this.service.refreshSource({ propertyId, sourceId });
+        return ok(data);
+      }
+
       return err(400, "Unknown action");
     } catch (e) {
       return err(e.statusCode || 500, e.message || "Internal error");

@@ -61,6 +61,14 @@ export async function dbDeleteIcalSource({ propertyId, sourceId }) {
   };
 }
 
+export async function dbRefreshIcalSource({ propertyId, sourceId }) {
+  const data = await callIcalApi({ action: "REFRESH_SOURCE", propertyId, sourceId });
+  return {
+    sources: Array.isArray(data.sources) ? data.sources : [],
+    blockedDates: Array.isArray(data.blockedDates) ? data.blockedDates : [],
+  };
+}
+
 export async function dbRefreshAllIcalSources(propertyId) {
   const data = await callIcalApi({ action: "REFRESH_ALL", propertyId });
   return {

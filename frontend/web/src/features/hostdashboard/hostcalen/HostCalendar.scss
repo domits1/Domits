@@ -621,8 +621,17 @@ $accent: #2f6fed;
 }
 
 .hc-cell--pending {
-  border-color: #9fb0c6;
-  box-shadow: 0 1px 5px rgba(17, 24, 39, 0.14);
+  border-color: #2563eb;
+  background-color: #ecf4ff;
+  box-shadow:
+    inset 0 0 0 2px rgba(37, 99, 235, 0.22),
+    0 0 0 2px rgba(59, 130, 246, 0.24),
+    0 6px 14px rgba(37, 99, 235, 0.18);
+}
+
+.hc-cell--pending .hc-cell-date,
+.hc-cell--pending .hc-cell-price {
+  color: #1e3a8a;
 }
 
 .hc-cell--selected {
@@ -1261,7 +1270,35 @@ $accent: #2f6fed;
 
 .hc-sync-header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 8px;
+}
+
+.hc-sync-refresh-all {
+  border: 1px solid #cfd6df;
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.hc-sync-refresh-all:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #bfc9d8;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.hc-sync-refresh-all:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .hc-sync-back {
@@ -1673,6 +1710,22 @@ $accent: #2f6fed;
   color: #16a34a;
 }
 
+.hc-sync-connected-card-status--pending {
+  color: #9a6700;
+}
+
+.hc-sync-connected-card-status--syncing {
+  color: #2563eb;
+}
+
+.hc-sync-connected-card-status--success {
+  color: #15803d;
+}
+
+.hc-sync-connected-card-status--error {
+  color: #dc2626;
+}
+
 .hc-sync-connected-card-meta {
   margin: 2px 0 0;
   font-size: 12px;
@@ -1706,6 +1759,18 @@ $accent: #2f6fed;
   border-color: #16a34a;
   background: #ecfdf3;
   color: #15803d;
+}
+
+.hc-sync-source-action.is-success {
+  border-color: #16a34a;
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.hc-sync-source-action.is-error {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 .hc-sync-source-action:disabled {

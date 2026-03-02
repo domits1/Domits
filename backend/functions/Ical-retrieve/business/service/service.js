@@ -1,4 +1,5 @@
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { Repository } from "../../data/repository.js";
 
 const MAX_ICS_BYTES = 2_000_000;
@@ -51,6 +52,31 @@ const resolveCalendarProvider = ({ calendarProvider, calendarUrl, calendarName }
 export class Service {
   constructor() {
     this.repository = new Repository();
+  }
+
+  async refreshSingleSource(propertyId, source) {
+    const url = String(source?.calendarUrl || "").trim();
+    if (!url) {
+      return;
+    }
+
+    const { events, meta } = await this.retrieveFromExternalCalendar(url);
+    const blockedDates = buildBlockedDatesFromEvents(events);
+    await this.repository.upsertSource({
+      propertyId,
+      sourceId: source.sourceId,
+      calendarName: source.calendarName || "EXTERNAL",
+      calendarUrl: url,
+      provider: resolveCalendarProvider({
+        calendarProvider: source.provider,
+        calendarUrl: url,
+        calendarName: source.calendarName || "EXTERNAL",
+      }),
+      blockedDatesText: JSON.stringify(blockedDates),
+      lastSyncAt: new Date().toISOString(),
+      etag: meta?.etag || null,
+      lastModified: meta?.lastModified || null,
+    });
   }
 
   async retrieveFromExternalCalendar(calendarUrl) {
@@ -169,30 +195,26 @@ export class Service {
     const sources = await this.repository.listSources(propertyId);
 
     for (const s of sources) {
-      const url = String(s?.calendarUrl || "").trim();
-      if (!url) continue;
-
       try {
-        const { events, meta } = await this.retrieveFromExternalCalendar(url);
-        const blockedDates = buildBlockedDatesFromEvents(events);
-        await this.repository.upsertSource({
-          propertyId,
-          sourceId: s.sourceId,
-          calendarName: s.calendarName || "EXTERNAL",
-          calendarUrl: url,
-          provider: resolveCalendarProvider({
-            calendarProvider: s.provider,
-            calendarUrl: url,
-            calendarName: s.calendarName || "EXTERNAL",
-          }),
-          blockedDatesText: JSON.stringify(blockedDates),
-          lastSyncAt: new Date().toISOString(),
-          etag: meta?.etag || null,
-          lastModified: meta?.lastModified || null,
-        });
+        await this.refreshSingleSource(propertyId, s);
       } catch {}
     }
 
+    return await this.listSources(propertyId);
+  }
+
+  async refreshSource({ propertyId, sourceId }) {
+    if (!propertyId || typeof propertyId !== "string") throw new BadRequestException("propertyId is required");
+    if (!sourceId || typeof sourceId !== "string") throw new BadRequestException("sourceId is required");
+
+    const sources = await this.repository.listSources(propertyId);
+    const normalizedSourceId = String(sourceId).trim();
+    const source = sources.find((item) => String(item?.sourceId || "").trim() === normalizedSourceId);
+    if (!source) {
+      throw new NotFoundException("Calendar source not found.");
+    }
+
+    await this.refreshSingleSource(propertyId, source);
     return await this.listSources(propertyId);
   }
 }

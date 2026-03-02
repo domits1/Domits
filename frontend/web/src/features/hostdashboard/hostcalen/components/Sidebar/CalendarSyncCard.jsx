@@ -12,6 +12,14 @@ const CALENDAR_PROVIDER = {
   GENERIC: "generic",
 };
 
+const SOURCE_SYNC_STATE = {
+  IDLE: "idle",
+  PENDING: "pending",
+  SYNCING: "syncing",
+  SUCCESS: "success",
+  ERROR: "error",
+};
+
 const REMOVE_SOURCE_FLOW_STEP = {
   REASON: "reason",
   CONFIRM: "confirm",
@@ -117,6 +125,38 @@ const formatLastSyncLabel = (value) => {
   return `Last synced: ${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
 };
 
+const resolveSourceSyncButtonLabel = (syncState) => {
+  if (syncState === SOURCE_SYNC_STATE.PENDING) {
+    return "Queued...";
+  }
+  if (syncState === SOURCE_SYNC_STATE.SYNCING) {
+    return "Syncing...";
+  }
+  if (syncState === SOURCE_SYNC_STATE.SUCCESS) {
+    return "Synced";
+  }
+  if (syncState === SOURCE_SYNC_STATE.ERROR) {
+    return "Retry sync";
+  }
+  return "Sync now";
+};
+
+const resolveSourceSyncStatusLabel = (syncState) => {
+  if (syncState === SOURCE_SYNC_STATE.PENDING) {
+    return "Queued for sync";
+  }
+  if (syncState === SOURCE_SYNC_STATE.SYNCING) {
+    return "Syncing now";
+  }
+  if (syncState === SOURCE_SYNC_STATE.SUCCESS) {
+    return "Sync complete";
+  }
+  if (syncState === SOURCE_SYNC_STATE.ERROR) {
+    return "Sync failed";
+  }
+  return "Sync active";
+};
+
 export default function CalendarSyncCard({
   domitsCalendarLink,
   externalCalendarUrlInput,
@@ -138,6 +178,9 @@ export default function CalendarSyncCard({
   onCancelEdit,
   onRefreshSource,
   refreshingSourceId,
+  sourceSyncStateById,
+  onRefreshAllSources,
+  refreshingAllSources,
   onRemoveSource,
   removingSourceId,
   onBack,
@@ -147,9 +190,16 @@ export default function CalendarSyncCard({
   const [removeSourceFlowStep, setRemoveSourceFlowStep] = React.useState(REMOVE_SOURCE_FLOW_STEP.REASON);
   const [selectedRemoveReasonIds, setSelectedRemoveReasonIds] = React.useState([]);
   const sources = Array.isArray(connectedSources) ? connectedSources : [];
+  const syncStateMap =
+    sourceSyncStateById && typeof sourceSyncStateById === "object" ? sourceSyncStateById : {};
   const hasConnections = sources.length > 0;
   const showConnectionSetup = !hasConnections || isConnectionSetupOpen;
-  const hasRefreshInProgress = Boolean(String(refreshingSourceId || "").trim());
+  const isSyncingAllSources = Boolean(refreshingAllSources);
+  const hasAnySourceSyncInProgress =
+    Object.values(syncStateMap).some(
+      (state) => state === SOURCE_SYNC_STATE.PENDING || state === SOURCE_SYNC_STATE.SYNCING
+    ) || Boolean(String(refreshingSourceId || "").trim());
+  const hasRefreshInProgress = isSyncingAllSources || hasAnySourceSyncInProgress;
   const isConfirmingRemoval = Boolean(String(pendingRemoveSourceId || "").trim());
   const isRemovingPendingSource =
     String(removingSourceId || "").trim() === String(pendingRemoveSourceId || "").trim();
@@ -288,11 +338,29 @@ export default function CalendarSyncCard({
           const sourceId = String(source?.sourceId || source?.id || `${index}`);
           const sourceName = String(source?.calendarName || source?.name || "External calendar");
           const isRemoving = String(removingSourceId || "") === sourceId;
-          const isRefreshing = String(refreshingSourceId || "") === sourceId;
+          const sourceSyncState = String(syncStateMap[sourceId] || SOURCE_SYNC_STATE.IDLE);
+          const isRefreshing =
+            sourceSyncState === SOURCE_SYNC_STATE.PENDING ||
+            sourceSyncState === SOURCE_SYNC_STATE.SYNCING;
           const isEditing = String(editingSourceId || "") === sourceId;
           const provider = resolveCalendarProvider(source);
           const providerIcon = getProviderIcon(provider);
           const isProviderIcon = provider !== CALENDAR_PROVIDER.GENERIC;
+          const syncActionClassName = [
+            "hc-sync-source-action",
+            sourceSyncState === SOURCE_SYNC_STATE.SYNCING && "is-active",
+            sourceSyncState === SOURCE_SYNC_STATE.SUCCESS && "is-success",
+            sourceSyncState === SOURCE_SYNC_STATE.ERROR && "is-error",
+          ]
+            .filter(Boolean)
+            .join(" ");
+          const sourceSyncStatusClassName = [
+            "hc-sync-connected-card-status",
+            sourceSyncState !== SOURCE_SYNC_STATE.IDLE &&
+              `hc-sync-connected-card-status--${sourceSyncState}`,
+          ]
+            .filter(Boolean)
+            .join(" ");
           return (
             <li key={sourceId} className="hc-sync-connected-card">
               <div className="hc-sync-connected-card-head">
@@ -309,14 +377,16 @@ export default function CalendarSyncCard({
                 </span>
                 <div className="hc-sync-connected-card-copy">
                   <p className="hc-sync-connected-card-name">{sourceName}</p>
-                  <p className="hc-sync-connected-card-status">Sync active</p>
+                  <p className={sourceSyncStatusClassName}>
+                    {resolveSourceSyncStatusLabel(sourceSyncState)}
+                  </p>
                   <p className="hc-sync-connected-card-meta">{formatLastSyncLabel(source?.lastSyncAt)}</p>
                 </div>
               </div>
               <div className="hc-sync-connected-card-actions">
                 <button
                   type="button"
-                  className={`hc-sync-source-action ${isRefreshing ? "is-active" : ""}`}
+                  className={syncActionClassName}
                   disabled={
                     !onRefreshSource ||
                     addingCalendar ||
@@ -326,7 +396,7 @@ export default function CalendarSyncCard({
                   }
                   onClick={() => onRefreshSource?.(sourceId)}
                 >
-                  {isRefreshing ? "Syncing..." : "Sync now"}
+                  {resolveSourceSyncButtonLabel(sourceSyncState)}
                 </button>
                 <button
                   type="button"
@@ -371,6 +441,18 @@ export default function CalendarSyncCard({
         >
           <img src={arrowLeftIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
         </button>
+        {hasConnections ? (
+          <button
+            type="button"
+            className="hc-sync-refresh-all"
+            disabled={
+              !onRefreshAllSources || addingCalendar || hasRefreshInProgress || isConfirmingRemoval
+            }
+            onClick={() => onRefreshAllSources?.()}
+          >
+            {isSyncingAllSources ? "Syncing all..." : "Sync all"}
+          </button>
+        ) : null}
       </header>
 
       <h3 className="hc-sync-title">Sync calendars</h3>
