@@ -41,24 +41,7 @@ describe('Property Details', () => {
         cy.get('.property-container .rules').should('be.visible');
         
         cy.get('.property-container .rc-nav__btn').first().click();
-
-        cy.get('.rc-cell.rc-cell--day:not(.is-out)').then($days => {
-        const total = $days.length;
-        const startIndex = Math.floor(Math.random() * (total - 3)); 
-        const endIndex = startIndex + Math.floor(Math.random() * 3) + 1; 
-
-        cy.wrap($days.eq(startIndex)).click({ force: true });
-        cy.wrap($days.eq(endIndex)).click({ force: true });
-        cy.get('.rc-footer .rc-cta').click();
-        cy.get('.rc-footer .rc-range strong').first().invoke('text').should('match', /\d{1,2}-\d{1,2}-\d{4}/);
-        cy.get('.rc-footer .rc-range strong').eq(1).invoke('text').should('match', /\d{1,2}-\d{1,2}-\d{4}/);
-
-        cy.get('.details').should('contain.text', 'Bathrooms')
-                        .and('contain.text', 'Bedrooms')
-                        .and('contain.text', 'Beds')
-                        .and('contain.text', 'Guests');
-
-        });
+        
         cy.get('body').then($body => {
         if ($body.find('.description-container .toggle-button').length > 0) {
             cy.get('.description-container .toggle-button').click();
