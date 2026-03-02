@@ -19,8 +19,6 @@ describe('Property Details', () => {
         
         cy.get('.loginButton').click();
         
-        // cy.get('.hostchatbot-close-button').click();
-        
         cy.get('.logo > a > img').should('be.visible').click();
         cy.get(':nth-child(3) > .domits-accommodationGroup > :nth-child(2) > .swiper > .swiper-wrapper > .swiper-slide-visible > img').click();
 
