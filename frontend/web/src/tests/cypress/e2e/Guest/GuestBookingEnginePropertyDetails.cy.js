@@ -14,8 +14,8 @@ describe('Property Details', () => {
         
         cy.get('.dropdownLoginButton').click();
         
-        cy.get('#email').type('testpersoondomits@gmail.com');
-        cy.get('#password').type('Gmail.com1');
+        cy.get('#email').type(Cypress.env('TEST_EMAIL'));
+        cy.get('#password').type(Cypress.env('TEST_PASSWORD'), { log: false });
         
         cy.get('.loginButton').click();
         
@@ -46,8 +46,8 @@ describe('Property Details', () => {
 
         cy.get('.rc-cell.rc-cell--day:not(.is-out)').then($days => {
         const total = $days.length;
-        const startIndex = Math.floor(Math.random() * (total - 3)); // avoid picking near end
-        const endIndex = startIndex + Math.floor(Math.random() * 3) + 1; // 1–3 days later
+        const startIndex = Math.floor(Math.random() * (total - 3)); 
+        const endIndex = startIndex + Math.floor(Math.random() * 3) + 1; 
 
         cy.wrap($days.eq(startIndex)).click({ force: true });
         cy.wrap($days.eq(endIndex)).click({ force: true });
