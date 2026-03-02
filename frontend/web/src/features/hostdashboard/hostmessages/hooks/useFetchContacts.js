@@ -30,7 +30,7 @@ const parseCognitoAttributes = (attrsArr) => {
 };
 
 const fetchUserInfo = async (targetUserId) => {
-  if (!targetUserId) return { givenName: "Unknown", userId: targetUserId };
+  if (!targetUserId) return { givenName: null, userId: targetUserId };
 
   try {
     const res = await fetch(GET_USER_INFO_API, {
@@ -39,7 +39,7 @@ const fetchUserInfo = async (targetUserId) => {
       body: JSON.stringify({ UserId: targetUserId }),
     });
 
-    if (!res.ok) return { givenName: "Unknown", userId: targetUserId };
+    if (!res.ok) return { givenName: null, userId: targetUserId };
 
     const userData = await res.json();
     const parsed = safeJsonParse(userData?.body) ?? userData?.body ?? userData;
@@ -47,17 +47,17 @@ const fetchUserInfo = async (targetUserId) => {
 
     const attrsArr = first?.Attributes;
     const attrs = parseCognitoAttributes(attrsArr);
-    if (!attrs) return { givenName: "Unknown", userId: targetUserId };
+    if (!attrs) return { givenName: null, userId: targetUserId };
 
     const resolvedUserId =
       attrs["sub"] || attrs["userId"] || attrsArr?.find?.((a) => a?.Name === "sub")?.Value || targetUserId;
 
     return {
-      givenName: attrs["given_name"] || attrs["name"] || "Unknown",
+      givenName: attrs["given_name"] || attrs["name"] || null,
       userId: resolvedUserId,
     };
   } catch {
-    return { givenName: "Unknown", userId: targetUserId };
+    return { givenName: null, userId: targetUserId };
   }
 };
 
@@ -184,6 +184,11 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
     propertyTitle = bookingInfo?.propertyTitle || null;
   } catch {}
 
+  const resolvedInfoName =
+    userInfo?.givenName && userInfo.givenName !== "Unknown" && userInfo.givenName.trim().length > 0
+      ? userInfo.givenName
+      : null;
+
   return {
     ...contact,
 
@@ -192,7 +197,7 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
     userId: partnerId,
 
     givenName:
-      userInfo?.givenName ||
+      resolvedInfoName ||
       contact?.givenName ||
       contact?.name ||
       contact?.fullName ||

@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useMemo, useCallback } from "react";
+import { useState, useEffect, useContext, useMemo, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import { WebSocketContext } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import ContactItem from "./ContactItem";
@@ -37,7 +37,7 @@ const resolveContactName = (contact) => {
 };
 
 const fetchUserInfo = async (targetUserId) => {
-  if (!targetUserId) return { givenName: "Unknown", userId: targetUserId, profileImage: null };
+  if (!targetUserId) return { givenName: null, userId: targetUserId, profileImage: null };
 
   try {
     const userResponse = await fetch("https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo", {
@@ -46,7 +46,7 @@ const fetchUserInfo = async (targetUserId) => {
       body: JSON.stringify({ UserId: targetUserId }),
     });
 
-    if (!userResponse.ok) return { givenName: "Unknown", userId: targetUserId, profileImage: null };
+    if (!userResponse.ok) return { givenName: null, userId: targetUserId, profileImage: null };
 
     const userData = await userResponse.json();
 
@@ -60,7 +60,7 @@ const fetchUserInfo = async (targetUserId) => {
     const first = Array.isArray(parsed) ? parsed[0] : parsed;
     const attrsArr = first?.Attributes;
 
-    if (!Array.isArray(attrsArr)) return { givenName: "Unknown", userId: targetUserId, profileImage: null };
+    if (!Array.isArray(attrsArr)) return { givenName: null, userId: targetUserId, profileImage: null };
 
     const attributes = attrsArr.reduce((acc, attribute) => {
       if (attribute?.Name) acc[attribute.Name] = attribute.Value;
@@ -71,12 +71,12 @@ const fetchUserInfo = async (targetUserId) => {
       attributes["sub"] || attributes["userId"] || attrsArr.find((a) => a?.Name === "sub")?.Value || targetUserId;
 
     return {
-      givenName: attributes["given_name"] || attributes["name"] || "Unknown",
+      givenName: attributes["given_name"] || attributes["name"] || null,
       userId: resolvedUserId,
       profileImage: attributes["picture"] || null,
     };
   } catch {
-    return { givenName: "Unknown", userId: targetUserId, profileImage: null };
+    return { givenName: null, userId: targetUserId, profileImage: null };
   }
 };
 
@@ -128,9 +128,11 @@ const hydratePartnerInContacts = ({ setContacts, selfUserId, partnerId, info }) 
     if (idx === -1) return updated;
 
     const existingName = resolveContactName(updated[idx]);
+    const resolvedInfoName =
+      info?.givenName && info.givenName !== "Unknown" && info.givenName.trim().length > 0 ? info.givenName : null;
     updated[idx] = {
       ...updated[idx],
-      givenName: info?.givenName || existingName || "Unknown",
+      givenName: resolvedInfoName || existingName || "Unknown",
       profileImage: updated[idx]?.profileImage || info?.profileImage || null,
     };
 
@@ -165,7 +167,9 @@ const ContactList = ({
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, contactKey: null });
 
-  const [hydratingIds, setHydratingIds] = useState(() => new Set());
+  const hydratingIdsRef = useRef(new Set());
+  const lastWsMessageIdRef = useRef(null);
+  const lastPropMessageIdRef = useRef(null);
 
   const processIncomingMessage = useCallback(
     (incoming) => {
@@ -177,28 +181,19 @@ const ContactList = ({
       setContacts?.((prevContacts) => upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming }));
 
       const hydrateKey = String(partnerId);
-      if (hydratingIds.has(hydrateKey)) return;
-
-      setHydratingIds((prev) => {
-        const next = new Set(prev);
-        next.add(hydrateKey);
-        return next;
-      });
+      if (hydratingIdsRef.current.has(hydrateKey)) return;
+      hydratingIdsRef.current.add(hydrateKey);
 
       const runHydrate = async () => {
         const info = await fetchUserInfo(partnerId);
         hydratePartnerInContacts({ setContacts, selfUserId: userId, partnerId, info });
 
-        setHydratingIds((prev) => {
-          const next = new Set(prev);
-          next.delete(hydrateKey);
-          return next;
-        });
+        hydratingIdsRef.current.delete(hydrateKey);
       };
 
       runHydrate();
     },
-    [hydratingIds, setContacts, userId]
+    [setContacts, userId]
   );
 
   useEffect(() => {
@@ -249,11 +244,17 @@ const ContactList = ({
 
     const latest = wsMessages[wsMessages.length - 1];
     if (!latest) return;
+    const messageId = latest?.id || latest?.message?.id || JSON.stringify(latest);
+    if (lastWsMessageIdRef.current === messageId) return;
+    lastWsMessageIdRef.current = messageId;
     processIncomingMessage(latest);
   }, [wsMessages, processIncomingMessage]);
 
   useEffect(() => {
     if (!message) return;
+    const messageId = message?.id || JSON.stringify(message);
+    if (lastPropMessageIdRef.current === messageId) return;
+    lastPropMessageIdRef.current = messageId;
     processIncomingMessage(message);
   }, [message, processIncomingMessage]);
 
