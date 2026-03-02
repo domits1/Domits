@@ -14,7 +14,7 @@ describe("Alessio-Revenue handler (event listener)", () => {
   let handler;
 
   beforeAll(async () => {
-    // import pas hier, zodat jest.mock eerst toegepast is
+    // Import here so that jest.mock is applied first
     const mod = await import("../../functions/Alessio-Revenue/index.js");
     handler = mod.handler;
   });
