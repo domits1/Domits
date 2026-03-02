@@ -21,6 +21,7 @@ import Bekir from "../../images/about-img/Bekir.png";
 import Kacper from "../../images/about-img/Kacper.png";
 import Valentijn from "../../images/about-img/valentijn.png";
 import Sakhi from "../../images/about-img/Sakhi.png";
+import Denisa from "../../images/about-img/Denisa.jpeg";
 import Omer from "../../images/about-img/Omer.jpg";
 import Ameen from "../../images/about-img/Ameen.jpg";
 
@@ -75,6 +76,7 @@ function About() {
     { name: "Valentijn", src: Valentijn, role: aboutContent.crew.developer },
     { name: "Yusuf", src: standard, role: aboutContent.crew.developer },
     { name: "Sakhi", src: Sakhi, role: aboutContent.crew.developer },
+    { name: "Denisa", src: Denisa, role: aboutContent.crew.designer },
     { name: "Omer", src: Omer, role: aboutContent.crew.developer },
     { name: "Ameen", src: Ameen, role: aboutContent.crew.developer },
    

@@ -49,6 +49,7 @@ export class AuthManager {
         if (property.hostId !== user.Username) {
             throw new Forbidden("You must be the owner of the property to access it.")
         }
+        return user.Username;
     }
 
     async authorizeDraftOwnerRequest(accessToken, draftId) {
