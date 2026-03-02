@@ -53,7 +53,6 @@ export default function HostCalendar() {
   const {
     externalBlockedDates,
     calendarSources,
-    calendarSyncForm,
     calendarSyncError,
     isSavingCalendarSync,
     isLoadingCalendarSync,
@@ -126,7 +125,6 @@ export default function HostCalendar() {
 
   const {
     availabilitySettingsForm,
-    normalizedAvailabilitySettings,
     availabilityWindowOptions,
     hasAvailabilitySettingsChanges,
     canSaveAvailabilitySettings,

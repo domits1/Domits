@@ -724,7 +724,7 @@ export class PropertyController {
                 (Array.isArray(overrides) ? overrides : [])
                     .map((entry) => {
                         if (!this.isPlainObject(entry)) {
-                            throw new Error("Calendar overrides must contain objects.");
+                            throw new TypeError("Calendar overrides must contain objects.");
                         }
 
                         const dateRaw = entry.date ?? entry.calendarDate ?? entry.day;
@@ -832,7 +832,7 @@ export class PropertyController {
         const milliseconds = truncatedValue > 1000000000000 ? truncatedValue : truncatedValue * 1000;
         const date = new Date(milliseconds);
         if (Number.isNaN(date.getTime())) {
-            throw new Error(`Calendar override ${fieldName} is invalid.`);
+            throw new TypeError(`Calendar override ${fieldName} is invalid.`);
         }
 
         return this.normalizeCalendarDateParts(

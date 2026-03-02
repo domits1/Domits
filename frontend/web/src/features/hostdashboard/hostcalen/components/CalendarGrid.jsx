@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { dayNames, formatYearMonth, isSameMonthUTC } from "../utils/date";
 import { cx } from "../utils/classNames";
 import PulseBarsLoader from "./PulseBarsLoader";
@@ -54,6 +55,7 @@ export default function CalendarGrid({
   onDateSelect,
   loadingMessage,
 }) {
+  const isMonthView = view === "month";
   const safeGrid = Array.isArray(monthGrid) ? monthGrid : [];
   const blockedDates = externalBlockedDates instanceof Set ? externalBlockedDates : new Set();
   const selectedSet = new Set(Array.isArray(selectedDateKeys) ? selectedDateKeys : []);
@@ -74,9 +76,7 @@ export default function CalendarGrid({
         </div>
       </header>
 
-      {view !== "month" ? (
-        <div className="hc-calendar-placeholder">Year view will be added in a follow-up iteration.</div>
-      ) : (
+      {isMonthView ? (
         <>
           <div className="hc-week-header" role="presentation">
             {dayNames.map((dayName) => (
@@ -97,11 +97,15 @@ export default function CalendarGrid({
               const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6;
               const isBlocked = blockedDates.has(key);
               const isBooked = bookedSet.has(key);
+              const isNotBlocked = isBlocked === false;
+              const isNotBooked = isBooked === false;
+              const isOutsideMonth = inCurrentMonth === false;
               const overrideAvailability = readOverrideAvailability(availabilityOverrides, key);
               const isAvailable =
-                !isBlocked &&
-                !isBooked &&
+                isNotBlocked &&
+                isNotBooked &&
                 (overrideAvailability ?? isDateWithinAvailability(dateNumber, availabilityRanges));
+              const isUnavailable = isAvailable === false;
               const isForcedUnavailable = overrideAvailability === false;
               const isSelected = selectedSet.has(key);
               const isPending = pendingSelectionStartKey === key;
@@ -114,14 +118,17 @@ export default function CalendarGrid({
 
               const overridePrice = Number(dayPriceOverrides[key]);
               const defaultPrice = isWeekend ? weekendRate : nightlyRate;
-              const displayPrice = !isBlocked
-                ? Number.isFinite(overridePrice) && overridePrice > 0
+              const hasValidOverridePrice = Number.isFinite(overridePrice) && overridePrice > 0;
+              const displayPrice = isBlocked
+                ? null
+                : hasValidOverridePrice
                   ? Math.trunc(overridePrice)
-                  : defaultPrice
-                : null;
+                  : defaultPrice;
 
-              const showExternalBlockedOverlay = inCurrentMonth && isBlocked && !isBooked;
-              const showUnavailableBadge = !showExternalBlockedOverlay && !isBooked && (isBlocked || !isAvailable);
+              const showExternalBlockedOverlay = inCurrentMonth && isBlocked && isNotBooked;
+              const canShowUnavailableBadge =
+                showExternalBlockedOverlay === false && isBooked === false;
+              const showUnavailableBadge = canShowUnavailableBadge && (isBlocked || isUnavailable);
               const showBookedBadge = inCurrentMonth && isBooked;
               const cellAriaLabel = [
                 date.toUTCString(),
@@ -134,24 +141,26 @@ export default function CalendarGrid({
                 .join(", ");
 
               return (
-                <article
+                <button
+                  type="button"
                   key={key}
                   className={cx(
                     "hc-cell",
-                    !inCurrentMonth && "hc-cell--outside",
+                    isOutsideMonth && "hc-cell--outside",
                     isToday && "hc-cell--today",
                     isBlocked && "hc-cell--blocked",
                     showExternalBlockedOverlay && "hc-cell--external-booking",
                     isBooked && "hc-cell--booked",
                     isAvailable && "hc-cell--available",
-                    !isBlocked && !isAvailable && "hc-cell--unavailable",
+                    isNotBlocked && isUnavailable && "hc-cell--unavailable",
                     isForcedUnavailable && "hc-cell--forced-unavailable",
                     isPending && "hc-cell--pending",
                     isSelected && isAvailable && "hc-cell--selected",
-                    isSelected && !isAvailable && "hc-cell--selected-unavailable",
+                    isSelected && isUnavailable && "hc-cell--selected-unavailable",
                     isSelected && "hc-cell--selected-outline"
                   )}
                   aria-label={cellAriaLabel}
+                  aria-pressed={isSelected}
                   onClick={() => onDateSelect?.({ key })}
                 >
                   {showExternalBlockedOverlay && (
@@ -177,11 +186,13 @@ export default function CalendarGrid({
 
                   <span className="hc-cell-date">{date.getUTCDate()}</span>
                   {displayPrice !== null && <span className="hc-cell-price">{formatEuroAmount(displayPrice)}</span>}
-                </article>
+                </button>
               );
             })}
           </div>
         </>
+      ) : (
+        <div className="hc-calendar-placeholder">Year view will be added in a follow-up iteration.</div>
       )}
 
       {isLoading && (
@@ -192,3 +203,43 @@ export default function CalendarGrid({
     </section>
   );
 }
+
+CalendarGrid.propTypes = {
+  view: PropTypes.string.isRequired,
+  cursor: PropTypes.instanceOf(Date).isRequired,
+  monthGrid: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.instanceOf(Date))).isRequired,
+  onPrev: PropTypes.func.isRequired,
+  onNext: PropTypes.func.isRequired,
+  availabilityRanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      start: PropTypes.number.isRequired,
+      end: PropTypes.number.isRequired,
+    })
+  ),
+  externalBlockedDates: PropTypes.instanceOf(Set),
+  nightlyRate: PropTypes.number,
+  weekendRate: PropTypes.number,
+  isLoading: PropTypes.bool,
+  selectedDateKeys: PropTypes.arrayOf(PropTypes.string),
+  pendingSelectionStartKey: PropTypes.string,
+  availabilityOverrides: PropTypes.objectOf(PropTypes.bool),
+  priceOverrides: PropTypes.objectOf(PropTypes.number),
+  bookedDateKeys: PropTypes.instanceOf(Set),
+  onDateSelect: PropTypes.func,
+  loadingMessage: PropTypes.string,
+};
+
+CalendarGrid.defaultProps = {
+  availabilityRanges: [],
+  externalBlockedDates: new Set(),
+  nightlyRate: 0,
+  weekendRate: 0,
+  isLoading: false,
+  selectedDateKeys: [],
+  pendingSelectionStartKey: null,
+  availabilityOverrides: {},
+  priceOverrides: {},
+  bookedDateKeys: new Set(),
+  onDateSelect: null,
+  loadingMessage: "",
+};

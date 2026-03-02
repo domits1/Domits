@@ -14,7 +14,7 @@ export const Property_Calendar_Override = new EntitySchema({
       primary: true,
       type: "bigint",
       transformer: {
-        from: (value) => Number(value),
+        from: Number,
         to: (value) => value,
       },
       nullable: false,
@@ -30,7 +30,7 @@ export const Property_Calendar_Override = new EntitySchema({
     updated_at: {
       type: "bigint",
       transformer: {
-        from: (value) => Number(value),
+        from: Number,
         to: (value) => value,
       },
       nullable: false,

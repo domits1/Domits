@@ -411,6 +411,7 @@ $accent: #2f6fed;
 
 .hc-cell {
   position: relative;
+  width: 100%;
   min-height: 90px;
   border: 1px solid #e3e5ea;
   border-radius: 8px;
@@ -420,6 +421,10 @@ $accent: #2f6fed;
   justify-content: space-between;
   background: $surface;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  text-align: left;
   transition:
     border-color 0.16s ease,
     box-shadow 0.16s ease,
