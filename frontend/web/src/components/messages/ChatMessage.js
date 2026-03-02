@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import profileImage from "./domits-logo.jpg";
 import Icon from "@mdi/react";
-import { mdiPartyPopper, mdiClipboardTextOutline, mdiDoor, mdiWifi, mdiStarOutline, mdiRobotOutline } from "@mdi/js";
+import {
+  mdiPartyPopper,
+  mdiClipboardTextOutline,
+  mdiDoor,
+  mdiWifi,
+  mdiStarOutline,
+  mdiRobotOutline,
+} from "@mdi/js";
 
 const ChatMessage = ({ message, userId, contactName, contactImage }) => {
   const { userId: senderId, text, createdAt, isSent, fileUrls, isAutomated, messageType } = message;
@@ -38,6 +45,15 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
 
   const automatedIcon = isAutomatedMessage ? getAutomatedIcon(messageType) : null;
   const hasText = typeof text === "string" && text.trim().length > 0;
+
+  const openImage = (url) => setModalImage(url);
+
+  const onImageKeyDown = (e, url) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openImage(url);
+    }
+  };
 
   return (
     <div className={`chat-message-row ${directionClass} ${isAutomatedMessage ? "automated-message" : ""}`}>
@@ -81,7 +97,10 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
                   src={fileUrl}
                   alt="Attachment"
                   className="message-image"
-                  onClick={() => setModalImage(fileUrl)}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openImage(fileUrl)}
+                  onKeyDown={(e) => onImageKeyDown(e, fileUrl)}
                   style={{ cursor: "pointer" }}
                 />
               );
@@ -107,7 +126,8 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
               e.preventDefault();
               setModalImage(null);
             }
-          }}>
+          }}
+        >
           <img src={modalImage} alt="Enlarged attachment" className="image-modal-content" />
         </div>
       )}
