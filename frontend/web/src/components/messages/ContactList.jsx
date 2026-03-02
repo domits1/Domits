@@ -25,8 +25,8 @@ const resolvePartnerId = (contact, selfUserId) => {
   return picked || null;
 };
 
-const GetUserInfo = async (targetUserId) => {
-  if (!targetUserId) return { givenName: "Unknown", userId: targetUserId };
+const fetchUserInfo = async (targetUserId) => {
+  if (!targetUserId) return { givenName: "Unknown", userId: targetUserId, profileImage: null };
 
   try {
     const userResponse = await fetch("https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo", {
@@ -35,7 +35,7 @@ const GetUserInfo = async (targetUserId) => {
       body: JSON.stringify({ UserId: targetUserId }),
     });
 
-    if (!userResponse.ok) return { givenName: "Unknown", userId: targetUserId };
+    if (!userResponse.ok) return { givenName: "Unknown", userId: targetUserId, profileImage: null };
 
     const userData = await userResponse.json();
 
@@ -49,7 +49,7 @@ const GetUserInfo = async (targetUserId) => {
     const first = Array.isArray(parsed) ? parsed[0] : parsed;
     const attrsArr = first?.Attributes;
 
-    if (!Array.isArray(attrsArr)) return { givenName: "Unknown", userId: targetUserId };
+    if (!Array.isArray(attrsArr)) return { givenName: "Unknown", userId: targetUserId, profileImage: null };
 
     const attributes = attrsArr.reduce((acc, attribute) => {
       if (attribute?.Name) acc[attribute.Name] = attribute.Value;
@@ -65,8 +65,65 @@ const GetUserInfo = async (targetUserId) => {
       profileImage: attributes["picture"] || null,
     };
   } catch {
-    return { givenName: "Unknown", userId: targetUserId };
+    return { givenName: "Unknown", userId: targetUserId, profileImage: null };
   }
+};
+
+const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
+  const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
+
+  const threadId = incoming?.threadId || null;
+  const partnerId = incoming?.userId === selfUserId ? incoming?.recipientId : incoming?.userId;
+
+  if (!partnerId || String(partnerId) === String(selfUserId)) return updated;
+
+  let displayText = incoming?.text ?? incoming?.content ?? "";
+  if (incoming?.fileUrls && incoming.fileUrls.length > 0) displayText = "Attachment";
+
+  const idx = updated.findIndex((c) => {
+    if (threadId && c?.threadId) return String(c.threadId) === String(threadId);
+    return resolvePartnerId(c, selfUserId) === partnerId;
+  });
+
+  if (idx !== -1) {
+    updated[idx] = {
+      ...updated[idx],
+      latestMessage: { ...incoming, text: displayText },
+    };
+  } else {
+    updated.unshift({
+      partnerId,
+      recipientId: partnerId,
+      userId: partnerId,
+      threadId: threadId || null,
+      propertyId: incoming?.propertyId || null,
+      propertyTitle: null,
+      accoImage: null,
+      givenName: "New message",
+      profileImage: null,
+      latestMessage: { ...incoming, text: displayText },
+      isFromRealtime: true,
+    });
+  }
+
+  updated.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
+  return updated;
+};
+
+const hydratePartnerInContacts = ({ setContacts, selfUserId, partnerId, info }) => {
+  setContacts?.((prevContacts) => {
+    const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
+    const idx = updated.findIndex((c) => String(resolvePartnerId(c, selfUserId)) === String(partnerId));
+    if (idx === -1) return updated;
+
+    updated[idx] = {
+      ...updated[idx],
+      givenName: info?.givenName || updated[idx]?.givenName || "Unknown",
+      profileImage: updated[idx]?.profileImage || info?.profileImage || null,
+    };
+
+    return updated;
+  });
 };
 
 const ContactList = ({
@@ -131,14 +188,9 @@ const ContactList = ({
     event.preventDefault();
     const partnerId = resolvePartnerId(contact, userId);
     if (!partnerId) return;
-    const key = contact?.threadId || partnerId;
 
-    setContextMenu({
-      visible: true,
-      x: event.clientX,
-      y: event.clientY,
-      contactKey: key,
-    });
+    const key = contact?.threadId || partnerId;
+    setContextMenu({ visible: true, x: event.clientX, y: event.clientY, contactKey: key });
   };
 
   const handleCloseSelectedChat = () => {
@@ -152,134 +204,64 @@ const ContactList = ({
     const latest = wsMessages[wsMessages.length - 1];
     if (!latest) return;
 
-    const threadId = latest?.threadId || null;
     const partnerId = latest?.userId === userId ? latest?.recipientId : latest?.userId;
     if (!partnerId || String(partnerId) === String(userId)) return;
 
-    let displayText = latest.text;
-    if (latest.fileUrls && latest.fileUrls.length > 0) displayText = "Attachment";
-
-    setContacts?.((prevContacts) => {
-      const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
-
-      const idx = updated.findIndex((c) => {
-        if (threadId && c?.threadId) return String(c.threadId) === String(threadId);
-        return resolvePartnerId(c, userId) === partnerId;
-      });
-
-      if (idx !== -1) {
-        updated[idx] = {
-          ...updated[idx],
-          latestMessage: { ...latest, text: displayText },
-        };
-      } else {
-        updated.unshift({
-          partnerId,
-          recipientId: partnerId,
-          userId: partnerId,
-          threadId: threadId || null,
-          propertyId: latest?.propertyId || null,
-          propertyTitle: null,
-          accoImage: null,
-          givenName: "New message",
-          profileImage: null,
-          latestMessage: { ...latest, text: displayText },
-          isFromRealtime: true,
-        });
-      }
-
-      updated.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
-      return updated;
-    });
+    setContacts?.((prevContacts) => upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming: latest }));
 
     const hydrateKey = String(partnerId);
-    if (!hydratingIds.has(hydrateKey)) {
+    if (hydratingIds.has(hydrateKey)) return;
+
+    setHydratingIds((prev) => {
+      const next = new Set(prev);
+      next.add(hydrateKey);
+      return next;
+    });
+
+    const runHydrate = async () => {
+      const info = await fetchUserInfo(partnerId);
+      hydratePartnerInContacts({ setContacts, selfUserId: userId, partnerId, info });
+
       setHydratingIds((prev) => {
         const next = new Set(prev);
-        next.add(hydrateKey);
+        next.delete(hydrateKey);
         return next;
       });
+    };
 
-      (async () => {
-        const info = await GetUserInfo(partnerId);
-
-        setContacts?.((prevContacts) => {
-          const updated = Array.isArray(prevContacts) ? [...prevContacts] : [];
-
-          const idx = updated.findIndex((c) => String(resolvePartnerId(c, userId)) === String(partnerId));
-          if (idx === -1) return updated;
-
-          updated[idx] = {
-            ...updated[idx],
-            givenName: info?.givenName || updated[idx]?.givenName || "Unknown",
-            profileImage: updated[idx]?.profileImage || info?.profileImage || null,
-          };
-
-          return updated;
-        });
-
-        setHydratingIds((prev) => {
-          const next = new Set(prev);
-          next.delete(hydrateKey);
-          return next;
-        });
-      })();
-    }
+    runHydrate();
   }, [wsMessages, setContacts, userId, hydratingIds]);
 
   useEffect(() => {
     if (!message) return;
 
-    setContacts?.((prevContacts) => {
-      const updatedContacts = Array.isArray(prevContacts) ? [...prevContacts] : [];
+    const partnerId = message?.userId === userId ? message?.recipientId : message?.userId;
+    if (!partnerId || String(partnerId) === String(userId)) return;
 
-      const threadId = message?.threadId || null;
-      const partnerId = message?.userId === userId ? message?.recipientId : message?.userId;
-      if (!partnerId || String(partnerId) === String(userId)) return updatedContacts;
+    setContacts?.((prevContacts) => upsertContactFromIncoming({ prevContacts, selfUserId: userId, incoming: message }));
 
-      const index = updatedContacts.findIndex((c) => {
-        if (threadId && c?.threadId) return String(c.threadId) === String(threadId);
-        return resolvePartnerId(c, userId) === partnerId;
-      });
+    const hydrateKey = String(partnerId);
+    if (hydratingIds.has(hydrateKey)) return;
 
-      if (index !== -1) {
-        let displayText = message.text;
-        if (message.fileUrls && message.fileUrls.length > 0) displayText = "Attachment";
-
-        updatedContacts[index] = {
-          ...updatedContacts[index],
-          latestMessage: {
-            text: displayText,
-            createdAt: message.createdAt,
-            fileUrls: message.fileUrls,
-            userId: message.userId,
-            recipientId: message.recipientId,
-            threadId: message.threadId || updatedContacts[index]?.threadId || null,
-          },
-        };
-      } else {
-        updatedContacts.unshift({
-          partnerId,
-          recipientId: partnerId,
-          userId: partnerId,
-          threadId: message?.threadId || null,
-          propertyId: message?.propertyId || null,
-          givenName: "New message",
-          profileImage: null,
-          latestMessage: {
-            text: message.text || "",
-            createdAt: message.createdAt,
-            userId: message.userId,
-            recipientId: message.recipientId,
-            threadId: message.threadId || null,
-          },
-        });
-      }
-
-      updatedContacts.sort((a, b) => new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0));
-      return updatedContacts;
+    setHydratingIds((prev) => {
+      const next = new Set(prev);
+      next.add(hydrateKey);
+      return next;
     });
-  }, [message, setContacts, userId]);
+
+    const runHydrate = async () => {
+      const info = await fetchUserInfo(partnerId);
+      hydratePartnerInContacts({ setContacts, selfUserId: userId, partnerId, info });
+
+      setHydratingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(hydrateKey);
+        return next;
+      });
+    };
+
+    runHydrate();
+  }, [message, setContacts, userId, hydratingIds]);
 
   const filteredContacts = useMemo(() => {
     let list = Array.isArray(contacts) ? [...contacts] : [];
