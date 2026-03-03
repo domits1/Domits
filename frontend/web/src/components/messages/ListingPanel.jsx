@@ -18,6 +18,7 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
 
   const [loading, setLoading] = useState(false);
   const [acco, setAcco] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   const endpoint = isGuest ? "bookingEngine/listingDetails" : "hostDashboard/single";
   const needsAuth = !isGuest;
@@ -33,12 +34,17 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
       }
 
       setLoading(true);
+      setLoadError(null);
       try {
         const token = needsAuth ? accessToken : null;
         const data = await getAccommodationByPropertyId(endpoint, propertyId, token);
         if (!cancelled) setAcco(data || null);
       } catch (e) {
-        if (!cancelled) setAcco(null);
+        if (!cancelled) {
+          setAcco(null);
+          setLoadError("Failed to load listing details.");
+          console.warn("ListingPanel: failed to load accommodation", e);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -76,6 +82,7 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
       >
         <div style={{ fontWeight: 900, fontSize: 16 }}>Listing</div>
         {loading ? <div style={{ fontSize: 12, color: "#64748b" }}>Loading…</div> : null}
+        {loadError ? <div style={{ fontSize: 12, color: "#ef4444" }}>{loadError}</div> : null}
       </div>
 
       <div style={{ padding: 16, overflow: "auto" }}>

@@ -215,6 +215,7 @@ const ChatScreen = ({
 
   const headerName = getOtherPartyName(userId, resolvedContactId, contactName);
   const hasMessages = mergedMessages.length > 0;
+  const isEmptyThread = hasMessages === false;
 
   return (
     <div className="chat-screen">
@@ -249,7 +250,7 @@ const ChatScreen = ({
       </div>
 
       <div className="chat-body" ref={scrollContainerRef} onScroll={handleScroll}>
-        {!hasMessages ? (
+        {isEmptyThread ? (
           <div className="chat-thread-empty">
             <h4>No messages yet</h4>
             <p>Say hi to start the conversation.</p>

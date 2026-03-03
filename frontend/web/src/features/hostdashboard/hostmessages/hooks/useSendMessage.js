@@ -36,6 +36,7 @@ export const useSendMessage = (userId) => {
     const channelID = [userId, recipientId].sort().join("_");
 
     try {
+      const metadata = options.metadata ? { isAutomated: false, ...options.metadata } : { isAutomated: false };
       const saved = await sendUnifiedMessage({
         senderId: userId,
         recipientId,
@@ -45,7 +46,7 @@ export const useSendMessage = (userId) => {
         threadId: options.threadId ?? null,
         hostId: options.hostId ?? null,
         guestId: options.guestId ?? null,
-        metadata: { isAutomated: false, ...(options.metadata || {}) },
+        metadata,
       });
 
       const savedId = pick(saved?.id, saved?.messageId, saved?.message?.id);
@@ -66,7 +67,7 @@ export const useSendMessage = (userId) => {
           propertyId: options.propertyId ?? null,
           hostId: options.hostId ?? null,
           guestId: options.guestId ?? null,
-          metadata: { isAutomated: false, ...(options.metadata || {}) },
+          metadata,
           accessToken: token || undefined,
           id: savedId || undefined,
           createdAt: savedCreatedAt || undefined,

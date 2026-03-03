@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { UserProvider, useUser } from "../hostdashboard/hostmessages/context/AuthContext";
+import { UserProvider } from "../hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../hostdashboard/hostmessages/context/webSocketContext";
 import { useAuth } from "../hostdashboard/hostmessages/hooks/useAuth";
 

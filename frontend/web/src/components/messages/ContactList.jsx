@@ -37,47 +37,48 @@ const resolveContactName = (contact) => {
 };
 
 const fetchUserInfo = async (targetUserId) => {
-  if (!targetUserId) return { givenName: null, userId: targetUserId, profileImage: null };
-
-  try {
-    const userResponse = await fetch("https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ UserId: targetUserId }),
-    });
-
-    if (!userResponse.ok) return { givenName: null, userId: targetUserId, profileImage: null };
-
-    const userData = await userResponse.json();
-
-    let parsed = null;
+  if (targetUserId) {
     try {
-      parsed = typeof userData?.body === "string" ? JSON.parse(userData.body) : userData?.body;
+      const userResponse = await fetch("https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ UserId: targetUserId }),
+      });
+
+      if (!userResponse.ok) return { givenName: null, userId: targetUserId, profileImage: null };
+
+      const userData = await userResponse.json();
+
+      let parsed = null;
+      try {
+        parsed = typeof userData?.body === "string" ? JSON.parse(userData.body) : userData?.body;
+      } catch {
+        parsed = null;
+      }
+
+      const first = Array.isArray(parsed) ? parsed[0] : parsed;
+      const attrsArr = first?.Attributes;
+
+      if (!Array.isArray(attrsArr)) return { givenName: null, userId: targetUserId, profileImage: null };
+
+      const attributes = attrsArr.reduce((acc, attribute) => {
+        if (attribute?.Name) acc[attribute.Name] = attribute.Value;
+        return acc;
+      }, {});
+
+      const resolvedUserId =
+        attributes["sub"] || attributes["userId"] || attrsArr.find((a) => a?.Name === "sub")?.Value || targetUserId;
+
+      return {
+        givenName: attributes["given_name"] || attributes["name"] || null,
+        userId: resolvedUserId,
+        profileImage: attributes["picture"] || null,
+      };
     } catch {
-      parsed = null;
+      return { givenName: null, userId: targetUserId, profileImage: null };
     }
-
-    const first = Array.isArray(parsed) ? parsed[0] : parsed;
-    const attrsArr = first?.Attributes;
-
-    if (!Array.isArray(attrsArr)) return { givenName: null, userId: targetUserId, profileImage: null };
-
-    const attributes = attrsArr.reduce((acc, attribute) => {
-      if (attribute?.Name) acc[attribute.Name] = attribute.Value;
-      return acc;
-    }, {});
-
-    const resolvedUserId =
-      attributes["sub"] || attributes["userId"] || attrsArr.find((a) => a?.Name === "sub")?.Value || targetUserId;
-
-    return {
-      givenName: attributes["given_name"] || attributes["name"] || null,
-      userId: resolvedUserId,
-      profileImage: attributes["picture"] || null,
-    };
-  } catch {
-    return { givenName: null, userId: targetUserId, profileImage: null };
   }
+  return { givenName: null, userId: targetUserId, profileImage: null };
 };
 
 const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
@@ -96,7 +97,8 @@ const upsertContactFromIncoming = ({ prevContacts, selfUserId, incoming }) => {
     return resolvePartnerId(c, selfUserId) === partnerId;
   });
 
-  if (idx !== -1) {
+  const hasExisting = idx > -1;
+  if (hasExisting) {
     updated[idx] = {
       ...updated[idx],
       latestMessage: { ...incoming, text: displayText },
@@ -275,6 +277,35 @@ const ContactList = ({
     return list;
   }, [contacts, searchTerm, tab, sortAlphabetically]);
 
+  let listContent = null;
+  if (loading) {
+    listContent = <p className="contact-list-loading-text">Loading contacts...</p>;
+  } else if (filteredContacts.length === 0) {
+    listContent = <p className="contact-list-empty-text">No contacts found.</p>;
+  } else {
+    listContent = filteredContacts.map((contact) => {
+      const partnerId = resolvePartnerId(contact, userId);
+      const fallbackKey =
+        contact?.id ||
+        contact?.latestMessage?.id ||
+        `${contact?.latestMessage?.createdAt || "unknown"}-${resolveContactName(contact)}`;
+      const key = contact?.threadId || partnerId || fallbackKey;
+      const isActive = selectedKey === key;
+
+      return (
+        <li
+          key={key}
+          className={`contact-list-list-item ${isActive ? "active" : ""}`}
+          onClick={() => handleClick(contact)}
+          onContextMenu={(event) => handleContextMenu(event, contact)}
+          style={{ cursor: "pointer" }}
+        >
+          <ContactItem contact={contact} selected={isActive} />
+        </li>
+      );
+    });
+  }
+
   return (
     <div className="messages-v2-contactlist">
       <div className="contactlist-top">
@@ -327,35 +358,7 @@ const ContactList = ({
         </div>
       </div>
 
-      <ul className="contact-list-list">
-        {loading ? (
-          <p className="contact-list-loading-text">Loading contacts...</p>
-        ) : filteredContacts.length === 0 ? (
-          <p className="contact-list-empty-text">No contacts found.</p>
-        ) : (
-          filteredContacts.map((contact) => {
-            const partnerId = resolvePartnerId(contact, userId);
-            const fallbackKey =
-              contact?.id ||
-              contact?.latestMessage?.id ||
-              `${contact?.latestMessage?.createdAt || "unknown"}-${resolveContactName(contact)}`;
-            const key = contact?.threadId || partnerId || fallbackKey;
-            const isActive = selectedKey === key;
-
-            return (
-              <li
-                key={key}
-                className={`contact-list-list-item ${isActive ? "active" : ""}`}
-                onClick={() => handleClick(contact)}
-                onContextMenu={(event) => handleContextMenu(event, contact)}
-                style={{ cursor: "pointer" }}
-              >
-                <ContactItem contact={contact} selected={isActive} />
-              </li>
-            );
-          })
-        )}
-      </ul>
+      <ul className="contact-list-list">{listContent}</ul>
 
       {contextMenu.visible && (
         <div className="contact-context-menu" style={{ top: contextMenu.y, left: contextMenu.x }} role="menu">

@@ -224,13 +224,15 @@ const hydrateContacts = async ({ contactsList, userId, role }) => {
 const normalizeLegacy = ({ raw, isHostLegacy, userId }) => {
   const partnerId = isHostLegacy ? raw?.userId : raw?.hostId;
 
+  const fallbackGuestId = isHostLegacy ? null : userId;
+
   return {
     ...raw,
     partnerId,
     recipientId: partnerId,
     userId: partnerId,
     hostId: raw?.hostId || (isHostLegacy ? userId : null),
-    guestId: raw?.userId || (!isHostLegacy ? userId : null),
+    guestId: raw?.userId || fallbackGuestId,
     Status: raw?.Status || raw?.status || "accepted",
   };
 };

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { UserProvider } from "../../features/hostdashboard/hostmessages/context/AuthContext";
+import { UserProvider, useUser } from "../../features/hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../features/hostdashboard/hostmessages/context/webSocketContext";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
-import { useUser } from "../../features/hostdashboard/hostmessages/context/AuthContext";
 
 import useFetchContacts from "../../features/hostdashboard/hostmessages/hooks/useFetchContacts";
 

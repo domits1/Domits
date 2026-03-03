@@ -24,8 +24,9 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
     const onKey = (e) => {
       if (e.key === "Escape") onClose?.();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const root = globalThis;
+    root.addEventListener("keydown", onKey);
+    return () => root.removeEventListener("keydown", onKey);
   }, [onClose]);
 
   useEffect(() => {

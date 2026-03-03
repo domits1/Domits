@@ -71,8 +71,8 @@ export const WebSocketProvider = ({ userId, children, token }) => {
         const normalized = normalizeIncoming(incoming);
 
         try {
-          window.__domitsWsLast = incoming;
-          window.__domitsWsLastNormalized = normalized;
+          globalThis.__domitsWsLast = incoming;
+          globalThis.__domitsWsLastNormalized = normalized;
         } catch {}
 
         if (!normalized) return;
@@ -84,7 +84,7 @@ export const WebSocketProvider = ({ userId, children, token }) => {
         setMessages((prev) => [...prev, normalized]);
 
         try {
-          window.dispatchEvent(new CustomEvent("domits:ws-message", { detail: normalized }));
+          globalThis.dispatchEvent(new CustomEvent("domits:ws-message", { detail: normalized }));
         } catch {}
       },
       token

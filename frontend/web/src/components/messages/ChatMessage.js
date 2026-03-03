@@ -21,7 +21,8 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
   };
 
   const isOutgoingBySender = senderId ? senderId === userId : null;
-  const isOutgoing = isOutgoingBySender !== null ? isOutgoingBySender : !!isSent;
+  const isOutgoing = isOutgoingBySender !== null ? isOutgoingBySender : Boolean(isSent);
+  const isIncoming = isOutgoing === false;
   const directionClass = isOutgoing ? "sent" : "received";
 
   const [modalImage, setModalImage] = useState(null);
@@ -51,7 +52,7 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
 
   return (
     <div className={`chat-message-row ${directionClass} ${isAutomatedMessage ? "automated-message" : ""}`}>
-      {!isOutgoing && (
+      {isIncoming && (
         <img
           className="chat-message-avatar"
           src={contactImage || profileImage}

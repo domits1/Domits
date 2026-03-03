@@ -33,14 +33,18 @@ export const connectWebSocket = (userId, onMessageReceived, token) => {
     try {
       const data = JSON.parse(event.data);
       onMessageReceived?.(data);
-    } catch (e) {}
+    } catch (e) {
+      console.warn("WebSocket message parse failed", e);
+    }
   };
 
   socket.onclose = () => {
     clearInterval(pingInterval);
   };
 
-  socket.onerror = () => {};
+  socket.onerror = (err) => {
+    console.warn("WebSocket error", err);
+  };
 };
 
 export const sendMessage = (message) => {

@@ -30,6 +30,7 @@ export const pushToUser = async (userId, payload) => {
 
     items = res?.Items || [];
   } catch (e) {
+    console.warn("Failed to query websocket connections", { userId, err: e });
     return;
   }
 
