@@ -21,7 +21,7 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
   };
 
   const isOutgoingBySender = senderId ? senderId === userId : null;
-  let isOutgoing = false;
+  let isOutgoing;
   if (isOutgoingBySender === true) {
     isOutgoing = true;
   } else if (isOutgoingBySender === false) {
