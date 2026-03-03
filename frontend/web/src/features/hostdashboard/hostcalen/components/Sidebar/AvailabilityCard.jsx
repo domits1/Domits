@@ -30,22 +30,14 @@ export default function AvailabilityCard({
   advanceNoticeDays,
   onOpenSettings,
 }) {
-  const openSettings = () => onOpenSettings?.();
-
   return (
-    <section
-      className="hc-info-card hc-info-card--interactive"
-      aria-label="Open availability settings"
-      role="button"
-      tabIndex={0}
-      onClick={openSettings}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openSettings();
-        }
-      }}
-    >
+    <section className="hc-info-card hc-info-card--interactive">
+      <button
+        type="button"
+        className="hc-info-card-hitarea"
+        aria-label="Open availability settings"
+        onClick={() => onOpenSettings?.()}
+      />
       <header className="hc-info-card-header">
         <h3 className="hc-info-card-title">Availability</h3>
         <span className="hc-info-card-chevron" aria-hidden="true">

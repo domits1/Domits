@@ -37,10 +37,11 @@ const readOverrideAvailability = (availabilityOverrides, key) => {
   if (!availabilityOverrides || typeof availabilityOverrides !== "object") {
     return null;
   }
-  if (!Object.hasOwn(availabilityOverrides, key)) {
-    return null;
+  const hasOverride = Object.hasOwn(availabilityOverrides, key);
+  if (hasOverride) {
+    return Boolean(availabilityOverrides[key]);
   }
-  return Boolean(availabilityOverrides[key]);
+  return null;
 };
 
 const buildYearMonthViews = (year) => {
@@ -69,16 +70,18 @@ const getUtcTodayParts = () => {
   };
 };
 
-const buildCellAriaLabel = ({ date, displayPrice, showExternalBlockedOverlay, isSelected, isPending }) =>
-  [
+const buildCellAriaLabel = ({ date, displayPrice, showExternalBlockedOverlay, isSelected, isPending }) => {
+  const hasDisplayPrice = displayPrice !== null;
+  return [
     date.toUTCString(),
-    displayPrice !== null ? `${formatEuroAmount(displayPrice)} per night` : null,
+    hasDisplayPrice ? `${formatEuroAmount(displayPrice)} per night` : null,
     showExternalBlockedOverlay ? "external booking" : null,
     isSelected ? "selected" : null,
     isPending ? "pending selection" : null,
   ]
     .filter(Boolean)
     .join(", ");
+};
 
 const buildDayPresentation = ({
   date,
@@ -115,7 +118,10 @@ const buildDayPresentation = ({
   const overridePrice = Number(dayPriceOverrides[key]);
   const defaultPrice = isWeekend ? weekendRate : nightlyRate;
   const hasValidOverridePrice = Number.isFinite(overridePrice) && overridePrice > 0;
-  const displayPrice = isBlocked ? null : hasValidOverridePrice ? Math.trunc(overridePrice) : defaultPrice;
+  let displayPrice = null;
+  if (!isBlocked) {
+    displayPrice = hasValidOverridePrice ? Math.trunc(overridePrice) : defaultPrice;
+  }
 
   const showExternalBlockedOverlay = inCurrentMonth && isBlocked && !isBooked;
   const showUnavailableBadge = !showExternalBlockedOverlay && !isBooked && (isBlocked || isUnavailable);
@@ -218,19 +224,19 @@ export default function CalendarGrid({
     <section className="hc-calendar-panel" aria-label="Calendar and nightly prices">
       <header className="hc-calendar-head">
         <h2 className="hc-calendar-title">{headerTitle}</h2>
-        <div className="hc-calendar-nav" role="group" aria-label={navigationGroupLabel}>
+        <nav className="hc-calendar-nav" aria-label={navigationGroupLabel}>
           <button type="button" className="hc-nav-button" onClick={onPrev} aria-label={previousPeriodLabel}>
             <img src={arrowLeftIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
           </button>
           <button type="button" className="hc-nav-button" onClick={onNext} aria-label={nextPeriodLabel}>
             <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
           </button>
-        </div>
+        </nav>
       </header>
 
       {isMonthView ? (
         <>
-          <div className="hc-week-header" role="presentation">
+          <div className="hc-week-header">
             {dayNames.map((dayName) => (
               <div key={dayName} className="hc-week-header-cell">
                 {dayName}
@@ -304,7 +310,7 @@ export default function CalendarGrid({
           {yearMonthViews.map((monthView) => (
             <section key={monthView.monthName} className="hc-year-month">
               <h3 className="hc-year-month-title">{monthView.monthName}</h3>
-              <div className="hc-year-week-header" role="presentation">
+              <div className="hc-year-week-header">
                 {dayNames.map((dayName) => (
                   <span key={`${monthView.monthName}-${dayName}`} className="hc-year-week-header-cell">
                     {dayName.slice(0, 1)}

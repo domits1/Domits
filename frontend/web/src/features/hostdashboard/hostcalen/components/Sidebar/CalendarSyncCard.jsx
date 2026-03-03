@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import arrowLeftIcon from "../../../../../images/arrow-left-icon.svg";
 import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 import calendarIcon from "../../../../../images/icons/calendar.png";
@@ -32,6 +33,19 @@ const REMOVE_SOURCE_REASONS = [
   { id: "managing-manually", label: "I prefer to manage availability manually." },
   { id: "other", label: "Other" },
 ];
+
+const calendarSourceShape = PropTypes.shape({
+  sourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  calendarName: PropTypes.string,
+  name: PropTypes.string,
+  calendarUrl: PropTypes.string,
+  url: PropTypes.string,
+  calendarProvider: PropTypes.string,
+  provider: PropTypes.string,
+  channel: PropTypes.string,
+  lastSyncAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+});
 
 const normalizeCalendarProvider = (value) => {
   const normalized = String(value || "").trim().toLowerCase();
@@ -267,6 +281,20 @@ function ConnectedSourcesSection({
   );
 }
 
+ConnectedSourcesSection.propTypes = {
+  sources: PropTypes.arrayOf(calendarSourceShape),
+  syncStateMap: PropTypes.objectOf(PropTypes.string),
+  removingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  editingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onRefreshSource: PropTypes.func,
+  onEditSource: PropTypes.func,
+  onOpenRemoveSourceFlow: PropTypes.func,
+  onRemoveSource: PropTypes.func,
+  addingCalendar: PropTypes.bool,
+  hasRefreshInProgress: PropTypes.bool,
+  isConfirmingRemoval: PropTypes.bool,
+};
+
 function ConnectionSetupForm({
   canAddCalendar,
   onAddCalendar,
@@ -368,6 +396,25 @@ function ConnectionSetupForm({
   );
 }
 
+ConnectionSetupForm.propTypes = {
+  canAddCalendar: PropTypes.bool,
+  onAddCalendar: PropTypes.func,
+  domitsCalendarLink: PropTypes.string,
+  domitsCalendarLinkCopied: PropTypes.bool,
+  onCopyDomitsCalendarLink: PropTypes.func,
+  externalCalendarUrlInput: PropTypes.string,
+  onExternalCalendarUrlChange: PropTypes.func,
+  calendarNameInput: PropTypes.string,
+  onCalendarNameChange: PropTypes.func,
+  calendarProviderInput: PropTypes.string,
+  onCalendarProviderChange: PropTypes.func,
+  addingCalendar: PropTypes.bool,
+  isEditingCalendar: PropTypes.bool,
+  addCalendarError: PropTypes.string,
+  hasConnections: PropTypes.bool,
+  connectedSection: PropTypes.node,
+};
+
 function ConnectPromptSection({ onOpenConnectionSetup, connectedSection }) {
   return (
     <section className="hc-sync-step">
@@ -390,6 +437,11 @@ function ConnectPromptSection({ onOpenConnectionSetup, connectedSection }) {
     </section>
   );
 }
+
+ConnectPromptSection.propTypes = {
+  onOpenConnectionSetup: PropTypes.func,
+  connectedSection: PropTypes.node,
+};
 
 function EditSourceModal({
   isOpen,
@@ -480,6 +532,21 @@ function EditSourceModal({
     </div>
   );
 }
+
+EditSourceModal.propTypes = {
+  isOpen: PropTypes.bool,
+  addingCalendar: PropTypes.bool,
+  onCancelEdit: PropTypes.func,
+  externalCalendarUrlInput: PropTypes.string,
+  onExternalCalendarUrlChange: PropTypes.func,
+  calendarNameInput: PropTypes.string,
+  onCalendarNameChange: PropTypes.func,
+  calendarProviderInput: PropTypes.string,
+  onCalendarProviderChange: PropTypes.func,
+  addCalendarError: PropTypes.string,
+  canAddCalendar: PropTypes.bool,
+  onAddCalendar: PropTypes.func,
+};
 
 function RemoveSourceModal({
   isOpen,
@@ -578,6 +645,22 @@ function RemoveSourceModal({
     </div>
   );
 }
+
+RemoveSourceModal.propTypes = {
+  isOpen: PropTypes.bool,
+  isRemovingPendingSource: PropTypes.bool,
+  isRemoveReasonStep: PropTypes.bool,
+  selectedRemoveReasonIdSet: PropTypes.instanceOf(Set),
+  handleToggleRemoveReason: PropTypes.func,
+  pendingRemoveSourceName: PropTypes.string,
+  addCalendarError: PropTypes.string,
+  resetRemoveSourceFlow: PropTypes.func,
+  setRemoveSourceFlowStep: PropTypes.func,
+  handleRemoveReasonsNext: PropTypes.func,
+  handleConfirmRemoveSource: PropTypes.func,
+  removeConfirmButtonLabel: PropTypes.string,
+  hasSelectedRemoveReason: PropTypes.bool,
+};
 
 export default function CalendarSyncCard({
   domitsCalendarLink,
@@ -858,3 +941,32 @@ export default function CalendarSyncCard({
     </section>
   );
 }
+
+CalendarSyncCard.propTypes = {
+  domitsCalendarLink: PropTypes.string,
+  externalCalendarUrlInput: PropTypes.string,
+  calendarNameInput: PropTypes.string,
+  calendarProviderInput: PropTypes.string,
+  onExternalCalendarUrlChange: PropTypes.func,
+  onCalendarNameChange: PropTypes.func,
+  onCalendarProviderChange: PropTypes.func,
+  onCopyDomitsCalendarLink: PropTypes.func,
+  domitsCalendarLinkCopied: PropTypes.bool,
+  onAddCalendar: PropTypes.func,
+  canAddCalendar: PropTypes.bool,
+  addingCalendar: PropTypes.bool,
+  addCalendarError: PropTypes.string,
+  isEditingCalendar: PropTypes.bool,
+  connectedSources: PropTypes.arrayOf(calendarSourceShape),
+  onEditSource: PropTypes.func,
+  editingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onCancelEdit: PropTypes.func,
+  onRefreshSource: PropTypes.func,
+  refreshingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  sourceSyncStateById: PropTypes.objectOf(PropTypes.string),
+  onRefreshAllSources: PropTypes.func,
+  refreshingAllSources: PropTypes.bool,
+  onRemoveSource: PropTypes.func,
+  removingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onBack: PropTypes.func,
+};

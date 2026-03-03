@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 
 export default function CalendarLinkCard({ connectedCount, onOpenSettings }) {
@@ -7,22 +8,15 @@ export default function CalendarLinkCard({ connectedCount, onOpenSettings }) {
     safeConnectedCount === 1
       ? "1 calendar connected"
       : `${safeConnectedCount} calendars connected`;
-  const openSettings = () => onOpenSettings?.();
 
   return (
-    <section
-      className="hc-info-card hc-info-card--interactive"
-      aria-label="Open calendar sync settings"
-      role="button"
-      tabIndex={0}
-      onClick={openSettings}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openSettings();
-        }
-      }}
-    >
+    <section className="hc-info-card hc-info-card--interactive">
+      <button
+        type="button"
+        className="hc-info-card-hitarea"
+        aria-label="Open calendar sync settings"
+        onClick={() => onOpenSettings?.()}
+      />
       <header className="hc-info-card-header">
         <h3 className="hc-info-card-title">Sync calendars</h3>
         <span className="hc-info-card-chevron" aria-hidden="true">
@@ -35,3 +29,8 @@ export default function CalendarLinkCard({ connectedCount, onOpenSettings }) {
     </section>
   );
 }
+
+CalendarLinkCard.propTypes = {
+  connectedCount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onOpenSettings: PropTypes.func,
+};

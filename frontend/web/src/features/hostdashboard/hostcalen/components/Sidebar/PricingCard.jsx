@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 
 const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("en-US")}`;
@@ -14,22 +15,14 @@ export default function PricingCard({
       ? `${weeklyDiscountPercent}% weekly discount`
       : "No weekly discount";
 
-  const openSettings = () => onOpenSettings?.();
-
   return (
-    <section
-      className="hc-info-card hc-info-card--interactive"
-      aria-label="Open price settings"
-      role="button"
-      tabIndex={0}
-      onClick={openSettings}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openSettings();
-        }
-      }}
-    >
+    <section className="hc-info-card hc-info-card--interactive">
+      <button
+        type="button"
+        className="hc-info-card-hitarea"
+        aria-label="Open price settings"
+        onClick={() => onOpenSettings?.()}
+      />
       <header className="hc-info-card-header">
         <h3 className="hc-info-card-title">Price</h3>
         <span className="hc-info-card-chevron" aria-hidden="true">
@@ -43,3 +36,10 @@ export default function PricingCard({
     </section>
   );
 }
+
+PricingCard.propTypes = {
+  nightlyRate: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  weekendRate: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  weeklyDiscountPercent: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onOpenSettings: PropTypes.func,
+};

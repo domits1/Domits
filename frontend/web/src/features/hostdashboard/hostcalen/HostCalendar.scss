@@ -487,7 +487,7 @@ $accent: #2f6fed;
 .hc-year-day--outside {
   background: #f4f5f7;
   border-color: #eceff3;
-  color: #b6bdc7;
+  color: #4b5563;
 }
 
 .hc-year-day--available {
@@ -499,7 +499,7 @@ $accent: #2f6fed;
 .hc-year-day--forced-unavailable {
   background: #d7dde6;
   border-color: #a9b3c1;
-  color: #667184;
+  color: #1f2937;
 }
 
 .hc-year-day--external-booking {
@@ -558,13 +558,13 @@ $accent: #2f6fed;
 
 .hc-cell--outside {
   background: #f4f5f7;
-  color: #9ca3af;
+  color: #4b5563;
   cursor: default;
 }
 
 .hc-cell--blocked {
   background: #dce1e8;
-  color: #9ca3af;
+  color: #374151;
 }
 
 .hc-cell--external-booking {
@@ -635,10 +635,10 @@ $accent: #2f6fed;
 }
 
 .hc-cell--selected {
-  background: #0eaa3a;
-  border-color: #0eaa3a;
+  background: #0e6a25;
+  border-color: #0e6a25;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(14, 170, 58, 0.26);
+  box-shadow: 0 4px 12px rgba(14, 106, 37, 0.32);
 }
 
 .hc-cell--selected-outline {
@@ -821,10 +821,21 @@ $accent: #2f6fed;
 }
 
 .hc-info-card {
+  position: relative;
   background: $surface;
   border: 1px solid $border;
   border-radius: 12px;
   padding: 14px;
+}
+
+.hc-info-card-hitarea {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
 }
 
 .hc-info-card--interactive {
@@ -848,7 +859,7 @@ $accent: #2f6fed;
   box-shadow: none;
 }
 
-.hc-info-card--interactive:focus-visible {
+.hc-info-card--interactive:focus-within {
   outline: none;
   border-color: #16a34a;
   box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.16);
@@ -1060,10 +1071,10 @@ $accent: #2f6fed;
 
 .hc-pricing-settings-save-btn {
   margin-top: 4px;
-  border: 1px solid #16a34a;
+  border: 1px solid #15803d;
   border-radius: 8px;
   padding: 7px 14px;
-  background: #16a34a;
+  background: #15803d;
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
@@ -1245,10 +1256,10 @@ $accent: #2f6fed;
 
 .hc-availability-settings-save-btn {
   margin-top: 4px;
-  border: 1px solid #16a34a;
+  border: 1px solid #15803d;
   border-radius: 8px;
   padding: 7px 14px;
-  background: #16a34a;
+  background: #15803d;
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
@@ -1770,7 +1781,7 @@ $accent: #2f6fed;
 .hc-sync-source-action.is-error {
   border-color: #ef4444;
   background: #fef2f2;
-  color: #dc2626;
+  color: #991b1b;
 }
 
 .hc-sync-source-action:disabled {
@@ -1780,7 +1791,7 @@ $accent: #2f6fed;
 
 .hc-sync-source-action--danger {
   border-color: #ef4444;
-  color: #dc2626;
+  color: #991b1b;
   background: #fef2f2;
 }
 
@@ -1879,10 +1890,10 @@ $accent: #2f6fed;
 
 .hc-selection-save-btn {
   margin-top: 6px;
-  border: 1px solid #16a34a;
+  border: 1px solid #15803d;
   border-radius: 8px;
   padding: 7px 14px;
-  background: #16a34a;
+  background: #15803d;
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
