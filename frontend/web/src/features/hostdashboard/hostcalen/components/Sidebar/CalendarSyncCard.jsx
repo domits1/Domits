@@ -458,6 +458,7 @@ function EditSourceModal({
   onAddCalendar,
 }) {
   const dialogRef = React.useRef(null);
+  const modalContentRef = React.useRef(null);
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -474,11 +475,31 @@ function EditSourceModal({
     }
   }, [isOpen]);
 
-  const handleDismiss = () => {
+  const handleDismiss = React.useCallback(() => {
     if (!addingCalendar) {
       onCancelEdit?.();
     }
-  };
+  }, [addingCalendar, onCancelEdit]);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+    const handleMouseDown = (event) => {
+      const modalContent = modalContentRef.current;
+      if (!modalContent) {
+        return;
+      }
+      const eventTarget = event.target;
+      if (eventTarget instanceof Node && !modalContent.contains(eventTarget)) {
+        handleDismiss();
+      }
+    };
+    globalThis.addEventListener("mousedown", handleMouseDown);
+    return () => {
+      globalThis.removeEventListener("mousedown", handleMouseDown);
+    };
+  }, [handleDismiss, isOpen]);
 
   if (!isOpen) {
     return null;
@@ -489,26 +510,12 @@ function EditSourceModal({
       ref={dialogRef}
       className="hc-sync-edit-modal-backdrop"
       aria-label="Edit calendar connection"
-      onMouseDown={(event) => {
-        const dialogBounds = event.currentTarget.getBoundingClientRect();
-        const clickedOutsideDialog =
-          event.clientX < dialogBounds.left ||
-          event.clientX > dialogBounds.right ||
-          event.clientY < dialogBounds.top ||
-          event.clientY > dialogBounds.bottom;
-        if (clickedOutsideDialog) {
-          handleDismiss();
-        }
-      }}
       onCancel={(event) => {
         event.preventDefault();
         handleDismiss();
       }}
     >
-      <section
-        className="hc-sync-edit-modal"
-        aria-modal="true"
-      >
+      <section ref={modalContentRef} className="hc-sync-edit-modal">
         <h4 className="hc-sync-edit-modal-title">Edit calendar connection</h4>
         <p className="hc-sync-edit-modal-copy">Update the link, name, or provider and save changes.</p>
 
@@ -595,6 +602,7 @@ function RemoveSourceModal({
   hasSelectedRemoveReason,
 }) {
   const dialogRef = React.useRef(null);
+  const modalContentRef = React.useRef(null);
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -611,11 +619,31 @@ function RemoveSourceModal({
     }
   }, [isOpen]);
 
-  const handleDismiss = () => {
+  const handleDismiss = React.useCallback(() => {
     if (!isRemovingPendingSource) {
       resetRemoveSourceFlow();
     }
-  };
+  }, [isRemovingPendingSource, resetRemoveSourceFlow]);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+    const handleMouseDown = (event) => {
+      const modalContent = modalContentRef.current;
+      if (!modalContent) {
+        return;
+      }
+      const eventTarget = event.target;
+      if (eventTarget instanceof Node && !modalContent.contains(eventTarget)) {
+        handleDismiss();
+      }
+    };
+    globalThis.addEventListener("mousedown", handleMouseDown);
+    return () => {
+      globalThis.removeEventListener("mousedown", handleMouseDown);
+    };
+  }, [handleDismiss, isOpen]);
 
   if (!isOpen) {
     return null;
@@ -626,26 +654,12 @@ function RemoveSourceModal({
       ref={dialogRef}
       className="hc-sync-remove-modal-backdrop"
       aria-label="Remove calendar connection"
-      onMouseDown={(event) => {
-        const dialogBounds = event.currentTarget.getBoundingClientRect();
-        const clickedOutsideDialog =
-          event.clientX < dialogBounds.left ||
-          event.clientX > dialogBounds.right ||
-          event.clientY < dialogBounds.top ||
-          event.clientY > dialogBounds.bottom;
-        if (clickedOutsideDialog) {
-          handleDismiss();
-        }
-      }}
       onCancel={(event) => {
         event.preventDefault();
         handleDismiss();
       }}
     >
-      <section
-        className="hc-sync-remove-modal"
-        aria-modal="true"
-      >
+      <section ref={modalContentRef} className="hc-sync-remove-modal">
         {isRemoveReasonStep ? (
           <>
             <h4 className="hc-sync-remove-modal-title">Why are you disconnecting this calendar?</h4>

@@ -195,7 +195,11 @@ export const useCalendarSelection = ({
     const value = Math.trunc(parsedSelectionPriceInput);
     setPriceOverridesByPropertyId((previous) => {
       const next = { ...previous };
-      const propertyOverrides = { ...(next[selectedPropertyId] || {}) };
+      const existingPropertyOverrides = next[selectedPropertyId];
+      const propertyOverrides =
+        existingPropertyOverrides && typeof existingPropertyOverrides === "object"
+          ? { ...existingPropertyOverrides }
+          : {};
       selectedDateKeys.forEach((key) => {
         if (!externalBlockedDates.has(key) && !bookedDateKeys.has(key)) {
           propertyOverrides[key] = value;

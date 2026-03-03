@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 export default function SelectionCard({
   selectedCount,
@@ -72,3 +73,14 @@ export default function SelectionCard({
     </section>
   );
 }
+
+SelectionCard.propTypes = {
+  selectedCount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  allSelectedAvailable: PropTypes.bool,
+  onToggleAvailability: PropTypes.func,
+  priceInputValue: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onPriceInputChange: PropTypes.func,
+  showSavePrice: PropTypes.bool,
+  canSavePrice: PropTypes.bool,
+  onSavePrice: PropTypes.func,
+};

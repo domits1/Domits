@@ -61,13 +61,16 @@ export const normalizeCalendarProviderForForm = (value) => {
 export const getSelectedPropertyStorageKey = (hostId) =>
   `${SELECTED_PROPERTY_STORAGE_PREFIX}:${String(hostId || "").trim()}`;
 
+const getBrowserWindow = () => globalThis?.window;
+
 export const readPersistedSelectedPropertyId = (hostId) => {
   const key = getSelectedPropertyStorageKey(hostId);
-  if (!key || typeof window === "undefined" || !window?.localStorage) {
+  const browserWindow = getBrowserWindow();
+  if (!key || !browserWindow?.localStorage) {
     return "";
   }
   try {
-    return String(window.localStorage.getItem(key) || "").trim();
+    return String(browserWindow.localStorage.getItem(key) || "").trim();
   } catch {
     return "";
   }
@@ -75,15 +78,16 @@ export const readPersistedSelectedPropertyId = (hostId) => {
 
 export const persistSelectedPropertyId = (hostId, propertyId) => {
   const key = getSelectedPropertyStorageKey(hostId);
-  if (!key || typeof window === "undefined" || !window?.localStorage) {
+  const browserWindow = getBrowserWindow();
+  if (!key || !browserWindow?.localStorage) {
     return;
   }
   try {
     const normalizedPropertyId = String(propertyId || "").trim();
     if (normalizedPropertyId) {
-      window.localStorage.setItem(key, normalizedPropertyId);
+      browserWindow.localStorage.setItem(key, normalizedPropertyId);
     } else {
-      window.localStorage.removeItem(key);
+      browserWindow.localStorage.removeItem(key);
     }
   } catch {}
 };
@@ -455,10 +459,19 @@ export const mergeAvailabilityRestrictions = (existingRestrictions, updates) => 
     if (!restriction) {
       return;
     }
+    const currentEntry = nextByRestriction.get(restriction);
+    const normalizedValue = Math.max(0, toInteger(entry?.value, 0));
+    if (currentEntry) {
+      nextByRestriction.set(restriction, {
+        ...currentEntry,
+        restriction,
+        value: normalizedValue,
+      });
+      return;
+    }
     nextByRestriction.set(restriction, {
-      ...(nextByRestriction.get(restriction) || {}),
       restriction,
-      value: Math.max(0, toInteger(entry?.value, 0)),
+      value: normalizedValue,
     });
   });
 
@@ -472,13 +485,7 @@ const clampInteger = (value, fallback, minimum, maximum) => {
   }
 
   const truncated = Math.trunc(numeric);
-  if (truncated < minimum) {
-    return minimum;
-  }
-  if (truncated > maximum) {
-    return maximum;
-  }
-  return truncated;
+  return Math.min(maximum, Math.max(minimum, truncated));
 };
 
 export const normalizeAvailabilitySettingsForm = (form) => {
@@ -498,17 +505,21 @@ export const normalizeAvailabilitySettingsForm = (form) => {
   };
 };
 
-export const buildComparablePricingSettings = (form) => ({
-  nightlyRate: toInteger(form?.nightlyRate, 0),
-  weeklyDiscountEnabled: Boolean(form?.weeklyDiscountEnabled),
-  weeklyDiscountPercent: Boolean(form?.weeklyDiscountEnabled)
-    ? Math.max(0, toInteger(form?.weeklyDiscountPercent, 0))
-    : 0,
-  monthlyDiscountEnabled: Boolean(form?.monthlyDiscountEnabled),
-  monthlyDiscountPercent: Boolean(form?.monthlyDiscountEnabled)
-    ? Math.max(0, toInteger(form?.monthlyDiscountPercent, 0))
-    : 0,
-});
+export const buildComparablePricingSettings = (form) => {
+  const weeklyDiscountEnabled = !!form?.weeklyDiscountEnabled;
+  const monthlyDiscountEnabled = !!form?.monthlyDiscountEnabled;
+  return {
+    nightlyRate: toInteger(form?.nightlyRate, 0),
+    weeklyDiscountEnabled,
+    weeklyDiscountPercent: weeklyDiscountEnabled
+      ? Math.max(0, toInteger(form?.weeklyDiscountPercent, 0))
+      : 0,
+    monthlyDiscountEnabled,
+    monthlyDiscountPercent: monthlyDiscountEnabled
+      ? Math.max(0, toInteger(form?.monthlyDiscountPercent, 0))
+      : 0,
+  };
+};
 
 export const getAvailabilityWindowOptionsWithCurrent = (currentValue) => {
   const normalizedCurrentValue = Number(currentValue);

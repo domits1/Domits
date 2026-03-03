@@ -41,9 +41,12 @@ const buildSyncStateMapForSources = (sources, previousStateById = {}) => {
 const isUnknownActionError = (error) =>
   String(error?.message || "").trim().toLowerCase().includes("unknown action");
 
-const SOURCE_SYNC_IN_PROGRESS_STATES = [SOURCE_SYNC_STATE.PENDING, SOURCE_SYNC_STATE.SYNCING];
+const SOURCE_SYNC_IN_PROGRESS_STATES = new Set([
+  SOURCE_SYNC_STATE.PENDING,
+  SOURCE_SYNC_STATE.SYNCING,
+]);
 
-const isSourceSyncInProgress = (state) => SOURCE_SYNC_IN_PROGRESS_STATES.includes(state);
+const isSourceSyncInProgress = (state) => SOURCE_SYNC_IN_PROGRESS_STATES.has(state);
 
 const hasAnySourceSyncInProgress = (sourceSyncStateById) =>
   Object.values(sourceSyncStateById).some(isSourceSyncInProgress);

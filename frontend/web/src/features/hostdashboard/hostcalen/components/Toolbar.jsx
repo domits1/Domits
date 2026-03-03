@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import PulseBarsLoader from "./PulseBarsLoader";
 import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
 import arrowUpIcon from "../../../../images/arrow-up-icon.svg";
@@ -73,35 +74,35 @@ export default function Toolbar({
     if (!nextPropertyId || nextPropertyId === selectedPropertyId) {
       return;
     }
-    onSelectProperty(nextPropertyId);
+    onSelectProperty?.(nextPropertyId);
   };
 
+  let listingTriggerContent = <span className="hc-listing-trigger-label">No listings found</span>;
+  if (isLoadingListings) {
+    listingTriggerContent = (
+      <PulseBarsLoader inline className="hc-listing-trigger-loader" message="Loading accommodations..." />
+    );
+  } else if (selectedOption) {
+    listingTriggerContent = (
+      <>
+        <span className={`hc-status-dot ${resolveStatusDotClass(selectedOption.status)}`} />
+        <span className="hc-listing-trigger-label">{selectedOption.label}</span>
+      </>
+    );
+  }
+
   return (
-    <div className="hc-toolbar" role="group" aria-label="Calendar controls">
+    <div className="hc-toolbar" aria-label="Calendar controls">
       <div className="hc-listing-dropdown" ref={dropdownRef}>
         <button
           type="button"
           className="hc-listing-trigger"
           onClick={toggleListingMenu}
           disabled={isLoadingListings || options.length === 0}
-          aria-haspopup="listbox"
           aria-expanded={menuOpen}
           aria-label="Select listing"
         >
-          {isLoadingListings ? (
-            <PulseBarsLoader
-              inline
-              className="hc-listing-trigger-loader"
-              message="Loading accommodations..."
-            />
-          ) : selectedOption ? (
-            <>
-              <span className={`hc-status-dot ${resolveStatusDotClass(selectedOption.status)}`} />
-              <span className="hc-listing-trigger-label">{selectedOption.label}</span>
-            </>
-          ) : (
-            <span className="hc-listing-trigger-label">No listings found</span>
-          )}
+          {listingTriggerContent}
           <span className="hc-listing-trigger-chevron" aria-hidden="true">
             <img
               src={menuOpen ? arrowUpIcon : arrowDownIcon}
@@ -112,11 +113,11 @@ export default function Toolbar({
         </button>
 
         {menuOpen && (
-          <ul className="hc-listing-menu" role="listbox" aria-label="Choose listing">
+          <ul className="hc-listing-menu" aria-label="Choose listing">
             {options.map((option) => {
               const isSelected = option.value === selectedPropertyId;
               return (
-                <li key={option.value} role="option" aria-selected={isSelected}>
+                <li key={option.value}>
                   <button
                     type="button"
                     className={`hc-listing-option ${isSelected ? "is-selected" : ""}`}
@@ -156,3 +157,19 @@ export default function Toolbar({
     </div>
   );
 }
+
+Toolbar.propTypes = {
+  view: PropTypes.string,
+  onViewChange: PropTypes.func,
+  onToday: PropTypes.func,
+  listingOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      label: PropTypes.string.isRequired,
+      status: PropTypes.string,
+    })
+  ),
+  selectedPropertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onSelectProperty: PropTypes.func,
+  isLoadingListings: PropTypes.bool,
+};
