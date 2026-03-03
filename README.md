@@ -67,13 +67,13 @@ Table of Contents
 
 
 ## Tech Stack
-🖥️ **Frontend:** React Native, JavaScript, TypeScript, SASS/SCSS  
-🧠 **Backend:** Node.js, AWS Lambda, PostgreSQL  
-☁️ **Cloud:** Amazon Web Services  
-🧪 **Testing:** Jest, Cypress  
-🚀 **CI/CD:** GitHub Actions, Amplify  
-📦 **Package Management:** npm  
-🪛 **Tooling:** TypeORM
+- 🖥️ **Frontend:** React Native, JavaScript, TypeScript, SASS/SCSS
+- 🧠 **Backend:** Node.js, AWS Lambda, PostgreSQL
+- ☁️ **Cloud:** Amazon Web Services
+- 🧪 **Testing:** Jest, Cypress
+- 🚀 **CI/CD:** GitHub Actions, Amplify
+- 📦 **Package Management:** npm
+- 🪛 **Tooling:** TypeORM
 
 ## Repository Structure
 ```
@@ -99,7 +99,21 @@ Table of Contents
       - content/ # Translation files
       - context/ # Context for global state management
       - features/ # Base folder (unless global or otherwise)
-        - guestdashboard/ # Example folder chosen to show structure. Most features folder follow this structure
+        - auth/
+        - bookingengine/
+        - hostonboarding/ # Example folder chosen to show structure. Most features folder follow this structure
+        - hostdashboard/
+          - hostcalen/ # Calendar and pricing tab
+          - hostcalendar/ # Legacy/older calendar modules
+          - hostreservations/
+          - hostmessages/
+          - hostrevenue/
+          - hosttasks/
+          - hostfinance/
+          - hostsettings/
+          - hostdistribution/
+          - HostListings.js
+        - guestdashboard/
           - chat/ # Chat files
           - components/ # Re-usable react components
           - context/ # Context for global state management
@@ -184,8 +198,8 @@ Get familar with code conventions to write clean code. Become aware of our serve
 * Learn and improve [Programming/Clean Code: Quick Reference Guide](https://github.com/domits1/Domits/wiki/Programming)
 * Become familiar with our [Code Conventions](https://github.com/domits1/Domits/wiki/Code-conventions) to maintain a consistent and readable codebase.
 * Get to know why we use SCSS compared to css and its benefits [here](https://www.youtube.com/watch?v=akDIJa0AP5c)
-* [Backend Setup](./docs/internal/onboarding/backend_setup.md) The createlambda function will create a template lambda for you. Familiarize yourself with the structure [here](./docs/internal/tools/backend_development_flow.md) before starting to code.
-* Understand the development workflow from finished work to deployment on acceptance [here](https://github.com/domits1/Domits/blob/docs/2377-frontend-backend-connection/docs/internal/onboarding/development_workflow.md)
+* [Backend Setup](./docs/internal/onboarding/backend_setup.md) The createlambda function will create a template lambda for you. Familiarize yourself with the structure [here](./docs/internal/onboarding/backend_development_flow.md) before starting to code.
+* Understand the development workflow from finished work to deployment on acceptance [here](https://github.com/domits1/Domits/blob/acceptance/docs/internal/onboarding/development_workflow.md)
 * Understand the code pipeline (CI/CD)
 
 ### Web/App Setup
@@ -224,9 +238,8 @@ Here's what you can do next:
 
 Get a basic understanding of every AWS service we use [here](/docs/internal/services/overview.md).
 
-Inside Domits, we have different API's used as key modules for powering Domits. We will devide the following API's into two API sections: 
+Inside Domits, we have different API's used as key modules for powering Domits.
 
----
 
 ### Connectivity API's
 APIs that give access to data and services in Domits and supports multiple use cases.
@@ -262,11 +275,10 @@ APIs that give access to data and services in Domits and supports multiple use c
 * Responsible for: Handling messages
 * Used for: Host/Guest messages
 
----
 
 ### Distribution API 
 
-**[Distribution](/docs/partner/api/distribution.md)**
+**[Distribution](/docs/partner/API/distribution.md)**
 * Responsible for: Handling Distribution
 * Used for: An API to connect anything (PMS, Channel Manager, RMS, Distribution Channels, ...) to the Domits system.
 
@@ -314,7 +326,7 @@ Follow the established code conventions.
 
 Always fill out the PR template completely before review.
 
-Keep your commits clean and descriptive according to [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+Keep your commits clean and descriptive according to [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
 ### Other Subjects to Understand
 
@@ -334,7 +346,7 @@ Understand how DevOps work. This wiki page explains what DevOps are, and how it 
 Understand how to monitor and debug your AWS functions.
 
 * [Site Reliability Engineering (SRE)](https://github.com/domits1/Domits/wiki/Site-Reliability-Engineering-(SRE))
-How reliability is maintained under scale — balancing uptime, latency, and resilience.
+How reliability is maintained under scale, balancing uptime, latency, and resilience.
 
 * [Cyber Security Testing Red, Blue & Purple Team](https://github.com/domits1/Domits/wiki/Cyber-Security)
 Be aware of how Cyber Security teams work.
@@ -376,7 +388,8 @@ Under the following conditions:
 
 All contributions are assumed to be licensed under the same MIT License unless explicitly stated otherwise.
 
-This software is provided **“as is”**, without warranty of any kind.
+This software is provided **as is**, without warranty of any kind.
+
 
 See the [LICENSE](./LICENSE) file for full details.
 
@@ -386,7 +399,8 @@ See the [LICENSE](./LICENSE) file for full details.
 
 This project follows a **Code of Conduct** to ensure a respectful, inclusive, and professional environment for everyone involved.
 
-All contributors, maintainers, and participants are expected to uphold these standards when interacting in the project’s repositories, issues, pull requests, and other community spaces.
+All contributors, maintainers, and participants are expected to uphold these standards when interacting in the project's repositories, issues, pull requests, and other community spaces.
+
 
 See the [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) file for full details.
 
@@ -396,7 +410,9 @@ See the [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) file for full details.
 
 Contributions to Domits are welcome, including code, documentation, bug reports, and improvements.
 
-Please follow the project’s contribution guidelines to ensure a smooth and consistent collaboration process.
+Please follow the project's contribution guidelines to ensure a smooth and consistent collaboration process.
+Use the repository PR template when opening changes: [PULL_REQUEST_TEMPLATE.md](./PULL_REQUEST_TEMPLATE.md)
+
 
 See the [CONTRIBUTING.md](./CONTRIBUTING.md) file for full details.
 
@@ -408,5 +424,5 @@ Domits takes security seriously.
 
 If you discover a security vulnerability, please **do not report it via public GitHub issues**.
 Follow the responsible disclosure process described in our Security Policy.
-
+Security references are maintained in [docs/security](./docs/security/).
 See the [SECURITY.md](./SECURITY.md) file for full details.
