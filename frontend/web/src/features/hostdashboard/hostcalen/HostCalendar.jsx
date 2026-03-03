@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import "./HostCalendar.scss";
 
 import Toolbar from "./components/Toolbar";
@@ -27,6 +28,49 @@ import { useCalendarPropertyDetails } from "./hooks/useCalendarPropertyDetails";
 import { useCalendarSelection } from "./hooks/useCalendarSelection";
 import { useCalendarSync } from "./hooks/useCalendarSync";
 import { usePricingSettings } from "./hooks/usePricingSettings";
+
+const availabilityWindowOptionShape = PropTypes.shape({
+  value: PropTypes.number.isRequired,
+  label: PropTypes.string.isRequired,
+});
+
+const selectedAvailabilityStatsShape = PropTypes.shape({
+  total: PropTypes.number.isRequired,
+  allAvailable: PropTypes.bool.isRequired,
+});
+
+const normalizedPricingSettingsFormShape = PropTypes.shape({
+  nightlyRate: PropTypes.number.isRequired,
+  weeklyDiscountEnabled: PropTypes.bool.isRequired,
+  weeklyDiscountPercent: PropTypes.number.isRequired,
+  monthlyDiscountEnabled: PropTypes.bool.isRequired,
+  monthlyDiscountPercent: PropTypes.number.isRequired,
+});
+
+const pricingSnapshotShape = PropTypes.shape({
+  nightlyRate: PropTypes.number.isRequired,
+  weekendRate: PropTypes.number.isRequired,
+  weeklyDiscountPercent: PropTypes.number.isRequired,
+  minimumStay: PropTypes.number.isRequired,
+  maximumStay: PropTypes.number.isRequired,
+  advanceNoticeDays: PropTypes.number.isRequired,
+});
+
+const pricingSettingsFormShape = PropTypes.shape({
+  nightlyRate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  weeklyDiscountEnabled: PropTypes.bool.isRequired,
+  weeklyDiscountPercent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  monthlyDiscountEnabled: PropTypes.bool.isRequired,
+  monthlyDiscountPercent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+});
+
+const availabilitySettingsFormShape = PropTypes.shape({
+  minimumStay: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  maximumStay: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  advanceNoticeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  preparationTimeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  availabilityWindowDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+});
 
 function HostCalendarSidebar({
   isSidebarLoading,
@@ -271,6 +315,65 @@ function HostCalendarSidebar({
     </>
   );
 }
+
+HostCalendarSidebar.propTypes = {
+  isSidebarLoading: PropTypes.bool.isRequired,
+  sidebarLoadingMessage: PropTypes.string.isRequired,
+  selectedDateKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedAvailabilityStats: selectedAvailabilityStatsShape.isRequired,
+  handleToggleAvailability: PropTypes.func.isRequired,
+  selectionPriceInput: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  handleSelectionPriceChange: PropTypes.func.isRequired,
+  selectionPriceDirty: PropTypes.bool.isRequired,
+  canSaveSelectionPrice: PropTypes.bool.isRequired,
+  handleSaveSelectionPrice: PropTypes.func.isRequired,
+  sidebarMode: PropTypes.string.isRequired,
+  normalizedPricingSettingsForm: normalizedPricingSettingsFormShape.isRequired,
+  pricingSnapshot: pricingSnapshotShape.isRequired,
+  pricingSettingsForm: pricingSettingsFormShape.isRequired,
+  weekendRateInput: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  updatePricingSettingsForm: PropTypes.func.isRequired,
+  setWeekendRateInput: PropTypes.func.isRequired,
+  hasAnyPricingSettingsChanges: PropTypes.bool.isRequired,
+  canSavePricingSettings: PropTypes.bool.isRequired,
+  isSavingPricingSettings: PropTypes.bool.isRequired,
+  pricingSettingsSaveError: PropTypes.string.isRequired,
+  handleSavePricingSettings: PropTypes.func.isRequired,
+  availabilitySettingsForm: availabilitySettingsFormShape.isRequired,
+  availabilityWindowOptions: PropTypes.arrayOf(availabilityWindowOptionShape).isRequired,
+  updateAvailabilitySettingsForm: PropTypes.func.isRequired,
+  hasAvailabilitySettingsChanges: PropTypes.bool.isRequired,
+  canSaveAvailabilitySettings: PropTypes.bool.isRequired,
+  isSavingAvailabilitySettings: PropTypes.bool.isRequired,
+  availabilitySettingsSaveError: PropTypes.string.isRequired,
+  handleSaveAvailabilitySettings: PropTypes.func.isRequired,
+  hostCalendarExportUrl: PropTypes.string.isRequired,
+  calendarUrlInput: PropTypes.string.isRequired,
+  calendarNameInput: PropTypes.string.isRequired,
+  calendarProviderInput: PropTypes.string.isRequired,
+  updateCalendarSyncForm: PropTypes.func.isRequired,
+  handleCopyDomitsCalendarLink: PropTypes.func.isRequired,
+  domitsCalendarLinkCopied: PropTypes.bool.isRequired,
+  handleAddCalendarSource: PropTypes.func.isRequired,
+  canAddCalendarSource: PropTypes.bool.isRequired,
+  isSavingCalendarSync: PropTypes.bool.isRequired,
+  calendarSyncError: PropTypes.string.isRequired,
+  isEditingCalendarSource: PropTypes.bool.isRequired,
+  calendarSources: PropTypes.arrayOf(PropTypes.object).isRequired,
+  handleEditCalendarSource: PropTypes.func.isRequired,
+  editingCalendarSourceId: PropTypes.string.isRequired,
+  handleCancelEditCalendarSource: PropTypes.func.isRequired,
+  handleRefreshCalendarSource: PropTypes.func.isRequired,
+  refreshingCalendarSourceId: PropTypes.string.isRequired,
+  sourceSyncStateById: PropTypes.objectOf(PropTypes.string).isRequired,
+  handleRefreshAllCalendarSources: PropTypes.func.isRequired,
+  isRefreshingAllCalendarSources: PropTypes.bool.isRequired,
+  handleRemoveCalendarSource: PropTypes.func.isRequired,
+  removingCalendarSourceId: PropTypes.string.isRequired,
+  handleCalendarSyncBack: PropTypes.func.isRequired,
+  setSidebarMode: PropTypes.func.isRequired,
+  openCalendarSync: PropTypes.func.isRequired,
+};
 
 export default function HostCalendar() {
   const [view, setView] = useState("month");
