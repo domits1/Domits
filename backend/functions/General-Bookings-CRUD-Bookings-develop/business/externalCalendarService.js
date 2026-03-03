@@ -224,7 +224,7 @@ function parseIcsLine(line) {
 }
 
 function unfoldLines(icsText) {
-  const raw = String(icsText).replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  const raw = String(icsText).replaceAll("\r\n", "\n").replaceAll("\r", "\n").split("\n");
   const out = [];
   for (const line of raw) {
     if (!out.length) {
@@ -364,14 +364,14 @@ function appendDateRangeKeys(targetSet, normalizedRange) {
 
 function normalizeTimestampMs(value) {
   if (typeof value === "number") {
-    return Number.isFinite(value) ? value : NaN;
+    return Number.isFinite(value) ? value : Number.NaN;
   }
   if (typeof value === "string" && /^\d+$/.test(value.trim())) {
     const parsedInt = Number(value);
-    return Number.isFinite(parsedInt) ? parsedInt : NaN;
+    return Number.isFinite(parsedInt) ? parsedInt : Number.NaN;
   }
   const parsedDate = new Date(value).getTime();
-  return Number.isFinite(parsedDate) ? parsedDate : NaN;
+  return Number.isFinite(parsedDate) ? parsedDate : Number.NaN;
 }
 
 function buildDateRangeKeys(arrivalMs, departureMs) {

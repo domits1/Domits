@@ -300,7 +300,7 @@ function parseIcsLine(line) {
 }
 
 function unfoldLines(icsText) {
-  const raw = String(icsText).replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  const raw = String(icsText).replaceAll("\r\n", "\n").replaceAll("\r", "\n").split("\n");
   const out = [];
   for (const line of raw) {
     if (!out.length) {
