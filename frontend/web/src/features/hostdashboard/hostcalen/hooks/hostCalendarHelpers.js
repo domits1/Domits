@@ -232,6 +232,8 @@ export const utcDateToKey = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+const UTC_DAY_IN_MS = 24 * 60 * 60 * 1000;
+
 export const getKeyRangeInclusive = (startKey, endKey) => {
   const startDate = keyToUtcDate(startKey);
   const endDate = keyToUtcDate(endKey);
@@ -243,10 +245,8 @@ export const getKeyRangeInclusive = (startKey, endKey) => {
   const to = startDate <= endDate ? endDate : startDate;
   const keys = [];
 
-  const cursor = new Date(from);
-  while (cursor <= to) {
-    keys.push(utcDateToKey(cursor));
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  for (let cursorMs = from.getTime(); cursorMs <= to.getTime(); cursorMs += UTC_DAY_IN_MS) {
+    keys.push(utcDateToKey(new Date(cursorMs)));
   }
 
   return keys;
@@ -334,10 +334,12 @@ export const buildBookedDateMap = (bookingsPayload) => {
         return;
       }
 
-      const cursor = new Date(from);
-      while (cursor < toExclusive) {
-        dateKeys.add(utcDateToKey(cursor));
-        cursor.setUTCDate(cursor.getUTCDate() + 1);
+      for (
+        let cursorMs = from.getTime();
+        cursorMs < toExclusive.getTime();
+        cursorMs += UTC_DAY_IN_MS
+      ) {
+        dateKeys.add(utcDateToKey(new Date(cursorMs)));
       }
     });
 
