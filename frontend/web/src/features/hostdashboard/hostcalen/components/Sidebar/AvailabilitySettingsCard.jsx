@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import arrowLeftIcon from "../../../../../images/arrow-left-icon.svg";
 
 const ADVANCE_NOTICE_OPTIONS = [0, 1, 2, 3, 5, 7, 14, 30];
@@ -179,3 +180,28 @@ export default function AvailabilitySettingsCard({
     </section>
   );
 }
+
+AvailabilitySettingsCard.propTypes = {
+  minimumStayInput: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  maximumStayInput: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  advanceNoticeDaysInput: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  preparationTimeDaysInput: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  availabilityWindowDaysInput: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  availabilityWindowOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ),
+  onMinimumStayChange: PropTypes.func,
+  onMaximumStayChange: PropTypes.func,
+  onAdvanceNoticeChange: PropTypes.func,
+  onPreparationTimeChange: PropTypes.func,
+  onAvailabilityWindowChange: PropTypes.func,
+  showSaveButton: PropTypes.bool,
+  canSave: PropTypes.bool,
+  saving: PropTypes.bool,
+  saveError: PropTypes.string,
+  onSave: PropTypes.func,
+  onBack: PropTypes.func,
+};

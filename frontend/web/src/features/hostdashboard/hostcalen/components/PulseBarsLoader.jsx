@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 const buildClassName = (isInline, className) =>
   ["hc-pulse-loader", isInline ? "hc-pulse-loader--inline" : "", className]
@@ -17,3 +18,9 @@ export default function PulseBarsLoader({ message, inline = false, className = "
     </div>
   );
 }
+
+PulseBarsLoader.propTypes = {
+  message: PropTypes.string,
+  inline: PropTypes.bool,
+  className: PropTypes.string,
+};

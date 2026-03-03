@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 
 const getStayText = (minimumStay, maximumStay) => {
@@ -57,3 +58,10 @@ export default function AvailabilityCard({
     </section>
   );
 }
+
+AvailabilityCard.propTypes = {
+  minimumStay: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  maximumStay: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  advanceNoticeDays: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onOpenSettings: PropTypes.func,
+};
