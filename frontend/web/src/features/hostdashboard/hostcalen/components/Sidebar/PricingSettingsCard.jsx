@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import arrowLeftIcon from "../../../../../images/arrow-left-icon.svg";
 
 const DISCOUNT_PERCENT_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
@@ -233,3 +234,28 @@ export default function PricingSettingsCard({
     </section>
   );
 }
+
+PricingSettingsCard.propTypes = {
+  nightlyRate: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  weekendRate: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  weeklyDiscountPercent: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  monthlyDiscountPercent: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  nightlyRateInput: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  weekendRateInput: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  weeklyDiscountEnabled: PropTypes.bool,
+  weeklyDiscountPercentInput: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  monthlyDiscountEnabled: PropTypes.bool,
+  monthlyDiscountPercentInput: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onNightlyRateChange: PropTypes.func,
+  onWeekendRateChange: PropTypes.func,
+  onWeeklyDiscountToggle: PropTypes.func,
+  onWeeklyDiscountPercentChange: PropTypes.func,
+  onMonthlyDiscountToggle: PropTypes.func,
+  onMonthlyDiscountPercentChange: PropTypes.func,
+  showSaveButton: PropTypes.bool,
+  canSave: PropTypes.bool,
+  saving: PropTypes.bool,
+  saveError: PropTypes.string,
+  onSave: PropTypes.func,
+  onBack: PropTypes.func,
+};

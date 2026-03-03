@@ -123,7 +123,7 @@ const buildDayPresentation = ({
     displayPrice = hasValidOverridePrice ? Math.trunc(overridePrice) : defaultPrice;
   }
 
-  const showExternalBlockedOverlay = inCurrentMonth && isBlocked && !isBooked;
+  const showExternalBlockedOverlay = isBlocked && !isBooked;
   const showUnavailableBadge = !showExternalBlockedOverlay && !isBooked && (isBlocked || isUnavailable);
 
   return {

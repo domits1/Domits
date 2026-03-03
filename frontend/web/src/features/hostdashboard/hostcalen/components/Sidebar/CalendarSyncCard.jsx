@@ -457,26 +457,57 @@ function EditSourceModal({
   canAddCalendar,
   onAddCalendar,
 }) {
+  const dialogRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const dialog = dialogRef.current;
+    if (!dialog || dialog.open) {
+      return;
+    }
+    try {
+      dialog.showModal();
+    } catch {
+      // no-op: prevents runtime crash if showModal is called during rapid unmounts
+    }
+  }, [isOpen]);
+
+  const handleDismiss = () => {
+    if (!addingCalendar) {
+      onCancelEdit?.();
+    }
+  };
+
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className="hc-sync-edit-modal-backdrop"
-      role="presentation"
-      onClick={() => {
-        if (!addingCalendar) {
-          onCancelEdit?.();
+      aria-label="Edit calendar connection"
+      onMouseDown={(event) => {
+        const dialogBounds = event.currentTarget.getBoundingClientRect();
+        const clickedOutsideDialog =
+          event.clientX < dialogBounds.left ||
+          event.clientX > dialogBounds.right ||
+          event.clientY < dialogBounds.top ||
+          event.clientY > dialogBounds.bottom;
+        if (clickedOutsideDialog) {
+          handleDismiss();
         }
+      }}
+      onCancel={(event) => {
+        event.preventDefault();
+        handleDismiss();
       }}
     >
       <section
         className="hc-sync-edit-modal"
-        role="dialog"
         aria-modal="true"
-        aria-label="Edit calendar connection"
-        onClick={(event) => event.stopPropagation()}
       >
         <h4 className="hc-sync-edit-modal-title">Edit calendar connection</h4>
         <p className="hc-sync-edit-modal-copy">Update the link, name, or provider and save changes.</p>
@@ -529,7 +560,7 @@ function EditSourceModal({
           </button>
         </div>
       </section>
-    </div>
+    </dialog>
   );
 }
 
@@ -563,26 +594,57 @@ function RemoveSourceModal({
   removeConfirmButtonLabel,
   hasSelectedRemoveReason,
 }) {
+  const dialogRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const dialog = dialogRef.current;
+    if (!dialog || dialog.open) {
+      return;
+    }
+    try {
+      dialog.showModal();
+    } catch {
+      // no-op: prevents runtime crash if showModal is called during rapid unmounts
+    }
+  }, [isOpen]);
+
+  const handleDismiss = () => {
+    if (!isRemovingPendingSource) {
+      resetRemoveSourceFlow();
+    }
+  };
+
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className="hc-sync-remove-modal-backdrop"
-      role="presentation"
-      onClick={() => {
-        if (!isRemovingPendingSource) {
-          resetRemoveSourceFlow();
+      aria-label="Remove calendar connection"
+      onMouseDown={(event) => {
+        const dialogBounds = event.currentTarget.getBoundingClientRect();
+        const clickedOutsideDialog =
+          event.clientX < dialogBounds.left ||
+          event.clientX > dialogBounds.right ||
+          event.clientY < dialogBounds.top ||
+          event.clientY > dialogBounds.bottom;
+        if (clickedOutsideDialog) {
+          handleDismiss();
         }
+      }}
+      onCancel={(event) => {
+        event.preventDefault();
+        handleDismiss();
       }}
     >
       <section
         className="hc-sync-remove-modal"
-        role="dialog"
         aria-modal="true"
-        aria-label="Remove calendar connection"
-        onClick={(event) => event.stopPropagation()}
       >
         {isRemoveReasonStep ? (
           <>
@@ -642,7 +704,7 @@ function RemoveSourceModal({
           </button>
         </div>
       </section>
-    </div>
+    </dialog>
   );
 }
 
@@ -773,9 +835,10 @@ export default function CalendarSyncCard({
         resetRemoveSourceFlow();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
+    const globalScope = globalThis;
+    globalScope.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      globalScope.removeEventListener("keydown", handleKeyDown);
     };
   }, [
     isEditingCalendar,

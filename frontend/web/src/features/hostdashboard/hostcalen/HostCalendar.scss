@@ -1446,10 +1446,10 @@ $accent: #2f6fed;
 
 .hc-sync-copy-btn {
   flex: 0 0 auto;
-  border: 1px solid #16a34a;
+  border: 1px solid #15803d;
   border-radius: 8px;
   padding: 8px 10px;
-  background: #16a34a;
+  background: #15803d;
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
@@ -1469,10 +1469,10 @@ $accent: #2f6fed;
 .hc-sync-add-btn {
   margin-top: 8px;
   width: 100%;
-  border: 1px solid #16a34a;
+  border: 1px solid #15803d;
   border-radius: 10px;
   padding: 10px 12px;
-  background: #16a34a;
+  background: #15803d;
   color: #ffffff;
   font-size: 16px;
   font-weight: 700;
@@ -1506,17 +1506,24 @@ $accent: #2f6fed;
 
 .hc-sync-edit-modal-backdrop {
   position: fixed;
-  inset: 0;
-  z-index: 1400;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+}
+
+.hc-sync-edit-modal-backdrop::backdrop {
   background: rgba(15, 23, 42, 0.38);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
 }
 
 .hc-sync-edit-modal {
-  width: min(460px, 100%);
+  width: min(460px, calc(100vw - 32px));
   border: 1px solid #d6d9df;
   border-radius: 14px;
   background: #ffffff;
@@ -1554,17 +1561,24 @@ $accent: #2f6fed;
 
 .hc-sync-remove-modal-backdrop {
   position: fixed;
-  inset: 0;
-  z-index: 1400;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+}
+
+.hc-sync-remove-modal-backdrop::backdrop {
   background: rgba(15, 23, 42, 0.38);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
 }
 
 .hc-sync-remove-modal {
-  width: min(440px, 100%);
+  width: min(440px, calc(100vw - 32px));
   border: 1px solid #d6d9df;
   border-radius: 14px;
   background: #ffffff;
@@ -2022,9 +2036,9 @@ $accent: #2f6fed;
   }
 
   .hc-cell-external-booking {
-    inset: 4px;
-    align-items: flex-end;
-    justify-content: flex-start;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
     gap: 0;
   }
 
@@ -2055,8 +2069,12 @@ $accent: #2f6fed;
   }
 
   .hc-cell-badge--unavailable {
+    top: 50%;
+    left: 50%;
+    right: auto;
     width: 36px;
     height: 36px;
+    transform: translate(-50%, -50%);
   }
 
   .hc-cell-date {
