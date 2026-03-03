@@ -129,6 +129,111 @@ const shouldSkipRefreshRequest = ({
   isRefreshingAnySource ||
   isRefreshingAllCalendarSources;
 
+const collectSourceIds = (sources) =>
+  (Array.isArray(sources) ? sources : [])
+    .map((source, index) => resolveSourceId(source, index))
+    .filter(Boolean);
+
+const markSourcesAsPending = ({ setSourceSyncStateById, calendarSources, sourceIds }) => {
+  setSourceSyncStateById((previous) => {
+    const nextStateById = buildSyncStateMapForSources(calendarSources, previous);
+    sourceIds.forEach((sourceId) => {
+      nextStateById[sourceId] = SOURCE_SYNC_STATE.PENDING;
+    });
+    return nextStateById;
+  });
+};
+
+const refreshSingleSourceWithinAll = async ({
+  sourceId,
+  selectedPropertyId,
+  applyRefreshedSources,
+  setSourceSyncStateById,
+}) => {
+  refreshSourceSyncState({
+    setSourceSyncStateById,
+    sourceId,
+    state: SOURCE_SYNC_STATE.SYNCING,
+  });
+
+  try {
+    const response = await dbRefreshIcalSource({
+      propertyId: selectedPropertyId,
+      sourceId,
+    });
+    const { sources, blockedDates } = extractSourcesAndBlockedDates(response);
+    applyRefreshedSources(sources, blockedDates);
+    setSourceSyncStateById((previous) => {
+      const nextStateById = buildSyncStateMapForSources(sources, previous);
+      nextStateById[sourceId] = SOURCE_SYNC_STATE.SUCCESS;
+      return nextStateById;
+    });
+    return { shouldFallbackToRefreshAll: false, errorMessage: "" };
+  } catch (error) {
+    if (isUnknownActionError(error)) {
+      return { shouldFallbackToRefreshAll: true, errorMessage: "" };
+    }
+    refreshSourceSyncState({
+      setSourceSyncStateById,
+      sourceId,
+      state: SOURCE_SYNC_STATE.ERROR,
+    });
+    return {
+      shouldFallbackToRefreshAll: false,
+      errorMessage: error?.message || "One or more calendars could not be refreshed.",
+    };
+  }
+};
+
+const refreshSourcesSequentially = async ({
+  sourceIds,
+  selectedPropertyId,
+  applyRefreshedSources,
+  setSourceSyncStateById,
+}) => {
+  let firstErrorMessage = "";
+  for (const sourceId of sourceIds) {
+    const result = await refreshSingleSourceWithinAll({
+      sourceId,
+      selectedPropertyId,
+      applyRefreshedSources,
+      setSourceSyncStateById,
+    });
+    if (result.shouldFallbackToRefreshAll) {
+      return { shouldFallbackToRefreshAll: true, firstErrorMessage };
+    }
+    if (!firstErrorMessage && result.errorMessage) {
+      firstErrorMessage = result.errorMessage;
+    }
+  }
+  return { shouldFallbackToRefreshAll: false, firstErrorMessage };
+};
+
+const runRefreshAllFallback = async ({
+  sourceIds,
+  selectedPropertyId,
+  applyRefreshedSources,
+  setSourceSyncStateById,
+}) => {
+  try {
+    const response = await dbRefreshAllIcalSources(selectedPropertyId);
+    const { sources, blockedDates } = extractSourcesAndBlockedDates(response);
+    applyRefreshedSources(sources, blockedDates);
+    applyAllSourceSyncState({
+      setSourceSyncStateById,
+      sourceIds,
+      nextState: SOURCE_SYNC_STATE.SUCCESS,
+    });
+    return "";
+  } catch (error) {
+    markInFlightSourceSyncsAsError({
+      setSourceSyncStateById,
+      sourceIds,
+    });
+    return error?.message || "Could not refresh calendar connections.";
+  }
+};
+
 export const useCalendarSync = ({ selectedPropertyId }) => {
   const [externalBlockedDates, setExternalBlockedDates] = useState(new Set());
   const [calendarSources, setCalendarSources] = useState([]);
@@ -576,86 +681,38 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       return;
     }
 
-    const sourceIds = calendarSources
-      .map((source, index) => resolveSourceId(source, index))
-      .filter(Boolean);
+    const sourceIds = collectSourceIds(calendarSources);
     if (sourceIds.length === 0) {
       return;
     }
 
     setIsRefreshingAllCalendarSources(true);
     setCalendarSyncError("");
-    setSourceSyncStateById((previous) => {
-      const nextStateById = buildSyncStateMapForSources(calendarSources, previous);
-      sourceIds.forEach((sourceId) => {
-        nextStateById[sourceId] = SOURCE_SYNC_STATE.PENDING;
-      });
-      return nextStateById;
+    markSourcesAsPending({
+      setSourceSyncStateById,
+      calendarSources,
+      sourceIds,
     });
 
-    let fallbackToRefreshAll = false;
     let firstErrorMessage = "";
     try {
-      for (const sourceId of sourceIds) {
-        if (fallbackToRefreshAll) {
-          break;
-        }
+      const refreshSequenceResult = await refreshSourcesSequentially({
+        sourceIds,
+        selectedPropertyId,
+        applyRefreshedSources,
+        setSourceSyncStateById,
+      });
+      firstErrorMessage = refreshSequenceResult.firstErrorMessage;
 
-        refreshSourceSyncState({
+      if (refreshSequenceResult.shouldFallbackToRefreshAll) {
+        const fallbackErrorMessage = await runRefreshAllFallback({
+          sourceIds,
+          selectedPropertyId,
+          applyRefreshedSources,
           setSourceSyncStateById,
-          sourceId,
-          state: SOURCE_SYNC_STATE.SYNCING,
         });
-
-        try {
-          const response = await dbRefreshIcalSource({
-            propertyId: selectedPropertyId,
-            sourceId,
-          });
-          const { sources, blockedDates } = extractSourcesAndBlockedDates(response);
-          applyRefreshedSources(sources, blockedDates);
-          setSourceSyncStateById((previous) => {
-            const nextStateById = buildSyncStateMapForSources(sources, previous);
-            nextStateById[sourceId] = SOURCE_SYNC_STATE.SUCCESS;
-            return nextStateById;
-          });
-        } catch (refreshError) {
-          if (isUnknownActionError(refreshError)) {
-            fallbackToRefreshAll = true;
-            break;
-          }
-
-          refreshSourceSyncState({
-            setSourceSyncStateById,
-            sourceId,
-            state: SOURCE_SYNC_STATE.ERROR,
-          });
-          if (!firstErrorMessage) {
-            firstErrorMessage =
-              refreshError?.message || "One or more calendars could not be refreshed.";
-          }
-        }
-      }
-
-      if (fallbackToRefreshAll) {
-        try {
-          const response = await dbRefreshAllIcalSources(selectedPropertyId);
-          const { sources, blockedDates } = extractSourcesAndBlockedDates(response);
-          applyRefreshedSources(sources, blockedDates);
-          applyAllSourceSyncState({
-            setSourceSyncStateById,
-            sourceIds,
-            nextState: SOURCE_SYNC_STATE.SUCCESS,
-          });
-        } catch (refreshAllError) {
-          markInFlightSourceSyncsAsError({
-            setSourceSyncStateById,
-            sourceIds,
-          });
-          if (!firstErrorMessage) {
-            firstErrorMessage =
-              refreshAllError?.message || "Could not refresh calendar connections.";
-          }
+        if (!firstErrorMessage && fallbackErrorMessage) {
+          firstErrorMessage = fallbackErrorMessage;
         }
       }
     } finally {

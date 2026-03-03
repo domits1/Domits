@@ -252,24 +252,51 @@ function parseIcsToEvents(icsText) {
     }
 
     if (line === "END:VEVENT") {
-      if (current) events.push(current);
+      pushCurrentEvent(events, current);
       current = null;
       continue;
     }
 
-    if (!current) continue;
+    if (!current) {
+      continue;
+    }
 
-    const idx = line.indexOf(":");
-    if (idx === -1) continue;
-    const left = line.slice(0, idx);
-    const value = line.slice(idx + 1).trim();
-    const key = left.split(";")[0].trim().toUpperCase();
-
-    if (key === "DTSTART") current.Dtstart = value;
-    if (key === "DTEND") current.Dtend = value;
+    applyIcsEventLine(current, line);
   }
 
   return events;
+}
+
+function pushCurrentEvent(events, currentEvent) {
+  if (currentEvent) {
+    events.push(currentEvent);
+  }
+}
+
+function applyIcsEventLine(currentEvent, line) {
+  const parsedLine = parseIcsLine(line);
+  if (!parsedLine) {
+    return;
+  }
+  const { key, value } = parsedLine;
+  if (key === "DTSTART") {
+    currentEvent.Dtstart = value;
+    return;
+  }
+  if (key === "DTEND") {
+    currentEvent.Dtend = value;
+  }
+}
+
+function parseIcsLine(line) {
+  const separatorIndex = line.indexOf(":");
+  if (separatorIndex === -1) {
+    return null;
+  }
+  const left = line.slice(0, separatorIndex);
+  const value = line.slice(separatorIndex + 1).trim();
+  const key = left.split(";")[0].trim().toUpperCase();
+  return { key, value };
 }
 
 function unfoldLines(icsText) {
@@ -306,6 +333,13 @@ function addDays(date, days, useUtc) {
   }
   output.setDate(output.getDate() + days);
   return output;
+}
+
+function startOfDay(date, useUtc) {
+  if (useUtc) {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  }
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function parseIcsDate(raw) {
@@ -348,41 +382,59 @@ function buildBlockedDatesFromEvents(events) {
   const normalizedEvents = Array.isArray(events) ? events : [];
 
   for (const event of normalizedEvents) {
-    const { date: start, useUtc: startUtc } = parseIcsDate(event?.Dtstart);
-    const { date: end, useUtc: endUtc } = parseIcsDate(event?.Dtend);
-    if (!start) {
+    const normalizedRange = normalizeEventDateRange(event);
+    if (!normalizedRange) {
       continue;
     }
-
-    if (!end) {
-      set.add(toYmd(start, startUtc));
+    if (normalizedRange.singleDateKey) {
+      set.add(normalizedRange.singleDateKey);
       continue;
     }
-
-    const useUtc = Boolean(startUtc || endUtc);
-    const startDay = useUtc
-      ? new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()))
-      : new Date(start.getFullYear(), start.getMonth(), start.getDate());
-    const endDay = useUtc
-      ? new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()))
-      : new Date(end.getFullYear(), end.getMonth(), end.getDate());
-
-    if (endDay.getTime() <= startDay.getTime()) {
-      set.add(toYmd(startDay, useUtc));
-      continue;
-    }
-
-    let current = startDay;
-    let safeCounter = 0;
-
-    while (current.getTime() < endDay.getTime()) {
-      set.add(toYmd(current, useUtc));
-      current = addDays(current, 1, useUtc);
-      safeCounter += 1;
-      if (safeCounter > MAX_EXPAND_DAYS) break;
-    }
+    appendDateRangeKeys(set, normalizedRange);
   }
 
   return Array.from(set);
+}
+
+function normalizeEventDateRange(event) {
+  const { date: startDate, useUtc: startUtc } = parseIcsDate(event?.Dtstart);
+  if (!startDate) {
+    return null;
+  }
+
+  const { date: endDate, useUtc: endUtc } = parseIcsDate(event?.Dtend);
+  if (!endDate) {
+    return {
+      singleDateKey: toYmd(startDate, startUtc),
+    };
+  }
+
+  const useUtc = Boolean(startUtc || endUtc);
+  const startDay = startOfDay(startDate, useUtc);
+  const endDay = startOfDay(endDate, useUtc);
+  if (endDay.getTime() <= startDay.getTime()) {
+    return {
+      singleDateKey: toYmd(startDay, useUtc),
+    };
+  }
+
+  return {
+    startDay,
+    endDay,
+    useUtc,
+  };
+}
+
+function appendDateRangeKeys(targetSet, normalizedRange) {
+  let currentDate = normalizedRange.startDay;
+  let safeCounter = 0;
+  while (currentDate.getTime() < normalizedRange.endDay.getTime()) {
+    targetSet.add(toYmd(currentDate, normalizedRange.useUtc));
+    currentDate = addDays(currentDate, 1, normalizedRange.useUtc);
+    safeCounter += 1;
+    if (safeCounter > MAX_EXPAND_DAYS) {
+      break;
+    }
+  }
 }
 
