@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Housekeeping.css';
-import { createTask, fetchTasks, updateTaskStatus, deleteTask } from './services/faketaskService';
+import { createTask, fetchTasks, deleteTask } from './services/faketaskService';
 
 const HostPropertyCare = () => {
-    // --- STATE ---
     const [activeTab, setActiveTab] = useState('Overview'); 
     const [tasks, setTasks] = useState([]);
     const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
@@ -12,33 +11,21 @@ const HostPropertyCare = () => {
 
     const [newTask, setNewTask] = useState({
         title: '', description: '', property: '', bookingRef: '', 
-        type: 'Cleaning', assignee: '', dueDate: '', priority: '', attachments: null
+        type: 'Cleaning', assignee: '', dueDate: '', priority: 'Medium', attachments: null
     });
+
+    const [viewingTask, setViewingTask] = useState(null);
+    const [editedTask, setEditedTask] = useState(null);  
 
     const [filters, setFilters] = useState({
-        property: 'All properties',
-        status: 'All statuses',
-        assignee: 'Anyone',
-        date: 'Any date',
-        priority: 'Any priority',
-        search: ''
+        property: 'All properties', status: 'All statuses', assignee: 'Anyone',
+        date: 'Any date', priority: 'Any priority', search: ''
     });
 
-    const [selectedTaskIds, setSelectedTaskIds] = useState([]);
-    
     const [confirmDialog, setConfirmDialog] = useState({
-        isOpen: false,
-        title: '',
-        message: '',
-        confirmText: 'Confirm',
-        cancelText: 'Cancel',
-        onConfirm: null
+        isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
 
-    const closeConfirmDialog = () => {
-        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-    };
-    
     useEffect(() => {
         loadData();
     }, []);
@@ -46,7 +33,6 @@ const HostPropertyCare = () => {
     useEffect(() => {
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
-        
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
@@ -68,12 +54,11 @@ const HostPropertyCare = () => {
         const data = await fetchTasks();
         
         const todayStr = new Date().toISOString().split('T')[0];
-        
         const processedTasks = data.map(task => {
             if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
                 return { ...task, status: 'Overdue' };
             }
-            return task; 
+            return task;
         });
 
         setTasks(processedTasks);
@@ -83,7 +68,19 @@ const HostPropertyCare = () => {
     const handleCreateTask = async (e) => {
         e.preventDefault();
         try {
-            const taskPayload = { ...newTask, status: 'Pending' }; 
+            const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            
+            const taskPayload = { 
+                ...newTask, 
+                status: 'Pending',
+                activities: [{
+                    id: Date.now(),
+                    user: 'User',
+                    action: 'created the task',
+                    timestamp: now
+                }]
+            }; 
+            
             let created = await createTask(taskPayload);
             
             const todayStr = new Date().toISOString().split('T')[0];
@@ -104,17 +101,12 @@ const HostPropertyCare = () => {
         setNewTask(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleFilterChange = (e) => {
-        const { name, value } = e.target;
-        setFilters(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleFileChange = (e) => {
-        setNewTask(prev => ({ ...prev, attachments: e.target.files[0] }));
+    const resetForm = () => {
+        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', dueDate: '', priority: 'Medium', attachments: null });
     };
 
     const handleCancelModal = () => {
-        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.dueDate || newTask.priority !== 'Low' || newTask.attachments;
+        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.dueDate || newTask.priority !== 'Medium' || newTask.attachments;
         if (hasUnsavedChanges) {
             setConfirmDialog({
                 isOpen: true,
@@ -134,60 +126,97 @@ const HostPropertyCare = () => {
         }
     };
 
-    const resetForm = () => {
-        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', dueDate: '', priority: 'Low', attachments: null });
+    const openTaskDetails = (task) => {
+        setViewingTask(task);
+        setEditedTask({ ...task }); 
     };
 
-    const handleClearFilters = () => {
-        setFilters({
-            property: 'All properties',
-            status: 'All statuses',
-            assignee: 'Anyone',
-            date: 'Any date',
-            priority: 'Any priority',
-            search: ''
-        });
-    };
-    
-    const handleSelectTask = (id) => {
-        setSelectedTaskIds(prev => 
-            prev.includes(id) ? prev.filter(taskId => taskId !== id) : [...prev, id]
-        );
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditedTask(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleDeleteSelected = () => {
+    const closeTaskDetails = () => {
+        const isEdited = JSON.stringify(viewingTask) !== JSON.stringify(editedTask);
+        if (isEdited) {
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Discard edits?',
+                message: 'You have unsaved changes. Are you sure you want to close without saving?',
+                confirmText: 'Discard Changes',
+                cancelText: 'Keep Editing',
+                onConfirm: () => {
+                    setViewingTask(null);
+                    setEditedTask(null);
+                    closeConfirmDialog();
+                }
+            });
+        } else {
+            setViewingTask(null);
+            setEditedTask(null);
+        }
+    };
+
+    const handleSaveChanges = () => {
+        const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const newLogs = [];
+
+        if (viewingTask.status !== editedTask.status) {
+            newLogs.push({ id: Date.now() + 1, user: 'User', action: `changed status to ${editedTask.status}`, timestamp: now });
+        }
+        if (viewingTask.assignee !== editedTask.assignee) {
+            newLogs.push({ id: Date.now() + 2, user: 'User', action: `reassigned task to ${editedTask.assignee}`, timestamp: now });
+        }
+        if (viewingTask.dueDate !== editedTask.dueDate) {
+            newLogs.push({ id: Date.now() + 3, user: 'User', action: `changed due date to ${editedTask.dueDate}`, timestamp: now });
+        }
+        if (viewingTask.priority !== editedTask.priority) {
+            newLogs.push({ id: Date.now() + 4, user: 'User', action: `changed priority to ${editedTask.priority}`, timestamp: now });
+        }
+        if (viewingTask.property !== editedTask.property) {
+            newLogs.push({ id: Date.now() + 6, user: 'User', action: `moved task to ${editedTask.property}`, timestamp: now });
+        }
+        
+        if (newLogs.length === 0 && JSON.stringify(viewingTask) !== JSON.stringify(editedTask)) {
+            newLogs.push({ id: Date.now() + 5, user: 'User', action: `updated task details`, timestamp: now });
+        }
+
+        const updatedTask = {
+            ...editedTask,
+            activities: [...(editedTask.activities || []), ...newLogs]
+        };
+
+        setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+        setViewingTask(null);
+        setEditedTask(null);
+    };
+
+    const handleDeleteSingleTask = () => {
         setConfirmDialog({
             isOpen: true,
-            title: 'Delete Tasks?',
-            message: `Are you sure you want to delete ${selectedTaskIds.length} task(s)? They will be moved to your Legacy Tasks list.`,
+            title: 'Delete Task?',
+            message: `Are you sure you want to delete "${viewingTask.title}"? It will be moved to your Legacy Tasks list.`,
             confirmText: 'Yes, Delete',
             cancelText: 'Cancel',
             onConfirm: async () => {
-                for (const id of selectedTaskIds) {
-                    // await deleteTask(id); 
-                }
                 
                 setTasks(tasks.map(t => 
-                    selectedTaskIds.includes(t.id) ? { ...t, isLegacy: true } : t
+                    t.id === viewingTask.id ? { ...t, isLegacy: true } : t
                 ));
-                setSelectedTaskIds([]);
+                setViewingTask(null);
+                setEditedTask(null);
                 closeConfirmDialog();
             }
         });
     };
 
-    const handleCancelSelection = () => {
-        setConfirmDialog({
-            isOpen: true,
-            title: 'Clear Selection?',
-            message: 'Are you sure you want to cancel your current selection?',
-            confirmText: 'Clear Selection',
-            cancelText: 'Go Back',
-            onConfirm: () => {
-                setSelectedTaskIds([]);
-                closeConfirmDialog();
-            }
-        });
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleClearFilters = () => {
+        setFilters({ property: 'All properties', status: 'All statuses', assignee: 'Anyone', date: 'Any date', priority: 'Any priority', search: '' });
     };
 
     const getFilteredTasks = () => {
@@ -223,6 +252,7 @@ const HostPropertyCare = () => {
     };
 
     const filteredTasks = getFilteredTasks();
+    const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
 
     const renderContent = () => {
         if (isLoading) return <div className="loading">Loading...</div>;
@@ -232,7 +262,7 @@ const HostPropertyCare = () => {
             case 'All Tasks': 
                 return renderTableView();
             case 'My Tasks':
-                return <div className="placeholder-view">My Tasks View (Coming soon)</div>;
+                return <div className="placeholder-view">My Tasks View</div>;
             case 'Reports':
                 return <div className="placeholder-view">Reports View</div>;
             case 'Settings':
@@ -260,6 +290,7 @@ const HostPropertyCare = () => {
                         <option value="Anyone">Anyone</option>
                         <option value="Sophie Janssen">Sophie Janssen</option>
                         <option value="Jan de Vries">Jan de Vries</option>
+                        <option value="Lisa Meijer">Lisa Meijer</option>
                     </select>
                     <select name="date" value={filters.date} onChange={handleFilterChange}>
                         <option value="Any date">Any date</option>
@@ -270,6 +301,8 @@ const HostPropertyCare = () => {
                         <option value="Any priority">Any priority</option>
                         <option value="Urgent">Urgent</option>
                         <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
                     </select>
                     
                     <div className="search-box">
@@ -289,9 +322,7 @@ const HostPropertyCare = () => {
                         <span className="status-tag"><span className="dot dot-overdue"></span> Overdue</span>
                         <span className="status-tag"><span className="dot dot-cancelled"></span> Cancelled</span>
                     </div>
-                    <button className="btn-clear-filters" onClick={handleClearFilters}>
-                        Clear filters
-                    </button>
+                    <button className="btn-clear-filters" onClick={handleClearFilters}>Clear filters</button>
                 </div>
             </div>
 
@@ -299,7 +330,6 @@ const HostPropertyCare = () => {
                 <table className="tasks-table">
                     <thead>
                         <tr>
-                            <th style={{ width: '40px' }}></th>
                             <th>Task</th>
                             <th>Property ▾</th>
                             <th>Type</th>
@@ -312,25 +342,17 @@ const HostPropertyCare = () => {
                     <tbody>
                         {filteredTasks.length === 0 ? (
                             <tr>
-                                <td colSpan="8" style={{textAlign: 'center', padding: '30px', color: '#6c757d'}}>
+                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#6c757d'}}>
                                     No tasks match your filters (or all are completed/deleted).
                                 </td>
                             </tr>
                         ) : (
                             filteredTasks.map(task => (
-                                <tr key={task.id} className={`row-${task.status.toLowerCase().replace(' ', '-')}`}>
+                                <tr key={task.id} className={`clickable-row row-${task.status.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
                                     <td>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={selectedTaskIds.includes(task.id)}
-                                            onChange={() => handleSelectTask(task.id)}
-                                            style={{ cursor: 'pointer', accentColor: '#28a745' }}
-                                        />
-                                    </td>
-                                    <td>
-                                        <div className="task-title-cell">
+                                        <div className="task-title-cell" title={task.title}>
                                             <span className="task-arrow">▶</span> 
-                                            <div>
+                                            <div className="truncate-text">
                                                 <strong>{task.title}</strong>
                                             </div>
                                         </div>
@@ -355,17 +377,6 @@ const HostPropertyCare = () => {
                     </tbody>
                 </table>
             </div>
-            
-            {selectedTaskIds.length > 0 && (
-                <div className="table-footer-actions">
-                    <button className="btn-text" onClick={handleCancelSelection} style={{ backgroundColor: 'white', border: '1px solid #ced4da', padding: '10px 20px', borderRadius: '6px' }}>
-                        Cancel
-                    </button>
-                    <button className="btn-create-green" onClick={handleDeleteSelected}>
-                        Delete {selectedTaskIds.length} Task(s)
-                    </button>
-                </div>
-            )}
         </div>
     );
 
@@ -446,7 +457,7 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label>Description</label>
-                                <textarea name="description" value={newTask.description} onChange={handleInputChange} placeholder="The patio light is broken and needs to be fixed as soon as possible." rows="3" required />
+                                <textarea name="description" value={newTask.description} onChange={handleInputChange} placeholder="Description here..." rows="3" required />
                             </div>
                             <div className="form-group">
                                 <label>Property</label>
@@ -474,17 +485,12 @@ const HostPropertyCare = () => {
                                     <option value="" disabled hidden>Select Assignee</option>
                                     <option value="Sophie Janssen">Sophie Janssen (sophie@domits.com)</option>
                                     <option value="Jan de Vries">Jan de Vries (jan@domits.com)</option>
+                                    <option value="Lisa Meijer">Lisa Meijer (lisa@domits.com)</option>
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label>Due Date</label>
-                                <input 
-                                    type="date" 
-                                    name="dueDate" 
-                                    value={newTask.dueDate} 
-                                    onChange={handleInputChange} 
-                                    required 
-                                />
+                                <input type="date" name="dueDate" value={newTask.dueDate} onChange={handleInputChange} required />
                             </div>
                             <div className="form-group">
                                 <label>Priority</label>
@@ -498,14 +504,9 @@ const HostPropertyCare = () => {
                             <div className="form-group">
                                 <label>Attachments (optional)</label>
                                 <div className="custom-file-upload">
-                                    <input type="file" id="file-upload" onChange={handleFileChange} />
+                                    <input type="file" id="file-upload" />
                                     <label htmlFor="file-upload">
-                                        <svg className="upload-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5l13.732-13.732z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                        <span className="upload-text">
-                                            {newTask.attachments ? newTask.attachments.name : 'Upload file...'}
-                                        </span>
+                                        <span className="upload-text">Upload file...</span>
                                     </label>
                                 </div>
                             </div>
@@ -517,6 +518,121 @@ const HostPropertyCare = () => {
                     </div>
                 </div>
             )}
+
+            {viewingTask && editedTask && (
+                <div className="modal-overlay">
+                    <div className="modal-content-large task-details-modal">
+                        <div className="modal-header details-header">
+                            <h3 className="details-title">{editedTask.title}</h3>
+                            <button className="close-btn" onClick={closeTaskDetails}>✕</button>
+                        </div>
+                        
+                        <div className="details-badges-row">
+                            <select name="status" value={editedTask.status} onChange={handleEditChange} className={`badge-select status-${editedTask.status.toLowerCase().replace(' ', '-')}`}>
+                                <option value="Pending">● Pending</option>
+                                <option value="In progress">● In progress</option>
+                                <option value="Completed">● Completed</option>
+                                <option value="Overdue">● Overdue</option>
+                            </select>
+                            <select name="priority" value={editedTask.priority} onChange={handleEditChange} className={`badge-select priority-${editedTask.priority.toLowerCase()}`}>
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                            <select name="property" value={editedTask.property || ''} onChange={handleEditChange} className="badge-select property-badge">
+                                <option value="City Loft Breda">🏢 City Loft Breda</option>
+                                <option value="Beach House">🏢 Beach House</option>
+                            </select>
+                        </div>
+
+                        <div className="details-body">
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea name="description" value={editedTask.description || ''} onChange={handleEditChange} rows="3" placeholder="Enter description..." />
+                            </div>
+
+                            <div className="form-row-grid">
+                                <div className="form-group">
+                                    <label>Assignee</label>
+                                    <select name="assignee" value={editedTask.assignee} onChange={handleEditChange}>
+                                        <option value="Sophie Janssen">Sophie Janssen</option>
+                                        <option value="Jan de Vries">Jan de Vries</option>
+                                        <option value="Lisa Meijer">Lisa Meijer</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Type</label>
+                                    <select name="type" value={editedTask.type} onChange={handleEditChange}>
+                                        <option value="Cleaning">Cleaning</option>
+                                        <option value="Maintenance">Maintenance</option>
+                                        <option value="Inspection">Inspection</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Booking Reference (optional)</label>
+                                    <input type="text" name="bookingRef" value={editedTask.bookingRef || ''} onChange={handleEditChange} placeholder="Select booking." />
+                                </div>
+                                <div className="form-group">
+                                    <label>Due Date</label>
+                                    <input type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} />
+                                </div>
+                            </div>
+
+                            <div className="form-group attachments-section">
+                                <div className="attachments-header">
+                                    <label>Attachments (optional)</label>
+                                    <span className="attachments-count">0 Attachments</span>
+                                </div>
+                                <div className="attachments-box">
+                                    <p className="no-attachments-text">No attachments yet.</p>
+                                </div>
+                            </div>
+
+                            <div className="activity-section">
+                                <div className="activity-header">
+                                    <h4>Activity</h4>
+                                    {editedTask.activities && editedTask.activities.length > 0 && (
+                                        <span className="created-info">
+                                            Created by {editedTask.activities[0].user} on {editedTask.activities[0].timestamp}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="activity-list">
+                                    {(!editedTask.activities || editedTask.activities.length === 0) ? (
+                                        <p className="no-attachments-text">No activity recorded yet.</p>
+                                    ) : (
+                                        [...editedTask.activities].reverse().map(activity => (
+                                            <div className="activity-item" key={activity.id} style={{ alignItems: 'flex-start' }}>
+                                                <div className="activity-avatar">U</div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                    <p><strong>{activity.user}</strong> {activity.action}</p>
+                                                    <span style={{ fontSize: '11px', color: '#adb5bd' }}>{activity.timestamp}</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer details-footer">
+                            <button className="btn-text" onClick={closeTaskDetails}>Cancel</button>
+                            
+                            {JSON.stringify(viewingTask) !== JSON.stringify(editedTask) ? (
+                                <button className="btn-create-green" onClick={handleSaveChanges}>
+                                    Save Changes
+                                </button>
+                            ) : (
+                                <button className="btn-create-green" onClick={handleDeleteSingleTask}>
+                                    Delete
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {confirmDialog.isOpen && (
                 <div className="confirm-modal-overlay">
                     <div className="confirm-modal-content">
@@ -524,12 +640,8 @@ const HostPropertyCare = () => {
                         <h3>{confirmDialog.title}</h3>
                         <p>{confirmDialog.message}</p>
                         <div className="confirm-modal-actions">
-                            <button className="btn-text" onClick={closeConfirmDialog}>
-                                {confirmDialog.cancelText}
-                            </button>
-                            <button className="btn-create-green" onClick={confirmDialog.onConfirm}>
-                                {confirmDialog.confirmText}
-                            </button>
+                            <button className="btn-text" onClick={closeConfirmDialog}>{confirmDialog.cancelText}</button>
+                            <button className="btn-create-green" onClick={confirmDialog.onConfirm}>{confirmDialog.confirmText}</button>
                         </div>
                     </div>
                 </div>
@@ -537,4 +649,5 @@ const HostPropertyCare = () => {
         </main>
     );
 };
+
 export default HostPropertyCare;

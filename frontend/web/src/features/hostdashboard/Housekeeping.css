@@ -169,17 +169,24 @@
     background-color: #fcfcfc;
 }
 
-/* Task Title Cell */
 .task-title-cell {
     display: flex;
     align-items: center;
     gap: 10px;
+    max-width: 250px; 
 }
 
 .task-arrow {
     color: #adb5bd;
     font-size: 10px;
     cursor: pointer;
+    flex-shrink: 0; 
+}
+
+.truncate-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .badge-priority, .badge-status {
@@ -618,4 +625,150 @@
 @keyframes popIn {
     from { opacity: 0; transform: scale(0.95) translateY(10px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.clickable-row:hover {
+    filter: brightness(0.97);
+}
+
+.task-details-modal .details-header {
+    border-bottom: none;
+    padding-bottom: 10px;
+}
+
+.details-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #212529;
+    margin: 0;
+}
+
+.details-badges-row {
+    padding: 0 25px 20px 25px;
+    border-bottom: 1px solid #eaeaea;
+    display: flex;
+    gap: 10px;
+}
+
+.badge-select {
+    appearance: none;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 25px 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 8px auto;
+}
+
+.badge-select.status-pending { background-color: #6c757d; color: white; }
+.badge-select.status-in-progress { background-color: #007bff; color: white; }
+.badge-select.status-completed { background-color: #28a745; color: white; }
+.badge-select.status-overdue { background-color: #dc3545; color: white; }
+
+.badge-select.priority-urgent { background-color: #dc3545; color: white; }
+.badge-select.priority-high { background-color: #fd7e14; color: white; }
+.badge-select.priority-medium { background-color: #ffc107; color: #333; background-image: none; padding-right: 10px;}
+.badge-select.priority-low { background-color: #6c757d; color: white; }
+
+.property-badge { background-color: #f8f9fa; color: #495057; border: 1px solid #ced4da; background-image: none; padding-right: 10px;}
+
+.details-body {
+    padding: 25px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.form-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 20px;
+}
+
+.attachments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.attachments-count {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.attachments-box {
+    border: 1px dashed #ced4da;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+}
+
+.no-attachments-text {
+    margin: 0;
+    font-size: 13px;
+    color: #adb5bd;
+}
+
+.activity-section {
+    margin-top: 30px;
+    border-top: 1px solid #eaeaea;
+    padding-top: 20px;
+}
+
+.activity-header {
+    display: flex;
+    align-items: baseline;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.activity-header h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #212529;
+}
+
+.created-info {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.activity-item p { margin: 0; }
+.text-blue { color: #007bff; font-weight: 500; }
+
+.activity-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.details-footer {
+    padding: 20px 25px;
+    background-color: #ffffff;
 }
