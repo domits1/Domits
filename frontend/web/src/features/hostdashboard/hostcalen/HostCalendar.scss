@@ -2021,6 +2021,44 @@ $accent: #2f6fed;
     min-height: 78px;
   }
 
+  .hc-cell-external-booking {
+    inset: 4px;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .hc-cell-external-booking-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .hc-cell-external-booking-icon img {
+    width: 14px;
+    height: 14px;
+  }
+
+  .hc-cell-external-booking-label {
+    display: none;
+  }
+
+  .hc-cell-badge {
+    top: 4px;
+    right: 4px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .hc-cell-badge--booked img {
+    width: 10px;
+    height: 10px;
+  }
+
+  .hc-cell-badge--unavailable {
+    width: 36px;
+    height: 36px;
+  }
+
   .hc-cell-date {
     font-size: 16px;
   }
