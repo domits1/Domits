@@ -1,703 +1,473 @@
-# #2446 – Database Table Research
+# #2446 - Database Table Research (Updated)
 
-## Cluster 1 – Amenities
+Last verified: 2026-03-02  
+Scope: repository-level validation against current ORM models, SQL schema files, and backend repository usage.
 
-### Huidige Tabellen
+## Validation Sources
+
+- `backend/ORM/models/*`
+- `backend/ORM/schema.psql`
+- `backend/functions/PropertyHandler/data/repository/*`
+- `backend/functions/UnifiedMessaging/data/*`
+- `backend/functions/UnifiedMessaging/migrations/002_add_unified_messaging_schema.sql`
+- `backend/functions/Distribution_API/data/repository.js`
+- `backend/functions/testingNewOrm/data/repository.js`
+- `backend/functions/General-Payments-Production-CRUD-fetchHostPayout/data/propertyRepository.js`
+
+---
+
+## Cluster 1 - Amenities
+
+### Current Tables
 
 1. `amenities`
 2. `amenity_categories`
 3. `amenity_and_category`
 4. `property_amenity`
 
----
+### Verified Structure
 
-## Analyse van huidige structuur
+`amenities`
+- `amenity` (PK, varchar)
 
-### `amenities`
-- Bevat één kolom: `amenity` (primary key, varchar)
-- Geen aparte ID (string is primary key)
-- Functioneert als lijst van beschikbare amenities
+`amenity_categories`
+- `category` (PK, varchar)
 
-### `amenity_categories`
-- Bevat één kolom: `category` (primary key, varchar)
-- Functioneert als lijst van categorieën
+`amenity_and_category`
+- `id` (PK, varchar)
+- `amenity` (varchar)
+- `category` (varchar)
+- `"eco-score"` (varchar)
 
-### `amenity_and_category`
-Bevat:
-- `id`
-- `amenity`
-- `category`
-- `eco-score`
+`property_amenity`
+- `id` (PK, varchar)
+- `amenityid` (varchar)
+- `property_id` (varchar)
 
-Functie:
-- Koppelt amenity aan category
-- Bevat extra metadata (`eco-score`)
+### Verified Behavior
 
-Probleem:
-- Slaat amenity en category opnieuw op als string
-- Dit creëert risico op inconsistentie (bijv. typfouten)
-- Kolomnaam `eco-score` bevat een streepje en is onpraktisch in SQL/ORM context
+- `property_amenity.amenityid` is logically treated as `amenity_and_category.id` in code.
+- `replaceAmenitiesByPropertyId` validates incoming amenity IDs against `amenity_and_category.id`.
+- There is an index on `property_amenity(amenityId)` in SQL (`fk_property_amenity_amenity_and_category_idx`), which supports this logical link.
 
-### `property_amenity`
-Bevat:
-- `id`
-- `amenityid`
-- `property_id`
+### Risks / Gaps
 
-Functie:
-- Koppelt property aan amenity
+1. String-based keys are used heavily.
+2. `"eco-score"` column naming is awkward for SQL and ORM mapping.
+3. No DB-level foreign keys (Aurora DSQL limitation), so integrity remains app-enforced.
+4. Junction uniqueness (`property_id`, `amenityid`) is not enforced in DB.
 
-Probleem:
-- `amenityid` verwijst niet duidelijk naar een echte ID
-- Geen expliciete referentie naar `amenities`
-- Mogelijke inconsistentie als strings verschillen
+### Decision
+
+| Table | Decision | Reason |
+|------|------|------|
+| amenities | KEEP (review usage) | Reference table exists but direct repository usage is limited |
+| amenity_categories | KEEP (review usage) | Same as above |
+| amenity_and_category | KEEP for now | Active source for amenity IDs |
+| property_amenity | KEEP (refactor later) | Active mapping table |
 
 ---
 
-## Geconstateerde Problemen
+## Cluster 2 - Rules
 
-1. Duplicatie van data tussen `amenities` en `amenity_and_category`.
-2. Duplicatie van category-data tussen `amenity_categories` en `amenity_and_category`.
-3. Geen duidelijke ID-structuur (strings als primary keys).
-4. Onlogische kolomnaam `eco-score` (met streepje).
-5. Onduidelijke referentie in `property_amenity.amenityid`.
-
----
-
-## Voorstel Target Structuur
-
-Voorstel om de structuur te vereenvoudigen naar:
-
-### `amenity_categories`
-- `id`
-- `name`
-
-### `amenities`
-- `id`
-- `name`
-- `category_id`
-- `eco_score`
-
-### `property_amenities`
-- `property_id`
-- `amenity_id`
-- Composite unique constraint (`property_id`, `amenity_id`)
-
----
-
-## Voordelen van deze Structuur
-
-- Verwijdert duplicatie
-- Verbetert data-consistentie
-- Eenvoudigere queries
-- Duidelijkere referenties
-- Betere schaalbaarheid
-- Voorbereid op canonical model in latere issues
-
----
-
-## Voorlopige Beslissing
-
-| Table | Beslissing | Reden |
-|--------|------------|--------|
-| amenities | KEEP (refactor) | Basislijst nodig |
-| amenity_categories | KEEP (refactor) | Nodig voor categorisatie |
-| amenity_and_category | MERGE/DELETE | Duplicatie, kan in amenities |
-| property_amenity | KEEP (refactor) | Nodig als junction table |
-
----
-
-## Cluster 2 – Rules
-
-### Huidige Tabellen
+### Current Tables
 
 1. `rules`
 2. `property_rule`
 
----
+### Verified Structure
 
-## Analyse van huidige structuur
+`rules`
+- `rule` (PK, varchar)
 
-### `rules`
-- Bevat één kolom: `rule` (primary key, varchar)
-- Functioneert als vaste lijst van beschikbare rules
-- Geen aparte ID-structuur
-
-### `property_rule`
-Bevat:
-- `property_id` (primary key)
-- `rule` (primary key)
+`property_rule`
+- `property_id` (PK, varchar)
+- `rule` (PK, varchar)
 - `value` (boolean)
 
-Functie:
-- Koppelt property aan rule
-- Geeft per property aan of een rule actief is (true/false)
-- Composite primary key voorkomt duplicaten
+### Verified Behavior
+
+- `propertyRuleRepository.replaceRulesByPropertyId` validates rule names against `rules.rule`.
+- The composite PK already prevents duplicates for (`property_id`, `rule`).
+
+### Risks / Gaps
+
+1. String PKs instead of ID-based keys.
+2. No metadata on `rules` (for example description/grouping).
+
+### Decision
+
+| Table | Decision | Reason |
+|------|------|------|
+| rules | KEEP (possible ID refactor later) | Actively used and validated |
+| property_rule | KEEP | Correct junction model and active usage |
 
 ---
 
-## Observaties
+## Cluster 3 - Property Types
 
-1. De structuur is logisch opgezet.
-2. Geen redundantie tussen tabellen.
-3. Strings worden gebruikt als primary keys (minder ideaal).
-4. Geen aparte rule ID of metadata (bijv. description).
-
----
-
-## Voorstel Target Structuur
-
-Optioneel refactor voorstel:
-
-### `rules`
-- `id`
-- `name`
-- `description` (optioneel)
-
-### `property_rules`
-- `property_id`
-- `rule_id`
-- `value`
-- Composite unique constraint (`property_id`, `rule_id`)
-
----
-
-## Voorlopige Beslissing
-
-| Table | Beslissing | Reden |
-|--------|------------|--------|
-| rules | KEEP (lichte refactor) | Structuur logisch, alleen ID verbetering |
-| property_rule | KEEP | Correct junction model |
-
----
-
-## Conclusie Cluster 2
-
-Geen verwijdering nodig. Alleen structurele verbetering mogelijk.
-
----
----
-
-## Cluster 3 – Property Types
-
-### Huidige Tabellen
+### Current Tables
 
 1. `property_types`
 2. `property_type`
 
----
+### Verified Structure
 
-## Analyse van huidige structuur
+`property_types`
+- `type` (PK, varchar)
 
-### `property_types`
-- Bevat één kolom: `type` (primary key, varchar)
-- Lijst van beschikbare property types
-
-### `property_type`
-Bevat:
-- `property_id` (primary key)
+`property_type`
+- `property_id` (PK, varchar)
 - `type` (varchar)
 - `spacetype` (varchar)
 
-Functie:
-- Koppelt property aan een type en spacetype
-- Door `property_id` als primary key kan een property slechts één type hebben
+### Verified Behavior
+
+- `property_types` is used to validate allowed types.
+- `property_type` is used as the property-level assignment table.
+- Because `property_id` is PK, each property can only have one type row.
+
+### Risks / Gaps
+
+1. String-based type values.
+2. One-to-one relation implemented via separate table adds complexity.
+
+### Decision
+
+| Table | Decision | Reason |
+|------|------|------|
+| property_types | KEEP (refactor candidate) | Active type reference list |
+| property_type | KEEP for now | Active in PropertyHandler workflows |
+
+Note: merging `type` and `spacetype` into `property` is possible, but only with coordinated migration + code updates.
 
 ---
 
-## Observaties
+## Cluster 4 - Pricing and Availability
 
-1. Er is geen many-to-many relatie nodig.
-2. Geen extra metadata op de relatie.
-3. `type` wordt als string opgeslagen → risico op inconsistentie.
-4. Structuur is over-engineered voor één-op-één relatie.
-
----
-
-## Voorstel Target Structuur
-
-### Optie 1 
-
-Verplaats `type` en `spacetype` direct naar de `property` tabel.
-
-Behoud eventueel:
-
-### `property_types`
-- `id`
-- `name`
-
-Verwijder:
-- `property_type`
-
----
-
-## Voorlopige Beslissing
-
-| Table | Beslissing | Reden |
-|--------|------------|--------|
-| property_types | KEEP (refactor) | Referentielijst |
-| property_type | MERGE/DELETE | Overbodige aparte tabel |
-
----
-
-## Conclusie Cluster 3
-
-Structuur kan worden vereenvoudigd door type direct in property op te nemen.
-
----
-
----
-
-## Cluster 4 – Pricing & Availability
-
-### Huidige Tabellen
+### Current Tables
 
 1. `property_pricing`
 2. `property_availability`
 3. `availability_restrictions`
 4. `property_availabilityrestriction`
+5. `property_calendar_price` (schema table, no ORM model)
 
----
+### Verified Structure
 
-## Analyse van huidige structuur
-
-### `property_pricing`
-Bevat:
-- `property_id` (primary key)
+`property_pricing`
+- `property_id` (PK, varchar)
 - `cleaning` (int, nullable)
 - `roomrate` (int, not null)
 
-Functie:
-- Baseline pricing per property (1 record per property)
-- Geen datum-range pricing (calendar pricing niet zichtbaar in ORM models)
-
-Observatie:
-- Bedragen als `int` → moet worden vastgelegd of dit cents zijn (aanrader) of decimal.
-
----
-
-### `property_availability`
-Bevat:
-- `property_id` (primary key)
-- `availablestartdate` (primary key, bigint)
+`property_availability`
+- `property_id` (PK part, varchar)
+- `availablestartdate` (PK part, bigint)
 - `availableenddate` (bigint)
 
-Functie:
-- Availability per property opgeslagen als ranges (start/end)
-- Meerdere ranges per property mogelijk (composite PK)
+`availability_restrictions`
+- `restriction` (PK, varchar)
 
-Observaties:
-- Overlappende ranges worden niet voorkomen door DB-structuur.
-- Bigint timestamps → moet worden vastgelegd: epoch seconds of ms + timezone policy (bijv. UTC).
-
----
-
-### `availability_restrictions`
-- Bevat één kolom: `restriction` (primary key, varchar)
-- Referentielijst voor mogelijke availability restrictions
-
----
-
-### `property_availabilityrestriction`
-Bevat:
-- `id` (primary key)
+`property_availabilityrestriction`
+- `id` (PK, varchar)
 - `property_id` (varchar)
 - `restriction` (varchar)
 - `value` (int)
 
-Functie:
-- Per property een restriction + value opslaan (bijv. min nights, max nights)
+`property_calendar_price`
+- Present in SQL schema (`backend/ORM/schema.psql`)
+- Not present as an ORM model in `backend/ORM/models`
+- Referenced in property deletion cleanup logic
 
-Observaties:
-- Geen composite unique constraint op (`property_id`, `restriction`) → duplicaten mogelijk.
-- `restriction` als string → risico op inconsistentie.
+### Verified Behavior
 
----
+- Availability and restriction repositories exist and are actively used.
+- Restriction names are validated against `availability_restrictions`.
+- No DB constraint prevents overlapping availability ranges.
+- No DB unique on (`property_id`, `restriction`) for `property_availabilityrestriction`.
 
-## Voorstel Target Structuur
+### Risks / Gaps
 
-### Pricing
-- `property_pricing` KEEP (lichte refactor/standaardisatie)
-  - bedragen standaardiseren (bijv. cents)
-  - (optioneel later) currency toevoegen
+1. Unclear monetary unit contract (`int` should be explicitly documented as cents if intended).
+2. No overlap prevention for availability ranges.
+3. Missing unique constraint on (`property_id`, `restriction`) in restriction mapping table.
+4. `property_calendar_price` is partially represented (schema exists, model missing).
 
-### Availability
-- `property_availability` KEEP
-  - policy nodig om overlapping ranges te voorkomen/normaliseren in service layer
-  - timestamps standaardiseren (UTC + epoch format)
+### Decision
 
-### Restrictions
-- `availability_restrictions` KEEP (refactor naar `id`, `name`)
-- `property_availabilityrestriction` KEEP (refactor)
-  - (`property_id`, `restriction_id`) unique
-  - liever `restriction_id` i.p.v. string
-
----
-
-## Voorlopige Beslissing
-
-| Table | Beslissing | Reden |
-|------|------------|------|
-| property_pricing | KEEP (refactor) | Baseline pricing per property |
-| property_availability | KEEP (refactor/policy) | Availability ranges nodig |
-| availability_restrictions | KEEP (refactor) | Referentielijst |
-| property_availabilityrestriction | KEEP (refactor) | Restriction values per property |
+| Table | Decision | Reason |
+|------|------|------|
+| property_pricing | KEEP (standardize money format) | Active baseline pricing |
+| property_availability | KEEP (add range policy) | Active range storage |
+| availability_restrictions | KEEP | Active reference table |
+| property_availabilityrestriction | KEEP (add uniqueness) | Active property restriction table |
+| property_calendar_price | KEEP/clarify ownership | Exists in schema and cleanup flow, but missing model |
 
 ---
 
-## Open Punt
+## Cluster 5 - General Details
 
-- `property_calendar_price` tabel niet gevonden in huidige ORM models folder? → later verifiëren in DB of andere code-locatie.
-
----
-
-## Cluster 5 – General Details
-
-### Huidige Tabellen
+### Current Tables
 
 1. `general_details`
 2. `property_generaldetail`
 
----
+### Verified Structure
 
-## Analyse van huidige structuur
+`general_details`
+- `detail` (PK, varchar)
 
-### `general_details`
-- Bevat één kolom: `detail` (primary key, varchar)
-- Functioneert als referentielijst van mogelijke property details
-
-### `property_generaldetail`
-Bevat:
-- `id` (primary key)
+`property_generaldetail`
+- `id` (PK, varchar)
 - `property_id` (varchar)
 - `detail` (varchar)
 - `value` (int)
 
-Functie:
-- Koppelt property aan een “detail” met een numerieke waarde
+### Verified Behavior
+
+- Repository validates values as numbers and writes integer values.
+- Upsert behavior is implemented in application code by checking existing (`property_id`, `detail`) rows.
+
+### Risks / Gaps
+
+1. No DB-level unique on (`property_id`, `detail`) despite app-level upsert logic.
+2. String detail keys are vulnerable to drift if app validation changes.
+
+### Decision
+
+| Table | Decision | Reason |
+|------|------|------|
+| general_details | KEEP (refactor candidate) | Active reference list |
+| property_generaldetail | KEEP (add DB unique) | Active value table |
 
 ---
 
-## Observaties
+## Cluster 6 - Images
 
-1. `detail` wordt als string opgeslagen → risico op inconsistentie/typfouten.
-2. Door `id` als primary key is er geen bescherming tegen dubbele entries voor dezelfde (`property_id`, `detail`).
-3. `value` is een `int`, dus dit model is geschikt voor numerieke details. (Nog verifiëren welke details gebruikt worden.)
-
----
-
-## Voorstel Target Structuur
-
-- `general_details` KEEP (refactor)
-  - liever `id`, `name` (optioneel: `unit`, `value_type`)
-- `property_general_details` KEEP (refactor)
-  - (`property_id`, `detail_id`) unique
-  - liever `detail_id` i.p.v. string
-
----
-
-## Voorlopige Beslissing
-
-| Table | Beslissing | Reden |
-|------|------------|------|
-| general_details | KEEP (refactor) | Referentielijst |
-| property_generaldetail | KEEP (refactor) | Detail values per property |
-
----
-
-## Cluster 6 – Images
-
-### Huidige Tabellen
+### Current Tables
 
 1. `property_image` (legacy)
-2. `property_image_v2` (v2)
+2. `property_image_v2`
 3. `property_image_variant`
 
----
+### Verified Structure
 
-## Analyse van huidige structuur
+`property_image` (legacy)
+- Composite PK: `property_id`, `key`
+- Additional SQL index currently exists as unique on `property_id`
 
-### `property_image` (legacy)
-Bevat:
-- `key` (primary key, varchar)
-- `property_id` (primary key, varchar)
-
-Functie:
-- Legacy opslag van image key per property
-- Geen metadata zoals sort order, status, timestamps of variants
-
-### `property_image_v2`
-Bevat:
-- `id` (primary key, varchar)
+`property_image_v2`
+- `id` (PK, varchar)
 - `property_id` (varchar)
 - `sort_order` (int)
 - `status` (varchar)
 - `created_at` (bigint)
 - `updated_at` (bigint)
 
-Functie:
-- Nieuwe (betere) image structuur met ordering en lifecycle metadata
-
-### `property_image_variant`
-Bevat:
-- `id` (primary key, varchar)
+`property_image_variant`
+- `id` (PK, varchar)
 - `image_id` (varchar)
 - `variant` (varchar)
 - `s3_key` (varchar)
 - `content_type` (varchar)
-- `bytes`, `width`, `height` (nullable)
+- `bytes`, `width`, `height` (nullable ints)
+- DB unique on (`image_id`, `variant`)
 
-Functie:
-- Per image meerdere variants opslaan (thumb/medium/large etc.)
-- `image_id` verwijst logisch naar `property_image_v2.id` (zonder FK)
+### Verified Behavior
+
+- PropertyHandler actively reads and writes both v2 and legacy image tables.
+- `getImagesByPropertyId` first tries v2 + variants, then falls back to legacy.
+- Legacy write path (`create`) still exists.
+- Payout repository uses `COALESCE(variant.s3_key, legacy.key)`, so both sources are still live in read paths.
+
+### Risks / Gaps
+
+1. Two active data sources for images.
+2. Legacy table has a unique index on `property_id`, which can conflict with multi-image expectations.
+3. No explicit final migration cutoff from legacy to v2.
+
+### Decision
+
+| Table | Decision | Reason |
+|------|------|------|
+| property_image_v2 | KEEP (canonical target) | Active modern model |
+| property_image_variant | KEEP | Required for variant storage |
+| property_image (legacy) | KEEP for now, then deprecate | Still used in active code paths |
 
 ---
 
-## Observaties
+## Cluster 7 - Unified Messaging
 
-1. Er bestaan 2 “truth sources” voor images: legacy (`property_image`) en v2 (`property_image_v2`).
-2. v2 + variants is een logisch en schaalbaar model.
-3. Timestamps zijn bigint → moet worden vastgelegd: epoch format + UTC policy.
-4. Deprecatie/migratie plan nodig om legacy table uit te faseren.
-
----
-
-## Voorstel Target Structuur
-
-- `property_image_v2` KEEP (canonical image table)
-- `property_image_variant` KEEP (variants per image)
-- `property_image` DEPRECATE → verwijderen nadat migratie afgerond is en legacy code niet meer gebruikt word_
-
----
-
-## Cluster 7 – Unified Messaging
-
-### Huidige Tabellen
+### Current Tables
 
 1. `unified_thread`
 2. `unified_message`
 
----
+### Verified Structure
 
-## Analyse van huidige structuur
-
-### `unified_thread`
-Bevat o.a.:
-- `id` (primary key)
+`unified_thread`
+- `id` (PK)
 - `hostId`, `guestId`
 - `propertyId` (nullable)
-- `platform` (varchar)
+- `platform`
 - `externalThreadId` (nullable)
-- `status` (default: OPEN)
+- `status` (default `OPEN`)
 - `createdAt`, `updatedAt`, `lastMessageAt` (bigint)
 
-Functie:
-- Canonical thread model voor messaging over platformen heen (Domits + extern)
-
----
-
-### `unified_message`
-Bevat o.a.:
-- `id` (primary key)
-- `threadId` (varchar)
+`unified_message`
+- `id` (PK)
+- `threadId`
 - `senderId`, `recipientId`
 - `content` (text)
 - `platformMessageId` (nullable)
 - `createdAt` (bigint)
-- `isRead` (boolean)
+- `isRead` (boolean, default false)
 - `metadata` (text)
 - `attachments` (text JSON)
-- `deliveryStatus` (pending/sent/delivered/failed)
+- `deliveryStatus` (varchar, default `pending`)
 
-Functie:
-- Canonical message model gekoppeld aan threads
-- Ondersteunt platform mapping (platformMessageId), attachments en delivery status
+### Verified Behavior
 
----
+- UnifiedMessaging repositories actively create and query these tables.
+- Existing indexes already include:
+  - `idx_unified_thread_host`
+  - `idx_unified_thread_platform` (`platform`, `externalThreadId`)
+  - `idx_unified_message_thread` (`threadId`)
 
-## Observaties
+### Risks / Gaps
 
-1. Dit is een duidelijke “unified” messaging basis.
-2. `metadata` en `attachments` worden als JSON text opgeslagen → flexibel, maar beperkt querybaar.
-3. Later indexes nodig op `threadId` en tijdvelden voor performance.
-4. Door bestaan van unified modellen zijn oude chat-tabellen kandidaten voor deprecatie, mits usage-check bevestigt dat unified wordt gebruikt.
+1. JSON stored as text reduces queryability.
+2. Depending on query patterns, extra index on `guestId` and/or time-based fields may still be needed.
 
----
+### Decision
 
-## Voorlopige Beslissing
-
-| Table | Beslissing | Reden |
-|------|------------|------|
-| unified_thread | KEEP | Canonical thread model |
-| unified_message | KEEP | Canonical message model |
+| Table | Decision | Reason |
+|------|------|------|
+| unified_thread | KEEP | Active canonical thread table |
+| unified_message | KEEP | Active canonical message table |
 
 ---
 
-## Cluster 8 – property_test_status
+## Cluster 8 - property_test_status
 
-### Huidige Tabellen
+### Current Tables
 
 1. `property_test_status`
 
----
+### Verified Structure
 
-## Analyse van huidige structuur
-
-### `property_test_status`
-Bevat:
-- `property_id` (primary key, varchar)
+`property_test_status`
+- `property_id` (PK, varchar)
 - `istest` (boolean)
 
-Functie:
-- Per property vastleggen of het om een test property gaat
+### Verified Behavior
+
+- PropertyHandler actively creates and reads `property_test_status`.
+- It is part of both create flow and property fetch flows.
+
+### Risks / Gaps
+
+1. One-to-one boolean in a separate table adds join and migration complexity.
+
+### Decision
+
+| Table | Decision | Reason |
+|------|------|------|
+| property_test_status | KEEP for now, merge candidate later | Active runtime usage today |
 
 ---
 
-## Observaties
+## Cluster 9 - user_table
 
-1. Dit is een 1-op-1 relatie met property.
-2. Het bevat slechts één boolean flag.
-3. Aparte tabel voor één boolean veld is waarschijnlijk over-engineered.
-
----
-
-## Voorstel Target Structuur
-
-- Verplaats `istest` naar `property` tabel als `is_test` boolean.
-- Verwijder aparte `property_test_status` tabel na migratie.
-
----
-
-## Voorlopige Beslissing
-
-| Table | Beslissing | Reden |
-|------|------------|------|
-| property_test_status | MERGE/DELETE later | 1-op-1 boolean hoort in property |
-
----
-
-## Cluster 9 – User Table (Old → New DB)
-
-### Huidige Tabellen
+### Current Tables
 
 1. `user_table`
 
----
+### Verified Structure
 
-## Analyse van huidige structuur
-
-### `user_table`
-Bevat:
-- `username` (primary key, varchar)
+`user_table`
+- `username` (PK, varchar)
 - `password` (varchar)
 
-Context:
-- Frontend gebruikt AWS Amplify Auth (Cognito) voor authenticatie.
-- Mobile app leest user attributes via AuthContext.
-- Repo search op `User_Table` en `user_table` toont geen usage buiten de model definitie.
+### Verified Behavior
+
+- There are active code references to `User_Table` in:
+  - `backend/functions/Distribution_API/data/repository.js`
+  - `backend/functions/testingNewOrm/data/repository.js`
+- Frontend and multiple backend services also use Cognito/Amplify authentication flows.
+
+### Risks / Gaps
+
+1. Storing passwords in app DB is high-risk if Cognito is the intended source of truth.
+2. Current repository references mean this table cannot be marked as "unused" without runtime traffic and ownership checks.
+
+### Decision
+
+| Table | Decision | Reason |
+|------|------|------|
+| user_table | DEPRECATE candidate only after usage audit | Code references still exist |
 
 ---
 
-## Observaties
+## Extra Checks
 
-1. `user_table` wordt niet actief gebruikt in de codebase.
-2. Authenticatie lijkt volledig via Cognito te verlopen.
-3. Opslaan van wachtwoorden in eigen DB is onwenselijk als Cognito primary auth-provider is.
+### availability_restriction vs availability_restrictions
 
----
+- `availability_restrictions` exists and is used.
+- `property_availabilityrestriction` exists and is used.
+- Singular `availability_restriction` model/table naming was not found in ORM models.
 
-## Voorstel Target Structuur
+### property_calendar_price
 
-- Cognito blijft primary identity store.
-- `user_table` markeren als DEPRECATE / DELETE candidate.
-- Verwijderen na bevestiging dat tabel niet actief in productie wordt gebruikt.
-
----
-
-## Voorlopige Beslissing
-
-| Table | Beslissing | Reden |
-|------|------------|------|
-| user_table | DEPRECATE / DELETE candidate | Geen code usage + Cognito is primary auth |
+- Table exists in SQL schema.
+- No ORM model exists in `backend/ORM/models`.
+- Property deletion flow includes cleanup for this table.
+- This is not "missing"; it is partially represented in current code.
 
 ---
 
-## Extra Check – availability_restriction vs availability_restrictions
+## Cross-Cluster Findings
 
-- `availability_restrictions` bestaat als referentielijst.
-- `property_availabilityrestriction` bestaat als mapping tabel.
-- `availability_restriction` (enkelvoud) niet aangetroffen in ORM models.
-
-Conclusie:
-- Enkelvoudige variant lijkt niet in gebruik.
+1. String primary keys are common and increase drift risk.
+2. Several junction tables rely on app-level checks instead of DB constraints.
+3. Aurora DSQL design means no DB foreign keys, so integrity must be explicit in service/repository logic.
+4. Some tables are in a transitional state (`property_image`, `property_image_v2`, `property_calendar_price` representation gap).
 
 ---
 
-## Extra Check – property_calendar_price
+## Rollout Framing for Any Backend/Data Refactor
 
-- `property_calendar_price` niet aangetroffen in ORM models.
-- Alleen `property_pricing` en `property_availability` aanwezig.
-- Mogelijk legacy of niet geïmplementeerd.
-- DB verificatie aanbevolen.
+### 1. Acceptance Code Deploy Steps
 
----
+- Deploy backward-compatible code first.
+- Ensure code can handle both old and new shapes during transition.
+- Avoid shipping code that only works after destructive schema changes.
 
-# Eindconclusie – #2446 First Research
+### 2. Aurora `main` SQL Steps
 
-## 1. Samenvatting
+- Apply idempotent DDL/DML in `main`.
+- Include verification SQL after each change.
+- Include rollback/cleanup SQL where feasible.
 
-Tijdens dit research-traject zijn alle relevante ORM models geanalyseerd.  
-Per cluster is beoordeeld:
+### 3. Smoke Tests
 
-- Of tabellen redundant zijn  
-- Of er duplicatie van data plaatsvindt  
-- Of string primary keys inconsistentie-risico veroorzaken  
-- Of er merge/delete kandidaten zijn  
-- Of structuur schaalbaar en logisch is  
+- API smoke tests for create/read/update/delete flows touching changed tables.
+- UI smoke tests for onboarding, property editing, pricing/availability, messaging, and images.
 
----
+### 4. Production Rollout Notes
 
-## 2. Cleanup Kandidaten (MERGE / DELETE)
-
-| Table | Actie |
-|--------|--------|
-| amenity_and_category | MERGE / DELETE |
-| property_type | MERGE in property |
-| property_image (legacy) | DEPRECATE |
-| property_test_status | MERGE in property |
-| user_table | DEPRECATE / DELETE candidate |
+- Repeat acceptance-proven sequence in production.
+- Keep expand/contract migration order.
+- Only remove old columns/tables after metrics and logs confirm zero dependency.
 
 ---
 
-## 3. Structurele Verbeteringen Nodig
+## Summary
 
-- String primary keys vervangen door id-based structuur.
-- Unique constraints toevoegen bij junction tables.
-- Referential integrity afdwingen via applicatielaag (Aurora DSQL heeft geen foreign keys).
-- Timestamp policy standaardiseren (UTC + epoch format).
-- Indexing toevoegen op performance-kritische velden (messaging, availability).
-
----
-
-## 4. Aurora DSQL Observatie
-
-Aurora DSQL ondersteunt geen foreign keys.
-
-Gevolgen:
-- Integrity moet via applicatie worden gewaarborgd.
-- Unique constraints moeten expliciet worden toegevoegd.
-- Logical foreign keys moeten duidelijk gedocumenteerd worden.
-- Inner joins zijn gevoelig voor inconsistentie bij string-based primary keys.
-
----
-
-## 5. Status
-
-- Alle genoemde tabellen onderzocht.
-- Cleanup kandidaten geïdentificeerd.
-- Refactor voorstellen opgesteld.
-- Open punten gedocumenteerd.
-- Research afgerond.
-
-
-
+- The previous research was directionally good on most table shapes.
+- Key corrections are now applied:
+  1. `user_table` is referenced in code, so "unused" was incorrect.
+  2. Unified messaging indexes already exist.
+  3. `property_calendar_price` exists in schema and cleanup logic.
+  4. Legacy image table is still active and cannot be dropped yet.
+- This document is now English-only and aligned with current repository state.
