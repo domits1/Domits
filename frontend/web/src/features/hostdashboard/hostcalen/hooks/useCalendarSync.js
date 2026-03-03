@@ -41,6 +41,94 @@ const buildSyncStateMapForSources = (sources, previousStateById = {}) => {
 const isUnknownActionError = (error) =>
   String(error?.message || "").trim().toLowerCase().includes("unknown action");
 
+const SOURCE_SYNC_IN_PROGRESS_STATES = [SOURCE_SYNC_STATE.PENDING, SOURCE_SYNC_STATE.SYNCING];
+
+const isSourceSyncInProgress = (state) => SOURCE_SYNC_IN_PROGRESS_STATES.includes(state);
+
+const hasAnySourceSyncInProgress = (sourceSyncStateById) =>
+  Object.values(sourceSyncStateById).some(isSourceSyncInProgress);
+
+const extractSourcesAndBlockedDates = (data) => {
+  const sources = Array.isArray(data?.sources) ? data.sources : [];
+  const blockedDates = Array.isArray(data?.blockedDates) ? data.blockedDates : [];
+  return { sources, blockedDates };
+};
+
+const resolveEditableProvider = (persistedProvider) => {
+  if (["airbnb", "booking", "generic"].includes(persistedProvider)) {
+    return persistedProvider;
+  }
+  return "auto";
+};
+
+const validateCalendarSourceSave = ({
+  selectedPropertyId,
+  editingSourceId,
+  sourceBeingEdited,
+  calendarUrl,
+  calendarName,
+}) => {
+  if (!selectedPropertyId) {
+    return "Select a listing first.";
+  }
+  if (editingSourceId && !sourceBeingEdited) {
+    return "Could not update calendar connection. Please retry.";
+  }
+  if (!calendarUrl || !calendarName) {
+    return "Both the calendar link and calendar name are required.";
+  }
+  return "";
+};
+
+const isValidPublicIcalUrl = (calendarUrl) => {
+  try {
+    const parsedCalendarUrl = new URL(calendarUrl);
+    return parsedCalendarUrl.protocol === "http:" || parsedCalendarUrl.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const refreshSourceSyncState = ({ setSourceSyncStateById, sourceId, state }) => {
+  setSourceSyncStateById((previous) => ({
+    ...previous,
+    [sourceId]: state,
+  }));
+};
+
+const applyAllSourceSyncState = ({ setSourceSyncStateById, sourceIds, nextState }) => {
+  setSourceSyncStateById((previous) => {
+    const nextStateById = { ...previous };
+    sourceIds.forEach((sourceId) => {
+      nextStateById[sourceId] = nextState;
+    });
+    return nextStateById;
+  });
+};
+
+const markInFlightSourceSyncsAsError = ({ setSourceSyncStateById, sourceIds }) => {
+  setSourceSyncStateById((previous) => {
+    const nextStateById = { ...previous };
+    sourceIds.forEach((sourceId) => {
+      if (isSourceSyncInProgress(nextStateById[sourceId])) {
+        nextStateById[sourceId] = SOURCE_SYNC_STATE.ERROR;
+      }
+    });
+    return nextStateById;
+  });
+};
+
+const shouldSkipRefreshRequest = ({
+  isSavingCalendarSync,
+  removingCalendarSourceId,
+  isRefreshingAnySource,
+  isRefreshingAllCalendarSources,
+}) =>
+  isSavingCalendarSync ||
+  removingCalendarSourceId ||
+  isRefreshingAnySource ||
+  isRefreshingAllCalendarSources;
+
 export const useCalendarSync = ({ selectedPropertyId }) => {
   const [externalBlockedDates, setExternalBlockedDates] = useState(new Set());
   const [calendarSources, setCalendarSources] = useState([]);
@@ -185,9 +273,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     !isSavingCalendarSync &&
     !removingCalendarSourceId &&
     !isRefreshingAllCalendarSources &&
-    !Object.values(sourceSyncStateById).some(
-      (state) => state === SOURCE_SYNC_STATE.SYNCING || state === SOURCE_SYNC_STATE.PENDING
-    ) &&
+    !hasAnySourceSyncInProgress(sourceSyncStateById) &&
     calendarUrlInput.trim().length > 0 &&
     calendarNameInput.trim().length > 0 &&
     (!isEditingCalendarSource || hasCalendarEditChanges);
@@ -244,9 +330,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     const persistedProvider = String(source?.calendarProvider || source?.provider || "")
       .trim()
       .toLowerCase();
-    const editableProvider = ["airbnb", "booking", "generic"].includes(persistedProvider)
-      ? persistedProvider
-      : "auto";
+    const editableProvider = resolveEditableProvider(persistedProvider);
 
     setEditingCalendarSourceId(normalizedSourceId);
     setCalendarSyncError("");
@@ -263,6 +347,46 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     setCalendarSyncError("");
   };
 
+  const applyCalendarSourcesPayload = ({ sources, blockedDates }) => {
+    setCalendarSources(sources);
+    setSourceSyncStateById((previous) => buildSyncStateMapForSources(sources, previous));
+    setExternalBlockedDates(new Set(blockedDates));
+  };
+
+  const persistSourceChange = async ({
+    propertyId,
+    editingSourceId,
+    calendarUrl,
+    calendarName,
+    calendarProvider,
+    hasSourceUrlChanged,
+  }) => {
+    let data = await dbUpsertIcalSource({
+      propertyId,
+      calendarUrl,
+      calendarName,
+      calendarProvider,
+    });
+
+    if (!hasSourceUrlChanged) {
+      return { data, warningMessage: "" };
+    }
+
+    try {
+      data = await dbDeleteIcalSource({
+        propertyId,
+        sourceId: editingSourceId,
+      });
+      return { data, warningMessage: "" };
+    } catch {
+      const latestData = await dbListIcalSources(propertyId);
+      return {
+        data: extractSourcesAndBlockedDates(latestData),
+        warningMessage: "Calendar updated, but old source could not be removed. Remove it manually.",
+      };
+    }
+  };
+
   const handleAddCalendarSource = async () => {
     const calendarUrl = calendarUrlInput.trim();
     const calendarName = calendarNameInput.trim();
@@ -277,28 +401,18 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       Boolean(previousSourceUrl) &&
       previousSourceUrl !== calendarUrl;
 
-    if (!selectedPropertyId) {
-      setCalendarSyncError("Select a listing first.");
+    const validationError = validateCalendarSourceSave({
+      selectedPropertyId,
+      editingSourceId: normalizedEditingSourceId,
+      sourceBeingEdited,
+      calendarUrl,
+      calendarName,
+    });
+    if (validationError) {
+      setCalendarSyncError(validationError);
       return;
     }
-    if (normalizedEditingSourceId && !sourceBeingEdited) {
-      setCalendarSyncError("Could not update calendar connection. Please retry.");
-      return;
-    }
-    if (!calendarUrl || !calendarName) {
-      setCalendarSyncError("Both the calendar link and calendar name are required.");
-      return;
-    }
-
-    let parsedCalendarUrl;
-    try {
-      parsedCalendarUrl = new URL(calendarUrl);
-    } catch {
-      setCalendarSyncError("Enter a valid public iCal URL (http/https).");
-      return;
-    }
-
-    if (parsedCalendarUrl.protocol !== "http:" && parsedCalendarUrl.protocol !== "https:") {
+    if (!isValidPublicIcalUrl(calendarUrl)) {
       setCalendarSyncError("Enter a valid public iCal URL (http/https).");
       return;
     }
@@ -307,39 +421,21 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     setCalendarSyncError("");
 
     try {
-      let data = await dbUpsertIcalSource({
+      const { data, warningMessage } = await persistSourceChange({
         propertyId: selectedPropertyId,
+        editingSourceId: normalizedEditingSourceId,
         calendarUrl,
         calendarName,
         calendarProvider,
+        hasSourceUrlChanged: hasSourceUrlChangedWhileEditing,
       });
-
-      if (hasSourceUrlChangedWhileEditing) {
-        try {
-          data = await dbDeleteIcalSource({
-            propertyId: selectedPropertyId,
-            sourceId: normalizedEditingSourceId,
-          });
-        } catch {
-          setCalendarSyncError(
-            "Calendar updated, but old source could not be removed. Remove it manually."
-          );
-          const latestData = await dbListIcalSources(selectedPropertyId);
-          data = {
-            sources: Array.isArray(latestData?.sources) ? latestData.sources : [],
-            blockedDates: Array.isArray(latestData?.blockedDates) ? latestData.blockedDates : [],
-          };
-        }
-      }
-
-      const sources = Array.isArray(data?.sources) ? data.sources : [];
-      const blockedDates = Array.isArray(data?.blockedDates) ? data.blockedDates : [];
-
-      setCalendarSources(sources);
-      setSourceSyncStateById((previous) => buildSyncStateMapForSources(sources, previous));
-      setExternalBlockedDates(new Set(blockedDates));
+      const payload = extractSourcesAndBlockedDates(data);
+      applyCalendarSourcesPayload(payload);
       setEditingCalendarSourceId("");
       setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
+      if (warningMessage) {
+        setCalendarSyncError(warningMessage);
+      }
     } catch (error) {
       setCalendarSyncError(error?.message || "Could not save calendar connection.");
     } finally {
@@ -366,12 +462,8 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
         propertyId: selectedPropertyId,
         sourceId: normalizedSourceId,
       });
-      const sources = Array.isArray(data?.sources) ? data.sources : [];
-      const blockedDates = Array.isArray(data?.blockedDates) ? data.blockedDates : [];
-
-      setCalendarSources(sources);
-      setSourceSyncStateById((previous) => buildSyncStateMapForSources(sources, previous));
-      setExternalBlockedDates(new Set(blockedDates));
+      const payload = extractSourcesAndBlockedDates(data);
+      applyCalendarSourcesPayload(payload);
       if (normalizedSourceId === String(editingCalendarSourceId || "").trim()) {
         setEditingCalendarSourceId("");
         setCalendarSyncForm({ ...INITIAL_CALENDAR_SYNC_FORM });
@@ -383,15 +475,8 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     }
   };
 
-  const normalizeRefreshResponse = (data) => {
-    const sources = Array.isArray(data?.sources) ? data.sources : [];
-    const blockedDates = Array.isArray(data?.blockedDates) ? data.blockedDates : [];
-    return { sources, blockedDates };
-  };
-
   const applyRefreshedSources = (sources, blockedDates) => {
-    setCalendarSources(sources);
-    setExternalBlockedDates(new Set(blockedDates));
+    applyCalendarSourcesPayload({ sources, blockedDates });
 
     if (editingCalendarSourceId) {
       const normalizedEditingSourceId = String(editingCalendarSourceId || "").trim();
@@ -417,18 +502,21 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       return;
     }
     if (
-      isSavingCalendarSync ||
-      removingCalendarSourceId ||
-      isRefreshingAnySource ||
-      isRefreshingAllCalendarSources
+      shouldSkipRefreshRequest({
+        isSavingCalendarSync,
+        removingCalendarSourceId,
+        isRefreshingAnySource,
+        isRefreshingAllCalendarSources,
+      })
     ) {
       return;
     }
 
-    setSourceSyncStateById((previous) => ({
-      ...previous,
-      [normalizedSourceId]: SOURCE_SYNC_STATE.SYNCING,
-    }));
+    refreshSourceSyncState({
+      setSourceSyncStateById,
+      sourceId: normalizedSourceId,
+      state: SOURCE_SYNC_STATE.SYNCING,
+    });
     setCalendarSyncError("");
 
     try {
@@ -448,7 +536,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
         data = await dbRefreshAllIcalSources(selectedPropertyId);
       }
 
-      const { sources, blockedDates } = normalizeRefreshResponse(data);
+      const { sources, blockedDates } = extractSourcesAndBlockedDates(data);
       applyRefreshedSources(sources, blockedDates);
       setSourceSyncStateById((previous) => {
         const nextStateById = buildSyncStateMapForSources(sources, previous);
@@ -463,10 +551,11 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
         return nextStateById;
       });
     } catch (error) {
-      setSourceSyncStateById((previous) => ({
-        ...previous,
-        [normalizedSourceId]: SOURCE_SYNC_STATE.ERROR,
-      }));
+      refreshSourceSyncState({
+        setSourceSyncStateById,
+        sourceId: normalizedSourceId,
+        state: SOURCE_SYNC_STATE.ERROR,
+      });
       setCalendarSyncError(error?.message || "Could not refresh calendar connections.");
     }
   };
@@ -477,10 +566,12 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       return;
     }
     if (
-      isSavingCalendarSync ||
-      removingCalendarSourceId ||
-      isRefreshingAnySource ||
-      isRefreshingAllCalendarSources
+      shouldSkipRefreshRequest({
+        isSavingCalendarSync,
+        removingCalendarSourceId,
+        isRefreshingAnySource,
+        isRefreshingAllCalendarSources,
+      })
     ) {
       return;
     }
@@ -510,17 +601,18 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
           break;
         }
 
-        setSourceSyncStateById((previous) => ({
-          ...previous,
-          [sourceId]: SOURCE_SYNC_STATE.SYNCING,
-        }));
+        refreshSourceSyncState({
+          setSourceSyncStateById,
+          sourceId,
+          state: SOURCE_SYNC_STATE.SYNCING,
+        });
 
         try {
           const response = await dbRefreshIcalSource({
             propertyId: selectedPropertyId,
             sourceId,
           });
-          const { sources, blockedDates } = normalizeRefreshResponse(response);
+          const { sources, blockedDates } = extractSourcesAndBlockedDates(response);
           applyRefreshedSources(sources, blockedDates);
           setSourceSyncStateById((previous) => {
             const nextStateById = buildSyncStateMapForSources(sources, previous);
@@ -533,10 +625,11 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
             break;
           }
 
-          setSourceSyncStateById((previous) => ({
-            ...previous,
-            [sourceId]: SOURCE_SYNC_STATE.ERROR,
-          }));
+          refreshSourceSyncState({
+            setSourceSyncStateById,
+            sourceId,
+            state: SOURCE_SYNC_STATE.ERROR,
+          });
           if (!firstErrorMessage) {
             firstErrorMessage =
               refreshError?.message || "One or more calendars could not be refreshed.";
@@ -547,27 +640,17 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       if (fallbackToRefreshAll) {
         try {
           const response = await dbRefreshAllIcalSources(selectedPropertyId);
-          const { sources, blockedDates } = normalizeRefreshResponse(response);
+          const { sources, blockedDates } = extractSourcesAndBlockedDates(response);
           applyRefreshedSources(sources, blockedDates);
-          setSourceSyncStateById((previous) => {
-            const nextStateById = buildSyncStateMapForSources(sources, previous);
-            sourceIds.forEach((sourceId) => {
-              nextStateById[sourceId] = SOURCE_SYNC_STATE.SUCCESS;
-            });
-            return nextStateById;
+          applyAllSourceSyncState({
+            setSourceSyncStateById,
+            sourceIds,
+            nextState: SOURCE_SYNC_STATE.SUCCESS,
           });
         } catch (refreshAllError) {
-          setSourceSyncStateById((previous) => {
-            const nextStateById = { ...previous };
-            sourceIds.forEach((sourceId) => {
-              if (
-                nextStateById[sourceId] === SOURCE_SYNC_STATE.PENDING ||
-                nextStateById[sourceId] === SOURCE_SYNC_STATE.SYNCING
-              ) {
-                nextStateById[sourceId] = SOURCE_SYNC_STATE.ERROR;
-              }
-            });
-            return nextStateById;
+          markInFlightSourceSyncsAsError({
+            setSourceSyncStateById,
+            sourceIds,
           });
           if (!firstErrorMessage) {
             firstErrorMessage =

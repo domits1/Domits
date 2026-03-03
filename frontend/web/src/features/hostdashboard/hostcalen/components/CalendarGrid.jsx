@@ -43,6 +43,112 @@ const readOverrideAvailability = (availabilityOverrides, key) => {
   return Boolean(availabilityOverrides[key]);
 };
 
+const buildYearMonthViews = (year) => {
+  const views = [];
+  monthNames.forEach((monthName, monthIndex) => {
+    const monthCursor = new Date(Date.UTC(year, monthIndex, 1));
+    const rawMonthGrid = getMonthMatrix(monthCursor);
+    const trimmedMonthGrid = rawMonthGrid.filter((weekRow) =>
+      weekRow.some((date) => isSameMonthUTC(date, monthCursor))
+    );
+    views.push({
+      monthName,
+      monthCursor,
+      monthGrid: trimmedMonthGrid.length > 0 ? trimmedMonthGrid : rawMonthGrid,
+    });
+  });
+  return views;
+};
+
+const getUtcTodayParts = () => {
+  const today = new Date();
+  return {
+    year: today.getUTCFullYear(),
+    month: today.getUTCMonth(),
+    day: today.getUTCDate(),
+  };
+};
+
+const buildCellAriaLabel = ({ date, displayPrice, showExternalBlockedOverlay, isSelected, isPending }) =>
+  [
+    date.toUTCString(),
+    displayPrice !== null ? `${formatEuroAmount(displayPrice)} per night` : null,
+    showExternalBlockedOverlay ? "external booking" : null,
+    isSelected ? "selected" : null,
+    isPending ? "pending selection" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+const buildDayPresentation = ({
+  date,
+  monthCursor,
+  blockedDates,
+  bookedSet,
+  selectedSet,
+  pendingSelectionStartKey,
+  availabilityOverrides,
+  availabilityRanges,
+  dayPriceOverrides,
+  nightlyRate,
+  weekendRate,
+  todayUtc,
+}) => {
+  const dateNumber = toDateNumber(date);
+  const inCurrentMonth = isSameMonthUTC(date, monthCursor);
+  const key = toDateKey(date);
+  const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6;
+  const isBlocked = blockedDates.has(key);
+  const isBooked = bookedSet.has(key);
+  const overrideAvailability = readOverrideAvailability(availabilityOverrides, key);
+  const isAvailable =
+    !isBlocked && !isBooked && (overrideAvailability ?? isDateWithinAvailability(dateNumber, availabilityRanges));
+  const isUnavailable = !isAvailable;
+  const isForcedUnavailable = overrideAvailability === false;
+  const isSelected = selectedSet.has(key);
+  const isPending = pendingSelectionStartKey === key;
+  const isToday =
+    todayUtc.year === date.getUTCFullYear() &&
+    todayUtc.month === date.getUTCMonth() &&
+    todayUtc.day === date.getUTCDate();
+
+  const overridePrice = Number(dayPriceOverrides[key]);
+  const defaultPrice = isWeekend ? weekendRate : nightlyRate;
+  const hasValidOverridePrice = Number.isFinite(overridePrice) && overridePrice > 0;
+  const displayPrice = isBlocked ? null : hasValidOverridePrice ? Math.trunc(overridePrice) : defaultPrice;
+
+  const showExternalBlockedOverlay = inCurrentMonth && isBlocked && !isBooked;
+  const showUnavailableBadge = !showExternalBlockedOverlay && !isBooked && (isBlocked || isUnavailable);
+
+  return {
+    key,
+    isOutsideMonth: !inCurrentMonth,
+    isToday,
+    isBlocked,
+    isBooked,
+    isAvailable,
+    isUnavailable,
+    isForcedUnavailable,
+    isSelected,
+    isPending,
+    showExternalBlockedOverlay,
+    showUnavailableBadge,
+    showBookedBadge: inCurrentMonth && isBooked,
+    showExternalBlockedYearIcon: isBlocked && !isBooked,
+    showUnavailableYearIcon: !isBlocked && !isBooked && isUnavailable,
+    showBookedYearIcon: isBooked,
+    displayPrice,
+    cellAriaLabel: buildCellAriaLabel({
+      date,
+      displayPrice,
+      showExternalBlockedOverlay,
+      isSelected,
+      isPending,
+    }),
+    dayNumber: date.getUTCDate(),
+  };
+};
+
 export default function CalendarGrid({
   view,
   cursor,
@@ -69,91 +175,39 @@ export default function CalendarGrid({
   const bookedSet = bookedDateKeys instanceof Set ? bookedDateKeys : new Set();
   const dayPriceOverrides = priceOverrides && typeof priceOverrides === "object" ? priceOverrides : {};
   const currentYear = cursor.getUTCFullYear();
+  const todayUtc = React.useMemo(() => getUtcTodayParts(), []);
 
-  const yearMonthViews = React.useMemo(() => {
-    return monthNames.map((monthName, monthIndex) => {
-      const monthCursor = new Date(Date.UTC(currentYear, monthIndex, 1));
-      const rawMonthGrid = getMonthMatrix(monthCursor);
-      const trimmedMonthGrid = rawMonthGrid.filter((weekRow) =>
-        weekRow.some((date) => isSameMonthUTC(date, monthCursor))
-      );
-      return {
-        monthName,
+  const yearMonthViews = React.useMemo(() => buildYearMonthViews(currentYear), [currentYear]);
+
+  const getDayPresentation = React.useCallback(
+    (date, monthCursor) =>
+      buildDayPresentation({
+        date,
         monthCursor,
-        monthGrid: trimmedMonthGrid.length > 0 ? trimmedMonthGrid : rawMonthGrid,
-      };
-    });
-  }, [currentYear]);
-
-  const getDayPresentation = (date, monthCursor) => {
-    const dateNumber = toDateNumber(date);
-    const inCurrentMonth = isSameMonthUTC(date, monthCursor);
-    const key = toDateKey(date);
-    const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6;
-    const isBlocked = blockedDates.has(key);
-    const isBooked = bookedSet.has(key);
-    const isNotBlocked = isBlocked === false;
-    const isNotBooked = isBooked === false;
-    const isOutsideMonth = inCurrentMonth === false;
-    const overrideAvailability = readOverrideAvailability(availabilityOverrides, key);
-    const isAvailable =
-      isNotBlocked && isNotBooked && (overrideAvailability ?? isDateWithinAvailability(dateNumber, availabilityRanges));
-    const isUnavailable = isAvailable === false;
-    const isForcedUnavailable = overrideAvailability === false;
-    const isSelected = selectedSet.has(key);
-    const isPending = pendingSelectionStartKey === key;
-
-    const today = new Date();
-    const isToday =
-      today.getUTCFullYear() === date.getUTCFullYear() &&
-      today.getUTCMonth() === date.getUTCMonth() &&
-      today.getUTCDate() === date.getUTCDate();
-
-    const overridePrice = Number(dayPriceOverrides[key]);
-    const defaultPrice = isWeekend ? weekendRate : nightlyRate;
-    const hasValidOverridePrice = Number.isFinite(overridePrice) && overridePrice > 0;
-    const displayPrice = isBlocked ? null : hasValidOverridePrice ? Math.trunc(overridePrice) : defaultPrice;
-
-    const showExternalBlockedOverlay = inCurrentMonth && isBlocked && isNotBooked;
-    const canShowUnavailableBadge = showExternalBlockedOverlay === false && isNotBooked;
-    const showUnavailableBadge = canShowUnavailableBadge && (isBlocked || isUnavailable);
-    const showBookedBadge = inCurrentMonth && isBooked;
-    const showExternalBlockedYearIcon = isBlocked && isNotBooked;
-    const showUnavailableYearIcon =
-      showExternalBlockedYearIcon === false && isNotBooked && (isBlocked || isUnavailable);
-    const showBookedYearIcon = isBooked;
-    const cellAriaLabel = [
-      date.toUTCString(),
-      displayPrice !== null ? `${formatEuroAmount(displayPrice)} per night` : null,
-      showExternalBlockedOverlay ? "external booking" : null,
-      isSelected ? "selected" : null,
-      isPending ? "pending selection" : null,
+        blockedDates,
+        bookedSet,
+        selectedSet,
+        pendingSelectionStartKey,
+        availabilityOverrides,
+        availabilityRanges,
+        dayPriceOverrides,
+        nightlyRate,
+        weekendRate,
+        todayUtc,
+      }),
+    [
+      blockedDates,
+      bookedSet,
+      selectedSet,
+      pendingSelectionStartKey,
+      availabilityOverrides,
+      availabilityRanges,
+      dayPriceOverrides,
+      nightlyRate,
+      weekendRate,
+      todayUtc,
     ]
-      .filter(Boolean)
-      .join(", ");
-
-    return {
-      key,
-      isOutsideMonth,
-      isToday,
-      isBlocked,
-      isBooked,
-      isAvailable,
-      isUnavailable,
-      isForcedUnavailable,
-      isSelected,
-      isPending,
-      showExternalBlockedOverlay,
-      showUnavailableBadge,
-      showBookedBadge,
-      showExternalBlockedYearIcon,
-      showUnavailableYearIcon,
-      showBookedYearIcon,
-      displayPrice,
-      cellAriaLabel,
-      dayNumber: date.getUTCDate(),
-    };
-  };
+  );
 
   const headerTitle = isMonthView ? formatYearMonth(cursor) : String(currentYear);
   const previousPeriodLabel = isMonthView ? "Previous month" : "Previous year";

@@ -259,55 +259,14 @@ export class PropertyService {
   }
 
   async getFullPropertyAttributes(propertyId) {
-    const [
-      basePropertyInfo,
-      amenities,
-      availability,
-      availabilityRestrictions,
-      checkIn,
-      generalDetails,
-      images,
-      location,
-      pricing,
-      rules,
-      propertyType,
-      propertyTestStatus,
-    ] = await Promise.all([
-      this.getBasePropertyInfo(propertyId),
-      this.getAmenities(propertyId),
-      this.getAvailability(propertyId),
-      this.getAvailabilityRestrictions(propertyId),
-      this.getCheckIn(propertyId),
-      this.getGeneralDetails(propertyId),
-      this.getImages(propertyId),
-      this.getLocation(propertyId),
-      this.getPricing(propertyId),
-      this.getRules(propertyId),
-      this.getPropertyType(propertyId),
-      this.getPropertyTestStatus(propertyId),
-    ]);
-    const technicalDetails =
-      propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
-        ? await this.getTechnicalDetails(propertyId)
-        : null;
-    return {
-      property: basePropertyInfo,
-      amenities: amenities,
-      availability: availability,
-      availabilityRestrictions: availabilityRestrictions,
-      checkIn: checkIn,
-      generalDetails: generalDetails,
-      images: images,
-      location: location,
-      pricing: pricing,
-      rules: rules,
-      propertyType: propertyType,
-      technicalDetails: technicalDetails,
-      propertyTestStatus: propertyTestStatus,
-    };
+    return this.getFullPropertyAttributesInternal(propertyId, false);
   }
 
   async getFullPropertyAttributesWithFullLocation(propertyId) {
+    return this.getFullPropertyAttributesInternal(propertyId, true);
+  }
+
+  async getFullPropertyAttributesInternal(propertyId, includeFullLocation) {
     const [
       basePropertyInfo,
       amenities,
@@ -329,7 +288,7 @@ export class PropertyService {
       this.getCheckIn(propertyId),
       this.getGeneralDetails(propertyId),
       this.getImages(propertyId),
-      this.getFullLocation(propertyId),
+      includeFullLocation ? this.getFullLocation(propertyId) : this.getLocation(propertyId),
       this.getPricing(propertyId),
       this.getRules(propertyId),
       this.getPropertyType(propertyId),

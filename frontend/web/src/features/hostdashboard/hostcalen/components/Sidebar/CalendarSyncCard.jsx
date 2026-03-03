@@ -157,6 +157,428 @@ const resolveSourceSyncStatusLabel = (syncState) => {
   return "Sync active";
 };
 
+function ConnectedSourcesSection({
+  sources,
+  syncStateMap,
+  removingSourceId,
+  editingSourceId,
+  onRefreshSource,
+  onEditSource,
+  onOpenRemoveSourceFlow,
+  onRemoveSource,
+  addingCalendar,
+  hasRefreshInProgress,
+  isConfirmingRemoval,
+}) {
+  return (
+    <section className="hc-sync-connected">
+      <p className="hc-sync-connected-title">Connected calendars</p>
+      <ul className="hc-sync-connected-list">
+        {sources.map((source, index) => {
+          const sourceId = String(source?.sourceId || source?.id || `${index}`);
+          const sourceName = String(source?.calendarName || source?.name || "External calendar");
+          const isRemoving = String(removingSourceId || "") === sourceId;
+          const sourceSyncState = String(syncStateMap[sourceId] || SOURCE_SYNC_STATE.IDLE);
+          const isEditing = String(editingSourceId || "") === sourceId;
+          const provider = resolveCalendarProvider(source);
+          const providerIcon = getProviderIcon(provider);
+          const isProviderIcon = provider !== CALENDAR_PROVIDER.GENERIC;
+          const syncActionClassName = [
+            "hc-sync-source-action",
+            sourceSyncState === SOURCE_SYNC_STATE.SYNCING && "is-active",
+            sourceSyncState === SOURCE_SYNC_STATE.SUCCESS && "is-success",
+            sourceSyncState === SOURCE_SYNC_STATE.ERROR && "is-error",
+          ]
+            .filter(Boolean)
+            .join(" ");
+          const sourceSyncStatusClassName = [
+            "hc-sync-connected-card-status",
+            sourceSyncState !== SOURCE_SYNC_STATE.IDLE &&
+              `hc-sync-connected-card-status--${sourceSyncState}`,
+          ]
+            .filter(Boolean)
+            .join(" ");
+
+          return (
+            <li key={sourceId} className="hc-sync-connected-card">
+              <div className="hc-sync-connected-card-head">
+                <span className="hc-sync-connected-card-icon" aria-hidden="true">
+                  <img
+                    src={providerIcon}
+                    alt=""
+                    className={
+                      isProviderIcon
+                        ? "hc-sync-connected-card-icon-image hc-sync-connected-card-icon-image--provider"
+                        : "hc-sync-connected-card-icon-image"
+                    }
+                  />
+                </span>
+                <div className="hc-sync-connected-card-copy">
+                  <p className="hc-sync-connected-card-name">{sourceName}</p>
+                  <p className={sourceSyncStatusClassName}>
+                    {resolveSourceSyncStatusLabel(sourceSyncState)}
+                  </p>
+                  <p className="hc-sync-connected-card-meta">{formatLastSyncLabel(source?.lastSyncAt)}</p>
+                </div>
+              </div>
+              <div className="hc-sync-connected-card-actions">
+                <button
+                  type="button"
+                  className={syncActionClassName}
+                  disabled={
+                    !onRefreshSource ||
+                    addingCalendar ||
+                    hasRefreshInProgress ||
+                    isRemoving ||
+                    isConfirmingRemoval
+                  }
+                  onClick={() => onRefreshSource?.(sourceId)}
+                >
+                  {resolveSourceSyncButtonLabel(sourceSyncState)}
+                </button>
+                <button
+                  type="button"
+                  className={`hc-sync-source-action ${isEditing ? "is-active" : ""}`}
+                  disabled={!onEditSource || addingCalendar || hasRefreshInProgress || isRemoving}
+                  onClick={() => onEditSource?.(sourceId)}
+                >
+                  {isEditing ? "Editing" : "Edit"}
+                </button>
+                <button
+                  type="button"
+                  className="hc-sync-source-action hc-sync-source-action--danger"
+                  disabled={
+                    !onRemoveSource ||
+                    isRemoving ||
+                    hasRefreshInProgress ||
+                    addingCalendar ||
+                    isConfirmingRemoval
+                  }
+                  onClick={() => onOpenRemoveSourceFlow(sourceId)}
+                >
+                  {isRemoving ? "Removing..." : "Remove"}
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function ConnectionSetupForm({
+  canAddCalendar,
+  onAddCalendar,
+  domitsCalendarLink,
+  domitsCalendarLinkCopied,
+  onCopyDomitsCalendarLink,
+  externalCalendarUrlInput,
+  onExternalCalendarUrlChange,
+  calendarNameInput,
+  onCalendarNameChange,
+  calendarProviderInput,
+  onCalendarProviderChange,
+  addingCalendar,
+  isEditingCalendar,
+  addCalendarError,
+  hasConnections,
+  connectedSection,
+}) {
+  return (
+    <form
+      className="hc-sync-form"
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (canAddCalendar) {
+          onAddCalendar?.();
+        }
+      }}
+    >
+      <section className="hc-sync-step">
+        <h4 className="hc-sync-step-title">Step 1</h4>
+        <p className="hc-sync-step-copy">Add this link to the other website.</p>
+
+        <div className="hc-sync-link-box">
+          <p className="hc-sync-field-label">Domits calendar link</p>
+          <div className="hc-sync-copy-row">
+            <input
+              type="text"
+              className="hc-sync-input hc-sync-input--readonly"
+              value={domitsCalendarLink}
+              readOnly
+            />
+            <button
+              type="button"
+              className={`hc-sync-copy-btn ${domitsCalendarLinkCopied ? "is-copied" : ""}`}
+              disabled={!domitsCalendarLink}
+              onClick={() => onCopyDomitsCalendarLink?.()}
+            >
+              {domitsCalendarLinkCopied ? "Copied" : "Copy"}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="hc-sync-step">
+        <h4 className="hc-sync-step-title">Step 2</h4>
+        <p className="hc-sync-step-copy">Get a public iCal feed link from the other website and add it below.</p>
+
+        <div className="hc-sync-fields">
+          <input
+            type="text"
+            className="hc-sync-input"
+            placeholder="Other website link"
+            value={externalCalendarUrlInput}
+            onChange={(event) => onExternalCalendarUrlChange?.(event.target.value)}
+          />
+          <input
+            type="text"
+            className="hc-sync-input"
+            placeholder="Calendar name"
+            value={calendarNameInput}
+            onChange={(event) => onCalendarNameChange?.(event.target.value)}
+          />
+          <select
+            className="hc-sync-input hc-sync-input--select"
+            value={String(calendarProviderInput || CALENDAR_PROVIDER.AUTO).toLowerCase()}
+            onChange={(event) => onCalendarProviderChange?.(event.target.value)}
+          >
+            <option value={CALENDAR_PROVIDER.AUTO}>Provider (Auto detect)</option>
+            <option value={CALENDAR_PROVIDER.AIRBNB}>Airbnb</option>
+            <option value={CALENDAR_PROVIDER.BOOKING}>Booking.com</option>
+            <option value={CALENDAR_PROVIDER.GENERIC}>Other</option>
+          </select>
+        </div>
+
+        <button type="submit" className="hc-sync-add-btn" disabled={!canAddCalendar}>
+          {addingCalendar ? "Adding..." : "+ Add calendar"}
+        </button>
+      </section>
+
+      {!isEditingCalendar && addCalendarError ? <p className="hc-sync-error">{addCalendarError}</p> : null}
+
+      {hasConnections ? connectedSection : null}
+
+      <p className="hc-sync-meta">
+        This is a two-way connection. <a href="/helpdesk-host">Need help?</a> Learn how it works.
+      </p>
+    </form>
+  );
+}
+
+function ConnectPromptSection({ onOpenConnectionSetup, connectedSection }) {
+  return (
+    <section className="hc-sync-step">
+      <h4 className="hc-sync-step-title">Connect calendars</h4>
+      <p className="hc-sync-step-copy">Sync all your hosting calendars so they stay up to date.</p>
+      <button
+        type="button"
+        className="hc-availability-connect-btn"
+        onClick={() => onOpenConnectionSetup(true)}
+      >
+        <span className="hc-availability-connect-btn-label">
+          <span className="hc-availability-connect-btn-icon" aria-hidden="true">
+            <img src={calendarIcon} alt="" />
+          </span>
+          <span>Connect to another website</span>
+        </span>
+        <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
+      </button>
+      {connectedSection}
+    </section>
+  );
+}
+
+function EditSourceModal({
+  isOpen,
+  addingCalendar,
+  onCancelEdit,
+  externalCalendarUrlInput,
+  onExternalCalendarUrlChange,
+  calendarNameInput,
+  onCalendarNameChange,
+  calendarProviderInput,
+  onCalendarProviderChange,
+  addCalendarError,
+  canAddCalendar,
+  onAddCalendar,
+}) {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div
+      className="hc-sync-edit-modal-backdrop"
+      role="presentation"
+      onClick={() => {
+        if (!addingCalendar) {
+          onCancelEdit?.();
+        }
+      }}
+    >
+      <section
+        className="hc-sync-edit-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Edit calendar connection"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h4 className="hc-sync-edit-modal-title">Edit calendar connection</h4>
+        <p className="hc-sync-edit-modal-copy">Update the link, name, or provider and save changes.</p>
+
+        <div className="hc-sync-fields">
+          <input
+            type="text"
+            className="hc-sync-input"
+            placeholder="Other website link"
+            value={externalCalendarUrlInput}
+            onChange={(event) => onExternalCalendarUrlChange?.(event.target.value)}
+          />
+          <input
+            type="text"
+            className="hc-sync-input"
+            placeholder="Calendar name"
+            value={calendarNameInput}
+            onChange={(event) => onCalendarNameChange?.(event.target.value)}
+          />
+          <select
+            className="hc-sync-input hc-sync-input--select"
+            value={String(calendarProviderInput || CALENDAR_PROVIDER.AUTO).toLowerCase()}
+            onChange={(event) => onCalendarProviderChange?.(event.target.value)}
+          >
+            <option value={CALENDAR_PROVIDER.AUTO}>Provider (Auto detect)</option>
+            <option value={CALENDAR_PROVIDER.AIRBNB}>Airbnb</option>
+            <option value={CALENDAR_PROVIDER.BOOKING}>Booking.com</option>
+            <option value={CALENDAR_PROVIDER.GENERIC}>Other</option>
+          </select>
+        </div>
+
+        {addCalendarError ? <p className="hc-sync-error">{addCalendarError}</p> : null}
+
+        <div className="hc-sync-edit-modal-actions">
+          <button
+            type="button"
+            className="hc-sync-cancel-btn"
+            disabled={addingCalendar}
+            onClick={() => onCancelEdit?.()}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="hc-sync-add-btn"
+            disabled={!canAddCalendar}
+            onClick={() => onAddCalendar?.()}
+          >
+            {addingCalendar ? "Saving..." : "Save changes"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function RemoveSourceModal({
+  isOpen,
+  isRemovingPendingSource,
+  isRemoveReasonStep,
+  selectedRemoveReasonIdSet,
+  handleToggleRemoveReason,
+  pendingRemoveSourceName,
+  addCalendarError,
+  resetRemoveSourceFlow,
+  setRemoveSourceFlowStep,
+  handleRemoveReasonsNext,
+  handleConfirmRemoveSource,
+  removeConfirmButtonLabel,
+  hasSelectedRemoveReason,
+}) {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div
+      className="hc-sync-remove-modal-backdrop"
+      role="presentation"
+      onClick={() => {
+        if (!isRemovingPendingSource) {
+          resetRemoveSourceFlow();
+        }
+      }}
+    >
+      <section
+        className="hc-sync-remove-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Remove calendar connection"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {isRemoveReasonStep ? (
+          <>
+            <h4 className="hc-sync-remove-modal-title">Why are you disconnecting this calendar?</h4>
+            <p className="hc-sync-remove-modal-copy">Choose all reasons that apply.</p>
+            <div className="hc-sync-remove-reasons-list">
+              {REMOVE_SOURCE_REASONS.map((reason) => (
+                <label key={reason.id} className="hc-sync-remove-reason-row">
+                  <input
+                    type="checkbox"
+                    className="hc-sync-remove-reason-checkbox"
+                    checked={selectedRemoveReasonIdSet.has(reason.id)}
+                    onChange={() => handleToggleRemoveReason(reason.id)}
+                    disabled={isRemovingPendingSource}
+                  />
+                  <span>{reason.label}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <h4 className="hc-sync-remove-modal-title">Remove calendar connection?</h4>
+            <p className="hc-sync-remove-modal-copy">
+              This will disconnect <strong>{pendingRemoveSourceName}</strong> from this accommodation.
+            </p>
+            <p className="hc-sync-remove-modal-copy">
+              You can re-add it later, but imported blocked dates from this source will stop syncing.
+            </p>
+          </>
+        )}
+
+        {addCalendarError ? <p className="hc-sync-error">{addCalendarError}</p> : null}
+
+        <div className="hc-sync-remove-modal-actions">
+          <button
+            type="button"
+            className="hc-sync-cancel-btn"
+            disabled={isRemovingPendingSource}
+            onClick={() => {
+              if (!isRemoveReasonStep) {
+                setRemoveSourceFlowStep(REMOVE_SOURCE_FLOW_STEP.REASON);
+                return;
+              }
+              resetRemoveSourceFlow();
+            }}
+          >
+            {isRemoveReasonStep ? "Cancel" : "Back"}
+          </button>
+          <button
+            type="button"
+            className="hc-sync-remove-confirm-btn"
+            disabled={isRemovingPendingSource || (isRemoveReasonStep && !hasSelectedRemoveReason)}
+            onClick={isRemoveReasonStep ? handleRemoveReasonsNext : handleConfirmRemoveSource}
+          >
+            {removeConfirmButtonLabel}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function CalendarSyncCard({
   domitsCalendarLink,
   externalCalendarUrlInput,
@@ -330,104 +752,20 @@ export default function CalendarSyncCard({
     removeConfirmButtonLabel = "Removing...";
   }
 
-  const renderConnectedSection = () => (
-    <section className="hc-sync-connected">
-      <p className="hc-sync-connected-title">Connected calendars</p>
-      <ul className="hc-sync-connected-list">
-        {sources.map((source, index) => {
-          const sourceId = String(source?.sourceId || source?.id || `${index}`);
-          const sourceName = String(source?.calendarName || source?.name || "External calendar");
-          const isRemoving = String(removingSourceId || "") === sourceId;
-          const sourceSyncState = String(syncStateMap[sourceId] || SOURCE_SYNC_STATE.IDLE);
-          const isRefreshing =
-            sourceSyncState === SOURCE_SYNC_STATE.PENDING ||
-            sourceSyncState === SOURCE_SYNC_STATE.SYNCING;
-          const isEditing = String(editingSourceId || "") === sourceId;
-          const provider = resolveCalendarProvider(source);
-          const providerIcon = getProviderIcon(provider);
-          const isProviderIcon = provider !== CALENDAR_PROVIDER.GENERIC;
-          const syncActionClassName = [
-            "hc-sync-source-action",
-            sourceSyncState === SOURCE_SYNC_STATE.SYNCING && "is-active",
-            sourceSyncState === SOURCE_SYNC_STATE.SUCCESS && "is-success",
-            sourceSyncState === SOURCE_SYNC_STATE.ERROR && "is-error",
-          ]
-            .filter(Boolean)
-            .join(" ");
-          const sourceSyncStatusClassName = [
-            "hc-sync-connected-card-status",
-            sourceSyncState !== SOURCE_SYNC_STATE.IDLE &&
-              `hc-sync-connected-card-status--${sourceSyncState}`,
-          ]
-            .filter(Boolean)
-            .join(" ");
-          return (
-            <li key={sourceId} className="hc-sync-connected-card">
-              <div className="hc-sync-connected-card-head">
-                <span className="hc-sync-connected-card-icon" aria-hidden="true">
-                  <img
-                    src={providerIcon}
-                    alt=""
-                    className={
-                      isProviderIcon
-                        ? "hc-sync-connected-card-icon-image hc-sync-connected-card-icon-image--provider"
-                        : "hc-sync-connected-card-icon-image"
-                    }
-                  />
-                </span>
-                <div className="hc-sync-connected-card-copy">
-                  <p className="hc-sync-connected-card-name">{sourceName}</p>
-                  <p className={sourceSyncStatusClassName}>
-                    {resolveSourceSyncStatusLabel(sourceSyncState)}
-                  </p>
-                  <p className="hc-sync-connected-card-meta">{formatLastSyncLabel(source?.lastSyncAt)}</p>
-                </div>
-              </div>
-              <div className="hc-sync-connected-card-actions">
-                <button
-                  type="button"
-                  className={syncActionClassName}
-                  disabled={
-                    !onRefreshSource ||
-                    addingCalendar ||
-                    hasRefreshInProgress ||
-                    isRemoving ||
-                    isConfirmingRemoval
-                  }
-                  onClick={() => onRefreshSource?.(sourceId)}
-                >
-                  {resolveSourceSyncButtonLabel(sourceSyncState)}
-                </button>
-                <button
-                  type="button"
-                  className={`hc-sync-source-action ${isEditing ? "is-active" : ""}`}
-                  disabled={!onEditSource || addingCalendar || hasRefreshInProgress || isRemoving}
-                  onClick={() => {
-                    onEditSource?.(sourceId);
-                  }}
-                >
-                  {isEditing ? "Editing" : "Edit"}
-                </button>
-                <button
-                  type="button"
-                  className="hc-sync-source-action hc-sync-source-action--danger"
-                  disabled={
-                    !onRemoveSource ||
-                    isRemoving ||
-                    hasRefreshInProgress ||
-                    addingCalendar ||
-                    isConfirmingRemoval
-                  }
-                  onClick={() => handleOpenRemoveSourceFlow(sourceId)}
-                >
-                  {isRemoving ? "Removing..." : "Remove"}
-                </button>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+  const connectedSection = (
+    <ConnectedSourcesSection
+      sources={sources}
+      syncStateMap={syncStateMap}
+      removingSourceId={removingSourceId}
+      editingSourceId={editingSourceId}
+      onRefreshSource={onRefreshSource}
+      onEditSource={onEditSource}
+      onOpenRemoveSourceFlow={handleOpenRemoveSourceFlow}
+      onRemoveSource={onRemoveSource}
+      addingCalendar={addingCalendar}
+      hasRefreshInProgress={hasRefreshInProgress}
+      isConfirmingRemoval={isConfirmingRemoval}
+    />
   );
 
   return (
@@ -462,256 +800,61 @@ export default function CalendarSyncCard({
       </p>
 
       {showConnectionSetup ? (
-        <form
-          className="hc-sync-form"
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (canAddCalendar) {
-              onAddCalendar?.();
-            }
-          }}
-        >
-          <section className="hc-sync-step">
-            <h4 className="hc-sync-step-title">Step 1</h4>
-            <p className="hc-sync-step-copy">Add this link to the other website.</p>
-
-            <div className="hc-sync-link-box">
-              <p className="hc-sync-field-label">Domits calendar link</p>
-              <div className="hc-sync-copy-row">
-                <input
-                  type="text"
-                  className="hc-sync-input hc-sync-input--readonly"
-                  value={domitsCalendarLink}
-                  readOnly
-                />
-                <button
-                  type="button"
-                  className={`hc-sync-copy-btn ${domitsCalendarLinkCopied ? "is-copied" : ""}`}
-                  disabled={!domitsCalendarLink}
-                  onClick={() => onCopyDomitsCalendarLink?.()}
-                >
-                  {domitsCalendarLinkCopied ? "Copied" : "Copy"}
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <section className="hc-sync-step">
-            <h4 className="hc-sync-step-title">Step 2</h4>
-            <p className="hc-sync-step-copy">Get a public iCal feed link from the other website and add it below.</p>
-
-            <div className="hc-sync-fields">
-              <input
-                type="text"
-                className="hc-sync-input"
-                placeholder="Other website link"
-                value={externalCalendarUrlInput}
-                onChange={(event) => onExternalCalendarUrlChange?.(event.target.value)}
-              />
-              <input
-                type="text"
-                className="hc-sync-input"
-                placeholder="Calendar name"
-                value={calendarNameInput}
-                onChange={(event) => onCalendarNameChange?.(event.target.value)}
-              />
-              <select
-                className="hc-sync-input hc-sync-input--select"
-                value={String(calendarProviderInput || CALENDAR_PROVIDER.AUTO).toLowerCase()}
-                onChange={(event) => onCalendarProviderChange?.(event.target.value)}
-              >
-                <option value={CALENDAR_PROVIDER.AUTO}>Provider (Auto detect)</option>
-                <option value={CALENDAR_PROVIDER.AIRBNB}>Airbnb</option>
-                <option value={CALENDAR_PROVIDER.BOOKING}>Booking.com</option>
-                <option value={CALENDAR_PROVIDER.GENERIC}>Other</option>
-              </select>
-            </div>
-
-            <button type="submit" className="hc-sync-add-btn" disabled={!canAddCalendar}>
-              {addingCalendar ? "Adding..." : "+ Add calendar"}
-            </button>
-          </section>
-
-          {!isEditingCalendar && addCalendarError ? <p className="hc-sync-error">{addCalendarError}</p> : null}
-
-          {hasConnections ? renderConnectedSection() : null}
-
-          <p className="hc-sync-meta">
-            This is a two-way connection. <a href="/helpdesk-host">Need help?</a> Learn how it works.
-          </p>
-        </form>
+        <ConnectionSetupForm
+          canAddCalendar={canAddCalendar}
+          onAddCalendar={onAddCalendar}
+          domitsCalendarLink={domitsCalendarLink}
+          domitsCalendarLinkCopied={domitsCalendarLinkCopied}
+          onCopyDomitsCalendarLink={onCopyDomitsCalendarLink}
+          externalCalendarUrlInput={externalCalendarUrlInput}
+          onExternalCalendarUrlChange={onExternalCalendarUrlChange}
+          calendarNameInput={calendarNameInput}
+          onCalendarNameChange={onCalendarNameChange}
+          calendarProviderInput={calendarProviderInput}
+          onCalendarProviderChange={onCalendarProviderChange}
+          addingCalendar={addingCalendar}
+          isEditingCalendar={isEditingCalendar}
+          addCalendarError={addCalendarError}
+          hasConnections={hasConnections}
+          connectedSection={connectedSection}
+        />
       ) : (
-        <section className="hc-sync-step">
-          <h4 className="hc-sync-step-title">Connect calendars</h4>
-          <p className="hc-sync-step-copy">Sync all your hosting calendars so they stay up to date.</p>
-          <button
-            type="button"
-            className="hc-availability-connect-btn"
-            onClick={() => setIsConnectionSetupOpen(true)}
-          >
-            <span className="hc-availability-connect-btn-label">
-              <span className="hc-availability-connect-btn-icon" aria-hidden="true">
-                <img src={calendarIcon} alt="" />
-              </span>
-              <span>Connect to another website</span>
-            </span>
-            <img src={arrowRightIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
-          </button>
-          {renderConnectedSection()}
-        </section>
+        <ConnectPromptSection
+          onOpenConnectionSetup={setIsConnectionSetupOpen}
+          connectedSection={connectedSection}
+        />
       )}
 
-      {isEditingCalendar ? (
-        <div
-          className="hc-sync-edit-modal-backdrop"
-          role="presentation"
-          onClick={() => {
-            if (!addingCalendar) {
-              onCancelEdit?.();
-            }
-          }}
-        >
-          <section
-            className="hc-sync-edit-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Edit calendar connection"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h4 className="hc-sync-edit-modal-title">Edit calendar connection</h4>
-            <p className="hc-sync-edit-modal-copy">Update the link, name, or provider and save changes.</p>
+      <EditSourceModal
+        isOpen={isEditingCalendar}
+        addingCalendar={addingCalendar}
+        onCancelEdit={onCancelEdit}
+        externalCalendarUrlInput={externalCalendarUrlInput}
+        onExternalCalendarUrlChange={onExternalCalendarUrlChange}
+        calendarNameInput={calendarNameInput}
+        onCalendarNameChange={onCalendarNameChange}
+        calendarProviderInput={calendarProviderInput}
+        onCalendarProviderChange={onCalendarProviderChange}
+        addCalendarError={addCalendarError}
+        canAddCalendar={canAddCalendar}
+        onAddCalendar={onAddCalendar}
+      />
 
-            <div className="hc-sync-fields">
-              <input
-                type="text"
-                className="hc-sync-input"
-                placeholder="Other website link"
-                value={externalCalendarUrlInput}
-                onChange={(event) => onExternalCalendarUrlChange?.(event.target.value)}
-              />
-              <input
-                type="text"
-                className="hc-sync-input"
-                placeholder="Calendar name"
-                value={calendarNameInput}
-                onChange={(event) => onCalendarNameChange?.(event.target.value)}
-              />
-              <select
-                className="hc-sync-input hc-sync-input--select"
-                value={String(calendarProviderInput || CALENDAR_PROVIDER.AUTO).toLowerCase()}
-                onChange={(event) => onCalendarProviderChange?.(event.target.value)}
-              >
-                <option value={CALENDAR_PROVIDER.AUTO}>Provider (Auto detect)</option>
-                <option value={CALENDAR_PROVIDER.AIRBNB}>Airbnb</option>
-                <option value={CALENDAR_PROVIDER.BOOKING}>Booking.com</option>
-                <option value={CALENDAR_PROVIDER.GENERIC}>Other</option>
-              </select>
-            </div>
-
-            {addCalendarError ? <p className="hc-sync-error">{addCalendarError}</p> : null}
-
-            <div className="hc-sync-edit-modal-actions">
-              <button
-                type="button"
-                className="hc-sync-cancel-btn"
-                disabled={addingCalendar}
-                onClick={() => onCancelEdit?.()}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="hc-sync-add-btn"
-                disabled={!canAddCalendar}
-                onClick={() => onAddCalendar?.()}
-              >
-                {addingCalendar ? "Saving..." : "Save changes"}
-              </button>
-            </div>
-          </section>
-        </div>
-      ) : null}
-
-      {isConfirmingRemoval ? (
-        <div
-          className="hc-sync-remove-modal-backdrop"
-          role="presentation"
-          onClick={() => {
-            if (!isRemovingPendingSource) {
-              resetRemoveSourceFlow();
-            }
-          }}
-        >
-          <section
-            className="hc-sync-remove-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Remove calendar connection"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {isRemoveReasonStep ? (
-              <>
-                <h4 className="hc-sync-remove-modal-title">Why are you disconnecting this calendar?</h4>
-                <p className="hc-sync-remove-modal-copy">Choose all reasons that apply.</p>
-                <div className="hc-sync-remove-reasons-list">
-                  {REMOVE_SOURCE_REASONS.map((reason) => (
-                    <label key={reason.id} className="hc-sync-remove-reason-row">
-                      <input
-                        type="checkbox"
-                        className="hc-sync-remove-reason-checkbox"
-                        checked={selectedRemoveReasonIdSet.has(reason.id)}
-                        onChange={() => handleToggleRemoveReason(reason.id)}
-                        disabled={isRemovingPendingSource}
-                      />
-                      <span>{reason.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <>
-                <h4 className="hc-sync-remove-modal-title">Remove calendar connection?</h4>
-                <p className="hc-sync-remove-modal-copy">
-                  This will disconnect <strong>{pendingRemoveSourceName}</strong> from this accommodation.
-                </p>
-                <p className="hc-sync-remove-modal-copy">
-                  You can re-add it later, but imported blocked dates from this source will stop syncing.
-                </p>
-              </>
-            )}
-
-            {addCalendarError ? <p className="hc-sync-error">{addCalendarError}</p> : null}
-
-            <div className="hc-sync-remove-modal-actions">
-              <button
-                type="button"
-                className="hc-sync-cancel-btn"
-                disabled={isRemovingPendingSource}
-                onClick={() => {
-                  if (!isRemoveReasonStep) {
-                    setRemoveSourceFlowStep(REMOVE_SOURCE_FLOW_STEP.REASON);
-                    return;
-                  }
-                  resetRemoveSourceFlow();
-                }}
-              >
-                {isRemoveReasonStep ? "Cancel" : "Back"}
-              </button>
-              <button
-                type="button"
-                className="hc-sync-remove-confirm-btn"
-                disabled={
-                  isRemovingPendingSource || (isRemoveReasonStep && !hasSelectedRemoveReason)
-                }
-                onClick={isRemoveReasonStep ? handleRemoveReasonsNext : handleConfirmRemoveSource}
-              >
-                {removeConfirmButtonLabel}
-              </button>
-            </div>
-          </section>
-        </div>
-      ) : null}
+      <RemoveSourceModal
+        isOpen={isConfirmingRemoval}
+        isRemovingPendingSource={isRemovingPendingSource}
+        isRemoveReasonStep={isRemoveReasonStep}
+        selectedRemoveReasonIdSet={selectedRemoveReasonIdSet}
+        handleToggleRemoveReason={handleToggleRemoveReason}
+        pendingRemoveSourceName={pendingRemoveSourceName}
+        addCalendarError={addCalendarError}
+        resetRemoveSourceFlow={resetRemoveSourceFlow}
+        setRemoveSourceFlowStep={setRemoveSourceFlowStep}
+        handleRemoveReasonsNext={handleRemoveReasonsNext}
+        handleConfirmRemoveSource={handleConfirmRemoveSource}
+        removeConfirmButtonLabel={removeConfirmButtonLabel}
+        hasSelectedRemoveReason={hasSelectedRemoveReason}
+      />
     </section>
   );
 }

@@ -28,6 +28,250 @@ import { useCalendarSelection } from "./hooks/useCalendarSelection";
 import { useCalendarSync } from "./hooks/useCalendarSync";
 import { usePricingSettings } from "./hooks/usePricingSettings";
 
+function HostCalendarSidebar({
+  isSidebarLoading,
+  sidebarLoadingMessage,
+  selectedDateKeys,
+  selectedAvailabilityStats,
+  handleToggleAvailability,
+  selectionPriceInput,
+  handleSelectionPriceChange,
+  selectionPriceDirty,
+  canSaveSelectionPrice,
+  handleSaveSelectionPrice,
+  sidebarMode,
+  normalizedPricingSettingsForm,
+  pricingSnapshot,
+  pricingSettingsForm,
+  weekendRateInput,
+  updatePricingSettingsForm,
+  setWeekendRateInput,
+  hasAnyPricingSettingsChanges,
+  canSavePricingSettings,
+  isSavingPricingSettings,
+  pricingSettingsSaveError,
+  handleSavePricingSettings,
+  availabilitySettingsForm,
+  availabilityWindowOptions,
+  updateAvailabilitySettingsForm,
+  hasAvailabilitySettingsChanges,
+  canSaveAvailabilitySettings,
+  isSavingAvailabilitySettings,
+  availabilitySettingsSaveError,
+  handleSaveAvailabilitySettings,
+  hostCalendarExportUrl,
+  calendarUrlInput,
+  calendarNameInput,
+  calendarProviderInput,
+  updateCalendarSyncForm,
+  handleCopyDomitsCalendarLink,
+  domitsCalendarLinkCopied,
+  handleAddCalendarSource,
+  canAddCalendarSource,
+  isSavingCalendarSync,
+  calendarSyncError,
+  isEditingCalendarSource,
+  calendarSources,
+  handleEditCalendarSource,
+  editingCalendarSourceId,
+  handleCancelEditCalendarSource,
+  handleRefreshCalendarSource,
+  refreshingCalendarSourceId,
+  sourceSyncStateById,
+  handleRefreshAllCalendarSources,
+  isRefreshingAllCalendarSources,
+  handleRemoveCalendarSource,
+  removingCalendarSourceId,
+  handleCalendarSyncBack,
+  setSidebarMode,
+  openCalendarSync,
+}) {
+  if (isSidebarLoading) {
+    return (
+      <section className="hc-sidebar-loading-card" aria-label="Loading pricing and availability">
+        <PulseBarsLoader message={sidebarLoadingMessage} />
+      </section>
+    );
+  }
+
+  if (selectedDateKeys.length > 0) {
+    return (
+      <SelectionCard
+        selectedCount={selectedAvailabilityStats.total}
+        allSelectedAvailable={selectedAvailabilityStats.allAvailable}
+        onToggleAvailability={handleToggleAvailability}
+        priceInputValue={selectionPriceInput}
+        onPriceInputChange={handleSelectionPriceChange}
+        showSavePrice={selectionPriceDirty}
+        canSavePrice={canSaveSelectionPrice}
+        onSavePrice={handleSaveSelectionPrice}
+      />
+    );
+  }
+
+  if (sidebarMode === "pricing-settings") {
+    return (
+      <PricingSettingsCard
+        nightlyRate={normalizedPricingSettingsForm.nightlyRate}
+        weekendRate={pricingSnapshot.weekendRate}
+        weeklyDiscountPercent={
+          normalizedPricingSettingsForm.weeklyDiscountEnabled
+            ? normalizedPricingSettingsForm.weeklyDiscountPercent
+            : 0
+        }
+        monthlyDiscountPercent={
+          normalizedPricingSettingsForm.monthlyDiscountEnabled
+            ? normalizedPricingSettingsForm.monthlyDiscountPercent
+            : 0
+        }
+        nightlyRateInput={pricingSettingsForm.nightlyRate}
+        weekendRateInput={weekendRateInput}
+        weeklyDiscountEnabled={pricingSettingsForm.weeklyDiscountEnabled}
+        weeklyDiscountPercentInput={pricingSettingsForm.weeklyDiscountPercent}
+        monthlyDiscountEnabled={pricingSettingsForm.monthlyDiscountEnabled}
+        monthlyDiscountPercentInput={pricingSettingsForm.monthlyDiscountPercent}
+        onNightlyRateChange={(value) => {
+          const nextValue = String(value).trim();
+          updatePricingSettingsForm({
+            nightlyRate: nextValue,
+          });
+        }}
+        onWeekendRateChange={(value) => {
+          const nextValue = String(value).trim();
+          setWeekendRateInput(nextValue);
+        }}
+        onWeeklyDiscountToggle={(enabled) =>
+          updatePricingSettingsForm({
+            weeklyDiscountEnabled: enabled,
+            weeklyDiscountPercent:
+              enabled && Number(pricingSettingsForm.weeklyDiscountPercent) <= 0
+                ? createInitialPricingForm().weeklyDiscountPercent
+                : pricingSettingsForm.weeklyDiscountPercent,
+          })
+        }
+        onWeeklyDiscountPercentChange={(value) =>
+          updatePricingSettingsForm({ weeklyDiscountPercent: Number(value) || 0 })
+        }
+        onMonthlyDiscountToggle={(enabled) =>
+          updatePricingSettingsForm({
+            monthlyDiscountEnabled: enabled,
+            monthlyDiscountPercent:
+              enabled && Number(pricingSettingsForm.monthlyDiscountPercent) <= 0
+                ? createInitialPricingForm().monthlyDiscountPercent
+                : pricingSettingsForm.monthlyDiscountPercent,
+          })
+        }
+        onMonthlyDiscountPercentChange={(value) =>
+          updatePricingSettingsForm({ monthlyDiscountPercent: Number(value) || 0 })
+        }
+        showSaveButton={hasAnyPricingSettingsChanges}
+        canSave={canSavePricingSettings}
+        saving={isSavingPricingSettings}
+        saveError={pricingSettingsSaveError}
+        onSave={handleSavePricingSettings}
+        onBack={() => setSidebarMode("summary")}
+      />
+    );
+  }
+
+  if (sidebarMode === "availability-settings") {
+    return (
+      <AvailabilitySettingsCard
+        minimumStayInput={availabilitySettingsForm.minimumStay}
+        maximumStayInput={availabilitySettingsForm.maximumStay}
+        advanceNoticeDaysInput={availabilitySettingsForm.advanceNoticeDays}
+        preparationTimeDaysInput={availabilitySettingsForm.preparationTimeDays}
+        availabilityWindowDaysInput={availabilitySettingsForm.availabilityWindowDays}
+        availabilityWindowOptions={availabilityWindowOptions}
+        onMinimumStayChange={(value) => {
+          const nextValue = String(value).trim();
+          updateAvailabilitySettingsForm({
+            minimumStay: nextValue === "" ? "" : Number(nextValue),
+          });
+        }}
+        onMaximumStayChange={(value) => {
+          const nextValue = String(value).trim();
+          updateAvailabilitySettingsForm({
+            maximumStay: nextValue === "" ? "" : Number(nextValue),
+          });
+        }}
+        onAdvanceNoticeChange={(value) =>
+          updateAvailabilitySettingsForm({ advanceNoticeDays: Number(value) || 0 })
+        }
+        onPreparationTimeChange={(value) =>
+          updateAvailabilitySettingsForm({ preparationTimeDays: Number(value) || 0 })
+        }
+        onAvailabilityWindowChange={(value) =>
+          updateAvailabilitySettingsForm({ availabilityWindowDays: Number(value) || 365 })
+        }
+        showSaveButton={hasAvailabilitySettingsChanges}
+        canSave={canSaveAvailabilitySettings}
+        saving={isSavingAvailabilitySettings}
+        saveError={availabilitySettingsSaveError}
+        onSave={handleSaveAvailabilitySettings}
+        onBack={() => setSidebarMode("summary")}
+      />
+    );
+  }
+
+  if (sidebarMode === "calendar-sync") {
+    return (
+      <CalendarSyncCard
+        domitsCalendarLink={hostCalendarExportUrl}
+        externalCalendarUrlInput={calendarUrlInput}
+        calendarNameInput={calendarNameInput}
+        calendarProviderInput={calendarProviderInput}
+        onExternalCalendarUrlChange={(value) =>
+          updateCalendarSyncForm({ calendarUrl: String(value || "") })
+        }
+        onCalendarNameChange={(value) => updateCalendarSyncForm({ calendarName: String(value || "") })}
+        onCalendarProviderChange={(value) =>
+          updateCalendarSyncForm({
+            calendarProvider: String(value || "auto").trim().toLowerCase(),
+          })
+        }
+        onCopyDomitsCalendarLink={handleCopyDomitsCalendarLink}
+        domitsCalendarLinkCopied={domitsCalendarLinkCopied}
+        onAddCalendar={handleAddCalendarSource}
+        canAddCalendar={canAddCalendarSource}
+        addingCalendar={isSavingCalendarSync}
+        addCalendarError={calendarSyncError}
+        isEditingCalendar={isEditingCalendarSource}
+        connectedSources={calendarSources}
+        onEditSource={handleEditCalendarSource}
+        editingSourceId={editingCalendarSourceId}
+        onCancelEdit={handleCancelEditCalendarSource}
+        onRefreshSource={handleRefreshCalendarSource}
+        refreshingSourceId={refreshingCalendarSourceId}
+        sourceSyncStateById={sourceSyncStateById}
+        onRefreshAllSources={handleRefreshAllCalendarSources}
+        refreshingAllSources={isRefreshingAllCalendarSources}
+        onRemoveSource={handleRemoveCalendarSource}
+        removingSourceId={removingCalendarSourceId}
+        onBack={handleCalendarSyncBack}
+      />
+    );
+  }
+
+  return (
+    <>
+      <PricingCard
+        nightlyRate={pricingSnapshot.nightlyRate}
+        weekendRate={pricingSnapshot.weekendRate}
+        weeklyDiscountPercent={pricingSnapshot.weeklyDiscountPercent}
+        onOpenSettings={() => setSidebarMode("pricing-settings")}
+      />
+      <AvailabilityCard
+        minimumStay={pricingSnapshot.minimumStay}
+        maximumStay={pricingSnapshot.maximumStay}
+        advanceNoticeDays={pricingSnapshot.advanceNoticeDays}
+        onOpenSettings={() => setSidebarMode("availability-settings")}
+      />
+      <CalendarLinkCard connectedCount={calendarSources.length} onOpenSettings={openCalendarSync} />
+    </>
+  );
+}
+
 export default function HostCalendar() {
   const [view, setView] = useState("month");
   const [cursor, setCursor] = useState(startOfMonthUTC(new Date()));
@@ -221,175 +465,64 @@ export default function HostCalendar() {
         </div>
 
         <aside className="hc-sidebar">
-          {isSidebarLoading ? (
-            <section className="hc-sidebar-loading-card" aria-label="Loading pricing and availability">
-              <PulseBarsLoader message={sidebarLoadingMessage} />
-            </section>
-          ) : selectedDateKeys.length > 0 ? (
-            <SelectionCard
-              selectedCount={selectedAvailabilityStats.total}
-              allSelectedAvailable={selectedAvailabilityStats.allAvailable}
-              onToggleAvailability={handleToggleAvailability}
-              priceInputValue={selectionPriceInput}
-              onPriceInputChange={handleSelectionPriceChange}
-              showSavePrice={selectionPriceDirty}
-              canSavePrice={canSaveSelectionPrice}
-              onSavePrice={handleSaveSelectionPrice}
-            />
-          ) : sidebarMode === "pricing-settings" ? (
-            <PricingSettingsCard
-              nightlyRate={normalizedPricingSettingsForm.nightlyRate}
-              weekendRate={pricingSnapshot.weekendRate}
-              weeklyDiscountPercent={
-                normalizedPricingSettingsForm.weeklyDiscountEnabled
-                  ? normalizedPricingSettingsForm.weeklyDiscountPercent
-                  : 0
-              }
-              monthlyDiscountPercent={
-                normalizedPricingSettingsForm.monthlyDiscountEnabled
-                  ? normalizedPricingSettingsForm.monthlyDiscountPercent
-                  : 0
-              }
-              nightlyRateInput={pricingSettingsForm.nightlyRate}
-              weekendRateInput={weekendRateInput}
-              weeklyDiscountEnabled={pricingSettingsForm.weeklyDiscountEnabled}
-              weeklyDiscountPercentInput={pricingSettingsForm.weeklyDiscountPercent}
-              monthlyDiscountEnabled={pricingSettingsForm.monthlyDiscountEnabled}
-              monthlyDiscountPercentInput={pricingSettingsForm.monthlyDiscountPercent}
-              onNightlyRateChange={(value) => {
-                const nextValue = String(value).trim();
-                updatePricingSettingsForm({
-                  nightlyRate: nextValue,
-                });
-              }}
-              onWeekendRateChange={(value) => {
-                const nextValue = String(value).trim();
-                setWeekendRateInput(nextValue);
-              }}
-              onWeeklyDiscountToggle={(enabled) =>
-                updatePricingSettingsForm({
-                  weeklyDiscountEnabled: enabled,
-                  weeklyDiscountPercent:
-                    enabled && Number(pricingSettingsForm.weeklyDiscountPercent) <= 0
-                      ? createInitialPricingForm().weeklyDiscountPercent
-                      : pricingSettingsForm.weeklyDiscountPercent,
-                })
-              }
-              onWeeklyDiscountPercentChange={(value) =>
-                updatePricingSettingsForm({ weeklyDiscountPercent: Number(value) || 0 })
-              }
-              onMonthlyDiscountToggle={(enabled) =>
-                updatePricingSettingsForm({
-                  monthlyDiscountEnabled: enabled,
-                  monthlyDiscountPercent:
-                    enabled && Number(pricingSettingsForm.monthlyDiscountPercent) <= 0
-                      ? createInitialPricingForm().monthlyDiscountPercent
-                      : pricingSettingsForm.monthlyDiscountPercent,
-                })
-              }
-              onMonthlyDiscountPercentChange={(value) =>
-                updatePricingSettingsForm({ monthlyDiscountPercent: Number(value) || 0 })
-              }
-              showSaveButton={hasAnyPricingSettingsChanges}
-              canSave={canSavePricingSettings}
-              saving={isSavingPricingSettings}
-              saveError={pricingSettingsSaveError}
-              onSave={handleSavePricingSettings}
-              onBack={() => setSidebarMode("summary")}
-            />
-          ) : sidebarMode === "availability-settings" ? (
-            <AvailabilitySettingsCard
-              minimumStayInput={availabilitySettingsForm.minimumStay}
-              maximumStayInput={availabilitySettingsForm.maximumStay}
-              advanceNoticeDaysInput={availabilitySettingsForm.advanceNoticeDays}
-              preparationTimeDaysInput={availabilitySettingsForm.preparationTimeDays}
-              availabilityWindowDaysInput={availabilitySettingsForm.availabilityWindowDays}
-              availabilityWindowOptions={availabilityWindowOptions}
-              onMinimumStayChange={(value) => {
-                const nextValue = String(value).trim();
-                updateAvailabilitySettingsForm({
-                  minimumStay: nextValue === "" ? "" : Number(nextValue),
-                });
-              }}
-              onMaximumStayChange={(value) => {
-                const nextValue = String(value).trim();
-                updateAvailabilitySettingsForm({
-                  maximumStay: nextValue === "" ? "" : Number(nextValue),
-                });
-              }}
-              onAdvanceNoticeChange={(value) =>
-                updateAvailabilitySettingsForm({ advanceNoticeDays: Number(value) || 0 })
-              }
-              onPreparationTimeChange={(value) =>
-                updateAvailabilitySettingsForm({ preparationTimeDays: Number(value) || 0 })
-              }
-              onAvailabilityWindowChange={(value) =>
-                updateAvailabilitySettingsForm({ availabilityWindowDays: Number(value) || 365 })
-              }
-              showSaveButton={hasAvailabilitySettingsChanges}
-              canSave={canSaveAvailabilitySettings}
-              saving={isSavingAvailabilitySettings}
-              saveError={availabilitySettingsSaveError}
-              onSave={handleSaveAvailabilitySettings}
-              onBack={() => setSidebarMode("summary")}
-            />
-          ) : sidebarMode === "calendar-sync" ? (
-            <CalendarSyncCard
-              domitsCalendarLink={hostCalendarExportUrl}
-              externalCalendarUrlInput={calendarUrlInput}
-              calendarNameInput={calendarNameInput}
-              calendarProviderInput={calendarProviderInput}
-              onExternalCalendarUrlChange={(value) =>
-                updateCalendarSyncForm({ calendarUrl: String(value || "") })
-              }
-              onCalendarNameChange={(value) =>
-                updateCalendarSyncForm({ calendarName: String(value || "") })
-              }
-              onCalendarProviderChange={(value) =>
-                updateCalendarSyncForm({
-                  calendarProvider: String(value || "auto").trim().toLowerCase(),
-                })
-              }
-              onCopyDomitsCalendarLink={handleCopyDomitsCalendarLink}
-              domitsCalendarLinkCopied={domitsCalendarLinkCopied}
-              onAddCalendar={handleAddCalendarSource}
-              canAddCalendar={canAddCalendarSource}
-              addingCalendar={isSavingCalendarSync}
-              addCalendarError={calendarSyncError}
-              isEditingCalendar={isEditingCalendarSource}
-              connectedSources={calendarSources}
-              onEditSource={handleEditCalendarSource}
-              editingSourceId={editingCalendarSourceId}
-              onCancelEdit={handleCancelEditCalendarSource}
-              onRefreshSource={handleRefreshCalendarSource}
-              refreshingSourceId={refreshingCalendarSourceId}
-              sourceSyncStateById={sourceSyncStateById}
-              onRefreshAllSources={handleRefreshAllCalendarSources}
-              refreshingAllSources={isRefreshingAllCalendarSources}
-              onRemoveSource={handleRemoveCalendarSource}
-              removingSourceId={removingCalendarSourceId}
-              onBack={handleCalendarSyncBack}
-            />
-          ) : (
-            <>
-              <PricingCard
-                nightlyRate={pricingSnapshot.nightlyRate}
-                weekendRate={pricingSnapshot.weekendRate}
-                weeklyDiscountPercent={pricingSnapshot.weeklyDiscountPercent}
-                onOpenSettings={() => setSidebarMode("pricing-settings")}
-              />
-              <AvailabilityCard
-                minimumStay={pricingSnapshot.minimumStay}
-                maximumStay={pricingSnapshot.maximumStay}
-                advanceNoticeDays={pricingSnapshot.advanceNoticeDays}
-                onOpenSettings={() => setSidebarMode("availability-settings")}
-              />
-              <CalendarLinkCard
-                connectedCount={calendarSources.length}
-                onOpenSettings={openCalendarSync}
-              />
-            </>
-          )}
+          <HostCalendarSidebar
+            isSidebarLoading={isSidebarLoading}
+            sidebarLoadingMessage={sidebarLoadingMessage}
+            selectedDateKeys={selectedDateKeys}
+            selectedAvailabilityStats={selectedAvailabilityStats}
+            handleToggleAvailability={handleToggleAvailability}
+            selectionPriceInput={selectionPriceInput}
+            handleSelectionPriceChange={handleSelectionPriceChange}
+            selectionPriceDirty={selectionPriceDirty}
+            canSaveSelectionPrice={canSaveSelectionPrice}
+            handleSaveSelectionPrice={handleSaveSelectionPrice}
+            sidebarMode={sidebarMode}
+            normalizedPricingSettingsForm={normalizedPricingSettingsForm}
+            pricingSnapshot={pricingSnapshot}
+            pricingSettingsForm={pricingSettingsForm}
+            weekendRateInput={weekendRateInput}
+            updatePricingSettingsForm={updatePricingSettingsForm}
+            setWeekendRateInput={setWeekendRateInput}
+            hasAnyPricingSettingsChanges={hasAnyPricingSettingsChanges}
+            canSavePricingSettings={canSavePricingSettings}
+            isSavingPricingSettings={isSavingPricingSettings}
+            pricingSettingsSaveError={pricingSettingsSaveError}
+            handleSavePricingSettings={handleSavePricingSettings}
+            availabilitySettingsForm={availabilitySettingsForm}
+            availabilityWindowOptions={availabilityWindowOptions}
+            updateAvailabilitySettingsForm={updateAvailabilitySettingsForm}
+            hasAvailabilitySettingsChanges={hasAvailabilitySettingsChanges}
+            canSaveAvailabilitySettings={canSaveAvailabilitySettings}
+            isSavingAvailabilitySettings={isSavingAvailabilitySettings}
+            availabilitySettingsSaveError={availabilitySettingsSaveError}
+            handleSaveAvailabilitySettings={handleSaveAvailabilitySettings}
+            hostCalendarExportUrl={hostCalendarExportUrl}
+            calendarUrlInput={calendarUrlInput}
+            calendarNameInput={calendarNameInput}
+            calendarProviderInput={calendarProviderInput}
+            updateCalendarSyncForm={updateCalendarSyncForm}
+            handleCopyDomitsCalendarLink={handleCopyDomitsCalendarLink}
+            domitsCalendarLinkCopied={domitsCalendarLinkCopied}
+            handleAddCalendarSource={handleAddCalendarSource}
+            canAddCalendarSource={canAddCalendarSource}
+            isSavingCalendarSync={isSavingCalendarSync}
+            calendarSyncError={calendarSyncError}
+            isEditingCalendarSource={isEditingCalendarSource}
+            calendarSources={calendarSources}
+            handleEditCalendarSource={handleEditCalendarSource}
+            editingCalendarSourceId={editingCalendarSourceId}
+            handleCancelEditCalendarSource={handleCancelEditCalendarSource}
+            handleRefreshCalendarSource={handleRefreshCalendarSource}
+            refreshingCalendarSourceId={refreshingCalendarSourceId}
+            sourceSyncStateById={sourceSyncStateById}
+            handleRefreshAllCalendarSources={handleRefreshAllCalendarSources}
+            isRefreshingAllCalendarSources={isRefreshingAllCalendarSources}
+            handleRemoveCalendarSource={handleRemoveCalendarSource}
+            removingCalendarSourceId={removingCalendarSourceId}
+            handleCalendarSyncBack={handleCalendarSyncBack}
+            setSidebarMode={setSidebarMode}
+            openCalendarSync={openCalendarSync}
+          />
         </aside>
       </div>
     </section>
