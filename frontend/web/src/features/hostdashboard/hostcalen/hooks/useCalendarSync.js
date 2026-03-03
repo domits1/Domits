@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getCognitoUserId } from "../../../../services/getAccessToken";
 import {
@@ -24,6 +24,44 @@ const SOURCE_SYNC_STATE = {
 };
 
 const resolveSourceId = (source, index) => String(source?.sourceId || source?.id || `${index}`).trim();
+const resolveStableSourceId = (source) => String(source?.sourceId || source?.id || "").trim();
+const resolveOrderingKey = (source, index) => resolveStableSourceId(source) || `__index-${index}`;
+
+const orderSourcesByPreviousOrder = (previousSources, incomingSources) => {
+  const safePreviousSources = Array.isArray(previousSources) ? previousSources : [];
+  const safeIncomingSources = Array.isArray(incomingSources) ? incomingSources : [];
+  if (!safePreviousSources.length || !safeIncomingSources.length) {
+    return safeIncomingSources;
+  }
+
+  const previousOrderKeys = safePreviousSources.map((source, index) =>
+    resolveOrderingKey(source, index)
+  );
+  const incomingEntries = safeIncomingSources.map((source, index) => ({
+    source,
+    key: resolveOrderingKey(source, index),
+  }));
+  const incomingByKey = new Map(incomingEntries.map((entry) => [entry.key, entry.source]));
+  const orderedSources = [];
+
+  previousOrderKeys.forEach((key) => {
+    if (!incomingByKey.has(key)) {
+      return;
+    }
+    orderedSources.push(incomingByKey.get(key));
+    incomingByKey.delete(key);
+  });
+
+  incomingEntries.forEach((entry) => {
+    if (!incomingByKey.has(entry.key)) {
+      return;
+    }
+    orderedSources.push(entry.source);
+    incomingByKey.delete(entry.key);
+  });
+
+  return orderedSources;
+};
 
 const buildSyncStateMapForSources = (sources, previousStateById = {}) => {
   const nextStateById = {};
@@ -249,6 +287,11 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
   const [isRefreshingAllCalendarSources, setIsRefreshingAllCalendarSources] = useState(false);
   const [editingCalendarSourceId, setEditingCalendarSourceId] = useState("");
   const [domitsCalendarLinkCopied, setDomitsCalendarLinkCopied] = useState(false);
+  const calendarSourcesRef = useRef([]);
+
+  useEffect(() => {
+    calendarSourcesRef.current = calendarSources;
+  }, [calendarSources]);
 
   useEffect(() => {
     let mounted = true;
@@ -456,8 +499,9 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
   };
 
   const applyCalendarSourcesPayload = ({ sources, blockedDates }) => {
-    setCalendarSources(sources);
-    setSourceSyncStateById((previous) => buildSyncStateMapForSources(sources, previous));
+    const orderedSources = orderSourcesByPreviousOrder(calendarSourcesRef.current, sources);
+    setCalendarSources(orderedSources);
+    setSourceSyncStateById((previous) => buildSyncStateMapForSources(orderedSources, previous));
     setExternalBlockedDates(new Set(blockedDates));
   };
 

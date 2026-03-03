@@ -245,11 +245,13 @@ export const getKeyRangeInclusive = (startKey, endKey) => {
     return [];
   }
 
-  const from = startDate <= endDate ? startDate : endDate;
-  const to = startDate <= endDate ? endDate : startDate;
+  const startMs = startDate.getTime();
+  const endMs = endDate.getTime();
+  const fromMs = Math.min(startMs, endMs);
+  const toMs = Math.max(startMs, endMs);
   const keys = [];
 
-  for (let cursorMs = from.getTime(); cursorMs <= to.getTime(); cursorMs += UTC_DAY_IN_MS) {
+  for (let cursorMs = fromMs; cursorMs <= toMs; cursorMs += UTC_DAY_IN_MS) {
     keys.push(utcDateToKey(new Date(cursorMs)));
   }
 

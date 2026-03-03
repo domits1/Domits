@@ -171,6 +171,28 @@ const resolveSourceSyncStatusLabel = (syncState) => {
   return "Sync active";
 };
 
+const useDismissOnOutsideMouseDown = ({ isOpen, modalContentRef, onDismiss }) => {
+  React.useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+    const handleMouseDown = (event) => {
+      const modalContent = modalContentRef.current;
+      if (!modalContent) {
+        return;
+      }
+      const eventTarget = event.target;
+      if (eventTarget instanceof Node && !modalContent.contains(eventTarget)) {
+        onDismiss();
+      }
+    };
+    globalThis.addEventListener("mousedown", handleMouseDown);
+    return () => {
+      globalThis.removeEventListener("mousedown", handleMouseDown);
+    };
+  }, [isOpen, modalContentRef, onDismiss]);
+};
+
 function ConnectedSourcesSection({
   sources,
   syncStateMap,
@@ -183,6 +205,7 @@ function ConnectedSourcesSection({
   addingCalendar,
   hasRefreshInProgress,
   isConfirmingRemoval,
+  isSyncingAllSources,
 }) {
   return (
     <section className="hc-sync-connected">
@@ -193,22 +216,26 @@ function ConnectedSourcesSection({
           const sourceName = String(source?.calendarName || source?.name || "External calendar");
           const isRemoving = String(removingSourceId || "") === sourceId;
           const sourceSyncState = String(syncStateMap[sourceId] || SOURCE_SYNC_STATE.IDLE);
+          const displaySyncState =
+            isSyncingAllSources && sourceSyncState === SOURCE_SYNC_STATE.PENDING
+              ? SOURCE_SYNC_STATE.SYNCING
+              : sourceSyncState;
           const isEditing = String(editingSourceId || "") === sourceId;
           const provider = resolveCalendarProvider(source);
           const providerIcon = getProviderIcon(provider);
           const isProviderIcon = provider !== CALENDAR_PROVIDER.GENERIC;
           const syncActionClassName = [
             "hc-sync-source-action",
-            sourceSyncState === SOURCE_SYNC_STATE.SYNCING && "is-active",
-            sourceSyncState === SOURCE_SYNC_STATE.SUCCESS && "is-success",
-            sourceSyncState === SOURCE_SYNC_STATE.ERROR && "is-error",
+            displaySyncState === SOURCE_SYNC_STATE.SYNCING && "is-active",
+            displaySyncState === SOURCE_SYNC_STATE.SUCCESS && "is-success",
+            displaySyncState === SOURCE_SYNC_STATE.ERROR && "is-error",
           ]
             .filter(Boolean)
             .join(" ");
           const sourceSyncStatusClassName = [
             "hc-sync-connected-card-status",
-            sourceSyncState !== SOURCE_SYNC_STATE.IDLE &&
-              `hc-sync-connected-card-status--${sourceSyncState}`,
+            displaySyncState !== SOURCE_SYNC_STATE.IDLE &&
+              `hc-sync-connected-card-status--${displaySyncState}`,
           ]
             .filter(Boolean)
             .join(" ");
@@ -230,7 +257,7 @@ function ConnectedSourcesSection({
                 <div className="hc-sync-connected-card-copy">
                   <p className="hc-sync-connected-card-name">{sourceName}</p>
                   <p className={sourceSyncStatusClassName}>
-                    {resolveSourceSyncStatusLabel(sourceSyncState)}
+                    {resolveSourceSyncStatusLabel(displaySyncState)}
                   </p>
                   <p className="hc-sync-connected-card-meta">{formatLastSyncLabel(source?.lastSyncAt)}</p>
                 </div>
@@ -248,7 +275,7 @@ function ConnectedSourcesSection({
                   }
                   onClick={() => onRefreshSource?.(sourceId)}
                 >
-                  {resolveSourceSyncButtonLabel(sourceSyncState)}
+                  {resolveSourceSyncButtonLabel(displaySyncState)}
                 </button>
                 <button
                   type="button"
@@ -293,6 +320,7 @@ ConnectedSourcesSection.propTypes = {
   addingCalendar: PropTypes.bool,
   hasRefreshInProgress: PropTypes.bool,
   isConfirmingRemoval: PropTypes.bool,
+  isSyncingAllSources: PropTypes.bool,
 };
 
 function ConnectionSetupForm({
@@ -481,25 +509,11 @@ function EditSourceModal({
     }
   }, [addingCalendar, onCancelEdit]);
 
-  React.useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-    const handleMouseDown = (event) => {
-      const modalContent = modalContentRef.current;
-      if (!modalContent) {
-        return;
-      }
-      const eventTarget = event.target;
-      if (eventTarget instanceof Node && !modalContent.contains(eventTarget)) {
-        handleDismiss();
-      }
-    };
-    globalThis.addEventListener("mousedown", handleMouseDown);
-    return () => {
-      globalThis.removeEventListener("mousedown", handleMouseDown);
-    };
-  }, [handleDismiss, isOpen]);
+  useDismissOnOutsideMouseDown({
+    isOpen,
+    modalContentRef,
+    onDismiss: handleDismiss,
+  });
 
   if (!isOpen) {
     return null;
@@ -625,25 +639,11 @@ function RemoveSourceModal({
     }
   }, [isRemovingPendingSource, resetRemoveSourceFlow]);
 
-  React.useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-    const handleMouseDown = (event) => {
-      const modalContent = modalContentRef.current;
-      if (!modalContent) {
-        return;
-      }
-      const eventTarget = event.target;
-      if (eventTarget instanceof Node && !modalContent.contains(eventTarget)) {
-        handleDismiss();
-      }
-    };
-    globalThis.addEventListener("mousedown", handleMouseDown);
-    return () => {
-      globalThis.removeEventListener("mousedown", handleMouseDown);
-    };
-  }, [handleDismiss, isOpen]);
+  useDismissOnOutsideMouseDown({
+    isOpen,
+    modalContentRef,
+    onDismiss: handleDismiss,
+  });
 
   if (!isOpen) {
     return null;
@@ -925,6 +925,7 @@ export default function CalendarSyncCard({
       addingCalendar={addingCalendar}
       hasRefreshInProgress={hasRefreshInProgress}
       isConfirmingRemoval={isConfirmingRemoval}
+      isSyncingAllSources={isSyncingAllSources}
     />
   );
 
