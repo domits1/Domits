@@ -271,6 +271,7 @@
           "developerAI": "Entwickler KI-Agenten",
           "developerRevenue": "Entwickler Einnahmen",
           "developerDistribution": "Entwickler Verteilung",
+          "designer": "Designer",
           "security": "Sicherheit",
           "marketing": "Marketing",
           "growth": "Wachstum",
@@ -756,4 +757,3 @@
         }
       }
 }
-  

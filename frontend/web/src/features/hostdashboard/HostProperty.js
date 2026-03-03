@@ -1,1 +1,3 @@
-export { default } from "./hostproperty/views/HostPropertyEditor";
+import HostPropertyEditor from "./hostproperty/views/HostPropertyEditor";
+
+export default HostPropertyEditor;
