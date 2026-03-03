@@ -28,7 +28,7 @@ export const handler = async (event) => {
                 await taskRepository.save(newTask);
 
                 return {
-                    statusCode: 201, // 201 = Created
+                    statusCode: 201,
                     headers: {
                         "Access-Control-Allow-Origin": "*", 
                         "Content-Type": "application/json"
