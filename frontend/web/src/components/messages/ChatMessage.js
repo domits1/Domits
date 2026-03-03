@@ -21,7 +21,14 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
   };
 
   const isOutgoingBySender = senderId ? senderId === userId : null;
-  const isOutgoing = isOutgoingBySender !== null ? isOutgoingBySender : Boolean(isSent);
+  let isOutgoing = false;
+  if (isOutgoingBySender === true) {
+    isOutgoing = true;
+  } else if (isOutgoingBySender === false) {
+    isOutgoing = false;
+  } else {
+    isOutgoing = Boolean(isSent);
+  }
   const isIncoming = isOutgoing === false;
   const directionClass = isOutgoing ? "sent" : "received";
 
@@ -86,6 +93,7 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
               return isVideo ? (
                 <video key={attachmentKey} controls className="message-video">
                   <source src={fileUrl} type="video/mp4" />
+                  <track kind="captions" srcLang="en" label="English" />
                   Your browser does not support the video tag.
                 </video>
               ) : (
