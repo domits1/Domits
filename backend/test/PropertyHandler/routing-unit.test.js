@@ -1,208 +1,186 @@
-import {handler} from "../../functions/PropertyHandler/index.js";
-import {PropertyController} from "../../functions/PropertyHandler/controller/propertyController.js";
-import {describe, it, expect} from "@jest/globals";
+import { describe, it, expect } from "@jest/globals";
+import { handler } from "../../functions/PropertyHandler/index.js";
+import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
+
+const routeCases = [
+  {
+    name: "POST request",
+    controllerMethod: "create",
+    event: { httpMethod: "POST" },
+    mockResponse: { statusCode: 201, body: "1" },
+    expectedStatusCode: 201,
+  },
+  {
+    name: "DELETE request",
+    controllerMethod: "delete",
+    event: { httpMethod: "DELETE" },
+    mockResponse: { statusCode: 200, body: "Deleted" },
+    expectedStatusCode: 200,
+    expectedBody: "Deleted",
+  },
+  {
+    name: "DELETE property image request",
+    controllerMethod: "deletePropertyImage",
+    event: { httpMethod: "DELETE", resource: "/property/images" },
+    mockResponse: { statusCode: 204 },
+    expectedStatusCode: 204,
+  },
+  {
+    name: "PATCH property overview request",
+    controllerMethod: "updatePropertyOverview",
+    event: { httpMethod: "PATCH", resource: "/property/overview" },
+    mockResponse: { statusCode: 204 },
+    expectedStatusCode: 204,
+  },
+  {
+    name: "PATCH property calendar overrides request",
+    controllerMethod: "updatePropertyCalendarOverrides",
+    event: { httpMethod: "PATCH", resource: "/property/calendar/overrides" },
+    mockResponse: { statusCode: 200 },
+    expectedStatusCode: 200,
+  },
+  {
+    name: "PATCH property activation request",
+    controllerMethod: "activateProperty",
+    event: { httpMethod: "PATCH", resource: "/property" },
+    mockResponse: { statusCode: 204 },
+    expectedStatusCode: 204,
+  },
+  {
+    name: "GET all hostDashboard properties",
+    controllerMethod: "getFullOwnedProperties",
+    event: {
+      httpMethod: "GET",
+      resource: "/property/hostDashboard/{subResource}",
+      pathParameters: { subResource: "all" },
+    },
+    mockResponse: { statusCode: 200 },
+    expectedStatusCode: 200,
+  },
+  {
+    name: "GET property calendar overrides",
+    controllerMethod: "getPropertyCalendarOverrides",
+    event: { httpMethod: "GET", resource: "/property/calendar/overrides" },
+    mockResponse: { statusCode: 200 },
+    expectedStatusCode: 200,
+  },
+  {
+    name: "GET single hostDashboard property",
+    controllerMethod: "getFullOwnedPropertyById",
+    event: {
+      httpMethod: "GET",
+      resource: "/property/hostDashboard/{subResource}",
+      pathParameters: { subResource: "single" },
+    },
+    mockResponse: { statusCode: 200 },
+    expectedStatusCode: 200,
+  },
+  {
+    name: "GET bookingEngine properties by type",
+    controllerMethod: "getActivePropertiesCardByType",
+    event: {
+      httpMethod: "GET",
+      resource: "/property/bookingEngine/{subResource}",
+      pathParameters: { subResource: "byType" },
+    },
+    mockResponse: { statusCode: 200 },
+    expectedStatusCode: 200,
+  },
+  {
+    name: "GET all active properties",
+    controllerMethod: "getActivePropertiesCard",
+    event: {
+      httpMethod: "GET",
+      resource: "/property/bookingEngine/{subResource}",
+      pathParameters: { subResource: "all" },
+    },
+    mockResponse: { statusCode: 200 },
+    expectedStatusCode: 200,
+  },
+  {
+    name: "GET properties by hostId",
+    controllerMethod: "getActivePropertiesCardByHostId",
+    event: {
+      httpMethod: "GET",
+      resource: "/property/bookingEngine/{subResource}",
+      pathParameters: { subResource: "byHostId" },
+    },
+    mockResponse: { statusCode: 200 },
+    expectedStatusCode: 200,
+  },
+  {
+    name: "GET set of properties",
+    controllerMethod: "getActivePropertiesCardById",
+    event: {
+      httpMethod: "GET",
+      resource: "/property/bookingEngine/{subResource}",
+      pathParameters: { subResource: "set" },
+    },
+    mockResponse: { statusCode: 200 },
+    expectedStatusCode: 200,
+  },
+  {
+    name: "GET active listing details",
+    controllerMethod: "getFullActivePropertyById",
+    event: {
+      httpMethod: "GET",
+      resource: "/property/bookingEngine/{subResource}",
+      pathParameters: { subResource: "listingDetails" },
+    },
+    mockResponse: { statusCode: 200 },
+    expectedStatusCode: 200,
+  },
+];
 
 describe("Routing unit tests", () => {
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
-    it("should handle a POST request", async () => {
-        jest.spyOn(PropertyController.prototype, 'create').mockResolvedValue({statusCode: 201, body: "1"});
+  it.each(routeCases)("should handle $name", async ({ controllerMethod, event, mockResponse, expectedStatusCode, expectedBody }) => {
+    jest.spyOn(PropertyController.prototype, controllerMethod).mockResolvedValue(mockResponse);
 
-        const event = {httpMethod: "POST"};
-        const response = await handler(event);
+    const response = await handler(event);
 
-        expect(response.statusCode).toBe(201);
-    });
+    expect(response.statusCode).toBe(expectedStatusCode);
+    if (expectedBody !== undefined) {
+      expect(response.body).toBe(expectedBody);
+    }
+  });
 
-    it("should handle a DELETE request", async () => {
-        jest.spyOn(PropertyController.prototype, 'delete').mockResolvedValue({statusCode: 200, body: "Deleted"});
+  it("should return 404 for unknown '/property/hostDashboard' sub-resource", async () => {
+    const event = {
+      httpMethod: "GET",
+      resource: "/property/hostDashboard/{subResource}",
+      pathParameters: { subResource: "unknown" },
+    };
+    const response = await handler(event);
+    expect(response.statusCode).toBe(404);
+    expect(response.body).toBe("Sub-resource for '/property/hostDashboard' not found.");
+  });
 
-        const event = {httpMethod: "DELETE"};
-        const response = await handler(event);
+  it("should return 404 for unknown '/property/bookingEngine' sub-resource", async () => {
+    const event = {
+      httpMethod: "GET",
+      resource: "/property/bookingEngine/{subResource}",
+      pathParameters: { subResource: "unknown" },
+    };
+    const response = await handler(event);
+    expect(response.statusCode).toBe(404);
+    expect(response.body).toBe("Sub-resource for '/property/bookingEngine' not found.");
+  });
 
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toBe("Deleted");
-    });
+  it("should return 404 for unknown HTTP method", async () => {
+    const event = { httpMethod: "PUT" };
+    const response = await handler(event);
+    expect(response.statusCode).toBe(404);
+    expect(response.body).toBe("Method not found.");
+  });
 
-    it("should handle a DELETE request for property image", async () => {
-        jest.spyOn(PropertyController.prototype, "deletePropertyImage").mockResolvedValue({statusCode: 204});
-
-        const event = {
-            httpMethod: "DELETE",
-            resource: "/property/images",
-        };
-        const response = await handler(event);
-
-        expect(response.statusCode).toBe(204);
-    });
-
-    it("should handle a PATCH request for property overview", async () => {
-        jest.spyOn(PropertyController.prototype, "updatePropertyOverview").mockResolvedValue({statusCode: 204});
-
-        const event = {
-            httpMethod: "PATCH",
-            resource: "/property/overview",
-        };
-        const response = await handler(event);
-
-        expect(response.statusCode).toBe(204);
-    });
-
-    it("should handle a PATCH request for property calendar overrides", async () => {
-        jest.spyOn(PropertyController.prototype, "updatePropertyCalendarOverrides").mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "PATCH",
-            resource: "/property/calendar/overrides",
-        };
-        const response = await handler(event);
-
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a PATCH request for property activation", async () => {
-        jest.spyOn(PropertyController.prototype, "activateProperty").mockResolvedValue({statusCode: 204});
-
-        const event = {
-            httpMethod: "PATCH",
-            resource: "/property",
-        };
-        const response = await handler(event);
-
-        expect(response.statusCode).toBe(204);
-    });
-
-    it("should handle a GET request for all properties on hostDashboard", async () => {
-        jest.spyOn(PropertyController.prototype, 'getFullOwnedProperties').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/hostDashboard/{subResource}",
-            pathParameters: {subResource: "all"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for property calendar overrides", async () => {
-        jest.spyOn(PropertyController.prototype, "getPropertyCalendarOverrides").mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/calendar/overrides",
-        };
-        const response = await handler(event);
-
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for a single property", async () => {
-        jest.spyOn(PropertyController.prototype, 'getFullOwnedPropertyById').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/hostDashboard/{subResource}",
-            pathParameters: {subResource: "single"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for properties by type", async () => {
-        jest.spyOn(PropertyController.prototype, 'getActivePropertiesCardByType').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "byType"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for all active properties", async () => {
-        jest.spyOn(PropertyController.prototype, 'getActivePropertiesCard').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "all"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for properties by hostId", async () => {
-        jest.spyOn(PropertyController.prototype, 'getActivePropertiesCardByHostId').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "byHostId"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for a set of properties", async () => {
-        jest.spyOn(PropertyController.prototype, 'getActivePropertiesCardById').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "set"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for listing details of an active property", async () => {
-        jest.spyOn(PropertyController.prototype, 'getFullActivePropertyById').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "listingDetails"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should return 404 for unrecognized sub-resource for '/property/hostDashboard'", async () => {
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/hostDashboard/{subResource}",
-            pathParameters: {subResource: "unknown"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(404);
-        expect(response.body).toBe("Sub-resource for '/property/hostDashboard' not found.");
-    });
-
-    it("should return 404 for unrecognized subResource '/property/bookingEngine'", async () => {
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "unknown"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(404);
-        expect(response.body).toBe("Sub-resource for '/property/bookingEngine' not found.");
-    });
-
-    it("should return 404 for unrecognized HTTP method", async () => {
-        const event = {httpMethod: "PUT"};
-        const response = await handler(event);
-        expect(response.statusCode).toBe(404);
-        expect(response.body).toBe("Method not found.");
-    });
-
-    it("should return 404 for unrecognized path", async () => {
-        const event = {httpMethod: "GET", resource: "some/path/that/does/not/exist", pathParameters: {}};
-        const response = await handler(event);
-        expect(response.statusCode).toBe(404);
-        expect(response.body).toBe("Path not found.");
-    });
+  it("should return 404 for unknown path", async () => {
+    const event = { httpMethod: "GET", resource: "some/path/that/does/not/exist", pathParameters: {} };
+    const response = await handler(event);
+    expect(response.statusCode).toBe(404);
+    expect(response.body).toBe("Path not found.");
+  });
 });

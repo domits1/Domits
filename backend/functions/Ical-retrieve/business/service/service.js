@@ -1,53 +1,10 @@
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { Repository } from "../../data/repository.js";
+import { resolveCalendarProvider } from "../../../.shared/calendarProvider.js";
 
 const MAX_ICS_BYTES = 2_000_000;
 const MAX_EXPAND_DAYS = 365;
-const CALENDAR_PROVIDER = {
-  AIRBNB: "airbnb",
-  BOOKING: "booking",
-  GENERIC: "generic",
-};
-
-const normalizeCalendarProvider = (provider) => {
-  const normalized = String(provider || "").trim().toLowerCase();
-  if (!normalized) {
-    return null;
-  }
-  if (normalized === CALENDAR_PROVIDER.AIRBNB || normalized === CALENDAR_PROVIDER.BOOKING) {
-    return normalized;
-  }
-  return CALENDAR_PROVIDER.GENERIC;
-};
-
-const resolveCalendarProvider = ({ calendarProvider, calendarUrl, calendarName }) => {
-  const explicitProvider = normalizeCalendarProvider(calendarProvider);
-  if (explicitProvider) {
-    return explicitProvider;
-  }
-
-  const url = String(calendarUrl || "").trim().toLowerCase();
-  const name = String(calendarName || "").trim().toLowerCase();
-  let hostname = "";
-  if (url) {
-    try {
-      hostname = String(new URL(url).hostname || "").toLowerCase();
-    } catch {
-      hostname = "";
-    }
-  }
-
-  if (hostname.includes("airbnb") || url.includes("airbnb") || name.includes("airbnb")) {
-    return CALENDAR_PROVIDER.AIRBNB;
-  }
-
-  if (hostname.includes("booking.com") || url.includes("booking.com") || name.includes("booking")) {
-    return CALENDAR_PROVIDER.BOOKING;
-  }
-
-  return CALENDAR_PROVIDER.GENERIC;
-};
 
 export class Service {
   constructor() {
