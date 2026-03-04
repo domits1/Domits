@@ -21,7 +21,7 @@ export const createTask = async (taskData) => {
     return new Promise((resolve) => {
         setTimeout(() => {
             const newTask = {
-                id: Math.floor(Math.random() * 10000),
+                id: Date.now(),
                 priority: 'Medium', 
                 dueDate: new Date().toISOString().split('T')[0],
                 ...taskData
