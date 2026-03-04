@@ -53,7 +53,7 @@
     border: none;
     padding: 10px 0;
     font-size: 16px;
-    color: #6c757d;
+    color: #495057;
     cursor: pointer;
     position: relative;
     font-weight: 500;
@@ -95,7 +95,7 @@
 
 .overview-stat-icon {
     font-size: 18px;
-    color: #6c757d;
+    color: #495057;
     width: 32px;
     height: 32px;
     display: flex;
@@ -117,7 +117,7 @@
 
 .overview-stat-label {
     font-size: 12px;
-    color: #6c757d;
+    color: #495057;
     text-transform: uppercase;
     font-weight: 600;
     margin-bottom: 4px;
@@ -131,7 +131,7 @@
 
 .overview-stat-value small {
     font-size: 11px;
-    color: #6c757d;
+    color: #495057;
     font-weight: normal;
     margin-left: 5px;
 }
@@ -177,7 +177,7 @@
 }
 
 .task-arrow {
-    color: #adb5bd;
+    color: #6c757d;
     font-size: 10px;
     cursor: pointer;
     flex-shrink: 0; 
@@ -202,7 +202,7 @@
 .badge-priority.urgent { background-color: #dc3545; color: white; }
 .badge-priority.high { background-color: #fd7e14; color: white; }
 .badge-priority.medium { background-color: #ffc107; color: #333; } 
-.badge-priority.low { background-color: #6c757d; color: white; }
+.badge-priority.low { background-color: #495057; color: white; }
 
 .badge-status {
     border-radius: 50px; 
@@ -212,7 +212,7 @@
     gap: 6px;
 }
 
-.badge-status.pending { background-color: #6c757d; color: white; }
+.badge-status.pending { background-color: #495057; color: white; }
 .badge-status.in-progress { background-color: #007bff; color: white; }
 .badge-status.completed { background-color: #28a745; color: white; }
 .badge-status.overdue { background-color: #dc3545; color: white; }
@@ -347,7 +347,7 @@
 .btn-text {
     background: none;
     border: none;
-    color: #6c757d;
+    color: #495057;
     cursor: pointer;
     font-weight: 600;
 }
@@ -377,7 +377,7 @@
     background-color: white;
     cursor: pointer;
     font-size: 14px;
-    color: #6c757d;
+    color: #495057;
     box-sizing: border-box;
     font-weight: normal; 
     margin-bottom: 0;
@@ -464,7 +464,7 @@
 }
 
 .search-box svg {
-    color: #6c757d;
+    color: #495057;
 }
 
 .active-filters-row {
@@ -501,7 +501,7 @@
     height: 8px;
     border-radius: 50%;
 }
-.dot-pending { background-color: #adb5bd; }
+.dot-pending { background-color: #6c757d; }
 .dot-inprogress { background-color: #fd7e14; }
 .dot-completed { background-color: #28a745; }
 .dot-overdue { background-color: #dc3545; }
@@ -512,7 +512,7 @@
     right: 0;
     background: none;
     border: none;
-    color: #adb5bd;
+    color: #6c757d;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -521,7 +521,7 @@
 
 .btn-clear-filters:hover {
     text-decoration: underline;
-    color: #6c757d;
+    color: #495057;
 }
 
 .tasks-table tr {
@@ -592,7 +592,7 @@
 .confirm-modal-content p {
     margin: 0 0 25px 0;
     font-size: 14px;
-    color: #6c757d;
+    color: #495057;
     line-height: 1.5;
 }
 
@@ -669,7 +669,7 @@
     background-size: 8px auto;
 }
 
-.badge-select.status-pending { background-color: #6c757d; color: white; }
+.badge-select.status-pending { background-color: #495057; color: white; }
 .badge-select.status-in-progress { background-color: #007bff; color: white; }
 .badge-select.status-completed { background-color: #28a745; color: white; }
 .badge-select.status-overdue { background-color: #dc3545; color: white; }
@@ -677,7 +677,7 @@
 .badge-select.priority-urgent { background-color: #dc3545; color: white; }
 .badge-select.priority-high { background-color: #fd7e14; color: white; }
 .badge-select.priority-medium { background-color: #ffc107; color: #333; background-image: none; padding-right: 10px;}
-.badge-select.priority-low { background-color: #6c757d; color: white; }
+.badge-select.priority-low { background-color: #495057; color: white; }
 
 .property-badge { background-color: #f8f9fa; color: #495057; border: 1px solid #ced4da; background-image: none; padding-right: 10px;}
 
@@ -702,7 +702,7 @@
 
 .attachments-count {
     font-size: 12px;
-    color: #6c757d;
+    color: #495057;
 }
 
 .attachments-box {
@@ -716,7 +716,7 @@
 .no-attachments-text {
     margin: 0;
     font-size: 13px;
-    color: #adb5bd;
+    color: #6c757d;
 }
 
 .activity-section {
@@ -740,7 +740,7 @@
 
 .created-info {
     font-size: 12px;
-    color: #6c757d;
+    color: #495057;
 }
 
 .activity-item {
