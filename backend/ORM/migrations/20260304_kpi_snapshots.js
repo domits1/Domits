@@ -1,4 +1,4 @@
-export class Migration20260304_kpi_snapshots {
+export class KpiSnapshots20260304 {
   async up(queryRunner) {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS main.kpi_snapshot (
