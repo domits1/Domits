@@ -7,6 +7,27 @@ export class PropertyPricingRepository {
     this.weekendRateColumnSupported = null;
   }
 
+  quoteIdentifier(identifier) {
+    return `"${String(identifier).replaceAll('"', '""')}"`;
+  }
+
+  getSchemaName(client) {
+    const schema = client?.options?.schema;
+    if (typeof schema !== "string") {
+      return null;
+    }
+    const normalized = schema.trim();
+    return normalized ? normalized : null;
+  }
+
+  getPricingTableName(client) {
+    const schemaName = this.getSchemaName(client);
+    if (!schemaName) {
+      return "property_pricing";
+    }
+    return `${this.quoteIdentifier(schemaName)}.${this.quoteIdentifier("property_pricing")}`;
+  }
+
   parseRoomRate(pricing) {
     const roomRate = Number(pricing?.roomRate ?? pricing?.roomrate);
     if (!Number.isFinite(roomRate) || roomRate < 2) {
@@ -53,15 +74,24 @@ export class PropertyPricingRepository {
       return true;
     }
 
+    const schemaName = this.getSchemaName(client);
+    const params = ["property_pricing"];
+    let schemaCondition = "table_schema = ANY(current_schemas(true))";
+    if (schemaName) {
+      params.push(schemaName);
+      schemaCondition = `table_schema = $${params.length}`;
+    }
+
     const result = await client.query(
       `
         SELECT column_name
         FROM information_schema.columns
-        WHERE table_name = 'property_pricing'
-          AND table_schema = ANY(current_schemas(true))
+        WHERE table_name = $1
+          AND ${schemaCondition}
           AND lower(column_name) = 'weekendrate'
         LIMIT 1
-      `
+      `,
+      params
     );
 
     const weekendRateSupported = Array.isArray(result) && result.length > 0;
@@ -72,6 +102,7 @@ export class PropertyPricingRepository {
   async getPricingById(id) {
     const client = await Database.getInstance();
     const hasWeekendRateColumn = await this.supportsWeekendRateColumn(client);
+    const pricingTable = this.getPricingTableName(client);
 
     const rows = await client.query(
       `
@@ -80,7 +111,7 @@ export class PropertyPricingRepository {
           roomrate,
           cleaning,
           ${hasWeekendRateColumn ? "weekendrate" : "roomrate AS weekendrate"}
-        FROM property_pricing
+        FROM ${pricingTable}
         WHERE property_id = $1
         LIMIT 1
       `,
@@ -94,6 +125,7 @@ export class PropertyPricingRepository {
   async create(pricing) {
     const client = await Database.getInstance();
     const hasWeekendRateColumn = await this.supportsWeekendRateColumn(client);
+    const pricingTable = this.getPricingTableName(client);
     const roomRateValue = this.parseRoomRate(pricing);
     const cleaningValue = this.parseCleaningValue(pricing, 0);
     const weekendRateValue = this.parseWeekendRate(pricing, roomRateValue);
@@ -101,7 +133,7 @@ export class PropertyPricingRepository {
     if (hasWeekendRateColumn) {
       await client.query(
         `
-          INSERT INTO property_pricing (property_id, cleaning, roomrate, weekendrate)
+          INSERT INTO ${pricingTable} (property_id, cleaning, roomrate, weekendrate)
           VALUES ($1, $2, $3, $4)
         `,
         [pricing.property_id, cleaningValue, roomRateValue, weekendRateValue]
@@ -109,7 +141,7 @@ export class PropertyPricingRepository {
     } else {
       await client.query(
         `
-          INSERT INTO property_pricing (property_id, cleaning, roomrate)
+          INSERT INTO ${pricingTable} (property_id, cleaning, roomrate)
           VALUES ($1, $2, $3)
         `,
         [pricing.property_id, cleaningValue, roomRateValue]
@@ -123,6 +155,7 @@ export class PropertyPricingRepository {
   async upsertPricingByPropertyId(propertyId, pricing) {
     const client = await Database.getInstance();
     const hasWeekendRateColumn = await this.supportsWeekendRateColumn(client);
+    const pricingTable = this.getPricingTableName(client);
     const existingPricing = await this.getPricingById(propertyId);
 
     const roomRateValue = this.parseRoomRate(pricing);
@@ -136,7 +169,7 @@ export class PropertyPricingRepository {
       if (hasWeekendRateColumn) {
         await client.query(
           `
-            UPDATE property_pricing
+            UPDATE ${pricingTable}
             SET roomrate = $2, cleaning = $3, weekendrate = $4
             WHERE property_id = $1
           `,
@@ -145,7 +178,7 @@ export class PropertyPricingRepository {
       } else {
         await client.query(
           `
-            UPDATE property_pricing
+            UPDATE ${pricingTable}
             SET roomrate = $2, cleaning = $3
             WHERE property_id = $1
           `,
@@ -155,7 +188,7 @@ export class PropertyPricingRepository {
     } else if (hasWeekendRateColumn) {
       await client.query(
         `
-          INSERT INTO property_pricing (property_id, roomrate, cleaning, weekendrate)
+          INSERT INTO ${pricingTable} (property_id, roomrate, cleaning, weekendrate)
           VALUES ($1, $2, $3, $4)
         `,
         [propertyId, roomRateValue, cleaningValue, weekendRateValue]
@@ -163,7 +196,7 @@ export class PropertyPricingRepository {
     } else {
       await client.query(
         `
-          INSERT INTO property_pricing (property_id, roomrate, cleaning)
+          INSERT INTO ${pricingTable} (property_id, roomrate, cleaning)
           VALUES ($1, $2, $3)
         `,
         [propertyId, roomRateValue, cleaningValue]
