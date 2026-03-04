@@ -26,6 +26,27 @@ const HostPropertyCare = () => {
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
 
+    // --- MOCK ZALOGOWANEGO UŻYTKOWNIKA ---
+    // W przyszłości pobierzesz to z kontekstu/Reduxa (np. zalogowany host)
+    const CURRENT_USER = 'Sophie Janssen'; 
+
+    // --- FUNKCJA DO CHECKBOXÓW W MY TASKS ---
+    const handleToggleComplete = (task) => {
+        const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
+        
+        const updatedTask = {
+            ...task,
+            status: newStatus,
+            activities: [
+                ...(task.activities || []),
+                { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
+            ]
+        };
+        
+        setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
+    };
+
     useEffect(() => {
         loadData();
     }, []);
@@ -262,7 +283,7 @@ const HostPropertyCare = () => {
             case 'All Tasks': 
                 return renderTableView();
             case 'My Tasks':
-                return <div className="placeholder-view">My Tasks View</div>;
+                return renderMyTasksView();
             case 'Reports':
                 return <div className="placeholder-view">Reports View</div>;
             case 'Settings':
@@ -271,7 +292,140 @@ const HostPropertyCare = () => {
                 return null;
         }
     };
+    // --- NOWY WIDOK: MY TASKS ---
+    const renderMyTasksView = () => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        // Pobieramy TYLKO zadania przypisane do zalogowanego użytkownika (i nie usunięte)
+        let myTasks = tasks.filter(t => t.assignee === CURRENT_USER && !t.isLegacy);
 
+        // Aplikujemy filtry z paska wyszukiwania (Status, Priorytet, itd.)
+        myTasks = myTasks.filter(task => {
+            const matchProperty = filters.property === 'All properties' || task.property === filters.property;
+            const matchStatus = filters.status === 'All statuses' || task.status === filters.status;
+            const matchPriority = filters.priority === 'Any priority' || task.priority === filters.priority;
+            const searchLower = filters.search.toLowerCase();
+            const matchSearch = filters.search === '' || (task.title && task.title.toLowerCase().includes(searchLower));
+            return matchProperty && matchStatus && matchPriority && matchSearch;
+        });
+
+        // Dzielimy na sekcje zgodnie z Issue
+        const todayTasks = myTasks.filter(t => t.dueDate === todayStr && t.status !== 'Overdue' && t.status !== 'Completed');
+        const overdueTasks = myTasks.filter(t => t.status === 'Overdue' || (t.dueDate && t.dueDate < todayStr && t.status !== 'Completed'));
+        
+        // Upcoming: domyślnie ustawiamy status na Pending, priorytet Low (zgodnie z issue) i sortujemy po dacie
+        const upcomingTasks = myTasks.filter(t => t.dueDate && t.dueDate > todayStr && t.status !== 'Completed')
+            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+            .map(t => ({ ...t, priority: t.priority || 'Low', status: t.status || 'Pending' }));
+
+        const renderTaskRow = (task, isOverdueSection = false) => {
+            // Zgodnie z Issue: Przeterminowane dostają na twardo status Overdue i Priority Urgent
+            const displayPriority = isOverdueSection ? 'Urgent' : (task.priority || 'Low');
+            const displayStatus = isOverdueSection ? 'Overdue' : task.status;
+
+            return (
+                <div key={task.id} className={`my-task-card ${isOverdueSection ? 'is-overdue-card' : ''}`} onClick={() => openTaskDetails(task)}>
+                    <div className="my-task-left">
+                        <div className="my-task-icon">📋</div>
+                        <div className="my-task-info">
+                            <h4>{task.title}</h4>
+                            <span>{task.property}</span>
+                        </div>
+                    </div>
+                    
+                    <div className="my-task-middle">
+                        {/* Symulacja czasu jak na designie lub wyświetlanie daty */}
+                        <span className="my-task-time">
+                            {isOverdueSection ? `Yesterday 17:00` : (task.dueDate === todayStr ? '15:00' : `Due ${task.dueDate}`)}
+                        </span>
+                    </div>
+
+                    <div className="my-task-right" onClick={e => e.stopPropagation() /* Zapobiega otwarciu modala przy klikaniu w prawą stronę */}>
+                        <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
+                            ● {displayStatus}
+                        </span>
+                        <span className={`badge-priority ${displayPriority.toLowerCase()}`}>
+                            {displayPriority}
+                        </span>
+                        
+                        {/* Zgodnie z Issue: Checkbox znika, jeśli jest Overdue */}
+                        {isOverdueSection ? (
+                            <div className="overdue-action-text">⍉ Overdue</div>
+                        ) : (
+                            <input 
+                                type="checkbox" 
+                                className="my-task-checkbox" 
+                                checked={task.status === 'Completed'}
+                                onChange={() => handleToggleComplete(task)}
+                            />
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        return (
+            <div className="my-tasks-container">
+                {/* --- SEKCJA: TODAY --- */}
+                <div className="my-tasks-section">
+                    <div className="section-header-row">
+                        <div className="section-title">
+                            <h3>Today's Tasks</h3>
+                            <span className="task-count">{todayTasks.length} Tasks</span>
+                        </div>
+                        {/* Filtry specyficzne dla My Tasks (jak na obrazku) */}
+                        <div className="my-tasks-filters">
+                            <select name="property" value={filters.property} onChange={handleFilterChange}>
+                                <option value="All properties">All properties</option>
+                                <option value="City Loft Breda">City Loft Breda</option>
+                                <option value="Beach House">Beach House</option>
+                            </select>
+                            <select name="status" value={filters.status} onChange={handleFilterChange}>
+                                <option value="All statuses">All statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="In progress">In progress</option>
+                            </select>
+                            <select name="priority" value={filters.priority} onChange={handleFilterChange}>
+                                <option value="Any priority">Any priority</option>
+                                <option value="Urgent">Urgent</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            <div className="search-box small-search">
+                                <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
+                                🔍
+                            </div>
+                        </div>
+                    </div>
+                    <div className="my-task-list">
+                        {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! 🎉</p>}
+                    </div>
+                </div>
+
+                {/* --- SEKCJA: OVERDUE --- */}
+                <div className="my-tasks-section">
+                    <div className="section-title">
+                        <h3>Overdue</h3>
+                        <span className="task-count">{overdueTasks.length} Task(s)</span>
+                    </div>
+                    <div className="my-task-list">
+                        {overdueTasks.length > 0 ? overdueTasks.map(t => renderTaskRow(t, true)) : null}
+                    </div>
+                </div>
+
+                {/* --- SEKCJA: UPCOMING --- */}
+                <div className="my-tasks-section">
+                    <div className="section-title">
+                        <h3>Upcoming</h3>
+                        <span className="task-count">{upcomingTasks.length} Task(s)</span>
+                    </div>
+                    <div className="my-task-list">
+                        {upcomingTasks.length > 0 ? upcomingTasks.map(t => renderTaskRow(t)) : null}
+                    </div>
+                </div>
+            </div>
+        );
+    };
     const renderTableView = () => (
         <div className="overview-container">
             <div className="filters-bar">
