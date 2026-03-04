@@ -22,6 +22,7 @@ const SOURCE_SYNC_STATE = {
   SUCCESS: "success",
   ERROR: "error",
 };
+const SOURCE_SUCCESS_STATE_RESET_DELAY_MS = 3200;
 
 const resolveSourceId = (source, index) => String(source?.sourceId || source?.id || `${index}`).trim();
 const resolveStableSourceId = (source) => String(source?.sourceId || source?.id || "").trim();
@@ -288,10 +289,71 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
   const [editingCalendarSourceId, setEditingCalendarSourceId] = useState("");
   const [domitsCalendarLinkCopied, setDomitsCalendarLinkCopied] = useState(false);
   const calendarSourcesRef = useRef([]);
+  const sourceSuccessResetTimersRef = useRef(new Map());
+
+  const clearSourceSuccessResetTimer = (sourceId) => {
+    const normalizedSourceId = String(sourceId || "").trim();
+    if (!normalizedSourceId) {
+      return;
+    }
+    const activeTimer = sourceSuccessResetTimersRef.current.get(normalizedSourceId);
+    if (!activeTimer) {
+      return;
+    }
+    clearTimeout(activeTimer);
+    sourceSuccessResetTimersRef.current.delete(normalizedSourceId);
+  };
+
+  const clearAllSourceSuccessResetTimers = () => {
+    sourceSuccessResetTimersRef.current.forEach((timerId) => {
+      clearTimeout(timerId);
+    });
+    sourceSuccessResetTimersRef.current.clear();
+  };
 
   useEffect(() => {
     calendarSourcesRef.current = calendarSources;
   }, [calendarSources]);
+
+  useEffect(
+    () => () => {
+      clearAllSourceSuccessResetTimers();
+    },
+    []
+  );
+
+  useEffect(() => {
+    const activeSuccessSourceIds = new Set();
+    Object.entries(sourceSyncStateById).forEach(([sourceId, sourceState]) => {
+      if (sourceState !== SOURCE_SYNC_STATE.SUCCESS) {
+        return;
+      }
+      activeSuccessSourceIds.add(sourceId);
+      if (sourceSuccessResetTimersRef.current.has(sourceId)) {
+        return;
+      }
+      const resetTimerId = setTimeout(() => {
+        sourceSuccessResetTimersRef.current.delete(sourceId);
+        setSourceSyncStateById((previous) => {
+          if (previous[sourceId] !== SOURCE_SYNC_STATE.SUCCESS) {
+            return previous;
+          }
+          return {
+            ...previous,
+            [sourceId]: SOURCE_SYNC_STATE.IDLE,
+          };
+        });
+      }, SOURCE_SUCCESS_STATE_RESET_DELAY_MS);
+      sourceSuccessResetTimersRef.current.set(sourceId, resetTimerId);
+    });
+
+    Array.from(sourceSuccessResetTimersRef.current.keys()).forEach((sourceId) => {
+      if (activeSuccessSourceIds.has(sourceId)) {
+        return;
+      }
+      clearSourceSuccessResetTimer(sourceId);
+    });
+  }, [sourceSyncStateById]);
 
   useEffect(() => {
     let mounted = true;
@@ -299,6 +361,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     const loadCalendarSources = async () => {
       if (!selectedPropertyId) {
         if (mounted) {
+          clearAllSourceSuccessResetTimers();
           setExternalBlockedDates(new Set());
           setCalendarSources([]);
           setSourceSyncStateById({});
@@ -669,6 +732,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       sourceId: normalizedSourceId,
       state: SOURCE_SYNC_STATE.SYNCING,
     });
+    clearSourceSuccessResetTimer(normalizedSourceId);
     setCalendarSyncError("");
 
     try {
@@ -692,14 +756,12 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       applyRefreshedSources(sources, blockedDates);
       setSourceSyncStateById((previous) => {
         const nextStateById = buildSyncStateMapForSources(sources, previous);
-        if (usedRefreshAllFallback) {
-          Object.keys(nextStateById).forEach((sourceKey) => {
-            nextStateById[sourceKey] = SOURCE_SYNC_STATE.SUCCESS;
-          });
-          return nextStateById;
+        if (
+          Object.prototype.hasOwnProperty.call(nextStateById, normalizedSourceId) ||
+          !usedRefreshAllFallback
+        ) {
+          nextStateById[normalizedSourceId] = SOURCE_SYNC_STATE.SUCCESS;
         }
-
-        nextStateById[normalizedSourceId] = SOURCE_SYNC_STATE.SUCCESS;
         return nextStateById;
       });
     } catch (error) {
