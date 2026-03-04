@@ -5,13 +5,11 @@ import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 import calendarIcon from "../../../../../images/icons/calendar.png";
 import airbnbIcon from "../../../../../images/icon-airbnb.png";
 import bookingIcon from "../../../../../images/icon-booking.png";
-
-const CALENDAR_PROVIDER = {
-  AUTO: "auto",
-  AIRBNB: "airbnb",
-  BOOKING: "booking",
-  GENERIC: "generic",
-};
+import {
+  CALENDAR_PROVIDER,
+  CALENDAR_PROVIDER_OPTIONS,
+  resolveCalendarProviderFromSource,
+} from "../../hooks/hostCalendarHelpers";
 
 const SOURCE_SYNC_STATE = {
   IDLE: "idle",
@@ -34,9 +32,10 @@ const REMOVE_SOURCE_REASONS = [
   { id: "other", label: "Other" },
 ];
 
+const stringOrNumberProp = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
 const calendarSourceShape = PropTypes.shape({
-  sourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  sourceId: stringOrNumberProp,
+  id: stringOrNumberProp,
   calendarName: PropTypes.string,
   name: PropTypes.string,
   calendarUrl: PropTypes.string,
@@ -44,58 +43,8 @@ const calendarSourceShape = PropTypes.shape({
   calendarProvider: PropTypes.string,
   provider: PropTypes.string,
   channel: PropTypes.string,
-  lastSyncAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  lastSyncAt: stringOrNumberProp,
 });
-
-const normalizeCalendarProvider = (value) => {
-  const normalized = String(value || "").trim().toLowerCase();
-  if (!normalized || normalized === CALENDAR_PROVIDER.AUTO) {
-    return "";
-  }
-  if (normalized === CALENDAR_PROVIDER.AIRBNB || normalized === CALENDAR_PROVIDER.BOOKING) {
-    return normalized;
-  }
-  return CALENDAR_PROVIDER.GENERIC;
-};
-
-const resolveCalendarProvider = (source = {}) => {
-  const explicitProvider = normalizeCalendarProvider(
-    source?.calendarProvider ?? source?.provider ?? source?.channel ?? ""
-  );
-  if (explicitProvider) {
-    return explicitProvider;
-  }
-
-  const calendarUrl = String(source?.calendarUrl || source?.url || "").trim().toLowerCase();
-  const calendarName = String(source?.calendarName || source?.name || "").trim().toLowerCase();
-
-  let hostname = "";
-  if (calendarUrl) {
-    try {
-      hostname = String(new URL(calendarUrl).hostname || "").toLowerCase();
-    } catch {
-      hostname = "";
-    }
-  }
-
-  if (
-    hostname.includes("airbnb") ||
-    calendarUrl.includes("airbnb") ||
-    calendarName.includes("airbnb")
-  ) {
-    return CALENDAR_PROVIDER.AIRBNB;
-  }
-
-  if (
-    hostname.includes("booking.com") ||
-    calendarUrl.includes("booking.com") ||
-    calendarName.includes("booking")
-  ) {
-    return CALENDAR_PROVIDER.BOOKING;
-  }
-
-  return CALENDAR_PROVIDER.GENERIC;
-};
 
 const getProviderIcon = (provider) => {
   if (provider === CALENDAR_PROVIDER.AIRBNB) {
@@ -193,6 +142,82 @@ const useDismissOnOutsideMouseDown = ({ isOpen, modalContentRef, onDismiss }) =>
   }, [isOpen, modalContentRef, onDismiss]);
 };
 
+const useShowModalEffect = (isOpen, dialogRef) => {
+  React.useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const dialog = dialogRef.current;
+    if (!dialog || dialog.open) {
+      return;
+    }
+    try {
+      dialog.showModal();
+    } catch {
+      // no-op: prevents runtime crash if showModal is called during rapid unmounts
+    }
+  }, [isOpen, dialogRef]);
+};
+
+function CalendarProviderSelect({ value, onChange }) {
+  return (
+    <select
+      className="hc-sync-input hc-sync-input--select"
+      value={String(value || CALENDAR_PROVIDER.AUTO).toLowerCase()}
+      onChange={(event) => onChange?.(event.target.value)}
+    >
+      {CALENDAR_PROVIDER_OPTIONS.map((providerOption) => (
+        <option key={providerOption.value} value={providerOption.value}>
+          {providerOption.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+CalendarProviderSelect.propTypes = {
+  value: PropTypes.string,
+  onChange: PropTypes.func,
+};
+
+function CalendarSourceFields({
+  externalCalendarUrlInput,
+  onExternalCalendarUrlChange,
+  calendarNameInput,
+  onCalendarNameChange,
+  calendarProviderInput,
+  onCalendarProviderChange,
+}) {
+  return (
+    <div className="hc-sync-fields">
+      <input
+        type="text"
+        className="hc-sync-input"
+        placeholder="Other website link"
+        value={externalCalendarUrlInput}
+        onChange={(event) => onExternalCalendarUrlChange?.(event.target.value)}
+      />
+      <input
+        type="text"
+        className="hc-sync-input"
+        placeholder="Calendar name"
+        value={calendarNameInput}
+        onChange={(event) => onCalendarNameChange?.(event.target.value)}
+      />
+      <CalendarProviderSelect value={calendarProviderInput} onChange={onCalendarProviderChange} />
+    </div>
+  );
+}
+
+CalendarSourceFields.propTypes = {
+  externalCalendarUrlInput: PropTypes.string,
+  onExternalCalendarUrlChange: PropTypes.func,
+  calendarNameInput: PropTypes.string,
+  onCalendarNameChange: PropTypes.func,
+  calendarProviderInput: PropTypes.string,
+  onCalendarProviderChange: PropTypes.func,
+};
+
 function ConnectedSourcesSection({
   sources,
   syncStateMap,
@@ -221,7 +246,7 @@ function ConnectedSourcesSection({
               ? SOURCE_SYNC_STATE.SYNCING
               : sourceSyncState;
           const isEditing = String(editingSourceId || "") === sourceId;
-          const provider = resolveCalendarProvider(source);
+          const provider = resolveCalendarProviderFromSource(source);
           const providerIcon = getProviderIcon(provider);
           const isProviderIcon = provider !== CALENDAR_PROVIDER.GENERIC;
           const syncActionClassName = [
@@ -311,8 +336,8 @@ function ConnectedSourcesSection({
 ConnectedSourcesSection.propTypes = {
   sources: PropTypes.arrayOf(calendarSourceShape),
   syncStateMap: PropTypes.objectOf(PropTypes.string),
-  removingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  editingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  removingSourceId: stringOrNumberProp,
+  editingSourceId: stringOrNumberProp,
   onRefreshSource: PropTypes.func,
   onEditSource: PropTypes.func,
   onOpenRemoveSourceFlow: PropTypes.func,
@@ -381,32 +406,14 @@ function ConnectionSetupForm({
         <h4 className="hc-sync-step-title">Step 2</h4>
         <p className="hc-sync-step-copy">Get a public iCal feed link from the other website and add it below.</p>
 
-        <div className="hc-sync-fields">
-          <input
-            type="text"
-            className="hc-sync-input"
-            placeholder="Other website link"
-            value={externalCalendarUrlInput}
-            onChange={(event) => onExternalCalendarUrlChange?.(event.target.value)}
-          />
-          <input
-            type="text"
-            className="hc-sync-input"
-            placeholder="Calendar name"
-            value={calendarNameInput}
-            onChange={(event) => onCalendarNameChange?.(event.target.value)}
-          />
-          <select
-            className="hc-sync-input hc-sync-input--select"
-            value={String(calendarProviderInput || CALENDAR_PROVIDER.AUTO).toLowerCase()}
-            onChange={(event) => onCalendarProviderChange?.(event.target.value)}
-          >
-            <option value={CALENDAR_PROVIDER.AUTO}>Provider (Auto detect)</option>
-            <option value={CALENDAR_PROVIDER.AIRBNB}>Airbnb</option>
-            <option value={CALENDAR_PROVIDER.BOOKING}>Booking.com</option>
-            <option value={CALENDAR_PROVIDER.GENERIC}>Other</option>
-          </select>
-        </div>
+        <CalendarSourceFields
+          externalCalendarUrlInput={externalCalendarUrlInput}
+          onExternalCalendarUrlChange={onExternalCalendarUrlChange}
+          calendarNameInput={calendarNameInput}
+          onCalendarNameChange={onCalendarNameChange}
+          calendarProviderInput={calendarProviderInput}
+          onCalendarProviderChange={onCalendarProviderChange}
+        />
 
         <button type="submit" className="hc-sync-add-btn" disabled={!canAddCalendar}>
           {addingCalendar ? "Adding..." : "+ Add calendar"}
@@ -488,20 +495,7 @@ function EditSourceModal({
   const dialogRef = React.useRef(null);
   const modalContentRef = React.useRef(null);
 
-  React.useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    const dialog = dialogRef.current;
-    if (!dialog || dialog.open) {
-      return;
-    }
-    try {
-      dialog.showModal();
-    } catch {
-      // no-op: prevents runtime crash if showModal is called during rapid unmounts
-    }
-  }, [isOpen]);
+  useShowModalEffect(isOpen, dialogRef);
 
   const handleDismiss = React.useCallback(() => {
     if (!addingCalendar) {
@@ -533,32 +527,14 @@ function EditSourceModal({
         <h4 className="hc-sync-edit-modal-title">Edit calendar connection</h4>
         <p className="hc-sync-edit-modal-copy">Update the link, name, or provider and save changes.</p>
 
-        <div className="hc-sync-fields">
-          <input
-            type="text"
-            className="hc-sync-input"
-            placeholder="Other website link"
-            value={externalCalendarUrlInput}
-            onChange={(event) => onExternalCalendarUrlChange?.(event.target.value)}
-          />
-          <input
-            type="text"
-            className="hc-sync-input"
-            placeholder="Calendar name"
-            value={calendarNameInput}
-            onChange={(event) => onCalendarNameChange?.(event.target.value)}
-          />
-          <select
-            className="hc-sync-input hc-sync-input--select"
-            value={String(calendarProviderInput || CALENDAR_PROVIDER.AUTO).toLowerCase()}
-            onChange={(event) => onCalendarProviderChange?.(event.target.value)}
-          >
-            <option value={CALENDAR_PROVIDER.AUTO}>Provider (Auto detect)</option>
-            <option value={CALENDAR_PROVIDER.AIRBNB}>Airbnb</option>
-            <option value={CALENDAR_PROVIDER.BOOKING}>Booking.com</option>
-            <option value={CALENDAR_PROVIDER.GENERIC}>Other</option>
-          </select>
-        </div>
+        <CalendarSourceFields
+          externalCalendarUrlInput={externalCalendarUrlInput}
+          onExternalCalendarUrlChange={onExternalCalendarUrlChange}
+          calendarNameInput={calendarNameInput}
+          onCalendarNameChange={onCalendarNameChange}
+          calendarProviderInput={calendarProviderInput}
+          onCalendarProviderChange={onCalendarProviderChange}
+        />
 
         {addCalendarError ? <p className="hc-sync-error">{addCalendarError}</p> : null}
 
@@ -618,20 +594,7 @@ function RemoveSourceModal({
   const dialogRef = React.useRef(null);
   const modalContentRef = React.useRef(null);
 
-  React.useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    const dialog = dialogRef.current;
-    if (!dialog || dialog.open) {
-      return;
-    }
-    try {
-      dialog.showModal();
-    } catch {
-      // no-op: prevents runtime crash if showModal is called during rapid unmounts
-    }
-  }, [isOpen]);
+  useShowModalEffect(isOpen, dialogRef);
 
   const handleDismiss = React.useCallback(() => {
     if (!isRemovingPendingSource) {
@@ -1037,14 +1000,14 @@ CalendarSyncCard.propTypes = {
   isEditingCalendar: PropTypes.bool,
   connectedSources: PropTypes.arrayOf(calendarSourceShape),
   onEditSource: PropTypes.func,
-  editingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  editingSourceId: stringOrNumberProp,
   onCancelEdit: PropTypes.func,
   onRefreshSource: PropTypes.func,
-  refreshingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  refreshingSourceId: stringOrNumberProp,
   sourceSyncStateById: PropTypes.objectOf(PropTypes.string),
   onRefreshAllSources: PropTypes.func,
   refreshingAllSources: PropTypes.bool,
   onRemoveSource: PropTypes.func,
-  removingSourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  removingSourceId: stringOrNumberProp,
   onBack: PropTypes.func,
 };

@@ -48,14 +48,63 @@ export const INITIAL_CALENDAR_SYNC_FORM = {
   calendarProvider: "auto",
 };
 
+export const CALENDAR_PROVIDER = Object.freeze({
+  AUTO: "auto",
+  AIRBNB: "airbnb",
+  BOOKING: "booking",
+  GENERIC: "generic",
+});
+
+export const CALENDAR_PROVIDER_OPTIONS = [
+  { value: CALENDAR_PROVIDER.AUTO, label: "Provider (Auto detect)" },
+  { value: CALENDAR_PROVIDER.AIRBNB, label: "Airbnb" },
+  { value: CALENDAR_PROVIDER.BOOKING, label: "Booking.com" },
+  { value: CALENDAR_PROVIDER.GENERIC, label: "Other" },
+];
+
 export const normalizeCalendarProviderForForm = (value) => {
-  const normalized = String(value || "auto")
+  const normalized = String(value || CALENDAR_PROVIDER.AUTO)
     .trim()
     .toLowerCase();
-  if (normalized === "airbnb" || normalized === "booking" || normalized === "generic") {
+  if (
+    normalized === CALENDAR_PROVIDER.AIRBNB ||
+    normalized === CALENDAR_PROVIDER.BOOKING ||
+    normalized === CALENDAR_PROVIDER.GENERIC
+  ) {
     return normalized;
   }
-  return "auto";
+  return CALENDAR_PROVIDER.AUTO;
+};
+
+export const resolveCalendarProviderFromSource = (source = {}) => {
+  const explicitProvider = normalizeCalendarProviderForForm(
+    source?.calendarProvider ?? source?.provider ?? source?.channel ?? CALENDAR_PROVIDER.AUTO
+  );
+  if (explicitProvider !== CALENDAR_PROVIDER.AUTO) {
+    return explicitProvider;
+  }
+
+  const calendarUrl = String(source?.calendarUrl || source?.url || "").trim().toLowerCase();
+  const calendarName = String(source?.calendarName || source?.name || "").trim().toLowerCase();
+
+  let hostname = "";
+  if (calendarUrl) {
+    try {
+      hostname = String(new URL(calendarUrl).hostname || "").toLowerCase();
+    } catch {
+      hostname = "";
+    }
+  }
+
+  if (hostname.includes("airbnb") || calendarUrl.includes("airbnb") || calendarName.includes("airbnb")) {
+    return CALENDAR_PROVIDER.AIRBNB;
+  }
+
+  if (hostname.includes("booking.com") || calendarUrl.includes("booking.com") || calendarName.includes("booking")) {
+    return CALENDAR_PROVIDER.BOOKING;
+  }
+
+  return CALENDAR_PROVIDER.GENERIC;
 };
 
 export const getSelectedPropertyStorageKey = (hostId) =>

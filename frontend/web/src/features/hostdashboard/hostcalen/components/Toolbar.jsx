@@ -15,6 +15,13 @@ const resolveStatusDotClass = (status) => {
   return "hc-status-dot--inactive";
 };
 
+const stringOrNumberProp = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
+const listingOptionShape = PropTypes.shape({
+  value: stringOrNumberProp.isRequired,
+  label: PropTypes.string.isRequired,
+  status: PropTypes.string,
+});
+
 export default function Toolbar({
   view,
   onViewChange,
@@ -162,14 +169,8 @@ Toolbar.propTypes = {
   view: PropTypes.string,
   onViewChange: PropTypes.func,
   onToday: PropTypes.func,
-  listingOptions: PropTypes.arrayOf(
-    PropTypes.shape({
-      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      label: PropTypes.string.isRequired,
-      status: PropTypes.string,
-    })
-  ),
-  selectedPropertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  listingOptions: PropTypes.arrayOf(listingOptionShape),
+  selectedPropertyId: stringOrNumberProp,
   onSelectProperty: PropTypes.func,
   isLoadingListings: PropTypes.bool,
 };

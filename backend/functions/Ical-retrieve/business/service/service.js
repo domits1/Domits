@@ -2,8 +2,8 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { Repository } from "../../data/repository.js";
 import { resolveCalendarProvider } from "../../../.shared/calendarProvider.js";
+import { buildSourceUpsertPayload, fetchExternalCalendar } from "../../../.shared/icalTransport.js";
 
-const MAX_ICS_BYTES = 2_000_000;
 const MAX_EXPAND_DAYS = 365;
 
 export class Service {
@@ -19,21 +19,18 @@ export class Service {
 
     const { events, meta } = await this.retrieveFromExternalCalendar(url);
     const blockedDates = buildBlockedDatesFromEvents(events);
-    await this.repository.upsertSource({
-      propertyId,
-      sourceId: source.sourceId,
-      calendarName: source.calendarName || "EXTERNAL",
-      calendarUrl: url,
-      provider: resolveCalendarProvider({
-        calendarProvider: source.provider,
-        calendarUrl: url,
-        calendarName: source.calendarName || "EXTERNAL",
-      }),
-      blockedDatesText: JSON.stringify(blockedDates),
-      lastSyncAt: new Date().toISOString(),
-      etag: meta?.etag || null,
-      lastModified: meta?.lastModified || null,
-    });
+    await this.repository.upsertSource(
+      buildSourceUpsertPayload({
+        propertyId,
+        source: {
+          ...source,
+          calendarUrl: url,
+          calendarName: source.calendarName || "EXTERNAL",
+        },
+        blockedDates,
+        meta,
+      })
+    );
   }
 
   async retrieveFromExternalCalendar(calendarUrl) {
@@ -44,37 +41,16 @@ export class Service {
       throw new BadRequestException("calendarUrl must start with http:// or https://");
     }
 
-    let icsText;
-    let etag = null;
-    let lastModified = null;
-
     try {
-      const res = await fetch(calendarUrl, {
-        method: "GET",
-        headers: {
-          "User-Agent": "Domits-Ical-Retrieve/1.0",
-          Accept: "text/calendar,*/*",
-        },
+      return await fetchExternalCalendar({
+        calendarUrl,
+        userAgent: "Domits-Ical-Retrieve/1.0",
+        parseEvents: parseIcsToEvents,
+        createHttpError: (statusCode) => new BadRequestException(`Failed to fetch external calendar (status ${statusCode})`),
       });
-
-      if (!res.ok) {
-        throw new BadRequestException(`Failed to fetch external calendar (status ${res.status})`);
-      }
-
-      etag = res.headers.get("etag");
-      lastModified = res.headers.get("last-modified");
-
-      const buf = await res.arrayBuffer();
-      if (buf.byteLength > MAX_ICS_BYTES) {
-        throw new BadRequestException("ICS file too large");
-      }
-      icsText = new TextDecoder("utf-8").decode(buf);
     } catch (e) {
       throw new BadRequestException("Could not download external calendar URL");
     }
-
-    const events = parseIcsToEvents(icsText);
-    return { events, meta: { etag, lastModified } };
   }
 
   async listSources(propertyId) {
@@ -121,19 +97,19 @@ export class Service {
     const sourceId = hashSourceId(url);
     const { events, meta } = await this.retrieveFromExternalCalendar(url);
     const blockedDates = buildBlockedDatesFromEvents(events);
-    const blockedDatesText = JSON.stringify(blockedDates);
-
-    await this.repository.upsertSource({
-      propertyId,
-      sourceId,
-      calendarName: name,
-      calendarUrl: url,
-      provider,
-      blockedDatesText,
-      lastSyncAt: new Date().toISOString(),
-      etag: meta?.etag || null,
-      lastModified: meta?.lastModified || null,
-    });
+    await this.repository.upsertSource(
+      buildSourceUpsertPayload({
+        propertyId,
+        source: {
+          sourceId,
+          calendarName: name,
+          calendarUrl: url,
+          provider,
+        },
+        blockedDates,
+        meta,
+      })
+    );
 
     return await this.listSources(propertyId);
   }

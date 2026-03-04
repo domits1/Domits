@@ -1,12 +1,10 @@
 import { Repository } from "../../data/repository.js";
-import { resolveCalendarProvider } from "../../../.shared/calendarProvider.js";
 import {
   buildBlockedDatesFromEvents,
-  parseIcsToEvents,
   toPositiveInteger,
 } from "../../../.shared/basicIcsUtils.js";
+import { buildSourceUpsertPayload, fetchExternalCalendar } from "../../../.shared/icalTransport.js";
 
-const MAX_ICS_BYTES = 2_000_000;
 const DEFAULT_SYNC_INTERVAL_MINUTES = 2;
 const DEFAULT_SYNC_BATCH_LIMIT = 500;
 const DEFAULT_SYNC_CONCURRENCY = 8;
@@ -97,66 +95,22 @@ export class Service {
 
     const { events, meta } = await this.retrieveFromExternalCalendar(calendarUrl, fetchTimeoutMs);
     const blockedDates = buildBlockedDatesFromEvents(events);
-    await this.repository.upsertSource({
-      propertyId,
-      sourceId,
-      calendarName: String(source?.calendarName || "EXTERNAL").trim() || "EXTERNAL",
-      calendarUrl,
-      provider: resolveCalendarProvider({
-        calendarProvider: source?.provider,
-        calendarUrl,
-        calendarName: source?.calendarName,
-      }),
-      blockedDatesText: JSON.stringify(blockedDates),
-      lastSyncAt: new Date().toISOString(),
-      etag: meta?.etag || null,
-      lastModified: meta?.lastModified || null,
-    });
+    await this.repository.upsertSource(
+      buildSourceUpsertPayload({
+        propertyId,
+        source,
+        blockedDates,
+        meta,
+      })
+    );
   }
 
   async retrieveFromExternalCalendar(calendarUrl, timeoutMs) {
-    const normalizedTimeoutMs = toPositiveInteger(timeoutMs, DEFAULT_FETCH_TIMEOUT_MS);
-    const abortController = new AbortController();
-    const timer = setTimeout(() => abortController.abort(), normalizedTimeoutMs);
-
-    let icsText;
-    let etag = null;
-    let lastModified = null;
-
-    try {
-      const response = await fetch(calendarUrl, {
-        method: "GET",
-        headers: {
-          "User-Agent": "Domits-Ical-Sync-Scheduler/1.0",
-          Accept: "text/calendar,*/*",
-        },
-        signal: abortController.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch external calendar (status ${response.status})`);
-      }
-
-      etag = response.headers.get("etag");
-      lastModified = response.headers.get("last-modified");
-
-      const buffer = await response.arrayBuffer();
-      if (buffer.byteLength > MAX_ICS_BYTES) {
-        throw new Error("ICS file too large");
-      }
-
-      icsText = new TextDecoder("utf-8").decode(buffer);
-    } finally {
-      clearTimeout(timer);
-    }
-
-    return {
-      events: parseIcsToEvents(icsText),
-      meta: {
-        etag,
-        lastModified,
-      },
-    };
+    return fetchExternalCalendar({
+      calendarUrl,
+      timeoutMs: toPositiveInteger(timeoutMs, DEFAULT_FETCH_TIMEOUT_MS),
+      userAgent: "Domits-Ical-Sync-Scheduler/1.0",
+    });
   }
 }
 
