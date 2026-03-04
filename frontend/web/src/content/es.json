@@ -270,6 +270,7 @@
             "developerAI": "Desarrollador de Agentes de IA",
             "developerRevenue": "Desarrollador de Ingresos",
             "developerDistribution": "Desarrollador de Distribución",
+            "designer": "Diseñador",
             "security": "Seguridad",
             "marketing": "Marketing",
             "growth": "Crecimiento",
@@ -755,4 +756,3 @@
           }
         }
 }
-  
