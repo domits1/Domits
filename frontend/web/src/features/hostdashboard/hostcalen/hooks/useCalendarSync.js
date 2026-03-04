@@ -186,6 +186,62 @@ const markSourcesAsPending = ({ setSourceSyncStateById, calendarSources, sourceI
   });
 };
 
+const resetSourceSyncStateIfSuccessful = (previousStateById, sourceId) => {
+  if (previousStateById[sourceId] !== SOURCE_SYNC_STATE.SUCCESS) {
+    return previousStateById;
+  }
+  return {
+    ...previousStateById,
+    [sourceId]: SOURCE_SYNC_STATE.IDLE,
+  };
+};
+
+const scheduleSourceSuccessReset = ({
+  sourceId,
+  sourceSuccessResetTimersRef,
+  setSourceSyncStateById,
+}) => {
+  if (sourceSuccessResetTimersRef.current.has(sourceId)) {
+    return;
+  }
+
+  const resetTimerId = setTimeout(() => {
+    sourceSuccessResetTimersRef.current.delete(sourceId);
+    setSourceSyncStateById((previous) => resetSourceSyncStateIfSuccessful(previous, sourceId));
+  }, SOURCE_SUCCESS_STATE_RESET_DELAY_MS);
+
+  sourceSuccessResetTimersRef.current.set(sourceId, resetTimerId);
+};
+
+const syncSuccessResetTimers = ({
+  sourceSyncStateById,
+  sourceSuccessResetTimersRef,
+  setSourceSyncStateById,
+  clearSourceSuccessResetTimer,
+}) => {
+  const activeSuccessSourceIds = new Set();
+
+  for (const [sourceId, sourceState] of Object.entries(sourceSyncStateById)) {
+    if (sourceState !== SOURCE_SYNC_STATE.SUCCESS) {
+      continue;
+    }
+
+    activeSuccessSourceIds.add(sourceId);
+    scheduleSourceSuccessReset({
+      sourceId,
+      sourceSuccessResetTimersRef,
+      setSourceSyncStateById,
+    });
+  }
+
+  for (const sourceId of Array.from(sourceSuccessResetTimersRef.current.keys())) {
+    if (activeSuccessSourceIds.has(sourceId)) {
+      continue;
+    }
+    clearSourceSuccessResetTimer(sourceId);
+  }
+};
+
 const refreshSingleSourceWithinAll = async ({
   sourceId,
   selectedPropertyId,
@@ -323,35 +379,11 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
   );
 
   useEffect(() => {
-    const activeSuccessSourceIds = new Set();
-    Object.entries(sourceSyncStateById).forEach(([sourceId, sourceState]) => {
-      if (sourceState !== SOURCE_SYNC_STATE.SUCCESS) {
-        return;
-      }
-      activeSuccessSourceIds.add(sourceId);
-      if (sourceSuccessResetTimersRef.current.has(sourceId)) {
-        return;
-      }
-      const resetTimerId = setTimeout(() => {
-        sourceSuccessResetTimersRef.current.delete(sourceId);
-        setSourceSyncStateById((previous) => {
-          if (previous[sourceId] !== SOURCE_SYNC_STATE.SUCCESS) {
-            return previous;
-          }
-          return {
-            ...previous,
-            [sourceId]: SOURCE_SYNC_STATE.IDLE,
-          };
-        });
-      }, SOURCE_SUCCESS_STATE_RESET_DELAY_MS);
-      sourceSuccessResetTimersRef.current.set(sourceId, resetTimerId);
-    });
-
-    Array.from(sourceSuccessResetTimersRef.current.keys()).forEach((sourceId) => {
-      if (activeSuccessSourceIds.has(sourceId)) {
-        return;
-      }
-      clearSourceSuccessResetTimer(sourceId);
+    syncSuccessResetTimers({
+      sourceSyncStateById,
+      sourceSuccessResetTimersRef,
+      setSourceSyncStateById,
+      clearSourceSuccessResetTimer,
     });
   }, [sourceSyncStateById]);
 
@@ -756,10 +788,7 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       applyRefreshedSources(sources, blockedDates);
       setSourceSyncStateById((previous) => {
         const nextStateById = buildSyncStateMapForSources(sources, previous);
-        if (
-          Object.prototype.hasOwnProperty.call(nextStateById, normalizedSourceId) ||
-          !usedRefreshAllFallback
-        ) {
+        if (Object.hasOwn(nextStateById, normalizedSourceId) || !usedRefreshAllFallback) {
           nextStateById[normalizedSourceId] = SOURCE_SYNC_STATE.SUCCESS;
         }
         return nextStateById;

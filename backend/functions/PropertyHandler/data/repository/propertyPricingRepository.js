@@ -17,7 +17,7 @@ export class PropertyPricingRepository {
       return null;
     }
     const normalized = schema.trim();
-    return normalized ? normalized : null;
+    return normalized || null;
   }
 
   getPricingTableName(client) {
