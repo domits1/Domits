@@ -164,7 +164,7 @@ export class Service {
         requestId,
       });
 
-      const { userId, start, end } =
+      const { userId, filterType, start, end } =
         await this._resolveContext(event);
 
       const { raw, calc } =
@@ -175,7 +175,33 @@ export class Service {
         userId,
         durationMs: Date.now() - startedAt,
       });
+    const snapshotPayload = {
+      revenue: Number(raw.totalRevenue?.totalRevenue ?? 0),
+      bookedNights: Number(raw.bookedNights?.bookedNights ?? 0),
+      availableNights: Number(raw.availableNights?.availableNights ?? 0),
+      propertyCount: Number(raw.propertyCount?.propertyCount ?? 0),
+      alos: Number(raw.averageLengthOfStay?.averageLengthOfStay ?? 0),
+      adr: Number(calc.averageDailyRate ?? 0),
+      occupancyRate: Number(calc.occupancyRate ?? 0),
+      revpar: Number(calc.revenuePerAvailableRoom ?? 0),
+      };
 
+    try {
+      await this.repository.createKpiSnapshot({
+      userId,
+      hostId: userId, // voorlopig hetzelfde
+      periodType: filterType ?? "alltime",
+      periodStart: start,
+      periodEnd: end,
+      metrics: snapshotPayload,
+      });
+    } catch (e) {
+        console.warn("[RMS][KPI_SNAPSHOT] failed", {
+        requestId,
+        userId,
+        message: e?.message,
+      });
+    }
       return {
         revenue: raw.totalRevenue,
         bookedNights: raw.bookedNights,
