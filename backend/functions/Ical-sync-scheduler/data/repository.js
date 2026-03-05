@@ -1,5 +1,5 @@
 import Database from "database";
-import { listSourcesWithLimit, upsertSourceRecord } from "../../.shared/icalSourceRepositoryHelpers.js";
+import { listSourcesWithLimit, upsertSourceRecord } from "../.shared/icalSourceRepositoryHelpers.js";
 
 export class Repository {
   async listSources(limit) {
