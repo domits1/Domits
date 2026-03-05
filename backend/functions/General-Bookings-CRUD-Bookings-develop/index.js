@@ -6,7 +6,16 @@ const eventparser = new ParseEvent();
 
 export const handler = async (event) => {
   let returnedResponse = {};
-  let parsedEvent = await eventparser.handleEvent(event);
+  
+  // ParseEvent can throw - let it propagate for tests that expect rejection
+  let parsedEvent;
+  try {
+    parsedEvent = await eventparser.handleEvent(event);
+  } catch (parseError) {
+    // Re-throw parseEvent errors so tests expecting rejection will work
+    throw parseError;
+  }
+
   switch(event.httpMethod){
     case "POST":
       returnedResponse = await controller.create(parsedEvent);

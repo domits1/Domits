@@ -11,20 +11,26 @@ import { Booking } from "database/models/Booking";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 
 const systemManagerRepository = new SystemManagerRepository();
+// TEST mode: Create mock Stripe instance, PROD mode: Use real Stripe
 const stripePromise = process.env.TEST === "true"
   ? Promise.resolve({
-    paymentIntents: {
-      create: async () => ({
-        id: `test_${randomUUID()}`,
-        client_secret: `test_secret_${randomUUID()}`,
-      }),
-    },
-  })
+      paymentIntents: {
+        create: async () => ({
+          id: "pi_test_123",
+          client_secret: "pi_test_123_secret_test",
+        }),
+        retrieve: async () => ({
+          id: "pi_test_123",
+          status: "succeeded",
+        }),
+      },
+    })
   : systemManagerRepository
-    .getSystemManagerParameter("/stripe/keys/secret/live")
-    .then((secret) => new Stripe(secret));
+      .getSystemManagerParameter("/stripe/keys/secret/live")
+      .then((secret) => new Stripe(secret));
 
-const client = new DynamoDBClient({ region: "eu-north-1" });
+// TEST mode: Skip DynamoDB client initialization
+const client = process.env.TEST === "true" ? null : new DynamoDBClient({ region: "eu-north-1" });
 
 class StripeRepository {
   async createPaymentIntent(account_id, propertyId, dates, bookingId) {
@@ -75,6 +81,11 @@ class StripeRepository {
   // stripe account_id, and give it back.
   // --------
   async getStripeAccountId(userId) {
+    // TEST mode: Return mock account ID
+    if (process.env.TEST === "true") {
+      return "acct_test_123";
+    }
+
     const client = await Database.getInstance();
     const query = await client
       .getRepository(Stripe_Connected_Accounts)

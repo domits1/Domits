@@ -1,9 +1,16 @@
 
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
-const lambdaClient = new LambdaClient({ region: "eu-north-1" });
+// TEST mode: Skip Lambda client initialization
+const lambdaClient = process.env.TEST === "true" ? null : new LambdaClient({ region: "eu-north-1" });
 
 const sendEmail = async (userEmail, hostEmail, bookingInfo) => {
+    // TEST mode: Skip email sending
+    if (process.env.TEST === "true") {
+        return;
+    }
+
+    // PROD mode: Send emails via AWS Lambda
     const userEmailPayload = {
         body: {
             toEmail: userEmail,
