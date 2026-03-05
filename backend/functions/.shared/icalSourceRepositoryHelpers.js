@@ -25,15 +25,43 @@ const SELECT_COLUMNS_NO_PROVIDER = `
 
 const normalizeOrder = (order) => (String(order || "").toUpperCase() === "ASC" ? "ASC" : "DESC");
 
+const quoteIdentifier = (identifier) => `"${String(identifier).replaceAll('"', '""')}"`;
+
+const getSchemaName = (client) => {
+  const schema = client?.options?.schema;
+  if (typeof schema !== "string") {
+    return null;
+  }
+  const normalized = schema.trim();
+  return normalized || null;
+};
+
+const getIcalSourceTableName = (client) => {
+  const schemaName = getSchemaName(client);
+  if (!schemaName) {
+    return "property_ical_source";
+  }
+  return `${quoteIdentifier(schemaName)}.${quoteIdentifier("property_ical_source")}`;
+};
+
 export async function hasProviderColumn(client) {
   try {
+    const schemaName = getSchemaName(client);
+    const params = ["property_ical_source", "provider"];
+    const schemaClause = schemaName
+      ? `AND table_schema = $3`
+      : `AND table_schema = ANY(current_schemas(true))`;
+    if (schemaName) {
+      params.push(schemaName);
+    }
     const rows = await client.query(`
       SELECT 1
       FROM information_schema.columns
-      WHERE table_name = 'property_ical_source'
-        AND column_name = 'provider'
+      WHERE table_name = $1
+        AND column_name = $2
+        ${schemaClause}
       LIMIT 1
-    `);
+    `, params);
     return Array.isArray(rows) && rows.length > 0;
   } catch {
     return false;
@@ -44,13 +72,14 @@ export async function listSourcesByProperty(client, propertyId, { order = "DESC"
   const providerColumnExists = await hasProviderColumn(client);
   const selectColumns = providerColumnExists ? SELECT_COLUMNS_WITH_PROVIDER : SELECT_COLUMNS_NO_PROVIDER;
   const sortOrder = normalizeOrder(order);
+  const sourceTable = getIcalSourceTableName(client);
 
   try {
     const rows = await client.query(
       `
       SELECT
         ${selectColumns}
-      FROM property_ical_source
+      FROM ${sourceTable}
       WHERE property_id = $1
       ORDER BY updated_at ${sortOrder}
       `,
@@ -70,13 +99,14 @@ export async function listSourcesWithLimit(client, limit, { order = "ASC", toler
   const providerColumnExists = await hasProviderColumn(client);
   const selectColumns = providerColumnExists ? SELECT_COLUMNS_WITH_PROVIDER : SELECT_COLUMNS_NO_PROVIDER;
   const sortOrder = normalizeOrder(order);
+  const sourceTable = getIcalSourceTableName(client);
 
   try {
     const rows = await client.query(
       `
       SELECT
         ${selectColumns}
-      FROM property_ical_source
+      FROM ${sourceTable}
       ORDER BY updated_at ${sortOrder}
       LIMIT $1
       `,
@@ -96,10 +126,11 @@ export async function upsertSourceRecord(
   { propertyId, sourceId, calendarName, calendarUrl, provider, blockedDatesText, lastSyncAt, etag, lastModified }
 ) {
   const providerColumnExists = await hasProviderColumn(client);
+  const sourceTable = getIcalSourceTableName(client);
   await client.query(
     providerColumnExists
       ? `
-        INSERT INTO property_ical_source
+        INSERT INTO ${sourceTable}
           (property_id, source_id, calendar_name, calendar_url, provider, blocked_dates, last_sync_at, updated_at, etag, last_modified)
         VALUES
           ($1,$2,$3,$4,$5,$6,$7, now(), $8, $9)
@@ -115,7 +146,7 @@ export async function upsertSourceRecord(
           last_modified = EXCLUDED.last_modified
       `
       : `
-        INSERT INTO property_ical_source
+        INSERT INTO ${sourceTable}
           (property_id, source_id, calendar_name, calendar_url, blocked_dates, last_sync_at, updated_at, etag, last_modified)
         VALUES
           ($1,$2,$3,$4,$5,$6, now(), $7, $8)
