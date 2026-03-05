@@ -45,4 +45,18 @@ export class PropertyTypeRepository {
         return result ? result : null;
     }
 
+    async updatePropertySpaceTypeByPropertyId(propertyId, spaceType) {
+        const client = await Database.getInstance();
+        await client
+            .createQueryBuilder()
+            .update(Property_Type)
+            .set({
+                spacetype: spaceType,
+            })
+            .where("property_id = :propertyId", { propertyId })
+            .execute();
+
+        return await this.getPropertyTypeByPropertyId(propertyId);
+    }
+
 }

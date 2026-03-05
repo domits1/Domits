@@ -19,6 +19,11 @@ import Jared from "../../images/about-img/Jared.jpg";
 import Sander from "../../images/about-img/Sander.png";
 import Bekir from "../../images/about-img/Bekir.png";
 import Kacper from "../../images/about-img/Kacper.png";
+import Valentijn from "../../images/about-img/valentijn.png";
+import Sakhi from "../../images/about-img/Sakhi.png";
+import Denisa from "../../images/about-img/Denisa.jpeg";
+import Omer from "../../images/about-img/Omer.jpg";
+import Ameen from "../../images/about-img/Ameen.jpg";
 
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
@@ -40,7 +45,6 @@ function About() {
   const founderMembers = [
     { name: "Stefan", src: stefan, role: aboutContent.crew.founder },
     { name: "Robert", src: Robert, role: aboutContent.crew.engineeringManager },
-    
   ];
 
   const developerMembers = [
@@ -69,7 +73,13 @@ function About() {
     { name: "Moncef", src: standard, role: aboutContent.crew.developer },
     { name: "Stephanie", src: standard, role: aboutContent.crew.developer },
     { name: "Tom", src: standard, role: aboutContent.crew.developer },
+    { name: "Valentijn", src: Valentijn, role: aboutContent.crew.developer },
     { name: "Yusuf", src: standard, role: aboutContent.crew.developer },
+    { name: "Sakhi", src: Sakhi, role: aboutContent.crew.developer },
+    { name: "Denisa", src: Denisa, role: aboutContent.crew.designer },
+    { name: "Omer", src: Omer, role: aboutContent.crew.developer },
+    { name: "Ameen", src: Ameen, role: aboutContent.crew.developer },
+    { name: "Hadeel", src: standard, role: aboutContent.crew.developer },
    
   ]
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -221,7 +231,7 @@ function About() {
             ))}
           </div>
         </div>
-        
+
         <div className="about__footer">
           <p className="about__footer-text">{aboutContent.footerText.description}</p>
           <p className="about__footer-text">{aboutContent.footerText.description2}</p>

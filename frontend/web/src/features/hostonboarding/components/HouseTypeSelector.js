@@ -24,7 +24,7 @@ function HouseTypeSelector({ header, description }) {
       className={`${selectedType === header ? "guest-access-item-selected" : "guest-access-item"}`}
       onClick={handleClick}>
       <h3 className="guest-access-header">{header}</h3>
-      <p>{description}</p>
+      <p className="guest-access-description">{description}</p>
     </div>
   )
 }

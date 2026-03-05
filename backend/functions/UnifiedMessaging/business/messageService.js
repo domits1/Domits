@@ -1,6 +1,5 @@
 import MessageRepository from "../data/messageRepository.js";
 import ThreadRepository from "../data/threadRepository.js";
-import { randomUUID } from "crypto";
 
 class MessageService {
   constructor() {
@@ -9,26 +8,37 @@ class MessageService {
   }
 
   async sendMessage(payload) {
-    let threadId = payload.threadId;
+    let threadId = payload.threadId || null;
+
+    const senderId = payload.senderId;
+    const recipientId = payload.recipientId;
+
+    const explicitHostId = payload.hostId || null;
+    const explicitGuestId = payload.guestId || null;
 
     if (!threadId) {
-      let thread = await this.threadRepository.findThread(payload.senderId, payload.recipientId, payload.propertyId);
+      let thread = await this.threadRepository.findThread(senderId, recipientId, payload.propertyId);
+
       if (!thread) {
+        const hostId = explicitHostId || senderId;
+        const guestId = explicitGuestId || recipientId;
+
         thread = await this.threadRepository.createThread({
-          hostId: payload.senderId,
-          guestId: payload.recipientId,
-          propertyId: payload.propertyId,
+          hostId,
+          guestId,
+          propertyId: payload.propertyId ?? null,
           platform: payload.platform || "DOMITS",
           externalThreadId: payload.externalThreadId,
         });
       }
+
       threadId = thread.id;
     }
 
     const message = await this.messageRepository.createMessage({
       threadId: threadId,
-      senderId: payload.senderId,
-      recipientId: payload.recipientId,
+      senderId: senderId,
+      recipientId: recipientId,
       content: payload.content,
       platformMessageId: payload.platformMessageId,
       metadata: payload.metadata,
@@ -40,7 +50,10 @@ class MessageService {
 
     return {
       statusCode: 201,
-      response: message,
+      response: {
+        ...message,
+        threadId,
+      },
     };
   }
 
