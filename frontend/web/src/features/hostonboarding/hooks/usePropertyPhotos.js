@@ -11,9 +11,9 @@ export default function usePhotos() {
   const MIN_WIDTH = 1024;
   const MIN_HEIGHT = 683;
   const MAX_PER_IMAGE = 5 * 1024 * 1024;
-  const MAX_TOTAL_SIZE = 5 * 1024 * 1024 * 30;
+  const MAX_TOTAL_SIZE = 5 * 1024 * 1024 * 60;
   const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
-  const MAX_IMAGES = 30;
+  const MAX_IMAGES = 60;
 
   const validateImage = (file, callback) => {
     if (!file) return;

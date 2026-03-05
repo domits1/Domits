@@ -112,20 +112,20 @@ export class PropertyController {
                 };
             }
 
-            if (files.length > 30) {
+            if (files.length > 60) {
                 return {
                     statusCode: 400,
                     headers: responseHeaders,
-                    body: JSON.stringify({ message: "Maximum of 30 images allowed." })
+                    body: JSON.stringify({ message: "Maximum of 60 images allowed." })
                 };
             }
 
             const existingCount = await this.propertyImageRepository.getImageCountByPropertyId(propertyId);
-            if (existingCount + files.length > 30) {
+            if (existingCount + files.length > 60) {
                 return {
                     statusCode: 400,
                     headers: responseHeaders,
-                    body: JSON.stringify({ message: "Maximum of 30 images allowed." })
+                    body: JSON.stringify({ message: "Maximum of 60 images allowed." })
                 };
             }
 

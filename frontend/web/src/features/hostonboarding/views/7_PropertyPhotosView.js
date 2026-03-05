@@ -14,7 +14,7 @@ function PhotosView() {
   const { prevPath, nextPath } = useOnboardingFlow();
   const { type: accommodationType } = useParams();
   const MIN_IMAGES = 5;
-  const MAX_IMAGES = 30;
+  const MAX_IMAGES = 60;
   const ACCEPTED_FILE_TYPES = "JPG, JPEG, PNG, WEBP";
   const MAX_FILE_SIZE_MB = 5;
   const {
