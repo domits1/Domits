@@ -549,40 +549,40 @@ const HostPropertyCare = () => {
 
                         <div className="details-body">
                             <div className="form-group">
-                                <label>Description</label>
-                                <textarea name="description" value={editedTask.description || ''} onChange={handleEditChange} rows="3" placeholder="Enter description..." />
+                                <label htmlFor='edit-description'>Description</label>
+                                <textarea name="description" value={editedTask.description || ''} onChange={handleEditChange} id='edit-description' rows="3" placeholder="Enter description..." />
                             </div>
 
                             <div className="form-row-grid">
                                 <div className="form-group">
-                                    <label>Assignee</label>
-                                    <select name="assignee" value={editedTask.assignee} onChange={handleEditChange}>
+                                    <label htmlFor='edit-assignee'>Assignee</label>
+                                    <select name="assignee" value={editedTask.assignee} onChange={handleEditChange} id="edit-assignee">
                                         <option value="Sophie Janssen">Sophie Janssen</option>
                                         <option value="Jan de Vries">Jan de Vries</option>
                                         <option value="Lisa Meijer">Lisa Meijer</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Type</label>
-                                    <select name="type" value={editedTask.type} onChange={handleEditChange}>
+                                    <label htmlFor='edit-type'>Type</label>
+                                    <select name="type" value={editedTask.type} onChange={handleEditChange} id="edit-type">
                                         <option value="Cleaning">Cleaning</option>
                                         <option value="Maintenance">Maintenance</option>
                                         <option value="Inspection">Inspection</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Booking Reference (optional)</label>
-                                    <input type="text" name="bookingRef" value={editedTask.bookingRef || ''} onChange={handleEditChange} placeholder="Select booking." />
+                                    <label htmlFor='edit-booking-ref'>Booking Reference (optional)</label>
+                                    <input type="text" name="bookingRef" value={editedTask.bookingRef || ''} onChange={handleEditChange} placeholder="Select booking." id='edit-booking-ref'/>
                                 </div>
                                 <div className="form-group">
-                                    <label>Due Date</label>
-                                    <input type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} />
+                                    <label htmlFor='edit-due-date'>Due Date</label>
+                                    <input type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} id='edit-due-date'/>
                                 </div>
                             </div>
 
                             <div className="form-group attachments-section">
                                 <div className="attachments-header">
-                                    <label>Attachments (optional)</label>
+                                    <label htmlFor='edit-attachments'>Attachments (optional)</label>
                                     <span className="attachments-count">0 Attachments</span>
                                 </div>
                                 <div className="attachments-box">

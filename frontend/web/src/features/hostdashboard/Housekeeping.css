@@ -25,7 +25,7 @@
 
 
 .btn-create-green {
-    background-color: #28a745; 
+    background-color: #1e7e34; 
     color: white;
     border: none;
     padding: 10px 20px;
@@ -106,9 +106,9 @@
     flex-shrink: 0;
 }
 
-.overview-stat-icon.error-icon { color: #dc3545; background-color: #fde8e8; font-weight: bold; }
-.overview-stat-icon.info-icon { color: #007bff; background-color: #e6f2ff; font-weight: bold; }
-.overview-stat-icon.success-icon { color: #28a745; background-color: #e6f9ec; font-weight: bold; }
+.overview-stat-icon.error-icon { color: #b02a37; background-color: #fde8e8; font-weight: bold; }
+.overview-stat-icon.info-icon { color: #0056b3; background-color: #e6f2ff; font-weight: bold; }
+.overview-stat-icon.success-icon { color: #1e7e34; background-color: #e6f9ec; font-weight: bold; }
 
 .overview-stat-info {
     display: flex;
@@ -200,7 +200,7 @@
 }
 
 .badge-priority.urgent { background-color: #dc3545; color: white; }
-.badge-priority.high { background-color: #fd7e14; color: white; }
+.badge-priority.high { background-color: #fd7e14; color: #212529; }
 .badge-priority.medium { background-color: #ffc107; color: #333; } 
 .badge-priority.low { background-color: #495057; color: white; }
 
@@ -213,8 +213,8 @@
 }
 
 .badge-status.pending { background-color: #495057; color: white; }
-.badge-status.in-progress { background-color: #007bff; color: white; }
-.badge-status.completed { background-color: #28a745; color: white; }
+.badge-status.in-progress { background-color: #0062cc; color: white; }
+.badge-status.completed { background-color: #1e7e34; color: white; }
 .badge-status.overdue { background-color: #dc3545; color: white; }
 .badge-status.cancelled { background-color: #343a40; color: white; }
 
@@ -545,7 +545,7 @@
     background-color: #ffffff;
 }
 
-.kpi-icon.info-icon { color: #007bff; background-color: #e6f2ff; font-weight: bold; }
+.kpi-icon.info-icon { color: #0056b3; background-color: #e6f2ff; font-weight: bold; }
 
 .table-footer-actions {
     display: flex;
@@ -670,12 +670,12 @@
 }
 
 .badge-select.status-pending { background-color: #495057; color: white; }
-.badge-select.status-in-progress { background-color: #007bff; color: white; }
-.badge-select.status-completed { background-color: #28a745; color: white; }
+.badge-select.status-in-progress { background-color: #0062cc; color: white; }
+.badge-select.status-completed { background-color: #1e7e34; color: white; }
 .badge-select.status-overdue { background-color: #dc3545; color: white; }
 
 .badge-select.priority-urgent { background-color: #dc3545; color: white; }
-.badge-select.priority-high { background-color: #fd7e14; color: white; }
+.badge-select.priority-high { background-color: #fd7e14; color: #212529; }
 .badge-select.priority-medium { background-color: #ffc107; color: #333; background-image: none; padding-right: 10px;}
 .badge-select.priority-low { background-color: #495057; color: white; }
 
