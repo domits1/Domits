@@ -1,6 +1,6 @@
 import Database from "database";
 import { DatabaseException } from "../util/exception/databaseException.js";
-import { listSourcesByProperty, upsertSourceRecord } from "../../.shared/icalSourceRepositoryHelpers.js";
+import { listSourcesByProperty, upsertSourceRecord } from "../.shared/icalSourceRepositoryHelpers.js";
 
 export class Repository {
   async listSources(propertyId) {
