@@ -20,6 +20,8 @@ import {
   normalizePricingForm,
 } from "../utils/hostPropertyUtils";
 
+const CONFIRM_BATCH_SIZE = 8;
+
 export const fetchPropertyAndListings = async (propertyId) => {
   const [response, hostPropertiesResponse] = await Promise.all([
     fetch(`${PROPERTY_API_BASE}/hostDashboard/single?property=${encodeURIComponent(propertyId)}`, {
@@ -264,25 +266,31 @@ const confirmPendingPhotoUploads = async ({
   orderedPendingPhotos,
   pendingOrderPosition,
 }) => {
-  const confirmResponse = await fetch(`${PROPERTY_API_BASE}/images/confirm`, {
-    method: "POST",
-    headers: {
-      Authorization: getAccessToken(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      propertyId,
-      images: uploads.map((upload, index) => ({
-        imageId: upload.imageId,
-        originalKey: upload.key,
-        sortOrder: pendingOrderPosition.get(orderedPendingPhotos[index].id) ?? index,
-      })),
-    }),
-  });
+  for (let startIndex = 0; startIndex < uploads.length; startIndex += CONFIRM_BATCH_SIZE) {
+    const uploadBatch = uploads.slice(startIndex, startIndex + CONFIRM_BATCH_SIZE);
+    const confirmResponse = await fetch(`${PROPERTY_API_BASE}/images/confirm`, {
+      method: "POST",
+      headers: {
+        Authorization: getAccessToken(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        propertyId,
+        images: uploadBatch.map((upload, batchIndex) => {
+          const globalIndex = startIndex + batchIndex;
+          return {
+            imageId: upload.imageId,
+            originalKey: upload.key,
+            sortOrder: pendingOrderPosition.get(orderedPendingPhotos[globalIndex].id) ?? globalIndex,
+          };
+        }),
+      }),
+    });
 
-  if (!confirmResponse.ok) {
-    const message = await getApiErrorMessage(confirmResponse, "Failed to finalize photo upload.");
-    throw new Error(message);
+    if (!confirmResponse.ok) {
+      const message = await getApiErrorMessage(confirmResponse, "Failed to finalize photo upload.");
+      throw new Error(message);
+    }
   }
 };
 

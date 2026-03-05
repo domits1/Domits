@@ -22,6 +22,7 @@ export async function submitAccommodation(navigate, builder, options = {}) {
   const API_URL = `${API_BASE}/property`;
   const PRESIGN_URL = `${API_BASE}/property/images/presign`;
   const CONFIRM_URL = `${API_BASE}/property/images/confirm`;
+  const CONFIRM_BATCH_SIZE = 8;
   const DRAFT_URL = `${API_BASE}/property/draft`;
 
   const payload = builder.build();
@@ -95,26 +96,31 @@ export async function submitAccommodation(navigate, builder, options = {}) {
 
   const confirmUploads = async (draftId, uploads, sortOrders) => {
     setSubmitState("confirming-images");
-    const res = await fetch(CONFIRM_URL, {
-      method: "POST",
-      headers: {
-        Authorization: getAccessToken(),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        propertyId: draftId,
-        images: uploads.map((upload, index) => ({
-          imageId: upload.imageId,
-          originalKey: upload.key,
-          sortOrder: sortOrders[index] ?? index,
-        })),
-      }),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || "Failed to confirm uploads.");
+    for (let startIndex = 0; startIndex < uploads.length; startIndex += CONFIRM_BATCH_SIZE) {
+      const uploadBatch = uploads.slice(startIndex, startIndex + CONFIRM_BATCH_SIZE);
+      const res = await fetch(CONFIRM_URL, {
+        method: "POST",
+        headers: {
+          Authorization: getAccessToken(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          propertyId: draftId,
+          images: uploadBatch.map((upload, batchIndex) => {
+            const globalIndex = startIndex + batchIndex;
+            return {
+              imageId: upload.imageId,
+              originalKey: upload.key,
+              sortOrder: sortOrders[globalIndex] ?? globalIndex,
+            };
+          }),
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to confirm uploads.");
+      }
     }
-    return res.json();
   };
 
   if (payload.propertyCheckIn) {
