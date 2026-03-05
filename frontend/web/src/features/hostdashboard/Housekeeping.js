@@ -33,11 +33,16 @@ const HostPropertyCare = () => {
     // --- FUNKCJA DO CHECKBOXÓW W MY TASKS ---
     const handleToggleComplete = (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        // Pobieramy dzisiejszą datę do statystyk KPI
+        const todayStr = new Date().toISOString().split('T')[0]; 
+        
         const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
         
         const updatedTask = {
             ...task,
             status: newStatus,
+            // KLUCZOWE: Dodajemy datę ukończenia, żeby KPI to widziało, lub usuwamy ją, gdy odznaczamy
+            completedAt: newStatus === 'Completed' ? todayStr : null, 
             activities: [
                 ...(task.activities || []),
                 { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
@@ -310,21 +315,25 @@ const HostPropertyCare = () => {
         });
 
         // Dzielimy na sekcje zgodnie z Issue
-        const todayTasks = myTasks.filter(t => t.dueDate === todayStr && t.status !== 'Overdue' && t.status !== 'Completed');
+        // ZMIANA: Usunięto ukrywanie 'Completed', żeby zadania zostawały na liście
+        const todayTasks = myTasks.filter(t => t.dueDate === todayStr && t.status !== 'Overdue');
         const overdueTasks = myTasks.filter(t => t.status === 'Overdue' || (t.dueDate && t.dueDate < todayStr && t.status !== 'Completed'));
         
         // Upcoming: domyślnie ustawiamy status na Pending, priorytet Low (zgodnie z issue) i sortujemy po dacie
-        const upcomingTasks = myTasks.filter(t => t.dueDate && t.dueDate > todayStr && t.status !== 'Completed')
+        const upcomingTasks = myTasks.filter(t => t.dueDate && t.dueDate > todayStr)
             .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
             .map(t => ({ ...t, priority: t.priority || 'Low', status: t.status || 'Pending' }));
 
         const renderTaskRow = (task, isOverdueSection = false) => {
-            // Zgodnie z Issue: Przeterminowane dostają na twardo status Overdue i Priority Urgent
             const displayPriority = isOverdueSection ? 'Urgent' : (task.priority || 'Low');
             const displayStatus = isOverdueSection ? 'Overdue' : task.status;
+            
+            // ZMIANA: Sprawdzamy, czy zadanie jest ukończone
+            const isCompleted = task.status === 'Completed';
 
             return (
-                <div key={task.id} className={`my-task-card ${isOverdueSection ? 'is-overdue-card' : ''}`} onClick={() => openTaskDetails(task)}>
+                // ZMIANA: Jeśli zadanie jest ukończone, lekko je wyszarzamy (opacity 0.6)
+                <div key={task.id} className={`my-task-card ${isOverdueSection ? 'is-overdue-card' : ''}`} onClick={() => openTaskDetails(task)} style={{ opacity: isCompleted ? 0.6 : 1 }}>
                     <div className="my-task-left">
                         <div className="my-task-icon">📋</div>
                         <div className="my-task-info">
