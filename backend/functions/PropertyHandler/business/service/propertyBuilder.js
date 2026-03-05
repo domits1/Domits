@@ -194,8 +194,8 @@ export class PropertyBuilder {
   addImages(images) {
     if (images.length < 5) {
       throw new TypeException("Minimum of 5 images required.");
-    } else if (images.length > 30) {
-      throw new TypeException("Maximum of 30 images allowed.");
+    } else if (images.length > 60) {
+      throw new TypeException("Maximum of 60 images allowed.");
     }
     const maxTotalKiloBytes = 5 * 1024;
     const totalKiloBytes = images.reduce((sum, image) => {
