@@ -22,8 +22,7 @@ export class Controller {
   async retrieve(event) {
     try {
       const token = getAuthToken(event);
-      await this.authManager.userIsAuthorized(token);
-
+      const user = await this.authManager.userIsAuthorized(token);
       const body = parseJson(event) || {};
       const action = String(body.action || "RETRIEVE_EXTERNAL").trim().toUpperCase();
 
@@ -34,34 +33,56 @@ export class Controller {
       }
 
       if (action === "LIST_SOURCES") {
-        if (!body?.propertyId) return err(400, "propertyId is required");
-        const data = await this.service.listSources(String(body.propertyId));
+        const propertyId = body?.propertyId ? String(body.propertyId).trim() : "";
+        if (!propertyId) return err(400, "propertyId is required");
+        await this.authManager.authorizePropertyOwnerForUser(user, propertyId);
+        const data = await this.service.listSources(propertyId);
         return ok(data);
       }
 
       if (action === "UPSERT_SOURCE") {
-        const propertyId = body?.propertyId ? String(body.propertyId) : "";
-        const calendarUrl = body?.calendarUrl ? String(body.calendarUrl) : "";
-        const calendarName = body?.calendarName ? String(body.calendarName) : "";
+        const propertyId = body?.propertyId ? String(body.propertyId).trim() : "";
+        const calendarUrl = body?.calendarUrl ? String(body.calendarUrl).trim() : "";
+        const calendarName = body?.calendarName ? String(body.calendarName).trim() : "";
+        const calendarProvider = body?.calendarProvider ? String(body.calendarProvider).trim() : "";
         if (!propertyId) return err(400, "propertyId is required");
         if (!calendarUrl) return err(400, "calendarUrl is required");
         if (!calendarName) return err(400, "calendarName is required");
-        const data = await this.service.upsertSource({ propertyId, calendarUrl, calendarName });
+        await this.authManager.authorizePropertyOwnerForUser(user, propertyId);
+        const data = await this.service.upsertSource({
+          propertyId,
+          calendarUrl,
+          calendarName,
+          calendarProvider,
+        });
         return ok(data);
       }
 
       if (action === "DELETE_SOURCE") {
-        const propertyId = body?.propertyId ? String(body.propertyId) : "";
-        const sourceId = body?.sourceId ? String(body.sourceId) : "";
+        const propertyId = body?.propertyId ? String(body.propertyId).trim() : "";
+        const sourceId = body?.sourceId ? String(body.sourceId).trim() : "";
         if (!propertyId) return err(400, "propertyId is required");
         if (!sourceId) return err(400, "sourceId is required");
+        await this.authManager.authorizePropertyOwnerForUser(user, propertyId);
         const data = await this.service.deleteSource({ propertyId, sourceId });
         return ok(data);
       }
 
       if (action === "REFRESH_ALL") {
-        if (!body?.propertyId) return err(400, "propertyId is required");
-        const data = await this.service.refreshAll(String(body.propertyId));
+        const propertyId = body?.propertyId ? String(body.propertyId).trim() : "";
+        if (!propertyId) return err(400, "propertyId is required");
+        await this.authManager.authorizePropertyOwnerForUser(user, propertyId);
+        const data = await this.service.refreshAll(propertyId);
+        return ok(data);
+      }
+
+      if (action === "REFRESH_SOURCE") {
+        const propertyId = body?.propertyId ? String(body.propertyId).trim() : "";
+        const sourceId = body?.sourceId ? String(body.sourceId).trim() : "";
+        if (!propertyId) return err(400, "propertyId is required");
+        if (!sourceId) return err(400, "sourceId is required");
+        await this.authManager.authorizePropertyOwnerForUser(user, propertyId);
+        const data = await this.service.refreshSource({ propertyId, sourceId });
         return ok(data);
       }
 

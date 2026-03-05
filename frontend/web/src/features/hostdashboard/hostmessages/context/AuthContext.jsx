@@ -1,6 +1,6 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { Auth } from 'aws-amplify';
-import {getAccessToken}  from '../../../../services/getAccessToken';
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { Auth } from "aws-amplify";
+import { getAccessToken } from "../../../../services/getAccessToken";
 
 const UserContext = createContext();
 export const useUser = () => useContext(UserContext);
@@ -14,10 +14,8 @@ export const UserProvider = ({ children }) => {
       try {
         const user = await Auth.currentAuthenticatedUser();
         setUserId(user.attributes.sub);
-
-
       } catch (error) {
-        console.error('Error fetching authenticated user:', error);
+        console.error("Error fetching authenticated user:", error);
       }
     }
     getCurrentUser();
@@ -31,7 +29,7 @@ export const UserProvider = ({ children }) => {
           setAccessToken(token);
         }
       } catch (error) {
-        console.error('Error fetching authenticated user:', error);
+        console.error("Error fetching access token:", error);
       }
     }
     fetchAccessToken();
