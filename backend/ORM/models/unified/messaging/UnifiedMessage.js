@@ -1,5 +1,13 @@
 import { EntitySchema } from "typeorm";
 
+const bigintNumber = {
+  type: "bigint",
+  transformer: {
+    from: (value) => (value === null || value === undefined ? value : Number(value)),
+    to: (value) => value,
+  },
+};
+
 export const UnifiedMessage = new EntitySchema({
   name: "UnifiedMessage",
   tableName: "unified_message",
@@ -31,11 +39,7 @@ export const UnifiedMessage = new EntitySchema({
       nullable: true,
     },
     createdAt: {
-      type: "bigint",
-      transformer: {
-        from: (value) => Number(value),
-        to: (value) => value,
-      },
+      ...bigintNumber,
       nullable: false,
     },
     isRead: {
@@ -48,12 +52,43 @@ export const UnifiedMessage = new EntitySchema({
       nullable: true,
     },
     attachments: {
-      type: "text", // JSON string to store array of { url: string, type: string, name: string }
+      type: "text",
       nullable: true,
     },
     deliveryStatus: {
-      type: "varchar", // 'pending', 'sent', 'delivered', 'failed'
+      type: "varchar",
       default: "pending",
+      nullable: true,
+    },
+    
+    direction: {
+      name: "direction",
+      type: "varchar",
+      nullable: true,
+    },
+    externalCreatedAt: {
+      name: "externalCreatedAt",
+      ...bigintNumber,
+      nullable: true,
+    },
+    externalSenderType: {
+      name: "externalSenderType",
+      type: "varchar",
+      nullable: true,
+    },
+    complianceStatus: {
+      name: "complianceStatus",
+      type: "varchar",
+      nullable: true,
+    },
+    errorCode: {
+      name: "errorCode",
+      type: "varchar",
+      nullable: true,
+    },
+    errorMessage: {
+      name: "errorMessage",
+      type: "text",
       nullable: true,
     },
   },

@@ -1,5 +1,13 @@
 import { EntitySchema } from "typeorm";
 
+const bigintNumber = {
+  type: "bigint",
+  transformer: {
+    from: (value) => (value === null || value === undefined ? value : Number(value)),
+    to: (value) => value,
+  },
+};
+
 export const UnifiedThread = new EntitySchema({
   name: "UnifiedThread",
   tableName: "unified_thread",
@@ -36,27 +44,41 @@ export const UnifiedThread = new EntitySchema({
       nullable: false,
     },
     createdAt: {
-      type: "bigint",
-      transformer: {
-        from: (value) => Number(value),
-        to: (value) => value,
-      },
+      ...bigintNumber,
       nullable: false,
     },
     updatedAt: {
-      type: "bigint",
-      transformer: {
-        from: (value) => Number(value),
-        to: (value) => value,
-      },
+      ...bigintNumber,
       nullable: false,
     },
     lastMessageAt: {
-      type: "bigint",
-      transformer: {
-        from: (value) => Number(value),
-        to: (value) => value,
-      },
+      ...bigintNumber,
+      nullable: true,
+    },
+
+    integrationAccountId: {
+      name: "integrationaccountid",
+      type: "varchar",
+      nullable: true,
+    },
+    assignedToUserId: {
+      name: "assignedtouserid",
+      type: "varchar",
+      nullable: true,
+    },
+    priority: {
+      name: "priority",
+      type: "varchar",
+      nullable: true,
+    },
+    lastInboundAt: {
+      name: "lastinboundat",
+      ...bigintNumber,
+      nullable: true,
+    },
+    lastOutboundAt: {
+      name: "lastoutboundat",
+      ...bigintNumber,
       nullable: true,
     },
   },
