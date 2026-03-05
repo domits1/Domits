@@ -4,6 +4,12 @@ import {Property_Availability_Restriction} from "database/models/Property_Availa
 import {Availability_Restrictions} from "database/models/Availability_Restrictions";
 import { randomUUID } from "node:crypto";
 
+const RESTRICTION_NAME_FALLBACKS = Object.freeze({
+    MinimumAdvanceReservation: ["MinimumAdvanceNoticeDays", "MinimumAdvanceBookingDays"],
+    MaximumAdvanceReservation: ["MaximumAdvanceNoticeDays", "MaximumAdvanceBookingDays"],
+    PreparationTimeDays: ["PreparationDays", "TurnoverDays"],
+});
+
 export class PropertyAvailabilityRestrictionRepository {
 
     constructor(systemManager) {
@@ -80,16 +86,59 @@ export class PropertyAvailabilityRestrictionRepository {
         return await client.transaction(async (transactionManager) => {
             if (normalizedRestrictions.length > 0) {
                 const restrictionNames = normalizedRestrictions.map((restriction) => restriction.restriction);
+                const restrictionLookupNames = Array.from(
+                    new Set(
+                        restrictionNames.flatMap((restrictionName) => [
+                            restrictionName,
+                            ...(RESTRICTION_NAME_FALLBACKS[restrictionName] || []),
+                        ])
+                    )
+                );
                 const existingRestrictionMappings = await transactionManager
                     .getRepository(Availability_Restrictions)
                     .createQueryBuilder("availability_restrictions")
                     .select(["availability_restrictions.restriction"])
-                    .where("availability_restrictions.restriction IN (:...restrictionNames)", { restrictionNames })
+                    .where("availability_restrictions.restriction IN (:...restrictionNames)", {
+                        restrictionNames: restrictionLookupNames,
+                    })
                     .getMany();
                 const existingRestrictionNameSet = new Set(
                     existingRestrictionMappings.map((restriction) => String(restriction.restriction))
                 );
-                const invalidRestrictionNames = restrictionNames.filter(
+
+                const remappedRestrictions = normalizedRestrictions.map((restriction) => {
+                    if (existingRestrictionNameSet.has(restriction.restriction)) {
+                        return restriction;
+                    }
+
+                    const fallbackNames = RESTRICTION_NAME_FALLBACKS[restriction.restriction] || [];
+                    const fallbackRestrictionName = fallbackNames.find((fallbackName) =>
+                        existingRestrictionNameSet.has(fallbackName)
+                    );
+
+                    if (!fallbackRestrictionName) {
+                        return restriction;
+                    }
+
+                    return {
+                        ...restriction,
+                        restriction: fallbackRestrictionName,
+                    };
+                });
+
+                const deduplicatedRestrictions = Array.from(
+                    new Map(
+                        remappedRestrictions.map((restriction) => [
+                            restriction.restriction,
+                            restriction,
+                        ])
+                    ).values()
+                );
+
+                const deduplicatedRestrictionNames = deduplicatedRestrictions.map(
+                    (restriction) => restriction.restriction
+                );
+                const invalidRestrictionNames = deduplicatedRestrictionNames.filter(
                     (restrictionName) => !existingRestrictionNameSet.has(restrictionName)
                 );
                 if (invalidRestrictionNames.length > 0) {
@@ -101,7 +150,9 @@ export class PropertyAvailabilityRestrictionRepository {
                     .delete()
                     .from(Property_Availability_Restriction)
                     .where("property_id = :propertyId", { propertyId })
-                    .andWhere("restriction IN (:...restrictionNames)", { restrictionNames })
+                    .andWhere("restriction IN (:...restrictionNames)", {
+                        restrictionNames: deduplicatedRestrictionNames,
+                    })
                     .execute();
 
                 await transactionManager
@@ -109,7 +160,7 @@ export class PropertyAvailabilityRestrictionRepository {
                     .insert()
                     .into(Property_Availability_Restriction)
                     .values(
-                        normalizedRestrictions.map((restriction) => ({
+                        deduplicatedRestrictions.map((restriction) => ({
                             id: randomUUID(),
                             property_id: propertyId,
                             restriction: restriction.restriction,
