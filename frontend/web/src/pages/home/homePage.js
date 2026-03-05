@@ -218,11 +218,12 @@ const Homepage = () => {
                     title: `${homePageContent.features.stayGuarantee}`,
                     text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
                   },
-                ].map((item, index) => {
+                ].map((item) => {
                   const isOpen = activePopup === item.text;
                   return (
-                    <div
-                      key={index}
+                    <button
+                      type="button"
+                      key={item.text}
                       className={`popup-trigger${isOpen ? " is-open" : ""}`}
                       onClick={() => handlePopupClick(item.text)}
                       onPointerEnter={(event) => {
@@ -235,14 +236,6 @@ const Homepage = () => {
                           setActivePopup(null);
                         }
                       }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          handlePopupClick(item.text);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
                       aria-expanded={isOpen}>
                       <span className="popup-header">
                         <span className="popup-emoji" aria-hidden="true">
@@ -250,8 +243,8 @@ const Homepage = () => {
                         </span>
                         <span className="popup-title">{item.title}</span>
                       </span>
-                      <div className="popup-content">{item.text}</div>
-                    </div>
+                      <span className="popup-content">{item.text}</span>
+                    </button>
                   );
                 })}
               </div>
