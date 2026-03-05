@@ -29,6 +29,9 @@ const handlePatch = async (event) => {
   if (isPath(event, "/property/overview")) {
     return controller.updatePropertyOverview(event);
   }
+  if (isPath(event, "/property/calendar/overrides")) {
+    return controller.updatePropertyCalendarOverrides(event);
+  }
   return controller.activateProperty(event);
 };
 
@@ -48,6 +51,10 @@ const bookingEngineHandlers = {
 };
 
 const handleGet = async (event) => {
+  if (isPath(event, "/property/calendar/overrides")) {
+    return controller.getPropertyCalendarOverrides(event);
+  }
+
   const subResource = event.pathParameters?.subResource;
   if (event.resource === "/property/hostDashboard/{subResource}") {
     const handler = hostDashboardHandlers[subResource];
