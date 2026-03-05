@@ -6,6 +6,15 @@ class PropertyRepository {
   constructor() {}
 
   async getPropertyById(id) {
+    // TEST mode: Return mock property
+    if (process.env.TEST === "true") {
+      return {
+        hostId: "test-host-123",
+        title: "Test Property",
+      };
+    }
+
+    // PROD mode: Query real database
     const client = await Database.getInstance();
     const result = await client
       .getRepository(Property)

@@ -1,5 +1,15 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SystemManagerRepository } from "../../data/repository/systemManagerRepository.js";
+import { isTestMode } from "../../../../util/isTestMode.js";
+import { 
+    getPropertyCardFixture, 
+    getFullPropertyFixture,
+    TEST_PROPERTY_ID,
+    TEST_HOST_ID,
+    FULL_ACTIVE_PROPERTY,
+    ACTIVE_PROPERTY_CARD,
+    getPropertiesByHostFixture
+} from "../../util/testFixtures/propertyFixtures.js";
 
 import { PropertyAmenityRepository } from "../../data/repository/propertyAmenityRepository.js";
 import { PropertyRepository } from "../../data/repository/propertyRepository.js";
@@ -235,6 +245,11 @@ export class PropertyService {
   }
 
   async getCardPropertyAttributes(propertyId) {
+    // In TEST mode, return deterministic test property card
+    if (isTestMode()) {
+      return getPropertyCardFixture(propertyId);
+    }
+    
     const [basePropertyInfo, generalDetails, pricing, images, location, testStatus] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
       this.getGeneralDetails(propertyId),
@@ -370,6 +385,18 @@ export class PropertyService {
   }
 
   async getBasePropertyInfo(property) {
+    // In TEST mode, return deterministic test property data
+    if (isTestMode()) {
+      return {
+        id: TEST_PROPERTY_ID,
+        host_id: TEST_HOST_ID,
+        status: "ACTIVE",
+        name: "Test Property",
+        description: "A test property for unit testing",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z"
+      };
+    }
     return await this.propertyRepository.getPropertyById(property);
   }
 
