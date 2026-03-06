@@ -80,7 +80,10 @@ export default function AvailabilitySettingsCard({
         <section className="hc-availability-settings-section">
           <h4 className="hc-availability-settings-section-title">Stay duration</h4>
 
-          <article className="hc-availability-settings-item" title={MINIMUM_NIGHTS_HELP}>
+          <article
+            className="hc-availability-settings-item hc-availability-settings-item--with-help"
+            data-help={MINIMUM_NIGHTS_HELP}
+          >
             <label className="hc-availability-settings-item-label" htmlFor="hc-availability-min-stay">
               Minimum nights
             </label>
@@ -95,7 +98,10 @@ export default function AvailabilitySettingsCard({
             />
           </article>
 
-          <article className="hc-availability-settings-item" title={MAXIMUM_NIGHTS_HELP}>
+          <article
+            className="hc-availability-settings-item hc-availability-settings-item--with-help"
+            data-help={MAXIMUM_NIGHTS_HELP}
+          >
             <label className="hc-availability-settings-item-label" htmlFor="hc-availability-max-stay">
               Maximum nights
             </label>
@@ -114,7 +120,10 @@ export default function AvailabilitySettingsCard({
         <section className="hc-availability-settings-section">
           <h4 className="hc-availability-settings-section-title">Availability</h4>
 
-          <article className="hc-availability-settings-item" title={ADVANCE_NOTICE_HELP}>
+          <article
+            className="hc-availability-settings-item hc-availability-settings-item--with-help"
+            data-help={ADVANCE_NOTICE_HELP}
+          >
             <label className="hc-availability-settings-item-label" htmlFor="hc-availability-advance-notice">
               Advance notice
             </label>
@@ -132,7 +141,10 @@ export default function AvailabilitySettingsCard({
             </select>
           </article>
 
-          <article className="hc-availability-settings-item" title={PREPARATION_TIME_HELP}>
+          <article
+            className="hc-availability-settings-item hc-availability-settings-item--with-help"
+            data-help={PREPARATION_TIME_HELP}
+          >
             <label className="hc-availability-settings-item-label" htmlFor="hc-availability-preparation-time">
               Preparation time
             </label>
@@ -150,7 +162,10 @@ export default function AvailabilitySettingsCard({
             </select>
           </article>
 
-          <article className="hc-availability-settings-item" title={AVAILABILITY_WINDOW_HELP}>
+          <article
+            className="hc-availability-settings-item hc-availability-settings-item--with-help"
+            data-help={AVAILABILITY_WINDOW_HELP}
+          >
             <label className="hc-availability-settings-item-label" htmlFor="hc-availability-window">
               Availability window
             </label>

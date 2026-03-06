@@ -10,6 +10,9 @@ import arrowLeftIcon from "../../../../images/arrow-left-icon.svg";
 import arrowRightIcon from "../../../../images/arrow-right-icon.svg";
 
 const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("en-US")}`;
+const EMPTY_SET = new Set();
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
 
 const toDateNumber = (date) => {
   const year = date.getUTCFullYear();
@@ -161,18 +164,18 @@ export default function CalendarGrid({
   monthGrid,
   onPrev,
   onNext,
-  availabilityRanges,
-  externalBlockedDates,
-  nightlyRate,
-  weekendRate,
-  isLoading,
-  selectedDateKeys,
-  pendingSelectionStartKey,
-  availabilityOverrides,
-  priceOverrides,
-  bookedDateKeys,
-  onDateSelect,
-  loadingMessage,
+  availabilityRanges = EMPTY_ARRAY,
+  externalBlockedDates = EMPTY_SET,
+  nightlyRate = 0,
+  weekendRate = 0,
+  isLoading = false,
+  selectedDateKeys = EMPTY_ARRAY,
+  pendingSelectionStartKey = null,
+  availabilityOverrides = EMPTY_OBJECT,
+  priceOverrides = EMPTY_OBJECT,
+  bookedDateKeys = EMPTY_SET,
+  onDateSelect = null,
+  loadingMessage = "",
 }) {
   const isMonthView = view === "month";
   const safeGrid = Array.isArray(monthGrid) ? monthGrid : [];
@@ -400,17 +403,3 @@ CalendarGrid.propTypes = {
   loadingMessage: PropTypes.string,
 };
 
-CalendarGrid.defaultProps = {
-  availabilityRanges: [],
-  externalBlockedDates: new Set(),
-  nightlyRate: 0,
-  weekendRate: 0,
-  isLoading: false,
-  selectedDateKeys: [],
-  pendingSelectionStartKey: null,
-  availabilityOverrides: {},
-  priceOverrides: {},
-  bookedDateKeys: new Set(),
-  onDateSelect: null,
-  loadingMessage: "",
-};

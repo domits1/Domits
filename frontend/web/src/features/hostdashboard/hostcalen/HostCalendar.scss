@@ -1170,6 +1170,67 @@ $accent: #2f6fed;
   padding: 8px 10px;
 }
 
+.hc-availability-settings-item--with-help {
+  position: relative;
+}
+
+.hc-availability-settings-item--with-help::after {
+  content: attr(data-help);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  width: auto;
+  max-width: none;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.24);
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition:
+    opacity 80ms ease,
+    transform 80ms ease,
+    visibility 0s linear 80ms;
+}
+
+.hc-availability-settings-item--with-help::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  bottom: calc(100% + 2px);
+  z-index: 21;
+  border-width: 6px;
+  border-style: solid;
+  border-color: #111827 transparent transparent transparent;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition:
+    opacity 80ms ease,
+    transform 80ms ease,
+    visibility 0s linear 80ms;
+}
+
+.hc-availability-settings-item--with-help:hover::after,
+.hc-availability-settings-item--with-help:hover::before,
+.hc-availability-settings-item--with-help:focus-within::after,
+.hc-availability-settings-item--with-help:focus-within::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
 .hc-availability-settings-item-label {
   margin: 0;
   display: block;
