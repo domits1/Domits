@@ -20,8 +20,7 @@ export const handler = async (event) => {
       returnedResponse = await controller.patch(event);
       break;
     case "DELETE":
-      console.log("DELETE request called");
-      break;
+      throw new Error("DELETE method is not implemented.");
     default:
       throw new Error("Unable to determine request type. Please contact the Admin.");
   }
