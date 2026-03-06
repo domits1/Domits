@@ -27,13 +27,15 @@ const normalizeOrder = (order) => (String(order || "").toUpperCase() === "ASC" ?
 
 const quoteIdentifier = (identifier) => `"${String(identifier).replaceAll('"', '""')}"`;
 
+const isValidSchemaName = (value) =>
+  typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
+
 const getSchemaName = (client) => {
   const schema = client?.options?.schema;
-  if (typeof schema !== "string") {
-    return null;
+  if (isValidSchemaName(schema)) {
+    return schema.trim();
   }
-  const normalized = schema.trim();
-  return normalized || null;
+  return process.env.TEST === "true" ? "test" : "main";
 };
 
 const getIcalSourceTableName = (client) => {

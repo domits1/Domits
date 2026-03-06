@@ -7,13 +7,16 @@ export class Repository {
     return `"${String(identifier).replaceAll('"', '""')}"`;
   }
 
+  isValidSchemaName(value) {
+    return typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
+  }
+
   getSchemaName(client) {
     const schema = client?.options?.schema;
-    if (typeof schema !== "string") {
-      return null;
+    if (this.isValidSchemaName(schema)) {
+      return schema.trim();
     }
-    const normalized = schema.trim();
-    return normalized || null;
+    return process.env.TEST === "true" ? "test" : "main";
   }
 
   getIcalSourceTableName(client) {

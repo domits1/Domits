@@ -3,13 +3,15 @@ import { DatabaseException } from "../../util/exception/DatabaseException.js";
 
 const quoteIdentifier = (value) => `"${String(value || "").replaceAll('"', '""')}"`;
 
+const isValidSchemaName = (value) =>
+  typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
+
 const getSchemaName = (client) => {
   const schema = client?.options?.schema;
-  if (typeof schema !== "string") {
-    return "";
+  if (isValidSchemaName(schema)) {
+    return quoteIdentifier(schema.trim());
   }
-  const normalized = schema.trim();
-  return normalized ? quoteIdentifier(normalized) : "";
+  return process.env.TEST === "true" ? quoteIdentifier("test") : quoteIdentifier("main");
 };
 
 const getOverrideTableName = (client) => {
