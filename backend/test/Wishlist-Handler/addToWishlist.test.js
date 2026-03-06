@@ -15,7 +15,7 @@ describe("WishlistService - addToWishlist", () => {
   let service;
 
   beforeEach(() => {
-    service = new WishlistService(); 
+    service = new WishlistService();
   });
 
   afterEach(() => {

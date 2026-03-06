@@ -1,12 +1,11 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { WishlistRepository } from "../../data/wishlistRepository.js";
 import { WishlistItem } from "../model/wishlistModel.js";
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 
 export class WishlistService {
-  constructor(dynamoDbClient = new DynamoDBClient({})) {
-    this.wishlistRepository = new WishlistRepository(dynamoDbClient);
+  constructor() {
+    this.wishlistRepository = new WishlistRepository();
   }
 
   async createWishlist({ guestId, wishlistName }) {

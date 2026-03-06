@@ -16,13 +16,13 @@ export const Guest_Favorite = new EntitySchema({
             generated: false,
             nullable: false
         },
-        isPlaceHolder: {
+        isPlaceholder: {
             type: "boolean",
             nullable: false
         },
         propertyId: {
             type: "varchar",
-            nullable: false
+            nullable: true
         },
         wishlistName: {
             type: "varchar",
