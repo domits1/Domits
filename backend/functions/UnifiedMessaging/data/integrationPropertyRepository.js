@@ -1,7 +1,7 @@
-import Database from "database";
+import Database from "../ORM/index.js";
 import { randomUUID } from "node:crypto";
 
-import { ChannelIntegrationProperty } from "../../../ORM/models/unified/integrations/ChannelIntegrationProperty.js";
+import { ChannelIntegrationProperty } from "../models/unified/integrations/ChannelIntegrationProperty.js";
 
 class IntegrationPropertyRepository {
   async upsert({ integrationAccountId, domitsPropertyId, externalPropertyId, externalPropertyName, status }) {

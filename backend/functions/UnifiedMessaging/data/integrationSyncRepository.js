@@ -1,8 +1,8 @@
-import Database from "database";
+import Database from "../ORM/index.js";
 import { randomUUID } from "node:crypto";
 
-import { IntegrationSyncState } from "../../../ORM/models/unified/sync/IntegrationSyncState.js";
-import { IntegrationSyncLog } from "../../../ORM/models/unified/sync/IntegrationSyncLog.js";
+import { IntegrationSyncState } from "../models/unified/sync/IntegrationSyncState.js";
+import { IntegrationSyncLog } from "../models/unified/sync/IntegrationSyncLog.js";
 
 class IntegrationSyncRepository {
   async ensureStateRow(integrationAccountId, syncType) {

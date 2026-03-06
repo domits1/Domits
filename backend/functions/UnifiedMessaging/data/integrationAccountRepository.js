@@ -1,7 +1,7 @@
-import Database from "database";
+import Database from "../ORM/index.js";
 import { randomUUID } from "node:crypto";
 
-import { ChannelIntegrationAccount } from "../../../ORM/models/unified/integrations/ChannelIntegrationAccount.js";
+import { ChannelIntegrationAccount } from "../models/unified/integrations/ChannelIntegrationAccount.js";
 
 class IntegrationAccountRepository {
   async create(row) {

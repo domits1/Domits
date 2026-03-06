@@ -1,7 +1,7 @@
-import Database from "database";
+import Database from "../ORM/index.js";
 import { randomUUID } from "node:crypto";
 
-import { ChannelReservationLink } from "../../../ORM/models/unified/integrations/ChannelReservationLink.js";
+import { ChannelReservationLink } from "../models/unified/integrations/ChannelReservationLink.js";
 
 class ReservationLinkRepository {
   async upsert(data) {

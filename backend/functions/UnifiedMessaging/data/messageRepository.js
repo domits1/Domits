@@ -1,38 +1,37 @@
-import Database from "database";
-import { UnifiedMessage } from "../../../ORM/models/unified/messaging/UnifiedMessage.js";
+import Database from "../ORM/index.js";
+import { UnifiedMessage } from "../models/unified/messaging/UnifiedMessage.js";
 import { randomUUID } from "node:crypto";
 
 class MessageRepository {
   async createMessage(data) {
     const client = await Database.getInstance();
     const id = randomUUID();
-    const createdAt = Date.now();
-
-    const toNullableJsonString = (value) => {
-      if (value == null) return null;
-      if (typeof value === "string") return value;
-      return JSON.stringify(value);
-    };
-
-    const metadataValue = toNullableJsonString(data.metadata);
-    const attachmentsValue = toNullableJsonString(data.attachments);
+    const createdAt = data.createdAt ?? Date.now();
 
     await client
       .createQueryBuilder()
       .insert()
       .into(UnifiedMessage)
       .values({
-        id: id,
+        id,
         threadId: data.threadId,
         senderId: data.senderId,
         recipientId: data.recipientId,
         content: data.content,
-        platformMessageId: data.platformMessageId,
-        createdAt: createdAt,
-        isRead: false,
-        metadata: metadataValue,
-        attachments: attachmentsValue,
+        platformMessageId: data.platformMessageId ?? null,
+        createdAt,
+        isRead: data.isRead ?? false,
+        metadata: data.metadata ?? null,
+        attachments: data.attachments ?? null,
         deliveryStatus: data.deliveryStatus || "pending",
+
+        // new fields (if present in model/db)
+        direction: data.direction ?? null,
+        externalCreatedAt: data.externalCreatedAt ?? null,
+        externalSenderType: data.externalSenderType ?? null,
+        complianceStatus: data.complianceStatus ?? null,
+        errorCode: data.errorCode ?? null,
+        errorMessage: data.errorMessage ?? null,
       })
       .execute();
 
@@ -41,6 +40,31 @@ class MessageRepository {
       ...data,
       createdAt,
     };
+  }
+
+  async platformMessageExists(threadId, platformMessageId) {
+    if (!platformMessageId) return false;
+    const client = await Database.getInstance();
+
+    const count = await client
+      .getRepository(UnifiedMessage)
+      .createQueryBuilder("m")
+      .where("m.threadId = :threadId", { threadId })
+      .andWhere("m.platformMessageId = :platformMessageId", { platformMessageId })
+      .getCount();
+
+    return count > 0;
+  }
+
+  async createMessageIfNotExists(data) {
+    // Dedupe only if platformMessageId exists
+    if (data.platformMessageId) {
+      const exists = await this.platformMessageExists(data.threadId, data.platformMessageId);
+      if (exists) return false;
+    }
+
+    await this.createMessage(data);
+    return true;
   }
 
   async getMessagesByThreadId(threadId) {

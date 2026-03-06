@@ -5,6 +5,8 @@ import IntegrationPropertyRepository from "../data/integrationPropertyRepository
 import IntegrationSyncRepository from "../data/integrationSyncRepository.js";
 import ReservationLinkRepository from "../data/reservationLinkRepository.js";
 
+import SyncRunner from "./syncRunner.js";
+
 const nowMs = () => Date.now();
 
 const ok = (response) => ({ statusCode: 200, response });
@@ -18,11 +20,12 @@ export default class IntegrationService {
     this.props = new IntegrationPropertyRepository();
     this.sync = new IntegrationSyncRepository();
     this.resLinks = new ReservationLinkRepository();
+    this.runner = new SyncRunner();
   }
 
   async createIntegration(body) {
     const userId = requireStr(body.userId);
-    const channel = requireStr(body.channel); // e.g. "BOOKING_COM"
+    const channel = requireStr(body.channel);
 
     if (!userId) return bad(400, { error: "Missing required field: userId" });
     if (!channel) return bad(400, { error: "Missing required field: channel" });
@@ -46,7 +49,6 @@ export default class IntegrationService {
       updatedAt: now,
     });
 
-    // initialize sync state rows (skeleton)
     await this.sync.ensureStateRow(id, "MESSAGES");
     await this.sync.ensureStateRow(id, "RESERVATIONS");
 
@@ -117,44 +119,22 @@ export default class IntegrationService {
     const accountId = requireStr(integrationId);
     if (!accountId) return bad(400, { error: "Missing integration id in path" });
 
-    // Skeleton sync: update state + write log only (no external API calls)
-    const startedAt = nowMs();
-    const logId = randomUUID();
-
-    await this.sync.setState(accountId, syncType, {
-      status: "RUNNING",
-      lastCursor: body.lastCursor ?? null,
-      lastSyncedAt: startedAt,
-    });
-
-    await this.sync.insertLog({
-      id: logId,
+    // Framework ready: jobFn can later call Booking.com API + ingestion pipeline
+    const result = await this.runner.run({
       integrationAccountId: accountId,
       syncType,
-      direction: "IMPORT",
-      status: "SUCCESS",
-      startedAt,
-      finishedAt: nowMs(),
-      itemsProcessed: 0,
-      errorCode: null,
-      errorMessage: null,
-      details: JSON.stringify({ note: "Scaffold sync (no external calls yet)" }),
+      maxAttempts: typeof body.maxAttempts === "number" ? body.maxAttempts : 3,
+      jobFn: async () => {
+        // placeholder: return "no work" but keep cursor support
+        return {
+          itemsProcessed: 0,
+          lastCursor: body.lastCursor ?? null,
+          lastSuccessfulItemAt: null,
+        };
+      },
     });
 
-    await this.accounts.touchSyncSuccess(accountId);
-
-    await this.sync.setState(accountId, syncType, {
-      status: "SUCCESS",
-      lastSyncedAt: nowMs(),
-    });
-
-    return ok({
-      ok: true,
-      integrationAccountId: accountId,
-      syncType,
-      logId,
-      note: "Scaffold sync completed (no external calls).",
-    });
+    return ok(result);
   }
 
   async linkReservation(integrationId, body) {
@@ -180,7 +160,11 @@ export default class IntegrationService {
       reservationStatus: body.reservationStatus ?? null,
       ratePlan: body.ratePlan ?? null,
       paymentStatus: body.paymentStatus ?? null,
-      rawPayload: body.rawPayload ? (typeof body.rawPayload === "string" ? body.rawPayload : JSON.stringify(body.rawPayload)) : null,
+      rawPayload: body.rawPayload
+        ? typeof body.rawPayload === "string"
+          ? body.rawPayload
+          : JSON.stringify(body.rawPayload)
+        : null,
     });
 
     return ok(saved);
