@@ -10,7 +10,10 @@ import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
 
-const systemManagerRepository = new SystemManagerRepository();
+const getSystemManagerRepository = () => {
+  return new SystemManagerRepository();
+};
+
 const stripePromise = process.env.TEST === "true"
   ? Promise.resolve({
     paymentIntents: {
@@ -20,7 +23,7 @@ const stripePromise = process.env.TEST === "true"
       }),
     },
   })
-  : systemManagerRepository
+  : getSystemManagerRepository()
     .getSystemManagerParameter("/stripe/keys/secret/live")
     .then((secret) => new Stripe(secret));
 
