@@ -1,4 +1,6 @@
 import { PRICING_RESTRICTION_KEYS, createInitialPricingForm } from "../../hostproperty/constants";
+import { ICAL_EXPORT_BUCKET, ICAL_EXPORT_REGION } from "../../../../utils/hostCalendarExportPath";
+export { ICAL_EXPORT_BUCKET, ICAL_EXPORT_REGION };
 
 export const ADVANCE_NOTICE_RESTRICTION_KEYS = [
   "MinimumAdvanceReservation",
@@ -28,9 +30,6 @@ export const AVAILABILITY_WINDOW_OPTIONS = [
   { label: "12 months", value: 365 },
   { label: "24 months", value: 730 },
 ];
-
-export const ICAL_EXPORT_BUCKET = "icalender";
-export const ICAL_EXPORT_REGION = "eu-north-1";
 
 export const WEEKEND_PRICE_KEYS = ["weekendRate", "weekendrate", "weekendPrice", "weekendprice"];
 export const BOOKING_EXCLUDED_STATUSES = new Set([

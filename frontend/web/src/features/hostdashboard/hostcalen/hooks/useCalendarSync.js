@@ -9,11 +9,10 @@ import {
   dbUpsertIcalSource,
 } from "../../../../utils/icalRetrieveHost";
 import {
-  ICAL_EXPORT_BUCKET,
-  ICAL_EXPORT_REGION,
   INITIAL_CALENDAR_SYNC_FORM,
   normalizeCalendarProviderForForm,
 } from "./hostCalendarHelpers";
+import { buildHostCalendarObjectUrl } from "../../../../utils/hostCalendarExportPath";
 
 const SOURCE_SYNC_STATE = {
   IDLE: "idle",
@@ -333,7 +332,7 @@ const runRefreshAllFallback = async ({
   }
 };
 
-export const useCalendarSync = ({ selectedPropertyId }) => {
+export const useCalendarSync = ({ selectedPropertyId, onPrepareHostCalendarExport }) => {
   const [externalBlockedDates, setExternalBlockedDates] = useState(new Set());
   const [calendarSources, setCalendarSources] = useState([]);
   const [sourceSyncStateById, setSourceSyncStateById] = useState({});
@@ -458,7 +457,10 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     if (!hostUserId || !propertyId) {
       return "";
     }
-    return `https://${ICAL_EXPORT_BUCKET}.s3.${ICAL_EXPORT_REGION}.amazonaws.com/hosts/${hostUserId}/${propertyId}.ics`;
+    return buildHostCalendarObjectUrl({
+      hostUserId,
+      propertyId,
+    });
   }, [selectedPropertyId]);
 
   const calendarUrlInput = String(calendarSyncForm.calendarUrl || "");
@@ -553,11 +555,24 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       return;
     }
     try {
+      let prepareErrorMessage = "";
+      if (typeof onPrepareHostCalendarExport === "function") {
+        try {
+          await onPrepareHostCalendarExport();
+        } catch (error) {
+          prepareErrorMessage = error?.message || "Calendar export refresh failed.";
+        }
+      }
       await navigator.clipboard.writeText(hostCalendarExportUrl);
       setDomitsCalendarLinkCopied(true);
       setTimeout(() => setDomitsCalendarLinkCopied(false), 1800);
-    } catch {
-      setCalendarSyncError("Could not copy calendar link. Please copy it manually.");
+      if (prepareErrorMessage) {
+        setCalendarSyncError(
+          `Link copied, but export refresh failed: ${prepareErrorMessage}`
+        );
+      }
+    } catch (error) {
+      setCalendarSyncError(error?.message || "Could not copy calendar link.");
     }
   };
 
