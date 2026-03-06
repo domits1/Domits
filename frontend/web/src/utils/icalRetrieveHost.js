@@ -39,8 +39,14 @@ export async function dbListIcalSources(propertyId) {
   };
 }
 
-export async function dbUpsertIcalSource({ propertyId, calendarUrl, calendarName }) {
-  const data = await callIcalApi({ action: "UPSERT_SOURCE", propertyId, calendarUrl, calendarName });
+export async function dbUpsertIcalSource({ propertyId, calendarUrl, calendarName, calendarProvider }) {
+  const data = await callIcalApi({
+    action: "UPSERT_SOURCE",
+    propertyId,
+    calendarUrl,
+    calendarName,
+    ...(calendarProvider ? { calendarProvider } : {}),
+  });
   return {
     sources: Array.isArray(data.sources) ? data.sources : [],
     blockedDates: Array.isArray(data.blockedDates) ? data.blockedDates : [],
@@ -49,6 +55,14 @@ export async function dbUpsertIcalSource({ propertyId, calendarUrl, calendarName
 
 export async function dbDeleteIcalSource({ propertyId, sourceId }) {
   const data = await callIcalApi({ action: "DELETE_SOURCE", propertyId, sourceId });
+  return {
+    sources: Array.isArray(data.sources) ? data.sources : [],
+    blockedDates: Array.isArray(data.blockedDates) ? data.blockedDates : [],
+  };
+}
+
+export async function dbRefreshIcalSource({ propertyId, sourceId }) {
+  const data = await callIcalApi({ action: "REFRESH_SOURCE", propertyId, sourceId });
   return {
     sources: Array.isArray(data.sources) ? data.sources : [],
     blockedDates: Array.isArray(data.blockedDates) ? data.blockedDates : [],

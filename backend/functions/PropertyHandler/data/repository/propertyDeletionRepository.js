@@ -280,6 +280,13 @@ export class PropertyDeletionRepository {
 
       await this.deleteByScopedColumnIfExists(
         transactionManager,
+        "property_calendar_override",
+        ["property_id"],
+        propertyId
+      );
+
+      await this.deleteByScopedColumnIfExists(
+        transactionManager,
         "property_ical_source",
         ["property_id"],
         propertyId

@@ -88,7 +88,10 @@ describe("PropertyBuilder unit tests (happy path)", () => {
 
     it("adds pricing", () => {
         builder.addPricing(propertyObj.propertyPricing);
-        expect(builder.propertyPricing).toEqual(propertyObj.propertyPricing);
+        expect(builder.propertyPricing).toMatchObject({
+            ...propertyObj.propertyPricing,
+            weekendRate: propertyObj.propertyPricing.roomRate,
+        });
     });
 
     it("adds rules", async () => {

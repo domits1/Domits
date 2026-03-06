@@ -3,11 +3,13 @@ import { TypeException } from "../../util/exception/TypeException.js";
 export class PropertyPricing {
     property_id;
     roomRate;
+    weekendRate;
     cleaning;
 
-    constructor(property_id, roomRate, cleaning) {
+    constructor(property_id, roomRate, cleaning, weekendRate = undefined) {
         this._property_id = property_id;
         this._roomRate = roomRate;
+        this._weekendRate = weekendRate;
         this._cleaning = cleaning;
     }
 
@@ -26,6 +28,20 @@ export class PropertyPricing {
             throw new TypeException("propertyPricing - Room rate must be at least €2,-")
         }
         this.roomRate = value;
+    }
+
+    set _weekendRate(value) {
+        if (value === undefined || value === null) {
+            this.weekendRate = this.roomRate;
+            return;
+        }
+        if (typeof value !== "number") {
+            throw new TypeException("propertyPricing - Weekend rate must be a number.")
+        }
+        if (value < 2) {
+            throw new TypeException("propertyPricing - Weekend rate must be at least â‚¬2,-")
+        }
+        this.weekendRate = value;
     }
 
     set _cleaning(value) {
