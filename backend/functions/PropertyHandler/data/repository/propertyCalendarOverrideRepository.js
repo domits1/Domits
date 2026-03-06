@@ -1,7 +1,7 @@
 import Database from "database";
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 
-const quoteIdentifier = (value) => `"${String(value || "").replace(/"/g, "\"\"")}"`;
+const quoteIdentifier = (value) => `"${String(value || "").replaceAll('"', '""')}"`;
 
 const getSchemaName = (client) => {
   const schema = client?.options?.schema;
