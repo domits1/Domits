@@ -1,41 +1,10 @@
 import Database from "database";
+import { resolveQualifiedTableName } from "./schemaUtils.js";
 
 export class PropertyRepository {
-  quoteIdentifier(identifier) {
-    return `"${String(identifier).replaceAll('"', '""')}"`;
-  }
-
-  isValidSchemaName(value) {
-    return typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
-  }
-
-  getSchemaName(client) {
-    if (process.env.TEST === "true") {
-      return "test";
-    }
-
-    const schema = client?.options?.schema;
-    if (this.isValidSchemaName(schema)) {
-      const normalized = schema.trim().toLowerCase();
-      if (normalized === "public") {
-        return "main";
-      }
-      return normalized;
-    }
-    return "main";
-  }
-
-  getPropertyTableName(client) {
-    const schemaName = this.getSchemaName(client);
-    if (!schemaName) {
-      return "property";
-    }
-    return `${this.quoteIdentifier(schemaName)}.${this.quoteIdentifier("property")}`;
-  }
-
   async getHostIdByPropertyId(propertyId) {
     const client = await Database.getInstance();
-    const propertyTable = this.getPropertyTableName(client);
+    const propertyTable = resolveQualifiedTableName(client, "property");
     const rows = await client.query(
       `
         SELECT hostid
