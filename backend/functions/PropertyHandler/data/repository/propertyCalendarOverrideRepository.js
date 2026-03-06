@@ -7,11 +7,19 @@ const isValidSchemaName = (value) =>
   typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
 
 const getSchemaName = (client) => {
+  if (process.env.TEST === "true") {
+    return quoteIdentifier("test");
+  }
+
   const schema = client?.options?.schema;
   if (isValidSchemaName(schema)) {
-    return quoteIdentifier(schema.trim());
+    const normalized = schema.trim().toLowerCase();
+    if (normalized === "public") {
+      return quoteIdentifier("main");
+    }
+    return quoteIdentifier(normalized);
   }
-  return process.env.TEST === "true" ? quoteIdentifier("test") : quoteIdentifier("main");
+  return quoteIdentifier("main");
 };
 
 const getOverrideTableName = (client) => {

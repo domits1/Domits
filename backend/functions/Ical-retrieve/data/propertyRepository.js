@@ -10,11 +10,19 @@ export class PropertyRepository {
   }
 
   getSchemaName(client) {
+    if (process.env.TEST === "true") {
+      return "test";
+    }
+
     const schema = client?.options?.schema;
     if (this.isValidSchemaName(schema)) {
-      return schema.trim();
+      const normalized = schema.trim().toLowerCase();
+      if (normalized === "public") {
+        return "main";
+      }
+      return normalized;
     }
-    return process.env.TEST === "true" ? "test" : "main";
+    return "main";
   }
 
   getPropertyTableName(client) {
