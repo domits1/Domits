@@ -1,4 +1,4 @@
-import {Service} from "../business/service/service.js";
+import { Service } from "../business/service/service.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 export default class Controller {
@@ -8,8 +8,21 @@ export default class Controller {
 
   async getHostKpi(event) {
     try {
-      const { metric } = event.queryStringParameters || {};
-      if (!metric) throw new Error("Missing parameter metric");
+      const metric = event?.queryStringParameters?.metric;
+
+      if (!metric) {
+        throw new Error("Missing parameter metric");
+      }
+
+      if (metric === "all") {
+        const result = await this.service.getAllKpis(event);
+
+        return {
+          statusCode: 200,
+          headers: responseHeaders,
+          body: JSON.stringify(result),
+        };
+      }
 
       const result = await this.service.getKpiMetric(event, metric);
 
@@ -19,10 +32,14 @@ export default class Controller {
         body: JSON.stringify({ [metric]: result }),
       };
     } catch (error) {
-      console.error(error.message);
+      console.error("[RMS][CONTROLLER_ERROR]", error?.message);
+
       return {
         statusCode: error.statusCode || 500,
-        body: JSON.stringify(error.message || "Something went wrong"),
+        headers: responseHeaders,
+        body: JSON.stringify(
+          error?.message || "Something went wrong"
+        ),
       };
     }
   }
