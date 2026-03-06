@@ -145,7 +145,14 @@ function HostCalendar() {
     }
 
     try {
-      const uploadURL = await uploadICalToS3(listOfAccommodations, userId);
+      const selectedPropertyId = String(
+        selectedAccommodation?.property?.id || selectedAccommodation?.ID || ""
+      ).trim();
+      const uploadURL = await uploadICalToS3(
+        listOfAccommodations,
+        userId,
+        selectedPropertyId
+      );
       if (uploadURL) {
         copyToClipboard(uploadURL);
       } else {
