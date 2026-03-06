@@ -89,7 +89,6 @@ function Header({ setSearchResults, setLoading }) {
       setCurrentView(userAttributes["custom:group"] === "Host" ? "host" : "guest");
     } catch (error) {
       setIsLoggedIn(false);
-      console.error("Error logging in:", error);
     }
   };
 
