@@ -1,6 +1,5 @@
 import { PRICING_RESTRICTION_KEYS, createInitialPricingForm } from "../../hostproperty/constants";
-import { ICAL_EXPORT_BUCKET, ICAL_EXPORT_REGION } from "../../../../utils/hostCalendarExportPath";
-export { ICAL_EXPORT_BUCKET, ICAL_EXPORT_REGION };
+export { ICAL_EXPORT_BUCKET, ICAL_EXPORT_REGION } from "../../../../utils/hostCalendarExportPath";
 
 export const ADVANCE_NOTICE_RESTRICTION_KEYS = [
   "MinimumAdvanceReservation",
