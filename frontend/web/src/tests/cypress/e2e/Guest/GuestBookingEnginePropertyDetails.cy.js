@@ -19,8 +19,6 @@ describe('Property Details', () => {
         
         cy.get('.loginButton').click();
         
-        // cy.get('.hostchatbot-close-button').click();
-        
         cy.get('.logo > a > img').should('be.visible').click();
         cy.get(':nth-child(3) > .domits-accommodationGroup > :nth-child(2) > .swiper > .swiper-wrapper > .swiper-slide-visible > img').click();
 
@@ -45,7 +43,6 @@ describe('Property Details', () => {
         cy.get('.property-container .rc-nav__btn').first().click();
 
         cy.get('.rc-cell.rc-cell--day:not(.is-out)').then($days => {
-        const total = $days.length;
 
         cy.wrap($days.eq(startIndex)).click({ force: true });
         cy.wrap($days.eq(endIndex)).click({ force: true });
