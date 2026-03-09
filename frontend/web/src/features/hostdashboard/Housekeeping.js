@@ -26,14 +26,10 @@ const HostPropertyCare = () => {
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
 
-    // --- MOCK ZALOGOWANEGO UŻYTKOWNIKA ---
-    // W przyszłości pobierzesz to z kontekstu/Reduxa (np. zalogowany host)
     const CURRENT_USER = 'Sophie Janssen'; 
 
-    // --- FUNKCJA DO CHECKBOXÓW W MY TASKS ---
     const handleToggleComplete = (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        // Pobieramy dzisiejszą datę do statystyk KPI
         const todayStr = new Date().toISOString().split('T')[0]; 
         
         const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
@@ -41,7 +37,6 @@ const HostPropertyCare = () => {
         const updatedTask = {
             ...task,
             status: newStatus,
-            // KLUCZOWE: Dodajemy datę ukończenia, żeby KPI to widziało, lub usuwamy ją, gdy odznaczamy
             completedAt: newStatus === 'Completed' ? todayStr : null, 
             activities: [
                 ...(task.activities || []),
@@ -297,14 +292,11 @@ const HostPropertyCare = () => {
                 return null;
         }
     };
-    // --- NOWY WIDOK: MY TASKS ---
     const renderMyTasksView = () => {
         const todayStr = new Date().toISOString().split('T')[0];
-        
-        // Pobieramy TYLKO zadania przypisane do zalogowanego użytkownika (i nie usunięte)
+
         let myTasks = tasks.filter(t => t.assignee === CURRENT_USER && !t.isLegacy);
 
-        // Aplikujemy filtry z paska wyszukiwania (Status, Priorytet, itd.)
         myTasks = myTasks.filter(task => {
             const matchProperty = filters.property === 'All properties' || task.property === filters.property;
             const matchStatus = filters.status === 'All statuses' || task.status === filters.status;
@@ -314,12 +306,9 @@ const HostPropertyCare = () => {
             return matchProperty && matchStatus && matchPriority && matchSearch;
         });
 
-        // Dzielimy na sekcje zgodnie z Issue
-        // ZMIANA: Usunięto ukrywanie 'Completed', żeby zadania zostawały na liście
         const todayTasks = myTasks.filter(t => t.dueDate === todayStr && t.status !== 'Overdue');
         const overdueTasks = myTasks.filter(t => t.status === 'Overdue' || (t.dueDate && t.dueDate < todayStr && t.status !== 'Completed'));
         
-        // Upcoming: domyślnie ustawiamy status na Pending, priorytet Low (zgodnie z issue) i sortujemy po dacie
         const upcomingTasks = myTasks.filter(t => t.dueDate && t.dueDate > todayStr)
             .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
             .map(t => ({ ...t, priority: t.priority || 'Low', status: t.status || 'Pending' }));
@@ -328,11 +317,9 @@ const HostPropertyCare = () => {
             const displayPriority = isOverdueSection ? 'Urgent' : (task.priority || 'Low');
             const displayStatus = isOverdueSection ? 'Overdue' : task.status;
             
-            // ZMIANA: Sprawdzamy, czy zadanie jest ukończone
             const isCompleted = task.status === 'Completed';
 
             return (
-                // ZMIANA: Jeśli zadanie jest ukończone, lekko je wyszarzamy (opacity 0.6)
                 <div key={task.id} className={`my-task-card ${isOverdueSection ? 'is-overdue-card' : ''}`} onClick={() => openTaskDetails(task)} style={{ opacity: isCompleted ? 0.6 : 1 }}>
                     <div className="my-task-left">
                         <div className="my-task-icon">📋</div>
@@ -343,13 +330,12 @@ const HostPropertyCare = () => {
                     </div>
                     
                     <div className="my-task-middle">
-                        {/* Symulacja czasu jak na designie lub wyświetlanie daty */}
                         <span className="my-task-time">
                             {isOverdueSection ? `Yesterday 17:00` : (task.dueDate === todayStr ? '15:00' : `Due ${task.dueDate}`)}
                         </span>
                     </div>
 
-                    <div className="my-task-right" onClick={e => e.stopPropagation() /* Zapobiega otwarciu modala przy klikaniu w prawą stronę */}>
+                    <div className="my-task-right" onClick={e => e.stopPropagation()}>
                         <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
                             ● {displayStatus}
                         </span>
@@ -357,7 +343,6 @@ const HostPropertyCare = () => {
                             {displayPriority}
                         </span>
                         
-                        {/* Zgodnie z Issue: Checkbox znika, jeśli jest Overdue */}
                         {isOverdueSection ? (
                             <div className="overdue-action-text">⍉ Overdue</div>
                         ) : (
@@ -375,14 +360,12 @@ const HostPropertyCare = () => {
 
         return (
             <div className="my-tasks-container">
-                {/* --- SEKCJA: TODAY --- */}
                 <div className="my-tasks-section">
                     <div className="section-header-row">
                         <div className="section-title">
                             <h3>Today's Tasks</h3>
                             <span className="task-count">{todayTasks.length} Tasks</span>
                         </div>
-                        {/* Filtry specyficzne dla My Tasks (jak na obrazku) */}
                         <div className="my-tasks-filters">
                             <select name="property" value={filters.property} onChange={handleFilterChange}>
                                 <option value="All properties">All properties</option>
@@ -411,7 +394,6 @@ const HostPropertyCare = () => {
                     </div>
                 </div>
 
-                {/* --- SEKCJA: OVERDUE --- */}
                 <div className="my-tasks-section">
                     <div className="section-title">
                         <h3>Overdue</h3>
@@ -422,7 +404,6 @@ const HostPropertyCare = () => {
                     </div>
                 </div>
 
-                {/* --- SEKCJA: UPCOMING --- */}
                 <div className="my-tasks-section">
                     <div className="section-title">
                         <h3>Upcoming</h3>

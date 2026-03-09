@@ -772,7 +772,7 @@
     padding: 20px 25px;
     background-color: #ffffff;
 }
-/* --- MY TASKS VIEW (CARD LIST) --- */
+
 .my-tasks-container {
     display: flex;
     flex-direction: column;
@@ -806,7 +806,6 @@
     color: #6c757d;
 }
 
-/* Filtry My Tasks */
 .my-tasks-filters {
     display: flex;
     gap: 10px;
@@ -831,7 +830,6 @@
     width: 120px;
 }
 
-/* Task Cards */
 .my-task-list {
     display: flex;
     flex-direction: column;
@@ -855,9 +853,8 @@
     transform: translateY(-1px);
 }
 
-/* KRYTYCZNE: Stylizacja przeterminowanego zadania z designu */
 .my-task-card.is-overdue-card {
-    background-color: #fff5f5; /* Delikatny czerwony/różowy */
+    background-color: #fff5f5;
     border-color: #ffc9c9;
 }
 
@@ -908,12 +905,11 @@
     justify-content: flex-end;
 }
 
-/* Checkbox wyglądający jak ten na designie */
 .my-task-checkbox {
     width: 22px;
     height: 22px;
     cursor: pointer;
-    accent-color: #28a745; /* Zielony kolor po zaznaczeniu */
+    accent-color: #28a745;
     border-radius: 4px;
 }
 
