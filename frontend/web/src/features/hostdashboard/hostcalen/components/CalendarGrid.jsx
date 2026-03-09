@@ -323,43 +323,54 @@ export default function CalendarGrid({
               <div className="hc-year-days">
                 {monthView.monthGrid.flat().map((date) => {
                   const dayPresentation = getDayPresentation(date, monthView.monthCursor);
+                  const isOutsideMonth = dayPresentation.isOutsideMonth;
                   return (
                     <div
                       key={`${monthView.monthName}-${dayPresentation.key}`}
                       className={cx(
                         "hc-year-day",
-                        dayPresentation.isOutsideMonth && "hc-year-day--outside",
-                        dayPresentation.isToday && "hc-year-day--today",
-                        dayPresentation.showExternalBlockedOverlay && "hc-year-day--external-booking",
-                        dayPresentation.isBooked && "hc-year-day--booked",
-                        dayPresentation.isForcedUnavailable && "hc-year-day--forced-unavailable",
-                        dayPresentation.isBlocked === false &&
+                        isOutsideMonth && "hc-year-day--outside",
+                        !isOutsideMonth && dayPresentation.isToday && "hc-year-day--today",
+                        !isOutsideMonth &&
+                          dayPresentation.showExternalBlockedOverlay &&
+                          "hc-year-day--external-booking",
+                        !isOutsideMonth && dayPresentation.isBooked && "hc-year-day--booked",
+                        !isOutsideMonth &&
+                          dayPresentation.isForcedUnavailable &&
+                          "hc-year-day--forced-unavailable",
+                        !isOutsideMonth &&
+                          dayPresentation.isBlocked === false &&
                           dayPresentation.isUnavailable &&
                           "hc-year-day--unavailable",
-                        dayPresentation.isAvailable && "hc-year-day--available",
-                        dayPresentation.isSelected && "hc-year-day--selected"
+                        !isOutsideMonth && dayPresentation.isAvailable && "hc-year-day--available",
+                        !isOutsideMonth && dayPresentation.isSelected && "hc-year-day--selected"
                       )}
-                      aria-label={dayPresentation.cellAriaLabel}
+                      aria-hidden={isOutsideMonth}
+                      aria-label={isOutsideMonth ? undefined : dayPresentation.cellAriaLabel}
                     >
-                      <span className="hc-year-day-number">{dayPresentation.dayNumber}</span>
+                      {!isOutsideMonth ? (
+                        <>
+                          <span className="hc-year-day-number">{dayPresentation.dayNumber}</span>
 
-                      {dayPresentation.showExternalBlockedYearIcon && (
-                        <span className="hc-year-day-icon hc-year-day-icon--external" aria-hidden="true">
-                          <img src={externalLinkIcon} alt="" />
-                        </span>
-                      )}
+                          {dayPresentation.showExternalBlockedYearIcon && (
+                            <span className="hc-year-day-icon hc-year-day-icon--external" aria-hidden="true">
+                              <img src={externalLinkIcon} alt="" />
+                            </span>
+                          )}
 
-                      {dayPresentation.showUnavailableYearIcon && (
-                        <span className="hc-year-day-icon hc-year-day-icon--unavailable" aria-hidden="true">
-                          <img src={calendarUnavailablePng} alt="" />
-                        </span>
-                      )}
+                          {dayPresentation.showUnavailableYearIcon && (
+                            <span className="hc-year-day-icon hc-year-day-icon--unavailable" aria-hidden="true">
+                              <img src={calendarUnavailablePng} alt="" />
+                            </span>
+                          )}
 
-                      {dayPresentation.showBookedYearIcon && (
-                        <span className="hc-year-day-icon hc-year-day-icon--booked" aria-hidden="true">
-                          <img src={checkPng} alt="" />
-                        </span>
-                      )}
+                          {dayPresentation.showBookedYearIcon && (
+                            <span className="hc-year-day-icon hc-year-day-icon--booked" aria-hidden="true">
+                              <img src={checkPng} alt="" />
+                            </span>
+                          )}
+                        </>
+                      ) : null}
                     </div>
                   );
                 })}
