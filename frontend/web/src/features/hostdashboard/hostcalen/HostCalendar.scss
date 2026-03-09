@@ -485,9 +485,10 @@ $accent: #2f6fed;
 }
 
 .hc-year-day--outside {
-  background: #f4f5f7;
-  border-color: #eceff3;
-  color: #4b5563;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+  pointer-events: none;
 }
 
 .hc-year-day--available {
@@ -1340,6 +1341,20 @@ $accent: #2f6fed;
   padding: 14px;
 }
 
+.hc-sync-card--focus-layer {
+  position: relative;
+  z-index: 1060;
+}
+
+.hc-sync-page-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(15, 23, 42, 0.24);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
 .hc-sync-header {
   display: flex;
   align-items: center;
@@ -1581,6 +1596,8 @@ $accent: #2f6fed;
 
 .hc-sync-edit-modal-backdrop::backdrop {
   background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .hc-sync-edit-modal {
@@ -1636,6 +1653,8 @@ $accent: #2f6fed;
 
 .hc-sync-remove-modal-backdrop::backdrop {
   background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .hc-sync-remove-modal {
