@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Housekeeping.css';
-import { createTask, fetchTasks, deleteTask } from './services/faketaskService';
+import { createTask, fetchTasks } from './services/faketaskService';
 
 const HostPropertyCare = () => {
     const [activeTab, setActiveTab] = useState('Overview'); 
@@ -114,8 +114,9 @@ const HostPropertyCare = () => {
             resetForm();
         } catch (error) {
             alert("Error creating task");
-        }
-    };
+            console.error("Error creating task:", error);
+        };
+    }
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -251,9 +252,9 @@ const HostPropertyCare = () => {
             
             const searchLower = filters.search.toLowerCase();
             const matchSearch = filters.search === '' || 
-                (task.title && task.title.toLowerCase().includes(searchLower)) ||
-                (task.property && task.property.toLowerCase().includes(searchLower)) ||
-                (task.assignee && task.assignee.toLowerCase().includes(searchLower));
+                (task.title?.toLowerCase().includes(searchLower)) ||
+                (task.property?.toLowerCase().includes(searchLower)) ||
+                (task.assignee?.toLowerCase().includes(searchLower));
 
             let matchDate = true;
             if (filters.date === 'Today') {
@@ -302,7 +303,7 @@ const HostPropertyCare = () => {
             const matchStatus = filters.status === 'All statuses' || task.status === filters.status;
             const matchPriority = filters.priority === 'Any priority' || task.priority === filters.priority;
             const searchLower = filters.search.toLowerCase();
-            const matchSearch = filters.search === '' || (task.title && task.title.toLowerCase().includes(searchLower));
+            const matchSearch = filters.search === '' || (task.title?.toLowerCase().includes(searchLower));
             return matchProperty && matchStatus && matchPriority && matchSearch;
         });
 
@@ -318,9 +319,27 @@ const HostPropertyCare = () => {
             const displayStatus = isOverdueSection ? 'Overdue' : task.status;
             
             const isCompleted = task.status === 'Completed';
-
+            let displayTime = `Due ${task.dueDate}`;
+            if (isOverdueSection) {
+                displayTime = 'Overdue';
+            } else if (task.dueDate === todayStr) {
+                displayTime = 'Today';
+            }
             return (
-                <div key={task.id} className={`my-task-card ${isOverdueSection ? 'is-overdue-card' : ''}`} onClick={() => openTaskDetails(task)} style={{ opacity: isCompleted ? 0.6 : 1 }}>
+                <div 
+                    key={task.id} 
+                    className={`my-task-card ${isOverdueSection ? 'is-overdue-card' : ''}`} 
+                    onClick={() => openTaskDetails(task)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openTaskDetails(task);
+                        }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    style={{ opacity: isCompleted ? 0.6 : 1 }}
+                >
                     <div className="my-task-left">
                         <div className="my-task-icon">📋</div>
                         <div className="my-task-info">
@@ -331,11 +350,16 @@ const HostPropertyCare = () => {
                     
                     <div className="my-task-middle">
                         <span className="my-task-time">
-                            {isOverdueSection ? `Yesterday 17:00` : (task.dueDate === todayStr ? '15:00' : `Due ${task.dueDate}`)}
+                            {displayTime}
                         </span>
                     </div>
 
-                    <div className="my-task-right" onClick={e => e.stopPropagation()}>
+                    <div 
+                        className="my-task-right" 
+                        onClick={e => e.stopPropagation()}
+                        onKeyDown={e => e.stopPropagation()}
+                        role="presentation"
+                    >
                         <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
                             ● {displayStatus}
                         </span>
@@ -385,7 +409,7 @@ const HostPropertyCare = () => {
                             </select>
                             <div className="search-box small-search">
                                 <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-                                🔍
+                                <span aria-hidden="true">🔍</span>
                             </div>
                         </div>
                     </div>
@@ -596,36 +620,36 @@ const HostPropertyCare = () => {
                         </div>
                         <form onSubmit={handleCreateTask}>
                             <div className="form-group">
-                                <label>Title</label>
-                                <input type="text" name="title" value={newTask.title} onChange={handleInputChange} placeholder="Repair broken patio light" required />
+                                <label htmlFor='task-title'>Title</label>
+                                <input type="text" id='task-title' name="title" value={newTask.title} onChange={handleInputChange} placeholder="Repair broken patio light" required />
                             </div>
                             <div className="form-group">
-                                <label>Description</label>
-                                <textarea name="description" value={newTask.description} onChange={handleInputChange} placeholder="Description here..." rows="3" required />
+                                <label htmlFor='task-description'>Description</label>
+                                <textarea id='task-description' name="description" value={newTask.description} onChange={handleInputChange} placeholder="Description here..." rows="3" required />
                             </div>
                             <div className="form-group">
-                                <label>Property</label>
-                                <select name="property" value={newTask.property} onChange={handleInputChange} required>
+                                <label htmlFor='task-property'>Property</label>
+                                <select id='task-property' name="property" value={newTask.property} onChange={handleInputChange} required>
                                     <option value="" disabled hidden>Select Property</option>
                                     <option value="City Loft Breda">City Loft Breda</option>
                                     <option value="Beach House">Beach House</option>
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Booking Reference (optional)</label>
-                                <input type="text" name="bookingRef" value={newTask.bookingRef} onChange={handleInputChange} placeholder="Select booking." />
+                                <label htmlFor='task-booking-ref'>Booking Reference (optional)</label>
+                                <input type="text" id='task-booking-ref' name="bookingRef" value={newTask.bookingRef} onChange={handleInputChange} placeholder="Select booking." />
                             </div>
                             <div className="form-group">
-                                <label>Type</label>
+                                <label htmlFor='task-type'>Type</label>
                                 <div className="radio-group">
-                                    <label><input type="radio" name="type" value="Cleaning" checked={newTask.type === 'Cleaning'} onChange={handleInputChange} /> Cleaning</label>
-                                    <label><input type="radio" name="type" value="Maintenance" checked={newTask.type === 'Maintenance'} onChange={handleInputChange} /> Maintenance</label>
-                                    <label><input type="radio" name="type" value="Inspection" checked={newTask.type === 'Inspection'} onChange={handleInputChange} /> Inspection</label>
+                                    <label><input type="radio" id='task-type-cleaning' name="type" value="Cleaning" checked={newTask.type === 'Cleaning'} onChange={handleInputChange} /> Cleaning</label>
+                                    <label><input type="radio" id='task-type-maintenance' name="type" value="Maintenance" checked={newTask.type === 'Maintenance'} onChange={handleInputChange} /> Maintenance</label>
+                                    <label><input type="radio" id='task-type-inspection' name="type" value="Inspection" checked={newTask.type === 'Inspection'} onChange={handleInputChange} /> Inspection</label>
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label>Assignee</label>
-                                <select name="assignee" value={newTask.assignee} onChange={handleInputChange} required>
+                                <label htmlFor='task-assignee'>Assignee</label>
+                                <select id='task-assignee' name="assignee" value={newTask.assignee} onChange={handleInputChange} required>
                                     <option value="" disabled hidden>Select Assignee</option>
                                     <option value="Sophie Janssen">Sophie Janssen (sophie@domits.com)</option>
                                     <option value="Jan de Vries">Jan de Vries (jan@domits.com)</option>
@@ -633,12 +657,12 @@ const HostPropertyCare = () => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Due Date</label>
-                                <input type="date" name="dueDate" value={newTask.dueDate} onChange={handleInputChange} required />
+                                <label htmlFor='task-due-date'>Due Date</label>
+                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} onChange={handleInputChange} required />
                             </div>
                             <div className="form-group">
-                                <label>Priority</label>
-                                <select name="priority" value={newTask.priority} onChange={handleInputChange} required>
+                                <label htmlFor='task-priority'>Priority</label>
+                                <select id='task-priority' name="priority" value={newTask.priority} onChange={handleInputChange} required>
                                     <option value="Low">Low</option>
                                     <option value="Medium">Medium</option>
                                     <option value="High">High</option>
@@ -646,7 +670,7 @@ const HostPropertyCare = () => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Attachments (optional)</label>
+                                <label htmlFor='task-attachments'>Attachments (optional)</label>
                                 <div className="custom-file-upload">
                                     <input type="file" id="file-upload" />
                                     <label htmlFor="file-upload">
@@ -692,40 +716,40 @@ const HostPropertyCare = () => {
 
                         <div className="details-body">
                             <div className="form-group">
-                                <label>Description</label>
-                                <textarea name="description" value={editedTask.description || ''} onChange={handleEditChange} rows="3" placeholder="Enter description..." />
+                                <label htmlFor='task-description'>Description</label>
+                                <textarea id='task-description' name="description" value={editedTask.description || ''} onChange={handleEditChange} rows="3" placeholder="Enter description..." />
                             </div>
 
                             <div className="form-row-grid">
                                 <div className="form-group">
-                                    <label>Assignee</label>
-                                    <select name="assignee" value={editedTask.assignee} onChange={handleEditChange}>
+                                    <label htmlFor='task-assignee'>Assignee</label>
+                                    <select id='task-assignee' name="assignee" value={editedTask.assignee} onChange={handleEditChange}>
                                         <option value="Sophie Janssen">Sophie Janssen</option>
                                         <option value="Jan de Vries">Jan de Vries</option>
                                         <option value="Lisa Meijer">Lisa Meijer</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Type</label>
-                                    <select name="type" value={editedTask.type} onChange={handleEditChange}>
+                                    <label htmlFor='task-type'>Type</label>
+                                    <select id='task-type' name="type" value={editedTask.type} onChange={handleEditChange}>
                                         <option value="Cleaning">Cleaning</option>
                                         <option value="Maintenance">Maintenance</option>
                                         <option value="Inspection">Inspection</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Booking Reference (optional)</label>
-                                    <input type="text" name="bookingRef" value={editedTask.bookingRef || ''} onChange={handleEditChange} placeholder="Select booking." />
+                                    <label htmlFor='task-booking-ref'>Booking Reference (optional)</label>
+                                    <input id='task-booking-ref' type="text" name="bookingRef" value={editedTask.bookingRef || ''} onChange={handleEditChange} placeholder="Select booking." />
                                 </div>
                                 <div className="form-group">
-                                    <label>Due Date</label>
-                                    <input type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} />
+                                    <label htmlFor='task-due-date'>Due Date</label>
+                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} />
                                 </div>
                             </div>
 
                             <div className="form-group attachments-section">
                                 <div className="attachments-header">
-                                    <label>Attachments (optional)</label>
+                                    <label htmlFor='task-attachments'>Attachments (optional)</label>
                                     <span className="attachments-count">0 Attachments</span>
                                 </div>
                                 <div className="attachments-box">
@@ -763,15 +787,12 @@ const HostPropertyCare = () => {
                         <div className="modal-footer details-footer">
                             <button className="btn-text" onClick={closeTaskDetails}>Cancel</button>
                             
-                            {JSON.stringify(viewingTask) !== JSON.stringify(editedTask) ? (
-                                <button className="btn-create-green" onClick={handleSaveChanges}>
-                                    Save Changes
-                                </button>
+                            {JSON.stringify(viewingTask) === JSON.stringify(editedTask) ? (
+                                <button className="btn-create-green" onClick={handleDeleteSingleTask}>Delete</button>
                             ) : (
-                                <button className="btn-create-green" onClick={handleDeleteSingleTask}>
-                                    Delete
-                                </button>
+                                <button className="btn-create-green" onClick={handleSaveChanges}>Save Changes</button>
                             )}
+
                         </div>
                     </div>
                 </div>
