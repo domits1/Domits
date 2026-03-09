@@ -3,20 +3,39 @@ import { getAccessToken } from "../services/getAccessToken";
 const DEFAULT_ICAL_RETRIEVE_URL =
   "https://eiul3lr63m.execute-api.eu-north-1.amazonaws.com/default/Ical-retrieve";
 
-const normalizeIcalRetrieveUrl = (value) => String(value || "").trim().replace(/\/+$/, "");
-const withIcalPathCase = (url, pathSegment) =>
-  url.replace(/\/ical-retrieve$/i, `/${pathSegment}`);
+const ICAL_RETRIEVE_PATH_LOWER = "/ical-retrieve";
+
+const normalizeIcalRetrieveUrl = (value) => {
+  let normalized = String(value || "").trim();
+  while (normalized.endsWith("/")) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+};
+
+const hasIcalRetrievePath = (url) => url.toLowerCase().endsWith(ICAL_RETRIEVE_PATH_LOWER);
+
+const withIcalPathCase = (url, pathSegment) => {
+  if (!hasIcalRetrievePath(url)) {
+    return url;
+  }
+  const prefix = url.slice(0, -ICAL_RETRIEVE_PATH_LOWER.length);
+  return `${prefix}/${pathSegment}`;
+};
+
 const buildIcalRetrieveCandidates = (value) => {
   const baseUrl = normalizeIcalRetrieveUrl(value);
   if (!baseUrl) {
     return [];
   }
 
-  const candidates = [baseUrl];
-  if (/\/ical-retrieve$/i.test(baseUrl)) {
-    candidates.push(withIcalPathCase(baseUrl, "Ical-retrieve"));
-    candidates.push(withIcalPathCase(baseUrl, "ical-retrieve"));
-  }
+  const candidates = hasIcalRetrievePath(baseUrl)
+    ? [
+        baseUrl,
+        withIcalPathCase(baseUrl, "Ical-retrieve"),
+        withIcalPathCase(baseUrl, "ical-retrieve"),
+      ]
+    : [baseUrl];
 
   return Array.from(new Set(candidates));
 };
