@@ -1,6 +1,7 @@
 import Database from "database";
 import { DatabaseException } from "../util/exception/databaseException.js";
 import { listSourcesByProperty, upsertSourceRecord } from "../../.shared/icalSourceRepositoryHelpers.js";
+import { resolveQualifiedTableName } from "./schemaUtils.js";
 
 export class Repository {
   async listSources(propertyId) {
@@ -19,8 +20,9 @@ export class Repository {
 
   async deleteSource(propertyId, sourceId) {
     const client = await Database.getInstance();
+    const sourceTable = resolveQualifiedTableName(client, "property_ical_source");
     try {
-      await client.query(`DELETE FROM property_ical_source WHERE property_id = $1 AND source_id = $2`, [propertyId, sourceId]);
+      await client.query(`DELETE FROM ${sourceTable} WHERE property_id = $1 AND source_id = $2`, [propertyId, sourceId]);
     } catch {
       throw new DatabaseException("Failed to delete calendar source");
     }

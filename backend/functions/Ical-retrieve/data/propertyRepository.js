@@ -1,12 +1,14 @@
 import Database from "database";
+import { resolveQualifiedTableName } from "./schemaUtils.js";
 
 export class PropertyRepository {
   async getHostIdByPropertyId(propertyId) {
     const client = await Database.getInstance();
+    const propertyTable = resolveQualifiedTableName(client, "property");
     const rows = await client.query(
       `
         SELECT hostid
-        FROM property
+        FROM ${propertyTable}
         WHERE id = $1
         LIMIT 1
       `,

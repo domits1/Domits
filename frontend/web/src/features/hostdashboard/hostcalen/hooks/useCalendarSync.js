@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getCognitoUserId } from "../../../../services/getAccessToken";
 import {
@@ -9,11 +9,10 @@ import {
   dbUpsertIcalSource,
 } from "../../../../utils/icalRetrieveHost";
 import {
-  ICAL_EXPORT_BUCKET,
-  ICAL_EXPORT_REGION,
   INITIAL_CALENDAR_SYNC_FORM,
   normalizeCalendarProviderForForm,
 } from "./hostCalendarHelpers";
+import { buildHostCalendarObjectUrl } from "../../../../utils/hostCalendarExportPath";
 
 const SOURCE_SYNC_STATE = {
   IDLE: "idle",
@@ -23,6 +22,7 @@ const SOURCE_SYNC_STATE = {
   ERROR: "error",
 };
 const SOURCE_SUCCESS_STATE_RESET_DELAY_MS = 3200;
+const SOURCES_POLL_INTERVAL_MS = 60000;
 
 const resolveSourceId = (source, index) => String(source?.sourceId || source?.id || `${index}`).trim();
 const resolveStableSourceId = (source) => String(source?.sourceId || source?.id || "").trim();
@@ -332,7 +332,7 @@ const runRefreshAllFallback = async ({
   }
 };
 
-export const useCalendarSync = ({ selectedPropertyId }) => {
+export const useCalendarSync = ({ selectedPropertyId, onPrepareHostCalendarExport }) => {
   const [externalBlockedDates, setExternalBlockedDates] = useState(new Set());
   const [calendarSources, setCalendarSources] = useState([]);
   const [sourceSyncStateById, setSourceSyncStateById] = useState({});
@@ -457,7 +457,10 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     if (!hostUserId || !propertyId) {
       return "";
     }
-    return `https://${ICAL_EXPORT_BUCKET}.s3.${ICAL_EXPORT_REGION}.amazonaws.com/hosts/${hostUserId}/${propertyId}.ics`;
+    return buildHostCalendarObjectUrl({
+      hostUserId,
+      propertyId,
+    });
   }, [selectedPropertyId]);
 
   const calendarUrlInput = String(calendarSyncForm.calendarUrl || "");
@@ -552,11 +555,24 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       return;
     }
     try {
+      let prepareErrorMessage = "";
+      if (typeof onPrepareHostCalendarExport === "function") {
+        try {
+          await onPrepareHostCalendarExport();
+        } catch (error) {
+          prepareErrorMessage = error?.message || "Calendar export refresh failed.";
+        }
+      }
       await navigator.clipboard.writeText(hostCalendarExportUrl);
       setDomitsCalendarLinkCopied(true);
       setTimeout(() => setDomitsCalendarLinkCopied(false), 1800);
-    } catch {
-      setCalendarSyncError("Could not copy calendar link. Please copy it manually.");
+      if (prepareErrorMessage) {
+        setCalendarSyncError(
+          `Link copied, but export refresh failed: ${prepareErrorMessage}`
+        );
+      }
+    } catch (error) {
+      setCalendarSyncError(error?.message || "Could not copy calendar link.");
     }
   };
 
@@ -593,12 +609,13 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
     setCalendarSyncError("");
   };
 
-  const applyCalendarSourcesPayload = ({ sources, blockedDates }) => {
+  const applyCalendarSourcesPayload = useCallback(({ sources, blockedDates }) => {
     const orderedSources = orderSourcesByPreviousOrder(calendarSourcesRef.current, sources);
+    calendarSourcesRef.current = orderedSources;
     setCalendarSources(orderedSources);
     setSourceSyncStateById((previous) => buildSyncStateMapForSources(orderedSources, previous));
     setExternalBlockedDates(new Set(blockedDates));
-  };
+  }, []);
 
   const persistSourceChange = async ({
     propertyId,
@@ -860,6 +877,48 @@ export const useCalendarSync = ({ selectedPropertyId }) => {
       }
     }
   };
+
+  useEffect(() => {
+    if (!selectedPropertyId) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    const pollSources = async () => {
+      if (
+        isSavingCalendarSync ||
+        removingCalendarSourceId ||
+        isRefreshingAllCalendarSources ||
+        hasAnySourceSyncInProgress(sourceSyncStateById)
+      ) {
+        return;
+      }
+
+      try {
+        const data = await dbListIcalSources(selectedPropertyId);
+        if (cancelled) {
+          return;
+        }
+        const payload = extractSourcesAndBlockedDates(data);
+        applyCalendarSourcesPayload(payload);
+      } catch {
+        // Keep polling silent to avoid noisy UI while user is idle.
+      }
+    };
+
+    const pollIntervalId = setInterval(pollSources, SOURCES_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(pollIntervalId);
+    };
+  }, [
+    selectedPropertyId,
+    isSavingCalendarSync,
+    removingCalendarSourceId,
+    isRefreshingAllCalendarSources,
+    sourceSyncStateById,
+    applyCalendarSourcesPayload,
+  ]);
 
   return {
     externalBlockedDates,

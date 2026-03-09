@@ -4,8 +4,8 @@ import ServiceUnavailableException from "../util/exception/ServiceUnavailableExc
 import {
   buildBlockedDatesFromEvents,
   buildDateRangeKeys,
-} from "../../.shared/basicIcsUtils.js";
-import { buildSourceUpsertPayload, fetchExternalCalendar } from "../../.shared/icalTransport.js";
+} from "../.shared/basicIcsUtils.js";
+import { buildSourceUpsertPayload, fetchExternalCalendar } from "../.shared/icalTransport.js";
 
 class ExternalCalendarService {
   constructor() {

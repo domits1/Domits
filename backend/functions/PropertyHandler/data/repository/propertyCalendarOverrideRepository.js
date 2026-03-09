@@ -1,6 +1,36 @@
 import Database from "database";
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 
+const quoteIdentifier = (value) => `"${String(value || "").replaceAll('"', '""')}"`;
+
+const isValidSchemaName = (value) =>
+  typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
+
+const getSchemaName = (client) => {
+  if (process.env.TEST === "true") {
+    return quoteIdentifier("test");
+  }
+
+  const schema = client?.options?.schema;
+  if (isValidSchemaName(schema)) {
+    const normalized = schema.trim().toLowerCase();
+    if (normalized === "public") {
+      return quoteIdentifier("main");
+    }
+    return quoteIdentifier(normalized);
+  }
+  return quoteIdentifier("main");
+};
+
+const getOverrideTableName = (client) => {
+  const tableName = quoteIdentifier("property_calendar_override");
+  const schemaName = getSchemaName(client);
+  if (!schemaName) {
+    return tableName;
+  }
+  return `${schemaName}.${tableName}`;
+};
+
 const toInteger = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
@@ -68,6 +98,7 @@ export class PropertyCalendarOverrideRepository {
 
   async getOverridesByPropertyId(propertyId, range = {}) {
     const client = await Database.getInstance();
+    const tableName = getOverrideTableName(client);
     const params = [propertyId];
     const where = ["property_id = $1"];
 
@@ -93,7 +124,7 @@ export class PropertyCalendarOverrideRepository {
             is_available,
             nightly_price,
             updated_at
-          FROM property_calendar_override
+          FROM ${tableName}
           WHERE ${where.join(" AND ")}
           ORDER BY calendar_date ASC
         `,
@@ -164,6 +195,7 @@ export class PropertyCalendarOverrideRepository {
     }
 
     const client = await Database.getInstance();
+    const tableName = getOverrideTableName(client);
     const updatedAt = Date.now();
 
     try {
@@ -172,7 +204,7 @@ export class PropertyCalendarOverrideRepository {
           if (override.isAvailable === null && override.nightlyPrice === null) {
             await transactionManager.query(
               `
-                DELETE FROM property_calendar_override
+                DELETE FROM ${tableName}
                 WHERE property_id = $1 AND calendar_date = $2
               `,
               [propertyId, override.calendarDate]
@@ -182,7 +214,7 @@ export class PropertyCalendarOverrideRepository {
 
           await transactionManager.query(
             `
-              INSERT INTO property_calendar_override
+              INSERT INTO ${tableName}
                 (property_id, calendar_date, is_available, nightly_price, updated_at)
               VALUES
                 ($1, $2, $3, $4, $5)
