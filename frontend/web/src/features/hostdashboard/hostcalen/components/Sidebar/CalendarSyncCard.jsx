@@ -745,6 +745,8 @@ export default function CalendarSyncCard({
     ) || Boolean(String(refreshingSourceId || "").trim());
   const hasRefreshInProgress = isSyncingAllSources || hasAnySourceSyncInProgress;
   const isConfirmingRemoval = Boolean(String(pendingRemoveSourceId || "").trim());
+  const isConnectionSetupOverlayOpen =
+    hasConnections && showConnectionSetup && !isEditingCalendar && !isConfirmingRemoval;
   const isRemovingPendingSource =
     String(removingSourceId || "").trim() === String(pendingRemoveSourceId || "").trim();
 
@@ -893,93 +895,99 @@ export default function CalendarSyncCard({
   );
 
   return (
-    <section className="hc-sync-card" aria-label="Sync calendars">
-      <header className="hc-sync-header">
-        <button
-          type="button"
-          className="hc-sync-back"
-          onClick={handleBack}
-          aria-label={hasConnections && isConnectionSetupOpen ? "Back to sync overview" : "Back to summary"}
-        >
-          <img src={arrowLeftIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
-        </button>
-        {hasConnections ? (
+    <>
+      {isConnectionSetupOverlayOpen ? <div className="hc-sync-page-backdrop" aria-hidden="true" /> : null}
+      <section
+        className={`hc-sync-card ${isConnectionSetupOverlayOpen ? "hc-sync-card--focus-layer" : ""}`}
+        aria-label="Sync calendars"
+      >
+        <header className="hc-sync-header">
           <button
             type="button"
-            className="hc-sync-refresh-all"
-            disabled={
-              !onRefreshAllSources || addingCalendar || hasRefreshInProgress || isConfirmingRemoval
-            }
-            onClick={() => onRefreshAllSources?.()}
+            className="hc-sync-back"
+            onClick={handleBack}
+            aria-label={hasConnections && isConnectionSetupOpen ? "Back to sync overview" : "Back to summary"}
           >
-            {isSyncingAllSources ? "Syncing all..." : "Sync all"}
+            <img src={arrowLeftIcon} alt="" aria-hidden="true" className="hc-chevron-icon" />
           </button>
-        ) : null}
-      </header>
+          {hasConnections ? (
+            <button
+              type="button"
+              className="hc-sync-refresh-all"
+              disabled={
+                !onRefreshAllSources || addingCalendar || hasRefreshInProgress || isConfirmingRemoval
+              }
+              onClick={() => onRefreshAllSources?.()}
+            >
+              {isSyncingAllSources ? "Syncing all..." : "Sync all"}
+            </button>
+          ) : null}
+        </header>
 
-      <h3 className="hc-sync-title">Sync calendars</h3>
-      <p className="hc-sync-copy">
-        Keep your availability up-to-date across different platforms. Sync calendars to automatically
-        reflect changes in bookings.
-      </p>
+        <h3 className="hc-sync-title">Sync calendars</h3>
+        <p className="hc-sync-copy">
+          Keep your availability up-to-date across different platforms. Sync calendars to automatically
+          reflect changes in bookings.
+        </p>
 
-      {showConnectionSetup ? (
-        <ConnectionSetupForm
-          canAddCalendar={canAddCalendar}
-          onAddCalendar={onAddCalendar}
-          domitsCalendarLink={domitsCalendarLink}
-          domitsCalendarLinkCopied={domitsCalendarLinkCopied}
-          onCopyDomitsCalendarLink={onCopyDomitsCalendarLink}
+        {showConnectionSetup ? (
+          <ConnectionSetupForm
+            canAddCalendar={canAddCalendar}
+            onAddCalendar={onAddCalendar}
+            domitsCalendarLink={domitsCalendarLink}
+            domitsCalendarLinkCopied={domitsCalendarLinkCopied}
+            onCopyDomitsCalendarLink={onCopyDomitsCalendarLink}
+            externalCalendarUrlInput={externalCalendarUrlInput}
+            onExternalCalendarUrlChange={onExternalCalendarUrlChange}
+            calendarNameInput={calendarNameInput}
+            onCalendarNameChange={onCalendarNameChange}
+            calendarProviderInput={calendarProviderInput}
+            onCalendarProviderChange={onCalendarProviderChange}
+            addingCalendar={addingCalendar}
+            isEditingCalendar={isEditingCalendar}
+            addCalendarError={addCalendarError}
+            hasConnections={hasConnections}
+            connectedSection={connectedSection}
+          />
+        ) : (
+          <ConnectPromptSection
+            onOpenConnectionSetup={setIsConnectionSetupOpen}
+            connectedSection={connectedSection}
+          />
+        )}
+
+        <EditSourceModal
+          isOpen={isEditingCalendar}
+          addingCalendar={addingCalendar}
+          onCancelEdit={onCancelEdit}
           externalCalendarUrlInput={externalCalendarUrlInput}
           onExternalCalendarUrlChange={onExternalCalendarUrlChange}
           calendarNameInput={calendarNameInput}
           onCalendarNameChange={onCalendarNameChange}
           calendarProviderInput={calendarProviderInput}
           onCalendarProviderChange={onCalendarProviderChange}
-          addingCalendar={addingCalendar}
-          isEditingCalendar={isEditingCalendar}
           addCalendarError={addCalendarError}
-          hasConnections={hasConnections}
-          connectedSection={connectedSection}
+          canAddCalendar={canAddCalendar}
+          onAddCalendar={onAddCalendar}
         />
-      ) : (
-        <ConnectPromptSection
-          onOpenConnectionSetup={setIsConnectionSetupOpen}
-          connectedSection={connectedSection}
+
+        <RemoveSourceModal
+          isOpen={isConfirmingRemoval}
+          isRemovingPendingSource={isRemovingPendingSource}
+          isRemoveReasonStep={isRemoveReasonStep}
+          selectedRemoveReasonIdSet={selectedRemoveReasonIdSet}
+          handleToggleRemoveReason={handleToggleRemoveReason}
+          pendingRemoveSourceName={pendingRemoveSourceName}
+          addCalendarError={addCalendarError}
+          resetRemoveSourceFlow={resetRemoveSourceFlow}
+          setRemoveSourceFlowStep={setRemoveSourceFlowStep}
+          handleRemoveReasonsNext={handleRemoveReasonsNext}
+          handleConfirmRemoveSource={handleConfirmRemoveSource}
+          removeConfirmButtonLabel={removeConfirmButtonLabel}
+          hasSelectedRemoveReason={hasSelectedRemoveReason}
         />
-      )}
-
-      <EditSourceModal
-        isOpen={isEditingCalendar}
-        addingCalendar={addingCalendar}
-        onCancelEdit={onCancelEdit}
-        externalCalendarUrlInput={externalCalendarUrlInput}
-        onExternalCalendarUrlChange={onExternalCalendarUrlChange}
-        calendarNameInput={calendarNameInput}
-        onCalendarNameChange={onCalendarNameChange}
-        calendarProviderInput={calendarProviderInput}
-        onCalendarProviderChange={onCalendarProviderChange}
-        addCalendarError={addCalendarError}
-        canAddCalendar={canAddCalendar}
-        onAddCalendar={onAddCalendar}
-      />
-
-      <RemoveSourceModal
-        isOpen={isConfirmingRemoval}
-        isRemovingPendingSource={isRemovingPendingSource}
-        isRemoveReasonStep={isRemoveReasonStep}
-        selectedRemoveReasonIdSet={selectedRemoveReasonIdSet}
-        handleToggleRemoveReason={handleToggleRemoveReason}
-        pendingRemoveSourceName={pendingRemoveSourceName}
-        addCalendarError={addCalendarError}
-        resetRemoveSourceFlow={resetRemoveSourceFlow}
-        setRemoveSourceFlowStep={setRemoveSourceFlowStep}
-        handleRemoveReasonsNext={handleRemoveReasonsNext}
-        handleConfirmRemoveSource={handleConfirmRemoveSource}
-        removeConfirmButtonLabel={removeConfirmButtonLabel}
-        hasSelectedRemoveReason={hasSelectedRemoveReason}
-      />
-    </section>
+      </section>
+    </>
   );
 }
 
