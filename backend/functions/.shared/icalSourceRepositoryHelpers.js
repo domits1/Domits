@@ -31,11 +31,20 @@ const isValidSchemaName = (value) =>
   typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
 
 const getSchemaName = (client) => {
+  if (process.env.TEST === "true") {
+    return "test";
+  }
+
   const schema = client?.options?.schema;
   if (isValidSchemaName(schema)) {
-    return schema.trim();
+    const normalized = schema.trim().toLowerCase();
+    if (normalized === "public") {
+      return "main";
+    }
+    return normalized;
   }
-  return process.env.TEST === "true" ? "test" : "main";
+
+  return "main";
 };
 
 const getIcalSourceTableName = (client) => {
