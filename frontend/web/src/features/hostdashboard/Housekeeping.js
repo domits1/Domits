@@ -326,18 +326,11 @@ const HostPropertyCare = () => {
                 displayTime = 'Today';
             }
             return (
-                <div 
+                <button 
+                    type="button"
                     key={task.id} 
                     className={`my-task-card ${isOverdueSection ? 'is-overdue-card' : ''}`} 
                     onClick={() => openTaskDetails(task)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            openTaskDetails(task);
-                        }
-                    }}
-                    role="button"
-                    tabIndex={0}
                     style={{ opacity: isCompleted ? 0.6 : 1 }}
                 >
                     <div className="my-task-left">
@@ -354,12 +347,7 @@ const HostPropertyCare = () => {
                         </span>
                     </div>
 
-                    <div 
-                        className="my-task-right" 
-                        onClick={e => e.stopPropagation()}
-                        onKeyDown={e => e.stopPropagation()}
-                        role="presentation"
-                    >
+                    <div className="my-task-right">
                         <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
                             ● {displayStatus}
                         </span>
@@ -374,11 +362,12 @@ const HostPropertyCare = () => {
                                 type="checkbox" 
                                 className="my-task-checkbox" 
                                 checked={task.status === 'Completed'}
+                                onClick={(e) => e.stopPropagation()} 
                                 onChange={() => handleToggleComplete(task)}
                             />
                         )}
                     </div>
-                </div>
+                </button>
             );
         };
 

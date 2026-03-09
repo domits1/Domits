@@ -846,6 +846,10 @@
     padding: 15px 20px;
     transition: box-shadow 0.2s, transform 0.1s;
     cursor: pointer;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
 }
 
 .my-task-card:hover {
@@ -867,7 +871,7 @@
 
 .my-task-icon {
     font-size: 20px;
-    color: #6c757d;
+    color: #495057;
     background-color: #f8f9fa;
     padding: 10px;
     border-radius: 6px;
