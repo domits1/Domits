@@ -42,7 +42,6 @@ function HostCalendar() {
     const fetchAccommodations = async () => {
       setIsLoading(true);
       if (!userId) {
-        console.log("No user id");
         return;
       } else {
         try {
@@ -56,7 +55,6 @@ function HostCalendar() {
             throw new Error("Failed to fetch");
           }
           const data = await response.json();
-          console.log(data);
 
           setAccommodations(data);
         } catch (error) {
@@ -145,7 +143,14 @@ function HostCalendar() {
     }
 
     try {
-      const uploadURL = await uploadICalToS3(listOfAccommodations, userId);
+      const selectedPropertyId = String(
+        selectedAccommodation?.property?.id || selectedAccommodation?.ID || ""
+      ).trim();
+      const uploadURL = await uploadICalToS3(
+        listOfAccommodations,
+        userId,
+        selectedPropertyId
+      );
       if (uploadURL) {
         copyToClipboard(uploadURL);
       } else {

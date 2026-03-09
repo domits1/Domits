@@ -6,11 +6,13 @@ import sendEmail from "./sendEmail.js";
 import Forbidden from "../util/exception/Forbidden.js";
 import TypeException from "../util/exception/TypeException.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
+import { BadRequestException } from "../util/exception/badRequestException.js";
 import ReservationRepository from "../data/reservationRepository.js";
 import StripeRepository from "../data/stripeRepository.js";
 import CognitoRepository from "../data/cognitoRepository.js";
 import PropertyRepository from "../data/propertyRepository.js";
 import getHostEmailById from "./getHostEmailById.js";
+import ExternalCalendarService from "./externalCalendarService.js";
 
 class BookingService {
   constructor() {
@@ -20,13 +22,37 @@ class BookingService {
     this.propertyRepository = new PropertyRepository();
     this.authManager = new AuthManager();
     this.getParamsModel = new GetParamsModel();
+    this.externalCalendarService = new ExternalCalendarService();
   }
 
   async create(event) {
     //await this.verifyEventDataTypes(event);
     const authenticatedUser = await this.authManager.authenticateUser(event.Authorization);
+    const propertyId = String(event?.identifiers?.property_Id || "").trim();
+    if (!propertyId) {
+      throw new BadRequestException("property_Id is required.");
+    }
+
+    const arrivalDateMs = this.parseBookingDateToMs(event?.general?.arrivalDate, "arrivalDate");
+    const departureDateMs = this.parseBookingDateToMs(event?.general?.departureDate, "departureDate");
+    if (departureDateMs <= arrivalDateMs) {
+      throw new BadRequestException("departureDate must be after arrivalDate.");
+    }
+
+    await this.reservationRepository.assertNoBookingConflict({
+      propertyId,
+      arrivalDateMs,
+      departureDateMs,
+    });
+
+    await this.externalCalendarService.ensureNoExternalConflict({
+      propertyId,
+      arrivalMs: arrivalDateMs,
+      departureMs: departureDateMs,
+    });
+
     const userEmail = authenticatedUser.email;
-    const fetchedProperty = await this.propertyRepository.getPropertyById(event.identifiers.property_Id);
+    const fetchedProperty = await this.propertyRepository.getPropertyById(propertyId);
     const hostEmail = await getHostEmailById(fetchedProperty.hostId);
 
     const bookingInfo = {
@@ -38,6 +64,36 @@ class BookingService {
     await sendEmail(userEmail, hostEmail, bookingInfo);
 
     return await this.reservationRepository.addBookingToTable(event, authenticatedUser.sub, fetchedProperty.hostId);
+  }
+
+  parseBookingDateToMs(value, fieldName) {
+    if (typeof value === "number") {
+      if (!Number.isFinite(value)) {
+        throw new BadRequestException(`${fieldName} is invalid.`);
+      }
+      return value;
+    }
+
+    if (typeof value === "string") {
+      const normalized = value.trim();
+      if (!normalized) {
+        throw new BadRequestException(`${fieldName} is required.`);
+      }
+      if (/^\d+$/.test(normalized)) {
+        const parsedInt = Number(normalized);
+        if (!Number.isFinite(parsedInt)) {
+          throw new BadRequestException(`${fieldName} is invalid.`);
+        }
+        return parsedInt;
+      }
+      const parsedDate = new Date(normalized).getTime();
+      if (!Number.isFinite(parsedDate)) {
+        throw new BadRequestException(`${fieldName} is invalid.`);
+      }
+      return parsedDate;
+    }
+
+    throw new BadRequestException(`${fieldName} is required.`);
   }
 
   async confirmPayment(paymentid) {
