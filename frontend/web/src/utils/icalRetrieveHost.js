@@ -1,6 +1,9 @@
 import { getAccessToken } from "../services/getAccessToken";
 
-const ICAL_RETRIEVE_URL = "https://eiul3lr63m.execute-api.eu-north-1.amazonaws.com/default/Ical-retrieve";
+const DEFAULT_ICAL_RETRIEVE_URL =
+  "https://eiul3lr63m.execute-api.eu-north-1.amazonaws.com/default/ical-retrieve";
+const ICAL_RETRIEVE_URL =
+  String(process.env.REACT_APP_ICAL_RETRIEVE_URL || DEFAULT_ICAL_RETRIEVE_URL).trim();
 
 async function callIcalApi(payload) {
   const token = getAccessToken();
