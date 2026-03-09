@@ -1,7 +1,7 @@
 import { getAccessToken } from "../services/getAccessToken";
 
 const DEFAULT_ICAL_RETRIEVE_URL =
-  "https://eiul3lr63m.execute-api.eu-north-1.amazonaws.com/default/Ical-retrieve";
+  "https://eiul3lr63m.execute-api.eu-north-1.amazonaws.com/default/ical-retrieve";
 
 const ICAL_RETRIEVE_PATH_LOWER = "/ical-retrieve";
 
@@ -31,9 +31,9 @@ const buildIcalRetrieveCandidates = (value) => {
 
   const candidates = hasIcalRetrievePath(baseUrl)
     ? [
-        baseUrl,
-        withIcalPathCase(baseUrl, "Ical-retrieve"),
         withIcalPathCase(baseUrl, "ical-retrieve"),
+        withIcalPathCase(baseUrl, "Ical-retrieve"),
+        baseUrl,
       ]
     : [baseUrl];
 
