@@ -324,31 +324,32 @@ export default function CalendarGrid({
                 {monthView.monthGrid.flat().map((date) => {
                   const dayPresentation = getDayPresentation(date, monthView.monthCursor);
                   const isOutsideMonth = dayPresentation.isOutsideMonth;
+                  const isCurrentMonth = !isOutsideMonth;
                   return (
                     <div
                       key={`${monthView.monthName}-${dayPresentation.key}`}
                       className={cx(
                         "hc-year-day",
                         isOutsideMonth && "hc-year-day--outside",
-                        !isOutsideMonth && dayPresentation.isToday && "hc-year-day--today",
-                        !isOutsideMonth &&
+                        isCurrentMonth && dayPresentation.isToday && "hc-year-day--today",
+                        isCurrentMonth &&
                           dayPresentation.showExternalBlockedOverlay &&
                           "hc-year-day--external-booking",
-                        !isOutsideMonth && dayPresentation.isBooked && "hc-year-day--booked",
-                        !isOutsideMonth &&
+                        isCurrentMonth && dayPresentation.isBooked && "hc-year-day--booked",
+                        isCurrentMonth &&
                           dayPresentation.isForcedUnavailable &&
                           "hc-year-day--forced-unavailable",
-                        !isOutsideMonth &&
+                        isCurrentMonth &&
                           dayPresentation.isBlocked === false &&
                           dayPresentation.isUnavailable &&
                           "hc-year-day--unavailable",
-                        !isOutsideMonth && dayPresentation.isAvailable && "hc-year-day--available",
-                        !isOutsideMonth && dayPresentation.isSelected && "hc-year-day--selected"
+                        isCurrentMonth && dayPresentation.isAvailable && "hc-year-day--available",
+                        isCurrentMonth && dayPresentation.isSelected && "hc-year-day--selected"
                       )}
                       aria-hidden={isOutsideMonth}
                       aria-label={isOutsideMonth ? undefined : dayPresentation.cellAriaLabel}
                     >
-                      {!isOutsideMonth ? (
+                      {isCurrentMonth ? (
                         <>
                           <span className="hc-year-day-number">{dayPresentation.dayNumber}</span>
 
