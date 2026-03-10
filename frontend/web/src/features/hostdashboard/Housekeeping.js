@@ -9,6 +9,7 @@ const HostPropertyCare = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [newTask, setNewTask] = useState({
         title: '', description: '', property: '', bookingRef: '', 
@@ -51,6 +52,10 @@ const HostPropertyCare = () => {
     useEffect(() => {
         loadData();
     }, []);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters, sortConfig, activeTab]);
 
     useEffect(() => {
         const today = new Date();
@@ -308,6 +313,22 @@ const HostPropertyCare = () => {
     const displayedTasks = getSortedTasks(filteredTasks);
     const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
 
+    const ITEMS_PER_PAGE = 10;
+    const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
+
+    let paginatedTasks = [];
+    if (activeTab === 'Overview') {
+        // W Overview pokazujemy maksymalnie 10 pierwszych zadań i tyle
+        paginatedTasks = displayedTasks.slice(0, ITEMS_PER_PAGE);
+    } else {
+        // W All Tasks pokazujemy zadania dla obecnej strony
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        paginatedTasks = displayedTasks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }
+
+    const handlePrevPage = () => setCurrentPage(p => Math.max(p - 1, 1));
+    const handleNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
+
     const renderContent = () => {
         if (isLoading) return <div className="loading">Loading...</div>;
 
@@ -550,7 +571,7 @@ const HostPropertyCare = () => {
                                 </td>
                             </tr>
                         ) : (
-                            displayedTasks.map(task => {
+                            paginatedTasks.map(task => {
                                 const isOverdue = task.status === 'Overdue';
                                 const displayPriority = isOverdue ? 'Urgent' : (task.priority || 'Low');
                                 const displayStatus = isOverdue ? 'Overdue' : task.status;
@@ -584,11 +605,27 @@ const HostPropertyCare = () => {
                         )}
                     </tbody>
                 </table>
-                <div className="pagination-mock" style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px', gap: '10px', color: '#495057', fontSize: '14px' }}>
-                    <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}>&lt;</button>
-                    <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer', fontWeight: 'bold' }}>1</button>
-                    <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}>&gt;</button>
-                </div>
+                {activeTab !== 'Overview' && (
+                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px', gap: '10px', color: '#495057', fontSize: '14px' }}>
+                        <button 
+                            onClick={handlePrevPage} 
+                            disabled={currentPage === 1}
+                            style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1 }}
+                        >
+                            &lt;
+                        </button>
+                        <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', fontWeight: 'bold' }}>
+                            {currentPage} / {totalPages}
+                        </button>
+                        <button 
+                            onClick={handleNextPage} 
+                            disabled={currentPage === totalPages}
+                            style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1 }}
+                        >
+                            &gt;
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

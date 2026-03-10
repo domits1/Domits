@@ -19,7 +19,27 @@ let mockTasks = [
     { id: 12, title: 'Fix smart lock battery', property: 'Beach House', type: 'Maintenance', assignee: 'Jan de Vries', priority: 'Urgent', status: 'Pending', dueDate: getOffsetDate(0) }, // Today
     { id: 13, title: 'Clean windows', property: 'City Loft Breda', type: 'Cleaning', assignee: 'Lisa Meijer', priority: 'Low', status: 'Completed', dueDate: getOffsetDate(-3) },
     { id: 14, title: 'Update guest manual', property: 'Beach House', type: 'Inspection', assignee: 'Sophie Janssen', priority: 'Medium', status: 'Pending', dueDate: getOffsetDate(5) },
-    { id: 15, title: 'Check HVAC filters', property: 'City Loft Breda', type: 'Maintenance', assignee: 'Jan de Vries', priority: 'Medium', status: 'Pending', dueDate: getOffsetDate(3) }
+    { id: 15, title: 'Check HVAC filters', property: 'City Loft Breda', type: 'Maintenance', assignee: 'Jan de Vries', priority: 'Medium', status: 'Pending', dueDate: getOffsetDate(3) },
+    { id: 16, title: 'Sanitize kitchen surfaces', property: 'Beach House', type: 'Cleaning', assignee: 'Sophie Janssen', priority: 'High', status: 'Pending', dueDate: getOffsetDate(0) },
+    { id: 17, title: 'Paint scratched wall', property: 'City Loft Breda', type: 'Maintenance', assignee: 'Jan de Vries', priority: 'Low', status: 'Pending', dueDate: getOffsetDate(10) },
+    { id: 18, title: 'Inventory check', property: 'Beach House', type: 'Inspection', assignee: 'Lisa Meijer', priority: 'Medium', status: 'Pending', dueDate: getOffsetDate(-1) }, // Overdue
+    { id: 19, title: 'Plumbing checkup', property: 'City Loft Breda', type: 'Maintenance', assignee: 'Jan de Vries', priority: 'Urgent', status: 'In progress', dueDate: getOffsetDate(-4) }, // Overdue
+    { id: 20, title: 'Replace lightbulbs', property: 'Beach House', type: 'Maintenance', assignee: 'Sophie Janssen', priority: 'Low', status: 'Completed', dueDate: getOffsetDate(-10) },
+    { id: 21, title: 'Clean pool area', property: 'Beach House', type: 'Cleaning', assignee: 'Lisa Meijer', priority: 'High', status: 'Pending', dueDate: getOffsetDate(1) },
+    { id: 22, title: 'Fire extinguisher check', property: 'City Loft Breda', type: 'Inspection', assignee: 'Jan de Vries', priority: 'High', status: 'Pending', dueDate: getOffsetDate(6) },
+    { id: 23, title: 'Organize cleaning supplies', property: 'City Loft Breda', type: 'Cleaning', assignee: 'Sophie Janssen', priority: 'Low', status: 'Pending', dueDate: getOffsetDate(0) },
+    { id: 24, title: 'Unclog shower drain', property: 'Beach House', type: 'Maintenance', assignee: 'Jan de Vries', priority: 'Urgent', status: 'Pending', dueDate: getOffsetDate(0) },
+    { id: 25, title: 'Empty trash bins', property: 'City Loft Breda', type: 'Cleaning', assignee: 'Lisa Meijer', priority: 'Medium', status: 'Pending', dueDate: getOffsetDate(0) },
+    { id: 26, title: 'Check roof tiles', property: 'Beach House', type: 'Inspection', assignee: 'Sophie Janssen', priority: 'Low', status: 'Pending', dueDate: getOffsetDate(20) },
+    { id: 27, title: 'Mow the lawn', property: 'Beach House', type: 'Maintenance', assignee: 'Jan de Vries', priority: 'Medium', status: 'Pending', dueDate: getOffsetDate(2) },
+    { id: 28, title: 'Dust all blinds', property: 'City Loft Breda', type: 'Cleaning', assignee: 'Lisa Meijer', priority: 'Low', status: 'Pending', dueDate: getOffsetDate(4) },
+    { id: 29, title: 'Review security cameras', property: 'City Loft Breda', type: 'Inspection', assignee: 'Jan de Vries', priority: 'High', status: 'In progress', dueDate: getOffsetDate(0) },
+    { id: 30, title: 'Clean oven and microwave', property: 'Beach House', type: 'Cleaning', assignee: 'Sophie Janssen', priority: 'Medium', status: 'Pending', dueDate: getOffsetDate(1) },
+    { id: 31, title: 'Fix broken deck board', property: 'Beach House', type: 'Maintenance', assignee: 'Jan de Vries', priority: 'High', status: 'Pending', dueDate: getOffsetDate(-3) }, // Overdue
+    { id: 32, title: 'Sweep front porch', property: 'City Loft Breda', type: 'Cleaning', assignee: 'Lisa Meijer', priority: 'Low', status: 'Pending', dueDate: getOffsetDate(0) },
+    { id: 33, title: 'Check thermostat', property: 'City Loft Breda', type: 'Inspection', assignee: 'Sophie Janssen', priority: 'Medium', status: 'Completed', dueDate: getOffsetDate(-2) },
+    { id: 34, title: 'Lubricate door hinges', property: 'Beach House', type: 'Maintenance', assignee: 'Jan de Vries', priority: 'Low', status: 'Pending', dueDate: getOffsetDate(8) },
+    { id: 35, title: 'Prepare welcome basket', property: 'City Loft Breda', type: 'Cleaning', assignee: 'Sophie Janssen', priority: 'High', status: 'Pending', dueDate: getOffsetDate(1) }
 ];
 
 export const fetchTasks = async () => {
