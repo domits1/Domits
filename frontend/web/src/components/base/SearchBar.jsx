@@ -29,6 +29,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar =
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
   const [address, setAddress] = useState('');
+  const [accommodation, setAccommodation] = useState('');
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
@@ -42,7 +43,6 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar =
   const [isBarActive, setIsBarActive] = useState(false);
   const {language} = useContext(LanguageContext);
   const searchContent = contentByLanguage[language]?.component.search;
-  const accommodation = '';
 
   const handleButtonClick = (e) => {
     e.stopPropagation();
@@ -145,6 +145,8 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar =
       location.state.searchParams
     ) {
       const { accommodation, address, totalGuests } = location.state.searchParams;
+      setAccommodation(accommodation || '');
+      setAddress(address || '');
       setTimeout(() => {
         performSearch(accommodation, address, totalGuests);
       }, 1);
@@ -252,6 +254,13 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar =
     setError(null);
   };
 
+  const accommodationOptions = [
+    { value: "", label: searchContent.accommodation },
+    { value: "house", label: searchContent.house },
+    { value: "boat", label: searchContent.boat },
+    { value: "camper", label: searchContent.camper },
+  ];
+
   return (
     <>
       {error && (
@@ -278,25 +287,42 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar =
                 />
               </div>
 
-              <div className={`search-check-in-out search-bar-field ${selectedDayRange.from && selectedDayRange.to ? 'has-value' : ''}`}>
-                <img src={calendarIcon} alt="" aria-hidden="true" className="search-field-icon search-field-icon--calendar" />
-                <DatePicker
-                  value={selectedDayRange}
-                  onChange={(range) => setSelectedDayRange(range)}
-                  minimumDate={utils("en").getToday()}
-                  shouldHighlightWeekends
-                  format="MMM DD, YYYY"
-                  calendarClassName="responsive-calendar"
-                  renderInput={({ ref }) => (
-                    <button
-                      type="button"
-                      ref={ref}
-                      className={`search-date-trigger ${startDate && endDate ? '' : 'is-placeholder'}`}>
-                      {startDate && endDate ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}` : searchContent.checkInOut}
-                    </button>
-                  )}
-                />
-              </div>
+              {isMobile && (
+                <div className="search-accommodation search-bar-field">
+                  <select
+                    value={accommodation}
+                    onChange={(e) => setAccommodation(e.target.value)}
+                    className={`search-accommodation-select ${accommodation ? "" : "is-placeholder"}`}>
+                    {accommodationOptions.map((option) => (
+                      <option key={option.value || "placeholder"} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {!isMobile && (
+                <div className={`search-check-in-out search-bar-field ${selectedDayRange.from && selectedDayRange.to ? 'has-value' : ''}`}>
+                  <img src={calendarIcon} alt="" aria-hidden="true" className="search-field-icon search-field-icon--calendar" />
+                  <DatePicker
+                    value={selectedDayRange}
+                    onChange={(range) => setSelectedDayRange(range)}
+                    minimumDate={utils("en").getToday()}
+                    shouldHighlightWeekends
+                    format="MMM DD, YYYY"
+                    calendarClassName="responsive-calendar"
+                    renderInput={({ ref }) => (
+                      <button
+                        type="button"
+                        ref={ref}
+                        className={`search-date-trigger ${startDate && endDate ? '' : 'is-placeholder'}`}>
+                        {startDate && endDate ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}` : searchContent.checkInOut}
+                      </button>
+                    )}
+                  />
+                </div>
+              )}
 
               <div className={`search-guest-section search-bar-field ${showGuestDropdown ? 'active' : ''}`}
                 onClick={toggleGuestDropdown}>
@@ -352,6 +378,28 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar =
                   />
                 </div>
               </div>
+
+              {isMobile && (
+                <div className={`search-check-in-out search-bar-field ${selectedDayRange.from && selectedDayRange.to ? 'has-value' : ''}`}>
+                  <img src={calendarIcon} alt="" aria-hidden="true" className="search-field-icon search-field-icon--calendar" />
+                  <DatePicker
+                    value={selectedDayRange}
+                    onChange={(range) => setSelectedDayRange(range)}
+                    minimumDate={utils("en").getToday()}
+                    shouldHighlightWeekends
+                    format="MMM DD, YYYY"
+                    calendarClassName="responsive-calendar"
+                    renderInput={({ ref }) => (
+                      <button
+                        type="button"
+                        ref={ref}
+                        className={`search-date-trigger ${startDate && endDate ? '' : 'is-placeholder'}`}>
+                        {startDate && endDate ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}` : searchContent.checkInOut}
+                      </button>
+                    )}
+                  />
+                </div>
+              )}
 
               <div className="mobile-search-filter-wrapper">
               <button className="searchbar-button" type="button" onClick={handleSearch}>
