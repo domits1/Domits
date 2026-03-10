@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
 import { createTask, fetchTasks } from './services/faketaskService';
+import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
 
 const HostPropertyCare = () => {
     const [activeTab, setActiveTab] = useState('Overview'); 
@@ -134,9 +135,7 @@ const HostPropertyCare = () => {
             setIsModalOpen(false);
             resetForm();
         } catch (error) {
-            console.error("Error creating task:", error);
             alert("Error creating task");
-            console.error("Error creating task:", error);
         };
     }
 
@@ -443,8 +442,9 @@ const HostPropertyCare = () => {
                         <div className="my-tasks-filters">
                             <select name="property" value={filters.property} onChange={handleFilterChange}>
                                 <option value="All properties">All properties</option>
-                                <option value="City Loft Breda">City Loft Breda</option>
-                                <option value="Beach House">Beach House</option>
+                                {filterPropertyOptions.map((propertyOption) => (
+                                    <option key={propertyOption} value={propertyOption}>{propertyOption}</option>
+                                ))}
                             </select>
                             <select name="status" value={filters.status} onChange={handleFilterChange}>
                                 <option value="All statuses">All statuses</option>
@@ -681,9 +681,12 @@ const HostPropertyCare = () => {
                             <div className="form-group">
                                 <label htmlFor='task-property'>Property</label>
                                 <select id='task-property' name="property" value={newTask.property} onChange={handleInputChange} required>
-                                    <option value="" disabled hidden>Select Property</option>
-                                    <option value="City Loft Breda">City Loft Breda</option>
-                                    <option value="Beach House">Beach House</option>
+                                    <option value="" disabled hidden>
+                                        {createPropertyOptions.length > 0 ? "Select Property" : "No properties available"}
+                                    </option>
+                                    {createPropertyOptions.map((propertyOption) => (
+                                        <option key={propertyOption} value={propertyOption}>{propertyOption}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="form-group">
