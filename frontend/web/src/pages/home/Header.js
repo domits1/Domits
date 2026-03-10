@@ -50,6 +50,7 @@ function Header({ setSearchResults, setLoading }) {
     const script = document.createElement("script");
     script.src = "//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js";
     script.async = true;
+    script.crossOrigin = "anonymous";
     document.head.appendChild(script);
 
     return () => {
