@@ -448,16 +448,7 @@ const HostPropertyCare = () => {
                             <span className="task-count">{todayTasks.length} Tasks</span>
                         </div>
                         <div className="my-tasks-filters">
-                            <select name="property" value={filters.property} onChange={handleFilterChange}>
-                                <option value="All properties">All properties</option>
-                                <option value="City Loft Breda">City Loft Breda</option>
-                                <option value="Beach House">Beach House</option>
-                            </select>
-                            <select name="status" value={filters.status} onChange={handleFilterChange}>
-                                <option value="All statuses">All statuses</option>
-                                <option value="Pending">Pending</option>
-                                <option value="In progress">In progress</option>
-                            </select>
+                            {renderCommonFilters()}
                             <select name="priority" value={filters.priority} onChange={handleFilterChange}>
                                 <option value="Any priority">Any priority</option>
                                 <option value="Urgent">Urgent</option>
@@ -524,16 +515,6 @@ const HostPropertyCare = () => {
             <div className="filters-bar">
                 <div className="filters-dropdowns">
                     {renderCommonFilters()}
-                    <select name="property" value={filters.property} onChange={handleFilterChange}>
-                        <option value="All properties">All properties</option>
-                        <option value="City Loft Breda">City Loft Breda</option>
-                        <option value="Beach House">Beach House</option>
-                    </select>
-                    <select name="status" value={filters.status} onChange={handleFilterChange}>
-                        <option value="All statuses">All statuses</option>
-                        <option value="Pending">Pending</option>
-                        <option value="In progress">In progress</option>
-                    </select>
                     <select name="assignee" value={filters.assignee} onChange={handleFilterChange}>
                         <option value="Anyone">Anyone</option>
                         <option value="Sophie Janssen">Sophie Janssen</option>
