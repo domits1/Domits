@@ -246,6 +246,20 @@ const HostPropertyCare = () => {
     const handleClearFilters = () => {
         setFilters({ property: 'All properties', status: 'All statuses', assignee: 'Anyone', date: 'Any date', priority: 'Any priority', search: '' });
     };
+    const renderCommonFilters = () => (
+        <>
+            <select name="property" value={filters.property} onChange={handleFilterChange}>
+                <option value="All properties">All properties</option>
+                <option value="City Loft Breda">City Loft Breda</option>
+                <option value="Beach House">Beach House</option>
+            </select>
+            <select name="status" value={filters.status} onChange={handleFilterChange}>
+                <option value="All statuses">All statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="In progress">In progress</option>
+            </select>
+        </>
+    );
 
     const getFilteredTasks = () => {
         return tasks.filter(task => {
@@ -291,21 +305,24 @@ const HostPropertyCare = () => {
 
     const getSortedTasks = (tasksToSort) => {
         return [...tasksToSort].sort((a, b) => {
+            const modifier = sortConfig.direction === 'asc' ? 1 : -1;
+
             if (sortConfig.key === 'priority') {
                 const priorityValues = { 'Urgent': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
                 const aVal = priorityValues[a.priority] || 0;
                 const bVal = priorityValues[b.priority] || 0;
-                return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+                return (aVal - bVal) * modifier;
             }
             if (sortConfig.key === 'dueDate') {
-                const aDate = a.dueDate ? new Date(a.dueDate) : new Date('9999-12-31');
-                const bDate = b.dueDate ? new Date(b.dueDate) : new Date('9999-12-31');
-                return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
+                const aDate = a.dueDate ? new Date(a.dueDate).getTime() : new Date('9999-12-31').getTime();
+                const bDate = b.dueDate ? new Date(b.dueDate).getTime() : new Date('9999-12-31').getTime();
+                return (aDate - bDate) * modifier;
             }
             const aStr = (a[sortConfig.key] || '').toString().toLowerCase();
             const bStr = (b[sortConfig.key] || '').toString().toLowerCase();
-            if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1;
-            if (aStr > bStr) return sortConfig.direction === 'asc' ? 1 : -1;
+            
+            if (aStr < bStr) return -1 * modifier;
+            if (aStr > bStr) return 1 * modifier;
             return 0;
         });
     };
@@ -480,10 +497,33 @@ const HostPropertyCare = () => {
             </div>
         );
     };
-    const renderTableView = () => (
+    const getSortIcon = (columnKey, defaultIcon = '') => {
+        if (sortConfig.key !== columnKey) return defaultIcon;
+        return sortConfig.direction === 'asc' ? '▴' : '▾';
+    };
+    const renderTableView = () => {
+        const renderPagination = () => {
+            if (activeTab === 'Overview') return null;
+            return (
+                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px', gap: '10px', color: '#495057', fontSize: '14px' }}>
+                    <button onClick={handlePrevPage} disabled={currentPage === 1} style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1 }}>
+                        &lt;
+                    </button>
+                    <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', fontWeight: 'bold' }}>
+                        {currentPage} / {totalPages}
+                    </button>
+                    <button onClick={handleNextPage} disabled={currentPage === totalPages} style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1 }}>
+                        &gt;
+                    </button>
+                </div>
+            );
+        };
+        
+        return (
         <div className="overview-container">
             <div className="filters-bar">
                 <div className="filters-dropdowns">
+                    {renderCommonFilters()}
                     <select name="property" value={filters.property} onChange={handleFilterChange}>
                         <option value="All properties">All properties</option>
                         <option value="City Loft Breda">City Loft Breda</option>
@@ -539,25 +579,25 @@ const HostPropertyCare = () => {
                     <thead>
                         <tr>
                             <th onClick={() => handleSort('title')} className="sortable-header">
-                                Task {sortConfig.key === 'title' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : ''}
+                                Task {getSortIcon('title', '')}
                             </th>
                             <th onClick={() => handleSort('property')} className="sortable-header">
-                                Property {sortConfig.key === 'property' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : '▾'}
+                                Property {getSortIcon('property', '▾')}
                             </th>
                             <th onClick={() => handleSort('type')} className="sortable-header">
-                                Type {sortConfig.key === 'type' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : ''}
+                                Type {getSortIcon('type', '')}
                             </th>
                             <th onClick={() => handleSort('assignee')} className="sortable-header">
-                                Assignee {sortConfig.key === 'assignee' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : ''}
+                                Assignee {getSortIcon('assignee', '')}
                             </th>
                             <th onClick={() => handleSort('dueDate')} className="sortable-header">
-                                Due Date {sortConfig.key === 'dueDate' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : '▾'}
+                                Due Date {getSortIcon('dueDate', '▾')}
                             </th>
                             <th onClick={() => handleSort('priority')} className="sortable-header">
-                                Priority {sortConfig.key === 'priority' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : '▾'}
+                                Priority {getSortIcon('priority', '▾')}
                             </th>
                             <th onClick={() => handleSort('status')} className="sortable-header">
-                                Status {sortConfig.key === 'status' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : '▾'}
+                                Status {getSortIcon('status', '▾')}
                             </th>
                         </tr>
                     </thead>
@@ -624,9 +664,10 @@ const HostPropertyCare = () => {
                         </button>
                     </div>
                 )}
+                
             </div>
         </div>
-    );
+    )};
 
     return (
         <main className="task-dashboard-v2">
