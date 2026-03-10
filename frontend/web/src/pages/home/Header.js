@@ -143,7 +143,7 @@ function Header({ setSearchResults, setLoading }) {
             Messages
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out
+            <span>Log out</span>
             <img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
@@ -168,7 +168,7 @@ function Header({ setSearchResults, setLoading }) {
             Settings
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out
+            <span>Log out</span>
             <img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
@@ -226,7 +226,7 @@ function Header({ setSearchResults, setLoading }) {
               ) : (
                 <>
                   <button onClick={() => navigate("/login")} className="header-dropdown-login-button">
-                    Login
+                    <span>Login</span>
                     <img src={loginArrow} alt="Login Arrow" />
                   </button>
                   <button onClick={() => navigate("/register")} className="header-dropdown-register-button">
