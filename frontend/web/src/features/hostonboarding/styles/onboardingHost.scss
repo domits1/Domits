@@ -42,6 +42,38 @@ $off-white: #f0f0f0;
 }
 
 .onboarding-host-div {
+  .onboarding-submit-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(2px);
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .onboarding-submit-overlay-content {
+    background: #fff;
+    border: 1px solid #e6e6e6;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 24px 28px;
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .onboarding-submit-overlay-content p {
+    margin: 0;
+    color: #1f2937;
+    font-weight: 600;
+  }
+
   h2 {
     text-align: center;
     flex-wrap: wrap;
@@ -310,7 +342,7 @@ $off-white: #f0f0f0;
   }
 
   .text-area-compact .textInput {
-    height: 40px;
+    height: 50px;
     width: 100%;
     max-width: 300px;
     margin: 0 auto;
@@ -329,6 +361,11 @@ $off-white: #f0f0f0;
     max-width: 780px;
     margin: 0 auto;
     display: block;
+  }
+
+  .hostonboarding-description-textarea {
+    height: 140px !important;
+    min-height: 140px;
   }
 
   .text-area-compact,
@@ -1683,6 +1720,11 @@ $off-white: #f0f0f0;
       .textInput,
       .textInput-field {
         width: 100% !important;
+      }
+
+      .hostonboarding-description-textarea {
+        height: 140px !important;
+        min-height: 140px;
       }
 
       .onboarding-button-box {

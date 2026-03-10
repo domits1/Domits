@@ -1,148 +1,146 @@
-import {handler} from "../../functions/PropertyHandler/index.js";
-import {PropertyController} from "../../functions/PropertyHandler/controller/propertyController.js";
-import {describe, it, expect} from "@jest/globals";
+import { describe, it, expect } from "@jest/globals";
+import { handler } from "../../functions/PropertyHandler/index.js";
+import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
+
+const HOST_DASHBOARD_RESOURCE = "/property/hostDashboard/{subResource}";
+const BOOKING_ENGINE_RESOURCE = "/property/bookingEngine/{subResource}";
+
+const withHttpMethod = (httpMethod, overrides = {}) => ({ httpMethod, ...overrides });
+const withHostDashboardSubResource = (subResource) =>
+  withHttpMethod("GET", { resource: HOST_DASHBOARD_RESOURCE, pathParameters: { subResource } });
+const withBookingEngineSubResource = (subResource) =>
+  withHttpMethod("GET", { resource: BOOKING_ENGINE_RESOURCE, pathParameters: { subResource } });
+
+const buildCase = ({ name, controllerMethod, event, statusCode, body }) => ({
+  name,
+  controllerMethod,
+  event,
+  mockResponse: body === undefined ? { statusCode } : { statusCode, body },
+  expectedStatusCode: statusCode,
+  expectedBody: body,
+});
+
+const directCases = [
+  buildCase({
+    name: "POST request",
+    controllerMethod: "create",
+    event: withHttpMethod("POST"),
+    statusCode: 201,
+    body: "1",
+  }),
+  buildCase({
+    name: "DELETE request",
+    controllerMethod: "delete",
+    event: withHttpMethod("DELETE"),
+    statusCode: 200,
+    body: "Deleted",
+  }),
+  buildCase({
+    name: "DELETE property image request",
+    controllerMethod: "deletePropertyImage",
+    event: withHttpMethod("DELETE", { resource: "/property/images" }),
+    statusCode: 204,
+  }),
+  buildCase({
+    name: "PATCH property overview request",
+    controllerMethod: "updatePropertyOverview",
+    event: withHttpMethod("PATCH", { resource: "/property/overview" }),
+    statusCode: 204,
+  }),
+  buildCase({
+    name: "PATCH property calendar overrides request",
+    controllerMethod: "updatePropertyCalendarOverrides",
+    event: withHttpMethod("PATCH", { resource: "/property/calendar/overrides" }),
+    statusCode: 200,
+  }),
+  buildCase({
+    name: "PATCH property activation request",
+    controllerMethod: "activateProperty",
+    event: withHttpMethod("PATCH", { resource: "/property" }),
+    statusCode: 204,
+  }),
+  buildCase({
+    name: "GET property calendar overrides request",
+    controllerMethod: "getPropertyCalendarOverrides",
+    event: withHttpMethod("GET", { resource: "/property/calendar/overrides" }),
+    statusCode: 200,
+  }),
+];
+
+const hostDashboardCases = [
+  ["all", "getFullOwnedProperties", "GET all hostDashboard properties"],
+  ["single", "getFullOwnedPropertyById", "GET single hostDashboard property"],
+].map(([subResource, controllerMethod, name]) =>
+  buildCase({
+    name,
+    controllerMethod,
+    event: withHostDashboardSubResource(subResource),
+    statusCode: 200,
+  })
+);
+
+const bookingEngineCases = [
+  ["byType", "getActivePropertiesCardByType", "GET bookingEngine properties by type"],
+  ["all", "getActivePropertiesCard", "GET all active properties"],
+  ["byHostId", "getActivePropertiesCardByHostId", "GET properties by hostId"],
+  ["set", "getActivePropertiesCardById", "GET set of properties"],
+  ["listingDetails", "getFullActivePropertyById", "GET active listing details"],
+].map(([subResource, controllerMethod, name]) =>
+  buildCase({
+    name,
+    controllerMethod,
+    event: withBookingEngineSubResource(subResource),
+    statusCode: 200,
+  })
+);
+
+const routeCases = [...directCases, ...hostDashboardCases, ...bookingEngineCases];
+
+const notFoundCases = [
+  {
+    name: "unknown '/property/hostDashboard' sub-resource",
+    event: withHostDashboardSubResource("unknown"),
+    expectedBody: "Sub-resource for '/property/hostDashboard' not found.",
+  },
+  {
+    name: "unknown '/property/bookingEngine' sub-resource",
+    event: withBookingEngineSubResource("unknown"),
+    expectedBody: "Sub-resource for '/property/bookingEngine' not found.",
+  },
+  {
+    name: "unknown HTTP method",
+    event: withHttpMethod("PUT"),
+    expectedBody: "Method not found.",
+  },
+  {
+    name: "unknown path",
+    event: withHttpMethod("GET", { resource: "some/path/that/does/not/exist", pathParameters: {} }),
+    expectedBody: "Path not found.",
+  },
+];
 
 describe("Routing unit tests", () => {
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
-    it("should handle a POST request", async () => {
-        jest.spyOn(PropertyController.prototype, 'create').mockResolvedValue({statusCode: 201, body: "1"});
+  it.each(routeCases)(
+    "should handle $name",
+    async ({ controllerMethod, event, mockResponse, expectedStatusCode, expectedBody }) => {
+      jest.spyOn(PropertyController.prototype, controllerMethod).mockResolvedValue(mockResponse);
 
-        const event = {httpMethod: "POST"};
-        const response = await handler(event);
+      const response = await handler(event);
 
-        expect(response.statusCode).toBe(201);
-    });
+      expect(response.statusCode).toBe(expectedStatusCode);
+      if (expectedBody !== undefined) {
+        expect(response.body).toBe(expectedBody);
+      }
+    }
+  );
 
-    it("should handle a DELETE request", async () => {
-        jest.spyOn(PropertyController.prototype, 'delete').mockResolvedValue({statusCode: 200, body: "Deleted"});
-
-        const event = {httpMethod: "DELETE"};
-        const response = await handler(event);
-
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toBe("Deleted");
-    });
-
-    it("should handle a GET request for all properties on hostDashboard", async () => {
-        jest.spyOn(PropertyController.prototype, 'getFullOwnedProperties').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/hostDashboard/{subResource}",
-            pathParameters: {subResource: "all"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for a single property", async () => {
-        jest.spyOn(PropertyController.prototype, 'getFullOwnedPropertyById').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/hostDashboard/{subResource}",
-            pathParameters: {subResource: "single"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for properties by type", async () => {
-        jest.spyOn(PropertyController.prototype, 'getActivePropertiesCardByType').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "byType"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for all active properties", async () => {
-        jest.spyOn(PropertyController.prototype, 'getActivePropertiesCard').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "all"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for properties by hostId", async () => {
-        jest.spyOn(PropertyController.prototype, 'getActivePropertiesCardByHostId').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "byHostId"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for a set of properties", async () => {
-        jest.spyOn(PropertyController.prototype, 'getActivePropertiesCardById').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "set"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should handle a GET request for listing details of an active property", async () => {
-        jest.spyOn(PropertyController.prototype, 'getFullActivePropertyById').mockResolvedValue({statusCode: 200});
-
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "listingDetails"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(200);
-    });
-
-    it("should return 404 for unrecognized sub-resource for '/property/hostDashboard'", async () => {
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/hostDashboard/{subResource}",
-            pathParameters: {subResource: "unknown"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(404);
-        expect(response.body).toBe("Sub-resource for '/property/hostDashboard' not found.");
-    });
-
-    it("should return 404 for unrecognized subResource '/property/bookingEngine'", async () => {
-        const event = {
-            httpMethod: "GET",
-            resource: "/property/bookingEngine/{subResource}",
-            pathParameters: {subResource: "unknown"},
-        };
-        const response = await handler(event);
-        expect(response.statusCode).toBe(404);
-        expect(response.body).toBe("Sub-resource for '/property/bookingEngine' not found.");
-    });
-
-    it("should return 404 for unrecognized HTTP method", async () => {
-        const event = {httpMethod: "PUT"};
-        const response = await handler(event);
-        expect(response.statusCode).toBe(404);
-        expect(response.body).toBe("Method not found.");
-    });
-
-    it("should return 404 for unrecognized path", async () => {
-        const event = {httpMethod: "GET", resource: "some/path/that/does/not/exist", pathParameters: {}};
-        const response = await handler(event);
-        expect(response.statusCode).toBe(404);
-        expect(response.body).toBe("Path not found.");
-    });
+  it.each(notFoundCases)("should return 404 for $name", async ({ event, expectedBody }) => {
+    const response = await handler(event);
+    expect(response.statusCode).toBe(404);
+    expect(response.body).toBe(expectedBody);
+  });
 });

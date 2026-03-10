@@ -41,6 +41,15 @@ export class PropertyBuilder {
     if (!propertyParams.id) {
       propertyParams.id = randomUUID();
     }
+    const normalizedRegistrationNumber =
+      typeof propertyParams.registrationNumber === "string"
+        ? propertyParams.registrationNumber.trim()
+        : "";
+    if (normalizedRegistrationNumber) {
+      propertyParams.registrationNumber = normalizedRegistrationNumber;
+    } else {
+      propertyParams.registrationNumber = `AUTO-${propertyParams.id}`;
+    }
     propertyParams.hostId = userId;
     propertyParams.createdAt = Date.now();
     propertyParams.status = "INACTIVE";
@@ -66,8 +75,9 @@ export class PropertyBuilder {
   }
 
   addAvailability(availabilities) {
+    const availabilityList = Array.isArray(availabilities) ? availabilities : [];
     let availabilityArray = [];
-    for (const availability of availabilities) {
+    for (const availability of availabilityList) {
       if (availability.availableStartDate < Date.now()) {
         throw new Error("Available start date can not be in the past.");
       }
@@ -151,7 +161,12 @@ export class PropertyBuilder {
   }
 
   addPricing(params) {
-    this.propertyPricing = new PropertyPricing(this.property.id, params.roomRate, params.cleaning);
+    this.propertyPricing = new PropertyPricing(
+      this.property.id,
+      params.roomRate,
+      params.cleaning,
+      params.weekendRate ?? params.weekendrate
+    );
     return this;
   }
 
@@ -184,8 +199,8 @@ export class PropertyBuilder {
   addImages(images) {
     if (images.length < 5) {
       throw new TypeException("Minimum of 5 images required.");
-    } else if (images.length > 30) {
-      throw new TypeException("Maximum of 30 images allowed.");
+    } else if (images.length > 60) {
+      throw new TypeException("Maximum of 60 images allowed.");
     }
     const maxTotalKiloBytes = 5 * 1024;
     const totalKiloBytes = images.reduce((sum, image) => {

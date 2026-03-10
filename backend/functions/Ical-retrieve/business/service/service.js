@@ -1,12 +1,36 @@
 import { BadRequestException } from "../../util/exception/badRequestException.js";
+import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { Repository } from "../../data/repository.js";
+import { resolveCalendarProvider } from "../../.shared/calendarProvider.js";
+import { buildSourceUpsertPayload, fetchExternalCalendar } from "../../.shared/icalTransport.js";
 
-const MAX_ICS_BYTES = 2_000_000;
 const MAX_EXPAND_DAYS = 365;
 
 export class Service {
   constructor() {
     this.repository = new Repository();
+  }
+
+  async refreshSingleSource(propertyId, source) {
+    const url = String(source?.calendarUrl || "").trim();
+    if (!url) {
+      return;
+    }
+
+    const { events, meta } = await this.retrieveFromExternalCalendar(url);
+    const blockedDates = buildBlockedDatesFromEvents(events);
+    await this.repository.upsertSource(
+      buildSourceUpsertPayload({
+        propertyId,
+        source: {
+          ...source,
+          calendarUrl: url,
+          calendarName: source.calendarName || "EXTERNAL",
+        },
+        blockedDates,
+        meta,
+      })
+    );
   }
 
   async retrieveFromExternalCalendar(calendarUrl) {
@@ -17,37 +41,16 @@ export class Service {
       throw new BadRequestException("calendarUrl must start with http:// or https://");
     }
 
-    let icsText;
-    let etag = null;
-    let lastModified = null;
-
     try {
-      const res = await fetch(calendarUrl, {
-        method: "GET",
-        headers: {
-          "User-Agent": "Domits-Ical-Retrieve/1.0",
-          Accept: "text/calendar,*/*",
-        },
+      return await fetchExternalCalendar({
+        calendarUrl,
+        userAgent: "Domits-Ical-Retrieve/1.0",
+        parseEvents: parseIcsToEvents,
+        createHttpError: (statusCode) => new BadRequestException(`Failed to fetch external calendar (status ${statusCode})`),
       });
-
-      if (!res.ok) {
-        throw new BadRequestException(`Failed to fetch external calendar (status ${res.status})`);
-      }
-
-      etag = res.headers.get("etag");
-      lastModified = res.headers.get("last-modified");
-
-      const buf = await res.arrayBuffer();
-      if (buf.byteLength > MAX_ICS_BYTES) {
-        throw new BadRequestException("ICS file too large");
-      }
-      icsText = new TextDecoder("utf-8").decode(buf);
     } catch (e) {
       throw new BadRequestException("Could not download external calendar URL");
     }
-
-    const events = parseIcsToEvents(icsText);
-    return { events, meta: { etag, lastModified } };
   }
 
   async listSources(propertyId) {
@@ -64,6 +67,11 @@ export class Service {
         sourceId: r.sourceId,
         calendarName: r.calendarName,
         calendarUrl: r.calendarUrl,
+        calendarProvider: resolveCalendarProvider({
+          calendarProvider: r.provider,
+          calendarUrl: r.calendarUrl,
+          calendarName: r.calendarName,
+        }),
         lastSyncAt: r.lastSyncAt,
         updatedAt: r.updatedAt,
         etag: r.etag,
@@ -73,29 +81,35 @@ export class Service {
     };
   }
 
-  async upsertSource({ propertyId, calendarUrl, calendarName }) {
+  async upsertSource({ propertyId, calendarUrl, calendarName, calendarProvider }) {
     if (!propertyId || typeof propertyId !== "string") throw new BadRequestException("propertyId is required");
     if (!calendarUrl || typeof calendarUrl !== "string") throw new BadRequestException("calendarUrl is required");
     if (!calendarName || typeof calendarName !== "string") throw new BadRequestException("calendarName is required");
 
     const url = calendarUrl.trim();
     const name = calendarName.trim();
+    const provider = resolveCalendarProvider({
+      calendarProvider,
+      calendarUrl: url,
+      calendarName: name,
+    });
 
     const sourceId = hashSourceId(url);
     const { events, meta } = await this.retrieveFromExternalCalendar(url);
     const blockedDates = buildBlockedDatesFromEvents(events);
-    const blockedDatesText = JSON.stringify(blockedDates);
-
-    await this.repository.upsertSource({
-      propertyId,
-      sourceId,
-      calendarName: name,
-      calendarUrl: url,
-      blockedDatesText,
-      lastSyncAt: new Date().toISOString(),
-      etag: meta?.etag || null,
-      lastModified: meta?.lastModified || null,
-    });
+    await this.repository.upsertSource(
+      buildSourceUpsertPayload({
+        propertyId,
+        source: {
+          sourceId,
+          calendarName: name,
+          calendarUrl: url,
+          provider,
+        },
+        blockedDates,
+        meta,
+      })
+    );
 
     return await this.listSources(propertyId);
   }
@@ -114,25 +128,26 @@ export class Service {
     const sources = await this.repository.listSources(propertyId);
 
     for (const s of sources) {
-      const url = String(s?.calendarUrl || "").trim();
-      if (!url) continue;
-
       try {
-        const { events, meta } = await this.retrieveFromExternalCalendar(url);
-        const blockedDates = buildBlockedDatesFromEvents(events);
-        await this.repository.upsertSource({
-          propertyId,
-          sourceId: s.sourceId,
-          calendarName: s.calendarName || "EXTERNAL",
-          calendarUrl: url,
-          blockedDatesText: JSON.stringify(blockedDates),
-          lastSyncAt: new Date().toISOString(),
-          etag: meta?.etag || null,
-          lastModified: meta?.lastModified || null,
-        });
+        await this.refreshSingleSource(propertyId, s);
       } catch {}
     }
 
+    return await this.listSources(propertyId);
+  }
+
+  async refreshSource({ propertyId, sourceId }) {
+    if (!propertyId || typeof propertyId !== "string") throw new BadRequestException("propertyId is required");
+    if (!sourceId || typeof sourceId !== "string") throw new BadRequestException("sourceId is required");
+
+    const sources = await this.repository.listSources(propertyId);
+    const normalizedSourceId = String(sourceId).trim();
+    const source = sources.find((item) => String(item?.sourceId || "").trim() === normalizedSourceId);
+    if (!source) {
+      throw new NotFoundException("Calendar source not found.");
+    }
+
+    await this.refreshSingleSource(propertyId, source);
     return await this.listSources(propertyId);
   }
 }

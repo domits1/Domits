@@ -11,6 +11,17 @@ import OnboardingProgress from "../components/OnboardingProgress";
 import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import { toast } from "react-toastify";
+import ClipLoader from "react-spinners/ClipLoader";
+
+const submitStateMessages = {
+  preparing: "Preparing your listing...",
+  "creating-draft": "Creating draft...",
+  "presigning-images": "Preparing photo upload...",
+  "uploading-images": "Uploading photos...",
+  "confirming-images": "Processing image variants...",
+  "creating-property": "Creating listing...",
+  finalizing: "Finalizing...",
+};
 
 function SummaryViewAndSubmit() {
   const builder = useBuilder();
@@ -21,11 +32,14 @@ function SummaryViewAndSubmit() {
   );
   const [hasDeclaredLegitimacy, setHasDeclaredLegitimacy] = useState(false);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  const [submitState, setSubmitState] = useState("idle");
   const canProceed = hasDeclaredLegitimacy && hasAcceptedTerms;
+  const isSubmitting = submitState !== "idle";
   const type = data.type;
   const navigate = useNavigate();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!hasDeclaredLegitimacy || !hasAcceptedTerms) {
       toast.error("Please accept all declarations and terms to continue.");
       return;
@@ -34,11 +48,25 @@ function SummaryViewAndSubmit() {
       toast.error("Upload at least 5 photos to continue.");
       return;
     }
-    submitAccommodation(navigate, builder);
+    const didSucceed = await submitAccommodation(navigate, builder, {
+      onSuccessPath: "/hostdashboard/listings",
+      onStateChange: setSubmitState,
+    });
+    if (!didSucceed) {
+      setSubmitState("idle");
+    }
   };
 
   return (
     <div className="onboarding-host-div">
+      {isSubmitting ? (
+        <div className="onboarding-submit-overlay">
+          <div className="onboarding-submit-overlay-content">
+            <ClipLoader size={80} color="#0D9813" loading />
+            <p>{submitStateMessages[submitState] || "Working on your listing..."}</p>
+          </div>
+        </div>
+      ) : null}
       <div className="summary">
         <OnboardingProgress />
         <FetchUserId />
@@ -56,15 +84,16 @@ function SummaryViewAndSubmit() {
           <button
             className="onboarding-button"
             onClick={() => (prevPath ? navigate(prevPath) : navigate(-1))}
+            disabled={isSubmitting}
           >
             Go back to change
           </button>
           <button
             className="onboarding-button"
             onClick={handleSubmit}
-            disabled={!canProceed}
+            disabled={!canProceed || isSubmitting}
           >
-            Confirm and proceed
+            {isSubmitting ? "Processing..." : "Confirm and proceed"}
           </button>
         </div>
       </div>

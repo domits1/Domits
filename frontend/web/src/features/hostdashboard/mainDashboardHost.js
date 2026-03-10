@@ -11,6 +11,7 @@ import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 // import HostPricing from "./hostpricing/views/HostPricing";
 import HostListings from "./HostListings";
 import HostSettings from "./HostSettings";
+import HostProperty from "./HostProperty";
 
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
@@ -116,6 +117,7 @@ function MainDashboardHost() {
           {/* <Route path="pricing" element={<HostPricing />} /> */}
 
           <Route path="listings" element={<HostListings />} />
+          <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />
 
           <Route path="*" element={<Navigate to="." replace />} />

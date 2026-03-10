@@ -295,6 +295,7 @@ CREATE TABLE IF NOT EXISTS main.property_pricing (
   property_id VARCHAR(255) NOT NULL,
   cleaning INTEGER,
   roomRate INTEGER NOT NULL,
+  weekendRate INTEGER,
   PRIMARY KEY (property_id)
 );
 CREATE UNIQUE INDEX ASYNC property_id_UNIQUE_property_pricing ON main.property_pricing (property_id);
@@ -390,7 +391,7 @@ CREATE UNIQUE INDEX ASYNC user_id_UNIQUE_stripe_connected_accounts ON main.strip
 -- -----------------------------------------------------
 -- Table main.property_calendar_price
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS main.property_calendar_price
+DROP TABLE IF EXISTS main.property_calendar_price;
 
 
 CREATE TABLE IF NOT EXISTS   property_calendar_price (
@@ -401,9 +402,44 @@ CREATE TABLE IF NOT EXISTS   property_calendar_price (
 );
 
 -- -----------------------------------------------------
+-- Table main.property_calendar_override
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_calendar_override;
+
+CREATE TABLE IF NOT EXISTS main.property_calendar_override (
+  property_id VARCHAR(255) NOT NULL,
+  calendar_date BIGINT NOT NULL,
+  is_available BOOLEAN,
+  nightly_price INTEGER,
+  updated_at BIGINT NOT NULL,
+  PRIMARY KEY (property_id, calendar_date)
+);
+CREATE INDEX ASYNC property_calendar_override_property_idx ON main.property_calendar_override (property_id);
+CREATE INDEX ASYNC property_calendar_override_date_idx ON main.property_calendar_override (calendar_date);
+
+-- -----------------------------------------------------
+-- Table main.property_ical_source
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS main.property_ical_source;
+
+CREATE TABLE IF NOT EXISTS main.property_ical_source (
+  property_id VARCHAR(255) NOT NULL,
+  source_id VARCHAR(255) NOT NULL,
+  calendar_name VARCHAR(255) NOT NULL,
+  calendar_url TEXT NOT NULL,
+  blocked_dates TEXT,
+  last_sync_at VARCHAR(255),
+  updated_at TIMESTAMP NOT NULL DEFAULT now(),
+  etag VARCHAR(255),
+  last_modified VARCHAR(255),
+  PRIMARY KEY (property_id, source_id)
+);
+CREATE INDEX ASYNC property_ical_source_property_idx ON main.property_ical_source (property_id);
+
+-- -----------------------------------------------------
 -- Table main.property_test_status
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS main.property_test_status
+DROP TABLE IF EXISTS main.property_test_status;
 
 
 CREATE TABLE IF NOT EXISTS   property_test_status (

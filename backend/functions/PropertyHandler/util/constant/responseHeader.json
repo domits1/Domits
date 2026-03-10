@@ -1,5 +1,5 @@
 {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS,PATCH",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS,PATCH,DELETE",
   "Access-Control-Allow-Headers": "Content-Type,Authorization"
 }

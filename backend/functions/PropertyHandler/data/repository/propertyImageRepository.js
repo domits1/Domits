@@ -7,6 +7,7 @@ import Database from "database";
 import { Property_Image } from "database/models/Property_Image";
 import { Property_Image_Legacy } from "database/models/Property_Image_Legacy";
 import { Property_Image_Variant } from "database/models/Property_Image_Variant";
+import { NotFoundException } from "../../util/exception/NotFoundException.js";
 
 const BUCKET = process.env.S3_BUCKET || "accommodation";
 const MAX_ORIGINAL_BYTES = 5 * 1024 * 1024;
@@ -449,6 +450,134 @@ export class PropertyImageRepository {
                 })
                 .execute();
         }
+    }
+
+    async reindexPropertyImages(transactionManager, propertyId) {
+        let remainingImages = [];
+        try {
+            remainingImages = await transactionManager
+                .getRepository(Property_Image)
+                .createQueryBuilder("property_image")
+                .select(["property_image.id"])
+                .where("property_id = :propertyId", { propertyId })
+                .orderBy("sort_order", "ASC")
+                .addOrderBy("created_at", "ASC")
+                .addOrderBy("id", "ASC")
+                .getMany();
+        } catch (error) {
+            if (error?.code !== "42P01") {
+                throw error;
+            }
+            return;
+        }
+
+        const now = Date.now();
+        for (const [index, image] of remainingImages.entries()) {
+            await transactionManager
+                .createQueryBuilder()
+                .update(Property_Image)
+                .set({
+                    sort_order: index,
+                    updated_at: now,
+                })
+                .where("id = :imageId", { imageId: image.id })
+                .andWhere("property_id = :propertyId", { propertyId })
+                .execute();
+        }
+    }
+
+    async deleteImageByPropertyId(propertyId, imageId) {
+        const client = await Database.getInstance();
+        const normalizedPropertyId = String(propertyId || "").trim();
+        const normalizedImageId = String(imageId || "").trim();
+
+        if (!normalizedPropertyId || !normalizedImageId) {
+            throw new Error("Missing propertyId or imageId.");
+        }
+
+        let imageRecord = null;
+        try {
+            imageRecord = await client
+                .getRepository(Property_Image)
+                .createQueryBuilder("property_image")
+                .where("id = :imageId", { imageId: normalizedImageId })
+                .andWhere("property_id = :propertyId", { propertyId: normalizedPropertyId })
+                .getOne();
+        } catch (error) {
+            if (error?.code !== "42P01") {
+                throw error;
+            }
+        }
+
+        if (imageRecord) {
+            let variantKeys = [];
+            try {
+                const variants = await client
+                    .getRepository(Property_Image_Variant)
+                    .createQueryBuilder("variant")
+                    .where("image_id = :imageId", { imageId: normalizedImageId })
+                    .getMany();
+                variantKeys = variants
+                    .map((variant) => String(variant?.s3_key || "").trim())
+                    .filter(Boolean);
+            } catch (error) {
+                if (error?.code !== "42P01") {
+                    throw error;
+                }
+            }
+
+            if (variantKeys.length > 0) {
+                await this.deleteObjects(variantKeys);
+            }
+
+            await client.transaction(async (transactionManager) => {
+                try {
+                    await transactionManager
+                        .createQueryBuilder()
+                        .delete()
+                        .from(Property_Image_Variant)
+                        .where("image_id = :imageId", { imageId: normalizedImageId })
+                        .execute();
+                } catch (error) {
+                    if (error?.code !== "42P01") {
+                        throw error;
+                    }
+                }
+
+                await transactionManager
+                    .createQueryBuilder()
+                    .delete()
+                    .from(Property_Image)
+                    .where("id = :imageId", { imageId: normalizedImageId })
+                    .andWhere("property_id = :propertyId", { propertyId: normalizedPropertyId })
+                    .execute();
+
+                await this.reindexPropertyImages(transactionManager, normalizedPropertyId);
+            });
+
+            return;
+        }
+
+        const legacyImage = await client
+            .getRepository(Property_Image_Legacy)
+            .createQueryBuilder("property_image_legacy")
+            .where("property_id = :propertyId", { propertyId: normalizedPropertyId })
+            .andWhere("key = :key", { key: normalizedImageId })
+            .getOne();
+
+        if (legacyImage) {
+            await this.deleteObjects([legacyImage.key]);
+            await client
+                .createQueryBuilder()
+                .delete()
+                .from(Property_Image_Legacy)
+                .where("property_id = :propertyId", { propertyId: normalizedPropertyId })
+                .andWhere("key = :key", { key: legacyImage.key })
+                .execute();
+            return;
+        }
+
+        throw new NotFoundException(`Image ${normalizedImageId} not found.`);
     }
 
     async deleteImagesByPropertyId(propertyId) {

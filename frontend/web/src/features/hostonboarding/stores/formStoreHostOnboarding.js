@@ -1,99 +1,96 @@
 import { create } from "zustand"
 
-/**
- * Zustand based store for managing multi page host-onboarding of a new accommodation.
- * Stores the accommodationdetails, steps-progress and dynamically updated nested fields.
- */
+const createInitialTechnicalDetails = () => ({
+  length: null,
+  height: null,
+  fuelConsumption: null,
+  speed: null,
+  renovationYear: null,
+  transmission: "Automatic",
+  generalPeriodicInspection: null,
+  fourWheelDrive: false,
+});
+
+const createInitialLocation = () => ({
+  country: "",
+  city: "",
+  street: "",
+  houseNumber: "",
+  houseNumberExtension: "",
+  postalCode: "",
+});
+
+const createInitialAccommodationDetails = () => ({
+  type: "",
+  title: "",
+  subtitle: "",
+  guestAccessType: "",
+  boatType: "",
+  camperType: "",
+
+  boatDetails: { country: "", city: "", harbor: "" },
+  camperDetails: { country: "", city: "", street: "", zipCode: "" },
+  address: { street: "", city: "", zipCode: "", country: "" },
+
+  accommodationCapacity: {
+    GuestAmount: 0,
+    Cabins: 0,
+    Bedrooms: 0,
+    Bathrooms: 0,
+    Beds: 0,
+  },
+
+  selectedAmenities: {},
+
+  houseRules: {
+    SmokingAllowed: false,
+    PetsAllowed: false,
+    "Parties/EventsAllowed": false,
+    SuitableForChildren: false,
+    SuitableForInfants: false,
+  },
+
+  checkIn: {
+    CheckIn: { from: 9, till: 18 },
+    CheckOut: { from: 7, till: 8 },
+  },
+
+  images: {},
+  imageList: [],
+  propertyId: "",
+  description: "",
+  boatSpecifications: {},
+  camperSpecifications: {},
+  Rent: 100,
+  CleaningFee: 0,
+  ServiceFee: 0,
+
+  Features: {
+    ExtraServices: [],
+  },
+
+  availability: {
+    ExpirationTime: 72,
+    MinimumStay: 1,
+    MinimumBookingPeriod: 3,
+    MaximumStay: 10,
+    MinimumAdvancedReservation: 1,
+    MaximumAdvancedReservation: 1,
+    PaymentDeadlineAfterBooking: "24",
+    PaymentDeadlineBeforeCheckIn: "36",
+    selectedDates: [],
+  },
+
+  registrationNumber: "",
+  ReservationsID: "",
+  OwnerId: "",
+});
+
 const useFormStoreHostOnboarding = create((set) => ({
-  technicalDetails: {
-    length: null,
-    height: null,
-    fuelConsumption: null,
-    speed: null,
-    renovationYear: null,
-    transmission: "Automatic",
-    generalPeriodicInspection: null,
-    fourWheelDrive: false,
-  },
-
-  location: {
-    country: "",
-    city: "",
-    street: "",
-    houseNumber: "",
-    houseNumberExtension: "",
-    postalCode: ""
-  },
-
-  // Step progress
+  technicalDetails: createInitialTechnicalDetails(),
+  location: createInitialLocation(),
   completedSteps: [],
-
-  // Main form data - Empty placeholder/constructor
-  accommodationDetails: {
-    type: "",
-    title: "",
-    subtitle: "",
-    guestAccessType: "",
-    boatType: "",
-    camperType: "",
-
-    boatDetails: { country: "", city: "", harbor: "" },
-    camperDetails: { country: "", city: "", street: "", zipCode: "" },
-    address: { street: "", city: "", zipCode: "", country: "" },
-
-    accommodationCapacity: {
-      GuestAmount: 0,
-      Cabins: 0,
-      Bedrooms: 0,
-      Bathrooms: 0,
-      Beds: 0,
-    },
-
-    selectedAmenities: {},
-
-    houseRules: {
-      SmokingAllowed: false,
-      PetsAllowed: false,
-      "Parties/EventsAllowed": false,
-      SuitableForChildren: false,
-      SuitableForInfants: false,
-    },
-
-    checkIn: {
-      CheckIn: { from: 9, till: 18 },
-      CheckOut: { from: 7, till: 8 },
-    },
-
-    images: {},
-    imageList: [],
-    propertyId: "",
-    description: "",
-    boatSpecifications: {},
-    camperSpecifications: {},
-    Rent: 100,
-    CleaningFee: 0,
-    ServiceFee: 0,
-
-    Features: {
-      ExtraServices: [],
-    },
-
-    availability: {
-      ExpirationTime: 72,
-      MinimumStay: 1,
-      MinimumBookingPeriod: 3,
-      MaximumStay: 10,
-      MinimumAdvancedReservation: 1,
-      MaximumAdvancedReservation: 1,
-      PaymentDeadlineAfterBooking: "24",
-      PaymentDeadlineBeforeCheckIn: "36",
-      selectedDates: [],
-    },
-
-    registrationNumber: "",
-    ReservationsID: "",
-    OwnerId: "",
-  },
+  accommodationDetails: createInitialAccommodationDetails(),
 
   /* ------- Basic Setters ------- */
 
@@ -370,6 +367,14 @@ const useFormStoreHostOnboarding = create((set) => ({
   markStepComplete: (step) =>
     set((state) => ({
       completedSteps: [...state.completedSteps, step],
+    })),
+
+  resetOnboardingState: () =>
+    set(() => ({
+      technicalDetails: createInitialTechnicalDetails(),
+      location: createInitialLocation(),
+      completedSteps: [],
+      accommodationDetails: createInitialAccommodationDetails(),
     })),
 }))
 

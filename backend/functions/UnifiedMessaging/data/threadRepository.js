@@ -37,29 +37,31 @@ class ThreadRepository {
   async findThread(userId1, userId2, propertyId) {
     const client = await Database.getInstance();
 
-    const thread = await client
+    const qb = client
       .getRepository(UnifiedThread)
       .createQueryBuilder("thread")
       .where("(thread.hostId = :u1 AND thread.guestId = :u2) OR (thread.hostId = :u2 AND thread.guestId = :u1)", {
         u1: userId1,
         u2: userId2,
-      })
-      .andWhere("thread.propertyId = :pId", { pId: propertyId })
-      .getOne();
+      });
 
-    return thread;
+    if (propertyId === null || propertyId === undefined) {
+      qb.andWhere("thread.propertyId IS NULL");
+    } else {
+      qb.andWhere("thread.propertyId = :pId", { pId: propertyId });
+    }
+
+    return qb.getOne();
   }
 
   async getThreadsForUser(userId) {
     const client = await Database.getInstance();
-    const threads = await client
+    return client
       .getRepository(UnifiedThread)
       .createQueryBuilder("thread")
       .where("thread.hostId = :userId OR thread.guestId = :userId", { userId })
       .orderBy("thread.lastMessageAt", "DESC")
       .getMany();
-
-    return threads;
   }
 
   async updateLastMessageAt(threadId, timestamp) {

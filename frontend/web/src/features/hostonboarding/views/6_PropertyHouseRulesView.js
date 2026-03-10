@@ -83,7 +83,13 @@ function PropertyHouseRulesView() {
                 return false;
               }
 
-              const allowedRules = ["SmokingAllowed", "PetsAllowed", "Parties/EventsAllowed"];
+              const allowedRules = [
+                "SmokingAllowed",
+                "PetsAllowed",
+                "Parties/EventsAllowed",
+                "SuitableForChildren",
+                "SuitableForInfants",
+              ];
               const houseRulesArray = allowedRules.map((rule) => ({
                 rule,
                 value: Boolean(houseRules?.[rule]),
@@ -93,7 +99,6 @@ function PropertyHouseRulesView() {
                 checkIn: { from: checkIn.CheckIn.from, till: checkIn.CheckIn.till },
                 checkOut: { from: checkIn.CheckOut.from, till: checkIn.CheckOut.till },
               });
-              console.log(builder);
               return true;
             }}
             routePath={nextPath || `/hostonboarding/${accommodationType}/photos`}
