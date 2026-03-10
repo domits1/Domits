@@ -1,13 +1,13 @@
 let mockTasks = [
-    { 
-        id: 1, 
-        title: 'Clean after guest checkout', 
-        property: 'City Loft Breda', 
-        type: 'Cleaning', 
-        assignee: 'Sophie Janssen', 
-        priority: 'High', 
-        status: 'Pending', 
-        dueDate: '2023-11-01' 
+    {
+        id: 1,
+        title: "Clean after guest checkout",
+        property: "City Loft Breda",
+        type: "Cleaning",
+        assignee: "Sophie Janssen",
+        priority: "High",
+        status: "Pending",
+        dueDate: "2023-11-01",
     },
 ];
 
@@ -22,9 +22,9 @@ export const createTask = async (taskData) => {
         setTimeout(() => {
             const newTask = {
                 id: Date.now(),
-                priority: 'Medium', 
-                dueDate: new Date().toISOString().split('T')[0],
-                ...taskData
+                priority: "Medium",
+                dueDate: new Date().toISOString().split("T")[0],
+                ...taskData,
             };
             mockTasks = [newTask, ...mockTasks];
             resolve(newTask);
@@ -35,10 +35,10 @@ export const createTask = async (taskData) => {
 export const deleteTask = async (taskId) => {
     return new Promise((resolve) => {
         setTimeout(() => {
-            mockTasks = mockTasks.map(task => 
+            mockTasks = mockTasks.map((task) =>
                 task.id === taskId ? { ...task, isLegacy: true } : task
             );
             resolve(taskId);
-        }, 300); 
+        }, 300);
     });
 };
