@@ -834,12 +834,14 @@
   .homePage-container .review-container .review-text {
     font-size: 0.9rem;
     -webkit-line-clamp: 4;
+    line-clamp: 4;
   }
 }
 @media (max-width: 768px) {
   .homePage-container .review-container .review-text {
     font-size: 0.8rem;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 }
 
