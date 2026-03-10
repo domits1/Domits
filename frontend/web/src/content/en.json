@@ -94,7 +94,8 @@
   
       "homepage": {
         "hero": {
-          "title":"Book sustainable holiday homes, boats and campers...",
+          "title":"Find Your Perfect Stay",
+          "subtitle": "Villas, Beachfront Homes & Luxury Escapes",
           "searchPlaceholder": "Search Destination",
           "searchTitle": "Accommodation",
           "searchGuests": "Guests"
@@ -105,8 +106,11 @@
           "quickPhone": "Quick phone support",
           "qualityGuarantee": "Domits quality guarantee",
           "bestPrice": "Best price guarantee",
+          "bestPriceDescription": "We strive to offer you the best possible price. If you find a cheaper option elsewhere, we will review it with you and adjust where appropriate.",
           "bookingGuarantee": "Accommodation booking guarantee",
-          "stayGuarantee": "Guarantee of stay at the accommodation"
+          "bookingGuaranteeDescription": "If changes are made after your stay has been confirmed, Domits will do its best to coordinate a suitable solution for your stay.",
+          "stayGuarantee": "Guarantee of stay at the accommodation",
+          "stayGuaranteeDescription": "If you are unable to access the arranged rooms on arrival, Domits will do its best to coordinate a suitable alternative."
         },
         "sections": {
           "trending": "Trending accommodations this month",
@@ -756,3 +760,4 @@
           }
         }
 }
+

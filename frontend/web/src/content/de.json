@@ -95,7 +95,8 @@
   
     "homepage": {
       "hero": {
-        "title": "Buche Ferienhäuser, Boote und Wohnmobile...",
+        "title": "Finde deinen perfekten Aufenthalt",
+        "subtitle": "Villen, Strandhäuser und luxuriöse Auszeiten",
         "searchPlaceholder": "Reiseziel suchen",
         "searchTitle": "Unterkunft",
         "searchGuests": "Gäste"
@@ -106,8 +107,11 @@
         "quickPhone": "Schneller Telefonsupport",
         "qualityGuarantee": "Domits Qualitätsgarantie",
         "bestPrice": "Bestpreisgarantie",
+        "bestPriceDescription": "Wir möchten Ihnen den bestmöglichen Preis bieten. Wenn Sie anderswo ein günstigeres Angebot finden, prüfen wir es mit Ihnen und passen den Preis gegebenenfalls an.",
         "bookingGuarantee": "Buchungsgarantie für Unterkünfte",
-        "stayGuarantee": "Aufenthaltsgarantie"
+        "bookingGuaranteeDescription": "Wenn nach Bestätigung Ihres Aufenthalts Änderungen auftreten, bemüht sich Domits um eine passende Lösung für Ihren Aufenthalt.",
+        "stayGuarantee": "Aufenthaltsgarantie",
+        "stayGuaranteeDescription": "Wenn Sie bei der Ankunft keinen Zugang zu den vereinbarten Zimmern erhalten, bemüht sich Domits um eine passende Alternative."
       },
       "sections": {
         "trending": "Trendunterkünfte in diesem Monat",
@@ -757,3 +761,4 @@
         }
       }
 }
+

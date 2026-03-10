@@ -94,7 +94,8 @@
     },
     "homepage": {
       "hero": {
-        "title": "Reserva casas de vacaciones, barcos y caravanas...",
+        "title": "Encuentra tu estancia perfecta",
+        "subtitle": "Villas, casas frente al mar y escapadas de lujo",
         "searchPlaceholder": "Buscar destino",
         "searchTitle": "Alojamiento",
         "searchGuests": "Huéspedes"
@@ -105,8 +106,11 @@
         "quickPhone": "Soporte telefónico rápido",
         "qualityGuarantee": "Garantía de calidad de Domits",
         "bestPrice": "Garantía del mejor precio",
+        "bestPriceDescription": "Queremos ofrecerte el mejor precio posible. Si encuentras una opción más barata en otro lugar, la revisaremos contigo y ajustaremos el precio cuando corresponda.",
         "bookingGuarantee": "Garantía de reserva de alojamiento",
-        "stayGuarantee": "Garantía de estancia en el alojamiento"
+        "bookingGuaranteeDescription": "Si se producen cambios después de confirmar tu estancia, Domits hará todo lo posible por coordinar una solución adecuada para tu viaje.",
+        "stayGuarantee": "Garantía de estancia en el alojamiento",
+        "stayGuaranteeDescription": "Si al llegar no puedes acceder a las habitaciones acordadas, Domits hará todo lo posible por coordinar una alternativa adecuada."
       },
       "sections": {
         "trending": "Alojamientos populares este mes",
@@ -756,3 +760,4 @@
           }
         }
 }
+

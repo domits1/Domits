@@ -95,7 +95,8 @@
   
       "homepage": {
         "hero": {
-          "title": "Boek vakantiehuizen, boten en campers.",
+          "title": "Vind jouw perfecte verblijf",
+          "subtitle": "Villa's, strandhuizen en luxe escapes",
           "searchPlaceholder": "Zoekbestemming",
           "searchTitle": "Accommodatie",
           "searchGuests": "Gasten"
@@ -106,8 +107,11 @@
           "quickPhone": "Snelle telefonische ondersteuning",
           "qualityGuarantee": "Domits kwaliteitsgarantie",
           "bestPrice": "Beste prijsgarantie",
+          "bestPriceDescription": "Wij streven ernaar u de best mogelijke prijs te bieden. Vindt u elders een lagere prijs, dan bekijken we die samen met u en passen we deze waar mogelijk aan.",
           "bookingGuarantee": "Garantie voor accommodatieboeking",
-          "stayGuarantee": "Garantie op verblijf in de accommodatie"
+          "bookingGuaranteeDescription": "Als er na bevestiging van uw verblijf nog wijzigingen plaatsvinden, doet Domits zijn best om een passende oplossing voor uw verblijf te regelen.",
+          "stayGuarantee": "Garantie op verblijf in de accommodatie",
+          "stayGuaranteeDescription": "Als u bij aankomst geen toegang krijgt tot de afgesproken kamers, doet Domits zijn best om een passend alternatief te regelen."
         },
         "sections": {
           "trending": "Populaire accommodaties deze maand",
@@ -757,3 +761,4 @@
           }
         }
 }
+
