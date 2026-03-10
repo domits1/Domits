@@ -27,6 +27,7 @@ class ReservationController {
             console.error(error);
             return {
                 statusCode: error.statusCode || 500,
+                headers: responseHeaderJSON,
                 message: error.message || "Something went wrong, please contact support."
             }
         }
@@ -56,6 +57,7 @@ class ReservationController {
             console.error(error)
             return {
                 statusCode: error.statusCode || 500,
+                headers: responseHeaderJSON,
                 response: error.message || "Something went wrong, please contact support."
             }
         }
@@ -77,6 +79,7 @@ class ReservationController {
             console.error(error)
             return {
                 statusCode: error.statusCode || 500,
+                headers: responseHeaderJSON,
                 message: error.message || "Something went wrong, please contact support.",
                 response: error.response || ""
             }

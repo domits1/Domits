@@ -12,6 +12,7 @@ describe('PropertyBuilder addPricing', () => {
     const validInput = fc.record({
         roomRate: fc.float({ min: 2 }).filter(n => !Number.isNaN(n)),
         cleaning: fc.float({ min: 0 }).filter(n => !Number.isNaN(n)),
+        weekendRate: fc.float({ min: 2 }).filter(n => !Number.isNaN(n)),
     });
 
     const invalidLowInput = fc.record({
@@ -31,6 +32,7 @@ describe('PropertyBuilder addPricing', () => {
 
                 return (
                     result.propertyPricing.roomRate >= 2 &&
+                    result.propertyPricing.weekendRate >= 2 &&
                     result.propertyPricing.cleaning >= 0
                 );
             })

@@ -7,6 +7,7 @@ export class PricingMapping {
             pricingEntry.property_id,
             pricingEntry.roomrate,
             pricingEntry.cleaning !== null ? pricingEntry.cleaning : null,
+            pricingEntry.weekendrate ?? pricingEntry.roomrate,
         )
     }
 }

@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 import StripeAccountRepository from "../../data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";

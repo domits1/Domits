@@ -9,10 +9,10 @@ import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
 import { hostImages, reviews, categories as groups, buildHomepageLists, S3_URL } from "./store/constants";
 
-import 'swiper/css';                
-import 'swiper/css/pagination';    
-import 'swiper/css/effect-fade'; 
-import { FetchAllPropertyTypes, FetchPropertyType } from "./services/fetchProperties";
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-fade';
+import { FetchAllPropertyTypes } from "./services/fetchProperties";
 import { LanguageContext } from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
@@ -29,16 +29,9 @@ const contentByLanguage = {
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingImages, setLoadingImages] = useState(false);
-  const [boatAccommodations, setBoatAccommodations] = useState([]);
-  const [camperAccommodations, setCamperAccommodations] = useState([]);
-  const [accommodationImages, setAccommodationImages] = useState([]);
-  const [byTypeAccommodations, setByTypeAccommodations] = useState([]);
   const [isBarActive, setIsBarActive] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
   const [activePopup, setActivePopup] = useState(null);
-  const [boatLoading, setBoatLoading] = useState(false);
-  const [camperLoading, setCamperLoading] = useState(false);
   const [propertyLoading, setPropertyLoading] = useState(false);
   const [allAccommodations, setAllAccommodations] = useState([]);
 
@@ -65,27 +58,21 @@ const Homepage = () => {
   useEffect(() => {
     async function loadData() {
       setPropertyLoading(true);
-      setBoatLoading(true);
-      setCamperLoading(true);
-      FetchPropertyType("Boat").then((data) => {
-        setBoatAccommodations(data.slice(0, 3));
-        setBoatLoading(false);
-      });
-      FetchPropertyType("Camper").then((data) => {
-        setCamperAccommodations(data.slice(0, 3));
-        setCamperLoading(false);
-      });
-      FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId).then((data) => {
+      try {
+        const data = await FetchAllPropertyTypes(lastEvaluatedKeyCreatedAt, lastEvaluatedKeyId);
         if (data.lastEvaluatedKey) {
           setLastEvaluatedKeyCreatedAt(data.lastEvaluatedKey.createdAt);
           setLastEvaluatedKeyId(data.lastEvaluatedKey.id);
         } else {
           setLastEvaluatedKeyCreatedAt(null);
-          setLastEvaluatedKeyId(null)
+          setLastEvaluatedKeyId(null);
         }
         setAllAccommodations(data.properties.slice(6, 9));
+      } catch (error) {
+        console.error("Failed to load accommodations:", error);
+      } finally {
         setPropertyLoading(false);
-      });
+      }
     }
 
     loadData();
@@ -147,6 +134,23 @@ const Homepage = () => {
     setActivePopup(activePopup === text ? null : text);
   };
 
+  useEffect(() => {
+    if (!activePopup) return;
+
+    const handleOutsideClick = (event) => {
+      if (event.target.closest(".popup-trigger")) return;
+      setActivePopup(null);
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+    };
+  }, [activePopup]);
+
   return (
     <>
       <div className="homePage-container">
@@ -193,8 +197,8 @@ const Homepage = () => {
             </div>
           </div>
 
-          <div className="domits-boatContainer">
-            <div className="domits-boatText">
+          <div className="domits-popularAccommodation">
+            <div className="domits-popularAccommodationText">
               <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
 
               <div className="domits-trendingContainer">
@@ -214,18 +218,35 @@ const Homepage = () => {
                     title: `${homePageContent.features.stayGuarantee}`,
                     text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
                   },
-                ].map((item, index) => (
-                  <div key={index} className="popup-trigger" onClick={() => handlePopupClick(item.text)}>
-                    {item.emoji} {item.title}
-                    {activePopup === item.text && (
-                      <div
-                        className="
-                  ">
-                        {item.text}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                ].map((item) => {
+                  const isOpen = activePopup === item.text;
+                  return (
+                    <button
+                      type="button"
+                      key={item.text}
+                      className={`popup-trigger${isOpen ? " is-open" : ""}`}
+                      onClick={() => handlePopupClick(item.text)}
+                      onPointerEnter={(event) => {
+                        if (event.pointerType !== "mouse") return;
+                        setActivePopup(item.text);
+                      }}
+                      onPointerLeave={(event) => {
+                        if (event.pointerType !== "mouse") return;
+                        if (activePopup === item.text) {
+                          setActivePopup(null);
+                        }
+                      }}
+                      aria-expanded={isOpen}>
+                      <span className="popup-header">
+                        <span className="popup-emoji" aria-hidden="true">
+                          {item.emoji}
+                        </span>
+                        <span className="popup-title">{item.title}</span>
+                      </span>
+                      <span className="popup-content">{item.text}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div className="domits-accommodationGroup">
@@ -236,52 +257,6 @@ const Homepage = () => {
                   ))
                 ) : (
                   <div>No trending properties available.</div>
-                )
-              ) : (
-                Array(3)
-                  .fill()
-                  .map((_, index) => <SkeletonLoader key={index} />)
-              )}
-            </div>
-          </div>
-
-          <div className="domits-boatContainer">
-            <div className="domits-boatText">
-              <h3 className="domits-subHead">{homePageContent.sections.rentBoat}</h3>
-            </div>
-            <div className="domits-accommodationGroup">
-              {boatLoading === false ? (
-                boatAccommodations.length > 0 ? (
-                  boatAccommodations.map((boat) => (
-                    <AccommodationCard key={boat.property.id} accommodation={boat} onClick={handleClick} />
-                  ))
-                ) : (
-                  <div>No boats available.</div>
-                )
-              ) : (
-                Array(3)
-                  .fill()
-                  .map((_, index) => <SkeletonLoader key={index} />)
-              )}
-            </div>
-          </div>
-
-          <div className="domits-boatContainer">
-            <div className="domits-boatText">
-              <h3 className="domits-subHead">{homePageContent.sections.discoverCampers}</h3>
-            </div>
-            <div className="domits-accommodationGroup">
-              {boatLoading === false ? (
-                camperAccommodations.length > 0 ? (
-                  camperAccommodations.map((camperAccommodations) => (
-                    <AccommodationCard
-                      key={camperAccommodations.property.id}
-                      accommodation={camperAccommodations}
-                      onClick={handleClick}
-                    />
-                  ))
-                ) : (
-                  <div>No boats available.</div>
                 )
               ) : (
                 Array(3)

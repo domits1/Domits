@@ -1,1 +1,0 @@
-[Intro Sprint](https://github.com/domits1/Domits#intro-sprint)

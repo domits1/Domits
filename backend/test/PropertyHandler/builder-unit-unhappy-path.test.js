@@ -109,11 +109,11 @@ describe("PropertyBuilder unit tests (unhappy paths)", () => {
             .toThrow(TypeException);
     });
 
-    it("should throw TypeException if more than 30 images are provided", () => {
+    it("should throw TypeException if more than 60 images are provided", () => {
         const builder = new PropertyBuilder();
         builder.property = {id: "test"};
 
-        const images = new Array(31).fill({key: "img", image: "img"});
+        const images = new Array(61).fill({key: "img", image: "img"});
 
         expect(() => builder.addImages(images))
             .toThrow(TypeException);
