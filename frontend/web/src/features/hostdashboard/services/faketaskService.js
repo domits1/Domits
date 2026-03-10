@@ -22,9 +22,9 @@ export const createTask = async (taskData) => {
         setTimeout(() => {
             const newTask = {
                 id: Date.now(),
-                priority: "Medium",
-                dueDate: new Date().toISOString().split("T")[0],
-                ...taskData,
+                priority: 'Medium', 
+                dueDate: new Date().toISOString().split('T')[0],
+                ...taskData
             };
             mockTasks = [newTask, ...mockTasks];
             resolve(newTask);
