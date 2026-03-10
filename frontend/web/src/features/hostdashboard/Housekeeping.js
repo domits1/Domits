@@ -83,7 +83,7 @@ const HostPropertyCare = () => {
         const todayStr = new Date().toISOString().split('T')[0];
         const processedTasks = data.map(task => {
             if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
-                return { ...task, status: 'Overdue' };
+                return { ...task, status: 'Overdue', priority: 'Urgent' };
             }
             return task;
         });
@@ -112,7 +112,7 @@ const HostPropertyCare = () => {
             
             const todayStr = new Date().toISOString().split('T')[0];
             if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
-                created = { ...created, status: 'Overdue' };
+                created = { ...created, status: 'Overdue', priority: 'Urgent' };
             }
 
             setTasks([created, ...tasks]);
@@ -318,10 +318,8 @@ const HostPropertyCare = () => {
 
     let paginatedTasks = [];
     if (activeTab === 'Overview') {
-        // W Overview pokazujemy maksymalnie 10 pierwszych zadań i tyle
         paginatedTasks = displayedTasks.slice(0, ITEMS_PER_PAGE);
     } else {
-        // W All Tasks pokazujemy zadania dla obecnej strony
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         paginatedTasks = displayedTasks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     }
