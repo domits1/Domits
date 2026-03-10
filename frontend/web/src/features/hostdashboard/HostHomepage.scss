@@ -392,6 +392,19 @@
     .accommodation-location {
       font-size: 0.75em;
     }
+
+    .infoBox {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+    }
+
+    .personalInfoContent {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+    }
   }
 
   @media (max-width: 480px) {

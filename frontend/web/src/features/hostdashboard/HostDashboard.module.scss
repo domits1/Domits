@@ -402,10 +402,16 @@
     .dashboardContainer {
       flex-direction: column;
       gap: 2em;
+      padding: 0 10px;
+      box-sizing: border-box;
+      align-items: center;
     }
     .dashboardLeft {
       width: 100%;
+      max-width: 100%;
       gap: 1em;
+      padding: 0;
+      box-sizing: border-box;
     }
 
     .topRow {
@@ -424,6 +430,7 @@
       flex-direction: column;
       gap: 1rem;
       padding: 0;
+      width: 100%;
     }
 
     .greenBtn {
@@ -433,6 +440,8 @@
     .infoBox {
       flex-direction: column;
       align-items: flex-start;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .hostListingContainer {
@@ -448,12 +457,26 @@
       max-width: 100%;
       max-height: 20vh;
     }
+
+    .cardsGrid {
+      justify-content: center;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+
+    .personalInfoContent {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
   }
 
   @media only screen and (max-width: 480px) {
     .dashboardCard {
       height: auto;
       width: 90vw;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .accommodationText {
@@ -471,10 +494,21 @@
 
     .dashboardContainer {
       gap: 1em;
+      padding: 0 5px;
+      box-sizing: border-box;
+      align-items: center;
+    }
+
+    .dashboardLeft {
+      width: 100%;
+      padding: 0 5px;
+      box-sizing: border-box;
     }
 
     .welcomeMsg {
       font-size: 1rem;
+      text-align: center;
+      width: 100%;
     }
 
     .alertMessage {
@@ -488,6 +522,23 @@
     .wijzer {
       width: 150px;
       font-size: 0.65em;
+    }
+
+    .buttonBox {
+      width: 100%;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+
+    .greenBtn {
+      width: 100%;
+      margin: 0 0 10px 0;
+    }
+
+    .infoBox {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
     }
   }
 }
