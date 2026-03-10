@@ -643,27 +643,8 @@ const HostPropertyCare = () => {
                         )}
                     </tbody>
                 </table>
-                {activeTab !== 'Overview' && (
-                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px', gap: '10px', color: '#495057', fontSize: '14px' }}>
-                        <button 
-                            onClick={handlePrevPage} 
-                            disabled={currentPage === 1}
-                            style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1 }}
-                        >
-                            &lt;
-                        </button>
-                        <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', fontWeight: 'bold' }}>
-                            {currentPage} / {totalPages}
-                        </button>
-                        <button 
-                            onClick={handleNextPage} 
-                            disabled={currentPage === totalPages}
-                            style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1 }}
-                        >
-                            &gt;
-                        </button>
-                    </div>
-                )}
+                
+                {renderPagination()}
                 
             </div>
         </div>
