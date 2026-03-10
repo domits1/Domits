@@ -85,12 +85,10 @@ function Header({ setSearchResults, setLoading }) {
     if (!isLoggedIn) {
       setFlowState({ isHost: true });
       navigate("/landing");
+    } else if (currentView === "host") {
+      navigateToGuestDashboard();
     } else {
-      if (currentView === "host") {
-        navigateToGuestDashboard();
-      } else {
-        navigateToHostDashboard();
-      }
+      navigateToHostDashboard();
     }
   };
 
@@ -145,8 +143,7 @@ function Header({ setSearchResults, setLoading }) {
             Messages
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out
-            <img src={logoutArrow} alt="Logout Arrow" />
+            Log out<img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
       );
@@ -170,8 +167,7 @@ function Header({ setSearchResults, setLoading }) {
             Settings
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out
-            <img src={logoutArrow} alt="Logout Arrow" />
+            Log out<img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
       );
@@ -227,8 +223,7 @@ function Header({ setSearchResults, setLoading }) {
               ) : (
                 <>
                   <button onClick={() => navigate("/login")} className="header-dropdown-login-button">
-                    Login
-                    <img src={loginArrow} alt="Login Arrow" />
+                    Login<img src={loginArrow} alt="Login Arrow" />
                   </button>
                   <button onClick={() => navigate("/register")} className="header-dropdown-register-button">
                     Register
