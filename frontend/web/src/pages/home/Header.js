@@ -143,7 +143,8 @@ function Header({ setSearchResults, setLoading }) {
             Messages
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out<img src={logoutArrow} alt="Logout Arrow" />
+            Log out
+            <img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
       );
@@ -167,7 +168,8 @@ function Header({ setSearchResults, setLoading }) {
             Settings
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
-            Log out<img src={logoutArrow} alt="Logout Arrow" />
+            Log out
+            <img src={logoutArrow} alt="Logout Arrow" />
           </button>
         </>
       );
@@ -187,19 +189,20 @@ function Header({ setSearchResults, setLoading }) {
         </div>
         <div className="header-right">
           {/* <ul className='header-links'> */}
-          {!isLoggedIn ? (
-            <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-              Become a Host
-            </button>
-          ) : group === "Host" ? (
-            <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
-              {currentView === "guest" ? "Switch to Host" : "Switch to Guest"}
-            </button>
-          ) : (
-            <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-              Become a Host
-            </button>
-          )}
+          {(() => {
+            if (!isLoggedIn || group !== "Host") {
+              return (
+                <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+                  Become a Host
+                </button>
+              );
+            }
+            return (
+              <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
+                {currentView === "guest" ? "Switch to Host" : "Switch to Guest"}
+              </button>
+            );
+          })()}
           {isLoggedIn && group === "Traveler" && (
             <button className="headerButtons" onClick={navigateToGuestDashboard}>
               Go to Dashboard
@@ -223,7 +226,8 @@ function Header({ setSearchResults, setLoading }) {
               ) : (
                 <>
                   <button onClick={() => navigate("/login")} className="header-dropdown-login-button">
-                    Login<img src={loginArrow} alt="Login Arrow" />
+                    Login
+                    <img src={loginArrow} alt="Login Arrow" />
                   </button>
                   <button onClick={() => navigate("/register")} className="header-dropdown-register-button">
                     Register
