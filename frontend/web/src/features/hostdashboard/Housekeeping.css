@@ -936,5 +936,5 @@
     transition: color 0.2s;
 }
 .sortable-header:hover {
-    color: #212529; /* Ciemniejszy kolor przy najechaniu */
+    color: #212529; 
 }

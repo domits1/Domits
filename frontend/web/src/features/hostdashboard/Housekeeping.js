@@ -551,7 +551,6 @@ const HostPropertyCare = () => {
                             </tr>
                         ) : (
                             displayedTasks.map(task => {
-                                // Zgodnie z Issue: Jeśli jest przeterminowane, wymuszamy "Urgent" i "Overdue" dla widoku
                                 const isOverdue = task.status === 'Overdue';
                                 const displayPriority = isOverdue ? 'Urgent' : (task.priority || 'Low');
                                 const displayStatus = isOverdue ? 'Overdue' : task.status;
@@ -585,7 +584,6 @@ const HostPropertyCare = () => {
                         )}
                     </tbody>
                 </table>
-                {/* Paginacja z designu */}
                 <div className="pagination-mock" style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px', gap: '10px', color: '#495057', fontSize: '14px' }}>
                     <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}>&lt;</button>
                     <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer', fontWeight: 'bold' }}>1</button>
