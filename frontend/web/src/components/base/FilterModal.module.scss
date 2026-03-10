@@ -3,27 +3,28 @@
     position: fixed;
     inset: 0;
     width: 100vw;
-    height: 100vh; 
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
     padding: 20px;
-    transform: translateY(-15%);
+    box-sizing: border-box;
+    overflow-y: auto;
   }
 
   .modal-content-filter {
-    transform: translateX(-11%);
     width: 90vw;
     max-width: 500px;
     height: auto;
-    max-height: 90vh; 
+    max-height: 90vh;
     padding: 20px;
     background-color: white;
     border-radius: 0.9rem;
     overflow-y: auto;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     position: relative;
+    box-sizing: border-box;
 
     h2 {
       margin-top: 0;
@@ -130,6 +131,22 @@
 
     input[type="checkbox"] {
       margin-right: 8px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .modal-overlay-filter {
+      align-items: flex-start;
+      padding: 1rem;
+    }
+
+    .modal-content-filter {
+      width: min(100%, calc(100vw - 2rem));
+      max-width: 25.5rem;
+      max-height: calc(100vh - 2rem);
+      margin: 0 auto;
+      padding: 1rem;
+      border-radius: 1rem;
     }
   }
 }

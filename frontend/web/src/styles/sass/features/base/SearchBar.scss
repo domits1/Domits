@@ -172,8 +172,14 @@ $primary-domits-color: #0d9813;
   }
 }
 
-.search-guest-section {
+.search-guest-wrapper {
+  position: relative;
   flex: 0.72 1 0;
+  min-width: 0;
+}
+
+.search-guest-section {
+  width: 100%;
   min-width: 0;
   justify-content: flex-start;
   padding-right: 2.65rem;
@@ -505,6 +511,10 @@ $primary-domits-color: #0d9813;
     box-sizing: border-box;
   }
 
+  .search-guest-wrapper {
+    width: 100%;
+  }
+
   .search-field-icon {
     display: block;
     width: 0.95rem;
@@ -560,29 +570,37 @@ $primary-domits-color: #0d9813;
   }
 
   .mobile-search-filter-wrapper {
-    width: 100%;
+    width: calc(100% - 0.6rem);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0 auto;
     padding-left: 0;
     gap: 0.9rem;
     box-sizing: border-box;
 
     .searchbar-button,
+    .filters-container,
     .filter-button {
-      flex: 1;
       min-width: 0;
       width: 100%;
-      height: 3.65rem;
+      height: 3.3rem;
       margin: 0;
       border-radius: 0.95rem;
-      font-size: 1.05rem;
+      font-size: 0.98rem;
       box-sizing: border-box;
     }
 
+    .filters-container {
+      display: flex;
+      width: 100%;
+    }
+
     .searchbar-button {
-      gap: 0.5rem;
+      gap: 0.45rem;
     }
 
     .search-text {
-      font-size: 1.05rem;
+      font-size: 0.98rem;
     }
   }
 
