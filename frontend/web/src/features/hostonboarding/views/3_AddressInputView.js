@@ -2,18 +2,26 @@ import { useParams } from "react-router-dom";
 import OnboardingButton from "../components/OnboardingButton";
 import { useAddressInput } from "../hooks/usePropertyLocation";
 import { useBuilder } from "../../../context/propertyBuilderContext";
-import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
 import AddressFormFields from "../components/AddressFormFields";
-import { useState } from "react";
+import OnboardingProgress from "../components/OnboardingProgress";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 function AddressInputView() {
-  const [location, setLocation] = useState({});
   const builder = useBuilder();
-  const form = useFormStoreHostOnboarding();
+  const { prevPath, nextPath } = useOnboardingFlow();
   const { type: accommodationType } = useParams();
-  const { options, details, handleChange } = useAddressInput(accommodationType);
+  const { options, details: location, handleChange } = useAddressInput(accommodationType);
+  const postalCodeValue = location.postalCode || location.zipCode || "";
+  const hasAddressValue = (value) => String(value || "").trim().length > 0;
+  const isAddressComplete =
+    hasAddressValue(location.country) &&
+    hasAddressValue(location.city) &&
+    hasAddressValue(location.street) &&
+    hasAddressValue(location.houseNumber) &&
+    hasAddressValue(postalCodeValue);
   return (
     <div className="onboarding-host-div">
       <main className="page-body">
+        <OnboardingProgress />
         <h2 className="onboardingSectionTitle">
           {accommodationType === "boat"
             ? "Where can we find your boat?"
@@ -26,7 +34,7 @@ function AddressInputView() {
           <section className="location-left">
             <AddressFormFields
               location={location}
-              setLocation={setLocation}
+              setLocation={handleChange}
               countryOptions={options.map((country) => ({
                 value: country,
                 label: country,
@@ -35,33 +43,34 @@ function AddressInputView() {
           </section>
         </section>
         <nav className="onboarding-button-box">
-          <OnboardingButton routePath={`/hostonboarding/${accommodationType}`} btnText="Go back" />
+          <OnboardingButton
+            routePath={prevPath || `/hostonboarding/${accommodationType}`}
+            btnText="Go back"
+          />
           <OnboardingButton
             onClick={() => {
               const houseNumberAndExtension = location?.houseNumber
-                                              ? location.houseNumber.split(" ")
+                                              ? location.houseNumber.trim().split(/\s+/)
                                               : [];
 
-              if (houseNumberAndExtension.length > 1) {
-                location.houseNumber = houseNumberAndExtension[0];
-                location.houseNumberExtension = houseNumberAndExtension.slice(1).join(" ");
-              } else {
-                location.houseNumber = houseNumberAndExtension[0] || "";
-                location.houseNumberExtension = "";
-              }
+              const houseNumber = houseNumberAndExtension[0] || "";
+              const houseNumberExtension = houseNumberAndExtension.length > 1
+                ? houseNumberAndExtension.slice(1).join(" ")
+                : "";
 
               builder.addLocation({
                 country: location.country,
                 city: location.city,
                 street: location.street,
-                houseNumber: parseFloat(location.houseNumber),
-                houseNumberExtension: location.houseNumberExtension,
-                postalCode: location.postalCode,
+                houseNumber: Number.isFinite(Number(houseNumber)) ? Number(houseNumber) : 0,
+                houseNumberExtension: houseNumberExtension,
+                postalCode: postalCodeValue,
               })
               console.log(builder);
             }}
-            routePath={`/hostonboarding/${accommodationType}/capacity`}
+            routePath={nextPath || `/hostonboarding/${accommodationType}/capacity`}
             btnText="Proceed"
+            disabled={!isAddressComplete}
           />
         </nav>
       </main>

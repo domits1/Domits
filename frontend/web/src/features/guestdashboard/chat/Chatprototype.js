@@ -6,7 +6,7 @@ import trash from './Icon-1.png';
 import smile from './smile.png';
 import users from './users.png';
 import home from './home.png';
-import calendar from './calendar.png';
+import calendar from '../../../images/icons/calendar.png';
 import card from './card.png';
 import django from './django.png';
 import jan from './jan.png';

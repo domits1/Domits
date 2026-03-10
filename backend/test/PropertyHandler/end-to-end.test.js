@@ -1,21 +1,25 @@
 import {handler} from "../../functions/PropertyHandler/index.js";
-import {describe, it, expect} from "@jest/globals";
+import {beforeAll, describe, it, expect} from "@jest/globals";
 import {getGuestAuthToken} from "../util/getGuestAuthToken.js";
 import {getPostEvent} from "./events/post";
-import {getDeleteEvent} from "./events/delete";
 import {getHostDashboardAllEvent} from "./events/get/hostDashboard/all";
-import {getHostDashboardSingleEvent} from "./events/get/hostDashboard/single";
 import {bookingEngineByTypeEvent} from "./events/get/bookingEngine/byType";
 import {bookingEngineAllEvent} from "./events/get/bookingEngine/all";
 import {bookingEngineByHostIdEvent} from "./events/get/bookingEngine/byHostId";
-import {bookingEngineSetEvent} from "./events/get/bookingEngine/set";
-import {bookingEngineListingDetailsEvent} from "./events/get/bookingEngine/listingDetails";
 import {bookingEngineInvalidSetEvent} from "./events/get/bookingEngine/invalidSet";
 import {getHostAuthToken} from "../util/getHostAuthToken.js";
 
 jest.setTimeout(50000); // temp fix for CI passing tests
 
 describe("End-to-end tests", () => {
+    let runtimePropertyId = "";
+
+    beforeAll(async () => {
+        const response = await handler(await getPostEvent());
+        expect(response.statusCode).toBe(201);
+        runtimePropertyId = String(response.body || "");
+        expect(runtimePropertyId).toBeTruthy();
+    }, 120000);
 
     describe("Patch request", () => {
         it("should throw a property not found exception", async () => {
@@ -36,7 +40,7 @@ describe("End-to-end tests", () => {
             const response = await handler({
                 httpMethod: "PATCH",
                 body: JSON.stringify({
-                    property: "42a335b3-e72e-49ee-bc8d-ed61e9bd35e5"
+                    property: runtimePropertyId
                 }),
                 headers: {
                     Authorization: await getGuestAuthToken()
@@ -46,11 +50,25 @@ describe("End-to-end tests", () => {
             expect(response.statusCode).toBe(403);
         });
 
+        it("should activate property", async () => {
+            const response = await handler({
+                httpMethod: "PATCH",
+                body: JSON.stringify({
+                    property: runtimePropertyId
+                }),
+                headers: {
+                    Authorization: await getHostAuthToken()
+                }
+            });
+
+            expect(response.statusCode).toBe(204);
+        });
+
         it("should throw a already active property exception", async () => {
             const response = await handler({
                 httpMethod: "PATCH",
                 body: JSON.stringify({
-                    property: "42a335b3-e72e-49ee-bc8d-ed61e9bd35e5"
+                    property: runtimePropertyId
                 }),
                 headers: {
                     Authorization: await getHostAuthToken()
@@ -93,23 +111,23 @@ describe("End-to-end tests", () => {
         });
     });
 
-    describe("Delete request", () => {
-        it("should handle a DELETE request", async () => {
-            const response = await handler(await getDeleteEvent());
-
-            expect(response.statusCode).toBe(204);
-        });
-    });
-
     describe("Host dashboard requests", () => {
       it("should handle GET all owned properties", async () => {
         const response = await handler(await getHostDashboardAllEvent());
 
         expect(response.statusCode).toBe(200);
-      });
+      }, 120000);
 
       it("should handle GET single owned property by ID", async () => {
-        const response = await handler(await getHostDashboardSingleEvent());
+        const response = await handler({
+            httpMethod: "GET",
+            resource: "/property/hostDashboard/{subResource}",
+            pathParameters: { subResource: "single" },
+            queryStringParameters: { property: runtimePropertyId },
+            headers: {
+                Authorization: await getHostAuthToken(),
+            },
+        });
 
         expect(response.statusCode).toBe(200);
       });
@@ -135,7 +153,12 @@ describe("End-to-end tests", () => {
       });
 
       it("should handle GET set of active properties by ID", async () => {
-        const response = await handler(bookingEngineSetEvent);
+        const response = await handler({
+            httpMethod: "GET",
+            resource: "/property/bookingEngine/{subResource}",
+            pathParameters: { subResource: "set" },
+            queryStringParameters: { properties: `${runtimePropertyId},${runtimePropertyId}` },
+        });
         const data = JSON.parse(response.body);
 
         expect(response.statusCode).toBe(200);
@@ -150,11 +173,37 @@ describe("End-to-end tests", () => {
       });
 
       it("should handle GET full active property by ID", async () => {
-        const response = await handler(bookingEngineListingDetailsEvent);
+        const response = await handler({
+            httpMethod: "GET",
+            resource: "/property/bookingEngine/{subResource}",
+            pathParameters: { subResource: "listingDetails" },
+            queryStringParameters: { property: runtimePropertyId },
+        });
         const data = JSON.parse(response.body);
 
         expect(response.statusCode).toBe(200);
-        expect(data.property.id).toBe("42a335b3-e72e-49ee-bc8d-ed61e9bd35e5");
+        expect(data.property.id).toBe(runtimePropertyId);
       });
+    });
+
+    describe("Delete request", () => {
+        it("should handle a DELETE request", async () => {
+            const createResponse = await handler(await getPostEvent());
+            expect(createResponse.statusCode).toBe(201);
+            const propertyIdToDelete = String(createResponse.body || "");
+            expect(propertyIdToDelete).toBeTruthy();
+
+            const response = await handler({
+                httpMethod: "DELETE",
+                headers: {
+                    Authorization: await getHostAuthToken(),
+                },
+                body: JSON.stringify({
+                    property: propertyIdToDelete,
+                }),
+            });
+
+            expect(response.statusCode).toBe(204);
+        });
     });
 });

@@ -112,6 +112,11 @@ jobs:
           
               # Copy function files directly to the temp directory (no nesting)
               cp -r ./backend/functions/$FUNC_NAME/* ./deploy_temp/
+
+              # Copy shared function utilities used by multiple Lambdas
+              if [ -d ./backend/functions/.shared ]; then
+                cp -r ./backend/functions/.shared ./deploy_temp/.shared
+              fi
           
               # Copy node_modules (using root dependencies)
               cp -r ./backend/node_modules ./deploy_temp/

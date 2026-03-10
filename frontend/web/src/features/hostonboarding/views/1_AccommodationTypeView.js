@@ -4,6 +4,7 @@ import { useHandleAccommodationTypeProceed } from "../hooks/usePropertyType"
 import { accommodationData } from "../constants/propertyTypeData"
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import OnboardingButton from "../components/OnboardingButton"
+import OnboardingProgress from "../components/OnboardingProgress"
 
 // Desc: Step 1 - Choose the type of accommodation you want to list on the platform
 export default function AccommodationTypeView() {
@@ -21,6 +22,7 @@ export default function AccommodationTypeView() {
   return (
     <div className="onboarding-host-div">
       <main className="page-body">
+        <OnboardingProgress />
         <h2 className="onboardingSectionTitle">
           What best describes your accommodation?
         </h2>
@@ -31,7 +33,12 @@ export default function AccommodationTypeView() {
           onSelectType={setAccommodationType}
         />
         <nav className="onboarding-button-box">
-          <OnboardingButton onClick={handleProceed} btnText="Proceed" buttonType="proceed" />
+          <OnboardingButton
+            onClick={handleProceed}
+            btnText="Proceed"
+            buttonType="proceed"
+            disabled={!selectedAccommodationType}
+          />
         </nav>
       </main>
     </div>

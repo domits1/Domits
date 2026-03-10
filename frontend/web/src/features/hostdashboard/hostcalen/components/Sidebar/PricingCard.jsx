@@ -1,25 +1,45 @@
 import React from "react";
+import PropTypes from "prop-types";
+import arrowRightIcon from "../../../../../images/arrow-right-icon.svg";
 
-export default function PricingCard({ tempPrice, setTempPrice, onSetPrice }) {
+const formatEuroAmount = (amount) => `EUR ${Number(amount || 0).toLocaleString("en-US")}`;
+
+export default function PricingCard({
+  nightlyRate,
+  weekendRate,
+  weeklyDiscountPercent,
+  onOpenSettings,
+}) {
+  const discountLine =
+    Number(weeklyDiscountPercent) > 0
+      ? `${weeklyDiscountPercent}% weekly discount`
+      : "No weekly discount";
+
   return (
-    <div className="hc-card">
-      <div className="hc-card-title">Add Price</div>
+    <section className="hc-info-card hc-info-card--interactive">
+      <button
+        type="button"
+        className="hc-info-card-hitarea"
+        aria-label="Open price settings"
+        onClick={() => onOpenSettings?.()}
+      />
+      <header className="hc-info-card-header">
+        <h3 className="hc-info-card-title">Price</h3>
+        <span className="hc-info-card-chevron" aria-hidden="true">
+          <img src={arrowRightIcon} alt="" className="hc-chevron-icon" />
+        </span>
+      </header>
 
-      <div className="hc-price-row">
-        <label className="hc-input-label">Price €</label>
-        <input
-          className="hc-input"
-          inputMode="decimal"
-          placeholder="e.g. 120"
-          value={tempPrice}
-          onChange={(e) => setTempPrice(e.target.value)}
-        />
-        <button className="hc-btn primary" onClick={onSetPrice}>Set price</button>
-      </div>
-
-      <div className="hc-note">
-        Seasonal & specific-day pricing supported
-      </div>
-    </div>
+      <p className="hc-info-card-line">{formatEuroAmount(nightlyRate)} per night</p>
+      <p className="hc-info-card-line">{formatEuroAmount(weekendRate)} weekend price</p>
+      <p className="hc-info-card-line">{discountLine}</p>
+    </section>
   );
 }
+
+PricingCard.propTypes = {
+  nightlyRate: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  weekendRate: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  weeklyDiscountPercent: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  onOpenSettings: PropTypes.func,
+};

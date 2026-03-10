@@ -66,10 +66,10 @@ export const createTask = async (taskData) => {
 export const deleteTask = async (taskId) => {
     return new Promise((resolve) => {
         setTimeout(() => {
-            mockTasks = mockTasks.map(task => 
+            mockTasks = mockTasks.map((task) =>
                 task.id === taskId ? { ...task, isLegacy: true } : task
             );
             resolve(taskId);
-        }, 300); 
+        }, 300);
     });
 };

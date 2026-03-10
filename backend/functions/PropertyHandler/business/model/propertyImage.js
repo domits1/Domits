@@ -38,8 +38,9 @@ export class PropertyImage {
         const padding = (imageData.match(/=+$/) || [''])[0].length;
         const imageDataBytes = (imageData.length * 3/4) - padding;
         const imageDataKiloBytes = imageDataBytes / 1024;
-        if (imageDataKiloBytes > 500) {
-            throw new Error(`Images must be less than 500KB: ${value}`)
+        const maxImageKiloBytes = 5 * 1024;
+        if (imageDataKiloBytes > maxImageKiloBytes) {
+            throw new Error(`Images must be less than 5MB: ${value}`)
         } else if (imageDataKiloBytes < 50) {
             throw new Error(`Images must be at least 50KB: ${value}`)
         }
