@@ -1,16 +1,30 @@
-import {UserMapping} from "../util/mapping/userMapping.js";
 import Database from "database";
-import {User_Table} from "database/models/User_Table";
+import { DatabaseException } from "../util/exception/databaseException.js";
+import { listSourcesByProperty, upsertSourceRecord } from "../.shared/icalSourceRepositoryHelpers.js";
+import { resolveQualifiedTableName } from "./schemaUtils.js";
 
 export class Repository {
+  async listSources(propertyId) {
+    const client = await Database.getInstance();
+    return listSourcesByProperty(client, propertyId, { order: "DESC" });
+  }
 
-    async getUser() {
-        const client = await Database.getInstance();
-        const response = await client
-            .getRepository(User_Table)
-            .createQueryBuilder()
-            .getMany();
-
-        return response.map(user => UserMapping.mapGetUserCommandToUser(user));
+  async upsertSource(payload) {
+    const client = await Database.getInstance();
+    try {
+      await upsertSourceRecord(client, payload);
+    } catch {
+      throw new DatabaseException("Failed to save calendar source");
     }
+  }
+
+  async deleteSource(propertyId, sourceId) {
+    const client = await Database.getInstance();
+    const sourceTable = resolveQualifiedTableName(client, "property_ical_source");
+    try {
+      await client.query(`DELETE FROM ${sourceTable} WHERE property_id = $1 AND source_id = $2`, [propertyId, sourceId]);
+    } catch {
+      throw new DatabaseException("Failed to delete calendar source");
+    }
+  }
 }

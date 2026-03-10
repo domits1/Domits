@@ -13,6 +13,13 @@ import { PropertyTechnicalDetails } from "./models/propertyTechnicalDetails";
 import { PropertyTestStatus } from "./models/propertyTestStatus";
 
 export class PropertyBuilder {
+  reset() {
+    Object.keys(this).forEach((key) => {
+      delete this[key];
+    });
+    return this;
+  }
+
   addProperty(property) {
     this.property = new PropertyModel(property);
     return this;

@@ -26,11 +26,11 @@ describe('Guest Login Flow', () => {
         cy.get(':nth-child(11) > p').should('be.visible').click();
         cy.get('.close-sidebar-btn').should('be.visible').click();
 
-        cy.get(':nth-child(3) > .host-icon-background > .guest-edit-icon').should('be.visible').click();
+        cy.get(':nth-child(3) > .settings-icon-background > .guest-edit-icon').should('be.visible').click();
         cy.get('.guest-edit-input').type('Domits');
         cy.get('.guest-check-icon').should('be.visible').click();
 
-        cy.get(':nth-child(4) > .host-icon-background > .guest-edit-icon').should('be.visible').click();
+        cy.get(':nth-child(4) > .settings-icon-background > .guest-edit-icon').should('be.visible').click();
         cy.get('.countryCodeDropdown').select('Denmark (+45)');
     });
 });

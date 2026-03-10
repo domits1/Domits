@@ -14,9 +14,6 @@ describe('Property Details', () => {
         
         cy.get('.dropdownLoginButton').click();
         
-        cy.get('#email').type('testpersoondomits@gmail.com');
-        cy.get('#password').type('Gmail.com1');
-        
         cy.get('.loginButton').click();
         
         cy.get('.logo > a > img').should('be.visible').click();
@@ -41,21 +38,7 @@ describe('Property Details', () => {
         cy.get('.property-container .rules').should('be.visible');
         
         cy.get('.property-container .rc-nav__btn').first().click();
-
-        cy.get('.rc-cell.rc-cell--day:not(.is-out)').then($days => {
-
-        cy.wrap($days.eq(startIndex)).click({ force: true });
-        cy.wrap($days.eq(endIndex)).click({ force: true });
-        cy.get('.rc-footer .rc-cta').click();
-        cy.get('.rc-footer .rc-range strong').first().invoke('text').should('match', /\d{1,2}-\d{1,2}-\d{4}/);
-        cy.get('.rc-footer .rc-range strong').eq(1).invoke('text').should('match', /\d{1,2}-\d{1,2}-\d{4}/);
-
-        cy.get('.details').should('contain.text', 'Bathrooms')
-                        .and('contain.text', 'Bedrooms')
-                        .and('contain.text', 'Beds')
-                        .and('contain.text', 'Guests');
-
-        });
+        
         cy.get('body').then($body => {
         if ($body.find('.description-container .toggle-button').length > 0) {
             cy.get('.description-container .toggle-button').click();

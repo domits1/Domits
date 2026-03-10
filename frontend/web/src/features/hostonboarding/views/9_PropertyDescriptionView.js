@@ -1,15 +1,18 @@
-import React from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDescription } from "../hooks/usePropertyDescription";
 import TextAreaField from "../components/TextAreaField";
 import SpecificationForm from "../components/SpecificationForm";
 import OnboardingButton from "../components/OnboardingButton";
 import { useBuilder } from "../../../context/propertyBuilderContext";
 import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding";
+import OnboardingProgress from "../components/OnboardingProgress";
+import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
 function PropertyDescriptionView() {
   const builder = useBuilder();
-  const form = useFormStoreHostOnboarding();
+  const navigate = useNavigate();
+  const { flowKey, prevPath, nextPath } = useOnboardingFlow();
   const technicalDetails = useFormStoreHostOnboarding((state) => state.technicalDetails);
   const type = useFormStoreHostOnboarding((state) => state.accommodationDetails.type);
   
@@ -36,9 +39,16 @@ function PropertyDescriptionView() {
       ? updateCamperSpecification
       : null;
 
+  useEffect(() => {
+    if (flowKey === "accommodation") {
+      navigate("/hostonboarding/accommodation/pricing", { replace: true });
+    }
+  }, [flowKey, navigate]);
+
   return (
     <div className="onboarding-host-div">
       <main className="container">
+        <OnboardingProgress />
         <h2 className="onboardingSectionTitle">Provide a description</h2>
         <p className="onboardingSectionSubtitle">
           Share what makes your accommodation special.
@@ -57,7 +67,7 @@ function PropertyDescriptionView() {
         />
         <nav className="onboarding-button-box">
           <OnboardingButton
-            routePath={`/hostonboarding/${type}/title`}
+            routePath={prevPath || `/hostonboarding/${type}/title`}
             btnText="Go back"
           />
           <OnboardingButton
@@ -76,7 +86,7 @@ function PropertyDescriptionView() {
               }
               console.log("Builder state:", builder);
             }}
-            routePath={`/hostonboarding/${type}/pricing`}
+            routePath={nextPath || `/hostonboarding/${type}/pricing`}
             btnText="Proceed"
           />
         </nav>

@@ -4,7 +4,7 @@ import countryList from "react-select-country-list"
 
 export const useAddressInput = (accommodationType) => {
   const options = useMemo(() => countryList().getLabels(), [])
-  const { accommodationDetails, setBoatDetails, setCamperDetails, setAddress } =
+  const { accommodationDetails, location, setLocation, setBoatDetails, setCamperDetails } =
     useFormStoreHostOnboarding()
 
   const details =
@@ -12,7 +12,7 @@ export const useAddressInput = (accommodationType) => {
       ? accommodationDetails.boatDetails
       : accommodationType === "camper"
         ? accommodationDetails.camperDetails
-        : accommodationDetails.address
+        : location
 
   const handleChange =
     accommodationType === "boat"
@@ -24,7 +24,7 @@ export const useAddressInput = (accommodationType) => {
             setCamperDetails(value)
           }
         : (value) => {
-            setAddress(value)
+            setLocation(value)
           }
   return { options, details, handleChange }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
 import { createTask, fetchTasks } from './services/faketaskService';
 
@@ -119,6 +119,7 @@ const HostPropertyCare = () => {
             setIsModalOpen(false);
             resetForm();
         } catch (error) {
+            console.error("Error creating task:", error);
             alert("Error creating task");
             console.error("Error creating task:", error);
         };
@@ -329,6 +330,45 @@ const HostPropertyCare = () => {
 
     const displayedTasks = getSortedTasks(filteredTasks);
     const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+    const filterPropertyOptions = useMemo(() => {
+        const optionSet = new Set();
+
+        hostPropertyOptions.forEach((option) => {
+            const normalizedOption = String(option || "").trim();
+            if (normalizedOption) {
+                optionSet.add(normalizedOption);
+            }
+        });
+
+        tasks.forEach((task) => {
+            const normalizedProperty = String(task?.property || "").trim();
+            if (normalizedProperty) {
+                optionSet.add(normalizedProperty);
+            }
+        });
+
+        [newTask.property, editedTask?.property].forEach((value) => {
+            const normalizedValue = String(value || "").trim();
+            if (normalizedValue) {
+                optionSet.add(normalizedValue);
+            }
+        });
+
+        return [...optionSet];
+    }, [editedTask?.property, hostPropertyOptions, newTask.property, tasks]);
+    const createPropertyOptions = useMemo(() => {
+        return hostPropertyOptions
+            .map((option) => String(option || "").trim())
+            .filter(Boolean);
+    }, [hostPropertyOptions]);
+    const editPropertyOptions = useMemo(() => {
+        const optionSet = new Set(createPropertyOptions);
+        const currentEditedProperty = String(editedTask?.property || "").trim();
+        if (currentEditedProperty) {
+            optionSet.add(currentEditedProperty);
+        }
+        return [...optionSet];
+    }, [createPropertyOptions, editedTask?.property]);
 
     const ITEMS_PER_PAGE = 10;
     const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
@@ -792,8 +832,9 @@ const HostPropertyCare = () => {
                                 <option value="Urgent">Urgent</option>
                             </select>
                             <select name="property" value={editedTask.property || ''} onChange={handleEditChange} className="badge-select property-badge">
-                                <option value="City Loft Breda">🏢 City Loft Breda</option>
-                                <option value="Beach House">🏢 Beach House</option>
+                                {editPropertyOptions.map((propertyOption) => (
+                                    <option key={propertyOption} value={propertyOption}>🏢 {propertyOption}</option>
+                                ))}
                             </select>
                         </div>
 
