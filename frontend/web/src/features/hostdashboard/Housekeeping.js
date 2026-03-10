@@ -8,6 +8,7 @@ const HostPropertyCare = () => {
     const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
 
     const [newTask, setNewTask] = useState({
         title: '', description: '', property: '', bookingRef: '', 
@@ -274,6 +275,37 @@ const HostPropertyCare = () => {
     };
 
     const filteredTasks = getFilteredTasks();
+
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const getSortedTasks = (tasksToSort) => {
+        return [...tasksToSort].sort((a, b) => {
+            if (sortConfig.key === 'priority') {
+                const priorityValues = { 'Urgent': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+                const aVal = priorityValues[a.priority] || 0;
+                const bVal = priorityValues[b.priority] || 0;
+                return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+            }
+            if (sortConfig.key === 'dueDate') {
+                const aDate = a.dueDate ? new Date(a.dueDate) : new Date('9999-12-31');
+                const bDate = b.dueDate ? new Date(b.dueDate) : new Date('9999-12-31');
+                return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
+            }
+            const aStr = (a[sortConfig.key] || '').toString().toLowerCase();
+            const bStr = (b[sortConfig.key] || '').toString().toLowerCase();
+            if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (aStr > bStr) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    };
+
+    const displayedTasks = getSortedTasks(filteredTasks);
     const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
 
     const renderContent = () => {
@@ -487,24 +519,44 @@ const HostPropertyCare = () => {
                 <table className="tasks-table">
                     <thead>
                         <tr>
-                            <th>Task</th>
-                            <th>Property ▾</th>
-                            <th>Type</th>
-                            <th>Assignee</th>
-                            <th>Due Date ▾</th>
-                            <th>Priority ▾</th>
-                            <th>Status ▾</th>
+                            <th onClick={() => handleSort('title')} className="sortable-header">
+                                Task {sortConfig.key === 'title' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : ''}
+                            </th>
+                            <th onClick={() => handleSort('property')} className="sortable-header">
+                                Property {sortConfig.key === 'property' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : '▾'}
+                            </th>
+                            <th onClick={() => handleSort('type')} className="sortable-header">
+                                Type {sortConfig.key === 'type' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : ''}
+                            </th>
+                            <th onClick={() => handleSort('assignee')} className="sortable-header">
+                                Assignee {sortConfig.key === 'assignee' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : ''}
+                            </th>
+                            <th onClick={() => handleSort('dueDate')} className="sortable-header">
+                                Due Date {sortConfig.key === 'dueDate' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : '▾'}
+                            </th>
+                            <th onClick={() => handleSort('priority')} className="sortable-header">
+                                Priority {sortConfig.key === 'priority' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : '▾'}
+                            </th>
+                            <th onClick={() => handleSort('status')} className="sortable-header">
+                                Status {sortConfig.key === 'status' ? (sortConfig.direction === 'asc' ? '▴' : '▾') : '▾'}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredTasks.length === 0 ? (
+                        {displayedTasks.length === 0 ? (
                             <tr>
-                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#6c757d'}}>
+                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#495057'}}>
                                     No tasks match your filters (or all are completed/deleted).
                                 </td>
                             </tr>
                         ) : (
-                            filteredTasks.map(task => (
+                            displayedTasks.map(task => {
+                                // Zgodnie z Issue: Jeśli jest przeterminowane, wymuszamy "Urgent" i "Overdue" dla widoku
+                                const isOverdue = task.status === 'Overdue';
+                                const displayPriority = isOverdue ? 'Urgent' : (task.priority || 'Low');
+                                const displayStatus = isOverdue ? 'Overdue' : task.status;
+
+                                return (
                                 <tr key={task.id} className={`clickable-row row-${task.status.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
                                     <td>
                                         <div className="task-title-cell" title={task.title}>
@@ -517,22 +569,28 @@ const HostPropertyCare = () => {
                                     <td>{task.property}</td>
                                     <td>{task.type}</td>
                                     <td>{task.assignee}</td>
-                                    <td>{task.dueDate || 'Today'}</td>
+                                    <td>{task.dueDate === new Date().toISOString().split('T')[0] ? 'Today' : task.dueDate}</td>
                                     <td>
-                                        <span className={`badge-priority ${task.priority ? task.priority.toLowerCase() : 'medium'}`}>
-                                            {task.priority || 'Medium'}
+                                        <span className={`badge-priority ${displayPriority.toLowerCase()}`}>
+                                            {displayPriority}
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`badge-status ${task.status.toLowerCase().replace(' ', '-')}`}>
-                                            ● {task.status}
+                                        <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
+                                            ● {displayStatus}
                                         </span>
                                     </td>
                                 </tr>
-                            ))
+                            )})
                         )}
                     </tbody>
                 </table>
+                {/* Paginacja z designu */}
+                <div className="pagination-mock" style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px', gap: '10px', color: '#495057', fontSize: '14px' }}>
+                    <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}>&lt;</button>
+                    <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer', fontWeight: 'bold' }}>1</button>
+                    <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}>&gt;</button>
+                </div>
             </div>
         </div>
     );

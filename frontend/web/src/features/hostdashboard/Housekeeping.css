@@ -929,3 +929,12 @@
     text-align: center;
     padding: 20px 0;
 }
+
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+}
+.sortable-header:hover {
+    color: #212529; /* Ciemniejszy kolor przy najechaniu */
+}
