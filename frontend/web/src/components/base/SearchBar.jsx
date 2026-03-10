@@ -1,12 +1,10 @@
-// For explenation on how search works: https://github.com/domits1/Domits/wiki/Web-Search
-import React, { useState, useEffect, useRef, useCallback, useMemo, useContext } from 'react';
+// For explanation on how search works: https://github.com/domits1/Domits/wiki/Web-Search
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker, { utils } from '@hassanmojab/react-modern-calendar-datepicker';
 import {
-  FaTimes, FaSearchLocation, FaHome, FaCaravan,
-  FaShip, FaTimesCircle, FaUser, FaChild, FaBaby, FaPaw, 
+  FaTimes, FaTimesCircle, FaUser, FaChild, FaBaby, FaPaw,
 } from 'react-icons/fa';
-import Select from 'react-select';
 import { useNavigate, useLocation } from 'react-router-dom';
 import FilterButton from './FilterButton';
 import {LanguageContext} from "../../context/LanguageContext.js";
@@ -14,6 +12,10 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import calendarIcon from "../../images/icons/calendar.png";
+import searchIcon from "../../images/icons/search-lg.svg";
+import usersIcon from "../../images/icons/users-01.png";
+import locationIcon from "../../images/icons/destination-pin.png";
 
 const contentByLanguage = {
   en,
@@ -22,11 +24,10 @@ const contentByLanguage = {
   es,
 };
 
-export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }) => {
+export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar = () => {} }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
-  const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
@@ -41,6 +42,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
   const [isBarActive, setIsBarActive] = useState(false);
   const {language} = useContext(LanguageContext);
   const searchContent = contentByLanguage[language]?.component.search;
+  const accommodation = '';
 
   const handleButtonClick = (e) => {
     e.stopPropagation();
@@ -83,18 +85,6 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
     toggleBar(!isBarActive);
   };
 
-  const totalGuestsDescription = useMemo(() => {
-    const totalGuests = adults + children;
-    const parts = [];
-  
-    if (totalGuests > 0) parts.push(`${totalGuests} Guest${totalGuests > 1 ? 's' : ''}`);
-    if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? 's' : ''}`);
-    if (pets > 0) parts.push(`${pets} Pet${pets > 1 ? 's' : ''}`);
-  
-    return parts.join(', ');
-  }, [adults, children, infants, pets]);
-  
-
   const guestDropdownRef = useRef();
 
   const resetGuests = useCallback((e) => {
@@ -116,10 +106,11 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
   };
 
   const totalGuests = adults + children + infants + pets;
+  const guestSummaryText = totalGuests > 0 ? `${totalGuests} ${searchContent.guests}` : searchContent.guests;
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
-      if (!guestDropdownRef.current.contains(e.target)) {
+      if (guestDropdownRef.current && !guestDropdownRef.current.contains(e.target)) {
         setShowGuestDropdown(false);
       }
     };
@@ -253,7 +244,7 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
 
   //voor de date format in calendar
   function formatDateToEnglish(date) {
-    const options = { day: 'numeric', month: 'short' };
+    const options = { day: 'numeric', month: 'short', year: 'numeric' };
     return date.toLocaleDateString('en-US', options);
   }
 
@@ -267,15 +258,16 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
         <div className="search-error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
         {isMobile && (
           <button className="mobile-search-button" onClick={toggleSearchBar}>
-            <FaSearchLocation size={15} /> 
-            {/* Search & Filter Accommodations */}
+            <img src={searchIcon} alt="" aria-hidden="true" className="mobile-search-button__icon" />
+            <span>{searchContent.search}</span>
           </button>
         )}
 
         {(showSearchBar || !isMobile) && (
           <div className={`search-bar-main-container ${isBarActive ? 'active' : 'inactive'}`}>
             <div className="search-bar-main">
-              <div className="search-location">
+              <div className="search-location search-bar-field">
+                <img src={locationIcon} alt="" aria-hidden="true" className="search-field-icon" />
                 <input
                   type="search"
                   placeholder={searchContent.destination}
@@ -285,34 +277,38 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
                   className="search-places-input"
                 />
               </div>
-              <div className="search-select-container">
-                <Select
-                  value={accommodation ? { label: accommodation, value: accommodation } : null}
-                  onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
-                  options={[
-                    { value: 'House', label: <><FaHome /> {searchContent.house}</> },
-                    { value: 'Boat', label: <><FaShip /> {searchContent.boat}</> },
-                    { value: 'Camper', label: <><FaCaravan /> {searchContent.camper}</> },
-                  ]}
-                  isSearchable={false}
-                  isClearable={true}
-                  placeholder={<span className="search-title-type">{searchContent.accommodation}</span>}
-                  classNamePrefix="custom-select-dropdown-menu"
-                  components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
+
+              <div className={`search-check-in-out search-bar-field ${selectedDayRange.from && selectedDayRange.to ? 'has-value' : ''}`}>
+                <img src={calendarIcon} alt="" aria-hidden="true" className="search-field-icon search-field-icon--calendar" />
+                <DatePicker
+                  value={selectedDayRange}
+                  onChange={(range) => setSelectedDayRange(range)}
+                  minimumDate={utils("en").getToday()}
+                  shouldHighlightWeekends
+                  format="MMM DD, YYYY"
+                  calendarClassName="responsive-calendar"
+                  renderInput={({ ref }) => (
+                    <button
+                      type="button"
+                      ref={ref}
+                      className={`search-date-trigger ${startDate && endDate ? '' : 'is-placeholder'}`}>
+                      {startDate && endDate ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}` : searchContent.checkInOut}
+                    </button>
+                  )}
                 />
               </div>
 
-              <div className={`search-guest-section ${showGuestDropdown ? 'active' : ''}`}
+              <div className={`search-guest-section search-bar-field ${showGuestDropdown ? 'active' : ''}`}
                 onClick={toggleGuestDropdown}>
-                <p className={`search-title-guest ${totalGuests > 0 ? 'hidden' : ''}`}>{searchContent.guests}</p>
+                <img src={usersIcon} alt="" aria-hidden="true" className="search-field-icon search-field-icon--guests" />
                 {totalGuests > 0 && (
                   <button className="search-clear-guests" onClick={resetGuests}>
                     <FaTimes />
                   </button>
                 )}
 
-                <p className="search-guest-text">
-                  {totalGuestsDescription}
+                <p className={`search-guest-text ${totalGuests > 0 ? '' : 'is-placeholder'}`}>
+                  {guestSummaryText}
                 </p>
 
                 <div className={`search-guest-dropdown ${showGuestDropdown ? 'active' : ''}`}
@@ -357,32 +353,10 @@ export const SearchBar = ({ setSearchResults, setLoading = () => {}, toggleBar }
                 </div>
               </div>
 
-              <div className="search-check-in-out">
-                <input
-                  className="input-calendar-checkInOut"
-                  type="text"
-                  value={startDate && endDate ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}` : ''}
-                  readOnly={true}
-                />
-                {!startDate && !endDate && (
-                  <span className='Calendar-placeholder'>
-                    {searchContent.checkInOut}
-                  </span>
-                )}
-                <DatePicker
-                  value={selectedDayRange}
-                  onChange={(range) => setSelectedDayRange(range)}
-                  minimumDate={utils("en").getToday()}
-                  shouldHighlightWeekends
-                  format="MMM DD, YYYY"
-                  calendarClassName="responsive-calendar"
-                />
-              </div>
-
               <div className="mobile-search-filter-wrapper">
               <button className="searchbar-button" type="button" onClick={handleSearch}>
-               <FaSearchLocation size={15} className="search-icon" />
-                <span className="search-text">Search</span>
+               <img src={searchIcon} alt="" aria-hidden="true" className="search-button-icon" />
+                <span className="search-text">{searchContent.search}</span>
                </button>
                {isMobile && <FilterButton />}
             </div>

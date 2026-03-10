@@ -819,3 +819,324 @@ $primary-domits-color: #0d9813;
     cursor: pointer;
   }
 }
+
+.search-bar-main {
+  width: min(41rem, calc(100vw - 2rem));
+  min-height: 3.55rem;
+  margin: 0 auto;
+  padding: 0.22rem 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background-color: #fff;
+  border: 1px solid #d9dde3;
+  border-radius: 0.95rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+  > div {
+    position: relative;
+  }
+
+  > div::before {
+    display: none;
+  }
+
+  > div + div::before {
+    position: absolute;
+    content: "";
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 46%;
+    background: #d9dde3;
+    display: block;
+  }
+}
+
+.search-bar-main .search-bar-field {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 3rem;
+  min-width: 0;
+  padding: 0 0.9rem;
+}
+
+.search-bar-main .search-field-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  opacity: 0.78;
+}
+
+.search-bar-main .search-field-icon--calendar,
+.search-bar-main .search-field-icon--guests {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.search-bar-main .search-field-icon--guests {
+  width: 1.05rem;
+  height: 1.05rem;
+  filter: grayscale(1) brightness(0.55);
+  opacity: 1;
+}
+
+.search-bar-main .search-location {
+  flex: 1.5 1 0;
+  width: auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  .search-places-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: auto;
+    text-align: left;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #374151;
+
+    &::placeholder {
+      color: #374151;
+      font-size: 1rem;
+      font-weight: 500;
+      transform: none;
+    }
+  }
+}
+
+.search-bar-main .search-location .search-places-input,
+.search-bar-main .search-check-in-out .search-date-trigger,
+.search-bar-main .search-guest-section .search-guest-text {
+  font-size: 0.98rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: #374151;
+}
+
+.search-bar-main .search-location .search-places-input::placeholder,
+.search-bar-main .search-check-in-out .search-date-trigger.is-placeholder,
+.search-bar-main .search-guest-section .search-guest-text.is-placeholder {
+  color: #374151;
+}
+
+.search-bar-main .search-check-in-out {
+  flex: 1.28 1 0;
+  width: auto;
+  min-width: 0;
+  cursor: pointer;
+
+  .DatePicker {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    z-index: 2;
+  }
+
+  .search-date-trigger {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    background: transparent;
+    padding: 0;
+    text-align: left;
+    font-size: 0.98rem;
+    font-weight: 500;
+    font-family: inherit;
+    line-height: 1.3;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+
+  .search-date-trigger.is-placeholder {
+    color: #374151;
+  }
+
+  .DatePicker__calendarContainer {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: $shadow-dropdown;
+    border-radius: 0.75rem;
+    z-index: 9999;
+  }
+
+  .DatePicker__calendarArrow {
+    border-color: transparent;
+  }
+}
+
+.search-bar-main .search-guest-text {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-bar-main .search-guest-text.is-placeholder {
+  color: #374151;
+}
+
+.search-bar-main .search-guest-section {
+  flex: 0.72 1 0;
+  width: auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  justify-content: flex-start;
+  padding-right: 2.65rem;
+  cursor: pointer;
+}
+
+.search-bar-main .search-clear-guests {
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+}
+
+.search-bar-main .mobile-search-filter-wrapper {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-left: 0.7rem;
+}
+
+.search-bar-main .searchbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 7.1rem;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0 0.95rem;
+  border-radius: 0.72rem;
+  border: none;
+  background-color: $primary-domits-color;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: none;
+
+  &:hover {
+    opacity: 0.94;
+  }
+}
+
+.search-bar-main .search-button-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.search-bar-main .searchbar-button .search-text {
+  display: inline-block;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+.mobile-search-button {
+  @include mobile {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.mobile-search-button__icon {
+  width: 1rem;
+  height: 1rem;
+  object-fit: contain;
+}
+
+@include mobile {
+  .search-bar-main {
+    display: flex !important;
+    width: 100%;
+    max-width: 420px;
+    min-height: auto;
+    margin: 10px;
+    padding: 0.6rem;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: $border-radius-md;
+  }
+
+  .search-bar-main > div + div::before {
+    display: none;
+  }
+
+  .search-bar-field,
+  .search-location,
+  .search-check-in-out,
+  .search-guest-section {
+    width: 100%;
+    min-height: 3.2rem;
+    padding: 0 0.9rem;
+    background-color: #f5f5f5;
+    border-radius: $border-radius-md;
+  }
+
+  .search-location .search-places-input,
+  .search-date-trigger,
+  .search-guest-text {
+    font-size: 0.95rem;
+  }
+
+  .search-bar-main .search-location .search-places-input::placeholder,
+  .search-bar-main .search-check-in-out .search-date-trigger.is-placeholder,
+  .search-bar-main .search-guest-section .search-guest-text.is-placeholder {
+    color: #374151;
+  }
+
+  .search-check-in-out {
+    min-height: 3.4rem;
+  }
+
+  .mobile-search-filter-wrapper {
+    width: 100%;
+    padding-left: 0;
+    margin-top: 0.1rem;
+  }
+
+  .mobile-search-filter-wrapper .searchbar-button,
+  .mobile-search-filter-wrapper .filter-button {
+    flex: 1;
+    height: 2.9rem;
+    margin-top: 0;
+    border-radius: 0.75rem;
+  }
+
+  .search-guest-dropdown {
+    width: min(25rem, calc(100vw - 2.5rem));
+    left: 50%;
+    right: auto;
+    top: calc(100% + 0.625rem);
+    margin-right: 0;
+  }
+}
