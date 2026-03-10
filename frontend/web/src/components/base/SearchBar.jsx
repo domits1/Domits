@@ -363,7 +363,7 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
 
               {!isMobile && renderDateField()}
 
-              <div className="search-guest-wrapper">
+              <div className={`search-guest-wrapper ${totalGuests > 0 ? 'has-clear' : ''}`}>
                 <button
                   type="button"
                   className={`search-guest-section search-bar-field ${showGuestDropdown ? 'active' : ''}`}

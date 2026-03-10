@@ -13,11 +13,23 @@
     overflow-y: auto;
   }
 
+  .modal-overlay-dismiss {
+    position: absolute;
+    inset: 0;
+    border: none;
+    padding: 0;
+    margin: 0;
+    background: rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+  }
+
   .modal-content-filter {
     width: 90vw;
     max-width: 500px;
     height: auto;
     max-height: 90vh;
+    margin: 0;
+    border: none;
     padding: 20px;
     background-color: white;
     border-radius: 0.9rem;
@@ -25,6 +37,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     position: relative;
     box-sizing: border-box;
+    z-index: 1;
 
     h2 {
       margin-top: 0;

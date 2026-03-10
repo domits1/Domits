@@ -106,21 +106,21 @@ $primary-domits-color: #0d9813;
     padding: 0;
     font-family: inherit;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 510;
     text-align: left;
     color: #374151;
 
     &::placeholder {
       color: #374151;
       font-size: 1rem;
-      font-weight: 500;
+      font-weight: 510;
       transform: none;
     }
   }
 }
 
 .search-check-in-out {
-  flex: 1.28 1 0;
+  flex: 1.15 1 0;
   min-width: 0;
   cursor: pointer;
 
@@ -142,8 +142,8 @@ $primary-domits-color: #0d9813;
     border: none;
     background: transparent;
     font-family: inherit;
-    font-size: 0.98rem;
-    font-weight: 500;
+    font-size: 1rem;
+    font-weight: 510;
     line-height: 1.3;
     text-align: left;
     color: #374151;
@@ -174,27 +174,34 @@ $primary-domits-color: #0d9813;
 
 .search-guest-wrapper {
   position: relative;
-  flex: 0.72 1 0;
+  flex: 0.95 1 0;
   min-width: 0;
+
+  &.has-clear .search-guest-section {
+    padding-right: 2.65rem;
+  }
 }
 
 .search-guest-section {
   width: 100%;
   min-width: 0;
   justify-content: flex-start;
-  padding-right: 2.65rem;
+  padding-right: 0.9rem;
   border: none;
   background: transparent;
   cursor: pointer;
 }
 
 .search-guest-text {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-family: inherit;
-  font-size: 0.98rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   line-height: 1.3;
   color: #374151;
+  text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -534,7 +541,7 @@ $primary-domits-color: #0d9813;
   .search-accommodation-select {
     width: 100%;
     font-size: 1.05rem;
-    font-weight: 500;
+    font-weight: 510;
     text-align: center;
     color: $primary-domits-color;
   }
@@ -554,6 +561,7 @@ $primary-domits-color: #0d9813;
   .search-guest-text {
     position: static;
     margin: 0;
+    font-weight: 600;
     line-height: 1.2;
   }
 
@@ -615,6 +623,19 @@ $primary-domits-color: #0d9813;
     left: 50%;
     right: auto;
     margin-right: 0;
+  }
+
+  .search-check-in-out .DatePicker__calendarContainer {
+    width: min(23rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    margin: 0;
+  }
+
+  .search-check-in-out .responsive-calendar {
+    width: 100%;
   }
 
   .responsive-calendar {
