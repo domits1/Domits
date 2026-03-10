@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
 import { createTask, fetchTasks } from './services/faketaskService';
 
@@ -8,6 +8,7 @@ const HostPropertyCare = () => {
     const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [hostPropertyOptions, setHostPropertyOptions] = useState([]);
 
     const [newTask, setNewTask] = useState({
         title: '', description: '', property: '', bookingRef: '', 
@@ -49,6 +50,26 @@ const HostPropertyCare = () => {
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const loadHostProperties = async () => {
+            const options = await fetchHostTaskPropertyOptions();
+
+            if (!mounted) {
+                return;
+            }
+
+            setHostPropertyOptions(Array.isArray(options) ? options : []);
+        };
+
+        loadHostProperties();
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     useEffect(() => {
@@ -113,6 +134,7 @@ const HostPropertyCare = () => {
             setIsModalOpen(false);
             resetForm();
         } catch (error) {
+            console.error("Error creating task:", error);
             alert("Error creating task");
             console.error("Error creating task:", error);
         };
@@ -275,6 +297,45 @@ const HostPropertyCare = () => {
 
     const filteredTasks = getFilteredTasks();
     const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+    const filterPropertyOptions = useMemo(() => {
+        const optionSet = new Set();
+
+        hostPropertyOptions.forEach((option) => {
+            const normalizedOption = String(option || "").trim();
+            if (normalizedOption) {
+                optionSet.add(normalizedOption);
+            }
+        });
+
+        tasks.forEach((task) => {
+            const normalizedProperty = String(task?.property || "").trim();
+            if (normalizedProperty) {
+                optionSet.add(normalizedProperty);
+            }
+        });
+
+        [newTask.property, editedTask?.property].forEach((value) => {
+            const normalizedValue = String(value || "").trim();
+            if (normalizedValue) {
+                optionSet.add(normalizedValue);
+            }
+        });
+
+        return [...optionSet];
+    }, [editedTask?.property, hostPropertyOptions, newTask.property, tasks]);
+    const createPropertyOptions = useMemo(() => {
+        return hostPropertyOptions
+            .map((option) => String(option || "").trim())
+            .filter(Boolean);
+    }, [hostPropertyOptions]);
+    const editPropertyOptions = useMemo(() => {
+        const optionSet = new Set(createPropertyOptions);
+        const currentEditedProperty = String(editedTask?.property || "").trim();
+        if (currentEditedProperty) {
+            optionSet.add(currentEditedProperty);
+        }
+        return [...optionSet];
+    }, [createPropertyOptions, editedTask?.property]);
 
     const renderContent = () => {
         if (isLoading) return <div className="loading">Loading...</div>;
@@ -435,8 +496,9 @@ const HostPropertyCare = () => {
                 <div className="filters-dropdowns">
                     <select name="property" value={filters.property} onChange={handleFilterChange}>
                         <option value="All properties">All properties</option>
-                        <option value="City Loft Breda">City Loft Breda</option>
-                        <option value="Beach House">Beach House</option>
+                        {filterPropertyOptions.map((propertyOption) => (
+                            <option key={propertyOption} value={propertyOption}>{propertyOption}</option>
+                        ))}
                     </select>
                     <select name="status" value={filters.status} onChange={handleFilterChange}>
                         <option value="All statuses">All statuses</option>
@@ -698,8 +760,9 @@ const HostPropertyCare = () => {
                                 <option value="Urgent">Urgent</option>
                             </select>
                             <select name="property" value={editedTask.property || ''} onChange={handleEditChange} className="badge-select property-badge">
-                                <option value="City Loft Breda">🏢 City Loft Breda</option>
-                                <option value="Beach House">🏢 Beach House</option>
+                                {editPropertyOptions.map((propertyOption) => (
+                                    <option key={propertyOption} value={propertyOption}>🏢 {propertyOption}</option>
+                                ))}
                             </select>
                         </div>
 

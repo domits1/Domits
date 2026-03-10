@@ -18,11 +18,20 @@ export default function ExternalCalendarsCard({ sources, onAddSource, onRemoveSo
   };
 
   const handleImport = async (payload) => {
+    const propertyId = String(payload?.propertyId || "").trim();
     const calendarUrl = String(payload?.calendarUrl || "").trim();
     const calendarName = String(payload?.calendarName || "").trim();
 
+    if (!propertyId) {
+      setImportError("propertyId is required.");
+      return;
+    }
     if (!calendarUrl) {
       setImportError("calendarUrl is required.");
+      return;
+    }
+    if (!calendarName) {
+      setImportError("calendarName is required.");
       return;
     }
 
@@ -30,7 +39,7 @@ export default function ExternalCalendarsCard({ sources, onAddSource, onRemoveSo
     setImportError(null);
 
     try {
-      await onAddSource?.({ calendarUrl, calendarName });
+      await onAddSource?.({ propertyId, calendarUrl, calendarName });
       setIsIcalModalOpen(false);
     } catch (e) {
       setImportError(e?.message || "Failed to import calendar");
@@ -78,12 +87,7 @@ export default function ExternalCalendarsCard({ sources, onAddSource, onRemoveSo
         </div>
       </div>
 
-      <Modal
-        isOpen={isIcalModalOpen}
-        onRequestClose={close}
-        className="hc-modal"
-        overlayClassName="hc-modal-overlay"
-      >
+      <Modal isOpen={isIcalModalOpen} onRequestClose={close} className="hc-modal" overlayClassName="hc-modal-overlay">
         <span className="ical-modal-close" onClick={close}>
           ×
         </span>

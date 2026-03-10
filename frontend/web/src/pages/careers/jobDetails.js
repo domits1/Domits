@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Jobs from "./jobs.json";
 import { useNavigate, useParams } from 'react-router-dom';
-import office from '../../images/office.jpg';
+import office from '../../images/office.webp';
 import coWork from '../../images/co-work.jpg';
 
 function JobDetails() {

@@ -1,9 +1,10 @@
 import Database from "database";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import LambdaRepository from "./lambdaRepository.js";
 import CreateDate from "../business/model/createDate.js";
 import UnableToSearch from "../util/exception/UnableToSearch.js";
 import NotFoundException from "../util/exception/NotFoundException.js";
+import ConflictException from "../util/exception/ConflictException.js";
 import { Booking } from "database/models/Booking";
 
 class ReservationRepository {
@@ -30,7 +31,7 @@ class ReservationRepository {
         hostid: hostId,
         hostname: "WIP-Host",
         guests: requestBody.general.guests.toString(),
-        guestname: requestBody.general.guestName,
+        guestname: requestBody.general.guestName || requestBody.general.guestname || "Guest",
         latepayment: false,
         paymentid: "FAILED: ",
         tempPaymentId,
@@ -54,6 +55,23 @@ class ReservationRepository {
         departureDate: requestBody.general.departureDate,
       },
     };
+  }
+
+  async assertNoBookingConflict({ propertyId, arrivalDateMs, departureDateMs }) {
+    const client = await Database.getInstance();
+
+    const conflictCount = await client
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .where("booking.property_id = :property_id", { property_id: propertyId })
+      .andWhere("booking.status != :failedStatus", { failedStatus: "Failed" })
+      .andWhere("booking.arrivaldate < :departureDate", { departureDate: departureDateMs })
+      .andWhere("booking.departuredate > :arrivalDate", { arrivalDate: arrivalDateMs })
+      .getCount();
+
+    if (conflictCount > 0) {
+      throw new ConflictException("Selected dates are no longer available.");
+    }
   }
   // ---------
   // Read bookings by propertyID

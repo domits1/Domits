@@ -66,8 +66,6 @@ const ChatUploadAttachment = ({ onUploadComplete }) => {
         }
     };
 
-    // Previews are rendered in ChatScreen; this component only handles selection & upload
-
     return (
         <div className="add-attachment">
             <button
