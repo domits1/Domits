@@ -63,5 +63,5 @@ export const Tables = [
   Stripe_Connected_Accounts,
   UnifiedThread,
   UnifiedMessage,
-  User_Table,
+  User_Table
 ];

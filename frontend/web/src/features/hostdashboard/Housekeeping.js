@@ -1,31 +1,716 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
-import { useNavigate } from 'react-router-dom';
+import { createTask, fetchTasks } from "./services/faketaskService";
+import { fetchHostTaskPropertyOptions } from "./services/hostTaskPropertyService";
 
 const HostPropertyCare = () => {
-    const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState('Overview'); 
+    const [tasks, setTasks] = useState([]);
+    const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [hostPropertyOptions, setHostPropertyOptions] = useState([]);
 
-    const handleContactNavigation = () => {
-        navigate('/contact');
+    const [newTask, setNewTask] = useState({
+        title: '', description: '', property: '', bookingRef: '', 
+        type: 'Cleaning', assignee: '', dueDate: '', priority: 'Medium', attachments: null
+    });
+
+    const [viewingTask, setViewingTask] = useState(null);
+    const [editedTask, setEditedTask] = useState(null);  
+
+    const [filters, setFilters] = useState({
+        property: 'All properties', status: 'All statuses', assignee: 'Anyone',
+        date: 'Any date', priority: 'Any priority', search: ''
+    });
+
+    const [confirmDialog, setConfirmDialog] = useState({
+        isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
+    });
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const loadHostProperties = async () => {
+            const options = await fetchHostTaskPropertyOptions();
+
+            if (!mounted) {
+                return;
+            }
+
+            setHostPropertyOptions(Array.isArray(options) ? options : []);
+        };
+
+        loadHostProperties();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        const activeTasks = tasks.filter(t => !t.isLegacy);
+
+        const newStats = {
+            total: activeTasks.length,
+            overdue: activeTasks.filter(t => t.status === 'Overdue' || (t.dueDate && t.dueDate < todayStr && t.status !== 'Completed')).length,
+            overdueIncrease: activeTasks.filter(t => t.dueDate === yesterdayStr && t.status !== 'Completed').length,
+            inProgress: activeTasks.filter(t => t.status === 'In progress').length,
+            completedToday: activeTasks.filter(t => t.status === 'Completed' && t.completedAt === todayStr).length
+        };
+        setStats(newStats);
+    }, [tasks]);
+
+    const loadData = async () => {
+        setIsLoading(true);
+        const data = await fetchTasks();
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        const processedTasks = data.map(task => {
+            if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
+                return { ...task, status: 'Overdue' };
+            }
+            return task;
+        });
+
+        setTasks(processedTasks);
+        setIsLoading(false);
     };
-    
-    return (
-        <main className="page-body">
-        <h2>Housekeeping</h2>
-            <section className='host-pc-property'>
-                <div className="property-content">
-                    <h3 className="property-h3">
-                        Are you looking for a cleaner, housekeeper, or maintenance handyman? Our partner Mostpros
-                        has a network of home service professionals ready to support you.
-                        <span className="property-span"
-                            onClick={handleContactNavigation}
-                        > Send us a message here
-                        </span> and we connect you with them.
-                    </h3>
+
+    const handleCreateTask = async (e) => {
+        e.preventDefault();
+        try {
+            const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            
+            const taskPayload = { 
+                ...newTask, 
+                status: 'Pending',
+                activities: [{
+                    id: Date.now(),
+                    user: 'User',
+                    action: 'created the task',
+                    timestamp: now
+                }]
+            }; 
+            
+            let created = await createTask(taskPayload);
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
+                created = { ...created, status: 'Overdue' };
+            }
+
+            setTasks([created, ...tasks]);
+            setIsModalOpen(false);
+            resetForm();
+        } catch (error) {
+            console.error("Error creating task:", error);
+            alert("Error creating task");
+        }
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setNewTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const resetForm = () => {
+        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', dueDate: '', priority: 'Medium', attachments: null });
+    };
+
+    const handleCancelModal = () => {
+        const hasUnsavedChanges = newTask.title || newTask.description || newTask.property || newTask.bookingRef || newTask.assignee || newTask.dueDate || newTask.priority !== 'Medium' || newTask.attachments;
+        if (hasUnsavedChanges) {
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Discard unsaved changes?',
+                message: 'You have unsaved changes in your new task. Are you sure you want to cancel and lose your progress?',
+                confirmText: 'Discard Task',
+                cancelText: 'Keep Editing',
+                onConfirm: () => {
+                    setIsModalOpen(false);
+                    resetForm();
+                    closeConfirmDialog();
+                }
+            });
+        } else {
+            setIsModalOpen(false);
+            resetForm();
+        }
+    };
+
+    const openTaskDetails = (task) => {
+        setViewingTask(task);
+        setEditedTask({ ...task }); 
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditedTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const closeTaskDetails = () => {
+        const isEdited = JSON.stringify(viewingTask) !== JSON.stringify(editedTask);
+        if (isEdited) {
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Discard edits?',
+                message: 'You have unsaved changes. Are you sure you want to close without saving?',
+                confirmText: 'Discard Changes',
+                cancelText: 'Keep Editing',
+                onConfirm: () => {
+                    setViewingTask(null);
+                    setEditedTask(null);
+                    closeConfirmDialog();
+                }
+            });
+        } else {
+            setViewingTask(null);
+            setEditedTask(null);
+        }
+    };
+
+    const handleSaveChanges = () => {
+        const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const newLogs = [];
+
+        if (viewingTask.status !== editedTask.status) {
+            newLogs.push({ id: Date.now() + 1, user: 'User', action: `changed status to ${editedTask.status}`, timestamp: now });
+        }
+        if (viewingTask.assignee !== editedTask.assignee) {
+            newLogs.push({ id: Date.now() + 2, user: 'User', action: `reassigned task to ${editedTask.assignee}`, timestamp: now });
+        }
+        if (viewingTask.dueDate !== editedTask.dueDate) {
+            newLogs.push({ id: Date.now() + 3, user: 'User', action: `changed due date to ${editedTask.dueDate}`, timestamp: now });
+        }
+        if (viewingTask.priority !== editedTask.priority) {
+            newLogs.push({ id: Date.now() + 4, user: 'User', action: `changed priority to ${editedTask.priority}`, timestamp: now });
+        }
+        if (viewingTask.property !== editedTask.property) {
+            newLogs.push({ id: Date.now() + 6, user: 'User', action: `moved task to ${editedTask.property}`, timestamp: now });
+        }
+        
+        if (newLogs.length === 0 && JSON.stringify(viewingTask) !== JSON.stringify(editedTask)) {
+            newLogs.push({ id: Date.now() + 5, user: 'User', action: `updated task details`, timestamp: now });
+        }
+
+        const updatedTask = {
+            ...editedTask,
+            activities: [...(editedTask.activities || []), ...newLogs]
+        };
+
+        setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+        setViewingTask(null);
+        setEditedTask(null);
+    };
+
+    const handleDeleteSingleTask = () => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Delete Task?',
+            message: `Are you sure you want to delete "${viewingTask.title}"? It will be moved to your Legacy Tasks list.`,
+            confirmText: 'Yes, Delete',
+            cancelText: 'Cancel',
+            onConfirm: async () => {
+                
+                setTasks(tasks.map(t => 
+                    t.id === viewingTask.id ? { ...t, isLegacy: true } : t
+                ));
+                setViewingTask(null);
+                setEditedTask(null);
+                closeConfirmDialog();
+            }
+        });
+    };
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleClearFilters = () => {
+        setFilters({ property: 'All properties', status: 'All statuses', assignee: 'Anyone', date: 'Any date', priority: 'Any priority', search: '' });
+    };
+
+    const getFilteredTasks = () => {
+        return tasks.filter(task => {
+            if (task.isLegacy || task.status === 'Completed') return false;
+
+            const matchProperty = filters.property === 'All properties' || task.property === filters.property;
+            const matchStatus = filters.status === 'All statuses' || task.status === filters.status;
+            const matchAssignee = filters.assignee === 'Anyone' || task.assignee === filters.assignee;
+            const matchPriority = filters.priority === 'Any priority' || task.priority === filters.priority;
+            
+            const searchLower = filters.search.toLowerCase();
+            const matchSearch = filters.search === '' || 
+                (task.title?.toLowerCase().includes(searchLower)) ||
+                (task.property?.toLowerCase().includes(searchLower)) ||
+                (task.assignee?.toLowerCase().includes(searchLower));
+
+            let matchDate = true;
+            if (filters.date === 'Today') {
+                const todayStr = new Date().toISOString().split('T')[0];
+                matchDate = task.dueDate === todayStr;
+            } else if (filters.date === 'This Week') {
+                const taskDate = new Date(task.dueDate);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const nextWeek = new Date(today);
+                nextWeek.setDate(today.getDate() + 7);
+                matchDate = task.dueDate && taskDate >= today && taskDate <= nextWeek;
+            }
+
+            return matchProperty && matchStatus && matchAssignee && matchPriority && matchSearch && matchDate;
+        });
+    };
+
+    const filteredTasks = getFilteredTasks();
+    const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+    const filterPropertyOptions = useMemo(() => {
+        const optionSet = new Set();
+
+        hostPropertyOptions.forEach((option) => {
+            const normalizedOption = String(option || "").trim();
+            if (normalizedOption) {
+                optionSet.add(normalizedOption);
+            }
+        });
+
+        tasks.forEach((task) => {
+            const normalizedProperty = String(task?.property || "").trim();
+            if (normalizedProperty) {
+                optionSet.add(normalizedProperty);
+            }
+        });
+
+        [newTask.property, editedTask?.property].forEach((value) => {
+            const normalizedValue = String(value || "").trim();
+            if (normalizedValue) {
+                optionSet.add(normalizedValue);
+            }
+        });
+
+        return [...optionSet];
+    }, [editedTask?.property, hostPropertyOptions, newTask.property, tasks]);
+    const createPropertyOptions = useMemo(() => {
+        return hostPropertyOptions
+            .map((option) => String(option || "").trim())
+            .filter(Boolean);
+    }, [hostPropertyOptions]);
+    const editPropertyOptions = useMemo(() => {
+        const optionSet = new Set(createPropertyOptions);
+        const currentEditedProperty = String(editedTask?.property || "").trim();
+        if (currentEditedProperty) {
+            optionSet.add(currentEditedProperty);
+        }
+        return [...optionSet];
+    }, [createPropertyOptions, editedTask?.property]);
+
+    const renderContent = () => {
+        if (isLoading) return <div className="loading">Loading...</div>;
+
+        switch (activeTab) {
+            case 'Overview':
+            case 'All Tasks': 
+                return renderTableView();
+            case 'My Tasks':
+                return <div className="placeholder-view">My Tasks View</div>;
+            case 'Reports':
+                return <div className="placeholder-view">Reports View</div>;
+            case 'Settings':
+                return <div className="placeholder-view">Settings View</div>;
+            default:
+                return null;
+        }
+    };
+
+    const renderTableView = () => (
+        <div className="overview-container">
+            <div className="filters-bar">
+                <div className="filters-dropdowns">
+                    <select name="property" value={filters.property} onChange={handleFilterChange}>
+                        <option value="All properties">All properties</option>
+                        {filterPropertyOptions.map((propertyOption) => (
+                            <option key={propertyOption} value={propertyOption}>{propertyOption}</option>
+                        ))}
+                    </select>
+                    <select name="status" value={filters.status} onChange={handleFilterChange}>
+                        <option value="All statuses">All statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In progress">In progress</option>
+                    </select>
+                    <select name="assignee" value={filters.assignee} onChange={handleFilterChange}>
+                        <option value="Anyone">Anyone</option>
+                        <option value="Sophie Janssen">Sophie Janssen</option>
+                        <option value="Jan de Vries">Jan de Vries</option>
+                        <option value="Lisa Meijer">Lisa Meijer</option>
+                    </select>
+                    <select name="date" value={filters.date} onChange={handleFilterChange}>
+                        <option value="Any date">Any date</option>
+                        <option value="Today">Today</option>
+                        <option value="This Week">This Week</option>
+                    </select>
+                    <select name="priority" value={filters.priority} onChange={handleFilterChange}>
+                        <option value="Any priority">Any priority</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                    
+                    <div className="search-box">
+                        <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
                 </div>
-            </section>
+
+                <div className="active-filters-row">
+                    <div className="status-tags">
+                        <span className="status-tag"><span className="dot dot-pending"></span> Pending</span>
+                        <span className="status-tag"><span className="dot dot-inprogress"></span> In progress</span>
+                        <span className="status-tag"><span className="dot dot-completed"></span> Completed</span>
+                        <span className="status-tag"><span className="dot dot-overdue"></span> Overdue</span>
+                        <span className="status-tag"><span className="dot dot-cancelled"></span> Cancelled</span>
+                    </div>
+                    <button className="btn-clear-filters" onClick={handleClearFilters}>Clear filters</button>
+                </div>
+            </div>
+
+            <div className="table-container">
+                <table className="tasks-table">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Property ▾</th>
+                            <th>Type</th>
+                            <th>Assignee</th>
+                            <th>Due Date ▾</th>
+                            <th>Priority ▾</th>
+                            <th>Status ▾</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredTasks.length === 0 ? (
+                            <tr>
+                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#6c757d'}}>
+                                    No tasks match your filters (or all are completed/deleted).
+                                </td>
+                            </tr>
+                        ) : (
+                            filteredTasks.map(task => (
+                                <tr key={task.id} className={`clickable-row row-${task.status.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
+                                    <td>
+                                        <div className="task-title-cell" title={task.title}>
+                                            <span className="task-arrow">▶</span> 
+                                            <div className="truncate-text">
+                                                <strong>{task.title}</strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{task.property}</td>
+                                    <td>{task.type}</td>
+                                    <td>{task.assignee}</td>
+                                    <td>{task.dueDate || 'Today'}</td>
+                                    <td>
+                                        <span className={`badge-priority ${task.priority ? task.priority.toLowerCase() : 'medium'}`}>
+                                            {task.priority || 'Medium'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className={`badge-status ${task.status.toLowerCase().replace(' ', '-')}`}>
+                                            ● {task.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+
+    return (
+        <main className="task-dashboard-v2">
+            <div className="top-header">
+                <h2>Tasks</h2>
+                <button className="btn-create-green" onClick={() => setIsModalOpen(true)}>
+                    + Create Task
+                </button>
+            </div>
+
+            <div className="tabs-nav">
+                {['Overview', 'My Tasks', 'All Tasks', 'Reports', 'Settings'].map(tab => (
+                    <button 
+                        key={tab} 
+                        className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
+                        onClick={() => setActiveTab(tab)}
+                    >
+                        {tab}
+                    </button>
+                ))}
+            </div>
+
+            {activeTab === 'Overview' && (
+                <div className="overview-stats-row">
+                    <div className="overview-stat-card">
+                        <div className="overview-stat-icon">📋</div>
+                        <div className="overview-stat-info">
+                            <span className="overview-stat-label">Total Tasks</span>
+                            <span className="overview-stat-value">{stats.total}</span>
+                        </div>
+                    </div>
+                    <div className="overview-stat-card">
+                        <div className="overview-stat-icon error-icon">!</div>
+                        <div className="overview-stat-info">
+                            <span className="overview-stat-label">Overdue</span>
+                            <span className="overview-stat-value">
+                                {stats.overdue} 
+                                {stats.overdueIncrease > 0 && (
+                                    <small> (+{stats.overdueIncrease} since yesterday)</small>
+                                )}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="overview-stat-card">
+                        <div className="overview-stat-icon info-icon">↻</div>
+                        <div className="overview-stat-info">
+                            <span className="overview-stat-label">In Progress</span>
+                            <span className="overview-stat-value">{stats.inProgress}</span>
+                        </div>
+                    </div>
+                    <div className="overview-stat-card">
+                        <div className="overview-stat-icon success-icon">✓</div>
+                        <div className="overview-stat-info">
+                            <span className="overview-stat-label">Completed Today</span>
+                            <span className="overview-stat-value">{stats.completedToday}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="content-area">
+                {renderContent()}
+            </div>
+
+            {isModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content-large">
+                        <div className="modal-header">
+                            <h3>Create Task</h3>
+                            <button className="close-btn" onClick={handleCancelModal}>✕</button>
+                        </div>
+                        <form onSubmit={handleCreateTask}>
+                            <div className="form-group">
+                                <label htmlFor='task-title'>Title</label>
+                                <input id='task-title' type="text" name="title" value={newTask.title} onChange={handleInputChange} placeholder="Repair broken patio light" required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-description'>Description</label>
+                                <textarea id='task-description' name="description" value={newTask.description} onChange={handleInputChange} placeholder="Description here..." rows="3" required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-property'>Property</label>
+                                <select id='task-property' name="property" value={newTask.property} onChange={handleInputChange} required>
+                                    <option value="" disabled hidden>
+                                        {createPropertyOptions.length > 0 ? "Select Property" : "No properties available"}
+                                    </option>
+                                    {createPropertyOptions.map((propertyOption) => (
+                                        <option key={propertyOption} value={propertyOption}>{propertyOption}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-booking-ref'>Booking Reference (optional)</label>
+                                <input id='task-booking-ref' type="text" name="bookingRef" value={newTask.bookingRef} onChange={handleInputChange} placeholder="Select booking." />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-type'>Type</label>
+                                <div className="radio-group">
+                                    <label><input id='task-type-cleaning' type="radio" name="type" value="Cleaning" checked={newTask.type === 'Cleaning'} onChange={handleInputChange} /> Cleaning</label>
+                                    <label><input id='task-type-maintenance' type="radio" name="type" value="Maintenance" checked={newTask.type === 'Maintenance'} onChange={handleInputChange} /> Maintenance</label>
+                                    <label><input id='task-type-inspection' type="radio" name="type" value="Inspection" checked={newTask.type === 'Inspection'} onChange={handleInputChange} /> Inspection</label>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-assignee'>Assignee</label>
+                                <select id='task-assignee' name="assignee" value={newTask.assignee} onChange={handleInputChange} required>
+                                    <option value="" disabled hidden>Select Assignee</option>
+                                    <option value="Sophie Janssen">Sophie Janssen (sophie@domits.com)</option>
+                                    <option value="Jan de Vries">Jan de Vries (jan@domits.com)</option>
+                                    <option value="Lisa Meijer">Lisa Meijer (lisa@domits.com)</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-due-date'>Due Date</label>
+                                <input id='task-due-date' type="date" name="dueDate" value={newTask.dueDate} onChange={handleInputChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-priority'>Priority</label>
+                                <select id='task-priority' name="priority" value={newTask.priority} onChange={handleInputChange} required>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor='task-attachments'>Attachments (optional)</label>
+                                <div className="custom-file-upload">
+                                    <input type="file" id="file-upload" />
+                                    <label htmlFor="file-upload">
+                                        <span className="upload-text">Upload file...</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>
+                                <button type="button" className="btn-text" onClick={handleCancelModal}>Cancel</button>
+                                <button type="submit" className="btn-create-green">Create Task</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {viewingTask && editedTask && (
+                <div className="modal-overlay">
+                    <div className="modal-content-large task-details-modal">
+                        <div className="modal-header details-header">
+                            <h3 className="details-title">{editedTask.title}</h3>
+                            <button className="close-btn" onClick={closeTaskDetails}>✕</button>
+                        </div>
+                        
+                        <div className="details-badges-row">
+                            <select name="status" value={editedTask.status} onChange={handleEditChange} className={`badge-select status-${editedTask.status.toLowerCase().replace(' ', '-')}`}>
+                                <option value="Pending">● Pending</option>
+                                <option value="In progress">● In progress</option>
+                                <option value="Completed">● Completed</option>
+                                <option value="Overdue">● Overdue</option>
+                            </select>
+                            <select name="priority" value={editedTask.priority} onChange={handleEditChange} className={`badge-select priority-${editedTask.priority.toLowerCase()}`}>
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                            <select name="property" value={editedTask.property || ''} onChange={handleEditChange} className="badge-select property-badge">
+                                {editPropertyOptions.map((propertyOption) => (
+                                    <option key={propertyOption} value={propertyOption}>🏢 {propertyOption}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="details-body">
+                            <div className="form-group">
+                                <label htmlFor='edit-description'>Description</label>
+                                <textarea name="description" value={editedTask.description || ''} onChange={handleEditChange} id='edit-description' rows="3" placeholder="Enter description..." />
+                            </div>
+
+                            <div className="form-row-grid">
+                                <div className="form-group">
+                                    <label htmlFor='edit-assignee'>Assignee</label>
+                                    <select name="assignee" value={editedTask.assignee} onChange={handleEditChange} id="edit-assignee">
+                                        <option value="Sophie Janssen">Sophie Janssen</option>
+                                        <option value="Jan de Vries">Jan de Vries</option>
+                                        <option value="Lisa Meijer">Lisa Meijer</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor='edit-type'>Type</label>
+                                    <select name="type" value={editedTask.type} onChange={handleEditChange} id="edit-type">
+                                        <option value="Cleaning">Cleaning</option>
+                                        <option value="Maintenance">Maintenance</option>
+                                        <option value="Inspection">Inspection</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor='edit-booking-ref'>Booking Reference (optional)</label>
+                                    <input type="text" name="bookingRef" value={editedTask.bookingRef || ''} onChange={handleEditChange} placeholder="Select booking." id='edit-booking-ref'/>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor='edit-due-date'>Due Date</label>
+                                    <input type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} id='edit-due-date'/>
+                                </div>
+                            </div>
+
+                            <div className="form-group attachments-section">
+                                <div className="attachments-header">
+                                    <label htmlFor='edit-attachments'>Attachments (optional)</label>
+                                    <span className="attachments-count">0 Attachments</span>
+                                </div>
+                                <div className="attachments-box">
+                                    <p className="no-attachments-text">No attachments yet.</p>
+                                </div>
+                            </div>
+
+                            <div className="activity-section">
+                                <div className="activity-header">
+                                    <h4>Activity</h4>
+                                    {editedTask.activities && editedTask.activities.length > 0 && (
+                                        <span className="created-info">
+                                            Created by {editedTask.activities[0].user} on {editedTask.activities[0].timestamp}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="activity-list">
+                                    {(!editedTask.activities || editedTask.activities.length === 0) ? (
+                                        <p className="no-attachments-text">No activity recorded yet.</p>
+                                    ) : (
+                                        [...editedTask.activities].reverse().map(activity => (
+                                            <div className="activity-item" key={activity.id} style={{ alignItems: 'flex-start' }}>
+                                                <div className="activity-avatar">U</div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                    <p><strong>{activity.user}</strong> {activity.action}</p>
+                                                    <span style={{ fontSize: '11px', color: '#adb5bd' }}>{activity.timestamp}</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer details-footer">
+                            <button className="btn-text" onClick={closeTaskDetails}>Cancel</button>
+                            
+                            {JSON.stringify(viewingTask) === JSON.stringify(editedTask) ? (
+                                <button className="btn-create-green" onClick={handleDeleteSingleTask}>Delete</button>
+                            ) : (
+                                <button className="btn-create-green" onClick={handleSaveChanges}>Save Changes</button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {confirmDialog.isOpen && (
+                <div className="confirm-modal-overlay">
+                    <div className="confirm-modal-content">
+                        <div className="confirm-modal-icon">⚠️</div>
+                        <h3>{confirmDialog.title}</h3>
+                        <p>{confirmDialog.message}</p>
+                        <div className="confirm-modal-actions">
+                            <button className="btn-text" onClick={closeConfirmDialog}>{confirmDialog.cancelText}</button>
+                            <button className="btn-create-green" onClick={confirmDialog.onConfirm}>{confirmDialog.confirmText}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
-}
+};
 
 export default HostPropertyCare;
