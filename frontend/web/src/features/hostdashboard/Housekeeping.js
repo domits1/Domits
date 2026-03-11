@@ -30,6 +30,8 @@ const HostPropertyCare = () => {
 
     const CURRENT_USER = 'Sophie Janssen'; 
 
+    const hostPropertyOptions = ['City Loft Breda', 'Beach House'];
+    
     const handleToggleComplete = (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         const todayStr = new Date().toISOString().split('T')[0]; 
