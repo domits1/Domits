@@ -30,9 +30,8 @@ const ListingDetails2 = () => {
         setHost(hostData);
 
         setLoading(false);
-      } catch (err) {
+      } catch {
         setError("Something went wrong while fetching the requested data, please try again later.");
-        console.error(err);
         setLoading(false);
       }
     };
