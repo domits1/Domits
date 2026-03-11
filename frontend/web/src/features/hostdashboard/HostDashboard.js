@@ -103,16 +103,18 @@ function HostDashboard() {
                 <div className={styles.leftHeader}>
                   <h3 className={styles.welcomeMsg}>Welcome {user.name}</h3>
 
-                  <div className={styles.buttonBox}>
-                    <button className={styles.greenBtn} onClick={fetchRecentAccommodations}>
-                      Refresh
-                    </button>
-                    <button className={styles.greenBtn} onClick={() => navigate("/hostdashboard/listings")}>
-                      Go to listing
-                    </button>
-                    <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>
-                      Add accommodation
-                    </button>
+                  <div className={styles.buttonContainer}>
+                    <div className={styles.buttonBox}>
+                      <button className={styles.greenBtn} onClick={fetchRecentAccommodations}>
+                        Refresh
+                      </button>
+                      <button className={styles.greenBtn} onClick={() => navigate("/hostdashboard/listings")}>
+                        Go to listing
+                      </button>
+                      <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>
+                        Add accommodation
+                      </button>
+                    </div>
                   </div>
                 </div>
 

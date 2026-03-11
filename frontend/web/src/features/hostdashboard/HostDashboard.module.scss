@@ -2,13 +2,19 @@
   color: white;
   background-color: var(--domits-host-blue);
   border: none;
-  padding: 10px 25px;
+  padding: 12px 30px;
   border-radius: 10px;
   cursor: pointer;
   margin: 0 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
 
   &:hover {
     opacity: 90%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transform: translateY(-2px);
   }
 }
 
@@ -86,6 +92,26 @@
 
 .isArchived {
   color: #6b7280;
+}
+
+.buttonBox {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 16px 0;
+}
+
+.buttonContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 8px;
 }
 
 .topRow {
@@ -229,14 +255,6 @@
         height: 18px;
       }
     }
-  }
-
-  .buttonBox {
-    display: flex;
-    flex-direction: row;
-    justify-content: start;
-    gap: 12px;
-    flex-wrap: wrap;
   }
 
   .accommodationText {
