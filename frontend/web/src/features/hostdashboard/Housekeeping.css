@@ -772,3 +772,160 @@
     padding: 20px 25px;
     background-color: #ffffff;
 }
+
+.my-tasks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    margin-top: 10px;
+}
+
+.section-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 10px;
+}
+
+.section-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.section-title h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #212529;
+}
+
+.section-title .task-count {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.my-tasks-filters {
+    display: flex;
+    gap: 10px;
+}
+
+.my-tasks-filters select {
+    border: none;
+    background-color: transparent;
+    color: #495057;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+
+.small-search {
+    border: none;
+    border-bottom: 1px solid #ced4da;
+    border-radius: 0;
+    padding: 2px 5px;
+    font-size: 13px;
+    background: transparent;
+    width: 120px;
+}
+
+.my-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.my-task-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px 20px;
+    transition: box-shadow 0.2s, transform 0.1s;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
+}
+
+.my-task-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transform: translateY(-1px);
+}
+
+.my-task-card.is-overdue-card {
+    background-color: #fff5f5;
+    border-color: #ffc9c9;
+}
+
+.my-task-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 35%;
+}
+
+.my-task-icon {
+    font-size: 20px;
+    color: #495057;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.my-task-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    color: #212529;
+    font-weight: 600;
+}
+
+.my-task-info span {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.my-task-middle {
+    flex-grow: 1;
+    text-align: right;
+    padding-right: 30px;
+}
+
+.my-task-time {
+    font-size: 13px;
+    color: #495057;
+}
+
+.my-task-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 250px;
+    justify-content: flex-end;
+}
+
+.my-task-checkbox {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: #28a745;
+    border-radius: 4px;
+}
+
+.overdue-action-text {
+    color: #dc3545;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.empty-state {
+    color: #adb5bd;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px 0;
+}
