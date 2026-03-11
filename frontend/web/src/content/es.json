@@ -17,7 +17,7 @@
         "becomeHost": "Conviértete en anfitrión"
       },
       "search": {
-        "destination": "Buscar destino",
+            "destination": "Destino",
         "accommodation": "Alojamiento",
         "checkInOut": "Entrada • Salida",
         "guests": "Huéspedes",
