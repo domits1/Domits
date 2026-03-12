@@ -1,8 +1,10 @@
 import ReservationController from "./controller/reservationController.js";
 import ParseEvent from "./business/parseEvent.js"
+import responsejson from "./util/const/responseheader.json" with { type: "json" };
 
 const controller = new ReservationController();
 const eventparser = new ParseEvent();
+const responseHeaders = responsejson;
 
 export const handler = async (event) => {
   let returnedResponse = {};
@@ -18,15 +20,14 @@ export const handler = async (event) => {
       returnedResponse = await controller.patch(event);
       break;
     case "DELETE":
-      console.log("DELETE request called");
-      break;
+      throw new Error("DELETE method is not implemented.");
     default:
       throw new Error("Unable to determine request type. Please contact the Admin.");
   }
 
   return {
     statusCode: returnedResponse?.statusCode || 200,
-    headers: returnedResponse?.headers || null,
+    headers: returnedResponse?.headers || responseHeaders,
     body: JSON.stringify(returnedResponse?.response),
     //body: JSON.stringify(event), 
   };
