@@ -1,10 +1,14 @@
 import PropTypes from "prop-types";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FaCalendarAlt } from "react-icons/fa";
+import {
+  buildUnavailableDateSet,
+  hasUnavailableDateInStayRange,
+  normalizeDateValue,
+  toDateKey,
+} from "../utils/dateAvailability";
 import "../styles/RangeCalendar.scss";
 
-const pad = (n) => (n < 10 ? `0${n}` : String(n));
-const toKey = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 const makeDate = (year, month, day) => new Date(year, month, day);
 const addMonths = (date, offset) => makeDate(date.getFullYear(), date.getMonth() + offset, 1);
 
@@ -18,15 +22,14 @@ const startOfCalendar = (year, month) => {
 
 const weekdayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const monthLabel = (date) => date.toLocaleString(undefined, { month: "long", year: "numeric" });
-const formatRangeDate = (date) => {
-  return date.toLocaleDateString(undefined, {
+const formatRangeDate = (date) =>
+  date.toLocaleDateString(undefined, {
     month: "long",
     day: "numeric",
     year: "numeric",
   });
-};
 
-function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, navigation }) {
+function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, navigation, blockedDateKeys }) {
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
 
@@ -38,15 +41,16 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, navigation }) {
       const date = new Date(start);
       date.setDate(start.getDate() + index);
       const inMonth = date.getMonth() === month;
-      const key = toKey(date);
+      const key = toDateKey(date);
+      const isUnavailable = inMonth && blockedDateKeys.has(key);
       const inRange = rangeStart && rangeEnd && date >= rangeStart && date <= rangeEnd && inMonth;
-      const isStart = rangeStart && key === toKey(rangeStart);
-      const isEnd = rangeEnd && key === toKey(rangeEnd);
-      items.push({ date, key, inMonth, inRange, isStart, isEnd });
+      const isStart = rangeStart && key === toDateKey(rangeStart);
+      const isEnd = rangeEnd && key === toDateKey(rangeEnd);
+      items.push({ date, key, inMonth, inRange, isStart, isEnd, isUnavailable });
     }
 
     return items;
-  }, [month, rangeEnd, rangeStart, year]);
+  }, [blockedDateKeys, month, rangeEnd, rangeStart, year]);
 
   return (
     <div className="rc-month">
@@ -80,13 +84,15 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, navigation }) {
             className={[
               "rc-cell rc-cell--day",
               !cell.inMonth && "is-out",
+              cell.isUnavailable && "is-unavailable",
               cell.inRange && "is-inrange",
               cell.isStart && "is-start",
               cell.isEnd && "is-end",
             ]
               .filter(Boolean)
               .join(" ")}
-            aria-label={cell.date.toDateString()}
+            aria-label={formatRangeDate(cell.date)}
+            disabled={!cell.inMonth || cell.isUnavailable}
             onClick={() => onPick(cell.date)}
           >
             <span>{cell.date.getDate()}</span>
@@ -102,6 +108,7 @@ MonthGrid.propTypes = {
   rangeStart: PropTypes.instanceOf(Date),
   rangeEnd: PropTypes.instanceOf(Date),
   onPick: PropTypes.func.isRequired,
+  blockedDateKeys: PropTypes.instanceOf(Set).isRequired,
   navigation: PropTypes.shape({
     side: PropTypes.oneOf(["left", "right"]),
     onClick: PropTypes.func,
@@ -114,48 +121,58 @@ MonthGrid.defaultProps = {
   navigation: null,
 };
 
-export default function RangeCalendar({ onChange }) {
+export default function RangeCalendar({ unavailableDateKeys, checkInDate, checkOutDate, onRangeChange }) {
   const now = new Date();
   const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const initialStart = new Date(now);
-  const initialEnd = new Date(now);
-
-  initialStart.setDate(now.getDate() - 2);
-  initialEnd.setDate(now.getDate() + 2);
 
   const [view, setView] = useState(initialMonth);
-  const [start, setStart] = useState(initialStart);
-  const [end, setEnd] = useState(initialEnd);
   const [draftStart, setDraftStart] = useState(null);
+  const rangeStart = useMemo(() => normalizeDateValue(checkInDate), [checkInDate]);
+  const rangeEnd = useMemo(() => normalizeDateValue(checkOutDate), [checkOutDate]);
+
+  const blockedDateKeys = useMemo(() => buildUnavailableDateSet(unavailableDateKeys), [unavailableDateKeys]);
 
   const rightMonth = useMemo(() => addMonths(view, 1), [view]);
 
   const next = () => setView((value) => addMonths(value, 1));
   const prev = () => setView((value) => addMonths(value, -1));
 
+  useEffect(() => {
+    setDraftStart(rangeStart && !rangeEnd ? rangeStart : null);
+  }, [rangeEnd, rangeStart]);
+
   const handlePick = (date) => {
-    if (!draftStart) {
-      setDraftStart(date);
-      setStart(date);
-      setEnd(null);
+    const key = toDateKey(date);
+    if (blockedDateKeys.has(key)) {
       return;
     }
 
-    const startTimestamp = Math.min(draftStart.getTime(), date.getTime());
-    const endTimestamp = Math.max(draftStart.getTime(), date.getTime());
-    const nextStart = new Date(startTimestamp);
-    const nextEnd = new Date(endTimestamp);
+    const anchorDate = draftStart || rangeStart;
 
-    setStart(nextStart);
-    setEnd(nextEnd);
-    setDraftStart(null);
-
-    if (onChange) {
-      onChange({ start: nextStart, end: nextEnd });
+    if (!anchorDate || rangeEnd) {
+      setDraftStart(date);
+      onRangeChange(key, "");
+      return;
     }
+
+    const nextStart = anchorDate.getTime() <= date.getTime() ? anchorDate : date;
+    const nextEnd = anchorDate.getTime() <= date.getTime() ? date : anchorDate;
+
+    if (hasUnavailableDateInStayRange(nextStart, nextEnd, blockedDateKeys)) {
+      alert("Selected stay includes unavailable dates.");
+      setDraftStart(date);
+      onRangeChange(key, "");
+      return;
+    }
+
+    setDraftStart(null);
+    onRangeChange(toDateKey(nextStart), toDateKey(nextEnd));
   };
 
-  const rangeLabel = start && end ? `${formatRangeDate(start)} - ${formatRangeDate(end)}` : "Select your stay dates";
+  const rangeLabel =
+    rangeStart && rangeEnd
+      ? `${formatRangeDate(rangeStart)} - ${formatRangeDate(rangeEnd)}`
+      : "Select your stay dates";
 
   return (
     <section className="availability-section">
@@ -174,16 +191,18 @@ export default function RangeCalendar({ onChange }) {
           <div className="rc-panels">
             <MonthGrid
               viewMonth={view}
-              rangeStart={start}
-              rangeEnd={end}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
               onPick={handlePick}
+              blockedDateKeys={blockedDateKeys}
               navigation={{ side: "left", onClick: prev }}
             />
             <MonthGrid
               viewMonth={rightMonth}
-              rangeStart={start}
-              rangeEnd={end}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
               onPick={handlePick}
+              blockedDateKeys={blockedDateKeys}
               navigation={{ side: "right", onClick: next }}
             />
           </div>
@@ -194,9 +213,14 @@ export default function RangeCalendar({ onChange }) {
 }
 
 RangeCalendar.propTypes = {
-  onChange: PropTypes.func,
+  unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  checkInDate: PropTypes.string,
+  checkOutDate: PropTypes.string,
+  onRangeChange: PropTypes.func.isRequired,
 };
 
 RangeCalendar.defaultProps = {
-  onChange: null,
+  unavailableDateKeys: [],
+  checkInDate: "",
+  checkOutDate: "",
 };

@@ -150,6 +150,20 @@
     background: #f3f5f8;
   }
 
+  &.is-unavailable {
+    background: #757575;
+    border-color: #757575;
+    cursor: not-allowed;
+
+    span {
+      color: #fff;
+    }
+
+    &:hover {
+      background: #757575;
+    }
+  }
+
   &.is-inrange {
     background: rgba(112, 112, 112, 0.12);
   }

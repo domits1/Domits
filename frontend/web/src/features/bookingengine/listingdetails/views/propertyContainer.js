@@ -10,7 +10,14 @@ import RulesContainer from "./rulesContainer";
 import RangeCalendar from "./RangeCalendar";
 import LocationSection from "./locationSection";
 
-const PropertyContainer = ({ property }) => {
+const PropertyContainer = ({
+  property,
+  unavailableDateKeys,
+  checkInDate,
+  checkOutDate,
+  setCheckInDate,
+  setCheckOutDate,
+}) => {
   return (
     <div className="property-container">
       <ImageGallery images={property.images} />
@@ -18,7 +25,15 @@ const PropertyContainer = ({ property }) => {
       <GeneralDetails generalDetails={property.generalDetails} />
       <Description description={property.property.description} />
       <AmenitiesContainer amenityIds={property.amenities} />
-      <RangeCalendar />
+      <RangeCalendar
+        unavailableDateKeys={unavailableDateKeys}
+        checkInDate={checkInDate}
+        checkOutDate={checkOutDate}
+        onRangeChange={(nextCheckInDate, nextCheckOutDate) => {
+          setCheckInDate(nextCheckInDate);
+          setCheckOutDate(nextCheckOutDate);
+        }}
+      />
       <LocationSection location={property.location} />
       <RulesContainer rules={property.rules} checkIn={property.checkIn} />
     </div>
@@ -37,6 +52,9 @@ PropertyContainer.propTypes = {
       description: PropTypes.string,
     }),
     amenities: PropTypes.array,
+    calendarAvailability: PropTypes.shape({
+      externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
+    }),
     location: PropTypes.shape({
       street: PropTypes.string,
       houseNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -53,6 +71,11 @@ PropertyContainer.propTypes = {
       }),
     }),
   }),
+  unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  checkInDate: PropTypes.string,
+  checkOutDate: PropTypes.string,
+  setCheckInDate: PropTypes.func.isRequired,
+  setCheckOutDate: PropTypes.func.isRequired,
 };
 
 PropertyContainer.defaultProps = {
@@ -62,10 +85,14 @@ PropertyContainer.defaultProps = {
     generalDetails: [],
     property: { description: "" },
     amenities: [],
+    calendarAvailability: { externalBlockedDates: [] },
     location: {},
     rules: [],
     checkIn: { checkIn: {}, checkOut: {} },
   },
+  unavailableDateKeys: [],
+  checkInDate: "",
+  checkOutDate: "",
 };
 
 export default PropertyContainer;

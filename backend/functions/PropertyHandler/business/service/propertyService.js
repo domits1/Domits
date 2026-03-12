@@ -14,6 +14,7 @@ import { PropertyTechnicalDetailRepository } from "../../data/repository/propert
 import { PropertyTypeRepository } from "../../data/repository/propertyTypeRepository.js";
 import { PropertyImageRepository } from "../../data/repository/propertyImageRepository.js";
 import { PropertyCalendarOverrideRepository } from "../../data/repository/propertyCalendarOverrideRepository.js";
+import { PropertyExternalCalendarRepository } from "../../data/repository/propertyExternalCalendarRepository.js";
 import { BookingRepository } from "../../data/repository/bookingRepository.js";
 import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatusRepository.js";
 import { PropertyDeletionRepository } from "../../data/repository/propertyDeletionRepository.js";
@@ -38,6 +39,7 @@ export class PropertyService {
     this.propertyTypeRepository = new PropertyTypeRepository(systemManagerRepository);
     this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
     this.propertyCalendarOverrideRepository = new PropertyCalendarOverrideRepository(systemManagerRepository);
+    this.propertyExternalCalendarRepository = new PropertyExternalCalendarRepository(systemManagerRepository);
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
     this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
@@ -190,7 +192,7 @@ export class PropertyService {
 
   async getFullActivePropertyById(propertyId) {
     const basePropertyInfo = await this.getBasePropertyInfo(propertyId);
-    if (!basePropertyInfo || basePropertyInfo.status !== "ACTIVE") {
+    if (basePropertyInfo?.status !== "ACTIVE") {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
     return await this.getFullPropertyAttributes(propertyId);
@@ -230,7 +232,7 @@ export class PropertyService {
 
   async getActivePropertyCardById(propertyId) {
     const basePropertyInfo = await this.getBasePropertyInfo(propertyId);
-    if (!basePropertyInfo || basePropertyInfo.status !== "ACTIVE") {
+    if (basePropertyInfo?.status !== "ACTIVE") {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
     return await this.getCardPropertyAttributes(propertyId);
@@ -279,6 +281,7 @@ export class PropertyService {
       pricing,
       rules,
       propertyType,
+      calendarAvailability,
       propertyTestStatus,
     ] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
@@ -292,6 +295,7 @@ export class PropertyService {
       this.getPricing(propertyId),
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
+      this.getPublicCalendarAvailability(propertyId),
       this.getPropertyTestStatus(propertyId),
     ]);
     const technicalDetails =
@@ -310,8 +314,18 @@ export class PropertyService {
       pricing: pricing,
       rules: rules,
       propertyType: propertyType,
+      calendarAvailability: calendarAvailability,
       technicalDetails: technicalDetails,
       propertyTestStatus: propertyTestStatus,
+    };
+  }
+
+  async getPublicCalendarAvailability(propertyId) {
+    const externalBlockedDates =
+      await this.propertyExternalCalendarRepository.getBlockedDatesByPropertyId(propertyId);
+
+    return {
+      externalBlockedDates: Array.isArray(externalBlockedDates) ? externalBlockedDates : [],
     };
   }
 
