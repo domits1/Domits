@@ -1,6 +1,4 @@
 import Database from "../ORM/index.js";
-import { randomUUID } from "node:crypto";
-
 import { ChannelIntegrationAccount } from "../models/unified/integrations/ChannelIntegrationAccount.js";
 
 class IntegrationAccountRepository {
@@ -23,6 +21,17 @@ class IntegrationAccountRepository {
   async getById(id) {
     const client = await Database.getInstance();
     return client.getRepository(ChannelIntegrationAccount).findOne({ where: { id } });
+  }
+
+  async findByChannelAndExternalAccountId(channel, externalAccountId) {
+    const client = await Database.getInstance();
+
+    return client
+      .getRepository(ChannelIntegrationAccount)
+      .createQueryBuilder("a")
+      .where("a.channel = :channel", { channel })
+      .andWhere("a.externalAccountId = :externalAccountId", { externalAccountId })
+      .getOne();
   }
 
   async update(id, patch) {

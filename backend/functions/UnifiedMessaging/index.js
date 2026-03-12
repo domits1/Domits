@@ -1,8 +1,12 @@
 import MessageController from "./controller/messageController.js";
 import IntegrationController from "./controller/integrationController.js";
+import IngestionController from "./controller/ingestionController.js";
+import WhatsAppWebhookController from "./controller/whatsappWebhookController.js";
 
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
+const ingestionController = new IngestionController();
+const whatsAppWebhookController = new WhatsAppWebhookController();
 
 export const handler = async (event) => {
   let returnedResponse = {};
@@ -10,13 +14,25 @@ export const handler = async (event) => {
 
   console.log(
     "Event received:",
-    JSON.stringify({ httpMethod, path, queryStringParameters: event.queryStringParameters })
+    JSON.stringify({
+      httpMethod,
+      path,
+      queryStringParameters: event.queryStringParameters,
+    })
   );
 
   try {
     const route = `${httpMethod}:${path}`;
 
     switch (true) {
+      case httpMethod === "GET" && (path.endsWith("/webhooks/whatsapp") || path.includes("/webhooks/whatsapp")):
+        returnedResponse = await whatsAppWebhookController.verifyWebhook(event);
+        break;
+
+      case httpMethod === "POST" && (path.endsWith("/webhooks/whatsapp") || path.includes("/webhooks/whatsapp")):
+        returnedResponse = await whatsAppWebhookController.handleWebhookEvent(event);
+        break;
+
       case httpMethod === "POST" && (path.endsWith("/send") || path.includes("/send")):
         returnedResponse = await messageController.sendMessage(event);
         break;
@@ -28,6 +44,11 @@ export const handler = async (event) => {
       case httpMethod === "GET" && (path.endsWith("/messages") || path.includes("/messages")):
         returnedResponse = await messageController.getMessages(event);
         break;
+
+      case httpMethod === "POST" && path.includes("/integrations/") && path.endsWith("/ingest/messages"):
+        returnedResponse = await ingestionController.ingestMessages(event);
+        break;
+
       case httpMethod === "POST" && (path.endsWith("/integrations") || path.includes("/integrations")):
         if (path.match(/\/integrations\/[^/]+\/.+/)) {
           returnedResponse = { statusCode: 404, response: "Not Found" };
@@ -84,13 +105,20 @@ export const handler = async (event) => {
     };
   }
 
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    ...(returnedResponse?.headers || {}),
+  };
+
+  const responseBody =
+    returnedResponse?.rawBody !== undefined
+      ? returnedResponse.rawBody
+      : JSON.stringify(returnedResponse?.response);
+
   return {
     statusCode: returnedResponse?.statusCode || 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type,Authorization",
-      ...(returnedResponse?.headers || {}),
-    },
-    body: JSON.stringify(returnedResponse?.response),
+    headers,
+    body: responseBody,
   };
 };
