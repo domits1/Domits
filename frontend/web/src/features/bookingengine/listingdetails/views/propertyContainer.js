@@ -20,21 +20,31 @@ const PropertyContainer = ({
 }) => {
   return (
     <div className="property-container">
-      <ImageGallery images={property.images} />
-      <PricingPerNight pricing={property.pricing} />
-      <GeneralDetails generalDetails={property.generalDetails} />
-      <Description description={property.property.description} />
-      <AmenitiesContainer amenityIds={property.amenities} />
-      <RangeCalendar
-        unavailableDateKeys={unavailableDateKeys}
-        checkInDate={checkInDate}
-        checkOutDate={checkOutDate}
-        onRangeChange={(nextCheckInDate, nextCheckOutDate) => {
-          setCheckInDate(nextCheckInDate);
-          setCheckOutDate(nextCheckOutDate);
-        }}
-      />
-      <LocationSection location={property.location} />
+      <section id="listing-photos" className="listing-section-block listing-section-block--photos">
+        <ImageGallery images={property.images} />
+        <PricingPerNight pricing={property.pricing} />
+        <GeneralDetails generalDetails={property.generalDetails} />
+      </section>
+      <section id="listing-about" className="listing-section-block">
+        <Description description={property.property.description} />
+      </section>
+      <section id="listing-amenities" className="listing-section-block">
+        <AmenitiesContainer amenityIds={property.amenities} />
+      </section>
+      <section id="listing-availability" className="listing-section-block">
+        <RangeCalendar
+          unavailableDateKeys={unavailableDateKeys}
+          checkInDate={checkInDate}
+          checkOutDate={checkOutDate}
+          onRangeChange={(nextCheckInDate, nextCheckOutDate) => {
+            setCheckInDate(nextCheckInDate);
+            setCheckOutDate(nextCheckOutDate);
+          }}
+        />
+      </section>
+      <section id="listing-location" className="listing-section-block">
+        <LocationSection location={property.location} />
+      </section>
       <RulesContainer rules={property.rules} checkIn={property.checkIn} />
     </div>
   );

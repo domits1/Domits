@@ -4,6 +4,7 @@ import Loading from "../../../hostdashboard/Loading";
 import FetchPropertyById from "../services/fetchPropertyById";
 import fetchHostInfo from "../services/fetchHostInfo";
 import Header from "../components/header";
+import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
 import { getFutureDateKey } from "../utils/dateAvailability";
@@ -187,8 +188,17 @@ const ListingDetails2 = () => {
     );
   }
 
+  const sectionItems = [
+    { id: "photos", label: "Photos", targetId: "listing-photos" },
+    { id: "about", label: "About", targetId: "listing-about" },
+    { id: "amenities", label: "Amenities", targetId: "listing-amenities" },
+    { id: "availability", label: "Availability", targetId: "listing-availability" },
+    { id: "location", label: "Location", targetId: "listing-location" },
+  ];
+
   return (
     <div className="listing-details">
+      <SectionTabs sections={sectionItems} />
       <Header title={property?.property?.title} />
 
       <div className="container">
