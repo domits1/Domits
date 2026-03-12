@@ -1,10 +1,12 @@
 import MessageRepository from "../data/messageRepository.js";
 import ThreadRepository from "../data/threadRepository.js";
+import WhatsAppProviderAdapter from "./whatsappProviderAdapter.js";
 
 class MessageService {
   constructor() {
     this.messageRepository = new MessageRepository();
     this.threadRepository = new ThreadRepository();
+    this.whatsAppProviderAdapter = new WhatsAppProviderAdapter();
   }
 
   async sendMessage(payload) {
@@ -16,8 +18,20 @@ class MessageService {
     const explicitHostId = payload.hostId || null;
     const explicitGuestId = payload.guestId || null;
 
+    let thread = null;
+
+    if (threadId) {
+      thread = await this.threadRepository.getThreadById(threadId);
+      if (!thread) {
+        return {
+          statusCode: 404,
+          response: { error: "Thread not found" },
+        };
+      }
+    }
+
     if (!threadId) {
-      let thread = await this.threadRepository.findThread(senderId, recipientId, payload.propertyId);
+      thread = await this.threadRepository.findThread(senderId, recipientId, payload.propertyId);
 
       if (!thread) {
         const hostId = explicitHostId || senderId;
@@ -29,30 +43,67 @@ class MessageService {
           propertyId: payload.propertyId ?? null,
           platform: payload.platform || "DOMITS",
           externalThreadId: payload.externalThreadId,
+          integrationAccountId: payload.integrationAccountId ?? null,
         });
       }
 
       threadId = thread.id;
     }
 
+    const resolvedPlatform = payload.platform || thread?.platform || "DOMITS";
+
+    let outboundResult = null;
+
+    if (resolvedPlatform === "WHATSAPP") {
+      outboundResult = await this.whatsAppProviderAdapter.sendText({
+        thread,
+        payload: {
+          ...payload,
+          threadId,
+          platform: resolvedPlatform,
+        },
+      });
+
+      if (!outboundResult?.ok) {
+        return {
+          statusCode: outboundResult?.statusCode || 400,
+          response: outboundResult?.response || { error: "Failed to send WhatsApp message" },
+        };
+      }
+    }
+
     const message = await this.messageRepository.createMessage({
-      threadId: threadId,
-      senderId: senderId,
-      recipientId: recipientId,
+      threadId,
+      senderId,
+      recipientId,
       content: payload.content,
-      platformMessageId: payload.platformMessageId,
+      platformMessageId: outboundResult?.platformMessageId ?? payload.platformMessageId ?? null,
       metadata: payload.metadata,
       attachments: payload.attachments,
-      deliveryStatus: payload.platform === "DOMITS" ? "delivered" : "pending",
+      deliveryStatus:
+        resolvedPlatform === "DOMITS"
+          ? "delivered"
+          : outboundResult?.deliveryStatus || "pending",
+      direction: payload.direction ?? "OUTBOUND",
+      externalCreatedAt: outboundResult?.externalCreatedAt ?? null,
+      externalSenderType: payload.externalSenderType ?? "HOST",
+      complianceStatus: payload.complianceStatus ?? null,
+      errorCode: null,
+      errorMessage: null,
     });
 
-    await this.threadRepository.updateLastMessageAt(threadId, Date.now());
+    await this.threadRepository.updateThreadActivity({
+      threadId,
+      direction: "OUTBOUND",
+      eventAt: Date.now(),
+    });
 
     return {
       statusCode: 201,
       response: {
         ...message,
         threadId,
+        providerResult: outboundResult?.response || null,
       },
     };
   }

@@ -35,6 +35,11 @@ class ThreadRepository {
     };
   }
 
+  async getThreadById(id) {
+    const client = await Database.getInstance();
+    return client.getRepository(UnifiedThread).findOne({ where: { id } });
+  }
+
   async findThread(userId1, userId2, propertyId) {
     const client = await Database.getInstance();
 
@@ -95,7 +100,6 @@ class ThreadRepository {
       };
     }
 
-    // create new
     return await this.createThread({
       hostId,
       guestId,
