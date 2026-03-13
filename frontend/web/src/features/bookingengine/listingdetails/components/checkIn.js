@@ -1,16 +1,33 @@
+import DatePicker from "react-datepicker";
 import PropTypes from "prop-types";
-import { getFutureDateKey } from "../utils/dateAvailability";
+import {
+  buildUnavailableDateSet,
+  getFutureDateKey,
+  isUnavailableDate,
+  normalizeDateValue,
+  toDateKey,
+} from "../utils/dateAvailability";
 
-const CheckIn = ({ checkInDate = "", setCheckInDate = () => {} }) => {
+const CheckIn = ({
+  checkInDate = "",
+  setCheckInDate = () => {},
+  unavailableDateKeys = [],
+}) => {
+  const unavailableDateSet = buildUnavailableDateSet(unavailableDateKeys);
+  const minDate = normalizeDateValue(getFutureDateKey(1));
+
   return (
     <div className="date-box">
       <p className="label">Check in</p>
-      <input
-        type="date"
-        onChange={(event) => setCheckInDate(event.target.value)}
-        value={checkInDate}
+      <DatePicker
+        selected={normalizeDateValue(checkInDate)}
+        onChange={(date) => setCheckInDate(date ? toDateKey(date) : "")}
         className="inputField"
-        min={getFutureDateKey(1)}
+        minDate={minDate}
+        filterDate={(date) => !isUnavailableDate(date, unavailableDateSet)}
+        dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
+        dateFormat="yyyy-MM-dd"
+        placeholderText="YYYY-MM-DD"
       />
     </div>
   );
@@ -19,6 +36,7 @@ const CheckIn = ({ checkInDate = "", setCheckInDate = () => {} }) => {
 CheckIn.propTypes = {
   checkInDate: PropTypes.string,
   setCheckInDate: PropTypes.func,
+  unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default CheckIn;
