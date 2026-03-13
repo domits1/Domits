@@ -1,5 +1,6 @@
 import { getAccessToken } from '../../../../services/getAccessToken';
 import { getGuestBookingDetails, getAccommodationByPropertyId } from '../services/messagingService';
+import { resolvePrimaryAccommodationImageUrl } from '../../../../utils/accommodationImage';
 
 const fetchBookingDetailsAndAccommodation = async ({
   hostId,
@@ -20,12 +21,8 @@ const fetchBookingDetailsAndAccommodation = async ({
 
   if (bookingData.property_id && accommodationEndpoint) {
     const accoRaw = await getAccommodationByPropertyId(accommodationEndpoint, bookingData.property_id, token);
-    const key = accoRaw?.images?.[0]?.key;
     propertyTitle = accoRaw?.title || accoRaw?.name || null;
-
-    if (key) {
-      accoImage = `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`;
-    }
+    accoImage = resolvePrimaryAccommodationImageUrl(accoRaw?.images, "thumb");
   }
 
   return {

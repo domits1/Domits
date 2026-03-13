@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FaHome } from 'react-icons/fa';
 import useFetchBookingDetails from "../../features/hostdashboard/hostmessages/hooks/useFetchBookingDetails";
 import '../../features/hostdashboard/hostmessages/styles/sass/bookingtab/hostBookingTab.scss';
+import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 
 
 const BookingTab = ({ userId, contactId, dashboardType }) => {
@@ -24,7 +25,7 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
         return;
     }
 
-    const firstImage = `https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation?.images?.[0]?.key}`;
+    const firstImage = resolvePrimaryAccommodationImageUrl(accommodation?.images, "thumb");
     const formatHour = (hour) => {
         return `${hour}:00`;
     };
@@ -39,7 +40,7 @@ const BookingTab = ({ userId, contactId, dashboardType }) => {
                 <div className="booking-tab">
                     <div className="acco-image">
                         {accommodation?.property?.title && <h3>{accommodation?.property?.title}</h3>}
-                        {accommodation?.images?.[0]?.key && (
+                        {firstImage && (
                             <img
                                 src={firstImage}
                                 onClick={() => setModalImage(firstImage)}

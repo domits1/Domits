@@ -11,6 +11,13 @@ import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import RoomServiceIcon from '@mui/icons-material/RoomService';
 import CalculateDaysBetweenDates from "./utils/CalculateDifferenceInNights";
+import { resolveAccommodationImageUrls } from "../../utils/accommodationImage";
+
+const getBookingStatusLabel = (status) => {
+    if (status === "Paid") return "Confirmed";
+    if (status === "Awaiting Payment") return "Failed";
+    return "Pending";
+};
 
 const BookingConfirmationOverview = () => {
     const location = useLocation();
@@ -18,11 +25,9 @@ const BookingConfirmationOverview = () => {
     const [bookingDetails, setBookingDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { success, addUserToContactList } = useAddUserToContactList();
+    const { addUserToContactList } = useAddUserToContactList();
     const [contactAdded, setContactAdded] = useState(false);
     const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768); // State to track screen size
-
-    const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/"
 
     useEffect(() => {
         const handleResize = () => {
@@ -89,22 +94,22 @@ const BookingConfirmationOverview = () => {
 
     useEffect(() => {
         if (
-            bookingDetails?.HostID &&
-            bookingDetails?.GuestID &&
-            bookingDetails?.AccoID &&
-            bookingDetails.Status === "Accepted" &&
+            bookingDetails?.hostId &&
+            bookingDetails?.guestId &&
+            bookingDetails?.id &&
+            bookingDetails.status === "Accepted" &&
             !contactAdded
         ) {
             
             addUserToContactList(
-                bookingDetails.GuestID,
-                bookingDetails.HostID,
+                bookingDetails.guestId,
+                bookingDetails.hostId,
                 "accepted",
-                bookingDetails.AccoID
+                bookingDetails.id
             );
             setContactAdded(true);
         }
-    }, [bookingDetails]);
+    }, [addUserToContactList, bookingDetails, contactAdded]);
     
 
     if (loading) return <p>Loading booking details...</p>;
@@ -116,7 +121,7 @@ const BookingConfirmationOverview = () => {
             {!isMobileView && (
                 <div className="left">
                     {bookingDetails?.images && bookingDetails.images.length > 0 ?(
-                        <ImageGallery images={bookingDetails.images.map(img => `${S3_URL}${img.key}`)} />
+                        <ImageGallery images={resolveAccommodationImageUrls(bookingDetails.images, "web")} />
                     ) : (
                         <p>No images available for this accommodation.</p>
                     )}
@@ -129,7 +134,7 @@ const BookingConfirmationOverview = () => {
                 {isMobileView && (
                     <div className="left mobile-left">
                     {bookingDetails?.images && bookingDetails.images.length > 0 ?(
-                        <ImageGallery images={bookingDetails.images.map(img => `${S3_URL}${img.key}`)} />
+                        <ImageGallery images={resolveAccommodationImageUrls(bookingDetails.images, "web")} />
                     ) : (
                             <p>No images available for this accommodation.</p>
                         )}
@@ -139,11 +144,7 @@ const BookingConfirmationOverview = () => {
                     <div>
                         <h3>
                             Booking{" "}
-                            {bookingDetails.status === "Paid"
-                                ? "Confirmed"
-                                : bookingDetails.status === "Awaiting Payment"
-                                    ? "Failed"
-                                    : "Pending"}
+                            {getBookingStatusLabel(bookingDetails.status)}
                         </h3>
                         <p>
                             <strong>Check-in:</strong>{" "}

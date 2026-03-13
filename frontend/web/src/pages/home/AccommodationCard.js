@@ -13,6 +13,7 @@ import {
   updateWishlistItem,
   isPropertyInAnyWishlist,
 } from "../../features/guestdashboard/services/wishlistService";
+import { resolveAccommodationImageUrls } from "../../utils/accommodationImage";
 
 const AccommodationCard = ({ accommodation, onClick }) => {
   const [liked, setLiked] = useState(false);
@@ -68,6 +69,11 @@ const AccommodationCard = ({ accommodation, onClick }) => {
     return <div>No accommodation data available.</div>;
   }
 
+  const cardImages = resolveAccommodationImageUrls(
+    accommodation.propertyImages,
+    "thumb"
+  );
+
   return (
     <div
       className="accocard"
@@ -106,10 +112,10 @@ const AccommodationCard = ({ accommodation, onClick }) => {
         modules={[EffectFade, Navigation, Pagination]}
         className="mySwiper"
       >
-        {accommodation.propertyImages?.map((img, index) => (
+        {cardImages.map((imgSrc, index) => (
           <SwiperSlide key={index}>
             <img
-              src={`https://accommodation.s3.eu-north-1.amazonaws.com/${img.key}`}
+              src={imgSrc}
               alt={`Accommodation ${accommodation.property?.id} - Image ${
                 index + 1
               }`}

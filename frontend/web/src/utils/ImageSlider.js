@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from "../features/hostdashboard/HostDashboard.module.scss";
+import { placeholderImage, resolveAccommodationImageUrl } from "./accommodationImage";
 
 /**
  * @param images = images you want to slide through
@@ -7,40 +8,40 @@ import styles from "../features/hostdashboard/HostDashboard.module.scss";
  * @returns {Element}
  * @constructor
  */
-function ImageSlider({ images, seconds, page}) {
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [isVisible, setIsVisible] = useState(false);
-    const ms = seconds * 1000;
+function ImageSlider({ images, seconds, page }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const safeImages = Array.isArray(images) ? images : [];
+  const ms = seconds * 1000;
 
-    useEffect(() => {
-        const imageKeys = Object.keys(images).filter(key => key === "key");
-        const totalImages = imageKeys.length;
+  useEffect(() => {
+    if (!safeImages.length) return undefined;
 
+    setIsVisible(true);
+
+    const intervalId = setInterval(() => {
+      setIsVisible(false);
+
+      setTimeout(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % safeImages.length);
         setIsVisible(true);
+      }, 1000);
+    }, ms);
 
-        const intervalId = setInterval(() => {
-            setIsVisible(false);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [safeImages, ms]);
 
-            setTimeout(() => {
-                setCurrentImageIndex(prevIndex => (prevIndex + 1) % totalImages);
-                setIsVisible(true);
-            }, 1000);
-        }, ms);
+  const imageSrc = resolveAccommodationImageUrl(safeImages[currentImageIndex], "web") || placeholderImage;
 
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, [images, seconds]);
-
-    const imageSrc = images[currentImageIndex].key;
-
-    return (
-        <img
-            src={`https://accommodation.s3.eu-north-1.amazonaws.com/${imageSrc}`}
-            alt="Slideshow"
-            className={`${(page === 'dashboard') ? styles.accommodationImg : styles.imgSliderImage} ${isVisible ? styles.visible : ''}`}
-        />
-    );
+  return (
+    <img
+      src={imageSrc}
+      alt="Slideshow"
+      className={`${page === 'dashboard' ? styles.accommodationImg : styles.imgSliderImage} ${isVisible ? styles.visible : ''}`}
+    />
+  );
 }
 
 export default ImageSlider;
