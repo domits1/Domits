@@ -8,7 +8,6 @@ import AmenitiesContainer from "./amenitiesContainer";
 import Description from "../components/description";
 import RulesContainer from "./rulesContainer";
 import RangeCalendar from "./RangeCalendar";
-import LocationSection from "./locationSection";
 
 const PropertyContainer = ({
   property,
@@ -42,9 +41,6 @@ const PropertyContainer = ({
           }}
         />
       </section>
-      <section id="listing-location" className="listing-section-block">
-        <LocationSection location={property.location} />
-      </section>
       <RulesContainer rules={property.rules} checkIn={property.checkIn} />
     </div>
   );
@@ -64,12 +60,6 @@ PropertyContainer.propTypes = {
     amenities: PropTypes.array,
     calendarAvailability: PropTypes.shape({
       externalBlockedDates: PropTypes.arrayOf(PropTypes.string),
-    }),
-    location: PropTypes.shape({
-      street: PropTypes.string,
-      houseNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      city: PropTypes.string,
-      country: PropTypes.string,
     }),
     rules: PropTypes.array,
     checkIn: PropTypes.shape({
@@ -96,7 +86,6 @@ PropertyContainer.defaultProps = {
     property: { description: "" },
     amenities: [],
     calendarAvailability: { externalBlockedDates: [] },
-    location: {},
     rules: [],
     checkIn: { checkIn: {}, checkOut: {} },
   },

@@ -193,7 +193,6 @@ const ListingDetails2 = () => {
     { id: "about", label: "About", targetId: "listing-about" },
     { id: "amenities", label: "Amenities", targetId: "listing-amenities" },
     { id: "availability", label: "Availability", targetId: "listing-availability" },
-    { id: "location", label: "Location", targetId: "listing-location" },
   ];
 
   return (

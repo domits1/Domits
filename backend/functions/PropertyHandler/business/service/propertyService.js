@@ -195,7 +195,7 @@ export class PropertyService {
     if (basePropertyInfo?.status !== "ACTIVE") {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getFullPropertyAttributes(propertyId);
+    return await this.getFullPropertyAttributes(propertyId, { includeCalendarAvailability: true });
   }
 
   async getFullPropertyByIdAsHost(propertyId) {
@@ -260,15 +260,16 @@ export class PropertyService {
     };
   }
 
-  async getFullPropertyAttributes(propertyId) {
-    return this.getFullPropertyAttributesInternal(propertyId, false);
+  async getFullPropertyAttributes(propertyId, options = {}) {
+    return this.getFullPropertyAttributesInternal(propertyId, false, options);
   }
 
-  async getFullPropertyAttributesWithFullLocation(propertyId) {
-    return this.getFullPropertyAttributesInternal(propertyId, true);
+  async getFullPropertyAttributesWithFullLocation(propertyId, options = {}) {
+    return this.getFullPropertyAttributesInternal(propertyId, true, options);
   }
 
-  async getFullPropertyAttributesInternal(propertyId, includeFullLocation) {
+  async getFullPropertyAttributesInternal(propertyId, includeFullLocation, options = {}) {
+    const { includeCalendarAvailability = false } = options;
     const [
       basePropertyInfo,
       amenities,
@@ -281,7 +282,6 @@ export class PropertyService {
       pricing,
       rules,
       propertyType,
-      calendarAvailability,
       propertyTestStatus,
     ] = await Promise.all([
       this.getBasePropertyInfo(propertyId),
@@ -295,14 +295,13 @@ export class PropertyService {
       this.getPricing(propertyId),
       this.getRules(propertyId),
       this.getPropertyType(propertyId),
-      this.getPublicCalendarAvailability(propertyId),
       this.getPropertyTestStatus(propertyId),
     ]);
     const technicalDetails =
       propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
         ? await this.getTechnicalDetails(propertyId)
         : null;
-    return {
+    const response = {
       property: basePropertyInfo,
       amenities: amenities,
       availability: availability,
@@ -314,10 +313,13 @@ export class PropertyService {
       pricing: pricing,
       rules: rules,
       propertyType: propertyType,
-      calendarAvailability: calendarAvailability,
       technicalDetails: technicalDetails,
       propertyTestStatus: propertyTestStatus,
     };
+    if (includeCalendarAvailability) {
+      response.calendarAvailability = await this.getPublicCalendarAvailability(propertyId);
+    }
+    return response;
   }
 
   async getPublicCalendarAvailability(propertyId) {

@@ -61,7 +61,8 @@
     .listing-sections-nav {
         position: relative;
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
         align-items: stretch;
         min-height: 66px;
 
