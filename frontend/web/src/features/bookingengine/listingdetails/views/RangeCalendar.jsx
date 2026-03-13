@@ -28,6 +28,10 @@ const formatRangeDate = (date) =>
     day: "numeric",
     year: "numeric",
   });
+const isSameDay = (left, right) =>
+  left.getFullYear() === right.getFullYear() &&
+  left.getMonth() === right.getMonth() &&
+  left.getDate() === right.getDate();
 
 function MonthGrid({
   viewMonth,
@@ -39,6 +43,7 @@ function MonthGrid({
 }) {
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
+  const today = new Date();
 
   const cells = useMemo(() => {
     const start = startOfCalendar(year, month);
@@ -53,11 +58,12 @@ function MonthGrid({
       const inRange = rangeStart && rangeEnd && date >= rangeStart && date <= rangeEnd && inMonth;
       const isStart = rangeStart && key === toDateKey(rangeStart);
       const isEnd = rangeEnd && key === toDateKey(rangeEnd);
-      items.push({ date, key, inMonth, inRange, isStart, isEnd, isUnavailable });
+      const isToday = inMonth && isSameDay(date, today);
+      items.push({ date, key, inMonth, inRange, isStart, isEnd, isUnavailable, isToday });
     }
 
     return items;
-  }, [blockedDateKeys, month, rangeEnd, rangeStart, year]);
+  }, [blockedDateKeys, month, rangeEnd, rangeStart, today, year]);
 
   return (
     <div className="rc-month">
@@ -99,6 +105,7 @@ function MonthGrid({
                 cell.inRange && "is-inrange",
                 cell.isStart && "is-start",
                 cell.isEnd && "is-end",
+                cell.isToday && "is-today",
               ]
                 .filter(Boolean)
                 .join(" ")}

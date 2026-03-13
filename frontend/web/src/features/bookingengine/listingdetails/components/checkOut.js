@@ -5,7 +5,6 @@ import {
   buildUnavailableDateSet,
   getFutureDateKey,
   hasUnavailableDateInStayRange,
-  isUnavailableDate,
   normalizeDateValue,
   toDateKey,
 } from "../utils/dateAvailability";
@@ -37,6 +36,7 @@ const CheckOut = ({
 
           return !hasUnavailableDateInStayRange(selectedCheckInDate, date, unavailableDateSet);
         }}
+        dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
         dateFormat="yyyy-MM-dd"
         placeholderText="YYYY-MM-DD"
       />

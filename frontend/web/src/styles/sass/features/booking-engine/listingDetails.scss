@@ -686,6 +686,20 @@
                     z-index: 40;
                 }
 
+                .react-datepicker__day.booking-picker-day--today,
+                .react-datepicker__day--today {
+                    background: rgba(36, 88, 255, 0.12);
+                    border-radius: 0.3rem;
+                    color: #1f3f9b;
+                    font-weight: 700;
+                }
+
+                .react-datepicker__day--disabled.booking-picker-day--today,
+                .react-datepicker__day--today.react-datepicker__day--disabled {
+                    background: rgba(36, 88, 255, 0.08);
+                    color: #5b6fb1;
+                }
+
                 .date-container input:focus {
                     border-bottom-color: var(--primary-color);
                 }

@@ -25,6 +25,7 @@ const CheckIn = ({
         className="inputField"
         minDate={minDate}
         filterDate={(date) => !isUnavailableDate(date, unavailableDateSet)}
+        dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
         dateFormat="yyyy-MM-dd"
         placeholderText="YYYY-MM-DD"
       />

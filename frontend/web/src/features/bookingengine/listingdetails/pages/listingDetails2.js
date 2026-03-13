@@ -7,7 +7,6 @@ import Header from "../components/header";
 import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
-import { getFutureDateKey } from "../utils/dateAvailability";
 
 const BOOKINGS_API_URL =
   "https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus";
@@ -129,8 +128,8 @@ const ListingDetails2 = () => {
   const [property, setProperty] = useState({});
   const [host, setHost] = useState({});
   const [acceptedBookingDateKeys, setAcceptedBookingDateKeys] = useState([]);
-  const [checkInDate, setCheckInDate] = useState(getFutureDateKey(1));
-  const [checkOutDate, setCheckOutDate] = useState(getFutureDateKey(2));
+  const [checkInDate, setCheckInDate] = useState("");
+  const [checkOutDate, setCheckOutDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -153,8 +152,8 @@ const ListingDetails2 = () => {
     setProperty({});
     setHost({});
     setAcceptedBookingDateKeys([]);
-    setCheckInDate(getFutureDateKey(1));
-    setCheckOutDate(getFutureDateKey(2));
+    setCheckInDate("");
+    setCheckOutDate("");
 
     const loadData = async () => {
       try {

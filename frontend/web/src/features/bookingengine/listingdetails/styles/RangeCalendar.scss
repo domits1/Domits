@@ -171,6 +171,16 @@
     }
   }
 
+  &.is-today {
+    background: rgba(36, 88, 255, 0.12);
+    border-color: rgba(36, 88, 255, 0.45);
+
+    span {
+      color: #1f3f9b;
+      font-weight: 700;
+    }
+  }
+
   &.is-inrange {
     background: rgba(112, 112, 112, 0.12);
   }
@@ -193,6 +203,14 @@
   &.is-end span {
     color: var(--rc-text);
     font-weight: 600;
+  }
+
+  &.is-unavailable.is-today {
+    box-shadow: inset 0 0 0 2px rgba(36, 88, 255, 0.55);
+
+    span {
+      color: #fff;
+    }
   }
 }
 

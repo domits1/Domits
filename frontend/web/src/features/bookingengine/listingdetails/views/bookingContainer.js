@@ -148,9 +148,9 @@ const BookingContainer = ({
   host = {},
   propertyId = null,
   unavailableDateKeys = [],
-  checkInDate = getFutureDateKey(1),
+  checkInDate = "",
   setCheckInDate = () => {},
-  checkOutDate = getFutureDateKey(2),
+  checkOutDate = "",
   setCheckOutDate = () => {},
 }) => {
   const [adults, setAdults] = useState(1);
