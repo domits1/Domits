@@ -1,72 +1,101 @@
-import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
+import React, { useEffect, useMemo, useState } from "react";
+import { FaCalendarAlt } from "react-icons/fa";
+import {
+  buildUnavailableDateSet,
+  hasUnavailableDateInStayRange,
+  normalizeDateValue,
+  toDateKey,
+} from "../utils/dateAvailability";
 import "../styles/RangeCalendar.scss";
 
-const pad = (n) => (n < 10 ? `0${n}` : String(n));
-const toKey = (d) =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const makeDate = (y, m, d) => new Date(y, m, d);
+const makeDate = (year, month, day) => new Date(year, month, day);
 const addMonths = (date, offset) => makeDate(date.getFullYear(), date.getMonth() + offset, 1);
-const startOfCalendar = (y, m) => {
-  const first = makeDate(y, m, 1);
-  // Monday=0 … Sunday=6
+
+const startOfCalendar = (year, month) => {
+  const first = makeDate(year, month, 1);
   const day = (first.getDay() + 6) % 7;
   const gridStart = new Date(first);
   gridStart.setDate(first.getDate() - day);
   return gridStart;
 };
-const weekdayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-const monthLabel = (d) =>
-  d.toLocaleString(undefined, { month: "long", year: "numeric" });
 
-function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
-  const y = viewMonth.getFullYear();
-  const m = viewMonth.getMonth();
+const weekdayLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const monthLabel = (date) => date.toLocaleString(undefined, { month: "long", year: "numeric" });
+const formatRangeDate = (date) =>
+  date.toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, navigation, blockedDateKeys }) {
+  const year = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
 
   const cells = useMemo(() => {
-    const start = startOfCalendar(y, m);
-    const arr = [];
-    for (let i = 0; i < 42; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const inMonth = d.getMonth() === m;
-      const key = toKey(d);
-      const inRange =
-        rangeStart && rangeEnd && d >= rangeStart && d <= rangeEnd && inMonth;
-      const isStart = rangeStart && key === toKey(rangeStart);
-      const isEnd = rangeEnd && key === toKey(rangeEnd);
-      arr.push({ d, key, inMonth, inRange, isStart, isEnd });
+    const start = startOfCalendar(year, month);
+    const items = [];
+
+    for (let index = 0; index < 42; index += 1) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + index);
+      const inMonth = date.getMonth() === month;
+      const key = toDateKey(date);
+      const isUnavailable = inMonth && blockedDateKeys.has(key);
+      const inRange = rangeStart && rangeEnd && date >= rangeStart && date <= rangeEnd && inMonth;
+      const isStart = rangeStart && key === toDateKey(rangeStart);
+      const isEnd = rangeEnd && key === toDateKey(rangeEnd);
+      items.push({ date, key, inMonth, inRange, isStart, isEnd, isUnavailable });
     }
-    return arr;
-  }, [y, m, rangeStart, rangeEnd]);
+
+    return items;
+  }, [blockedDateKeys, month, rangeEnd, rangeStart, year]);
 
   return (
     <div className="rc-month">
-      <div className="rc-month__label">{monthLabel(viewMonth)}</div>
+      <div className="rc-month__topline">
+        {navigation?.side === "left" && (
+          <button type="button" className="rc-month__arrow" aria-label="Previous month" onClick={navigation.onClick}>
+            <span className="rc-chevron rc-chevron--left" />
+          </button>
+        )}
+        <div className="rc-month__label">{monthLabel(viewMonth)}</div>
+        {navigation?.side === "right" && (
+          <button type="button" className="rc-month__arrow" aria-label="Next month" onClick={navigation.onClick}>
+            <span className="rc-chevron rc-chevron--right" />
+          </button>
+        )}
+      </div>
+
       <div className="rc-grid rc-grid--head">
-        {weekdayLabels.map((w) => (
-          <div key={w} className="rc-cell rc-cell--head">
-            {w}
+        {weekdayLabels.map((weekday) => (
+          <div key={weekday} className="rc-cell rc-cell--head">
+            {weekday}
           </div>
         ))}
       </div>
+
       <div className="rc-grid rc-grid--body">
-        {cells.map((c) => (
+        {cells.map((cell) => (
           <button
-            key={c.key}
+            key={cell.key}
             type="button"
             className={[
               "rc-cell rc-cell--day",
-              !c.inMonth && "is-out",
-              c.inRange && "is-inrange",
-              c.isStart && "is-start",
-              c.isEnd && "is-end",
+              !cell.inMonth && "is-out",
+              cell.isUnavailable && "is-unavailable",
+              cell.inRange && "is-inrange",
+              cell.isStart && "is-start",
+              cell.isEnd && "is-end",
             ]
               .filter(Boolean)
               .join(" ")}
-            aria-label={c.d.toDateString()}
-            onClick={() => onPick(c.d)}
+            aria-label={formatRangeDate(cell.date)}
+            disabled={!cell.inMonth || cell.isUnavailable}
+            onClick={() => onPick(cell.date)}
           >
-            <span>{c.d.getDate()}</span>
+            <span>{cell.date.getDate()}</span>
           </button>
         ))}
       </div>
@@ -74,102 +103,124 @@ function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick }) {
   );
 }
 
-export default function RangeCalendar({ onChange }) {
+MonthGrid.propTypes = {
+  viewMonth: PropTypes.instanceOf(Date).isRequired,
+  rangeStart: PropTypes.instanceOf(Date),
+  rangeEnd: PropTypes.instanceOf(Date),
+  onPick: PropTypes.func.isRequired,
+  blockedDateKeys: PropTypes.instanceOf(Set).isRequired,
+  navigation: PropTypes.shape({
+    side: PropTypes.oneOf(["left", "right"]),
+    onClick: PropTypes.func,
+  }),
+};
+
+MonthGrid.defaultProps = {
+  rangeStart: null,
+  rangeEnd: null,
+  navigation: null,
+};
+
+export default function RangeCalendar({ unavailableDateKeys, checkInDate, checkOutDate, onRangeChange }) {
   const now = new Date();
   const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const initialStart = new Date(now);
-  initialStart.setDate(now.getDate() - 2);
-  const initialEnd = new Date(now);
-  initialEnd.setDate(now.getDate() + 2);
-  const [activeTab, setActiveTab] = useState("calendar");
+
   const [view, setView] = useState(initialMonth);
-  const [start, setStart] = useState(initialStart);
-  const [end, setEnd] = useState(initialEnd);
   const [draftStart, setDraftStart] = useState(null);
-  const next = () => setView((v) => addMonths(v, 1));
-  const prev = () => setView((v) => addMonths(v, -1));
+  const rangeStart = useMemo(() => normalizeDateValue(checkInDate), [checkInDate]);
+  const rangeEnd = useMemo(() => normalizeDateValue(checkOutDate), [checkOutDate]);
+
+  const blockedDateKeys = useMemo(() => buildUnavailableDateSet(unavailableDateKeys), [unavailableDateKeys]);
+
   const rightMonth = useMemo(() => addMonths(view, 1), [view]);
-  const handlePick = (d) => {
-    if (!draftStart) {
-      setDraftStart(d);
-      setStart(d);
-      setEnd(null);
+
+  const next = () => setView((value) => addMonths(value, 1));
+  const prev = () => setView((value) => addMonths(value, -1));
+
+  useEffect(() => {
+    setDraftStart(rangeStart && !rangeEnd ? rangeStart : null);
+  }, [rangeEnd, rangeStart]);
+
+  const handlePick = (date) => {
+    const key = toDateKey(date);
+    if (blockedDateKeys.has(key)) {
       return;
     }
-    const a = draftStart <= d ? draftStart : d;
-    const b = draftStart <= d ? d : draftStart;
-    setStart(a);
-    setEnd(b);
+
+    const anchorDate = draftStart || rangeStart;
+
+    if (!anchorDate || rangeEnd) {
+      setDraftStart(date);
+      onRangeChange(key, "");
+      return;
+    }
+
+    const nextStart = anchorDate.getTime() <= date.getTime() ? anchorDate : date;
+    const nextEnd = anchorDate.getTime() <= date.getTime() ? date : anchorDate;
+
+    if (hasUnavailableDateInStayRange(nextStart, nextEnd, blockedDateKeys)) {
+      alert("Selected stay includes unavailable dates.");
+      setDraftStart(date);
+      onRangeChange(key, "");
+      return;
+    }
+
     setDraftStart(null);
-    onChange && onChange({ start: a, end: b });
+    onRangeChange(toDateKey(nextStart), toDateKey(nextEnd));
   };
+
+  const rangeLabel =
+    rangeStart && rangeEnd
+      ? `${formatRangeDate(rangeStart)} - ${formatRangeDate(rangeEnd)}`
+      : "Select your stay dates";
+
   return (
-    <>
-      <p className="title">Booking Availability Calendar</p>
+    <section className="availability-section">
+      <div className="availability-section__header">
+        <div className="availability-section__title-row">
+          <span className="availability-section__icon" aria-hidden="true">
+            <FaCalendarAlt />
+          </span>
+          <h3 className="availability-section__title">Availability</h3>
+        </div>
+        <p className="availability-section__range">{rangeLabel}</p>
+      </div>
+
       <div className="rc-con">
         <div className="rc">
-          <div className="rc-header">
-            <div className="rc-tabs" role="tablist">
-              <button
-                role="tab"
-                aria-selected={activeTab === "calendar"}
-                className={"rc-tab" + (activeTab === "calendar" ? " is-active" : "")}
-                onClick={() => setActiveTab("calendar")}
-              >
-                Calendar
-              </button>
-            </div>
-            <div className="rc-nav">
-              <button
-                className="rc-nav__btn"
-                aria-label="Previous month"
-                onClick={prev}
-              >
-                <span className="rc-chevron rc-chevron--left" />
-              </button>
-              <button
-                className="rc-nav__btn"
-                aria-label="Next month"
-                onClick={next}
-              >
-                <span className="rc-chevron rc-chevron--right" />
-              </button>
-            </div>
-          </div>
-          {activeTab === "calendar" ? (
-            <div className="rc-panels">
-              <MonthGrid
-                viewMonth={view}
-                rangeStart={start}
-                rangeEnd={end}
-                onPick={handlePick}
-              />
-              <MonthGrid
-                viewMonth={rightMonth}
-                rangeStart={start}
-                rangeEnd={end}
-                onPick={handlePick}
-              />
-            </div>
-          ) : (
-            <div className="rc-flexible">
-              <p>Select a time window and we'll suggest dates.</p>
-            </div>
-          )}
-          <div className="rc-footer">
-            <div className="rc-range">
-              <span>Start:</span>
-              <strong>{start ? start.toLocaleDateString() : "—"}</strong>
-              <span className="rc-range__sep">•</span>
-              <span>End:</span>
-              <strong>{end ? end.toLocaleDateString() : "—"}</strong>
-            </div>
-            <button className="rc-cta" type="button">
-              Apply
-            </button>
+          <div className="rc-panels">
+            <MonthGrid
+              viewMonth={view}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
+              onPick={handlePick}
+              blockedDateKeys={blockedDateKeys}
+              navigation={{ side: "left", onClick: prev }}
+            />
+            <MonthGrid
+              viewMonth={rightMonth}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
+              onPick={handlePick}
+              blockedDateKeys={blockedDateKeys}
+              navigation={{ side: "right", onClick: next }}
+            />
           </div>
         </div>
       </div>
-    </>
+    </section>
   );
 }
+
+RangeCalendar.propTypes = {
+  unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  checkInDate: PropTypes.string,
+  checkOutDate: PropTypes.string,
+  onRangeChange: PropTypes.func.isRequired,
+};
+
+RangeCalendar.defaultProps = {
+  unavailableDateKeys: [],
+  checkInDate: "",
+  checkOutDate: "",
+};

@@ -62,9 +62,13 @@
   margin-right: 8px;
 }
 .show-more-text {
+  padding: 0;
+  border: none;
+  background: none;
   color: #007bff; 
   text-decoration: underline; 
   cursor: pointer; 
+  font: inherit;
 }
 
 .show-more-text:hover {

@@ -1,9 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import DateSelectionContainer from "./dateSelectionContainer";
 import GuestSelectionContainer from "./guestSelectionContainer";
 import Pricing from "../components/pricing";
 import useHandleReservePress from "../hooks/handleReservePress";
+import {
+  buildUnavailableDateSet,
+  getFutureDateKey,
+  hasUnavailableDateInStayRange,
+  isUnavailableDate,
+} from "../utils/dateAvailability";
 
 import { UserProvider } from "../../../hostdashboard/hostmessages/context/AuthContext";
 import { WebSocketProvider } from "../../../hostdashboard/hostmessages/context/webSocketContext";
@@ -126,15 +132,37 @@ const MessageHostModalInner = ({ onClose, hostId, hostName, hostImage, propertyI
   );
 };
 
-const BookingContainer = ({ property, host, propertyId }) => {
-  const [checkInDate, setCheckInDate] = useState(new Date(Date.now() + 86400000).toISOString().split("T")[0]);
-  const [checkOutDate, setCheckOutDate] = useState(new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0]);
-  const [nights, setNights] = useState();
+const calculateNights = (checkInDate, checkOutDate) => {
+  if (!checkInDate || !checkOutDate) {
+    return 0;
+  }
+
+  const checkIn = new Date(checkInDate);
+  const checkOut = new Date(checkOutDate);
+  const timeDifference = checkOut.getTime() - checkIn.getTime();
+  return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+};
+
+const BookingContainer = ({
+  property,
+  host,
+  propertyId,
+  unavailableDateKeys,
+  checkInDate,
+  setCheckInDate,
+  checkOutDate,
+  setCheckOutDate,
+}) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
 
   const handleReservePress = useHandleReservePress();
   const [showMessageHost, setShowMessageHost] = useState(false);
+  const unavailableDateSet = useMemo(
+    () => buildUnavailableDateSet(unavailableDateKeys),
+    [unavailableDateKeys]
+  );
+  const nights = useMemo(() => calculateNights(checkInDate, checkOutDate), [checkInDate, checkOutDate]);
 
   const hostId = property?.property?.hostId || property?.property?.hostID || null;
   const hostName = host?.givenName || host?.name || "Host";
@@ -158,16 +186,78 @@ const BookingContainer = ({ property, host, propertyId }) => {
     };
   }, [showMessageHost]);
 
+  useEffect(() => {
+    if (!checkInDate) {
+      return;
+    }
+
+    if (
+      isUnavailableDate(checkInDate, unavailableDateSet) ||
+      (checkOutDate && hasUnavailableDateInStayRange(checkInDate, checkOutDate, unavailableDateSet))
+    ) {
+      setCheckInDate("");
+      setCheckOutDate("");
+    }
+  }, [checkInDate, checkOutDate, setCheckInDate, setCheckOutDate, unavailableDateSet]);
+
+  const handleCheckInDateChange = (value) => {
+    if (!value) {
+      setCheckInDate("");
+      setCheckOutDate("");
+      return;
+    }
+
+    if (isUnavailableDate(value, unavailableDateSet)) {
+      alert("Check in date is unavailable.");
+      return;
+    }
+
+    if (checkOutDate && checkOutDate <= value) {
+      alert("Check in date has to be before check out date.");
+      return;
+    }
+
+    if (checkOutDate && hasUnavailableDateInStayRange(value, checkOutDate, unavailableDateSet)) {
+      alert("Selected stay includes unavailable dates.");
+      return;
+    }
+
+    setCheckInDate(value);
+  };
+
+  const handleCheckOutDateChange = (value) => {
+    if (!value) {
+      setCheckOutDate("");
+      return;
+    }
+
+    if (!checkInDate) {
+      alert("Select a check in date first.");
+      return;
+    }
+
+    if (checkInDate >= value) {
+      alert("Check out date has to be after check in date.");
+      return;
+    }
+
+    if (hasUnavailableDateInStayRange(checkInDate, value, unavailableDateSet)) {
+      alert("Selected stay includes unavailable dates.");
+      return;
+    }
+
+    setCheckOutDate(value);
+  };
+
   return (
     <div className="booking-container">
       <h3 className="booking-title">Booking details</h3>
 
       <DateSelectionContainer
         checkInDate={checkInDate}
-        setCheckInDate={setCheckInDate}
+        setCheckInDate={handleCheckInDateChange}
         checkOutDate={checkOutDate}
-        setCheckOutDate={setCheckOutDate}
-        setNights={setNights}
+        setCheckOutDate={handleCheckOutDateChange}
       />
 
       <br />
@@ -239,6 +329,21 @@ BookingContainer.propTypes = {
     profileImage: PropTypes.string,
   }),
   propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
+  checkInDate: PropTypes.string,
+  setCheckInDate: PropTypes.func,
+  checkOutDate: PropTypes.string,
+  setCheckOutDate: PropTypes.func,
+};
+
+BookingContainer.defaultProps = {
+  host: {},
+  propertyId: null,
+  unavailableDateKeys: [],
+  checkInDate: getFutureDateKey(1),
+  setCheckInDate: () => {},
+  checkOutDate: getFutureDateKey(2),
+  setCheckOutDate: () => {},
 };
 
 export default BookingContainer;
