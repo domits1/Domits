@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import {
   resolveAccommodationImageUrl,
   resolveAccommodationImageKey,
@@ -13,6 +14,7 @@ const ImageGallery = ({ images }) => {
 
   const toMainSrc = (image) => resolveAccommodationImageUrl(image, "web");
   const toThumbSrc = (image) => resolveAccommodationImageUrl(image, "thumb");
+  const getImageAltText = (index) => `Accommodation image ${index + 1}`;
 
   const nextImage = () => {
     setActiveIndex((prev) => (prev + 1) % images.length);
@@ -29,6 +31,7 @@ const ImageGallery = ({ images }) => {
           <img
             className="main-image"
             src={toMainSrc(main)}
+            alt={getImageAltText(0)}
             onClick={() => {
               setActiveIndex(0);
               setShowOverlay(true);
@@ -43,6 +46,7 @@ const ImageGallery = ({ images }) => {
               key={resolveAccommodationImageKey(img, "web") || index}
               className="small-image"
               src={toMainSrc(img)}
+              alt={getImageAltText(index + 1)}
               onClick={() => {
                 setActiveIndex(index + 1);
                 setShowOverlay(true);
@@ -63,7 +67,11 @@ const ImageGallery = ({ images }) => {
               ‹
             </button>
 
-            <img className="overlay-main-image" src={toMainSrc(images[activeIndex])} />
+            <img
+              className="overlay-main-image"
+              src={toMainSrc(images[activeIndex])}
+              alt={getImageAltText(activeIndex)}
+            />
 
             <button className="nav-button right" onClick={nextImage}>
               ›
@@ -76,6 +84,7 @@ const ImageGallery = ({ images }) => {
                 key={resolveAccommodationImageKey(img, "web") || index}
                 className={`thumb ${index === activeIndex ? "active" : ""}`}
                 src={toThumbSrc(img)}
+                alt={getImageAltText(index)}
                 onClick={() => setActiveIndex(index)}
               />
             ))}
@@ -84,6 +93,10 @@ const ImageGallery = ({ images }) => {
       )}
     </section>
   );
+};
+
+ImageGallery.propTypes = {
+  images: PropTypes.array.isRequired,
 };
 
 export default ImageGallery;

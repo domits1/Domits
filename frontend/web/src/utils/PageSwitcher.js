@@ -43,10 +43,12 @@ function PageSwitcher({ accommodations, bankDetailsProvided, amount, onEdit, onD
       {currentItems.map((accommodation) => {
         const createdAtTimestamp = new Date(accommodation.createdAt).getTime();
         const updatedAtTimestamp = new Date(accommodation.updatedAt).getTime();
-        const listedOnDate = !Number.isNaN(createdAtTimestamp)
+        const hasValidCreatedAt = Number.isFinite(createdAtTimestamp);
+        const hasValidUpdatedAt = Number.isFinite(updatedAtTimestamp);
+        const listedOnDate = hasValidCreatedAt
           ? formatDate(accommodation.createdAt)
           : formatDate(accommodation.updatedAt);
-        const lastChangeDate = !Number.isNaN(updatedAtTimestamp)
+        const lastChangeDate = hasValidUpdatedAt
           ? formatDate(accommodation.updatedAt)
           : formatDate(accommodation.createdAt);
         const canSetLive = bankDetailsProvided && accommodation.DateRanges?.length > 0;

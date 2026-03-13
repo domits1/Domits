@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from "../features/hostdashboard/HostDashboard.module.scss";
 import { placeholderImage, resolveAccommodationImageUrl } from "./accommodationImage";
 
@@ -13,25 +13,40 @@ function ImageSlider({ images, seconds, page }) {
   const [isVisible, setIsVisible] = useState(false);
   const safeImages = Array.isArray(images) ? images : [];
   const ms = seconds * 1000;
+  const currentImageIndexRef = useRef(0);
+
+  useEffect(() => {
+    currentImageIndexRef.current = currentImageIndex;
+  }, [currentImageIndex]);
+
+  const showNextImage = useCallback(() => {
+    if (!safeImages.length) {
+      return;
+    }
+
+    const nextIndex = (currentImageIndexRef.current + 1) % safeImages.length;
+    currentImageIndexRef.current = nextIndex;
+    setCurrentImageIndex(nextIndex);
+    setIsVisible(true);
+  }, [safeImages.length]);
 
   useEffect(() => {
     if (!safeImages.length) return undefined;
 
     setIsVisible(true);
+    let timeoutId;
 
     const intervalId = setInterval(() => {
       setIsVisible(false);
 
-      setTimeout(() => {
-        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % safeImages.length);
-        setIsVisible(true);
-      }, 1000);
+      timeoutId = setTimeout(showNextImage, 1000);
     }, ms);
 
     return () => {
       clearInterval(intervalId);
+      clearTimeout(timeoutId);
     };
-  }, [safeImages, ms]);
+  }, [safeImages.length, ms, showNextImage]);
 
   const imageSrc = resolveAccommodationImageUrl(safeImages[currentImageIndex], "web") || placeholderImage;
 

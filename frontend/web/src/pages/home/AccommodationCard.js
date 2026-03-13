@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { EffectFade, Navigation, Pagination } from "swiper/modules";
@@ -14,6 +15,10 @@ import {
   isPropertyInAnyWishlist,
 } from "../../features/guestdashboard/services/wishlistService";
 import { resolveAccommodationImageUrls } from "../../utils/accommodationImage";
+import { getListingPricingBreakdown } from "../../features/bookingengine/listingdetails/utils/pricing";
+
+const EURO_SYMBOL = "\u20AC";
+const formatEuroAmount = (value) => `${EURO_SYMBOL}${Number(value || 0).toFixed(2)}`;
 
 const AccommodationCard = ({ accommodation, onClick }) => {
   const [liked, setLiked] = useState(false);
@@ -73,6 +78,10 @@ const AccommodationCard = ({ accommodation, onClick }) => {
     accommodation.propertyImages,
     "thumb"
   );
+  const { nightlyDisplayPrice } = getListingPricingBreakdown(
+    accommodation.propertyPricing,
+    1
+  );
 
   return (
     <div
@@ -128,7 +137,7 @@ const AccommodationCard = ({ accommodation, onClick }) => {
           {accommodation.property?.title || "No title available"}
         </div>
         <div className="accocard-price">
-          €{accommodation.propertyPricing?.roomRate || "N/A"} per night
+          {formatEuroAmount(nightlyDisplayPrice)} per night
         </div>
         <div className="accocard-detail">
           {accommodation.property?.description || "No description available"}
@@ -152,6 +161,32 @@ const AccommodationCard = ({ accommodation, onClick }) => {
       </div>
     </div>
   );
+};
+
+AccommodationCard.propTypes = {
+  accommodation: PropTypes.shape({
+    property: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      title: PropTypes.string,
+      description: PropTypes.string,
+    }),
+    propertyImages: PropTypes.array,
+    propertyPricing: PropTypes.shape({
+      roomRate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      cleaning: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+    propertyGeneralDetails: PropTypes.arrayOf(
+      PropTypes.shape({
+        detail: PropTypes.string,
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      })
+    ),
+  }),
+  onClick: PropTypes.func.isRequired,
+};
+
+AccommodationCard.defaultProps = {
+  accommodation: null,
 };
 
 export default AccommodationCard;
