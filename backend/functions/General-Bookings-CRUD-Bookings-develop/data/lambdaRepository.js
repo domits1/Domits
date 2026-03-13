@@ -2,17 +2,35 @@ import NotFoundException from "../util/exception/NotFoundException.js";
 import Database from "database";
 import { Property_Pricing } from "database/models/Property_Pricing";
 class LambdaRepository {
+  extractPropertyCards(payload) {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (Array.isArray(payload?.properties)) {
+      return payload.properties;
+    }
+
+    if (payload === "No property found." || payload?.message === "No property found.") {
+      return [];
+    }
+
+    return null;
+  }
+
   async getPropertiesFromHostId(host_Id) {
     const response = await fetch(
       `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byHostId?hostId=${host_Id}`
     );
 
     const receivedData = await response.json();
-    if (receivedData === "No property found.") {
+    const propertyCards = this.extractPropertyCards(receivedData);
+
+    if (!response.ok || propertyCards === null || propertyCards.length < 1) {
       throw new NotFoundException("User has no active properties.");
     }
 
-    const properties = receivedData.map((property) => ({
+    const properties = propertyCards.map((property) => ({
       id: property.property.id,
       title: property.property.title,
       rate: property.propertyPricing.roomRate,
