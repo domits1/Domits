@@ -43,7 +43,24 @@ const resolveAddressAttribute = (rawAddress = "") => {
   return address;
 };
 
-const isValidEmailAddress = (email = "") => /\S+@\S+\.\S+/.test(email);
+const isValidEmailAddress = (email = "") => {
+  const normalizedEmail = String(email || "").trim();
+  if (!normalizedEmail || normalizedEmail.includes(" ")) {
+    return false;
+  }
+
+  const atIndex = normalizedEmail.indexOf("@");
+  const lastAtIndex = normalizedEmail.lastIndexOf("@");
+
+  if (atIndex <= 0 || atIndex !== lastAtIndex || atIndex === normalizedEmail.length - 1) {
+    return false;
+  }
+
+  const domain = normalizedEmail.slice(atIndex + 1);
+  const dotIndex = domain.indexOf(".");
+
+  return dotIndex > 0 && dotIndex < domain.length - 1;
+};
 
 const requestEmailUpdate = async (userId, newEmail) => {
   const response = await fetch(
