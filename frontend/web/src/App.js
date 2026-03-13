@@ -104,8 +104,6 @@ function App() {
     document.title = "Domits";
   }, [searchResults]);
 
-  void loading;
-
   useEffect(() => {
     initializeUserAttributes();
   }, []);
@@ -153,7 +151,7 @@ function App() {
           <ScrollToTop />
           <AuthProvider>
             <UserProvider>
-              <div className="App">
+              <div className="App" aria-busy={loading}>
                 {currentPath !== "/admin" && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
                 <Routes>
                   <Route path="/home" element={<Home searchResults={searchResults} />} />
