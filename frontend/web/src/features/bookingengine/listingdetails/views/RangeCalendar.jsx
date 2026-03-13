@@ -84,27 +84,32 @@ function MonthGrid({
       </div>
 
       <div className="rc-grid rc-grid--body">
-        {cells.map((cell) => (
-          <button
-            key={cell.key}
-            type="button"
-            className={[
-              "rc-cell rc-cell--day",
-              !cell.inMonth && "is-out",
-              cell.isUnavailable && "is-unavailable",
-              cell.inRange && "is-inrange",
-              cell.isStart && "is-start",
-              cell.isEnd && "is-end",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            aria-label={formatRangeDate(cell.date)}
-            disabled={!cell.inMonth || cell.isUnavailable}
-            onClick={() => onPick(cell.date)}
-          >
-            <span>{cell.date.getDate()}</span>
-          </button>
-        ))}
+        {cells.map((cell) => {
+          if (!cell.inMonth) {
+            return <div key={cell.key} className="rc-cell rc-cell--day is-out is-empty" aria-hidden="true" />;
+          }
+
+          return (
+            <button
+              key={cell.key}
+              type="button"
+              className={[
+                "rc-cell rc-cell--day",
+                cell.isUnavailable && "is-unavailable",
+                cell.inRange && "is-inrange",
+                cell.isStart && "is-start",
+                cell.isEnd && "is-end",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-label={formatRangeDate(cell.date)}
+              disabled={cell.isUnavailable}
+              onClick={() => onPick(cell.date)}
+            >
+              <span>{cell.date.getDate()}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

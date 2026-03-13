@@ -150,6 +150,13 @@
     background: #f3f5f8;
   }
 
+  &.is-empty {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+    pointer-events: none;
+  }
+
   &.is-unavailable {
     background: #757575;
     border-color: #757575;

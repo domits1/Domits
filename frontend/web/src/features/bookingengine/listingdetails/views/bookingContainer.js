@@ -258,6 +258,7 @@ const BookingContainer = ({
         setCheckInDate={handleCheckInDateChange}
         checkOutDate={checkOutDate}
         setCheckOutDate={handleCheckOutDateChange}
+        unavailableDateKeys={unavailableDateKeys}
       />
 
       <br />

@@ -677,6 +677,15 @@
                     }
                 }
 
+                .react-datepicker-wrapper,
+                .react-datepicker__input-container {
+                    width: 100%;
+                }
+
+                .react-datepicker-popper {
+                    z-index: 40;
+                }
+
                 .date-container input:focus {
                     border-bottom-color: var(--primary-color);
                 }
