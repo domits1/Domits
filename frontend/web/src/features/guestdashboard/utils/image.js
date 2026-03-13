@@ -1,5 +1,5 @@
-import {
-  S3_ACCOMMODATION_URL,
+export {
+  S3_ACCOMMODATION_URL as S3_URL,
   placeholderImage,
   normalizeImageUrl,
   resolveAccommodationImageKey,
@@ -7,13 +7,3 @@ import {
   resolveAccommodationImageUrls,
   resolvePrimaryAccommodationImageUrl,
 } from "../../../utils/accommodationImage";
-
-export const S3_URL = S3_ACCOMMODATION_URL;
-export {
-  placeholderImage,
-  normalizeImageUrl,
-  resolveAccommodationImageKey,
-  resolveAccommodationImageUrl,
-  resolveAccommodationImageUrls,
-  resolvePrimaryAccommodationImageUrl,
-};

@@ -89,7 +89,7 @@ function RedirectHostOnboardingCatchAll() {
 
 function App() {
   const [searchResults, setSearchResults] = useState([]);
-  const [, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Apollo Client
   const client = new ApolloClient({
@@ -103,6 +103,8 @@ function App() {
   useEffect(() => {
     document.title = "Domits";
   }, [searchResults]);
+
+  void loading;
 
   useEffect(() => {
     initializeUserAttributes();
