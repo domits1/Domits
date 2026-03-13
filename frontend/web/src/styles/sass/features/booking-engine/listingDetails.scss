@@ -688,16 +688,16 @@
 
                 .react-datepicker__day.booking-picker-day--today,
                 .react-datepicker__day--today {
-                    background: rgba(36, 88, 255, 0.12);
+                    background: #dbe6ff;
                     border-radius: 0.3rem;
-                    color: #1f3f9b;
+                    color: #16388c;
                     font-weight: 700;
                 }
 
                 .react-datepicker__day--disabled.booking-picker-day--today,
                 .react-datepicker__day--today.react-datepicker__day--disabled {
-                    background: rgba(36, 88, 255, 0.08);
-                    color: #5b6fb1;
+                    background: #e7eefc;
+                    color: #2f4c8f;
                 }
 
                 .date-container input:focus {
