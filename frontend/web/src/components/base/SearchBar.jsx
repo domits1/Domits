@@ -254,13 +254,6 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
     setError(null);
   };
 
-  const accommodationOptions = [
-    { value: "", label: searchContent.accommodation },
-    { value: "house", label: searchContent.house },
-    { value: "boat", label: searchContent.boat },
-    { value: "camper", label: searchContent.camper },
-  ];
-
   const guestCounters = [
     {
       key: 'adults',
@@ -346,22 +339,7 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
                 />
               </div>
 
-              {isMobile && (
-                <div className="search-accommodation search-bar-field">
-                  <select
-                    value={accommodation}
-                    onChange={(e) => setAccommodation(e.target.value)}
-                    className={`search-accommodation-select ${accommodation ? "" : "is-placeholder"}`}>
-                    {accommodationOptions.map((option) => (
-                      <option key={option.value || "placeholder"} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {!isMobile && renderDateField()}
+              {renderDateField()}
 
               <div className={`search-guest-wrapper ${totalGuests > 0 ? 'has-clear' : ''}`}>
                 <button
@@ -410,8 +388,6 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
                   ))}
                 </div>
               </div>
-
-              {isMobile && renderDateField()}
 
               <div className="mobile-search-filter-wrapper">
               <button className="searchbar-button" type="button" onClick={handleSearch}>

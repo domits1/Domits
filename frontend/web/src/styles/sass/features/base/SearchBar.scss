@@ -503,7 +503,6 @@ $primary-domits-color: #0d9813;
 
   .search-bar-field,
   .search-location,
-  .search-accommodation,
   .search-check-in-out,
   .search-guest-section {
     display: flex;
@@ -537,8 +536,7 @@ $primary-domits-color: #0d9813;
 
   .search-location .search-places-input,
   .search-check-in-out .search-date-trigger,
-  .search-guest-text,
-  .search-accommodation-select {
+  .search-guest-text {
     width: 100%;
     font-size: 1.05rem;
     font-weight: 510;
@@ -548,8 +546,7 @@ $primary-domits-color: #0d9813;
 
   .search-location .search-places-input::placeholder,
   .search-check-in-out .search-date-trigger.is-placeholder,
-  .search-guest-text.is-placeholder,
-  .search-accommodation-select.is-placeholder {
+  .search-guest-text.is-placeholder {
     color: $primary-domits-color;
   }
 
@@ -563,18 +560,6 @@ $primary-domits-color: #0d9813;
     margin: 0;
     font-weight: 600;
     line-height: 1.2;
-  }
-
-  .search-accommodation-select {
-    border: none;
-    background: transparent;
-    appearance: none;
-    -webkit-appearance: none;
-    font-family: inherit;
-    line-height: 1.3;
-    cursor: pointer;
-    outline: none;
-    text-align-last: center;
   }
 
   .mobile-search-filter-wrapper {
