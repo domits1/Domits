@@ -29,7 +29,14 @@ const formatRangeDate = (date) =>
     year: "numeric",
   });
 
-function MonthGrid({ viewMonth, rangeStart, rangeEnd, onPick, navigation, blockedDateKeys }) {
+function MonthGrid({
+  viewMonth,
+  rangeStart = null,
+  rangeEnd = null,
+  onPick,
+  navigation = null,
+  blockedDateKeys,
+}) {
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
 
@@ -115,13 +122,12 @@ MonthGrid.propTypes = {
   }),
 };
 
-MonthGrid.defaultProps = {
-  rangeStart: null,
-  rangeEnd: null,
-  navigation: null,
-};
-
-export default function RangeCalendar({ unavailableDateKeys, checkInDate, checkOutDate, onRangeChange }) {
+export default function RangeCalendar({
+  unavailableDateKeys = [],
+  checkInDate = "",
+  checkOutDate = "",
+  onRangeChange,
+}) {
   const now = new Date();
   const initialMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -219,8 +225,3 @@ RangeCalendar.propTypes = {
   onRangeChange: PropTypes.func.isRequired,
 };
 
-RangeCalendar.defaultProps = {
-  unavailableDateKeys: [],
-  checkInDate: "",
-  checkOutDate: "",
-};

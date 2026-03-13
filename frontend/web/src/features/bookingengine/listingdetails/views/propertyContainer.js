@@ -10,10 +10,19 @@ import RulesContainer from "./rulesContainer";
 import RangeCalendar from "./RangeCalendar";
 
 const PropertyContainer = ({
-  property,
-  unavailableDateKeys,
-  checkInDate,
-  checkOutDate,
+  property = {
+    images: [],
+    pricing: {},
+    generalDetails: [],
+    property: { description: "" },
+    amenities: [],
+    calendarAvailability: { externalBlockedDates: [] },
+    rules: [],
+    checkIn: { checkIn: {}, checkOut: {} },
+  },
+  unavailableDateKeys = [],
+  checkInDate = "",
+  checkOutDate = "",
   setCheckInDate,
   setCheckOutDate,
 }) => {
@@ -76,22 +85,6 @@ PropertyContainer.propTypes = {
   checkOutDate: PropTypes.string,
   setCheckInDate: PropTypes.func.isRequired,
   setCheckOutDate: PropTypes.func.isRequired,
-};
-
-PropertyContainer.defaultProps = {
-  property: {
-    images: [],
-    pricing: {},
-    generalDetails: [],
-    property: { description: "" },
-    amenities: [],
-    calendarAvailability: { externalBlockedDates: [] },
-    rules: [],
-    checkIn: { checkIn: {}, checkOut: {} },
-  },
-  unavailableDateKeys: [],
-  checkInDate: "",
-  checkOutDate: "",
 };
 
 export default PropertyContainer;

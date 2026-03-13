@@ -1,7 +1,11 @@
 import PropTypes from "prop-types";
 import { addDaysToDateKey, getFutureDateKey } from "../utils/dateAvailability";
 
-const CheckOut = ({ checkOutDate, setCheckOutDate, checkInDate }) => {
+const CheckOut = ({
+  checkOutDate = "",
+  setCheckOutDate = () => {},
+  checkInDate = "",
+}) => {
   const minCheckOutDate = checkInDate ? addDaysToDateKey(checkInDate, 1) : getFutureDateKey(2);
 
   return (
@@ -23,12 +27,6 @@ CheckOut.propTypes = {
   checkOutDate: PropTypes.string,
   setCheckOutDate: PropTypes.func,
   checkInDate: PropTypes.string,
-};
-
-CheckOut.defaultProps = {
-  checkOutDate: "",
-  setCheckOutDate: () => {},
-  checkInDate: "",
 };
 
 export default CheckOut;

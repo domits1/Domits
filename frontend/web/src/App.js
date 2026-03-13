@@ -89,7 +89,7 @@ function RedirectHostOnboardingCatchAll() {
 
 function App() {
   const [searchResults, setSearchResults] = useState([]);
-  const [setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 
   // Apollo Client
   const client = new ApolloClient({

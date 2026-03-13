@@ -145,13 +145,13 @@ const calculateNights = (checkInDate, checkOutDate) => {
 
 const BookingContainer = ({
   property,
-  host,
-  propertyId,
-  unavailableDateKeys,
-  checkInDate,
-  setCheckInDate,
-  checkOutDate,
-  setCheckOutDate,
+  host = {},
+  propertyId = null,
+  unavailableDateKeys = [],
+  checkInDate = getFutureDateKey(1),
+  setCheckInDate = () => {},
+  checkOutDate = getFutureDateKey(2),
+  setCheckOutDate = () => {},
 }) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
@@ -334,16 +334,6 @@ BookingContainer.propTypes = {
   setCheckInDate: PropTypes.func,
   checkOutDate: PropTypes.string,
   setCheckOutDate: PropTypes.func,
-};
-
-BookingContainer.defaultProps = {
-  host: {},
-  propertyId: null,
-  unavailableDateKeys: [],
-  checkInDate: getFutureDateKey(1),
-  setCheckInDate: () => {},
-  checkOutDate: getFutureDateKey(2),
-  setCheckOutDate: () => {},
 };
 
 export default BookingContainer;

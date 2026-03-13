@@ -15,7 +15,10 @@ const fetchHostInfo = async (ownerId) => {
         }
         const responseData = await response.json();
         const hostData = JSON.parse(responseData.body);
-        return hostData;
+        if (Array.isArray(hostData)) {
+            return hostData[0] || {};
+        }
+        return hostData || {};
     } catch {
         return {};
     }
