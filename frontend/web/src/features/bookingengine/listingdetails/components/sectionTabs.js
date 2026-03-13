@@ -32,7 +32,7 @@ const resolveActiveSection = (sections) => {
   return matchingSection || sections[0]?.id || "";
 };
 
-const SectionTabs = ({ sections }) => {
+const SectionTabs = ({ sections = [] }) => {
   const [activeSection, setActiveSection] = useState(sections[0]?.id || "");
   const [indicatorStyle, setIndicatorStyle] = useState({});
   const buttonRefs = useRef({});
@@ -114,10 +114,6 @@ SectionTabs.propTypes = {
       targetId: PropTypes.string.isRequired,
     })
   ),
-};
-
-SectionTabs.defaultProps = {
-  sections: [],
 };
 
 export default SectionTabs;

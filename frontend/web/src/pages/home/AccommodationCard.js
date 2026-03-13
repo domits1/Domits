@@ -20,7 +20,7 @@ import { getListingPricingBreakdown } from "../../features/bookingengine/listing
 const EURO_SYMBOL = "\u20AC";
 const formatEuroAmount = (value) => `${EURO_SYMBOL}${Number(value || 0).toFixed(2)}`;
 
-const AccommodationCard = ({ accommodation, onClick }) => {
+const AccommodationCard = ({ accommodation = null, onClick }) => {
   const [liked, setLiked] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
 
@@ -33,8 +33,8 @@ const AccommodationCard = ({ accommodation, onClick }) => {
       try {
         const isLiked = await isPropertyInAnyWishlist(accommodationId);
         setLiked(isLiked);
-      } catch (err) {
-        console.error("Wishlist ophalen mislukt:", err.message || err);
+      } catch {
+        setLiked(false);
       }
     };
     checkIfLiked();
@@ -183,10 +183,6 @@ AccommodationCard.propTypes = {
     ),
   }),
   onClick: PropTypes.func.isRequired,
-};
-
-AccommodationCard.defaultProps = {
-  accommodation: null,
 };
 
 export default AccommodationCard;

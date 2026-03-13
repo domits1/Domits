@@ -5,7 +5,7 @@ import { getListingPricingBreakdown } from "../utils/pricing";
 const EURO_SYMBOL = "\u20AC";
 const formatEuro = (value) => `${EURO_SYMBOL}${value.toFixed(2)}`;
 
-const Pricing = ({ pricing, nights }) => {
+const Pricing = ({ pricing = {}, nights = 1 }) => {
   const {
     nights: normalizedNights,
     roomSubtotal,
@@ -52,11 +52,6 @@ Pricing.propTypes = {
     cleaning: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }),
   nights: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-};
-
-Pricing.defaultProps = {
-  pricing: {},
-  nights: 1,
 };
 
 export default Pricing;

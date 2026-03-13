@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { getFutureDateKey } from "../utils/dateAvailability";
 
-const CheckIn = ({ checkInDate, setCheckInDate }) => {
+const CheckIn = ({ checkInDate = "", setCheckInDate = () => {} }) => {
   return (
     <div className="date-box">
       <p className="label">Check in</p>
@@ -19,11 +19,6 @@ const CheckIn = ({ checkInDate, setCheckInDate }) => {
 CheckIn.propTypes = {
   checkInDate: PropTypes.string,
   setCheckInDate: PropTypes.func,
-};
-
-CheckIn.defaultProps = {
-  checkInDate: "",
-  setCheckInDate: () => {},
 };
 
 export default CheckIn;
