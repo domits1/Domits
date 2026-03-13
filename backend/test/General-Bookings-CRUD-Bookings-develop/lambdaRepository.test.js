@@ -8,7 +8,7 @@ describe("LambdaRepository.getPropertiesFromHostId", () => {
   });
 
   it("maps property cards from an array response", async () => {
-    jest.spyOn(global, "fetch").mockResolvedValue({
+    jest.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       json: async () => [
         {
@@ -33,7 +33,7 @@ describe("LambdaRepository.getPropertiesFromHostId", () => {
   });
 
   it("accepts a wrapped properties payload", async () => {
-    jest.spyOn(global, "fetch").mockResolvedValue({
+    jest.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       json: async () => ({
         properties: [
@@ -60,7 +60,7 @@ describe("LambdaRepository.getPropertiesFromHostId", () => {
   });
 
   it("throws NotFoundException when the endpoint responds with no properties", async () => {
-    jest.spyOn(global, "fetch").mockResolvedValue({
+    jest.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: false,
       json: async () => "No property found.",
     });
@@ -71,7 +71,7 @@ describe("LambdaRepository.getPropertiesFromHostId", () => {
   });
 
   it("throws NotFoundException on unexpected non-array payloads", async () => {
-    jest.spyOn(global, "fetch").mockResolvedValue({
+    jest.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: false,
       json: async () => ({ message: "Internal server error" }),
     });
