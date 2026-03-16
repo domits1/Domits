@@ -24,8 +24,6 @@ class MessageRepository {
         metadata: data.metadata ?? null,
         attachments: data.attachments ?? null,
         deliveryStatus: data.deliveryStatus || "pending",
-
-        // new fields (if present in model/db)
         direction: data.direction ?? null,
         externalCreatedAt: data.externalCreatedAt ?? null,
         externalSenderType: data.externalSenderType ?? null,
@@ -57,7 +55,6 @@ class MessageRepository {
   }
 
   async createMessageIfNotExists(data) {
-    // Dedupe only if platformMessageId exists
     if (data.platformMessageId) {
       const exists = await this.platformMessageExists(data.threadId, data.platformMessageId);
       if (exists) return false;
@@ -65,6 +62,68 @@ class MessageRepository {
 
     await this.createMessage(data);
     return true;
+  }
+
+  async findByPlatformMessageId(platformMessageId) {
+    if (!platformMessageId) return null;
+
+    const client = await Database.getInstance();
+    return client
+      .getRepository(UnifiedMessage)
+      .createQueryBuilder("m")
+      .where("m.platformMessageId = :platformMessageId", { platformMessageId })
+      .orderBy("m.createdAt", "DESC")
+      .getOne();
+  }
+
+  async updateMessageStatusByPlatformMessageId(platformMessageId, patch = {}) {
+    if (!platformMessageId) return null;
+
+    const client = await Database.getInstance();
+    const existing = await this.findByPlatformMessageId(platformMessageId);
+    if (!existing) return null;
+
+    let nextMetadata = existing.metadata ?? null;
+
+    if (patch.metadataPatch) {
+      let parsed = {};
+      if (typeof nextMetadata === "string") {
+        try {
+          parsed = JSON.parse(nextMetadata) || {};
+        } catch {
+          parsed = { rawMetadata: nextMetadata };
+        }
+      } else if (nextMetadata && typeof nextMetadata === "object") {
+        parsed = nextMetadata;
+      }
+
+      nextMetadata = JSON.stringify({
+        ...parsed,
+        ...patch.metadataPatch,
+      });
+    }
+
+    const next = {
+      ...existing,
+      deliveryStatus: patch.deliveryStatus ?? existing.deliveryStatus,
+      errorCode: patch.errorCode ?? existing.errorCode,
+      errorMessage: patch.errorMessage ?? existing.errorMessage,
+      metadata: nextMetadata,
+    };
+
+    await client
+      .createQueryBuilder()
+      .update(UnifiedMessage)
+      .set({
+        deliveryStatus: next.deliveryStatus,
+        errorCode: next.errorCode,
+        errorMessage: next.errorMessage,
+        metadata: next.metadata,
+      })
+      .where("id = :id", { id: existing.id })
+      .execute();
+
+    return next;
   }
 
   async getMessagesByThreadId(threadId) {

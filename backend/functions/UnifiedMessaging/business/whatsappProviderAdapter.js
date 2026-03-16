@@ -1,12 +1,18 @@
 import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
 
-const ok = (response) => ({ ok: true, statusCode: 200, response });
-const bad = (statusCode, response) => ({ ok: false, statusCode, response });
+const GRAPH_API_VERSION = process.env.WHATSAPP_GRAPH_API_VERSION || "v22.0";
 
-const isNonEmptyString = (value) => typeof value === "string" && value.trim().length > 0;
+const badRequest = (message) => {
+  const error = new Error(message);
+  error.code = "WHATSAPP_BAD_REQUEST";
+  return error;
+};
 
-const getRawText = (payload) => {
-  return typeof payload?.content === "string" ? payload.content.trim() : "";
+const normalizeWhatsAppRecipient = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  return raw.replace(/[^\d]/g, "");
 };
 
 export default class WhatsAppProviderAdapter {
@@ -14,79 +20,133 @@ export default class WhatsAppProviderAdapter {
     this.integrationAccounts = new IntegrationAccountRepository();
   }
 
-  async sendText({ thread, payload }) {
-    if (!thread) {
-      return bad(400, { error: "WhatsApp send requires an existing thread" });
-    }
-
-    if (thread.platform !== "WHATSAPP") {
-      return bad(400, { error: "Thread platform is not WHATSAPP" });
-    }
-
-    const text = getRawText(payload);
-    if (!text) {
-      return bad(400, { error: "WhatsApp text message content is required" });
-    }
-
-    const integrationAccountId = thread.integrationAccountId || payload.integrationAccountId || null;
+  async sendMessage({
+    integrationAccountId,
+    recipientId,
+    content,
+    attachments = null,
+  }) {
     if (!integrationAccountId) {
-      return bad(400, { error: "Missing WhatsApp integrationAccountId" });
+      throw badRequest("Missing integrationAccountId for WhatsApp send");
     }
 
     const integration = await this.integrationAccounts.getById(integrationAccountId);
     if (!integration) {
-      return bad(404, { error: "WhatsApp integration account not found" });
+      throw badRequest("WhatsApp integration account not found");
     }
 
-    if (integration.channel !== "WHATSAPP") {
-      return bad(400, { error: "Integration account is not a WHATSAPP channel" });
+    const phoneNumberId = integration.externalAccountId || null;
+    if (!phoneNumberId) {
+      throw badRequest("WhatsApp integration is missing externalAccountId / phone_number_id");
     }
 
-    if (integration.status !== "CONNECTED") {
-      return bad(400, {
-        error: "WhatsApp integration account is not connected",
-        status: integration.status,
-      });
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || "";
+    if (!accessToken) {
+      throw badRequest("Missing WHATSAPP_ACCESS_TOKEN");
     }
 
-    const externalThreadId = thread.externalThreadId || payload.externalThreadId || thread.guestId || null;
-    if (!isNonEmptyString(externalThreadId)) {
-      return bad(400, { error: "Missing WhatsApp recipient thread identifier" });
+    const to = normalizeWhatsAppRecipient(recipientId);
+    if (!to) {
+      throw badRequest("Invalid WhatsApp recipientId");
     }
 
-    return ok({
+    const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
+
+    let payload;
+    if (hasAttachments) {
+      const first = attachments[0] || {};
+      const attachmentUrl = first?.url || null;
+      const attachmentType = String(first?.type || "").toLowerCase();
+
+      if (!attachmentUrl) {
+        throw badRequest("WhatsApp attachment is missing url");
+      }
+
+      if (attachmentType === "image") {
+        payload = {
+          messaging_product: "whatsapp",
+          to,
+          type: "image",
+          image: {
+            link: attachmentUrl,
+            caption: content || undefined,
+          },
+        };
+      } else if (attachmentType === "document" || attachmentType === "file") {
+        payload = {
+          messaging_product: "whatsapp",
+          to,
+          type: "document",
+          document: {
+            link: attachmentUrl,
+            filename: first?.name || undefined,
+            caption: content || undefined,
+          },
+        };
+      } else if (attachmentType === "video") {
+        payload = {
+          messaging_product: "whatsapp",
+          to,
+          type: "video",
+          video: {
+            link: attachmentUrl,
+            caption: content || undefined,
+          },
+        };
+      } else {
+        throw badRequest(`Unsupported WhatsApp attachment type: ${attachmentType || "unknown"}`);
+      }
+    } else {
+      payload = {
+        messaging_product: "whatsapp",
+        to,
+        type: "text",
+        text: {
+          body: String(content || ""),
+        },
+      };
+    }
+
+    const response = await fetch(
+      `https://graph.facebook.com/${GRAPH_API_VERSION}/${encodeURIComponent(phoneNumberId)}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const responseText = await response.text();
+    let parsed = null;
+    try {
+      parsed = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      parsed = null;
+    }
+
+    if (!response.ok) {
+      const error = new Error(parsed?.error?.message || `WhatsApp send failed with status ${response.status}`);
+      error.code = parsed?.error?.code || "WHATSAPP_SEND_FAILED";
+      error.details = parsed || responseText;
+      throw error;
+    }
+
+    const providerMessageId = parsed?.messages?.[0]?.id || null;
+
+    return {
       accepted: true,
-      mode: "placeholder",
+      mode: "live",
       channel: "WHATSAPP",
-      integrationAccountId: integration.id,
-      externalAccountId: integration.externalAccountId,
-      recipientWhatsAppId: externalThreadId,
-      messageType: "text",
-      text,
-    });
-  }
-
-  async sendTemplate({ thread, payload }) {
-    if (!thread || thread.platform !== "WHATSAPP") {
-      return bad(400, { error: "Thread platform is not WHATSAPP" });
-    }
-
-    return bad(501, {
-      error: "WhatsApp template sending is not implemented yet",
-      threadId: thread.id,
-      payload,
-    });
-  }
-
-  async sendMedia({ thread, payload }) {
-    if (!thread || thread.platform !== "WHATSAPP") {
-      return bad(400, { error: "Thread platform is not WHATSAPP" });
-    }
-
-    return bad(501, {
-      error: "WhatsApp media sending is not implemented yet",
-      threadId: thread.id,
-      payload,
-    });
+      integrationAccountId,
+      externalAccountId: phoneNumberId,
+      recipientWhatsAppId: to,
+      messageType: payload.type,
+      text: content || "",
+      providerMessageId,
+      rawResponse: parsed,
+    };
   }
 }

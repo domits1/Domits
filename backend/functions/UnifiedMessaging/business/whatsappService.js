@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 
 import IngestionService from "./ingestionService.js";
 import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
+import MessageRepository from "../data/messageRepository.js";
 
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
@@ -74,12 +75,6 @@ const getAttachmentPayload = (message) => {
   ];
 };
 
-const mapDirectionFromStatus = (statusValue) => {
-  const s = String(statusValue || "").toLowerCase();
-  if (s === "sent" || s === "delivered" || s === "read" || s === "failed") return "OUTBOUND";
-  return "SYSTEM";
-};
-
 const mapDeliveryStatus = (statusValue) => {
   const s = String(statusValue || "").toLowerCase();
   if (["sent", "delivered", "read", "failed"].includes(s)) return s;
@@ -94,6 +89,7 @@ export default class WhatsAppService {
   constructor() {
     this.ingestionService = new IngestionService();
     this.integrationAccounts = new IntegrationAccountRepository();
+    this.messageRepository = new MessageRepository();
   }
 
   async verifyWebhook(event) {
@@ -137,12 +133,12 @@ export default class WhatsAppService {
       }
     }
 
-    const normalizedThreads = await this.normalizeWebhookPayload(body);
+    const normalized = await this.normalizeWebhookPayload(body);
 
-    const results = [];
-    for (const threadPayload of normalizedThreads) {
+    const ingestionResults = [];
+    for (const threadPayload of normalized.inboundThreads) {
       const result = await this.ingestionService.ingestExternalThread(threadPayload);
-      results.push({
+      ingestionResults.push({
         integrationAccountId: threadPayload.integrationAccountId,
         externalThreadId: threadPayload.externalThreadId,
         statusCode: result?.statusCode || 200,
@@ -150,15 +146,69 @@ export default class WhatsAppService {
       });
     }
 
+    const statusResults = [];
+    for (const statusItem of normalized.statusUpdates) {
+      const updated = await this.messageRepository.updateMessageStatusByPlatformMessageId(
+        statusItem.platformMessageId,
+        {
+          deliveryStatus: statusItem.deliveryStatus,
+          errorCode: statusItem.errorCode,
+          errorMessage: statusItem.errorMessage,
+          metadataPatch: {
+            whatsappStatus: statusItem.deliveryStatus,
+            whatsappConversation: statusItem.conversation,
+            whatsappPricing: statusItem.pricing,
+            whatsappStatusRaw: statusItem.rawStatus,
+            whatsappStatusUpdatedAt: statusItem.externalCreatedAt,
+          },
+        }
+      );
+
+      statusResults.push({
+        platformMessageId: statusItem.platformMessageId,
+        matched: !!updated,
+        deliveryStatus: statusItem.deliveryStatus,
+      });
+
+      if (!updated) {
+        console.log(
+          "WhatsApp status update did not match an existing platformMessageId:",
+          statusItem.platformMessageId
+        );
+      }
+    }
+
     return ok({
       ok: true,
-      processedThreads: results.length,
-      results,
+      processedInboundThreads: ingestionResults.length,
+      processedStatusUpdates: statusResults.length,
+      ingestionResults,
+      statusResults,
     });
   }
 
+  async resolveIntegrationAccount(phoneNumberId) {
+    if (phoneNumberId) {
+      const direct = await this.integrationAccounts.findByChannelAndExternalAccountId("WHATSAPP", phoneNumberId);
+      if (direct) return direct;
+    }
+
+    const allWhatsAppIntegrations = await this.integrationAccounts.listByChannel("WHATSAPP");
+
+    if (allWhatsAppIntegrations.length === 1) {
+      console.log(
+        "WhatsApp webhook fallback: using single WHATSAPP integration for phone_number_id",
+        phoneNumberId
+      );
+      return allWhatsAppIntegrations[0];
+    }
+
+    return null;
+  }
+
   async normalizeWebhookPayload(body) {
-    const threads = [];
+    const inboundThreads = [];
+    const statusUpdates = [];
     const entries = asArray(body?.entry);
 
     for (const entry of entries) {
@@ -169,9 +219,7 @@ export default class WhatsAppService {
         const metadata = value?.metadata || {};
         const phoneNumberId = metadata?.phone_number_id || null;
 
-        const integration = phoneNumberId
-          ? await this.integrationAccounts.findByChannelAndExternalAccountId("WHATSAPP", phoneNumberId)
-          : null;
+        const integration = await this.resolveIntegrationAccount(phoneNumberId);
 
         if (!integration) {
           console.log("WhatsApp webhook skipped: no integration account found for phone_number_id", phoneNumberId);
@@ -187,7 +235,7 @@ export default class WhatsAppService {
           const guestPhone = message?.from || fallbackGuestPhone || null;
           if (!guestPhone) continue;
 
-          threads.push({
+          inboundThreads.push({
             integrationAccountId: integration.id,
             platform: "WHATSAPP",
             externalThreadId: guestPhone,
@@ -220,46 +268,24 @@ export default class WhatsAppService {
 
         const statuses = asArray(value?.statuses);
         for (const status of statuses) {
-          const guestPhone = status?.recipient_id || null;
-          if (!guestPhone) continue;
-
-          threads.push({
+          statusUpdates.push({
             integrationAccountId: integration.id,
-            platform: "WHATSAPP",
-            externalThreadId: guestPhone,
-            hostId: integration.userId,
-            guestId: guestPhone,
-            propertyId: null,
-            status: "OPEN",
-            messages: [
-              {
-                platformMessageId: status?.id || null,
-                senderId: integration.userId,
-                recipientId: guestPhone,
-                content: `[WhatsApp status: ${status?.status || "unknown"}]`,
-                externalCreatedAt: normalizeTimestampMs(status?.timestamp),
-                direction: mapDirectionFromStatus(status?.status),
-                externalSenderType: "SYSTEM",
-                complianceStatus: null,
-                errorCode: status?.errors?.[0]?.code || null,
-                errorMessage: status?.errors?.[0]?.title || null,
-                metadata: {
-                  channel: "WHATSAPP",
-                  phoneNumberId,
-                  displayPhoneNumber: metadata?.display_phone_number || null,
-                  status: status?.status || null,
-                  conversation: status?.conversation || null,
-                  pricing: status?.pricing || null,
-                  rawStatus: status,
-                },
-                attachments: null,
-              },
-            ],
+            platformMessageId: status?.id || null,
+            deliveryStatus: mapDeliveryStatus(status?.status),
+            externalCreatedAt: normalizeTimestampMs(status?.timestamp),
+            conversation: status?.conversation || null,
+            pricing: status?.pricing || null,
+            errorCode: status?.errors?.[0]?.code || null,
+            errorMessage: status?.errors?.[0]?.title || null,
+            rawStatus: status,
           });
         }
       }
     }
 
-    return threads;
+    return {
+      inboundThreads,
+      statusUpdates,
+    };
   }
 }

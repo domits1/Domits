@@ -20,55 +20,83 @@ class MessageService {
 
     let thread = null;
 
-    if (threadId) {
-      thread = await this.threadRepository.getThreadById(threadId);
-      if (!thread) {
-        return {
-          statusCode: 404,
-          response: { error: "Thread not found" },
-        };
-      }
-    }
-
     if (!threadId) {
-      thread = await this.threadRepository.findThread(senderId, recipientId, payload.propertyId);
-
-      if (!thread) {
-        const hostId = explicitHostId || senderId;
-        const guestId = explicitGuestId || recipientId;
-
-        thread = await this.threadRepository.createThread({
-          hostId,
-          guestId,
-          propertyId: payload.propertyId ?? null,
-          platform: payload.platform || "DOMITS",
+      if (payload.platform === "WHATSAPP" && payload.integrationAccountId && payload.externalThreadId) {
+        thread = await this.threadRepository.upsertExternalThread({
+          integrationAccountId: payload.integrationAccountId,
+          platform: payload.platform,
           externalThreadId: payload.externalThreadId,
-          integrationAccountId: payload.integrationAccountId ?? null,
+          hostId: explicitHostId || senderId,
+          guestId: explicitGuestId || recipientId,
+          propertyId: payload.propertyId ?? null,
+          status: "OPEN",
         });
+      } else {
+        thread = await this.threadRepository.findThread(senderId, recipientId, payload.propertyId);
+
+        if (!thread) {
+          const hostId = explicitHostId || senderId;
+          const guestId = explicitGuestId || recipientId;
+
+          thread = await this.threadRepository.createThread({
+            hostId,
+            guestId,
+            propertyId: payload.propertyId ?? null,
+            platform: payload.platform || "DOMITS",
+            externalThreadId: payload.externalThreadId,
+            integrationAccountId: payload.integrationAccountId ?? null,
+          });
+        }
       }
 
       threadId = thread.id;
+    } else if (payload.platform === "WHATSAPP" && payload.integrationAccountId && payload.externalThreadId) {
+      thread = await this.threadRepository.upsertExternalThread({
+        integrationAccountId: payload.integrationAccountId,
+        platform: payload.platform,
+        externalThreadId: payload.externalThreadId,
+        hostId: explicitHostId || senderId,
+        guestId: explicitGuestId || recipientId,
+        propertyId: payload.propertyId ?? null,
+        status: "OPEN",
+      });
+      threadId = thread.id;
     }
 
-    const resolvedPlatform = payload.platform || thread?.platform || "DOMITS";
+    let providerResult = null;
+    let platformMessageId = payload.platformMessageId ?? null;
+    let deliveryStatus = payload.platform === "DOMITS" ? "delivered" : "pending";
+    let errorCode = null;
+    let errorMessage = null;
 
-    let outboundResult = null;
+    if (payload.platform === "WHATSAPP") {
+      try {
+        providerResult = await this.whatsAppProviderAdapter.sendMessage({
+          integrationAccountId: payload.integrationAccountId,
+          recipientId,
+          content: payload.content,
+          attachments: payload.attachments,
+        });
 
-    if (resolvedPlatform === "WHATSAPP") {
-      outboundResult = await this.whatsAppProviderAdapter.sendText({
-        thread,
-        payload: {
-          ...payload,
-          threadId,
-          platform: resolvedPlatform,
-        },
-      });
-
-      if (!outboundResult?.ok) {
-        return {
-          statusCode: outboundResult?.statusCode || 400,
-          response: outboundResult?.response || { error: "Failed to send WhatsApp message" },
+        platformMessageId = providerResult?.providerMessageId || null;
+        deliveryStatus = "sent";
+      } catch (error) {
+        providerResult = {
+          accepted: false,
+          mode: "live",
+          channel: "WHATSAPP",
+          integrationAccountId: payload.integrationAccountId ?? null,
+          externalAccountId: null,
+          recipientWhatsAppId: recipientId,
+          messageType: Array.isArray(payload.attachments) && payload.attachments.length > 0 ? "media" : "text",
+          text: payload.content || "",
+          error: error?.message || String(error),
+          details: error?.details || null,
         };
+
+        deliveryStatus = "failed";
+        errorCode = error?.code || "WHATSAPP_SEND_FAILED";
+        errorMessage = error?.message || "WhatsApp send failed";
       }
     }
 
@@ -77,19 +105,22 @@ class MessageService {
       senderId,
       recipientId,
       content: payload.content,
-      platformMessageId: outboundResult?.platformMessageId ?? payload.platformMessageId ?? null,
-      metadata: payload.metadata,
+      platformMessageId,
+      metadata:
+        payload.platform === "WHATSAPP"
+          ? JSON.stringify({
+              ...(typeof payload.metadata === "string" ? { rawMetadata: payload.metadata } : payload.metadata || {}),
+              providerResult,
+            })
+          : payload.metadata,
       attachments: payload.attachments,
-      deliveryStatus:
-        resolvedPlatform === "DOMITS"
-          ? "delivered"
-          : outboundResult?.deliveryStatus || "pending",
-      direction: payload.direction ?? "OUTBOUND",
-      externalCreatedAt: outboundResult?.externalCreatedAt ?? null,
-      externalSenderType: payload.externalSenderType ?? "HOST",
-      complianceStatus: payload.complianceStatus ?? null,
-      errorCode: null,
-      errorMessage: null,
+      deliveryStatus,
+      direction: "OUTBOUND",
+      externalCreatedAt: null,
+      externalSenderType: payload.platform === "WHATSAPP" ? "HOST" : null,
+      complianceStatus: null,
+      errorCode,
+      errorMessage,
     });
 
     await this.threadRepository.updateThreadActivity({
@@ -99,11 +130,11 @@ class MessageService {
     });
 
     return {
-      statusCode: 201,
+      statusCode: errorCode ? 502 : 201,
       response: {
         ...message,
         threadId,
-        providerResult: outboundResult?.response || null,
+        providerResult,
       },
     };
   }

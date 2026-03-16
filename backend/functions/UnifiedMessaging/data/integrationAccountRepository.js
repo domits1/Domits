@@ -1,4 +1,5 @@
 import Database from "../ORM/index.js";
+
 import { ChannelIntegrationAccount } from "../models/unified/integrations/ChannelIntegrationAccount.js";
 
 class IntegrationAccountRepository {
@@ -14,6 +15,16 @@ class IntegrationAccountRepository {
       .getRepository(ChannelIntegrationAccount)
       .createQueryBuilder("a")
       .where("a.userId = :userId", { userId })
+      .orderBy("a.updatedAt", "DESC")
+      .getMany();
+  }
+
+  async listByChannel(channel) {
+    const client = await Database.getInstance();
+    return client
+      .getRepository(ChannelIntegrationAccount)
+      .createQueryBuilder("a")
+      .where("a.channel = :channel", { channel })
       .orderBy("a.updatedAt", "DESC")
       .getMany();
   }
