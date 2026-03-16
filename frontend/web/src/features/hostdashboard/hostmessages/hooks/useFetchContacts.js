@@ -29,8 +29,39 @@ const parseCognitoAttributes = (attrsArr) => {
   }, {});
 };
 
+const normalizePhoneDisplay = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  const digits = raw.replace(/[^\d]/g, "");
+  if (!digits) return raw;
+
+  if (digits.startsWith("31") && digits.length === 11) {
+    return `+${digits.slice(0, 2)} ${digits.slice(2, 3)} ${digits.slice(3, 7)} ${digits.slice(7)}`;
+  }
+
+  if (digits.length > 9) {
+    return `+${digits}`;
+  }
+
+  return raw;
+};
+
+const looksLikePhoneIdentifier = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return false;
+  return /^[\d+\-\s()]+$/.test(raw);
+};
+
 const fetchUserInfo = async (targetUserId) => {
   if (!targetUserId) return { givenName: null, userId: targetUserId };
+
+  if (looksLikePhoneIdentifier(targetUserId)) {
+    return {
+      givenName: normalizePhoneDisplay(targetUserId),
+      userId: targetUserId,
+    };
+  }
 
   try {
     const res = await fetch(GET_USER_INFO_API, {
@@ -84,6 +115,8 @@ const fetchLatestMessage = async (threadId, fallbackRecipientId) => {
       senderId: latest?.senderId || latest?.userId || null,
       recipientId: latest?.recipientId || fallbackRecipientId || null,
       threadId: latest?.threadId || threadId || null,
+      platform: latest?.platform || metadata?.channel || null,
+      metadata,
     };
   } catch {
     return null;
@@ -122,6 +155,9 @@ const buildUnifiedContactsFromThreads = ({ threads, userId, role }) => {
         propertyId: t.propertyId,
         threadId: t.id,
         isFromUnified: true,
+        platform: t.platform || "DOMITS",
+        externalThreadId: t.externalThreadId || null,
+        integrationAccountId: t.integrationaccountid || t.integrationAccountId || null,
       };
     })
     .filter((c) => c.partnerId && String(c.partnerId) !== String(userId));
@@ -144,6 +180,8 @@ const computeLookupIds = ({ threadHostId, threadGuestId, userId, partnerId, role
 
 const hydrateOneContact = async ({ contact, userId, role }) => {
   const partnerId = contact?.partnerId || contact?.recipientId || contact?.userId || null;
+  const platform = String(contact?.platform || "DOMITS").toUpperCase();
+  const isWhatsApp = platform === "WHATSAPP";
 
   const [userInfo, latestMessage] = await Promise.all([
     partnerId ? fetchUserInfo(partnerId) : Promise.resolve({ givenName: "Unknown", userId: partnerId }),
@@ -168,26 +206,37 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
   let propertyId = contact?.propertyId || contact?.AccoId || null;
   let propertyTitle = null;
 
-  try {
-    const bookingInfo = await fetchBookingDetailsAndAccommodation({
-      hostId: hostIdForLookup,
-      guestId: guestIdForLookup,
-      withAuth: role !== "guest",
-      accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
-    });
+  if (!isWhatsApp) {
+    try {
+      const bookingInfo = await fetchBookingDetailsAndAccommodation({
+        hostId: hostIdForLookup,
+        guestId: guestIdForLookup,
+        withAuth: role !== "guest",
+        accommodationEndpoint: role === "guest" ? "bookingEngine/listingDetails" : "hostDashboard/single",
+      });
 
-    accoImage = bookingInfo?.accoImage || null;
-    bookingStatus = bookingInfo?.bookingStatus || null;
-    arrivalDate = bookingInfo?.arrivalDate || null;
-    departureDate = bookingInfo?.departureDate || null;
-    propertyId = bookingInfo?.propertyId || propertyId;
-    propertyTitle = bookingInfo?.propertyTitle || null;
-  } catch {}
+      accoImage = bookingInfo?.accoImage || null;
+      bookingStatus = bookingInfo?.bookingStatus || null;
+      arrivalDate = bookingInfo?.arrivalDate || null;
+      departureDate = bookingInfo?.departureDate || null;
+      propertyId = bookingInfo?.propertyId || propertyId;
+      propertyTitle = bookingInfo?.propertyTitle || null;
+    } catch {}
+  }
 
   const resolvedInfoName =
     userInfo?.givenName && userInfo.givenName !== "Unknown" && userInfo.givenName.trim().length > 0
       ? userInfo.givenName
       : null;
+
+  const contactNameFallback =
+    normalizePhoneDisplay(partnerId) ||
+    contact?.givenName ||
+    contact?.name ||
+    contact?.fullName ||
+    contact?.displayName ||
+    contact?.contactName ||
+    "Unknown";
 
   return {
     ...contact,
@@ -196,14 +245,7 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
     recipientId: partnerId,
     userId: partnerId,
 
-    givenName:
-      resolvedInfoName ||
-      contact?.givenName ||
-      contact?.name ||
-      contact?.fullName ||
-      contact?.displayName ||
-      contact?.contactName ||
-      "Unknown",
+    givenName: resolvedInfoName || contactNameFallback,
     profileImage: contact?.profileImage || null,
 
     latestMessage,
@@ -213,6 +255,11 @@ const hydrateOneContact = async ({ contact, userId, role }) => {
     departureDate,
     propertyId,
     propertyTitle,
+    platform,
+    channelLabel: platform === "WHATSAPP" ? "WhatsApp" : platform,
+    isWhatsApp,
+    externalThreadId: contact?.externalThreadId || null,
+    integrationAccountId: contact?.integrationAccountId || null,
   };
 };
 
@@ -234,6 +281,7 @@ const normalizeLegacy = ({ raw, isHostLegacy, userId }) => {
     hostId: raw?.hostId || (isHostLegacy ? userId : null),
     guestId: raw?.userId || fallbackGuestId,
     Status: raw?.Status || raw?.status || "accepted",
+    platform: "DOMITS",
   };
 };
 
