@@ -27,6 +27,12 @@ const Accommodations = ({ searchResults }) => {
 
   const displayedAccolist = accolist.slice(startIndex, endIndex);
 
+  const getAccommodationKey = (accommodation, index) =>
+    accommodation?.property?.id ||
+    accommodation?.ID ||
+    accommodation?.id ||
+    `accommodation-${index}`;
+
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -150,8 +156,14 @@ const Accommodations = ({ searchResults }) => {
 
         <div id="card-visibility">
           {displayedAccolist.length > 0
-            ? displayedAccolist.map((accommodation) => {
-                return <AccommodationCard key={accommodation.ID} accommodation={accommodation} onClick={handleClick} />;
+            ? displayedAccolist.map((accommodation, index) => {
+                return (
+                  <AccommodationCard
+                    key={getAccommodationKey(accommodation, index)}
+                    accommodation={accommodation}
+                    onClick={handleClick}
+                  />
+                );
               })
             : null}
         </div>

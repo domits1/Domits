@@ -1,4 +1,9 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
+import {
+  resolveAccommodationImageUrl,
+  resolveAccommodationImageKey,
+} from "../../../../utils/accommodationImage";
 
 const ImageGallery = ({ images }) => {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -7,13 +12,9 @@ const ImageGallery = ({ images }) => {
   const main = images[0];
   const thumbs = images.slice(1, 5);
 
-  const toSrc = (key) => {
-    if (!key) return "";
-    if (typeof key === "string" && (key.startsWith("http://") || key.startsWith("https://"))) {
-      return key;
-    }
-    return `https://accommodation.s3.eu-north-1.amazonaws.com/${key}`;
-  };
+  const toMainSrc = (image) => resolveAccommodationImageUrl(image, "web");
+  const toThumbSrc = (image) => resolveAccommodationImageUrl(image, "thumb");
+  const getImageAltText = (index) => `Accommodation image ${index + 1}`;
 
   const nextImage = () => {
     setActiveIndex((prev) => (prev + 1) % images.length);
@@ -29,7 +30,8 @@ const ImageGallery = ({ images }) => {
         {main && (
           <img
             className="main-image"
-            src={toSrc(main.key)}
+            src={toMainSrc(main)}
+            alt={getImageAltText(0)}
             onClick={() => {
               setActiveIndex(0);
               setShowOverlay(true);
@@ -41,9 +43,10 @@ const ImageGallery = ({ images }) => {
         <div className="small-images-container">
           {thumbs.map((img, index) => (
             <img
-              key={img.key}
+              key={resolveAccommodationImageKey(img, "web") || index}
               className="small-image"
-              src={toSrc(img.key)}
+              src={toMainSrc(img)}
+              alt={getImageAltText(index + 1)}
               onClick={() => {
                 setActiveIndex(index + 1);
                 setShowOverlay(true);
@@ -64,7 +67,11 @@ const ImageGallery = ({ images }) => {
               ‹
             </button>
 
-            <img className="overlay-main-image" src={toSrc(images[activeIndex].key)} />
+            <img
+              className="overlay-main-image"
+              src={toMainSrc(images[activeIndex])}
+              alt={getImageAltText(activeIndex)}
+            />
 
             <button className="nav-button right" onClick={nextImage}>
               ›
@@ -74,9 +81,10 @@ const ImageGallery = ({ images }) => {
           <div className="overlay-thumbnails">
             {images.map((img, index) => (
               <img
-                key={img.key}
+                key={resolveAccommodationImageKey(img, "web") || index}
                 className={`thumb ${index === activeIndex ? "active" : ""}`}
-                src={toSrc(img.key)}
+                src={toThumbSrc(img)}
+                alt={getImageAltText(index)}
                 onClick={() => setActiveIndex(index)}
               />
             ))}
@@ -85,6 +93,10 @@ const ImageGallery = ({ images }) => {
       )}
     </section>
   );
+};
+
+ImageGallery.propTypes = {
+  images: PropTypes.array.isRequired,
 };
 
 export default ImageGallery;

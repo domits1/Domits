@@ -118,6 +118,27 @@ const Homepage = () => {
     reviews[(currentIndex + 2) % reviews.length],
   ];
 
+  const trendingBadges = [
+    {
+      id: "bestPrice",
+      emoji: String.fromCodePoint(0x1f396, 0xfe0f),
+      title: homePageContent.features.bestPrice,
+      text: homePageContent.features.bestPriceDescription,
+    },
+    {
+      id: "bookingGuarantee",
+      emoji: String.fromCodePoint(0x2705),
+      title: homePageContent.features.bookingGuarantee,
+      text: homePageContent.features.bookingGuaranteeDescription,
+    },
+    {
+      id: "stayGuarantee",
+      emoji: String.fromCodePoint(0x1f91d),
+      title: homePageContent.features.stayGuarantee,
+      text: homePageContent.features.stayGuaranteeDescription,
+    },
+  ];
+
   const handleClick = (e, ID) => {
     if (!e || !e.target) {
       console.error("Event or event target is undefined.");
@@ -157,7 +178,10 @@ const Homepage = () => {
         <div className="domits-homepage">
           <div className="domits-searchContainer" style={{ "--villa-background": `url(${S3_URL}/Images/villaHomepage.webp)` }}>
             <div className="domits-searchTextCon">
-              <h3 className="domits-searchText">{homePageContent.hero.title}</h3>
+              <h1 className="domits-searchText">{homePageContent.hero.title}</h1>
+              {homePageContent.hero.subtitle && (
+                <p className="domits-searchSubtitle">{homePageContent.hero.subtitle}</p>
+              )}
             </div>
             <div className="domits-searchbarCon">
               <SearchBar
@@ -202,37 +226,21 @@ const Homepage = () => {
               <h3 className="domits-subHead">{homePageContent.sections.trending}</h3>
 
               <div className="domits-trendingContainer">
-                {[
-                  {
-                    emoji: "🎖️",
-                    title: `${homePageContent.features.bestPrice}`,
-                    text: "We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.",
-                  },
-                  {
-                    emoji: "✅",
-                    title: `${homePageContent.features.bookingGuarantee}`,
-                    text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.",
-                  },
-                  {
-                    emoji: "🤝",
-                    title: `${homePageContent.features.stayGuarantee}`,
-                    text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
-                  },
-                ].map((item) => {
-                  const isOpen = activePopup === item.text;
+                {trendingBadges.map((item) => {
+                  const isOpen = activePopup === item.id;
                   return (
                     <button
                       type="button"
-                      key={item.text}
+                      key={item.id}
                       className={`popup-trigger${isOpen ? " is-open" : ""}`}
-                      onClick={() => handlePopupClick(item.text)}
+                      onClick={() => handlePopupClick(item.id)}
                       onPointerEnter={(event) => {
                         if (event.pointerType !== "mouse") return;
-                        setActivePopup(item.text);
+                        setActivePopup(item.id);
                       }}
                       onPointerLeave={(event) => {
                         if (event.pointerType !== "mouse") return;
-                        if (activePopup === item.text) {
+                        if (activePopup === item.id) {
                           setActivePopup(null);
                         }
                       }}
@@ -438,3 +446,5 @@ const Homepage = () => {
 
 
 export default Homepage;
+
+

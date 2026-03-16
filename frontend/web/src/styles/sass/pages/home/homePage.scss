@@ -39,14 +39,32 @@
   padding-top: 32vh;
   color: #fff;
   text-align: center;
-  font-size: 4rem;
   width: 100%;
-  font-weight: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
 .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
-  font-size: 2.5rem;
-  padding-bottom: 2vh;
+  max-width: 720px;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.75rem, 5vw, 4.75rem);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
+  max-width: 720px;
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
 }
 
 .homePage-container .domits-homepage .domits-searchbarCon {
@@ -58,19 +76,24 @@
 
 @media (max-width: 1024px) {
   .homePage-container .domits-homepage .domits-searchTextCon {
-    font-size: 5em;
+    padding-inline: 24px;
   }
 }
 @media (max-width: 768px) {
   .homePage-container .domits-homepage .domits-searchTextCon {
-    font-size: 2.5em;
-    padding-top: 20vh;
+    min-height: 55vh;
+    padding-top: 0;
+    justify-content: center;
+    gap: 10px;
   }
   .homePage-container .domits-homepage .domits-searchbarCon {
     display: none;
   }
   .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
-    font-size: 1em;
+    font-size: clamp(2rem, 8vw, 3rem);
+  }
+  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
+    font-size: 1rem;
   }
 }
 @media (max-width: 480px) {
@@ -79,10 +102,16 @@
   }
   .homePage-container .domits-homepage .domits-searchTextCon {
     height: 50vh;
-    font-size: 2em;
+    min-height: 50vh;
+    padding-top: 0;
+    padding-inline: 16px;
+    justify-content: center;
   }
   .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
-    font-size: 1em;
+    font-size: 2rem;
+  }
+  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
+    font-size: 0.95rem;
   }
 }
 
@@ -805,12 +834,14 @@
   .homePage-container .review-container .review-text {
     font-size: 0.9rem;
     -webkit-line-clamp: 4;
+    line-clamp: 4;
   }
 }
 @media (max-width: 768px) {
   .homePage-container .review-container .review-text {
     font-size: 0.8rem;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 }
 
@@ -931,12 +962,18 @@
     background-position: center;
   }
   .homePage-container .domits-homepage .domits-searchTextCon {
-    padding-top: 18vh;
-    font-size: 2.2rem;
+    height: 55vh;
+    min-height: 55vh;
+    padding-top: 0;
+    padding-inline: 18px;
+    justify-content: center;
+    gap: 8px;
   }
   .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
-    font-size: 1.1rem;
-    padding-bottom: 10px;
+    font-size: clamp(1.9rem, 7vw, 2.6rem);
+  }
+  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
+    font-size: 0.95rem;
   }
   .homePage-container .domits-homepage .domits-searchbarCon {
     display: none;
@@ -1147,5 +1184,27 @@
   .homePage-container .domits-homepage .small-asia-countries-container,
   .homePage-container .domits-homepage .small-caribbean-countries-container {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .homePage-container .domits-homepage .domits-searchContainer {
+    height: 50vh;
+  }
+
+  .homePage-container .domits-homepage .domits-searchTextCon {
+    height: 50vh;
+    min-height: 50vh;
+    padding-top: 0;
+    padding-inline: 16px;
+    justify-content: center;
+  }
+
+  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchText {
+    font-size: 2rem;
+  }
+
+  .homePage-container .domits-homepage .domits-searchTextCon .domits-searchSubtitle {
+    font-size: 0.95rem;
   }
 }

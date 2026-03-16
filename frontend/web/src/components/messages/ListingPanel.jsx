@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { getAccommodationByPropertyId } from "../../features/hostdashboard/hostmessages/services/messagingService";
 import { useUser } from "../../features/hostdashboard/hostmessages/context/AuthContext";
-
-const S3_ACCO_BASE = "https://accommodation.s3.eu-north-1.amazonaws.com/";
-
-const isHttp = (v) => typeof v === "string" && /^https?:\/\//i.test(v);
+import {
+  normalizeImageUrl,
+  resolveAccommodationImageUrl,
+} from "../../utils/accommodationImage";
 
 const buildListingUrl = (propertyId) => {
   if (!propertyId) return "#";
@@ -61,10 +61,12 @@ const ListingPanel = ({ dashboardType, propertyId, propertyTitle, accoImage }) =
   }, [propertyTitle, acco, propertyId]);
 
   const imageUrl = useMemo(() => {
-    if (isHttp(accoImage)) return accoImage;
-    const key = acco?.images?.[0]?.key || acco?.property?.images?.[0]?.key || null;
-    if (key) return `${S3_ACCO_BASE}${key}`;
-    return null;
+    if (accoImage) return normalizeImageUrl(accoImage);
+    return (
+      resolveAccommodationImageUrl(acco?.images?.[0], "thumb") ||
+      resolveAccommodationImageUrl(acco?.property?.images?.[0], "thumb") ||
+      null
+    );
   }, [accoImage, acco]);
 
   if (!propertyId) return null;

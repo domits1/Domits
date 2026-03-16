@@ -1,12 +1,11 @@
-.hosthomepagecontainer{
-  
+.hosthomepagecontainer {
   .StripeModal {
     z-index: 2;
     left: 0;
     width: 100%;
     height: auto;
     padding: 20px;
-    background-color: #0D9813;
+    background-color: #0d9813;
     color: white;
     text-align: center;
     border-radius: 6px;
@@ -30,7 +29,7 @@
     }
 
     button {
-      background-color: #0D9813;
+      background-color: #0d9813;
       border: none;
       border-radius: 40px;
       font-size: 1.5em;
@@ -47,7 +46,8 @@
     width: 3.2vw;
   }
 
-  .wijzer, .wijzer-grn {
+  .wijzer,
+  .wijzer-grn {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -94,7 +94,8 @@
     }
   }
 
-  .Mui, .Mui-add {
+  .Mui,
+  .Mui-add {
     display: flex;
     align-items: center;
     justify-content: space-around;
@@ -282,7 +283,7 @@
   }
 
   .personalInfoContent {
-    width: 20%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -340,7 +341,8 @@
   }
 
   @media (max-width: 1024px) {
-    .dashboard-1, .dashboard-2 {
+    .dashboard-1,
+    .dashboard-2 {
       width: 100%;
       margin-bottom: 20px;
     }
@@ -389,6 +391,19 @@
 
     .accommodation-location {
       font-size: 0.75em;
+    }
+
+    .infoBox {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+    }
+
+    .personalInfoContent {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
     }
   }
 
