@@ -33,6 +33,10 @@ const MessagesContent = ({ dashboardType }) => {
   const [selectedPropertyTitle, setSelectedPropertyTitle] = useState(null);
   const [selectedAccoImage, setSelectedAccoImage] = useState(null);
 
+  const [selectedPlatform, setSelectedPlatform] = useState("DOMITS");
+  const [selectedIntegrationAccountId, setSelectedIntegrationAccountId] = useState(null);
+  const [selectedExternalThreadId, setSelectedExternalThreadId] = useState(null);
+
   const [message, setMessage] = useState(null);
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
@@ -56,7 +60,10 @@ const MessagesContent = ({ dashboardType }) => {
     threadId = null,
     propertyId = null,
     propertyTitle = null,
-    accoImage = null
+    accoImage = null,
+    platform = "DOMITS",
+    integrationAccountId = null,
+    externalThreadId = null
   ) => {
     setSelectedContactId(contactId);
     setSelectedContactName(contactName);
@@ -66,6 +73,10 @@ const MessagesContent = ({ dashboardType }) => {
     setSelectedPropertyId(propertyId || null);
     setSelectedPropertyTitle(propertyTitle || null);
     setSelectedAccoImage(accoImage || null);
+
+    setSelectedPlatform(platform || "DOMITS");
+    setSelectedIntegrationAccountId(integrationAccountId || null);
+    setSelectedExternalThreadId(externalThreadId || null);
   };
 
   const handleBackToContacts = () => {
@@ -76,6 +87,10 @@ const MessagesContent = ({ dashboardType }) => {
     setSelectedPropertyId(null);
     setSelectedPropertyTitle(null);
     setSelectedAccoImage(null);
+
+    setSelectedPlatform("DOMITS");
+    setSelectedIntegrationAccountId(null);
+    setSelectedExternalThreadId(null);
   };
 
   const handleCloseChat = (contactId = null) => {
@@ -88,6 +103,10 @@ const MessagesContent = ({ dashboardType }) => {
       setSelectedPropertyId(null);
       setSelectedPropertyTitle(null);
       setSelectedAccoImage(null);
+
+      setSelectedPlatform("DOMITS");
+      setSelectedIntegrationAccountId(null);
+      setSelectedExternalThreadId(null);
     }
   };
 
@@ -97,7 +116,7 @@ const MessagesContent = ({ dashboardType }) => {
 
   const showContactList = isMobile ? !selectedContactId : true;
   const showChatScreen = isMobile ? !!selectedContactId : true;
-  const showDetailsPanel = !isMobile && !isTablet;
+  const showDetailsPanel = !isMobile && !isTablet && selectedPlatform !== "WHATSAPP";
 
   return (
     <div className={`${dashboardType}-dashboard-page-body messages-v2`}>
@@ -143,6 +162,9 @@ const MessagesContent = ({ dashboardType }) => {
                     contactImage={selectedContactImage}
                     threadId={selectedThreadId}
                     propertyId={selectedPropertyId}
+                    platform={selectedPlatform}
+                    integrationAccountId={selectedIntegrationAccountId}
+                    externalThreadId={selectedExternalThreadId}
                     onBack={isTablet ? handleBackToContacts : null}
                     dashboardType={dashboardType}
                   />

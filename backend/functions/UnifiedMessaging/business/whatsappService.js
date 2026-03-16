@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import IngestionService from "./ingestionService.js";
 import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
 import MessageRepository from "../data/messageRepository.js";
+import publishRealtimeMessage from "./publishRealtimeMessage.js";
 
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
@@ -75,6 +76,11 @@ const getAttachmentPayload = (message) => {
   ];
 };
 
+const extractFileUrls = (attachments) => {
+  const arr = Array.isArray(attachments) ? attachments : [];
+  return arr.map((item) => item?.url).filter(Boolean);
+};
+
 const mapDeliveryStatus = (statusValue) => {
   const s = String(statusValue || "").toLowerCase();
   if (["sent", "delivered", "read", "failed"].includes(s)) return s;
@@ -138,12 +144,38 @@ export default class WhatsAppService {
     const ingestionResults = [];
     for (const threadPayload of normalized.inboundThreads) {
       const result = await this.ingestionService.ingestExternalThread(threadPayload);
+
       ingestionResults.push({
         integrationAccountId: threadPayload.integrationAccountId,
         externalThreadId: threadPayload.externalThreadId,
         statusCode: result?.statusCode || 200,
         response: result?.response || null,
       });
+
+      const insertedMessages = Number(result?.response?.insertedMessages || 0);
+      const resolvedThreadId = result?.response?.threadId || null;
+
+      if (insertedMessages > 0 && resolvedThreadId) {
+        for (const msg of asArray(threadPayload.messages)) {
+          await publishRealtimeMessage({
+            senderId: msg.senderId,
+            userId: msg.senderId,
+            recipientId: msg.recipientId,
+            text: msg.content || "",
+            content: msg.content || "",
+            fileUrls: extractFileUrls(msg.attachments),
+            attachments: msg.attachments || null,
+            threadId: resolvedThreadId,
+            propertyId: threadPayload.propertyId || null,
+            metadata: msg.metadata || {},
+            createdAt: msg.externalCreatedAt || Date.now(),
+            platform: "WHATSAPP",
+            integrationAccountId: threadPayload.integrationAccountId,
+            externalThreadId: threadPayload.externalThreadId,
+            type: "message",
+          });
+        }
+      }
     }
 
     const statusResults = [];

@@ -1,5 +1,3 @@
-// frontend/web/src/components/messages/ChatScreen.jsx
-
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 import ChatMessage from "./ChatMessage";
@@ -39,6 +37,9 @@ const ChatScreen = ({
   contactImage,
   threadId,
   propertyId,
+  platform = "DOMITS",
+  integrationAccountId = null,
+  externalThreadId = null,
   onBack,
   onClose,
   dashboardType,
@@ -65,6 +66,8 @@ const ChatScreen = ({
   const isNearBottomRef = useRef(true);
 
   const resolvedContactId = contactId || null;
+  const resolvedPlatform = String(platform || "DOMITS").toUpperCase();
+  const isWhatsApp = resolvedPlatform === "WHATSAPP";
 
   useEffect(() => {
     if (!resolvedContactId) {
@@ -162,6 +165,7 @@ const ChatScreen = ({
       threadId: threadId || null,
       propertyId: effectivePropertyId,
       isSent: true,
+      platform: resolvedPlatform,
     };
 
     isNearBottomRef.current = true;
@@ -174,6 +178,9 @@ const ChatScreen = ({
         hostId,
         guestId,
         metadata: { isAutomated: false },
+        platform: resolvedPlatform,
+        integrationAccountId: integrationAccountId ?? null,
+        externalThreadId: externalThreadId || resolvedContactId,
       });
 
       if (!result?.success) throw new Error(result?.error || "send failed");
@@ -184,6 +191,7 @@ const ChatScreen = ({
         id: saved?.id || optimisticId,
         createdAt: saved?.createdAt ? new Date(saved.createdAt).toISOString() : nowIso,
         threadId: saved?.threadId || optimistic.threadId,
+        platform: saved?.platform || resolvedPlatform,
       };
 
       setLocalMessages((prev) => prev.map((m) => (m.id === optimisticId ? finalMsg : m)));
@@ -238,7 +246,7 @@ const ChatScreen = ({
 
           <div className="chat-header-text">
             <h3>{headerName}</h3>
-            <p className="chat-status">Active now</p>
+            <p className="chat-status">{isWhatsApp ? "WhatsApp conversation" : "Active now"}</p>
           </div>
         </div>
 
@@ -270,7 +278,14 @@ const ChatScreen = ({
       </div>
 
       <div className="chat-footer">
-        <BookingTab userId={userId} contactId={resolvedContactId} contactName={headerName} dashboardType={dashboardType} />
+        {!isWhatsApp ? (
+          <BookingTab
+            userId={userId}
+            contactId={resolvedContactId}
+            contactName={headerName}
+            dashboardType={dashboardType}
+          />
+        ) : null}
 
         <div className="chat-input">
           <div className="attachment-area">
@@ -295,7 +310,7 @@ const ChatScreen = ({
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="message-input-textarea"
-                placeholder="Type a message"
+                placeholder={isWhatsApp ? "Type a WhatsApp message" : "Type a message"}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -347,6 +362,9 @@ ChatScreen.propTypes = {
   contactImage: PropTypes.string,
   threadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   propertyId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  platform: PropTypes.string,
+  integrationAccountId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  externalThreadId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onBack: PropTypes.func,
   onClose: PropTypes.func,
   dashboardType: PropTypes.string,
