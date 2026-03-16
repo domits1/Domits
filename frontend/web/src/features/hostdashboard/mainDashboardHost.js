@@ -8,10 +8,10 @@ import Messages from "../../components/messages/Messages";
 import HostReports from "./HostPayments";
 import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
-// import HostPricing from "./hostpricing/views/HostPricing";
 import HostListings from "./HostListings";
 import HostSettings from "./HostSettings";
 import HostProperty from "./HostProperty";
+import HostIntegrations from "./HostIntegrations";
 
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
@@ -43,7 +43,6 @@ function MainDashboardHost() {
         <Routes>
           <Route index element={<HostDashboard />} />
 
-          {/* If you want onboarding fully hidden from host sidebar, keep routes but don't link to them */}
           <Route
             path="hostonboarding/*"
             element={
@@ -95,27 +94,18 @@ function MainDashboardHost() {
             <Route path="*" element={<Navigate to="." replace />} />
           </Route>
 
-          {/* ✅ Rename URL: calendar -> calendar-pricing */}
           <Route path="calendar-pricing" element={<HostCalendar />} />
-
-          {/* Optional: keep old URL working (redirect) */}
           <Route path="calendar" element={<Navigate to="../calendar-pricing" replace />} />
 
           <Route path="reservations" element={<HostReservations />} />
           <Route path="messages" element={<Messages dashboardType="host" />} />
+          <Route path="integrations" element={<HostIntegrations />} />
           <Route path="revenues" element={<HostReports />} />
 
-          {/* ✅ Rename URL: housekeeping -> tasks */}
           <Route path="tasks" element={<HostPropertyCare />} />
-
-          {/* Optional: keep old URL working (redirect) */}
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
 
           <Route path="finance" element={<HostFinanceTab />} />
-
-          {/* ✅ Hide Pricing route */}
-          {/* <Route path="pricing" element={<HostPricing />} /> */}
-
           <Route path="listings" element={<HostListings />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />

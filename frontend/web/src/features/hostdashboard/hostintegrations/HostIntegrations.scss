@@ -1,0 +1,277 @@
+.host-integrations-page {
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.host-integrations-hero {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+.host-integrations-eyebrow {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #15803d;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.host-integrations-hero h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 1.5rem + 1vw, 2.5rem);
+  line-height: 1.1;
+}
+
+.host-integrations-subtitle {
+  margin: 10px 0 0;
+  max-width: 760px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.host-integrations-loading,
+.host-integrations-error-banner {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.host-integrations-error-banner {
+  color: #991b1b;
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+.host-integrations-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.host-integrations-list {
+  display: grid;
+  gap: 16px;
+}
+
+.host-integrations-list-item {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.host-integrations-list-item.is-active .host-integrations-card {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.14), 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.host-integrations-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 18px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.host-integrations-list-item:hover .host-integrations-card {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
+}
+
+.host-integrations-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.host-integrations-card-head h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.host-integrations-card-copy {
+  margin: 6px 0 0;
+  color: #4b5563;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.host-integrations-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.host-integrations-status.is-success {
+  color: #166534;
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+}
+
+.host-integrations-status.is-pending {
+  color: #9a6700;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.host-integrations-status.is-danger {
+  color: #991b1b;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+}
+
+.host-integrations-status.is-muted {
+  color: #4b5563;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+
+.host-integrations-card-body {
+  margin-top: 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.host-integrations-meta {
+  display: grid;
+  gap: 12px;
+}
+
+.host-integrations-meta div {
+  display: grid;
+  gap: 4px;
+}
+
+.host-integrations-meta-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.host-integrations-error {
+  margin: 0;
+  color: #991b1b;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.host-integrations-actions {
+  display: flex;
+}
+
+.host-integrations-primary-btn {
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 16px;
+  background: #15803d;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(21, 128, 61, 0.22);
+}
+
+.host-integrations-primary-btn:hover {
+  background: #166534;
+}
+
+.host-integrations-detail {
+  min-width: 0;
+}
+
+.host-integrations-setup {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+  display: grid;
+  gap: 20px;
+}
+
+.host-integrations-setup-header h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.host-integrations-setup-header p {
+  margin: 8px 0 0;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.host-integrations-steps {
+  display: grid;
+  gap: 16px;
+}
+
+.host-integrations-step {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.host-integrations-step-number {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #15803d;
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+}
+
+.host-integrations-step h4 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.host-integrations-step p {
+  margin: 6px 0 0;
+  color: #4b5563;
+  line-height: 1.55;
+}
+
+.host-integrations-callout {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.host-integrations-callout h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.host-integrations-callout p {
+  margin: 8px 0 0;
+  color: #4b5563;
+  line-height: 1.55;
+}
+
+@media (max-width: 1080px) {
+  .host-integrations-grid {
+    grid-template-columns: 1fr;
+  }
+}
