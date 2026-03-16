@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { UserProvider } from "./hostmessages/context/AuthContext";
 import { useAuth } from "./hostmessages/hooks/useAuth";
 import "./hostintegrations/HostIntegrations.scss";
 
@@ -80,7 +81,7 @@ function IntegrationCard({ integration, onManage }) {
         {integration.lastErrorMessage ? <p className="host-integrations-error">{integration.lastErrorMessage}</p> : null}
 
         <div className="host-integrations-actions">
-          <button type="button" className="host-integrations-primary-btn" onClick={() => onManage?.(integration)}>
+          <button type="button" className="host-integrations-primary-btn" onClick={() => onManage?.(integration.id)}>
             {connected ? "Manage WhatsApp" : "Connect WhatsApp"}
           </button>
         </div>
@@ -118,9 +119,7 @@ function WhatsAppSetupPanel({ integration }) {
           <span className="host-integrations-step-number">2</span>
           <div>
             <h4>Select business number</h4>
-            <p>
-              If the host has multiple numbers, let them pick the number they want to use for Domits messaging.
-            </p>
+            <p>If the host has multiple numbers, let them pick the number they want to use for Domits messaging.</p>
           </div>
         </div>
 
@@ -159,7 +158,7 @@ function WhatsAppSetupPanel({ integration }) {
   );
 }
 
-export default function HostIntegrations() {
+function HostIntegrationsInner() {
   const { userId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -276,5 +275,13 @@ export default function HostIntegrations() {
         </div>
       ) : null}
     </main>
+  );
+}
+
+export default function HostIntegrations() {
+  return (
+    <UserProvider>
+      <HostIntegrationsInner />
+    </UserProvider>
   );
 }
