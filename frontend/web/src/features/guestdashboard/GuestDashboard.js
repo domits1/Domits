@@ -8,19 +8,174 @@ import { getGuestBookings, buildListingDetailsUrl } from "./services/bookingAPI"
 import GuestInfoRow from "./components/GuestInfoRow";
 import GuestFamilyRow from "./components/GuestFamilyRow";
 
-
-import { placeholderImage, normalizeImageUrl } from "./utils/image";
+import { placeholderImage } from "./utils/image";
+import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 
 import {
   isValidPhoneE164,
   parseFamilyString,
   formatFamilyLabel,
-  splitBookingsByTime,
+  getCurrentOrUpcomingBooking,
   getPropertyId,
   getArrivalDate,
   getDepartureDate,
   formatDate,
+  resolveHostName,
+  resolveSubtitleCity,
 } from "./utils/guestDashboardUtils";
+
+const EMAIL_UPDATE_SUCCESS_MESSAGE = "Email update successful, please verify your new email.";
+const EMAIL_IN_USE_MESSAGE = "This email address is already in use.";
+
+const resolveAddressAttribute = (rawAddress = "") => {
+  let address = rawAddress || "";
+
+  try {
+    const parsed = JSON.parse(rawAddress);
+    address =
+      parsed.formatted ||
+      parsed.street_address ||
+      `${parsed.street_address || ""} ${parsed.postal_code || ""} ${parsed.locality || ""} ${
+        parsed.country || ""
+      }`.trim();
+  } catch {}
+
+  return address;
+};
+
+const isValidEmailAddress = (email = "") => {
+  const normalizedEmail = String(email || "").trim();
+  if (!normalizedEmail || normalizedEmail.includes(" ")) {
+    return false;
+  }
+
+  const atIndex = normalizedEmail.indexOf("@");
+  const lastAtIndex = normalizedEmail.lastIndexOf("@");
+
+  if (atIndex <= 0 || atIndex !== lastAtIndex || atIndex === normalizedEmail.length - 1) {
+    return false;
+  }
+
+  const domain = normalizedEmail.slice(atIndex + 1);
+  const dotIndex = domain.indexOf(".");
+
+  return dotIndex > 0 && dotIndex < domain.length - 1;
+};
+
+const requestEmailUpdate = async (userId, newEmail) => {
+  const response = await fetch(
+    "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-CustomerIAM-Production-Update-UserEmail",
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, newEmail }),
+    }
+  );
+
+  const json = await response.json().catch(() => ({}));
+  return { response, json };
+};
+
+const getEmailUpdateErrorMessage = (responseOk, message) => {
+  if (!responseOk) {
+    return "Failed to update email. Please try again later.";
+  }
+  if (message === EMAIL_IN_USE_MESSAGE) {
+    return message;
+  }
+  if (message !== EMAIL_UPDATE_SUCCESS_MESSAGE) {
+    return "Email update response was unexpected. Please try again.";
+  }
+  return "";
+};
+
+const buildCurrentBookingSummary = async (guestId) => {
+  const selectedBooking = getCurrentOrUpcomingBooking(await getGuestBookings(guestId));
+
+  if (!selectedBooking) {
+    return {
+      booking: null,
+      image: placeholderImage,
+      title: "Current booking",
+      city: "",
+      hostName: "-",
+    };
+  }
+
+  const bookingCity = selectedBooking?.city || selectedBooking?.location?.city || "Unknown city";
+  const propertyId = getPropertyId(selectedBooking);
+
+  if (!propertyId) {
+    return {
+      booking: selectedBooking,
+      image: placeholderImage,
+      title: "Current booking",
+      city: bookingCity,
+      hostName: resolveHostName(
+        selectedBooking?.hostName,
+        selectedBooking?.host_name,
+        selectedBooking?.host?.name,
+        selectedBooking?.host?.fullName
+      ),
+    };
+  }
+
+  const response = await fetch(buildListingDetailsUrl(propertyId));
+  if (!response.ok) {
+    return {
+      booking: selectedBooking,
+      image: placeholderImage,
+      title: `Property #${propertyId}`,
+      city: bookingCity,
+      hostName: resolveHostName(
+        selectedBooking?.hostName,
+        selectedBooking?.host_name,
+        selectedBooking?.host?.name,
+        selectedBooking?.host?.fullName
+      ),
+    };
+  }
+
+  const data = await response.json().catch(() => ({}));
+  const property = data.property || {};
+  const images = Array.isArray(data.images) ? data.images : [];
+  const location = data.location || {};
+  const hostObj = data.host || data.hostInfo || property.host || property.hostInfo || null;
+
+  const hostNameFromHost =
+    hostObj?.name ||
+    hostObj?.fullName ||
+    (hostObj?.firstName && hostObj?.lastName ? `${hostObj.firstName} ${hostObj.lastName}` : null);
+
+  const hostNameFromProperty =
+    property.username && property.familyname
+      ? `${String(property.username).trim()} ${String(property.familyname).trim()}`
+      : (property.username && String(property.username).trim()) ||
+        (property.familyname && String(property.familyname).trim()) ||
+        null;
+
+  const subtitle = property.subtitle || "";
+  const cityFromLocation = location.city || null;
+  const cityFromSubtitle = resolveSubtitleCity(subtitle);
+
+  return {
+    booking: selectedBooking,
+    image: resolvePrimaryAccommodationImageUrl(images, "thumb"),
+    title: property.title || property.name || `Property #${property.id || propertyId}`,
+    city: cityFromLocation || cityFromSubtitle || subtitle || bookingCity,
+    hostName: resolveHostName(
+      hostNameFromHost,
+      hostNameFromProperty,
+      data.hostName,
+      property.hostName,
+      selectedBooking?.hostName,
+      selectedBooking?.host_name,
+      selectedBooking?.host?.name,
+      selectedBooking?.host?.fullName,
+      property.hostId
+    ),
+  };
+};
 
 const GuestDashboard = () => {
   const [user, setUser] = useState({
@@ -57,7 +212,7 @@ const GuestDashboard = () => {
   const [currentBookingImage, setCurrentBookingImage] = useState(placeholderImage);
   const [currentBookingTitle, setCurrentBookingTitle] = useState("Current booking");
   const [currentBookingCity, setCurrentBookingCity] = useState("");
-  const [hostName, setHostName] = useState("—");
+  const [hostName, setHostName] = useState("-");
   const [bookingLoading, setBookingLoading] = useState(true);
   const [bookingError, setBookingError] = useState("");
 
@@ -95,36 +250,21 @@ const GuestDashboard = () => {
       }
 
       const newEmail = (temp.email || "").trim();
-      if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
+      if (!newEmail || !isValidEmailAddress(newEmail)) {
         alert("Please provide a valid email address.");
         return;
       }
 
       const userInfo = await Auth.currentAuthenticatedUser();
-      const params = { userId: userInfo.username, newEmail };
+      const { response, json } = await requestEmailUpdate(userInfo.username, newEmail);
+      const errorMessage = getEmailUpdateErrorMessage(response.ok, json.message);
 
-      const resp = await fetch(
-        "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-CustomerIAM-Production-Update-UserEmail",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(params),
-        }
-      );
-
-      const json = await resp.json().catch(() => ({}));
-
-      if (resp.ok) {
-        if (json.message === "Email update successful, please verify your new email.") {
-          setIsVerifying(true);
-        } else if (json.message === "This email address is already in use.") {
-          alert(json.message);
-        } else {
-          alert("Email update response was unexpected. Please try again.");
-        }
-      } else {
-        alert("Failed to update email. Please try again later.");
+      if (errorMessage) {
+        alert(errorMessage);
+        return;
       }
+
+      setIsVerifying(true);
     } catch {
       alert("An error occurred while updating the email.");
     }
@@ -176,7 +316,7 @@ const GuestDashboard = () => {
 
   const savePhone = async () => {
     try {
-      const newPhone = (temp.phone || "").replace(/\s/g, "");
+      const newPhone = (temp.phone || "").replaceAll(/\s/g, "");
       if (!isValidPhoneE164(newPhone)) {
         alert("Phone must be in international format, e.g., +31612345678");
         return;
@@ -221,89 +361,17 @@ const GuestDashboard = () => {
     setBookingError("");
     setCurrentBooking(null);
     setCurrentBookingImage(placeholderImage);
-    setHostName("—");
+    setHostName("-");
     setCurrentBookingTitle("Current booking");
     setCurrentBookingCity("");
 
     try {
-      const bookingData = await getGuestBookings(guestId);
-
-      let normalizedBookings = [];
-      if (Array.isArray(bookingData)) normalizedBookings = bookingData;
-      else if (Array.isArray(bookingData?.data)) normalizedBookings = bookingData.data;
-      else if (Array.isArray(bookingData?.response)) normalizedBookings = bookingData.response;
-      else if (typeof bookingData?.body === "string") {
-        try {
-          const innerParsed = JSON.parse(bookingData.body);
-          if (Array.isArray(innerParsed)) normalizedBookings = innerParsed;
-          else if (Array.isArray(innerParsed?.response)) normalizedBookings = innerParsed.response;
-        } catch {}
-      }
-
-      const paidBookings = normalizedBookings.filter(
-        (b) => String(b?.status ?? b?.Status ?? "").toLowerCase() === "paid"
-      );
-
-      if (!paidBookings.length) return;
-
-      const { currentBookings, upcomingBookings } = splitBookingsByTime(paidBookings);
-      const selectedBooking = currentBookings[0] || upcomingBookings[0] || paidBookings[0];
-      if (!selectedBooking) return;
-
-      setCurrentBooking(selectedBooking);
-
-      const bookingCity = selectedBooking?.city || selectedBooking?.location?.city || "Unknown city";
-      setCurrentBookingCity(bookingCity);
-
-      const propertyId = getPropertyId(selectedBooking);
-      if (!propertyId) return;
-
-      const resp = await fetch(buildListingDetailsUrl(propertyId));
-      if (!resp.ok) return;
-
-      const data = await resp.json().catch(() => ({}));
-      const property = data.property || {};
-      const images = Array.isArray(data.images) ? data.images : [];
-      const location = data.location || {};
-      const hostObj = data.host || data.hostInfo || property.host || property.hostInfo || null;
-
-      const hostNameFromHost =
-        hostObj?.name ||
-        hostObj?.fullName ||
-        (hostObj?.firstName && hostObj?.lastName ? `${hostObj.firstName} ${hostObj.lastName}` : null);
-
-      const hostNameFromProperty =
-        property.username && property.familyname
-          ? `${String(property.username).trim()} ${String(property.familyname).trim()}`
-          : (property.username && String(property.username).trim()) ||
-            (property.familyname && String(property.familyname).trim()) ||
-            null;
-
-      const resolvedHostName =
-        hostNameFromHost ||
-        hostNameFromProperty ||
-        data.hostName ||
-        property.hostName ||
-        selectedBooking?.hostName ||
-        selectedBooking?.host_name ||
-        selectedBooking?.host?.name ||
-        selectedBooking?.host?.fullName ||
-        property.hostId ||
-        "—";
-
-      setHostName(resolvedHostName);
-
-      const title = property.title || property.name || `Property #${property.id || propertyId}`;
-      setCurrentBookingTitle(title);
-
-      const firstImageKey = images[0]?.key || null;
-      setCurrentBookingImage(normalizeImageUrl(firstImageKey));
-
-      const subtitle = property.subtitle || "";
-      const cityFromLocation = location.city || null;
-      const cityFromSubtitle = subtitle ? subtitle.split(",")[0].trim() : "";
-      const city = cityFromLocation || cityFromSubtitle || "";
-      setCurrentBookingCity(city || subtitle || bookingCity);
+      const summary = await buildCurrentBookingSummary(guestId);
+      setCurrentBooking(summary.booking);
+      setCurrentBookingImage(summary.image);
+      setCurrentBookingTitle(summary.title);
+      setCurrentBookingCity(summary.city);
+      setHostName(summary.hostName);
     } catch {
       setBookingError("Could not load your current booking.");
     } finally {
@@ -318,24 +386,13 @@ const GuestDashboard = () => {
         const attrs = authUser.attributes || {};
         setGuestId(attrs.sub || null);
 
-        let address = attrs.address || "";
-        try {
-          const parsed = JSON.parse(attrs.address);
-          address =
-            parsed.formatted ||
-            parsed.street_address ||
-            `${parsed.street_address || ""} ${parsed.postal_code || ""} ${parsed.locality || ""} ${
-              parsed.country || ""
-            }`.trim();
-        } catch {}
-
-        const familyAttr = attrs["custom:family"] || attrs["family"] || "2 adults - 2 kids";
+        const familyAttr = attrs["custom:family"] || attrs.family || "2 adults - 2 kids";
         const parsedFamily = parseFamilyString(familyAttr);
 
         setUser({
           email: attrs.email ?? "",
           name: attrs.given_name ?? attrs.name ?? "",
-          address: address ?? "",
+          address: resolveAddressAttribute(attrs.address),
           phone: attrs.phone_number ?? "",
           family: formatFamilyLabel(parsedFamily),
         });
@@ -375,7 +432,7 @@ const GuestDashboard = () => {
                 <div className="booking-details__content">
                   <h4 className="booking-details__title">{currentBookingTitle}</h4>
 
-                  {bookingLoading && <div className="booking-details__host">Loading booking…</div>}
+                  {bookingLoading && <div className="booking-details__host">Loading booking...</div>}
 
                   {!bookingLoading && !currentBooking && !bookingError && (
                     <div className="booking-details__host">You have no current or upcoming paid bookings.</div>
@@ -385,26 +442,22 @@ const GuestDashboard = () => {
 
                   {currentBooking && !bookingLoading && (
                     <>
-                      <div className="booking-details__host">Host: {hostName || "—"}</div>
+                      <div className="booking-details__host">Host: {hostName || "-"}</div>
                       <div className="booking-details__host">{currentBookingCity}</div>
 
                       <div className="booking-details__pi">
                         <div className="booking-details__row">
                           <div className="booking-details__label">Check-in</div>
-                          <div className="booking-details__value">
-                            {formatDate(getArrivalDate(currentBooking))}
-                          </div>
+                          <div className="booking-details__value">{formatDate(getArrivalDate(currentBooking))}</div>
                         </div>
                         <div className="booking-details__row">
                           <div className="booking-details__label">Check-out</div>
-                          <div className="booking-details__value">
-                            {formatDate(getDepartureDate(currentBooking))}
-                          </div>
+                          <div className="booking-details__value">{formatDate(getDepartureDate(currentBooking))}</div>
                         </div>
                         <div className="booking-details__row">
                           <div className="booking-details__label">Status</div>
                           <div className="booking-details__value">
-                            {String(currentBooking?.status ?? currentBooking?.Status ?? "") || "—"}
+                            {String(currentBooking?.status ?? currentBooking?.Status ?? "") || "-"}
                           </div>
                         </div>
                       </div>
@@ -429,7 +482,7 @@ const GuestDashboard = () => {
                     9+
                   </span>
                 </div>
-                <a className="messages-section__cta" href="#">
+                <Link className="messages-section__cta" to="/guestdashboard/messages">
                   <span>Go to message centre</span>
                   <span className="messages-section__icon" aria-hidden="true">
                     <svg
@@ -445,7 +498,7 @@ const GuestDashboard = () => {
                       <path d="M21 15a4 4 0 0 1-4 4H8l-4 4v-8a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h13a4 4 0 0 1 4 4z" />
                     </svg>
                   </span>
-                </a>
+                </Link>
               </section>
             </div>
 
