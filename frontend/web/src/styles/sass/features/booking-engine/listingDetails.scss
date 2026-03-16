@@ -610,8 +610,10 @@
 
             .date-box {
                 display: flex;
+                flex: 1 1 0;
                 flex-direction: column;
                 align-items: flex-start;
+                min-width: 0;
                 gap: 4px;
                 background: transparent;
                 padding: 0;
@@ -641,8 +643,9 @@
                     }
                 }
                 .inputField {
+                    box-sizing: border-box;
                     width: 100%;
-                    padding: 8px 12px;
+                    padding: 8px 42px 8px 12px;
                     border: 2px solid rgba(20, 200, 90, 0.2);
                     background: linear-gradient(135deg, rgba(20, 200, 90, 0.04) 0%, rgba(20, 200, 90, 0.01) 100%);
                     border-radius: 10px;
@@ -680,6 +683,25 @@
                 .react-datepicker-wrapper,
                 .react-datepicker__input-container {
                     width: 100%;
+                }
+
+                .date-picker-field {
+                    position: relative;
+                    width: 100%;
+                }
+
+                .date-picker-icon {
+                    position: absolute;
+                    top: 50%;
+                    right: 14px;
+                    transform: translateY(-50%);
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #49a35a;
+                    font-size: 0.95rem;
+                    line-height: 1;
+                    pointer-events: none;
                 }
 
                 .react-datepicker-popper {

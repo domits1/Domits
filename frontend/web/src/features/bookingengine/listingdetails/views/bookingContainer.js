@@ -6,7 +6,6 @@ import Pricing from "../components/pricing";
 import useHandleReservePress from "../hooks/handleReservePress";
 import {
   buildUnavailableDateSet,
-  getFutureDateKey,
   hasUnavailableDateInStayRange,
   isUnavailableDate,
 } from "../utils/dateAvailability";

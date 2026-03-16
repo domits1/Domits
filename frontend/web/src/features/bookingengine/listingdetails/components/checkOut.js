@@ -1,5 +1,6 @@
 import DatePicker from "react-datepicker";
 import PropTypes from "prop-types";
+import { FaCalendarAlt } from "react-icons/fa";
 import {
   addDaysToDateKey,
   buildUnavailableDateSet,
@@ -23,23 +24,28 @@ const CheckOut = ({
   return (
     <div className="date-box">
       <p className="label">Check out</p>
-      <DatePicker
-        selected={selectedCheckOutDate}
-        onChange={(date) => setCheckOutDate(date ? toDateKey(date) : "")}
-        className="inputField"
-        disabled={!checkInDate}
-        minDate={normalizeDateValue(minCheckOutDate)}
-        filterDate={(date) => {
-          if (!selectedCheckInDate) {
-            return false;
-          }
+      <div className="date-picker-field">
+        <DatePicker
+          selected={selectedCheckOutDate}
+          onChange={(date) => setCheckOutDate(date ? toDateKey(date) : "")}
+          className="inputField"
+          disabled={!checkInDate}
+          minDate={normalizeDateValue(minCheckOutDate)}
+          filterDate={(date) => {
+            if (!selectedCheckInDate) {
+              return false;
+            }
 
-          return !hasUnavailableDateInStayRange(selectedCheckInDate, date, unavailableDateSet);
-        }}
-        dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
-        dateFormat="yyyy-MM-dd"
-        placeholderText="YYYY-MM-DD"
-      />
+            return !hasUnavailableDateInStayRange(selectedCheckInDate, date, unavailableDateSet);
+          }}
+          dayClassName={(date) => (toDateKey(date) === toDateKey(new Date()) ? "booking-picker-day--today" : "")}
+          dateFormat="yyyy-MM-dd"
+          placeholderText="YYYY-MM-DD"
+        />
+        <span className="date-picker-icon" aria-hidden="true">
+          <FaCalendarAlt />
+        </span>
+      </div>
     </div>
   );
 };
