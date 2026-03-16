@@ -35,7 +35,8 @@
 }
 
 .host-integrations-loading,
-.host-integrations-error-banner {
+.host-integrations-error-banner,
+.host-integrations-success-banner {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
@@ -46,6 +47,12 @@
   color: #991b1b;
   border-color: #fecaca;
   background: #fff5f5;
+}
+
+.host-integrations-success-banner {
+  color: #166534;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
 }
 
 .host-integrations-grid {
@@ -177,19 +184,29 @@
   display: flex;
 }
 
-.host-integrations-primary-btn {
+.host-integrations-primary-btn,
+.host-integrations-secondary-btn {
   border: 0;
   border-radius: 12px;
   padding: 11px 16px;
-  background: #15803d;
-  color: #ffffff;
   font-weight: 700;
   cursor: pointer;
+}
+
+.host-integrations-primary-btn {
+  background: #15803d;
+  color: #ffffff;
   box-shadow: 0 8px 20px rgba(21, 128, 61, 0.22);
 }
 
 .host-integrations-primary-btn:hover {
   background: #166534;
+}
+
+.host-integrations-secondary-btn {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #d1d5db;
 }
 
 .host-integrations-detail {
@@ -270,8 +287,124 @@
   line-height: 1.55;
 }
 
+.host-integrations-flow {
+  display: grid;
+  gap: 16px;
+}
+
+.host-integrations-flow-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.host-integrations-session-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #166534;
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+}
+
+.host-integrations-session-chip.is-muted {
+  color: #4b5563;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.host-integrations-manual-form {
+  display: grid;
+  gap: 14px;
+  background: #fafafa;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.host-integrations-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.host-integrations-field {
+  display: grid;
+  gap: 8px;
+}
+
+.host-integrations-field span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.host-integrations-field input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+}
+
+.host-integrations-field input:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+.host-integrations-number-list {
+  display: grid;
+  gap: 12px;
+}
+
+.host-integrations-number-list h4 {
+  margin: 0;
+}
+
+.host-integrations-number-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.host-integrations-number-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.host-integrations-number-card strong {
+  display: block;
+}
+
+.host-integrations-number-card p {
+  margin: 6px 0 0;
+  color: #4b5563;
+}
+
 @media (max-width: 1080px) {
   .host-integrations-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .host-integrations-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .host-integrations-number-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

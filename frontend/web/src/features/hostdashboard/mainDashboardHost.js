@@ -12,6 +12,7 @@ import HostListings from "./HostListings";
 import HostSettings from "./HostSettings";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
+import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
 
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
@@ -100,6 +101,7 @@ function MainDashboardHost() {
           <Route path="reservations" element={<HostReservations />} />
           <Route path="messages" element={<Messages dashboardType="host" />} />
           <Route path="integrations" element={<HostIntegrations />} />
+          <Route path="integrations/whatsapp/callback" element={<WhatsAppConnectCallback />} />
           <Route path="revenues" element={<HostReports />} />
 
           <Route path="tasks" element={<HostPropertyCare />} />

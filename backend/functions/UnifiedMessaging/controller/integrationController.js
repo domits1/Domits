@@ -70,6 +70,21 @@ class IntegrationController {
     const body = safeJson(event.body) || {};
     return await this.integrationService.linkReservation(integrationId, body);
   }
+
+  async startWhatsAppConnect(event) {
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.startWhatsAppConnect(body);
+  }
+
+  async completeWhatsAppConnect(event) {
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.completeWhatsAppConnect(body);
+  }
+
+  async selectWhatsAppNumber(event) {
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.selectWhatsAppNumber(body);
+  }
 }
 
 export default IntegrationController;

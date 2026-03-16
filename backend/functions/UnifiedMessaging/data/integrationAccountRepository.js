@@ -34,6 +34,18 @@ class IntegrationAccountRepository {
     return client.getRepository(ChannelIntegrationAccount).findOne({ where: { id } });
   }
 
+  async findByUserIdAndChannel(userId, channel) {
+    const client = await Database.getInstance();
+
+    return client
+      .getRepository(ChannelIntegrationAccount)
+      .createQueryBuilder("a")
+      .where("a.userId = :userId", { userId })
+      .andWhere("a.channel = :channel", { channel })
+      .orderBy("a.updatedAt", "DESC")
+      .getOne();
+  }
+
   async findByChannelAndExternalAccountId(channel, externalAccountId) {
     const client = await Database.getInstance();
 

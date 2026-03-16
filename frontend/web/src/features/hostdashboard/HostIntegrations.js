@@ -5,6 +5,20 @@ import "./hostintegrations/HostIntegrations.scss";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
 
+/**
+ * CHANGE LATER FOR PRODUCTION:
+ * - localhost for now
+ * - later replace with https://www.domits.com
+ */
+const WHATSAPP_CALLBACK_URL = "http://localhost:3000/hostdashboard/integrations/whatsapp/callback";
+
+/**
+ * META CONFIG
+ * Replace only if these ever change.
+ */
+const META_APP_ID = "1808176813897212";
+const META_EMBEDDED_SIGNUP_CONFIG_ID = "1259900802765110";
+
 const CHANNEL_LABELS = {
   WHATSAPP: "WhatsApp",
 };
@@ -40,6 +54,26 @@ const formatDateTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown";
   return date.toLocaleString();
+};
+
+const buildMetaEmbeddedSignupUrl = ({ userId, connectSessionId }) => {
+  const statePayload = {
+    userId,
+    connectSessionId,
+    channel: "WHATSAPP",
+    callbackUrl: WHATSAPP_CALLBACK_URL,
+  };
+
+  const params = new URLSearchParams({
+    client_id: META_APP_ID,
+    config_id: META_EMBEDDED_SIGNUP_CONFIG_ID,
+    response_type: "code",
+    override_default_response_type: "true",
+    redirect_uri: WHATSAPP_CALLBACK_URL,
+    state: btoa(JSON.stringify(statePayload)),
+  });
+
+  return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
 };
 
 function IntegrationCard({ integration, onManage }) {
@@ -90,7 +124,14 @@ function IntegrationCard({ integration, onManage }) {
   );
 }
 
-function WhatsAppSetupPanel({ integration }) {
+function WhatsAppSetupPanel({
+  integration,
+  connecting,
+  connectSessionId,
+  actionError,
+  actionSuccess,
+  onStartConnect,
+}) {
   const connected = !!integration?.externalAccountId;
 
   return (
@@ -98,8 +139,8 @@ function WhatsAppSetupPanel({ integration }) {
       <div className="host-integrations-setup-header">
         <h2>WhatsApp integration</h2>
         <p>
-          Connect your WhatsApp Business so hosts can reply from the Domits inbox. This page is the right place for the
-          future Meta connect flow.
+          Start the real Meta Embedded Signup flow here. After Meta returns to the callback page, Domits can process the
+          authorization result and continue the connection flow.
         </p>
       </div>
 
@@ -107,52 +148,55 @@ function WhatsAppSetupPanel({ integration }) {
         <div className="host-integrations-step">
           <span className="host-integrations-step-number">1</span>
           <div>
-            <h4>Connect with Meta</h4>
-            <p>
-              Start a Meta login and permission flow here, so the host can authorize Domits to use their WhatsApp
-              Business number.
-            </p>
+            <h4>Start connect session</h4>
+            <p>Create a Domits connect session so the WhatsApp connect flow can be tracked safely.</p>
           </div>
         </div>
 
         <div className="host-integrations-step">
           <span className="host-integrations-step-number">2</span>
           <div>
-            <h4>Select business number</h4>
-            <p>If the host has multiple numbers, let them pick the number they want to use for Domits messaging.</p>
+            <h4>Open Meta Embedded Signup</h4>
+            <p>Redirect the host to Meta so they can authorize WhatsApp Business onboarding.</p>
           </div>
         </div>
 
         <div className="host-integrations-step">
           <span className="host-integrations-step-number">3</span>
           <div>
-            <h4>Confirm connection</h4>
+            <h4>Return to Domits callback</h4>
             <p>
-              Save the selected WhatsApp Business details in the integration tables and show the connection status in
-              the dashboard.
+              Meta sends the host back to the callback route, where Domits can continue with code exchange and number
+              selection.
             </p>
           </div>
         </div>
       </div>
 
       <div className="host-integrations-callout">
-        {connected ? (
-          <>
-            <h4>Current test connection</h4>
-            <p>
-              A WhatsApp integration is already linked for this user. The next implementation step is replacing the
-              temporary/manual setup with a real host self-service Meta connect flow.
-            </p>
-          </>
-        ) : (
-          <>
-            <h4>No WhatsApp connected yet</h4>
-            <p>
-              The UI entry point is ready. The next implementation step is the real Meta authorization flow plus saving
-              the selected phone number ID for the host.
-            </p>
-          </>
-        )}
+        <h4>{connected ? "Current connection" : "Connect WhatsApp"}</h4>
+        <p>
+          {connected
+            ? "You can reconnect and replace the current WhatsApp connection."
+            : "No WhatsApp number is connected yet for this host account."}
+        </p>
+      </div>
+
+      <div className="host-integrations-flow">
+        <div className="host-integrations-flow-actions">
+          <button type="button" className="host-integrations-primary-btn" disabled={connecting} onClick={onStartConnect}>
+            {connecting ? "Starting..." : connected ? "Reconnect with Meta" : "Connect with Meta"}
+          </button>
+
+          {connectSessionId ? (
+            <span className="host-integrations-session-chip">Session ready</span>
+          ) : (
+            <span className="host-integrations-session-chip is-muted">No active session</span>
+          )}
+        </div>
+
+        {actionError ? <p className="host-integrations-error-banner">{actionError}</p> : null}
+        {actionSuccess ? <p className="host-integrations-success-banner">{actionSuccess}</p> : null}
       </div>
     </section>
   );
@@ -160,59 +204,55 @@ function WhatsAppSetupPanel({ integration }) {
 
 function HostIntegrationsInner() {
   const { userId } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [integrations, setIntegrations] = useState([]);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState(null);
 
+  const [connecting, setConnecting] = useState(false);
+  const [connectSessionId, setConnectSessionId] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
+
+  const fetchIntegrations = async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(`${UNIFIED_API}/integrations?userId=${encodeURIComponent(userId)}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Failed to fetch integrations: ${res.status} ${txt}`);
+      }
+
+      const data = await res.json();
+      const rows = Array.isArray(data) ? data : [];
+      const normalized = rows.map(normalizeIntegration).filter(Boolean);
+
+      setIntegrations(normalized);
+      const firstWhatsApp = normalized.find((item) => item.channel === "WHATSAPP");
+      setSelectedIntegrationId(firstWhatsApp?.id || null);
+    } catch (err) {
+      setError(err?.message || "Failed to load integrations");
+      setIntegrations([]);
+      setSelectedIntegrationId(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let cancelled = false;
-
-    const run = async () => {
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-
-      try {
-        const res = await fetch(`${UNIFIED_API}/integrations?userId=${encodeURIComponent(userId)}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!res.ok) {
-          const txt = await res.text().catch(() => "");
-          throw new Error(`Failed to fetch integrations: ${res.status} ${txt}`);
-        }
-
-        const data = await res.json();
-        const rows = Array.isArray(data) ? data : [];
-        const normalized = rows.map(normalizeIntegration).filter(Boolean);
-
-        if (!cancelled) {
-          setIntegrations(normalized);
-          const firstWhatsApp = normalized.find((item) => item.channel === "WHATSAPP");
-          setSelectedIntegrationId(firstWhatsApp?.id || null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err?.message || "Failed to load integrations");
-          setIntegrations([]);
-          setSelectedIntegrationId(null);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    run();
-
-    return () => {
-      cancelled = true;
-    };
+    fetchIntegrations();
   }, [userId]);
 
   const visibleIntegrations = useMemo(() => {
@@ -230,12 +270,54 @@ function HostIntegrationsInner() {
         lastSuccessfulSyncAt: null,
         lastFailedSyncAt: null,
         lastErrorMessage: null,
+        credentialsRef: null,
       },
     ];
   }, [integrations]);
 
   const selectedIntegration =
     visibleIntegrations.find((item) => String(item.id) === String(selectedIntegrationId)) || visibleIntegrations[0];
+
+  const handleStartConnect = async () => {
+    setActionError("");
+    setActionSuccess("");
+    setConnecting(true);
+
+    try {
+      const res = await fetch(`${UNIFIED_API}/integrations/whatsapp/connect/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          callbackUrl: WHATSAPP_CALLBACK_URL,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to start WhatsApp connect");
+      }
+
+      const nextSessionId = data?.connectSessionId || "";
+      if (!nextSessionId) {
+        throw new Error("Missing connectSessionId from backend");
+      }
+
+      setConnectSessionId(nextSessionId);
+      setActionSuccess("Connect session started. Redirecting to Meta...");
+
+      const metaUrl = buildMetaEmbeddedSignupUrl({
+        userId,
+        connectSessionId: nextSessionId,
+      });
+
+      window.location.href = metaUrl;
+    } catch (err) {
+      setActionError(err?.message || "Failed to start connect");
+    } finally {
+      setConnecting(false);
+    }
+  };
 
   return (
     <main className="host-integrations-page">
@@ -270,7 +352,14 @@ function HostIntegrationsInner() {
           </section>
 
           <div className="host-integrations-detail">
-            <WhatsAppSetupPanel integration={selectedIntegration} />
+            <WhatsAppSetupPanel
+              integration={selectedIntegration}
+              connecting={connecting}
+              connectSessionId={connectSessionId}
+              actionError={actionError}
+              actionSuccess={actionSuccess}
+              onStartConnect={handleStartConnect}
+            />
           </div>
         </div>
       ) : null}

@@ -14,6 +14,20 @@ const bad = (statusCode, response) => ({ statusCode, response });
 
 const requireStr = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
+const normalizeSelectableNumber = (item) => {
+  if (!item || typeof item !== "object") return null;
+
+  const phoneNumberId = requireStr(item.phoneNumberId || item.externalAccountId);
+  if (!phoneNumberId) return null;
+
+  return {
+    phoneNumberId,
+    displayName: requireStr(item.displayName) || "WhatsApp Business Number",
+    businessAccountId: requireStr(item.businessAccountId) || null,
+    phoneNumber: requireStr(item.phoneNumber) || null,
+  };
+};
+
 export default class IntegrationService {
   constructor() {
     this.accounts = new IntegrationAccountRepository();
@@ -119,13 +133,11 @@ export default class IntegrationService {
     const accountId = requireStr(integrationId);
     if (!accountId) return bad(400, { error: "Missing integration id in path" });
 
-    // Framework ready: jobFn can later call Booking.com API + ingestion pipeline
     const result = await this.runner.run({
       integrationAccountId: accountId,
       syncType,
       maxAttempts: typeof body.maxAttempts === "number" ? body.maxAttempts : 3,
       jobFn: async () => {
-        // placeholder: return "no work" but keep cursor support
         return {
           itemsProcessed: 0,
           lastCursor: body.lastCursor ?? null,
@@ -168,5 +180,127 @@ export default class IntegrationService {
     });
 
     return ok(saved);
+  }
+
+  async startWhatsAppConnect(body) {
+    const userId = requireStr(body.userId);
+    const callbackUrl = requireStr(body.callbackUrl);
+
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+    if (!callbackUrl) return bad(400, { error: "Missing required field: callbackUrl" });
+
+    const connectSessionId = randomUUID();
+
+    return ok({
+      mode: "embedded-signup",
+      channel: "WHATSAPP",
+      connectSessionId,
+      callbackUrl,
+      nextStep: "meta_oauth",
+    });
+  }
+
+  async completeWhatsAppConnect(body) {
+    const userId = requireStr(body.userId);
+    const connectSessionId = requireStr(body.connectSessionId);
+    const code = requireStr(body.code);
+    const callbackUrl = requireStr(body.callbackUrl);
+
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+    if (!connectSessionId) return bad(400, { error: "Missing required field: connectSessionId" });
+    if (!code) return bad(400, { error: "Missing required field: code" });
+    if (!callbackUrl) return bad(400, { error: "Missing required field: callbackUrl" });
+
+    /**
+     * REAL NEXT STEP PLACEHOLDER:
+     * Here the backend should:
+     * 1. exchange code with Meta
+     * 2. store token in AWS Secrets Manager
+     * 3. fetch WABA / phone numbers from Meta
+     *
+     * For now, we safely return the currently known/selectable test number from the existing integration,
+     * or an empty list if none exists yet.
+     */
+
+    const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
+
+    const selectableNumbers = existing?.externalAccountId
+      ? [
+          {
+            phoneNumberId: existing.externalAccountId,
+            displayName: existing.displayName || "WhatsApp Business Number",
+            businessAccountId: null,
+            phoneNumber: null,
+          },
+        ]
+      : [];
+
+    return ok({
+      mode: "embedded-signup",
+      channel: "WHATSAPP",
+      connectSessionId,
+      codeReceived: true,
+      selectableNumbers,
+      /**
+       * PLACEHOLDER:
+       * later set this to the real secret ref created by Secrets Manager
+       */
+      credentialsRef: "meta-embedded-signup-token-placeholder",
+    });
+  }
+
+  async selectWhatsAppNumber(body) {
+    const userId = requireStr(body.userId);
+    const connectSessionId = requireStr(body.connectSessionId);
+    const phoneNumberId = requireStr(body.phoneNumberId);
+    const displayName = requireStr(body.displayName) || "WhatsApp Business Number";
+
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+    if (!connectSessionId) return bad(400, { error: "Missing required field: connectSessionId" });
+    if (!phoneNumberId) return bad(400, { error: "Missing required field: phoneNumberId" });
+
+    const credentialsRef = requireStr(body.credentialsRef) || "meta-embedded-signup-token-placeholder";
+    const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
+
+    let saved;
+    if (existing) {
+      saved = await this.accounts.update(existing.id, {
+        externalAccountId: phoneNumberId,
+        displayName,
+        status: "CONNECTED",
+        credentialsRef,
+        lastErrorCode: null,
+        lastErrorMessage: null,
+      });
+    } else {
+      const id = randomUUID();
+      const now = nowMs();
+
+      saved = await this.accounts.create({
+        id,
+        userId,
+        channel: "WHATSAPP",
+        externalAccountId: phoneNumberId,
+        displayName,
+        status: "CONNECTED",
+        credentialsRef,
+        lastSuccessfulSyncAt: null,
+        lastFailedSyncAt: null,
+        lastErrorCode: null,
+        lastErrorMessage: null,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await this.sync.ensureStateRow(id, "MESSAGES");
+      await this.sync.ensureStateRow(id, "RESERVATIONS");
+    }
+
+    return ok({
+      mode: "embedded-signup",
+      channel: "WHATSAPP",
+      connected: true,
+      integration: saved,
+    });
   }
 }

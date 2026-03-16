@@ -33,6 +33,18 @@ export const handler = async (event) => {
         returnedResponse = await whatsAppWebhookController.handleWebhookEvent(event);
         break;
 
+      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/connect/start"):
+        returnedResponse = await integrationController.startWhatsAppConnect(event);
+        break;
+
+      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/connect/complete"):
+        returnedResponse = await integrationController.completeWhatsAppConnect(event);
+        break;
+
+      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/connect/select-number"):
+        returnedResponse = await integrationController.selectWhatsAppNumber(event);
+        break;
+
       case httpMethod === "POST" && (path.endsWith("/send") || path.includes("/send")):
         returnedResponse = await messageController.sendMessage(event);
         break;
