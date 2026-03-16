@@ -14,6 +14,7 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [noData, setNoData] = useState(false);
 
   const isMountedRef = useRef(false);
   const fetchingRef = useRef(false);
@@ -56,10 +57,11 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
 
       if (fetchingRef.current) return;
       fetchingRef.current = true;
+      setError(null);
+      setNoData(false);
 
       if (!silent) {
         setLoading(true);
-        setError(null);
       }
 
       try {
@@ -120,7 +122,15 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
           setOccData(occRes);
           lastKeysRef.current.occ = occKey;
         }
+        const hasAnyData = [...adrRes, ...revparRes, ...alosRes, ...occRes].some(
+  (item) => Number(item.thisYear || 0) !== 0 || Number(item.lastYear || 0) !== 0
+        );
 
+        if (!hasAnyData) {
+          setNoData(true);
+      } else {
+        setNoData(false);
+      }
         if (!silent) setError(null);
       } catch (err) {
         console.error(err);
@@ -161,7 +171,10 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
         : selectedMetric === "RevPAR"
           ? revparData
           : alosData;
-
+          
+  const selectedMetricHasData = (chartData || []).some(
+  (item) => Number(item.thisYear || 0) !== 0 || Number(item.lastYear || 0) !== 0
+);
   const yTick = (v) => (selectedMetric === "ALOS" ? `${v}` : selectedMetric === "OCC" ? `${v}%` : `€${v}`);
 
   const tipFmt = (v) => (selectedMetric === "ALOS" ? `${v} nights` : selectedMetric === "OCC" ? `${v}%` : `€${v}`);
@@ -178,12 +191,14 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
         </div>
       </div>
 
-      {loading ? (
-        <div className="mc-status">Loading chart…</div>
-      ) : error ? (
-        <div className="mc-status error">{error}</div>
-      ) : (
-        <div className="mc-chart">
+{loading ? (
+  <div className="mc-status">Loading chart…</div>
+) : error ? (
+  <div className="mc-status error">{error}</div>
+) : noData || !selectedMetricHasData ? (
+  <div className="mc-status">No data</div>
+) : (
+  <div className="mc-chart">
           <ResponsiveContainer width="100%" height={350}>
             <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />

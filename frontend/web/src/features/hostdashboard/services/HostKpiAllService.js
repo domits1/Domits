@@ -24,9 +24,29 @@ export const HostKpiAllService = {
       headers: { Authorization: token },
     });
 
-    let data = await response.json();
-    if (data?.body) data = JSON.parse(data.body);
+    // If backend returns a non-200 response, treat it as no data instead of an error
+if (!response.ok) {
+  console.warn("KPI fetch returned non-OK status:", response.status);
+  return {};
+}
 
-    return data?.all ?? data;
+let data = {};
+try {
+  data = await response.json();
+} catch (e) {
+  console.warn("Failed to parse KPI response JSON");
+  return {};
+}
+
+if (data?.body) {
+  try {
+    data = JSON.parse(data.body);
+  } catch {
+    return {};
+  }
+}
+
+// Always return an object so the dashboard shows "No data" instead of a fetch error
+return data?.all ?? data ?? {};
   },
 };
