@@ -6,7 +6,7 @@ export const HostKpiAllService = {
   async fetchAll(hostId, filterType, startDate, endDate) {
     if (!hostId) throw new Error("Host ID is missing");
     const effectiveFilterType = filterType ?? "monthly";
-    const token = await getAccessToken();
+    const token = getAccessToken();
 
     const formatDate = (isoDate) => {
       if (!isoDate) return "";
