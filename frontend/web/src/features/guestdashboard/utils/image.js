@@ -1,6 +1,5 @@
 import {
   S3_ACCOMMODATION_URL,
-  placeholderImage as accommodationPlaceholderImage,
   normalizeImageUrl as normalizeAccommodationImageUrl,
   resolveAccommodationImageKey as resolveAccommodationImageKeyInternal,
   resolveAccommodationImageUrl as resolveAccommodationImageUrlInternal,
@@ -8,8 +7,7 @@ import {
   resolvePrimaryAccommodationImageUrl as resolvePrimaryAccommodationImageUrlInternal,
 } from "../../../utils/accommodationImage";
 
-export const S3_URL = S3_ACCOMMODATION_URL;
-export const placeholderImage = accommodationPlaceholderImage;
+export { S3_ACCOMMODATION_URL as S3_URL, placeholderImage } from "../../../utils/accommodationImage";
 export const normalizeImageUrl = (maybeKeyOrUrl) =>
   normalizeAccommodationImageUrl(maybeKeyOrUrl);
 export const resolveAccommodationImageKey = (image, preferredVariant = "web") =>
