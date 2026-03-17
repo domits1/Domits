@@ -1,5 +1,4 @@
 import {
-  S3_ACCOMMODATION_URL,
   normalizeImageUrl as normalizeAccommodationImageUrl,
   resolveAccommodationImageKey as resolveAccommodationImageKeyInternal,
   resolveAccommodationImageUrl as resolveAccommodationImageUrlInternal,
