@@ -33,15 +33,16 @@ if (!response.ok) {
 let data = {};
 try {
   data = await response.json();
-} catch (e) {
-  console.warn("Failed to parse KPI response JSON");
+} catch (error) {
+  console.warn("Failed to parse KPI response JSON", error);
   return {};
 }
 
 if (data?.body) {
   try {
     data = JSON.parse(data.body);
-  } catch {
+  } catch (error) {
+    console.warn("Failed to parse KPI response body", error);
     return {};
   }
 }
