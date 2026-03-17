@@ -2,6 +2,7 @@ import { WishlistRepository } from "../../data/wishlistRepository.js";
 import { WishlistItem } from "../model/wishlistModel.js";
 import { DatabaseException } from "../../util/exception/DatabaseException.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
+import { TypeException } from "../../util/exception/TypeException.js";
 
 export class WishlistService {
   constructor() {
@@ -9,7 +10,7 @@ export class WishlistService {
   }
 
   async createWishlist({ guestId, wishlistName }) {
-    if (!wishlistName) throw new DatabaseException("wishlistName is required");
+    if (!wishlistName) throw new TypeException("wishlistName is required");
 
     const wishlistKey = `${wishlistName}#__placeholder__`;
 
@@ -65,8 +66,17 @@ export class WishlistService {
   }
 
   async getWishlist({ guestId, wishlistName }) {
+    if (!wishlistName) throw new DatabaseException("wishlistName is required");
+
     const items = await this.wishlistRepository.queryByGuestId(guestId);
-    const filtered = items.filter((item) => item.wishlistName === wishlistName);
+    const filtered = items.filter(
+      (item) =>
+        item.wishlistName === wishlistName &&
+        !item.isPlaceholder &&
+        typeof item.propertyId === "string" &&
+        item.propertyId.length > 0
+    );
+
     return filtered;
   }
 
@@ -76,7 +86,11 @@ export class WishlistService {
     return items.reduce((acc, item) => {
       const name = item.wishlistName || "My next trip";
       if (!acc[name]) acc[name] = [];
-      acc[name].push(item.propertyId);
+
+      if (!item.isPlaceholder && typeof item.propertyId === "string" && item.propertyId.length > 0) {
+        acc[name].push(item.propertyId);
+      }
+
       return acc;
     }, {});
   }
@@ -87,7 +101,9 @@ export class WishlistService {
 
     for (const item of toUpdate) {
       const oldKey = item.wishlistKey;
-      const newKey = `${newName}#${item.propertyId}`;
+      const newKey = item.isPlaceholder
+        ? `${newName}#__placeholder__`
+        : `${newName}#${item.propertyId}`;
 
       await this.wishlistRepository.delete({ guestId: item.guestId, wishlistKey: oldKey });
 
@@ -95,7 +111,8 @@ export class WishlistService {
         guestId: item.guestId,
         wishlistKey: newKey,
         wishlistName: newName,
-        propertyId: item.propertyId,
+        propertyId: item.propertyId ?? null,
+        isPlaceholder: item.isPlaceholder ?? false,
       });
     }
 

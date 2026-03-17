@@ -1,37 +1,67 @@
 import { getAccessToken } from "../utils/authUtils";
 
 const BASE_URL = "https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist";
+const DEFAULT_WISHLIST_NAME = "My next trip";
+
+const getRequestHeaders = () => ({
+  Authorization: getAccessToken(),
+  "Content-Type": "application/json",
+  Origin: window.location.origin,
+});
+
+const parseJson = async (response) => {
+  try {
+    return await response.json();
+  } catch (_error) {
+    return {};
+  }
+};
+
+const normalizeWishlistItems = (data) => {
+  const items = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.items)
+      ? data.items
+      : [];
+
+  return items.filter((item) => typeof item?.propertyId === "string" && item.propertyId.length > 0);
+};
+
+const normalizeWishlistsMap = (data) => {
+  const source =
+    data && typeof data === "object" && !Array.isArray(data)
+      ? data.wishlists && typeof data.wishlists === "object"
+        ? data.wishlists
+        : data
+      : {};
+
+  return Object.entries(source).reduce((acc, [name, propertyIds]) => {
+    if (!Array.isArray(propertyIds)) return acc;
+    acc[name] = propertyIds.filter((propertyId) => typeof propertyId === "string" && propertyId.length > 0);
+    return acc;
+  }, {});
+};
 
 // Fetch user's wishlists (GET)
 export const fetchWishlists = async () => {
-  const token = getAccessToken();
   const res = await fetch(BASE_URL, {
     method: "GET",
-    headers: {
-      Authorization: token,
-      "Content-Type": "application/json",
-      Origin: window.location.origin,
-    },
+    headers: getRequestHeaders(),
   });
 
   if (!res.ok) {
     throw new Error("Failed to fetch wishlists");
   }
 
-  return res.json();
+  const data = await parseJson(res);
+  return { wishlists: normalizeWishlistsMap(data) };
 };
 
 // Move accommodation to a different wishlist (PATCH)
 export const moveAccommodation = async (oldName, newName, propertyId) => {
-  const token = getAccessToken();
-
   const res = await fetch(BASE_URL, {
     method: "PATCH",
-    headers: {
-      Authorization: token,
-      "Content-Type": "application/json",
-      Origin: window.location.origin,
-    },
+    headers: getRequestHeaders(),
     body: JSON.stringify({ oldName, newName, propertyId }),
   });
 
@@ -43,16 +73,10 @@ export const moveAccommodation = async (oldName, newName, propertyId) => {
 };
 
 // Add or remove accommodation from a wishlist (POST / DELETE)
-export const updateWishlistItem = async (propertyId, method, wishlistName = "My next trip") => {
-  const token = getAccessToken();
-
+export const updateWishlistItem = async (propertyId, method, wishlistName = DEFAULT_WISHLIST_NAME) => {
   const res = await fetch(BASE_URL, {
     method,
-    headers: {
-      Authorization: token,
-      "Content-Type": "application/json",
-      Origin: window.location.origin,
-    },
+    headers: getRequestHeaders(),
     body: JSON.stringify({
       propertyId,
       wishlistName,
@@ -76,14 +100,9 @@ export const isPropertyInAnyWishlist = async (propertyId) => {
 
 // Fetch real item count for a specific wishlist (POST)
 export const fetchWishlistItemCount = async (wishlistName) => {
-  const token = getAccessToken();
-
   const res = await fetch(BASE_URL, {
     method: "POST",
-    headers: {
-      Authorization: token,
-      "Content-Type": "application/json",
-    },
+    headers: getRequestHeaders(),
     body: JSON.stringify({
       action: "getWishlist",
       wishlistName,
@@ -94,19 +113,15 @@ export const fetchWishlistItemCount = async (wishlistName) => {
     throw new Error(`Failed to get item count for wishlist '${wishlistName}'`);
   }
 
-  return res.json();
+  const data = await parseJson(res);
+  return { items: normalizeWishlistItems(data) };
 };
 
 // Create a new wishlist (PUT)
 export const createWishlist = async (wishlistName) => {
-  const token = getAccessToken();
-
   const res = await fetch(BASE_URL, {
     method: "PUT",
-    headers: {
-      Authorization: token,
-      "Content-Type": "application/json",
-    },
+    headers: getRequestHeaders(),
     body: JSON.stringify({ wishlistName }),
   });
 
@@ -119,14 +134,9 @@ export const createWishlist = async (wishlistName) => {
 
 // Rename a wishlist (PATCH)
 export const renameWishlist = async (oldName, newName) => {
-  const token = getAccessToken();
-
   const res = await fetch(BASE_URL, {
     method: "PATCH",
-    headers: {
-      Authorization: token,
-      "Content-Type": "application/json",
-    },
+    headers: getRequestHeaders(),
     body: JSON.stringify({ oldName, newName }),
   });
 
@@ -139,14 +149,9 @@ export const renameWishlist = async (oldName, newName) => {
 
 // Delete a wishlist (DELETE)
 export const deleteWishlist = async (wishlistName) => {
-  const token = getAccessToken();
-
   const res = await fetch(BASE_URL, {
     method: "DELETE",
-    headers: {
-      Authorization: token,
-      "Content-Type": "application/json",
-    },
+    headers: getRequestHeaders(),
     body: JSON.stringify({ wishlistName }),
   });
 
@@ -155,4 +160,9 @@ export const deleteWishlist = async (wishlistName) => {
   }
 
   return res.json();
+};
+
+export const fetchWishlistItems = async (wishlistName = DEFAULT_WISHLIST_NAME) => {
+  const response = await fetchWishlistItemCount(wishlistName);
+  return response.items;
 };

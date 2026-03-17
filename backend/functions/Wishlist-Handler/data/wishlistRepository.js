@@ -16,8 +16,8 @@ export class WishlistRepository {
 
   async delete({ guestId, wishlistKey }) {
     const client = await Database.getInstance();
-    await client.getRepository(Guest_Favorite).delete({ guestId, wishlistKey });
-    return true;
+    const result = await client.getRepository(Guest_Favorite).delete({ guestId, wishlistKey });
+    return Number(result?.affected ?? 0) > 0;
   }
 
   async queryByGuestId(guestId) {
