@@ -142,8 +142,13 @@ CREATE TABLE IF NOT EXISTS main.guest_favorite (
   guestId VARCHAR(255) NOT NULL,
   wishlistKey VARCHAR(255) NOT NULL,
   isPlaceholder BOOLEAN NOT NULL,
-  propertyId VARCHAR(255) NOT NULL,
+  propertyId VARCHAR(255),
   wishlistName VARCHAR(255) NOT NULL,
+  CONSTRAINT guest_favorite_property_placeholder_chk
+    CHECK (
+      (isPlaceholder = TRUE AND propertyId IS NULL) OR
+      (isPlaceholder = FALSE AND propertyId IS NOT NULL)
+    ),
   PRIMARY KEY (guestId, wishlistKey)
 );
 CREATE INDEX ASYNC fk_guest_favorite_property_idx ON main.guest_favorite (propertyId);
