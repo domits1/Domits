@@ -126,6 +126,13 @@ $text-muted: #6b7280;
       overflow-y: visible;
 
       .guest-card-row {
+        width: 100%;
+        display: block;
+        background: transparent;
+        border: 0;
+        text-align: left;
+        font: inherit;
+        color: inherit;
         padding: 12px;
         border-radius: $radius-sm;
         transition:

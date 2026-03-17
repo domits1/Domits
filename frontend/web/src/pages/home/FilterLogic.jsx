@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { MAX_PRICE, MIN_PRICE } from "../../constants/searchFilters";
 
-export default function (props) {
-  const [priceValues, setPriceValues] = useState([15, 400]);
+export default function useFilterLogic(props) {
+  const [priceValues, setPriceValues] = useState([MIN_PRICE, MAX_PRICE]);
   const { onFilterApplied } = props || {};
 
   const [ecoScore, setEcoScore] = useState({
@@ -84,14 +85,14 @@ export default function (props) {
         if (onFilterApplied && typeof onFilterApplied === "function") {
           onFilterApplied(data);
         }
-      } else if (data && data.items && Array.isArray(data.items)) {
+      } else if (Array.isArray(data?.items)) {
         setAccommodationResults(data.items);
 
         if (onFilterApplied && typeof onFilterApplied === "function") {
           onFilterApplied(data.items);
         }
       } else {
-        throw new Error("No accommodations found for these criteria");
+        throw new TypeError("No accommodations found for these criteria");
       }
     } catch (err) {
       setError(err.message);

@@ -1,13 +1,25 @@
 import React from "react";
+import PropTypes from "prop-types";
+import { getListingPricingBreakdown } from "../utils/pricing";
 
-const Pricing = ({ pricing, nights }) => {
+const EURO_SYMBOL = "\u20AC";
+const formatEuro = (value) => `${EURO_SYMBOL}${value.toFixed(2)}`;
+
+const Pricing = ({ pricing = {}, nights = 1 }) => {
+  const {
+    nights: normalizedNights,
+    roomSubtotal,
+    cleaningRate,
+    cleaningSubtotal,
+    serviceFee,
+    total,
+  } = getListingPricingBreakdown(pricing, nights || 1);
+
   return (
     <div className="pricing-container">
       <div className="pricing-description-and-price">
-        <div className="pricing-description">Host price:</div>
-        <div className="pricing-price">
-          € &nbsp;{nights * pricing.roomRate + (pricing.roomRate + pricing.cleaning) * nights * 0.1}
-        </div>
+        <div className="pricing-description">Host price</div>
+        <div className="pricing-price">{formatEuro(roomSubtotal + serviceFee)}</div>
       </div>
       <hr />
       <div className="pricing-description-and-price">
@@ -17,9 +29,9 @@ const Pricing = ({ pricing, nights }) => {
       </div>
       <div className="pricing-description-and-price">
         <div className="pricing-description">
-          {nights} night{nights > 1 ? "s" : ""} x €{pricing.cleaning} a night
+          {normalizedNights} night{normalizedNights > 1 ? "s" : ""} x {formatEuro(cleaningRate)} a night
         </div>
-        <div className="pricing-price">€ &nbsp; {pricing.cleaning * nights}</div>
+        <div className="pricing-price">{formatEuro(cleaningSubtotal)}</div>
       </div>
       <hr />
       <div className="pricing-description-and-price">
@@ -27,18 +39,19 @@ const Pricing = ({ pricing, nights }) => {
           <h2>Total</h2>
         </div>
         <div className="pricing-price">
-          <h2>
-            € &nbsp;
-            {(
-              nights * pricing.roomRate +
-              (pricing.roomRate + pricing.cleaning) * nights * 0.1 +
-              pricing.cleaning * nights
-            ).toFixed(2)}
-          </h2>
+          <h2>{formatEuro(total)}</h2>
         </div>
       </div>
     </div>
   );
+};
+
+Pricing.propTypes = {
+  pricing: PropTypes.shape({
+    roomRate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    cleaning: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }),
+  nights: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default Pricing;
