@@ -14,6 +14,8 @@ import TranslatedText from "../../../features/translation/components/TranslatedT
 import {useTranslation} from "react-i18next";
 import LoadingScreen from "../../loadingscreen/screens/LoadingScreen";
 
+const DEFAULT_WISHLIST_NAME = "My next trip";
+
 const HomeScreen = () => {
     const {t} = useTranslation();
 
@@ -105,22 +107,40 @@ const HomeScreen = () => {
     const fetchFavorites = useCallback(async () => {
         setFavoritesLoading(true);
 
-        const response = await GetWishlist();
+        const response = await GetWishlist(DEFAULT_WISHLIST_NAME);
+        const favoritePropertyIds = Array.isArray(response)
+            ? response
+                .map((item) => item?.propertyId)
+                .filter((propertyId) => typeof propertyId === "string")
+            : [];
 
-        setFavorites(response.AccommodationIDs);
-        setFavorites([])
+        setFavorites(favoritePropertyIds);
         setFavoritesLoading(false);
     }, []);
 
-    const onFavoritePress = (id) => {
+    const onFavoritePress = async (id) => {
         if (favorites.includes(id)) {
-            setFavorites(favorites.filter(item => item !== id));
-            RemoveFromWishlist(id)
+            setFavorites((prevFavorites) => prevFavorites.filter((item) => item !== id));
+            const response = await RemoveFromWishlist(id, DEFAULT_WISHLIST_NAME);
+
+            if (!response) {
+                setFavorites((prevFavorites) =>
+                    prevFavorites.includes(id) ? prevFavorites : [...prevFavorites, id]
+                );
+                ToastMessage(t("Failed to remove favorite."), ToastAndroid.SHORT);
+            }
         } else {
-            setFavorites([...favorites, id]);
-            addToWishlist(id);
+            setFavorites((prevFavorites) =>
+                prevFavorites.includes(id) ? prevFavorites : [...prevFavorites, id]
+            );
+            const response = await addToWishlist(id, DEFAULT_WISHLIST_NAME);
+
+            if (!response) {
+                setFavorites((prevFavorites) => prevFavorites.filter((item) => item !== id));
+                ToastMessage(t("Failed to add favorite."), ToastAndroid.SHORT);
+            }
         }
-    }
+    };
 
     const fetchNextDataSet = () => {
         if (propertiesByCountry.length > 0) {
@@ -135,7 +155,7 @@ const HomeScreen = () => {
 
     useEffect(() => {
         fetchProperties();
-        // fetchFavorites();
+        fetchFavorites();
     }, []);
 
     const renderFlatListItem = ({item}) => {
