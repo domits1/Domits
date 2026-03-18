@@ -36,7 +36,6 @@ export const handler = async (event) => {
       };
     })();
   } catch (error) {
-    console.error(error);
     return {
       statusCode: 500,
       headers: responseHeaders,

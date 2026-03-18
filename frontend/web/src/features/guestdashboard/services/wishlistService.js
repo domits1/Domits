@@ -3,11 +3,14 @@ import { getAccessToken } from "../utils/authUtils";
 const BASE_URL = "https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist";
 const DEFAULT_WISHLIST_NAME = "My next trip";
 
-const getRequestHeaders = () => ({
-  Authorization: getAccessToken(),
-  "Content-Type": "application/json",
-  Origin: window.location.origin,
-});
+const getRequestHeaders = () => {
+  const headers = { "Content-Type": "application/json" };
+  const token = getAccessToken();
+  if (token) {
+    headers.Authorization = token;
+  }
+  return headers;
+};
 
 const parseJson = async (response) => {
   try {

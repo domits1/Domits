@@ -20,6 +20,7 @@ async function AddToWishlist(propertyId, wishlistName = DEFAULT_WISHLIST_NAME) {
 
     return await response.json();
   } catch (error) {
+    console.warn("AddToWishlist failed:", error.message);
     return null;
   }
 }
