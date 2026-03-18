@@ -1,7 +1,7 @@
 const responseHeader = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "*",
-  "Access-Control-Allow-Methods": "*",
+  "Access-Control-Allow-Methods": "OPTIONS,POST,GET,DELETE,PUT,PATCH",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization",
 };
 
 export default responseHeader;

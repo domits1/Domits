@@ -28,7 +28,7 @@ export class WishlistService {
   }
 
   async addToWishlist({ guestId, propertyId, wishlistName }) {
-    if (!propertyId || !wishlistName) throw new DatabaseException("propertyId and wishlistName are required");
+    if (!propertyId || !wishlistName) throw new TypeException("propertyId and wishlistName are required");
 
     const wishlistKey = `${wishlistName}#${propertyId}`;
 
@@ -66,18 +66,16 @@ export class WishlistService {
   }
 
   async getWishlist({ guestId, wishlistName }) {
-    if (!wishlistName) throw new DatabaseException("wishlistName is required");
+    if (!wishlistName) throw new TypeException("wishlistName is required");
 
     const items = await this.wishlistRepository.queryByGuestId(guestId);
-    const filtered = items.filter(
+    return items.filter(
       (item) =>
         item.wishlistName === wishlistName &&
         !item.isPlaceholder &&
         typeof item.propertyId === "string" &&
         item.propertyId.length > 0
     );
-
-    return filtered;
   }
 
   async getAllWishlists(guestId) {
