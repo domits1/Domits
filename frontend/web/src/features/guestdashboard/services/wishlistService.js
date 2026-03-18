@@ -12,28 +12,32 @@ const getRequestHeaders = () => ({
 const parseJson = async (response) => {
   try {
     return await response.json();
-  } catch (_error) {
+  } catch (error) {
+    console.warn("Failed to parse response JSON:", error);
     return {};
   }
 };
 
 const normalizeWishlistItems = (data) => {
-  const items = Array.isArray(data)
-    ? data
-    : Array.isArray(data?.items)
-      ? data.items
-      : [];
+  let items;
+  if (Array.isArray(data)) {
+    items = data;
+  } else if (Array.isArray(data?.items)) {
+    items = data.items;
+  } else {
+    items = [];
+  }
 
   return items.filter((item) => typeof item?.propertyId === "string" && item.propertyId.length > 0);
 };
 
 const normalizeWishlistsMap = (data) => {
-  const source =
-    data && typeof data === "object" && !Array.isArray(data)
-      ? data.wishlists && typeof data.wishlists === "object"
-        ? data.wishlists
-        : data
-      : {};
+  let source;
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    source = data.wishlists && typeof data.wishlists === "object" ? data.wishlists : data;
+  } else {
+    source = {};
+  }
 
   return Object.entries(source).reduce((acc, [name, propertyIds]) => {
     if (!Array.isArray(propertyIds)) return acc;

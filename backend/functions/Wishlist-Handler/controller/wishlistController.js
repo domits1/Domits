@@ -177,8 +177,8 @@ export class WishlistController {
 
     try {
       return JSON.parse(event.body);
-    } catch (_error) {
-      throw new TypeException("Request body must be valid JSON.");
+    } catch (error) {
+      throw new TypeException("Request body must be valid JSON.", { cause: error });
     }
   }
 
