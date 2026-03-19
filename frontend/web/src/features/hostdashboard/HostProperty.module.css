@@ -79,7 +79,9 @@
   font-weight: 500;
   border-bottom: 3px solid transparent;
   cursor: pointer;
-  transition: color 0.15s ease, border-bottom-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-bottom-color 0.15s ease;
 }
 
 .tab:active {
@@ -131,7 +133,9 @@
   line-height: 1.2;
   padding: 10px 12px;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .listingSelect:focus {
@@ -154,7 +158,9 @@
   line-height: 1.2;
   padding: 8px 10px;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -325,7 +331,9 @@
   display: block;
   opacity: 0.72;
   filter: brightness(0) saturate(100%);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .amenityCategoryHeader:hover .amenityCategoryChevronIcon {
@@ -439,7 +447,11 @@
   background: #f5f5f5;
   cursor: grab;
   touch-action: pan-y;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease,
+    opacity 0.16s ease;
 }
 
 .photoTileLarge {
@@ -476,7 +488,10 @@
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .photoAddButtonDragOver {
@@ -546,7 +561,8 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: brightness(0) saturate(100%) invert(46%) sepia(91%) saturate(838%) hue-rotate(86deg) brightness(95%) contrast(92%) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  filter: brightness(0) saturate(100%) invert(46%) sepia(91%) saturate(838%) hue-rotate(86deg) brightness(95%)
+    contrast(92%) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
 .photoPendingBadge {
@@ -577,7 +593,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
   z-index: 3;
 }
 
@@ -1453,7 +1471,9 @@
   font-weight: 700;
   padding: 10px 18px;
   cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .deletePropertyButton:hover {
@@ -1540,7 +1560,9 @@
   font-size: 16px;
   line-height: 1.35;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .input:focus,
@@ -2025,5 +2047,436 @@
   .deletePropertyConfirmCancelButton {
     width: 100%;
     font-size: 18px;
+  }
+}
+
+.cancellationPolicyList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cancellationPolicyItem {
+  border-bottom: 1px solid #ececec;
+  background: #ffffff;
+  transition: background 0.15s ease;
+}
+
+.cancellationPolicyItem:last-child {
+  border-bottom: none;
+}
+
+.cancellationPolicyItemSelected {
+  background: #f7fbf7;
+}
+
+.cancellationPolicyRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cancellationPolicyRow:hover {
+  background: #f2f8f2;
+}
+
+.cancellationPolicyRadioGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cancellationPolicyRadio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #c0c0c0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease;
+}
+
+.cancellationPolicyRadioSelected {
+  border-color: #0d9813;
+}
+
+.cancellationPolicyRadioDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0d9813;
+}
+
+.cancellationPolicyName {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.cancellationPolicySummaryRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cancellationPolicyCheck {
+  color: #0d9813;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cancellationPolicySummary {
+  font-size: 14px;
+  color: #999999;
+  font-weight: 500;
+}
+
+.cancellationPolicySummaryActive {
+  color: #555555;
+}
+
+.cancellationPolicyDetails {
+  padding: 14px 16px 16px 46px;
+  border-top: 1px solid #ececec;
+  background: #fcfcfc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cancellationPolicyDetailsTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.cancellationPolicyDetailsSubtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #555555;
+}
+
+.cancellationPolicyDetailsList {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cancellationPolicyDetailsList li {
+  font-size: 14px;
+  color: #333333;
+  line-height: 1.45;
+}
+
+.cancellationPolicyImportant {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #444444;
+  line-height: 1.45;
+}
+
+.cancellationPolicyHideBtn {
+  border: 1px solid #c8e6c9;
+  border-radius: 6px;
+  background: #f1f8f1;
+  color: #0d7a12;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  cursor: pointer;
+  width: fit-content;
+  margin-top: 4px;
+  transition: background 0.15s ease;
+}
+
+.cancellationPolicyHideBtn:hover {
+  background: #e2f4e3;
+}
+
+.checkinGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fafafa;
+}
+
+.checkinField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.checkinLabel {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.checkinFieldHint {
+  margin: 0;
+  font-size: 12px;
+  color: #777777;
+  line-height: 1.35;
+}
+
+.checkinSelect {
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e1e1e;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.2s ease;
+  width: 100%;
+}
+
+.checkinSelect:focus {
+  border-color: #0d9813;
+  box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.1);
+}
+
+.checkinToggleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.checkinSelectInline {
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e1e1e;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 8px;
+  outline: none;
+  transition: border-color 0.2s ease;
+  min-width: 90px;
+}
+
+.checkinSelectInline:focus {
+  border-color: #0d9813;
+}
+
+.rulesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ruleToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #ececec;
+  background: #ffffff;
+}
+
+.ruleToggleRow:nth-child(odd) {
+  border-right: 1px solid #ececec;
+}
+
+.ruleToggleRow:nth-last-child(-n + 2) {
+  border-bottom: none;
+}
+
+.ruleToggleLabel {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.policyToggleSwitch {
+  position: relative;
+  flex-shrink: 0;
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  border: none;
+  background: #b0b8be;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 0;
+}
+
+.policyToggleSwitchOn {
+  background: #0d9813;
+}
+
+.policyToggleSwitch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.policyToggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: left 0.2s ease;
+}
+
+.policyToggleSwitchOn .policyToggleThumb {
+  left: 25px;
+}
+
+.policyCustomRuleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #ececec;
+  background: #ffffff;
+}
+
+.policyRuleLabelCustom {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.policyRuleRowRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.policyCustomRuleDelete {
+  border: none;
+  background: transparent;
+  color: #aaaaaa;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.15s ease;
+}
+
+.policyCustomRuleDelete:hover {
+  color: #e11818;
+}
+
+.addCustomRuleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: #1a1a1a;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.addCustomRuleBtn:hover {
+  color: #0d9813;
+}
+
+.addCustomRulePlus {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0d9813;
+}
+
+.customRuleInputRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  flex-wrap: wrap;
+}
+
+.customRuleInput {
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e1e1e;
+  font-size: 15px;
+  padding: 8px 10px;
+  outline: none;
+  flex: 1 1 180px;
+  transition: border-color 0.2s ease;
+}
+
+.customRuleInput:focus {
+  border-color: #0d9813;
+  box-shadow: 0 0 0 2px rgba(13, 152, 19, 0.1);
+}
+
+.customRuleAddConfirm {
+  border: none;
+  border-radius: 6px;
+  background: #076407;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.customRuleAddCancel {
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #444444;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .cancellationPolicyRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .checkinGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .rulesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .ruleToggleRow:nth-child(odd) {
+    border-right: none;
+  }
+
+  .ruleToggleRow:nth-last-child(-n + 2) {
+    border-bottom: 1px solid #ececec;
+  }
+
+  .ruleToggleRow:last-child {
+    border-bottom: none;
   }
 }
