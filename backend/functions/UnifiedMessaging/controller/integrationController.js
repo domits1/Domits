@@ -85,6 +85,11 @@ class IntegrationController {
     const body = safeJson(event.body) || {};
     return await this.integrationService.selectWhatsAppNumber(body);
   }
+
+  async disconnectWhatsApp(event) {
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.disconnectWhatsApp(body);
+  }
 }
 
 export default IntegrationController;

@@ -12,10 +12,6 @@ const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/def
  */
 const WHATSAPP_CALLBACK_URL = "http://localhost:3000/hostdashboard/integrations/whatsapp/callback";
 
-/**
- * META CONFIG
- * Replace only if these ever change.
- */
 const META_APP_ID = "1808176813897212";
 const META_EMBEDDED_SIGNUP_CONFIG_ID = "1259900802765110";
 
@@ -127,10 +123,12 @@ function IntegrationCard({ integration, onManage }) {
 function WhatsAppSetupPanel({
   integration,
   connecting,
+  disconnecting,
   connectSessionId,
   actionError,
   actionSuccess,
   onStartConnect,
+  onDisconnect,
 }) {
   const connected = !!integration?.externalAccountId;
 
@@ -177,7 +175,7 @@ function WhatsAppSetupPanel({
         <h4>{connected ? "Current connection" : "Connect WhatsApp"}</h4>
         <p>
           {connected
-            ? "You can reconnect and replace the current WhatsApp connection."
+            ? "You can reconnect and replace the current WhatsApp connection, or disconnect it."
             : "No WhatsApp number is connected yet for this host account."}
         </p>
       </div>
@@ -187,6 +185,17 @@ function WhatsAppSetupPanel({
           <button type="button" className="host-integrations-primary-btn" disabled={connecting} onClick={onStartConnect}>
             {connecting ? "Starting..." : connected ? "Reconnect with Meta" : "Connect with Meta"}
           </button>
+
+          {connected ? (
+            <button
+              type="button"
+              className="host-integrations-secondary-btn"
+              disabled={disconnecting}
+              onClick={onDisconnect}
+            >
+              {disconnecting ? "Disconnecting..." : "Disconnect WhatsApp"}
+            </button>
+          ) : null}
 
           {connectSessionId ? (
             <span className="host-integrations-session-chip">Session ready</span>
@@ -211,6 +220,7 @@ function HostIntegrationsInner() {
   const [selectedIntegrationId, setSelectedIntegrationId] = useState(null);
 
   const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
   const [connectSessionId, setConnectSessionId] = useState("");
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
@@ -319,6 +329,38 @@ function HostIntegrationsInner() {
     }
   };
 
+  const handleDisconnect = async () => {
+    const confirmed = window.confirm(
+      "Disconnect WhatsApp? This will stop new WhatsApp messages from being sent or received in Domits. Existing conversations will remain visible."
+    );
+    if (!confirmed) return;
+
+    setActionError("");
+    setActionSuccess("");
+    setDisconnecting(true);
+
+    try {
+      const res = await fetch(`${UNIFIED_API}/integrations/whatsapp/disconnect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to disconnect WhatsApp");
+      }
+
+      setConnectSessionId("");
+      setActionSuccess("WhatsApp disconnected successfully.");
+      await fetchIntegrations();
+    } catch (err) {
+      setActionError(err?.message || "Failed to disconnect WhatsApp");
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
   return (
     <main className="host-integrations-page">
       <header className="host-integrations-hero">
@@ -355,10 +397,12 @@ function HostIntegrationsInner() {
             <WhatsAppSetupPanel
               integration={selectedIntegration}
               connecting={connecting}
+              disconnecting={disconnecting}
               connectSessionId={connectSessionId}
               actionError={actionError}
               actionSuccess={actionSuccess}
               onStartConnect={handleStartConnect}
+              onDisconnect={handleDisconnect}
             />
           </div>
         </div>

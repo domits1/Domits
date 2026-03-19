@@ -45,6 +45,10 @@ export const handler = async (event) => {
         returnedResponse = await integrationController.selectWhatsAppNumber(event);
         break;
 
+      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/disconnect"):
+        returnedResponse = await integrationController.disconnectWhatsApp(event);
+        break;
+
       case httpMethod === "POST" && (path.endsWith("/send") || path.includes("/send")):
         returnedResponse = await messageController.sendMessage(event);
         break;

@@ -14,20 +14,6 @@ const bad = (statusCode, response) => ({ statusCode, response });
 
 const requireStr = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
-const normalizeSelectableNumber = (item) => {
-  if (!item || typeof item !== "object") return null;
-
-  const phoneNumberId = requireStr(item.phoneNumberId || item.externalAccountId);
-  if (!phoneNumberId) return null;
-
-  return {
-    phoneNumberId,
-    displayName: requireStr(item.displayName) || "WhatsApp Business Number",
-    businessAccountId: requireStr(item.businessAccountId) || null,
-    phoneNumber: requireStr(item.phoneNumber) || null,
-  };
-};
-
 export default class IntegrationService {
   constructor() {
     this.accounts = new IntegrationAccountRepository();
@@ -211,17 +197,6 @@ export default class IntegrationService {
     if (!code) return bad(400, { error: "Missing required field: code" });
     if (!callbackUrl) return bad(400, { error: "Missing required field: callbackUrl" });
 
-    /**
-     * REAL NEXT STEP PLACEHOLDER:
-     * Here the backend should:
-     * 1. exchange code with Meta
-     * 2. store token in AWS Secrets Manager
-     * 3. fetch WABA / phone numbers from Meta
-     *
-     * For now, we safely return the currently known/selectable test number from the existing integration,
-     * or an empty list if none exists yet.
-     */
-
     const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
 
     const selectableNumbers = existing?.externalAccountId
@@ -241,10 +216,6 @@ export default class IntegrationService {
       connectSessionId,
       codeReceived: true,
       selectableNumbers,
-      /**
-       * PLACEHOLDER:
-       * later set this to the real secret ref created by Secrets Manager
-       */
       credentialsRef: "meta-embedded-signup-token-placeholder",
     });
   }
@@ -301,6 +272,22 @@ export default class IntegrationService {
       channel: "WHATSAPP",
       connected: true,
       integration: saved,
+    });
+  }
+
+  async disconnectWhatsApp(body) {
+    const userId = requireStr(body.userId);
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+
+    const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
+    if (!existing) return bad(404, { error: "WhatsApp integration not found" });
+
+    const disconnected = await this.accounts.disconnect(existing.id);
+    if (!disconnected) return bad(404, { error: "WhatsApp integration not found" });
+
+    return ok({
+      disconnected: true,
+      integration: disconnected,
     });
   }
 }

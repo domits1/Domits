@@ -65,12 +65,22 @@ class IntegrationAccountRepository {
 
     const next = {
       ...existing,
-      externalAccountId: patch.externalAccountId ?? existing.externalAccountId,
-      displayName: patch.displayName ?? existing.displayName,
-      status: patch.status ?? existing.status,
-      credentialsRef: patch.credentialsRef ?? existing.credentialsRef,
-      lastErrorCode: patch.lastErrorCode ?? existing.lastErrorCode,
-      lastErrorMessage: patch.lastErrorMessage ?? existing.lastErrorMessage,
+      externalAccountId: Object.prototype.hasOwnProperty.call(patch, "externalAccountId")
+        ? patch.externalAccountId
+        : existing.externalAccountId,
+      displayName: Object.prototype.hasOwnProperty.call(patch, "displayName")
+        ? patch.displayName
+        : existing.displayName,
+      status: Object.prototype.hasOwnProperty.call(patch, "status") ? patch.status : existing.status,
+      credentialsRef: Object.prototype.hasOwnProperty.call(patch, "credentialsRef")
+        ? patch.credentialsRef
+        : existing.credentialsRef,
+      lastErrorCode: Object.prototype.hasOwnProperty.call(patch, "lastErrorCode")
+        ? patch.lastErrorCode
+        : existing.lastErrorCode,
+      lastErrorMessage: Object.prototype.hasOwnProperty.call(patch, "lastErrorMessage")
+        ? patch.lastErrorMessage
+        : existing.lastErrorMessage,
       updatedAt: Date.now(),
     };
 
@@ -84,6 +94,35 @@ class IntegrationAccountRepository {
         credentialsRef: next.credentialsRef,
         lastErrorCode: next.lastErrorCode,
         lastErrorMessage: next.lastErrorMessage,
+        updatedAt: next.updatedAt,
+      })
+      .where("id = :id", { id })
+      .execute();
+
+    return next;
+  }
+
+  async disconnect(id) {
+    const client = await Database.getInstance();
+
+    const existing = await this.getById(id);
+    if (!existing) return null;
+
+    const next = {
+      ...existing,
+      externalAccountId: null,
+      credentialsRef: null,
+      status: "DISCONNECTED",
+      updatedAt: Date.now(),
+    };
+
+    await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationAccount)
+      .set({
+        externalAccountId: null,
+        credentialsRef: null,
+        status: "DISCONNECTED",
         updatedAt: next.updatedAt,
       })
       .where("id = :id", { id })
