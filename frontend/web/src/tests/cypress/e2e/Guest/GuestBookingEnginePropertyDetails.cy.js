@@ -14,6 +14,9 @@ describe('Property Details', () => {
         
         cy.get('.dropdownLoginButton').click();
         
+        cy.get('#email').type(Cypress.env('TEST_EMAIL'));
+        cy.get('#password').type(Cypress.env('TEST_PASSWORD'), { log: false });
+        
         cy.get('.loginButton').click();
         
         cy.get('.logo > a > img').should('be.visible').click();
