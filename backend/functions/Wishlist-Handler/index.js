@@ -36,6 +36,7 @@ export const handler = async (event) => {
       };
     })();
   } catch (error) {
+    console.error(`Unhandled error in Wishlist handler: ${error}`);
     return {
       statusCode: 500,
       headers: responseHeaders,
