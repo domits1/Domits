@@ -90,6 +90,16 @@ class IntegrationController {
     const body = safeJson(event.body) || {};
     return await this.integrationService.disconnectWhatsApp(body);
   }
+
+  async checkWhatsAppTokenHealth(event) {
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.checkWhatsAppTokenHealth(body);
+  }
+
+  async refreshWhatsAppToken(event) {
+    const body = safeJson(event.body) || {};
+    return await this.integrationService.refreshWhatsAppToken(body);
+  }
 }
 
 export default IntegrationController;

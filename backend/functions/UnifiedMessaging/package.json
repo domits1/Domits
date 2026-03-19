@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.958.0",
+    "@aws-sdk/client-secrets-manager": "^3.958.0",
     "@aws-sdk/client-ssm": "^3.958.0",
     "@aws-sdk/dsql-signer": "^3.958.0",
     "pg": "^8.16.3",

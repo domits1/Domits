@@ -6,8 +6,11 @@ import IntegrationSyncRepository from "../data/integrationSyncRepository.js";
 import ReservationLinkRepository from "../data/reservationLinkRepository.js";
 
 import SyncRunner from "./syncRunner.js";
+import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
 
 const nowMs = () => Date.now();
+const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
@@ -21,6 +24,7 @@ export default class IntegrationService {
     this.sync = new IntegrationSyncRepository();
     this.resLinks = new ReservationLinkRepository();
     this.runner = new SyncRunner();
+    this.credentialStore = new WhatsAppCredentialStore();
   }
 
   async createIntegration(body) {
@@ -57,8 +61,44 @@ export default class IntegrationService {
 
   async listIntegrations(userId) {
     if (!requireStr(userId)) return bad(400, { error: "Missing required query param: userId" });
+
     const items = await this.accounts.listByUserId(userId);
-    return ok(items);
+
+    const hydrated = await Promise.all(
+      items.map(async (item) => {
+        if (String(item?.channel || "").toUpperCase() !== "WHATSAPP") return item;
+        if (!item?.credentialsRef) return item;
+
+        try {
+          const secret = await this.credentialStore.readSecret(item.credentialsRef);
+          if (!secret?.expiresAt) return item;
+
+          const expiresAt = Number(secret.expiresAt);
+          const now = nowMs();
+
+          if (Number.isFinite(expiresAt) && expiresAt <= now) {
+            return {
+              ...item,
+              status: "RECONNECT_REQUIRED",
+              lastErrorMessage: item.lastErrorMessage || "WhatsApp token expired. Reconnect required.",
+            };
+          }
+
+          if (Number.isFinite(expiresAt) && expiresAt - now <= THREE_DAYS_MS) {
+            return {
+              ...item,
+              status: "TOKEN_EXPIRING_SOON",
+            };
+          }
+
+          return item;
+        } catch {
+          return item;
+        }
+      })
+    );
+
+    return ok(hydrated);
   }
 
   async updateIntegration(integrationId, patch) {
@@ -197,6 +237,16 @@ export default class IntegrationService {
     if (!code) return bad(400, { error: "Missing required field: code" });
     if (!callbackUrl) return bad(400, { error: "Missing required field: callbackUrl" });
 
+    /**
+     * TODO: REAL META TOKEN EXCHANGE
+     * Here the backend should:
+     * 1. exchange `code` with Meta
+     * 2. fetch WABA / phone numbers
+     * 3. store token in Secrets Manager
+     *
+     * For now we return an empty list if no connected number exists yet.
+     */
+
     const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
 
     const selectableNumbers = existing?.externalAccountId
@@ -216,7 +266,7 @@ export default class IntegrationService {
       connectSessionId,
       codeReceived: true,
       selectableNumbers,
-      credentialsRef: "meta-embedded-signup-token-placeholder",
+      credentialsRef: existing?.credentialsRef || null,
     });
   }
 
@@ -230,8 +280,36 @@ export default class IntegrationService {
     if (!connectSessionId) return bad(400, { error: "Missing required field: connectSessionId" });
     if (!phoneNumberId) return bad(400, { error: "Missing required field: phoneNumberId" });
 
-    const credentialsRef = requireStr(body.credentialsRef) || "meta-embedded-signup-token-placeholder";
     const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
+
+    let integrationAccountId = existing?.id || randomUUID();
+    let credentialsRef = existing?.credentialsRef || null;
+
+    if (!credentialsRef) {
+      credentialsRef = this.credentialStore.buildSecretName({
+        userId,
+        integrationAccountId,
+      });
+    }
+
+    const issuedAt = nowMs();
+    const expiresAt = issuedAt + SIXTY_DAYS_MS;
+
+    await this.credentialStore.ensureSecret({
+      userId,
+      integrationAccountId,
+      payload: {
+        provider: "META_WHATSAPP",
+        accessToken: null,
+        /**
+         * TODO:
+         * Replace null with the real token returned by Meta token exchange.
+         */
+        issuedAt,
+        expiresAt,
+        refreshStatus: "NEEDS_REAL_META_TOKEN_EXCHANGE",
+      },
+    });
 
     let saved;
     if (existing) {
@@ -244,11 +322,10 @@ export default class IntegrationService {
         lastErrorMessage: null,
       });
     } else {
-      const id = randomUUID();
       const now = nowMs();
 
       saved = await this.accounts.create({
-        id,
+        id: integrationAccountId,
         userId,
         channel: "WHATSAPP",
         externalAccountId: phoneNumberId,
@@ -263,8 +340,8 @@ export default class IntegrationService {
         updatedAt: now,
       });
 
-      await this.sync.ensureStateRow(id, "MESSAGES");
-      await this.sync.ensureStateRow(id, "RESERVATIONS");
+      await this.sync.ensureStateRow(integrationAccountId, "MESSAGES");
+      await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
     }
 
     return ok({
@@ -288,6 +365,105 @@ export default class IntegrationService {
     return ok({
       disconnected: true,
       integration: disconnected,
+    });
+  }
+
+  async checkWhatsAppTokenHealth(body) {
+    const userId = requireStr(body.userId);
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+
+    const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
+    if (!existing) return bad(404, { error: "WhatsApp integration not found" });
+    if (!existing.credentialsRef) return bad(400, { error: "Missing credentialsRef on integration" });
+
+    const secret = await this.credentialStore.readSecret(existing.credentialsRef);
+    if (!secret?.expiresAt) {
+      return ok({
+        status: "UNKNOWN",
+        expiresAt: null,
+        needsReconnect: false,
+        message: "No token expiry metadata found.",
+      });
+    }
+
+    const expiresAt = Number(secret.expiresAt);
+    const now = nowMs();
+
+    if (!Number.isFinite(expiresAt)) {
+      return ok({
+        status: "UNKNOWN",
+        expiresAt: null,
+        needsReconnect: false,
+        message: "Invalid token expiry metadata.",
+      });
+    }
+
+    if (expiresAt <= now) {
+      await this.accounts.update(existing.id, {
+        status: "RECONNECT_REQUIRED",
+        lastErrorMessage: "WhatsApp token expired. Reconnect required.",
+      });
+
+      return ok({
+        status: "EXPIRED",
+        expiresAt,
+        needsReconnect: true,
+      });
+    }
+
+    if (expiresAt - now <= THREE_DAYS_MS) {
+      return ok({
+        status: "EXPIRING_SOON",
+        expiresAt,
+        needsReconnect: false,
+      });
+    }
+
+    return ok({
+      status: "HEALTHY",
+      expiresAt,
+      needsReconnect: false,
+    });
+  }
+
+  async refreshWhatsAppToken(body) {
+    const userId = requireStr(body.userId);
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+
+    const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
+    if (!existing) return bad(404, { error: "WhatsApp integration not found" });
+    if (!existing.credentialsRef) return bad(400, { error: "Missing credentialsRef on integration" });
+
+    const secret = await this.credentialStore.readSecret(existing.credentialsRef);
+    if (!secret) return bad(404, { error: "WhatsApp secret not found" });
+
+    /**
+     * TODO: REAL META TOKEN REFRESH
+     * Meta says expiring system user tokens are valid for 60 days from generated or refreshed date
+     * and should be refreshed within that period. We are not guessing the refresh endpoint here.
+     *
+     * Replace the block below with the real Meta refresh call and real returned token.
+     */
+    const refreshedAt = nowMs();
+    const nextExpiresAt = refreshedAt + SIXTY_DAYS_MS;
+
+    await this.credentialStore.writeSecret(existing.credentialsRef, {
+      ...secret,
+      refreshedAt,
+      expiresAt: nextExpiresAt,
+      refreshStatus: "PLACEHOLDER_REFRESHED",
+    });
+
+    await this.accounts.update(existing.id, {
+      status: "CONNECTED",
+      lastErrorCode: null,
+      lastErrorMessage: null,
+    });
+
+    return ok({
+      refreshed: true,
+      expiresAt: nextExpiresAt,
+      mode: "placeholder-refresh",
     });
   }
 }
