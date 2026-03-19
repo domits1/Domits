@@ -1,5 +1,6 @@
 import { getAccessToken, getCognitoUserId } from "../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../hostproperty/constants";
+import { placeholderImage, resolveAccommodationImageUrls } from "../../../utils/accommodationImage";
 
 const buildFallbackListingsUrl = (hostId) => {
     const fallbackUrl = new URL(`${PROPERTY_API_BASE}/bookingEngine/byHostId`);
@@ -7,16 +8,29 @@ const buildFallbackListingsUrl = (hostId) => {
     return fallbackUrl.toString();
 };
 
-const buildPropertyLabel = (listing) => {
-    const title = String(listing?.property?.title || "Untitled listing").trim();
+const buildPropertyTitle = (listing) => String(listing?.property?.title || "Untitled listing").trim();
+
+const buildPropertyLocation = (listing) => {
     const city = String(listing?.propertyLocation?.city || listing?.location?.city || "").trim();
     const country = String(listing?.propertyLocation?.country || listing?.location?.country || "").trim();
-    const locationSuffix = [city, country].filter(Boolean).join(", ");
+    return [city, country].filter(Boolean).join(", ");
+};
+
+const buildPropertyLabel = (listing) => {
+    const title = buildPropertyTitle(listing);
+    const locationSuffix = buildPropertyLocation(listing);
     return locationSuffix ? `${title} - ${locationSuffix}` : title;
 };
 
-const normalizePropertyOptions = (listings) => {
-    const uniqueLabels = new Set();
+const getPropertyStatus = (listing) => String(listing?.property?.status || "INACTIVE").trim().toUpperCase();
+
+const getPreviewImages = (listing) => {
+    const previewImages = resolveAccommodationImageUrls(listing?.images, "thumb").slice(0, 3);
+    return previewImages.length > 0 ? previewImages : [placeholderImage];
+};
+
+const normalizePropertySelectOptions = (listings) => {
+    const propertyOptionsById = new Map();
 
     (Array.isArray(listings) ? listings : []).forEach((listing) => {
         const propertyId = String(listing?.property?.id || "").trim();
@@ -24,13 +38,20 @@ const normalizePropertyOptions = (listings) => {
             return;
         }
 
-        const label = buildPropertyLabel(listing);
-        if (label) {
-            uniqueLabels.add(label);
-        }
+        propertyOptionsById.set(propertyId, {
+            value: propertyId,
+            title: buildPropertyTitle(listing),
+            location: buildPropertyLocation(listing),
+            label: buildPropertyLabel(listing),
+            status: getPropertyStatus(listing),
+            previewImages: getPreviewImages(listing),
+            imageCount: Array.isArray(listing?.images) ? listing.images.length : 0,
+        });
     });
 
-    return [...uniqueLabels];
+    return [...propertyOptionsById.values()].sort((leftOption, rightOption) =>
+        leftOption.label.localeCompare(rightOption.label)
+    );
 };
 
 const fetchListingsFromHostDashboard = async (token) => {
@@ -57,7 +78,7 @@ const fetchListingsFromHostDashboard = async (token) => {
 
 const fetchListingsByHostId = async ({ hostId, token }) => {
     if (!hostId) {
-        return [];
+        return null;
     }
 
     const response = await fetch(buildFallbackListingsUrl(hostId), {
@@ -68,25 +89,42 @@ const fetchListingsByHostId = async ({ hostId, token }) => {
     });
 
     if (!response.ok) {
-        return [];
+        return null;
     }
 
     const data = await response.json();
     return Array.isArray(data) ? data : [];
 };
 
-export const fetchHostTaskPropertyOptions = async () => {
+const fetchHostOwnedListings = async () => {
     const token = getAccessToken();
     if (!token) {
-        return [];
+        throw new Error("You must be signed in to load your listings.");
     }
 
-    try {
-        const hostId = getCognitoUserId();
-        const primaryResult = await fetchListingsFromHostDashboard(token);
-        const listings = primaryResult.listings ?? (await fetchListingsByHostId({ hostId, token }));
+    const hostId = getCognitoUserId();
+    const primaryResult = await fetchListingsFromHostDashboard(token);
+    if (primaryResult.listings !== null) {
+        return primaryResult.listings;
+    }
 
-        return normalizePropertyOptions(listings);
+    const fallbackListings = await fetchListingsByHostId({ hostId, token });
+    if (fallbackListings !== null) {
+        return fallbackListings;
+    }
+
+    throw new Error("Failed to load your properties.");
+};
+
+export const fetchHostPropertySelectOptions = async () => {
+    const listings = await fetchHostOwnedListings();
+    return normalizePropertySelectOptions(listings);
+};
+
+export const fetchHostTaskPropertyOptions = async () => {
+    try {
+        const propertyOptions = await fetchHostPropertySelectOptions();
+        return propertyOptions.map((option) => option.label);
     } catch {
         return [];
     }
