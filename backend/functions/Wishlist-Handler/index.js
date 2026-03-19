@@ -1,17 +1,14 @@
 import { WishlistController } from "./controller/wishlistController.js";
+import responseHeaders from "./util/constant/responseHeader.js";
 
-let controller = new WishlistController();
+const controller = new WishlistController();
 
 export const handler = async (event) => {
-  if (!controller) {
-    controller = new WishlistController();
-  }
-
   try {
     return await (async () => {
       const { httpMethod, resource } = event;
 
-      if (resource === "/wishlist") {
+      if (resource === "/wishlist" || resource === "/Wishlist") {
         switch (httpMethod) {
           case "POST":
             return await controller.create(event);
@@ -26,21 +23,24 @@ export const handler = async (event) => {
           default:
             return {
               statusCode: 404,
-              body: "Method not found." 
+              headers: responseHeaders,
+              body: JSON.stringify({ message: "Method not found." }),
             };
         }
       }
 
       return {
         statusCode: 404,
-        body: "Path not found."
+        headers: responseHeaders,
+        body: JSON.stringify({ message: "Path not found." }),
       };
     })();
   } catch (error) {
-    console.error(error);
+    console.error(`Unhandled error in Wishlist handler: ${error}`);
     return {
       statusCode: 500,
-      body: "Something went wrong, please contact support."
+      headers: responseHeaders,
+      body: JSON.stringify({ message: "Something went wrong, please contact support." }),
     };
   }
 };

@@ -6,7 +6,7 @@ import GuestBooking from "./GuestBooking";
 import GuestPayments from "./GuestPayments";
 // import GuestReviews from "./GuestReviews";
 import GuestSettings from "./GuestSettings";
-// import GuestWishlist from "./GuestWishlist";
+import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
 
 const MainDashboardGuest = () => {
@@ -14,9 +14,17 @@ const MainDashboardGuest = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname === "/guestdashboard/messages") {
-      setActiveComponent("Messages");
-    }
+    const routeToComponentMap = {
+      "/guestdashboard": "Dashboard",
+      "/guestdashboard/": "Dashboard",
+      "/guestdashboard/bookings": "Bookings",
+      "/guestdashboard/messages": "Messages",
+      "/guestdashboard/payments": "Payments",
+      "/guestdashboard/settings": "Settings",
+      "/guestdashboard/wishlist": "Wishlist",
+    };
+
+    setActiveComponent(routeToComponentMap[location.pathname] || "Dashboard");
   }, [location.pathname]);
 
   const renderComponent = () => {
@@ -37,9 +45,8 @@ const MainDashboardGuest = () => {
       case "Settings":
         return <GuestSettings />;
 
-      // Work on it later
-      // case "Wishlist":
-      //   return <GuestWishlist />;
+      case "Wishlist":
+        return <GuestWishlist />;
 
       default:
         return <GuestDashboard />;

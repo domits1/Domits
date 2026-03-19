@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { getAccessToken } from "./utils/authUtils";
+import { fetchWishlistItems, updateWishlistItem } from "./services/wishlistService";
 
 import "./styles/GuestWishlist.scss";
 
@@ -25,22 +26,8 @@ const GuestWishlist = () => {
       setLoading(true);
 
       try {
-        const res = await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-          method: "POST",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "getWishlist",
-            wishlistName: selectedList,
-          }),
-        });
-
-        const result = await res.json();
-        const propertyIds = (result.items || [])
-          .filter((item) => item.propertyId)
-          .map((item) => item.propertyId);
+        const items = await fetchWishlistItems(selectedList);
+        const propertyIds = items.map((item) => item.propertyId);
 
         if (propertyIds.length === 0) {
           setWishlist([]);
@@ -70,17 +57,7 @@ const GuestWishlist = () => {
     if (!token) return;
 
     try {
-      await fetch("https://i8t5rc1e7b.execute-api.eu-north-1.amazonaws.com/dev/Wishlist", {
-        method: "DELETE",
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          propertyId: accommodationId,
-          wishlistName: selectedList,
-        }),
-      });
+      await updateWishlistItem(accommodationId, "DELETE", selectedList);
     } catch (err) {
       console.error(" Error removing from wishlist:", err.message);
     }
