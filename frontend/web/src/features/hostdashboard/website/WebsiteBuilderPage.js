@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "./HostWebsite.module.scss";
-import { fetchHostPropertySelectOptions } from "./services/hostTaskPropertyService";
+import styles from "./WebsiteBuilderPage.module.scss";
+import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
 
 const EMPTY_SELECTION = "";
 
@@ -10,11 +10,25 @@ const PROPERTY_STATUS_LABELS = {
   INACTIVE: "Draft",
   ARCHIVED: "Archived",
 };
+const SUMMARY_DESCRIPTION_WORD_LIMIT = 23;
 
 const getPropertyStatusLabel = (status) =>
   PROPERTY_STATUS_LABELS[String(status || "").toUpperCase()] || "Unknown";
 
-function HostWebsite() {
+const truncateDescription = (description, wordLimit = SUMMARY_DESCRIPTION_WORD_LIMIT) => {
+  const words = String(description || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (words.length <= wordLimit) {
+    return words.join(" ");
+  }
+
+  return `${words.slice(0, wordLimit).join(" ")}...`;
+};
+
+function WebsiteBuilderPage() {
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +48,6 @@ function HostWebsite() {
           : EMPTY_SELECTION
       );
     } catch (error) {
-      console.error("Failed to load website property options:", error);
       setPropertyOptions([]);
       setSelectedPropertyId(EMPTY_SELECTION);
       setLoadError(error?.message || "We could not load your listings.");
@@ -51,6 +64,7 @@ function HostWebsite() {
     propertyOptions.find((propertyOption) => propertyOption.value === selectedPropertyId) || null;
 
   const previewImages = selectedProperty?.previewImages || [];
+  const summaryDescription = truncateDescription(selectedProperty?.description);
 
   const renderSelectionState = () => {
     if (isLoading) {
@@ -105,7 +119,6 @@ function HostWebsite() {
               </option>
             ))}
           </select>
-          <p className={styles.helperText}>Only properties connected to your host account are shown here.</p>
         </div>
 
         {selectedProperty ? (
@@ -146,10 +159,7 @@ function HostWebsite() {
                       : "No photos imported yet"}
                   </span>
                 </div>
-                <p className={styles.summaryMeta}>
-                  A few listing photos are pulled in automatically so you can recognize the property you are
-                  about to turn into a standalone website.
-                </p>
+                {summaryDescription ? <p className={styles.summaryMeta}>{summaryDescription}</p> : null}
               </div>
             </div>
           </div>
@@ -189,4 +199,4 @@ function HostWebsite() {
   );
 }
 
-export default HostWebsite;
+export default WebsiteBuilderPage;

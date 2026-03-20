@@ -10,6 +10,9 @@ const buildFallbackListingsUrl = (hostId) => {
 
 const buildPropertyTitle = (listing) => String(listing?.property?.title || "Untitled listing").trim();
 
+const buildPropertyDescription = (listing) =>
+    String(listing?.property?.description || "").replace(/\s+/g, " ").trim();
+
 const buildPropertyLocation = (listing) => {
     const city = String(listing?.propertyLocation?.city || listing?.location?.city || "").trim();
     const country = String(listing?.propertyLocation?.country || listing?.location?.country || "").trim();
@@ -41,6 +44,7 @@ const normalizePropertySelectOptions = (listings) => {
         propertyOptionsById.set(propertyId, {
             value: propertyId,
             title: buildPropertyTitle(listing),
+            description: buildPropertyDescription(listing),
             location: buildPropertyLocation(listing),
             label: buildPropertyLabel(listing),
             status: getPropertyStatus(listing),
