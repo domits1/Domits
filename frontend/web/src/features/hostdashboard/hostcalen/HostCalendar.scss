@@ -485,9 +485,10 @@ $accent: #2f6fed;
 }
 
 .hc-year-day--outside {
-  background: #f4f5f7;
-  border-color: #eceff3;
-  color: #4b5563;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+  pointer-events: none;
 }
 
 .hc-year-day--available {
@@ -1170,6 +1171,67 @@ $accent: #2f6fed;
   padding: 8px 10px;
 }
 
+.hc-availability-settings-item--with-help {
+  position: relative;
+}
+
+.hc-availability-settings-item--with-help::after {
+  content: attr(data-help);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  width: auto;
+  max-width: none;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.24);
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition:
+    opacity 80ms ease,
+    transform 80ms ease,
+    visibility 0s linear 80ms;
+}
+
+.hc-availability-settings-item--with-help::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  bottom: calc(100% + 2px);
+  z-index: 21;
+  border-width: 6px;
+  border-style: solid;
+  border-color: #111827 transparent transparent transparent;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition:
+    opacity 80ms ease,
+    transform 80ms ease,
+    visibility 0s linear 80ms;
+}
+
+.hc-availability-settings-item--with-help:hover::after,
+.hc-availability-settings-item--with-help:hover::before,
+.hc-availability-settings-item--with-help:focus-within::after,
+.hc-availability-settings-item--with-help:focus-within::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
 .hc-availability-settings-item-label {
   margin: 0;
   display: block;
@@ -1277,6 +1339,20 @@ $accent: #2f6fed;
   border: 1px solid $border;
   border-radius: 12px;
   padding: 14px;
+}
+
+.hc-sync-card--focus-layer {
+  position: relative;
+  z-index: 1060;
+}
+
+.hc-sync-page-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(15, 23, 42, 0.24);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .hc-sync-header {
@@ -1520,6 +1596,8 @@ $accent: #2f6fed;
 
 .hc-sync-edit-modal-backdrop::backdrop {
   background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .hc-sync-edit-modal {
@@ -1575,6 +1653,8 @@ $accent: #2f6fed;
 
 .hc-sync-remove-modal-backdrop::backdrop {
   background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .hc-sync-remove-modal {

@@ -1,7 +1,13 @@
 import {Storage} from 'aws-amplify';
+import {
+    ICAL_EXPORT_BUCKET,
+    ICAL_EXPORT_REGION,
+    buildHostCalendarObjectKey,
+    buildHostCalendarObjectUrl,
+} from "./hostCalendarExportPath";
 
-const S3_BUCKET_NAME = "icalender";
-const region = 'eu-north-1';
+const S3_BUCKET_NAME = ICAL_EXPORT_BUCKET;
+const region = ICAL_EXPORT_REGION;
 
 function iCalFormat(events) {
     let icsContent = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Domits/Domits Calendar//v1.0//EN`;
@@ -66,11 +72,14 @@ function foldICalLine(inputString) {
     return foldedString;
 }
 
-export async function uploadICalToS3(events, userId) {
+export async function uploadICalToS3(events, userId, propertyId = "") {
     const icsContent = iCalFormat(events);
 
     const blob = new Blob([icsContent], {type: 'text/calendar'});
-    const fileKey = `hosts/${userId}/${userId}.ics`;
+    const fileKey = buildHostCalendarObjectKey({
+        hostUserId: userId,
+        propertyId: propertyId || userId,
+    });
 
     try {
         const arrayBuffer = await blob.arrayBuffer();
@@ -83,7 +92,12 @@ export async function uploadICalToS3(events, userId) {
             customPrefix: {public: ''},
         });
 
-        const url = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/${fileKey}`;
+        const url = buildHostCalendarObjectUrl({
+            hostUserId: userId,
+            propertyId: propertyId || userId,
+            bucket: S3_BUCKET_NAME,
+            region,
+        });
         return url;
     } catch (err) {
         console.error("Failed to upload iCal to S3:", err);

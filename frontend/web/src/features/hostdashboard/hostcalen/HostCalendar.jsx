@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import "./HostCalendar.scss";
 
@@ -28,6 +28,8 @@ import { useCalendarPropertyDetails } from "./hooks/useCalendarPropertyDetails";
 import { useCalendarSelection } from "./hooks/useCalendarSelection";
 import { useCalendarSync } from "./hooks/useCalendarSync";
 import { usePricingSettings } from "./hooks/usePricingSettings";
+import { uploadICalToS3 } from "../../../utils/iCalFormatHost";
+import { getCognitoUserId } from "../../../services/getAccessToken";
 
 const availabilityWindowOptionShape = PropTypes.shape({
   value: PropTypes.number.isRequired,
@@ -71,6 +73,78 @@ const availabilitySettingsFormShape = PropTypes.shape({
   preparationTimeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   availabilityWindowDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 });
+
+const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+const toUtcDateFromDateNumber = (dateNumber) => {
+  const normalized = String(Math.trunc(Number(dateNumber) || 0));
+  if (!/^\d{8}$/.test(normalized)) {
+    return null;
+  }
+
+  const year = Number(normalized.slice(0, 4));
+  const month = Number(normalized.slice(4, 6));
+  const day = Number(normalized.slice(6, 8));
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
+};
+
+const resolvePropertyLocationLabel = (propertyDetails) => {
+  const location = propertyDetails?.propertyLocation || propertyDetails?.location || {};
+  const street = String(location?.street || propertyDetails?.street || "").trim();
+  const city = String(location?.city || propertyDetails?.city || "").trim();
+  const country = String(location?.country || propertyDetails?.country || "").trim();
+  return [street, city, country].filter(Boolean).join(", ");
+};
+
+const buildPropertyIcalExportEvents = ({
+  propertyId,
+  hostUserId,
+  propertyDetails,
+  availabilityRanges,
+}) => {
+  const normalizedPropertyId = String(propertyId || "").trim();
+  const normalizedHostUserId = String(hostUserId || "").trim();
+  if (!normalizedPropertyId || !normalizedHostUserId) {
+    return [];
+  }
+
+  const listingTitle = String(
+    propertyDetails?.property?.title || propertyDetails?.title || "Domits listing"
+  ).trim();
+  const locationLabel = resolvePropertyLocationLabel(propertyDetails);
+  const nowIso = new Date().toISOString();
+
+  return (Array.isArray(availabilityRanges) ? availabilityRanges : [])
+    .map((range, index) => {
+      const start = toUtcDateFromDateNumber(range?.start);
+      const end = toUtcDateFromDateNumber(range?.end);
+      if (!start || !end) {
+        return null;
+      }
+
+      const endExclusive = new Date(end.getTime() + ONE_DAY_IN_MS);
+      return {
+        UID: `${normalizedPropertyId}-${range.start}-${range.end}-${index}`,
+        Dtstamp: nowIso,
+        Dtstart: start.toISOString(),
+        Dtend: endExclusive.toISOString(),
+        Summary: `${listingTitle} - Available`,
+        Location: locationLabel,
+        AccommodationId: normalizedPropertyId,
+        OwnerId: normalizedHostUserId,
+      };
+    })
+    .filter(Boolean);
+};
 
 function HostCalendarSidebar({
   isSidebarLoading,
@@ -396,6 +470,28 @@ export default function HostCalendar() {
   } = useCalendarPropertyDetails({ selectedPropertyId });
 
   const { bookedDateKeysByPropertyId } = useCalendarBookings();
+  const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
+  const availabilityRanges = useMemo(
+    () => normalizeAvailabilityRanges(propertyDetails?.availability),
+    [propertyDetails]
+  );
+
+  const ensurePropertyIcalExport = useCallback(async () => {
+    const hostUserId = String(getCognitoUserId() || "").trim();
+    const propertyId = String(selectedPropertyId || "").trim();
+    if (!hostUserId || !propertyId) {
+      return;
+    }
+
+    const events = buildPropertyIcalExportEvents({
+      propertyId,
+      hostUserId,
+      propertyDetails,
+      availabilityRanges,
+    });
+
+    await uploadICalToS3(events, hostUserId, propertyId);
+  }, [availabilityRanges, propertyDetails, selectedPropertyId]);
 
   const {
     externalBlockedDates,
@@ -423,13 +519,10 @@ export default function HostCalendar() {
     handleRemoveCalendarSource,
     handleRefreshCalendarSource,
     handleRefreshAllCalendarSources,
-  } = useCalendarSync({ selectedPropertyId });
-
-  const monthGrid = useMemo(() => getMonthMatrix(cursor), [cursor]);
-  const availabilityRanges = useMemo(
-    () => normalizeAvailabilityRanges(propertyDetails?.availability),
-    [propertyDetails]
-  );
+  } = useCalendarSync({
+    selectedPropertyId,
+    onPrepareHostCalendarExport: ensurePropertyIcalExport,
+  });
 
   const pricingSnapshot = useMemo(() => buildPricingSnapshot(propertyDetails), [propertyDetails]);
 

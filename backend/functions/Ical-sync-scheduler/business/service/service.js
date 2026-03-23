@@ -2,8 +2,8 @@ import { Repository } from "../../data/repository.js";
 import {
   buildBlockedDatesFromEvents,
   toPositiveInteger,
-} from "../../../.shared/basicIcsUtils.js";
-import { buildSourceUpsertPayload, fetchExternalCalendar } from "../../../.shared/icalTransport.js";
+} from "../../.shared/basicIcsUtils.js";
+import { buildSourceUpsertPayload, fetchExternalCalendar } from "../../.shared/icalTransport.js";
 
 const DEFAULT_SYNC_INTERVAL_MINUTES = 2;
 const DEFAULT_SYNC_BATCH_LIMIT = 500;

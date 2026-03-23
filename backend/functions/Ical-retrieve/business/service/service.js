@@ -1,8 +1,8 @@
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { Repository } from "../../data/repository.js";
-import { resolveCalendarProvider } from "../../../.shared/calendarProvider.js";
-import { buildSourceUpsertPayload, fetchExternalCalendar } from "../../../.shared/icalTransport.js";
+import { resolveCalendarProvider } from "../../.shared/calendarProvider.js";
+import { buildSourceUpsertPayload, fetchExternalCalendar } from "../../.shared/icalTransport.js";
 
 const MAX_EXPAND_DAYS = 365;
 

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { getAccessToken } from "../../../../services/getAccessToken";
+import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 
 import {
   getKeyRangeInclusive,
@@ -6,6 +8,55 @@ import {
   keyToUtcDate,
   utcDateToKey,
 } from "./hostCalendarHelpers";
+
+const dateNumberToKey = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
+  const normalized = String(Math.trunc(parsed));
+  if (normalized.length !== 8) {
+    return "";
+  }
+  return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}`;
+};
+
+const buildOverridePayload = (dateKeys, availabilityByKey, priceByKey) =>
+  (Array.isArray(dateKeys) ? dateKeys : [])
+    .map((key) => {
+      const date = keyToDateNumber(key);
+      if (!date) {
+        return null;
+      }
+      const nightlyPriceRaw = Number(priceByKey?.[key]);
+      const nightlyPrice =
+        Number.isFinite(nightlyPriceRaw) && nightlyPriceRaw > 0 ? Math.trunc(nightlyPriceRaw) : null;
+      return {
+        date,
+        isAvailable: Object.hasOwn(availabilityByKey, key) ? Boolean(availabilityByKey[key]) : null,
+        nightlyPrice,
+      };
+    })
+    .filter(Boolean);
+
+const parseOverrideResponse = (overrides) => {
+  const availabilityByKey = {};
+  const priceByKey = {};
+  (Array.isArray(overrides) ? overrides : []).forEach((override) => {
+    const key = dateNumberToKey(override?.date ?? override?.calendarDate);
+    if (!key) {
+      return;
+    }
+    if (override?.isAvailable !== null && override?.isAvailable !== undefined) {
+      availabilityByKey[key] = Boolean(override.isAvailable);
+    }
+    const nightlyPrice = Number(override?.nightlyPrice);
+    if (Number.isFinite(nightlyPrice) && nightlyPrice > 0) {
+      priceByKey[key] = Math.trunc(nightlyPrice);
+    }
+  });
+  return { availabilityByKey, priceByKey };
+};
 
 export const useCalendarSelection = ({
   cursor,
@@ -22,6 +73,70 @@ export const useCalendarSelection = ({
   const [selectionPriceDirty, setSelectionPriceDirty] = useState(false);
   const [pendingSelectionStartKey, setPendingSelectionStartKey] = useState(null);
   const [selectedDateKeys, setSelectedDateKeys] = useState([]);
+
+  const persistOverrides = async (propertyId, dateKeys, availabilityByKey, priceByKey) => {
+    const token = getAccessToken();
+    if (!token || !propertyId) {
+      return false;
+    }
+
+    const overrides = buildOverridePayload(dateKeys, availabilityByKey, priceByKey);
+    if (!overrides.length) {
+      return false;
+    }
+
+    const response = await fetch(`${PROPERTY_API_BASE}/calendar/overrides`, {
+      method: "PATCH",
+      headers: {
+        Authorization: token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        propertyId,
+        overrides,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Could not save date overrides (${response.status}).`);
+    }
+
+    const body = await response.json();
+    const { availabilityByKey: confirmedAvailability, priceByKey: confirmedPrice } = parseOverrideResponse(
+      body?.overrides
+    );
+
+    setAvailabilityOverrides((previous) => {
+      const next = { ...previous };
+      dateKeys.forEach((key) => {
+        if (Object.hasOwn(next, key)) {
+          delete next[key];
+        }
+      });
+      Object.entries(confirmedAvailability).forEach(([key, value]) => {
+        next[key] = value;
+      });
+      return next;
+    });
+
+    setPriceOverridesByPropertyId((previous) => {
+      const next = { ...previous };
+      const existing = next[propertyId];
+      const propertyPrices = existing && typeof existing === "object" ? { ...existing } : {};
+      dateKeys.forEach((key) => {
+        if (Object.hasOwn(propertyPrices, key)) {
+          delete propertyPrices[key];
+        }
+      });
+      Object.entries(confirmedPrice).forEach(([key, value]) => {
+        propertyPrices[key] = value;
+      });
+      next[propertyId] = propertyPrices;
+      return next;
+    });
+
+    return true;
+  };
 
   const currentMonthKeys = useMemo(() => {
     const keys = (Array.isArray(monthGrid) ? monthGrid : [])
@@ -119,6 +234,53 @@ export const useCalendarSelection = ({
   }, [selectedDateKeys, selectedPropertyPriceOverrides, pricingSnapshot.nightlyRate, pricingSnapshot.weekendRate]);
 
   useEffect(() => {
+    let mounted = true;
+
+    const loadOverrides = async () => {
+      if (!selectedPropertyId) {
+        return;
+      }
+      const token = getAccessToken();
+      if (!token) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${PROPERTY_API_BASE}/calendar/overrides?propertyId=${encodeURIComponent(selectedPropertyId)}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`Could not load date overrides (${response.status}).`);
+        }
+        const body = await response.json();
+        if (!mounted) {
+          return;
+        }
+        const { availabilityByKey, priceByKey } = parseOverrideResponse(body?.overrides);
+        setAvailabilityOverrides(availabilityByKey);
+        setPriceOverridesByPropertyId((previous) => ({
+          ...previous,
+          [selectedPropertyId]: priceByKey,
+        }));
+      } catch (error) {
+        console.error(error?.message || error);
+      }
+    };
+
+    loadOverrides();
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedPropertyId]);
+
+  useEffect(() => {
     setAvailabilityOverrides({});
     setSelectionPriceInput("");
     setSelectionPriceDirty(false);
@@ -171,14 +333,22 @@ export const useCalendarSelection = ({
       return;
     }
 
-    setAvailabilityOverrides((previousOverrides) => {
-      const nextOverrides = { ...previousOverrides };
-      keys.forEach((key) => {
-        if (!externalBlockedDates.has(key) && !bookedDateKeys.has(key)) {
-          nextOverrides[key] = Boolean(nextAvailability);
-        }
-      });
-      return nextOverrides;
+    const nextAvailabilityOverrides = { ...availabilityOverrides };
+    keys.forEach((key) => {
+      if (!externalBlockedDates.has(key) && !bookedDateKeys.has(key)) {
+        nextAvailabilityOverrides[key] = Boolean(nextAvailability);
+      }
+    });
+
+    setAvailabilityOverrides(nextAvailabilityOverrides);
+
+    void persistOverrides(
+      selectedPropertyId,
+      keys,
+      nextAvailabilityOverrides,
+      selectedPropertyPriceOverrides
+    ).catch((error) => {
+      console.error(error?.message || error);
     });
   };
 
@@ -193,22 +363,27 @@ export const useCalendarSelection = ({
     }
 
     const value = Math.trunc(parsedSelectionPriceInput);
-    setPriceOverridesByPropertyId((previous) => {
-      const next = { ...previous };
-      const existingPropertyOverrides = next[selectedPropertyId];
-      const propertyOverrides =
-        existingPropertyOverrides && typeof existingPropertyOverrides === "object"
-          ? { ...existingPropertyOverrides }
-          : {};
-      selectedDateKeys.forEach((key) => {
-        if (!externalBlockedDates.has(key) && !bookedDateKeys.has(key)) {
-          propertyOverrides[key] = value;
-        }
-      });
-      next[selectedPropertyId] = propertyOverrides;
-      return next;
+    const nextPropertyPriceOverrides = { ...selectedPropertyPriceOverrides };
+    selectedDateKeys.forEach((key) => {
+      if (!externalBlockedDates.has(key) && !bookedDateKeys.has(key)) {
+        nextPropertyPriceOverrides[key] = value;
+      }
     });
+
+    setPriceOverridesByPropertyId((previous) => ({
+      ...previous,
+      [selectedPropertyId]: nextPropertyPriceOverrides,
+    }));
     setSelectionPriceDirty(false);
+
+    void persistOverrides(
+      selectedPropertyId,
+      selectedDateKeys,
+      availabilityOverrides,
+      nextPropertyPriceOverrides
+    ).catch((error) => {
+      console.error(error?.message || error);
+    });
   };
 
   return {

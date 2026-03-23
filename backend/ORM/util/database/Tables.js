@@ -29,7 +29,7 @@ import { Rules } from "../../models/Rules.js";
 import { Property_Type } from "../../models/Property_Type.js";
 import { Stripe_Connected_Accounts } from "../../models/Stripe_Connected_Accounts.js";
 import { UnifiedThread } from "../../models/UnifiedThread.js";
-import { UnifiedMessage } from "../../models/UnifiedMessage.js";
+import { UnifiedMessage } from "../../models/UnifiedMessage.js"; 
 
 export const Tables = [
   Amenities,

@@ -1,5 +1,5 @@
 import Database from "database";
-import { listSourcesByProperty, upsertSourceRecord } from "../../.shared/icalSourceRepositoryHelpers.js";
+import { listSourcesByProperty, upsertSourceRecord } from "../.shared/icalSourceRepositoryHelpers.js";
 
 class ExternalCalendarRepository {
   async listSources(propertyId) {
