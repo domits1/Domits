@@ -160,7 +160,6 @@ export class WishlistController {
   }
 
   handleError(error) {
-    console.error("Controller error:", error);
     return {
       statusCode: error.statusCode || 500,
       headers: responseHeaders,

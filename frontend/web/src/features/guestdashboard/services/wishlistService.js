@@ -16,8 +16,8 @@ const parseJson = async (response) => {
   try {
     return await response.json();
   } catch (error) {
-    console.warn("Failed to parse response JSON:", error);
-    return {};
+    console.error("Failed to parse wishlist API response JSON", error);
+    throw new Error("Invalid response received from wishlist service");
   }
 };
 
@@ -76,7 +76,7 @@ export const moveAccommodation = async (oldName, newName, propertyId) => {
     throw new Error("Failed to move accommodation");
   }
 
-  return res.json();
+  return parseJson(res);
 };
 
 // Add or remove accommodation from a wishlist (POST / DELETE)
@@ -94,7 +94,7 @@ export const updateWishlistItem = async (propertyId, method, wishlistName = DEFA
     throw new Error(`Failed to ${method === "POST" ? "add to" : "remove from"} wishlist`);
   }
 
-  return res.json();
+  return parseJson(res);
 };
 
 // Check if a property is in any wishlist
@@ -136,7 +136,7 @@ export const createWishlist = async (wishlistName) => {
     throw new Error("Failed to create wishlist");
   }
 
-  return res.json();
+  return parseJson(res);
 };
 
 // Rename a wishlist (PATCH)
@@ -151,7 +151,7 @@ export const renameWishlist = async (oldName, newName) => {
     throw new Error("Failed to rename wishlist");
   }
 
-  return res.json();
+  return parseJson(res);
 };
 
 // Delete a wishlist (DELETE)
@@ -166,7 +166,7 @@ export const deleteWishlist = async (wishlistName) => {
     throw new Error("Failed to delete wishlist");
   }
 
-  return res.json();
+  return parseJson(res);
 };
 
 export const fetchWishlistItems = async (wishlistName = DEFAULT_WISHLIST_NAME) => {
