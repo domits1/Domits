@@ -5,7 +5,7 @@ export const validateTaskPayload = (data) => {
         errors.push("Title is required");
     }
 
-    if (!data.property || !data.property.propertyId) {
+    if (!data.property?.propertyId) {
         errors.push("Property selection must include a valid ID");
     }
 
