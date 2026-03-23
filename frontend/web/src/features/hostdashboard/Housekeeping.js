@@ -628,14 +628,32 @@ const HostPropertyCare = () => {
         if (sortConfig.key !== columnKey) return defaultIcon;
         return sortConfig.direction === 'asc' ? '▴' : '▾';
     };
+
+    const renderPagination = () => (
+        <div className="pagination">
+            <button onClick={handlePrevPage} disabled={currentPage === 1}>Previous</button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button onClick={handleNextPage} disabled={currentPage === totalPages}>Next</button>
+        </div>
+    );
+
+    const renderTableView = () => (
         <div className="overview-container">
             <div className="filters-bar">
-                {renderFilterControls({
-                    className: 'filters-dropdowns',
-                    showAssignee: true,
-                    showDate: true,
-                    priorityOptions: ['Urgent', 'High', 'Medium', 'Low'],
-                })}
+                <div className="filters-dropdowns">
+                    {renderCommonFilters()}
+                    <select name="priority" value={filters.priority} onChange={handleFilterChange}>
+                        <option value="Any priority">Any priority</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                    <div className="search-box small-search">
+                        <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
+                        <span aria-hidden="true">🔍</span>
+                    </div>
+                </div>
 
                 <div className="active-filters-row">
                     <div className="status-tags">
@@ -718,12 +736,10 @@ const HostPropertyCare = () => {
                         )}
                     </tbody>
                 </table>
-                
                 {renderPagination()}
-                
             </div>
         </div>
-
+    );
 
     return (
         <main className="task-dashboard-v2">
