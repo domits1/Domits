@@ -144,24 +144,6 @@ const HostPropertyCare = () => {
     const [confirmDialog, setConfirmDialog] = useState({
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
-    const handleToggleComplete = (task) => {
-        const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const todayStr = getTodayString(); 
-        
-        const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
-        
-        const updatedTask = {
-            ...task,
-            status: newStatus,
-            completedAt: newStatus === 'Completed' ? todayStr : null, 
-            activities: [
-                ...(task.activities || []),
-                { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
-            ]
-        };
-        
-        setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
-    };
 
     const CURRENT_USER = 'Sophie Janssen'; 
 
@@ -646,120 +628,6 @@ const HostPropertyCare = () => {
         if (sortConfig.key !== columnKey) return defaultIcon;
         return sortConfig.direction === 'asc' ? '▴' : '▾';
     };
-    const renderTableView = () => {
-        const renderPagination = () => {
-            if (activeTab === 'Overview') return null;
-            return (
-                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'flex-end', padding: '15px 20px', gap: '10px', color: '#495057', fontSize: '14px' }}>
-                    <button onClick={handlePrevPage} disabled={currentPage === 1} style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1 }}>
-                        &lt;
-                    </button>
-                    <button style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', fontWeight: 'bold' }}>
-                        {currentPage} / {totalPages}
-                    </button>
-                    <button onClick={handleNextPage} disabled={currentPage === totalPages} style={{ border: '1px solid #ced4da', background: 'white', borderRadius: '4px', padding: '2px 8px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1 }}>
-                        &gt;
-                    </button>
-                </div>
-            );
-        };
-        
-        return (
-        <div className="overview-container">
-            <div className="filters-bar">
-                <div className="filters-dropdowns">
-                    {renderCommonFilters()}
-                    <select name="assignee" value={filters.assignee} onChange={handleFilterChange}>
-                        <option value="Anyone">Anyone</option>
-                        <option value="Sophie Janssen">Sophie Janssen</option>
-                        <option value="Jan de Vries">Jan de Vries</option>
-                        <option value="Lisa Meijer">Lisa Meijer</option>
-                    </select>
-                    <select name="date" value={filters.date} onChange={handleFilterChange}>
-                        <option value="Any date">Any date</option>
-                        <option value="Today">Today</option>
-                        <option value="This Week">This Week</option>
-                    </select>
-                    <select name="priority" value={filters.priority} onChange={handleFilterChange}>
-                        <option value="Any priority">Any priority</option>
-                        <option value="Urgent">Urgent</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
-                    
-                    <div className="my-task-middle">
-                        <span className="my-task-time">
-                            {displayTime}
-                        </span>
-                    </div>
-
-                    <div className="my-task-right">
-                        <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
-                            ● {displayStatus}
-                        </span>
-                        <span className={`badge-priority ${displayPriority.toLowerCase()}`}>
-                            {displayPriority}
-                        </span>
-                        
-                        {isOverdueSection ? (
-                            <div className="overdue-action-text">⍉ Overdue</div>
-                        ) : (
-                            <input 
-                                type="checkbox" 
-                                className="my-task-checkbox" 
-                                checked={task.status === 'Completed'}
-                                onClick={(e) => e.stopPropagation()} 
-                                onChange={() => handleToggleComplete(task)}
-                            />
-                        )}
-                    </div>
-                </button>
-            );
-        };
-
-        return (
-            <div className="my-tasks-container">
-                <div className="my-tasks-section">
-                    <div className="section-header-row">
-                        <div className="section-title">
-                            <h3>Today's Tasks</h3>
-                            <span className="task-count">{todayTasks.length} Tasks</span>
-                        </div>
-                        {renderFilterControls({
-                            className: 'my-tasks-filters',
-                            compactSearch: true,
-                            priorityOptions: ['Urgent', 'Medium', 'Low'],
-                        })}
-                    </div>
-                    <div className="my-task-list">
-                        {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! 🎉</p>}
-                    </div>
-                </div>
-
-                <div className="my-tasks-section">
-                    <div className="section-title">
-                        <h3>Overdue</h3>
-                        <span className="task-count">{overdueTasks.length} Task(s)</span>
-                    </div>
-                    <div className="my-task-list">
-                        {overdueTasks.length > 0 ? overdueTasks.map(t => renderTaskRow(t, true)) : null}
-                    </div>
-                </div>
-
-                <div className="my-tasks-section">
-                    <div className="section-title">
-                        <h3>Upcoming</h3>
-                        <span className="task-count">{upcomingTasks.length} Task(s)</span>
-                    </div>
-                    <div className="my-task-list">
-                        {upcomingTasks.length > 0 ? upcomingTasks.map(t => renderTaskRow(t)) : null}
-                    </div>
-                </div>
-            </div>
-        );
-    };
-    const renderTableView = () => (
         <div className="overview-container">
             <div className="filters-bar">
                 {renderFilterControls({
@@ -855,7 +723,7 @@ const HostPropertyCare = () => {
                 
             </div>
         </div>
-    )};
+};
 
     return (
         <main className="task-dashboard-v2">
@@ -1123,6 +991,5 @@ const HostPropertyCare = () => {
             )}
         </main>
     );
-};
 
 export default HostPropertyCare;
