@@ -1,6 +1,129 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
 import { createTask, fetchTasks } from './services/faketaskService';
+import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
+
+const DEFAULT_FILTERS = {
+    property: 'All properties',
+    status: 'All statuses',
+    assignee: 'Anyone',
+    date: 'Any date',
+    priority: 'Any priority',
+    search: '',
+};
+
+const DEFAULT_NEW_TASK = {
+    title: '',
+    description: '',
+    property: '',
+    bookingRef: '',
+    type: 'Cleaning',
+    assignee: '',
+    dueDate: '',
+    priority: 'Medium',
+    attachments: null,
+};
+
+const CURRENT_USER = 'Sophie Janssen';
+
+const getTodayString = () => new Date().toISOString().split('T')[0];
+
+const isTaskOverdue = (task, todayStr) => (
+    Boolean(task?.dueDate) &&
+    task.dueDate < todayStr &&
+    task.status !== 'Completed' &&
+    task.status !== 'Cancelled'
+);
+
+const normalizeTaskStatus = (task, todayStr) => {
+    if (isTaskOverdue(task, todayStr)) {
+        return { ...task, status: 'Overdue' };
+    }
+
+    return task;
+};
+
+const matchesFilterSelection = (selectedValue, defaultValue, taskValue) => (
+    selectedValue === defaultValue || taskValue === selectedValue
+);
+
+const matchesSearchFields = (task, searchTerm, searchFields) => {
+    if (!searchTerm) {
+        return true;
+    }
+
+    const searchLower = searchTerm.toLowerCase();
+    return searchFields.some((field) => String(task?.[field] || '').toLowerCase().includes(searchLower));
+};
+
+const matchesDateFilter = (task, dateFilter) => {
+    if (dateFilter === DEFAULT_FILTERS.date) {
+        return true;
+    }
+
+    if (dateFilter === 'Today') {
+        return task.dueDate === getTodayString();
+    }
+
+    if (dateFilter === 'This Week' && task.dueDate) {
+        const taskDate = new Date(task.dueDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const nextWeek = new Date(today);
+        nextWeek.setDate(today.getDate() + 7);
+
+        return taskDate >= today && taskDate <= nextWeek;
+    }
+
+    return true;
+};
+
+const matchesTaskFilters = (
+    task,
+    filters,
+    {
+        includeAssignee = false,
+        includeDate = false,
+        excludeLegacy = false,
+        excludeCompleted = false,
+        searchFields = ['title'],
+    } = {}
+) => {
+    if (excludeLegacy && task.isLegacy) {
+        return false;
+    }
+
+    if (excludeCompleted && task.status === 'Completed') {
+        return false;
+    }
+
+    if (!matchesFilterSelection(filters.property, DEFAULT_FILTERS.property, task.property)) {
+        return false;
+    }
+
+    if (!matchesFilterSelection(filters.status, DEFAULT_FILTERS.status, task.status)) {
+        return false;
+    }
+
+    if (includeAssignee && !matchesFilterSelection(filters.assignee, DEFAULT_FILTERS.assignee, task.assignee)) {
+        return false;
+    }
+
+    if (!matchesFilterSelection(filters.priority, DEFAULT_FILTERS.priority, task.priority)) {
+        return false;
+    }
+
+    if (!matchesSearchFields(task, filters.search, searchFields)) {
+        return false;
+    }
+
+    if (!includeDate) {
+        return true;
+    }
+
+    return matchesDateFilter(task, filters.date);
+};
 
 const HostPropertyCare = () => {
     const [activeTab, setActiveTab] = useState('Overview'); 
@@ -11,22 +134,34 @@ const HostPropertyCare = () => {
     const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
 
-    const [newTask, setNewTask] = useState({
-        title: '', description: '', property: '', bookingRef: '', 
-        type: 'Cleaning', assignee: '', dueDate: '', priority: 'Medium', attachments: null
-    });
+    const [newTask, setNewTask] = useState({ ...DEFAULT_NEW_TASK });
 
     const [viewingTask, setViewingTask] = useState(null);
     const [editedTask, setEditedTask] = useState(null);  
 
-    const [filters, setFilters] = useState({
-        property: 'All properties', status: 'All statuses', assignee: 'Anyone',
-        date: 'Any date', priority: 'Any priority', search: ''
-    });
+    const [filters, setFilters] = useState({ ...DEFAULT_FILTERS });
 
     const [confirmDialog, setConfirmDialog] = useState({
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
+    const handleToggleComplete = (task) => {
+        const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const todayStr = getTodayString(); 
+        
+        const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
+        
+        const updatedTask = {
+            ...task,
+            status: newStatus,
+            completedAt: newStatus === 'Completed' ? todayStr : null, 
+            activities: [
+                ...(task.activities || []),
+                { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
+            ]
+        };
+        
+        setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
+    };
 
     const CURRENT_USER = 'Sophie Janssen'; 
 
@@ -61,7 +196,7 @@ const HostPropertyCare = () => {
 
     useEffect(() => {
         const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = getTodayString();
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
@@ -70,7 +205,7 @@ const HostPropertyCare = () => {
 
         const newStats = {
             total: activeTasks.length,
-            overdue: activeTasks.filter(t => t.status === 'Overdue' || (t.dueDate && t.dueDate < todayStr && t.status !== 'Completed')).length,
+            overdue: activeTasks.filter(t => t.status === 'Overdue' || isTaskOverdue(t, todayStr)).length,
             overdueIncrease: activeTasks.filter(t => t.dueDate === yesterdayStr && t.status !== 'Completed').length,
             inProgress: activeTasks.filter(t => t.status === 'In progress').length,
             completedToday: activeTasks.filter(t => t.status === 'Completed' && t.completedAt === todayStr).length
@@ -120,8 +255,7 @@ const HostPropertyCare = () => {
             setTasks([created, ...tasks]);
             setIsModalOpen(false);
             resetForm();
-        } catch (error) {
-            console.error("Error creating task:", error);
+        } catch {
             alert("Error creating task");
             console.error("Error creating task:", error);
         };
@@ -133,7 +267,7 @@ const HostPropertyCare = () => {
     };
 
     const resetForm = () => {
-        setNewTask({ title: '', description: '', property: '', bookingRef: '', type: 'Cleaning', assignee: '', dueDate: '', priority: 'Medium', attachments: null });
+        setNewTask({ ...DEFAULT_NEW_TASK });
     };
 
     const handleCancelModal = () => {
@@ -247,7 +381,7 @@ const HostPropertyCare = () => {
     };
 
     const handleClearFilters = () => {
-        setFilters({ property: 'All properties', status: 'All statuses', assignee: 'Anyone', date: 'Any date', priority: 'Any priority', search: '' });
+        setFilters({ ...DEFAULT_FILTERS });
     };
     const renderCommonFilters = () => (
         <>
@@ -265,35 +399,13 @@ const HostPropertyCare = () => {
     );
 
     const getFilteredTasks = () => {
-        return tasks.filter(task => {
-            if (task.isLegacy || task.status === 'Completed') return false;
-
-            const matchProperty = filters.property === 'All properties' || task.property === filters.property;
-            const matchStatus = filters.status === 'All statuses' || task.status === filters.status;
-            const matchAssignee = filters.assignee === 'Anyone' || task.assignee === filters.assignee;
-            const matchPriority = filters.priority === 'Any priority' || task.priority === filters.priority;
-            
-            const searchLower = filters.search.toLowerCase();
-            const matchSearch = filters.search === '' || 
-                (task.title?.toLowerCase().includes(searchLower)) ||
-                (task.property?.toLowerCase().includes(searchLower)) ||
-                (task.assignee?.toLowerCase().includes(searchLower));
-
-            let matchDate = true;
-            if (filters.date === 'Today') {
-                const todayStr = new Date().toISOString().split('T')[0];
-                matchDate = task.dueDate === todayStr;
-            } else if (filters.date === 'This Week') {
-                const taskDate = new Date(task.dueDate);
-                const today = new Date();
-                today.setHours(0,0,0,0);
-                const nextWeek = new Date(today);
-                nextWeek.setDate(today.getDate() + 7);
-                matchDate = task.dueDate && taskDate >= today && taskDate <= nextWeek;
-            }
-
-            return matchProperty && matchStatus && matchAssignee && matchPriority && matchSearch && matchDate;
-        });
+        return tasks.filter((task) => matchesTaskFilters(task, filters, {
+            includeAssignee: true,
+            includeDate: true,
+            excludeLegacy: true,
+            excludeCompleted: true,
+            searchFields: ['title', 'property', 'assignee'],
+        }));
     };
 
     const filteredTasks = getFilteredTasks();
@@ -576,14 +688,86 @@ const HostPropertyCare = () => {
                         <option value="Low">Low</option>
                     </select>
                     
-                    <div className="search-box">
-                        <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
+                    <div className="my-task-middle">
+                        <span className="my-task-time">
+                            {displayTime}
+                        </span>
+                    </div>
+
+                    <div className="my-task-right">
+                        <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
+                            ● {displayStatus}
+                        </span>
+                        <span className={`badge-priority ${displayPriority.toLowerCase()}`}>
+                            {displayPriority}
+                        </span>
+                        
+                        {isOverdueSection ? (
+                            <div className="overdue-action-text">⍉ Overdue</div>
+                        ) : (
+                            <input 
+                                type="checkbox" 
+                                className="my-task-checkbox" 
+                                checked={task.status === 'Completed'}
+                                onClick={(e) => e.stopPropagation()} 
+                                onChange={() => handleToggleComplete(task)}
+                            />
+                        )}
+                    </div>
+                </button>
+            );
+        };
+
+        return (
+            <div className="my-tasks-container">
+                <div className="my-tasks-section">
+                    <div className="section-header-row">
+                        <div className="section-title">
+                            <h3>Today's Tasks</h3>
+                            <span className="task-count">{todayTasks.length} Tasks</span>
+                        </div>
+                        {renderFilterControls({
+                            className: 'my-tasks-filters',
+                            compactSearch: true,
+                            priorityOptions: ['Urgent', 'Medium', 'Low'],
+                        })}
+                    </div>
+                    <div className="my-task-list">
+                        {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! 🎉</p>}
                     </div>
                 </div>
+
+                <div className="my-tasks-section">
+                    <div className="section-title">
+                        <h3>Overdue</h3>
+                        <span className="task-count">{overdueTasks.length} Task(s)</span>
+                    </div>
+                    <div className="my-task-list">
+                        {overdueTasks.length > 0 ? overdueTasks.map(t => renderTaskRow(t, true)) : null}
+                    </div>
+                </div>
+
+                <div className="my-tasks-section">
+                    <div className="section-title">
+                        <h3>Upcoming</h3>
+                        <span className="task-count">{upcomingTasks.length} Task(s)</span>
+                    </div>
+                    <div className="my-task-list">
+                        {upcomingTasks.length > 0 ? upcomingTasks.map(t => renderTaskRow(t)) : null}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+    const renderTableView = () => (
+        <div className="overview-container">
+            <div className="filters-bar">
+                {renderFilterControls({
+                    className: 'filters-dropdowns',
+                    showAssignee: true,
+                    showDate: true,
+                    priorityOptions: ['Urgent', 'High', 'Medium', 'Low'],
+                })}
 
                 <div className="active-filters-row">
                     <div className="status-tags">

@@ -14,6 +14,7 @@ import { PropertyTechnicalDetailRepository } from "../../data/repository/propert
 import { PropertyTypeRepository } from "../../data/repository/propertyTypeRepository.js";
 import { PropertyImageRepository } from "../../data/repository/propertyImageRepository.js";
 import { PropertyCalendarOverrideRepository } from "../../data/repository/propertyCalendarOverrideRepository.js";
+import { PropertyExternalCalendarRepository } from "../../data/repository/propertyExternalCalendarRepository.js";
 import { BookingRepository } from "../../data/repository/bookingRepository.js";
 import { PropertyTestStatusRepository } from "../../data/repository/propertyTestStatusRepository.js";
 import { PropertyDeletionRepository } from "../../data/repository/propertyDeletionRepository.js";
@@ -38,6 +39,7 @@ export class PropertyService {
     this.propertyTypeRepository = new PropertyTypeRepository(systemManagerRepository);
     this.propertyImageRepository = new PropertyImageRepository(systemManagerRepository);
     this.propertyCalendarOverrideRepository = new PropertyCalendarOverrideRepository(systemManagerRepository);
+    this.propertyExternalCalendarRepository = new PropertyExternalCalendarRepository(systemManagerRepository);
     this.propertyTechnicalDetailRepository = new PropertyTechnicalDetailRepository(systemManagerRepository);
     this.bookingRepository = new BookingRepository(dynamoDbClient, systemManagerRepository);
     this.propertyTestStatusRepository = new PropertyTestStatusRepository(systemManagerRepository);
@@ -190,10 +192,10 @@ export class PropertyService {
 
   async getFullActivePropertyById(propertyId) {
     const basePropertyInfo = await this.getBasePropertyInfo(propertyId);
-    if (!basePropertyInfo || basePropertyInfo.status !== "ACTIVE") {
+    if (basePropertyInfo?.status !== "ACTIVE") {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
-    return await this.getFullPropertyAttributes(propertyId);
+    return await this.getFullPropertyAttributes(propertyId, { includeCalendarAvailability: true });
   }
 
   async getFullPropertyByIdAsHost(propertyId) {
@@ -230,7 +232,7 @@ export class PropertyService {
 
   async getActivePropertyCardById(propertyId) {
     const basePropertyInfo = await this.getBasePropertyInfo(propertyId);
-    if (!basePropertyInfo || basePropertyInfo.status !== "ACTIVE") {
+    if (basePropertyInfo?.status !== "ACTIVE") {
       throw new NotFoundException(`Property ${propertyId} not found or inactive.`);
     }
     return await this.getCardPropertyAttributes(propertyId);
@@ -258,15 +260,16 @@ export class PropertyService {
     };
   }
 
-  async getFullPropertyAttributes(propertyId) {
-    return this.getFullPropertyAttributesInternal(propertyId, false);
+  async getFullPropertyAttributes(propertyId, options = {}) {
+    return this.getFullPropertyAttributesInternal(propertyId, false, options);
   }
 
-  async getFullPropertyAttributesWithFullLocation(propertyId) {
-    return this.getFullPropertyAttributesInternal(propertyId, true);
+  async getFullPropertyAttributesWithFullLocation(propertyId, options = {}) {
+    return this.getFullPropertyAttributesInternal(propertyId, true, options);
   }
 
-  async getFullPropertyAttributesInternal(propertyId, includeFullLocation) {
+  async getFullPropertyAttributesInternal(propertyId, includeFullLocation, options = {}) {
+    const { includeCalendarAvailability = false } = options;
     const [
       basePropertyInfo,
       amenities,
@@ -298,7 +301,7 @@ export class PropertyService {
       propertyType.property_type === "Boat" || propertyType.property_type === "Camper"
         ? await this.getTechnicalDetails(propertyId)
         : null;
-    return {
+    const response = {
       property: basePropertyInfo,
       amenities: amenities,
       availability: availability,
@@ -312,6 +315,19 @@ export class PropertyService {
       propertyType: propertyType,
       technicalDetails: technicalDetails,
       propertyTestStatus: propertyTestStatus,
+    };
+    if (includeCalendarAvailability) {
+      response.calendarAvailability = await this.getPublicCalendarAvailability(propertyId);
+    }
+    return response;
+  }
+
+  async getPublicCalendarAvailability(propertyId) {
+    const externalBlockedDates =
+      await this.propertyExternalCalendarRepository.getBlockedDatesByPropertyId(propertyId);
+
+    return {
+      externalBlockedDates: Array.isArray(externalBlockedDates) ? externalBlockedDates : [],
     };
   }
 

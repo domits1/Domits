@@ -1,8 +1,21 @@
+import PropTypes from "prop-types";
 import { useState } from "react";
 
 const GuestSelectionContainer = ({ setAdultsParent, setKidsParent }) => {
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
+
+  const handleAdultsChange = (event) => {
+    const nextValue = Math.max(1, Number.parseInt(event.target.value, 10) || 0);
+    setAdults(nextValue);
+    setAdultsParent(nextValue);
+  };
+
+  const handleKidsChange = (event) => {
+    const nextValue = Math.max(0, Number.parseInt(event.target.value, 10) || 0);
+    setKids(nextValue);
+    setKidsParent(nextValue);
+  };
 
   return (
     <div className="guests-container">
@@ -14,10 +27,7 @@ const GuestSelectionContainer = ({ setAdultsParent, setKidsParent }) => {
             value={adults}
             style={{ width: "30px" }}
             min="1"
-            onChange={(event) => {
-              setAdults(parseFloat(event.target.value));
-              setAdultsParent(parseFloat(event.target.value));
-            }}
+            onChange={handleAdultsChange}
           />{" "}
           adults
         </div>
@@ -30,16 +40,18 @@ const GuestSelectionContainer = ({ setAdultsParent, setKidsParent }) => {
             value={kids}
             style={{ width: "30px" }}
             min="0"
-            onChange={(event) => {
-              setKids(parseFloat(event.target.value));
-              setKidsParent(parseFloat(event.target.value));
-            }}
+            onChange={handleKidsChange}
           />{" "}
           kids
         </div>
       </div>
     </div>
   );
+};
+
+GuestSelectionContainer.propTypes = {
+  setAdultsParent: PropTypes.func.isRequired,
+  setKidsParent: PropTypes.func.isRequired,
 };
 
 export default GuestSelectionContainer;

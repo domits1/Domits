@@ -11,15 +11,17 @@ const fetchHostInfo = async (ownerId) => {
             body: JSON.stringify(requestData)
         });
         if (!response.ok) {
-            throw new Error('Failed to fetch host information');
+            return {};
         }
         const responseData = await response.json();
         const hostData = JSON.parse(responseData.body);
-        return hostData;
-
-    } catch (error) {
-        console.error('Error fetching host info:', error);
+        if (Array.isArray(hostData)) {
+            return hostData[0] || {};
+        }
+        return hostData || {};
+    } catch {
+        return {};
     }
 };
 
-export default fetchHostInfo
+export default fetchHostInfo;

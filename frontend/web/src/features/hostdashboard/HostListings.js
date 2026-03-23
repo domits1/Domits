@@ -6,6 +6,10 @@ import { toast } from "react-toastify";
 import styles from "./HostDashboard.module.scss";
 import spinner from "../../images/spinnner.gif";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import {
+  resolveAccommodationImageUrl,
+  resolveAccommodationImageKey,
+} from "../../utils/accommodationImage";
 import { getAccessToken } from "../../services/getAccessToken.js";
 import { useSetLiveEligibility } from "./hooks/useSetLiveEligibility";
 import {
@@ -22,8 +26,10 @@ const getListingStatus = (accommodation) => String(accommodation?.property?.stat
 
 const getListingImage = (accommodation) => {
   const firstImage = Array.isArray(accommodation?.images) ? accommodation.images[0] : null;
-  const imageKey = firstImage?.web_key || firstImage?.key || firstImage?.thumb_key || firstImage?.original_key || "";
-  return imageKey ? `https://accommodation.s3.eu-north-1.amazonaws.com/${imageKey}` : "";
+  if (!resolveAccommodationImageKey(firstImage, "thumb")) {
+    return "";
+  }
+  return resolveAccommodationImageUrl(firstImage, "thumb");
 };
 
 const getStatusLabel = (status) => {
