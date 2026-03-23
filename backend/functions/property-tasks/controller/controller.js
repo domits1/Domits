@@ -1,31 +1,77 @@
-import {Service} from "../business/service/service.js";
-import {AuthManager} from "../auth/authManager.js";
-
+import { Service } from "../business/service/service.js";
+import { getTasks, createTask, updateTask, deleteTask } from "../business/service/taskService.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 export class Controller {
-    service;
-    authManager;
-
     constructor() {
         this.service = new Service();
-        this.authManager = new AuthManager();
     }
 
-    async getUser(event) {
+    async getTasks(event) {
         try {
+            const hostId = event.requestContext.authorizer.claims.sub;
+            const filters = event.queryStringParameters || {};
+
+            const tasks = await getTasks(hostId, filters);
+
             return {
                 statusCode: 200,
-                body: JSON.stringify(await this.service.getUser()),
-                headers: responseHeaders
+                headers: responseHeaders,
+                body: JSON.stringify(tasks)
             };
         } catch (error) {
-            console.error(error.message);
-            return {
-                statusCode: error.statusCode || 500,
-                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
-            }
+            return this.handleError(error);
         }
     }
 
+    async createTask(event) {
+        try {
+            const hostId = event.requestContext.authorizer.claims.sub;
+            const taskData = JSON.parse(event.body);
+
+            const result = await createTask(hostId, taskData);
+            return {
+                statusCode: 201,
+                headers: responseHeaders,
+                body: JSON.stringify(result)
+            };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+    async updateTask(event) {
+        try {
+            const hostId = event.requestContext.authorizer.claims.sub;
+            const taskId = event.pathParameters?.id; 
+            const updateData = JSON.parse(event.body);
+
+            const result = await updateTask(hostId, taskId, updateData);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    async deleteTask(event) {
+        try {
+            const hostId = event.requestContext.authorizer.claims.sub;
+            const taskId = event.pathParameters?.id;
+
+            const result = await deleteTask(hostId, taskId);
+            return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    handleError(error) {
+        console.error("Controller Error:", error);
+        return {
+            statusCode: error.statusCode || 500,
+            headers: responseHeaders,
+            body: JSON.stringify({
+                message: error.message || "Something went wrong, please contact support."
+            })
+        };
+    }
 }
