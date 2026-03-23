@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import Slider from '@mui/material/Slider';
 import FilterLogic from './FilterLogic';
 import './FilterMain.css';
+import { MAX_PRICE, MIN_PRICE } from '../../constants/searchFilters';
+
+const EURO_SYMBOL = '\u20AC';
 
 const FilterUi = ({ onFilterApplied }) => {
   const {
@@ -23,19 +27,17 @@ const FilterUi = ({ onFilterApplied }) => {
     showMoreSeasonTypes,
     handleEcoChange,
     ecoScore,
-    setEcoScore,
   } = FilterLogic({ onFilterApplied });
 
-
-  const [minInputValue, setMinInputValue] = useState(`€${priceValues[0]}`);
-  const [maxInputValue, setMaxInputValue] = useState(`€${priceValues[1]}`);
+  const [minInputValue, setMinInputValue] = useState(`${EURO_SYMBOL}${priceValues[0]}`);
+  const [maxInputValue, setMaxInputValue] = useState(`${EURO_SYMBOL}${priceValues[1]}`);
 
   useEffect(() => {
-    setMinInputValue(`€${priceValues[0]}`);
-    setMaxInputValue(`€${priceValues[1]}`);
+    setMinInputValue(`${EURO_SYMBOL}${priceValues[0]}`);
+    setMaxInputValue(`${EURO_SYMBOL}${priceValues[1]}`);
   }, [priceValues]);
 
-  const handleSliderChange = (e, newValues) => {
+  const handleSliderChange = (_event, newValues) => {
     setPriceValues(newValues);
   };
 
@@ -43,31 +45,30 @@ const FilterUi = ({ onFilterApplied }) => {
     fetchFilteredAccommodations();
   };
 
-  const handleMinInputChange = (e) => {
-
-    const rawValue = e.target.value;
+  const handleMinInputChange = (event) => {
+    const rawValue = event.target.value;
     setMinInputValue(rawValue);
 
-    const numericValue = rawValue.replace(/[^0-9]/g, '');
+    const numericValue = rawValue.replaceAll(/\D/g, '');
 
     if (numericValue) {
-      const newValue = parseInt(numericValue, 10);
-      if (newValue >= 15 && newValue <= priceValues[1]) {
+      const newValue = Number.parseInt(numericValue, 10);
+      if (newValue >= MIN_PRICE && newValue <= priceValues[1]) {
         handlePriceChange(0, newValue);
         fetchFilteredAccommodations();
       }
     }
   };
 
-  const handleMaxInputChange = (e) => {
-    const rawValue = e.target.value;
+  const handleMaxInputChange = (event) => {
+    const rawValue = event.target.value;
     setMaxInputValue(rawValue);
 
-    const numericValue = rawValue.replace(/[^0-9]/g, '');
+    const numericValue = rawValue.replaceAll(/\D/g, '');
 
     if (numericValue) {
-      const newValue = parseInt(numericValue, 10);
-      if (newValue <= 400 && newValue >= priceValues[0]) {
+      const newValue = Number.parseInt(numericValue, 10);
+      if (newValue <= MAX_PRICE && newValue >= priceValues[0]) {
         handlePriceChange(1, newValue);
         fetchFilteredAccommodations();
       }
@@ -75,14 +76,14 @@ const FilterUi = ({ onFilterApplied }) => {
   };
 
   const handleBlur = () => {
-    setMinInputValue(`€${priceValues[0]}`);
-    setMaxInputValue(`€${priceValues[1]}`);
+    setMinInputValue(`${EURO_SYMBOL}${priceValues[0]}`);
+    setMaxInputValue(`${EURO_SYMBOL}${priceValues[1]}`);
   };
 
   return (
     <div>
       <div className="filter-section">
-        <div className='FilterTitle'>Price Range</div>
+        <div className="FilterTitle">Price Range</div>
         <div className="slider-container">
           <Slider
             sx={{
@@ -107,16 +108,17 @@ const FilterUi = ({ onFilterApplied }) => {
             onChange={handleSliderChange}
             onChangeCommitted={handleSliderChangeCommitted}
             valueLabelDisplay="auto"
-            min={15}
-            max={400}
+            min={MIN_PRICE}
+            max={MAX_PRICE}
             step={1}
-            valueLabelFormat={(value) => `€${value}`}
+            valueLabelFormat={(value) => `${EURO_SYMBOL}${value}`}
             disableSwap
           />
           <div className="price-inputs">
             <div>
-              <label>Min:</label>
+              <label htmlFor="filter-price-min">Min:</label>
               <input
+                id="filter-price-min"
                 type="text"
                 value={minInputValue}
                 onChange={handleMinInputChange}
@@ -124,8 +126,9 @@ const FilterUi = ({ onFilterApplied }) => {
               />
             </div>
             <div>
-              <label>Max:</label>
+              <label htmlFor="filter-price-max">Max:</label>
               <input
+                id="filter-price-max"
                 type="text"
                 value={maxInputValue}
                 onChange={handleMaxInputChange}
@@ -137,7 +140,7 @@ const FilterUi = ({ onFilterApplied }) => {
       </div>
 
       <div className="filter-section">
-        <div className='FilterTitle'>Facilities</div>
+        <div className="FilterTitle">Facilities</div>
         <div className="facility-list">
           {Object.keys(selectedFacilities).slice(0, 5).map((facility) => (
             <label key={facility} className="facility-item">
@@ -167,16 +170,17 @@ const FilterUi = ({ onFilterApplied }) => {
                 </label>
               ))}
         </div>
-        <span
+        <button
+          type="button"
           onClick={() => setShowMoreFacilities(!showMoreFacilities)}
           className="show-more-text"
         >
           {showMoreFacilities ? 'Show Less' : 'Show More'}
-        </span>
+        </button>
       </div>
 
       <div className="filter-section">
-        <div className='FilterTitle'>Property Type</div>
+        <div className="FilterTitle">Property Type</div>
         <div className="facility-list">
           {Object.keys(selectedPropertyTypes).slice(0, 5).map((propertyType) => (
             <label key={propertyType} className="facility-item">
@@ -206,16 +210,17 @@ const FilterUi = ({ onFilterApplied }) => {
                 </label>
               ))}
         </div>
-        <span
+        <button
+          type="button"
           onClick={() => setShowMorePropertyTypes(!showMorePropertyTypes)}
           className="show-more-text"
         >
           {showMorePropertyTypes ? 'Show Less' : 'Show More'}
-        </span>
+        </button>
       </div>
 
       <div className="filter-section">
-        <div className='FilterTitle'>Seasons</div>
+        <div className="FilterTitle">Seasons</div>
         <div className="facility-list">
           {Object.keys(seasonFilter).slice(0, 5).map((season) => (
             <label key={season} className="facility-item">
@@ -244,17 +249,18 @@ const FilterUi = ({ onFilterApplied }) => {
                   {season.charAt(0).toUpperCase() + season.slice(1)}
                 </label>
               ))}
-          <span
+          <button
+            type="button"
             onClick={() => setShowMoreSeasonTypes(!showMoreSeasonTypes)}
             className="show-more-text"
           >
             {showMoreSeasonTypes ? 'Show Less' : 'Show More'}
-          </span>
+          </button>
         </div>
       </div>
 
       <div className="filter-section">
-        <div className='FilterTitle'>Eco Score</div>
+        <div className="FilterTitle">Eco Score</div>
         <div className="facility-list">
           {Object.keys(ecoScore).slice(0, 5).map((eco) => (
             <label key={eco} className="facility-item">
@@ -270,8 +276,12 @@ const FilterUi = ({ onFilterApplied }) => {
           ))}
         </div>
       </div>
-    </div >
+    </div>
   );
+};
+
+FilterUi.propTypes = {
+  onFilterApplied: PropTypes.func,
 };
 
 export default FilterUi;

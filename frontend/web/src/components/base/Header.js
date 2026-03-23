@@ -194,8 +194,7 @@ function Header({ setSearchResults, setLoading }) {
           <button onClick={() => navigate("/hostdashboard/reservations")} className="dropdownLoginButton">
             {components.user.reservations}
           </button>
-          <button onClick={() => navigate("/hostdashboard/")} className="dropdownLoginButton">
-            {Hostchat}
+          <button onClick={navigateToMessages} className="dropdownLoginButton">
             {components.user.messages}
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
@@ -220,7 +219,7 @@ function Header({ setSearchResults, setLoading }) {
             {components.user.payments}
           </button>
           {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
-            Reviews
+            Reviews 
           </button> */}
           <button onClick={navigateToSettings} className="dropdownLoginButton">
             {components.user.settings}

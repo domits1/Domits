@@ -1,6 +1,5 @@
 /* General Styling */
 * {
-    /* box-sizing: border-box; */
     margin: 0;
     padding: 0;
 }
@@ -14,7 +13,7 @@ body {
 
 .header-app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
-    padding: 20px 1% 5px 1%;
+    padding: 12px 1%;
     text-align: center;
     background-color: white;
     position: fixed;
@@ -31,7 +30,8 @@ body {
 }
 
 .search-bar-hidden.visible {
-    display: block;
+    display: flex;
+    align-items: center;
     opacity: 1;
     padding-left: 8vw;
 }
@@ -48,6 +48,7 @@ body {
     align-items: center;
     flex-wrap: wrap;
     width: 95%;
+    min-height: 3.75rem;
     margin: auto;
 }
 
@@ -218,7 +219,6 @@ body {
         height: auto;
     }
 
-    .hide-other-content .header-logo,
     .hide-other-content .header-right {
         display: none;
     }
@@ -263,21 +263,30 @@ body {
 
 @media screen and (max-width: 480px) {
     .header-app-header {
-        height: 10vh;
+        height: auto;
+        padding: 16px 16px 18px;
+        overflow: visible;
     }
 
+    .search-bar-hidden,
     .search-bar-hidden.visible {
-        padding-left: 0vw;
+        position: static;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        width: auto;
+        padding-left: 0;
     }
 
     .header-logo {
         display: flex;
-        justify-content: center;
-        width: 100%;
+        justify-content: flex-start;
+        width: auto;
+        flex: 0 0 auto;
     }
 
     .header-logo img {
-        max-width: 80%;
+        max-width: 170px;
         height: auto;
     }
 
@@ -286,7 +295,29 @@ body {
     }
 
     .header-nav {
-        flex-direction: column;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        position: relative;
+    }
+
+    .search-bar-hidden.visible .search-bar-main-container {
+        position: fixed;
+        top: 92px;
+        left: 50%;
+        width: calc(100vw - 32px);
+        max-width: calc(100vw - 32px);
+        margin-left: 0 !important;
+        padding: 0 !important;
+        transform: translateX(-50%);
+        z-index: 1001;
+    }
+
+    .search-bar-hidden.visible .search-bar-main {
+        margin: 0 auto !important;
+        max-width: 100% !important;
     }
 
     .header-buttons {

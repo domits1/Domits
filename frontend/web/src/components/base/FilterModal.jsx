@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import Slider from "@mui/material/Slider";
 import styles from "./FilterModal.module.scss";
+import { MAX_PRICE, MIN_PRICE } from "../../constants/searchFilters";
 
 const FilterModal = ({ isOpen, onClose }) => {
-  const [priceValues, setPriceValues] = useState([0, 400]);
+  const [priceValues, setPriceValues] = useState([MIN_PRICE, MAX_PRICE]);
   const [roomFacilities, setRoomFacilities] = useState({
     tv: false,
     minibar: false,
@@ -45,16 +47,32 @@ const FilterModal = ({ isOpen, onClose }) => {
     setPropertyAccessibility({ ...propertyAccessibility, [event.target.name]: event.target.checked });
   };
 
+  const formatOptionLabel = (key) => key.charAt(0).toUpperCase() + key.slice(1).replaceAll(/([A-Z])/g, " $1");
+
   if (!isOpen) return null;
 
   return (
     <div className={styles["filter-modal-container"]}>
-      <div className={styles["modal-overlay-filter"]} onClick={onClose}>
-        <div className={styles["modal-content-filter"]} onClick={(e) => e.stopPropagation()}>
+      <div className={styles["modal-overlay-filter"]}>
+        <button
+          type="button"
+          className={styles["modal-overlay-dismiss"]}
+          onClick={onClose}
+          aria-label="Close filter modal"
+        />
+        <dialog
+          open
+          className={styles["modal-content-filter"]}
+          aria-labelledby="filter-modal-title"
+          onCancel={(event) => {
+            event.preventDefault();
+            onClose();
+          }}
+        >
           <div style={{ padding: "0px", height: "100%", boxSizing: "border-box" }}>
             <div className={styles["filter-modal-header"]}>
-              <h2 className="filter-text">Filter</h2>
-              <button className={styles["filter-modal-close-btn"]} onClick={onClose} aria-label="Close">
+              <h2 id="filter-modal-title" className="filter-text">Filter</h2>
+              <button type="button" className={styles["filter-modal-close-btn"]} onClick={onClose} aria-label="Close">
                 &times;
               </button>
             </div>
@@ -84,8 +102,8 @@ const FilterModal = ({ isOpen, onClose }) => {
                 value={priceValues}
                 onChange={(e, newValues) => setPriceValues(newValues)}
                 valueLabelDisplay="auto"
-                min={15}
-                max={400}
+                min={MIN_PRICE}
+                max={MAX_PRICE}
                 step={1}
                 valueLabelFormat={(value) => `€${value}`}
                 disableSwap
@@ -102,7 +120,7 @@ const FilterModal = ({ isOpen, onClose }) => {
                 {Object.entries(roomFacilities).map(([key, value]) => (
                   <label key={key} className={styles["room-facility-option"]}>
                     <input type="checkbox" name={key} checked={value} onChange={handleRoomFacilityChange} />
-                    {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1")}
+                    {formatOptionLabel(key)}
                   </label>
                 ))}
               </div>
@@ -113,15 +131,20 @@ const FilterModal = ({ isOpen, onClose }) => {
               {Object.entries(propertyAccessibility).map(([key, value]) => (
                 <label key={key} className={styles["accessibility-option"]}>
                   <input type="checkbox" name={key} checked={value} onChange={handlePropertyAccessibilityChange} />
-                  {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1")}
+                  {formatOptionLabel(key)}
                 </label>
               ))}
             </div>
           </div>
-        </div>
+        </dialog>
       </div>
     </div>
   );
+};
+
+FilterModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default FilterModal;

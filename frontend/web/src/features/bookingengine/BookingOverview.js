@@ -14,15 +14,13 @@ import Calender from "@mui/icons-material/CalendarTodayOutlined";
 import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
 import publicKeys from "../../utils/const/publicKeys.json";
+import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 
 const BookingOverview = () => {
   const navigate = useNavigate();
   const [bookingDetails, setBookingDetails] = useState(null);
-
-  const [cognitoUserId, setCognitoUserId] = useState(null);
-  const [cognitoUserEmail, setCognitoUserEmail] = useState(null);
   const [userName, setUserName] = useState(null);
   const [showCheckout, setShowCheckout] = useState(null);
   const [hideButton, setHideButton] = useState(null);
@@ -39,7 +37,10 @@ const BookingOverview = () => {
   const checkInDate = searchParams.get("checkInDate");
   const checkOutDate = searchParams.get("checkOutDate");
   const guests = searchParams.get("guests");
-  const S3_URL = "https://accommodation.s3.eu-north-1.amazonaws.com/";
+  const showAuthenticationPrompt = !isAuthenticated;
+  const isTestBooking = Boolean(bookingDetails?.testStatus);
+  const shouldShowConfirmButton = !hideButton && !isTestBooking;
+  const shouldShowCheckout = !isTestBooking && Boolean(showCheckout && stripeClientSecret && bookingId);
 
   useEffect(() => {
     const fetchAccommodation = async () => {
@@ -98,21 +99,21 @@ const BookingOverview = () => {
   }
 
   const createBooking = async () => {
-    const event = {
-      identifiers: {
-        property_Id: propertyId,
-      },
-      general: {
-        guests: parseFloat(bookingDetails.guests),
+      const event = {
+        identifiers: {
+          property_Id: propertyId,
+        },
+        general: {
+        guests: Number.parseFloat(bookingDetails.guests),
         latePayment: false,
-        arrivalDate: parseFloat(bookingDetails.checkInDate),
-        departureDate: parseFloat(bookingDetails.checkOutDate),
+        arrivalDate: Number.parseFloat(bookingDetails.checkInDate),
+        departureDate: Number.parseFloat(bookingDetails.checkOutDate),
         guestName: userName,
       },
     };
 
     try {
-      const authToken = await getAccessToken();
+      const authToken = getAccessToken();
       if (!authToken) {
         setError("Missing authentication token. Try refreshing the page.");
         throw new Unauthorized("Unable to get a valid authentication token.");
@@ -143,7 +144,7 @@ const BookingOverview = () => {
       setShowCheckout(true);
     } catch (error) {
       console.error("Error creating booking:", error);
-      setError("Unable to store booking, please contact the support team or try again later.", error);
+      setError("Unable to store booking, please contact the support team or try again later.");
     }
   };
 
@@ -155,7 +156,7 @@ const BookingOverview = () => {
       setHideButton(true);
     } catch (error) {
       setLoading(false);
-      setError("Failed to initialize checkout page. Contact support or try again.", error);
+      setError("Failed to initialize checkout page. Contact support or try again.");
       console.error("Something went wrong during handling the confirm and pay button.", error);
     }
   };
@@ -185,8 +186,8 @@ const BookingOverview = () => {
                 <Calender /> Date:
               </span>
               <span className="detail-value">
-                {DateFormatterDD_MM_YYYY(parseFloat(bookingDetails.checkInDate))} -{" "}
-                {DateFormatterDD_MM_YYYY(parseFloat(bookingDetails.checkOutDate))}
+                {DateFormatterDD_MM_YYYY(Number.parseFloat(bookingDetails.checkInDate))} -{" "}
+                {DateFormatterDD_MM_YYYY(Number.parseFloat(bookingDetails.checkOutDate))}
               </span>
             </div>
             <div className="detail-row">
@@ -197,7 +198,7 @@ const BookingOverview = () => {
             </div>
           </div>
 
-          {!isAuthenticated ? (
+          {showAuthenticationPrompt ? (
             <div>
               <h2>Please Register or Log In to Continue</h2>
               <div className="auth-actions">
@@ -211,19 +212,19 @@ const BookingOverview = () => {
             </div>
           ) : (
             <>
-              {!hideButton && !bookingDetails.testStatus && (
+              {shouldShowConfirmButton && (
                 <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading}>
                   {loading ? "Loading..." : "Confirm & Pay"}
                 </button>
               )}
-              {bookingDetails.testStatus && (
+              {isTestBooking && (
                 <Link to="/contact" className="footer-links">
                   <button type="button" className="confirm-pay-button" onClick={handleRequestInfo} disabled={loading}>
                     Request Info
                   </button>
                 </Link>
               )}
-              {!bookingDetails.testStatus && showCheckout && stripeClientSecret && bookingId && (
+              {shouldShowCheckout && (
                 <Elements
                   stripe={stripePromise}
                   options={{
@@ -243,7 +244,10 @@ const BookingOverview = () => {
             <div className="booking-details-name">
               <img
                 className="bookingDetailsImage"
-                src={`${S3_URL}${pricingObject.images?.[0]?.key || ""}`}
+                src={resolvePrimaryAccommodationImageUrl(
+                  pricingObject.images,
+                  "thumb"
+                )}
                 alt="Accommodation"
               />
               <div>

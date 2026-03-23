@@ -1,30 +1,39 @@
+import "react-datepicker/dist/react-datepicker.css";
+import PropTypes from "prop-types";
 import CheckIn from "../components/checkIn";
 import CheckOut from "../components/checkOut";
 
-const DateSelectionContainer = ({ checkInDate, setCheckInDate, checkOutDate, setCheckOutDate, setNights }) => {
-  const calculateNights = () => {
-    if (checkInDate && checkOutDate) {
-      const checkIn = new Date(checkInDate);
-      const checkOut = new Date(checkOutDate);
-
-      const timeDifference = checkOut.getTime() - checkIn.getTime();
-      const diffDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-
-      setNights(diffDays);
-      return diffDays;
-    }
-    return null;
-  };
-
-  const nights = calculateNights();
-
+const DateSelectionContainer = ({
+  checkInDate = "",
+  setCheckInDate = () => {},
+  checkOutDate = "",
+  setCheckOutDate = () => {},
+  unavailableDateKeys = [],
+}) => {
   return (
     <div className="date-container">
-      <CheckIn checkInDate={checkInDate} setCheckInDate={setCheckInDate} checkOutDate={checkOutDate} />
+      <CheckIn
+        checkInDate={checkInDate}
+        setCheckInDate={setCheckInDate}
+        unavailableDateKeys={unavailableDateKeys}
+      />
 
-      <CheckOut checkOutDate={checkOutDate} setCheckOutDate={setCheckOutDate} checkInDate={checkInDate} />
+      <CheckOut
+        checkOutDate={checkOutDate}
+        setCheckOutDate={setCheckOutDate}
+        checkInDate={checkInDate}
+        unavailableDateKeys={unavailableDateKeys}
+      />
     </div>
   );
+};
+
+DateSelectionContainer.propTypes = {
+  checkInDate: PropTypes.string,
+  setCheckInDate: PropTypes.func,
+  checkOutDate: PropTypes.string,
+  setCheckOutDate: PropTypes.func,
+  unavailableDateKeys: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default DateSelectionContainer;
