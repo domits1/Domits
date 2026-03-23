@@ -723,7 +723,7 @@ const HostPropertyCare = () => {
                 
             </div>
         </div>
-};
+
 
     return (
         <main className="task-dashboard-v2">
@@ -991,5 +991,5 @@ const HostPropertyCare = () => {
             )}
         </main>
     );
-
+};
 export default HostPropertyCare;
