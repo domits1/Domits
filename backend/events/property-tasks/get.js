@@ -1,5 +1,3 @@
-// TODO Create your own get event to your handler function.
-
 import {handler} from "../function/index.js";
 
 async function main() {
@@ -7,5 +5,3 @@ async function main() {
         httpMethod: "GET"
     }));
 }
-
-main();

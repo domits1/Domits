@@ -8,9 +8,3 @@ const mockData = {
     }
 };
 
-try {
-    validateTaskPayload(mockData);
-    console.log("✅");
-} catch (e) {
-    console.error("❌", e.message);
-}
