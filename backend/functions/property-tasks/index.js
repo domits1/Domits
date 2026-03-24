@@ -3,7 +3,6 @@ import { Controller } from "./controller/controller.js";
 let controller = null;
 
 export const handler = async (event) => {
-    console.log(`Method: ${event.httpMethod} | Path: ${event.path}`);
 
     try {
         if (!controller) {
@@ -41,7 +40,6 @@ export const handler = async (event) => {
                 };
         }
     } catch (error) {
-        console.error("CRITICAL ERROR:", error);
         return {
             statusCode: 500,
             headers: { "Access-Control-Allow-Origin": "*" },

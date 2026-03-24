@@ -65,7 +65,6 @@ export class Controller {
     }
 
     handleError(error) {
-        console.error("Controller Error:", error);
         return {
             statusCode: error.statusCode || 500,
             headers: responseHeaders,
