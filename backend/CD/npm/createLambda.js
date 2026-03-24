@@ -144,7 +144,7 @@ class LambdaFactory {
       httpMethod: "ANY",
       type: "AWS_PROXY",
       integrationHttpMethod: "POST",
-      uri: `arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/${lambdaArn}/invocations`,
+      uri: `arn:aws:apigateway:ap-southeast-2:lambda:path/2015-03-31/functions/${lambdaArn}/invocations`,
     }));
 
     await this.lambdaClient.send(new AddPermissionCommand({
@@ -152,7 +152,7 @@ class LambdaFactory {
       FunctionName: name,
       Principal: "apigateway.amazonaws.com",
       StatementId: `${name}-InvokePermission`,
-      SourceArn: `arn:aws:execute-api:eu-north-1:${await this.getAccountId()}:${api}/*/*/`,
+      SourceArn: `arn:aws:execute-api:ap-southeast-2:${await this.getAccountId()}:${api}/*/*/`,
     }));
 
     await this.apiGatewayClient.send(new CreateDeploymentCommand({
@@ -161,7 +161,7 @@ class LambdaFactory {
     }));
 
     console.log("\n\x1b[32m%s\x1b[0m", `API Gateway ${name} was created successfully.`);
-    console.log("\n\x1b[33m", `Test it out at: https://${api}.execute-api.eu-north-1.amazonaws.com/default`);
+    console.log("\n\x1b[33m", `Test it out at: https://${api}.execute-api.ap-southeast-2.amazonaws.com/default`);
     console.log("\n\x1b[33m", "**Note** The above link will return an error as you are not providing an auth token and id.");
   }
 

@@ -861,6 +861,38 @@ export class PropertyController {
     }
 
     // -------------------------
+    // GET /property/bookingEngine/filter
+    // -------------------------
+    async getFilteredPropertyCards(event) {
+        try {
+            const filters = {
+                minPrice: event.queryStringParameters?.minPrice ? parseInt(event.queryStringParameters.minPrice) : undefined,
+                maxPrice: event.queryStringParameters?.maxPrice ? parseInt(event.queryStringParameters.maxPrice) : undefined,
+                facilities: event.queryStringParameters?.facilities ? event.queryStringParameters.facilities.split(",") : undefined,
+                type: event.queryStringParameters?.type ? event.queryStringParameters.type : undefined,
+                seasons: event.queryStringParameters?.seasons ? event.queryStringParameters.seasons.split(",") : undefined,
+                ecoScore: event.queryStringParameters?.ecoScore ? parseInt(event.queryStringParameters.ecoScore) : undefined,
+                country: event.queryStringParameters?.country ? event.queryStringParameters.country : undefined,
+                guests: event.queryStringParameters?.guests ? parseInt(event.queryStringParameters.guests) : undefined,
+            };
+
+            const properties = await this.propertyService.getFilteredPropertyCards(filters);
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify(properties)
+            }
+        } catch (error) {
+            console.error(error);
+            return {
+                statusCode: error.statusCode || 500,
+                headers: responseHeaders,
+                body: JSON.stringify(error.message || "Something went wrong, please contact support.")
+            }
+        }
+    }
+
+    // -------------------------
     // GET /property/bookingEngine/country
     // -------------------------
     async getActivePropertiesCardByCountry(event) {

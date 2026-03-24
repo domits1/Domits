@@ -157,6 +157,14 @@ export class PropertyService {
     };
   }
 
+  async getFilteredPropertyCards(filters) {
+    const propertyIdentifiers = await this.propertyRepository.getFilteredProperties(filters);
+    const properties = await Promise.all(
+      propertyIdentifiers.map(async (property) => await this.getCardPropertyAttributes(property))
+    );
+    return properties;
+  }
+
   async getActivePropertyCardsByType(type) {
     const propertyIdentifiers = await this.propertyRepository.getActivePropertiesByType(type);
     return await Promise.all(

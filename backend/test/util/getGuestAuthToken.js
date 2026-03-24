@@ -20,9 +20,9 @@ export async function getGuestAuthToken() {
 
     guestTokenRequest = (async () => {
         try {
-            const client = new CognitoIdentityProviderClient({ region: "eu-north-1" });
+            const client = new CognitoIdentityProviderClient({ region: "ap-southeast-2" });
             const command = new AdminInitiateAuthCommand({
-                UserPoolId: "eu-north-1_mPxNhvSFX",
+                UserPoolId: "ap-southeast-2_mPxNhvSFX",
                 ClientId: "3mbk6j5phshnmnc8nljued41qt",
                 AuthFlow: "ADMIN_NO_SRP_AUTH",
                 AuthParameters: {

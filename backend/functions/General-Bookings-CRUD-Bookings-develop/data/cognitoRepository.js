@@ -1,6 +1,6 @@
 import { CognitoIdentityProviderClient, GetUserCommand} from "@aws-sdk/client-cognito-identity-provider";
 import Unauthorized from "../util/exception/Unauthorized.js"
-const client = new CognitoIdentityProviderClient({ region: "eu-north-1" });
+const client = new CognitoIdentityProviderClient({ region: "ap-southeast-2" });
 
 class CognitoRepository{
     async getUser(auth){

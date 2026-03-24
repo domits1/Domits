@@ -6,7 +6,7 @@ export class CognitoRepository {
     constructor(systemManager) {
         this.systemManager = systemManager
     }
-    cognitoClient = new CognitoIdentityProviderClient({region: "eu-north-1"})
+    cognitoClient = new CognitoIdentityProviderClient({region: "ap-southeast-2"})
 
     async getUserByAccessToken(accessToken) {
         const params = new GetUserCommand({
@@ -18,7 +18,7 @@ export class CognitoRepository {
 
     async getUserById(id) {
         const params = new AdminGetUserCommand({
-            UserPoolId: "eu-north-1_mPxNhvSFX",
+            UserPoolId: "ap-southeast-2_mPxNhvSFX",
             Username: id
         });
         const result = await this.cognitoClient.send(params);

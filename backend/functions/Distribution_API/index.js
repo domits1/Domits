@@ -1,5 +1,5 @@
 const INTERNAL_BASE_URL =
-  "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default";
+  "https://wkmwpwurbc.execute-api.ap-southeast-2.amazonaws.com/default";
 
 export const handler = async (event) => {
   try {

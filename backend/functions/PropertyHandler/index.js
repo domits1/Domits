@@ -40,6 +40,7 @@ const hostDashboardHandlers = {
 const bookingEngineHandlers = {
   byType: (event) => controller.getActivePropertiesCardByType(event),
   all: (event) => controller.getActivePropertiesCard(event),
+  filter: (event) => controller.getFilteredPropertyCards(event),
   byCountry: (event) => controller.getActivePropertiesCardByCountry(event),
   byHostId: (event) => controller.getActivePropertiesCardByHostId(event),
   set: (event) => controller.getActivePropertiesCardById(event),

@@ -1,6 +1,6 @@
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
-const lambdaClient = new LambdaClient({ region: "eu-north-1" });
+const lambdaClient = new LambdaClient({ region: "ap-southeast-2" });
 
 const getHostEmailById = async (hostId) => {
     const payload = {

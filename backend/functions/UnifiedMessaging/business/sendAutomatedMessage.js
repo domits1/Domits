@@ -12,7 +12,7 @@ const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageTe
     };
 
     try {
-        const response = await fetch("https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/send", {
+        const response = await fetch("https://54s3llwby8.execute-api.ap-southeast-2.amazonaws.com/default/send", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -33,7 +33,7 @@ const sendAutomatedMessage = async (senderId, recipientId, propertyId, messageTe
         
         try {
             const { LambdaClient, InvokeCommand } = await import("@aws-sdk/client-lambda");
-            const lambdaClient = new LambdaClient({ region: "eu-north-1" });
+            const lambdaClient = new LambdaClient({ region: "ap-southeast-2" });
             
             const legacyPayload = {
                 action: "sendMessage",

@@ -27,7 +27,7 @@ const stripePromise = process.env.TEST === "true"
     .getSystemManagerParameter("/stripe/keys/secret/live")
     .then((secret) => new Stripe(secret));
 
-const client = new DynamoDBClient({ region: "eu-north-1" });
+const client = new DynamoDBClient({ region: "ap-southeast-2" });
 
 class StripeRepository {
   async createPaymentIntent(account_id, propertyId, dates, bookingId) {

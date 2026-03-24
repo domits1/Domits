@@ -9,7 +9,7 @@ export class CognitoRepository {
   constructor(systemManager) {
     this.systemManager = systemManager;
   }
-  cognitoClient = new CognitoIdentityProviderClient({ region: "eu-north-1" });
+  cognitoClient = new CognitoIdentityProviderClient({ region: "ap-southeast-2" });
 
   async getUserByAccessToken(accessToken) {
     const params = new GetUserCommand({

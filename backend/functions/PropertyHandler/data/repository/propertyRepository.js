@@ -2,6 +2,13 @@ import {NotFoundException} from "../../util/exception/NotFoundException.js";
 import {PropertyBaseInfoMapping} from "../../util/mapping/propertyBaseInfo.js";
 import Database from "database";
 import {Property} from "database/models/Property";
+import {Property_Pricing} from "database/models/Property_Pricing";
+import {Property_Type} from "database/models/Property_Type";
+import {Property_Amenity} from "database/models/Property_Amenity";
+import {Property_Location} from "database/models/Property_Location";
+import {Property_General_Detail} from "database/models/Property_General_Detail";
+import {Property_Availability} from "database/models/Property_Availability";
+import { FilterConstants } from "../../util/constant/filterConstants.js";
 
 export class PropertyRepository {
 
@@ -229,6 +236,125 @@ export class PropertyRepository {
             return result.map(item => {
                 return item.id
             })
+        }
+    }
+
+    /**
+     * Retrieves a list of property IDs based on a set of filters.
+     * @param {object} filters - The filter criteria.
+     * @returns {Promise<string[]>} - A list of property IDs.
+     */
+    async getFilteredProperties(filters) {
+        const client = await Database.getInstance();
+        const query = client.getRepository(Property).createQueryBuilder("property")
+            .where("property.status = :status", { status: FilterConstants.STATUS_ACTIVE });
+
+        this._applyPriceFilter(query, filters);
+        this._applyTypeFilter(query, filters);
+        this._applyFacilitiesFilter(query, filters);
+        this._applySeasonsFilter(query, filters);
+        this._applyEcoScoreFilter(query, filters);
+        this._applyCountryFilter(query, filters);
+        this._applyGuestsFilter(query, filters);
+
+        const result = await query.getMany();
+        return result.map(item => item.id);
+    }
+
+    /**
+     * Applies the price filter to the query.
+     * @param {import("typeorm").SelectQueryBuilder<Property>} query - The query builder.
+     * @param {object} filters - The filter criteria.
+     * @private
+     */
+    _applyPriceFilter(query, filters) {
+        if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+            query.innerJoin(Property_Pricing, "pp", "pp.property_id = property.id");
+            if (filters.minPrice !== undefined) {
+                query.andWhere("pp.roomrate >= :minPrice", { minPrice: filters.minPrice });
+            }
+            if (filters.maxPrice !== undefined) {
+                query.andWhere("pp.roomrate <= :maxPrice", { maxPrice: filters.maxPrice });
+            }
+        }
+    }
+
+    /**
+     * Applies the property type filter to the query.
+     * @param {import("typeorm").SelectQueryBuilder<Property>} query - The query builder.
+     * @param {object} filters - The filter criteria.
+     * @private
+     */
+    _applyTypeFilter(query, filters) {
+        if (filters.type) {
+            query.innerJoin(Property_Type, "pt", "pt.property_id = property.id");
+            query.andWhere("pt.type = :type", { type: filters.type });
+        }
+    }
+
+    /**
+     * Applies the facilities filter to the query.
+     * @param {import("typeorm").SelectQueryBuilder<Property>} query - The query builder.
+     * @param {object} filters - The filter criteria.
+     * @private
+     */
+    _applyFacilitiesFilter(query, filters) {
+        if (filters.facilities && filters.facilities.length > 0) {
+            query.innerJoin(Property_Amenity, "pa", "pa.property_id = property.id");
+            query.andWhere("pa.amenityid IN (:...facilities)", { facilities: filters.facilities });
+        }
+    }
+
+    /**
+     * Applies the seasons filter to the query.
+     * @param {import("typeorm").SelectQueryBuilder<Property>} query - The query builder.
+     * @param {object} filters - The filter criteria.
+     * @private
+     */
+    _applySeasonsFilter(query, filters) {
+        if (filters.seasons && filters.seasons.length > 0) {
+            query.innerJoin(Property_Availability, "pav", "pav.property_id = property.id");
+        }
+    }
+
+    /**
+     * Applies the eco score filter to the query.
+     * @param {import("typeorm").SelectQueryBuilder<Property>} query - The query builder.
+     * @param {object} filters - The filter criteria.
+     * @private
+     */
+    _applyEcoScoreFilter(query, filters) {
+        if (filters.ecoScore !== undefined) {
+            query.innerJoin(Property_General_Detail, "pgd_eco", "pgd_eco.property_id = property.id");
+            query.andWhere("pgd_eco.detail = :ecoDetail", { ecoDetail: FilterConstants.ECO_SCORE_DETAIL });
+            query.andWhere("pgd_eco.value >= :ecoScore", { ecoScore: filters.ecoScore });
+        }
+    }
+
+    /**
+     * Applies the country filter to the query.
+     * @param {import("typeorm").SelectQueryBuilder<Property>} query - The query builder.
+     * @param {object} filters - The filter criteria.
+     * @private
+     */
+    _applyCountryFilter(query, filters) {
+        if (filters.country) {
+            query.innerJoin(Property_Location, "pl", "pl.property_id = property.id");
+            query.andWhere("pl.country = :country", { country: filters.country });
+        }
+    }
+
+    /**
+     * Applies the guests filter to the query.
+     * @param {import("typeorm").SelectQueryBuilder<Property>} query - The query builder.
+     * @param {object} filters - The filter criteria.
+     * @private
+     */
+    _applyGuestsFilter(query, filters) {
+        if (filters.guests !== undefined) {
+            query.innerJoin(Property_General_Detail, "pgd_guests", "pgd_guests.property_id = property.id");
+            query.andWhere("pgd_guests.detail = :guestDetail", { guestDetail: FilterConstants.GUESTS_DETAIL });
+            query.andWhere("pgd_guests.value >= :guests", { guests: filters.guests });
         }
     }
 

@@ -4,7 +4,7 @@ import { Property_Pricing } from "database/models/Property_Pricing";
 class LambdaRepository {
   async getPropertiesFromHostId(host_Id) {
     const response = await fetch(
-      `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property/bookingEngine/byHostId?hostId=${host_Id}`
+      `https://wkmwpwurbc.execute-api.ap-southeast-2.amazonaws.com/default/property/bookingEngine/byHostId?hostId=${host_Id}`
     );
 
     const receivedData = await response.json();

@@ -1,7 +1,7 @@
 import NotFoundException from "../util/exception/NotFoundException.js";
 
 const BASE_URL =
-  "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default";
+  "https://wkmwpwurbc.execute-api.ap-southeast-2.amazonaws.com/default";
 
 class DistributionRepository {
   async getListingDetailsByPropertyId(propertyId) {

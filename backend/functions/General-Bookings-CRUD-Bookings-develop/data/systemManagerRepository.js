@@ -1,8 +1,8 @@
-import {GetParameterCommand, SSMClient} from "@aws-sdk/client-ssm";
+wimport {GetParameterCommand, SSMClient} from "@aws-sdk/client-ssm";
     
 class SystemManagerRepository {
 
-    ssmClient = new SSMClient({region: "eu-north-1"})
+    ssmClient = new SSMClient({region: "ap-southeast-2"})
 
     async getSystemManagerParameter(parameterName) {
         const params = new GetParameterCommand({
