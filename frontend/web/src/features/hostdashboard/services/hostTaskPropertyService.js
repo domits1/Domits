@@ -11,7 +11,7 @@ const buildFallbackListingsUrl = (hostId) => {
 const buildPropertyTitle = (listing) => String(listing?.property?.title || "Untitled listing").trim();
 
 const buildPropertyDescription = (listing) =>
-    String(listing?.property?.description || "").replace(/\s+/g, " ").trim();
+    String(listing?.property?.description || "").replaceAll(/\s+/g, " ").trim();
 
 const buildPropertyLocation = (listing) => {
     const city = String(listing?.propertyLocation?.city || listing?.location?.city || "").trim();

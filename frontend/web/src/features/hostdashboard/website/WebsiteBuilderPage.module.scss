@@ -310,7 +310,7 @@
   padding: 0.45rem 0.75rem;
   border-radius: 999px;
   background: rgba(31, 78, 121, 0.1);
-  color: #153e64;
+  color: #0f3554;
   font-size: 0.9rem;
   font-weight: 700;
 }
@@ -373,19 +373,21 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, 250px);
   justify-content: center;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 16px;
 }
 
 .templateCard {
   position: relative;
   display: grid;
-  grid-template-rows: auto auto;
+  grid-template-rows: auto minmax(0, 1fr);
   justify-items: center;
   align-content: start;
   gap: 12px;
   width: 250px;
-  align-self: flex-start;
+  height: 100%;
+  min-height: 412px;
+  align-self: stretch;
   padding: 16px 16px 18px;
   border: 1px solid #d9e3ef;
   border-radius: 24px;
@@ -464,13 +466,14 @@
   justify-content: center;
   width: min(100%, 214px);
   justify-self: center;
-  min-height: 258px;
+  aspect-ratio: 214 / 258;
   padding: 18px 14px 16px;
   border-radius: 22px;
   border: 1px solid #e5edf5;
   background:
       linear-gradient(180deg, rgba(246, 250, 255, 0.95), rgba(255, 255, 255, 0.9)),
       #ffffff;
+  box-sizing: border-box;
 }
 
 .templateCardSelected .templatePreviewShell {
@@ -483,7 +486,7 @@
   display: grid;
   gap: 10px;
   padding: 12px;
-  min-height: 230px;
+  aspect-ratio: 178 / 230;
   width: min(100%, 178px);
   margin-inline: auto;
   border-radius: 18px;
@@ -492,6 +495,7 @@
       radial-gradient(circle at top left, rgba(115, 147, 179, 0.12), transparent 42%),
       linear-gradient(180deg, #fbfdfd, #ffffff);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  box-sizing: border-box;
 }
 
 .templateCanvasPanorama {
@@ -500,6 +504,25 @@
 
 .templateCanvasTrustSignals .templateHeroBand {
   min-height: 60px;
+}
+
+.templateCanvasTrustSignals {
+  justify-self: center;
+  align-content: start;
+  gap: 8px;
+}
+
+.templateCanvasTrustSignals .templateTrustStack {
+  gap: 8px;
+}
+
+.templateCanvasTrustSignals .templateTrustCard {
+  gap: 5px;
+  padding: 8px;
+}
+
+.templateCanvasTrustSignals .templateTrustMeta {
+  gap: 5px;
 }
 
 .templateCanvasFeatureStack .templateHeroBand {
@@ -789,6 +812,7 @@
 
 .templateCardContent {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   align-content: start;
   gap: 10px;
   width: 100%;
@@ -800,13 +824,20 @@
   justify-content: flex-start;
   gap: 10px;
   align-items: flex-start;
+  min-height: calc(1.25em * 2);
 }
 
 .templateName {
+  display: -webkit-box;
   font-size: 1rem;
   font-weight: 700;
   color: #0f172a;
   line-height: 1.25;
+  width: 100%;
+  min-height: calc(1.25em * 2);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .templateSelectedTag {
@@ -832,7 +863,13 @@
   color: #475569;
   line-height: 1.6;
   font-size: 0.95rem;
-  max-width: 28ch;
+  width: 100%;
+  max-width: none;
+  min-height: calc(1.6em * 4);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
 
 .templateSelectionState {
@@ -881,6 +918,20 @@
   object-fit: contain;
   pointer-events: none;
   filter: brightness(0) saturate(100%);
+}
+
+.galleryThumbnailButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.galleryThumbnailImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 @media (min-width: 720px) {
@@ -952,9 +1003,6 @@
     align-items: stretch;
   }
 
-  .templateCanvas {
-    min-height: 200px;
-  }
 }
 
 @media (max-width: 639px) {
@@ -966,6 +1014,7 @@
   .templateCard {
     width: 100%;
     min-width: 0;
+    min-height: 352px;
     gap: 10px;
     padding: 12px 12px 14px;
     border-radius: 20px;
@@ -973,14 +1022,14 @@
 
   .templatePreviewShell {
     width: 100%;
-    min-height: 194px;
+    aspect-ratio: 1 / 1.3857;
     padding: 14px 10px 12px;
     border-radius: 18px;
   }
 
   .templateCanvas {
     width: min(100%, 140px);
-    min-height: 172px;
+    aspect-ratio: 140 / 172;
     padding: 10px;
     gap: 8px;
     border-radius: 16px;
@@ -998,6 +1047,19 @@
   .templateCanvasQuoteSpotlight .templateHeroBand,
   .templateCanvasLocalGuide .templateHeroBand {
     min-height: 46px;
+  }
+
+  .templateCanvasTrustSignals {
+    gap: 6px;
+  }
+
+  .templateCanvasTrustSignals .templateTrustStack {
+    gap: 6px;
+  }
+
+  .templateCanvasTrustSignals .templateTrustCard {
+    gap: 4px;
+    padding: 7px;
   }
 
   .templateCanvasEditorial .templateEditorialVisual {
@@ -1051,6 +1113,7 @@
 
   .templateName {
     font-size: 0.92rem;
+    min-height: calc(1.25em * 2);
   }
 
   .templateSelectedTag {
@@ -1064,6 +1127,7 @@
     font-size: 0.84rem;
     line-height: 1.45;
     max-width: none;
+    min-height: calc(1.45em * 4);
   }
 }
 
@@ -1073,6 +1137,7 @@
   }
 
   .templateCard {
+    min-height: 318px;
     gap: 8px;
     padding: 10px 10px 12px;
     border-radius: 18px;
@@ -1091,14 +1156,14 @@
   }
 
   .templatePreviewShell {
-    min-height: 156px;
+    aspect-ratio: 1 / 1.4182;
     padding: 10px 8px;
     border-radius: 16px;
   }
 
   .templateCanvas {
     width: min(100%, 118px);
-    min-height: 144px;
+    aspect-ratio: 118 / 144;
     padding: 8px;
     gap: 6px;
     border-radius: 14px;
@@ -1136,6 +1201,19 @@
   .templateCanvasQuoteSpotlight .templateHeroBand,
   .templateCanvasLocalGuide .templateHeroBand {
     min-height: 38px;
+  }
+
+  .templateCanvasTrustSignals {
+    gap: 5px;
+  }
+
+  .templateCanvasTrustSignals .templateTrustStack {
+    gap: 5px;
+  }
+
+  .templateCanvasTrustSignals .templateTrustCard {
+    gap: 3px;
+    padding: 5px;
   }
 
   .templateCanvasEditorial .templateEditorialVisual,
@@ -1254,6 +1332,7 @@
   .templateName {
     font-size: 0.82rem;
     line-height: 1.2;
+    min-height: calc(1.2em * 2);
   }
 
   .templateSelectedTag {
@@ -1266,6 +1345,7 @@
   .templateDescription {
     font-size: 0.75rem;
     line-height: 1.35;
+    min-height: calc(1.35em * 4);
   }
 }
 
@@ -1276,6 +1356,7 @@
 
   .templateCard {
     width: min(100%, 250px);
+    min-height: 332px;
   }
 }
 

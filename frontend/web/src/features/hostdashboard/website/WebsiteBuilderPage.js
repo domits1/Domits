@@ -4,73 +4,19 @@ import styles from "./WebsiteBuilderPage.module.scss";
 import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
 import arrowLeftIcon from "../../../images/arrow-left-icon.svg";
 import arrowRightIcon from "../../../images/arrow-right-icon.svg";
+import TemplateSilhouette from "./TemplateSilhouette";
+import { WEBSITE_TEMPLATE_OPTIONS, getWebsiteTemplateById } from "./websiteTemplates";
 
 const EMPTY_SELECTION = "";
 const STEP_SELECT_LISTING = "select-listing";
 const STEP_PICK_TEMPLATE = "pick-template";
+const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
 
 const PROPERTY_STATUS_LABELS = {
   ACTIVE: "Live",
   INACTIVE: "Draft",
   ARCHIVED: "Archived",
 };
-
-const TEMPLATE_OPTIONS = [
-  {
-    id: "panorama-landing",
-    name: "Panorama Landing",
-    description: "Large hero image with fast trust signals and a guided booking call-to-action.",
-    layout: "panorama",
-  },
-  {
-    id: "trust-signals",
-    name: "Trust Signals",
-    description: "A reassuring landing page with reviews, guest highlights, policy clarity, and a soft booking nudge.",
-    layout: "trustSignals",
-  },
-  {
-    id: "experience-journey",
-    name: "Experience Journey",
-    description: "A curated flow that walks guests through arrival, stay, surroundings, and next steps.",
-    layout: "experienceJourney",
-  },
-  {
-    id: "amenities-spotlight",
-    name: "Amenities Spotlight",
-    description: "A feature-led layout that puts standout amenities and property strengths front and center.",
-    layout: "amenitiesSpotlight",
-  },
-  {
-    id: "gallery-grid",
-    name: "Gallery Grid",
-    description: "Photo-first browsing with a clean grid for guests who compare on visuals.",
-    layout: "galleryGrid",
-  },
-  {
-    id: "editorial-split",
-    name: "Editorial Split",
-    description: "Story-led content on the left with a visual property showcase on the right.",
-    layout: "editorial",
-  },
-  {
-    id: "booking-focus",
-    name: "Booking Focus",
-    description: "A booking-led layout with a visible quote panel for guests ready to decide faster.",
-    layout: "bookingFocus",
-  },
-  {
-    id: "contact-focus",
-    name: "Contact Focus",
-    description: "Balanced content sections with a strong footer action for direct guest contact.",
-    layout: "contactFocus",
-  },
-  {
-    id: "local-guide",
-    name: "Local Guide",
-    description: "A location-led page that highlights the area, nearby spots, and the context around the stay.",
-    layout: "localGuide",
-  },
-];
 
 const SUMMARY_DESCRIPTION_WORD_LIMIT = 23;
 
@@ -90,296 +36,55 @@ const truncateDescription = (description, wordLimit = SUMMARY_DESCRIPTION_WORD_L
   return `${words.slice(0, wordLimit).join(" ")}...`;
 };
 
-const getTemplateById = (templateId) =>
-  TEMPLATE_OPTIONS.find((templateOption) => templateOption.id === templateId) || TEMPLATE_OPTIONS[0];
-
-function TemplateSilhouette({ layout }) {
-  switch (layout) {
-    case "featureStack":
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasFeatureStack}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <div className={styles.templateNavDots}>
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
-          <div className={styles.templateHeroBand} />
-          <div className={styles.templateFeatureStackRow}>
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className={styles.templateFeatureStackCard}>
-                <span className={styles.templateMiniIcon} />
-                <span className={styles.templateLineWide} />
-                <span className={styles.templateLineShort} />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    case "trustSignals":
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasTrustSignals}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <div className={styles.templateRightMeta}>
-              <span className={styles.templateTinyLine} />
-              <span className={styles.templateTinyLine} />
-            </div>
-          </div>
-          <div className={styles.templateHeroBand} />
-          <div className={styles.templateTrustStack}>
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className={styles.templateTrustCard}>
-                <div className={styles.templateTrustMeta}>
-                  <span className={styles.templateTinyLine} />
-                  <span className={styles.templateTinyLine} />
-                  <span className={styles.templateTinyLine} />
-                </div>
-                <span className={styles.templateLineWide} />
-                <span className={styles.templateLineShort} />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    case "experienceJourney":
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasExperienceJourney}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <div className={styles.templateNavDots}>
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
-          <div className={styles.templateJourneyStack}>
-            {[0, 1, 2].map((index) => {
-              const isReversed = index === 1;
-
-              return (
-                <div
-                  key={index}
-                  className={`${styles.templateJourneyStop} ${
-                    isReversed ? styles.templateJourneyStopReverse : ""
-                  }`}
-                >
-                  {isReversed ? (
-                    <>
-                      <div className={styles.templateJourneyVisual} />
-                      <div className={styles.templateJourneyCopy}>
-                        <span className={styles.templateLineWide} />
-                        <span className={styles.templateLineShort} />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className={styles.templateJourneyCopy}>
-                        <span className={styles.templateLineWide} />
-                        <span className={styles.templateLineShort} />
-                      </div>
-                      <div className={styles.templateJourneyVisual} />
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    case "amenitiesSpotlight":
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasAmenitiesSpotlight}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <div className={styles.templateNavDots}>
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
-          <div className={styles.templateAmenitiesHero}>
-            <div className={styles.templateAmenitiesVisual} />
-            <div className={styles.templateAmenitiesList}>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className={styles.templateAmenityRow}>
-                  <span className={styles.templateLineWide} />
-                  <span className={styles.templateLineShort} />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className={styles.templateAmenitiesFooter}>
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className={styles.templateAmenityPill}>
-                <span className={styles.templateTinyLine} />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    case "editorial":
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasEditorial}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <div className={styles.templateRightMeta}>
-              <span className={styles.templateTinyLine} />
-              <span className={styles.templateTinyLine} />
-            </div>
-          </div>
-          <div className={styles.templateEditorialBody}>
-            <div className={styles.templateEditorialCopy}>
-              <span className={styles.templateLineWide} />
-              <span className={styles.templateLineWide} />
-              <span className={styles.templateLineShort} />
-              <span className={styles.templateButtonStub} />
-            </div>
-            <div className={styles.templateEditorialVisual} />
-          </div>
-          <div className={styles.templateEditorialFooter}>
-            <span className={styles.templateLineShort} />
-            <span className={styles.templateLineShort} />
-            <span className={styles.templateLineShort} />
-          </div>
-        </div>
-      );
-    case "galleryGrid":
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasGalleryGrid}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <span className={styles.templateTinyLine} />
-          </div>
-          <div className={styles.templateGalleryGrid}>
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className={styles.templateGalleryTile}>
-                <div className={styles.templateGalleryVisual} />
-                <span className={styles.templateLineShort} />
-                <span className={styles.templateTinyLine} />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    case "bookingFocus":
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasQuoteSpotlight}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <div className={styles.templateRightMeta}>
-              <span className={styles.templateTinyLine} />
-              <span className={styles.templateTinyLine} />
-            </div>
-          </div>
-          <div className={styles.templateHeroBand} />
-          <div className={styles.templateQuoteSpotlightBody}>
-            <div className={styles.templateQuoteCopy}>
-              <span className={styles.templateLineWide} />
-              <span className={styles.templateLineWide} />
-              <span className={styles.templateLineShort} />
-              <div className={styles.templateQuoteSignalGroup}>
-                <span className={styles.templateTinyLine} />
-                <span className={styles.templateTinyLine} />
-                <span className={styles.templateTinyLine} />
-              </div>
-            </div>
-            <div className={styles.templateQuotePanel}>
-              <span className={styles.templateLineWide} />
-              <span className={styles.templateLineShort} />
-              <span className={styles.templateLineShort} />
-              <span className={styles.templateButtonStub} />
-            </div>
-          </div>
-        </div>
-      );
-    case "contactFocus":
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasContactFocus}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <div className={styles.templateNavDots}>
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
-          <div className={styles.templateContactColumns}>
-            <div className={styles.templateContactPanel}>
-              <span className={styles.templateLineWide} />
-              <span className={styles.templateLineShort} />
-              <span className={styles.templateLineWide} />
-            </div>
-            <div className={styles.templateContactPanel}>
-              <span className={styles.templateLineWide} />
-              <span className={styles.templateLineShort} />
-              <span className={styles.templateLineShort} />
-            </div>
-          </div>
-          <div className={styles.templateContactFooter}>
-            <span className={styles.templateButtonStub} />
-          </div>
-        </div>
-      );
-    case "localGuide":
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasLocalGuide}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <span className={styles.templateTinyLine} />
-          </div>
-          <div className={styles.templateHeroBand} />
-          <div className={styles.templateLocalGuideBody}>
-            <div className={styles.templateLocalGuideVisual} />
-            <div className={styles.templateLocalGuideCopy}>
-              <span className={styles.templateLineWide} />
-              <span className={styles.templateLineWide} />
-              <span className={styles.templateLineShort} />
-              <span className={styles.templateButtonStub} />
-            </div>
-          </div>
-          <div className={styles.templateLocalGuideFooter}>
-            <span className={styles.templateTinyLine} />
-            <span className={styles.templateTinyLine} />
-            <span className={styles.templateTinyLine} />
-          </div>
-        </div>
-      );
-    case "panorama":
-    default:
-      return (
-        <div className={`${styles.templateCanvas} ${styles.templateCanvasPanorama}`} aria-hidden="true">
-          <div className={styles.templateChrome}>
-            <span className={styles.templateBrandMark} />
-            <div className={styles.templateNavDots}>
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
-          <div className={styles.templateHeroBand} />
-          <div className={styles.templateSearchStub} />
-          <div className={styles.templateFeatureRow}>
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className={styles.templateFeatureCard}>
-                <span className={styles.templateMiniIcon} />
-                <span className={styles.templateLineWide} />
-                <span className={styles.templateLineShort} />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
+const getImportedPhotoSummary = (importedImageCount, emptyLabel = "No photos imported yet") => {
+  if (importedImageCount < 1) {
+    return emptyLabel;
   }
-}
+
+  return `${importedImageCount} photo${importedImageCount === 1 ? "" : "s"} imported`;
+};
+
+const getPreviewReadySummary = (importedImageCount) => {
+  if (importedImageCount < 1) {
+    return "No photos imported yet";
+  }
+
+  return `${importedImageCount} image${importedImageCount === 1 ? "" : "s"} ready for preview`;
+};
+
+const getGalleryAnimationClassName = (direction) => {
+  if (direction === "forward") {
+    return styles.galleryAnimatedImageForward;
+  }
+
+  if (direction === "backward") {
+    return styles.galleryAnimatedImageBackward;
+  }
+
+  return "";
+};
+
+const getStepHeaderDescription = (activeStep) => {
+  if (activeStep === STEP_SELECT_LISTING) {
+    return "Pick the property you want to use as the base for your website. This page only shows listings that belong to your host account.";
+  }
+
+  return "The live site can stay stable while you choose the layout direction for this selected listing.";
+};
+
+const getGalleryViewAlt = (propertyLabel, activeIndex) => `${propertyLabel} view ${activeIndex + 1}`;
+
+const getPhotoCardClassName = (photoIndex) => {
+  const variantClassName = PHOTO_CARD_VARIANT_CLASSES[photoIndex] || "";
+  return `${styles.photoCard} ${variantClassName}`.trim();
+};
+
 
 function WebsiteBuilderPage() {
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
   const [activeStep, setActiveStep] = useState(STEP_SELECT_LISTING);
-  const [selectedTemplateId, setSelectedTemplateId] = useState(TEMPLATE_OPTIONS[0].id);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(WEBSITE_TEMPLATE_OPTIONS[0].id);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -419,7 +124,7 @@ function WebsiteBuilderPage() {
   const galleryImages = selectedProperty?.galleryImages || previewImages;
   const importedImageCount = selectedProperty?.imageCount || 0;
   const summaryDescription = truncateDescription(selectedProperty?.description);
-  const selectedTemplate = getTemplateById(selectedTemplateId);
+  const selectedTemplate = getWebsiteTemplateById(selectedTemplateId);
   const activeGalleryImage = galleryImages[activeGalleryIndex] || galleryImages[0] || "";
 
   useEffect(() => {
@@ -448,8 +153,11 @@ function WebsiteBuilderPage() {
       return undefined;
     }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const documentBody = globalThis.document?.body;
+    const previousOverflow = documentBody?.style.overflow ?? "";
+    if (documentBody) {
+      documentBody.style.overflow = "hidden";
+    }
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -467,11 +175,13 @@ function WebsiteBuilderPage() {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    globalThis.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
+      if (documentBody) {
+        documentBody.style.overflow = previousOverflow;
+      }
+      globalThis.removeEventListener("keydown", handleKeyDown);
     };
   }, [activeGalleryIndex, galleryImages.length, isGalleryOpen]);
 
@@ -503,15 +213,16 @@ function WebsiteBuilderPage() {
     <div className={styles.photoStack}>
       {previewImages.map((imageUrl, index) => (
         <button
-          key={`${selectedProperty.value}-${index}`}
+          key={`${selectedProperty.value}-${imageUrl}`}
           type="button"
-          className={`${styles.photoCard} ${styles[`photoCard${index + 1}`] || ""}`}
+          className={getPhotoCardClassName(index)}
           onClick={() => openGallery(index)}
           aria-label={`Open photo ${index + 1} of ${selectedProperty.title || selectedProperty.label}`}
         >
           <img
             src={imageUrl}
-            alt={`${selectedProperty.title || selectedProperty.label} preview ${index + 1}`}
+            alt=""
+            aria-hidden="true"
             className={styles.photoImage}
           />
         </button>
@@ -589,11 +300,7 @@ function WebsiteBuilderPage() {
                   <span className={styles.statusPill}>
                     Status: {getPropertyStatusLabel(selectedProperty.status)}
                   </span>
-                  <span className={styles.metaText}>
-                    {importedImageCount > 0
-                      ? `${importedImageCount} photo${importedImageCount === 1 ? "" : "s"} imported`
-                      : "No photos imported yet"}
-                  </span>
+                  <span className={styles.metaText}>{getImportedPhotoSummary(importedImageCount)}</span>
                 </div>
                 {summaryDescription ? <p className={styles.summaryMeta}>{summaryDescription}</p> : null}
                 <div className={styles.buttonRow}>
@@ -641,7 +348,8 @@ function WebsiteBuilderPage() {
           >
             <img
               src={galleryImages[0]}
-              alt={selectedProperty.title || selectedProperty.label}
+              alt=""
+              aria-hidden="true"
               className={styles.selectedListingImage}
             />
           </button>
@@ -656,11 +364,7 @@ function WebsiteBuilderPage() {
               <span className={styles.statusPill}>
                 Status: {getPropertyStatusLabel(selectedProperty.status)}
               </span>
-              <span className={styles.metaText}>
-                {importedImageCount > 0
-                  ? `${importedImageCount} image${importedImageCount === 1 ? "" : "s"} ready for preview`
-                  : "No photos imported yet"}
-              </span>
+              <span className={styles.metaText}>{getPreviewReadySummary(importedImageCount)}</span>
             </div>
              {summaryDescription ? <p className={styles.summaryMeta}>{summaryDescription}</p> : null}
              <div className={styles.buttonRow}>
@@ -679,7 +383,7 @@ function WebsiteBuilderPage() {
           </div>
 
         <div className={styles.templateGrid}>
-          {TEMPLATE_OPTIONS.map((templateOption) => {
+          {WEBSITE_TEMPLATE_OPTIONS.map((templateOption) => {
             const isSelected = templateOption.id === selectedTemplateId;
 
             return (
@@ -744,9 +448,7 @@ function WebsiteBuilderPage() {
             <div className={styles.selectorHeader}>
               <h2>{activeStep === STEP_SELECT_LISTING ? "Select your listing" : "Start shaping the website"}</h2>
               <p>
-                {activeStep === STEP_SELECT_LISTING
-                  ? "Pick the property you want to use as the base for your website. This page only shows listings that belong to your host account."
-                  : "The live site can stay stable while you choose the layout direction for this selected listing."}
+                {getStepHeaderDescription(activeStep)}
               </p>
             </div>
 
@@ -756,7 +458,15 @@ function WebsiteBuilderPage() {
       </div>
 
       {isGalleryOpen && selectedProperty ? (
-        <div className="image-overlay" role="dialog" aria-modal="true" aria-label="Listing gallery">
+        <dialog
+          open
+          className="image-overlay"
+          aria-label="Listing gallery"
+          onCancel={(event) => {
+            event.preventDefault();
+            closeGallery();
+          }}
+        >
           <button
             type="button"
             className="close-overlay-button"
@@ -780,15 +490,11 @@ function WebsiteBuilderPage() {
             <div className={styles.galleryImageViewport}>
               <img
                 key={`gallery-image-${activeGalleryIndex}-${galleryAnimationTick}`}
-                className={`overlay-main-image ${styles.galleryAnimatedImage} ${
-                  galleryAnimationDirection === "forward"
-                    ? styles.galleryAnimatedImageForward
-                    : galleryAnimationDirection === "backward"
-                    ? styles.galleryAnimatedImageBackward
-                    : ""
-                }`}
+                className={`overlay-main-image ${styles.galleryAnimatedImage} ${getGalleryAnimationClassName(
+                  galleryAnimationDirection
+                )}`.trim()}
                 src={activeGalleryImage}
-                alt={`${selectedProperty.title || selectedProperty.label} image ${activeGalleryIndex + 1}`}
+                alt={getGalleryViewAlt(selectedProperty.title || selectedProperty.label, activeGalleryIndex)}
               />
             </div>
 
@@ -805,11 +511,10 @@ function WebsiteBuilderPage() {
 
           <div className="overlay-thumbnails">
             {galleryImages.map((imageUrl, index) => (
-              <img
-                key={`${selectedProperty.value}-gallery-${index}`}
-                className={index === activeGalleryIndex ? "thumb active" : "thumb"}
-                src={imageUrl}
-                alt={`${selectedProperty.title || selectedProperty.label} thumbnail ${index + 1}`}
+              <button
+                key={`${selectedProperty.value}-gallery-${imageUrl}`}
+                type="button"
+                className={`${index === activeGalleryIndex ? "thumb active" : "thumb"} ${styles.galleryThumbnailButton}`}
                 onClick={() => {
                   if (index === activeGalleryIndex) {
                     return;
@@ -817,10 +522,18 @@ function WebsiteBuilderPage() {
 
                   setGalleryImage(index, index > activeGalleryIndex ? "forward" : "backward");
                 }}
-              />
+                aria-label={`Show gallery item ${index + 1} for ${selectedProperty.title || selectedProperty.label}`}
+              >
+                <img
+                  src={imageUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className={styles.galleryThumbnailImage}
+                />
+              </button>
             ))}
           </div>
-        </div>
+        </dialog>
       ) : null}
     </main>
   );
