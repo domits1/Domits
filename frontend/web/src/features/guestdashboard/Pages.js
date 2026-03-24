@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import BookingIcon from "@mui/icons-material/LanguageOutlined";
 import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
-// import WishlistIcon from "@mui/icons-material/Favorite";
+import WishlistIcon from "@mui/icons-material/Favorite";
 import Settings from "@mui/icons-material/Settings";
 // import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
 
@@ -14,7 +14,7 @@ const NAV = [
 
   // Work on it later
   // { key: "Reviews",  label: "Reviews",  icon: <ReviewsOutlinedIcon />, to: "reviews" },
-  // { key: "Wishlist", label: "Wishlist", icon: <WishlistIcon />,        to: "wishlist" },
+  { key: "Wishlist", label: "Wishlist", icon: <WishlistIcon />, to: "wishlist" },
 
   { key: "Settings", label: "Settings", icon: <Settings />, to: "settings" },
 ];
