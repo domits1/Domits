@@ -1,5 +1,10 @@
 import { EntitySchema } from "typeorm";
 
+const bigintTransformer = {
+    from: (value) => value !== null && value !== undefined ? Number(value) : null,
+    to: (value) => value,
+};
+
 export const Property_Task_Activity = new EntitySchema({
     name: "Property_Task_Activity",
     tableName: "property_task_activity",
@@ -36,6 +41,7 @@ export const Property_Task_Activity = new EntitySchema({
         created_at: {
             type: "bigint",
             nullable: false,
+            transformer: bigintTransformer,
         },
     },
 });

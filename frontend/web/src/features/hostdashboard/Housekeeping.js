@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
-import { createTask, fetchTasks } from './services/faketaskService';
+import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
 
 const DEFAULT_FILTERS = {
@@ -16,6 +16,7 @@ const DEFAULT_NEW_TASK = {
     title: '',
     description: '',
     property: '',
+    property_id: '',
     bookingRef: '',
     type: 'Cleaning',
     assignee: '',
@@ -145,27 +146,37 @@ const HostPropertyCare = () => {
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
 
-    const CURRENT_USER = 'Sophie Janssen'; 
+    const CURRENT_USER = 'Sophie Janssen';
 
-    const hostPropertyOptions = ['City Loft Breda', 'Beach House'];
+    const [propertyOptions, setPropertyOptions] = useState([]);
+
+    useEffect(() => {
+        fetchHostTaskPropertyOptions().then(setPropertyOptions);
+    }, []);
     
-    const handleToggleComplete = (task) => {
+    const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const todayStr = new Date().toISOString().split('T')[0]; 
-        
+        const todayStr = new Date().toISOString().split('T')[0];
+
         const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
-        
+
         const updatedTask = {
             ...task,
             status: newStatus,
-            completedAt: newStatus === 'Completed' ? todayStr : null, 
+            completedAt: newStatus === 'Completed' ? todayStr : null,
             activities: [
                 ...(task.activities || []),
                 { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
             ]
         };
-        
+
         setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
+
+        try {
+            await updateTask(task.id, { status: newStatus });
+        } catch {
+            setTasks(tasks.map(t => t.id === task.id ? task : t));
+        }
     };
 
     useEffect(() => {
@@ -248,6 +259,24 @@ const HostPropertyCare = () => {
         setNewTask(prev => ({ ...prev, [name]: value }));
     };
 
+    const handlePropertyChange = (e) => {
+        const selected = createPropertyOptions.find(o => o.id === e.target.value);
+        setNewTask(prev => ({
+            ...prev,
+            property_id: selected?.id || '',
+            property: selected?.label || '',
+        }));
+    };
+
+    const handleEditPropertyChange = (e) => {
+        const selected = editPropertyOptions.find(o => o.id === e.target.value);
+        setEditedTask(prev => ({
+            ...prev,
+            property_id: selected?.id || prev.property_id,
+            property: selected?.label || '',
+        }));
+    };
+
     const resetForm = () => {
         setNewTask({ ...DEFAULT_NEW_TASK });
     };
@@ -304,7 +333,7 @@ const HostPropertyCare = () => {
         }
     };
 
-    const handleSaveChanges = () => {
+    const handleSaveChanges = async () => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         const newLogs = [];
 
@@ -336,6 +365,12 @@ const HostPropertyCare = () => {
         setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
         setViewingTask(null);
         setEditedTask(null);
+
+        try {
+            await updateTask(updatedTask.id, updatedTask);
+        } catch {
+            setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
+        }
     };
 
     const handleDeleteSingleTask = () => {
@@ -346,13 +381,21 @@ const HostPropertyCare = () => {
             confirmText: 'Yes, Delete',
             cancelText: 'Cancel',
             onConfirm: async () => {
-                
-                setTasks(tasks.map(t => 
-                    t.id === viewingTask.id ? { ...t, isLegacy: true } : t
+                const taskId = viewingTask.id;
+                setTasks(tasks.map(t =>
+                    t.id === taskId ? { ...t, isLegacy: true } : t
                 ));
                 setViewingTask(null);
                 setEditedTask(null);
                 closeConfirmDialog();
+
+                try {
+                    await deleteTask(taskId);
+                } catch {
+                    setTasks(prev => prev.map(t =>
+                        t.id === taskId ? { ...t, isLegacy: false } : t
+                    ));
+                }
             }
         });
     };
@@ -369,8 +412,9 @@ const HostPropertyCare = () => {
         <>
             <select name="property" value={filters.property} onChange={handleFilterChange}>
                 <option value="All properties">All properties</option>
-                <option value="City Loft Breda">City Loft Breda</option>
-                <option value="Beach House">Beach House</option>
+                {filterPropertyOptions.map(label => (
+                    <option key={label} value={label}>{label}</option>
+                ))}
             </select>
             <select name="status" value={filters.status} onChange={handleFilterChange}>
                 <option value="All statuses">All statuses</option>
@@ -427,44 +471,34 @@ const HostPropertyCare = () => {
     const displayedTasks = getSortedTasks(filteredTasks);
     const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
     const filterPropertyOptions = useMemo(() => {
-        const optionSet = new Set();
-
-        hostPropertyOptions.forEach((option) => {
-            const normalizedOption = String(option || "").trim();
-            if (normalizedOption) {
-                optionSet.add(normalizedOption);
-            }
-        });
+        const labelSet = new Set(propertyOptions.map(o => o.label));
 
         tasks.forEach((task) => {
             const normalizedProperty = String(task?.property || "").trim();
             if (normalizedProperty) {
-                optionSet.add(normalizedProperty);
+                labelSet.add(normalizedProperty);
             }
         });
 
         [newTask.property, editedTask?.property].forEach((value) => {
             const normalizedValue = String(value || "").trim();
             if (normalizedValue) {
-                optionSet.add(normalizedValue);
+                labelSet.add(normalizedValue);
             }
         });
 
-        return [...optionSet];
-    }, [editedTask?.property, hostPropertyOptions, newTask.property, tasks]);
-    const createPropertyOptions = useMemo(() => {
-        return hostPropertyOptions
-            .map((option) => String(option || "").trim())
-            .filter(Boolean);
-    }, [hostPropertyOptions]);
+        return [...labelSet];
+    }, [editedTask?.property, propertyOptions, newTask.property, tasks]);
+
+    const createPropertyOptions = useMemo(() => propertyOptions, [propertyOptions]);
+
     const editPropertyOptions = useMemo(() => {
-        const optionSet = new Set(createPropertyOptions);
-        const currentEditedProperty = String(editedTask?.property || "").trim();
-        if (currentEditedProperty) {
-            optionSet.add(currentEditedProperty);
+        const currentLabel = String(editedTask?.property || "").trim();
+        if (currentLabel && !propertyOptions.some(o => o.label === currentLabel)) {
+            return [...propertyOptions, { id: editedTask?.property_id || "", label: currentLabel }];
         }
-        return [...optionSet];
-    }, [createPropertyOptions, editedTask?.property]);
+        return propertyOptions;
+    }, [propertyOptions, editedTask?.property, editedTask?.property_id]);
 
     const ITEMS_PER_PAGE = 10;
     const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
@@ -822,10 +856,11 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-property'>Property</label>
-                                <select id='task-property' name="property" value={newTask.property} onChange={handleInputChange} required>
+                                <select id='task-property' name="property" value={newTask.property_id} onChange={handlePropertyChange} required>
                                     <option value="" disabled hidden>Select Property</option>
-                                    <option value="City Loft Breda">City Loft Breda</option>
-                                    <option value="Beach House">Beach House</option>
+                                    {createPropertyOptions.map(o => (
+                                        <option key={o.id} value={o.id}>{o.label}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="form-group">
@@ -901,9 +936,9 @@ const HostPropertyCare = () => {
                                 <option value="High">High</option>
                                 <option value="Urgent">Urgent</option>
                             </select>
-                            <select name="property" value={editedTask.property || ''} onChange={handleEditChange} className="badge-select property-badge">
-                                {editPropertyOptions.map((propertyOption) => (
-                                    <option key={propertyOption} value={propertyOption}>🏢 {propertyOption}</option>
+                            <select name="property" value={editedTask.property_id || ''} onChange={handleEditPropertyChange} className="badge-select property-badge">
+                                {editPropertyOptions.map((o) => (
+                                    <option key={o.id} value={o.id}>🏢 {o.label}</option>
                                 ))}
                             </select>
                         </div>

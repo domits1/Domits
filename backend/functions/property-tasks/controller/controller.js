@@ -1,12 +1,7 @@
-import { Service } from "../business/service/service.js";
 import { getTasks, createTask, updateTask, deleteTask } from "../business/service/taskService.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 export class Controller {
-    constructor() {
-        this.service = new Service();
-    }
-
     async getTasks(event) {
         try {
             const hostId = event.requestContext.authorizer.claims.sub;

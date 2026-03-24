@@ -5,8 +5,16 @@ export const validateTaskPayload = (data) => {
         errors.push("Title is required");
     }
 
-    if (!data.property?.propertyId) {
-        errors.push("Property selection must include a valid ID");
+    if (!data.property_id) {
+        errors.push("property_id is required");
+    }
+
+    if (!data.property_snapshot_label) {
+        errors.push("property_snapshot_label is required");
+    }
+
+    if (!data.type) {
+        errors.push("type is required");
     }
 
     if (errors.length > 0) {
