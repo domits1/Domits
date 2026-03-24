@@ -7,18 +7,18 @@ import Header from "../components/header";
 import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
-
+import ListingCancellationPolicy from "../../components/ListingCancellationPolicy";
 const BOOKINGS_API_URL =
   "https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-const startOfUtcDay = (date) =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+const startOfUtcDay = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
 const dateToKey = (date) =>
-  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
-    date.getUTCDate()
-  ).padStart(2, "0")}`;
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(
+    2,
+    "0"
+  )}`;
 
 const normalizeTimestampLike = (value) => {
   if (value === null || value === undefined) {
@@ -137,10 +137,10 @@ const ListingDetails2 = () => {
     () =>
       Array.from(
         new Set([
-          ...((Array.isArray(property?.calendarAvailability?.externalBlockedDates)
+          ...(Array.isArray(property?.calendarAvailability?.externalBlockedDates)
             ? property.calendarAvailability.externalBlockedDates
-            : [])),
-          ...((Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : [])),
+            : []),
+          ...(Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : []),
         ])
       ),
     [acceptedBookingDateKeys, property?.calendarAvailability?.externalBlockedDates]
@@ -208,6 +208,8 @@ const ListingDetails2 = () => {
           setCheckInDate={setCheckInDate}
           setCheckOutDate={setCheckOutDate}
         />
+        <ListingCancellationPolicy policyId="flexible" />
+
         <BookingContainer
           property={property}
           host={host}
