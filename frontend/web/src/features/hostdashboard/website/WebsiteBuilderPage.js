@@ -340,34 +340,23 @@ function WebsiteBuilderPage() {
         </div>
 
         <div className={styles.selectedListingCard}>
-          <button
-            type="button"
-            className={styles.selectedListingMedia}
-            onClick={() => openGallery(0)}
-            aria-label={`Browse photos for ${selectedProperty.title || selectedProperty.label}`}
-          >
-            <img
-              src={galleryImages[0]}
-              alt=""
-              aria-hidden="true"
-              className={styles.selectedListingImage}
-            />
-          </button>
+          <div className={styles.selectionPreview}>
+            {renderPhotoStack()}
 
-          <div className={styles.selectedListingBody}>
-            <p className={styles.summaryLabel}>Current listing</p>
-            <p className={styles.selectedListingTitle}>{selectedProperty.title || selectedProperty.label}</p>
-            {selectedProperty.location ? (
-              <p className={styles.selectedListingLocation}>{selectedProperty.location}</p>
-            ) : null}
-            <div className={styles.metaRow}>
-              <span className={styles.statusPill}>
-                Status: {getPropertyStatusLabel(selectedProperty.status)}
-              </span>
-              <span className={styles.metaText}>{getPreviewReadySummary(importedImageCount)}</span>
-            </div>
-             {summaryDescription ? <p className={styles.summaryMeta}>{summaryDescription}</p> : null}
-             <div className={styles.buttonRow}>
+            <div className={styles.selectionContent}>
+              <p className={styles.summaryLabel}>Current listing</p>
+              <p className={styles.selectedListingTitle}>{selectedProperty.title || selectedProperty.label}</p>
+              {selectedProperty.location ? (
+                <p className={styles.selectedListingLocation}>{selectedProperty.location}</p>
+              ) : null}
+              <div className={styles.metaRow}>
+                <span className={styles.statusPill}>
+                  Status: {getPropertyStatusLabel(selectedProperty.status)}
+                </span>
+                <span className={styles.metaText}>{getPreviewReadySummary(importedImageCount)}</span>
+              </div>
+              {summaryDescription ? <p className={styles.summaryMeta}>{summaryDescription}</p> : null}
+              <div className={styles.buttonRow}>
                 <button type="button" className={styles.secondaryButton} onClick={() => openGallery(0)}>
                   Browse photos
                 </button>
@@ -381,6 +370,7 @@ function WebsiteBuilderPage() {
               </div>
             </div>
           </div>
+        </div>
 
         <div className={styles.templateGrid}>
           {WEBSITE_TEMPLATE_OPTIONS.map((templateOption) => {

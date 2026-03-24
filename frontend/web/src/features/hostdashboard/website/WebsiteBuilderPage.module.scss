@@ -227,7 +227,6 @@
 }
 
 .photoCard:focus-visible,
-.selectedListingMedia:focus-visible,
 .galleryCloseButton:focus-visible,
 .galleryNavButton:focus-visible,
 .thumbnailButton:focus-visible,
@@ -335,38 +334,14 @@
 }
 
 .selectedListingCard {
-  display: grid;
-  gap: 18px;
-  padding: 18px;
-  border-radius: 20px;
-  border: 1px solid #dbe7f3;
-  background:
-    linear-gradient(145deg, rgba(249, 252, 255, 0.96), rgba(241, 247, 253, 0.9)),
-    #ffffff;
-}
-
-.selectedListingMedia {
-  width: 100%;
-  padding: 0;
-  border: 0;
+  padding: 22px;
   border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.16);
+  background:
+    radial-gradient(circle at top left, rgba(31, 78, 121, 0.08), transparent 38%),
+    linear-gradient(135deg, rgba(31, 78, 121, 0.08), rgba(255, 255, 255, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   overflow: hidden;
-  background: #dbeafe;
-  cursor: pointer;
-  min-height: 220px;
-}
-
-.selectedListingImage {
-  width: 100%;
-  height: 100%;
-  min-height: 220px;
-  object-fit: cover;
-  display: block;
-}
-
-.selectedListingBody {
-  display: grid;
-  gap: 8px;
 }
 
 .templateGrid {
@@ -940,11 +915,6 @@
   .selectionPreview {
     grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
     gap: 28px;
-  }
-
-  .selectedListingCard {
-    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
-    align-items: center;
   }
 }
 
