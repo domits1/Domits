@@ -309,8 +309,8 @@
   align-items: center;
   padding: 0.45rem 0.75rem;
   border-radius: 999px;
-  background: rgba(31, 78, 121, 0.1);
-  color: #0f3554;
+  background: rgba(31, 78, 121, 0.14);
+  color: #08243c;
   font-size: 0.9rem;
   font-weight: 700;
 }
@@ -837,6 +837,7 @@
   min-height: calc(1.25em * 2);
   overflow: hidden;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
 }
 
@@ -869,6 +870,7 @@
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
+  line-clamp: 4;
   -webkit-line-clamp: 4;
 }
 
