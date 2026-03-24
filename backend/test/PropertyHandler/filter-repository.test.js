@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { PropertyRepository } from "../../functions/PropertyHandler/data/repository/propertyRepository.js";
 import Database from "../../ORM/index.js";
-import { Property } from "../../ORM/models/Property";
 import { Property_Pricing } from "../../ORM/models/Property_Pricing";
 import { Property_Type } from "../../ORM/models/Property_Type";
 import { Property_Amenity } from "../../ORM/models/Property_Amenity";

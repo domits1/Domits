@@ -866,14 +866,14 @@ export class PropertyController {
     async getFilteredPropertyCards(event) {
         try {
             const filters = {
-                minPrice: event.queryStringParameters?.minPrice ? parseInt(event.queryStringParameters.minPrice) : undefined,
-                maxPrice: event.queryStringParameters?.maxPrice ? parseInt(event.queryStringParameters.maxPrice) : undefined,
+                minPrice: event.queryStringParameters?.minPrice ? Number.parseInt(event.queryStringParameters.minPrice) : undefined,
+                maxPrice: event.queryStringParameters?.maxPrice ? Number.parseInt(event.queryStringParameters.maxPrice) : undefined,
                 facilities: event.queryStringParameters?.facilities ? event.queryStringParameters.facilities.split(",") : undefined,
                 type: event.queryStringParameters?.type ? event.queryStringParameters.type : undefined,
                 seasons: event.queryStringParameters?.seasons ? event.queryStringParameters.seasons.split(",") : undefined,
-                ecoScore: event.queryStringParameters?.ecoScore ? parseInt(event.queryStringParameters.ecoScore) : undefined,
+                ecoScore: event.queryStringParameters?.ecoScore ? Number.parseInt(event.queryStringParameters.ecoScore) : undefined,
                 country: event.queryStringParameters?.country ? event.queryStringParameters.country : undefined,
-                guests: event.queryStringParameters?.guests ? parseInt(event.queryStringParameters.guests) : undefined,
+                guests: event.queryStringParameters?.guests ? Number.parseInt(event.queryStringParameters.guests) : undefined,
             };
 
             const properties = await this.propertyService.getFilteredPropertyCards(filters);
