@@ -23,16 +23,22 @@ const TEMPLATE_OPTIONS = [
     layout: "panorama",
   },
   {
-    id: "feature-stack",
-    name: "Feature Stack",
-    description: "A landing page with quick checks, value blocks, and a simple flow down the page.",
-    layout: "featureStack",
+    id: "trust-signals",
+    name: "Trust Signals",
+    description: "A reassuring landing page with reviews, guest highlights, policy clarity, and a soft booking nudge.",
+    layout: "trustSignals",
   },
   {
-    id: "editorial-split",
-    name: "Editorial Split",
-    description: "Story-led content on the left with a visual property showcase on the right.",
-    layout: "editorial",
+    id: "experience-journey",
+    name: "Experience Journey",
+    description: "A curated flow that walks guests through arrival, stay, surroundings, and next steps.",
+    layout: "experienceJourney",
+  },
+  {
+    id: "amenities-spotlight",
+    name: "Amenities Spotlight",
+    description: "A feature-led layout that puts standout amenities and property strengths front and center.",
+    layout: "amenitiesSpotlight",
   },
   {
     id: "gallery-grid",
@@ -41,16 +47,28 @@ const TEMPLATE_OPTIONS = [
     layout: "galleryGrid",
   },
   {
+    id: "editorial-split",
+    name: "Editorial Split",
+    description: "Story-led content on the left with a visual property showcase on the right.",
+    layout: "editorial",
+  },
+  {
+    id: "booking-focus",
+    name: "Booking Focus",
+    description: "A booking-led layout with a visible quote panel for guests ready to decide faster.",
+    layout: "bookingFocus",
+  },
+  {
     id: "contact-focus",
     name: "Contact Focus",
     description: "Balanced content sections with a strong footer action for direct guest contact.",
     layout: "contactFocus",
   },
   {
-    id: "quote-spotlight",
-    name: "Quote Spotlight",
-    description: "A booking-led layout with a visible quote panel for guests ready to decide faster.",
-    layout: "quoteSpotlight",
+    id: "local-guide",
+    name: "Local Guide",
+    description: "A location-led page that highlights the area, nearby spots, and the context around the stay.",
+    layout: "localGuide",
   },
 ];
 
@@ -100,6 +118,108 @@ function TemplateSilhouette({ layout }) {
           </div>
         </div>
       );
+    case "trustSignals":
+      return (
+        <div className={`${styles.templateCanvas} ${styles.templateCanvasTrustSignals}`} aria-hidden="true">
+          <div className={styles.templateChrome}>
+            <span className={styles.templateBrandMark} />
+            <div className={styles.templateRightMeta}>
+              <span className={styles.templateTinyLine} />
+              <span className={styles.templateTinyLine} />
+            </div>
+          </div>
+          <div className={styles.templateHeroBand} />
+          <div className={styles.templateTrustStack}>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className={styles.templateTrustCard}>
+                <div className={styles.templateTrustMeta}>
+                  <span className={styles.templateTinyLine} />
+                  <span className={styles.templateTinyLine} />
+                  <span className={styles.templateTinyLine} />
+                </div>
+                <span className={styles.templateLineWide} />
+                <span className={styles.templateLineShort} />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    case "experienceJourney":
+      return (
+        <div className={`${styles.templateCanvas} ${styles.templateCanvasExperienceJourney}`} aria-hidden="true">
+          <div className={styles.templateChrome}>
+            <span className={styles.templateBrandMark} />
+            <div className={styles.templateNavDots}>
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+          <div className={styles.templateJourneyStack}>
+            {[0, 1, 2].map((index) => {
+              const isReversed = index === 1;
+
+              return (
+                <div
+                  key={index}
+                  className={`${styles.templateJourneyStop} ${
+                    isReversed ? styles.templateJourneyStopReverse : ""
+                  }`}
+                >
+                  {isReversed ? (
+                    <>
+                      <div className={styles.templateJourneyVisual} />
+                      <div className={styles.templateJourneyCopy}>
+                        <span className={styles.templateLineWide} />
+                        <span className={styles.templateLineShort} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className={styles.templateJourneyCopy}>
+                        <span className={styles.templateLineWide} />
+                        <span className={styles.templateLineShort} />
+                      </div>
+                      <div className={styles.templateJourneyVisual} />
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    case "amenitiesSpotlight":
+      return (
+        <div className={`${styles.templateCanvas} ${styles.templateCanvasAmenitiesSpotlight}`} aria-hidden="true">
+          <div className={styles.templateChrome}>
+            <span className={styles.templateBrandMark} />
+            <div className={styles.templateNavDots}>
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+          <div className={styles.templateAmenitiesHero}>
+            <div className={styles.templateAmenitiesVisual} />
+            <div className={styles.templateAmenitiesList}>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className={styles.templateAmenityRow}>
+                  <span className={styles.templateLineWide} />
+                  <span className={styles.templateLineShort} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={styles.templateAmenitiesFooter}>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className={styles.templateAmenityPill}>
+                <span className={styles.templateTinyLine} />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
     case "editorial":
       return (
         <div className={`${styles.templateCanvas} ${styles.templateCanvasEditorial}`} aria-hidden="true">
@@ -144,11 +264,42 @@ function TemplateSilhouette({ layout }) {
           </div>
         </div>
       );
-      case "contactFocus":
-        return (
-          <div className={`${styles.templateCanvas} ${styles.templateCanvasContactFocus}`} aria-hidden="true">
-            <div className={styles.templateChrome}>
-              <span className={styles.templateBrandMark} />
+    case "bookingFocus":
+      return (
+        <div className={`${styles.templateCanvas} ${styles.templateCanvasQuoteSpotlight}`} aria-hidden="true">
+          <div className={styles.templateChrome}>
+            <span className={styles.templateBrandMark} />
+            <div className={styles.templateRightMeta}>
+              <span className={styles.templateTinyLine} />
+              <span className={styles.templateTinyLine} />
+            </div>
+          </div>
+          <div className={styles.templateHeroBand} />
+          <div className={styles.templateQuoteSpotlightBody}>
+            <div className={styles.templateQuoteCopy}>
+              <span className={styles.templateLineWide} />
+              <span className={styles.templateLineWide} />
+              <span className={styles.templateLineShort} />
+              <div className={styles.templateQuoteSignalGroup}>
+                <span className={styles.templateTinyLine} />
+                <span className={styles.templateTinyLine} />
+                <span className={styles.templateTinyLine} />
+              </div>
+            </div>
+            <div className={styles.templateQuotePanel}>
+              <span className={styles.templateLineWide} />
+              <span className={styles.templateLineShort} />
+              <span className={styles.templateLineShort} />
+              <span className={styles.templateButtonStub} />
+            </div>
+          </div>
+        </div>
+      );
+    case "contactFocus":
+      return (
+        <div className={`${styles.templateCanvas} ${styles.templateCanvasContactFocus}`} aria-hidden="true">
+          <div className={styles.templateChrome}>
+            <span className={styles.templateBrandMark} />
             <div className={styles.templateNavDots}>
               <span />
               <span />
@@ -167,46 +318,39 @@ function TemplateSilhouette({ layout }) {
               <span className={styles.templateLineShort} />
             </div>
           </div>
-            <div className={styles.templateContactFooter}>
+          <div className={styles.templateContactFooter}>
+            <span className={styles.templateButtonStub} />
+          </div>
+        </div>
+      );
+    case "localGuide":
+      return (
+        <div className={`${styles.templateCanvas} ${styles.templateCanvasLocalGuide}`} aria-hidden="true">
+          <div className={styles.templateChrome}>
+            <span className={styles.templateBrandMark} />
+            <span className={styles.templateTinyLine} />
+          </div>
+          <div className={styles.templateHeroBand} />
+          <div className={styles.templateLocalGuideBody}>
+            <div className={styles.templateLocalGuideVisual} />
+            <div className={styles.templateLocalGuideCopy}>
+              <span className={styles.templateLineWide} />
+              <span className={styles.templateLineWide} />
+              <span className={styles.templateLineShort} />
               <span className={styles.templateButtonStub} />
             </div>
           </div>
-        );
-      case "quoteSpotlight":
-        return (
-          <div className={`${styles.templateCanvas} ${styles.templateCanvasQuoteSpotlight}`} aria-hidden="true">
-            <div className={styles.templateChrome}>
-              <span className={styles.templateBrandMark} />
-              <div className={styles.templateRightMeta}>
-                <span className={styles.templateTinyLine} />
-                <span className={styles.templateTinyLine} />
-              </div>
-            </div>
-            <div className={styles.templateHeroBand} />
-            <div className={styles.templateQuoteSpotlightBody}>
-              <div className={styles.templateQuoteCopy}>
-                <span className={styles.templateLineWide} />
-                <span className={styles.templateLineWide} />
-                <span className={styles.templateLineShort} />
-                <div className={styles.templateQuoteSignalGroup}>
-                  <span className={styles.templateTinyLine} />
-                  <span className={styles.templateTinyLine} />
-                  <span className={styles.templateTinyLine} />
-                </div>
-              </div>
-              <div className={styles.templateQuotePanel}>
-                <span className={styles.templateLineWide} />
-                <span className={styles.templateLineShort} />
-                <span className={styles.templateLineShort} />
-                <span className={styles.templateButtonStub} />
-              </div>
-            </div>
+          <div className={styles.templateLocalGuideFooter}>
+            <span className={styles.templateTinyLine} />
+            <span className={styles.templateTinyLine} />
+            <span className={styles.templateTinyLine} />
           </div>
-        );
-      case "panorama":
-      default:
-        return (
-          <div className={`${styles.templateCanvas} ${styles.templateCanvasPanorama}`} aria-hidden="true">
+        </div>
+      );
+    case "panorama":
+    default:
+      return (
+        <div className={`${styles.templateCanvas} ${styles.templateCanvasPanorama}`} aria-hidden="true">
           <div className={styles.templateChrome}>
             <span className={styles.templateBrandMark} />
             <div className={styles.templateNavDots}>
@@ -544,7 +688,7 @@ function WebsiteBuilderPage() {
                 type="button"
                 className={`${styles.templateCard} ${isSelected ? styles.templateCardSelected : ""}`}
                 onClick={() => setSelectedTemplateId(templateOption.id)}
-                aria-pressed={isSelected}
+                  aria-pressed={isSelected}
                 >
                   <span className={styles.templateRadio} aria-hidden="true">
                     <span className={styles.templateRadioDot} />
