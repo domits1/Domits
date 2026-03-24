@@ -27,10 +27,12 @@ const buildPropertyLabel = (listing) => {
 
 const getPropertyStatus = (listing) => String(listing?.property?.status || "INACTIVE").trim().toUpperCase();
 
-const getPreviewImages = (listing) => {
-    const previewImages = resolveAccommodationImageUrls(listing?.images, "thumb").slice(0, 3);
-    return previewImages.length > 0 ? previewImages : [placeholderImage];
+const getGalleryImages = (listing) => {
+    const galleryImages = resolveAccommodationImageUrls(listing?.images, "web");
+    return galleryImages.length > 0 ? galleryImages : [placeholderImage];
 };
+
+const getPreviewImages = (galleryImages) => galleryImages.slice(0, 3);
 
 const normalizePropertySelectOptions = (listings) => {
     const propertyOptionsById = new Map();
@@ -41,6 +43,8 @@ const normalizePropertySelectOptions = (listings) => {
             return;
         }
 
+        const galleryImages = getGalleryImages(listing);
+
         propertyOptionsById.set(propertyId, {
             value: propertyId,
             title: buildPropertyTitle(listing),
@@ -48,7 +52,8 @@ const normalizePropertySelectOptions = (listings) => {
             location: buildPropertyLocation(listing),
             label: buildPropertyLabel(listing),
             status: getPropertyStatus(listing),
-            previewImages: getPreviewImages(listing),
+            galleryImages,
+            previewImages: getPreviewImages(galleryImages),
             imageCount: Array.isArray(listing?.images) ? listing.images.length : 0,
         });
     });
