@@ -1,14 +1,12 @@
+const getOffsetDate = (days) => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+};
+
 let mockTasks = [
-    {
-        id: 1,
-        title: "Clean after guest checkout",
-        property: "City Loft Breda",
-        type: "Cleaning",
-        assignee: "Sophie Janssen",
-        priority: "High",
-        status: "Pending",
-        dueDate: "2023-11-01",
-    },
+    { id: 1, title: 'Clean after guest checkout', property: 'City Loft Breda', type: 'Cleaning', assignee: 'Sophie Janssen', priority: 'High', status: 'Pending', dueDate: getOffsetDate(0) },
+    
 ];
 
 export const fetchTasks = async () => {
