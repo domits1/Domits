@@ -48,3 +48,6 @@ src/ui-components/studioTheme.js
 src/ui-components/studioTheme.js.d.ts
 src/ui-components/utils.js
 #amplify-do-not-edit-end
+/backend/ORM/migrations/20260312_guest_favorite_placeholder_alignment.js
+/backend/ORM/migrations/20260312_guest_favorite_placeholder_alignment.sql
+/backend/ORM/migrations/20260312_guest_favorite.js
