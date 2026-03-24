@@ -927,8 +927,8 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
     childrenAllowed: false,
     smokingAllowed: false,
     petsAllowed: true,
-    maxGuests: "11:00",
-    partiesAllowed: true,
+    maxGuests: 4,
+    partiesAllowed: false,
     quietHours: "11:00",
   });
 
@@ -941,10 +941,10 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
   const [showPropertyRuleInput, setShowPropertyRuleInput] = useState(false);
 
   const [safetyRules, setSafetyRules] = useState({
-    smokeDetector: false,
-    carbonMonoxide: false,
+    smokeDetector: true,
+    carbonMonoxide: true,
     fireExtinguisher: true,
-    firstAidKit: "11:00",
+    firstAidKit: true,
   });
   const [customSafetyRules, setCustomSafetyRules] = useState([]);
   const [newSafetyRule, setNewSafetyRule] = useState("");
@@ -1183,9 +1183,9 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
               className={styles.checkinSelectInline}
               value={houseRules.maxGuests}
               onChange={(e) => setHouseRules((p) => ({ ...p, maxGuests: e.target.value }))}>
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num}>
+                  {num}
                 </option>
               ))}
             </select>
@@ -1198,7 +1198,7 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
             />
           </div>
           <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Quiet hours</span>
+            <span className={styles.ruleToggleLabel}>Quiet hours start</span>
             <select
               className={styles.checkinSelectInline}
               value={houseRules.quietHours}
@@ -1300,16 +1300,10 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
           </div>
           <div className={styles.ruleToggleRow}>
             <span className={styles.ruleToggleLabel}>First aid kit</span>
-            <select
-              className={styles.checkinSelectInline}
-              value={safetyRules.firstAidKit}
-              onChange={(e) => setSafetyRules((p) => ({ ...p, firstAidKit: e.target.value }))}>
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            <ToggleSwitch
+              checked={safetyRules.firstAidKit}
+              onChange={(val) => setSafetyRules((p) => ({ ...p, firstAidKit: val }))}
+            />
           </div>
 
           {customSafetyRules.map((rule) => (

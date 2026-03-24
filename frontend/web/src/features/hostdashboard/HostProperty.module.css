@@ -2068,28 +2068,37 @@
   border-bottom: none;
 }
 
-.cancellationPolicyItemSelected {
-  background: #f7fbf7;
+.cancellationPolicyItemSelected .cancellationPolicyRow {
+  background: #e8f3e6;
 }
 
 .cancellationPolicyRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  width: 100%;
   padding: 14px 16px;
   cursor: pointer;
   user-select: none;
+  background: #ffffff;
+  transition: background 0.15s ease;
+  border: none;
+  gap: 12px;
 }
 
 .cancellationPolicyRow:hover {
-  background: #f2f8f2;
+  background: #f0f7ee;
+}
+
+.cancellationPolicyItemSelected .cancellationPolicyRow:hover {
+  background: #e2efe0;
 }
 
 .cancellationPolicyRadioGroup {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .cancellationPolicyRadio {
@@ -2125,6 +2134,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .cancellationPolicyCheck {
@@ -2456,8 +2467,11 @@
 
 @media (max-width: 700px) {
   .cancellationPolicyRow {
-    grid-template-columns: 1fr;
-    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .cancellationPolicySummaryRow {
+    margin-left: 30px;
   }
 
   .checkinGrid {
