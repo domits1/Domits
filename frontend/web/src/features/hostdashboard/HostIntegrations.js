@@ -10,7 +10,7 @@ const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/def
  * - localhost for now
  * - later replace with https://www.domits.com
  */
-const WHATSAPP_CALLBACK_URL = "http://localhost:3000/hostdashboard/integrations/whatsapp/callback";
+const WHATSAPP_CALLBACK_URL = "http://localhost:3000/hostdashboard/integrations-marketplace/whatsapp/callback";
 
 const META_APP_ID = "1808176813897212";
 const META_EMBEDDED_SIGNUP_CONFIG_ID = "1259900802765110";
@@ -82,8 +82,8 @@ function IntegrationCard({ integration, onManage }) {
           <h3>{integration.channelLabel}</h3>
           <p className="host-integrations-card-copy">
             {connected
-              ? "This channel is connected and can be used from the unified inbox."
-              : "Connect this channel to send and receive messages in Domits."}
+              ? "Your WhatsApp Business number is connected and ready to use in your Domits inbox."
+              : "Connect your WhatsApp Business number to send and receive messages in Domits."}
           </p>
         </div>
 
@@ -98,7 +98,7 @@ function IntegrationCard({ integration, onManage }) {
           </div>
 
           <div>
-            <span className="host-integrations-meta-label">Phone number ID</span>
+            <span className="host-integrations-meta-label">WhatsApp number ID</span>
             <strong>{integration.externalAccountId || "Not connected"}</strong>
           </div>
 
@@ -135,10 +135,9 @@ function WhatsAppSetupPanel({
   return (
     <section className="host-integrations-setup">
       <div className="host-integrations-setup-header">
-        <h2>WhatsApp integration</h2>
+        <h2>WhatsApp Business</h2>
         <p>
-          Start the real Meta Embedded Signup flow here. After Meta returns to the callback page, Domits can process the
-          authorization result and continue the connection flow.
+          Connect your WhatsApp Business number here so you can manage WhatsApp conversations directly in Domits.
         </p>
       </div>
 
@@ -146,44 +145,41 @@ function WhatsAppSetupPanel({
         <div className="host-integrations-step">
           <span className="host-integrations-step-number">1</span>
           <div>
-            <h4>Start connect session</h4>
-            <p>Create a Domits connect session so the WhatsApp connect flow can be tracked safely.</p>
+            <h4>Start your connection</h4>
+            <p>You’ll continue with Meta to securely connect your business number.</p>
           </div>
         </div>
 
         <div className="host-integrations-step">
           <span className="host-integrations-step-number">2</span>
           <div>
-            <h4>Open Meta Embedded Signup</h4>
-            <p>Redirect the host to Meta so they can authorize WhatsApp Business onboarding.</p>
+            <h4>Use your existing number or set up a new one</h4>
+            <p>If you already use WhatsApp Business, you can connect that number. If you’re new, Meta will guide you.</p>
           </div>
         </div>
 
         <div className="host-integrations-step">
           <span className="host-integrations-step-number">3</span>
           <div>
-            <h4>Return to Domits callback</h4>
-            <p>
-              Meta sends the host back to the callback route, where Domits can continue with code exchange and number
-              selection.
-            </p>
+            <h4>Finish in Domits</h4>
+            <p>After connecting, you’ll be able to manage WhatsApp conversations in Domits.</p>
           </div>
         </div>
       </div>
 
       <div className="host-integrations-callout">
-        <h4>{connected ? "Current connection" : "Connect WhatsApp"}</h4>
+        <h4>{connected ? "Your current connection" : "Before you connect"}</h4>
         <p>
           {connected
-            ? "You can reconnect and replace the current WhatsApp connection, or disconnect it."
-            : "No WhatsApp number is connected yet for this host account."}
+            ? "You can reconnect to replace your current WhatsApp Business number, or disconnect it at any time."
+            : "You’ll continue with Meta to connect your business number. If you already use WhatsApp Business, you can connect your existing number. If you’re new, Meta will guide you through the setup."}
         </p>
       </div>
 
       <div className="host-integrations-flow">
         <div className="host-integrations-flow-actions">
           <button type="button" className="host-integrations-primary-btn" disabled={connecting} onClick={onStartConnect}>
-            {connecting ? "Starting..." : connected ? "Reconnect with Meta" : "Connect with Meta"}
+            {connecting ? "Starting..." : connected ? "Reconnect with Meta" : "Connect your WhatsApp Business"}
           </button>
 
           {connected ? (
@@ -314,7 +310,7 @@ function HostIntegrationsInner() {
       }
 
       setConnectSessionId(nextSessionId);
-      setActionSuccess("Connect session started. Redirecting to Meta...");
+      setActionSuccess("Taking you to Meta to connect your WhatsApp Business number...");
 
       const metaUrl = buildMetaEmbeddedSignupUrl({
         userId,
@@ -366,14 +362,14 @@ function HostIntegrationsInner() {
       <header className="host-integrations-hero">
         <div>
           <p className="host-integrations-eyebrow">Host dashboard</p>
-          <h1>Integrations</h1>
+          <h1>Marketplace</h1>
           <p className="host-integrations-subtitle">
-            Connect external messaging channels and manage which business number Domits should use.
+            Connect your WhatsApp Business number and manage how WhatsApp conversations appear in Domits.
           </p>
         </div>
       </header>
 
-      {loading ? <p className="host-integrations-loading">Loading integrations…</p> : null}
+      {loading ? <p className="host-integrations-loading">Loading Marketplace…</p> : null}
       {error ? <p className="host-integrations-error-banner">{error}</p> : null}
 
       {!loading && !error ? (

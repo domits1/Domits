@@ -132,7 +132,7 @@ function WhatsAppConnectCallbackInner() {
         throw new Error(data?.error || "Failed to save selected WhatsApp number.");
       }
 
-      navigate("/hostdashboard/integrations", {
+      navigate("/hostdashboard/integrations-marketplace", {
         replace: true,
         state: { successMessage: "WhatsApp connected successfully." },
       });
@@ -148,14 +148,14 @@ function WhatsAppConnectCallbackInner() {
       <header className="host-integrations-hero">
         <div>
           <p className="host-integrations-eyebrow">Host dashboard</p>
-          <h1>WhatsApp callback</h1>
+          <h1>Marketplace</h1>
           <p className="host-integrations-subtitle">
-            Finish the WhatsApp Business connection and choose the number that Domits should use.
+            Finish connecting your WhatsApp Business number and choose the number you want to use in Domits.
           </p>
         </div>
       </header>
 
-      {loading ? <p className="host-integrations-loading">Processing Meta callback…</p> : null}
+      {loading ? <p className="host-integrations-loading">Finalizing your WhatsApp connection…</p> : null}
       {error ? <p className="host-integrations-error-banner">{error}</p> : null}
       {successMessage ? <p className="host-integrations-success-banner">{successMessage}</p> : null}
 
@@ -163,15 +163,15 @@ function WhatsAppConnectCallbackInner() {
         <section className="host-integrations-setup">
           <div className="host-integrations-setup-header">
             <h2>Select your WhatsApp number</h2>
-            <p>Choose which WhatsApp Business number Domits should connect for this host account.</p>
+            <p>Choose the WhatsApp Business number you want to connect to your Domits inbox.</p>
           </div>
 
           {selectableNumbers.length === 0 ? (
             <div className="host-integrations-callout">
-              <h4>No selectable numbers returned</h4>
+              <h4>No numbers are ready to select yet</h4>
               <p>
-                The callback completed, but no numbers were returned yet. The next step is wiring the real Meta code
-                exchange and asset lookup fully on the backend.
+                Your connection was received, but no WhatsApp Business numbers are available to choose yet. Please try
+                again shortly.
               </p>
             </div>
           ) : (

@@ -100,8 +100,8 @@ function MainDashboardHost() {
 
           <Route path="reservations" element={<HostReservations />} />
           <Route path="messages" element={<Messages dashboardType="host" />} />
-          <Route path="integrations" element={<HostIntegrations />} />
-          <Route path="integrations/whatsapp/callback" element={<WhatsAppConnectCallback />} />
+          <Route path="integrations-marketplace" element={<HostIntegrations />} />
+          <Route path="integrations-marketplace/whatsapp/callback" element={<WhatsAppConnectCallback />} />
           <Route path="revenues" element={<HostReports />} />
 
           <Route path="tasks" element={<HostPropertyCare />} />

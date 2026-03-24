@@ -225,14 +225,14 @@ const MessagesContent = ({ dashboardType }) => {
                     </p>
                     <h3 style={{ margin: "6px 0 4px", fontSize: "22px" }}>Connect your WhatsApp Business</h3>
                     <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.55, maxWidth: "760px" }}>
-                      Link your WhatsApp Business number so hosts can receive and reply to WhatsApp messages directly
-                      from the Domits inbox.
+                      Link your WhatsApp Business number so you can receive and reply to WhatsApp messages directly
+                      from your Domits inbox.
                     </p>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => navigate("/hostdashboard/integrations")}
+                    onClick={() => navigate("/hostdashboard/integrations-marketplace")}
                     style={{
                       border: 0,
                       borderRadius: "12px",

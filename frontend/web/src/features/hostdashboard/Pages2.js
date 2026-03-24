@@ -18,7 +18,12 @@ const NAV = [
   { key: "CalendarPricing", label: "Calendar & Pricing", icon: <CalendarIcon />, to: "calendar-pricing" },
   { key: "Reservations", label: "Reservations", icon: <EventIcon />, to: "reservations" },
   { key: "Messages", label: "Messages", icon: <MessageIcon />, to: "messages" },
-  { key: "Integrations", label: "Integrations", icon: <IntegrationInstructionsIcon />, to: "integrations" },
+  {
+    key: "Integrations",
+    label: "Marketplace",
+    icon: <IntegrationInstructionsIcon />,
+    to: "integrations-marketplace",
+  },
   { key: "Revenues", label: "Revenues", icon: <ShowChartIcon />, to: "revenues" },
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
