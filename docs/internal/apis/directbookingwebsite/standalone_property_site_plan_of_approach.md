@@ -4,7 +4,7 @@
 Working baseline
 
 ## Last Updated
-2026-03-19
+2026-03-20
 
 ## Purpose
 This document captures the current plan of approach for the standalone website research within Domits. It is the research-oriented counterpart to the technical design pack and ADR. The goal is to keep the research baseline, research questions, chapter structure, and intended validation approach explicit in markdown.
@@ -46,14 +46,20 @@ V1 foundation includes:
   - amenities
   - location
   - house rules
+- published render content baked into the standalone site at publish or refresh time
 - availability check and price calculation
 - template choice
 - site name
 - logo and favicon
 - publish and unpublish
 - live and draft status
-- one primary language choice per site
+- English as the first and only site language in v1
 - tooling choices aligned with the current Domits stack
+
+Implementation detail for this baseline:
+- descriptive page content such as title, description, photos, amenities, location, and house rules is imported from PMS into standalone-owned published data
+- public page render uses that published standalone snapshot
+- pricing and availability remain live PMS reads through server-side quote APIs
 
 V2 extends this base with:
 
@@ -82,6 +88,7 @@ Domits is a short-term rental platform that helps hosts manage accommodations, r
 - realize a template approach that supports customization without turning every template into a separate project
 - design hosting and deployment so the solution is scalable and cost-efficient
 - guarantee correct and consistent integration with availability, pricing, and booking data from the PMS
+- keep public property pages fast to render by serving baked published content instead of live descriptive PMS reads
 - ensure security by design in a multi-tenant environment
 
 #### 1.6 Research questions
@@ -220,6 +227,11 @@ Analyze:
 Analyze:
 - realtime versus caching
 - server-side versus client-side logic
+
+Current implementation direction:
+- descriptive property content is imported from PMS into standalone-owned published data at publish or refresh time
+- public render uses that standalone snapshot
+- quote pricing and availability remain live PMS reads
 
 #### 5.6 Security and isolation
 Analyze:

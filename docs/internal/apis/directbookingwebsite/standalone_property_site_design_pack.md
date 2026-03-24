@@ -8,9 +8,9 @@ This document defines the v1 design pack for Domits standalone property sites. I
 
 **Status:** Proposed
 
-**Last Updated:** 2026-03-19
+**Last Updated:** 2026-03-20
 
-**Related Architecture Decision:** [ADR - Standalone Property Site V1](../../architecture/standalone_property_site_adr.md)
+**Related Architecture Decision:** [ADR - Standalone Property Site V1](./standalone_property_site_adr.md)
 
 ## Summary
 V1 is the foundation release for standalone property sites. It is intentionally small so Domits can lay down a clean, secure, maintainable base for later iteration in v2.
@@ -19,12 +19,14 @@ V1 foundation includes:
 
 - one standalone site per property
 - a single multi-tenant frontend runtime
-- PMS as source of truth for property content, pricing, availability, availability window, timezone, and bookings
-- standalone-owned site config and publish state
+- PMS as the upstream source for descriptive property-content import
+- PMS as the live source of truth for pricing, availability, and bookings
+- standalone-owned site config, published content snapshots, and publish state
 - fallback Domits subdomain in v1
 - custom domains designed now, implemented later
 - first-party analytics events for KPI reporting
-- live PMS reads after publish, not descriptive snapshots
+- baked published page content for public render after publish
+- live PMS reads only for quote pricing and availability
 - a target guest flow that covers property detail, availability check, and price calculation
 - an explicit language and tooling choice aligned with Domits constraints
 - no payment checkout, booking creation, or public confirmation in v1
@@ -43,7 +45,7 @@ V2 extends this foundation with:
 ### V1 scope
 V1 includes:
 
-- Public property page rendered from PMS-backed data:
+- Public property page rendered from a published standalone content snapshot imported from PMS:
   - title
   - subtitle
   - description
@@ -74,9 +76,10 @@ V1 includes:
 - First-party analytics events
 - Separate standalone site state model
 - Separate domain state model for fallback subdomains
+- Publish-time import of PMS descriptive content into standalone-owned render data
 - Site language and tooling baseline:
-  - one primary language per site in v1
-  - language selected by host or inherited from PMS defaults
+  - English is the first and only primary site language in v1
+  - broader host-selectable locale support is later scope
   - implementation aligned with the current Domits stack instead of introducing a second frontend/runtime stack
 
 ### Explicit v1 exclusions
@@ -135,21 +138,23 @@ flowchart LR
     QuoteAPI --> StandaloneDB
     EventAPI --> StandaloneDB
 
-    SiteAPI --> PMSRead[PMS Property Read APIs]
+    ConfigAPI --> PMSImport[PMS Property Import APIs]
     QuoteAPI --> PMSAvailability[PMS Availability Service]
     QuoteAPI --> PMSPricing[PMS Pricing Service]
-    PMSRead --> PMSDB[(Aurora main PMS tables)]
+    PMSImport --> PMSDB[(Aurora main PMS tables)]
     PMSAvailability --> PMSDB
     PMSPricing --> PMSDB
 
     ConfigAPI --> Assets[S3 Assets]
+    SiteAPI --> Assets
     Renderer --> DomainLayer[Fallback Domain Layer]
     DomainLayer --> ResolveAPI
 ```
 
 ### Context notes
-- The standalone layer owns site configuration and events.
-- PMS remains the source of truth for property data, pricing, availability, availability window, and bookings.
+- The standalone layer owns site configuration, published render data, and events.
+- PMS remains the upstream source for descriptive property import and the live source of truth for pricing, availability, and bookings.
+- Public render uses standalone-owned published content snapshots and assets, not live PMS descriptive reads.
 - Public guest traffic never talks directly to raw PMS tables.
 - This diagram shows the v1 foundation only.
 - V2 adds checkout, payment, booking creation, and confirmation on top of this base.
@@ -158,7 +163,7 @@ flowchart LR
 - Frontend runtime stays inside the existing Domits React stack; templates do not become separate frontend projects.
 - Public site APIs stay aligned with the current AWS backend model: Lambda / API Gateway plus Aurora `main`.
 - Standalone assets remain in S3 and site telemetry remains first-party in `main.standalone_site_event`.
-- V1 supports one primary language per site. Full multilingual SEO and translation management are later concerns.
+- V1 uses English as the only supported primary site language. Full multilingual SEO, translation management, and host-selectable locales are later concerns.
 
 ---
 
@@ -232,25 +237,28 @@ Future only:
 | PMS-owned | Standalone-owned |
 |------|------|
 | property identity | site identity |
-| title / subtitle / description | template selection |
-| images | template version pin |
-| amenities | branding and theme tokens |
-| location | enabled sections |
-| house rules | site name |
-| pricing rules | preview token metadata |
-| availability rules | publish status |
-| availability window | fallback domain mapping |
-| timezone | future custom-domain metadata |
-| bookings | analytics event metadata |
+| descriptive-content source records | published property snapshot |
+| pricing rules | template selection |
+| availability rules | template version pin |
+| bookings | branding and theme tokens |
+| | enabled sections |
+| | site name |
+| | preview token metadata |
+| | publish status |
+| | fallback domain mapping |
+| | future custom-domain metadata |
+| | analytics event metadata |
+| | quote-facing timezone snapshot |
 | | content overrides |
 | | public contact info |
 | | policy content |
 | | primary locale |
 
 ### Ownership policy
-- PMS-owned fields are read live after publish.
-- Standalone-owned fields are persisted in standalone tables.
-- V1 does not duplicate PMS descriptive content into standalone tables.
+- PMS-owned descriptive content is imported into standalone-owned published snapshots at publish time or explicit refresh time.
+- Public render reads standalone-owned published data and assets.
+- PMS remains the live source of truth for quote pricing and availability.
+- PMS changes to title, photos, or description do not affect the public site until the host republishes or refreshes the snapshot.
 
 ---
 
@@ -260,9 +268,9 @@ Future only:
 
 | Table | Purpose |
 |------|------|
-| `main.standalone_site` | core site record and lifecycle |
+| `main.standalone_site` | core site record, property linkage, quote-facing timezone, and lifecycle |
 | `main.standalone_site_theme` | one-to-one branding tokens and asset keys |
-| `main.standalone_site_content` | one-to-one public content overrides and contact info |
+| `main.standalone_site_content` | one-to-one published property snapshot, overrides, and contact info |
 | `main.standalone_site_section` | enabled sections and ordering |
 | `main.standalone_site_domain` | fallback and future custom-domain mapping |
 | `main.standalone_site_event` | raw event store for KPI and auditability |
@@ -276,6 +284,7 @@ CREATE TABLE IF NOT EXISTS main.standalone_site (
   host_id VARCHAR(255) NOT NULL,
   site_name VARCHAR(255) NOT NULL,
   primary_locale VARCHAR(32) NOT NULL,
+  property_timezone VARCHAR(64) NOT NULL,
   status VARCHAR(32) NOT NULL,
   template_key VARCHAR(255) NOT NULL,
   template_version VARCHAR(64) NOT NULL,
@@ -304,6 +313,7 @@ CREATE TABLE IF NOT EXISTS main.standalone_site_theme (
 
 CREATE TABLE IF NOT EXISTS main.standalone_site_content (
   site_id VARCHAR(255) NOT NULL,
+  property_snapshot_json TEXT NOT NULL,
   contact_name VARCHAR(255),
   contact_email VARCHAR(255),
   contact_phone VARCHAR(255),
@@ -405,6 +415,7 @@ erDiagram
       varchar host_id
       varchar site_name
       varchar primary_locale
+      varchar property_timezone
       varchar status
       varchar template_key
       varchar template_version
@@ -423,6 +434,7 @@ erDiagram
     }
     STANDALONE_SITE_CONTENT {
       varchar site_id PK
+      text property_snapshot_json
       varchar contact_name
       varchar contact_email
       varchar contact_phone
@@ -472,12 +484,12 @@ erDiagram
 
 | Contract area | Requirement |
 |------|------|
-| Data source | Must render PMS-backed property content live |
+| Data source | Must render standalone-owned published property content snapshots |
 | Theme source | Must read standalone theme tokens |
 | Sections | Must support section enable/disable and ordering |
 | CTA contract | Must expose a consistent availability and quote CTA |
 | Route contract | Must support property page and preview route in v1 |
-| Language support | Must render one primary site language in v1 and keep template copy localizable |
+| Language support | Must render English as the only supported primary site language in v1 and keep template copy localizable for later locales |
 | Accessibility | Must support keyboard navigation, semantic headings, contrast-safe tokens |
 | Analytics | Must emit shared standalone event names |
 | Failure handling | Must render suspended / unavailable / quote-conflict states safely |
@@ -525,16 +537,16 @@ erDiagram
 
 | Source field | Owner | Standalone section | Notes |
 |------|------|------|------|
-| `property.title` | PMS | `hero` | live PMS read |
-| `property.subtitle` | PMS | `hero` | live PMS read |
-| `property.description` | PMS | `hero` / `about` | live PMS read |
-| `images[]` | PMS | `gallery` | live PMS read |
-| `amenities[]` | PMS | `amenities` | live PMS read |
-| `location.city` / `location.country` | PMS | `location` | full address remains hidden unless policy allows |
-| `rules[]` | PMS | `house_rules` | live PMS read |
-| `availability window` | PMS | `availability_quote` | controls allowed date range |
-| `timezone` | PMS | `availability_quote` | authoritative timezone |
-| `primary_locale` | Standalone | global | one site-wide language in v1 |
+| `property.title` | Standalone published snapshot | `hero` | imported from PMS at publish/refresh time |
+| `property.subtitle` | Standalone published snapshot | `hero` | imported from PMS at publish/refresh time |
+| `property.description` | Standalone published snapshot | `hero` / `about` | imported from PMS at publish/refresh time |
+| `images[]` | Standalone published snapshot | `gallery` | imported from PMS at publish/refresh time |
+| `amenities[]` | Standalone published snapshot | `amenities` | imported from PMS at publish/refresh time |
+| `location.city` / `location.country` | Standalone published snapshot | `location` | full address remains hidden unless policy allows |
+| `rules[]` | Standalone published snapshot | `house_rules` | imported from PMS at publish/refresh time |
+| `availability window` | Standalone published snapshot | `availability_quote` | display snapshot only |
+| `timezone` | Standalone quote context | `availability_quote` | stored with the site; quote behavior still validates live |
+| `primary_locale` | Standalone | global | fixed to English (`en`) in v1; broader locale choice is later |
 | `contact_name` | Standalone | `contact` | public override |
 | `contact_email` | Standalone | `contact` | public override |
 | `contact_phone` | Standalone | `contact` | public override |
@@ -609,7 +621,8 @@ Rules:
 **Rules**
 - validates the request host against the resolved site
 - reads site config from standalone tables
-- reads property content live from PMS
+- reads published property content snapshot from standalone tables
+- resolves public asset references from standalone-owned storage
 - returns only public-safe data
 
 **Success response**
@@ -809,6 +822,7 @@ sequenceDiagram
     participant Dashboard as Host Dashboard
     participant ConfigAPI as Standalone Site Config API
     participant PMS as PMS Eligibility Check
+    participant PMSImport as PMS Property Import API
     participant DB as Aurora main standalone_* tables
     participant Domain as Fallback Domain Generator
     participant Renderer as Public Renderer
@@ -817,6 +831,8 @@ sequenceDiagram
     Dashboard->>ConfigAPI: publish request
     ConfigAPI->>PMS: validate property eligibility
     PMS-->>ConfigAPI: eligible
+    ConfigAPI->>PMSImport: import descriptive property content
+    PMSImport-->>ConfigAPI: published property snapshot
     ConfigAPI->>DB: upsert standalone_site and child records
     ConfigAPI->>Domain: reserve fallback domain
     Domain-->>ConfigAPI: generated fallback domain
@@ -826,7 +842,7 @@ sequenceDiagram
     DB-->>Renderer: published site config
 ```
 
-### Resolve host -> site -> property
+### Resolve host -> site -> render
 
 ```mermaid
 sequenceDiagram
@@ -835,7 +851,9 @@ sequenceDiagram
     participant ResolveAPI as Site Resolve API
     participant DomainTable as standalone_site_domain
     participant SiteTable as standalone_site
-    participant PMS as PMS Property Read API
+    participant RenderAPI as Public Site Render API
+    participant ContentTable as standalone_site_content
+    participant ThemeTable as standalone_site_theme
 
     Guest->>Browser: request standalone site
     Browser->>ResolveAPI: GET /public/sites/resolve with Host header
@@ -843,9 +861,12 @@ sequenceDiagram
     DomainTable-->>ResolveAPI: site_id
     ResolveAPI->>SiteTable: validate site status
     SiteTable-->>ResolveAPI: published site metadata
-    ResolveAPI->>PMS: read live property timezone
-    PMS-->>ResolveAPI: property summary
     ResolveAPI-->>Browser: site resolution payload
+    Browser->>RenderAPI: GET /public/sites/:siteId
+    RenderAPI->>SiteTable: load site config
+    RenderAPI->>ContentTable: load published property snapshot
+    RenderAPI->>ThemeTable: load theme
+    RenderAPI-->>Browser: public render model
 ```
 
 ### Quote request
@@ -863,7 +884,7 @@ sequenceDiagram
     Guest->>Browser: select dates and guests
     Browser->>QuoteAPI: POST /public/sites/:siteId/quote
     QuoteAPI->>SiteTable: validate site and host context
-    SiteTable-->>QuoteAPI: property_id and config
+    SiteTable-->>QuoteAPI: property_id and quote context
     QuoteAPI->>PMSAvailability: validate date range and restrictions
     PMSAvailability-->>QuoteAPI: availability result
     alt available
@@ -927,6 +948,7 @@ sequenceDiagram
 
 | Risk / threat | Cause | Impact | Mitigation | Detection |
 |------|------|------|------|------|
+| stale published content | PMS descriptive content changes after publish | site shows outdated title, photos, or description | snapshot refresh and republish workflow | snapshot-age monitoring |
 | stale quote | dates or prices change after quote | guest sees invalid price | short quote expiry, later revalidation before booking | quote conflict rate |
 | domain misconfiguration | bad domain record | wrong or missing site resolution | unique domain index, status validation, fallback domain retained | resolve failure logs |
 | tenant data leak | host resolution bug | one site sees another tenant's data | resolve by host first, validate site status, never trust propertyId from client | cross-tenant mismatch alarms |
@@ -946,7 +968,8 @@ sequenceDiagram
 | pricing service unavailable | quote endpoint returns 503 | "Pricing is temporarily unavailable." | request + dependency error | yes |
 | payment service unavailable (v2) | checkout cannot continue | "Payment is temporarily unavailable." | checkout dependency error | yes |
 | booking service unavailable (v2) | booking cannot be finalized | "Booking could not be completed right now." | booking dependency error | yes |
-| property unpublished in PMS | site render returns safe unavailable state, not stale content | "This property is not bookable right now." | site/property eligibility log | yes |
+| property unpublished in PMS | keep site visible from latest published snapshot, but fail quote safely | "This property is not bookable right now." | site/property eligibility and quote dependency log | yes |
+| published site missing content snapshot | fail closed on render | "This site is temporarily unavailable." | render completeness error | yes |
 | site published but template version missing | fail closed and suspend render path | "This site is temporarily unavailable." | template resolution error | yes |
 | unknown host | do not guess tenant | 404 site not found | resolve failure log | no |
 | stale quote | return conflict | "Selected dates or price changed. Please refresh quote." | quote conflict log | yes, thresholded |
@@ -1024,6 +1047,7 @@ GROUP BY site_id;
 | booking error metric | booking API | v2 only: detect checkout and booking failures |
 | confirmation lookup metric | confirmation API | v2 only: detect invalid or abused confirmation access |
 | publish failure metric | config API | catch rollout and eligibility issues |
+| snapshot freshness metric | publish/import pipeline | detect stale descriptive snapshots |
 | audit trail | standalone_site_event | support review of publish and status changes |
 
 Required log fields:
@@ -1046,6 +1070,7 @@ Required log fields:
 - host resolution validation
 - preview token validation
 - quote request validation
+- published snapshot import validation
 - ownership boundary mapping
 - template contract validation
 
@@ -1068,11 +1093,11 @@ Required log fields:
 
 ### Integration tests
 - standalone tables in `main`
-- PMS live-read integration
+- publish-time PMS descriptive-content import
 - fallback domain resolution
 - preview token validation
 - event write path
-- quote path with restriction failures
+- live quote path with restriction failures
 
 ### V2 extension integration tests
 - checkout-session creation with payment dependency stub
@@ -1282,7 +1307,7 @@ Safe order:
 | 1 | apply standalone DDL in `main` | tables and indexes exist |
 | 2 | run verification SQL | no `public` duplicates, indexes present |
 | 3 | deploy dark-launched code to acceptance | no public dependency on new tables |
-| 4 | create preview site | preview URL renders correct property |
+| 4 | create preview site | preview URL renders correct published snapshot |
 | 5 | publish fallback domain | resolve endpoint maps host to site |
 | 6 | request valid quote | quote returned with expiry |
 | 7 | request blocked quote | conflict returned |
@@ -1301,19 +1326,19 @@ Safe order:
 ## 15. Diagram Prompts For Another LLM
 
 ### System context diagram prompt
-Create a clean software architecture context diagram for the v1 foundation of Domits standalone property sites. Show these components and relationships: Host Dashboard, Standalone Site Admin Config, Public Standalone Site App (single multi-tenant frontend), Site Resolve API, Public Site Render API, Public Quote API, PMS Property APIs, Pricing/Availability Service, Aurora main schema, S3 asset storage, Domain/DNS layer, Analytics/KPI pipeline. Indicate PMS as source of truth for property content, pricing, availability, and bookings. Indicate standalone layer owns template config, branding, publish state, preview, domain records, primary locale, and analytics events.
+Create a clean software architecture context diagram for the v1 foundation of Domits standalone property sites. Show these components and relationships: Host Dashboard, Standalone Site Admin Config, Public Standalone Site App (single multi-tenant frontend), Site Resolve API, Public Site Render API, Public Quote API, PMS Property Import API, Pricing/Availability Service, Aurora main schema, S3 asset storage, Domain/DNS layer, Analytics/KPI pipeline. Indicate PMS as the upstream source for descriptive property-content import and the live source of truth for pricing, availability, and bookings. Indicate standalone layer owns template config, published property snapshots, branding, publish state, preview, domain records, primary locale, and analytics events.
 
 ### ERD prompt
-Create an ERD for a standalone property site platform. Include tables: standalone_site, standalone_site_theme, standalone_site_content, standalone_site_section, standalone_site_domain, standalone_site_event, and a referenced PMS property entity. Show one standalone site per property, one-to-one theme/content, one-to-many sections/domains/events. Mark PMS-owned entities separately from standalone-owned entities. Include a primary locale field on the site record.
+Create an ERD for a standalone property site platform. Include tables: standalone_site, standalone_site_theme, standalone_site_content, standalone_site_section, standalone_site_domain, standalone_site_event, and a referenced PMS property entity. Show one standalone site per property, one-to-one theme/content, one-to-many sections/domains/events. Mark PMS-owned entities separately from standalone-owned entities. Include primary_locale and property_timezone on the site record, and property_snapshot_json on the standalone_site_content record.
 
 ### Publish sequence prompt
-Create a sequence diagram for publishing a Domits standalone property site. Actors: Host, Host Dashboard, Standalone Site Config API, PMS Eligibility Check, Aurora main standalone tables, Domain Service, Preview/Public Renderer. Flow: host configures template/branding, system validates PMS property eligibility, writes standalone_site config, generates fallback subdomain, sets status to PREVIEW or PUBLISHED, renderer becomes available.
+Create a sequence diagram for publishing a Domits standalone property site. Actors: Host, Host Dashboard, Standalone Site Config API, PMS Eligibility Check, PMS Property Import API, Aurora main standalone tables, Domain Service, Preview/Public Renderer. Flow: host configures template/branding, system validates PMS property eligibility, imports descriptive PMS property content into a published snapshot, writes standalone_site config, generates fallback subdomain, sets status to PREVIEW or PUBLISHED, renderer becomes available.
 
 ### Resolve host sequence prompt
-Create a sequence diagram for resolving a public request to a Domits standalone site. Actors: Guest Browser, Public Renderer, Site Resolve API, standalone_site_domain table, standalone_site table, PMS Property API. Flow: request arrives with host, resolve host to site, validate site status, load site config, load PMS-backed property data, return render model. Include failure branches for unknown host and suspended site.
+Create a sequence diagram for resolving a public request to a Domits standalone site. Actors: Guest Browser, Public Renderer, Site Resolve API, standalone_site_domain table, standalone_site table, Public Site Render API, standalone_site_content table, standalone_site_theme table. Flow: request arrives with host, resolve host to site, validate site status, load standalone site config, load published property snapshot, return render model. Include failure branches for unknown host and suspended site.
 
 ### Quote sequence prompt
-Create a sequence diagram for the v1 guest quote flow on a Domits standalone site. Actors: Guest Browser, Public Renderer, Quote API, Site Config Store, PMS Availability Service, PMS Pricing Service, Analytics Event Store. Flow: guest selects dates/guests, renderer sends quote request, server resolves site and property, checks availability window and restrictions, computes authoritative price server-side, returns quote with expiry and breakdown, stores analytics event. Include conflict branch for unavailable dates.
+Create a sequence diagram for the v1 guest quote flow on a Domits standalone site. Actors: Guest Browser, Public Renderer, Quote API, Site Config Store, PMS Availability Service, PMS Pricing Service, Analytics Event Store. Flow: guest selects dates/guests, renderer sends quote request, server resolves site and property linkage, checks availability window and restrictions live against PMS, computes authoritative price server-side, returns quote with expiry and breakdown, stores analytics event. Make clear that descriptive page content is already baked into standalone-owned published content and is not fetched from PMS in this flow.
 
 ### V2 checkout and confirmation prompt
 Create a sequence diagram for the v2 extension of Domits standalone property sites: checkout, booking creation, and confirmation. Actors: Guest Browser, Checkout API, Quote Validator, PMS Availability/Pricing Service, Payment Service, Booking API, Booking Service, Confirmation API, Analytics Event Store. Show quote revalidation before booking creation, idempotency key handling, booking source attribution as STANDALONE_SITE, confirmation token usage, and failure branch when quote becomes stale.
@@ -1343,11 +1368,11 @@ Create a failure-mode table for Domits standalone property sites. Include: custo
 - v1 is the foundation release, intentionally kept small
 - v1 includes property detail, publish flow, fallback domain, and server-side availability and quote
 - booking funnel, booking creation, and public confirmation move to v2
-- PMS-owned content is read live after publish
+- PMS-owned descriptive content is imported into standalone-owned published snapshots at publish or refresh time
 - fallback subdomains are in v1; custom domains are later
 - first-party event collection is the KPI source
 - one standalone site per property in v1
 - preview is tokenized and private
-- one primary language per site is supported in v1; full multilingual support is later
+- English is the only supported primary site language in v1; full multilingual support is later
 - implementation tooling stays aligned with the current Domits stack
 - property timezone is authoritative for quote behavior in v1 and booking behavior in v2
