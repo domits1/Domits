@@ -2,6 +2,8 @@
 node_modules/
 package-lock.json
 
+# Mac system files
+.DS_Store
 
 # Don't add .env (secret key) files:
 .env
