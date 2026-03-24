@@ -373,6 +373,23 @@ const HostPropertyCare = () => {
         }
     };
 
+    const confirmDeleteTask = async (taskId) => {
+        setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, isLegacy: true } : t
+        ));
+        setViewingTask(null);
+        setEditedTask(null);
+        closeConfirmDialog();
+
+        try {
+            await deleteTask(taskId);
+        } catch {
+            setTasks(prev => prev.map(t =>
+                t.id === taskId ? { ...t, isLegacy: false } : t
+            ));
+        }
+    };
+
     const handleDeleteSingleTask = () => {
         setConfirmDialog({
             isOpen: true,
@@ -380,23 +397,7 @@ const HostPropertyCare = () => {
             message: `Are you sure you want to delete "${viewingTask.title}"? It will be moved to your Legacy Tasks list.`,
             confirmText: 'Yes, Delete',
             cancelText: 'Cancel',
-            onConfirm: async () => {
-                const taskId = viewingTask.id;
-                setTasks(tasks.map(t =>
-                    t.id === taskId ? { ...t, isLegacy: true } : t
-                ));
-                setViewingTask(null);
-                setEditedTask(null);
-                closeConfirmDialog();
-
-                try {
-                    await deleteTask(taskId);
-                } catch {
-                    setTasks(prev => prev.map(t =>
-                        t.id === taskId ? { ...t, isLegacy: false } : t
-                    ));
-                }
-            }
+            onConfirm: () => confirmDeleteTask(viewingTask.id),
         });
     };
 
