@@ -41,7 +41,7 @@ function PropertyDescriptionView() {
 
   useEffect(() => {
     if (flowKey === "accommodation") {
-      navigate("/hostonboarding/accommodation/pricing", { replace: true });
+      navigate("/hostdashboard/hostonboarding/accommodation/pricing", { replace: true });
     }
   }, [flowKey, navigate]);
 
@@ -67,7 +67,7 @@ function PropertyDescriptionView() {
         />
         <nav className="onboarding-button-box">
           <OnboardingButton
-            routePath={prevPath || `/hostonboarding/${type}/title`}
+            routePath={prevPath || `/hostdashboard/hostonboarding/${type}/title`}
             btnText="Go back"
           />
           <OnboardingButton
@@ -86,7 +86,7 @@ function PropertyDescriptionView() {
               }
               console.log("Builder state:", builder);
             }}
-            routePath={nextPath || `/hostonboarding/${type}/pricing`}
+            routePath={nextPath || `/hostdashboard/hostonboarding/${type}/pricing`}
             btnText="Proceed"
           />
         </nav>
