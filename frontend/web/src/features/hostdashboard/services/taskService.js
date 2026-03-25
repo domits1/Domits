@@ -1,7 +1,5 @@
 import { getAccessToken } from "../../../services/getAccessToken";
 
-// TODO: Replace with the actual API Gateway URL after first deployment.
-// Find it in AWS Console → API Gateway → APIs → property-tasks → Stages → Invoke URL.
 const TASKS_API_URL = "https://mzubqhvg7j.execute-api.eu-north-1.amazonaws.com/default";
 
 const getHeaders = () => ({
