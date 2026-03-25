@@ -19,19 +19,21 @@ import { resolveAccommodationImageUrls } from "../../utils/accommodationImage";
 import { getListingPricingBreakdown } from "../../features/bookingengine/listingdetails/utils/pricing";
 
 const EURO_SYMBOL = "\u20AC";
-const formatEuroAmount = (value) => `${EURO_SYMBOL}${Number(value || 0).toFixed(2)}`;
+const formatEuroAmount = (value) =>
+  `${EURO_SYMBOL}${Number(value || 0).toFixed(2)}`;
 
 const AccommodationCard = ({ accommodation = null, onClick }) => {
   const [liked, setLiked] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  // Check if this accommodation is already liked
   useEffect(() => {
     const checkIfLiked = async () => {
       const token = getAccessToken();
       if (!token) return;
-      const accommodationId = accommodation.property?.id;
+
+      const accommodationId = accommodation?.property?.id;
+
       try {
         const isLiked = await isPropertyInAnyWishlist(accommodationId);
         setLiked(isLiked);
@@ -39,20 +41,23 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
         setLiked(false);
       }
     };
+
     checkIfLiked();
   }, [accommodation]);
 
-  // Like/unlike functionality
   const handleLike = async (e) => {
     e.stopPropagation();
+
     const token = getAccessToken();
     if (!token) return;
-    const accommodationId = accommodation.property?.id;
+
+    const accommodationId = accommodation?.property?.id;
     const method = liked ? "DELETE" : "POST";
+
     try {
       await updateWishlistItem(accommodationId, method);
       setLiked(!liked);
-      //  Only show popup when liking (POST) 
+
       if (method === "POST") {
         setShowPopup(true);
       }
@@ -66,30 +71,91 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
     setShowShareModal(true);
   };
 
+  const handleCardClick = () => {
+    onClick(undefined, accommodation?.property?.id);
+  };
+
   if (!accommodation) {
     return <div>No accommodation data available.</div>;
   }
 
-  const shareUrl = `${globalThis.location.origin}/listingdetails?ID=${encodeURIComponent(accommodation.property?.id)}`;
+  const propertyId = accommodation?.property?.id;
+  const propertyTitle = accommodation?.property?.title || "Accommodation";
+
+  const shareUrl = `${globalThis.location.origin}/listingdetails?ID=${encodeURIComponent(
+    propertyId
+  )}`;
 
   const cardImages = resolveAccommodationImageUrls(
     accommodation.propertyImages,
     "thumb"
   );
+
   const { nightlyDisplayPrice } = getListingPricingBreakdown(
     accommodation.propertyPricing,
     1
   );
 
   return (
-    <div
-      className="accocard"
-      key={accommodation.property?.id}
-      onClick={(e) => onClick(e, accommodation.property?.id)}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(e, accommodation.property?.id); }}
-      role="button"
-      tabIndex={0}
-    >
+    <div className="accocard-wrapper" key={propertyId}>
+      <button
+        type="button"
+        className="accocard"
+        onClick={handleCardClick}
+        aria-label={`View property ${propertyTitle}`}
+      >
+        <Swiper
+          spaceBetween={30}
+          effect="fade"
+          navigation={true}
+          pagination={{ clickable: true }}
+          loop={true}
+          modules={[EffectFade, Navigation, Pagination]}
+          className="mySwiper"
+        >
+          {cardImages.map((imgSrc, index) => (
+            <SwiperSlide key={imgSrc}>
+              <img
+                src={imgSrc}
+                alt={`${propertyTitle} ${index + 1}`}
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+
+        <div className="accocard-content">
+          <div className="accocard-title">
+            {accommodation.property?.title || "No title available"}
+          </div>
+
+          <div className="accocard-price">
+            {formatEuroAmount(nightlyDisplayPrice)} per night
+          </div>
+
+          <div className="accocard-detail">
+            {accommodation.property?.description || "No description available"}
+          </div>
+
+          <div className="accocard-specs">
+            <BedOutlinedIcon />
+            <div>
+              {accommodation.propertyGeneralDetails?.find(
+                (item) => item.detail === "Bedrooms"
+              )?.value || 0}{" "}
+              Bedroom(s)
+            </div>
+
+            <PeopleOutlinedIcon />
+            <div>
+              {accommodation.propertyGeneralDetails?.find(
+                (item) => item.detail === "Guests"
+              )?.value || 0}{" "}
+              Guest(s)
+            </div>
+          </div>
+        </div>
+      </button>
+
       <button
         type="button"
         className="accocard-share-button"
@@ -98,7 +164,13 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
       >
         <IosShareIcon />
       </button>
-      <button className="accocard-like-button" onClick={handleLike}>
+
+      <button
+        type="button"
+        className="accocard-like-button"
+        onClick={handleLike}
+        aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
+      >
         {liked ? (
           <FavoriteIcon sx={{ color: "#ec5050" }} />
         ) : (
@@ -106,10 +178,9 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
         )}
       </button>
 
-{/* Wishlist popup appears over the card */}
       {showPopup && (
         <WishlistChoice
-          propertyId={accommodation.property?.id}
+          propertyId={propertyId}
           activeList="My next trip"
           show={showPopup}
           onClose={() => setShowPopup(false)}
@@ -123,51 +194,6 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
           onClose={() => setShowShareModal(false)}
         />
       )}
-      <Swiper
-        spaceBetween={30}
-        effect="fade"
-        navigation={true}
-        pagination={{ clickable: true }}
-        loop={true}
-        modules={[EffectFade, Navigation, Pagination]}
-        className="mySwiper"
-      >
-        {cardImages.map((imgSrc, index) => (
-          <SwiperSlide key={imgSrc}>
-            <img
-              src={imgSrc}
-              alt={`${accommodation.property?.title || "Accommodation"} ${index + 1}`}
-            />
-          </SwiperSlide>
-        ))}
-      </Swiper>
-      <div className="accocard-content">
-        <div className="accocard-title">
-          {accommodation.property?.title || "No title available"}
-        </div>
-        <div className="accocard-price">
-          {formatEuroAmount(nightlyDisplayPrice)} per night
-        </div>
-        <div className="accocard-detail">
-          {accommodation.property?.description || "No description available"}
-        </div>
-        <div className="accocard-specs">
-          <BedOutlinedIcon />
-          <div>
-            {accommodation.propertyGeneralDetails?.find(
-              (item) => item.detail === "Bedrooms"
-            )?.value || 0}{" "}
-            Bedroom(s)
-          </div>
-          <PeopleOutlinedIcon />
-          <div>
-            {accommodation.propertyGeneralDetails?.find(
-              (item) => item.detail === "Guests"
-            )?.value || 0}{" "}
-            Guest(s)
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

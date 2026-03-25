@@ -1,16 +1,14 @@
-.accocard {
+.accocard-wrapper {
   width: 100%;
   max-width: 450px;
   margin: 1% auto 10px;
-  background: #fff;
-  overflow: hidden;
   display: inline-block;
   vertical-align: top;
   position: relative;
   z-index: 1;
   transition:
-    transform 0.5s ease-in-out,
-    opacity 0.5s ease-in-out;
+          transform 0.5s ease-in-out,
+          opacity 0.5s ease-in-out;
 
   @media (max-width: 1292px) {
     display: block;
@@ -40,6 +38,32 @@
   }
 }
 
+.accocard {
+  width: 100%;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  border: none;
+  padding: 0;
+  text-align: left;
+  display: block;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  color: inherit;
+}
+
+.accocard:focus {
+  outline: none;
+}
+
+.accocard:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 4px;
+  border-radius: 15px;
+}
+
 .accocard-share-button,
 .accocard-like-button {
   position: absolute;
@@ -58,13 +82,25 @@
   opacity: 0;
   transform: scale(0.95);
   transition:
-    opacity 0.4s ease-in-out,
-    transform 0.4s ease-in-out;
+          opacity 0.4s ease-in-out,
+          transform 0.4s ease-in-out;
+}
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.9);
-    transform: scale(1.1);
-  }
+.accocard-share-button:hover,
+.accocard-like-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
+
+.accocard-share-button:focus,
+.accocard-like-button:focus {
+  outline: none;
+}
+
+.accocard-share-button:focus-visible,
+.accocard-like-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .accocard-share-button {
@@ -289,7 +325,7 @@
     gap: 14px;
   }
 
-  .accocard {
+  .accocard-wrapper {
     max-width: 100%;
     margin: 0 auto 14px;
   }
