@@ -61,7 +61,7 @@ const ListingCancellationPolicy = ({ policyId = "flexible" }) => {
             <h4 className="policy-details-title">If your guest cancels:</h4>
             <ul className="policy-rules-list">
               {policy.rules.map((rule, index) => (
-                <li key={index}>{rule}</li>
+                <li key={`${rule}-${index}`}>{rule}</li>
               ))}
             </ul>
             {policy.important && (
