@@ -2,7 +2,7 @@ import { getAccessToken } from "../../../services/getAccessToken";
 
 // TODO: Replace with the actual API Gateway URL after first deployment.
 // Find it in AWS Console → API Gateway → APIs → property-tasks → Stages → Invoke URL.
-const TASKS_API_URL = "https://PLACEHOLDER.execute-api.eu-north-1.amazonaws.com/default/property-tasks";
+const TASKS_API_URL = "https://mzubqhvg7j.execute-api.eu-north-1.amazonaws.com/default";
 
 const getHeaders = () => ({
     "Content-Type": "application/json",
@@ -19,7 +19,6 @@ const toDateString = (timestamp) => {
     return new Date(Number(timestamp)).toISOString().split("T")[0];
 };
 
-// Maps backend field names to frontend field names used throughout the component.
 const normalizeTask = (task) => ({
     ...task,
     property: task.property_snapshot_label || "",
@@ -28,9 +27,6 @@ const normalizeTask = (task) => ({
     isLegacy: task.is_legacy,
 });
 
-// Maps frontend field names to the flat format the backend expects.
-// Only includes fields that are explicitly present in taskData, so partial PATCH
-// updates don't accidentally overwrite unrelated fields with null/undefined.
 const toBackendPayload = (taskData) => {
     const payload = {};
     if (taskData.title !== undefined) payload.title = taskData.title;
