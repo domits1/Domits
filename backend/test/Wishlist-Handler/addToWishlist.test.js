@@ -1,5 +1,6 @@
 import { WishlistService } from "../../functions/Wishlist-Handler/business/service/wishlistService.js";
 import { DatabaseException } from "../../functions/Wishlist-Handler/util/exception/DatabaseException.js";
+import { TypeException } from "../../functions/Wishlist-Handler/util/exception/TypeException.js";
 
 
 const mockPut = jest.fn();
@@ -15,7 +16,7 @@ describe("WishlistService - addToWishlist", () => {
   let service;
 
   beforeEach(() => {
-    service = new WishlistService(); 
+    service = new WishlistService();
   });
 
   afterEach(() => {
@@ -39,13 +40,13 @@ describe("WishlistService - addToWishlist", () => {
   test(" should throw if propertyId is missing", async () => {
     await expect(service.addToWishlist({ guestId: "guest123", wishlistName: "Favorites" }))
       .rejects
-      .toThrow(DatabaseException);
+      .toThrow(TypeException);
   });
 
   test(" should throw if wishlistName is missing", async () => {
     await expect(service.addToWishlist({ guestId: "guest123", propertyId: "prop001" }))
       .rejects
-      .toThrow(DatabaseException);
+      .toThrow(TypeException);
   });
 
   test(" should throw if put fails", async () => {
