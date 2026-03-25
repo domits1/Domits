@@ -188,7 +188,7 @@ const BookingOverview = () => {
 
       {showShareModal && (
         <ShareModal
-          url={`${window.location.origin}/listingdetails?ID=${propertyId}`}
+          url={`${globalThis.location.origin}/listingdetails?ID=${propertyId}`}
           title={pricingObject?.title}
           onClose={() => setShowShareModal(false)}
         />
