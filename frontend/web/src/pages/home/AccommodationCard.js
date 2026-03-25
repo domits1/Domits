@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { EffectFade, Navigation, Pagination } from "swiper/modules";
 import IosShareIcon from "@mui/icons-material/IosShare";
+import ShareModal from "../../features/bookingengine/components/ShareModal";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
@@ -23,6 +24,9 @@ const formatEuroAmount = (value) => `${EURO_SYMBOL}${Number(value || 0).toFixed(
 const AccommodationCard = ({ accommodation = null, onClick }) => {
   const [liked, setLiked] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  const shareUrl = `${window.location.origin}/listingdetails?ID=${encodeURIComponent(accommodation?.property?.id)}`;
 
   // Check if this accommodation is already liked
   useEffect(() => {
@@ -59,15 +63,9 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
     }
   };
 
-  const handleShare = (e, ID) => {
+  const handleShare = (e) => {
     e.stopPropagation();
-    const shareURL = `${window.location.origin}/listingdetails?ID=${encodeURIComponent(
-      ID
-    )}`;
-    navigator.clipboard
-      .writeText(shareURL)
-      .then(() => alert("Gekopieerd URL: " + shareURL))
-      .catch((error) => console.error("Kon de URL niet kopiëren:", error));
+    setShowShareModal(true);
   };
 
   if (!accommodation) {
@@ -91,7 +89,7 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
     >
       <button
         className="accocard-share-button"
-        onClick={(e) => handleShare(e, accommodation.property?.id)}
+        onClick={handleShare}
       >
         <IosShareIcon />
       </button>
@@ -103,13 +101,21 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
         )}
       </button>
 
-{/* Wishlist popup appears over the card */} 
+{/* Wishlist popup appears over the card */}
       {showPopup && (
         <WishlistChoice
           propertyId={accommodation.property?.id}
           activeList="My next trip"
           show={showPopup}
           onClose={() => setShowPopup(false)}
+        />
+      )}
+
+      {showShareModal && (
+        <ShareModal
+          url={shareUrl}
+          title={accommodation.property?.title}
+          onClose={() => setShowShareModal(false)}
         />
       )}
       <Swiper
