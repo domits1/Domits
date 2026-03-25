@@ -30,6 +30,8 @@ import { Property_Type } from "../../models/Property_Type.js";
 import { Stripe_Connected_Accounts } from "../../models/Stripe_Connected_Accounts.js";
 import { UnifiedThread } from "../../models/UnifiedThread.js";
 import { UnifiedMessage } from "../../models/UnifiedMessage.js"; 
+import { PropertyTask } from "../../models/Property_Task.js";
+import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 
 export const Tables = [
@@ -65,5 +67,7 @@ export const Tables = [
   UnifiedThread,
   UnifiedMessage,
   User_Table,
+  PropertyTask,
+  Property_Task_Activity,
   Kpi_Snapshot,
 ];

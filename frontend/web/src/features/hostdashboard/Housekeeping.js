@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
-import { createTask, fetchTasks } from './services/faketaskService';
+import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
 
 const DEFAULT_FILTERS = {
@@ -16,6 +16,7 @@ const DEFAULT_NEW_TASK = {
     title: '',
     description: '',
     property: '',
+    property_id: '',
     bookingRef: '',
     type: 'Cleaning',
     assignee: '',
@@ -131,7 +132,8 @@ const HostPropertyCare = () => {
     const [stats, setStats] = useState({ total: 0, overdue: 0, overdueIncrease: 0, inProgress: 0, completedToday: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [hostPropertyOptions, setHostPropertyOptions] = useState([]);
+    const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [newTask, setNewTask] = useState({ ...DEFAULT_NEW_TASK });
 
@@ -143,23 +145,38 @@ const HostPropertyCare = () => {
     const [confirmDialog, setConfirmDialog] = useState({
         isOpen: false, title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', onConfirm: null
     });
-    const handleToggleComplete = (task) => {
+
+    const CURRENT_USER = 'Sophie Janssen';
+
+    const [propertyOptions, setPropertyOptions] = useState([]);
+
+    useEffect(() => {
+        fetchHostTaskPropertyOptions().then(setPropertyOptions);
+    }, []);
+    
+    const handleToggleComplete = async (task) => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const todayStr = getTodayString(); 
-        
+        const todayStr = new Date().toISOString().split('T')[0];
+
         const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
-        
+
         const updatedTask = {
             ...task,
             status: newStatus,
-            completedAt: newStatus === 'Completed' ? todayStr : null, 
+            completedAt: newStatus === 'Completed' ? todayStr : null,
             activities: [
                 ...(task.activities || []),
                 { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
             ]
         };
-        
+
         setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
+
+        try {
+            await updateTask(task.id, { status: newStatus });
+        } catch {
+            setTasks(tasks.map(t => t.id === task.id ? task : t));
+        }
     };
 
     useEffect(() => {
@@ -167,24 +184,8 @@ const HostPropertyCare = () => {
     }, []);
 
     useEffect(() => {
-        let mounted = true;
-
-        const loadHostProperties = async () => {
-            const options = await fetchHostTaskPropertyOptions();
-
-            if (!mounted) {
-                return;
-            }
-
-            setHostPropertyOptions(Array.isArray(options) ? options : []);
-        };
-
-        loadHostProperties();
-
-        return () => {
-            mounted = false;
-        };
-    }, []);
+        setCurrentPage(1);
+    }, [filters, sortConfig, activeTab]);
 
     useEffect(() => {
         const today = new Date();
@@ -208,8 +209,14 @@ const HostPropertyCare = () => {
     const loadData = async () => {
         setIsLoading(true);
         const data = await fetchTasks();
-        const todayStr = getTodayString();
-        const processedTasks = data.map((task) => normalizeTaskStatus(task, todayStr));
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        const processedTasks = data.map(task => {
+            if (task.dueDate && task.dueDate < todayStr && task.status !== 'Completed' && task.status !== 'Cancelled') {
+                return { ...task, status: 'Overdue', priority: 'Urgent' };
+            }
+            return task;
+        });
 
         setTasks(processedTasks);
         setIsLoading(false);
@@ -231,20 +238,43 @@ const HostPropertyCare = () => {
                 }]
             }; 
             
-            const todayStr = getTodayString();
-            let created = normalizeTaskStatus(await createTask(taskPayload), todayStr);
+            let created = await createTask(taskPayload);
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (created.dueDate && created.dueDate < todayStr && created.status !== 'Completed' && created.status !== 'Cancelled') {
+                created = { ...created, status: 'Overdue', priority: 'Urgent' };
+            }
 
             setTasks([created, ...tasks]);
             setIsModalOpen(false);
             resetForm();
         } catch {
             alert("Error creating task");
+            console.error("Error creating task:", error);
         };
     }
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewTask(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handlePropertyChange = (e) => {
+        const selected = createPropertyOptions.find(o => o.id === e.target.value);
+        setNewTask(prev => ({
+            ...prev,
+            property_id: selected?.id || '',
+            property: selected?.label || '',
+        }));
+    };
+
+    const handleEditPropertyChange = (e) => {
+        const selected = editPropertyOptions.find(o => o.id === e.target.value);
+        setEditedTask(prev => ({
+            ...prev,
+            property_id: selected?.id || prev.property_id,
+            property: selected?.label || '',
+        }));
     };
 
     const resetForm = () => {
@@ -303,7 +333,7 @@ const HostPropertyCare = () => {
         }
     };
 
-    const handleSaveChanges = () => {
+    const handleSaveChanges = async () => {
         const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         const newLogs = [];
 
@@ -335,6 +365,29 @@ const HostPropertyCare = () => {
         setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
         setViewingTask(null);
         setEditedTask(null);
+
+        try {
+            await updateTask(updatedTask.id, updatedTask);
+        } catch {
+            setTasks(tasks.map(t => t.id === viewingTask.id ? viewingTask : t));
+        }
+    };
+
+    const confirmDeleteTask = async (taskId) => {
+        setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, isLegacy: true } : t
+        ));
+        setViewingTask(null);
+        setEditedTask(null);
+        closeConfirmDialog();
+
+        try {
+            await deleteTask(taskId);
+        } catch {
+            setTasks(prev => prev.map(t =>
+                t.id === taskId ? { ...t, isLegacy: false } : t
+            ));
+        }
     };
 
     const handleDeleteSingleTask = () => {
@@ -344,15 +397,7 @@ const HostPropertyCare = () => {
             message: `Are you sure you want to delete "${viewingTask.title}"? It will be moved to your Legacy Tasks list.`,
             confirmText: 'Yes, Delete',
             cancelText: 'Cancel',
-            onConfirm: async () => {
-                
-                setTasks(tasks.map(t => 
-                    t.id === viewingTask.id ? { ...t, isLegacy: true } : t
-                ));
-                setViewingTask(null);
-                setEditedTask(null);
-                closeConfirmDialog();
-            }
+            onConfirm: () => confirmDeleteTask(viewingTask.id),
         });
     };
 
@@ -364,6 +409,21 @@ const HostPropertyCare = () => {
     const handleClearFilters = () => {
         setFilters({ ...DEFAULT_FILTERS });
     };
+    const renderCommonFilters = () => (
+        <>
+            <select name="property" value={filters.property} onChange={handleFilterChange}>
+                <option value="All properties">All properties</option>
+                {filterPropertyOptions.map(label => (
+                    <option key={label} value={label}>{label}</option>
+                ))}
+            </select>
+            <select name="status" value={filters.status} onChange={handleFilterChange}>
+                <option value="All statuses">All statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="In progress">In progress</option>
+            </select>
+        </>
+    );
 
     const getFilteredTasks = () => {
         return tasks.filter((task) => matchesTaskFilters(task, filters, {
@@ -376,104 +436,84 @@ const HostPropertyCare = () => {
     };
 
     const filteredTasks = getFilteredTasks();
+
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const getSortedTasks = (tasksToSort) => {
+        return [...tasksToSort].sort((a, b) => {
+            const modifier = sortConfig.direction === 'asc' ? 1 : -1;
+
+            if (sortConfig.key === 'priority') {
+                const priorityValues = { 'Urgent': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+                const aVal = priorityValues[a.priority] || 0;
+                const bVal = priorityValues[b.priority] || 0;
+                return (aVal - bVal) * modifier;
+            }
+            if (sortConfig.key === 'dueDate') {
+                const aDate = a.dueDate ? new Date(a.dueDate).getTime() : new Date('9999-12-31').getTime();
+                const bDate = b.dueDate ? new Date(b.dueDate).getTime() : new Date('9999-12-31').getTime();
+                return (aDate - bDate) * modifier;
+            }
+            const aStr = (a[sortConfig.key] || '').toString().toLowerCase();
+            const bStr = (b[sortConfig.key] || '').toString().toLowerCase();
+            
+            if (aStr < bStr) return -1 * modifier;
+            if (aStr > bStr) return 1 * modifier;
+            return 0;
+        });
+    };
+
+    const displayedTasks = getSortedTasks(filteredTasks);
     const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
     const filterPropertyOptions = useMemo(() => {
-        const optionSet = new Set();
-
-        hostPropertyOptions.forEach((option) => {
-            const normalizedOption = String(option || "").trim();
-            if (normalizedOption) {
-                optionSet.add(normalizedOption);
-            }
-        });
+        const labelSet = new Set(propertyOptions.map(o => o.label));
 
         tasks.forEach((task) => {
             const normalizedProperty = String(task?.property || "").trim();
             if (normalizedProperty) {
-                optionSet.add(normalizedProperty);
+                labelSet.add(normalizedProperty);
             }
         });
 
         [newTask.property, editedTask?.property].forEach((value) => {
             const normalizedValue = String(value || "").trim();
             if (normalizedValue) {
-                optionSet.add(normalizedValue);
+                labelSet.add(normalizedValue);
             }
         });
 
-        return [...optionSet];
-    }, [editedTask?.property, hostPropertyOptions, newTask.property, tasks]);
-    const createPropertyOptions = useMemo(() => {
-        return hostPropertyOptions
-            .map((option) => String(option || "").trim())
-            .filter(Boolean);
-    }, [hostPropertyOptions]);
+        return [...labelSet];
+    }, [editedTask?.property, propertyOptions, newTask.property, tasks]);
+
+    const createPropertyOptions = useMemo(() => propertyOptions, [propertyOptions]);
+
     const editPropertyOptions = useMemo(() => {
-        const optionSet = new Set(createPropertyOptions);
-        const currentEditedProperty = String(editedTask?.property || "").trim();
-        if (currentEditedProperty) {
-            optionSet.add(currentEditedProperty);
+        const currentLabel = String(editedTask?.property || "").trim();
+        if (currentLabel && !propertyOptions.some(o => o.label === currentLabel)) {
+            return [...propertyOptions, { id: editedTask?.property_id || "", label: currentLabel }];
         }
-        return [...optionSet];
-    }, [createPropertyOptions, editedTask?.property]);
+        return propertyOptions;
+    }, [propertyOptions, editedTask?.property, editedTask?.property_id]);
 
-    const renderTaskSearchBox = (compactSearch = false) => (
-        <div className={`search-box${compactSearch ? ' small-search' : ''}`}>
-            <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
-            {compactSearch ? (
-                <span aria-hidden="true">🔍</span>
-            ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-            )}
-        </div>
-    );
+    const ITEMS_PER_PAGE = 10;
+    const totalPages = Math.ceil(displayedTasks.length / ITEMS_PER_PAGE) || 1;
 
-    const renderFilterControls = ({
-        className,
-        showAssignee = false,
-        showDate = false,
-        compactSearch = false,
-        priorityOptions,
-    }) => (
-        <div className={className}>
-            <select name="property" value={filters.property} onChange={handleFilterChange}>
-                <option value={DEFAULT_FILTERS.property}>All properties</option>
-                {filterPropertyOptions.map((propertyOption) => (
-                    <option key={propertyOption} value={propertyOption}>{propertyOption}</option>
-                ))}
-            </select>
-            <select name="status" value={filters.status} onChange={handleFilterChange}>
-                <option value={DEFAULT_FILTERS.status}>All statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="In progress">In progress</option>
-            </select>
-            {showAssignee && (
-                <select name="assignee" value={filters.assignee} onChange={handleFilterChange}>
-                    <option value={DEFAULT_FILTERS.assignee}>Anyone</option>
-                    <option value="Sophie Janssen">Sophie Janssen</option>
-                    <option value="Jan de Vries">Jan de Vries</option>
-                    <option value="Lisa Meijer">Lisa Meijer</option>
-                </select>
-            )}
-            {showDate && (
-                <select name="date" value={filters.date} onChange={handleFilterChange}>
-                    <option value={DEFAULT_FILTERS.date}>Any date</option>
-                    <option value="Today">Today</option>
-                    <option value="This Week">This Week</option>
-                </select>
-            )}
-            <select name="priority" value={filters.priority} onChange={handleFilterChange}>
-                <option value={DEFAULT_FILTERS.priority}>Any priority</option>
-                {priorityOptions.map((priorityOption) => (
-                    <option key={priorityOption} value={priorityOption}>{priorityOption}</option>
-                ))}
-            </select>
-            {renderTaskSearchBox(compactSearch)}
-        </div>
-    );
+    let paginatedTasks = [];
+    if (activeTab === 'Overview') {
+        paginatedTasks = displayedTasks.slice(0, ITEMS_PER_PAGE);
+    } else {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        paginatedTasks = displayedTasks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }
+
+    const handlePrevPage = () => setCurrentPage(p => Math.max(p - 1, 1));
+    const handleNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
 
     const renderContent = () => {
         if (isLoading) return <div className="loading">Loading...</div>;
@@ -493,16 +533,21 @@ const HostPropertyCare = () => {
         }
     };
     const renderMyTasksView = () => {
-        const todayStr = getTodayString();
+        const todayStr = new Date().toISOString().split('T')[0];
 
         let myTasks = tasks.filter(t => t.assignee === CURRENT_USER && !t.isLegacy);
 
-        myTasks = myTasks.filter((task) => matchesTaskFilters(task, filters, {
-            searchFields: ['title'],
-        }));
+        myTasks = myTasks.filter(task => {
+            const matchProperty = filters.property === 'All properties' || task.property === filters.property;
+            const matchStatus = filters.status === 'All statuses' || task.status === filters.status;
+            const matchPriority = filters.priority === 'Any priority' || task.priority === filters.priority;
+            const searchLower = filters.search.toLowerCase();
+            const matchSearch = filters.search === '' || (task.title?.toLowerCase().includes(searchLower));
+            return matchProperty && matchStatus && matchPriority && matchSearch;
+        });
 
         const todayTasks = myTasks.filter(t => t.dueDate === todayStr && t.status !== 'Overdue');
-        const overdueTasks = myTasks.filter(t => t.status === 'Overdue' || isTaskOverdue(t, todayStr));
+        const overdueTasks = myTasks.filter(t => t.status === 'Overdue' || (t.dueDate && t.dueDate < todayStr && t.status !== 'Completed'));
         
         const upcomingTasks = myTasks.filter(t => t.dueDate && t.dueDate > todayStr)
             .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
@@ -573,11 +618,19 @@ const HostPropertyCare = () => {
                             <h3>Today's Tasks</h3>
                             <span className="task-count">{todayTasks.length} Tasks</span>
                         </div>
-                        {renderFilterControls({
-                            className: 'my-tasks-filters',
-                            compactSearch: true,
-                            priorityOptions: ['Urgent', 'Medium', 'Low'],
-                        })}
+                        <div className="my-tasks-filters">
+                            {renderCommonFilters()}
+                            <select name="priority" value={filters.priority} onChange={handleFilterChange}>
+                                <option value="Any priority">Any priority</option>
+                                <option value="Urgent">Urgent</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            <div className="search-box small-search">
+                                <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
+                                <span aria-hidden="true">🔍</span>
+                            </div>
+                        </div>
                     </div>
                     <div className="my-task-list">
                         {todayTasks.length > 0 ? todayTasks.map(t => renderTaskRow(t)) : <p className="empty-state">No tasks for today! 🎉</p>}
@@ -606,15 +659,36 @@ const HostPropertyCare = () => {
             </div>
         );
     };
+    const getSortIcon = (columnKey, defaultIcon = '') => {
+        if (sortConfig.key !== columnKey) return defaultIcon;
+        return sortConfig.direction === 'asc' ? '▴' : '▾';
+    };
+
+    const renderPagination = () => (
+        <div className="pagination">
+            <button onClick={handlePrevPage} disabled={currentPage === 1}>Previous</button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button onClick={handleNextPage} disabled={currentPage === totalPages}>Next</button>
+        </div>
+    );
+
     const renderTableView = () => (
         <div className="overview-container">
             <div className="filters-bar">
-                {renderFilterControls({
-                    className: 'filters-dropdowns',
-                    showAssignee: true,
-                    showDate: true,
-                    priorityOptions: ['Urgent', 'High', 'Medium', 'Low'],
-                })}
+                <div className="filters-dropdowns">
+                    {renderCommonFilters()}
+                    <select name="priority" value={filters.priority} onChange={handleFilterChange}>
+                        <option value="Any priority">Any priority</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                    <div className="search-box small-search">
+                        <input type="text" name="search" value={filters.search} onChange={handleFilterChange} placeholder="Search tasks" />
+                        <span aria-hidden="true">🔍</span>
+                    </div>
+                </div>
 
                 <div className="active-filters-row">
                     <div className="status-tags">
@@ -632,24 +706,43 @@ const HostPropertyCare = () => {
                 <table className="tasks-table">
                     <thead>
                         <tr>
-                            <th>Task</th>
-                            <th>Property ▾</th>
-                            <th>Type</th>
-                            <th>Assignee</th>
-                            <th>Due Date ▾</th>
-                            <th>Priority ▾</th>
-                            <th>Status ▾</th>
+                            <th onClick={() => handleSort('title')} className="sortable-header">
+                                Task {getSortIcon('title', '')}
+                            </th>
+                            <th onClick={() => handleSort('property')} className="sortable-header">
+                                Property {getSortIcon('property', '▾')}
+                            </th>
+                            <th onClick={() => handleSort('type')} className="sortable-header">
+                                Type {getSortIcon('type', '')}
+                            </th>
+                            <th onClick={() => handleSort('assignee')} className="sortable-header">
+                                Assignee {getSortIcon('assignee', '')}
+                            </th>
+                            <th onClick={() => handleSort('dueDate')} className="sortable-header">
+                                Due Date {getSortIcon('dueDate', '▾')}
+                            </th>
+                            <th onClick={() => handleSort('priority')} className="sortable-header">
+                                Priority {getSortIcon('priority', '▾')}
+                            </th>
+                            <th onClick={() => handleSort('status')} className="sortable-header">
+                                Status {getSortIcon('status', '▾')}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredTasks.length === 0 ? (
+                        {displayedTasks.length === 0 ? (
                             <tr>
-                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#6c757d'}}>
+                                <td colSpan="7" style={{textAlign: 'center', padding: '30px', color: '#495057'}}>
                                     No tasks match your filters (or all are completed/deleted).
                                 </td>
                             </tr>
                         ) : (
-                            filteredTasks.map(task => (
+                            paginatedTasks.map(task => {
+                                const isOverdue = task.status === 'Overdue';
+                                const displayPriority = isOverdue ? 'Urgent' : (task.priority || 'Low');
+                                const displayStatus = isOverdue ? 'Overdue' : task.status;
+
+                                return (
                                 <tr key={task.id} className={`clickable-row row-${task.status.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
                                     <td>
                                         <div className="task-title-cell" title={task.title}>
@@ -662,22 +755,23 @@ const HostPropertyCare = () => {
                                     <td>{task.property}</td>
                                     <td>{task.type}</td>
                                     <td>{task.assignee}</td>
-                                    <td>{task.dueDate || 'Today'}</td>
+                                    <td>{task.dueDate === new Date().toISOString().split('T')[0] ? 'Today' : task.dueDate}</td>
                                     <td>
-                                        <span className={`badge-priority ${task.priority ? task.priority.toLowerCase() : 'medium'}`}>
-                                            {task.priority || 'Medium'}
+                                        <span className={`badge-priority ${displayPriority.toLowerCase()}`}>
+                                            {displayPriority}
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`badge-status ${task.status.toLowerCase().replace(' ', '-')}`}>
-                                            ● {task.status}
+                                        <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
+                                            ● {displayStatus}
                                         </span>
                                     </td>
                                 </tr>
-                            ))
+                            )})
                         )}
                     </tbody>
                 </table>
+                {renderPagination()}
             </div>
         </div>
     );
@@ -763,12 +857,10 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-property'>Property</label>
-                                <select id='task-property' name="property" value={newTask.property} onChange={handleInputChange} required>
-                                    <option value="" disabled hidden>
-                                        {createPropertyOptions.length > 0 ? "Select Property" : "No properties available"}
-                                    </option>
-                                    {createPropertyOptions.map((propertyOption) => (
-                                        <option key={propertyOption} value={propertyOption}>{propertyOption}</option>
+                                <select id='task-property' name="property" value={newTask.property_id} onChange={handlePropertyChange} required>
+                                    <option value="" disabled hidden>Select Property</option>
+                                    {createPropertyOptions.map(o => (
+                                        <option key={o.id} value={o.id}>{o.label}</option>
                                     ))}
                                 </select>
                             </div>
@@ -845,9 +937,9 @@ const HostPropertyCare = () => {
                                 <option value="High">High</option>
                                 <option value="Urgent">Urgent</option>
                             </select>
-                            <select name="property" value={editedTask.property || ''} onChange={handleEditChange} className="badge-select property-badge">
-                                {editPropertyOptions.map((propertyOption) => (
-                                    <option key={propertyOption} value={propertyOption}>🏢 {propertyOption}</option>
+                            <select name="property" value={editedTask.property_id || ''} onChange={handleEditPropertyChange} className="badge-select property-badge">
+                                {editPropertyOptions.map((o) => (
+                                    <option key={o.id} value={o.id}>🏢 {o.label}</option>
                                 ))}
                             </select>
                         </div>
@@ -952,5 +1044,4 @@ const HostPropertyCare = () => {
         </main>
     );
 };
-
 export default HostPropertyCare;
