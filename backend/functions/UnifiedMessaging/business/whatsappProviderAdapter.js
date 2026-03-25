@@ -1,10 +1,17 @@
 import IntegrationAccountRepository from "../data/integrationAccountRepository.js";
+import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
 
 const GRAPH_API_VERSION = process.env.WHATSAPP_GRAPH_API_VERSION || "v22.0";
 
 const badRequest = (message) => {
   const error = new Error(message);
   error.code = "WHATSAPP_BAD_REQUEST";
+  return error;
+};
+
+const reconnectRequired = (message) => {
+  const error = new Error(message);
+  error.code = "WHATSAPP_RECONNECT_REQUIRED";
   return error;
 };
 
@@ -15,9 +22,60 @@ const normalizeWhatsAppRecipient = (value) => {
   return raw.replace(/[^\d]/g, "");
 };
 
+const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+
 export default class WhatsAppProviderAdapter {
   constructor() {
     this.integrationAccounts = new IntegrationAccountRepository();
+    this.credentialStore = new WhatsAppCredentialStore();
+  }
+
+  logTokenSource(level, message, integration, cause, extra = {}) {
+    console[level](
+      message,
+      JSON.stringify({
+        integrationAccountId: integration?.id || null,
+        userId: integration?.userId || null,
+        cause,
+        ...extra,
+      })
+    );
+  }
+
+  async resolveAccessToken(integration) {
+    if (integration?.credentialsRef) {
+      const secret = await this.credentialStore.readSecretOrNull(integration.credentialsRef);
+
+      if (!secret) {
+        this.logTokenSource("warn", "WhatsApp outbound missing secret", integration, "missing_secret");
+        throw reconnectRequired("WhatsApp credentials secret is missing. Reconnect required.");
+      }
+
+      const secretAccessToken = requireStr(secret?.accessToken);
+      if (!secretAccessToken) {
+        this.logTokenSource("warn", "WhatsApp outbound missing token", integration, "missing_access_token");
+        throw reconnectRequired("WhatsApp access token is missing from stored credentials. Reconnect required.");
+      }
+
+      return {
+        accessToken: secretAccessToken,
+        tokenSource: "SECRET",
+      };
+    }
+
+    const envAccessToken = requireStr(process.env.WHATSAPP_ACCESS_TOKEN);
+    if (!envAccessToken) {
+      this.logTokenSource("warn", "WhatsApp outbound missing token", integration, "missing_env_token");
+      throw reconnectRequired("WhatsApp outbound token is not configured. Reconnect required.");
+    }
+
+    // Legacy fallback: older integrations may still rely on a shared environment token.
+    this.logTokenSource("warn", "WhatsApp outbound using legacy env token", integration, "legacy_env_token");
+
+    return {
+      accessToken: envAccessToken,
+      tokenSource: "ENV",
+    };
   }
 
   async sendMessage({
@@ -40,10 +98,7 @@ export default class WhatsAppProviderAdapter {
       throw badRequest("WhatsApp integration is missing externalAccountId / phone_number_id");
     }
 
-    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || "";
-    if (!accessToken) {
-      throw badRequest("Missing WHATSAPP_ACCESS_TOKEN");
-    }
+    const { accessToken, tokenSource } = await this.resolveAccessToken(integration);
 
     const to = normalizeWhatsAppRecipient(recipientId);
     if (!to) {
@@ -141,6 +196,7 @@ export default class WhatsAppProviderAdapter {
       mode: "live",
       channel: "WHATSAPP",
       integrationAccountId,
+      tokenSource,
       externalAccountId: phoneNumberId,
       recipientWhatsAppId: to,
       messageType: payload.type,

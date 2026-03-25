@@ -11,11 +11,69 @@ import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
 const nowMs = () => Date.now();
 const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+const GRAPH_API_VERSION = process.env.WHATSAPP_GRAPH_API_VERSION || "v22.0";
+const PLACEHOLDER_REFRESH_STATUSES = new Set([
+  "NEEDS_REAL_META_TOKEN_EXCHANGE",
+  "PLACEHOLDER_REFRESHED",
+]);
 
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
 
 const requireStr = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
+const requireEnv = (name) => {
+  const value = requireStr(process.env[name]);
+  if (!value) {
+    const error = new Error(`Missing required env var: ${name}`);
+    error.code = "MISSING_ENV";
+    throw error;
+  }
+  return value;
+};
+const hasConfiguredEnvToken = () => !!requireStr(process.env.WHATSAPP_ACCESS_TOKEN);
+const hasUsableSecretAccessToken = (secret) => !!requireStr(secret?.accessToken);
+const isPlaceholderRefreshStatus = (value) => PLACEHOLDER_REFRESH_STATUSES.has(String(value || "").trim().toUpperCase());
+const normalizeExpiresAt = (value) => {
+  if (value == null) return null;
+
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+const uniqueBy = (items, keyFn) => {
+  const seen = new Set();
+  const out = [];
+
+  for (const item of Array.isArray(items) ? items : []) {
+    const key = keyFn(item);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+
+  return out;
+};
+const parseJsonSafely = (value) => {
+  try {
+    if (!value) return null;
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+const parseTokenResponse = (rawText) => {
+  const parsedJson = parseJsonSafely(rawText);
+  if (parsedJson && typeof parsedJson === "object") return parsedJson;
+
+  const params = new URLSearchParams(String(rawText || ""));
+  const accessToken = params.get("access_token");
+  if (!accessToken) return null;
+
+  return {
+    access_token: accessToken,
+    token_type: params.get("token_type") || null,
+    expires_in: params.get("expires_in") || null,
+  };
+};
 
 export default class IntegrationService {
   constructor() {
@@ -25,6 +83,329 @@ export default class IntegrationService {
     this.resLinks = new ReservationLinkRepository();
     this.runner = new SyncRunner();
     this.credentialStore = new WhatsAppCredentialStore();
+  }
+
+  logTokenLifecycle(level, message, integration, cause, extra = {}) {
+    console[level](
+      message,
+      JSON.stringify({
+        integrationAccountId: integration?.id || null,
+        userId: integration?.userId || null,
+        cause,
+        ...extra,
+      })
+    );
+  }
+
+  evaluateWhatsAppTokenState(integration, secret) {
+    const envTokenConfigured = hasConfiguredEnvToken();
+    const tokenSource = integration?.credentialsRef
+      ? hasUsableSecretAccessToken(secret)
+        ? "SECRET"
+        : "NONE"
+      : envTokenConfigured
+        ? "ENV"
+        : "NONE";
+
+    if (!integration?.credentialsRef) {
+      return {
+        status: "RECONNECT_REQUIRED",
+        needsReconnect: true,
+        expiresAt: null,
+        reliableExpiry: false,
+        tokenSource,
+        cause: "missing_credentials_ref",
+        message: "WhatsApp credentials are not configured in Secrets Manager. Reconnect required.",
+        shouldPersistReconnect: true,
+      };
+    }
+
+    if (!secret) {
+      return {
+        status: "RECONNECT_REQUIRED",
+        needsReconnect: true,
+        expiresAt: null,
+        reliableExpiry: false,
+        tokenSource,
+        cause: "missing_secret",
+        message: "WhatsApp credentials secret is missing. Reconnect required.",
+        shouldPersistReconnect: true,
+      };
+    }
+
+    if (!hasUsableSecretAccessToken(secret)) {
+      return {
+        status: "RECONNECT_REQUIRED",
+        needsReconnect: true,
+        expiresAt: null,
+        reliableExpiry: false,
+        tokenSource,
+        cause: "missing_access_token",
+        message: "WhatsApp access token is missing from the stored credentials. Reconnect required.",
+        shouldPersistReconnect: true,
+      };
+    }
+
+    if (isPlaceholderRefreshStatus(secret?.refreshStatus)) {
+      return {
+        status: "UNKNOWN",
+        needsReconnect: false,
+        expiresAt: normalizeExpiresAt(secret?.expiresAt),
+        reliableExpiry: false,
+        tokenSource,
+        cause: "placeholder_token_metadata",
+        message: "WhatsApp token metadata is placeholder-only and cannot be trusted for lifecycle management.",
+        shouldPersistReconnect: false,
+      };
+    }
+
+    if (secret?.expiresAt == null) {
+      return {
+        status: "UNKNOWN",
+        needsReconnect: false,
+        expiresAt: null,
+        reliableExpiry: false,
+        tokenSource,
+        cause: "missing_expiry_metadata",
+        message: "WhatsApp token expiry metadata is unavailable.",
+        shouldPersistReconnect: false,
+      };
+    }
+
+    const expiresAt = normalizeExpiresAt(secret?.expiresAt);
+    if (!Number.isFinite(expiresAt)) {
+      return {
+        status: "UNKNOWN",
+        needsReconnect: false,
+        expiresAt: null,
+        reliableExpiry: false,
+        tokenSource,
+        cause: "invalid_expiry_metadata",
+        message: "WhatsApp token expiry metadata is invalid.",
+        shouldPersistReconnect: false,
+      };
+    }
+
+    const now = nowMs();
+    if (expiresAt <= now) {
+      return {
+        status: "RECONNECT_REQUIRED",
+        needsReconnect: true,
+        expiresAt,
+        reliableExpiry: true,
+        tokenSource,
+        cause: "expired_token",
+        message: "WhatsApp token expired. Reconnect required.",
+        shouldPersistReconnect: true,
+      };
+    }
+
+    if (expiresAt - now <= THREE_DAYS_MS) {
+      return {
+        status: "EXPIRING_SOON",
+        needsReconnect: false,
+        expiresAt,
+        reliableExpiry: true,
+        tokenSource,
+        cause: "expiring_soon",
+        message: "WhatsApp token is expiring soon.",
+        shouldPersistReconnect: false,
+      };
+    }
+
+    return {
+      status: "HEALTHY",
+      needsReconnect: false,
+      expiresAt,
+      reliableExpiry: true,
+      tokenSource,
+      cause: "healthy",
+      message: "WhatsApp token is configured and expiry metadata is available.",
+      shouldPersistReconnect: false,
+    };
+  }
+
+  async persistReconnectRequired(integration, cause, message, errorCode = "WHATSAPP_RECONNECT_REQUIRED") {
+    this.logTokenLifecycle("warn", "WhatsApp reconnect required", integration, cause, {
+      status: "RECONNECT_REQUIRED",
+    });
+
+    await this.accounts.update(integration.id, {
+      status: "RECONNECT_REQUIRED",
+      lastErrorCode: errorCode,
+      lastErrorMessage: message,
+    });
+  }
+
+  async metaGraphRequest({ path, accessToken, method = "GET", query = {} }) {
+    const token = requireStr(accessToken);
+    if (!token) {
+      const error = new Error("Missing Meta access token");
+      error.code = "MISSING_ACCESS_TOKEN";
+      throw error;
+    }
+
+    const url = new URL(`https://graph.facebook.com/${GRAPH_API_VERSION}/${String(path || "").replace(/^\/+/, "")}`);
+    for (const [key, value] of Object.entries(query || {})) {
+      if (value == null || value === "") continue;
+      url.searchParams.set(key, String(value));
+    }
+
+    const response = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const rawText = await response.text();
+    const parsed = parseJsonSafely(rawText);
+
+    if (!response.ok) {
+      const error = new Error(parsed?.error?.message || `Meta Graph request failed with status ${response.status}`);
+      error.code = parsed?.error?.code || "META_GRAPH_REQUEST_FAILED";
+      error.details = parsed || rawText;
+      throw error;
+    }
+
+    return parsed || {};
+  }
+
+  async exchangeWhatsAppCode({ code, redirectUri }) {
+    const clientId = requireEnv("WHATSAPP_APP_ID");
+    const clientSecret = requireEnv("WHATSAPP_APP_SECRET");
+
+    const url = new URL(`https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token`);
+    url.searchParams.set("client_id", clientId);
+    url.searchParams.set("client_secret", clientSecret);
+    url.searchParams.set("redirect_uri", redirectUri);
+    url.searchParams.set("code", code);
+
+    const response = await fetch(url, { method: "GET" });
+    const rawText = await response.text();
+    const parsed = parseTokenResponse(rawText);
+
+    if (!response.ok) {
+      const details = parseJsonSafely(rawText) || rawText;
+      const error = new Error(
+        (typeof details === "object" && details?.error?.message) || `Meta token exchange failed with status ${response.status}`
+      );
+      error.code = (typeof details === "object" && details?.error?.code) || "META_TOKEN_EXCHANGE_FAILED";
+      error.details = details;
+      throw error;
+    }
+
+    if (!parsed?.access_token) {
+      const error = new Error("Meta token exchange succeeded but no access token was returned");
+      error.code = "META_TOKEN_MISSING";
+      throw error;
+    }
+
+    return {
+      accessToken: parsed.access_token,
+      tokenType: parsed.token_type || "bearer",
+      expiresIn: parsed.expires_in != null ? Number(parsed.expires_in) : null,
+    };
+  }
+
+  async fetchWhatsAppBusinessAccounts(accessToken) {
+    const businesses = await this.metaGraphRequest({
+      path: "me/businesses",
+      accessToken,
+      query: {
+        fields: "id,name",
+        limit: 100,
+      },
+    });
+
+    const businessRows = Array.isArray(businesses?.data) ? businesses.data : [];
+    const wabas = [];
+
+    for (const business of businessRows) {
+      const businessId = requireStr(business?.id);
+      if (!businessId) continue;
+
+      for (const edge of ["owned_whatsapp_business_accounts", "client_whatsapp_business_accounts"]) {
+        try {
+          const response = await this.metaGraphRequest({
+            path: `${businessId}/${edge}`,
+            accessToken,
+            query: {
+              fields: "id,name",
+              limit: 100,
+            },
+          });
+
+          const rows = Array.isArray(response?.data) ? response.data : [];
+          for (const row of rows) {
+            const wabaId = requireStr(row?.id);
+            if (!wabaId) continue;
+
+            wabas.push({
+              businessId,
+              businessName: row?.name || business?.name || null,
+              wabaId,
+              wabaName: row?.name || null,
+            });
+          }
+        } catch (error) {
+          console.warn(
+            "WhatsApp asset edge lookup failed",
+            JSON.stringify({
+              edge,
+              businessId,
+              cause: error?.code || "META_GRAPH_REQUEST_FAILED",
+            })
+          );
+        }
+      }
+    }
+
+    return uniqueBy(wabas, (item) => `${item.businessId}:${item.wabaId}`);
+  }
+
+  async fetchWhatsAppSelectableNumbers(accessToken) {
+    const businessAccounts = await this.fetchWhatsAppBusinessAccounts(accessToken);
+    const numbers = [];
+
+    for (const account of businessAccounts) {
+      try {
+        const response = await this.metaGraphRequest({
+          path: `${account.wabaId}/phone_numbers`,
+          accessToken,
+          query: {
+            fields: "id,display_phone_number,verified_name",
+            limit: 100,
+          },
+        });
+
+        const rows = Array.isArray(response?.data) ? response.data : [];
+        for (const row of rows) {
+          const phoneNumberId = requireStr(row?.id);
+          if (!phoneNumberId) continue;
+
+          numbers.push({
+            phoneNumberId,
+            displayName: row?.verified_name || row?.display_phone_number || account.wabaName || "WhatsApp Business Number",
+            businessAccountId: account.wabaId,
+            businessId: account.businessId,
+            businessName: account.businessName,
+            phoneNumber: row?.display_phone_number || null,
+          });
+        }
+      } catch (error) {
+        console.warn(
+          "WhatsApp phone number lookup failed",
+          JSON.stringify({
+            businessAccountId: account.wabaId,
+            businessId: account.businessId,
+            cause: error?.code || "META_GRAPH_REQUEST_FAILED",
+          })
+        );
+      }
+    }
+
+    return uniqueBy(numbers, (item) => item.phoneNumberId);
   }
 
   async createIntegration(body) {
@@ -67,33 +448,26 @@ export default class IntegrationService {
     const hydrated = await Promise.all(
       items.map(async (item) => {
         if (String(item?.channel || "").toUpperCase() !== "WHATSAPP") return item;
-        if (!item?.credentialsRef) return item;
 
         try {
-          const secret = await this.credentialStore.readSecret(item.credentialsRef);
-          if (!secret?.expiresAt) return item;
+          const secret = await this.credentialStore.readSecretOrNull(item.credentialsRef);
+          const evaluation = this.evaluateWhatsAppTokenState(item, secret);
 
-          const expiresAt = Number(secret.expiresAt);
-          const now = nowMs();
-
-          if (Number.isFinite(expiresAt) && expiresAt <= now) {
-            return {
-              ...item,
-              status: "RECONNECT_REQUIRED",
-              lastErrorMessage: item.lastErrorMessage || "WhatsApp token expired. Reconnect required.",
-            };
-          }
-
-          if (Number.isFinite(expiresAt) && expiresAt - now <= THREE_DAYS_MS) {
-            return {
-              ...item,
-              status: "TOKEN_EXPIRING_SOON",
-            };
-          }
-
-          return item;
-        } catch {
-          return item;
+          return {
+            ...item,
+            status: evaluation.status === "EXPIRING_SOON" ? "TOKEN_EXPIRING_SOON" : evaluation.status,
+            lastErrorMessage:
+              evaluation.status === "HEALTHY" || evaluation.status === "EXPIRING_SOON"
+                ? item.lastErrorMessage
+                : evaluation.message,
+          };
+        } catch (error) {
+          this.logTokenLifecycle("warn", "WhatsApp token health evaluation failed during list", item, "health_check_error");
+          return {
+            ...item,
+            status: "UNKNOWN",
+            lastErrorMessage: item.lastErrorMessage || "Unable to evaluate WhatsApp token health.",
+          };
         }
       })
     );
@@ -237,28 +611,50 @@ export default class IntegrationService {
     if (!code) return bad(400, { error: "Missing required field: code" });
     if (!callbackUrl) return bad(400, { error: "Missing required field: callbackUrl" });
 
-    /**
-     * TODO: REAL META TOKEN EXCHANGE
-     * Here the backend should:
-     * 1. exchange `code` with Meta
-     * 2. fetch WABA / phone numbers
-     * 3. store token in Secrets Manager
-     *
-     * For now we return an empty list if no connected number exists yet.
-     */
-
     const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
+    const integrationAccountId = existing?.id || randomUUID();
+    const credentialsRef =
+      existing?.credentialsRef ||
+      this.credentialStore.buildSecretName({
+        userId,
+        integrationAccountId,
+      });
 
-    const selectableNumbers = existing?.externalAccountId
-      ? [
-          {
-            phoneNumberId: existing.externalAccountId,
-            displayName: existing.displayName || "WhatsApp Business Number",
-            businessAccountId: null,
-            phoneNumber: null,
-          },
-        ]
-      : [];
+    const exchanged = await this.exchangeWhatsAppCode({
+      code,
+      redirectUri: callbackUrl,
+    });
+
+    const selectableNumbers = await this.fetchWhatsAppSelectableNumbers(exchanged.accessToken);
+    const issuedAt = nowMs();
+    const expiresAt =
+      Number.isFinite(exchanged.expiresIn) && exchanged.expiresIn > 0 ? issuedAt + exchanged.expiresIn * 1000 : null;
+
+    await this.credentialStore.ensureSecret({
+      userId,
+      integrationAccountId,
+      payload: {
+        provider: "META_WHATSAPP",
+        accessToken: exchanged.accessToken,
+        tokenType: exchanged.tokenType,
+        issuedAt,
+        expiresAt,
+        tokenMetadataSource: "META_CODE_EXCHANGE",
+        selectedPhoneNumberId: null,
+        selectedBusinessAccountId: null,
+        selectableNumbers,
+        lastAssetSyncAt: issuedAt,
+      },
+    });
+
+    await this.credentialStore.savePendingConnectState(connectSessionId, {
+      userId,
+      integrationAccountId,
+      credentialsRef,
+      issuedAt,
+      expiresAt,
+      selectableNumbers,
+    });
 
     return ok({
       mode: "embedded-signup",
@@ -266,7 +662,7 @@ export default class IntegrationService {
       connectSessionId,
       codeReceived: true,
       selectableNumbers,
-      credentialsRef: existing?.credentialsRef || null,
+      credentialsRef,
     });
   }
 
@@ -281,34 +677,47 @@ export default class IntegrationService {
     if (!phoneNumberId) return bad(400, { error: "Missing required field: phoneNumberId" });
 
     const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
-
-    let integrationAccountId = existing?.id || randomUUID();
-    let credentialsRef = existing?.credentialsRef || null;
-
-    if (!credentialsRef) {
-      credentialsRef = this.credentialStore.buildSecretName({
-        userId,
-        integrationAccountId,
+    const pendingConnect = await this.credentialStore.readPendingConnectState(connectSessionId);
+    if (!pendingConnect || requireStr(pendingConnect.userId) !== userId) {
+      return bad(409, {
+        error: "WhatsApp connect session was not found or does not belong to this user.",
       });
     }
 
-    const issuedAt = nowMs();
-    const expiresAt = issuedAt + SIXTY_DAYS_MS;
+    const integrationAccountId = requireStr(pendingConnect.integrationAccountId) || existing?.id || null;
+    const credentialsRef = requireStr(pendingConnect.credentialsRef) || existing?.credentialsRef || null;
 
-    await this.credentialStore.ensureSecret({
-      userId,
-      integrationAccountId,
-      payload: {
-        provider: "META_WHATSAPP",
-        accessToken: null,
-        /**
-         * TODO:
-         * Replace null with the real token returned by Meta token exchange.
-         */
-        issuedAt,
-        expiresAt,
-        refreshStatus: "NEEDS_REAL_META_TOKEN_EXCHANGE",
-      },
+    if (!integrationAccountId || !credentialsRef) {
+      return bad(409, {
+        error: "WhatsApp connect session is incomplete. Missing pending integration credentials.",
+      });
+    }
+
+    const existingSecret = await this.credentialStore.readSecretOrNull(credentialsRef);
+    const accessToken = requireStr(existingSecret?.accessToken);
+    if (!accessToken) {
+      return bad(409, {
+        error: "WhatsApp token exchange has not completed successfully. Missing access token in stored credentials.",
+      });
+    }
+
+    const selectableNumbers = Array.isArray(existingSecret?.selectableNumbers) ? existingSecret.selectableNumbers : [];
+    const selectedNumber = selectableNumbers.find((item) => requireStr(item?.phoneNumberId) === phoneNumberId);
+    if (!selectedNumber) {
+      return bad(400, {
+        error: "Selected WhatsApp phone number is not available in the stored Meta assets.",
+      });
+    }
+
+    await this.credentialStore.writeSecret(credentialsRef, {
+      ...existingSecret,
+      provider: "META_WHATSAPP",
+      accessToken,
+      selectedPhoneNumberId: selectedNumber.phoneNumberId,
+      selectedBusinessAccountId: selectedNumber.businessAccountId || null,
+      selectedBusinessId: selectedNumber.businessId || null,
+      selectedDisplayName: displayName || selectedNumber.displayName || null,
+      refreshStatus: null,
     });
 
     let saved;
@@ -344,6 +753,8 @@ export default class IntegrationService {
       await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
     }
 
+    await this.credentialStore.deletePendingConnectState(connectSessionId);
+
     return ok({
       mode: "embedded-signup",
       channel: "WHATSAPP",
@@ -374,55 +785,33 @@ export default class IntegrationService {
 
     const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
     if (!existing) return bad(404, { error: "WhatsApp integration not found" });
-    if (!existing.credentialsRef) return bad(400, { error: "Missing credentialsRef on integration" });
 
-    const secret = await this.credentialStore.readSecret(existing.credentialsRef);
-    if (!secret?.expiresAt) {
-      return ok({
-        status: "UNKNOWN",
-        expiresAt: null,
-        needsReconnect: false,
-        message: "No token expiry metadata found.",
-      });
-    }
+    const secret = await this.credentialStore.readSecretOrNull(existing.credentialsRef);
+    const evaluation = this.evaluateWhatsAppTokenState(existing, secret);
 
-    const expiresAt = Number(secret.expiresAt);
-    const now = nowMs();
+    this.logTokenLifecycle(
+      evaluation.status === "RECONNECT_REQUIRED" ? "warn" : "log",
+      "WhatsApp token health evaluation",
+      existing,
+      evaluation.cause,
+      {
+        status: evaluation.status,
+        tokenSource: evaluation.tokenSource,
+        reliableExpiry: evaluation.reliableExpiry,
+      }
+    );
 
-    if (!Number.isFinite(expiresAt)) {
-      return ok({
-        status: "UNKNOWN",
-        expiresAt: null,
-        needsReconnect: false,
-        message: "Invalid token expiry metadata.",
-      });
-    }
-
-    if (expiresAt <= now) {
-      await this.accounts.update(existing.id, {
-        status: "RECONNECT_REQUIRED",
-        lastErrorMessage: "WhatsApp token expired. Reconnect required.",
-      });
-
-      return ok({
-        status: "EXPIRED",
-        expiresAt,
-        needsReconnect: true,
-      });
-    }
-
-    if (expiresAt - now <= THREE_DAYS_MS) {
-      return ok({
-        status: "EXPIRING_SOON",
-        expiresAt,
-        needsReconnect: false,
-      });
+    if (evaluation.shouldPersistReconnect) {
+      await this.persistReconnectRequired(existing, evaluation.cause, evaluation.message);
     }
 
     return ok({
-      status: "HEALTHY",
-      expiresAt,
-      needsReconnect: false,
+      status: evaluation.status,
+      expiresAt: evaluation.expiresAt,
+      needsReconnect: evaluation.needsReconnect,
+      message: evaluation.message,
+      tokenSource: evaluation.tokenSource,
+      reliableExpiry: evaluation.reliableExpiry,
     });
   }
 
@@ -432,38 +821,33 @@ export default class IntegrationService {
 
     const existing = await this.accounts.findByUserIdAndChannel(userId, "WHATSAPP");
     if (!existing) return bad(404, { error: "WhatsApp integration not found" });
-    if (!existing.credentialsRef) return bad(400, { error: "Missing credentialsRef on integration" });
 
-    const secret = await this.credentialStore.readSecret(existing.credentialsRef);
-    if (!secret) return bad(404, { error: "WhatsApp secret not found" });
+    const secret = await this.credentialStore.readSecretOrNull(existing.credentialsRef);
+    const evaluation = this.evaluateWhatsAppTokenState(existing, secret);
 
-    /**
-     * TODO: REAL META TOKEN REFRESH
-     * Meta says expiring system user tokens are valid for 60 days from generated or refreshed date
-     * and should be refreshed within that period. We are not guessing the refresh endpoint here.
-     *
-     * Replace the block below with the real Meta refresh call and real returned token.
-     */
-    const refreshedAt = nowMs();
-    const nextExpiresAt = refreshedAt + SIXTY_DAYS_MS;
-
-    await this.credentialStore.writeSecret(existing.credentialsRef, {
-      ...secret,
-      refreshedAt,
-      expiresAt: nextExpiresAt,
-      refreshStatus: "PLACEHOLDER_REFRESHED",
+    this.logTokenLifecycle("warn", "WhatsApp token refresh unsupported", existing, "refresh_unsupported", {
+      tokenSource: evaluation.tokenSource,
+      currentStatus: evaluation.status,
     });
 
-    await this.accounts.update(existing.id, {
-      status: "CONNECTED",
-      lastErrorCode: null,
-      lastErrorMessage: null,
-    });
+    const message = "Automatic WhatsApp token refresh is not supported by the current backend configuration.";
+
+    if (evaluation.shouldPersistReconnect) {
+      await this.persistReconnectRequired(
+        existing,
+        "refresh_unsupported",
+        `${message} Reconnect required.`,
+        "WHATSAPP_REFRESH_UNSUPPORTED"
+      );
+    }
 
     return ok({
-      refreshed: true,
-      expiresAt: nextExpiresAt,
-      mode: "placeholder-refresh",
+      refreshed: false,
+      needsReconnect: evaluation.needsReconnect,
+      status: evaluation.status,
+      expiresAt: evaluation.expiresAt,
+      tokenSource: evaluation.tokenSource,
+      message: evaluation.needsReconnect ? `${message} Reconnect required.` : message,
     });
   }
 }
