@@ -731,8 +731,30 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
           </div>
         </div>
 
+        <div className={styles.pricingRateRow}>
+          <label htmlFor="pricing-weekend-rate" className={styles.pricingRateLabel}>
+            Weekend rate
+          </label>
+          <div className={styles.pricingRateInputWrap}>
+            <span aria-hidden="true" className={styles.pricingRateCurrency}>EUR</span>
+            <input
+              id="pricing-weekend-rate"
+              type="number"
+              min={PRICING_MIN_NIGHTLY_RATE_FOR_INPUT}
+              max={PRICING_MAX_NIGHTLY_RATE}
+              step={1}
+              className={styles.pricingRateInput}
+              value={pricingForm.weekendRate === 0 ? "" : pricingForm.weekendRate}
+              onChange={(event) => {
+                const nextWeekendRate = event.target.value;
+                updatePricingForm({ weekendRate: nextWeekendRate === "" ? 0 : nextWeekendRate });
+              }}
+            />
+          </div>
+        </div>
+
         <p className={styles.pricingBaseHint}>
-          Set the base nightly rate guests will be charged.
+          Set the base nightly rate and weekend rate guests will be charged.
         </p>
 
         <div className={styles.pricingStayGrid}>
@@ -1060,6 +1082,7 @@ const propertyAddressShape = PropTypes.shape({
 
 const pricingFormShape = PropTypes.shape({
   nightlyRate: PropTypes.number,
+  weekendRate: PropTypes.number,
   minimumStay: PropTypes.number,
   maximumStay: PropTypes.number,
   weeklyDiscountEnabled: PropTypes.bool,

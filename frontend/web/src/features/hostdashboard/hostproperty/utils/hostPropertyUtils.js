@@ -39,6 +39,12 @@ export const normalizePricingForm = (pricingForm) => {
     PRICING_MIN_NIGHTLY_RATE_FOR_INPUT,
     PRICING_MAX_NIGHTLY_RATE
   );
+  const weekendRate = clampInteger(
+  pricingForm?.weekendRate,
+  pricingForm?.nightlyRate ?? defaultPricingForm.weekendRate,
+  PRICING_MIN_NIGHTLY_RATE_FOR_INPUT,
+  PRICING_MAX_NIGHTLY_RATE
+  );
   const minimumStay = clampInteger(pricingForm?.minimumStay, defaultPricingForm.minimumStay, 1, 365);
   const maximumStayRaw = clampInteger(pricingForm?.maximumStay, defaultPricingForm.maximumStay, 0, 365);
   const maximumStay = maximumStayRaw === 0 ? 0 : Math.max(minimumStay, maximumStayRaw);
@@ -49,6 +55,7 @@ export const normalizePricingForm = (pricingForm) => {
 
   return {
     nightlyRate,
+    weekendRate,
     minimumStay,
     maximumStay,
     weeklyDiscountEnabled,
@@ -160,6 +167,15 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
       PRICING_MAX_NIGHTLY_RATE
     )
     : defaultPricingForm.nightlyRate;
+  const weekendRateRaw = Number(pricing?.weekendRate ?? pricing?.weekendrate);
+  const weekendRate = Number.isFinite(weekendRateRaw)
+    ? clampInteger(
+      weekendRateRaw,
+      nightlyRate,
+      PRICING_MIN_NIGHTLY_RATE_FOR_INPUT,
+      PRICING_MAX_NIGHTLY_RATE
+    )
+    : nightlyRate;
   const minimumStay = clampInteger(
     readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.minimumStay, defaultPricingForm.minimumStay),
     defaultPricingForm.minimumStay,
@@ -228,6 +244,7 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
 
   return {
     nightlyRate,
+    weekendRate, 
     minimumStay,
     maximumStay,
     weeklyDiscountEnabled: weeklyDiscountPercent > 0,

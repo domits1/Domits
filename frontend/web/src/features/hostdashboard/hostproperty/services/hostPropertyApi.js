@@ -100,11 +100,20 @@ const verifyPricing = async (propertyId, pricingPayload, availabilityRestriction
   const verificationData = await fetchPropertySnapshot(propertyId);
   const persistedRoomRate = Number(verificationData?.pricing?.roomRate ?? verificationData?.pricing?.roomrate);
   const expectedRoomRate = Number(pricingPayload?.roomRate);
+  const persistedWeekendRate = Number(verificationData?.pricing?.weekendRate ?? verificationData?.pricing?.weekendrate);
+  const expectedWeekendRate = Number(pricingPayload?.weekendRate);
   const hasSameRoomRate = Number.isFinite(persistedRoomRate) && Number.isFinite(expectedRoomRate)
     ? Math.trunc(persistedRoomRate) === Math.trunc(expectedRoomRate)
     : false;
   if (!hasSameRoomRate) {
     throw new Error("Pricing could not be updated in the deployed backend yet.");
+  }
+
+  const hasSameWeekendRate = Number.isFinite(persistedWeekendRate) && Number.isFinite(expectedWeekendRate)
+    ? Math.trunc(persistedWeekendRate) === Math.trunc(expectedWeekendRate)
+    : false;
+  if (!hasSameWeekendRate) {
+    throw new Error("Weekend pricing could not be updated in the deployed backend yet.");
   }
 
   const persistedRestrictionValueMap = buildAvailabilityRestrictionValueMap(verificationData?.availabilityRestrictions);
@@ -147,7 +156,10 @@ export const savePropertyChanges = async ({
     throw new Error(`Nightly rate must be at least EUR ${PRICING_MIN_NIGHTLY_RATE_FOR_SAVE}.`);
   }
   const pricingPayload = isSavingPricing
-    ? { roomRate: normalizedPricingForm.nightlyRate }
+    ? {
+        roomRate: normalizedPricingForm.nightlyRate,
+        weekendRate: normalizedPricingForm.weekendRate,
+      }
     : undefined;
   const availabilityRestrictionsPayload = isSavingPricing
     ? buildPricingRestrictionsPayload(normalizedPricingForm)

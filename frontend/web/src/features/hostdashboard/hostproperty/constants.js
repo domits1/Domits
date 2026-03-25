@@ -81,6 +81,7 @@ export const createInitialPolicyRules = () =>
 
 export const createInitialPricingForm = () => ({
   nightlyRate: 120,
+  weekendRate: 120,
   minimumStay: 1,
   maximumStay: 0,
   weeklyDiscountEnabled: false,
