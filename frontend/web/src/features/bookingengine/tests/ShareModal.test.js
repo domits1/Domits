@@ -62,8 +62,7 @@ describe("ShareModal", () => {
   test("calls onClose when Escape key is pressed", () => {
     render(<ShareModal url={TEST_URL} title={TEST_TITLE} onClose={onClose} />);
 
-    const backdrop = document.querySelector(".share-modal-backdrop");
-    fireEvent.keyDown(backdrop, { key: "Escape" });
+    fireEvent.keyDown(document, { key: "Escape" });
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -71,8 +70,7 @@ describe("ShareModal", () => {
   test("does not call onClose when a non-Escape key is pressed", () => {
     render(<ShareModal url={TEST_URL} title={TEST_TITLE} onClose={onClose} />);
 
-    const backdrop = document.querySelector(".share-modal-backdrop");
-    fireEvent.keyDown(backdrop, { key: "Enter" });
+    fireEvent.keyDown(document, { key: "Enter" });
 
     expect(onClose).not.toHaveBeenCalled();
   });

@@ -7,9 +7,20 @@
   justify-content: center;
   z-index: 1200;
   padding: 16px;
+
+  &__btn {
+    position: fixed;
+    inset: 0;
+    background: none;
+    border: none;
+    cursor: default;
+    z-index: -1;
+  }
 }
 
-.share-modal {
+dialog.share-modal {
+  border: none;
+  overflow: visible;
   background: #ffffff;
   border-radius: 16px;
   padding: 24px;
@@ -161,59 +172,6 @@
   }
 }
 
-// Share button on the new listing details gallery
-.gallery-share-btn {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background-color: rgba(255, 255, 255, 0.85);
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.2s ease, transform 0.2s ease;
-  z-index: 1;
-
-  &:hover {
-    background-color: rgba(200, 200, 200, 0.85);
-    transform: scale(1.1);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-  }
-}
-
-// Share button in BookingOverview header
-.booking-share-btn {
-  background-color: transparent;
-  border: 1px solid #e0e0e0;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #333;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-
-  &:hover {
-    background-color: #f5f5f5;
-    transform: scale(1.05);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-  }
-}
 
 @media (max-width: 400px) {
   .share-modal {
