@@ -190,11 +190,9 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
     content = <div className="mc-status">Loading chart…</div>;
   } else if (error) {
     content = <div className="mc-status error">{error}</div>;
-  } else if (noData || !selectedMetricHasData) {
-    content = <div className="mc-status">No data</div>;
   } else {
     content = (
-      <div className="mc-chart">
+      <div className="mc-chart mc-chart-wrapper">
         <ResponsiveContainer width="100%" height={350}>
           <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -221,6 +219,10 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
             />
           </LineChart>
         </ResponsiveContainer>
+
+        {(noData || !selectedMetricHasData) && (
+          <div className="mc-no-data-overlay">No data</div>
+        )}
       </div>
     );
   }
