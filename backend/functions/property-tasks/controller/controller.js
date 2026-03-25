@@ -1,14 +1,18 @@
 import { getTasks, createTask, updateTask, deleteTask } from "../business/service/taskService.js";
+import { AuthManager } from "../auth/authManager.js";
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 
 export class Controller {
+    constructor() {
+        this.authManager = new AuthManager();
+    }
+
     async getTasks(event) {
         try {
-            const hostId = event.requestContext.authorizer.claims.sub;
+            const hostId = await this.authManager.getHostId(event.headers?.Authorization);
             const filters = event.queryStringParameters || {};
 
             const tasks = await getTasks(hostId, filters);
-
             return {
                 statusCode: 200,
                 headers: responseHeaders,
@@ -21,7 +25,7 @@ export class Controller {
 
     async createTask(event) {
         try {
-            const hostId = event.requestContext.authorizer.claims.sub;
+            const hostId = await this.authManager.getHostId(event.headers?.Authorization);
             const taskData = JSON.parse(event.body);
 
             const result = await createTask(hostId, taskData);
@@ -34,10 +38,11 @@ export class Controller {
             return this.handleError(error);
         }
     }
+
     async updateTask(event) {
         try {
-            const hostId = event.requestContext.authorizer.claims.sub;
-            const taskId = event.pathParameters?.id; 
+            const hostId = await this.authManager.getHostId(event.headers?.Authorization);
+            const taskId = event.pathParameters?.id;
             const updateData = JSON.parse(event.body);
 
             const result = await updateTask(hostId, taskId, updateData);
@@ -49,7 +54,7 @@ export class Controller {
 
     async deleteTask(event) {
         try {
-            const hostId = event.requestContext.authorizer.claims.sub;
+            const hostId = await this.authManager.getHostId(event.headers?.Authorization);
             const taskId = event.pathParameters?.id;
 
             const result = await deleteTask(hostId, taskId);
