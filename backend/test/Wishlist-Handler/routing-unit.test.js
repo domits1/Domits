@@ -99,7 +99,7 @@ describe("Wishlist routing unit tests", () => {
 
     const response = await handler(event);
     expect(response.statusCode).toBe(404);
-    expect(response.body).toBe("Method not found.");
+    expect(JSON.parse(response.body)).toEqual({ message: "Method not found." });
   });
 
   it("should return 404 for an unknown resource", async () => {
@@ -111,6 +111,6 @@ describe("Wishlist routing unit tests", () => {
 
     const response = await handler(event);
     expect(response.statusCode).toBe(404);
-    expect(response.body).toBe("Path not found.");
+    expect(JSON.parse(response.body)).toEqual({ message: "Path not found." });
   });
 });

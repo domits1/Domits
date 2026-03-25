@@ -2,10 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import "./MonthlyComparison.scss";
 
-import { RevPARService } from "../services/RevParService";
-import { ADRCardService } from "../services/ADRCardService";
-import { HostRevenueService } from "../services/HostRevenueService";
-import { OccupancyRateService } from "../services/OccupancyRateService";
+import { HostKpiAllService } from "../services/HostKpiAllService";
 
 const MonthlyComparison = ({ hostId, refreshKey }) => {
   const [selectedMetric, setSelectedMetric] = useState("OCC");
@@ -17,6 +14,7 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [noData, setNoData] = useState(false);
 
   const isMountedRef = useRef(false);
   const fetchingRef = useRef(false);
@@ -59,10 +57,11 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
 
       if (fetchingRef.current) return;
       fetchingRef.current = true;
+      setError(null);
+      setNoData(false);
 
       if (!silent) {
         setLoading(true);
-        setError(null);
       }
 
       try {
@@ -79,29 +78,18 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
           const { start, end } = getMonthRange(year, i);
           const monthLabel = shortMonths[i];
 
-          const [adrRaw, revparRaw, alosRaw, occRaw] = await Promise.all([
-            ADRCardService.fetchMetric(hostId, "averageDailyRate", "custom", start, end),
-            RevPARService.fetchMetric(hostId, "revenuePerAvailableRoom", "custom", start, end),
-            HostRevenueService.fetchMetricData(hostId, "averageLengthOfStay", "custom", start, end),
-            OccupancyRateService.fetchOccupancyRate(hostId, "custom", start, end),
-          ]);
+          const allRaw = await HostKpiAllService.fetchAll(hostId, "custom", start, end);
 
-          const adrVal = typeof adrRaw === "number" ? adrRaw : Number(adrRaw?.averageDailyRate ?? adrRaw?.value ?? 0);
+        const adrVal = Number(allRaw?.averageDailyRate ?? 0);
+        const revparVal = Number(allRaw?.revenuePerAvailableRoom ?? 0);
 
-          const revparVal =
-            typeof revparRaw === "number"
-              ? revparRaw
-              : Number(revparRaw?.revenuePerAvailableRoom ?? revparRaw?.value ?? 0);
-
-          const alosValRaw =
-            alosRaw?.averageLengthOfStay?.averageLengthOfStay ??
-            alosRaw?.averageLengthOfStay ??
-            alosRaw?.value ??
-            alosRaw ??
-            0;
+        const alosValRaw =
+          allRaw?.averageLengthOfStay?.averageLengthOfStay ??
+          allRaw?.averageLengthOfStay ??
+          0;
 
           const alosVal = Number(alosValRaw) || 0;
-          const occVal = typeof occRaw === "number" ? occRaw : Number(occRaw ?? 0);
+          const occVal = Number(allRaw?.occupancyRate ?? 0);
 
           adrRes.push({ month: monthLabel, thisYear: adrVal, lastYear: adrVal * 0.9 });
           revparRes.push({ month: monthLabel, thisYear: revparVal, lastYear: revparVal * 0.9 });
@@ -134,7 +122,12 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
           setOccData(occRes);
           lastKeysRef.current.occ = occKey;
         }
+        const hasAnyData = [...adrRes, ...revparRes, ...alosRes, ...occRes].some(
+  (item) => Number(item.thisYear || 0) !== 0 || Number(item.lastYear || 0) !== 0
+        );
 
+        setNoData(!hasAnyData);
+        
         if (!silent) setError(null);
       } catch (err) {
         console.error(err);
@@ -167,18 +160,70 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
     };
   }, [refreshKey, hostId, fetchAll]);
 
-  const chartData =
-    selectedMetric === "OCC"
-      ? occData
-      : selectedMetric === "ADR"
-        ? adrData
-        : selectedMetric === "RevPAR"
-          ? revparData
-          : alosData;
+  const getChartData = () => {
+    switch (selectedMetric) {
+      case "OCC":
+        return occData;
+      case "ADR":
+        return adrData;
+      case "RevPAR":
+        return revparData;
+      case "ALOS":
+        return alosData;
+      default:
+        return [];
+    }
+  };
 
+  const chartData = getChartData();
+          
+  const selectedMetricHasData = (chartData || []).some(
+  (item) => Number(item.thisYear || 0) !== 0 || Number(item.lastYear || 0) !== 0
+);
   const yTick = (v) => (selectedMetric === "ALOS" ? `${v}` : selectedMetric === "OCC" ? `${v}%` : `€${v}`);
 
   const tipFmt = (v) => (selectedMetric === "ALOS" ? `${v} nights` : selectedMetric === "OCC" ? `${v}%` : `€${v}`);
+
+  let content;
+
+  if (loading) {
+    content = <div className="mc-status">Loading chart…</div>;
+  } else if (error) {
+    content = <div className="mc-status error">{error}</div>;
+  } else if (noData || !selectedMetricHasData) {
+    content = <div className="mc-status">No data</div>;
+  } else {
+    content = (
+      <div className="mc-chart">
+        <ResponsiveContainer width="100%" height={350}>
+          <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis tickFormatter={yTick} />
+            <Tooltip formatter={tipFmt} />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="thisYear"
+              stroke="#0d9813"
+              strokeWidth={3}
+              dot={{ r: 3 }}
+              name={`${selectedMetric} (This Year)`}
+            />
+            <Line
+              type="monotone"
+              dataKey="lastYear"
+              stroke="#999"
+              strokeWidth={2}
+              strokeDasharray="4 4"
+              dot={{ r: 2 }}
+              name={`${selectedMetric} (Last Year)`}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
 
   return (
     <div className="mc-comparison-card">
@@ -192,40 +237,7 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
         </div>
       </div>
 
-      {loading ? (
-        <div className="mc-status">Loading chart…</div>
-      ) : error ? (
-        <div className="mc-status error">{error}</div>
-      ) : (
-        <div className="mc-chart">
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis tickFormatter={yTick} />
-              <Tooltip formatter={tipFmt} />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="thisYear"
-                stroke="#0d9813"
-                strokeWidth={3}
-                dot={{ r: 3 }}
-                name={`${selectedMetric} (This Year)`}
-              />
-              <Line
-                type="monotone"
-                dataKey="lastYear"
-                stroke="#999"
-                strokeWidth={2}
-                strokeDasharray="4 4"
-                dot={{ r: 2 }}
-                name={`${selectedMetric} (Last Year)`}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      {content}
     </div>
   );
 };
