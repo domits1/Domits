@@ -70,7 +70,7 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
     return <div>No accommodation data available.</div>;
   }
 
-  const shareUrl = `${window.location.origin}/listingdetails?ID=${encodeURIComponent(accommodation.property?.id)}`;
+  const shareUrl = `${globalThis.location.origin}/listingdetails?ID=${encodeURIComponent(accommodation.property?.id)}`;
 
   const cardImages = resolveAccommodationImageUrls(
     accommodation.propertyImages,
@@ -86,6 +86,9 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
       className="accocard"
       key={accommodation.property?.id}
       onClick={(e) => onClick(e, accommodation.property?.id)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(e, accommodation.property?.id); }}
+      role="button"
+      tabIndex={0}
     >
       <button
         type="button"
@@ -130,12 +133,10 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
         className="mySwiper"
       >
         {cardImages.map((imgSrc, index) => (
-          <SwiperSlide key={index}>
+          <SwiperSlide key={imgSrc}>
             <img
               src={imgSrc}
-              alt={`Accommodation ${accommodation.property?.id} - Image ${
-                index + 1
-              }`}
+              alt={`${accommodation.property?.title || "Accommodation"} ${index + 1}`}
             />
           </SwiperSlide>
         ))}

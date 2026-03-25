@@ -105,7 +105,7 @@ const ImageGallery = ({ images, propertyTitle }) => {
 
       {showShareModal && (
         <ShareModal
-          url={window.location.href}
+          url={globalThis.location.href}
           title={propertyTitle}
           onClose={() => setShowShareModal(false)}
         />

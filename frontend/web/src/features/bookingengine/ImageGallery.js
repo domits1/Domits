@@ -66,7 +66,7 @@ const ImageGallery = ({ images }) => {
       )}
 
       {showShareModal && (
-        <ShareModal url={window.location.href} onClose={() => setShowShareModal(false)} />
+        <ShareModal url={globalThis.location.href} onClose={() => setShowShareModal(false)} />
       )}
 
       {showOverlay && (
