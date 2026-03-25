@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
+import IosShareIcon from "@mui/icons-material/IosShare";
 import {
   resolveAccommodationImageUrl,
   resolveAccommodationImageKey,
 } from "../../../../utils/accommodationImage";
+import ShareModal from "../../components/ShareModal";
 
-const ImageGallery = ({ images }) => {
+const ImageGallery = ({ images, propertyTitle }) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const main = images[0];
   const thumbs = images.slice(1, 5);
@@ -28,15 +31,23 @@ const ImageGallery = ({ images }) => {
     <section className="image-section">
       <div className="image-gallery">
         {main && (
-          <img
-            className="main-image"
-            src={toMainSrc(main)}
-            alt={getImageAltText(0)}
-            onClick={() => {
-              setActiveIndex(0);
-              setShowOverlay(true);
-            }}
-          />
+          <div className="main-image-wrapper">
+            <img
+              className="main-image"
+              src={toMainSrc(main)}
+              alt={getImageAltText(0)}
+              onClick={() => {
+                setActiveIndex(0);
+                setShowOverlay(true);
+              }}
+            />
+            <button
+              className="gallery-share-btn"
+              onClick={() => setShowShareModal(true)}
+              aria-label="Share property">
+              <IosShareIcon fontSize="small" />
+            </button>
+          </div>
         )}
 
         {/* THUMBNAILS */}
@@ -91,12 +102,21 @@ const ImageGallery = ({ images }) => {
           </div>
         </div>
       )}
+
+      {showShareModal && (
+        <ShareModal
+          url={window.location.href}
+          title={propertyTitle}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </section>
   );
 };
 
 ImageGallery.propTypes = {
   images: PropTypes.array.isRequired,
+  propertyTitle: PropTypes.string,
 };
 
 export default ImageGallery;
