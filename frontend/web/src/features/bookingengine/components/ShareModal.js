@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import CloseIcon from "@mui/icons-material/Close";
@@ -64,59 +64,38 @@ const ShareModal = ({ url, title = "Check out this property on Domits", onClose 
   const handlePlatformShare = (platform) => {
     const shareUrl = platform.getUrl(url, title);
     if (platform.openInTab) {
-      window.open(shareUrl, "_blank", "noopener,noreferrer");
+      globalThis.open(shareUrl, "_blank", "noopener,noreferrer");
     } else {
-      window.location.href = shareUrl;
+      globalThis.location.href = shareUrl;
     }
   };
 
   const handleCopy = () => {
-    navigator.clipboard
-      .writeText(url)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => {
-        const input = document.createElement("input");
-        input.value = url;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand("copy");
-        document.body.removeChild(input);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
-  const handleBackdropClick = (e) => {
-    e.stopPropagation();
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Escape") {
-      onClose();
-    }
-  };
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   const truncatedUrl = url.length > 45 ? `${url.slice(0, 45)}…` : url;
 
   return ReactDOM.createPortal(
-    <div
-      className="share-modal-backdrop"
-      onClick={handleBackdropClick}
-      onKeyDown={handleKeyDown}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Share"
-      tabIndex={-1}>
-      <div className="share-modal">
+    <div className="share-modal-backdrop">
+      <button className="share-modal-backdrop__btn" onClick={onClose} aria-label="Close modal" tabIndex={-1} />
+      <dialog className="share-modal" aria-modal="true" aria-label="Share" open>
         <div className="share-modal__header">
           <h2 className="share-modal__title">Share</h2>
-          <button className="share-modal__close" onClick={onClose} aria-label="Close share modal">
+          <button type="button" className="share-modal__close" onClick={onClose} aria-label="Close share modal">
             <CloseIcon fontSize="small" />
           </button>
         </div>
@@ -124,6 +103,7 @@ const ShareModal = ({ url, title = "Check out this property on Domits", onClose 
         <div className="share-modal__platforms">
           {PLATFORMS.map((platform) => (
             <button
+              type="button"
               key={platform.name}
               className="share-modal__platform-btn"
               onClick={() => handlePlatformShare(platform)}
@@ -143,6 +123,7 @@ const ShareModal = ({ url, title = "Check out this property on Domits", onClose 
               {truncatedUrl}
             </span>
             <button
+              type="button"
               className={`share-modal__copy-btn${copied ? " share-modal__copy-btn--copied" : ""}`}
               onClick={handleCopy}
               aria-label="Copy link">
@@ -150,7 +131,7 @@ const ShareModal = ({ url, title = "Check out this property on Domits", onClose 
             </button>
           </div>
         </div>
-      </div>
+      </dialog>
     </div>,
     document.body
   );
