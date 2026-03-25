@@ -26,8 +26,6 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
   const [showPopup, setShowPopup] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  const shareUrl = `${window.location.origin}/listingdetails?ID=${encodeURIComponent(accommodation?.property?.id)}`;
-
   // Check if this accommodation is already liked
   useEffect(() => {
     const checkIfLiked = async () => {
@@ -72,6 +70,8 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
     return <div>No accommodation data available.</div>;
   }
 
+  const shareUrl = `${window.location.origin}/listingdetails?ID=${encodeURIComponent(accommodation.property?.id)}`;
+
   const cardImages = resolveAccommodationImageUrls(
     accommodation.propertyImages,
     "thumb"
@@ -88,8 +88,10 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
       onClick={(e) => onClick(e, accommodation.property?.id)}
     >
       <button
+        type="button"
         className="accocard-share-button"
         onClick={handleShare}
+        aria-label="Share property"
       >
         <IosShareIcon />
       </button>
