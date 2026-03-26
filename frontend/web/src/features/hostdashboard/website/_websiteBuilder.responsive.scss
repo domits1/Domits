@@ -16,16 +16,26 @@
     border-radius: 20px;
   }
 
+  .stepTitleRow {
+    gap: 8px;
+  }
+
+  .titleIcon {
+    font-size: 21px !important;
+  }
+
   .selectionSummary,
-  .selectedListingCard,
   .templateSelectionState {
     padding: 18px;
   }
 
   .photoStack {
-    width: min(100%, 250px);
+    width: min(100%, 258px);
     min-height: 156px;
-    margin-left: 2px;
+    margin-inline: auto;
+    margin-left: 0;
+    justify-self: center;
+    transform: translateX(8px);
   }
 
   .photoCard {
@@ -34,22 +44,27 @@
   }
 
   .photoCard1 {
-    left: 4px;
-    transform: translateY(16px) rotate(-7deg) scale(1);
+    transform: translateX(calc(-50% - 54px)) translateY(16px) rotate(-7deg) scale(1);
   }
 
   .photoCard2 {
-    left: 60px;
-    transform: translateY(0) rotate(-1deg) scale(1);
+    transform: translateX(-50%) translateY(0) rotate(-1deg) scale(1);
   }
 
   .photoCard3 {
-    left: 116px;
-    transform: translateY(12px) rotate(7deg) scale(1);
+    transform: translateX(calc(-50% + 58px)) translateY(12px) rotate(7deg) scale(1);
   }
 
   .buttonRow {
     flex-direction: column;
+  }
+
+  .selectionPreview {
+    justify-items: center;
+  }
+
+  .selectionContent {
+    width: 100%;
   }
 
   .primaryButton,
@@ -425,7 +440,8 @@
   .primaryButton,
   .secondaryButton,
   .galleryAnimatedImageForward,
-  .galleryAnimatedImageBackward {
+  .galleryAnimatedImageBackward,
+  .galleryAnimatedImage {
     animation: none;
     transition: none;
   }
@@ -482,42 +498,36 @@
 
 @keyframes photoCardEnter1 {
   from {
-    left: 0;
-    transform: translateY(2px) rotate(0deg) scale(0.98);
+    transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
     opacity: 0;
   }
 
   to {
-    left: 8px;
-    transform: translateY(22px) rotate(-7deg) scale(1);
+    transform: translateX(calc(-50% - 74px)) translateY(22px) rotate(-7deg) scale(1);
     opacity: 1;
   }
 }
 
 @keyframes photoCardEnter2 {
   from {
-    left: 104px;
-    transform: translateY(2px) rotate(0deg) scale(0.98);
+    transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
     opacity: 0;
   }
 
   to {
-    left: 82px;
-    transform: translateY(2px) rotate(-1deg) scale(1);
+    transform: translateX(-50%) translateY(2px) rotate(-1deg) scale(1);
     opacity: 0.97;
   }
 }
 
 @keyframes photoCardEnter3 {
   from {
-    left: 208px;
-    transform: translateY(2px) rotate(0deg) scale(0.98);
+    transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
     opacity: 0;
   }
 
   to {
-    left: 156px;
-    transform: translateY(18px) rotate(7deg) scale(1);
+    transform: translateX(calc(-50% + 74px)) translateY(18px) rotate(7deg) scale(1);
     opacity: 0.92;
   }
 }
@@ -525,42 +535,36 @@
 @media (max-width: 640px) {
   @keyframes photoCardEnter1 {
     from {
-      left: 0;
-      transform: translateY(2px) rotate(0deg) scale(0.98);
+      transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
       opacity: 0;
     }
 
     to {
-      left: 4px;
-      transform: translateY(16px) rotate(-7deg) scale(1);
+      transform: translateX(calc(-50% - 54px)) translateY(16px) rotate(-7deg) scale(1);
       opacity: 1;
     }
   }
 
   @keyframes photoCardEnter2 {
     from {
-      left: 82px;
-      transform: translateY(2px) rotate(0deg) scale(0.98);
+      transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
       opacity: 0;
     }
 
     to {
-      left: 60px;
-      transform: translateY(0) rotate(-1deg) scale(1);
+      transform: translateX(-50%) translateY(0) rotate(-1deg) scale(1);
       opacity: 0.97;
     }
   }
 
   @keyframes photoCardEnter3 {
     from {
-      left: 164px;
-      transform: translateY(2px) rotate(0deg) scale(0.98);
+      transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
       opacity: 0;
     }
 
     to {
-      left: 116px;
-      transform: translateY(12px) rotate(7deg) scale(1);
+      transform: translateX(calc(-50% + 58px)) translateY(12px) rotate(7deg) scale(1);
       opacity: 0.92;
     }
   }

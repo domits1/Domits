@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import LanguageIcon from "@mui/icons-material/Language";
+import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router-dom";
 import styles from "./WebsiteBuilderPage.module.scss";
 import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
@@ -8,8 +10,6 @@ import TemplateSilhouette from "./TemplateSilhouette";
 import { WEBSITE_TEMPLATE_OPTIONS, getWebsiteTemplateById } from "./websiteTemplates";
 
 const EMPTY_SELECTION = "";
-const STEP_SELECT_LISTING = "select-listing";
-const STEP_PICK_TEMPLATE = "pick-template";
 const PHOTO_CARD_VARIANT_CLASSES = [styles.photoCard1, styles.photoCard2, styles.photoCard3];
 
 const PROPERTY_STATUS_LABELS = {
@@ -44,14 +44,6 @@ const getImportedPhotoSummary = (importedImageCount, emptyLabel = "No photos imp
   return `${importedImageCount} photo${importedImageCount === 1 ? "" : "s"} imported`;
 };
 
-const getPreviewReadySummary = (importedImageCount) => {
-  if (importedImageCount < 1) {
-    return "No photos imported yet";
-  }
-
-  return `${importedImageCount} image${importedImageCount === 1 ? "" : "s"} ready for preview`;
-};
-
 const getGalleryAnimationClassName = (direction) => {
   if (direction === "forward") {
     return styles.galleryAnimatedImageForward;
@@ -64,14 +56,6 @@ const getGalleryAnimationClassName = (direction) => {
   return "";
 };
 
-const getStepHeaderDescription = (activeStep) => {
-  if (activeStep === STEP_SELECT_LISTING) {
-    return "Pick the property you want to use as the base for your website. This page only shows listings that belong to your host account.";
-  }
-
-  return "The live site can stay stable while you choose the layout direction for this selected listing.";
-};
-
 const getGalleryViewAlt = (propertyLabel, activeIndex) => `${propertyLabel} view ${activeIndex + 1}`;
 
 const getPhotoCardClassName = (photoIndex) => {
@@ -79,11 +63,9 @@ const getPhotoCardClassName = (photoIndex) => {
   return `${styles.photoCard} ${variantClassName}`.trim();
 };
 
-
 function WebsiteBuilderPage() {
   const [propertyOptions, setPropertyOptions] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(EMPTY_SELECTION);
-  const [activeStep, setActiveStep] = useState(STEP_SELECT_LISTING);
   const [selectedTemplateId, setSelectedTemplateId] = useState(WEBSITE_TEMPLATE_OPTIONS[0].id);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -126,10 +108,10 @@ function WebsiteBuilderPage() {
   const summaryDescription = truncateDescription(selectedProperty?.description);
   const selectedTemplate = getWebsiteTemplateById(selectedTemplateId);
   const activeGalleryImage = galleryImages[activeGalleryIndex] || galleryImages[0] || "";
+  const isListingStepComplete = Boolean(selectedProperty);
 
   useEffect(() => {
     if (!selectedProperty) {
-      setActiveStep(STEP_SELECT_LISTING);
       setIsGalleryOpen(false);
       setActiveGalleryIndex(0);
       setGalleryAnimationDirection("idle");
@@ -231,11 +213,7 @@ function WebsiteBuilderPage() {
   );
 
   const renderSelectionState = () => {
-    if (isLoading) {
-      return <p className={styles.stateText}>Loading your listings...</p>;
-    }
-
-    if (loadError) {
+    if (loadError && propertyOptions.length === 0) {
       return (
         <div className={`${styles.stateCard} ${styles.errorState}`}>
           <p>{loadError}</p>
@@ -248,7 +226,7 @@ function WebsiteBuilderPage() {
       );
     }
 
-    if (propertyOptions.length === 0) {
+    if (!isLoading && propertyOptions.length === 0) {
       return (
         <div className={styles.stateCard}>
           <p>
@@ -275,8 +253,11 @@ function WebsiteBuilderPage() {
             className={styles.selectInput}
             value={selectedPropertyId}
             onChange={(event) => setSelectedPropertyId(event.target.value)}
+            disabled={isLoading}
           >
-            <option value={EMPTY_SELECTION}>Choose a listing</option>
+            <option value={EMPTY_SELECTION}>
+              {isLoading ? "Loading your listings..." : "Choose a listing"}
+            </option>
             {propertyOptions.map((propertyOption) => (
               <option key={propertyOption.value} value={propertyOption.value}>
                 {propertyOption.label}
@@ -307,13 +288,6 @@ function WebsiteBuilderPage() {
                   <button type="button" className={styles.secondaryButton} onClick={() => openGallery(0)}>
                     Browse photos
                   </button>
-                  <button
-                    type="button"
-                    className={styles.primaryButton}
-                    onClick={() => setActiveStep(STEP_PICK_TEMPLATE)}
-                  >
-                    Proceed
-                  </button>
                 </div>
               </div>
             </div>
@@ -324,54 +298,8 @@ function WebsiteBuilderPage() {
   };
 
   const renderTemplateStep = () => {
-    if (!selectedProperty) {
-      return null;
-    }
-
     return (
       <div className={styles.templateStage}>
-        <div className={styles.stepHeader}>
-          <p className={styles.stepEyebrow}>Step 2</p>
-          <h2>Choose a website template</h2>
-          <p>
-            Keep your selected listing as the source, then choose the layout direction that fits the
-            kind of guest experience you want to publish first.
-          </p>
-        </div>
-
-        <div className={styles.selectedListingCard}>
-          <div className={styles.selectionPreview}>
-            {renderPhotoStack()}
-
-            <div className={styles.selectionContent}>
-              <p className={styles.summaryLabel}>Current listing</p>
-              <p className={styles.selectedListingTitle}>{selectedProperty.title || selectedProperty.label}</p>
-              {selectedProperty.location ? (
-                <p className={styles.selectedListingLocation}>{selectedProperty.location}</p>
-              ) : null}
-              <div className={styles.metaRow}>
-                <span className={styles.statusPill}>
-                  Status: {getPropertyStatusLabel(selectedProperty.status)}
-                </span>
-                <span className={styles.metaText}>{getPreviewReadySummary(importedImageCount)}</span>
-              </div>
-              {summaryDescription ? <p className={styles.summaryMeta}>{summaryDescription}</p> : null}
-              <div className={styles.buttonRow}>
-                <button type="button" className={styles.secondaryButton} onClick={() => openGallery(0)}>
-                  Browse photos
-                </button>
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={() => setActiveStep(STEP_SELECT_LISTING)}
-                >
-                  Change listing
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className={styles.templateGrid}>
           {WEBSITE_TEMPLATE_OPTIONS.map((templateOption) => {
             const isSelected = templateOption.id === selectedTemplateId;
@@ -382,21 +310,21 @@ function WebsiteBuilderPage() {
                 type="button"
                 className={`${styles.templateCard} ${isSelected ? styles.templateCardSelected : ""}`}
                 onClick={() => setSelectedTemplateId(templateOption.id)}
-                  aria-pressed={isSelected}
-                >
-                  <span className={styles.templateRadio} aria-hidden="true">
-                    <span className={styles.templateRadioDot} />
-                  </span>
-                  {isSelected ? <span className={styles.templateSelectedTag}>Selected</span> : null}
-                  <div className={styles.templatePreviewShell}>
-                    <TemplateSilhouette layout={templateOption.layout} />
+                aria-pressed={isSelected}
+              >
+                <span className={styles.templateRadio} aria-hidden="true">
+                  <span className={styles.templateRadioDot} />
+                </span>
+                {isSelected ? <span className={styles.templateSelectedTag}>Selected</span> : null}
+                <div className={styles.templatePreviewShell}>
+                  <TemplateSilhouette layout={templateOption.layout} />
+                </div>
+                <div className={styles.templateCardContent}>
+                  <div className={styles.templateCardHeader}>
+                    <span className={styles.templateName}>{templateOption.name}</span>
                   </div>
-                  <div className={styles.templateCardContent}>
-                    <div className={styles.templateCardHeader}>
-                      <span className={styles.templateName}>{templateOption.name}</span>
-                    </div>
-                    <p className={styles.templateDescription}>{templateOption.description}</p>
-                  </div>
+                  <p className={styles.templateDescription}>{templateOption.description}</p>
+                </div>
               </button>
             );
           })}
@@ -436,13 +364,53 @@ function WebsiteBuilderPage() {
 
           <div className={styles.selectorCard}>
             <div className={styles.selectorHeader}>
-              <h2>{activeStep === STEP_SELECT_LISTING ? "Select your listing" : "Start shaping the website"}</h2>
+              <div className={styles.stepTitleRow}>
+                <span className={styles.titleIconBadge} aria-hidden="true">
+                  <LanguageIcon className={styles.titleIcon} />
+                </span>
+                <h2>Configure your website</h2>
+              </div>
               <p>
-                {getStepHeaderDescription(activeStep)}
+                Your website starts from the property data you already manage in Domits. Title,
+                description, photos, and other core listing details are imported directly into the new
+                site, so you can assemble your site without any technical knowledge.
               </p>
             </div>
 
-            {activeStep === STEP_SELECT_LISTING ? renderSelectionState() : renderTemplateStep()}
+            <div className={styles.builderSteps}>
+              <section className={styles.builderStepSection}>
+                <div className={styles.stepHeader}>
+                  <p className={styles.stepEyebrow}>Step 1</p>
+                  <div className={styles.stepTitleRow}>
+                    <span className={styles.titleIconBadge} aria-hidden="true">
+                      <HomeIcon className={styles.titleIcon} />
+                    </span>
+                    <h2>Choose your listing</h2>
+                  </div>
+                  <p>
+                    Pick the property you want to use as the base for your website. This page only
+                    shows listings that belong to your host account.
+                  </p>
+                </div>
+
+                {renderSelectionState()}
+              </section>
+
+              {isListingStepComplete ? (
+                <section className={styles.builderStepSection}>
+                  <div className={styles.stepHeader}>
+                    <p className={styles.stepEyebrow}>Step 2</p>
+                    <h2>Choose a website template</h2>
+                    <p>
+                      Select the layout direction you want to use for the listing website. You can keep
+                      adjusting the listing choice above while you compare template options.
+                    </p>
+                  </div>
+
+                  {renderTemplateStep()}
+                </section>
+              ) : null}
+            </div>
           </div>
         </section>
       </div>
