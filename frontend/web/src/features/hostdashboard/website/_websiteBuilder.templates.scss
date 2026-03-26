@@ -1,7 +1,7 @@
 .templateGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 250px);
-  justify-content: center;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  justify-content: stretch;
   align-items: stretch;
   gap: 16px;
 }
@@ -13,7 +13,7 @@
   justify-items: center;
   align-content: start;
   gap: 12px;
-  width: 250px;
+  width: 100%;
   height: 100%;
   min-height: 412px;
   align-self: stretch;
@@ -93,7 +93,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(100%, 214px);
+  width: min(100%, 226px);
   justify-self: center;
   aspect-ratio: 214 / 258;
   padding: 18px 14px 16px;
@@ -116,7 +116,7 @@
   gap: 10px;
   padding: 12px;
   aspect-ratio: 178 / 230;
-  width: min(100%, 178px);
+  width: min(100%, 188px);
   margin-inline: auto;
   border-radius: 18px;
   border: 1px solid rgba(115, 147, 179, 0.22);

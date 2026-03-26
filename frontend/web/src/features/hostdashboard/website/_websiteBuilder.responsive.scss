@@ -36,23 +36,16 @@
     margin-left: 0;
     justify-self: center;
     transform: translateX(8px);
+    --photo-stack-left-offset-x: -54px;
+    --photo-stack-left-offset-y: 16px;
+    --photo-stack-center-offset-y: 0px;
+    --photo-stack-right-offset-x: 58px;
+    --photo-stack-right-offset-y: 12px;
   }
 
   .photoCard {
     width: min(100%, 120px);
     border-radius: 18px;
-  }
-
-  .photoCard1 {
-    transform: translateX(calc(-50% - 54px)) translateY(16px) rotate(-7deg) scale(1);
-  }
-
-  .photoCard2 {
-    transform: translateX(-50%) translateY(0) rotate(-1deg) scale(1);
-  }
-
-  .photoCard3 {
-    transform: translateX(calc(-50% + 58px)) translateY(12px) rotate(7deg) scale(1);
   }
 
   .buttonRow {
@@ -496,76 +489,15 @@
   }
 }
 
-@keyframes photoCardEnter1 {
+@keyframes photoCardEnter {
   from {
-    transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
+    transform: translateX(-50%) translateY(var(--photo-card-enter-offset-y)) rotate(0deg)
+      scale(var(--photo-card-enter-scale));
     opacity: 0;
   }
 
   to {
-    transform: translateX(calc(-50% - 74px)) translateY(22px) rotate(-7deg) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes photoCardEnter2 {
-  from {
-    transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(-50%) translateY(2px) rotate(-1deg) scale(1);
-    opacity: 0.97;
-  }
-}
-
-@keyframes photoCardEnter3 {
-  from {
-    transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(calc(-50% + 74px)) translateY(18px) rotate(7deg) scale(1);
-    opacity: 0.92;
-  }
-}
-
-@media (max-width: 640px) {
-  @keyframes photoCardEnter1 {
-    from {
-      transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
-      opacity: 0;
-    }
-
-    to {
-      transform: translateX(calc(-50% - 54px)) translateY(16px) rotate(-7deg) scale(1);
-      opacity: 1;
-    }
-  }
-
-  @keyframes photoCardEnter2 {
-    from {
-      transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
-      opacity: 0;
-    }
-
-    to {
-      transform: translateX(-50%) translateY(0) rotate(-1deg) scale(1);
-      opacity: 0.97;
-    }
-  }
-
-  @keyframes photoCardEnter3 {
-    from {
-      transform: translateX(-50%) translateY(2px) rotate(0deg) scale(0.98);
-      opacity: 0;
-    }
-
-    to {
-      transform: translateX(calc(-50% + 58px)) translateY(12px) rotate(7deg) scale(1);
-      opacity: 0.92;
-    }
+    transform: var(--photo-card-final-transform);
+    opacity: var(--photo-card-final-opacity, 1);
   }
 }

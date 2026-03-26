@@ -235,6 +235,16 @@
   min-height: 194px;
   margin-left: 6px;
   justify-self: start;
+  --photo-stack-left-offset-x: -74px;
+  --photo-stack-center-offset-y: 2px;
+  --photo-stack-left-offset-y: 22px;
+  --photo-stack-right-offset-x: 74px;
+  --photo-stack-right-offset-y: 18px;
+  --photo-stack-left-rotation: -7deg;
+  --photo-stack-center-rotation: -1deg;
+  --photo-stack-right-rotation: 7deg;
+  --photo-card-enter-offset-y: 2px;
+  --photo-card-enter-scale: 0.98;
 }
 
 .photoCard {
@@ -255,8 +265,9 @@
   cursor: pointer;
   animation-duration: 540ms;
   animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
-  animation-fill-mode: forwards;
+  animation-fill-mode: both;
   will-change: left, transform, opacity;
+  transform: var(--photo-card-final-transform);
 }
 
 .photoCard:focus-visible,
@@ -270,21 +281,27 @@
 
 .photoCard1 {
   z-index: 3;
-  transform: translateX(calc(-50% - 74px)) translateY(22px) rotate(-7deg) scale(1);
-  animation-name: photoCardEnter1;
+  --photo-card-final-transform: translateX(calc(-50% + var(--photo-stack-left-offset-x)))
+    translateY(var(--photo-stack-left-offset-y)) rotate(var(--photo-stack-left-rotation)) scale(1);
+  --photo-card-final-opacity: 1;
+  animation-name: photoCardEnter;
 }
 
 .photoCard2 {
   z-index: 2;
-  transform: translateX(-50%) translateY(2px) rotate(-1deg) scale(1);
-  animation-name: photoCardEnter2;
+  --photo-card-final-transform: translateX(-50%) translateY(var(--photo-stack-center-offset-y))
+    rotate(var(--photo-stack-center-rotation)) scale(1);
+  --photo-card-final-opacity: 0.97;
+  animation-name: photoCardEnter;
   animation-delay: 40ms;
 }
 
 .photoCard3 {
   z-index: 1;
-  transform: translateX(calc(-50% + 74px)) translateY(18px) rotate(7deg) scale(1);
-  animation-name: photoCardEnter3;
+  --photo-card-final-transform: translateX(calc(-50% + var(--photo-stack-right-offset-x)))
+    translateY(var(--photo-stack-right-offset-y)) rotate(var(--photo-stack-right-rotation)) scale(1);
+  --photo-card-final-opacity: 0.92;
+  animation-name: photoCardEnter;
   animation-delay: 80ms;
 }
 
