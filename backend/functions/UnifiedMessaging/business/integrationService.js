@@ -74,6 +74,17 @@ const parseTokenResponse = (rawText) => {
     expires_in: params.get("expires_in") || null,
   };
 };
+const categorizeMetaError = (error) => {
+  const code = String(error?.code || "");
+  const message = String(error?.message || "").toLowerCase();
+
+  if (code === "100" || message.includes("missing permission")) return "permission_denied";
+  if (code === "190" || message.includes("invalid oauth")) return "invalid_token";
+  if (message.includes("expired")) return "expired";
+  if (message.includes("rate limit")) return "rate_limited";
+  if (message.includes("not found") || message.includes("unsupported get request")) return "not_found";
+  return "graph_request_failed";
+};
 
 export default class IntegrationService {
   constructor() {
@@ -251,6 +262,14 @@ export default class IntegrationService {
       url.searchParams.set(key, String(value));
     }
 
+    console.log(
+      "WhatsApp Graph request",
+      JSON.stringify({
+        path: String(path || "").replace(/^\/+/, ""),
+        method,
+      })
+    );
+
     const response = await fetch(url, {
       method,
       headers: {
@@ -265,6 +284,17 @@ export default class IntegrationService {
       const error = new Error(parsed?.error?.message || `Meta Graph request failed with status ${response.status}`);
       error.code = parsed?.error?.code || "META_GRAPH_REQUEST_FAILED";
       error.details = parsed || rawText;
+      error.graphPath = String(path || "").replace(/^\/+/, "");
+      error.responseCategory = categorizeMetaError(error);
+      console.warn(
+        "WhatsApp Graph request failed",
+        JSON.stringify({
+          path: error.graphPath,
+          method,
+          causeCode: error.code,
+          responseCategory: error.responseCategory,
+        })
+      );
       throw error;
     }
 
@@ -292,6 +322,15 @@ export default class IntegrationService {
       );
       error.code = (typeof details === "object" && details?.error?.code) || "META_TOKEN_EXCHANGE_FAILED";
       error.details = details;
+      console.warn(
+        "WhatsApp code exchange failed",
+        JSON.stringify({
+          causeCode: error.code,
+          responseCategory: categorizeMetaError(error),
+          hasExpiresIn: false,
+          hasTokenType: false,
+        })
+      );
       throw error;
     }
 
@@ -301,6 +340,14 @@ export default class IntegrationService {
       throw error;
     }
 
+    console.log(
+      "WhatsApp code exchange succeeded",
+      JSON.stringify({
+        hasExpiresIn: parsed.expires_in != null,
+        hasTokenType: !!parsed.token_type,
+      })
+    );
+
     return {
       accessToken: parsed.access_token,
       tokenType: parsed.token_type || "bearer",
@@ -308,60 +355,127 @@ export default class IntegrationService {
     };
   }
 
-  async fetchWhatsAppBusinessAccounts(accessToken) {
-    const businesses = await this.metaGraphRequest({
-      path: "me/businesses",
-      accessToken,
-      query: {
-        fields: "id,name",
-        limit: 100,
-      },
-    });
-
-    const businessRows = Array.isArray(businesses?.data) ? businesses.data : [];
+  async fetchBusinessWabasForBusinessId({ accessToken, businessId, businessName = null, source = "business_id" }) {
     const wabas = [];
+    for (const edge of ["owned_whatsapp_business_accounts", "client_whatsapp_business_accounts"]) {
+      try {
+        const response = await this.metaGraphRequest({
+          path: `${businessId}/${edge}`,
+          accessToken,
+          query: {
+            fields: "id,name",
+            limit: 100,
+          },
+        });
 
-    for (const business of businessRows) {
-      const businessId = requireStr(business?.id);
-      if (!businessId) continue;
+        const rows = Array.isArray(response?.data) ? response.data : [];
+        for (const row of rows) {
+          const wabaId = requireStr(row?.id);
+          if (!wabaId) continue;
 
-      for (const edge of ["owned_whatsapp_business_accounts", "client_whatsapp_business_accounts"]) {
-        try {
-          const response = await this.metaGraphRequest({
-            path: `${businessId}/${edge}`,
-            accessToken,
-            query: {
-              fields: "id,name",
-              limit: 100,
-            },
+          wabas.push({
+            businessId,
+            businessName: businessName || row?.name || null,
+            wabaId,
+            wabaName: row?.name || null,
+            source,
           });
-
-          const rows = Array.isArray(response?.data) ? response.data : [];
-          for (const row of rows) {
-            const wabaId = requireStr(row?.id);
-            if (!wabaId) continue;
-
-            wabas.push({
-              businessId,
-              businessName: row?.name || business?.name || null,
-              wabaId,
-              wabaName: row?.name || null,
-            });
-          }
-        } catch (error) {
-          console.warn(
-            "WhatsApp asset edge lookup failed",
-            JSON.stringify({
-              edge,
-              businessId,
-              cause: error?.code || "META_GRAPH_REQUEST_FAILED",
-            })
-          );
         }
+      } catch (error) {
+        console.warn(
+          "WhatsApp asset edge lookup failed",
+          JSON.stringify({
+            path: `${businessId}/${edge}`,
+            businessId,
+            causeCode: error?.code || "META_GRAPH_REQUEST_FAILED",
+            responseCategory: error?.responseCategory || categorizeMetaError(error),
+          })
+        );
       }
     }
 
     return uniqueBy(wabas, (item) => `${item.businessId}:${item.wabaId}`);
+  }
+
+  async fetchWhatsAppBusinessAccounts(accessToken) {
+    const aggregated = [];
+    const fallbackBusinessId = requireStr(process.env.WHATSAPP_BUSINESS_ID);
+    const fallbackWabaId = requireStr(process.env.WHATSAPP_WABA_ID);
+    let meBusinessesError = null;
+
+    try {
+      const businesses = await this.metaGraphRequest({
+        path: "me/businesses",
+        accessToken,
+        query: {
+          fields: "id,name",
+          limit: 100,
+        },
+      });
+
+      const businessRows = Array.isArray(businesses?.data) ? businesses.data : [];
+      for (const business of businessRows) {
+        const businessId = requireStr(business?.id);
+        if (!businessId) continue;
+
+        const wabas = await this.fetchBusinessWabasForBusinessId({
+          accessToken,
+          businessId,
+          businessName: business?.name || null,
+          source: "me/businesses",
+        });
+
+        aggregated.push(...wabas);
+      }
+    } catch (error) {
+      meBusinessesError = error;
+      console.warn(
+        "WhatsApp business discovery failed on me/businesses",
+        JSON.stringify({
+          path: "me/businesses",
+          causeCode: error?.code || "META_GRAPH_REQUEST_FAILED",
+          responseCategory: error?.responseCategory || categorizeMetaError(error),
+        })
+      );
+    }
+
+    if (aggregated.length === 0 && fallbackBusinessId) {
+      const wabas = await this.fetchBusinessWabasForBusinessId({
+        accessToken,
+        businessId: fallbackBusinessId,
+        businessName: null,
+        source: "env_business_id",
+      });
+
+      aggregated.push(...wabas);
+    }
+
+    if (aggregated.length === 0 && fallbackWabaId) {
+      aggregated.push({
+        businessId: fallbackBusinessId || null,
+        businessName: null,
+        wabaId: fallbackWabaId,
+        wabaName: null,
+        source: "env_waba_id",
+      });
+    }
+
+    const uniqueAccounts = uniqueBy(aggregated, (item) => `${item.businessId || "none"}:${item.wabaId}`);
+    if (uniqueAccounts.length > 0) {
+      return uniqueAccounts;
+    }
+
+    const error = new Error(
+      "WhatsApp code exchange succeeded, but business asset discovery failed due to permission or scope limitations in the current token flow."
+    );
+    error.code = meBusinessesError?.code || "WHATSAPP_ASSET_DISCOVERY_FAILED";
+    error.responseCategory = meBusinessesError?.responseCategory || "permission_denied";
+    error.details = {
+      meBusinessesFailed: !!meBusinessesError,
+      usedBusinessIdFallback: !!fallbackBusinessId,
+      usedWabaIdFallback: !!fallbackWabaId,
+    };
+    throw error;
   }
 
   async fetchWhatsAppSelectableNumbers(accessToken) {
@@ -397,15 +511,27 @@ export default class IntegrationService {
         console.warn(
           "WhatsApp phone number lookup failed",
           JSON.stringify({
+            path: `${account.wabaId}/phone_numbers`,
             businessAccountId: account.wabaId,
             businessId: account.businessId,
-            cause: error?.code || "META_GRAPH_REQUEST_FAILED",
+            causeCode: error?.code || "META_GRAPH_REQUEST_FAILED",
+            responseCategory: error?.responseCategory || categorizeMetaError(error),
           })
         );
       }
     }
 
-    return uniqueBy(numbers, (item) => item.phoneNumberId);
+    const uniqueNumbers = uniqueBy(numbers, (item) => item.phoneNumberId);
+    if (uniqueNumbers.length > 0) {
+      return uniqueNumbers;
+    }
+
+    const error = new Error(
+      "WhatsApp code exchange succeeded, but no phone numbers could be discovered from the accessible business assets."
+    );
+    error.code = "WHATSAPP_PHONE_DISCOVERY_FAILED";
+    error.responseCategory = "permission_denied";
+    throw error;
   }
 
   async createIntegration(body) {

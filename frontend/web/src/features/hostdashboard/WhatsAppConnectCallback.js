@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { UserProvider } from "./hostmessages/context/AuthContext";
 import { useAuth } from "./hostmessages/hooks/useAuth";
 import "./hostintegrations/HostIntegrations.scss";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const COMPLETE_CACHE_PREFIX = "whatsapp-connect-complete";
+const COMPLETE_POLL_INTERVAL_MS = 500;
+const COMPLETE_POLL_TIMEOUT_MS = 15000;
 
 const decodeState = (value) => {
   try {
@@ -15,10 +18,37 @@ const decodeState = (value) => {
   }
 };
 
+const buildCompleteCacheKey = ({ connectSessionId, code }) => {
+  if (!connectSessionId || !code) return "";
+  return `${COMPLETE_CACHE_PREFIX}:${connectSessionId}:${code}`;
+};
+
+const readCompletionCache = (cacheKey) => {
+  if (!cacheKey) return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(cacheKey);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCompletionCache = (cacheKey, value) => {
+  if (!cacheKey) return;
+
+  try {
+    window.sessionStorage.setItem(cacheKey, JSON.stringify(value));
+  } catch {
+    // Ignore sessionStorage write failures and continue with in-memory flow.
+  }
+};
+
 function WhatsAppConnectCallbackInner() {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const [params] = useSearchParams();
+  const startedCacheKeyRef = useRef("");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,9 +62,31 @@ function WhatsAppConnectCallbackInner() {
   const errorDescription = params.get("error_description");
 
   const decodedState = useMemo(() => decodeState(stateRaw), [stateRaw]);
+  const completeCacheKey = useMemo(
+    () =>
+      buildCompleteCacheKey({
+        connectSessionId: decodedState?.connectSessionId,
+        code,
+      }),
+    [code, decodedState]
+  );
 
   useEffect(() => {
     let cancelled = false;
+    let pollTimer = null;
+    let pollTimeout = null;
+
+    const applyCompletedState = (payload) => {
+      const nextNumbers = Array.isArray(payload?.selectableNumbers) ? payload.selectableNumbers : [];
+      setSelectableNumbers(nextNumbers);
+      setSuccessMessage(
+        nextNumbers.length > 0
+          ? "Meta authorization completed. Select the WhatsApp number you want to connect."
+          : "Meta authorization completed, but no selectable numbers were returned yet."
+      );
+      setError("");
+      setLoading(false);
+    };
 
     const run = async () => {
       if (errorReason) {
@@ -55,11 +107,65 @@ function WhatsAppConnectCallbackInner() {
         return;
       }
 
+      const cached = readCompletionCache(completeCacheKey);
+      if (cached?.status === "completed") {
+        applyCompletedState(cached.payload);
+        return;
+      }
+
+      if (cached?.status === "failed") {
+        setError(cached.error || "Failed to complete callback processing.");
+        setLoading(false);
+        return;
+      }
+
+      if (cached?.status === "processing") {
+        pollTimer = window.setInterval(() => {
+          const nextCached = readCompletionCache(completeCacheKey);
+          if (!nextCached || cancelled) return;
+
+          if (nextCached.status === "completed") {
+            window.clearInterval(pollTimer);
+            window.clearTimeout(pollTimeout);
+            if (!cancelled) applyCompletedState(nextCached.payload);
+          }
+
+          if (nextCached.status === "failed") {
+            window.clearInterval(pollTimer);
+            window.clearTimeout(pollTimeout);
+            if (!cancelled) {
+              setError(nextCached.error || "Failed to complete callback processing.");
+              setLoading(false);
+            }
+          }
+        }, COMPLETE_POLL_INTERVAL_MS);
+
+        pollTimeout = window.setTimeout(() => {
+          window.clearInterval(pollTimer);
+          if (!cancelled) {
+            setError("WhatsApp authorization is already being finalized. Please wait a moment and refresh if needed.");
+            setLoading(false);
+          }
+        }, COMPLETE_POLL_TIMEOUT_MS);
+
+        return;
+      }
+
+      if (startedCacheKeyRef.current === completeCacheKey) {
+        return;
+      }
+
       try {
         const resolvedUserId = decodedState?.userId || userId;
         if (!resolvedUserId) {
           throw new Error("Missing userId for callback processing.");
         }
+
+        startedCacheKeyRef.current = completeCacheKey;
+        writeCompletionCache(completeCacheKey, {
+          status: "processing",
+          startedAt: Date.now(),
+        });
 
         const res = await fetch(`${UNIFIED_API}/integrations/whatsapp/connect/complete`, {
           method: "POST",
@@ -78,20 +184,30 @@ function WhatsAppConnectCallbackInner() {
           throw new Error(data?.error || "Failed to complete WhatsApp connect.");
         }
 
+        writeCompletionCache(completeCacheKey, {
+          status: "completed",
+          completedAt: Date.now(),
+          payload: {
+            selectableNumbers: Array.isArray(data?.selectableNumbers) ? data.selectableNumbers : [],
+          },
+        });
+
         if (!cancelled) {
-          setSelectableNumbers(Array.isArray(data?.selectableNumbers) ? data.selectableNumbers : []);
-          setSuccessMessage(
-            Array.isArray(data?.selectableNumbers) && data.selectableNumbers.length > 0
-              ? "Meta authorization completed. Select the WhatsApp number you want to connect."
-              : "Meta authorization completed, but no selectable numbers were returned yet."
-          );
+          applyCompletedState({
+            selectableNumbers: Array.isArray(data?.selectableNumbers) ? data.selectableNumbers : [],
+          });
         }
       } catch (err) {
+        writeCompletionCache(completeCacheKey, {
+          status: "failed",
+          failedAt: Date.now(),
+          error: err?.message || "Failed to complete callback processing.",
+        });
+
         if (!cancelled) {
           setError(err?.message || "Failed to complete callback processing.");
+          setLoading(false);
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     };
 
@@ -99,8 +215,10 @@ function WhatsAppConnectCallbackInner() {
 
     return () => {
       cancelled = true;
+      if (pollTimer) window.clearInterval(pollTimer);
+      if (pollTimeout) window.clearTimeout(pollTimeout);
     };
-  }, [code, decodedState, errorDescription, errorReason, stateRaw, userId]);
+  }, [code, completeCacheKey, decodedState, errorDescription, errorReason, stateRaw, userId]);
 
   const handleUseNumber = async (item) => {
     setSaving(true);
@@ -119,11 +237,6 @@ function WhatsAppConnectCallbackInner() {
           phoneNumberId: item.phoneNumberId,
           displayName: item.displayName,
           businessAccountId: item.businessAccountId || null,
-          /**
-           * PLACEHOLDER FOR NOW:
-           * later backend should create a real Secrets Manager ref after real token exchange
-           */
-          credentialsRef: "meta-embedded-signup-token-placeholder",
         }),
       });
 
