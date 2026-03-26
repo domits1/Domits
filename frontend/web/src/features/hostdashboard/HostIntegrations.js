@@ -22,6 +22,7 @@ const CHANNEL_LABELS = {
 
 const integrationPropType = PropTypes.shape({
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  channel: PropTypes.string,
   status: PropTypes.string,
   displayName: PropTypes.string,
   channelLabel: PropTypes.string,

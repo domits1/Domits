@@ -89,6 +89,22 @@ const startCompletionPolling = ({ cacheKey, cancelledRef, applyCompletedState, s
   return handles;
 };
 
+const getCallbackPreconditionError = ({ errorReason, errorDescription, code, decodedState }) => {
+  if (errorReason) {
+    return errorDescription || errorReason || "Meta authorization was cancelled or failed.";
+  }
+
+  if (!code) {
+    return "Missing authorization code in callback URL.";
+  }
+
+  if (!decodedState?.connectSessionId) {
+    return "Missing connect session state.";
+  }
+
+  return "";
+};
+
 function WhatsAppConnectCallbackInner() {
   const navigate = useNavigate();
   const { userId } = useAuth();
@@ -134,20 +150,14 @@ function WhatsAppConnectCallbackInner() {
     };
 
     const run = async () => {
-      if (errorReason) {
-        setError(errorDescription || errorReason || "Meta authorization was cancelled or failed.");
-        setLoading(false);
-        return;
-      }
-
-      if (!code) {
-        setError("Missing authorization code in callback URL.");
-        setLoading(false);
-        return;
-      }
-
-      if (!decodedState?.connectSessionId) {
-        setError("Missing connect session state.");
+      const preconditionError = getCallbackPreconditionError({
+        errorReason,
+        errorDescription,
+        code,
+        decodedState,
+      });
+      if (preconditionError) {
+        setError(preconditionError);
         setLoading(false);
         return;
       }

@@ -40,7 +40,10 @@ const normalizeExpiresAt = (value) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 };
-const normalizeExpiresIn = (value) => (value != null ? Number(value) : null);
+const normalizeExpiresIn = (value) => {
+  if (value == null) return null;
+  return Number(value);
+};
 const resolveTokenSource = (integration, secret) => {
   if (integration?.credentialsRef) {
     return hasUsableSecretAccessToken(secret) ? "SECRET" : "NONE";

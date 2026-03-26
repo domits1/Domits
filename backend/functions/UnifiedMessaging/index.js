@@ -160,10 +160,12 @@ export const handler = async (event) => {
       ...(returnedResponse?.headers || {}),
     };
 
-    const responseBody =
-      returnedResponse?.rawBody !== undefined
-        ? returnedResponse.rawBody
-        : JSON.stringify(returnedResponse?.response);
+    let responseBody;
+    if (returnedResponse?.rawBody === undefined) {
+      responseBody = JSON.stringify(returnedResponse?.response);
+    } else {
+      responseBody = returnedResponse.rawBody;
+    }
 
     return {
       statusCode: returnedResponse?.statusCode || 200,

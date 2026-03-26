@@ -94,6 +94,48 @@ const computeMetaSignature = (appSecret, rawBody) => {
 const getSignatureHeader = (event) =>
   event?.headers?.["x-hub-signature-256"] || event?.headers?.["X-Hub-Signature-256"] || null;
 
+const buildInboundThreadPayload = ({ integration, guestPhone, fallbackGuestName, phoneNumberId, metadata, message }) => ({
+  integrationAccountId: integration.id,
+  platform: "WHATSAPP",
+  externalThreadId: guestPhone,
+  hostId: integration.userId,
+  guestId: guestPhone,
+  propertyId: null,
+  status: "OPEN",
+  messages: [
+    {
+      platformMessageId: message?.id || null,
+      senderId: guestPhone,
+      recipientId: integration.userId,
+      content: getTextContent(message),
+      externalCreatedAt: normalizeTimestampMs(message?.timestamp),
+      direction: "INBOUND",
+      externalSenderType: "GUEST",
+      metadata: {
+        channel: "WHATSAPP",
+        guestName: fallbackGuestName,
+        phoneNumberId,
+        displayPhoneNumber: metadata?.display_phone_number || null,
+        messageType: message?.type || null,
+        rawMessage: message,
+      },
+      attachments: getAttachmentPayload(message),
+    },
+  ],
+});
+
+const buildStatusUpdatePayload = (integration, status) => ({
+  integrationAccountId: integration.id,
+  platformMessageId: status?.id || null,
+  deliveryStatus: mapDeliveryStatus(status?.status),
+  externalCreatedAt: normalizeTimestampMs(status?.timestamp),
+  conversation: status?.conversation || null,
+  pricing: status?.pricing || null,
+  errorCode: status?.errors?.[0]?.code || null,
+  errorMessage: status?.errors?.[0]?.title || null,
+  rawStatus: status,
+});
+
 export default class WhatsAppService {
   constructor() {
     this.ingestionService = new IngestionService();
@@ -281,50 +323,14 @@ export default class WhatsAppService {
           const guestPhone = message?.from || fallbackGuestPhone || null;
           if (!guestPhone) continue;
 
-          inboundThreads.push({
-            integrationAccountId: integration.id,
-            platform: "WHATSAPP",
-            externalThreadId: guestPhone,
-            hostId: integration.userId,
-            guestId: guestPhone,
-            propertyId: null,
-            status: "OPEN",
-            messages: [
-              {
-                platformMessageId: message?.id || null,
-                senderId: guestPhone,
-                recipientId: integration.userId,
-                content: getTextContent(message),
-                externalCreatedAt: normalizeTimestampMs(message?.timestamp),
-                direction: "INBOUND",
-                externalSenderType: "GUEST",
-                metadata: {
-                  channel: "WHATSAPP",
-                  guestName: fallbackGuestName,
-                  phoneNumberId,
-                  displayPhoneNumber: metadata?.display_phone_number || null,
-                  messageType: message?.type || null,
-                  rawMessage: message,
-                },
-                attachments: getAttachmentPayload(message),
-              },
-            ],
-          });
+          inboundThreads.push(
+            buildInboundThreadPayload({ integration, guestPhone, fallbackGuestName, phoneNumberId, metadata, message })
+          );
         }
 
         const statuses = asArray(value?.statuses);
         for (const status of statuses) {
-          statusUpdates.push({
-            integrationAccountId: integration.id,
-            platformMessageId: status?.id || null,
-            deliveryStatus: mapDeliveryStatus(status?.status),
-            externalCreatedAt: normalizeTimestampMs(status?.timestamp),
-            conversation: status?.conversation || null,
-            pricing: status?.pricing || null,
-            errorCode: status?.errors?.[0]?.code || null,
-            errorMessage: status?.errors?.[0]?.title || null,
-            rawStatus: status,
-          });
+          statusUpdates.push(buildStatusUpdatePayload(integration, status));
         }
       }
     }
