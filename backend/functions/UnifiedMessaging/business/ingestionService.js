@@ -9,6 +9,26 @@ const toNullableJsonString = (value) => {
   return JSON.stringify(value);
 };
 
+const badRequest = (error) => ({ statusCode: 400, response: { error } });
+
+const validateIngestionPayload = (payload) => {
+  if (!payload?.integrationAccountId) return "Missing integrationAccountId";
+  if (!payload?.platform) return "Missing platform";
+  if (!payload?.externalThreadId) return "Missing externalThreadId";
+  if (!payload?.hostId || !payload?.guestId) return "Missing hostId/guestId";
+  return null;
+};
+
+const normalizeExternalCreatedAt = (value) => {
+  if (value == null) return null;
+  if (typeof value === "number") return value;
+
+  const parsed = Number(new Date(value).getTime());
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const resolveDeliveryStatus = (direction) => (direction === "OUTBOUND" ? "pending" : "delivered");
+
 export default class IngestionService {
   constructor() {
     this.threadRepo = new ThreadRepository();
@@ -40,34 +60,18 @@ export default class IngestionService {
    * }
    */
   async ingestExternalThread(payload) {
-    const integrationAccountId = payload?.integrationAccountId || null;
-    const platform = payload?.platform || null;
-    const externalThreadId = payload?.externalThreadId || null;
-
-    if (!integrationAccountId) {
-      return { statusCode: 400, response: { error: "Missing integrationAccountId" } };
-    }
-    if (!platform) {
-      return { statusCode: 400, response: { error: "Missing platform" } };
-    }
-    if (!externalThreadId) {
-      return { statusCode: 400, response: { error: "Missing externalThreadId" } };
-    }
-
-    const hostId = payload?.hostId || null;
-    const guestId = payload?.guestId || null;
-
-    if (!hostId || !guestId) {
-      return { statusCode: 400, response: { error: "Missing hostId/guestId" } };
+    const validationError = validateIngestionPayload(payload);
+    if (validationError) {
+      return badRequest(validationError);
     }
 
     // 1) upsert thread by (platform + integrationAccountId + externalThreadId)
     const thread = await this.threadRepo.upsertExternalThread({
-      integrationAccountId,
-      platform,
-      externalThreadId,
-      hostId,
-      guestId,
+      integrationAccountId: payload.integrationAccountId,
+      platform: payload.platform,
+      externalThreadId: payload.externalThreadId,
+      hostId: payload.hostId,
+      guestId: payload.guestId,
       propertyId: payload?.propertyId ?? null,
       status: payload?.status ?? "OPEN",
     });
@@ -81,14 +85,7 @@ export default class IngestionService {
       if (!m) continue;
 
       const platformMessageId = m.platformMessageId ?? null;
-
-      const externalCreatedAt =
-        m.externalCreatedAt != null
-          ? typeof m.externalCreatedAt === "number"
-            ? m.externalCreatedAt
-            : Number(new Date(m.externalCreatedAt).getTime())
-          : null;
-
+      const externalCreatedAt = normalizeExternalCreatedAt(m.externalCreatedAt);
       const direction = m.direction || "INBOUND";
 
       const didInsert = await this.messageRepo.createMessageIfNotExists({
@@ -99,7 +96,7 @@ export default class IngestionService {
         platformMessageId,
         createdAt: nowMs(), // internal created time
         isRead: false,
-        deliveryStatus: direction === "OUTBOUND" ? "pending" : "delivered",
+        deliveryStatus: resolveDeliveryStatus(direction),
         direction,
         externalCreatedAt: Number.isFinite(externalCreatedAt) ? externalCreatedAt : null,
         externalSenderType: m.externalSenderType ?? null,

@@ -278,14 +278,14 @@ const ChatScreen = ({
       </div>
 
       <div className="chat-footer">
-        {!isWhatsApp ? (
+        {isWhatsApp ? null : (
           <BookingTab
             userId={userId}
             contactId={resolvedContactId}
             contactName={headerName}
             dashboardType={dashboardType}
           />
-        ) : null}
+        )}
 
         <div className="chat-input">
           <div className="attachment-area">

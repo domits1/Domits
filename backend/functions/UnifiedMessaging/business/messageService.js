@@ -2,6 +2,55 @@ import MessageRepository from "../data/messageRepository.js";
 import ThreadRepository from "../data/threadRepository.js";
 import WhatsAppProviderAdapter from "./whatsappProviderAdapter.js";
 
+const isWhatsAppPayload = (payload) => payload.platform === "WHATSAPP";
+const resolveParticipantId = (explicitId, fallbackId) => explicitId || fallbackId;
+
+const buildExternalThreadPayload = (payload, senderId, recipientId) => ({
+  integrationAccountId: payload.integrationAccountId,
+  platform: payload.platform,
+  externalThreadId: payload.externalThreadId,
+  hostId: resolveParticipantId(payload.hostId || null, senderId),
+  guestId: resolveParticipantId(payload.guestId || null, recipientId),
+  propertyId: payload.propertyId ?? null,
+  status: "OPEN",
+});
+
+const buildThreadPayload = (payload, senderId, recipientId) => ({
+  hostId: resolveParticipantId(payload.hostId || null, senderId),
+  guestId: resolveParticipantId(payload.guestId || null, recipientId),
+  propertyId: payload.propertyId ?? null,
+  platform: payload.platform || "DOMITS",
+  externalThreadId: payload.externalThreadId,
+  integrationAccountId: payload.integrationAccountId ?? null,
+});
+
+const buildWhatsAppFailureResult = (payload, recipientId, error) => ({
+  accepted: false,
+  mode: "live",
+  channel: "WHATSAPP",
+  integrationAccountId: payload.integrationAccountId ?? null,
+  externalAccountId: null,
+  recipientWhatsAppId: recipientId,
+  messageType: Array.isArray(payload.attachments) && payload.attachments.length > 0 ? "media" : "text",
+  text: payload.content || "",
+  error: error?.message || String(error),
+  details: error?.details || null,
+});
+
+const buildStoredMetadata = (payload, providerResult) => {
+  if (!isWhatsAppPayload(payload)) {
+    return payload.metadata;
+  }
+
+  const baseMetadata =
+    typeof payload.metadata === "string" ? { rawMetadata: payload.metadata } : payload.metadata || {};
+
+  return JSON.stringify({
+    ...baseMetadata,
+    providerResult,
+  });
+};
+
 class MessageService {
   constructor() {
     this.messageRepository = new MessageRepository();
@@ -9,95 +58,78 @@ class MessageService {
     this.whatsAppProviderAdapter = new WhatsAppProviderAdapter();
   }
 
-  async sendMessage(payload) {
+  async resolveThread(payload, senderId, recipientId) {
     let threadId = payload.threadId || null;
-
-    const senderId = payload.senderId;
-    const recipientId = payload.recipientId;
-
-    const explicitHostId = payload.hostId || null;
-    const explicitGuestId = payload.guestId || null;
-
     let thread = null;
+    const shouldUpsertExternalThread =
+      isWhatsAppPayload(payload) && payload.integrationAccountId && payload.externalThreadId;
 
     if (!threadId) {
-      if (payload.platform === "WHATSAPP" && payload.integrationAccountId && payload.externalThreadId) {
-        thread = await this.threadRepository.upsertExternalThread({
-          integrationAccountId: payload.integrationAccountId,
-          platform: payload.platform,
-          externalThreadId: payload.externalThreadId,
-          hostId: explicitHostId || senderId,
-          guestId: explicitGuestId || recipientId,
-          propertyId: payload.propertyId ?? null,
-          status: "OPEN",
-        });
+      if (shouldUpsertExternalThread) {
+        thread = await this.threadRepository.upsertExternalThread(buildExternalThreadPayload(payload, senderId, recipientId));
       } else {
         thread = await this.threadRepository.findThread(senderId, recipientId, payload.propertyId);
-
         if (!thread) {
-          const hostId = explicitHostId || senderId;
-          const guestId = explicitGuestId || recipientId;
-
-          thread = await this.threadRepository.createThread({
-            hostId,
-            guestId,
-            propertyId: payload.propertyId ?? null,
-            platform: payload.platform || "DOMITS",
-            externalThreadId: payload.externalThreadId,
-            integrationAccountId: payload.integrationAccountId ?? null,
-          });
+          thread = await this.threadRepository.createThread(buildThreadPayload(payload, senderId, recipientId));
         }
       }
 
-      threadId = thread.id;
-    } else if (payload.platform === "WHATSAPP" && payload.integrationAccountId && payload.externalThreadId) {
-      thread = await this.threadRepository.upsertExternalThread({
-        integrationAccountId: payload.integrationAccountId,
-        platform: payload.platform,
-        externalThreadId: payload.externalThreadId,
-        hostId: explicitHostId || senderId,
-        guestId: explicitGuestId || recipientId,
-        propertyId: payload.propertyId ?? null,
-        status: "OPEN",
-      });
+      return { thread, threadId: thread.id };
+    }
+
+    if (shouldUpsertExternalThread) {
+      thread = await this.threadRepository.upsertExternalThread(buildExternalThreadPayload(payload, senderId, recipientId));
       threadId = thread.id;
     }
 
+    return { thread, threadId };
+  }
+
+  async sendWhatsAppMessage(payload, recipientId) {
+    try {
+      const providerResult = await this.whatsAppProviderAdapter.sendMessage({
+        integrationAccountId: payload.integrationAccountId,
+        recipientId,
+        content: payload.content,
+        attachments: payload.attachments,
+      });
+
+      return {
+        providerResult,
+        platformMessageId: providerResult?.providerMessageId || null,
+        deliveryStatus: "sent",
+        errorCode: null,
+        errorMessage: null,
+      };
+    } catch (error) {
+      return {
+        providerResult: buildWhatsAppFailureResult(payload, recipientId, error),
+        platformMessageId: payload.platformMessageId ?? null,
+        deliveryStatus: "failed",
+        errorCode: error?.code || "WHATSAPP_SEND_FAILED",
+        errorMessage: error?.message || "WhatsApp send failed",
+      };
+    }
+  }
+
+  async sendMessage(payload) {
+    const senderId = payload.senderId;
+    const recipientId = payload.recipientId;
+    const { threadId } = await this.resolveThread(payload, senderId, recipientId);
+
     let providerResult = null;
     let platformMessageId = payload.platformMessageId ?? null;
-    let deliveryStatus = payload.platform === "DOMITS" ? "delivered" : "pending";
+    let deliveryStatus = isWhatsAppPayload(payload) ? "pending" : "delivered";
     let errorCode = null;
     let errorMessage = null;
 
-    if (payload.platform === "WHATSAPP") {
-      try {
-        providerResult = await this.whatsAppProviderAdapter.sendMessage({
-          integrationAccountId: payload.integrationAccountId,
-          recipientId,
-          content: payload.content,
-          attachments: payload.attachments,
-        });
-
-        platformMessageId = providerResult?.providerMessageId || null;
-        deliveryStatus = "sent";
-      } catch (error) {
-        providerResult = {
-          accepted: false,
-          mode: "live",
-          channel: "WHATSAPP",
-          integrationAccountId: payload.integrationAccountId ?? null,
-          externalAccountId: null,
-          recipientWhatsAppId: recipientId,
-          messageType: Array.isArray(payload.attachments) && payload.attachments.length > 0 ? "media" : "text",
-          text: payload.content || "",
-          error: error?.message || String(error),
-          details: error?.details || null,
-        };
-
-        deliveryStatus = "failed";
-        errorCode = error?.code || "WHATSAPP_SEND_FAILED";
-        errorMessage = error?.message || "WhatsApp send failed";
-      }
+    if (isWhatsAppPayload(payload)) {
+      const sendResult = await this.sendWhatsAppMessage(payload, recipientId);
+      providerResult = sendResult.providerResult;
+      platformMessageId = sendResult.platformMessageId;
+      deliveryStatus = sendResult.deliveryStatus;
+      errorCode = sendResult.errorCode;
+      errorMessage = sendResult.errorMessage;
     }
 
     const message = await this.messageRepository.createMessage({
@@ -106,18 +138,12 @@ class MessageService {
       recipientId,
       content: payload.content,
       platformMessageId,
-      metadata:
-        payload.platform === "WHATSAPP"
-          ? JSON.stringify({
-              ...(typeof payload.metadata === "string" ? { rawMetadata: payload.metadata } : payload.metadata || {}),
-              providerResult,
-            })
-          : payload.metadata,
+      metadata: buildStoredMetadata(payload, providerResult),
       attachments: payload.attachments,
       deliveryStatus,
       direction: "OUTBOUND",
       externalCreatedAt: null,
-      externalSenderType: payload.platform === "WHATSAPP" ? "HOST" : null,
+      externalSenderType: isWhatsAppPayload(payload) ? "HOST" : null,
       complianceStatus: null,
       errorCode,
       errorMessage,

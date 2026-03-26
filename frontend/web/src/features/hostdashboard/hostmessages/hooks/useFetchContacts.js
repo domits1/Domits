@@ -33,7 +33,7 @@ const normalizePhoneDisplay = (value) => {
   const raw = String(value || "").trim();
   if (!raw) return null;
 
-  const digits = raw.replace(/[^\d]/g, "");
+  const digits = raw.replaceAll(/[^\d]/g, "");
   if (!digits) return raw;
 
   if (digits.startsWith("31") && digits.length === 11) {

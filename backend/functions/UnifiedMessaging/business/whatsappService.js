@@ -91,6 +91,9 @@ const computeMetaSignature = (appSecret, rawBody) => {
   return `sha256=${crypto.createHmac("sha256", appSecret).update(rawBody || "", "utf8").digest("hex")}`;
 };
 
+const getSignatureHeader = (event) =>
+  event?.headers?.["x-hub-signature-256"] || event?.headers?.["X-Hub-Signature-256"] || null;
+
 export default class WhatsAppService {
   constructor() {
     this.ingestionService = new IngestionService();
@@ -98,51 +101,32 @@ export default class WhatsAppService {
     this.messageRepository = new MessageRepository();
   }
 
-  async verifyWebhook(event) {
-    const qs = event?.queryStringParameters || {};
-    const mode = qs["hub.mode"];
-    const token = qs["hub.verify_token"];
-    const challenge = qs["hub.challenge"];
-
-    const expectedVerifyToken = process.env.WHATSAPP_VERIFY_TOKEN || "";
-
-    if (mode === "subscribe" && token && expectedVerifyToken && token === expectedVerifyToken) {
-      return {
-        statusCode: 200,
-        headers: { "Content-Type": "text/plain" },
-        rawBody: String(challenge || ""),
-      };
+  async publishInboundThreadMessages(threadPayload, resolvedThreadId) {
+    for (const msg of asArray(threadPayload.messages)) {
+      await publishRealtimeMessage({
+        senderId: msg.senderId,
+        userId: msg.senderId,
+        recipientId: msg.recipientId,
+        text: msg.content || "",
+        content: msg.content || "",
+        fileUrls: extractFileUrls(msg.attachments),
+        attachments: msg.attachments || null,
+        threadId: resolvedThreadId,
+        propertyId: threadPayload.propertyId || null,
+        metadata: msg.metadata || {},
+        createdAt: msg.externalCreatedAt || Date.now(),
+        platform: "WHATSAPP",
+        integrationAccountId: threadPayload.integrationAccountId,
+        externalThreadId: threadPayload.externalThreadId,
+        type: "message",
+      });
     }
-
-    return bad(403, { error: "Webhook verification failed" });
   }
 
-  async handleWebhookEvent(event) {
-    const rawBody = event?.body || "";
-    const body = safeJson(rawBody);
-
-    if (!body) {
-      return bad(400, { error: "Invalid JSON body" });
-    }
-
-    const signatureHeader =
-      event?.headers?.["x-hub-signature-256"] ||
-      event?.headers?.["X-Hub-Signature-256"] ||
-      null;
-
-    const appSecret = process.env.WHATSAPP_APP_SECRET || "";
-
-    if (appSecret && signatureHeader) {
-      const expected = computeMetaSignature(appSecret, rawBody);
-      if (signatureHeader !== expected) {
-        return bad(401, { error: "Invalid WhatsApp signature" });
-      }
-    }
-
-    const normalized = await this.normalizeWebhookPayload(body);
-
+  async processInboundThreads(inboundThreads) {
     const ingestionResults = [];
-    for (const threadPayload of normalized.inboundThreads) {
+
+    for (const threadPayload of inboundThreads) {
       const result = await this.ingestionService.ingestExternalThread(threadPayload);
 
       ingestionResults.push({
@@ -154,32 +138,18 @@ export default class WhatsAppService {
 
       const insertedMessages = Number(result?.response?.insertedMessages || 0);
       const resolvedThreadId = result?.response?.threadId || null;
-
       if (insertedMessages > 0 && resolvedThreadId) {
-        for (const msg of asArray(threadPayload.messages)) {
-          await publishRealtimeMessage({
-            senderId: msg.senderId,
-            userId: msg.senderId,
-            recipientId: msg.recipientId,
-            text: msg.content || "",
-            content: msg.content || "",
-            fileUrls: extractFileUrls(msg.attachments),
-            attachments: msg.attachments || null,
-            threadId: resolvedThreadId,
-            propertyId: threadPayload.propertyId || null,
-            metadata: msg.metadata || {},
-            createdAt: msg.externalCreatedAt || Date.now(),
-            platform: "WHATSAPP",
-            integrationAccountId: threadPayload.integrationAccountId,
-            externalThreadId: threadPayload.externalThreadId,
-            type: "message",
-          });
-        }
+        await this.publishInboundThreadMessages(threadPayload, resolvedThreadId);
       }
     }
 
+    return ingestionResults;
+  }
+
+  async processStatusUpdates(statusUpdates) {
     const statusResults = [];
-    for (const statusItem of normalized.statusUpdates) {
+
+    for (const statusItem of statusUpdates) {
       const updated = await this.messageRepository.updateMessageStatusByPlatformMessageId(
         statusItem.platformMessageId,
         {
@@ -209,6 +179,50 @@ export default class WhatsAppService {
         );
       }
     }
+
+    return statusResults;
+  }
+
+  async verifyWebhook(event) {
+    const qs = event?.queryStringParameters || {};
+    const mode = qs["hub.mode"];
+    const token = qs["hub.verify_token"];
+    const challenge = qs["hub.challenge"];
+
+    const expectedVerifyToken = process.env.WHATSAPP_VERIFY_TOKEN || "";
+
+    if (mode === "subscribe" && token && expectedVerifyToken && token === expectedVerifyToken) {
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "text/plain" },
+        rawBody: String(challenge || ""),
+      };
+    }
+
+    return bad(403, { error: "Webhook verification failed" });
+  }
+
+  async handleWebhookEvent(event) {
+    const rawBody = event?.body || "";
+    const body = safeJson(rawBody);
+
+    if (!body) {
+      return bad(400, { error: "Invalid JSON body" });
+    }
+
+    const signatureHeader = getSignatureHeader(event);
+    const appSecret = process.env.WHATSAPP_APP_SECRET || "";
+
+    if (appSecret && signatureHeader) {
+      const expected = computeMetaSignature(appSecret, rawBody);
+      if (signatureHeader !== expected) {
+        return bad(401, { error: "Invalid WhatsApp signature" });
+      }
+    }
+
+    const normalized = await this.normalizeWebhookPayload(body);
+    const ingestionResults = await this.processInboundThreads(normalized.inboundThreads);
+    const statusResults = await this.processStatusUpdates(normalized.statusUpdates);
 
     return ok({
       ok: true,

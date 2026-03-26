@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { UserProvider } from "./hostmessages/context/AuthContext";
 import { useAuth } from "./hostmessages/hooks/useAuth";
 import "./hostintegrations/HostIntegrations.scss";
@@ -18,6 +19,16 @@ const META_EMBEDDED_SIGNUP_CONFIG_ID = "1259900802765110";
 const CHANNEL_LABELS = {
   WHATSAPP: "WhatsApp",
 };
+
+const integrationPropType = PropTypes.shape({
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  status: PropTypes.string,
+  displayName: PropTypes.string,
+  channelLabel: PropTypes.string,
+  externalAccountId: PropTypes.string,
+  lastSuccessfulSyncAt: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  lastErrorMessage: PropTypes.string,
+});
 
 const statusToneClass = (status) => {
   const normalized = String(status || "").toLowerCase();
@@ -72,6 +83,24 @@ const buildMetaEmbeddedSignupUrl = ({ userId, connectSessionId }) => {
   return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
 };
 
+const getIntegrationCardCopy = (connected) =>
+  connected
+    ? "Your WhatsApp Business number is connected and ready to use in your Domits inbox."
+    : "Connect your WhatsApp Business number to send and receive messages in Domits.";
+
+const getConnectCalloutTitle = (connected) => (connected ? "Your current connection" : "Before you connect");
+
+const getConnectCalloutCopy = (connected) =>
+  connected
+    ? "You can reconnect to replace your current WhatsApp Business number, or disconnect it at any time."
+    : "You’ll continue with Meta to connect your business number. If you already use WhatsApp Business, you can connect your existing number. If you’re new, Meta will guide you through the setup.";
+
+const getConnectButtonLabel = ({ connecting, connected }) => {
+  if (connecting) return "Starting...";
+  if (connected) return "Reconnect with Meta";
+  return "Connect your WhatsApp Business";
+};
+
 function IntegrationCard({ integration, onManage }) {
   const connected = String(integration?.channel || "").toUpperCase() === "WHATSAPP" && !!integration?.externalAccountId;
 
@@ -80,11 +109,7 @@ function IntegrationCard({ integration, onManage }) {
       <div className="host-integrations-card-head">
         <div>
           <h3>{integration.channelLabel}</h3>
-          <p className="host-integrations-card-copy">
-            {connected
-              ? "Your WhatsApp Business number is connected and ready to use in your Domits inbox."
-              : "Connect your WhatsApp Business number to send and receive messages in Domits."}
-          </p>
+          <p className="host-integrations-card-copy">{getIntegrationCardCopy(connected)}</p>
         </div>
 
         <span className={`host-integrations-status ${statusToneClass(integration.status)}`}>{integration.status}</span>
@@ -119,6 +144,11 @@ function IntegrationCard({ integration, onManage }) {
     </article>
   );
 }
+
+IntegrationCard.propTypes = {
+  integration: integrationPropType,
+  onManage: PropTypes.func,
+};
 
 function WhatsAppSetupPanel({
   integration,
@@ -168,18 +198,14 @@ function WhatsAppSetupPanel({
       </div>
 
       <div className="host-integrations-callout">
-        <h4>{connected ? "Your current connection" : "Before you connect"}</h4>
-        <p>
-          {connected
-            ? "You can reconnect to replace your current WhatsApp Business number, or disconnect it at any time."
-            : "You’ll continue with Meta to connect your business number. If you already use WhatsApp Business, you can connect your existing number. If you’re new, Meta will guide you through the setup."}
-        </p>
+        <h4>{getConnectCalloutTitle(connected)}</h4>
+        <p>{getConnectCalloutCopy(connected)}</p>
       </div>
 
       <div className="host-integrations-flow">
         <div className="host-integrations-flow-actions">
           <button type="button" className="host-integrations-primary-btn" disabled={connecting} onClick={onStartConnect}>
-            {connecting ? "Starting..." : connected ? "Reconnect with Meta" : "Connect your WhatsApp Business"}
+            {getConnectButtonLabel({ connecting, connected })}
           </button>
 
           {connected ? (
@@ -206,6 +232,17 @@ function WhatsAppSetupPanel({
     </section>
   );
 }
+
+WhatsAppSetupPanel.propTypes = {
+  integration: integrationPropType,
+  connecting: PropTypes.bool,
+  connectSessionId: PropTypes.string,
+  disconnecting: PropTypes.bool,
+  actionError: PropTypes.string,
+  actionSuccess: PropTypes.string,
+  onStartConnect: PropTypes.func,
+  onDisconnect: PropTypes.func,
+};
 
 function HostIntegrationsInner() {
   const { userId } = useAuth();
@@ -317,7 +354,7 @@ function HostIntegrationsInner() {
         connectSessionId: nextSessionId,
       });
 
-      window.location.href = metaUrl;
+      globalThis.location.href = metaUrl;
     } catch (err) {
       setActionError(err?.message || "Failed to start connect");
     } finally {
@@ -326,7 +363,7 @@ function HostIntegrationsInner() {
   };
 
   const handleDisconnect = async () => {
-    const confirmed = window.confirm(
+    const confirmed = globalThis.confirm(
       "Disconnect WhatsApp? This will stop new WhatsApp messages from being sent or received in Domits. Existing conversations will remain visible."
     );
     if (!confirmed) return;

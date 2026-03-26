@@ -8,8 +8,124 @@ const integrationController = new IntegrationController();
 const ingestionController = new IngestionController();
 const whatsAppWebhookController = new WhatsAppWebhookController();
 
+const notFound = { statusCode: 404, response: "Not Found" };
+const internalError = { statusCode: 500, response: "Internal Server Error" };
+const nestedIntegrationRoutePattern = /\/integrations\/[^/]+\/.+/;
+
+const pathIncludesOrEndsWith = (path, suffix) => {
+  const normalizedPath = String(path || "");
+  return normalizedPath.endsWith(suffix) || normalizedPath.includes(suffix);
+};
+
+const hasNestedIntegrationSubroute = (path) => nestedIntegrationRoutePattern.exec(String(path || ""));
+
+const routeDefinitions = [
+  {
+    matches: (method, path) => method === "GET" && pathIncludesOrEndsWith(path, "/webhooks/whatsapp"),
+    handle: (event) => whatsAppWebhookController.verifyWebhook(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && pathIncludesOrEndsWith(path, "/webhooks/whatsapp"),
+    handle: (event) => whatsAppWebhookController.handleWebhookEvent(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/whatsapp/connect/start"),
+    handle: (event) => integrationController.startWhatsAppConnect(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/whatsapp/connect/complete"),
+    handle: (event) => integrationController.completeWhatsAppConnect(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" && String(path || "").endsWith("/integrations/whatsapp/connect/select-number"),
+    handle: (event) => integrationController.selectWhatsAppNumber(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/whatsapp/disconnect"),
+    handle: (event) => integrationController.disconnectWhatsApp(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/whatsapp/token/health"),
+    handle: (event) => integrationController.checkWhatsAppTokenHealth(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/whatsapp/token/refresh"),
+    handle: (event) => integrationController.refreshWhatsAppToken(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && pathIncludesOrEndsWith(path, "/send"),
+    handle: (event) => messageController.sendMessage(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && pathIncludesOrEndsWith(path, "/threads"),
+    handle: (event) => messageController.getThreads(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && pathIncludesOrEndsWith(path, "/messages"),
+    handle: (event) => messageController.getMessages(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" && String(path || "").includes("/integrations/") && String(path || "").endsWith("/ingest/messages"),
+    handle: (event) => ingestionController.ingestMessages(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" && pathIncludesOrEndsWith(path, "/integrations") && !hasNestedIntegrationSubroute(path),
+    handle: (event) => integrationController.createIntegration(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "GET" && pathIncludesOrEndsWith(path, "/integrations") && !hasNestedIntegrationSubroute(path),
+    handle: (event) => integrationController.listIntegrations(event),
+  },
+  {
+    matches: (method, path) => method === "PATCH" && String(path || "").includes("/integrations/"),
+    handle: (event) => integrationController.updateIntegration(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "GET" && String(path || "").includes("/integrations/") && String(path || "").endsWith("/logs"),
+    handle: (event) => integrationController.getIntegrationLogs(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" && String(path || "").includes("/integrations/") && String(path || "").endsWith("/properties"),
+    handle: (event) => integrationController.upsertIntegrationProperty(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "GET" && String(path || "").includes("/integrations/") && String(path || "").endsWith("/properties"),
+    handle: (event) => integrationController.listIntegrationProperties(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" &&
+      String(path || "").includes("/integrations/") &&
+      String(path || "").endsWith("/sync/messages"),
+    handle: (event) => integrationController.triggerMessagesSync(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" &&
+      String(path || "").includes("/integrations/") &&
+      String(path || "").endsWith("/sync/reservations"),
+    handle: (event) => integrationController.triggerReservationsSync(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" &&
+      String(path || "").includes("/integrations/") &&
+      String(path || "").endsWith("/reservations/link"),
+    handle: (event) => integrationController.linkReservation(event),
+  },
+];
+
+const findRouteHandler = (httpMethod, path) =>
+  routeDefinitions.find((route) => route.matches(httpMethod, path))?.handle || null;
+
 export const handler = async (event) => {
-  let returnedResponse = {};
   const { httpMethod, path } = event;
 
   console.log(
@@ -23,126 +139,46 @@ export const handler = async (event) => {
 
   try {
     const route = `${httpMethod}:${path}`;
+    const routeHandler = findRouteHandler(httpMethod, path);
 
-    switch (true) {
-      case httpMethod === "GET" && (path.endsWith("/webhooks/whatsapp") || path.includes("/webhooks/whatsapp")):
-        returnedResponse = await whatsAppWebhookController.verifyWebhook(event);
-        break;
-
-      case httpMethod === "POST" && (path.endsWith("/webhooks/whatsapp") || path.includes("/webhooks/whatsapp")):
-        returnedResponse = await whatsAppWebhookController.handleWebhookEvent(event);
-        break;
-
-      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/connect/start"):
-        returnedResponse = await integrationController.startWhatsAppConnect(event);
-        break;
-
-      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/connect/complete"):
-        returnedResponse = await integrationController.completeWhatsAppConnect(event);
-        break;
-
-      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/connect/select-number"):
-        returnedResponse = await integrationController.selectWhatsAppNumber(event);
-        break;
-
-      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/disconnect"):
-        returnedResponse = await integrationController.disconnectWhatsApp(event);
-        break;
-
-      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/token/health"):
-        returnedResponse = await integrationController.checkWhatsAppTokenHealth(event);
-        break;
-
-      case httpMethod === "POST" && path.endsWith("/integrations/whatsapp/token/refresh"):
-        returnedResponse = await integrationController.refreshWhatsAppToken(event);
-        break;
-
-      case httpMethod === "POST" && (path.endsWith("/send") || path.includes("/send")):
-        returnedResponse = await messageController.sendMessage(event);
-        break;
-
-      case httpMethod === "GET" && (path.endsWith("/threads") || path.includes("/threads")):
-        returnedResponse = await messageController.getThreads(event);
-        break;
-
-      case httpMethod === "GET" && (path.endsWith("/messages") || path.includes("/messages")):
-        returnedResponse = await messageController.getMessages(event);
-        break;
-
-      case httpMethod === "POST" && path.includes("/integrations/") && path.endsWith("/ingest/messages"):
-        returnedResponse = await ingestionController.ingestMessages(event);
-        break;
-
-      case httpMethod === "POST" && (path.endsWith("/integrations") || path.includes("/integrations")):
-        if (path.match(/\/integrations\/[^/]+\/.+/)) {
-          returnedResponse = { statusCode: 404, response: "Not Found" };
-        } else {
-          returnedResponse = await integrationController.createIntegration(event);
-        }
-        break;
-
-      case httpMethod === "GET" && (path.endsWith("/integrations") || path.includes("/integrations")):
-        if (path.match(/\/integrations\/[^/]+\/.+/)) {
-          returnedResponse = { statusCode: 404, response: "Not Found" };
-        } else {
-          returnedResponse = await integrationController.listIntegrations(event);
-        }
-        break;
-
-      case httpMethod === "PATCH" && path.includes("/integrations/"):
-        returnedResponse = await integrationController.updateIntegration(event);
-        break;
-
-      case httpMethod === "GET" && path.includes("/integrations/") && path.endsWith("/logs"):
-        returnedResponse = await integrationController.getIntegrationLogs(event);
-        break;
-
-      case httpMethod === "POST" && path.includes("/integrations/") && path.endsWith("/properties"):
-        returnedResponse = await integrationController.upsertIntegrationProperty(event);
-        break;
-
-      case httpMethod === "GET" && path.includes("/integrations/") && path.endsWith("/properties"):
-        returnedResponse = await integrationController.listIntegrationProperties(event);
-        break;
-
-      case httpMethod === "POST" && path.includes("/integrations/") && path.endsWith("/sync/messages"):
-        returnedResponse = await integrationController.triggerMessagesSync(event);
-        break;
-
-      case httpMethod === "POST" && path.includes("/integrations/") && path.endsWith("/sync/reservations"):
-        returnedResponse = await integrationController.triggerReservationsSync(event);
-        break;
-
-      case httpMethod === "POST" && path.includes("/integrations/") && path.endsWith("/reservations/link"):
-        returnedResponse = await integrationController.linkReservation(event);
-        break;
-
-      default:
-        console.log("No matching route for:", route);
-        returnedResponse = { statusCode: 404, response: "Not Found" };
+    if (!routeHandler) {
+      console.log("No matching route for:", route);
+      return {
+        statusCode: notFound.statusCode,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "Content-Type,Authorization",
+        },
+        body: JSON.stringify(notFound.response),
+      };
     }
+
+    const returnedResponse = await routeHandler(event);
+    const headers = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type,Authorization",
+      ...(returnedResponse?.headers || {}),
+    };
+
+    const responseBody =
+      returnedResponse?.rawBody !== undefined
+        ? returnedResponse.rawBody
+        : JSON.stringify(returnedResponse?.response);
+
+    return {
+      statusCode: returnedResponse?.statusCode || 200,
+      headers,
+      body: responseBody,
+    };
   } catch (error) {
     console.error("Error in handler:", error);
-    returnedResponse = {
-      statusCode: 500,
-      response: "Internal Server Error",
+    return {
+      statusCode: internalError.statusCode,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization",
+      },
+      body: JSON.stringify(internalError.response),
     };
   }
-
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type,Authorization",
-    ...(returnedResponse?.headers || {}),
-  };
-
-  const responseBody =
-    returnedResponse?.rawBody !== undefined
-      ? returnedResponse.rawBody
-      : JSON.stringify(returnedResponse?.response);
-
-  return {
-    statusCode: returnedResponse?.statusCode || 200,
-    headers,
-    body: responseBody,
-  };
 };

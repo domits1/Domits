@@ -19,10 +19,60 @@ const normalizeWhatsAppRecipient = (value) => {
   const raw = String(value || "").trim();
   if (!raw) return null;
 
-  return raw.replace(/[^\d]/g, "");
+  return raw.replaceAll(/[^\d]/g, "");
 };
 
 const requireStr = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+
+const buildAttachmentPayload = ({ attachmentType, attachmentUrl, first, content, to }) => {
+  if (attachmentType === "image") {
+    return {
+      messaging_product: "whatsapp",
+      to,
+      type: "image",
+      image: {
+        link: attachmentUrl,
+        caption: content || undefined,
+      },
+    };
+  }
+
+  if (attachmentType === "document" || attachmentType === "file") {
+    return {
+      messaging_product: "whatsapp",
+      to,
+      type: "document",
+      document: {
+        link: attachmentUrl,
+        filename: first?.name || undefined,
+        caption: content || undefined,
+      },
+    };
+  }
+
+  if (attachmentType === "video") {
+    return {
+      messaging_product: "whatsapp",
+      to,
+      type: "video",
+      video: {
+        link: attachmentUrl,
+        caption: content || undefined,
+      },
+    };
+  }
+
+  throw badRequest(`Unsupported WhatsApp attachment type: ${attachmentType || "unknown"}`);
+};
+
+const buildTextPayload = ({ to, content }) => ({
+  messaging_product: "whatsapp",
+  to,
+  type: "text",
+  text: {
+    body: String(content || ""),
+  },
+});
 
 export default class WhatsAppProviderAdapter {
   constructor() {
@@ -78,6 +128,23 @@ export default class WhatsAppProviderAdapter {
     };
   }
 
+  buildPayload({ to, content, attachments }) {
+    const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
+    if (!hasAttachments) {
+      return buildTextPayload({ to, content });
+    }
+
+    const first = attachments[0] || {};
+    const attachmentUrl = first?.url || null;
+    const attachmentType = String(first?.type || "").toLowerCase();
+
+    if (!attachmentUrl) {
+      throw badRequest("WhatsApp attachment is missing url");
+    }
+
+    return buildAttachmentPayload({ attachmentType, attachmentUrl, first, content, to });
+  }
+
   async sendMessage({
     integrationAccountId,
     recipientId,
@@ -105,62 +172,7 @@ export default class WhatsAppProviderAdapter {
       throw badRequest("Invalid WhatsApp recipientId");
     }
 
-    const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
-
-    let payload;
-    if (hasAttachments) {
-      const first = attachments[0] || {};
-      const attachmentUrl = first?.url || null;
-      const attachmentType = String(first?.type || "").toLowerCase();
-
-      if (!attachmentUrl) {
-        throw badRequest("WhatsApp attachment is missing url");
-      }
-
-      if (attachmentType === "image") {
-        payload = {
-          messaging_product: "whatsapp",
-          to,
-          type: "image",
-          image: {
-            link: attachmentUrl,
-            caption: content || undefined,
-          },
-        };
-      } else if (attachmentType === "document" || attachmentType === "file") {
-        payload = {
-          messaging_product: "whatsapp",
-          to,
-          type: "document",
-          document: {
-            link: attachmentUrl,
-            filename: first?.name || undefined,
-            caption: content || undefined,
-          },
-        };
-      } else if (attachmentType === "video") {
-        payload = {
-          messaging_product: "whatsapp",
-          to,
-          type: "video",
-          video: {
-            link: attachmentUrl,
-            caption: content || undefined,
-          },
-        };
-      } else {
-        throw badRequest(`Unsupported WhatsApp attachment type: ${attachmentType || "unknown"}`);
-      }
-    } else {
-      payload = {
-        messaging_product: "whatsapp",
-        to,
-        type: "text",
-        text: {
-          body: String(content || ""),
-        },
-      };
-    }
+    const payload = this.buildPayload({ to, content, attachments });
 
     const response = await fetch(
       `https://graph.facebook.com/${GRAPH_API_VERSION}/${encodeURIComponent(phoneNumberId)}/messages`,

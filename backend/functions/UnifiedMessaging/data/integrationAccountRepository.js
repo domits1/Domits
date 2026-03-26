@@ -2,6 +2,8 @@ import Database from "../ORM/index.js";
 
 import { ChannelIntegrationAccount } from "../models/unified/integrations/ChannelIntegrationAccount.js";
 
+const getPatchedValue = (patch, key, fallback) => (Object.hasOwn(patch, key) ? patch[key] : fallback);
+
 class IntegrationAccountRepository {
   async create(row) {
     const client = await Database.getInstance();
@@ -65,22 +67,12 @@ class IntegrationAccountRepository {
 
     const next = {
       ...existing,
-      externalAccountId: Object.prototype.hasOwnProperty.call(patch, "externalAccountId")
-        ? patch.externalAccountId
-        : existing.externalAccountId,
-      displayName: Object.prototype.hasOwnProperty.call(patch, "displayName")
-        ? patch.displayName
-        : existing.displayName,
-      status: Object.prototype.hasOwnProperty.call(patch, "status") ? patch.status : existing.status,
-      credentialsRef: Object.prototype.hasOwnProperty.call(patch, "credentialsRef")
-        ? patch.credentialsRef
-        : existing.credentialsRef,
-      lastErrorCode: Object.prototype.hasOwnProperty.call(patch, "lastErrorCode")
-        ? patch.lastErrorCode
-        : existing.lastErrorCode,
-      lastErrorMessage: Object.prototype.hasOwnProperty.call(patch, "lastErrorMessage")
-        ? patch.lastErrorMessage
-        : existing.lastErrorMessage,
+      externalAccountId: getPatchedValue(patch, "externalAccountId", existing.externalAccountId),
+      displayName: getPatchedValue(patch, "displayName", existing.displayName),
+      status: getPatchedValue(patch, "status", existing.status),
+      credentialsRef: getPatchedValue(patch, "credentialsRef", existing.credentialsRef),
+      lastErrorCode: getPatchedValue(patch, "lastErrorCode", existing.lastErrorCode),
+      lastErrorMessage: getPatchedValue(patch, "lastErrorMessage", existing.lastErrorMessage),
       updatedAt: Date.now(),
     };
 

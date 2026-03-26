@@ -33,12 +33,40 @@ const requireEnv = (name) => {
 const hasConfiguredEnvToken = () => !!requireStr(process.env.WHATSAPP_ACCESS_TOKEN);
 const hasUsableSecretAccessToken = (secret) => !!requireStr(secret?.accessToken);
 const isPlaceholderRefreshStatus = (value) => PLACEHOLDER_REFRESH_STATUSES.has(String(value || "").trim().toUpperCase());
+const normalizeGraphPath = (path) => String(path || "").replace(/^\/+/, "");
 const normalizeExpiresAt = (value) => {
   if (value == null) return null;
 
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 };
+const normalizeExpiresIn = (value) => (value != null ? Number(value) : null);
+const resolveTokenSource = (integration, secret) => {
+  if (integration?.credentialsRef) {
+    return hasUsableSecretAccessToken(secret) ? "SECRET" : "NONE";
+  }
+
+  return hasConfiguredEnvToken() ? "ENV" : "NONE";
+};
+const buildTokenState = ({
+  status,
+  needsReconnect,
+  expiresAt,
+  reliableExpiry,
+  tokenSource,
+  cause,
+  message,
+  shouldPersistReconnect,
+}) => ({
+  status,
+  needsReconnect,
+  expiresAt,
+  reliableExpiry,
+  tokenSource,
+  cause,
+  message,
+  shouldPersistReconnect,
+});
 const uniqueBy = (items, keyFn) => {
   const seen = new Set();
   const out = [];
@@ -85,6 +113,10 @@ const categorizeMetaError = (error) => {
   if (message.includes("not found") || message.includes("unsupported get request")) return "not_found";
   return "graph_request_failed";
 };
+const serializeRawPayload = (rawPayload) => {
+  if (!rawPayload) return null;
+  return typeof rawPayload === "string" ? rawPayload : JSON.stringify(rawPayload);
+};
 
 export default class IntegrationService {
   constructor() {
@@ -109,17 +141,10 @@ export default class IntegrationService {
   }
 
   evaluateWhatsAppTokenState(integration, secret) {
-    const envTokenConfigured = hasConfiguredEnvToken();
-    const tokenSource = integration?.credentialsRef
-      ? hasUsableSecretAccessToken(secret)
-        ? "SECRET"
-        : "NONE"
-      : envTokenConfigured
-        ? "ENV"
-        : "NONE";
+    const tokenSource = resolveTokenSource(integration, secret);
 
     if (!integration?.credentialsRef) {
-      return {
+      return buildTokenState({
         status: "RECONNECT_REQUIRED",
         needsReconnect: true,
         expiresAt: null,
@@ -128,11 +153,11 @@ export default class IntegrationService {
         cause: "missing_credentials_ref",
         message: "WhatsApp credentials are not configured in Secrets Manager. Reconnect required.",
         shouldPersistReconnect: true,
-      };
+      });
     }
 
     if (!secret) {
-      return {
+      return buildTokenState({
         status: "RECONNECT_REQUIRED",
         needsReconnect: true,
         expiresAt: null,
@@ -141,11 +166,11 @@ export default class IntegrationService {
         cause: "missing_secret",
         message: "WhatsApp credentials secret is missing. Reconnect required.",
         shouldPersistReconnect: true,
-      };
+      });
     }
 
     if (!hasUsableSecretAccessToken(secret)) {
-      return {
+      return buildTokenState({
         status: "RECONNECT_REQUIRED",
         needsReconnect: true,
         expiresAt: null,
@@ -154,11 +179,11 @@ export default class IntegrationService {
         cause: "missing_access_token",
         message: "WhatsApp access token is missing from the stored credentials. Reconnect required.",
         shouldPersistReconnect: true,
-      };
+      });
     }
 
     if (isPlaceholderRefreshStatus(secret?.refreshStatus)) {
-      return {
+      return buildTokenState({
         status: "UNKNOWN",
         needsReconnect: false,
         expiresAt: normalizeExpiresAt(secret?.expiresAt),
@@ -167,11 +192,11 @@ export default class IntegrationService {
         cause: "placeholder_token_metadata",
         message: "WhatsApp token metadata is placeholder-only and cannot be trusted for lifecycle management.",
         shouldPersistReconnect: false,
-      };
+      });
     }
 
     if (secret?.expiresAt == null) {
-      return {
+      return buildTokenState({
         status: "UNKNOWN",
         needsReconnect: false,
         expiresAt: null,
@@ -180,12 +205,12 @@ export default class IntegrationService {
         cause: "missing_expiry_metadata",
         message: "WhatsApp token expiry metadata is unavailable.",
         shouldPersistReconnect: false,
-      };
+      });
     }
 
     const expiresAt = normalizeExpiresAt(secret?.expiresAt);
     if (!Number.isFinite(expiresAt)) {
-      return {
+      return buildTokenState({
         status: "UNKNOWN",
         needsReconnect: false,
         expiresAt: null,
@@ -194,12 +219,12 @@ export default class IntegrationService {
         cause: "invalid_expiry_metadata",
         message: "WhatsApp token expiry metadata is invalid.",
         shouldPersistReconnect: false,
-      };
+      });
     }
 
     const now = nowMs();
     if (expiresAt <= now) {
-      return {
+      return buildTokenState({
         status: "RECONNECT_REQUIRED",
         needsReconnect: true,
         expiresAt,
@@ -208,11 +233,11 @@ export default class IntegrationService {
         cause: "expired_token",
         message: "WhatsApp token expired. Reconnect required.",
         shouldPersistReconnect: true,
-      };
+      });
     }
 
     if (expiresAt - now <= THREE_DAYS_MS) {
-      return {
+      return buildTokenState({
         status: "EXPIRING_SOON",
         needsReconnect: false,
         expiresAt,
@@ -221,10 +246,10 @@ export default class IntegrationService {
         cause: "expiring_soon",
         message: "WhatsApp token is expiring soon.",
         shouldPersistReconnect: false,
-      };
+      });
     }
 
-    return {
+    return buildTokenState({
       status: "HEALTHY",
       needsReconnect: false,
       expiresAt,
@@ -233,7 +258,7 @@ export default class IntegrationService {
       cause: "healthy",
       message: "WhatsApp token is configured and expiry metadata is available.",
       shouldPersistReconnect: false,
-    };
+    });
   }
 
   async persistReconnectRequired(integration, cause, message, errorCode = "WHATSAPP_RECONNECT_REQUIRED") {
@@ -256,7 +281,8 @@ export default class IntegrationService {
       throw error;
     }
 
-    const url = new URL(`https://graph.facebook.com/${GRAPH_API_VERSION}/${String(path || "").replace(/^\/+/, "")}`);
+    const normalizedPath = normalizeGraphPath(path);
+    const url = new URL(`https://graph.facebook.com/${GRAPH_API_VERSION}/${normalizedPath}`);
     for (const [key, value] of Object.entries(query || {})) {
       if (value == null || value === "") continue;
       url.searchParams.set(key, String(value));
@@ -265,7 +291,7 @@ export default class IntegrationService {
     console.log(
       "WhatsApp Graph request",
       JSON.stringify({
-        path: String(path || "").replace(/^\/+/, ""),
+        path: normalizedPath,
         method,
       })
     );
@@ -284,7 +310,7 @@ export default class IntegrationService {
       const error = new Error(parsed?.error?.message || `Meta Graph request failed with status ${response.status}`);
       error.code = parsed?.error?.code || "META_GRAPH_REQUEST_FAILED";
       error.details = parsed || rawText;
-      error.graphPath = String(path || "").replace(/^\/+/, "");
+      error.graphPath = normalizedPath;
       error.responseCategory = categorizeMetaError(error);
       console.warn(
         "WhatsApp Graph request failed",
@@ -351,7 +377,7 @@ export default class IntegrationService {
     return {
       accessToken: parsed.access_token,
       tokenType: parsed.token_type || "bearer",
-      expiresIn: parsed.expires_in != null ? Number(parsed.expires_in) : null,
+      expiresIn: normalizeExpiresIn(parsed.expires_in),
     };
   }
 
@@ -534,6 +560,35 @@ export default class IntegrationService {
     throw error;
   }
 
+  async hydrateListedIntegration(item) {
+    if (String(item?.channel || "").toUpperCase() !== "WHATSAPP") {
+      return item;
+    }
+
+    try {
+      const secret = await this.credentialStore.readSecretOrNull(item.credentialsRef);
+      const evaluation = this.evaluateWhatsAppTokenState(item, secret);
+      const preservesExistingError =
+        evaluation.status === "HEALTHY" || evaluation.status === "EXPIRING_SOON";
+
+      return {
+        ...item,
+        status: evaluation.status === "EXPIRING_SOON" ? "TOKEN_EXPIRING_SOON" : evaluation.status,
+        lastErrorMessage: preservesExistingError ? item.lastErrorMessage : evaluation.message,
+      };
+    } catch (error) {
+      this.logTokenLifecycle("warn", "WhatsApp token health evaluation failed during list", item, "health_check_error", {
+        errorCode: error?.code || null,
+        errorMessage: error?.message || null,
+      });
+      return {
+        ...item,
+        status: "UNKNOWN",
+        lastErrorMessage: item.lastErrorMessage || "Unable to evaluate WhatsApp token health.",
+      };
+    }
+  }
+
   async createIntegration(body) {
     const userId = requireStr(body.userId);
     const channel = requireStr(body.channel);
@@ -570,34 +625,7 @@ export default class IntegrationService {
     if (!requireStr(userId)) return bad(400, { error: "Missing required query param: userId" });
 
     const items = await this.accounts.listByUserId(userId);
-
-    const hydrated = await Promise.all(
-      items.map(async (item) => {
-        if (String(item?.channel || "").toUpperCase() !== "WHATSAPP") return item;
-
-        try {
-          const secret = await this.credentialStore.readSecretOrNull(item.credentialsRef);
-          const evaluation = this.evaluateWhatsAppTokenState(item, secret);
-
-          return {
-            ...item,
-            status: evaluation.status === "EXPIRING_SOON" ? "TOKEN_EXPIRING_SOON" : evaluation.status,
-            lastErrorMessage:
-              evaluation.status === "HEALTHY" || evaluation.status === "EXPIRING_SOON"
-                ? item.lastErrorMessage
-                : evaluation.message,
-          };
-        } catch (error) {
-          this.logTokenLifecycle("warn", "WhatsApp token health evaluation failed during list", item, "health_check_error");
-          return {
-            ...item,
-            status: "UNKNOWN",
-            lastErrorMessage: item.lastErrorMessage || "Unable to evaluate WhatsApp token health.",
-          };
-        }
-      })
-    );
-
+    const hydrated = await Promise.all(items.map((item) => this.hydrateListedIntegration(item)));
     return ok(hydrated);
   }
 
@@ -698,11 +726,7 @@ export default class IntegrationService {
       reservationStatus: body.reservationStatus ?? null,
       ratePlan: body.ratePlan ?? null,
       paymentStatus: body.paymentStatus ?? null,
-      rawPayload: body.rawPayload
-        ? typeof body.rawPayload === "string"
-          ? body.rawPayload
-          : JSON.stringify(body.rawPayload)
-        : null,
+      rawPayload: serializeRawPayload(body.rawPayload),
     });
 
     return ok(saved);

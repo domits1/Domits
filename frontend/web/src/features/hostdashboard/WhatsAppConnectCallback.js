@@ -23,11 +23,22 @@ const buildCompleteCacheKey = ({ connectSessionId, code }) => {
   return `${COMPLETE_CACHE_PREFIX}:${connectSessionId}:${code}`;
 };
 
+const clearCompletionTimers = ({ pollTimer, pollTimeout }) => {
+  if (pollTimer) globalThis.clearInterval(pollTimer);
+  if (pollTimeout) globalThis.clearTimeout(pollTimeout);
+};
+
+const getCallbackLocation = () => {
+  const origin = globalThis.location?.origin || "";
+  const pathname = globalThis.location?.pathname || "";
+  return `${origin}${pathname}`;
+};
+
 const readCompletionCache = (cacheKey) => {
   if (!cacheKey) return null;
 
   try {
-    const raw = window.sessionStorage.getItem(cacheKey);
+    const raw = globalThis.sessionStorage.getItem(cacheKey);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -38,10 +49,44 @@ const writeCompletionCache = (cacheKey, value) => {
   if (!cacheKey) return;
 
   try {
-    window.sessionStorage.setItem(cacheKey, JSON.stringify(value));
+    globalThis.sessionStorage.setItem(cacheKey, JSON.stringify(value));
   } catch {
     // Ignore sessionStorage write failures and continue with in-memory flow.
   }
+};
+
+const startCompletionPolling = ({ cacheKey, cancelledRef, applyCompletedState, setError, setLoading }) => {
+  const handles = {
+    pollTimer: null,
+    pollTimeout: null,
+  };
+
+  handles.pollTimer = globalThis.setInterval(() => {
+    const nextCached = readCompletionCache(cacheKey);
+    if (!nextCached || cancelledRef.current) return;
+
+    if (nextCached.status === "completed") {
+      clearCompletionTimers(handles);
+      applyCompletedState(nextCached.payload);
+      return;
+    }
+
+    if (nextCached.status === "failed") {
+      clearCompletionTimers(handles);
+      setError(nextCached.error || "Failed to complete callback processing.");
+      setLoading(false);
+    }
+  }, COMPLETE_POLL_INTERVAL_MS);
+
+  handles.pollTimeout = globalThis.setTimeout(() => {
+    clearCompletionTimers(handles);
+    if (!cancelledRef.current) {
+      setError("WhatsApp authorization is already being finalized. Please wait a moment and refresh if needed.");
+      setLoading(false);
+    }
+  }, COMPLETE_POLL_TIMEOUT_MS);
+
+  return handles;
 };
 
 function WhatsAppConnectCallbackInner() {
@@ -49,6 +94,7 @@ function WhatsAppConnectCallbackInner() {
   const { userId } = useAuth();
   const [params] = useSearchParams();
   const startedCacheKeyRef = useRef("");
+  const cancelledRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -72,9 +118,8 @@ function WhatsAppConnectCallbackInner() {
   );
 
   useEffect(() => {
-    let cancelled = false;
-    let pollTimer = null;
-    let pollTimeout = null;
+    cancelledRef.current = false;
+    let timerHandles = { pollTimer: null, pollTimeout: null };
 
     const applyCompletedState = (payload) => {
       const nextNumbers = Array.isArray(payload?.selectableNumbers) ? payload.selectableNumbers : [];
@@ -120,34 +165,13 @@ function WhatsAppConnectCallbackInner() {
       }
 
       if (cached?.status === "processing") {
-        pollTimer = window.setInterval(() => {
-          const nextCached = readCompletionCache(completeCacheKey);
-          if (!nextCached || cancelled) return;
-
-          if (nextCached.status === "completed") {
-            window.clearInterval(pollTimer);
-            window.clearTimeout(pollTimeout);
-            if (!cancelled) applyCompletedState(nextCached.payload);
-          }
-
-          if (nextCached.status === "failed") {
-            window.clearInterval(pollTimer);
-            window.clearTimeout(pollTimeout);
-            if (!cancelled) {
-              setError(nextCached.error || "Failed to complete callback processing.");
-              setLoading(false);
-            }
-          }
-        }, COMPLETE_POLL_INTERVAL_MS);
-
-        pollTimeout = window.setTimeout(() => {
-          window.clearInterval(pollTimer);
-          if (!cancelled) {
-            setError("WhatsApp authorization is already being finalized. Please wait a moment and refresh if needed.");
-            setLoading(false);
-          }
-        }, COMPLETE_POLL_TIMEOUT_MS);
-
+        timerHandles = startCompletionPolling({
+          cacheKey: completeCacheKey,
+          cancelledRef,
+          applyCompletedState,
+          setError,
+          setLoading,
+        });
         return;
       }
 
@@ -175,7 +199,7 @@ function WhatsAppConnectCallbackInner() {
             connectSessionId: decodedState.connectSessionId,
             code,
             state: stateRaw,
-            callbackUrl: decodedState?.callbackUrl || window.location.origin + window.location.pathname,
+            callbackUrl: decodedState?.callbackUrl || getCallbackLocation(),
           }),
         });
 
@@ -192,7 +216,7 @@ function WhatsAppConnectCallbackInner() {
           },
         });
 
-        if (!cancelled) {
+        if (!cancelledRef.current) {
           applyCompletedState({
             selectableNumbers: Array.isArray(data?.selectableNumbers) ? data.selectableNumbers : [],
           });
@@ -204,7 +228,7 @@ function WhatsAppConnectCallbackInner() {
           error: err?.message || "Failed to complete callback processing.",
         });
 
-        if (!cancelled) {
+        if (!cancelledRef.current) {
           setError(err?.message || "Failed to complete callback processing.");
           setLoading(false);
         }
@@ -214,9 +238,8 @@ function WhatsAppConnectCallbackInner() {
     run();
 
     return () => {
-      cancelled = true;
-      if (pollTimer) window.clearInterval(pollTimer);
-      if (pollTimeout) window.clearTimeout(pollTimeout);
+      cancelledRef.current = true;
+      clearCompletionTimers(timerHandles);
     };
   }, [code, completeCacheKey, decodedState, errorDescription, errorReason, stateRaw, userId]);
 

@@ -1,18 +1,5 @@
 import IntegrationService from "../business/integrationService.js";
-
-const safeJson = (v) => {
-  try {
-    if (!v) return null;
-    return typeof v === "string" ? JSON.parse(v) : v;
-  } catch {
-    return null;
-  }
-};
-
-const extractIntegrationId = (path) => {
-  const m = String(path || "").match(/\/integrations\/([^/]+)/);
-  return m?.[1] || null;
-};
+import { extractIntegrationId, safeJson } from "./controllerUtils.js";
 
 class IntegrationController {
   constructor() {
