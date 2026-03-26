@@ -19,6 +19,11 @@ const ImageGallery = ({ images, propertyTitle }) => {
   const toThumbSrc = (image) => resolveAccommodationImageUrl(image, "thumb");
   const getImageAltText = (index) => `Accommodation image ${index + 1}`;
 
+  const openOverlayAtIndex = (index) => {
+    setActiveIndex(index);
+    setShowOverlay(true);
+  };
+
   const nextImage = () => {
     setActiveIndex((prev) => (prev + 1) % images.length);
   };
@@ -32,49 +37,67 @@ const ImageGallery = ({ images, propertyTitle }) => {
       <div className="image-gallery">
         {main && (
           <div className="main-image-wrapper">
-            <img
-              className="main-image"
-              src={toMainSrc(main)}
-              alt={getImageAltText(0)}
-              onClick={() => {
-                setActiveIndex(0);
-                setShowOverlay(true);
-              }}
-            />
             <button
+              type="button"
+              className="image-button main-image-button"
+              onClick={() => openOverlayAtIndex(0)}
+              aria-label="Open image 1"
+            >
+              <img
+                className="main-image"
+                src={toMainSrc(main)}
+                alt={getImageAltText(0)}
+              />
+            </button>
+
+            <button
+              type="button"
               className="gallery-share-btn"
               onClick={() => setShowShareModal(true)}
-              aria-label="Share property">
+              aria-label="Share property"
+            >
               <IosShareIcon fontSize="small" />
             </button>
           </div>
         )}
 
-        {/* THUMBNAILS */}
         <div className="small-images-container">
           {thumbs.map((img, index) => (
-            <img
+            <button
+              type="button"
               key={resolveAccommodationImageKey(img, "web") || index}
-              className="small-image"
-              src={toMainSrc(img)}
-              alt={getImageAltText(index + 1)}
-              onClick={() => {
-                setActiveIndex(index + 1);
-                setShowOverlay(true);
-              }}
-            />
+              className="image-button small-image-button"
+              onClick={() => openOverlayAtIndex(index + 1)}
+              aria-label={`Open image ${index + 2}`}
+            >
+              <img
+                className="small-image"
+                src={toMainSrc(img)}
+                alt={getImageAltText(index + 1)}
+              />
+            </button>
           ))}
         </div>
       </div>
 
       {showOverlay && (
         <div className="image-overlay">
-          <button className="close-overlay-button" onClick={() => setShowOverlay(false)}>
+          <button
+            type="button"
+            className="close-overlay-button"
+            onClick={() => setShowOverlay(false)}
+            aria-label="Close image gallery"
+          >
             ×
           </button>
 
           <div className="overlay-center-wrapper">
-            <button className="nav-button left" onClick={prevImage}>
+            <button
+              type="button"
+              className="nav-button left"
+              onClick={prevImage}
+              aria-label="Previous image"
+            >
               ‹
             </button>
 
@@ -84,20 +107,31 @@ const ImageGallery = ({ images, propertyTitle }) => {
               alt={getImageAltText(activeIndex)}
             />
 
-            <button className="nav-button right" onClick={nextImage}>
+            <button
+              type="button"
+              className="nav-button right"
+              onClick={nextImage}
+              aria-label="Next image"
+            >
               ›
             </button>
           </div>
 
           <div className="overlay-thumbnails">
             {images.map((img, index) => (
-              <img
+              <button
+                type="button"
                 key={resolveAccommodationImageKey(img, "web") || index}
-                className={`thumb ${index === activeIndex ? "active" : ""}`}
-                src={toThumbSrc(img)}
-                alt={getImageAltText(index)}
+                className={`thumb-button ${index === activeIndex ? "active" : ""}`}
                 onClick={() => setActiveIndex(index)}
-              />
+                aria-label={`Show image ${index + 1}`}
+              >
+                <img
+                  className={`thumb ${index === activeIndex ? "active" : ""}`}
+                  src={toThumbSrc(img)}
+                  alt={getImageAltText(index)}
+                />
+              </button>
             ))}
           </div>
         </div>

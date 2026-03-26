@@ -128,7 +128,7 @@
     "zustand": "^5.0.3"
   },
   "eslintConfig": {
-    "extends": ["react-app"],
+    "extends": ["react-app", "react-app/jest"],
     "env": { "es2020": true },
     "parserOptions": {
       "ecmaVersion": "latest",

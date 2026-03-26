@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import CloseIcon from "@mui/icons-material/Close";
@@ -16,7 +16,10 @@ const PLATFORMS = [
     name: "Email",
     icon: <EmailIcon fontSize="small" />,
     color: "#EA4335",
-    getUrl: (url, title) => `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`,
+    getUrl: (url, title) =>
+      `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(
+        url,
+      )}`,
     openInTab: false,
   },
   {
@@ -30,7 +33,8 @@ const PLATFORMS = [
     name: "Facebook",
     icon: <FacebookIcon fontSize="small" />,
     color: "#1877F2",
-    getUrl: (url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    getUrl: (url) =>
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
     openInTab: true,
   },
   {
@@ -38,7 +42,9 @@ const PLATFORMS = [
     icon: <TwitterIcon fontSize="small" />,
     color: "#000000",
     getUrl: (url, title) =>
-      `https://x.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+      `https://x.com/intent/tweet?url=${encodeURIComponent(
+        url,
+      )}&text=${encodeURIComponent(title)}`,
     openInTab: true,
   },
   {
@@ -46,7 +52,9 @@ const PLATFORMS = [
     icon: <TelegramIcon fontSize="small" />,
     color: "#0088CC",
     getUrl: (url, title) =>
-      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+      `https://t.me/share/url?url=${encodeURIComponent(
+        url,
+      )}&text=${encodeURIComponent(title)}`,
     openInTab: true,
   },
   {
@@ -58,11 +66,18 @@ const PLATFORMS = [
   },
 ];
 
-const ShareModal = ({ url, title = "Check out this property on Domits", onClose }) => {
+const ShareModal = ({
+                      url,
+                      title = "Check out this property on Domits",
+                      onClose,
+                    }) => {
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef(null);
+  const modalRef = useRef(null);
 
   const handlePlatformShare = (platform) => {
     const shareUrl = platform.getUrl(url, title);
+
     if (platform.openInTab) {
       globalThis.open(shareUrl, "_blank", "noopener,noreferrer");
     } else {
@@ -70,12 +85,24 @@ const ShareModal = ({ url, title = "Check out this property on Domits", onClose 
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+  const scheduleCopiedReset = () => {
+    clearTimeout(copyTimeoutRef.current);
+    setCopied(true);
+    copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard?.writeText(url);
+      scheduleCopiedReset();
+    } catch (error) {
+      console.error("Failed to copy link:", error);
+    }
+  };
+
+  useEffect(() => {
+    return () => clearTimeout(copyTimeoutRef.current);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -83,19 +110,47 @@ const ShareModal = ({ url, title = "Check out this property on Domits", onClose 
         onClose();
       }
     };
+
+    const handlePointerDownOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handlePointerDownOutside);
+    document.addEventListener("touchstart", handlePointerDownOutside);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handlePointerDownOutside);
+      document.removeEventListener("touchstart", handlePointerDownOutside);
+    };
   }, [onClose]);
 
   const truncatedUrl = url.length > 45 ? `${url.slice(0, 45)}…` : url;
 
+  if (typeof document === "undefined") {
+    return null;
+  }
+
   return ReactDOM.createPortal(
     <div className="share-modal-backdrop">
-      <button className="share-modal-backdrop__btn" onClick={onClose} aria-label="Close modal" tabIndex={-1} />
-      <dialog className="share-modal" aria-modal="true" aria-label="Share" open>
+      <dialog
+        ref={modalRef}
+        className="share-modal"
+        aria-modal="true"
+        aria-label="Share"
+        open
+      >
         <div className="share-modal__header">
           <h2 className="share-modal__title">Share</h2>
-          <button type="button" className="share-modal__close" onClick={onClose} aria-label="Close share modal">
+          <button
+            type="button"
+            className="share-modal__close"
+            onClick={onClose}
+            aria-label="Close share modal"
+          >
             <CloseIcon fontSize="small" />
           </button>
         </div>
@@ -107,11 +162,17 @@ const ShareModal = ({ url, title = "Check out this property on Domits", onClose 
               key={platform.name}
               className="share-modal__platform-btn"
               onClick={() => handlePlatformShare(platform)}
-              aria-label={`Share via ${platform.name}`}>
-              <span className="share-modal__platform-icon" style={{ backgroundColor: platform.color }}>
+              aria-label={`Share via ${platform.name}`}
+            >
+              <span
+                className="share-modal__platform-icon"
+                style={{ backgroundColor: platform.color }}
+              >
                 {platform.icon}
               </span>
-              <span className="share-modal__platform-name">{platform.name}</span>
+              <span className="share-modal__platform-name">
+                {platform.name}
+              </span>
             </button>
           ))}
         </div>
@@ -124,16 +185,23 @@ const ShareModal = ({ url, title = "Check out this property on Domits", onClose 
             </span>
             <button
               type="button"
-              className={`share-modal__copy-btn${copied ? " share-modal__copy-btn--copied" : ""}`}
+              className={`share-modal__copy-btn${
+                copied ? " share-modal__copy-btn--copied" : ""
+              }`}
               onClick={handleCopy}
-              aria-label="Copy link">
-              {copied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
+              aria-label="Copy link"
+            >
+              {copied ? (
+                <CheckIcon fontSize="small" />
+              ) : (
+                <ContentCopyIcon fontSize="small" />
+              )}
             </button>
           </div>
         </div>
       </dialog>
     </div>,
-    document.body
+    document.body,
   );
 };
 
