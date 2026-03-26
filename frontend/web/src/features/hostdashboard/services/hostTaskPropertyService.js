@@ -39,7 +39,7 @@ const normalizePropertySelectOptions = (listings) => {
 
     (Array.isArray(listings) ? listings : []).forEach((listing) => {
         const propertyId = String(listing?.property?.id || "").trim();
-        if (!propertyId) {
+        if (!propertyId || propertyOptionsById.has(propertyId)) {
             return;
         }
 
@@ -133,7 +133,7 @@ export const fetchHostPropertySelectOptions = async () => {
 export const fetchHostTaskPropertyOptions = async () => {
     try {
         const propertyOptions = await fetchHostPropertySelectOptions();
-        return propertyOptions.map((option) => option.label);
+        return propertyOptions.map(({ value, label }) => ({ id: value, label }));
     } catch {
         return [];
     }

@@ -2,6 +2,7 @@ import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
 import { Stripe_Connected_Accounts } from "database/models/Stripe_Connected_Accounts";
+import { Kpi_Snapshot } from "database/models/Kpi_Snapshot";
 
 export class Repository {
   async getBookedNights(cognitoUserId, startDate = null, endDate = null) {
@@ -163,5 +164,34 @@ export class Repository {
       .getRawOne();
 
     return { averageLengthOfStay: Number(result?.averageLengthOfStay ?? 0) };
+  }
+  
+  async createKpiSnapshot({
+    userId,
+    hostId = null,
+    periodType,
+    periodStart = null,
+    periodEnd = null,
+    metrics,
+  }) {
+    const client = await Database.getInstance();
+    const repo = client.getRepository(Kpi_Snapshot);
+
+    return repo.save({
+      user_id: userId,
+      host_id: hostId,
+      period_type: periodType,
+      period_start: periodStart,
+      period_end: periodEnd,
+
+      revenue: metrics.revenue ?? null,
+      booked_nights: metrics.bookedNights ?? null,
+      available_nights: metrics.availableNights ?? null,
+      property_count: metrics.propertyCount ?? null,
+      alos: metrics.alos ?? null,
+      adr: metrics.adr ?? null,
+      occupancy_rate: metrics.occupancyRate ?? null,
+      revpar: metrics.revpar ?? null,
+    });
   }
 }
