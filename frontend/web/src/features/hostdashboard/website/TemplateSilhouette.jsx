@@ -18,6 +18,21 @@ const NAV_DOT_IDS = ["primary", "secondary", "tertiary"];
 const TRUST_META_IDS = ["one", "two", "three"];
 const RIGHT_META_IDS = ["first", "second"];
 
+const joinClassNames = (...classNames) => classNames.filter(Boolean).join(" ");
+
+const getInteractiveTargetClass = (slot) => {
+  switch (slot) {
+    case "a":
+      return styles.templateInteractiveTargetA;
+    case "b":
+      return styles.templateInteractiveTargetB;
+    case "c":
+      return styles.templateInteractiveTargetC;
+    default:
+      return "";
+  }
+};
+
 function TemplateNavDots() {
   return (
     <div className={styles.templateNavDots}>
@@ -38,6 +53,10 @@ function TemplateRightMeta() {
   );
 }
 
+function TemplateCursor() {
+  return <span className={styles.templateCursor} aria-hidden="true" />;
+}
+
 function TemplateSilhouette({ layout }) {
   switch (layout) {
     case "featureStack":
@@ -47,16 +66,27 @@ function TemplateSilhouette({ layout }) {
             <span className={styles.templateBrandMark} />
             <TemplateNavDots />
           </div>
-          <div className={styles.templateHeroBand} />
+          <div className={joinClassNames(styles.templateHeroBand, getInteractiveTargetClass("a"))} />
           <div className={styles.templateFeatureStackRow}>
             {FEATURE_CARD_IDS.map((cardId) => (
               <div key={cardId} className={styles.templateFeatureStackCard}>
-                <span className={styles.templateMiniIcon} />
+                <span
+                  className={joinClassNames(
+                    styles.templateMiniIcon,
+                    cardId === "details" ? getInteractiveTargetClass("b") : ""
+                  )}
+                />
                 <span className={styles.templateLineWide} />
-                <span className={styles.templateLineShort} />
+                <span
+                  className={joinClassNames(
+                    styles.templateLineShort,
+                    cardId === "cta" ? getInteractiveTargetClass("c") : ""
+                  )}
+                />
               </div>
             ))}
           </div>
+          <TemplateCursor />
         </div>
       );
     case "trustSignals":
@@ -66,10 +96,17 @@ function TemplateSilhouette({ layout }) {
             <span className={styles.templateBrandMark} />
             <TemplateRightMeta />
           </div>
-          <div className={styles.templateHeroBand} />
+          <div className={joinClassNames(styles.templateHeroBand, getInteractiveTargetClass("a"))} />
           <div className={styles.templateTrustStack}>
-            {TRUST_CARD_IDS.map((cardId) => (
-              <div key={cardId} className={styles.templateTrustCard}>
+            {TRUST_CARD_IDS.map((cardId, index) => (
+              <div
+                key={cardId}
+                className={joinClassNames(
+                  styles.templateTrustCard,
+                  index === 0 ? getInteractiveTargetClass("b") : "",
+                  index === 1 ? getInteractiveTargetClass("c") : ""
+                )}
+              >
                 <div className={styles.templateTrustMeta}>
                   {TRUST_META_IDS.map((metaId) => (
                     <span key={`${cardId}-${metaId}`} className={styles.templateTinyLine} />
@@ -80,6 +117,7 @@ function TemplateSilhouette({ layout }) {
               </div>
             ))}
           </div>
+          <TemplateCursor />
         </div>
       );
     case "experienceJourney":
@@ -90,7 +128,7 @@ function TemplateSilhouette({ layout }) {
             <TemplateNavDots />
           </div>
           <div className={styles.templateJourneyStack}>
-            {JOURNEY_STOP_CONFIG.map(({ id, reversed }) => (
+            {JOURNEY_STOP_CONFIG.map(({ id, reversed }, index) => (
               <div
                 key={id}
                 className={`${styles.templateJourneyStop} ${
@@ -99,7 +137,12 @@ function TemplateSilhouette({ layout }) {
               >
                 {reversed ? (
                   <>
-                    <div className={styles.templateJourneyVisual} />
+                    <div
+                      className={joinClassNames(
+                        styles.templateJourneyVisual,
+                        index === 1 ? getInteractiveTargetClass("b") : ""
+                      )}
+                    />
                     <div className={styles.templateJourneyCopy}>
                       <span className={styles.templateLineWide} />
                       <span className={styles.templateLineShort} />
@@ -111,12 +154,19 @@ function TemplateSilhouette({ layout }) {
                       <span className={styles.templateLineWide} />
                       <span className={styles.templateLineShort} />
                     </div>
-                    <div className={styles.templateJourneyVisual} />
+                    <div
+                      className={joinClassNames(
+                        styles.templateJourneyVisual,
+                        index === 0 ? getInteractiveTargetClass("a") : "",
+                        index === 2 ? getInteractiveTargetClass("c") : ""
+                      )}
+                    />
                   </>
                 )}
               </div>
             ))}
           </div>
+          <TemplateCursor />
         </div>
       );
     case "amenitiesSpotlight":
@@ -127,10 +177,16 @@ function TemplateSilhouette({ layout }) {
             <TemplateNavDots />
           </div>
           <div className={styles.templateAmenitiesHero}>
-            <div className={styles.templateAmenitiesVisual} />
+            <div className={joinClassNames(styles.templateAmenitiesVisual, getInteractiveTargetClass("a"))} />
             <div className={styles.templateAmenitiesList}>
-              {AMENITY_ROW_IDS.map((rowId) => (
-                <div key={rowId} className={styles.templateAmenityRow}>
+              {AMENITY_ROW_IDS.map((rowId, index) => (
+                <div
+                  key={rowId}
+                  className={joinClassNames(
+                    styles.templateAmenityRow,
+                    index === 0 ? getInteractiveTargetClass("b") : ""
+                  )}
+                >
                   <span className={styles.templateLineWide} />
                   <span className={styles.templateLineShort} />
                 </div>
@@ -138,12 +194,19 @@ function TemplateSilhouette({ layout }) {
             </div>
           </div>
           <div className={styles.templateAmenitiesFooter}>
-            {AMENITY_PILL_IDS.map((pillId) => (
-              <div key={pillId} className={styles.templateAmenityPill}>
+            {AMENITY_PILL_IDS.map((pillId, index) => (
+              <div
+                key={pillId}
+                className={joinClassNames(
+                  styles.templateAmenityPill,
+                  index === 1 ? getInteractiveTargetClass("c") : ""
+                )}
+              >
                 <span className={styles.templateTinyLine} />
               </div>
             ))}
           </div>
+          <TemplateCursor />
         </div>
       );
     case "editorial":
@@ -158,15 +221,22 @@ function TemplateSilhouette({ layout }) {
               <span className={styles.templateLineWide} />
               <span className={styles.templateLineWide} />
               <span className={styles.templateLineShort} />
-              <span className={styles.templateButtonStub} />
+              <span className={joinClassNames(styles.templateButtonStub, getInteractiveTargetClass("a"))} />
             </div>
-            <div className={styles.templateEditorialVisual} />
+            <div className={joinClassNames(styles.templateEditorialVisual, getInteractiveTargetClass("b"))} />
           </div>
           <div className={styles.templateEditorialFooter}>
             {LOCAL_GUIDE_IDS.map((lineId) => (
-              <span key={lineId} className={styles.templateLineShort} />
+              <span
+                key={lineId}
+                className={joinClassNames(
+                  styles.templateLineShort,
+                  lineId === "food" ? getInteractiveTargetClass("c") : ""
+                )}
+              />
             ))}
           </div>
+          <TemplateCursor />
         </div>
       );
     case "galleryGrid":
@@ -177,14 +247,22 @@ function TemplateSilhouette({ layout }) {
             <span className={styles.templateTinyLine} />
           </div>
           <div className={styles.templateGalleryGrid}>
-            {GALLERY_TILE_IDS.map((tileId) => (
+            {GALLERY_TILE_IDS.map((tileId, index) => (
               <div key={tileId} className={styles.templateGalleryTile}>
-                <div className={styles.templateGalleryVisual} />
+                <div
+                  className={joinClassNames(
+                    styles.templateGalleryVisual,
+                    index === 0 ? getInteractiveTargetClass("a") : "",
+                    index === 2 ? getInteractiveTargetClass("b") : "",
+                    index === 4 ? getInteractiveTargetClass("c") : ""
+                  )}
+                />
                 <span className={styles.templateLineShort} />
                 <span className={styles.templateTinyLine} />
               </div>
             ))}
           </div>
+          <TemplateCursor />
         </div>
       );
     case "bookingFocus":
@@ -194,7 +272,7 @@ function TemplateSilhouette({ layout }) {
             <span className={styles.templateBrandMark} />
             <TemplateRightMeta />
           </div>
-          <div className={styles.templateHeroBand} />
+          <div className={joinClassNames(styles.templateHeroBand, getInteractiveTargetClass("a"))} />
           <div className={styles.templateQuoteSpotlightBody}>
             <div className={styles.templateQuoteCopy}>
               <span className={styles.templateLineWide} />
@@ -206,13 +284,14 @@ function TemplateSilhouette({ layout }) {
                 ))}
               </div>
             </div>
-            <div className={styles.templateQuotePanel}>
+            <div className={joinClassNames(styles.templateQuotePanel, getInteractiveTargetClass("b"))}>
               <span className={styles.templateLineWide} />
               <span className={styles.templateLineShort} />
               <span className={styles.templateLineShort} />
-              <span className={styles.templateButtonStub} />
+              <span className={joinClassNames(styles.templateButtonStub, getInteractiveTargetClass("c"))} />
             </div>
           </div>
+          <TemplateCursor />
         </div>
       );
     case "contactFocus":
@@ -223,8 +302,15 @@ function TemplateSilhouette({ layout }) {
             <TemplateNavDots />
           </div>
           <div className={styles.templateContactColumns}>
-            {["contact", "details"].map((panelId) => (
-              <div key={panelId} className={styles.templateContactPanel}>
+            {["contact", "details"].map((panelId, index) => (
+              <div
+                key={panelId}
+                className={joinClassNames(
+                  styles.templateContactPanel,
+                  index === 0 ? getInteractiveTargetClass("a") : "",
+                  index === 1 ? getInteractiveTargetClass("b") : ""
+                )}
+              >
                 <span className={styles.templateLineWide} />
                 <span className={styles.templateLineShort} />
                 <span className={panelId === "contact" ? styles.templateLineWide : styles.templateLineShort} />
@@ -232,8 +318,9 @@ function TemplateSilhouette({ layout }) {
             ))}
           </div>
           <div className={styles.templateContactFooter}>
-            <span className={styles.templateButtonStub} />
+            <span className={joinClassNames(styles.templateButtonStub, getInteractiveTargetClass("c"))} />
           </div>
+          <TemplateCursor />
         </div>
       );
     case "localGuide":
@@ -243,14 +330,14 @@ function TemplateSilhouette({ layout }) {
             <span className={styles.templateBrandMark} />
             <span className={styles.templateTinyLine} />
           </div>
-          <div className={styles.templateHeroBand} />
+          <div className={joinClassNames(styles.templateHeroBand, getInteractiveTargetClass("a"))} />
           <div className={styles.templateLocalGuideBody}>
-            <div className={styles.templateLocalGuideVisual} />
+            <div className={joinClassNames(styles.templateLocalGuideVisual, getInteractiveTargetClass("b"))} />
             <div className={styles.templateLocalGuideCopy}>
               <span className={styles.templateLineWide} />
               <span className={styles.templateLineWide} />
               <span className={styles.templateLineShort} />
-              <span className={styles.templateButtonStub} />
+              <span className={joinClassNames(styles.templateButtonStub, getInteractiveTargetClass("c"))} />
             </div>
           </div>
           <div className={styles.templateLocalGuideFooter}>
@@ -258,6 +345,7 @@ function TemplateSilhouette({ layout }) {
               <span key={lineId} className={styles.templateTinyLine} />
             ))}
           </div>
+          <TemplateCursor />
         </div>
       );
     case "panorama":
@@ -268,17 +356,23 @@ function TemplateSilhouette({ layout }) {
             <span className={styles.templateBrandMark} />
             <TemplateNavDots />
           </div>
-          <div className={styles.templateHeroBand} />
-          <div className={styles.templateSearchStub} />
+          <div className={joinClassNames(styles.templateHeroBand, getInteractiveTargetClass("a"))} />
+          <div className={joinClassNames(styles.templateSearchStub, getInteractiveTargetClass("b"))} />
           <div className={styles.templateFeatureRow}>
             {FEATURE_CARD_IDS.map((cardId) => (
               <div key={cardId} className={styles.templateFeatureCard}>
-                <span className={styles.templateMiniIcon} />
+                <span
+                  className={joinClassNames(
+                    styles.templateMiniIcon,
+                    cardId === "details" ? getInteractiveTargetClass("c") : ""
+                  )}
+                />
                 <span className={styles.templateLineWide} />
                 <span className={styles.templateLineShort} />
               </div>
             ))}
           </div>
+          <TemplateCursor />
         </div>
       );
   }

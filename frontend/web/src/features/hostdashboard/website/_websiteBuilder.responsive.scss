@@ -78,6 +78,11 @@
     gap: 12px;
   }
 
+  .templateCursor {
+    width: 10px;
+    height: 14px;
+  }
+
   .templateCard {
     width: 100%;
     min-width: 0;
@@ -434,13 +439,21 @@
   .secondaryButton,
   .galleryAnimatedImageForward,
   .galleryAnimatedImageBackward,
-  .galleryAnimatedImage {
+  .galleryAnimatedImage,
+  .templateCursor,
+  .templateInteractiveTargetA,
+  .templateInteractiveTargetB,
+  .templateInteractiveTargetC {
     animation: none;
     transition: none;
   }
 
   .templateCardSelected .templateRadio::after {
     animation: none;
+  }
+
+  .templateCursor {
+    display: none;
   }
 
   .photoCard {
