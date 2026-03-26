@@ -20,7 +20,13 @@ export class PaymentsService {
 
     const stripeAccount = await this.repository.getExistingStripeRevenueAccount(cognitoUserId);
     if (!stripeAccount?.account_id) {
-      throw new Error("No Stripe account found for this user.");
+    return {
+      totalRevenue: 0,
+      formattedTotalRevenue: (0).toLocaleString("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      }),
+    };
     }
 
     const transfers = await this.stripe.transfers.list({

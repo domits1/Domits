@@ -8,6 +8,10 @@ import spinner from "../../images/spinnner.gif";
 import info from "../../images/icons/info.png";
 import editIcon from "../../images/icons/edit-05.png";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import {
+  placeholderImage,
+  resolvePrimaryAccommodationImageUrl,
+} from "../../utils/accommodationImage";
 import { getAccessToken } from "../../services/getAccessToken.js";
 import { toast } from "react-toastify";
 
@@ -153,7 +157,10 @@ function HostDashboard() {
                       }>
                       {accommodation?.images?.length > 0 ? (
                         <img
-                          src={`https://accommodation.s3.eu-north-1.amazonaws.com/${accommodation.images[0].key}`}
+                          src={resolvePrimaryAccommodationImageUrl(
+                            accommodation.images,
+                            "thumb"
+                          )}
                           alt="Listing image"
                           className={styles.imgListedDashboard}
                         />

@@ -39,6 +39,10 @@ import { IntegrationSyncState } from "../../models/unified/sync/IntegrationSyncS
 import { IntegrationSyncLog } from "../../models/unified/sync/IntegrationSyncLog.js";
 import { UnifiedThreadNote } from "../../models/unified/collaboration/UnifiedThreadNote.js";
 
+import { PropertyTask } from "../../models/Property_Task.js";
+import { Property_Task_Activity } from "../../models/Property_Task_Activity.js";
+import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
+
 export const Tables = [
   Amenities,
   Amenity_And_Category,
@@ -81,4 +85,7 @@ export const Tables = [
   UnifiedThreadNote,
 
   User_Table,
+  PropertyTask,
+  Property_Task_Activity,
+  Kpi_Snapshot,
 ];

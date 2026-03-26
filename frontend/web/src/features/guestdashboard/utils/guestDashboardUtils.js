@@ -111,6 +111,46 @@ export const splitBookingsByTime = (bookings) => {
   return { currentBookings, upcomingBookings, pastBookings };
 };
 
+export const normalizeGuestBookingsResponse = (bookingData) => {
+  if (Array.isArray(bookingData)) return bookingData;
+  if (Array.isArray(bookingData?.data)) return bookingData.data;
+  if (Array.isArray(bookingData?.response)) return bookingData.response;
+  if (typeof bookingData?.body === "string") {
+    try {
+      const innerParsed = JSON.parse(bookingData.body);
+      if (Array.isArray(innerParsed)) return innerParsed;
+      if (Array.isArray(innerParsed?.response)) return innerParsed.response;
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+export const getPaidBookings = (bookingData) =>
+  normalizeGuestBookingsResponse(bookingData).filter(
+    (booking) => String(booking?.status ?? booking?.Status ?? "").toLowerCase() === "paid"
+  );
+
+export const getCurrentOrUpcomingBooking = (bookingData) => {
+  const paidBookings = getPaidBookings(bookingData);
+  const { currentBookings, upcomingBookings } = splitBookingsByTime(paidBookings);
+  return currentBookings[0] || upcomingBookings[0] || paidBookings[0] || null;
+};
+
+export const resolveHostName = (...sources) => {
+  for (const source of sources) {
+    const value = String(source || "").trim();
+    if (value) return value;
+  }
+  return "-";
+};
+
+export const resolveSubtitleCity = (subtitle = "") => {
+  const normalizedSubtitle = String(subtitle || "").trim();
+  return normalizedSubtitle ? normalizedSubtitle.split(",")[0].trim() : "";
+};
+
 export const getPropertyId = (booking) =>
   booking?.property_id ??
   booking?.propertyId ??
@@ -123,3 +163,4 @@ export const formatDate = (dateValue) => {
   if (!dateValue) return "-";
   return dateFormatterDD_MM_YYYY(dateValue);
 };
+

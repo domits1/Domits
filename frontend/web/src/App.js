@@ -89,7 +89,7 @@ function RedirectHostOnboardingCatchAll() {
 
 function App() {
   const [searchResults, setSearchResults] = useState([]);
-  const [setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Apollo Client
   const client = new ApolloClient({
@@ -151,7 +151,7 @@ function App() {
           <ScrollToTop />
           <AuthProvider>
             <UserProvider>
-              <div className="App">
+              <div className="App" aria-busy={loading}>
                 {currentPath !== "/admin" && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
                 <Routes>
                   <Route path="/home" element={<Home searchResults={searchResults} />} />

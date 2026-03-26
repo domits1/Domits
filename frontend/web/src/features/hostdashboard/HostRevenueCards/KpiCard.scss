@@ -121,3 +121,16 @@
     justify-content: flex-start;
   }
 }
+/* Force KPI cards to be consistent in size */
+.kpi-card,
+.booked-nights-card,
+.or-occupancy-rate-card,
+.alos-card,
+.adr-card,
+.revpar-card {
+  width: 300px !important;
+  height: 460px !important;
+  min-height: 460px !important;
+  display: flex;
+  flex-direction: column;
+}
