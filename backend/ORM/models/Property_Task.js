@@ -14,6 +14,7 @@ export const PropertyTask = new EntitySchema({
         property_id: { type: "varchar", nullable: false },
         property_snapshot_label: { type: "varchar", nullable: false },
         title: { type: "varchar", nullable: false },
+        type: { type: "varchar", nullable: false },
         description: { type: "text", nullable: true },
 status: { type: "varchar", default: "Pending" },
         priority: { type: "varchar", default: "Medium" },
