@@ -294,6 +294,38 @@ export default class WhatsAppService {
     return null;
   }
 
+  async collectWebhookChangePayloads(change, inboundThreads, statusUpdates) {
+    const value = change?.value || {};
+    const metadata = value?.metadata || {};
+    const phoneNumberId = metadata?.phone_number_id || null;
+
+    const integration = await this.resolveIntegrationAccount(phoneNumberId);
+
+    if (!integration) {
+      console.log("WhatsApp webhook skipped: no integration account found for phone_number_id", phoneNumberId);
+      return;
+    }
+
+    const contacts = asArray(value?.contacts);
+    const fallbackGuestPhone = contacts?.[0]?.wa_id || null;
+    const fallbackGuestName = contacts?.[0]?.profile?.name || null;
+
+    const inboundMessages = asArray(value?.messages);
+    for (const message of inboundMessages) {
+      const guestPhone = message?.from || fallbackGuestPhone || null;
+      if (!guestPhone) continue;
+
+      inboundThreads.push(
+        buildInboundThreadPayload({ integration, guestPhone, fallbackGuestName, phoneNumberId, metadata, message })
+      );
+    }
+
+    const statuses = asArray(value?.statuses);
+    for (const status of statuses) {
+      statusUpdates.push(buildStatusUpdatePayload(integration, status));
+    }
+  }
+
   async normalizeWebhookPayload(body) {
     const inboundThreads = [];
     const statusUpdates = [];
@@ -303,35 +335,7 @@ export default class WhatsAppService {
       const changes = asArray(entry?.changes);
 
       for (const change of changes) {
-        const value = change?.value || {};
-        const metadata = value?.metadata || {};
-        const phoneNumberId = metadata?.phone_number_id || null;
-
-        const integration = await this.resolveIntegrationAccount(phoneNumberId);
-
-        if (!integration) {
-          console.log("WhatsApp webhook skipped: no integration account found for phone_number_id", phoneNumberId);
-          continue;
-        }
-
-        const contacts = asArray(value?.contacts);
-        const fallbackGuestPhone = contacts?.[0]?.wa_id || null;
-        const fallbackGuestName = contacts?.[0]?.profile?.name || null;
-
-        const inboundMessages = asArray(value?.messages);
-        for (const message of inboundMessages) {
-          const guestPhone = message?.from || fallbackGuestPhone || null;
-          if (!guestPhone) continue;
-
-          inboundThreads.push(
-            buildInboundThreadPayload({ integration, guestPhone, fallbackGuestName, phoneNumberId, metadata, message })
-          );
-        }
-
-        const statuses = asArray(value?.statuses);
-        for (const status of statuses) {
-          statusUpdates.push(buildStatusUpdatePayload(integration, status));
-        }
+        await this.collectWebhookChangePayloads(change, inboundThreads, statusUpdates);
       }
     }
 
