@@ -80,7 +80,7 @@ export const createTask = async (taskData) => {
 };
 
 export const updateTask = async (taskId, updateData) => {
-    const response = await fetch(`${TASKS_API_URL}/${taskId}`, {
+    const response = await fetch(`${TASKS_API_URL}?id=${taskId}`, {
         method: "PATCH",
         headers: getHeaders(),
         body: JSON.stringify(toBackendPayload(updateData)),
@@ -94,7 +94,7 @@ export const updateTask = async (taskId, updateData) => {
 };
 
 export const deleteTask = async (taskId) => {
-    const response = await fetch(`${TASKS_API_URL}/${taskId}`, {
+    const response = await fetch(`${TASKS_API_URL}?id=${taskId}`, {
         method: "DELETE",
         headers: getHeaders(),
     });
