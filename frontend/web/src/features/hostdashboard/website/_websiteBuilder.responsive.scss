@@ -1,0 +1,503 @@
+@media (min-width: 720px) {
+  .selectionPreview {
+    grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .websitePage {
+    gap: 18px;
+  }
+
+  .heroCard,
+  .selectorCard {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .stepTitleRow {
+    gap: 8px;
+  }
+
+  .titleIcon {
+    font-size: 21px !important;
+  }
+
+  .selectionSummary,
+  .templateSelectionState {
+    padding: 18px;
+  }
+
+  .photoStack {
+    width: min(100%, 258px);
+    min-height: 156px;
+    margin-inline: auto;
+    margin-left: 0;
+    justify-self: center;
+    transform: translateX(8px);
+    --photo-stack-left-offset-x: -54px;
+    --photo-stack-left-offset-y: 16px;
+    --photo-stack-center-offset-y: 0px;
+    --photo-stack-right-offset-x: 58px;
+    --photo-stack-right-offset-y: 12px;
+  }
+
+  .photoCard {
+    width: min(100%, 120px);
+    border-radius: 18px;
+  }
+
+  .buttonRow {
+    flex-direction: column;
+  }
+
+  .selectionPreview {
+    justify-items: center;
+  }
+
+  .selectionContent {
+    width: 100%;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+
+  .templateSelectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+}
+
+@media (max-width: 639px) {
+  .templateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .templateCard {
+    width: 100%;
+    min-width: 0;
+    min-height: 352px;
+    gap: 10px;
+    padding: 12px 12px 14px;
+    border-radius: 20px;
+  }
+
+  .templatePreviewShell {
+    width: 100%;
+    aspect-ratio: 1 / 1.3857;
+    padding: 14px 10px 12px;
+    border-radius: 18px;
+  }
+
+  .templateCanvas {
+    width: min(100%, 140px);
+    aspect-ratio: 140 / 172;
+    padding: 10px;
+    gap: 8px;
+    border-radius: 16px;
+  }
+
+  .templateHeroBand {
+    min-height: 62px;
+  }
+
+  .templateCanvasFeatureStack .templateHeroBand {
+    min-height: 58px;
+  }
+
+  .templateCanvasTrustSignals .templateHeroBand,
+  .templateCanvasQuoteSpotlight .templateHeroBand,
+  .templateCanvasLocalGuide .templateHeroBand {
+    min-height: 46px;
+  }
+
+  .templateCanvasTrustSignals {
+    gap: 6px;
+  }
+
+  .templateCanvasTrustSignals .templateTrustStack {
+    gap: 6px;
+  }
+
+  .templateCanvasTrustSignals .templateTrustCard {
+    gap: 4px;
+    padding: 7px;
+  }
+
+  .templateCanvasEditorial .templateEditorialVisual {
+    min-height: 94px;
+  }
+
+  .templateCanvasGalleryGrid .templateGalleryVisual {
+    min-height: 42px;
+  }
+
+  .templateCanvasContactFocus .templateContactPanel {
+    min-height: 74px;
+  }
+
+  .templateCanvasAmenitiesSpotlight .templateAmenitiesVisual {
+    min-height: 92px;
+  }
+
+  .templateJourneyVisual {
+    min-height: 44px;
+  }
+
+  .templateFeatureRow,
+  .templateFeatureStackRow {
+    gap: 8px;
+  }
+
+  .templateFeatureCard,
+  .templateFeatureStackCard,
+  .templateContactPanel {
+    gap: 6px;
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .templateMiniIcon {
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+  }
+
+  .templateSearchStub {
+    height: 14px;
+    margin-top: -14px;
+  }
+
+  .templateButtonStub {
+    width: 68px;
+    height: 14px;
+  }
+
+  .templateName {
+    font-size: 0.92rem;
+    min-height: calc(1.25em * 2);
+  }
+
+  .templateSelectedTag {
+    top: 12px;
+    right: 12px;
+    padding: 0.28rem 0.5rem;
+    font-size: 0.72rem;
+  }
+
+  .templateDescription {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    max-width: none;
+    min-height: calc(1.45em * 4);
+  }
+}
+
+@media (max-width: 479px) {
+  .templateGrid {
+    gap: 10px;
+  }
+
+  .templateCard {
+    min-height: 318px;
+    gap: 8px;
+    padding: 10px 10px 12px;
+    border-radius: 18px;
+  }
+
+  .templateRadio {
+    top: 10px;
+    left: 10px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .templateRadioDot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .templatePreviewShell {
+    aspect-ratio: 1 / 1.4182;
+    padding: 10px 8px;
+    border-radius: 16px;
+  }
+
+  .templateCanvas {
+    width: min(100%, 118px);
+    aspect-ratio: 118 / 144;
+    padding: 8px;
+    gap: 6px;
+    border-radius: 14px;
+  }
+
+  .templateChrome {
+    gap: 6px;
+  }
+
+  .templateBrandMark {
+    width: 40px;
+    height: 6px;
+  }
+
+  .templateNavDots {
+    gap: 4px;
+  }
+
+  .templateNavDots span,
+  .templateTinyLine {
+    width: 18px;
+    height: 5px;
+  }
+
+  .templateHeroBand {
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .templateCanvasFeatureStack .templateHeroBand {
+    min-height: 44px;
+  }
+
+  .templateCanvasTrustSignals .templateHeroBand,
+  .templateCanvasQuoteSpotlight .templateHeroBand,
+  .templateCanvasLocalGuide .templateHeroBand {
+    min-height: 38px;
+  }
+
+  .templateCanvasTrustSignals {
+    gap: 5px;
+  }
+
+  .templateCanvasTrustSignals .templateTrustStack {
+    gap: 5px;
+  }
+
+  .templateCanvasTrustSignals .templateTrustCard {
+    gap: 3px;
+    padding: 5px;
+  }
+
+  .templateCanvasEditorial .templateEditorialVisual,
+  .templateAmenitiesVisual {
+    min-height: 74px;
+    border-radius: 12px;
+  }
+
+  .templateCanvasGalleryGrid .templateGalleryVisual,
+  .templateJourneyVisual,
+  .templateLocalGuideVisual {
+    min-height: 32px;
+    border-radius: 10px;
+  }
+
+  .templateCanvasContactFocus .templateContactPanel {
+    min-height: 58px;
+  }
+
+  .templateSearchStub {
+    width: 54%;
+    max-width: 74px;
+    height: 12px;
+    margin-top: -10px;
+  }
+
+  .templateFeatureRow,
+  .templateFeatureStackRow,
+  .templateEditorialBody,
+  .templateQuoteSpotlightBody,
+  .templateEditorialFooter,
+  .templateContactColumns,
+  .templateAmenitiesHero,
+  .templateAmenitiesFooter {
+    gap: 6px;
+  }
+
+  .templateFeatureCard,
+  .templateFeatureStackCard,
+  .templateContactPanel {
+    gap: 4px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .templateMiniIcon {
+    width: 18px;
+    height: 18px;
+    border-radius: 7px;
+  }
+
+  .templateLineWide,
+  .templateLineShort {
+    height: 5px;
+  }
+
+  .templateButtonStub {
+    width: 56px;
+    height: 12px;
+  }
+
+  .templateQuotePanel {
+    gap: 6px;
+    padding: 8px 7px;
+    border-radius: 12px;
+  }
+
+  .templateQuoteSignalGroup {
+    gap: 4px;
+  }
+
+  .templateTrustStack,
+  .templateJourneyStack,
+  .templateAmenitiesList {
+    gap: 6px;
+  }
+
+  .templateTrustCard,
+  .templateAmenityRow,
+  .templateAmenityPill {
+    gap: 4px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .templateJourneyStop,
+  .templateJourneyStopReverse {
+    grid-template-columns: minmax(0, 1fr) 34px;
+    gap: 6px;
+  }
+
+  .templateJourneyStopReverse {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .templateLocalGuideBody {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .templateTrustMeta,
+  .templateLocalGuideFooter {
+    gap: 4px;
+  }
+
+  .templateCardContent {
+    gap: 8px;
+  }
+
+  .templateCardHeader {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+  }
+
+  .templateName {
+    font-size: 0.82rem;
+    line-height: 1.2;
+    min-height: calc(1.2em * 2);
+  }
+
+  .templateSelectedTag {
+    top: 10px;
+    right: 10px;
+    padding: 0.24rem 0.42rem;
+    font-size: 0.68rem;
+  }
+
+  .templateDescription {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    min-height: calc(1.35em * 4);
+  }
+}
+
+@media (max-width: 399px) {
+  .templateGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .templateCard {
+    width: min(100%, 250px);
+    min-height: 332px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photoCard,
+  .templateCard,
+  .primaryButton,
+  .secondaryButton,
+  .galleryAnimatedImageForward,
+  .galleryAnimatedImageBackward,
+  .galleryAnimatedImage {
+    animation: none;
+    transition: none;
+  }
+
+  .templateCardSelected .templateRadio::after {
+    animation: none;
+  }
+
+  .photoCard {
+    opacity: 1;
+  }
+}
+
+@keyframes templateRadioPulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.82;
+  }
+
+  70% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes galleryImageSlideForward {
+  from {
+    transform: translateX(36px) scale(0.985);
+    opacity: 0.35;
+  }
+
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes galleryImageSlideBackward {
+  from {
+    transform: translateX(-36px) scale(0.985);
+    opacity: 0.35;
+  }
+
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes photoCardEnter {
+  from {
+    transform: translateX(-50%) translateY(var(--photo-card-enter-offset-y)) rotate(0deg)
+      scale(var(--photo-card-enter-scale));
+    opacity: 0;
+  }
+
+  to {
+    transform: var(--photo-card-final-transform);
+    opacity: var(--photo-card-final-opacity, 1);
+  }
+}
