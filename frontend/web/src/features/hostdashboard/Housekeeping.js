@@ -525,9 +525,9 @@ const HostPropertyCare = () => {
             case 'My Tasks':
                 return renderMyTasksView();
             case 'Reports':
-                return <div className="placeholder-view">Reports View</div>;
+                return <div className="placeholder-view">Coming soon</div>;
             case 'Settings':
-                return <div className="placeholder-view">Settings View</div>;
+                return <div className="placeholder-view">Coming soon</div>;
             default:
                 return null;
         }
@@ -738,12 +738,12 @@ const HostPropertyCare = () => {
                             </tr>
                         ) : (
                             paginatedTasks.map(task => {
-                                const isOverdue = task.status === 'Overdue';
+                                const isOverdue = task.status === 'Overdue' || isTaskOverdue(task, getTodayString());
                                 const displayPriority = isOverdue ? 'Urgent' : (task.priority || 'Low');
                                 const displayStatus = isOverdue ? 'Overdue' : task.status;
 
                                 return (
-                                <tr key={task.id} className={`clickable-row row-${task.status.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
+                                <tr key={task.id} className={`clickable-row row-${displayStatus.toLowerCase().replace(' ', '-')}`} onClick={() => openTaskDetails(task)}>
                                     <td>
                                         <div className="task-title-cell" title={task.title}>
                                             <span className="task-arrow">▶</span> 
@@ -887,7 +887,7 @@ const HostPropertyCare = () => {
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-due-date'>Due Date</label>
-                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} onChange={handleInputChange} required />
+                                <input type="date" id='task-due-date' name="dueDate" value={newTask.dueDate} onChange={handleInputChange} onClick={(e) => e.target.showPicker?.()} required />
                             </div>
                             <div className="form-group">
                                 <label htmlFor='task-priority'>Priority</label>
@@ -920,7 +920,13 @@ const HostPropertyCare = () => {
                 <div className="modal-overlay">
                     <div className="modal-content-large task-details-modal">
                         <div className="modal-header details-header">
-                            <h3 className="details-title">{editedTask.title}</h3>
+                            <input
+                                className="details-title-input"
+                                name="title"
+                                value={editedTask.title}
+                                onChange={handleEditChange}
+                                placeholder="Task title"
+                            />
                             <button className="close-btn" onClick={closeTaskDetails}>✕</button>
                         </div>
                         
@@ -973,7 +979,7 @@ const HostPropertyCare = () => {
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor='task-due-date'>Due Date</label>
-                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} />
+                                    <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} onChange={handleEditChange} onClick={(e) => e.target.showPicker?.()} />
                                 </div>
                             </div>
 
