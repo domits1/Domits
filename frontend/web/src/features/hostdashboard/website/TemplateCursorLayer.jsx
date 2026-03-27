@@ -246,9 +246,20 @@ function TemplateCursorLayer({ layout, children }) {
     };
   }, [canvasRect, interactionConfig, prefersReducedMotion, targetPositions]);
 
-  const getCanvasProps = ({ className = "", ...restProps } = {}) => ({
+  const getCanvasProps = ({ className = "", ref: forwardedRef, ...restProps } = {}) => ({
     ...restProps,
-    ref: canvasRef,
+    ref: (node) => {
+      canvasRef.current = node;
+
+      if (typeof forwardedRef === "function") {
+        forwardedRef(node);
+        return;
+      }
+
+      if (forwardedRef && typeof forwardedRef === "object") {
+        forwardedRef.current = node;
+      }
+    },
     className,
   });
 

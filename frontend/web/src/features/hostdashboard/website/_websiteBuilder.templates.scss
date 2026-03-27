@@ -18,9 +18,11 @@
   min-height: 412px;
   align-self: stretch;
   padding: 16px 16px 18px;
+  min-width: 0;
   border: 1px solid #d9e3ef;
   border-radius: 24px;
   background: #ffffff;
+  box-sizing: border-box;
   cursor: pointer;
   text-align: left;
   transition:
@@ -90,10 +92,14 @@
 }
 
 .templatePreviewShell {
+  --template-canvas-base-width: 188px;
+  --template-canvas-scale: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   width: min(100%, 226px);
+  min-width: 0;
+  max-width: 100%;
   justify-self: center;
   aspect-ratio: 214 / 258;
   padding: 18px 14px 16px;
@@ -105,6 +111,16 @@
   box-sizing: border-box;
 }
 
+.templateCanvasViewport {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, var(--template-canvas-base-width));
+  aspect-ratio: 178 / 230;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
 .templateCardSelected .templatePreviewShell {
   background:
     linear-gradient(180deg, rgba(233, 241, 250, 0.97), rgba(244, 248, 253, 0.95)),
@@ -112,13 +128,17 @@
 }
 
 .templateCanvas {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
   display: grid;
   gap: 10px;
   padding: 12px;
   aspect-ratio: 178 / 230;
-  width: min(100%, 188px);
-  margin-inline: auto;
+  width: var(--template-canvas-base-width);
+  min-width: var(--template-canvas-base-width);
+  max-width: none;
+  margin-inline: 0;
   border-radius: 18px;
   border: 1px solid rgba(115, 147, 179, 0.22);
   background:
@@ -128,10 +148,18 @@
   box-sizing: border-box;
   overflow: hidden;
   isolation: isolate;
+  transform-origin: center center;
+  transform: translate(-50%, -50%) scale(var(--template-canvas-scale));
+}
+
+.templateCanvas > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .templateCanvasPanorama {
   justify-self: center;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
 .templateCanvasTrustSignals .templateHeroBand {
@@ -140,7 +168,7 @@
 
 .templateCanvasTrustSignals {
   justify-self: center;
-  align-content: start;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 8px;
 }
 
@@ -162,15 +190,23 @@
 }
 
 .templateCanvasExperienceJourney {
-  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .templateCanvasAmenitiesSpotlight .templateAmenitiesVisual {
   min-height: 118px;
 }
 
+.templateCanvasAmenitiesSpotlight {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
 .templateCanvasEditorial .templateEditorialVisual {
   min-height: 120px;
+}
+
+.templateCanvasEditorial {
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .templateCanvasGalleryGrid .templateGalleryVisual {
@@ -182,18 +218,31 @@
   align-content: start;
 }
 
+.templateCanvasContactFocus {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
 .templateCanvasQuoteSpotlight .templateHeroBand {
   min-height: 58px;
+}
+
+.templateCanvasQuoteSpotlight {
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 
 .templateCanvasLocalGuide .templateHeroBand {
   min-height: 56px;
 }
 
+.templateCanvasLocalGuide {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
 .templateChrome {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-width: 0;
   gap: 8px;
 }
 
@@ -268,6 +317,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  min-height: 0;
 }
 
 .templateFeatureCard,
@@ -277,13 +327,16 @@
   justify-items: center;
   gap: 8px;
   padding: 10px;
+  min-width: 0;
   border-radius: 14px;
   background: rgba(247, 252, 240, 0.82);
+  box-sizing: border-box;
 }
 
 .templateMiniIcon {
-  width: 28px;
-  height: 28px;
+  width: clamp(12px, 62%, 28px);
+  aspect-ratio: 1 / 1;
+  height: auto;
   border-radius: 10px;
   background: linear-gradient(135deg, rgba(164, 195, 125, 0.92), rgba(206, 228, 179, 0.88));
 }
@@ -316,6 +369,7 @@
 .templateJourneyStack {
   display: grid;
   gap: 10px;
+  min-height: 0;
 }
 
 .templateTrustCard,
@@ -324,8 +378,10 @@
   display: grid;
   gap: 6px;
   padding: 10px;
+  min-width: 0;
   border-radius: 14px;
   background: rgba(247, 252, 240, 0.82);
+  box-sizing: border-box;
 }
 
 .templateTrustMeta,
@@ -340,6 +396,7 @@
   grid-template-columns: minmax(0, 1fr) 52px;
   gap: 10px;
   align-items: center;
+  min-width: 0;
 }
 
 .templateJourneyStopReverse {
@@ -351,10 +408,14 @@
   display: grid;
   align-content: start;
   gap: 6px;
+  min-width: 0;
 }
 
 .templateJourneyVisual {
+  width: 100%;
+  max-width: 100%;
   min-height: 52px;
+  box-sizing: border-box;
 }
 
 .templateAmenitiesHero {
@@ -362,6 +423,8 @@
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   gap: 12px;
   align-items: stretch;
+  min-height: 0;
+  min-width: 0;
 }
 
 .templateAmenitiesList {
@@ -380,6 +443,7 @@
   display: grid;
   align-content: start;
   gap: 10px;
+  min-width: 0;
 }
 
 .templateQuoteCopy {
@@ -434,10 +498,15 @@
   grid-template-columns: 56px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
+  min-height: 0;
+  min-width: 0;
 }
 
 .templateLocalGuideVisual {
+  width: 100%;
+  max-width: 100%;
   min-height: 74px;
+  box-sizing: border-box;
 }
 
 .templateEditorialFooter,
@@ -469,7 +538,9 @@
   align-content: start;
   gap: 10px;
   width: 100%;
+  min-width: 0;
   padding-inline: 2px;
+  box-sizing: border-box;
 }
 
 .templateCardHeader {
@@ -546,4 +617,28 @@
 .templateSelectionCopy {
   display: grid;
   gap: 8px;
+}
+
+.templateCanvasPanorama .templateFeatureRow,
+.templateCanvasFeatureStack .templateFeatureStackRow,
+.templateCanvasTrustSignals .templateTrustStack,
+.templateCanvasExperienceJourney .templateJourneyStack,
+.templateCanvasAmenitiesSpotlight .templateAmenitiesHero,
+.templateCanvasEditorial .templateEditorialBody,
+.templateCanvasQuoteSpotlight .templateQuoteSpotlightBody,
+.templateCanvasContactFocus .templateContactColumns,
+.templateCanvasLocalGuide .templateLocalGuideBody {
+  height: 100%;
+}
+
+.templateCanvasPanorama .templateFeatureCard,
+.templateCanvasFeatureStack .templateFeatureStackCard,
+.templateCanvasTrustSignals .templateTrustCard,
+.templateCanvasContactFocus .templateContactPanel {
+  height: 100%;
+}
+
+.templateCanvasTrustSignals .templateTrustStack,
+.templateCanvasExperienceJourney .templateJourneyStack {
+  grid-auto-rows: 1fr;
 }
