@@ -1,6 +1,6 @@
 import { getAccessToken } from "../../../../src/services/getAccessToken.js";
 
-const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
+export const BASE_URL = "https://3biydcr59g.execute-api.eu-north-1.amazonaws.com/default/";
 
 export const HostRevenueService = {
   async fetchMetricData(arg1, arg2, filterType = "monthly", startDate, endDate) {
@@ -35,8 +35,7 @@ export const HostRevenueService = {
       let data = await response.json();
       if (data?.body) data = JSON.parse(data.body);
       return data;
-    } catch (err) {
-      console.error(`Error fetching ${metric}:`, err);
+    } catch {
       return null;
     }
   },

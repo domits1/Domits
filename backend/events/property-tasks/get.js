@@ -1,0 +1,1 @@
+export { handler } from "../../functions/property-tasks/index.js";

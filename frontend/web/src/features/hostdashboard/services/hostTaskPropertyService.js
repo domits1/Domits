@@ -16,21 +16,22 @@ const buildPropertyLabel = (listing) => {
 };
 
 const normalizePropertyOptions = (listings) => {
-    const uniqueLabels = new Set();
+    const seen = new Set();
 
-    (Array.isArray(listings) ? listings : []).forEach((listing) => {
+    return (Array.isArray(listings) ? listings : []).reduce((acc, listing) => {
         const propertyId = String(listing?.property?.id || "").trim();
-        if (!propertyId) {
-            return;
+        if (!propertyId || seen.has(propertyId)) {
+            return acc;
         }
 
         const label = buildPropertyLabel(listing);
         if (label) {
-            uniqueLabels.add(label);
+            seen.add(propertyId);
+            acc.push({ id: propertyId, label });
         }
-    });
 
-    return [...uniqueLabels];
+        return acc;
+    }, []);
 };
 
 const fetchListingsFromHostDashboard = async (token) => {

@@ -1,151 +1,31 @@
-import { PutItemCommand, DeleteItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import Database from "database";
+import { Guest_Favorite } from "database/models/Guest_Favorite";
 
 export class WishlistRepository {
-  constructor(dynamoDbClient) {
-    this.dynamoDbClient = dynamoDbClient;
-    this.tableName = "guest_favorite";
-  }
-
-  // Create or overwrite an item in the wishlist table
-  async create(item) {
-    const dynamoItem = {
-      guestId: { S: item.guestId },
-      wishlistKey: { S: item.wishlistKey },
-      wishlistName: { S: item.wishlistName },
-    };
-
-    if (item.propertyId) {
-      dynamoItem.propertyId = { S: item.propertyId };
-    }
-
-    if (item.isPlaceholder !== undefined) {
-      dynamoItem.isPlaceholder = { BOOL: item.isPlaceholder };
-    }
-
-    const params = new PutItemCommand({
-      TableName: this.tableName,
-      Item: dynamoItem,
+  async put(item) {
+    const client = await Database.getInstance();
+    await client.getRepository(Guest_Favorite).save({
+      guestId: item.guestId,
+      wishlistKey: item.wishlistKey,
+      wishlistName: item.wishlistName,
+      propertyId: item.propertyId ?? null,
+      isPlaceholder: item.isPlaceholder ?? false,
     });
-
-    await this.dynamoDbClient.send(params);
     return item;
   }
 
-  // Delete a single wishlist item
   async delete({ guestId, wishlistKey }) {
-    const params = new DeleteItemCommand({
-      TableName: this.tableName,
-      Key: {
-        guestId: { S: guestId },
-        wishlistKey: { S: wishlistKey },
-      },
-    });
-
-    await this.dynamoDbClient.send(params);
-    return true;
+    const client = await Database.getInstance();
+    const result = await client.getRepository(Guest_Favorite).delete({ guestId, wishlistKey });
+    return Number(result?.affected ?? 0) > 0;
   }
 
-  // Delete all items from a specific wishlist
-  async deleteAll({ guestId, wishlistName }) {
-    const query = new QueryCommand({
-      TableName: this.tableName,
-      KeyConditionExpression: "guestId = :g",
-      ExpressionAttributeValues: {
-        ":g": { S: guestId },
-      },
-    });
-
-    const result = await this.dynamoDbClient.send(query);
-
-    const itemsToDelete = result.Items.filter((item) => item.wishlistName.S === wishlistName);
-
-    for (const item of itemsToDelete) {
-      await this.dynamoDbClient.send(
-        new DeleteItemCommand({
-          TableName: this.tableName,
-          Key: {
-            guestId: item.guestId,
-            wishlistKey: item.wishlistKey,
-          },
-        })
-      );
-    }
-
-    return true;
-  }
-
-  // Get all items for a specific wishlist
-  async getByKey({ guestId, wishlistKey }) {
-    const params = new QueryCommand({
-      TableName: this.tableName,
-      KeyConditionExpression: "guestId = :g",
-      ExpressionAttributeValues: {
-        ":g": { S: guestId },
-      },
-    });
-
-    const result = await this.dynamoDbClient.send(params);
-
-    return result.Items.filter((item) => item.wishlistKey.S.startsWith(wishlistKey));
-  }
-
-  // Get all wishlist items for a guest
-  async getAll(guestId) {
-    const params = new QueryCommand({
-      TableName: this.tableName,
-      KeyConditionExpression: "guestId = :g",
-      ExpressionAttributeValues: {
-        ":g": { S: guestId },
-      },
-    });
-
-    const result = await this.dynamoDbClient.send(params);
-    return result.Items;
-  }
-
-  // Rename all items in a wishlist
-  async rename({ guestId, oldName, newName }) {
-    const result = await this.getAll(guestId);
-    const toRename = result.filter((item) => item.wishlistName.S === oldName);
-
-    for (const item of toRename) {
-      const propertyId = item.propertyId?.S || "__placeholder__";
-      const oldKey = item.wishlistKey.S;
-      const newKey = `${newName}#${propertyId}`;
-
-      // Delete old item
-      await this.dynamoDbClient.send(
-        new DeleteItemCommand({
-          TableName: this.tableName,
-          Key: {
-            guestId: { S: guestId },
-            wishlistKey: { S: oldKey },
-          },
-        })
-      );
-
-      // Put new item with updated name
-      const newItem = {
-        guestId: { S: guestId },
-        wishlistKey: { S: newKey },
-        wishlistName: { S: newName },
-      };
-
-      if (item.propertyId) {
-        newItem.propertyId = { S: propertyId };
-      }
-      if (item.isPlaceholder) {
-        newItem.isPlaceholder = { BOOL: item.isPlaceholder.BOOL };
-      }
-
-      await this.dynamoDbClient.send(
-        new PutItemCommand({
-          TableName: this.tableName,
-          Item: newItem,
-        })
-      );
-    }
-
-    return true;
+  async queryByGuestId(guestId) {
+    const client = await Database.getInstance();
+    return await client
+      .getRepository(Guest_Favorite)
+      .createQueryBuilder("gf")
+      .where("gf.guestId = :guestId", { guestId })
+      .getMany();
   }
 }
