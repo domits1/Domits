@@ -7,6 +7,12 @@ import ReservationLinkRepository from "../data/reservationLinkRepository.js";
 
 import SyncRunner from "./syncRunner.js";
 import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
+import HoliduCredentialStore from "./holiduCredentialStore.js";
+import {
+  normalizeHoliduCredentials,
+  buildHoliduSecretPayload,
+  buildHoliduCredentialSummary,
+} from "./holiduCredentialUtils.js";
 
 const nowMs = () => Date.now();
 const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
@@ -129,6 +135,7 @@ export default class IntegrationService {
     this.resLinks = new ReservationLinkRepository();
     this.runner = new SyncRunner();
     this.credentialStore = new WhatsAppCredentialStore();
+    this.holiduCredentialStore = new HoliduCredentialStore();
   }
 
   logTokenLifecycle(level, message, integration, cause, extra = {}) {
@@ -750,6 +757,73 @@ export default class IntegrationService {
       connectSessionId,
       callbackUrl,
       nextStep: "meta_oauth",
+    });
+  }
+
+  async connectHolidu(body) {
+    const userId = requireStr(body.userId);
+    const displayName = requireStr(body.displayName) || "Holidu";
+    const externalAccountId = requireStr(body.externalAccountId);
+    const credentials = normalizeHoliduCredentials(body.credentials);
+
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+    if (!credentials) {
+      return bad(400, {
+        error: "Missing required field: credentials. Provide at least one Holidu credential value.",
+      });
+    }
+
+    const existing = await this.accounts.findByUserIdAndChannel(userId, "HOLIDU");
+    const integrationAccountId = existing?.id || randomUUID();
+    const connectedAt = existing?.createdAt || nowMs();
+    const updatedAt = nowMs();
+
+    const credentialsRef = await this.holiduCredentialStore.ensureSecret({
+      userId,
+      integrationAccountId,
+      payload: buildHoliduSecretPayload({
+        credentials,
+        connectedAt,
+        updatedAt,
+      }),
+    });
+
+    let integration;
+    if (existing) {
+      integration = await this.accounts.update(existing.id, {
+        displayName,
+        externalAccountId,
+        status: "CONNECTED",
+        credentialsRef,
+        lastErrorCode: null,
+        lastErrorMessage: null,
+      });
+    } else {
+      integration = await this.accounts.create({
+        id: integrationAccountId,
+        userId,
+        channel: "HOLIDU",
+        externalAccountId,
+        displayName,
+        status: "CONNECTED",
+        credentialsRef,
+        lastSuccessfulSyncAt: null,
+        lastFailedSyncAt: null,
+        lastErrorCode: null,
+        lastErrorMessage: null,
+        createdAt: connectedAt,
+        updatedAt,
+      });
+
+      await this.sync.ensureStateRow(integrationAccountId, "MESSAGES");
+      await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
+    }
+
+    return ok({
+      connected: true,
+      channel: "HOLIDU",
+      integration,
+      credentialsSummary: buildHoliduCredentialSummary(credentials),
     });
   }
 

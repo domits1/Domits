@@ -33,6 +33,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.startWhatsAppConnect(event),
   },
   {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/holidu/connect"),
+    handle: (event) => integrationController.connectHolidu(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/whatsapp/connect/complete"),
     handle: (event) => integrationController.completeWhatsAppConnect(event),
   },
