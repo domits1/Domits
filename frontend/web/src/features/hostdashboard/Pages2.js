@@ -27,7 +27,7 @@ const NAV = [
   // { key: "Pricing", label: "Pricing", icon: <PriceChangeIcon />, to: "pricing" },
 
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
-  { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
+  // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 
