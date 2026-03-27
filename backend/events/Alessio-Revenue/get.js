@@ -12,9 +12,7 @@ async function main() {
     },
   };
 
-  const response = await handler(event);
-
-  console.log("Response:", response);
+  await handler(event);
 }
 
 main();

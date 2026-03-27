@@ -130,7 +130,6 @@ const MonthlyComparison = ({ hostId, refreshKey }) => {
         
         if (!silent) setError(null);
       } catch (err) {
-        console.error(err);
         if (!silent && isMountedRef.current) {
           setError("Failed to fetch monthly comparison data");
         }
