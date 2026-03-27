@@ -1,0 +1,89 @@
+.listing-cancellation-policy {
+  margin: 40px 0;
+  padding: 0 20px;
+}
+
+.policy-section-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #222;
+}
+
+.policy-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 24px;
+  background: #fff;
+}
+
+.policy-header {
+  margin-bottom: 16px;
+}
+
+.policy-badge {
+  display: inline-block;
+  background: var(--primary-color, #2d8a5a);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.policy-summary {
+  font-size: 16px;
+  color: #555;
+  margin: 0;
+}
+
+.policy-details {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.policy-details-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #222;
+}
+
+.policy-rules-list {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 0 0 16px 0;
+}
+
+.policy-rules-list li {
+  margin-bottom: 8px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.policy-important {
+  background: #f7f7f7;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+}
+
+.policy-toggle-button {
+  background: none;
+  border: none;
+  color: var(--primary-color, #2d8a5a);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+  text-decoration: underline;
+  margin-top: 12px;
+}
+
+.policy-toggle-button:hover {
+  color: #236b47;
+}

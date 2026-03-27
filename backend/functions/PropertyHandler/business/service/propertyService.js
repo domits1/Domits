@@ -147,6 +147,13 @@ export class PropertyService {
       await this.updateRules(propertyId, updates.rules);
     }
 
+    if (options.rules) {
+      await this.propertyRuleRepository.deleteByPropertyId(propertyId);
+      if (options.rules.length) {
+        await this.propertyRuleRepository.insertRules(propertyId, options.rules);
+      }
+    }
+
     return updatedProperty;
   }
 
@@ -323,8 +330,7 @@ export class PropertyService {
   }
 
   async getPublicCalendarAvailability(propertyId) {
-    const externalBlockedDates =
-      await this.propertyExternalCalendarRepository.getBlockedDatesByPropertyId(propertyId);
+    const externalBlockedDates = await this.propertyExternalCalendarRepository.getBlockedDatesByPropertyId(propertyId);
 
     return {
       externalBlockedDates: Array.isArray(externalBlockedDates) ? externalBlockedDates : [],
@@ -477,7 +483,10 @@ export class PropertyService {
   }
 
   async updateAvailabilityRestrictions(propertyId, restrictions) {
-    return await this.propertyAvailabilityRestrictionRepository.replaceRestrictionsByPropertyId(propertyId, restrictions);
+    return await this.propertyAvailabilityRestrictionRepository.replaceRestrictionsByPropertyId(
+      propertyId,
+      restrictions
+    );
   }
 
   async getPropertyCalendarOverrides(propertyId, range = {}) {

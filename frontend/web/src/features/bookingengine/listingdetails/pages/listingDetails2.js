@@ -7,18 +7,22 @@ import Header from "../components/header";
 import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
-
+import ListingCancellationPolicy from "../../components/ListingCancellationPolicy";
+import ListingHouseRules from "../../components/ListingHouseRules";
+import ListingPropertyRules from "../../components/ListingPropertyRules";
+import ListingSafety from "../../components/ListingSafety";
+import ListingCheckInOut from "../../components/ListingCheckInOut";
 const BOOKINGS_API_URL =
   "https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus";
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-const startOfUtcDay = (date) =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+const startOfUtcDay = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
 const dateToKey = (date) =>
-  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
-    date.getUTCDate()
-  ).padStart(2, "0")}`;
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(
+    2,
+    "0"
+  )}`;
 
 const normalizeTimestampLike = (value) => {
   if (value === null || value === undefined) {
@@ -137,10 +141,10 @@ const ListingDetails2 = () => {
     () =>
       Array.from(
         new Set([
-          ...((Array.isArray(property?.calendarAvailability?.externalBlockedDates)
+          ...(Array.isArray(property?.calendarAvailability?.externalBlockedDates)
             ? property.calendarAvailability.externalBlockedDates
-            : [])),
-          ...((Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : [])),
+            : []),
+          ...(Array.isArray(acceptedBookingDateKeys) ? acceptedBookingDateKeys : []),
         ])
       ),
     [acceptedBookingDateKeys, property?.calendarAvailability?.externalBlockedDates]
@@ -162,6 +166,30 @@ const ListingDetails2 = () => {
           fetchAcceptedBookingsByPropertyId(id).catch(() => []),
         ]);
         setProperty(fetchedProperty);
+        // TEMPORARY
+        const mockProperty = {
+          ...fetchedProperty,
+          cancellationPolicy: "flexible",
+          childrenAllowed: true,
+          smokingAllowed: false,
+          petsAllowed: true,
+          partiesAllowed: false,
+          quietHours: "22:00 – 08:00",
+          maxGuests: 6,
+          cookingAllowed: true,
+          parkingAvailable: true,
+          customRules: ["No shoes indoors", "Turn off AC when leaving"],
+          smokeDetector: true,
+          carbonMonoxideDetector: true,
+          fireExtinguisher: true,
+          firstAidKit: false,
+          checkInTime: "15:00",
+          checkOutTime: "11:00",
+          lateCheckIn: "Available until 23:00",
+          lateCheckOut: "Upon request",
+          preparationTime: "1 hour between bookings",
+        };
+        setProperty(mockProperty);
         setAcceptedBookingDateKeys(buildAcceptedBookingDateKeys(acceptedBookings));
 
         const hostData = await fetchHostInfo(fetchedProperty?.property?.hostId);
@@ -200,14 +228,25 @@ const ListingDetails2 = () => {
       <Header title={property?.property?.title} />
 
       <div className="container">
-        <PropertyContainer
-          property={property}
-          unavailableDateKeys={unavailableDateKeys}
-          checkInDate={checkInDate}
-          checkOutDate={checkOutDate}
-          setCheckInDate={setCheckInDate}
-          setCheckOutDate={setCheckOutDate}
-        />
+        <div className="property-column">
+          <PropertyContainer
+            property={property}
+            unavailableDateKeys={unavailableDateKeys}
+            checkInDate={checkInDate}
+            checkOutDate={checkOutDate}
+            setCheckInDate={setCheckInDate}
+            setCheckOutDate={setCheckOutDate}
+          />
+
+          <div className="policies-wrapper">
+            <ListingCancellationPolicy policyId={property.cancellationPolicy || "flexible"} />
+            <ListingHouseRules rules={property} />
+            <ListingSafety features={property} />
+            <ListingCheckInOut info={property} />
+            <ListingPropertyRules rules={property} />
+          </div>
+        </div>
+
         <BookingContainer
           property={property}
           host={host}
