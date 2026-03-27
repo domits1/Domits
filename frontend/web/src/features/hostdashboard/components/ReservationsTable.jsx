@@ -18,25 +18,38 @@ function ReservationsTable({ data = [], isLoading }) {
           </tr>
         </thead>
         <tbody>
-          {data.length > 0 ? (
-            data.slice(0, 5).map((item, i) => (
-              <tr key={i}>
-                <td>{item?.guestName || "Guest"}</td>
-                <td>{item?.property?.title || item?.location?.city || "Property"}</td>
-                <td>
-                  {item?.checkIn || "--"} – {item?.checkOut || "--"}
-                </td>
-                <td className={styles.status}>
-                  {item?.status || "Confirmed"}
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="4">No reservations found</td>
-            </tr>
-          )}
-        </tbody>
+  {data.map((r) => (
+    <tr key={r.id}>
+      
+      <td>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <img
+            src={r.avatar}
+            alt=""
+            width="30"
+            height="30"
+            style={{ borderRadius: "50%" }}
+          />
+          {r.guest}
+        </div>
+      </td>
+
+      <td>
+        <div>
+          <div>{r.property}</div>
+          <small>{r.address}</small>
+        </div>
+      </td>
+
+      <td>{r.dates}</td>
+
+      <td style={{ color: "#16a34a", fontWeight: 500 }}>
+        {r.status}
+      </td>
+
+    </tr>
+  ))}
+</tbody>
       </table>
     </div>
   );

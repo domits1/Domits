@@ -1,28 +1,31 @@
 import React from "react";
 import styles from "../HostDashboard.module.scss";
 
-function MessagesPanel({ data = [] }) {
-  const messages = data.slice(0, 3); // placeholder until API exists
-
+function MessagesPanel({ messages = [], onSeeAll }) {
   return (
     <div className={styles.card}>
       <h3>Recent messages</h3>
 
       {messages.length > 0 ? (
-        messages.map((msg, i) => (
-          <div key={i} className={styles.messageItem}>
+        messages.map((msg) => (
+          <div key={msg.id} className={styles.messageItem}>
             <div>
-              <strong>{msg?.guestName || "Guest"}</strong>
-              <p>{msg?.message || "No message content"}</p>
+              <strong>{msg.name}</strong>
+              <p>{msg.text}</p>
             </div>
-            <span className={styles.messageTime}>--:--</span>
+            <span className={styles.messageTime}>{msg.time}</span>
           </div>
         ))
       ) : (
         <p>No messages</p>
       )}
 
-      <button className={styles.seeAllBtn}>See all</button>
+      <button
+        className={styles.seeAllBtn}
+        onClick={onSeeAll}  
+      >
+        See all
+      </button>
     </div>
   );
 }

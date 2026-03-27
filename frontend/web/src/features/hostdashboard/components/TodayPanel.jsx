@@ -8,12 +8,12 @@ function TodayPanel({ data }) {
 
       <div className={styles.todayItem}>
         <span>Check-ins</span>
-        <strong>{data?.checkIns || 0}</strong>
+        <strong>{data?.checkins || 0}</strong>
       </div>
 
       <div className={styles.todayItem}>
         <span>Check-outs</span>
-        <strong>{data?.checkOuts || 0}</strong>
+        <strong>{data?.checkouts || 0}</strong>
       </div>
 
       <div className={styles.todayItem}>

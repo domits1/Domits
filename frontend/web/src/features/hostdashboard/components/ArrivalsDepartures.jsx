@@ -1,26 +1,39 @@
 import React from "react";
 import styles from "../HostDashboard.module.scss";
 
-function ArrivalsDepartures({ data = [] }) {
-  const checkIns = data.slice(0, 2);
-  const checkOuts = data.slice(2, 3);
-
+function ArrivalsDepartures({ arrivals = [], departures = [] }) {
   return (
     <div className={styles.card}>
       <h3>Today’s arrivals & departures</h3>
 
       <div className={styles.arrivalsGrid}>
+
         {/* Check-ins */}
         <div>
           <h4>Check-in today</h4>
-          {checkIns.length > 0 ? (
-            checkIns.map((item, i) => (
-              <div key={i} className={styles.arrivalItem}>
-                <div>
-                  <strong>{item?.guestName || "Guest"}</strong>
-                  <p>{item?.property?.title || item?.location?.city || "Property"}</p>
+
+          {arrivals.length > 0 ? (
+            arrivals.map((item) => (
+              <div key={item.id} className={styles.arrivalItem}>
+
+                <div className={styles.arrivalLeft}>
+                  <img
+                    src={item.avatar}
+                    alt=""
+                    className={styles.avatar}
+                  />
+
+                  <div>
+                    <strong>{item.guest}</strong>
+                    <p className={styles.subText}>{item.property}</p>
+                  </div>
                 </div>
-                <span className={styles.status}>Check-in</span>
+
+                <div className={styles.arrivalRight}>
+                  <span className={styles.date}>{item.dates}</span>
+                  <span className={styles.statusBadge}>Checked-in</span>
+                </div>
+
               </div>
             ))
           ) : (
@@ -28,23 +41,38 @@ function ArrivalsDepartures({ data = [] }) {
           )}
         </div>
 
-        {/* Check-outs */}
         <div>
           <h4>Check-out today</h4>
-          {checkOuts.length > 0 ? (
-            checkOuts.map((item, i) => (
-              <div key={i} className={styles.arrivalItem}>
-                <div>
-                  <strong>{item?.guestName || "Guest"}</strong>
-                  <p>{item?.property?.title || item?.location?.city || "Property"}</p>
+
+          {departures.length > 0 ? (
+            departures.map((item) => (
+              <div key={item.id} className={styles.arrivalItem}>
+
+                <div className={styles.arrivalLeft}>
+                  <img
+                    src={item.avatar}
+                    alt=""
+                    className={styles.avatar}
+                  />
+
+                  <div>
+                    <strong>{item.guest}</strong>
+                    <p className={styles.subText}>{item.property}</p>
+                  </div>
                 </div>
-                <span className={styles.status}>Check-out</span>
+
+                <div className={styles.arrivalRight}>
+                  <span className={styles.date}>{item.dates}</span>
+                  <span className={styles.statusBadge}>Checked-out</span>
+                </div>
+
               </div>
             ))
           ) : (
             <p>No departures</p>
           )}
         </div>
+
       </div>
     </div>
   );
