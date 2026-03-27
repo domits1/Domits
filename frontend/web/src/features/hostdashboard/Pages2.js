@@ -10,7 +10,7 @@ import CreditCardIcon from "@mui/icons-material/AccountBalanceWallet";
 // import PriceChangeIcon from "@mui/icons-material/PriceChange";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
-// import LanguageIcon from "@mui/icons-material/Language";
+import LanguageIcon from "@mui/icons-material/Language";
 import SettingsIcon from "@mui/icons-material/Settings";
 
 const NAV = [
