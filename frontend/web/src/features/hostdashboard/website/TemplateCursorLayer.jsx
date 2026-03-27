@@ -23,6 +23,136 @@ const createCursorState = (position = DEFAULT_CURSOR_POSITION, visible = false, 
   activeTargetId,
 });
 
+const getHiddenCursorPosition = (canvasRect) => ({
+  x: canvasRect.width * HIDDEN_CURSOR_OFFSET.xRatio,
+  y: canvasRect.height * HIDDEN_CURSOR_OFFSET.yRatio,
+});
+
+const getAvailableSteps = (interactionConfig, targetPositions) =>
+  interactionConfig.steps.filter((step) => targetPositions[step.targetId]);
+
+const getMeasuredTargetPositions = (canvasNode, canvasBounds) => {
+  const nextTargetPositions = {};
+
+  canvasNode.querySelectorAll("[data-template-target]").forEach((targetElement) => {
+    const targetId = targetElement.dataset.templateTarget;
+
+    if (!targetId) {
+      return;
+    }
+
+    const targetBounds = targetElement.getBoundingClientRect();
+    nextTargetPositions[targetId] = {
+      x: targetBounds.left - canvasBounds.left + targetBounds.width / 2,
+      y: targetBounds.top - canvasBounds.top + targetBounds.height / 2,
+    };
+  });
+
+  return nextTargetPositions;
+};
+
+const measureCanvasTargets = (canvasNode) => {
+  const canvasBounds = canvasNode.getBoundingClientRect();
+
+  return {
+    canvasRect: {
+      width: canvasBounds.width,
+      height: canvasBounds.height,
+    },
+    targetPositions: getMeasuredTargetPositions(canvasNode, canvasBounds),
+  };
+};
+
+const observeCanvasTargets = (canvasNode, onMeasure) => {
+  if (typeof globalThis.ResizeObserver !== "function") {
+    return null;
+  }
+
+  const resizeObserver = new globalThis.ResizeObserver(onMeasure);
+  resizeObserver.observe(canvasNode);
+  canvasNode.querySelectorAll("[data-template-target]").forEach((targetElement) => {
+    resizeObserver.observe(targetElement);
+  });
+
+  return resizeObserver;
+};
+
+const createSequenceScheduler = (isCancelledRef) => {
+  const timeoutIds = [];
+
+  const schedule = (delayMs, callback) => {
+    const timeoutId = globalThis.setTimeout(() => {
+      if (!isCancelledRef.current) {
+        callback();
+      }
+    }, delayMs);
+
+    timeoutIds.push(timeoutId);
+  };
+
+  const clear = () => {
+    timeoutIds.forEach((timeoutId) => globalThis.clearTimeout(timeoutId));
+  };
+
+  return { schedule, clear };
+};
+
+const setHiddenCursor = (setCursorState, hiddenCursorPosition, visible) => {
+  setCursorState(createCursorState(hiddenCursorPosition, visible));
+};
+
+const setCursorTarget = (setCursorState, targetPosition, targetId = null) => {
+  setCursorState(createCursorState(targetPosition, true, targetId));
+};
+
+const scheduleNextSequence = (sequenceState) => {
+  const { hiddenCursorPosition, interactionConfig, scheduler, setCursorState } = sequenceState;
+  setHiddenCursor(setCursorState, hiddenCursorPosition, false);
+  scheduler.schedule(interactionConfig.loopPauseMs, () => startCursorSequence(sequenceState));
+};
+
+const scheduleStepActivation = (sequenceState, step, targetPosition, nextStepIndex) => {
+  const { interactionConfig, scheduler, setCursorState } = sequenceState;
+
+  scheduler.schedule(interactionConfig.moveDurationMs, () => {
+    setCursorTarget(setCursorState, targetPosition, step.targetId);
+    scheduler.schedule(step.holdMs ?? interactionConfig.moveDurationMs, () =>
+      scheduleStepMove(sequenceState, nextStepIndex)
+    );
+  });
+};
+
+function scheduleStepMove(sequenceState, stepIndex) {
+  const { availableSteps, hiddenCursorPosition, scheduler, setCursorState, targetPositions } = sequenceState;
+
+  if (stepIndex >= availableSteps.length) {
+    scheduleNextSequence(sequenceState);
+    return;
+  }
+
+  const step = availableSteps[stepIndex];
+  const targetPosition = targetPositions[step.targetId];
+
+  if (!targetPosition) {
+    scheduleStepMove(sequenceState, stepIndex + 1);
+    return;
+  }
+
+  setHiddenCursor(setCursorState, hiddenCursorPosition, true);
+  setCursorTarget(setCursorState, targetPosition);
+  scheduleStepActivation(sequenceState, step, targetPosition, stepIndex + 1);
+}
+
+function startCursorSequence(sequenceState) {
+  const { hiddenCursorPosition, interactionConfig, scheduler, setCursorState } = sequenceState;
+
+  setHiddenCursor(setCursorState, hiddenCursorPosition, false);
+  scheduler.schedule(interactionConfig.entryDelayMs, () => {
+    setHiddenCursor(setCursorState, hiddenCursorPosition, true);
+    scheduler.schedule(40, () => scheduleStepMove(sequenceState, 0));
+  });
+}
+
 function usePrefersReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() =>
     globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false
@@ -31,7 +161,7 @@ function usePrefersReducedMotion() {
   useEffect(() => {
     const mediaQueryList = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
 
-    if (!mediaQueryList) {
+    if (!mediaQueryList || typeof mediaQueryList.addEventListener !== "function") {
       return undefined;
     }
 
@@ -39,22 +169,12 @@ function usePrefersReducedMotion() {
       setPrefersReducedMotion(event.matches);
     };
 
-    if (typeof mediaQueryList.addEventListener === "function") {
-      mediaQueryList.addEventListener("change", handleChange);
-      return () => mediaQueryList.removeEventListener("change", handleChange);
-    }
-
-    mediaQueryList.addListener(handleChange);
-    return () => mediaQueryList.removeListener(handleChange);
+    mediaQueryList.addEventListener("change", handleChange);
+    return () => mediaQueryList.removeEventListener("change", handleChange);
   }, []);
 
   return prefersReducedMotion;
 }
-
-const getHiddenCursorPosition = (canvasRect) => ({
-  x: canvasRect.width * HIDDEN_CURSOR_OFFSET.xRatio,
-  y: canvasRect.height * HIDDEN_CURSOR_OFFSET.yRatio,
-});
 
 function TemplateCursorLayer({ layout, children }) {
   const interactionConfig = getTemplateInteractionConfig(layout);
@@ -74,45 +194,14 @@ function TemplateCursorLayer({ layout, children }) {
     }
 
     const measureTargets = () => {
-      const canvasBounds = canvasNode.getBoundingClientRect();
-      const nextCanvasRect = {
-        width: canvasBounds.width,
-        height: canvasBounds.height,
-      };
-
-      const targetElements = Array.from(canvasNode.querySelectorAll("[data-template-target]"));
-      const nextTargetPositions = {};
-
-      targetElements.forEach((targetElement) => {
-        const targetId = targetElement.getAttribute("data-template-target");
-
-        if (!targetId) {
-          return;
-        }
-
-        const targetBounds = targetElement.getBoundingClientRect();
-        nextTargetPositions[targetId] = {
-          x: targetBounds.left - canvasBounds.left + targetBounds.width / 2,
-          y: targetBounds.top - canvasBounds.top + targetBounds.height / 2,
-        };
-      });
-
-      setCanvasRect(nextCanvasRect);
-      setTargetPositions(nextTargetPositions);
+      const nextMeasurements = measureCanvasTargets(canvasNode);
+      setCanvasRect(nextMeasurements.canvasRect);
+      setTargetPositions(nextMeasurements.targetPositions);
     };
 
     measureTargets();
 
-    const resizeObserver =
-      typeof globalThis.ResizeObserver === "function" ? new globalThis.ResizeObserver(measureTargets) : null;
-
-    if (resizeObserver) {
-      resizeObserver.observe(canvasNode);
-      canvasNode.querySelectorAll("[data-template-target]").forEach((targetElement) => {
-        resizeObserver.observe(targetElement);
-      });
-    }
-
+    const resizeObserver = observeCanvasTargets(canvasNode, measureTargets);
     globalThis.addEventListener("resize", measureTargets);
 
     return () => {
@@ -132,78 +221,28 @@ function TemplateCursorLayer({ layout, children }) {
       return undefined;
     }
 
-    const availableSteps = interactionConfig.steps.filter((step) => targetPositions[step.targetId]);
+    const availableSteps = getAvailableSteps(interactionConfig, targetPositions);
 
     if (availableSteps.length === 0) {
       setCursorState(createCursorState(getHiddenCursorPosition(canvasRect), false));
       return undefined;
     }
 
-    let isCancelled = false;
-    const timeoutIds = [];
+    const isCancelledRef = { current: false };
+    const scheduler = createSequenceScheduler(isCancelledRef);
 
-    const schedule = (delayMs, callback) => {
-      const timeoutId = globalThis.setTimeout(() => {
-        if (!isCancelled) {
-          callback();
-        }
-      }, delayMs);
-
-      timeoutIds.push(timeoutId);
-    };
-
-    const hiddenCursorPosition = getHiddenCursorPosition(canvasRect);
-
-    const moveToStep = (stepIndex) => {
-      if (stepIndex >= availableSteps.length) {
-        setCursorState(createCursorState(hiddenCursorPosition, false));
-        schedule(interactionConfig.loopPauseMs, runSequence);
-        return;
-      }
-
-      const step = availableSteps[stepIndex];
-      const targetPosition = targetPositions[step.targetId];
-
-      if (!targetPosition) {
-        moveToStep(stepIndex + 1);
-        return;
-      }
-
-      setCursorState((currentState) =>
-        createCursorState(
-          {
-            x: targetPosition.x,
-            y: targetPosition.y,
-          },
-          currentState.visible,
-          null
-        )
-      );
-
-      schedule(interactionConfig.moveDurationMs, () => {
-        setCursorState((currentState) => ({
-          ...currentState,
-          visible: true,
-          activeTargetId: step.targetId,
-        }));
-
-        schedule(step.holdMs ?? interactionConfig.moveDurationMs, () => moveToStep(stepIndex + 1));
-      });
-    };
-
-    const runSequence = () => {
-      setCursorState(createCursorState(hiddenCursorPosition, false));
-      schedule(interactionConfig.entryDelayMs, () => {
-        setCursorState(createCursorState(hiddenCursorPosition, true));
-        schedule(40, () => moveToStep(0));
-      });
-    };
-
-    runSequence();
+    startCursorSequence({
+      availableSteps,
+      hiddenCursorPosition: getHiddenCursorPosition(canvasRect),
+      interactionConfig,
+      scheduler,
+      setCursorState,
+      targetPositions,
+    });
 
     return () => {
-      isCancelled = true;
-      timeoutIds.forEach((timeoutId) => globalThis.clearTimeout(timeoutId));
+      isCancelledRef.current = true;
+      scheduler.clear();
     };
   }, [canvasRect, interactionConfig, prefersReducedMotion, targetPositions]);
 

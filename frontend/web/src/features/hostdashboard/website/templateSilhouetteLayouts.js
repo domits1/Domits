@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import styles from "./WebsiteBuilderPage.module.scss";
 
 const FEATURE_CARD_IDS = ["trust", "details", "cta"];
@@ -15,6 +16,9 @@ const LOCAL_GUIDE_IDS = ["area", "food", "transport"];
 const NAV_DOT_IDS = ["primary", "secondary", "tertiary"];
 const TRUST_META_IDS = ["one", "two", "three"];
 const RIGHT_META_IDS = ["first", "second"];
+const silhouetteLayoutPropTypes = {
+  getTargetProps: PropTypes.func.isRequired,
+};
 
 function TemplateNavDots() {
   return (
@@ -105,12 +109,15 @@ function ExperienceJourneyLayout({ getTargetProps }) {
         <TemplateNavDots />
       </div>
       <div className={styles.templateJourneyStack}>
-        {JOURNEY_STOP_CONFIG.map(({ id, reversed }) => (
-          <div
-            key={id}
-            className={`${styles.templateJourneyStop} ${reversed ? styles.templateJourneyStopReverse : ""}`}
-          >
-            {reversed ? (
+        {JOURNEY_STOP_CONFIG.map(({ id, reversed }) => {
+          const journeyStopClassName = `${styles.templateJourneyStop} ${
+            reversed ? styles.templateJourneyStopReverse : ""
+          }`;
+          const visualTargetId = id === "arrival" ? "arrival-visual" : "surroundings-visual";
+
+          return (
+            <div key={id} className={journeyStopClassName}>
+              {reversed ? (
               <>
                 <div {...getTargetProps("stay-visual", styles.templateJourneyVisual)} />
                 <div className={styles.templateJourneyCopy}>
@@ -124,16 +131,12 @@ function ExperienceJourneyLayout({ getTargetProps }) {
                   <span className={styles.templateLineWide} />
                   <span className={styles.templateLineShort} />
                 </div>
-                <div
-                  {...getTargetProps(
-                    id === "arrival" ? "arrival-visual" : "surroundings-visual",
-                    styles.templateJourneyVisual
-                  )}
-                />
+                <div {...getTargetProps(visualTargetId, styles.templateJourneyVisual)} />
               </>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
     </>
   );
@@ -336,6 +339,17 @@ function PanoramaLayout({ getTargetProps }) {
     </>
   );
 }
+
+FeatureStackLayout.propTypes = silhouetteLayoutPropTypes;
+TrustSignalsLayout.propTypes = silhouetteLayoutPropTypes;
+ExperienceJourneyLayout.propTypes = silhouetteLayoutPropTypes;
+AmenitiesSpotlightLayout.propTypes = silhouetteLayoutPropTypes;
+EditorialLayout.propTypes = silhouetteLayoutPropTypes;
+GalleryGridLayout.propTypes = silhouetteLayoutPropTypes;
+BookingFocusLayout.propTypes = silhouetteLayoutPropTypes;
+ContactFocusLayout.propTypes = silhouetteLayoutPropTypes;
+LocalGuideLayout.propTypes = silhouetteLayoutPropTypes;
+PanoramaLayout.propTypes = silhouetteLayoutPropTypes;
 
 export const TEMPLATE_SILHOUETTE_LAYOUTS = {
   panorama: {
