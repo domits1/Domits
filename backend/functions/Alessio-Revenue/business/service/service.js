@@ -4,7 +4,6 @@ import AuthManager from "../../auth/authManager.js";
 import Stripe from "stripe";
 import { PaymentsService } from "./paymentService.js";
 import "dotenv/config";
-import crypto from "node:crypto";
 
 export class Service {
   constructor() {
@@ -48,13 +47,9 @@ export class Service {
       (async () => {
        try {
         return await this.paymentsService.getTotalHostRevenue(event);
-      } catch (e) {
-      console.warn("[RMS][KPI_REFRESH] revenue unavailable", {
-        userId,
-        message: e?.message,
-      });
-      return { totalRevenue: 0 };
-    }
+      } catch {
+        return { totalRevenue: 0 };
+      }
       })(),
       this.repository.getBookedNights(userId, start, end),
       this.repository.getAvailableNights(userId, start, end),
@@ -96,85 +91,45 @@ export class Service {
   }
 
   async getKpiMetric(event, kpiMetric) {
-    const startedAt = Date.now();
-    const requestId =
-      event?.requestContext?.requestId ?? crypto.randomUUID();
+    const { userId, start, end } =
+      await this._resolveContext(event);
 
-    try {
-      console.info("[RMS][KPI_REFRESH] start", {
-        requestId,
-        kpiMetric,
-      });
+    const { raw, calc } =
+      await this._fetchKpiBaseData(event, userId, start, end);
 
-      const { userId, start, end } =
-        await this._resolveContext(event);
-
-      const { raw, calc } =
-        await this._fetchKpiBaseData(event, userId, start, end);
-
-      console.info("[RMS][KPI_REFRESH] success", {
-        requestId,
-        kpiMetric,
-        userId,
-        durationMs: Date.now() - startedAt,
-      });
-
-      switch (kpiMetric) {
-        case "revenue":
-          return raw.totalRevenue;
-        case "bookedNights":
-          return raw.bookedNights;
-        case "availableNights":
-          return raw.availableNights;
-        case "propertyCount":
-          return raw.propertyCount;
-        case "averageDailyRate":
-          return calc.averageDailyRate.toFixed(2);
-        case "revenuePerAvailableRoom":
-          return calc.revenuePerAvailableRoom.toFixed(2);
-        case "occupancyRate":
-          return calc.occupancyRate.toFixed(2);
-        case "averageLengthOfStay":
-          return raw.averageLengthOfStay;
-        case "ratesApi":
-          return this.repository.getBaseRate(userId);
-        default:
-          throw new Error(`Unknown metric: ${kpiMetric}`);
-      }
-    } catch (error) {
-      console.error("[RMS][KPI_REFRESH] error", {
-        requestId,
-        kpiMetric,
-        durationMs: Date.now() - startedAt,
-        message: error?.message,
-      });
-      throw error;
+    switch (kpiMetric) {
+      case "revenue":
+        return raw.totalRevenue;
+      case "bookedNights":
+        return raw.bookedNights;
+      case "availableNights":
+        return raw.availableNights;
+      case "propertyCount":
+        return raw.propertyCount;
+      case "averageDailyRate":
+        return calc.averageDailyRate.toFixed(2);
+      case "revenuePerAvailableRoom":
+        return calc.revenuePerAvailableRoom.toFixed(2);
+      case "occupancyRate":
+        return calc.occupancyRate.toFixed(2);
+      case "averageLengthOfStay":
+        return raw.averageLengthOfStay;
+      case "ratesApi":
+        return this.repository.getBaseRate(userId);
+      default:
+        throw new Error(`Unknown metric: ${kpiMetric}`);
     }
   }
 
   // All KPIs in one call
 
   async getAllKpis(event) {
-    const startedAt = Date.now();
-    const requestId =
-      event?.requestContext?.requestId ?? crypto.randomUUID();
+    const { userId, filterType, start, end } =
+      await this._resolveContext(event);
 
-    try {
-      console.info("[RMS][KPI_REFRESH_ALL] start", {
-        requestId,
-      });
+    const { raw, calc } =
+      await this._fetchKpiBaseData(event, userId, start, end);
 
-      const { userId, filterType, start, end } =
-        await this._resolveContext(event);
-
-      const { raw, calc } =
-        await this._fetchKpiBaseData(event, userId, start, end);
-
-      console.info("[RMS][KPI_REFRESH_ALL] success", {
-        requestId,
-        userId,
-        durationMs: Date.now() - startedAt,
-      });
     const snapshotPayload = {
       revenue: Number(raw.totalRevenue?.totalRevenue ?? 0),
       bookedNights: Number(raw.bookedNights?.bookedNights ?? 0),
@@ -195,32 +150,21 @@ export class Service {
       periodEnd: end,
       metrics: snapshotPayload,
       });
-    } catch (e) {
-        console.warn("[RMS][KPI_SNAPSHOT] failed", {
-        requestId,
-        userId,
-        message: e?.message,
-      });
+    } catch {
+      // Snapshot persistence must not block the KPI response.
     }
-      return {
-        revenue: raw.totalRevenue,
-        bookedNights: raw.bookedNights,
-        availableNights: raw.availableNights,
-        propertyCount: raw.propertyCount,
-        averageLengthOfStay: raw.averageLengthOfStay,
-        averageDailyRate: calc.averageDailyRate.toFixed(2),
-        occupancyRate: calc.occupancyRate.toFixed(2),
-        revenuePerAvailableRoom:
-          calc.revenuePerAvailableRoom.toFixed(2),
-      };
-    } catch (error) {
-      console.error("[RMS][KPI_REFRESH_ALL] error", {
-        requestId,
-        durationMs: Date.now() - startedAt,
-        message: error?.message,
-      });
-      throw error;
-    }
+
+    return {
+      revenue: raw.totalRevenue,
+      bookedNights: raw.bookedNights,
+      availableNights: raw.availableNights,
+      propertyCount: raw.propertyCount,
+      averageLengthOfStay: raw.averageLengthOfStay,
+      averageDailyRate: calc.averageDailyRate.toFixed(2),
+      occupancyRate: calc.occupancyRate.toFixed(2),
+      revenuePerAvailableRoom:
+        calc.revenuePerAvailableRoom.toFixed(2),
+    };
   }
 
   getDateRange(filterType, startDate, endDate) {
