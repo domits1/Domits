@@ -123,7 +123,7 @@ const scheduleStepActivation = (sequenceState, step, targetPosition, nextStepInd
 };
 
 function scheduleStepMove(sequenceState, stepIndex) {
-  const { availableSteps, hiddenCursorPosition, scheduler, setCursorState, targetPositions } = sequenceState;
+  const { availableSteps, hiddenCursorPosition, setCursorState, targetPositions } = sequenceState;
 
   if (stepIndex >= availableSteps.length) {
     scheduleNextSequence(sequenceState);
