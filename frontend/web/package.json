@@ -127,6 +127,14 @@
     "swiper": "^11.1.14",
     "zustand": "^5.0.3"
   },
+  "eslintConfig": {
+    "extends": ["react-app", "react-app/jest"],
+    "env": { "es2020": true },
+    "parserOptions": {
+      "ecmaVersion": "latest",
+      "sourceType": "module"
+    }
+  },
   "jest": {
     "moduleNameMapper": {
       "^axios$": "axios/dist/node/axios.cjs"
