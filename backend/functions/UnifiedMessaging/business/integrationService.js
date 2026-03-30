@@ -132,6 +132,7 @@ const describeLocalError = (error) => ({
   code: error?.code || error?.name || "INTERNAL_ERROR",
   message: error?.message || "Unknown error",
 });
+const HOLIDU_ACCOUNT_POLICY = "SINGLE_ACCOUNT_PER_USER";
 const shapeHoliduIntegrationForResponse = (integration) => {
   if (!integration || String(integration.channel || "").toUpperCase() !== "HOLIDU") {
     return integration;
@@ -788,6 +789,8 @@ export default class IntegrationService {
     }
 
     try {
+      // Multi-account support for Holidu is intentionally deferred for now.
+      // Reuse the user's existing HOLIDU integration row instead of creating additional accounts.
       const existing = await this.accounts.findByUserIdAndChannel(userId, "HOLIDU");
       const integrationAccountId = existing?.id || randomUUID();
       const connectedAt = existing?.createdAt || nowMs();
@@ -858,6 +861,8 @@ export default class IntegrationService {
         channel: "HOLIDU",
         integration: shapeHoliduIntegrationForResponse(integration),
         credentialsSummary: buildHoliduCredentialSummary(credentials),
+        accountPolicy: HOLIDU_ACCOUNT_POLICY,
+        multiAccountDeferred: true,
       });
     } catch (error) {
       const details = describeLocalError(error);
