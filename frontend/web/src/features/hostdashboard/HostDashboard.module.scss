@@ -1,8 +1,8 @@
 .dashboardContainer {
   display: flex;
   justify-content: center;
-  width: 100%;
-  width: 1990px;
+  width: 90%;
+  margin: auto 5%;
 }
 
 .dashboardLeft {
@@ -29,6 +29,10 @@
   font-weight: 650;
 }
 
+.card {
+  margin-bottom: 30px;
+}
+
 /* STATS */
 .statsRow {
   display: grid;
@@ -40,7 +44,7 @@
 .statsCard {
   background: #fff;
   border-radius: 14px;
-  padding: 50px 24px;
+  padding: 24px;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -133,17 +137,17 @@
 }
 
 .arrivalsGrid h4{
-  font-size: 25px;
+  font-size: 22px;
   font-weight: 550;
 }
 
 .arrivalsGrid > div:first-child {
   border-right: 1px solid #eee;
-  padding-right: 20px;
+  padding-right: 20px; 
 }
 
 .arrivalsGrid > div:last-child {
-  padding-left: 20px;
+  padding-left: 20px; 
 }
 
 .arrivalItem {
@@ -152,8 +156,8 @@
   align-items: center;
   padding: 14px 0;
   border-top: 1px solid #eee;
-  font-size: 22px;
-  font-weight: 350;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .arrivalLeft {
@@ -163,16 +167,13 @@
 }
 
 .avatar {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
 }
 
-.subText {
-  font-size: 15px;
-  color: #000;
-  margin: 0;
-  font-weight: 400;
+.arrivalLeft p {
+  font-size: 12px;
 }
 
 .arrivalRight {
@@ -182,7 +183,7 @@
 }
 
 .date {
-  font-size: 17px;
+  font-size: 10px;
   font-weight: 500;
   color: #000;
 }
@@ -190,10 +191,10 @@
 .statusBadge {
   background: #f0fdf4;
   color: #000;
-  font-size: 17px;
-  padding: 5px 10px;
+  font-size: 13px;
+  padding: 5px 8px;
   border-radius: 6px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* MESSAGES */
@@ -207,7 +208,7 @@
 }
 
 .messageTime {
-  font-size: 16px;
+  font-size: 15px;
   color: #000;
 }
 
@@ -219,7 +220,7 @@
   border: 1px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 18px;
   transition: all 0.2s ease;
 }
 
