@@ -128,6 +128,18 @@ const serializeRawPayload = (rawPayload) => {
   if (!rawPayload) return null;
   return typeof rawPayload === "string" ? rawPayload : JSON.stringify(rawPayload);
 };
+const describeLocalError = (error) => ({
+  code: error?.code || error?.name || "INTERNAL_ERROR",
+  message: error?.message || "Unknown error",
+});
+const shapeHoliduIntegrationForResponse = (integration) => {
+  if (!integration || String(integration.channel || "").toUpperCase() !== "HOLIDU") {
+    return integration;
+  }
+
+  const { credentialsRef, ...safeIntegration } = integration;
+  return safeIntegration;
+};
 
 export default class IntegrationService {
   constructor() {
@@ -574,7 +586,7 @@ export default class IntegrationService {
 
   async hydrateListedIntegration(item) {
     if (String(item?.channel || "").toUpperCase() !== "WHATSAPP") {
-      return item;
+      return shapeHoliduIntegrationForResponse(item);
     }
 
     try {
@@ -775,157 +787,248 @@ export default class IntegrationService {
       });
     }
 
-    const existing = await this.accounts.findByUserIdAndChannel(userId, "HOLIDU");
-    const integrationAccountId = existing?.id || randomUUID();
-    const connectedAt = existing?.createdAt || nowMs();
-    const updatedAt = nowMs();
+    try {
+      const existing = await this.accounts.findByUserIdAndChannel(userId, "HOLIDU");
+      const integrationAccountId = existing?.id || randomUUID();
+      const connectedAt = existing?.createdAt || nowMs();
+      const updatedAt = nowMs();
 
-    const credentialsRef = await this.holiduCredentialStore.ensureSecret({
-      userId,
-      integrationAccountId,
-      payload: buildHoliduSecretPayload({
-        credentials,
-        connectedAt,
-        updatedAt,
-      }),
-    });
+      let credentialsRef;
+      try {
+        credentialsRef = await this.holiduCredentialStore.ensureSecret({
+          userId,
+          integrationAccountId,
+          payload: buildHoliduSecretPayload({
+            credentials,
+            connectedAt,
+            updatedAt,
+          }),
+        });
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(503, {
+          error: "Failed to store Holidu credentials in Secrets Manager.",
+          errorCode: "HOLIDU_SECRET_STORE_FAILED",
+          details,
+        });
+      }
 
-    let integration;
-    if (existing) {
-      integration = await this.accounts.update(existing.id, {
-        displayName,
-        externalAccountId,
-        status: "CONNECTED",
-        credentialsRef,
-        lastErrorCode: null,
-        lastErrorMessage: null,
-      });
-    } else {
-      integration = await this.accounts.create({
-        id: integrationAccountId,
-        userId,
+      let integration;
+      try {
+        if (existing) {
+          integration = await this.accounts.update(existing.id, {
+            displayName,
+            externalAccountId,
+            status: "CONNECTED",
+            credentialsRef,
+            lastErrorCode: null,
+            lastErrorMessage: null,
+          });
+        } else {
+          integration = await this.accounts.create({
+            id: integrationAccountId,
+            userId,
+            channel: "HOLIDU",
+            externalAccountId,
+            displayName,
+            status: "CONNECTED",
+            credentialsRef,
+            lastSuccessfulSyncAt: null,
+            lastFailedSyncAt: null,
+            lastErrorCode: null,
+            lastErrorMessage: null,
+            createdAt: connectedAt,
+            updatedAt,
+          });
+
+          await this.sync.ensureStateRow(integrationAccountId, "MESSAGES");
+          await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
+        }
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(500, {
+          error: "Holidu credentials were stored, but the integration record could not be persisted.",
+          errorCode: "HOLIDU_CONNECTION_PERSIST_FAILED",
+          details,
+        });
+      }
+
+      return ok({
+        connected: true,
         channel: "HOLIDU",
-        externalAccountId,
-        displayName,
-        status: "CONNECTED",
-        credentialsRef,
-        lastSuccessfulSyncAt: null,
-        lastFailedSyncAt: null,
-        lastErrorCode: null,
-        lastErrorMessage: null,
-        createdAt: connectedAt,
-        updatedAt,
+        integration: shapeHoliduIntegrationForResponse(integration),
+        credentialsSummary: buildHoliduCredentialSummary(credentials),
       });
-
-      await this.sync.ensureStateRow(integrationAccountId, "MESSAGES");
-      await this.sync.ensureStateRow(integrationAccountId, "RESERVATIONS");
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Unexpected Holidu connection failure.",
+        errorCode: "HOLIDU_CONNECT_FAILED",
+        details,
+      });
     }
-
-    return ok({
-      connected: true,
-      channel: "HOLIDU",
-      integration,
-      credentialsSummary: buildHoliduCredentialSummary(credentials),
-    });
   }
 
   async checkHoliduStatus(userId) {
     const normalizedUserId = requireStr(userId);
     if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
-
-    const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "HOLIDU");
-    if (!integration) {
-      return ok({
-        channel: "HOLIDU",
-        integrationAccountId: null,
-        status: "NOT_CONNECTED",
-        validationMode: "LOCAL_SECRET_VALIDATION",
-        reason: "No Holidu integration row exists for this user.",
-        displayName: null,
-        externalAccountId: null,
-        credentialsRefPresent: false,
-        secretPresent: false,
-        requiredFieldsPresent: false,
-      });
-    }
-
-    const credentialsRefPresent = !!requireStr(integration.credentialsRef);
-    if (!credentialsRefPresent) {
-      return ok({
-        channel: "HOLIDU",
-        integrationAccountId: integration.id,
-        status: "INCOMPLETE",
-        validationMode: "LOCAL_SECRET_VALIDATION",
-        reason: "Integration row exists but credentialsRef is missing.",
-        displayName: integration.displayName ?? null,
-        externalAccountId: integration.externalAccountId ?? null,
-        credentialsRefPresent,
-        secretPresent: false,
-        requiredFieldsPresent: false,
-      });
-    }
-
-    let secret;
     try {
-      secret = await this.holiduCredentialStore.readSecretOrNull(integration.credentialsRef);
-    } catch (error) {
-      return ok({
-        channel: "HOLIDU",
-        integrationAccountId: integration.id,
-        status: "RECONNECT_REQUIRED",
-        validationMode: "LOCAL_SECRET_VALIDATION",
-        reason: `Stored Holidu secret could not be read locally: ${error?.message || "unknown error"}`,
-        displayName: integration.displayName ?? null,
-        externalAccountId: integration.externalAccountId ?? null,
-        credentialsRefPresent,
-        secretPresent: false,
-        requiredFieldsPresent: false,
-      });
-    }
+      const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "HOLIDU");
+      if (!integration) {
+        return ok({
+          channel: "HOLIDU",
+          integrationAccountId: null,
+          status: "NOT_CONNECTED",
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          reason: "No Holidu integration row exists for this user.",
+          displayName: null,
+          externalAccountId: null,
+          credentialsRefPresent: false,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
 
-    if (!secret || typeof secret !== "object" || Array.isArray(secret)) {
-      return ok({
-        channel: "HOLIDU",
-        integrationAccountId: integration.id,
-        status: "RECONNECT_REQUIRED",
-        validationMode: "LOCAL_SECRET_VALIDATION",
-        reason: "Stored Holidu secret is missing, unreadable, or malformed.",
-        displayName: integration.displayName ?? null,
-        externalAccountId: integration.externalAccountId ?? null,
-        credentialsRefPresent,
-        secretPresent: false,
-        requiredFieldsPresent: false,
-      });
-    }
+      if (String(integration.status || "").toUpperCase() === "DISCONNECTED") {
+        return ok({
+          channel: "HOLIDU",
+          integrationAccountId: integration.id,
+          status: "DISCONNECTED",
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          reason: "Holidu integration is disconnected in Domits and is not locally usable.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent: false,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
 
-    const requiredFieldSummary = summarizeHoliduRequiredFields(secret);
-    if (!hasHoliduRequiredCredentialFields(secret)) {
+      const credentialsRefPresent = !!requireStr(integration.credentialsRef);
+      if (!credentialsRefPresent) {
+        return ok({
+          channel: "HOLIDU",
+          integrationAccountId: integration.id,
+          status: "INCOMPLETE",
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          reason: "Integration row exists but credentialsRef is missing.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
+
+      let secret;
+      try {
+        secret = await this.holiduCredentialStore.readSecretOrNull(integration.credentialsRef);
+      } catch (error) {
+        const details = describeLocalError(error);
+        return ok({
+          channel: "HOLIDU",
+          integrationAccountId: integration.id,
+          status: "RECONNECT_REQUIRED",
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          reason: `Stored Holidu secret could not be read locally: ${details.message}`,
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
+
+      if (!secret || typeof secret !== "object" || Array.isArray(secret)) {
+        return ok({
+          channel: "HOLIDU",
+          integrationAccountId: integration.id,
+          status: "RECONNECT_REQUIRED",
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          reason: "Stored Holidu secret is missing, unreadable, or malformed.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: false,
+          requiredFieldsPresent: false,
+        });
+      }
+
+      const requiredFieldSummary = summarizeHoliduRequiredFields(secret);
+      if (!hasHoliduRequiredCredentialFields(secret)) {
+        return ok({
+          channel: "HOLIDU",
+          integrationAccountId: integration.id,
+          status: "INCOMPLETE",
+          validationMode: "LOCAL_SECRET_VALIDATION",
+          reason: "Stored Holidu secret is present but required local credential fields are incomplete.",
+          displayName: integration.displayName ?? null,
+          externalAccountId: integration.externalAccountId ?? null,
+          credentialsRefPresent,
+          secretPresent: true,
+          requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
+        });
+      }
+
       return ok({
         channel: "HOLIDU",
         integrationAccountId: integration.id,
-        status: "INCOMPLETE",
+        status: "CONNECTED",
         validationMode: "LOCAL_SECRET_VALIDATION",
-        reason: "Stored Holidu secret is present but required local credential fields are incomplete.",
+        reason: "Integration row and locally required Holidu secret fields are present.",
         displayName: integration.displayName ?? null,
         externalAccountId: integration.externalAccountId ?? null,
         credentialsRefPresent,
         secretPresent: true,
         requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
       });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Failed to evaluate Holidu local connectivity state.",
+        errorCode: "HOLIDU_STATUS_CHECK_FAILED",
+        details,
+      });
     }
+  }
 
-    return ok({
-      channel: "HOLIDU",
-      integrationAccountId: integration.id,
-      status: "CONNECTED",
-      validationMode: "LOCAL_SECRET_VALIDATION",
-      reason: "Integration row and locally required Holidu secret fields are present.",
-      displayName: integration.displayName ?? null,
-      externalAccountId: integration.externalAccountId ?? null,
-      credentialsRefPresent,
-      secretPresent: true,
-      requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
-    });
+  async disconnectHolidu(body) {
+    const userId = requireStr(body.userId);
+    if (!userId) return bad(400, { error: "Missing required field: userId" });
+    try {
+      const existing = await this.accounts.findByUserIdAndChannel(userId, "HOLIDU");
+      if (!existing) return bad(404, { error: "Holidu integration not found" });
+
+      let disconnected;
+      try {
+        disconnected = await this.accounts.disconnect(existing.id);
+      } catch (error) {
+        const details = describeLocalError(error);
+        return bad(500, {
+          error: "Failed to persist Holidu disconnect state in Domits.",
+          errorCode: "HOLIDU_DISCONNECT_PERSIST_FAILED",
+          details,
+        });
+      }
+
+      if (!disconnected) return bad(404, { error: "Holidu integration not found" });
+
+      return ok({
+        disconnected: true,
+        channel: "HOLIDU",
+        integrationAccountId: disconnected.id,
+        status: disconnected.status,
+        message:
+          "Holidu integration disconnected in Domits. credentialsRef was cleared on the integration row; the underlying secret is not deleted by this flow.",
+      });
+    } catch (error) {
+      const details = describeLocalError(error);
+      return bad(500, {
+        error: "Unexpected Holidu disconnect failure.",
+        errorCode: "HOLIDU_DISCONNECT_FAILED",
+        details,
+      });
+    }
   }
 
   async completeWhatsAppConnect(body) {

@@ -47,7 +47,6 @@ export const buildHoliduCredentialSummary = (credentials) => ({
   clientIdMasked: maskSecret(credentials?.clientId),
   hasClientSecret: !!requireStr(credentials?.clientSecret),
   clientSecretMasked: maskSecret(credentials?.clientSecret),
-  notes: requireStr(credentials?.notes),
 });
 
 export const hasHoliduRequiredCredentialFields = (credentials) => {

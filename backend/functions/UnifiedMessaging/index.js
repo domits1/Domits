@@ -41,6 +41,10 @@ const routeDefinitions = [
     handle: (event) => integrationController.checkHoliduStatus(event),
   },
   {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/holidu/disconnect"),
+    handle: (event) => integrationController.disconnectHolidu(event),
+  },
+  {
     matches: (method, path) => method === "POST" && String(path || "").endsWith("/integrations/whatsapp/connect/complete"),
     handle: (event) => integrationController.completeWhatsAppConnect(event),
   },
