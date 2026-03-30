@@ -15,8 +15,7 @@ const getRequestHeaders = () => {
 const parseJson = async (response) => {
   try {
     return await response.json();
-  } catch (error) {
-    console.error("Failed to parse wishlist API response JSON", error);
+  } catch {
     throw new Error("Invalid response received from wishlist service");
   }
 };
