@@ -7,6 +7,9 @@ import { ChannelReservationLink } from "../../../models/unified/integrations/Cha
 
 import { IntegrationSyncState } from "../../../models/unified/sync/IntegrationSyncState.js";
 import { IntegrationSyncLog } from "../../../models/unified/sync/IntegrationSyncLog.js";
+import { MessagingPreference } from "../../../models/unified/preferences/MessagingPreference.js";
+import { MessagingTemplate } from "../../../models/unified/preferences/MessagingTemplate.js";
+import { MessagingAutoReplyRule } from "../../../models/unified/preferences/MessagingAutoReplyRule.js";
 
 export const Tables = [
 
@@ -19,4 +22,8 @@ export const Tables = [
 
   IntegrationSyncState,
   IntegrationSyncLog,
+
+  MessagingPreference,
+  MessagingTemplate,
+  MessagingAutoReplyRule,
 ];

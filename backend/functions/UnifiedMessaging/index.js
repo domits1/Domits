@@ -2,11 +2,13 @@ import MessageController from "./controller/messageController.js";
 import IntegrationController from "./controller/integrationController.js";
 import IngestionController from "./controller/ingestionController.js";
 import WhatsAppWebhookController from "./controller/whatsappWebhookController.js";
+import PreferencesCenterController from "./controller/preferencesCenterController.js";
 
 const messageController = new MessageController();
 const integrationController = new IntegrationController();
 const ingestionController = new IngestionController();
 const whatsAppWebhookController = new WhatsAppWebhookController();
+const preferencesCenterController = new PreferencesCenterController();
 
 const notFound = { statusCode: 404, response: "Not Found" };
 const internalError = { statusCode: 500, response: "Internal Server Error" };
@@ -76,6 +78,45 @@ const routeDefinitions = [
   {
     matches: (method, path) => method === "GET" && pathIncludesOrEndsWith(path, "/messages"),
     handle: (event) => messageController.getMessages(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/messaging-preferences"),
+    handle: (event) => preferencesCenterController.getPreferences(event),
+  },
+  {
+    matches: (method, path) => method === "PUT" && String(path || "").endsWith("/messaging-preferences"),
+    handle: (event) => preferencesCenterController.upsertPreferences(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/messaging-templates"),
+    handle: (event) => preferencesCenterController.listTemplates(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/messaging-templates"),
+    handle: (event) => preferencesCenterController.createTemplate(event),
+  },
+  {
+    matches: (method, path) => method === "PATCH" && String(path || "").includes("/messaging-templates/"),
+    handle: (event) => preferencesCenterController.updateTemplate(event),
+  },
+  {
+    matches: (method, path) =>
+      method === "POST" &&
+      String(path || "").includes("/messaging-templates/") &&
+      String(path || "").endsWith("/duplicate"),
+    handle: (event) => preferencesCenterController.duplicateTemplate(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/messaging-auto-replies"),
+    handle: (event) => preferencesCenterController.listAutoReplyRules(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/messaging-auto-replies"),
+    handle: (event) => preferencesCenterController.createAutoReplyRule(event),
+  },
+  {
+    matches: (method, path) => method === "PATCH" && String(path || "").includes("/messaging-auto-replies/"),
+    handle: (event) => preferencesCenterController.updateAutoReplyRule(event),
   },
   {
     matches: (method, path) =>

@@ -14,6 +14,7 @@ import HostSettings from "./HostSettings";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
+import MessagingPreferencesCenter from "./hostmessages/MessagingPreferencesCenter";
 
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
@@ -100,6 +101,7 @@ function MainDashboardHost() {
           <Route path="calendar" element={<Navigate to="../calendar-pricing" replace />} />
 
           <Route path="reservations" element={<HostReservations />} />
+          <Route path="messages/preferences" element={<MessagingPreferencesCenter />} />
           <Route path="messages" element={<Messages dashboardType="host" />} />
           <Route path="integrations-marketplace" element={<HostIntegrations />} />
           <Route path="integrations-marketplace/whatsapp/callback" element={<WhatsAppConnectCallback />} />

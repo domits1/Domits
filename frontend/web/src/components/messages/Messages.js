@@ -182,6 +182,55 @@ const MessagesContent = ({ dashboardType }) => {
       <WebSocketProvider userId={userId} token={accessToken}>
         {userId ? (
           <>
+            {dashboardType === "host" ? (
+              <div
+                style={{
+                  marginBottom: "18px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "16px",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      color: "#15803d",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Host Messaging
+                  </p>
+                  <h2 style={{ margin: "6px 0 4px", fontSize: "28px" }}>Unified Inbox</h2>
+                  <p style={{ margin: 0, color: "#4b5563" }}>
+                    View conversations, reply across channels, and manage messaging preferences.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/hostdashboard/messages/preferences")}
+                  style={{
+                    border: 0,
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    background: "#111827",
+                    color: "#fff",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Messaging Preferences
+                </button>
+              </div>
+            ) : null}
+
             <NewContactModal
               isOpen={isNewMessageOpen}
               onClose={() => setIsNewMessageOpen(false)}
