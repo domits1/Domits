@@ -17,7 +17,7 @@ const mockData = {
       avatar: "https://i.pravatar.cc/40?img=1",
       property: "Beach House Breda",
       address: "Princengracht 123, NL",
-      dates: "May 15–17",
+      dates: "May 15 –17",
       status: "Checked-in",
     },
     {
@@ -26,7 +26,7 @@ const mockData = {
       avatar: "https://i.pravatar.cc/40?img=2",
       property: "Rijhouse 1922",
       address: "Breda City",
-      dates: "May 15–17",
+      dates: "May 15 – 17",
       status: "Arriving tomorrow",
     },
   ],

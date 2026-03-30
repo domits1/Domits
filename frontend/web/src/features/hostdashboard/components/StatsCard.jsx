@@ -1,5 +1,6 @@
 import React from "react";
 import styles from "../HostDashboard.module.scss";
+import PropTypes from "prop-types";
 
 function StatsCard({ icon, value, label }) {
   return (
@@ -12,5 +13,11 @@ function StatsCard({ icon, value, label }) {
     </div>
   );
 }
+
+StatsCard.propTypes = {
+  icon: PropTypes.node,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  label: PropTypes.string.isRequired,
+};
 
 export default StatsCard;

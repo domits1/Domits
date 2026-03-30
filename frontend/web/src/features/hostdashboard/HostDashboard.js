@@ -23,18 +23,28 @@ function HostDashboard() {
     messages,
   } = mockData;
 
+  const statsItems = [
+    { icon: "🏠", value: stats.listings, label: "Listings" },
+    { icon: "📅", value: stats.reservations, label: "Reservations" },
+    { icon: "💰", value: `€${stats.revenue}`, label: "Revenue this month" },
+    { icon: "✅", value: `${stats.occupancy}%`, label: "Occupancy rate" },
+  ];
+
   return (
     <main className={styles.dashboardContainer}>
       <div className={styles.dashboardLeft}>
-        
-        <h2>Welcome back, {host.name}!</h2>
+        <h1>Welcome back, {host.name}!</h1>
         <p>Here is what is happening across your properties today</p>
 
         <div className={styles.statsRow}>
-          <StatsCard icon="🏠" value={stats.listings} label="Listings" />
-          <StatsCard icon="📅" value={stats.reservations} label="Reservations" />
-          <StatsCard icon="💰" value={`€${stats.revenue}`} label="Revenue this month" />
-          <StatsCard icon="✅" value={`${stats.occupancy}%`} label="Occupancy rate" />
+          {statsItems.map((item) => (
+            <StatsCard
+              key={item.label}
+              icon={item.icon}
+              value={item.value}
+              label={item.label}
+            />
+          ))}
         </div>
 
         <div className={styles.mainGrid}>
@@ -49,7 +59,6 @@ function HostDashboard() {
             onSeeAll={() => navigate("/hostdashboard/messages")}
           />
         </div>
-
       </div>
     </main>
   );
