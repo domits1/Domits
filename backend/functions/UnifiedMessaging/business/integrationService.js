@@ -12,6 +12,8 @@ import {
   normalizeHoliduCredentials,
   buildHoliduSecretPayload,
   buildHoliduCredentialSummary,
+  hasHoliduRequiredCredentialFields,
+  summarizeHoliduRequiredFields,
 } from "./holiduCredentialUtils.js";
 
 const nowMs = () => Date.now();
@@ -767,9 +769,9 @@ export default class IntegrationService {
     const credentials = normalizeHoliduCredentials(body.credentials);
 
     if (!userId) return bad(400, { error: "Missing required field: userId" });
-    if (!credentials) {
+    if (!credentials || !hasHoliduRequiredCredentialFields(credentials)) {
       return bad(400, {
-        error: "Missing required field: credentials. Provide at least one Holidu credential value.",
+        error: "Holidu credentials must include apiKey, or both clientId and clientSecret.",
       });
     }
 
@@ -824,6 +826,105 @@ export default class IntegrationService {
       channel: "HOLIDU",
       integration,
       credentialsSummary: buildHoliduCredentialSummary(credentials),
+    });
+  }
+
+  async checkHoliduStatus(userId) {
+    const normalizedUserId = requireStr(userId);
+    if (!normalizedUserId) return bad(400, { error: "Missing required query param: userId" });
+
+    const integration = await this.accounts.findByUserIdAndChannel(normalizedUserId, "HOLIDU");
+    if (!integration) {
+      return ok({
+        channel: "HOLIDU",
+        integrationAccountId: null,
+        status: "NOT_CONNECTED",
+        validationMode: "LOCAL_SECRET_VALIDATION",
+        reason: "No Holidu integration row exists for this user.",
+        displayName: null,
+        externalAccountId: null,
+        credentialsRefPresent: false,
+        secretPresent: false,
+        requiredFieldsPresent: false,
+      });
+    }
+
+    const credentialsRefPresent = !!requireStr(integration.credentialsRef);
+    if (!credentialsRefPresent) {
+      return ok({
+        channel: "HOLIDU",
+        integrationAccountId: integration.id,
+        status: "INCOMPLETE",
+        validationMode: "LOCAL_SECRET_VALIDATION",
+        reason: "Integration row exists but credentialsRef is missing.",
+        displayName: integration.displayName ?? null,
+        externalAccountId: integration.externalAccountId ?? null,
+        credentialsRefPresent,
+        secretPresent: false,
+        requiredFieldsPresent: false,
+      });
+    }
+
+    let secret;
+    try {
+      secret = await this.holiduCredentialStore.readSecretOrNull(integration.credentialsRef);
+    } catch (error) {
+      return ok({
+        channel: "HOLIDU",
+        integrationAccountId: integration.id,
+        status: "RECONNECT_REQUIRED",
+        validationMode: "LOCAL_SECRET_VALIDATION",
+        reason: `Stored Holidu secret could not be read locally: ${error?.message || "unknown error"}`,
+        displayName: integration.displayName ?? null,
+        externalAccountId: integration.externalAccountId ?? null,
+        credentialsRefPresent,
+        secretPresent: false,
+        requiredFieldsPresent: false,
+      });
+    }
+
+    if (!secret || typeof secret !== "object" || Array.isArray(secret)) {
+      return ok({
+        channel: "HOLIDU",
+        integrationAccountId: integration.id,
+        status: "RECONNECT_REQUIRED",
+        validationMode: "LOCAL_SECRET_VALIDATION",
+        reason: "Stored Holidu secret is missing, unreadable, or malformed.",
+        displayName: integration.displayName ?? null,
+        externalAccountId: integration.externalAccountId ?? null,
+        credentialsRefPresent,
+        secretPresent: false,
+        requiredFieldsPresent: false,
+      });
+    }
+
+    const requiredFieldSummary = summarizeHoliduRequiredFields(secret);
+    if (!hasHoliduRequiredCredentialFields(secret)) {
+      return ok({
+        channel: "HOLIDU",
+        integrationAccountId: integration.id,
+        status: "INCOMPLETE",
+        validationMode: "LOCAL_SECRET_VALIDATION",
+        reason: "Stored Holidu secret is present but required local credential fields are incomplete.",
+        displayName: integration.displayName ?? null,
+        externalAccountId: integration.externalAccountId ?? null,
+        credentialsRefPresent,
+        secretPresent: true,
+        requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
+      });
+    }
+
+    return ok({
+      channel: "HOLIDU",
+      integrationAccountId: integration.id,
+      status: "CONNECTED",
+      validationMode: "LOCAL_SECRET_VALIDATION",
+      reason: "Integration row and locally required Holidu secret fields are present.",
+      displayName: integration.displayName ?? null,
+      externalAccountId: integration.externalAccountId ?? null,
+      credentialsRefPresent,
+      secretPresent: true,
+      requiredFieldsPresent: requiredFieldSummary.requiredFieldsPresent,
     });
   }
 

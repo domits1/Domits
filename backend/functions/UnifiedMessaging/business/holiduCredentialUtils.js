@@ -49,3 +49,18 @@ export const buildHoliduCredentialSummary = (credentials) => ({
   clientSecretMasked: maskSecret(credentials?.clientSecret),
   notes: requireStr(credentials?.notes),
 });
+
+export const hasHoliduRequiredCredentialFields = (credentials) => {
+  const apiKey = requireStr(credentials?.apiKey);
+  const clientId = requireStr(credentials?.clientId);
+  const clientSecret = requireStr(credentials?.clientSecret);
+
+  return !!apiKey || (!!clientId && !!clientSecret);
+};
+
+export const summarizeHoliduRequiredFields = (credentials) => ({
+  hasApiKey: !!requireStr(credentials?.apiKey),
+  hasClientId: !!requireStr(credentials?.clientId),
+  hasClientSecret: !!requireStr(credentials?.clientSecret),
+  requiredFieldsPresent: hasHoliduRequiredCredentialFields(credentials),
+});
