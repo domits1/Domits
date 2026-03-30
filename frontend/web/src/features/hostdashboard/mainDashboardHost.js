@@ -9,6 +9,7 @@ import HostReports from "./HostPayments";
 import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
+import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
 import HostSettings from "./HostSettings";
 import HostProperty from "./HostProperty";
 import HostIntegrations from "./HostIntegrations";
@@ -108,7 +109,14 @@ function MainDashboardHost() {
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
 
           <Route path="finance" element={<HostFinanceTab />} />
+<<<<<<< feature/whatsapp-unified-inbox
+=======
+
+          {/* <Route path="pricing" element={<HostPricing />} /> */}
+
+>>>>>>> acceptance
           <Route path="listings" element={<HostListings />} />
+          <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />
 

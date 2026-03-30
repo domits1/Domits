@@ -9,6 +9,7 @@ import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import CreditCardIcon from "@mui/icons-material/AccountBalanceWallet";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
+import LanguageIcon from "@mui/icons-material/Language";
 import SettingsIcon from "@mui/icons-material/Settings";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 
@@ -27,7 +28,14 @@ const NAV = [
   { key: "Revenues", label: "Revenues", icon: <ShowChartIcon />, to: "revenues" },
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
+<<<<<<< feature/whatsapp-unified-inbox
+=======
+
+  // { key: "Pricing", label: "Pricing", icon: <PriceChangeIcon />, to: "pricing" },
+
+>>>>>>> acceptance
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
+  // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 

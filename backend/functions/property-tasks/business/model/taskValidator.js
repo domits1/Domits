@@ -13,11 +13,7 @@ export const validateTaskPayload = (data) => {
         errors.push("property_snapshot_label is required");
     }
 
-    if (!data.type) {
-        errors.push("type is required");
-    }
-
-    if (errors.length > 0) {
+if (errors.length > 0) {
         throw new Error(`Validation failed: ${errors.join(", ")}`);
     }
 

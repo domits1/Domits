@@ -1,0 +1,261 @@
+@media (min-width: 720px) {
+  .selectionPreview {
+    grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .websitePage {
+    gap: 18px;
+  }
+
+  .heroCard,
+  .selectorCard {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .stepTitleRow {
+    gap: 8px;
+  }
+
+  .titleIcon {
+    font-size: 21px !important;
+  }
+
+  .selectionSummary,
+  .templateSelectionState {
+    padding: 18px;
+  }
+
+  .photoStack {
+    width: min(100%, 258px);
+    min-height: 156px;
+    margin-inline: auto;
+    margin-left: 0;
+    justify-self: center;
+    transform: translateX(8px);
+    --photo-stack-left-offset-x: -54px;
+    --photo-stack-left-offset-y: 16px;
+    --photo-stack-center-offset-y: 0px;
+    --photo-stack-right-offset-x: 58px;
+    --photo-stack-right-offset-y: 12px;
+  }
+
+  .photoCard {
+    width: min(100%, 120px);
+    border-radius: 18px;
+  }
+
+  .buttonRow {
+    flex-direction: column;
+  }
+
+  .selectionPreview {
+    justify-items: center;
+  }
+
+  .selectionContent {
+    width: 100%;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+
+  .templateSelectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+}
+
+@media (max-width: 639px) {
+  .templateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .templateCard {
+    width: 100%;
+    min-width: 0;
+    min-height: 366px;
+    gap: 10px;
+    padding: 12px 12px 12px;
+    border-radius: 20px;
+  }
+
+  .templatePreviewShell {
+    width: 100%;
+    aspect-ratio: 1 / 1.3857;
+    padding: 14px 10px 12px;
+    border-radius: 18px;
+  }
+
+  .templateName {
+    font-size: 0.92rem;
+    min-height: calc(1.25em * 2);
+  }
+
+  .templateSelectedTag {
+    top: 12px;
+    right: 12px;
+    padding: 0.28rem 0.5rem;
+    font-size: 0.72rem;
+  }
+
+  .templateDescription {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    max-width: none;
+    min-height: calc(1.45em * 5);
+  }
+}
+
+@media (max-width: 479px) {
+  .templateGrid {
+    gap: 10px;
+  }
+
+  .templateCard {
+    min-height: 344px;
+    gap: 8px;
+    padding: 10px 10px 10px;
+    border-radius: 18px;
+  }
+
+  .templateRadio {
+    top: 10px;
+    left: 10px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .templateRadioDot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .templatePreviewShell {
+    aspect-ratio: 1 / 1.4182;
+    padding: 10px 8px;
+    border-radius: 16px;
+  }
+
+  .templateCardContent {
+    gap: 8px;
+  }
+
+  .templateCardHeader {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+  }
+
+  .templateName {
+    font-size: 0.82rem;
+    line-height: 1.2;
+    min-height: calc(1.2em * 2);
+  }
+
+  .templateSelectedTag {
+    top: 10px;
+    right: 10px;
+    padding: 0.24rem 0.42rem;
+    font-size: 0.68rem;
+  }
+
+  .templateDescription {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    min-height: calc(1.35em * 5);
+  }
+}
+
+@media (max-width: 359px) {
+  .templateGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .templateCard {
+    width: min(100%, 250px);
+    min-height: 332px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photoCard,
+  .templateCard,
+  .primaryButton,
+  .secondaryButton,
+  .galleryAnimatedImageForward,
+  .galleryAnimatedImageBackward,
+  .galleryAnimatedImage {
+    animation: none;
+    transition: none;
+  }
+
+  .templateCardSelected .templateRadio::after {
+    animation: none;
+  }
+
+  .photoCard {
+    opacity: 1;
+  }
+}
+
+@keyframes templateRadioPulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.82;
+  }
+
+  70% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes galleryImageSlideForward {
+  from {
+    transform: translateX(36px) scale(0.985);
+    opacity: 0.35;
+  }
+
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes galleryImageSlideBackward {
+  from {
+    transform: translateX(-36px) scale(0.985);
+    opacity: 0.35;
+  }
+
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes photoCardEnter {
+  from {
+    transform: translateX(-50%) translateY(var(--photo-card-enter-offset-y)) rotate(0deg)
+      scale(var(--photo-card-enter-scale));
+    opacity: 0;
+  }
+
+  to {
+    transform: var(--photo-card-final-transform);
+    opacity: var(--photo-card-final-opacity, 1);
+  }
+}
