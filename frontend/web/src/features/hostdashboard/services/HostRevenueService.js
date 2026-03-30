@@ -35,8 +35,7 @@ export const HostRevenueService = {
       let data = await response.json();
       if (data?.body) data = JSON.parse(data.body);
       return data;
-    } catch (err) {
-      console.error(`Error fetching ${metric}:`, err);
+    } catch {
       return null;
     }
   },

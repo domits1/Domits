@@ -42,7 +42,7 @@ export class Controller {
     async updateTask(event) {
         try {
             const hostId = await this.authManager.getHostId(event.headers?.Authorization);
-            const taskId = event.pathParameters?.id;
+            const taskId = event.queryStringParameters?.id || event.pathParameters?.id;
             const updateData = JSON.parse(event.body);
 
             const result = await updateTask(hostId, taskId, updateData);
@@ -55,7 +55,7 @@ export class Controller {
     async deleteTask(event) {
         try {
             const hostId = await this.authManager.getHostId(event.headers?.Authorization);
-            const taskId = event.pathParameters?.id;
+            const taskId = event.queryStringParameters?.id || event.pathParameters?.id;
 
             const result = await deleteTask(hostId, taskId);
             return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };

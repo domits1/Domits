@@ -26,32 +26,20 @@ jest.mock("stripe", () => {
   return jest.fn().mockImplementation(() => ({}));
 });
 
-describe("Service KPI logging", () => {
+describe("Service KPI metric resolution", () => {
   let service;
 
   beforeEach(() => {
     service = new Service();
-    jest.spyOn(console, "info").mockImplementation(() => {});
-    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  test("logs success when KPI is calculated", async () => {
+  test("returns the KPI metric when dependencies resolve", async () => {
     const event = {
       headers: { Authorization: "Bearer test" },
       queryStringParameters: { filterType: "weekly" },
     };
 
-    await service.getKpiMetric(event, "averageDailyRate");
-
-    expect(console.info).toHaveBeenCalledWith(
-      expect.stringContaining("[RMS][KPI_REFRESH] success"),
-      expect.objectContaining({
-        kpiMetric: "averageDailyRate",
-      })
-    );
+    await expect(service.getKpiMetric(event, "averageDailyRate"))
+      .resolves.toBe("100.00");
   });
 });

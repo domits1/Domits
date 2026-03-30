@@ -9,6 +9,7 @@ import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import CreditCardIcon from "@mui/icons-material/AccountBalanceWallet";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
+import LanguageIcon from "@mui/icons-material/Language";
 import SettingsIcon from "@mui/icons-material/Settings";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 
@@ -28,6 +29,7 @@ const NAV = [
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
+  // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 
@@ -71,9 +73,17 @@ function Pages({ onNavigate }) {
         <span aria-hidden="true">{open ? "×" : "☰"}</span>
       </button>
 
-      <div className={`sidebar-overlay ${open ? "open" : ""}`} onClick={() => setOpen(false)} aria-hidden={!open} />
+      <div
+        className={`sidebar-overlay ${open ? "open" : ""}`}
+        onClick={() => setOpen(false)}
+        aria-hidden={!open}
+      />
 
-      <nav className={`sidebar ${open ? "open" : ""}`} aria-label="Host navigation" id="host-menu">
+      <nav
+        className={`sidebar ${open ? "open" : ""}`}
+        aria-label="Host navigation"
+        id="host-menu"
+      >
         <div className="menu-content">
           <h2 className="sidebar-title">Menu</h2>
           <ul className="menu-list">
