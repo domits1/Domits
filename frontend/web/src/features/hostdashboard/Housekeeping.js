@@ -593,21 +593,46 @@ const HostPropertyCare = () => {
     const handleNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
 
     const handleExportCSV = () => {
+        const lines = [];
+
+        lines.push('TASK REPORT SUMMARY');
+        lines.push(`Generated,${new Date().toLocaleDateString()}`);
+        lines.push('');
+        lines.push('KPI METRICS');
+        lines.push(`Completion Rate,${reportData.completionRate}%`);
+        lines.push(`Avg Completion Time,${reportData.avgCompletionTime}`);
+        lines.push(`Total Tasks,${reportData.total}`);
+        lines.push(`Completed,${reportData.completed}`);
+        lines.push(`Pending,${reportData.pending}`);
+        lines.push(`In Progress,${reportData.inProgress}`);
+        lines.push(`Overdue,${reportData.overdue}`);
+        lines.push(`Overdue This Week,${reportData.overdueThisWeek}`);
+        lines.push('');
+        lines.push('TASKS BY PROPERTY');
+        lines.push('Property,Total,Completed,In Progress,Overdue');
+        reportData.byProperty.forEach(prop => {
+            lines.push(`"${prop.label}",${prop.total},${prop.completed},${prop.inProgress},${prop.overdue}`);
+        });
+        lines.push('');
+        lines.push('TASK LIST');
+        lines.push('Title,Status,Priority,Property,Assignee,Due Date');
         const filtered = tasks.filter(t => matchesTaskFilters(t, filters, {
             includeAssignee: true,
             includeDate: true,
             excludeLegacy: true,
         }));
-        const headers = ['Title', 'Status', 'Priority', 'Property', 'Assignee', 'Due Date'];
-        const rows = filtered.map(t => [
-            `"${(t.title || '').replace(/"/g, '""')}"`,
-            t.status || '',
-            t.priority || '',
-            `"${(t.property || '').replace(/"/g, '""')}"`,
-            t.assignee || '',
-            t.dueDate || '',
-        ]);
-        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        filtered.forEach(t => {
+            lines.push([
+                `"${(t.title || '').replace(/"/g, '""')}"`,
+                t.status || '',
+                t.priority || '',
+                `"${(t.property || '').replace(/"/g, '""')}"`,
+                t.assignee || '',
+                t.dueDate || '',
+            ].join(','));
+        });
+
+        const csv = lines.join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -706,13 +731,13 @@ const HostPropertyCare = () => {
                             <ResponsiveContainer width="50%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={reportData.distributionData}
+                                        data={reportData.distributionData.filter(d => d.value > 0)}
                                         innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
+                                        outerRadius={90}
+                                        paddingAngle={3}
                                         dataKey="value"
                                     >
-                                        {reportData.distributionData.map((entry, index) => (
+                                        {reportData.distributionData.filter(d => d.value > 0).map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Pie>
