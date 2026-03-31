@@ -717,27 +717,31 @@ const HostPropertyCare = () => {
                     <button className="btn-export-green" onClick={handleExportCSV}>↥ Export CSV</button>
                 </div>
 
-                <div className="reports-kpi-row">
-                    <div className="kpi-card-v2">
-                        <span className="kpi-title">Completion Rate</span>
-                        <span className="kpi-main-val green-text">{reportData.completionRate}%</span>
-                        <span className="kpi-sub">Completed {reportData.completed} out of {reportData.total} tasks</span>
+                <div className="reports-main-grid">
+                    <div className="reports-left-col">
+                        <div className="reports-kpi-row">
+                            <div className="kpi-card-v2">
+                                <span className="kpi-title">Completion Rate</span>
+                                <span className="kpi-main-val green-text">{reportData.completionRate}%</span>
+                                <span className="kpi-sub">Completed {reportData.completed} out of {reportData.total} tasks</span>
+                            </div>
+                            <div className="kpi-card-v2">
+                                <span className="kpi-title">Avg Completion Time</span>
+                                <span className="kpi-main-val">{reportData.avgCompletionTime}</span>
+                                <span className="kpi-sub">Average time taken to complete each task.</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="kpi-card-v2">
-                        <span className="kpi-title">Avg Completion Time</span>
-                        <span className="kpi-main-val">{reportData.avgCompletionTime}</span>
-                        <span className="kpi-sub">Average time taken to complete each task.</span>
-                    </div>
-                    <div className="kpi-card-v2">
-                        <span className="kpi-title">Overdue Tasks</span>
-                        <span className="kpi-main-val red-text">
-                            {reportData.overdue} <small style={{fontSize: '14px', color: '#666'}}>{reportData.overdueThisWeek} this week</small>
-                        </span>
-                        <span className="kpi-sub">{reportData.overdue} tasks exceeded their deadline.</span>
+                    <div className="reports-right-col">
+                        <div className="kpi-card-v2">
+                            <span className="kpi-title">Overdue Tasks</span>
+                            <span className="kpi-main-val red-text">{reportData.overdue}</span>
+                            <span className="kpi-sub">{reportData.overdueThisWeek} this week · {reportData.overdue} tasks exceeded their deadline.</span>
+                        </div>
                     </div>
                 </div>
 
-                <div className="reports-middle-row">
+                <div className="reports-main-grid">
                     <div className="chart-box tasks-over-time">
                         <div className="chart-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
                             <h4 style={{margin:0}}>Tasks Over Time</h4>

@@ -1076,9 +1076,28 @@
     cursor: pointer;
 }
 
+.reports-main-grid {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.reports-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.reports-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .reports-kpi-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
 }
 
@@ -1097,7 +1116,7 @@
 .red-text { color: #dc3545; }
 .kpi-sub { font-size: 12px; color: #888; line-height: 1.4; }
 
-.reports-middle-row, .reports-bottom-row {
+.reports-bottom-row {
     display: grid;
     grid-template-columns: 2.2fr 1fr;
     gap: 20px;
