@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./HostDashboard.module.scss";
-
+import { FaBed, FaCalendarAlt, FaBox, FaComments } from "react-icons/fa";
 import StatsCard from "./components/StatsCard";
 import ReservationsTable from "./components/ReservationsTable";
 import TodayPanel from "./components/TodayPanel";
@@ -32,14 +32,26 @@ function HostDashboard() {
   } = mockData;
 
   const statsItems = [
-    { icon: "🏠", value: stats.listings, label: "Listings" },
-    { icon: "📅", value: stats.reservations, label: "Reservations" },
     {
-      icon: "💰",
+      icon: <FaBed />,
+      value: stats.listings,
+      label: "Listings",
+    },
+    {
+      icon: <FaCalendarAlt />,
+      value: stats.reservations,
+      label: "Reservations",
+    },
+    {
+      icon: <FaBox />,
       value: formatCurrency(stats.revenue),
       label: "Revenue this month",
     },
-    { icon: "📊", value: `${stats.occupancy}%`, label: "Occupancy rate" },
+    {
+      icon: <FaComments />,
+      value: `${stats.occupancy}%`,
+      label: "Occupancy rate",
+    },
   ];
 
   return (
