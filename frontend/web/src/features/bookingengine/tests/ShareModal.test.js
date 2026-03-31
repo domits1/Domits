@@ -54,7 +54,7 @@ describe("ShareModal", () => {
     render(<ShareModal url={TEST_URL} title={TEST_TITLE} onClose={onClose} />);
 
     const backdrop = document.querySelector(".share-modal-backdrop");
-    fireEvent.click(backdrop, { target: backdrop, currentTarget: backdrop });
+    fireEvent.mouseDown(backdrop, { target: backdrop, currentTarget: backdrop });
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });

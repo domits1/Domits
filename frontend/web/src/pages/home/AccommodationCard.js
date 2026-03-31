@@ -102,28 +102,6 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
   return (
     <div className="accocard-wrapper">
       <div className="accocard">
-        {/* IMAGE / SWIPER */}
-        <div className="accocard-media">
-          <Swiper
-            spaceBetween={30}
-            effect="fade"
-            navigation
-            pagination={{ clickable: true }}
-            loop
-            modules={[EffectFade, Navigation, Pagination]}
-            className="mySwiper"
-          >
-            {cardImages.map((imgSrc, index) => (
-              <SwiperSlide key={imgSrc}>
-                <img
-                  src={imgSrc}
-                  alt={`${propertyTitle} ${index + 1}`}
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </div>
-
         {/* CLICKABLE CONTENT */}
         <a
           className="accocard-content"
@@ -134,6 +112,32 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
           }}
           aria-label={`View property ${propertyTitle}`}
         >
+          {/* IMAGE / SWIPER */}
+          <div className="accocard-media">
+            <Swiper
+              spaceBetween={30}
+              effect="fade"
+              navigation
+              pagination={{ clickable: true }}
+              loop
+              modules={[EffectFade, Navigation, Pagination]}
+              className="mySwiper"
+              onClick={(swiper, e) => e?.stopPropagation()}
+            >
+              {cardImages.map((imgSrc, index) => (
+                <SwiperSlide key={imgSrc}>
+                  <img
+                    src={imgSrc}
+                    alt={`${propertyTitle} ${index + 1}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCardClick(e, propertyId);
+                    }}
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
           <div className="accocard-title">
             {accommodation.property?.title || "No title available"}
           </div>
