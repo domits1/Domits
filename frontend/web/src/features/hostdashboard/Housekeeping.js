@@ -673,7 +673,6 @@ const HostPropertyCare = () => {
     const renderReportsView = () => {
         return (
             <div className="reports-container">
-                {/* 1. Filtry i Export */}
                 <div className="reports-controls">
                     <div className="reports-filters">
                         <select name="property" value={filters.property} onChange={handleFilterChange}>
@@ -711,7 +710,6 @@ const HostPropertyCare = () => {
                     <button className="btn-export-green" onClick={handleExportCSV}>↥ Export CSV</button>
                 </div>
 
-                {/* 2. KPI Cards */}
                 <div className="reports-kpi-row">
                     <div className="kpi-card-v2">
                         <span className="kpi-title">Completion Rate</span>
@@ -732,7 +730,6 @@ const HostPropertyCare = () => {
                     </div>
                 </div>
 
-                {/* 3. Main Charts Row */}
                 <div className="reports-middle-row">
                     <div className="chart-box tasks-over-time">
                         <div className="chart-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
@@ -807,7 +804,6 @@ const HostPropertyCare = () => {
                     </div>
                 </div>
 
-                {/* 4. Bottom Row */}
                 <div className="reports-bottom-row">
                     <div className="chart-box tasks-by-property">
                         <h4>Tasks by Property</h4>

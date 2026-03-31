@@ -1039,7 +1039,6 @@
 }
 
 
-/* REPORTS */
 .reports-container {
     padding: 10px 0;
     display: flex;
@@ -1077,7 +1076,6 @@
     cursor: pointer;
 }
 
-/* KPI Cards V2 */
 .reports-kpi-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1099,7 +1097,6 @@
 .red-text { color: #dc3545; }
 .kpi-sub { font-size: 12px; color: #888; line-height: 1.4; }
 
-/* Charts Layout */
 .reports-middle-row, .reports-bottom-row {
     display: grid;
     grid-template-columns: 2.2fr 1fr;
@@ -1115,7 +1112,6 @@
 
 .chart-box h4 { margin: 0 0 20px 0; font-size: 16px; color: #333; }
 
-/* Multi-segment progress bar */
 .multi-progress {
     height: 12px;
     background: #f0f0f0;
@@ -1138,7 +1134,6 @@
     font-size: 14px;
 }
 
-/* Summary Panel */
 .summary-item {
     display: flex;
     align-items: center;
