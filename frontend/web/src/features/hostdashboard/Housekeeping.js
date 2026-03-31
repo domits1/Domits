@@ -241,6 +241,7 @@ const HostPropertyCare = () => {
             ...task,
             status: newStatus,
             completedAt: newStatus === 'Completed' ? todayStr : null,
+            completed_date: newStatus === 'Completed' ? Date.now() : null,
             activities: [
                 ...(task.activities || []),
                 { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
@@ -436,6 +437,9 @@ const HostPropertyCare = () => {
 
         const updatedTask = {
             ...editedTask,
+            completed_date: editedTask.status === 'Completed' && viewingTask.status !== 'Completed'
+                ? Date.now()
+                : editedTask.completed_date ?? null,
             activities: [...(editedTask.activities || []), ...newLogs]
         };
 
