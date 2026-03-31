@@ -1,42 +1,60 @@
 .dashboardContainer {
+  width: 100%;
+  padding: 30px;
   display: flex;
   justify-content: center;
-  width: 90%;
-  margin: auto 5%;
+  box-sizing: border-box;
 }
 
 .dashboardLeft {
   width: 100%;
   max-width: 1600px;
-  margin-top: 20px;
 }
 
-.dashboardLeft h2 {
-  font-size: 36px;
+.dashboardLeft h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
   font-weight: 700;
-  margin-bottom: 6px;
+  line-height: 1.2;
   color: #000;
 }
 
-.dashboardLeft p {
-  font-size: 22px;
+.dashboardLeft > p {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.4;
   color: #000;
   font-weight: 400;
 }
 
-.card h2{
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.card h2 {
+  margin: 0 0 16px;
   font-size: 27px;
   font-weight: 650;
+  line-height: 1.3;
+  color: #000;
 }
 
-.card {
-  margin-bottom: 30px;
+.card h3 {
+  margin: 0 0 12px;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #000;
 }
 
-/* STATS */
 .statsRow {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
   margin-top: 28px;
 }
@@ -49,49 +67,40 @@
   align-items: center;
   gap: 14px;
   border: 1px solid #ddd;
+  min-width: 0;
 }
 
 .statsIcon {
+  flex-shrink: 0;
   font-size: 30px;
+  line-height: 1;
 }
 
 .statsValue {
-  font-size: 32px;
-  font-weight: 700;
   margin: 0;
+  font-size: 30px;
+  font-weight: 640;
+  line-height: 1.2;
   color: #000;
+  word-break: break-word;
 }
 
 .statsLabel {
+  margin: 4px 0 0;
   font-size: 20px;
+  line-height: 1.3;
   color: #000;
-  margin: 0;
   font-weight: 500;
 }
 
-/* GRID */
 .mainGrid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
   gap: 28px;
   margin-top: 28px;
+  align-items: start;
 }
 
-/* CARDS */
-.card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 24px;
-  border: 1px solid #ddd;
-}
-
-.card h3 {
-  font-size: 26px;
-  font-weight: 700;
-  color: #000;
-}
-
-/* TABLE */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -103,14 +112,20 @@
   font-size: 22px;
   font-weight: 620;
   color: #000;
-  padding-bottom: 12px;
+  padding: 0 12px 12px 0;
 }
 
 .table td {
   font-size: 20px;
-  padding: 14px 0;
+  padding: 14px 12px 14px 0;
   border-top: 1px solid #eee;
   color: #000;
+  vertical-align: middle;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 0;
 }
 
 .status {
@@ -118,113 +133,339 @@
   font-weight: 600;
 }
 
-/* TODAY PANEL */
 .todayItem {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   padding: 14px 0;
   border-top: 1px solid #eee;
   font-size: 20px;
+  line-height: 1.4;
   color: #000;
 }
 
-/* ARRIVALS */
+.todayItem strong {
+  flex-shrink: 0;
+}
+
 .arrivalsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   margin-top: 16px;
 }
 
-.arrivalsGrid h4{
+.arrivalsGrid h4 {
+  margin: 0 0 8px;
   font-size: 22px;
   font-weight: 550;
+  line-height: 1.3;
+  color: #000;
 }
 
 .arrivalsGrid > div:first-child {
   border-right: 1px solid #eee;
-  padding-right: 20px; 
+  padding-right: 20px;
 }
 
 .arrivalsGrid > div:last-child {
-  padding-left: 20px; 
+  padding-left: 20px;
 }
 
 .arrivalItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   padding: 14px 0;
   border-top: 1px solid #eee;
-  font-size: 14px;
-  font-weight: 400;
 }
 
 .arrivalLeft {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+
+.arrivalLeft strong {
+  display: block;
+  font-size: 16px;
+  line-height: 1.3;
+  color: #000;
+}
+
+.arrivalLeft p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #555;
 }
 
 .avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-}
-
-.arrivalLeft p {
-  font-size: 12px;
+  flex-shrink: 0;
+  object-fit: cover;
 }
 
 .arrivalRight {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .date {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   color: #000;
+  white-space: nowrap;
 }
 
 .statusBadge {
   background: #f0fdf4;
-  color: #000;
+  color: #166534;
   font-size: 13px;
-  padding: 5px 8px;
-  border-radius: 6px;
-  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-/* MESSAGES */
 .messageItem {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
   border-top: 1px solid #eee;
   padding: 14px 0;
   font-size: 20px;
   color: #000;
 }
 
+.messageItem strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.messageItem p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+}
+
 .messageTime {
+  flex-shrink: 0;
   font-size: 15px;
   color: #000;
+  white-space: nowrap;
 }
 
 .seeAllBtn {
-  margin-top: 12px;
+  margin-top: 16px;
   width: 100%;
-  padding: 10px;
+  padding: 12px 16px;
   background: #f5f5f5;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 18px;
-  transition: all 0.2s ease;
+  font-weight: 500;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .seeAllBtn:hover {
   background: #eaeaea;
   border-color: #ccc;
+}
+
+.seeAllBtn:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+.seeAllBtn:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 1200px) {
+  .statsRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardContainer {
+    padding: 16px;
+  }
+
+  .dashboardLeft h1 {
+    font-size: 28px;
+  }
+
+  .dashboardLeft > p {
+    font-size: 18px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .card h2 {
+    font-size: 22px;
+  }
+
+  .statsRow {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .statsCard {
+    padding: 20px;
+  }
+
+  .statsValue {
+    font-size: 28px;
+  }
+
+  .statsLabel {
+    font-size: 18px;
+  }
+
+  .mainGrid {
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .table th {
+    font-size: 18px;
+  }
+
+  .table td {
+    font-size: 16px;
+  }
+
+  .todayItem {
+    font-size: 17px;
+  }
+
+  .arrivalsGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .arrivalsGrid > div:first-child {
+    border-right: 0;
+    border-bottom: 1px solid #eee;
+    padding-right: 0;
+    padding-bottom: 12px;
+  }
+
+  .arrivalsGrid > div:last-child {
+    padding-left: 0;
+  }
+
+  .arrivalItem {
+    align-items: flex-start;
+  }
+
+  .arrivalRight {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .messageItem {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .messageTime {
+    align-self: flex-end;
+  }
+
+  .seeAllBtn {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboardContainer {
+    padding: 12px;
+  }
+
+  .dashboardLeft h1 {
+    font-size: 24px;
+  }
+
+  .dashboardLeft > p {
+    font-size: 16px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .card h2 {
+    font-size: 20px;
+  }
+
+  .statsCard {
+    padding: 16px;
+  }
+
+  .statsIcon {
+    font-size: 24px;
+  }
+
+  .statsValue {
+    font-size: 24px;
+  }
+
+  .statsLabel {
+    font-size: 16px;
+  }
+
+  .arrivalItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .arrivalRight {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .date,
+  .statusBadge {
+    white-space: normal;
+  }
+
+  .messageItem strong {
+    font-size: 16px;
+  }
+
+  .messageItem p {
+    font-size: 14px;
+  }
 }

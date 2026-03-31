@@ -1,6 +1,6 @@
 import React from "react";
-import styles from "./HostDashboard.module.scss";
 import { useNavigate } from "react-router-dom";
+import styles from "./HostDashboard.module.scss";
 
 import StatsCard from "./components/StatsCard";
 import ReservationsTable from "./components/ReservationsTable";
@@ -9,6 +9,14 @@ import ArrivalsDepartures from "./components/ArrivalsDepartures";
 import MessagesPanel from "./components/MessagesPanel";
 
 import mockData from "./components/MockData";
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("en-IE", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 function HostDashboard() {
   const navigate = useNavigate();
@@ -26,8 +34,12 @@ function HostDashboard() {
   const statsItems = [
     { icon: "🏠", value: stats.listings, label: "Listings" },
     { icon: "📅", value: stats.reservations, label: "Reservations" },
-    { icon: "💰", value: `€${stats.revenue}`, label: "Revenue this month" },
-    { icon: "✅", value: `${stats.occupancy}%`, label: "Occupancy rate" },
+    {
+      icon: "💰",
+      value: formatCurrency(stats.revenue),
+      label: "Revenue this month",
+    },
+    { icon: "📊", value: `${stats.occupancy}%`, label: "Occupancy rate" },
   ];
 
   return (
@@ -48,7 +60,7 @@ function HostDashboard() {
         </div>
 
         <div className={styles.mainGrid}>
-          <ReservationsTable data={reservations} />
+          <ReservationsTable data={reservations} isLoading={false} />
           <TodayPanel data={today} />
         </div>
 

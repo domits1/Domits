@@ -4,10 +4,10 @@ import PropTypes from "prop-types";
 
 function TodayPanel({ data }) {
   const items = [
-    { label: "Check-ins", value: data?.checkins },
-    { label: "Check-outs", value: data?.checkouts },
-    { label: "Messages", value: data?.messages },
-    { label: "Tasks", value: data?.tasks },
+    { label: "Check-ins", value: data?.checkins ?? 0 },
+    { label: "Check-outs", value: data?.checkouts ?? 0 },
+    { label: "Messages", value: data?.messages ?? 0 },
+    { label: "Tasks", value: data?.tasks ?? 0 },
   ];
 
   return (
@@ -17,7 +17,7 @@ function TodayPanel({ data }) {
       {items.map((item) => (
         <div key={item.label} className={styles.todayItem}>
           <span>{item.label}</span>
-          <strong>{item.value || 0}</strong>
+          <strong>{item.value}</strong>
         </div>
       ))}
     </div>

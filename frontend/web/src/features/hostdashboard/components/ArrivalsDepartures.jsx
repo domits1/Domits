@@ -2,11 +2,17 @@ import React from "react";
 import styles from "../HostDashboard.module.scss";
 import PropTypes from "prop-types";
 
-function ArrivalItem({ item, status }) {
+function ArrivalItem({ item, fallbackStatus }) {
+  const status = item.status || fallbackStatus;
+
   return (
     <div className={styles.arrivalItem}>
       <div className={styles.arrivalLeft}>
-        <img src={item.avatar} alt="" className={styles.avatar} />
+        <img
+          src={item.avatar}
+          alt={item.guest}
+          className={styles.avatar}
+        />
         <div>
           <strong>{item.guest}</strong>
           <p className={styles.subText}>{item.property}</p>
@@ -28,8 +34,9 @@ ArrivalItem.propTypes = {
     guest: PropTypes.string,
     property: PropTypes.string,
     dates: PropTypes.string,
+    status: PropTypes.string,
   }).isRequired,
-  status: PropTypes.string.isRequired,
+  fallbackStatus: PropTypes.string.isRequired,
 };
 
 function ArrivalsDepartures({ arrivals = [], departures = [] }) {
@@ -43,7 +50,11 @@ function ArrivalsDepartures({ arrivals = [], departures = [] }) {
 
           {arrivals.length > 0 ? (
             arrivals.map((item) => (
-              <ArrivalItem key={item.id} item={item} status="Checked-in" />
+              <ArrivalItem
+                key={item.id}
+                item={item}
+                fallbackStatus="Checked-in"
+              />
             ))
           ) : (
             <p>No arrivals</p>
@@ -55,7 +66,11 @@ function ArrivalsDepartures({ arrivals = [], departures = [] }) {
 
           {departures.length > 0 ? (
             departures.map((item) => (
-              <ArrivalItem key={item.id} item={item} status="Checked-out" />
+              <ArrivalItem
+                key={item.id}
+                item={item}
+                fallbackStatus="Checked-out"
+              />
             ))
           ) : (
             <p>No departures</p>
@@ -67,8 +82,26 @@ function ArrivalsDepartures({ arrivals = [], departures = [] }) {
 }
 
 ArrivalsDepartures.propTypes = {
-  arrivals: PropTypes.arrayOf(PropTypes.object),
-  departures: PropTypes.arrayOf(PropTypes.object),
+  arrivals: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      avatar: PropTypes.string,
+      guest: PropTypes.string,
+      property: PropTypes.string,
+      dates: PropTypes.string,
+      status: PropTypes.string,
+    })
+  ),
+  departures: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      avatar: PropTypes.string,
+      guest: PropTypes.string,
+      property: PropTypes.string,
+      dates: PropTypes.string,
+      status: PropTypes.string,
+    })
+  ),
 };
 
 export default ArrivalsDepartures;

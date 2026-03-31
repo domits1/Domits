@@ -34,8 +34,12 @@ function MessagesPanel({ messages = [], onSeeAll }) {
         <p>No messages</p>
       )}
 
-      <button className={styles.seeAllBtn} onClick={onSeeAll}>
-        See all
+      <button
+        className={styles.seeAllBtn}
+        onClick={onSeeAll}
+        aria-label="View all messages"
+      >
+        See all messages
       </button>
     </div>
   );
