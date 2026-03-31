@@ -1037,3 +1037,116 @@
 .form-group input[type="date"] {
     cursor: pointer;
 }
+
+
+/* REPORTS */
+.reports-container {
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.reports-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reports-filters {
+    display: flex;
+    gap: 10px;
+}
+
+.reports-filters select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #666;
+    font-size: 13px;
+}
+
+.btn-export-green {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* KPI Cards V2 */
+.reports-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.kpi-card-v2 {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.kpi-title { font-size: 14px; font-weight: 600; color: #333; }
+.kpi-main-val { font-size: 32px; font-weight: 700; margin: 10px 0; }
+.green-text { color: #28a745; }
+.red-text { color: #dc3545; }
+.kpi-sub { font-size: 12px; color: #888; line-height: 1.4; }
+
+/* Charts Layout */
+.reports-middle-row, .reports-bottom-row {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr;
+    gap: 20px;
+}
+
+.chart-box {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.chart-box h4 { margin: 0 0 20px 0; font-size: 16px; color: #333; }
+
+/* Multi-segment progress bar */
+.multi-progress {
+    height: 12px;
+    background: #f0f0f0;
+    border-radius: 20px;
+    display: flex;
+    overflow: hidden;
+}
+
+.progress-segment { height: 100%; }
+.p-done { background-color: #518361; }
+.p-progress { background-color: #5587c6; }
+.p-overdue { background-color: #d9625b; }
+
+.prop-row-v2 {
+    display: grid;
+    grid-template-columns: 1.5fr 0.8fr 2fr 0.3fr;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f9f9f9;
+    font-size: 14px;
+}
+
+/* Summary Panel */
+.summary-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f9f9f9;
+    font-size: 14px;
+    color: #444;
+}
+
+.sum-val { margin-left: auto; font-weight: 600; }
+.sum-icon { margin-right: 10px; }
