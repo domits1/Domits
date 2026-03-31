@@ -660,7 +660,12 @@ const HostPropertyCare = () => {
                 {/* 1. Filtry i Export */}
                 <div className="reports-controls">
                     <div className="reports-filters">
-                        {renderCommonFilters()}
+                        <select name="property" value={filters.property} onChange={handleFilterChange}>
+                            <option value="All properties">All properties</option>
+                            {filterPropertyOptions.map(label => (
+                                <option key={label} value={label}>{label}</option>
+                            ))}
+                        </select>
                         <select name="status" value={filters.status} onChange={handleFilterChange}>
                             <option value="All statuses">All statuses</option>
                             <option value="Pending">Pending</option>
