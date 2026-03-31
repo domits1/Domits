@@ -512,10 +512,13 @@ const HostPropertyCare = () => {
                     <option key={label} value={label}>{label}</option>
                 ))}
             </select>
+
             <select name="status" value={filters.status} onChange={handleFilterChange}>
                 <option value="All statuses">All statuses</option>
                 <option value="Pending">Pending</option>
                 <option value="In progress">In progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Overdue">Overdue</option>
             </select>
         </>
     );
@@ -682,19 +685,7 @@ const HostPropertyCare = () => {
             <div className="reports-container">
                 <div className="reports-controls">
                     <div className="reports-filters">
-                        <select name="property" value={filters.property} onChange={handleFilterChange}>
-                            <option value="All properties">All properties</option>
-                            {filterPropertyOptions.map(label => (
-                                <option key={label} value={label}>{label}</option>
-                            ))}
-                        </select>
-                        <select name="status" value={filters.status} onChange={handleFilterChange}>
-                            <option value="All statuses">All statuses</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In progress">In progress</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Overdue">Overdue</option>
-                        </select>
+                            {renderCommonFilters()}
                         <select name="priority" value={filters.priority} onChange={handleFilterChange}>
                             <option value="Any priority">Any priority</option>
                             <option value="Urgent">Urgent</option>
