@@ -783,26 +783,28 @@ const HostPropertyCare = () => {
 
                     <div className="chart-box task-distribution">
                         <h4>Task Distribution</h4>
-                        <div style={{ width: '100%', height: 250, display: 'flex', alignItems: 'center' }}>
-                            <ResponsiveContainer width="50%" height="100%">
-                                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                                    <Pie
-                                        data={reportData.distributionData.filter(d => d.value > 0)}
-                                        innerRadius={55}
-                                        outerRadius={75}
-                                        paddingAngle={3}
-                                        dataKey="value"
-                                        cx="50%"
-                                        cy="50%"
-                                    >
-                                        {reportData.distributionData.filter(d => d.value > 0).map((entry) => (
-                                            <Cell key={`cell-${entry.name}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip formatter={(value, name) => [`${value} tasks`, name]} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div className="donut-legend" style={{ width: '50%', paddingLeft: '20px' }}>
+                        <div className="donut-wrapper">
+                            <div className="donut-chart-area">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={reportData.distributionData.filter(d => d.value > 0)}
+                                            innerRadius="45%"
+                                            outerRadius="65%"
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                            cx="50%"
+                                            cy="50%"
+                                        >
+                                            {reportData.distributionData.filter(d => d.value > 0).map((entry) => (
+                                                <Cell key={`cell-${entry.name}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(value, name) => [`${value} tasks`, name]} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="donut-legend">
                                 {reportData.distributionData.map(d => (
                                     <div key={d.name} className="summary-item" style={{ border: 'none', padding: '5px 0' }}>
                                         <span className="dot" style={{ backgroundColor: d.color, marginRight: '8px' }}></span>
