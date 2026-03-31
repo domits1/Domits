@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Toast from "../../../components/toast/Toast";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import CloseIcon from "@mui/icons-material/Close";
@@ -72,6 +73,7 @@ const ShareModal = ({
                       onClose,
                     }) => {
   const [copied, setCopied] = useState(false);
+  const [toast, setToast] = useState({ message: "", status: "" });
   const copyTimeoutRef = useRef(null);
   const modalRef = useRef(null);
 
@@ -95,8 +97,8 @@ const ShareModal = ({
     try {
       await navigator.clipboard?.writeText(url);
       scheduleCopiedReset();
-    } catch (error) {
-      console.error("Failed to copy link:", error);
+    } catch {
+      setToast({ message: "Failed to copy link. Please try again.", status: "error" });
     }
   };
 
@@ -199,6 +201,11 @@ const ShareModal = ({
             </button>
           </div>
         </div>
+        <Toast
+          message={toast.message}
+          status={toast.status || "error"}
+          onClose={() => setToast({ message: "", status: "" })}
+        />
       </dialog>
     </div>,
     document.body,
