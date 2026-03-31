@@ -590,7 +590,7 @@ const HostPropertyCare = () => {
 
     const assigneeOptions = useMemo(() => {
         const set = new Set(tasks.map(t => t.assignee).filter(Boolean));
-        return [...set].sort();
+        return [...set].sort((a, b) => a.localeCompare(b));
     }, [tasks]);
 
     const editPropertyOptions = useMemo(() => {
@@ -616,34 +616,41 @@ const HostPropertyCare = () => {
     const handleNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
 
     const handleExportCSV = () => {
-        const lines = [];
-
         const now = new Date();
-        const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '-');
-        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/:/g, '-');
+        const dateStr = now.toLocaleDateString('en-GB').replaceAll('/', '-');
+        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replaceAll(':', '-');
         const timeDisplay = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-        lines.push('TASK REPORT SUMMARY');
-        lines.push(`Generated,${now.toLocaleDateString('en-GB')} ${timeDisplay}`);
-        lines.push('');
-        lines.push('KPI METRICS');
-        lines.push(`Completion Rate,${reportData.completionRate}%`);
-        lines.push(`Avg Completion Time,${reportData.avgCompletionTime}`);
-        lines.push(`Total Tasks,${reportData.total}`);
-        lines.push(`Completed,${reportData.completed}`);
-        lines.push(`Pending,${reportData.pending}`);
-        lines.push(`In Progress,${reportData.inProgress}`);
-        lines.push(`Overdue,${reportData.overdue}`);
-        lines.push(`Overdue This Week,${reportData.overdueThisWeek}`);
-        lines.push('');
-        lines.push('TASKS BY PROPERTY');
-        lines.push('Property,Total,Completed,In Progress,Overdue');
+        const lines = [];
+        
+
+        lines.push(
+            'TASK REPORT SUMMARY',
+            `Generated,${now.toLocaleDateString('en-GB')} ${timeDisplay}`,
+            '',
+            'KPI METRICS',
+            `Completion Rate,${reportData.completionRate}%`,
+            `Avg Completion Time,${reportData.avgCompletionTime}`,
+            `Total Tasks,${reportData.total}`,
+            `Completed,${reportData.completed}`,
+            `Pending,${reportData.pending}`,
+            `In Progress,${reportData.inProgress}`,
+            `Overdue,${reportData.overdue}`,
+            `Overdue This Week,${reportData.overdueThisWeek}`,
+            '',
+            'TASKS BY PROPERTY',
+            'Property,Total,Completed,In Progress,Overdue'
+        );
+
         reportData.byProperty.forEach(prop => {
             lines.push(`"${prop.label}",${prop.total},${prop.completed},${prop.inProgress},${prop.overdue}`);
         });
-        lines.push('');
-        lines.push('TASK LIST');
-        lines.push('Title,Status,Priority,Property,Assignee,Due Date');
+
+        lines.push(
+            '',
+            'TASK LIST',
+            'Title,Status,Priority,Property,Assignee,Due Date'
+        );
         const filtered = tasks.filter(t => matchesTaskFilters(t, filters, {
             includeAssignee: true,
             includeDate: true,
@@ -651,10 +658,10 @@ const HostPropertyCare = () => {
         }));
         filtered.forEach(t => {
             lines.push([
-                `"${(t.title || '').replace(/"/g, '""')}"`,
+                `"${(t.title || '').replaceAll('"', '""')}"`,
                 t.status || '',
                 t.priority || '',
-                `"${(t.property || '').replace(/"/g, '""')}"`,
+                `"${(t.property || '').replaceAll('"', '""')}"`,
                 t.assignee || '',
                 t.dueDate || '',
             ].join(','));
@@ -784,8 +791,8 @@ const HostPropertyCare = () => {
                                         cx="50%"
                                         cy="50%"
                                     >
-                                        {reportData.distributionData.filter(d => d.value > 0).map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        {reportData.distributionData.filter(d => d.value > 0).map((entry) => (
+                                            <Cell key={`cell-${entry.name}`} fill={entry.color} />
                                         ))}
                                     </Pie>
                                     <Tooltip formatter={(value, name) => [`${value} tasks`, name]} />
