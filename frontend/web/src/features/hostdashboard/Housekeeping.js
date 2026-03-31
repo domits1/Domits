@@ -196,9 +196,12 @@ const HostPropertyCare = () => {
             if (timeView === 'Daily') {
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             }
-            const d = new Date(date);
-            d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const monday = new Date(date);
+            monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${fmt(monday)} – ${fmt(sunday)}`;
         };
 
         const timeMap = {};
@@ -574,6 +577,11 @@ const HostPropertyCare = () => {
 
     const createPropertyOptions = useMemo(() => propertyOptions, [propertyOptions]);
 
+    const assigneeOptions = useMemo(() => {
+        const set = new Set(tasks.map(t => t.assignee).filter(Boolean));
+        return [...set].sort();
+    }, [tasks]);
+
     const editPropertyOptions = useMemo(() => {
         const currentLabel = String(editedTask?.property || "").trim();
         if (currentLabel && !propertyOptions.some(o => o.label === currentLabel)) {
@@ -653,15 +661,30 @@ const HostPropertyCare = () => {
                 <div className="reports-controls">
                     <div className="reports-filters">
                         {renderCommonFilters()}
-                        <select name="assignee" value={filters.assignee} onChange={handleFilterChange}>
-                            <option value="Anyone">Anyone</option>
-                            <option value="Sophie Janssen">Sophie Janssen</option>
-                        </select>
-                        <select name="date" value={filters.date} onChange={handleFilterChange}>
-                            <option value="Any date">Any date</option>
+                        <select name="status" value={filters.status} onChange={handleFilterChange}>
+                            <option value="All statuses">All statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In progress">In progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Overdue">Overdue</option>
                         </select>
                         <select name="priority" value={filters.priority} onChange={handleFilterChange}>
                             <option value="Any priority">Any priority</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <select name="assignee" value={filters.assignee} onChange={handleFilterChange}>
+                            <option value="Anyone">Anyone</option>
+                            {assigneeOptions.map(a => (
+                                <option key={a} value={a}>{a}</option>
+                            ))}
+                        </select>
+                        <select name="date" value={filters.date} onChange={handleFilterChange}>
+                            <option value="Any date">Any date</option>
+                            <option value="Today">Today</option>
+                            <option value="This Week">This Week</option>
                         </select>
                     </div>
                     <button className="btn-export-green" onClick={handleExportCSV}>↥ Export CSV</button>
@@ -733,13 +756,15 @@ const HostPropertyCare = () => {
                         <h4>Task Distribution</h4>
                         <div style={{ width: '100%', height: 250, display: 'flex', alignItems: 'center' }}>
                             <ResponsiveContainer width="50%" height="100%">
-                                <PieChart>
+                                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                                     <Pie
                                         data={reportData.distributionData.filter(d => d.value > 0)}
-                                        innerRadius={60}
-                                        outerRadius={90}
+                                        innerRadius={55}
+                                        outerRadius={75}
                                         paddingAngle={3}
                                         dataKey="value"
+                                        cx="50%"
+                                        cy="50%"
                                     >
                                         {reportData.distributionData.filter(d => d.value > 0).map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
