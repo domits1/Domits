@@ -122,17 +122,12 @@ const AccommodationCard = ({ accommodation = null, onClick }) => {
               loop
               modules={[EffectFade, Navigation, Pagination]}
               className="mySwiper"
-              onClick={(swiper, e) => e?.stopPropagation()}
             >
               {cardImages.map((imgSrc, index) => (
                 <SwiperSlide key={imgSrc}>
                   <img
                     src={imgSrc}
                     alt={`${propertyTitle} ${index + 1}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCardClick(e, propertyId);
-                    }}
                   />
                 </SwiperSlide>
               ))}
