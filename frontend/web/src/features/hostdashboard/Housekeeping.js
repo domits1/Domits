@@ -204,17 +204,28 @@ const HostPropertyCare = () => {
             return `${fmt(monday)} – ${fmt(sunday)}`;
         };
 
+        const getSortTimestamp = (timestamp) => {
+            if (!timestamp) return 0;
+            const date = new Date(Number(timestamp));
+            if (timeView === 'Daily') return date.getTime();
+            const monday = new Date(date);
+            monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+            monday.setHours(0, 0, 0, 0);
+            return monday.getTime();
+        };
+
         const timeMap = {};
         filtered.forEach(task => {
             const key = getIntervalKey(task.created_at);
+            const sortTs = getSortTimestamp(task.created_at);
             if (!key) return;
-            if (!timeMap[key]) timeMap[key] = { date: key, pending: 0, progress: 0, completed: 0, overdue: 0 };
+            if (!timeMap[key]) timeMap[key] = { date: key, _sort: sortTs, pending: 0, progress: 0, completed: 0, overdue: 0 };
             if (task.status === 'Pending') timeMap[key].pending++;
             else if (task.status === 'In progress') timeMap[key].progress++;
             else if (task.status === 'Completed') timeMap[key].completed++;
             else if (task.status === 'Overdue') timeMap[key].overdue++;
         });
-        const timeData = Object.values(timeMap).sort((a, b) => new Date(a.date) - new Date(b.date));
+        const timeData = Object.values(timeMap).sort((a, b) => a._sort - b._sort);
 
         const propertyMap = {};
         filtered.forEach(task => {
@@ -607,8 +618,13 @@ const HostPropertyCare = () => {
     const handleExportCSV = () => {
         const lines = [];
 
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '-');
+        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/:/g, '-');
+        const timeDisplay = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
         lines.push('TASK REPORT SUMMARY');
-        lines.push(`Generated,${new Date().toLocaleDateString()}`);
+        lines.push(`Generated,${now.toLocaleDateString('en-GB')} ${timeDisplay}`);
         lines.push('');
         lines.push('KPI METRICS');
         lines.push(`Completion Rate,${reportData.completionRate}%`);
@@ -649,7 +665,7 @@ const HostPropertyCare = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'tasks-report.csv';
+        a.download = `tasks-report_${dateStr}_${timeStr}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };
