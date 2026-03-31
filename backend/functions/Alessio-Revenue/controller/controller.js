@@ -32,8 +32,6 @@ export default class Controller {
         body: JSON.stringify({ [metric]: result }),
       };
     } catch (error) {
-      console.error("[RMS][CONTROLLER_ERROR]", error?.message);
-
       return {
         statusCode: error.statusCode || 500,
         headers: responseHeaders,

@@ -10,6 +10,7 @@ import CreditCardIcon from "@mui/icons-material/AccountBalanceWallet";
 // import PriceChangeIcon from "@mui/icons-material/PriceChange";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
+import LanguageIcon from "@mui/icons-material/Language";
 import SettingsIcon from "@mui/icons-material/Settings";
 
 const NAV = [
@@ -23,10 +24,10 @@ const NAV = [
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
 
-  // ✅ undo the comment if working on it
   // { key: "Pricing", label: "Pricing", icon: <PriceChangeIcon />, to: "pricing" },
 
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
+  // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
 ];
 
