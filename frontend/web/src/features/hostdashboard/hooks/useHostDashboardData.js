@@ -7,6 +7,10 @@ import getReservationsFromToken from "../services/getReservationsFromToken";
 import { fetchTasks } from "../services/taskService";
 import { getAccessToken } from "../../../services/getAccessToken";
 import useFetchContacts from "../hostmessages/hooks/useFetchContacts";
+import {
+  fetchUserProfileById,
+  getEmptyUserProfile,
+} from "../services/fetchUserProfileById";
 
 const INITIAL_DATA = {
   hostName: "Host",
@@ -92,9 +96,9 @@ const formatReservationDateRange = (arrivalDate, departureDate) => {
 const humanizeStatus = (value) =>
   String(value || "Upcoming")
     .replaceAll(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
+    .replaceAll(/\s+/g, " ")
     .trim()
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+    .replaceAll(/\b\w/g, (character) => character.toUpperCase());
 
 const getReservationStatus = (reservation, today) => {
   if (isSameDay(reservation.arrivalDate, today)) {
@@ -143,6 +147,13 @@ const flattenBookingsPayload = (payload) => {
       return {
         id: reservationId,
         propertyId,
+        guestId:
+          reservation?.guestid ||
+          reservation?.guestId ||
+          reservation?.guest_id ||
+          reservation?.userId ||
+          reservation?.user_id ||
+          null,
         guest: String(reservation?.guestname || reservation?.guestName || "Guest").trim(),
         avatar: null,
         property: String(property?.title || reservation?.propertyTitle || "Untitled property").trim(),
@@ -154,6 +165,33 @@ const flattenBookingsPayload = (payload) => {
         statusRaw: reservation?.status,
       };
     });
+  });
+};
+
+const enrichReservationsWithGuestProfiles = async (reservations) => {
+  const safeReservations = Array.isArray(reservations) ? reservations : [];
+  const uniqueGuestIds = [...new Set(safeReservations.map((reservation) => reservation?.guestId).filter(Boolean))];
+
+  if (uniqueGuestIds.length === 0) {
+    return safeReservations;
+  }
+
+  const profileEntries = await Promise.all(
+    uniqueGuestIds.map(async (guestId) => {
+      const profile = await fetchUserProfileById(guestId);
+      return [guestId, profile || getEmptyUserProfile(guestId)];
+    })
+  );
+
+  const profileMap = new Map(profileEntries);
+
+  return safeReservations.map((reservation) => {
+    const guestProfile = profileMap.get(reservation?.guestId);
+
+    return {
+      ...reservation,
+      avatar: guestProfile?.profileImage || null,
+    };
   });
 };
 
@@ -214,6 +252,7 @@ const buildRecentMessages = (contacts) =>
       return {
         id: contact?.threadId || contact?.partnerId || contact?.userId || contact?.recipientId || contact?.givenName,
         name: contact?.givenName || contact?.name || "Guest",
+        avatar: contact?.profileImage || null,
         text: String(contact?.latestMessage?.text || "No message preview available").trim(),
         time: isValidDate(createdAt) ? formatMessageTime(createdAt) : "",
       };
@@ -361,7 +400,7 @@ export default function useHostDashboardData() {
 
         const today = startOfDay(new Date());
         const normalizedReservations =
-          bookingsPayload === "Data not found" ? [] : flattenBookingsPayload(bookingsPayload);
+          bookingsPayload === "Data not found" ? [] : await enrichReservationsWithGuestProfiles(flattenBookingsPayload(bookingsPayload));
         const upcomingReservations = buildUpcomingReservations(normalizedReservations, today);
         const arrivals = buildArrivalDepartureItems(normalizedReservations, "arrivalDate", today, "Arriving today");
         const departures = buildArrivalDepartureItems(
@@ -501,16 +540,18 @@ export default function useHostDashboardData() {
     }));
   }, [contacts, contactsLoading, hostId, recentMessages]);
 
+  const isMessagesLoading = loadingState.identity || hostId === null || contactsLoading;
+
   const sectionLoading = {
     stats: loadingState.identity || loadingState.stats,
     reservations: loadingState.identity || loadingState.reservations,
     arrivals: loadingState.identity || loadingState.arrivals,
     tasks: loadingState.identity || loadingState.tasks,
-    messages: loadingState.identity || (!hostId ? true : contactsLoading),
+    messages: isMessagesLoading,
     today: {
       checkins: loadingState.identity || loadingState.reservations,
       checkouts: loadingState.identity || loadingState.reservations,
-      messages: loadingState.identity || (!hostId ? true : contactsLoading),
+      messages: isMessagesLoading,
       tasks: loadingState.identity || loadingState.tasks,
     },
   };

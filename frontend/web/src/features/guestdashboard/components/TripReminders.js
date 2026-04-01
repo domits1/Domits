@@ -23,8 +23,8 @@ function TripReminders({ reminders = [] }) {
       {reminders.length === 0 ? (
         <p>No active trips yet</p>
       ) : (
-        reminders.map((item, i) => (
-          <ReminderItem key={i} text={item} />
+        reminders.map((item) => (
+          <ReminderItem key={item} text={item} />
         ))
       )}
     </div>

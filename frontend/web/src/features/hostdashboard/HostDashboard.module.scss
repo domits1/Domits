@@ -288,6 +288,13 @@
   color: #000;
 }
 
+.messageMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
 .messageItem strong {
   display: block;
   margin-bottom: 4px;
@@ -437,6 +444,10 @@
   .messageItem {
     flex-direction: column;
     gap: 8px;
+  }
+
+  .messageMain {
+    width: 100%;
   }
 
   .messageTime {
