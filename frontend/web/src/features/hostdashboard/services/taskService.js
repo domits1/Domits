@@ -22,6 +22,7 @@ const normalizeTask = (task) => ({
     property: task.property_snapshot_label || "",
     assignee: task.assignee_name || "",
     dueDate: toDateString(task.due_date),
+    completedAt: toDateString(task.completed_date),
     isLegacy: task.is_legacy,
 });
 

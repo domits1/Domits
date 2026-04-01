@@ -1,0 +1,644 @@
+.templateGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  justify-content: stretch;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.templateCard {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  justify-items: center;
+  align-content: start;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  min-height: 412px;
+  align-self: stretch;
+  padding: 16px 16px 18px;
+  min-width: 0;
+  border: 1px solid #d9e3ef;
+  border-radius: 24px;
+  background: #ffffff;
+  box-sizing: border-box;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+}
+
+.templateCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.09);
+}
+
+.templateCardSelected {
+  border-color: rgba(31, 78, 121, 0.5);
+  background:
+    linear-gradient(180deg, rgba(238, 245, 252, 0.98), rgba(228, 237, 248, 0.96)),
+    #ffffff;
+  box-shadow:
+    0 20px 36px rgba(15, 23, 42, 0.1),
+    0 0 0 3px rgba(31, 78, 121, 0.16);
+}
+
+.templateRadio {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid #bfd0e0;
+  background: #ffffff;
+  overflow: visible;
+}
+
+.templateCardSelected .templateRadio {
+  border-color: #1f4e79;
+}
+
+.templateCardSelected .templateRadio::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 2px solid rgba(31, 78, 121, 0.34);
+  transform-origin: center;
+  animation: templateRadioPulse 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+.templateRadioDot {
+  position: relative;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.templateCardSelected .templateRadioDot {
+  background: #1f4e79;
+}
+
+.templatePreviewShell {
+  --template-canvas-base-width: 188px;
+  --template-canvas-scale: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 226px);
+  min-width: 0;
+  max-width: 100%;
+  justify-self: center;
+  aspect-ratio: 214 / 258;
+  padding: 18px 14px 16px;
+  border-radius: 22px;
+  border: 1px solid #e5edf5;
+  background:
+      linear-gradient(180deg, rgba(246, 250, 255, 0.95), rgba(255, 255, 255, 0.9)),
+      #ffffff;
+  box-sizing: border-box;
+}
+
+.templateCanvasViewport {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, var(--template-canvas-base-width));
+  aspect-ratio: 178 / 230;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.templateCardSelected .templatePreviewShell {
+  background:
+    linear-gradient(180deg, rgba(233, 241, 250, 0.97), rgba(244, 248, 253, 0.95)),
+    #ffffff;
+}
+
+.templateCanvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  aspect-ratio: 178 / 230;
+  width: var(--template-canvas-base-width);
+  min-width: var(--template-canvas-base-width);
+  max-width: none;
+  margin-inline: 0;
+  border-radius: 18px;
+  border: 1px solid rgba(115, 147, 179, 0.22);
+  background:
+      radial-gradient(circle at top left, rgba(115, 147, 179, 0.12), transparent 42%),
+      linear-gradient(180deg, #fbfdfd, #ffffff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  box-sizing: border-box;
+  overflow: hidden;
+  isolation: isolate;
+  transform-origin: center center;
+  transform: translate(-50%, -50%) scale(var(--template-canvas-scale));
+}
+
+.templateCanvas > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.templateCanvasPanorama {
+  justify-self: center;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+}
+
+.templateCanvasTrustSignals .templateHeroBand {
+  min-height: 60px;
+}
+
+.templateCanvasTrustSignals {
+  justify-self: center;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 8px;
+}
+
+.templateCanvasTrustSignals .templateTrustStack {
+  gap: 8px;
+}
+
+.templateCanvasTrustSignals .templateTrustCard {
+  gap: 5px;
+  padding: 8px;
+}
+
+.templateCanvasTrustSignals .templateTrustMeta {
+  gap: 5px;
+}
+
+.templateCanvasFeatureStack .templateHeroBand {
+  min-height: 72px;
+}
+
+.templateCanvasExperienceJourney {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.templateCanvasAmenitiesSpotlight .templateAmenitiesVisual {
+  min-height: 118px;
+}
+
+.templateCanvasAmenitiesSpotlight {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.templateCanvasEditorial .templateEditorialVisual {
+  min-height: 120px;
+}
+
+.templateCanvasEditorial {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.templateCanvasGalleryGrid .templateGalleryVisual {
+  min-height: 58px;
+}
+
+.templateCanvasContactFocus .templateContactPanel {
+  min-height: 92px;
+  align-content: start;
+}
+
+.templateCanvasContactFocus {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.templateCanvasQuoteSpotlight .templateHeroBand {
+  min-height: 58px;
+}
+
+.templateCanvasQuoteSpotlight {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.templateCanvasLocalGuide .templateHeroBand {
+  min-height: 56px;
+}
+
+.templateCanvasLocalGuide {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.templateChrome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.templateBrandMark,
+.templateTinyLine,
+.templateLineWide,
+.templateLineShort,
+.templateButtonStub {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(160, 197, 122, 0.88), rgba(207, 229, 176, 0.82));
+}
+
+.templateBrandMark {
+  width: 54px;
+  height: 7px;
+}
+
+.templateNavDots {
+  display: flex;
+  gap: 6px;
+}
+
+.templateNavDots span,
+.templateTinyLine {
+  width: 26px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(167, 197, 132, 0.55);
+}
+
+.templateRightMeta {
+  display: flex;
+  gap: 8px;
+}
+
+.templateHeroBand,
+.templateEditorialVisual,
+.templateGalleryVisual {
+  border-radius: 16px;
+  background:
+      linear-gradient(135deg, rgba(183, 212, 132, 0.92), rgba(224, 239, 186, 0.8)),
+      linear-gradient(45deg, rgba(120, 158, 82, 0.12), rgba(255, 255, 255, 0.1));
+}
+
+.templateAmenitiesVisual,
+.templateJourneyVisual,
+.templateLocalGuideVisual {
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(183, 212, 132, 0.92), rgba(224, 239, 186, 0.8)),
+    linear-gradient(45deg, rgba(120, 158, 82, 0.12), rgba(255, 255, 255, 0.1));
+}
+
+.templateHeroBand {
+  min-height: 84px;
+}
+
+.templateSearchStub {
+  justify-self: center;
+  width: 50%;
+  max-width: 180px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 18px rgba(143, 170, 113, 0.2);
+  margin-top: -18px;
+}
+
+.templateFeatureRow,
+.templateFeatureStackRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  min-height: 0;
+}
+
+.templateFeatureCard,
+.templateFeatureStackCard,
+.templateContactPanel {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 10px;
+  min-width: 0;
+  border-radius: 14px;
+  background: rgba(247, 252, 240, 0.82);
+  box-sizing: border-box;
+}
+
+.templateMiniIcon {
+  width: clamp(12px, 62%, 28px);
+  aspect-ratio: 1 / 1;
+  height: auto;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(164, 195, 125, 0.92), rgba(206, 228, 179, 0.88));
+}
+
+.templateLineWide {
+  width: 100%;
+  height: 6px;
+}
+
+.templateLineShort {
+  width: 68%;
+  height: 6px;
+}
+
+.templateButtonStub {
+  width: 86px;
+  height: 16px;
+}
+
+.templateEditorialBody,
+.templateQuoteSpotlightBody,
+.templateContactColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.templateTrustStack,
+.templateJourneyStack {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+}
+
+.templateTrustCard,
+.templateAmenityRow,
+.templateAmenityPill {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  min-width: 0;
+  border-radius: 14px;
+  background: rgba(247, 252, 240, 0.82);
+  box-sizing: border-box;
+}
+
+.templateTrustMeta,
+.templateLocalGuideFooter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.templateJourneyStop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.templateJourneyStopReverse {
+  grid-template-columns: 52px minmax(0, 1fr);
+}
+
+.templateJourneyCopy,
+.templateLocalGuideCopy {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.templateJourneyVisual {
+  width: 100%;
+  max-width: 100%;
+  min-height: 52px;
+  box-sizing: border-box;
+}
+
+.templateAmenitiesHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 12px;
+  align-items: stretch;
+  min-height: 0;
+  min-width: 0;
+}
+
+.templateAmenitiesList {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.templateAmenitiesFooter {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.templateEditorialCopy {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.templateQuoteCopy {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.templateEditorialVisual {
+  min-height: 98px;
+}
+
+.templateQuotePanel {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 8px;
+  padding: 12px 10px;
+  border-radius: 16px;
+  background: rgba(247, 252, 240, 0.88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.templateQuoteSignalGroup {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  min-width: 0;
+  gap: 6px;
+}
+
+.templateCanvasQuoteSpotlight .templateQuoteSignalGroup .templateTinyLine {
+  width: 100%;
+  max-width: none;
+}
+
+.templateCanvasQuoteSpotlight .templateQuotePanel .templateLineWide,
+.templateCanvasQuoteSpotlight .templateQuotePanel .templateLineShort {
+  max-width: 100%;
+}
+
+.templateCanvasQuoteSpotlight .templateQuotePanel .templateButtonStub {
+  width: min(100%, 86px);
+}
+
+.templateLocalGuideBody {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 0;
+  min-width: 0;
+}
+
+.templateLocalGuideVisual {
+  width: 100%;
+  max-width: 100%;
+  min-height: 74px;
+  box-sizing: border-box;
+}
+
+.templateEditorialFooter,
+.templateContactFooter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.templateGalleryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.templateGalleryTile {
+  display: grid;
+  gap: 8px;
+}
+
+.templateGalleryVisual {
+  min-height: 52px;
+}
+
+.templateCardContent {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding-inline: 2px;
+  box-sizing: border-box;
+}
+
+.templateCardHeader {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: calc(1.25em * 2);
+}
+
+.templateName {
+  display: -webkit-box;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+  width: 100%;
+  min-height: calc(1.25em * 2);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+}
+
+.templateSelectedTag {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.34rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 78, 121, 0.18);
+  background: rgba(233, 241, 250, 0.96);
+  color: #0f172a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  pointer-events: none;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+.templateDescription {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  width: 100%;
+  max-width: none;
+  min-height: calc(1.6em * 4);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  line-clamp: 4;
+  -webkit-line-clamp: 4;
+}
+
+.templateSelectionState {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(31, 78, 121, 0.14);
+  background: #f8fbff;
+}
+
+.templateSelectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+}
+
+.templateSelectionCopy {
+  display: grid;
+  gap: 8px;
+}
+
+.templateCanvasPanorama .templateFeatureRow,
+.templateCanvasFeatureStack .templateFeatureStackRow,
+.templateCanvasTrustSignals .templateTrustStack,
+.templateCanvasExperienceJourney .templateJourneyStack,
+.templateCanvasAmenitiesSpotlight .templateAmenitiesHero,
+.templateCanvasEditorial .templateEditorialBody,
+.templateCanvasQuoteSpotlight .templateQuoteSpotlightBody,
+.templateCanvasContactFocus .templateContactColumns,
+.templateCanvasLocalGuide .templateLocalGuideBody {
+  height: 100%;
+}
+
+.templateCanvasPanorama .templateFeatureCard,
+.templateCanvasFeatureStack .templateFeatureStackCard,
+.templateCanvasTrustSignals .templateTrustCard,
+.templateCanvasContactFocus .templateContactPanel {
+  height: 100%;
+}
+
+.templateCanvasTrustSignals .templateTrustStack,
+.templateCanvasExperienceJourney .templateJourneyStack {
+  grid-auto-rows: 1fr;
+}

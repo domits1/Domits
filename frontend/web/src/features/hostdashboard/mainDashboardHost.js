@@ -10,6 +10,7 @@ import HostPropertyCare from "./Housekeeping";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 // import HostPricing from "./hostpricing/views/HostPricing";
 import HostListings from "./HostListings";
+import WebsiteBuilderPage from "./website/WebsiteBuilderPage";
 import HostSettings from "./HostSettings";
 import HostProperty from "./HostProperty";
 
@@ -113,10 +114,10 @@ function MainDashboardHost() {
 
           <Route path="finance" element={<HostFinanceTab />} />
 
-          {/* ✅ Hide Pricing route */}
           {/* <Route path="pricing" element={<HostPricing />} /> */}
 
           <Route path="listings" element={<HostListings />} />
+          <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="property" element={<HostProperty />} />
           <Route path="settings" element={<HostSettings />} />
 
