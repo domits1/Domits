@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
+import IosShareIcon from "@mui/icons-material/IosShare";
 import {
   resolveAccommodationImageUrl,
   resolveAccommodationImageKey,
 } from "../../../../utils/accommodationImage";
+import ShareModal from "../../components/ShareModal";
 
-const ImageGallery = ({ images }) => {
+const ImageGallery = ({ images, propertyTitle }) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const main = images[0];
   const thumbs = images.slice(1, 5);
@@ -15,6 +18,11 @@ const ImageGallery = ({ images }) => {
   const toMainSrc = (image) => resolveAccommodationImageUrl(image, "web");
   const toThumbSrc = (image) => resolveAccommodationImageUrl(image, "thumb");
   const getImageAltText = (index) => `Accommodation image ${index + 1}`;
+
+  const openOverlayAtIndex = (index) => {
+    setActiveIndex(index);
+    setShowOverlay(true);
+  };
 
   const nextImage = () => {
     setActiveIndex((prev) => (prev + 1) % images.length);
@@ -28,42 +36,68 @@ const ImageGallery = ({ images }) => {
     <section className="image-section">
       <div className="image-gallery">
         {main && (
-          <img
-            className="main-image"
-            src={toMainSrc(main)}
-            alt={getImageAltText(0)}
-            onClick={() => {
-              setActiveIndex(0);
-              setShowOverlay(true);
-            }}
-          />
+          <div className="main-image-wrapper">
+            <button
+              type="button"
+              className="image-button main-image-button"
+              onClick={() => openOverlayAtIndex(0)}
+              aria-label="Open image 1"
+            >
+              <img
+                className="main-image"
+                src={toMainSrc(main)}
+                alt={getImageAltText(0)}
+              />
+            </button>
+
+            <button
+              type="button"
+              className="gallery-share-btn"
+              onClick={() => setShowShareModal(true)}
+              aria-label="Share property"
+            >
+              <IosShareIcon fontSize="small" />
+            </button>
+          </div>
         )}
 
-        {/* THUMBNAILS */}
         <div className="small-images-container">
           {thumbs.map((img, index) => (
-            <img
+            <button
+              type="button"
               key={resolveAccommodationImageKey(img, "web") || index}
-              className="small-image"
-              src={toMainSrc(img)}
-              alt={getImageAltText(index + 1)}
-              onClick={() => {
-                setActiveIndex(index + 1);
-                setShowOverlay(true);
-              }}
-            />
+              className="image-button small-image-button"
+              onClick={() => openOverlayAtIndex(index + 1)}
+              aria-label={`Open image ${index + 2}`}
+            >
+              <img
+                className="small-image"
+                src={toMainSrc(img)}
+                alt={getImageAltText(index + 1)}
+              />
+            </button>
           ))}
         </div>
       </div>
 
       {showOverlay && (
         <div className="image-overlay">
-          <button className="close-overlay-button" onClick={() => setShowOverlay(false)}>
+          <button
+            type="button"
+            className="close-overlay-button"
+            onClick={() => setShowOverlay(false)}
+            aria-label="Close image gallery"
+          >
             ×
           </button>
 
           <div className="overlay-center-wrapper">
-            <button className="nav-button left" onClick={prevImage}>
+            <button
+              type="button"
+              className="nav-button left"
+              onClick={prevImage}
+              aria-label="Previous image"
+            >
               ‹
             </button>
 
@@ -73,23 +107,42 @@ const ImageGallery = ({ images }) => {
               alt={getImageAltText(activeIndex)}
             />
 
-            <button className="nav-button right" onClick={nextImage}>
+            <button
+              type="button"
+              className="nav-button right"
+              onClick={nextImage}
+              aria-label="Next image"
+            >
               ›
             </button>
           </div>
 
           <div className="overlay-thumbnails">
             {images.map((img, index) => (
-              <img
+              <button
+                type="button"
                 key={resolveAccommodationImageKey(img, "web") || index}
-                className={`thumb ${index === activeIndex ? "active" : ""}`}
-                src={toThumbSrc(img)}
-                alt={getImageAltText(index)}
+                className={`thumb-button ${index === activeIndex ? "active" : ""}`}
                 onClick={() => setActiveIndex(index)}
-              />
+                aria-label={`Show image ${index + 1}`}
+              >
+                <img
+                  className={`thumb ${index === activeIndex ? "active" : ""}`}
+                  src={toThumbSrc(img)}
+                  alt={getImageAltText(index)}
+                />
+              </button>
             ))}
           </div>
         </div>
+      )}
+
+      {showShareModal && (
+        <ShareModal
+          url={globalThis.location.href}
+          title={propertyTitle}
+          onClose={() => setShowShareModal(false)}
+        />
       )}
     </section>
   );
@@ -97,6 +150,7 @@ const ImageGallery = ({ images }) => {
 
 ImageGallery.propTypes = {
   images: PropTypes.array.isRequired,
+  propertyTitle: PropTypes.string,
 };
 
 export default ImageGallery;

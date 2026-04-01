@@ -29,7 +29,7 @@ const PropertyContainer = ({
   return (
     <div className="property-container">
       <section id="listing-photos" className="listing-section-block listing-section-block--photos">
-        <ImageGallery images={property.images} />
+        <ImageGallery images={property.images} propertyTitle={property?.property?.title} />
         <PricingPerNight pricing={property.pricing} />
         <GeneralDetails generalDetails={property.generalDetails} />
       </section>
