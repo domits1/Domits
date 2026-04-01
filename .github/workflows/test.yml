@@ -87,11 +87,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'eu-north-1' }}
 
-      # Run all tests in the project
+      # Run all tests in the project (excluding end-to-end tests that require live DB)
       - name: Execute test suite
         run: |
           cd backend
-          npm run test
+          npm run test -- --testPathIgnorePatterns="test/PropertyHandler/end-to-end.test.js"
 
   validate-lambda-functions:
     name: Validate AWS Lambda Functions
