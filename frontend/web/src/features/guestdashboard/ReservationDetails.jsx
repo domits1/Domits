@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../../styles/sass/features/guestdashboard/guestReservationDetail.scss";
 import "../../styles/sass/features/guestdashboard/mainDashboardGuest.scss";
 
@@ -12,7 +12,6 @@ import BookingDetails from "./components/BookingDetails";
 import mockReservationDetails from "./utils/mockReservationDetails";
 
 function ReservationDetails() {
-  const { id } = useParams();
   const navigate = useNavigate();
 
   // For now using mock (later replace with API)

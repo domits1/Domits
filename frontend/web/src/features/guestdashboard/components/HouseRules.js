@@ -1,14 +1,26 @@
 import React from "react";
 import PropTypes from "prop-types";
 
+const buildRuleKey = (() => {
+  const separator = "::";
+
+  return (rule, counts) => {
+    const nextCount = (counts.get(rule) || 0) + 1;
+    counts.set(rule, nextCount);
+    return `${rule}${separator}${nextCount}`;
+  };
+})();
+
 function HouseRules({ rules, cancellationPolicy }) {
+  const ruleCounts = new Map();
+
   return (
     <div className="card">
       <h3>House rules</h3>
 
       <div className="rulesList">
-        {rules.map((rule, index) => (
-          <div key={index} className="ruleItem">
+        {rules.map((rule) => (
+          <div key={buildRuleKey(rule, ruleCounts)} className="ruleItem">
             <span className="ruleItemIcon">🚫</span>
             <span>{rule}</span>
           </div>
@@ -17,9 +29,9 @@ function HouseRules({ rules, cancellationPolicy }) {
 
       {cancellationPolicy && (
         <div className="policyBlock">
-            <h3>Cancellation Policy</h3>
-            <span className="policyTag">{cancellationPolicy.type}</span>
-            <span>{cancellationPolicy.description}</span>
+          <h3>Cancellation Policy</h3>
+          <span className="policyTag">{cancellationPolicy.type}</span>
+          <span>{cancellationPolicy.description}</span>
         </div>
       )}
     </div>

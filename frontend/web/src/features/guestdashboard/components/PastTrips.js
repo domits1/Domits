@@ -34,12 +34,13 @@ function PastTrips({ stays = [] }) {
     <div className="card">
       <div className="cardHeader">
         <h2>Past trips</h2>
-        <span
+        <button
+          type="button"
           className="viewAll"
           onClick={() => navigate("/guestdashboard/bookings")}
         >
           View All &gt;
-        </span>
+        </button>
       </div>
 
       <div className="pastList">

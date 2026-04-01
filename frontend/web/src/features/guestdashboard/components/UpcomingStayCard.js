@@ -13,12 +13,13 @@ function UpcomingStayCard({ stay }) {
     <div className="card upcomingCard">
       <div className="cardHeader">
         <h2>Your upcoming stay</h2>
-        <span
+        <button
+          type="button"
           className="viewAll"
           onClick={() => navigate("/guestdashboard/bookings")}
         >
           View All &gt;
-        </span>
+        </button>
       </div>
 
       <div className="stayInnerCard">

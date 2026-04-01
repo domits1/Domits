@@ -28,11 +28,14 @@ h1{
 }
 
 .viewAll {
-  color: #16a34a;
-  background-color: white;
-  border: #ffffff;
+  font-family: inherit;
+  color: #166534;
+  background: none;
+  border: 0;
+  padding: 0;
   font-size: 14px;
   font-weight: 500;
+  line-height: 1.2;
   margin-bottom: 12px;
   display: inline-block;
   cursor: pointer;
@@ -135,8 +138,8 @@ h1{
 .value {
   display: flex;
   flex-direction: column;
-  font-weight: 580;
-  font-size: 12px;
+  font-weight: 600;
+  font-size: 18px;
 }
 
 .time, .guestCount {
@@ -161,23 +164,13 @@ h1{
 .reservationIdRow {
   font-size: 14px;
   font-weight: 500;
-  color: #313135;
-}
-
-.value {
-  font-weight: 600;
-  font-size: 18px;
+  color: #6b7280;
 }
 
 .divider {
   width: 1px;
   height: 30px;
   background: #e5e7eb;
-}
-
-.reservationIdRow {
-  font-size: 14px;
-  color: #6b7280;
 }
 
 /* ---------------- CHECK-IN INSTRUCTIONS ---------------- */
@@ -299,7 +292,7 @@ h1{
 /* BUTTON */
 .primaryBtn {
   width: 100%;
-  background: #16a34a;
+  background: #166534;
   color: white;
   border: none;
   padding: 12px;
@@ -310,5 +303,11 @@ h1{
 }
 
 .primaryBtn:hover {
-  background: #15803d;
+  background: #14532d;
+}
+
+.viewAll:focus-visible,
+.primaryBtn:focus-visible {
+  outline: 2px solid #166534;
+  outline-offset: 2px;
 }

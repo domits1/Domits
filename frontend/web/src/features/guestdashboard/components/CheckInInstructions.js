@@ -1,7 +1,19 @@
 import React from "react";
 import PropTypes from "prop-types";
 
+const buildInstructionKey = (() => {
+  const separator = "::";
+
+  return (instruction, counts) => {
+    const nextCount = (counts.get(instruction) || 0) + 1;
+    counts.set(instruction, nextCount);
+    return `${instruction}${separator}${nextCount}`;
+  };
+})();
+
 function CheckInInstructions({ address, instructions }) {
+  const instructionCounts = new Map();
+
   return (
     <div className="card">
       <h3>Check-in instructions</h3>
@@ -11,8 +23,8 @@ function CheckInInstructions({ address, instructions }) {
       </p>
 
       <ul>
-        {instructions.map((instruction, index) => (
-          <li key={index}>{instruction}</li>
+        {instructions.map((instruction) => (
+          <li key={buildInstructionKey(instruction, instructionCounts)}>{instruction}</li>
         ))}
       </ul>
 
