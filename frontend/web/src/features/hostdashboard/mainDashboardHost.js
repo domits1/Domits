@@ -109,12 +109,6 @@ function MainDashboardHost() {
           <Route path="housekeeping" element={<Navigate to="../tasks" replace />} />
 
           <Route path="finance" element={<HostFinanceTab />} />
-<<<<<<< feature/whatsapp-unified-inbox
-=======
-
-          {/* <Route path="pricing" element={<HostPricing />} /> */}
-
->>>>>>> acceptance
           <Route path="listings" element={<HostListings />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="property" element={<HostProperty />} />

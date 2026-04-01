@@ -28,12 +28,6 @@ const NAV = [
   { key: "Revenues", label: "Revenues", icon: <ShowChartIcon />, to: "revenues" },
   { key: "Tasks", label: "Tasks", icon: <CleaningServicesIcon />, to: "tasks" },
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
-<<<<<<< feature/whatsapp-unified-inbox
-=======
-
-  // { key: "Pricing", label: "Pricing", icon: <PriceChangeIcon />, to: "pricing" },
-
->>>>>>> acceptance
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
   // { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   { key: "Settings", label: "Settings", icon: <SettingsIcon />, to: "settings" },
