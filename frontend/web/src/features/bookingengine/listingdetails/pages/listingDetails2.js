@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import Loading from "../../../hostdashboard/Loading";
 import FetchPropertyById from "../services/fetchPropertyById";
 import fetchHostInfo from "../services/fetchHostInfo";
+import fetchPropertyPolicies from "../services/fetchPropertyPolicies";
 import Header from "../components/header";
 import SectionTabs from "../components/sectionTabs";
 import PropertyContainer from "../views/propertyContainer";
@@ -161,35 +162,18 @@ const ListingDetails2 = () => {
 
     const loadData = async () => {
       try {
-        const [fetchedProperty, acceptedBookings] = await Promise.all([
+        const [fetchedProperty, acceptedBookings, policies] = await Promise.all([
           FetchPropertyById(id),
           fetchAcceptedBookingsByPropertyId(id).catch(() => []),
+          fetchPropertyPolicies(id).catch(() => ({})),
         ]);
-        setProperty(fetchedProperty);
-        // TEMPORARY
-        const mockProperty = {
+
+        const propertyWithPolicies = {
           ...fetchedProperty,
-          cancellationPolicy: "flexible",
-          childrenAllowed: true,
-          smokingAllowed: false,
-          petsAllowed: true,
-          partiesAllowed: false,
-          quietHours: "22:00 – 08:00",
-          maxGuests: 6,
-          cookingAllowed: true,
-          parkingAvailable: true,
-          customRules: ["No shoes indoors", "Turn off AC when leaving"],
-          smokeDetector: true,
-          carbonMonoxideDetector: true,
-          fireExtinguisher: true,
-          firstAidKit: false,
-          checkInTime: "15:00",
-          checkOutTime: "11:00",
-          lateCheckIn: "Available until 23:00",
-          lateCheckOut: "Upon request",
-          preparationTime: "1 hour between bookings",
+          ...policies,
         };
-        setProperty(mockProperty);
+
+        setProperty(propertyWithPolicies);
         setAcceptedBookingDateKeys(buildAcceptedBookingDateKeys(acceptedBookings));
 
         const hostData = await fetchHostInfo(fetchedProperty?.property?.hostId);

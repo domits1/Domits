@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "../../HostProperty.module.css";
 import arrowDownIcon from "../../../../images/arrow-down-icon.svg";
@@ -911,48 +911,60 @@ function HostPropertyPricingTab({ pricingForm, setPricingForm }) {
   );
 }
 
-export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule, handleDeletePropertyClick, saving }) {
-  const [selectedPolicy, setSelectedPolicy] = useState("flexible");
-  const [expandedPolicy, setExpandedPolicy] = useState("flexible");
-
-  const [checkinTime, setCheckinTime] = useState("15:00");
-  const [checkoutTime, setCheckoutTime] = useState("11:00");
-  const [lateCheckinEnabled, setLateCheckinEnabled] = useState(false);
-  const [lateCheckinTime, setLateCheckinTime] = useState("20:00");
-  const [lateCheckoutEnabled, setLateCheckoutEnabled] = useState(false);
-  const [advanceNotice, setAdvanceNotice] = useState("1 day");
-  const [prepTime, setPrepTime] = useState("1 day");
-
-  const [houseRules, setHouseRules] = useState({
-    childrenAllowed: false,
-    smokingAllowed: false,
-    petsAllowed: true,
-    maxGuests: 4,
-    partiesAllowed: false,
-    quietHours: "11:00",
-  });
-
-  const [propertyRules, setPropertyRules] = useState({
-    cookingAllowed: false,
-    parkingAvailable: false,
-  });
-  const [customPropertyRules, setCustomPropertyRules] = useState([]);
+export default function HostPropertyPoliciesTab({
+  policyRules,
+  updatePolicyRule,
+  handleDeletePropertyClick,
+  saving,
+  checkinTime,
+  setCheckinTime,
+  checkoutTime,
+  setCheckoutTime,
+  lateCheckinEnabled,
+  setLateCheckinEnabled,
+  lateCheckinTime,
+  setLateCheckinTime,
+  lateCheckoutEnabled,
+  setLateCheckoutEnabled,
+  lateCheckoutTime,
+  setLateCheckoutTime,
+  houseRules,
+  setHouseRules,
+  updateHouseRule,
+  propertyRules,
+  setPropertyRules,
+  updatePropertyRule,
+  customPropertyRules,
+  setCustomPropertyRules,
+  safetyRules,
+  setSafetyRules,
+  updateSafetyRule,
+  customSafetyRules,
+  setCustomSafetyRules,
+  selectedCancellationPolicy,
+  setSelectedCancellationPolicy,
+}) {
+  const [selectedPolicy, setSelectedPolicy] = useState(selectedCancellationPolicy || "flexible");
+  const [expandedPolicy, setExpandedPolicy] = useState(selectedCancellationPolicy || "flexible");
   const [newPropertyRule, setNewPropertyRule] = useState("");
   const [showPropertyRuleInput, setShowPropertyRuleInput] = useState(false);
-
-  const [safetyRules, setSafetyRules] = useState({
-    smokeDetector: true,
-    carbonMonoxide: true,
-    fireExtinguisher: true,
-    firstAidKit: true,
-  });
-  const [customSafetyRules, setCustomSafetyRules] = useState([]);
   const [newSafetyRule, setNewSafetyRule] = useState("");
   const [showSafetyRuleInput, setShowSafetyRuleInput] = useState(false);
+  const [advanceNotice, setAdvanceNotice] = useState("Same day");
+  const [prepTime, setPrepTime] = useState("None");
+
+  // Sync selected policy with prop
+  useEffect(() => {
+    if (selectedCancellationPolicy && selectedCancellationPolicy !== selectedPolicy) {
+      setSelectedPolicy(selectedCancellationPolicy);
+      setExpandedPolicy(selectedCancellationPolicy);
+    }
+  }, [selectedCancellationPolicy]);
 
   const handleSelectPolicy = (id) => {
     setSelectedPolicy(id);
     setExpandedPolicy(id);
+    setSelectedCancellationPolicy(id);
   };
 
   const toggleExpandPolicy = (id) => {
@@ -1160,29 +1172,26 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
             <span className={styles.ruleToggleLabel}>Children allowed</span>
             <ToggleSwitch
               checked={houseRules.childrenAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, childrenAllowed: val }))}
+              onChange={(val) => updateHouseRule("childrenAllowed", val)}
             />
           </div>
           <div className={styles.ruleToggleRow}>
             <span className={styles.ruleToggleLabel}>Smoking allowed</span>
             <ToggleSwitch
               checked={houseRules.smokingAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, smokingAllowed: val }))}
+              onChange={(val) => updateHouseRule("smokingAllowed", val)}
             />
           </div>
           <div className={styles.ruleToggleRow}>
             <span className={styles.ruleToggleLabel}>Pets allowed</span>
-            <ToggleSwitch
-              checked={houseRules.petsAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, petsAllowed: val }))}
-            />
+            <ToggleSwitch checked={houseRules.petsAllowed} onChange={(val) => updateHouseRule("petsAllowed", val)} />
           </div>
           <div className={styles.ruleToggleRow}>
             <span className={styles.ruleToggleLabel}>Maximum guests</span>
             <select
               className={styles.checkinSelectInline}
               value={houseRules.maxGuests}
-              onChange={(e) => setHouseRules((p) => ({ ...p, maxGuests: e.target.value }))}>
+              onChange={(e) => updateHouseRule("maxGuests", e.target.value)}>
               {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => (
                 <option key={num} value={num}>
                   {num}
@@ -1194,7 +1203,7 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
             <span className={styles.ruleToggleLabel}>Parties / Events allowed</span>
             <ToggleSwitch
               checked={houseRules.partiesAllowed}
-              onChange={(val) => setHouseRules((p) => ({ ...p, partiesAllowed: val }))}
+              onChange={(val) => updateHouseRule("partiesAllowed", val)}
             />
           </div>
           <div className={styles.ruleToggleRow}>
@@ -1202,7 +1211,7 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
             <select
               className={styles.checkinSelectInline}
               value={houseRules.quietHours}
-              onChange={(e) => setHouseRules((p) => ({ ...p, quietHours: e.target.value }))}>
+              onChange={(e) => updateHouseRule("quietHours", e.target.value)}>
               {TIME_OPTIONS.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -1221,14 +1230,14 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
             <span className={styles.ruleToggleLabel}>Cooking allowed</span>
             <ToggleSwitch
               checked={propertyRules.cookingAllowed}
-              onChange={(val) => setPropertyRules((p) => ({ ...p, cookingAllowed: val }))}
+              onChange={(val) => updatePropertyRule("cookingAllowed", val)}
             />
           </div>
           <div className={styles.ruleToggleRow}>
             <span className={styles.ruleToggleLabel}>Parking available</span>
             <ToggleSwitch
               checked={propertyRules.parkingAvailable}
-              onChange={(val) => setPropertyRules((p) => ({ ...p, parkingAvailable: val }))}
+              onChange={(val) => updatePropertyRule("parkingAvailable", val)}
             />
           </div>
 
@@ -1281,29 +1290,26 @@ export default function HostPropertyPoliciesTab({ policyRules, updatePolicyRule,
             <span className={styles.ruleToggleLabel}>Smoke detector</span>
             <ToggleSwitch
               checked={safetyRules.smokeDetector}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, smokeDetector: val }))}
+              onChange={(val) => updateSafetyRule("smokeDetector", val)}
             />
           </div>
           <div className={styles.ruleToggleRow}>
             <span className={styles.ruleToggleLabel}>Carbon monoxide</span>
             <ToggleSwitch
               checked={safetyRules.carbonMonoxide}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, carbonMonoxide: val }))}
+              onChange={(val) => updateSafetyRule("carbonMonoxide", val)}
             />
           </div>
           <div className={styles.ruleToggleRow}>
             <span className={styles.ruleToggleLabel}>Fire extinguisher</span>
             <ToggleSwitch
               checked={safetyRules.fireExtinguisher}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, fireExtinguisher: val }))}
+              onChange={(val) => updateSafetyRule("fireExtinguisher", val)}
             />
           </div>
           <div className={styles.ruleToggleRow}>
             <span className={styles.ruleToggleLabel}>First aid kit</span>
-            <ToggleSwitch
-              checked={safetyRules.firstAidKit}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, firstAidKit: val }))}
-            />
+            <ToggleSwitch checked={safetyRules.firstAidKit} onChange={(val) => updateSafetyRule("firstAidKit", val)} />
           </div>
 
           {customSafetyRules.map((rule) => (
@@ -1411,6 +1417,33 @@ export function HostPropertyTabContent({
   setPricingForm,
   policyRules,
   updatePolicyRule,
+  checkinTime,
+  setCheckinTime,
+  checkoutTime,
+  setCheckoutTime,
+  lateCheckinEnabled,
+  setLateCheckinEnabled,
+  lateCheckinTime,
+  setLateCheckinTime,
+  lateCheckoutEnabled,
+  setLateCheckoutEnabled,
+  lateCheckoutTime,
+  setLateCheckoutTime,
+  houseRules,
+  setHouseRules,
+  updateHouseRule,
+  propertyRules,
+  setPropertyRules,
+  updatePropertyRule,
+  customPropertyRules,
+  setCustomPropertyRules,
+  safetyRules,
+  setSafetyRules,
+  updateSafetyRule,
+  customSafetyRules,
+  setCustomSafetyRules,
+  selectedCancellationPolicy,
+  setSelectedCancellationPolicy,
   handleDeletePropertyClick,
   saving,
 }) {
@@ -1474,6 +1507,33 @@ export function HostPropertyTabContent({
           updatePolicyRule={updatePolicyRule}
           handleDeletePropertyClick={handleDeletePropertyClick}
           saving={saving}
+          checkinTime={checkinTime}
+          setCheckinTime={setCheckinTime}
+          checkoutTime={checkoutTime}
+          setCheckoutTime={setCheckoutTime}
+          lateCheckinEnabled={lateCheckinEnabled}
+          setLateCheckinEnabled={setLateCheckinEnabled}
+          lateCheckinTime={lateCheckinTime}
+          setLateCheckinTime={setLateCheckinTime}
+          lateCheckoutEnabled={lateCheckoutEnabled}
+          setLateCheckoutEnabled={setLateCheckoutEnabled}
+          lateCheckoutTime={lateCheckoutTime}
+          setLateCheckoutTime={setLateCheckoutTime}
+          houseRules={houseRules}
+          setHouseRules={setHouseRules}
+          updateHouseRule={updateHouseRule}
+          propertyRules={propertyRules}
+          setPropertyRules={setPropertyRules}
+          updatePropertyRule={updatePropertyRule}
+          customPropertyRules={customPropertyRules}
+          setCustomPropertyRules={setCustomPropertyRules}
+          safetyRules={safetyRules}
+          setSafetyRules={setSafetyRules}
+          updateSafetyRule={updateSafetyRule}
+          customSafetyRules={customSafetyRules}
+          setCustomSafetyRules={setCustomSafetyRules}
+          selectedCancellationPolicy={selectedCancellationPolicy}
+          setSelectedCancellationPolicy={setSelectedCancellationPolicy}
         />
       );
     default:
@@ -1608,6 +1668,33 @@ HostPropertyPoliciesTab.propTypes = {
   updatePolicyRule: PropTypes.func.isRequired,
   handleDeletePropertyClick: PropTypes.func.isRequired,
   saving: PropTypes.bool.isRequired,
+  checkinTime: PropTypes.string,
+  setCheckinTime: PropTypes.func,
+  checkoutTime: PropTypes.string,
+  setCheckoutTime: PropTypes.func,
+  lateCheckinEnabled: PropTypes.bool,
+  setLateCheckinEnabled: PropTypes.func,
+  lateCheckinTime: PropTypes.string,
+  setLateCheckinTime: PropTypes.func,
+  lateCheckoutEnabled: PropTypes.bool,
+  setLateCheckoutEnabled: PropTypes.func,
+  lateCheckoutTime: PropTypes.string,
+  setLateCheckoutTime: PropTypes.func,
+  houseRules: PropTypes.objectOf(PropTypes.any).isRequired,
+  setHouseRules: PropTypes.func.isRequired,
+  updateHouseRule: PropTypes.func.isRequired,
+  propertyRules: PropTypes.objectOf(PropTypes.any).isRequired,
+  setPropertyRules: PropTypes.func.isRequired,
+  updatePropertyRule: PropTypes.func.isRequired,
+  customPropertyRules: PropTypes.array.isRequired,
+  setCustomPropertyRules: PropTypes.func.isRequired,
+  safetyRules: PropTypes.objectOf(PropTypes.any).isRequired,
+  setSafetyRules: PropTypes.func.isRequired,
+  updateSafetyRule: PropTypes.func.isRequired,
+  customSafetyRules: PropTypes.array.isRequired,
+  setCustomSafetyRules: PropTypes.func.isRequired,
+  selectedCancellationPolicy: PropTypes.string,
+  setSelectedCancellationPolicy: PropTypes.func,
 };
 
 HostPropertyTabContent.propTypes = {

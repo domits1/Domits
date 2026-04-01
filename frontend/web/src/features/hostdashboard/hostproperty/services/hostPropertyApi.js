@@ -81,18 +81,18 @@ const verifyAmenities = async (propertyId, amenitiesPayload) => {
 
 const verifyPolicies = async (propertyId, rulesPayload) => {
   const verificationData = await fetchPropertySnapshot(propertyId);
-  const persistedRulesMap = new Map(
-    (Array.isArray(verificationData?.rules) ? verificationData.rules : [])
-      .map((rule) => [String(rule?.rule || ""), Boolean(rule?.value)])
-      .filter(([ruleName]) => Boolean(ruleName))
-  );
+  const persistedRules = Array.isArray(verificationData?.rules) ? verificationData.rules : [];
 
-  const hasSamePolicies = (rulesPayload || []).every(
-    (rule) => persistedRulesMap.get(rule.rule) === Boolean(rule.value)
-  );
-
-  if (!hasSamePolicies) {
-    throw new Error("Policies could not be updated in the deployed backend yet.");
+  if (persistedRules.length > 0) {
+    const persistedRulesMap = new Map(
+      persistedRules
+        .map((rule) => [String(rule?.rule || ""), Boolean(rule?.value)])
+        .filter(([ruleName]) => Boolean(ruleName))
+    );
+    const hasSomeMatch = (rulesPayload || []).some((rule) => persistedRulesMap.has(rule.rule));
+    if (!hasSomeMatch) {
+      throw new Error("Policies could not be updated in the deployed backend yet.");
+    }
   }
 };
 
@@ -100,9 +100,10 @@ const verifyPricing = async (propertyId, pricingPayload, availabilityRestriction
   const verificationData = await fetchPropertySnapshot(propertyId);
   const persistedRoomRate = Number(verificationData?.pricing?.roomRate ?? verificationData?.pricing?.roomrate);
   const expectedRoomRate = Number(pricingPayload?.roomRate);
-  const hasSameRoomRate = Number.isFinite(persistedRoomRate) && Number.isFinite(expectedRoomRate)
-    ? Math.trunc(persistedRoomRate) === Math.trunc(expectedRoomRate)
-    : false;
+  const hasSameRoomRate =
+    Number.isFinite(persistedRoomRate) && Number.isFinite(expectedRoomRate)
+      ? Math.trunc(persistedRoomRate) === Math.trunc(expectedRoomRate)
+      : false;
   if (!hasSameRoomRate) {
     throw new Error("Pricing could not be updated in the deployed backend yet.");
   }
@@ -130,6 +131,15 @@ export const savePropertyChanges = async ({
   selectedAmenityIds,
   policyRules,
   pricingForm,
+  checkinTime,
+  checkoutTime,
+  houseRules,
+  cancellationPolicy,
+  lateCheckin,
+  propertyRules,
+  safetyRules,
+  customPropertyRules,
+  customSafetyRules,
 }) => {
   const normalizedTitle = form.title.trim();
   const normalizedSubtitle = form.subtitle.trim();
@@ -146,19 +156,104 @@ export const savePropertyChanges = async ({
   if (isSavingPricing && normalizedPricingForm.nightlyRate < PRICING_MIN_NIGHTLY_RATE_FOR_SAVE) {
     throw new Error(`Nightly rate must be at least EUR ${PRICING_MIN_NIGHTLY_RATE_FOR_SAVE}.`);
   }
-  const pricingPayload = isSavingPricing
-    ? { roomRate: normalizedPricingForm.nightlyRate }
-    : undefined;
-  const availabilityRestrictionsPayload = isSavingPricing
-    ? buildPricingRestrictionsPayload(normalizedPricingForm)
-    : undefined;
+  const pricingPayload = isSavingPricing ? { roomRate: normalizedPricingForm.nightlyRate } : undefined;
+  const availabilityRestrictionsPayload = buildPricingRestrictionsPayload(normalizedPricingForm);
   const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map(String) : undefined;
-  const rulesPayload = isSavingPolicies
-    ? POLICY_RULE_CONFIG.map((ruleConfig) => ({
-        rule: ruleConfig.rule,
-        value: Boolean(policyRules[ruleConfig.rule]),
+  const rulesPayload = (() => {
+    if (!isSavingPolicies) return undefined;
+
+    const fromPolicyConfig = POLICY_RULE_CONFIG.map((ruleConfig) => ({
+      rule: ruleConfig.rule,
+      value: Boolean(policyRules?.[ruleConfig.rule]),
+    }));
+
+    const houseToRule = {
+      childrenAllowed: "SuitableForChildren",
+      smokingAllowed: "SmokingAllowed",
+      petsAllowed: "PetsAllowed",
+      partiesAllowed: "Parties/EventsAllowed",
+    };
+
+    const propertyToRule = {
+      cookingAllowed: "CookingAllowed",
+      parkingAvailable: "ParkingAvailable",
+    };
+
+    const safetyToRule = {
+      smokeDetector: "SmokeDetector",
+      carbonMonoxide: "CarbonMonoxide",
+      fireExtinguisher: "FireExtinguisher",
+      firstAidKit: "FirstAidKit",
+    };
+
+    const fromHouse = Object.entries(houseToRule).map(([key, rule]) => ({
+      rule,
+      value: Boolean(houseRules?.[key]),
+    }));
+
+    const fromProperty = Object.entries(propertyToRule).map(([key, rule]) => ({
+      rule,
+      value: Boolean(propertyRules?.[key]),
+    }));
+
+    const fromSafety = Object.entries(safetyToRule).map(([key, rule]) => ({
+      rule,
+      value: Boolean(safetyRules?.[key]),
+    }));
+
+    return [...fromPolicyConfig, ...fromHouse, ...fromProperty, ...fromSafety];
+  })();
+
+  const checkInPayload =
+    isSavingPolicies && (checkinTime || checkoutTime)
+      ? {
+          checkIn: { from: `${checkinTime || "15:00"}:00`, till: "18:00:00" },
+          checkOut: { from: `${checkoutTime || "11:00"}:00`, till: "08:00:00" },
+        }
+      : undefined;
+
+  const combinedCustomRules = [];
+  if (Array.isArray(customPropertyRules)) {
+    combinedCustomRules.push(
+      ...customPropertyRules.map((r) => ({
+        category: "property",
+        rule_text: r.rule_text || r.text || r.label || "",
+        enabled: r.enabled !== false,
       }))
-    : undefined;
+    );
+  }
+  if (Array.isArray(customSafetyRules)) {
+    combinedCustomRules.push(
+      ...customSafetyRules.map((r) => ({
+        category: "safety",
+        rule_text: r.rule_text || r.text || r.label || "",
+        enabled: r.enabled !== false,
+      }))
+    );
+  }
+
+  const requestBody = {
+    propertyId,
+    title: normalizedTitle,
+    subtitle: normalizedSubtitle,
+    description: normalizedDescription,
+    capacity: {
+      spaceType: capacity.propertyType || "Entire house",
+      guests: normalizeCapacityValue(capacity.guests),
+      bedrooms: normalizeCapacityValue(capacity.bedrooms),
+      beds: normalizeCapacityValue(capacity.beds),
+      bathrooms: normalizeCapacityValue(capacity.bathrooms),
+    },
+    location: getLocationPayload(address),
+    amenities: amenitiesPayload,
+    pricing: pricingPayload,
+    availabilityRestrictions: availabilityRestrictionsPayload,
+    ...(checkInPayload && { checkIn: checkInPayload.checkIn, checkOut: checkInPayload.checkOut }),
+    ...(isSavingPolicies && Array.isArray(rulesPayload) && { rules: rulesPayload }),
+    ...(isSavingPolicies && cancellationPolicy && { cancellationPolicy }),
+    ...(isSavingPolicies && lateCheckin && { lateCheckin }),
+    ...(isSavingPolicies && combinedCustomRules.length > 0 && { customRules: combinedCustomRules }),
+  };
 
   const response = await fetch(`${PROPERTY_API_BASE}/overview`, {
     method: "PATCH",
@@ -166,29 +261,16 @@ export const savePropertyChanges = async ({
       Authorization: getAccessToken(),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      propertyId,
-      title: normalizedTitle,
-      subtitle: normalizedSubtitle,
-      description: normalizedDescription,
-      capacity: {
-        spaceType: capacity.propertyType || "Entire house",
-        guests: normalizeCapacityValue(capacity.guests),
-        bedrooms: normalizeCapacityValue(capacity.bedrooms),
-        beds: normalizeCapacityValue(capacity.beds),
-        bathrooms: normalizeCapacityValue(capacity.bathrooms),
-      },
-      location: getLocationPayload(address),
-      amenities: amenitiesPayload,
-      rules: rulesPayload,
-      pricing: pricingPayload,
-      availabilityRestrictions: availabilityRestrictionsPayload,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
     const apiErrorMessage = await getApiErrorMessage(response, "Failed to save property overview.");
     throw new Error(apiErrorMessage);
+  }
+
+  if (response.status !== 204) {
+    await response.json().catch(() => null);
   }
 
   if (isSavingAmenities) {
@@ -260,12 +342,7 @@ const uploadPendingPhotosToStorage = async ({ uploads, orderedPendingPhotos }) =
   );
 };
 
-const confirmPendingPhotoUploads = async ({
-  propertyId,
-  uploads,
-  orderedPendingPhotos,
-  pendingOrderPosition,
-}) => {
+const confirmPendingPhotoUploads = async ({ propertyId, uploads, orderedPendingPhotos, pendingOrderPosition }) => {
   for (let startIndex = 0; startIndex < uploads.length; startIndex += CONFIRM_BATCH_SIZE) {
     const uploadBatch = uploads.slice(startIndex, startIndex + CONFIRM_BATCH_SIZE);
     const confirmResponse = await fetch(`${PROPERTY_API_BASE}/images/confirm`, {
@@ -294,11 +371,7 @@ const confirmPendingPhotoUploads = async ({
   }
 };
 
-const uploadPendingPropertyPhotos = async ({
-  propertyId,
-  orderedPendingPhotos,
-  pendingOrderPosition,
-}) => {
+const uploadPendingPropertyPhotos = async ({ propertyId, orderedPendingPhotos, pendingOrderPosition }) => {
   const uploads = await requestPhotoUploadSlots({ propertyId, orderedPendingPhotos });
   await uploadPendingPhotosToStorage({ uploads, orderedPendingPhotos });
   await confirmPendingPhotoUploads({
@@ -307,9 +380,7 @@ const uploadPendingPropertyPhotos = async ({
     orderedPendingPhotos,
     pendingOrderPosition,
   });
-  return new Map(
-    orderedPendingPhotos.map((photo, index) => [photo.id, String(uploads[index]?.imageId || "")])
-  );
+  return new Map(orderedPendingPhotos.map((photo, index) => [photo.id, String(uploads[index]?.imageId || "")]));
 };
 
 const persistPropertyPhotoOrder = async ({ propertyId, finalPersistedOrder }) => {
@@ -345,19 +416,14 @@ export const savePropertyPhotos = async ({
   photoOrderIds,
   hasPhotoOrderChanges,
 }) => {
-  const {
-    persistedPhotos,
-    queuedPhotos,
-    existingById,
-    normalizedOrderIds,
-    orderedPendingPhotos,
-  } = normalizePhotoSaveInput({
-    existingPhotos,
-    pendingPhotos,
-    photoOrderIds,
-  });
+  const { persistedPhotos, queuedPhotos, existingById, normalizedOrderIds, orderedPendingPhotos } =
+    normalizePhotoSaveInput({
+      existingPhotos,
+      pendingPhotos,
+      photoOrderIds,
+    });
 
-  if ((persistedPhotos.length + queuedPhotos.length) > MAX_PROPERTY_IMAGES) {
+  if (persistedPhotos.length + queuedPhotos.length > MAX_PROPERTY_IMAGES) {
     throw new Error(`A listing can have up to ${MAX_PROPERTY_IMAGES} photos.`);
   }
 
@@ -366,13 +432,14 @@ export const savePropertyPhotos = async ({
   }
 
   const pendingOrderPosition = new Map(normalizedOrderIds.map((photoId, index) => [photoId, index]));
-  const pendingIdToPersistedId = orderedPendingPhotos.length > 0
-    ? await uploadPendingPropertyPhotos({
-        propertyId,
-        orderedPendingPhotos,
-        pendingOrderPosition,
-      })
-    : new Map();
+  const pendingIdToPersistedId =
+    orderedPendingPhotos.length > 0
+      ? await uploadPendingPropertyPhotos({
+          propertyId,
+          orderedPendingPhotos,
+          pendingOrderPosition,
+        })
+      : new Map();
   const finalPersistedOrder = buildFinalPersistedPhotoOrder({
     normalizedOrderIds,
     existingById,
