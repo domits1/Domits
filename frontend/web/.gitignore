@@ -79,3 +79,7 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 #amplify-do-not-edit-end
+
+# Compiled SCSS output
+src/index.css
+src/index.css.map
