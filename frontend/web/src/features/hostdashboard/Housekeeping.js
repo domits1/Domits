@@ -2,6 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import './Housekeeping.css';
 import { fetchTasks, createTask, updateTask, deleteTask } from './services/taskService';
 import { fetchHostTaskPropertyOptions } from './services/hostTaskPropertyService';
+import { 
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+    PieChart, Pie, Cell 
+} from 'recharts';
 
 const DEFAULT_FILTERS = {
     property: 'All properties',
@@ -28,6 +32,7 @@ const DEFAULT_NEW_TASK = {
 const CURRENT_USER = 'Sophie Janssen';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
+
 
 const isTaskOverdue = (task, todayStr) => (
     Boolean(task?.dueDate) &&
@@ -149,6 +154,92 @@ const HostPropertyCare = () => {
     const CURRENT_USER = 'Sophie Janssen';
 
     const [propertyOptions, setPropertyOptions] = useState([]);
+    const [timeView, setTimeView] = useState('Weekly');
+
+    const reportData = useMemo(() => {
+        const filtered = tasks.filter((task) => matchesTaskFilters(task, filters, {
+            includeAssignee: true,
+            includeDate: true,
+            excludeLegacy: true,
+        }));
+
+        const total = filtered.length;
+        const completed = filtered.filter(t => t.status === 'Completed').length;
+        const overdue = filtered.filter(t => t.status === 'Overdue').length;
+        const inProgress = filtered.filter(t => t.status === 'In progress').length;
+        const pending = filtered.filter(t => t.status === 'Pending').length;
+        const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        const completedWithDates = filtered.filter(t => t.status === 'Completed' && t.completed_date && t.created_at);
+        const avgMs = completedWithDates.length > 0
+            ? completedWithDates.reduce((sum, t) => sum + (Number(t.completed_date) - Number(t.created_at)), 0) / completedWithDates.length
+            : 0;
+        const avgCompletionTime = completedWithDates.length > 0
+            ? `${Math.floor(avgMs / 3600000)}h ${Math.floor((avgMs % 3600000) / 60000)}m`
+            : '—';
+
+        const weekStart = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const overdueThisWeek = filtered.filter(t =>
+            t.status === 'Overdue' && t.due_date && Number(t.due_date) >= weekStart
+        ).length;
+
+        const distributionData = [
+            { name: 'Pending', value: pending, color: '#6c757d' },
+            { name: 'In Progress', value: inProgress, color: '#0062cc' },
+            { name: 'Completed', value: completed, color: '#1e7e34' },
+            { name: 'Overdue', value: overdue, color: '#dc3545' },
+        ];
+
+        const getIntervalKey = (timestamp) => {
+            if (!timestamp) return null;
+            const date = new Date(Number(timestamp));
+            if (timeView === 'Daily') {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+            const monday = new Date(date);
+            monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${fmt(monday)} – ${fmt(sunday)}`;
+        };
+
+        const getSortTimestamp = (timestamp) => {
+            if (!timestamp) return 0;
+            const date = new Date(Number(timestamp));
+            if (timeView === 'Daily') return date.getTime();
+            const monday = new Date(date);
+            monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+            monday.setHours(0, 0, 0, 0);
+            return monday.getTime();
+        };
+
+        const timeMap = {};
+        filtered.forEach(task => {
+            const key = getIntervalKey(task.created_at);
+            const sortTs = getSortTimestamp(task.created_at);
+            if (!key) return;
+            if (!timeMap[key]) timeMap[key] = { date: key, _sort: sortTs, pending: 0, progress: 0, completed: 0, overdue: 0 };
+            if (task.status === 'Pending') timeMap[key].pending++;
+            else if (task.status === 'In progress') timeMap[key].progress++;
+            else if (task.status === 'Completed') timeMap[key].completed++;
+            else if (task.status === 'Overdue') timeMap[key].overdue++;
+        });
+        const timeData = Object.values(timeMap).sort((a, b) => a._sort - b._sort);
+
+        const propertyMap = {};
+        filtered.forEach(task => {
+            const label = task.property || task.property_snapshot_label || 'Unknown';
+            if (!propertyMap[label]) propertyMap[label] = { label, completed: 0, inProgress: 0, overdue: 0, total: 0 };
+            propertyMap[label].total++;
+            if (task.status === 'Completed') propertyMap[label].completed++;
+            else if (task.status === 'In progress') propertyMap[label].inProgress++;
+            else if (task.status === 'Overdue') propertyMap[label].overdue++;
+        });
+        const byProperty = Object.values(propertyMap);
+
+        return { total, completed, overdue, inProgress, pending, completionRate, avgCompletionTime, overdueThisWeek, distributionData, timeData, byProperty };
+    }, [tasks, filters, timeView]);
 
     useEffect(() => {
         fetchHostTaskPropertyOptions().then(setPropertyOptions);
@@ -164,6 +255,7 @@ const HostPropertyCare = () => {
             ...task,
             status: newStatus,
             completedAt: newStatus === 'Completed' ? todayStr : null,
+            completed_date: newStatus === 'Completed' ? Date.now() : null,
             activities: [
                 ...(task.activities || []),
                 { id: Date.now(), user: CURRENT_USER, action: `marked task ${newStatus}`, timestamp: now }
@@ -358,6 +450,9 @@ const HostPropertyCare = () => {
 
         const updatedTask = {
             ...editedTask,
+            completed_date: editedTask.status === 'Completed' && viewingTask.status !== 'Completed'
+                ? Date.now()
+                : editedTask.completed_date ?? null,
             activities: [...(editedTask.activities || []), ...newLogs]
         };
 
@@ -416,10 +511,13 @@ const HostPropertyCare = () => {
                     <option key={label} value={label}>{label}</option>
                 ))}
             </select>
+
             <select name="status" value={filters.status} onChange={handleFilterChange}>
                 <option value="All statuses">All statuses</option>
                 <option value="Pending">Pending</option>
                 <option value="In progress">In progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Overdue">Overdue</option>
             </select>
         </>
     );
@@ -492,6 +590,11 @@ const HostPropertyCare = () => {
 
     const createPropertyOptions = useMemo(() => propertyOptions, [propertyOptions]);
 
+    const assigneeOptions = useMemo(() => {
+        const set = new Set(tasks.map(t => t.assignee).filter(Boolean));
+        return [...set].sort((a, b) => a.localeCompare(b));
+    }, [tasks]);
+
     const editPropertyOptions = useMemo(() => {
         const currentLabel = String(editedTask?.property || "").trim();
         if (currentLabel && !propertyOptions.some(o => o.label === currentLabel)) {
@@ -514,6 +617,241 @@ const HostPropertyCare = () => {
     const handlePrevPage = () => setCurrentPage(p => Math.max(p - 1, 1));
     const handleNextPage = () => setCurrentPage(p => Math.min(p + 1, totalPages));
 
+    const handleExportCSV = () => {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-GB').replaceAll('/', '-');
+        const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replaceAll(':', '-');
+        const timeDisplay = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        const lines = [];
+        
+
+        lines.push(
+            'TASK REPORT SUMMARY',
+            `Generated,${now.toLocaleDateString('en-GB')} ${timeDisplay}`,
+            '',
+            'KPI METRICS',
+            `Completion Rate,${reportData.completionRate}%`,
+            `Avg Completion Time,${reportData.avgCompletionTime}`,
+            `Total Tasks,${reportData.total}`,
+            `Completed,${reportData.completed}`,
+            `Pending,${reportData.pending}`,
+            `In Progress,${reportData.inProgress}`,
+            `Overdue,${reportData.overdue}`,
+            `Overdue This Week,${reportData.overdueThisWeek}`,
+            '',
+            'TASKS BY PROPERTY',
+            'Property,Total,Completed,In Progress,Overdue'
+        );
+
+        reportData.byProperty.forEach(prop => {
+            lines.push(`"${prop.label}",${prop.total},${prop.completed},${prop.inProgress},${prop.overdue}`);
+        });
+
+        lines.push(
+            '',
+            'TASK LIST',
+            'Title,Status,Priority,Property,Assignee,Due Date'
+        );
+        const filtered = tasks.filter(t => matchesTaskFilters(t, filters, {
+            includeAssignee: true,
+            includeDate: true,
+            excludeLegacy: true,
+        }));
+        filtered.forEach(t => {
+            lines.push([
+                `"${(t.title || '').replaceAll('"', '""')}"`,
+                t.status || '',
+                t.priority || '',
+                `"${(t.property || '').replaceAll('"', '""')}"`,
+                t.assignee || '',
+                t.dueDate || '',
+            ].join(','));
+        });
+
+        const csv = lines.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tasks-report_${dateStr}_${timeStr}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const renderReportsView = () => {
+        return (
+            <div className="reports-container">
+                <div className="reports-controls">
+                    <div className="reports-filters">
+                            {renderCommonFilters()}
+                        <select name="priority" value={filters.priority} onChange={handleFilterChange}>
+                            <option value="Any priority">Any priority</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <select name="assignee" value={filters.assignee} onChange={handleFilterChange}>
+                            <option value="Anyone">Anyone</option>
+                            {assigneeOptions.map(a => (
+                                <option key={a} value={a}>{a}</option>
+                            ))}
+                        </select>
+                        <select name="date" value={filters.date} onChange={handleFilterChange}>
+                            <option value="Any date">Any date</option>
+                            <option value="Today">Today</option>
+                            <option value="This Week">This Week</option>
+                        </select>
+                    </div>
+                    <button className="btn-export-green" onClick={handleExportCSV}>↥ Export CSV</button>
+                </div>
+
+                <div className="reports-main-grid">
+                    <div className="reports-left-col">
+                        <div className="reports-kpi-row">
+                            <div className="kpi-card-v2">
+                                <span className="kpi-title">Completion Rate</span>
+                                <span className="kpi-main-val green-text">{reportData.completionRate}%</span>
+                                <span className="kpi-sub">Completed {reportData.completed} out of {reportData.total} tasks</span>
+                            </div>
+                            <div className="kpi-card-v2">
+                                <span className="kpi-title">Avg Completion Time</span>
+                                <span className="kpi-main-val">{reportData.avgCompletionTime}</span>
+                                <span className="kpi-sub">Average time taken to complete each task.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="reports-right-col">
+                        <div className="kpi-card-v2">
+                            <span className="kpi-title">Overdue Tasks</span>
+                            <span className="kpi-main-val red-text">{reportData.overdue}</span>
+                            <span className="kpi-sub">{reportData.overdueThisWeek} this week · {reportData.overdue} tasks exceeded their deadline.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="reports-main-grid">
+                    <div className="chart-box tasks-over-time">
+                        <div className="chart-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
+                            <h4 style={{margin:0}}>Tasks Over Time</h4>
+                            <div className="chart-toggle" style={{display:'flex', gap:'8px'}}>
+                                {['Weekly', 'Daily'].map(v => (
+                                    <button
+                                        key={v}
+                                        onClick={() => setTimeView(v)}
+                                        style={{
+                                            padding: '4px 12px',
+                                            borderRadius: '4px',
+                                            border: '1px solid #ced4da',
+                                            background: timeView === v ? '#28a745' : '#fff',
+                                            color: timeView === v ? '#fff' : '#495057',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                        }}
+                                    >{v}</button>
+                                ))}
+                            </div>
+                        </div>
+                        <div style={{ width: '100%', height: 300 }}>
+                            <ResponsiveContainer>
+                                <BarChart data={reportData.timeData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} />
+                                    <Tooltip cursor={{fill: '#f5f5f5'}} />
+                                    <Legend wrapperStyle={{fontSize: '12px', paddingTop: '12px'}} />
+                                    <Bar dataKey="pending" name="Pending" stackId="a" fill="#6c757d" barSize={30} />
+                                    <Bar dataKey="progress" name="In Progress" stackId="a" fill="#0062cc" />
+                                    <Bar dataKey="completed" name="Completed" stackId="a" fill="#1e7e34" />
+                                    <Bar dataKey="overdue" name="Overdue" stackId="a" fill="#dc3545" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="chart-box task-distribution">
+                        <h4>Task Distribution</h4>
+                        <div className="donut-wrapper">
+                            <div className="donut-chart-area">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={reportData.distributionData.filter(d => d.value > 0)}
+                                            innerRadius="45%"
+                                            outerRadius="65%"
+                                            paddingAngle={3}
+                                            dataKey="value"
+                                            cx="50%"
+                                            cy="50%"
+                                        >
+                                            {reportData.distributionData.filter(d => d.value > 0).map((entry) => (
+                                                <Cell key={`cell-${entry.name}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(value, name) => [`${value} tasks`, name]} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="donut-legend">
+                                {reportData.distributionData.map(d => (
+                                    <div key={d.name} className="summary-item" style={{ border: 'none', padding: '5px 0' }}>
+                                        <span className="dot" style={{ backgroundColor: d.color, marginRight: '8px' }}></span>
+                                        <span style={{fontSize: '13px'}}>{d.name}</span>
+                                        <span className="sum-val">{d.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="reports-bottom-row">
+                    <div className="chart-box tasks-by-property">
+                        <h4>Tasks by Property</h4>
+                        <div className="property-list-v2">
+                            {reportData.byProperty.length === 0 ? (
+                                <p className="empty-state">No tasks match current filters.</p>
+                            ) : reportData.byProperty.map(prop => {
+                                const completedPct = prop.total > 0 ? (prop.completed / prop.total) * 100 : 0;
+                                const progressPct = prop.total > 0 ? (prop.inProgress / prop.total) * 100 : 0;
+                                const overduePct = prop.total > 0 ? (prop.overdue / prop.total) * 100 : 0;
+                                return (
+                                    <div key={prop.label} className="prop-row-v2">
+                                        <div className="prop-name-cell">{prop.label}</div>
+                                        <div className="prop-status-label">
+                                            {prop.completed === prop.total && prop.total > 0 ? 'Completed' : 'In progress'}
+                                        </div>
+                                        <div className="prop-progress-wrapper">
+                                            <div className="multi-progress">
+                                                <div className="progress-segment p-done" style={{width: `${completedPct}%`}}></div>
+                                                <div className="progress-segment p-progress" style={{width: `${progressPct}%`}}></div>
+                                                <div className="progress-segment p-overdue" style={{width: `${overduePct}%`}}></div>
+                                            </div>
+                                        </div>
+                                        <div className="prop-total-val">{prop.total}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="chart-box task-summary-panel">
+                        <h4>Task Summary</h4>
+                        <div className="summary-list">
+                            <div className="summary-item"><span className="sum-icon">📋</span> Total Tasks <span className="sum-val">{reportData.total}</span></div>
+                            <div className="summary-item"><span className="dot dot-pending" style={{marginRight:'8px'}}></span> Pending <span className="sum-val">{reportData.pending}</span></div>
+                            <div className="summary-item"><span className="dot dot-inprogress" style={{marginRight:'8px'}}></span> In Progress <span className="sum-val">{reportData.inProgress}</span></div>
+                            <div className="summary-item"><span className="dot dot-completed" style={{marginRight:'8px'}}></span> Completed <span className="sum-val">{reportData.completed}</span></div>
+                            <div className="summary-item"><span className="dot dot-overdue" style={{marginRight:'8px'}}></span> Overdue <span className="sum-val">{reportData.overdue}</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const renderContent = () => {
         if (isLoading) return <div className="loading">Loading...</div>;
 
@@ -524,7 +862,7 @@ const HostPropertyCare = () => {
             case 'My Tasks':
                 return renderMyTasksView();
             case 'Reports':
-                return <div className="placeholder-view">Coming soon</div>;
+                return renderReportsView();
             case 'Settings':
                 return <div className="placeholder-view">Coming soon</div>;
             default:
