@@ -29,6 +29,9 @@ export default class MessagingPreferenceRepository {
         .set({
           guestMessageEmailEnabled: next.guestMessageEmailEnabled,
           autoReplyEmailEnabled: next.autoReplyEmailEnabled,
+          dailyReminderEnabled: next.dailyReminderEnabled,
+          dailyReminderTime: next.dailyReminderTime,
+          dailyReminderTimezone: next.dailyReminderTimezone,
           defaultResponseTimeTargetMinutes: next.defaultResponseTimeTargetMinutes,
           businessHoursEnabled: next.businessHoursEnabled,
           businessHoursStart: next.businessHoursStart,

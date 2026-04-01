@@ -1,6 +1,7 @@
 import PreferencesCenterService from "../business/preferencesCenterService.js";
 import {
   extractMessagingAutoReplyRuleId,
+  extractMessagingSchedulerRuleId,
   extractMessagingTemplateId,
   safeJson,
 } from "./controllerUtils.js";
@@ -42,6 +43,12 @@ export default class PreferencesCenterController {
     return await this.preferencesCenterService.duplicateTemplate(templateId);
   }
 
+  async renderTemplate(event) {
+    const templateId = extractMessagingTemplateId(event.path);
+    const body = safeJson(event.body) || {};
+    return await this.preferencesCenterService.renderTemplate(templateId, body);
+  }
+
   async listAutoReplyRules(event) {
     const userId = event.queryStringParameters?.userId || null;
     return await this.preferencesCenterService.listAutoReplyRules(userId);
@@ -56,5 +63,26 @@ export default class PreferencesCenterController {
     const ruleId = extractMessagingAutoReplyRuleId(event.path);
     const body = safeJson(event.body) || {};
     return await this.preferencesCenterService.updateAutoReplyRule(ruleId, body);
+  }
+
+  async listSchedulerRules(event) {
+    const userId = event.queryStringParameters?.userId || null;
+    return await this.preferencesCenterService.listSchedulerRules(userId);
+  }
+
+  async createSchedulerRule(event) {
+    const body = safeJson(event.body) || {};
+    return await this.preferencesCenterService.createSchedulerRule(body);
+  }
+
+  async updateSchedulerRule(event) {
+    const ruleId = extractMessagingSchedulerRuleId(event.path);
+    const body = safeJson(event.body) || {};
+    return await this.preferencesCenterService.updateSchedulerRule(ruleId, body);
+  }
+
+  async setReservationAutomationPause(event) {
+    const body = safeJson(event.body) || {};
+    return await this.preferencesCenterService.setReservationAutomationPause(body);
   }
 }

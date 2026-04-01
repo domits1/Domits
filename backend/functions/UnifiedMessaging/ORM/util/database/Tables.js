@@ -10,6 +10,9 @@ import { IntegrationSyncLog } from "../../../models/unified/sync/IntegrationSync
 import { MessagingPreference } from "../../../models/unified/preferences/MessagingPreference.js";
 import { MessagingTemplate } from "../../../models/unified/preferences/MessagingTemplate.js";
 import { MessagingAutoReplyRule } from "../../../models/unified/preferences/MessagingAutoReplyRule.js";
+import { MessagingSchedulerRule } from "../../../models/unified/preferences/MessagingSchedulerRule.js";
+import { MessagingSchedulerExecutionLog } from "../../../models/unified/preferences/MessagingSchedulerExecutionLog.js";
+import { MessagingReservationAutomationPause } from "../../../models/unified/preferences/MessagingReservationAutomationPause.js";
 
 export const Tables = [
 
@@ -26,4 +29,7 @@ export const Tables = [
   MessagingPreference,
   MessagingTemplate,
   MessagingAutoReplyRule,
+  MessagingSchedulerRule,
+  MessagingSchedulerExecutionLog,
+  MessagingReservationAutomationPause,
 ];

@@ -67,6 +67,18 @@ export async function duplicateMessagingTemplate(templateId) {
   return parseResponse(response);
 }
 
+export async function renderMessagingTemplate(templateId, payload) {
+  const response = await fetch(
+    `${UNIFIED_MESSAGING_API}/messaging-templates/${encodeURIComponent(templateId)}/render`,
+    {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify(payload),
+    }
+  );
+  return parseResponse(response);
+}
+
 export async function listMessagingAutoReplyRules(userId) {
   const response = await fetch(
     `${UNIFIED_MESSAGING_API}/messaging-auto-replies?userId=${encodeURIComponent(userId)}`,
@@ -87,6 +99,41 @@ export async function createMessagingAutoReplyRule(payload) {
 export async function updateMessagingAutoReplyRule(ruleId, payload) {
   const response = await fetch(`${UNIFIED_MESSAGING_API}/messaging-auto-replies/${encodeURIComponent(ruleId)}`, {
     method: "PATCH",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
+}
+
+export async function listMessagingSchedulerRules(userId) {
+  const response = await fetch(
+    `${UNIFIED_MESSAGING_API}/messaging-scheduler-rules?userId=${encodeURIComponent(userId)}`,
+    { method: "GET", headers: jsonHeaders }
+  );
+  return parseResponse(response);
+}
+
+export async function createMessagingSchedulerRule(payload) {
+  const response = await fetch(`${UNIFIED_MESSAGING_API}/messaging-scheduler-rules`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
+}
+
+export async function updateMessagingSchedulerRule(ruleId, payload) {
+  const response = await fetch(`${UNIFIED_MESSAGING_API}/messaging-scheduler-rules/${encodeURIComponent(ruleId)}`, {
+    method: "PATCH",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
+}
+
+export async function setMessagingReservationPause(payload) {
+  const response = await fetch(`${UNIFIED_MESSAGING_API}/messaging-reservation-pauses`, {
+    method: "PUT",
     headers: jsonHeaders,
     body: JSON.stringify(payload),
   });

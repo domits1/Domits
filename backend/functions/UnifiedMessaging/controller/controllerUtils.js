@@ -10,6 +10,7 @@ export const safeJson = (value) => {
 const integrationIdPattern = /\/integrations\/([^/]+)/;
 const messagingTemplateIdPattern = /\/messaging-templates\/([^/]+)/;
 const messagingAutoReplyRuleIdPattern = /\/messaging-auto-replies\/([^/]+)/;
+const messagingSchedulerRuleIdPattern = /\/messaging-scheduler-rules\/([^/]+)/;
 
 export const extractIntegrationId = (path) => {
   const match = integrationIdPattern.exec(String(path || ""));
@@ -23,5 +24,10 @@ export const extractMessagingTemplateId = (path) => {
 
 export const extractMessagingAutoReplyRuleId = (path) => {
   const match = messagingAutoReplyRuleIdPattern.exec(String(path || ""));
+  return match?.[1] || null;
+};
+
+export const extractMessagingSchedulerRuleId = (path) => {
+  const match = messagingSchedulerRuleIdPattern.exec(String(path || ""));
   return match?.[1] || null;
 };

@@ -96,6 +96,13 @@ const routeDefinitions = [
     handle: (event) => preferencesCenterController.createTemplate(event),
   },
   {
+    matches: (method, path) =>
+      method === "POST" &&
+      String(path || "").includes("/messaging-templates/") &&
+      String(path || "").endsWith("/render"),
+    handle: (event) => preferencesCenterController.renderTemplate(event),
+  },
+  {
     matches: (method, path) => method === "PATCH" && String(path || "").includes("/messaging-templates/"),
     handle: (event) => preferencesCenterController.updateTemplate(event),
   },
@@ -117,6 +124,22 @@ const routeDefinitions = [
   {
     matches: (method, path) => method === "PATCH" && String(path || "").includes("/messaging-auto-replies/"),
     handle: (event) => preferencesCenterController.updateAutoReplyRule(event),
+  },
+  {
+    matches: (method, path) => method === "GET" && String(path || "").endsWith("/messaging-scheduler-rules"),
+    handle: (event) => preferencesCenterController.listSchedulerRules(event),
+  },
+  {
+    matches: (method, path) => method === "POST" && String(path || "").endsWith("/messaging-scheduler-rules"),
+    handle: (event) => preferencesCenterController.createSchedulerRule(event),
+  },
+  {
+    matches: (method, path) => method === "PATCH" && String(path || "").includes("/messaging-scheduler-rules/"),
+    handle: (event) => preferencesCenterController.updateSchedulerRule(event),
+  },
+  {
+    matches: (method, path) => method === "PUT" && String(path || "").endsWith("/messaging-reservation-pauses"),
+    handle: (event) => preferencesCenterController.setReservationAutomationPause(event),
   },
   {
     matches: (method, path) =>

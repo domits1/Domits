@@ -57,11 +57,10 @@ class MessageRepository {
   async createMessageIfNotExists(data) {
     if (data.platformMessageId) {
       const exists = await this.platformMessageExists(data.threadId, data.platformMessageId);
-      if (exists) return false;
+      if (exists) return null;
     }
 
-    await this.createMessage(data);
-    return true;
+    return this.createMessage(data);
   }
 
   async findByPlatformMessageId(platformMessageId) {

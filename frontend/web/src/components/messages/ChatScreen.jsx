@@ -6,6 +6,10 @@ import MessageToast from "./MessageToast";
 import { useSendMessage } from "../../features/hostdashboard/hostmessages/hooks/useSendMessage";
 import { useFetchMessages } from "../../features/hostdashboard/hostmessages/hooks/useFetchMessages";
 import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/components/chatUploadAttachment";
+import {
+  listMessagingTemplates,
+  renderMessagingTemplate,
+} from "../../features/hostdashboard/hostmessages/services/preferencesService";
 import { FaPaperPlane, FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
 
@@ -54,6 +58,8 @@ const ChatScreen = ({
   const [toastText, setToastText] = useState("");
   const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
+  const [availableTemplates, setAvailableTemplates] = useState([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
 
   const [localMessages, setLocalMessages] = useState([]);
 
@@ -68,6 +74,7 @@ const ChatScreen = ({
   const resolvedContactId = contactId || null;
   const resolvedPlatform = String(platform || "DOMITS").toUpperCase();
   const isWhatsApp = resolvedPlatform === "WHATSAPP";
+  const isHostComposer = dashboardType !== "guest";
 
   useEffect(() => {
     if (!resolvedContactId) {
@@ -82,6 +89,33 @@ const ChatScreen = ({
 
     fetchMessages(resolvedContactId, threadId || null);
   }, [resolvedContactId, threadId, fetchMessages]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTemplates = async () => {
+      if (!isHostComposer || !userId) {
+        setAvailableTemplates([]);
+        return;
+      }
+
+      try {
+        const rows = await listMessagingTemplates(userId, false);
+        if (!cancelled) {
+          setAvailableTemplates(Array.isArray(rows) ? rows : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setAvailableTemplates([]);
+        }
+      }
+    };
+
+    loadTemplates();
+    return () => {
+      cancelled = true;
+    };
+  }, [isHostComposer, userId]);
 
   const mergedMessages = useMemo(() => {
     const base = threadId ? messagesByThread?.[threadId] : messagesByRecipient?.[resolvedContactId];
@@ -210,6 +244,29 @@ const ChatScreen = ({
 
   const handleUploadComplete = (url) => setUploadedFileUrls((prev) => [...prev, url]);
 
+  const handleInsertTemplate = async () => {
+    if (!selectedTemplateId || !isHostComposer) return;
+
+    try {
+      const rendered = await renderMessagingTemplate(selectedTemplateId, {
+        threadId: threadId || null,
+        hostId: dashboardType === "guest" ? resolvedContactId : userId,
+        guestId: dashboardType === "guest" ? userId : resolvedContactId,
+        propertyId: propertyId ?? null,
+      });
+
+      const renderedText = String(rendered?.renderedContent || "").trim();
+      if (!renderedText) return;
+
+      setNewMessage((prev) => (prev.trim() ? `${prev.trim()}\n\n${renderedText}` : renderedText));
+      setSelectedTemplateId("");
+    } catch {
+      setError("Failed to load template.");
+      setToastText("Template could not be loaded");
+      setShowToast(true);
+    }
+  };
+
   if (!resolvedContactId) {
     return (
       <div className="chat-screen">
@@ -288,6 +345,34 @@ const ChatScreen = ({
         )}
 
         <div className="chat-input">
+          {isHostComposer && availableTemplates.length > 0 ? (
+            <div className="message-input-container">
+              <div className="message-input-wrapper">
+                <select
+                  value={selectedTemplateId}
+                  onChange={(event) => setSelectedTemplateId(event.target.value)}
+                  className="message-input-textarea"
+                >
+                  <option value="">Insert a saved template</option>
+                  {availableTemplates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleInsertTemplate}
+                  className="message-input-send-button"
+                  disabled={!selectedTemplateId}
+                  title="Insert template"
+                  type="button"
+                >
+                  Use
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <div className="attachment-area">
             <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
 

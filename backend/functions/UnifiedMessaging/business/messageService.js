@@ -1,6 +1,7 @@
 import MessageRepository from "../data/messageRepository.js";
 import ThreadRepository from "../data/threadRepository.js";
 import WhatsAppProviderAdapter from "./whatsappProviderAdapter.js";
+import MessagingRuntimeService from "./messagingRuntimeService.js";
 
 const isWhatsAppPayload = (payload) => payload.platform === "WHATSAPP";
 const resolveParticipantId = (explicitId, fallbackId) => explicitId || fallbackId;
@@ -56,6 +57,7 @@ class MessageService {
     this.messageRepository = new MessageRepository();
     this.threadRepository = new ThreadRepository();
     this.whatsAppProviderAdapter = new WhatsAppProviderAdapter();
+    this.messagingRuntimeService = new MessagingRuntimeService();
   }
 
   async resolveThread(payload, senderId, recipientId) {
@@ -154,6 +156,41 @@ class MessageService {
       direction: "OUTBOUND",
       eventAt: Date.now(),
     });
+
+    const hostId = payload.hostId ?? null;
+    const guestId = payload.guestId ?? null;
+    const senderIsGuest = hostId && guestId && String(senderId) === String(guestId);
+    const recipientIsHost = hostId && String(recipientId) === String(hostId);
+
+    if (senderIsGuest && recipientIsHost) {
+      let parsedMetadata = {};
+      if (typeof payload.metadata === "string") {
+        try {
+          parsedMetadata = JSON.parse(payload.metadata) || {};
+        } catch {
+          parsedMetadata = {};
+        }
+      } else if (payload.metadata && typeof payload.metadata === "object") {
+        parsedMetadata = payload.metadata;
+      }
+
+      try {
+        await this.messagingRuntimeService.processInboundGuestMessage({
+          hostId,
+          guestId,
+          threadId,
+          propertyId: payload.propertyId ?? null,
+          platform: payload.platform || "DOMITS",
+          content: payload.content,
+          messageId: message.id,
+          integrationAccountId: payload.integrationAccountId ?? null,
+          externalThreadId: payload.externalThreadId ?? null,
+          metadata: parsedMetadata,
+        });
+      } catch (runtimeError) {
+        console.error("Messaging runtime side effects failed for inbound message:", runtimeError);
+      }
+    }
 
     return {
       statusCode: errorCode ? 502 : 201,

@@ -1,5 +1,6 @@
 import ThreadRepository from "../data/threadRepository.js";
 import MessageRepository from "../data/messageRepository.js";
+import MessagingRuntimeService from "./messagingRuntimeService.js";
 
 const nowMs = () => Date.now();
 
@@ -33,6 +34,7 @@ export default class IngestionService {
   constructor() {
     this.threadRepo = new ThreadRepository();
     this.messageRepo = new MessageRepository();
+    this.messagingRuntimeService = new MessagingRuntimeService();
   }
 
   /**
@@ -88,7 +90,7 @@ export default class IngestionService {
       const externalCreatedAt = normalizeExternalCreatedAt(m.externalCreatedAt);
       const direction = m.direction || "INBOUND";
 
-      const didInsert = await this.messageRepo.createMessageIfNotExists({
+      const createdMessage = await this.messageRepo.createMessageIfNotExists({
         threadId: thread.id,
         senderId: m.senderId,
         recipientId: m.recipientId,
@@ -107,10 +109,33 @@ export default class IngestionService {
         attachments: toNullableJsonString(m.attachments),
       });
 
-      if (didInsert) {
+      if (createdMessage) {
         inserted += 1;
         if (Number.isFinite(externalCreatedAt)) {
           lastSuccessfulItemAt = Math.max(lastSuccessfulItemAt ?? 0, externalCreatedAt);
+        }
+
+        const isInboundGuestMessage =
+          direction === "INBOUND" &&
+          (String(m.externalSenderType || "").toUpperCase() === "GUEST" || String(m.senderId) === String(payload.guestId));
+
+        if (isInboundGuestMessage) {
+          try {
+            await this.messagingRuntimeService.processInboundGuestMessage({
+              hostId: payload.hostId,
+              guestId: payload.guestId,
+              threadId: thread.id,
+              propertyId: payload?.propertyId ?? null,
+              platform: payload.platform,
+              content: m.content ?? "",
+              messageId: createdMessage.id,
+              integrationAccountId: payload.integrationAccountId,
+              externalThreadId: payload.externalThreadId,
+              metadata: m.metadata || {},
+            });
+          } catch (runtimeError) {
+            console.error("Messaging runtime side effects failed for ingested inbound message:", runtimeError);
+          }
         }
       }
 

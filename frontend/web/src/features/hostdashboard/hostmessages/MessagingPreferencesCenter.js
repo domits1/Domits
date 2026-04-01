@@ -4,13 +4,17 @@ import { Auth } from "aws-amplify";
 
 import { SettingsLayout } from "../../../components/settings/SettingsComponents";
 import {
+  createMessagingSchedulerRule,
   createMessagingAutoReplyRule,
   createMessagingTemplate,
   duplicateMessagingTemplate,
   fetchMessagingPreferences,
   listMessagingAutoReplyRules,
+  listMessagingSchedulerRules,
   listMessagingTemplates,
+  renderMessagingTemplate,
   saveMessagingPreferences,
+  updateMessagingSchedulerRule,
   updateMessagingAutoReplyRule,
   updateMessagingTemplate,
 } from "./services/preferencesService";
@@ -19,6 +23,9 @@ import "./MessagingPreferencesCenter.scss";
 const defaultPreferences = {
   guestMessageEmailEnabled: true,
   autoReplyEmailEnabled: false,
+  dailyReminderEnabled: false,
+  dailyReminderTime: "09:00",
+  dailyReminderTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Amsterdam",
   defaultResponseTimeTargetMinutes: "",
   businessHoursEnabled: false,
   businessHoursStart: "09:00",
@@ -47,9 +54,27 @@ const defaultRuleForm = {
   isEnabled: true,
 };
 
+const defaultSchedulerForm = {
+  id: null,
+  name: "",
+  channel: "DOMITS",
+  templateId: "",
+  triggerType: "BEFORE_CHECKIN",
+  offsetUnit: "DAYS",
+  offsetValue: "1",
+  isEnabled: true,
+  skipIfGuestResponded: true,
+};
+
 const languageOptions = ["en", "nl", "de", "es"];
 const channelOptions = ["DOMITS", "WHATSAPP", "OTA", "EMAIL", "SMS"];
 const templateCategories = ["general", "welcome", "house-rules", "checkout", "support"];
+const schedulerTriggerOptions = [
+  { value: "BEFORE_CHECKIN", label: "X days/hours before check-in" },
+  { value: "DURING_STAY", label: "During stay" },
+  { value: "BEFORE_CHECKOUT", label: "X days/hours before check-out" },
+  { value: "AFTER_CHECKOUT", label: "After check-out" },
+];
 
 function MessagingPreferencesCenter() {
   const navigate = useNavigate();
@@ -64,6 +89,8 @@ function MessagingPreferencesCenter() {
   const [templateForm, setTemplateForm] = useState(defaultTemplateForm);
   const [rules, setRules] = useState([]);
   const [ruleForm, setRuleForm] = useState(defaultRuleForm);
+  const [schedulerRules, setSchedulerRules] = useState([]);
+  const [schedulerForm, setSchedulerForm] = useState(defaultSchedulerForm);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,10 +124,11 @@ function MessagingPreferencesCenter() {
       setError("");
 
       try {
-        const [preferencesData, templateRows, ruleRows] = await Promise.all([
+        const [preferencesData, templateRows, ruleRows, schedulerRuleRows] = await Promise.all([
           fetchMessagingPreferences(userId),
           listMessagingTemplates(userId, true),
           listMessagingAutoReplyRules(userId),
+          listMessagingSchedulerRules(userId),
         ]);
 
         if (cancelled) return;
@@ -108,6 +136,10 @@ function MessagingPreferencesCenter() {
         setPreferences({
           guestMessageEmailEnabled: preferencesData.guestMessageEmailEnabled ?? true,
           autoReplyEmailEnabled: preferencesData.autoReplyEmailEnabled ?? false,
+          dailyReminderEnabled: preferencesData.dailyReminderEnabled ?? false,
+          dailyReminderTime: (preferencesData.dailyReminderTime || "09:00:00").slice(0, 5),
+          dailyReminderTimezone:
+            preferencesData.dailyReminderTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Amsterdam",
           defaultResponseTimeTargetMinutes: preferencesData.defaultResponseTimeTargetMinutes ?? "",
           businessHoursEnabled: preferencesData.businessHoursEnabled ?? false,
           businessHoursStart: (preferencesData.businessHoursStart || "09:00:00").slice(0, 5),
@@ -117,6 +149,7 @@ function MessagingPreferencesCenter() {
         });
         setTemplates(Array.isArray(templateRows) ? templateRows : []);
         setRules(Array.isArray(ruleRows) ? ruleRows : []);
+        setSchedulerRules(Array.isArray(schedulerRuleRows) ? schedulerRuleRows : []);
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError.message || "Failed to load messaging preferences.");
@@ -152,6 +185,8 @@ function MessagingPreferencesCenter() {
       const saved = await saveMessagingPreferences({
         userId,
         ...preferences,
+        dailyReminderTime: preferences.dailyReminderEnabled ? preferences.dailyReminderTime : null,
+        dailyReminderTimezone: preferences.dailyReminderEnabled ? preferences.dailyReminderTimezone : null,
         defaultResponseTimeTargetMinutes:
           preferences.defaultResponseTimeTargetMinutes === ""
             ? null
@@ -162,6 +197,9 @@ function MessagingPreferencesCenter() {
         ...prev,
         guestMessageEmailEnabled: saved.guestMessageEmailEnabled,
         autoReplyEmailEnabled: saved.autoReplyEmailEnabled,
+        dailyReminderEnabled: saved.dailyReminderEnabled ?? prev.dailyReminderEnabled,
+        dailyReminderTime: (saved.dailyReminderTime || prev.dailyReminderTime || "09:00:00").slice(0, 5),
+        dailyReminderTimezone: saved.dailyReminderTimezone || prev.dailyReminderTimezone,
       }));
       showSavedMessage("Preferences saved");
     } catch (saveError) {
@@ -169,7 +207,11 @@ function MessagingPreferencesCenter() {
     }
   };
 
-  const resetTemplateForm = () => setTemplateForm(defaultTemplateForm);
+  const resetTemplateForm = () =>
+    setTemplateForm({
+      ...defaultTemplateForm,
+      language: preferences.defaultMessageLanguage || "en",
+    });
 
   const handleEditTemplate = (template) => {
     setTemplateForm({
@@ -237,6 +279,7 @@ function MessagingPreferencesCenter() {
   };
 
   const resetRuleForm = () => setRuleForm(defaultRuleForm);
+  const resetSchedulerForm = () => setSchedulerForm(defaultSchedulerForm);
 
   const handleEditRule = (rule) => {
     setRuleForm({
@@ -292,6 +335,79 @@ function MessagingPreferencesCenter() {
     }
   };
 
+  const handleEditSchedulerRule = (rule) => {
+    setSchedulerForm({
+      id: rule.id,
+      name: rule.name || "",
+      channel: rule.channel || "DOMITS",
+      templateId: rule.templateId || "",
+      triggerType: rule.triggerType || "BEFORE_CHECKIN",
+      offsetUnit: rule.offsetUnit || "DAYS",
+      offsetValue: rule.offsetValue == null ? "1" : String(rule.offsetValue),
+      isEnabled: !!rule.isEnabled,
+      skipIfGuestResponded: rule.skipIfGuestResponded ?? true,
+    });
+  };
+
+  const handleSaveSchedulerRule = async () => {
+    if (!userId) return;
+
+    const payload = {
+      userId,
+      name: schedulerForm.name,
+      channel: "DOMITS",
+      templateId: schedulerForm.templateId,
+      triggerType: schedulerForm.triggerType,
+      offsetUnit: schedulerForm.offsetUnit,
+      offsetValue: schedulerForm.offsetValue === "" ? null : Number(schedulerForm.offsetValue),
+      isEnabled: schedulerForm.isEnabled,
+      skipIfGuestResponded: schedulerForm.skipIfGuestResponded,
+    };
+
+    try {
+      let saved;
+      if (schedulerForm.id) {
+        saved = await updateMessagingSchedulerRule(schedulerForm.id, payload);
+        setSchedulerRules((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
+        showSavedMessage("Scheduled template rule updated");
+      } else {
+        saved = await createMessagingSchedulerRule(payload);
+        setSchedulerRules((prev) => [saved, ...prev]);
+        showSavedMessage("Scheduled template rule created");
+      }
+
+      resetSchedulerForm();
+    } catch (saveError) {
+      setError(saveError.message || "Failed to save scheduled template rule.");
+    }
+  };
+
+  const handleToggleSchedulerRule = async (rule) => {
+    try {
+      const saved = await updateMessagingSchedulerRule(rule.id, { isEnabled: !rule.isEnabled });
+      setSchedulerRules((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
+      showSavedMessage("Scheduled template rule updated");
+    } catch (toggleError) {
+      setError(toggleError.message || "Failed to update scheduled template rule.");
+    }
+  };
+
+  const handleInsertTemplatePreview = async (templateId) => {
+    if (!templateId || !userId) return;
+
+    try {
+      const rendered = await renderMessagingTemplate(templateId, {
+        hostId: userId,
+      });
+      const previewText = rendered?.renderedContent || "";
+      if (previewText) {
+        showSavedMessage("Template render preview loaded");
+      }
+    } catch (previewError) {
+      setError(previewError.message || "Failed to preview template variables.");
+    }
+  };
+
   return (
     <SettingsLayout>
       <div className="messaging-preferences-center">
@@ -335,6 +451,33 @@ function MessagingPreferencesCenter() {
                     type="checkbox"
                     checked={preferences.autoReplyEmailEnabled}
                     onChange={(event) => handlePreferenceChange("autoReplyEmailEnabled", event.target.checked)}
+                  />
+                </label>
+                <label className="preference-toggle-card">
+                  <span>Daily reminder email enabled</span>
+                  <input
+                    type="checkbox"
+                    checked={preferences.dailyReminderEnabled}
+                    onChange={(event) => handlePreferenceChange("dailyReminderEnabled", event.target.checked)}
+                  />
+                </label>
+                <label>
+                  <span>Daily reminder time</span>
+                  <input
+                    type="time"
+                    value={preferences.dailyReminderTime}
+                    onChange={(event) => handlePreferenceChange("dailyReminderTime", event.target.value)}
+                    disabled={!preferences.dailyReminderEnabled}
+                  />
+                </label>
+                <label>
+                  <span>Daily reminder timezone</span>
+                  <input
+                    type="text"
+                    value={preferences.dailyReminderTimezone}
+                    onChange={(event) => handlePreferenceChange("dailyReminderTimezone", event.target.value)}
+                    placeholder="Europe/Amsterdam"
+                    disabled={!preferences.dailyReminderEnabled}
                   />
                 </label>
               </div>
@@ -465,6 +608,11 @@ function MessagingPreferencesCenter() {
                       onChange={(event) => setTemplateForm((prev) => ({ ...prev, content: event.target.value }))}
                     />
                   </label>
+                  <p className="messaging-preferences-empty">
+                    Available variables: {"{{guestName}}"}, {"{{propertyName}}"}, {"{{checkInDate}}"}, {"{{checkOutDate}}"},
+                    {" {{fullAddress}}"}, {" {{checkInFrom}}"}, {" {{checkInTill}}"}, {" {{checkOutFrom}}"},
+                    {" {{checkOutTill}}"}
+                  </p>
                   <div className="messaging-preferences-actions">
                     <button type="button" className="messaging-preferences-primary" onClick={handleSaveTemplate}>
                       {templateForm.id ? "Update Template" : "Create Template"}
@@ -486,6 +634,7 @@ function MessagingPreferencesCenter() {
                         <p>{template.category || "uncategorized"} · {String(template.language || "en").toUpperCase()}</p>
                       </div>
                       <div className="messaging-preferences-card-actions">
+                        <button type="button" onClick={() => handleInsertTemplatePreview(template.id)}>Preview</button>
                         <button type="button" onClick={() => handleEditTemplate(template)}>Edit</button>
                         <button type="button" onClick={() => handleDuplicateTemplate(template)}>Duplicate</button>
                         <button type="button" onClick={() => handleArchiveTemplate(template)}>Archive</button>
@@ -515,7 +664,7 @@ function MessagingPreferencesCenter() {
               <div className="messaging-preferences-section-head">
                 <div>
                   <h4>Automatic Reply Rules</h4>
-                  <p>Host-scoped keyword rules only. Execution remains out of scope for this slice.</p>
+                  <p>Host-scoped keyword rules with live runtime execution on inbound guest messages.</p>
                 </div>
                 <button type="button" className="messaging-preferences-secondary" onClick={resetRuleForm}>
                   New Rule
@@ -627,6 +776,128 @@ function MessagingPreferencesCenter() {
                       <div className="messaging-preferences-card-actions">
                         <button type="button" onClick={() => handleEditRule(rule)}>Edit</button>
                         <button type="button" onClick={() => handleToggleRule(rule)}>
+                          {rule.isEnabled ? "Disable" : "Enable"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="messaging-preferences-section">
+              <div className="messaging-preferences-section-head">
+                <div>
+                  <h4>Template Scheduler</h4>
+                  <p>DOMITS lifecycle sends only in this slice. Rules are timezone-aware through the scheduler service.</p>
+                </div>
+                <button type="button" className="messaging-preferences-secondary" onClick={resetSchedulerForm}>
+                  New Scheduled Send
+                </button>
+              </div>
+              <div className="messaging-preferences-split">
+                <div className="messaging-preferences-editor">
+                  <label>
+                    <span>Rule name</span>
+                    <input
+                      type="text"
+                      value={schedulerForm.name}
+                      onChange={(event) => setSchedulerForm((prev) => ({ ...prev, name: event.target.value }))}
+                    />
+                  </label>
+                  <label>
+                    <span>Template</span>
+                    <select
+                      value={schedulerForm.templateId}
+                      onChange={(event) => setSchedulerForm((prev) => ({ ...prev, templateId: event.target.value }))}
+                    >
+                      <option value="">Select template</option>
+                      {activeTemplates.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Trigger</span>
+                    <select
+                      value={schedulerForm.triggerType}
+                      onChange={(event) => setSchedulerForm((prev) => ({ ...prev, triggerType: event.target.value }))}
+                    >
+                      {schedulerTriggerOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Offset unit</span>
+                    <select
+                      value={schedulerForm.offsetUnit}
+                      onChange={(event) => setSchedulerForm((prev) => ({ ...prev, offsetUnit: event.target.value }))}
+                    >
+                      <option value="DAYS">Days</option>
+                      <option value="HOURS">Hours</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Offset value</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={schedulerForm.offsetValue}
+                      onChange={(event) => setSchedulerForm((prev) => ({ ...prev, offsetValue: event.target.value }))}
+                    />
+                  </label>
+                  <label className="preference-toggle-card">
+                    <span>Skip if guest already responded</span>
+                    <input
+                      type="checkbox"
+                      checked={schedulerForm.skipIfGuestResponded}
+                      onChange={(event) =>
+                        setSchedulerForm((prev) => ({ ...prev, skipIfGuestResponded: event.target.checked }))
+                      }
+                    />
+                  </label>
+                  <label className="preference-toggle-card">
+                    <span>Rule enabled</span>
+                    <input
+                      type="checkbox"
+                      checked={schedulerForm.isEnabled}
+                      onChange={(event) => setSchedulerForm((prev) => ({ ...prev, isEnabled: event.target.checked }))}
+                    />
+                  </label>
+                  <div className="messaging-preferences-actions">
+                    <button type="button" className="messaging-preferences-primary" onClick={handleSaveSchedulerRule}>
+                      {schedulerForm.id ? "Update Scheduled Send" : "Create Scheduled Send"}
+                    </button>
+                    {schedulerForm.id ? (
+                      <button type="button" className="messaging-preferences-secondary" onClick={resetSchedulerForm}>
+                        Cancel
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="messaging-preferences-list">
+                  <h5>Scheduled Rules</h5>
+                  {schedulerRules.length === 0 ? (
+                    <p className="messaging-preferences-empty">No scheduled template rules yet.</p>
+                  ) : null}
+                  {schedulerRules.map((rule) => (
+                    <article key={rule.id} className="messaging-preferences-card">
+                      <div>
+                        <strong>{rule.name}</strong>
+                        <p>{rule.triggerType} · DOMITS · template {rule.templateId}</p>
+                        <p>
+                          Offset: {rule.offsetValue ?? 0} {String(rule.offsetUnit || "").toLowerCase() || "hours"}
+                        </p>
+                      </div>
+                      <div className="messaging-preferences-card-actions">
+                        <button type="button" onClick={() => handleEditSchedulerRule(rule)}>Edit</button>
+                        <button type="button" onClick={() => handleToggleSchedulerRule(rule)}>
                           {rule.isEnabled ? "Disable" : "Enable"}
                         </button>
                       </div>
