@@ -199,6 +199,10 @@ p {
   align-items: center;
 }
 
+.cardHeader h2 {
+  margin: 0;
+}
+
 .viewAll {
   font-size: 13px;
   color: #16a34a;
@@ -314,7 +318,7 @@ p {
   margin: 0;
 }
 
-.stayActions {
+.stayActions, .stayActionsSecondary {
   display: flex;
   gap: 15px;
   margin-top: 12px;
@@ -323,7 +327,7 @@ p {
 .stayActions button {
   width: 100%;
   padding: 10px 25px;
-  background: #166534;
+  background: #15803d;
   color: white;
   border: none;
   border-radius: 6px;
@@ -332,7 +336,19 @@ p {
 }
 
 .stayActions button:hover {
-  background: #15803d;
+  background: #16a34a;
+  cursor: pointer;
+}
+
+.stayActionsSecondary button {
+  width: 100%;
+  padding: 10px 25px;
+  background: #f5f5f5;
+  color: #000;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
 }
 
 .secondaryBtn {
@@ -352,7 +368,8 @@ p {
   border: 1px solid #ddd;
 }
 
-.secondaryBtn:hover {
+.secondaryBtn:hover,
+.stayActionsSecondary button:hover {
   background: #eaeaea;
   border-color: #cfcfcf;
 }

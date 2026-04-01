@@ -1,7 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 
 function CurrentStayCard({ stay }) {
+  const navigate = useNavigate(); // ✅ inside component
+
+  const handleOpenReservation = () => {
+    navigate(`/guestdashboard/reservation/${stay.id}`);
+  };
+
   return (
     <div className="card currentStayCard">
       <h2>Your current stay</h2>
@@ -29,7 +36,9 @@ function CurrentStayCard({ stay }) {
       </div>
 
       <div className="stayActions">
-        <button type="button">Open reservation</button>
+        <button type="button" onClick={handleOpenReservation}>
+          Open reservation
+        </button>
         <button type="button">Message host</button>
         <button type="button">Download invoice</button>
       </div>
@@ -39,6 +48,7 @@ function CurrentStayCard({ stay }) {
 
 CurrentStayCard.propTypes = {
   stay: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), // 👈 important
     image: PropTypes.string,
     name: PropTypes.string,
     location: PropTypes.string,

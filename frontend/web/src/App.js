@@ -77,6 +77,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import ChannelManager from "./pages/channelmanager/Channelmanager.js";
 import AdminProperty from "./pages/adminproperty/AdminProperty.js";
+//import ReservationDetails from "./features/guestdashboard/views/ReservationDetails";
 
 const stripePromise = loadStripe(publicKeys.STRIPE_PUBLIC_KEYS.LIVE);
 Modal.setAppElement("#root");

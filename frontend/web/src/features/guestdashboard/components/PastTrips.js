@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import "../../../styles/sass/features/guestdashboard/guestDashboard.scss";
+import { useNavigate } from "react-router-dom";
 
 function PastTripItem({ stay }) {
   return (
@@ -27,11 +28,18 @@ PastTripItem.propTypes = {
 };
 
 function PastTrips({ stays = [] }) {
+  const navigate = useNavigate();
+  
   return (
     <div className="card">
       <div className="cardHeader">
         <h2>Past trips</h2>
-        <span className="viewAll">View All &gt;</span>
+        <span
+          className="viewAll"
+          onClick={() => navigate("/guestdashboard/bookings")}
+        >
+          View All &gt;
+        </span>
       </div>
 
       <div className="pastList">

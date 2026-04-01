@@ -8,6 +8,7 @@ import GuestPayments from "./GuestPayments";
 import GuestSettings from "./GuestSettings";
 import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
+import ReservationDetails from "./ReservationDetails";
 
 const MainDashboardGuest = () => {
   const [activeComponent, setActiveComponent] = useState("Dashboard");
@@ -23,6 +24,11 @@ const MainDashboardGuest = () => {
       "/guestdashboard/settings": "Settings",
       "/guestdashboard/wishlist": "Wishlist",
     };
+
+    if (location.pathname.startsWith("/guestdashboard/reservation/")) {
+      setActiveComponent("ReservationDetails");
+      return;
+    }
 
     setActiveComponent(routeToComponentMap[location.pathname] || "Dashboard");
   }, [location.pathname]);
@@ -47,6 +53,9 @@ const MainDashboardGuest = () => {
 
       case "Wishlist":
         return <GuestWishlist />;
+
+      case "ReservationDetails":
+        return <ReservationDetails />;
 
       default:
         return <GuestDashboard />;
