@@ -13,6 +13,8 @@ import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import Calender from "@mui/icons-material/CalendarTodayOutlined";
 import People from "@mui/icons-material/PeopleAltOutlined";
 import Back from "@mui/icons-material/KeyboardBackspace";
+import IosShareIcon from "@mui/icons-material/IosShare";
+import ShareModal from "./components/ShareModal";
 import publicKeys from "../../utils/const/publicKeys.json";
 import { resolvePrimaryAccommodationImageUrl } from "../../utils/accommodationImage";
 
@@ -31,6 +33,7 @@ const BookingOverview = () => {
   const [pricingObject, setPricingObject] = useState(null);
   const [isProcessing, setIsProcessing] = useState(true);
   const [stripeClientSecret, setStripeClientSecret] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const propertyId = searchParams.get("id");
@@ -175,7 +178,21 @@ const BookingOverview = () => {
           </Link>
         </div>
         <h1>Booking Overview</h1>
+        <button
+          className="booking-share-btn"
+          onClick={() => setShowShareModal(true)}
+          aria-label="Share property">
+          <IosShareIcon fontSize="small" />
+        </button>
       </div>
+
+      {showShareModal && (
+        <ShareModal
+          url={`${globalThis.location.origin}/listingdetails?ID=${propertyId}`}
+          title={pricingObject?.title}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
 
       <div className="Bookingcontainer">
         <div className="right-panel">
