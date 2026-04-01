@@ -1,19 +1,37 @@
 import React from "react";
 import styles from "../HostDashboard.module.scss";
 import PropTypes from "prop-types";
+import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
+
+function GuestAvatar({ name, avatar }) {
+  if (avatar) {
+    return (
+      <img
+        src={avatar}
+        alt={name}
+        width="30"
+        height="30"
+        style={{ borderRadius: "50%" }}
+      />
+    );
+  }
+
+  const initial = String(name || "G").trim().charAt(0).toUpperCase() || "G";
+
+  return <span className={styles.avatarFallback}>{initial}</span>;
+}
+
+GuestAvatar.propTypes = {
+  name: PropTypes.string,
+  avatar: PropTypes.string,
+};
 
 function ReservationRow({ reservation }) {
   return (
     <tr>
       <td>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <img
-            src={reservation.avatar}
-            alt={reservation.guest}
-            width="30"
-            height="30"
-            style={{ borderRadius: "50%" }}
-          />
+          <GuestAvatar name={reservation.guest} avatar={reservation.avatar} />
           <span>{reservation.guest}</span>
         </div>
       </td>
@@ -35,7 +53,7 @@ function ReservationRow({ reservation }) {
 
 ReservationRow.propTypes = {
   reservation: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     avatar: PropTypes.string,
     guest: PropTypes.string,
     property: PropTypes.string,
@@ -47,7 +65,14 @@ ReservationRow.propTypes = {
 
 function ReservationsTable({ data = [], isLoading = false }) {
   if (isLoading) {
-    return <div className={styles.card}>Loading...</div>;
+    return (
+      <div className={styles.card}>
+        <h2>Upcoming reservations</h2>
+        <div className={styles.cardLoaderWrap}>
+          <PulseBarsLoader message="Loading reservations..." />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -80,7 +105,7 @@ function ReservationsTable({ data = [], isLoading = false }) {
 ReservationsTable.propTypes = {
   data: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.number.isRequired,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       avatar: PropTypes.string,
       guest: PropTypes.string,
       property: PropTypes.string,

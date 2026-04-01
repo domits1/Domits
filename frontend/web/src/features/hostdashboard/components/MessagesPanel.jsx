@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "../HostDashboard.module.scss";
 import PropTypes from "prop-types";
+import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 
 function MessageItem({ msg }) {
   return (
@@ -16,19 +17,23 @@ function MessageItem({ msg }) {
 
 MessageItem.propTypes = {
   msg: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     name: PropTypes.string,
     text: PropTypes.string,
     time: PropTypes.string,
   }).isRequired,
 };
 
-function MessagesPanel({ messages = [], onSeeAll }) {
+function MessagesPanel({ messages = [], isLoading = false, onSeeAll }) {
   return (
     <div className={styles.card}>
       <h2>Recent messages</h2>
 
-      {messages.length > 0 ? (
+      {isLoading ? (
+        <div className={styles.cardLoaderWrap}>
+          <PulseBarsLoader message="Loading messages..." />
+        </div>
+      ) : messages.length > 0 ? (
         messages.map((msg) => <MessageItem key={msg.id} msg={msg} />)
       ) : (
         <p>No messages</p>
@@ -48,12 +53,13 @@ function MessagesPanel({ messages = [], onSeeAll }) {
 MessagesPanel.propTypes = {
   messages: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.number.isRequired,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       name: PropTypes.string,
       text: PropTypes.string,
       time: PropTypes.string,
     })
   ),
+  isLoading: PropTypes.bool,
   onSeeAll: PropTypes.func,
 };
 

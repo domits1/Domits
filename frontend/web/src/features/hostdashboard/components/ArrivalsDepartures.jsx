@@ -1,6 +1,22 @@
 import React from "react";
 import styles from "../HostDashboard.module.scss";
 import PropTypes from "prop-types";
+import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
+
+function GuestAvatar({ name, avatar }) {
+  if (avatar) {
+    return <img src={avatar} alt={name} className={styles.avatar} />;
+  }
+
+  const initial = String(name || "G").trim().charAt(0).toUpperCase() || "G";
+
+  return <span className={styles.avatarFallback}>{initial}</span>;
+}
+
+GuestAvatar.propTypes = {
+  name: PropTypes.string,
+  avatar: PropTypes.string,
+};
 
 function ArrivalItem({ item, fallbackStatus }) {
   const status = item.status || fallbackStatus;
@@ -8,11 +24,7 @@ function ArrivalItem({ item, fallbackStatus }) {
   return (
     <div className={styles.arrivalItem}>
       <div className={styles.arrivalLeft}>
-        <img
-          src={item.avatar}
-          alt={item.guest}
-          className={styles.avatar}
-        />
+        <GuestAvatar name={item.guest} avatar={item.avatar} />
         <div>
           <strong>{item.guest}</strong>
           <p className={styles.subText}>{item.property}</p>
@@ -29,7 +41,7 @@ function ArrivalItem({ item, fallbackStatus }) {
 
 ArrivalItem.propTypes = {
   item: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     avatar: PropTypes.string,
     guest: PropTypes.string,
     property: PropTypes.string,
@@ -39,44 +51,50 @@ ArrivalItem.propTypes = {
   fallbackStatus: PropTypes.string.isRequired,
 };
 
-function ArrivalsDepartures({ arrivals = [], departures = [] }) {
+function ArrivalsDepartures({ arrivals = [], departures = [], isLoading = false }) {
   return (
     <div className={styles.card}>
       <h2>Today’s arrivals & departures</h2>
 
-      <div className={styles.arrivalsGrid}>
-        <div>
-          <h4>Check-in today</h4>
-
-          {arrivals.length > 0 ? (
-            arrivals.map((item) => (
-              <ArrivalItem
-                key={item.id}
-                item={item}
-                fallbackStatus="Checked-in"
-              />
-            ))
-          ) : (
-            <p>No arrivals</p>
-          )}
+      {isLoading ? (
+        <div className={styles.cardLoaderWrap}>
+          <PulseBarsLoader message="Loading arrivals and departures..." />
         </div>
+      ) : (
+        <div className={styles.arrivalsGrid}>
+          <div>
+            <h4>Check-in today</h4>
 
-        <div>
-          <h4>Check-out today</h4>
+            {arrivals.length > 0 ? (
+              arrivals.map((item) => (
+                <ArrivalItem
+                  key={item.id}
+                  item={item}
+                  fallbackStatus="Checked-in"
+                />
+              ))
+            ) : (
+              <p>No arrivals</p>
+            )}
+          </div>
 
-          {departures.length > 0 ? (
-            departures.map((item) => (
-              <ArrivalItem
-                key={item.id}
-                item={item}
-                fallbackStatus="Checked-out"
-              />
-            ))
-          ) : (
-            <p>No departures</p>
-          )}
+          <div>
+            <h4>Check-out today</h4>
+
+            {departures.length > 0 ? (
+              departures.map((item) => (
+                <ArrivalItem
+                  key={item.id}
+                  item={item}
+                  fallbackStatus="Checked-out"
+                />
+              ))
+            ) : (
+              <p>No departures</p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -84,7 +102,7 @@ function ArrivalsDepartures({ arrivals = [], departures = [] }) {
 ArrivalsDepartures.propTypes = {
   arrivals: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.number.isRequired,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       avatar: PropTypes.string,
       guest: PropTypes.string,
       property: PropTypes.string,
@@ -94,7 +112,7 @@ ArrivalsDepartures.propTypes = {
   ),
   departures: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.number.isRequired,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       avatar: PropTypes.string,
       guest: PropTypes.string,
       property: PropTypes.string,
@@ -102,6 +120,7 @@ ArrivalsDepartures.propTypes = {
       status: PropTypes.string,
     })
   ),
+  isLoading: PropTypes.bool,
 };
 
 export default ArrivalsDepartures;

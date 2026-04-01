@@ -27,6 +27,17 @@
   font-weight: 400;
 }
 
+.inlineAlert {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid #f3c2c2;
+  border-radius: 12px;
+  background: #fff5f5;
+  color: #991b1b;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
 .card {
   background: #fff;
   border: 1px solid #ddd;
@@ -72,8 +83,19 @@
 
 .statsIcon {
   flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #f4f7fb;
+  color: #1f2937;
   font-size: 30px;
   line-height: 1;
+}
+
+.statsIcon svg {
+  font-size: 28px;
 }
 
 .statsValue {
@@ -209,6 +231,26 @@
   border-radius: 50%;
   flex-shrink: 0;
   object-fit: cover;
+}
+
+.cardLoaderWrap {
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarFallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #eef2f7;
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .arrivalRight {
@@ -433,6 +475,12 @@
   }
 
   .statsIcon {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+
+  .statsIcon svg {
     font-size: 24px;
   }
 
