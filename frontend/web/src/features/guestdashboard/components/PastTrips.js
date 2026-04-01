@@ -20,7 +20,7 @@ function PastTripItem({ stay }) {
 
 PastTripItem.propTypes = {
   stay: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     image: PropTypes.string,
     name: PropTypes.string,
     dates: PropTypes.string,
@@ -29,7 +29,7 @@ PastTripItem.propTypes = {
 
 function PastTrips({ stays = [] }) {
   const navigate = useNavigate();
-  
+
   return (
     <div className="card">
       <div className="cardHeader">
@@ -44,9 +44,7 @@ function PastTrips({ stays = [] }) {
       </div>
 
       <div className="pastList">
-        {stays.map((stay) => (
-          <PastTripItem key={stay.id} stay={stay} />
-        ))}
+        {stays.length === 0 ? <p>No past trips yet.</p> : stays.map((stay) => <PastTripItem key={stay.id} stay={stay} />)}
       </div>
     </div>
   );

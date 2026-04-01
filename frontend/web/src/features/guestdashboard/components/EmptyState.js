@@ -16,7 +16,7 @@ function EmptyState() {
         <div>
           <p>You have no upcoming stays. Explore destinations.</p>
 
-          <button type="button" onClick={() => navigate("/search")}>
+          <button type="button" onClick={() => navigate("/home")}>
             Browse stays
           </button>
         </div>
