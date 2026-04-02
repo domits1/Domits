@@ -11,8 +11,6 @@ const NAV = [
   { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "." },
   { key: "Bookings", label: "Bookings", icon: <BookingIcon />, to: "bookings" },
   { key: "Messages", label: "Messages", icon: <MessageIcon />, to: "messages" },
-
-  // Work on it later
   // { key: "Reviews",  label: "Reviews",  icon: <ReviewsOutlinedIcon />, to: "reviews" },
   { key: "Wishlist", label: "Wishlist", icon: <WishlistIcon />, to: "wishlist" },
 
@@ -47,7 +45,6 @@ function Pages({ onNavigate }) {
 
   return (
     <>
-      {/* Toggle button: ☰ (closed) / × (open) */}
       <button
         ref={btnRef}
         type="button"
