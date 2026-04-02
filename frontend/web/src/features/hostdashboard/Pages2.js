@@ -15,7 +15,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 
 const NAV = [
   
-  { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "/hostonboarding" },
+  { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "hostonboarding" },
   { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "." },
   { key: "CalendarPricing", label: "Calendar & Pricing", icon: <CalendarIcon />, to: "calendar-pricing" },
   { key: "Reservations", label: "Reservations", icon: <EventIcon />, to: "reservations" },

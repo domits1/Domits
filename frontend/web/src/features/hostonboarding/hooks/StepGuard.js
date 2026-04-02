@@ -8,7 +8,7 @@ function StepGuard({ children, step }) {
   const location = useLocation()
 
   if (!completedSteps.includes(step)) {
-    return <Navigate to="/hostonboarding" state={{ from: location }} />
+    return <Navigate to="/hostdashboard/hostonboarding" state={{ from: location }} />
   }
 
   return children
