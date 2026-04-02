@@ -1043,6 +1043,55 @@ function PolicyRuleSection({
   );
 }
 
+const createCustomRule = (label) => ({
+  id: Date.now(),
+  label: label.trim(),
+  enabled: false,
+});
+
+function useRuleSectionState(initialToggleState) {
+  const [toggleState, setToggleState] = useState(initialToggleState);
+  const [customRules, setCustomRules] = useState([]);
+  const [newRuleValue, setNewRuleValue] = useState("");
+  const [showRuleInput, setShowRuleInput] = useState(false);
+
+  const addCustomRule = () => {
+    if (!newRuleValue.trim()) {
+      return;
+    }
+    setCustomRules((previous) => [...previous, createCustomRule(newRuleValue)]);
+    setNewRuleValue("");
+    setShowRuleInput(false);
+  };
+
+  const toggleCustomRule = (ruleId, value) => {
+    setCustomRules((previous) => previous.map((rule) => (rule.id === ruleId ? { ...rule, enabled: value } : rule)));
+  };
+
+  const deleteCustomRule = (ruleId) => {
+    setCustomRules((previous) => previous.filter((rule) => rule.id !== ruleId));
+  };
+
+  const cancelCustomRule = () => {
+    setShowRuleInput(false);
+    setNewRuleValue("");
+  };
+
+  return {
+    toggleState,
+    setToggleState,
+    customRules,
+    newRuleValue,
+    setNewRuleValue,
+    showRuleInput,
+    setShowRuleInput,
+    addCustomRule,
+    toggleCustomRule,
+    deleteCustomRule,
+    cancelCustomRule,
+  };
+}
+
 const POLICY_TOGGLE_FIELDS = [
   { rule: "SuitableForChildren", label: "Children allowed" },
   { rule: "SuitableForInfants", label: "Infants allowed" },
@@ -1115,24 +1164,16 @@ export default function HostPropertyPoliciesTab({
 }) {
   const [selectedPolicy, setSelectedPolicy] = useState("flexible");
   const [expandedPolicy, setExpandedPolicy] = useState("flexible");
-
-  const [propertyRules, setPropertyRules] = useState({
+  const propertyRuleSection = useRuleSectionState({
     cookingAllowed: false,
     parkingAvailable: false,
   });
-  const [customPropertyRules, setCustomPropertyRules] = useState([]);
-  const [newPropertyRule, setNewPropertyRule] = useState("");
-  const [showPropertyRuleInput, setShowPropertyRuleInput] = useState(false);
-
-  const [safetyRules, setSafetyRules] = useState({
+  const safetyRuleSection = useRuleSectionState({
     smokeDetector: true,
     carbonMonoxide: true,
     fireExtinguisher: true,
     firstAidKit: true,
   });
-  const [customSafetyRules, setCustomSafetyRules] = useState([]);
-  const [newSafetyRule, setNewSafetyRule] = useState("");
-  const [showSafetyRuleInput, setShowSafetyRuleInput] = useState(false);
 
   const handleSelectPolicy = (id) => {
     setSelectedPolicy(id);
@@ -1141,37 +1182,6 @@ export default function HostPropertyPoliciesTab({
 
   const toggleExpandPolicy = (id) => {
     setExpandedPolicy((prev) => (prev === id ? null : id));
-  };
-
-  const addCustomRule = (type) => {
-    const label = type === "property" ? newPropertyRule : newSafetyRule;
-    if (!label.trim()) return;
-    const rule = { id: Date.now(), label: label.trim(), enabled: false };
-    if (type === "property") {
-      setCustomPropertyRules((prev) => [...prev, rule]);
-      setNewPropertyRule("");
-      setShowPropertyRuleInput(false);
-    } else {
-      setCustomSafetyRules((prev) => [...prev, rule]);
-      setNewSafetyRule("");
-      setShowSafetyRuleInput(false);
-    }
-  };
-
-  const toggleCustomRule = (type, id, val) => {
-    if (type === "property") {
-      setCustomPropertyRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: val } : r)));
-    } else {
-      setCustomSafetyRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: val } : r)));
-    }
-  };
-
-  const deleteCustomRule = (type, id) => {
-    if (type === "property") {
-      setCustomPropertyRules((prev) => prev.filter((r) => r.id !== id));
-    } else {
-      setCustomSafetyRules((prev) => prev.filter((r) => r.id !== id));
-    }
   };
 
   const lateCheckInEnabled = Boolean(
@@ -1388,40 +1398,34 @@ export default function HostPropertyPoliciesTab({
       <PolicyRuleSection
         title="Property Rules"
         toggleFields={PROPERTY_RULE_TOGGLE_FIELDS}
-        toggleState={propertyRules}
-        setToggleState={setPropertyRules}
-        customRules={customPropertyRules}
-        onToggleCustomRule={(id, value) => toggleCustomRule("property", id, value)}
-        onDeleteCustomRule={(id) => deleteCustomRule("property", id)}
-        customRuleInputVisible={showPropertyRuleInput}
-        customRuleValue={newPropertyRule}
-        onCustomRuleChange={(event) => setNewPropertyRule(event.target.value)}
-        onConfirmCustomRule={() => addCustomRule("property")}
-        onCancelCustomRule={() => {
-          setShowPropertyRuleInput(false);
-          setNewPropertyRule("");
-        }}
-        onShowCustomRuleInput={() => setShowPropertyRuleInput(true)}
+        toggleState={propertyRuleSection.toggleState}
+        setToggleState={propertyRuleSection.setToggleState}
+        customRules={propertyRuleSection.customRules}
+        onToggleCustomRule={propertyRuleSection.toggleCustomRule}
+        onDeleteCustomRule={propertyRuleSection.deleteCustomRule}
+        customRuleInputVisible={propertyRuleSection.showRuleInput}
+        customRuleValue={propertyRuleSection.newRuleValue}
+        onCustomRuleChange={(event) => propertyRuleSection.setNewRuleValue(event.target.value)}
+        onConfirmCustomRule={propertyRuleSection.addCustomRule}
+        onCancelCustomRule={propertyRuleSection.cancelCustomRule}
+        onShowCustomRuleInput={() => propertyRuleSection.setShowRuleInput(true)}
         disabled={saving}
       />
 
       <PolicyRuleSection
         title="Safety &amp; Property"
         toggleFields={SAFETY_RULE_TOGGLE_FIELDS}
-        toggleState={safetyRules}
-        setToggleState={setSafetyRules}
-        customRules={customSafetyRules}
-        onToggleCustomRule={(id, value) => toggleCustomRule("safety", id, value)}
-        onDeleteCustomRule={(id) => deleteCustomRule("safety", id)}
-        customRuleInputVisible={showSafetyRuleInput}
-        customRuleValue={newSafetyRule}
-        onCustomRuleChange={(event) => setNewSafetyRule(event.target.value)}
-        onConfirmCustomRule={() => addCustomRule("safety")}
-        onCancelCustomRule={() => {
-          setShowSafetyRuleInput(false);
-          setNewSafetyRule("");
-        }}
-        onShowCustomRuleInput={() => setShowSafetyRuleInput(true)}
+        toggleState={safetyRuleSection.toggleState}
+        setToggleState={safetyRuleSection.setToggleState}
+        customRules={safetyRuleSection.customRules}
+        onToggleCustomRule={safetyRuleSection.toggleCustomRule}
+        onDeleteCustomRule={safetyRuleSection.deleteCustomRule}
+        customRuleInputVisible={safetyRuleSection.showRuleInput}
+        customRuleValue={safetyRuleSection.newRuleValue}
+        onCustomRuleChange={(event) => safetyRuleSection.setNewRuleValue(event.target.value)}
+        onConfirmCustomRule={safetyRuleSection.addCustomRule}
+        onCancelCustomRule={safetyRuleSection.cancelCustomRule}
+        onShowCustomRuleInput={() => safetyRuleSection.setShowRuleInput(true)}
         disabled={saving}
       />
 
