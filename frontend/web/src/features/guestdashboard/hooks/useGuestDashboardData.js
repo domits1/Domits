@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import useFetchContacts from "../../hostdashboard/hostmessages/hooks/useFetchContacts";
 import useDashboardIdentity from "../../../hooks/useDashboardIdentity";
 import {
-  buildListingDetailsUrl,
   getGuestBookings,
 } from "../services/bookingAPI";
 import {
@@ -11,14 +10,12 @@ import {
   getDepartureDate,
   getPaidBookings,
   getPropertyId,
-  resolveHostName,
-  resolveSubtitleCity,
 } from "../utils/guestDashboardUtils";
 import { normalizeImageUrl, placeholderImage } from "../utils/image";
 import {
   resolveAccommodationImageUrl,
-  resolvePrimaryAccommodationImageUrl,
 } from "../../../utils/accommodationImage";
+import { fetchPropertySummaries } from "../services/propertySummaryService";
 import {
   buildRecentMessages,
   countContactsWithMessages,
@@ -192,73 +189,6 @@ const classifyBookings = (bookings) => {
   });
 
   return { currentBookings, upcomingBookings, pastBookings };
-};
-
-const buildPropertySummary = async (propertyId) => {
-  const response = await fetch(buildListingDetailsUrl(propertyId));
-  if (!response.ok) {
-    throw new Error("Failed to fetch listing details.");
-  }
-
-  const data = await response.json().catch(() => ({}));
-  const property = data.property || {};
-  const images = Array.isArray(data.images) ? data.images : [];
-  const location = data.location || {};
-  const host = data.host || data.hostInfo || property.host || property.hostInfo || null;
-
-  const hostNameFromHost =
-    host?.name ||
-    host?.fullName ||
-    (host?.firstName && host?.lastName ? `${host.firstName} ${host.lastName}` : null);
-
-  const hostNameFromProperty =
-    property.username && property.familyname
-      ? `${String(property.username).trim()} ${String(property.familyname).trim()}`
-      : (property.username && String(property.username).trim()) ||
-        (property.familyname && String(property.familyname).trim()) ||
-        null;
-
-  const subtitle = property.subtitle || "";
-  const city = location.city || resolveSubtitleCity(subtitle) || "";
-  const country = location.country || property.country || "";
-
-  return {
-    title: property.title || property.name || `Property #${property.id || propertyId}`,
-    imageUrl: resolvePrimaryAccommodationImageUrl(images, "thumb"),
-    locationLabel: [city, country].filter(Boolean).join(", ") || city || country || "Unknown location",
-    hostName: resolveHostName(hostNameFromHost, hostNameFromProperty, data.hostName, property.hostName),
-  };
-};
-
-const fetchPropertySummaries = async (propertyIds) => {
-  const uniquePropertyIds = [...new Set((Array.isArray(propertyIds) ? propertyIds : []).filter(Boolean))];
-
-  if (uniquePropertyIds.length === 0) {
-    return {};
-  }
-
-  const summaries = await Promise.all(
-    uniquePropertyIds.map(async (propertyId) => {
-      try {
-        return [propertyId, await buildPropertySummary(propertyId)];
-      } catch {
-        return [
-          propertyId,
-          {
-            title: `Property #${propertyId}`,
-            imageUrl: placeholderImage,
-            locationLabel: "Unknown location",
-            hostName: "",
-          },
-        ];
-      }
-    })
-  );
-
-  return summaries.reduce((acc, [propertyId, summary]) => {
-    acc[propertyId] = summary;
-    return acc;
-  }, {});
 };
 
 const buildStayRecord = ({ booking, arrivalDate, departureDate, propertySummary }) => {
