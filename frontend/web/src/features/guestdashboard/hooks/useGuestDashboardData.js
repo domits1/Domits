@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Auth } from "aws-amplify";
 
 import useFetchContacts from "../../hostdashboard/hostmessages/hooks/useFetchContacts";
+import useDashboardIdentity from "../../../hooks/useDashboardIdentity";
 import {
   buildListingDetailsUrl,
   getGuestBookings,
@@ -19,6 +19,13 @@ import {
   resolveAccommodationImageUrl,
   resolvePrimaryAccommodationImageUrl,
 } from "../../../utils/accommodationImage";
+import {
+  buildRecentMessages,
+  countContactsWithMessages,
+  isSameDay,
+  isValidDate,
+  startOfDay,
+} from "../../../utils/dashboardShared";
 
 const INITIAL_DATA = {
   guestName: "Guest",
@@ -36,14 +43,8 @@ const INITIAL_DATA = {
 };
 
 const INITIAL_LOADING_STATE = {
-  identity: true,
-  stays: true,
+  stays: false,
 };
-
-const MESSAGE_TIME_FORMATTER = new Intl.DateTimeFormat("en-GB", {
-  hour: "2-digit",
-  minute: "2-digit",
-});
 
 const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -71,26 +72,6 @@ const safeString = (value, fallback = "") => {
   return text || fallback;
 };
 
-const isValidDate = (value) => value instanceof Date && !Number.isNaN(value.getTime());
-
-const startOfDay = (date) => {
-  const nextDate = new Date(date);
-  nextDate.setHours(0, 0, 0, 0);
-  return nextDate;
-};
-
-const isSameDay = (leftDate, rightDate) => {
-  if (!isValidDate(leftDate) || !isValidDate(rightDate)) {
-    return false;
-  }
-
-  return (
-    leftDate.getFullYear() === rightDate.getFullYear() &&
-    leftDate.getMonth() === rightDate.getMonth() &&
-    leftDate.getDate() === rightDate.getDate()
-  );
-};
-
 const pickFirstNumber = (source, keys) => {
   for (const key of keys) {
     const value = source?.[key];
@@ -116,41 +97,6 @@ const formatStayDateRange = (arrivalDate, departureDate) => {
   const secondPart = STAY_DATE_FORMATTER.format(departureDate);
   return `${firstPart} - ${secondPart}`;
 };
-
-const formatMessageTime = (createdAt) => {
-  const now = new Date();
-  return isSameDay(createdAt, now)
-    ? MESSAGE_TIME_FORMATTER.format(createdAt)
-    : SHORT_DATE_FORMATTER.format(createdAt);
-};
-
-const buildRecentMessages = (contacts) =>
-  (Array.isArray(contacts) ? contacts : [])
-    .filter((contact) => contact?.latestMessage?.createdAt)
-    .sort((leftContact, rightContact) => {
-      const leftTime = new Date(leftContact.latestMessage.createdAt).getTime();
-      const rightTime = new Date(rightContact.latestMessage.createdAt).getTime();
-      return rightTime - leftTime;
-    })
-    .slice(0, 4)
-    .map((contact) => {
-      const createdAt = new Date(contact?.latestMessage?.createdAt);
-      return {
-        id:
-          contact?.threadId ||
-          contact?.partnerId ||
-          contact?.userId ||
-          contact?.recipientId ||
-          contact?.givenName,
-        name: contact?.givenName || contact?.name || "Host",
-        avatar: contact?.profileImage || null,
-        text: safeString(contact?.latestMessage?.text, "No message preview available"),
-        time: isValidDate(createdAt) ? formatMessageTime(createdAt) : "",
-      };
-    });
-
-const countMessageThreads = (contacts) =>
-  (Array.isArray(contacts) ? contacts : []).filter((contact) => contact?.latestMessage?.createdAt).length;
 
 const normalizeStayStatus = (value) => {
   const normalized = safeString(value).toLowerCase();
@@ -345,61 +291,18 @@ const buildStayRecord = ({ booking, arrivalDate, departureDate, propertySummary 
   };
 };
 
-const getGuestDisplayName = (user) => {
-  const attributes = user?.attributes || {};
-  return (
-    attributes.given_name ||
-    attributes.name ||
-    attributes.preferred_username ||
-    user?.username ||
-    "Guest"
-  );
-};
-
 export default function useGuestDashboardData() {
-  const [guestId, setGuestId] = useState(null);
   const [dashboardData, setDashboardData] = useState(INITIAL_DATA);
   const [loadingState, setLoadingState] = useState(INITIAL_LOADING_STATE);
   const [error, setError] = useState(null);
+  const {
+    userId: guestId,
+    displayName: guestName,
+    loading: identityLoading,
+    error: identityError,
+  } = useDashboardIdentity("Guest");
 
   const { contacts, loading: contactsLoading } = useFetchContacts(guestId, "guest");
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadUser = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser({ bypassCache: true });
-        if (!isMounted) {
-          return;
-        }
-
-        setGuestId(user?.attributes?.sub || null);
-        setDashboardData((previousData) => ({
-          ...previousData,
-          guestName: getGuestDisplayName(user),
-        }));
-        setLoadingState((previousState) => ({
-          ...previousState,
-          identity: false,
-        }));
-      } catch {
-        if (isMounted) {
-          setError("Unable to load your dashboard.");
-          setLoadingState({
-            identity: false,
-            stays: false,
-          });
-        }
-      }
-    };
-
-    loadUser();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -511,7 +414,7 @@ export default function useGuestDashboardData() {
     };
   }, [guestId]);
 
-  const recentMessages = useMemo(() => buildRecentMessages(contacts), [contacts]);
+  const recentMessages = useMemo(() => buildRecentMessages(contacts, "Host"), [contacts]);
 
   useEffect(() => {
     if (!guestId || contactsLoading) {
@@ -522,7 +425,7 @@ export default function useGuestDashboardData() {
       ...previousData,
       stats: {
         ...previousData.stats,
-        messages: countMessageThreads(contacts),
+        messages: countContactsWithMessages(contacts),
       },
       messages: recentMessages,
     }));
@@ -530,12 +433,13 @@ export default function useGuestDashboardData() {
 
   return {
     ...dashboardData,
+    guestName,
     loading: {
-      identity: loadingState.identity,
-      stats: loadingState.identity || loadingState.stays,
-      stays: loadingState.identity || loadingState.stays,
-      messages: loadingState.identity || contactsLoading,
+      identity: identityLoading,
+      stats: identityLoading || loadingState.stays,
+      stays: identityLoading || loadingState.stays,
+      messages: identityLoading || contactsLoading,
     },
-    error,
+    error: error || identityError,
   };
 }

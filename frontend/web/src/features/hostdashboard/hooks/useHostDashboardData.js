@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Auth } from "aws-amplify";
 
 import { fetchHostPropertySelectOptions } from "../services/hostTaskPropertyService";
 import { HostRevenueService } from "../services/HostRevenueService";
@@ -11,6 +10,14 @@ import {
   fetchUserProfileById,
   getEmptyUserProfile,
 } from "../services/fetchUserProfileById";
+import useDashboardIdentity from "../../../hooks/useDashboardIdentity";
+import {
+  buildRecentMessages,
+  countContactsWithMessagesOnDay,
+  isSameDay,
+  isValidDate,
+  startOfDay,
+} from "../../../utils/dashboardShared";
 
 const INITIAL_DATA = {
   hostName: "Host",
@@ -33,11 +40,10 @@ const INITIAL_DATA = {
 };
 
 const INITIAL_LOADING_STATE = {
-  identity: true,
-  stats: true,
-  reservations: true,
-  arrivals: true,
-  tasks: true,
+  stats: false,
+  reservations: false,
+  arrivals: false,
+  tasks: false,
 };
 
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
@@ -45,39 +51,9 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
-const MESSAGE_TIME_FORMATTER = new Intl.DateTimeFormat("en-GB", {
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
-
-const isValidDate = (value) => value instanceof Date && !Number.isNaN(value.getTime());
-
 const toDate = (value) => {
   const date = new Date(value);
   return isValidDate(date) ? date : null;
-};
-
-const startOfDay = (date) => {
-  const nextDate = new Date(date);
-  nextDate.setHours(0, 0, 0, 0);
-  return nextDate;
-};
-
-const isSameDay = (leftDate, rightDate) => {
-  if (!isValidDate(leftDate) || !isValidDate(rightDate)) {
-    return false;
-  }
-
-  return (
-    leftDate.getFullYear() === rightDate.getFullYear() &&
-    leftDate.getMonth() === rightDate.getMonth() &&
-    leftDate.getDate() === rightDate.getDate()
-  );
 };
 
 const isOpenTask = (task) => {
@@ -226,90 +202,18 @@ const buildArrivalDepartureItems = (reservations, key, today, fallbackStatus) =>
       status: fallbackStatus,
     }));
 
-const getHostName = (user) => {
-  const attributes = user?.attributes || {};
-  return attributes.given_name || attributes.name || attributes.preferred_username || user?.username || "Host";
-};
-
-const formatMessageTime = (createdAt) => {
-  const now = new Date();
-  return isSameDay(createdAt, now)
-    ? MESSAGE_TIME_FORMATTER.format(createdAt)
-    : SHORT_DATE_FORMATTER.format(createdAt);
-};
-
-const buildRecentMessages = (contacts) =>
-  (Array.isArray(contacts) ? contacts : [])
-    .filter((contact) => contact?.latestMessage?.createdAt)
-    .sort((leftContact, rightContact) => {
-      const leftTime = new Date(leftContact.latestMessage.createdAt).getTime();
-      const rightTime = new Date(rightContact.latestMessage.createdAt).getTime();
-      return rightTime - leftTime;
-    })
-    .slice(0, 4)
-    .map((contact) => {
-      const createdAt = toDate(contact?.latestMessage?.createdAt);
-      return {
-        id: contact?.threadId || contact?.partnerId || contact?.userId || contact?.recipientId || contact?.givenName,
-        name: contact?.givenName || contact?.name || "Guest",
-        avatar: contact?.profileImage || null,
-        text: String(contact?.latestMessage?.text || "No message preview available").trim(),
-        time: isValidDate(createdAt) ? formatMessageTime(createdAt) : "",
-      };
-    });
-
-const countTodayMessages = (contacts, today) =>
-  (Array.isArray(contacts) ? contacts : []).filter((contact) =>
-    isSameDay(toDate(contact?.latestMessage?.createdAt), today)
-  ).length;
-
 export default function useHostDashboardData() {
-  const [hostId, setHostId] = useState(null);
   const [dashboardData, setDashboardData] = useState(INITIAL_DATA);
   const [loadingState, setLoadingState] = useState(INITIAL_LOADING_STATE);
   const [error, setError] = useState(null);
+  const {
+    userId: hostId,
+    displayName: hostName,
+    loading: identityLoading,
+    error: identityError,
+  } = useDashboardIdentity("Host");
 
   const { contacts, loading: contactsLoading } = useFetchContacts(hostId, "host");
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadUser = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser({ bypassCache: true });
-        if (!isMounted) {
-          return;
-        }
-
-        setHostId(user?.attributes?.sub || null);
-        setDashboardData((previousData) => ({
-          ...previousData,
-          hostName: getHostName(user),
-        }));
-        setLoadingState((previousState) => ({
-          ...previousState,
-          identity: false,
-        }));
-      } catch {
-        if (isMounted) {
-          setError("Unable to load your dashboard.");
-          setLoadingState({
-            identity: false,
-            stats: false,
-            reservations: false,
-            arrivals: false,
-            tasks: false,
-          });
-        }
-      }
-    };
-
-    loadUser();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -517,7 +421,7 @@ export default function useHostDashboardData() {
     };
   }, [hostId]);
 
-  const recentMessages = useMemo(() => buildRecentMessages(contacts), [contacts]);
+  const recentMessages = useMemo(() => buildRecentMessages(contacts, "Guest"), [contacts]);
 
   useEffect(() => {
     if (!hostId) {
@@ -535,30 +439,31 @@ export default function useHostDashboardData() {
       messages: recentMessages,
       today: {
         ...previousData.today,
-        messages: countTodayMessages(contacts, today),
+        messages: countContactsWithMessagesOnDay(contacts, today, toDate),
       },
     }));
   }, [contacts, contactsLoading, hostId, recentMessages]);
 
-  const isMessagesLoading = loadingState.identity || hostId === null || contactsLoading;
+  const isMessagesLoading = identityLoading || hostId === null || contactsLoading;
 
   const sectionLoading = {
-    stats: loadingState.identity || loadingState.stats,
-    reservations: loadingState.identity || loadingState.reservations,
-    arrivals: loadingState.identity || loadingState.arrivals,
-    tasks: loadingState.identity || loadingState.tasks,
+    stats: identityLoading || loadingState.stats,
+    reservations: identityLoading || loadingState.reservations,
+    arrivals: identityLoading || loadingState.arrivals,
+    tasks: identityLoading || loadingState.tasks,
     messages: isMessagesLoading,
     today: {
-      checkins: loadingState.identity || loadingState.reservations,
-      checkouts: loadingState.identity || loadingState.reservations,
+      checkins: identityLoading || loadingState.reservations,
+      checkouts: identityLoading || loadingState.reservations,
       messages: isMessagesLoading,
-      tasks: loadingState.identity || loadingState.tasks,
+      tasks: identityLoading || loadingState.tasks,
     },
   };
 
   return {
     ...dashboardData,
+    hostName,
     loading: sectionLoading,
-    error,
+    error: error || identityError,
   };
 }
