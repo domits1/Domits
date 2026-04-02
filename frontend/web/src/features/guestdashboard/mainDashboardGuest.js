@@ -4,7 +4,6 @@ import Pages from "./Pages";
 import GuestDashboard from "./GuestDashboard";
 import GuestBooking from "./GuestBooking";
 import GuestPayments from "./GuestPayments";
-// import GuestReviews from "./GuestReviews";
 import GuestSettings from "./GuestSettings";
 import GuestWishlist from "./GuestWishlist";
 import Messages from "../../components/messages/Messages";
@@ -44,9 +43,6 @@ const MainDashboardGuest = () => {
       case "Payments":
         return <GuestPayments />;
 
-      // Work on it later
-      // case "Reviews":
-      //   return <GuestReviews />;
 
       case "Settings":
         return <GuestSettings />;

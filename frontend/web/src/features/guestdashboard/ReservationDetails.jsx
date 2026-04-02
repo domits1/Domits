@@ -14,7 +14,6 @@ import mockReservationDetails from "./utils/mockReservationDetails";
 function ReservationDetails() {
   const navigate = useNavigate();
 
-  // For now using mock (later replace with API)
   const reservation = mockReservationDetails;
 
   const handleBack = () => {
@@ -28,17 +27,14 @@ function ReservationDetails() {
   return (
     <div className="dashboardContainer">
       <div className="dashboardLeft">
-        {/* Back button */}
         <button type="button" className="viewAll" onClick={handleBack}>
           ← Back to all trips
         </button>
 
-        {/* Title + Status */}
         <h1>{reservation.property.name}</h1>
         <span className="confirmed">● {reservation.stay.status}</span>
 
         <div className="mainGrid">
-          {/* LEFT COLUMN */}
           <div>
             <PropertyCard
               image={reservation.property.image}
@@ -59,7 +55,6 @@ function ReservationDetails() {
             />
           </div>
 
-          {/* RIGHT COLUMN */}
           <div>
             <HouseRules
               rules={reservation.rules}
