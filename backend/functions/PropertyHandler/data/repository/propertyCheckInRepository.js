@@ -36,4 +36,49 @@ export class PropertyCheckInRepository {
         return result ? result : null;
     }
 
+    async upsertPropertyCheckInByPropertyId(propertyId, timeslots) {
+        const client = await Database.getInstance();
+        const existing = await this.getPropertyCheckInTimeslotsByPropertyId(propertyId);
+        const normalizedCheckIn = {
+            property_id: propertyId,
+            checkIn: {
+                from: timeslots?.checkIn?.from,
+                till: timeslots?.checkIn?.till,
+            },
+            checkOut: {
+                from: timeslots?.checkOut?.from,
+                till: timeslots?.checkOut?.till,
+            },
+        };
+
+        if (existing) {
+            await client
+                .createQueryBuilder()
+                .update(Property_Check_In)
+                .set({
+                    checkinfrom: normalizedCheckIn.checkIn.from,
+                    checkintill: normalizedCheckIn.checkIn.till,
+                    checkoutfrom: normalizedCheckIn.checkOut.from,
+                    checkouttill: normalizedCheckIn.checkOut.till,
+                })
+                .where("property_id = :propertyId", { propertyId })
+                .execute();
+        } else {
+            await client
+                .createQueryBuilder()
+                .insert()
+                .into(Property_Check_In)
+                .values({
+                    property_id: normalizedCheckIn.property_id,
+                    checkinfrom: normalizedCheckIn.checkIn.from,
+                    checkintill: normalizedCheckIn.checkIn.till,
+                    checkoutfrom: normalizedCheckIn.checkOut.from,
+                    checkouttill: normalizedCheckIn.checkOut.till,
+                })
+                .execute();
+        }
+
+        return await this.getPropertyCheckInTimeslotsByPropertyId(propertyId);
+    }
+
 }
