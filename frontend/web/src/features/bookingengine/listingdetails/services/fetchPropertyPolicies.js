@@ -35,7 +35,7 @@ const fetchPropertyPolicies = async (propertyId) => {
       maxGuests: data?.capacity?.guests || data?.property?.maxGuests || 0,
       cookingAllowed: policies.cookingAllowed !== false,
       parkingAvailable: policies.parkingAvailable === true,
-      customRules: Array.isArray(data?.property?.customRules) ? data.property.customRules : [],
+      customRules: Array.isArray(data?.property?.customRules) ? data?.property?.customRules : [],
       smokeDetector: policies.smokeDetector === true,
       carbonMonoxideDetector: policies.carbonMonoxideDetector === true,
       fireExtinguisher: policies.fireExtinguisher === true,

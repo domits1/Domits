@@ -150,7 +150,7 @@ export class PropertyService {
     }
 
     if (updates?.checkIn) {
-      await this.updateCheckInRule(propertyId, updates.checkIn);
+      await this.updateCheckInTimeslotRule(propertyId, updates.checkIn);
     }
 
     if (updates?.amenities) {
@@ -587,7 +587,7 @@ export class PropertyService {
     return null;
   }
 
-  async updateCheckInRule(propertyId, checkInData) {
+  async updateCheckInTimeslotRule(propertyId, checkInData) {
     if (!checkInData || typeof checkInData !== "object") return;
 
     const rulesToUpdate = [
@@ -735,7 +735,7 @@ export class PropertyService {
     ];
 
     for (const ruleName of houseRuleNames) {
-      const isEnabled = houseRules[ruleName] === true;
+      const isEnabled = houseRules?.[ruleName] ?? false === true;
       const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleName);
 
       if (existing) {
