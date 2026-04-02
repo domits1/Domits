@@ -149,6 +149,10 @@ export class PropertyService {
       await this.updateAvailabilityRestrictions(propertyId, updates.availabilityRestrictions);
     }
 
+    if (updates?.checkIn) {
+      await this.updateCheckIn(propertyId, updates.checkIn);
+    }
+
     if (updates?.amenities) {
       await this.updateAmenities(propertyId, updates.amenities);
     }
@@ -322,7 +326,7 @@ export class PropertyService {
       this.getAmenities(propertyId),
       this.getAvailability(propertyId),
       this.getAvailabilityRestrictions(propertyId),
-      this.getCheckIn(propertyId),
+      this.getCheckInRules(propertyId),
       this.getGeneralDetails(propertyId),
       this.getImages(propertyId),
       includeFullLocation ? this.getFullLocation(propertyId) : this.getLocation(propertyId),
@@ -446,6 +450,14 @@ export class PropertyService {
     return await this.propertyCheckInRepository.getPropertyCheckInTimeslotsByPropertyId(property);
   }
 
+  async updateCheckIn(propertyId, checkIn) {
+    const result = await this.propertyCheckInRepository.upsertPropertyCheckInByPropertyId(propertyId, checkIn);
+    if (!result) {
+      throw new DatabaseException("Failed to update property check-in settings.");
+    }
+    return result;
+  }
+
   async createGeneralDetail(details) {
     for (const detail of details) {
       const result = await this.propertyGeneralDetailRepository.create(detail);
@@ -549,14 +561,15 @@ export class PropertyService {
     await this.propertyRuleRepository.replaceRulesByPropertyId(propertyId, rules);
   }
 
-  async getCheckIn(propertyId) {
+  async getCheckInRules(propertyId) {
     const rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
+
     if (!rules || rules.length === 0) return null;
 
-    const checkInFrom = rules.find((r) => r.rule === "CheckInFrom");
-    const checkInTill = rules.find((r) => r.rule === "CheckInTill");
-    const checkOutFrom = rules.find((r) => r.rule === "CheckOutFrom");
-    const checkOutTill = rules.find((r) => r.rule === "CheckOutTill");
+    const checkInFrom = rules?.find((r) => r.rule === "CheckInFrom");
+    const checkInTill = rules?.find((r) => r.rule === "CheckInTill");
+    const checkOutFrom = rules?.find((r) => r.rule === "CheckOutFrom");
+    const checkOutTill = rules?.find((r) => r.rule === "CheckOutTill");
 
     if (checkInFrom || checkInTill || checkOutFrom || checkOutTill) {
       return {

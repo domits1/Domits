@@ -14,6 +14,19 @@ import {
   createInitialPricingForm,
 } from "../constants";
 
+const POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS = [
+  "MinimumAdvanceReservation",
+  "MinimumAdvanceNoticeDays",
+  "MinimumAdvanceBookingDays",
+];
+const DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY = "MinimumAdvanceReservation";
+const POLICY_PREPARATION_TIME_RESTRICTION_KEYS = [
+  "PreparationTimeDays",
+  "PreparationDays",
+  "TurnoverDays",
+];
+const DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY = "PreparationTimeDays";
+
 const clampInteger = (value, fallback, min, max) => {
   const parsedValue = Number(value);
   if (!Number.isFinite(parsedValue)) {
@@ -154,11 +167,11 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
   const nightlyRateRaw = Number(pricing?.roomRate ?? pricing?.roomrate);
   const nightlyRate = Number.isFinite(nightlyRateRaw)
     ? clampInteger(
-        nightlyRateRaw,
-        defaultPricingForm.nightlyRate,
-        PRICING_MIN_NIGHTLY_RATE_FOR_INPUT,
-        PRICING_MAX_NIGHTLY_RATE
-      )
+      nightlyRateRaw,
+      defaultPricingForm.nightlyRate,
+      PRICING_MIN_NIGHTLY_RATE_FOR_INPUT,
+      PRICING_MAX_NIGHTLY_RATE
+    )
     : defaultPricingForm.nightlyRate;
   const minimumStay = clampInteger(
     readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.minimumStay, defaultPricingForm.minimumStay),
@@ -174,11 +187,19 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
   );
   const maximumStay = maximumStayRaw === 0 ? 0 : Math.max(minimumStay, maximumStayRaw);
   const weeklyDiscountPercent = normalizeDiscountPercent(
-    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.weeklyDiscountPercent, 0),
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.weeklyDiscountPercent,
+      0
+    ),
     0
   );
   const monthlyDiscountPercent = normalizeDiscountPercent(
-    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.monthlyDiscountPercent, 0),
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.monthlyDiscountPercent,
+      0
+    ),
     0
   );
   const lastMinuteDiscountDays = clampInteger(
@@ -192,7 +213,11 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
     365
   );
   const lastMinuteDiscountPercent = normalizeDiscountPercent(
-    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.lastMinuteDiscountPercent, 0),
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.lastMinuteDiscountPercent,
+      0
+    ),
     0
   );
   const earlyBirdDiscountDays = clampInteger(
@@ -206,7 +231,11 @@ export const mapPropertyPricingToState = (pricing, availabilityRestrictions) => 
     365
   );
   const earlyBirdDiscountPercent = normalizeDiscountPercent(
-    readRestrictionValue(restrictionValueMap, PRICING_RESTRICTION_KEYS.earlyBirdDiscountPercent, 0),
+    readRestrictionValue(
+      restrictionValueMap,
+      PRICING_RESTRICTION_KEYS.earlyBirdDiscountPercent,
+      0
+    ),
     0
   );
 
@@ -416,17 +445,19 @@ export const buildDisplayedPhotos = (existingPhotos, pendingPhotos, photoOrderId
   const existingById = new Map((Array.isArray(existingPhotos) ? existingPhotos : []).map((photo) => [photo.id, photo]));
   const pendingById = new Map((Array.isArray(pendingPhotos) ? pendingPhotos : []).map((photo) => [photo.id, photo]));
   const orderedIds = Array.isArray(photoOrderIds) ? photoOrderIds : [];
-  const missingIds = [...existingById.keys(), ...pendingById.keys()].filter((photoId) => !orderedIds.includes(photoId));
+  const missingIds = [
+    ...existingById.keys(),
+    ...pendingById.keys(),
+  ].filter((photoId) => !orderedIds.includes(photoId));
   const resolvedOrder = [...orderedIds, ...missingIds];
 
   return resolvedOrder
     .map((photoId, index) => {
       const existingPhoto = existingById.get(photoId);
       if (existingPhoto) {
-        const preferredKey =
-          index === 0
-            ? existingPhoto.webKey || existingPhoto.key || existingPhoto.thumbKey || existingPhoto.originalKey
-            : existingPhoto.thumbKey || existingPhoto.webKey || existingPhoto.key || existingPhoto.originalKey;
+        const preferredKey = index === 0
+          ? existingPhoto.webKey || existingPhoto.key || existingPhoto.thumbKey || existingPhoto.originalKey
+          : existingPhoto.thumbKey || existingPhoto.webKey || existingPhoto.key || existingPhoto.originalKey;
         return {
           id: photoId,
           src: normalizeImageUrl(preferredKey),
@@ -449,7 +480,11 @@ export const buildDisplayedPhotos = (existingPhotos, pendingPhotos, photoOrderId
 
 export const normalizeAmenityIds = (amenityIds) =>
   Array.from(
-    new Set((Array.isArray(amenityIds) ? amenityIds : []).map((amenityId) => String(amenityId).trim()).filter(Boolean))
+    new Set(
+      (Array.isArray(amenityIds) ? amenityIds : [])
+        .map((amenityId) => String(amenityId).trim())
+        .filter(Boolean)
+    )
   ).sort((left, right) => left.localeCompare(right));
 
 export const buildPolicyRulesSnapshot = (policyRules) =>
@@ -457,6 +492,64 @@ export const buildPolicyRulesSnapshot = (policyRules) =>
     snapshot[ruleConfig.rule] = Boolean(policyRules?.[ruleConfig.rule]);
     return snapshot;
   }, {});
+
+const normalizeTimeString = (value, fallback) => {
+  const trimmedValue = String(value || "").trim();
+  if (!trimmedValue) {
+    return fallback;
+  }
+  const timeMatch = /^(\d{2}:\d{2})(:\d{2})?$/.exec(trimmedValue);
+  return timeMatch ? timeMatch[1] : trimmedValue;
+};
+
+export const normalizeCheckInDetails = (checkInDetails) => {
+  const checkInFrom = normalizeTimeString(checkInDetails?.checkIn?.from, "15:00");
+  const checkInTill = normalizeTimeString(checkInDetails?.checkIn?.till, checkInFrom);
+  const checkOutFrom = normalizeTimeString(checkInDetails?.checkOut?.from, "11:00");
+  const checkOutTill = normalizeTimeString(checkInDetails?.checkOut?.till, checkOutFrom);
+
+  return {
+    checkIn: {
+      from: checkInFrom,
+      till: checkInTill,
+    },
+    checkOut: {
+      from: checkOutFrom,
+      till: checkOutTill,
+    },
+  };
+};
+
+export const normalizePolicyAvailabilitySettings = (settings) => ({
+  advanceNoticeDays: clampInteger(settings?.advanceNoticeDays, 0, 0, 365),
+  preparationTimeDays: clampInteger(settings?.preparationTimeDays, 0, 0, 30),
+  advanceNoticeRestrictionKey:
+    String(settings?.advanceNoticeRestrictionKey || "").trim() ||
+    DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY,
+  preparationTimeRestrictionKey:
+    String(settings?.preparationTimeRestrictionKey || "").trim() ||
+    DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY,
+});
+
+export const buildPolicyEditorSnapshot = (policyRules, checkInDetails, policyAvailabilitySettings) => ({
+  rules: buildPolicyRulesSnapshot(policyRules),
+  checkIn: normalizeCheckInDetails(checkInDetails),
+  availability: normalizePolicyAvailabilitySettings(policyAvailabilitySettings),
+});
+
+export const buildPolicyAvailabilityRestrictionsPayload = (policyAvailabilitySettings) => {
+  const normalizedSettings = normalizePolicyAvailabilitySettings(policyAvailabilitySettings);
+  return [
+    {
+      restriction: normalizedSettings.advanceNoticeRestrictionKey,
+      value: normalizedSettings.advanceNoticeDays,
+    },
+    {
+      restriction: normalizedSettings.preparationTimeRestrictionKey,
+      value: normalizedSettings.preparationTimeDays,
+    },
+  ];
+};
 
 export const buildOverviewSnapshot = (form, capacity, address) => ({
   form: {
@@ -557,58 +650,44 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
   const propertyAmenities = Array.isArray(data?.amenities) ? data.amenities : [];
   const propertyRules = Array.isArray(data?.rules) ? data.rules : [];
   const propertyImages = Array.isArray(data?.images) ? data.images : [];
-  const availabilityRestrictions = Array.isArray(data?.availabilityRestrictions) ? data.availabilityRestrictions : [];
+  const availabilityRestrictions = Array.isArray(data?.availabilityRestrictions)
+    ? data.availabilityRestrictions
+    : [];
   const property = data?.property || {};
   const generalDetails = Array.isArray(data?.generalDetails) ? data.generalDetails : [];
   const locationData = data?.location || {};
   const propertyType = data?.propertyType || {};
   const propertyPricing = data?.pricing || null;
-  const checkInData = data?.checkIn || {};
-  const cancellationPolicy = data?.cancellationPolicy || null;
-  const lateCheckinData = data?.lateCheckin || {};
-  const houseRulesData = Array.isArray(data?.houseRules) ? data.houseRules : [];
-  const customRulesData = Array.isArray(data?.customRules) ? data.customRules : [];
-
-  const formatTime = (time) => {
-    if (!time) return null;
-    const timeStr = String(time).trim();
-    return timeStr.includes(":") ? timeStr.split(":").slice(0, 2).join(":") : timeStr;
+  const restrictionValueMap = buildAvailabilityRestrictionValueMap(availabilityRestrictions);
+  const checkInDetails = data?.checkIn && typeof data.checkIn === "object"
+    ? data.checkIn
+    : { checkIn: {}, checkOut: {} };
+  const policyAvailabilitySettings = {
+    advanceNoticeDays: Math.max(
+      0,
+      ...POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS
+        .filter((restrictionKey) => restrictionValueMap.has(restrictionKey))
+        .map((restrictionKey) => Number(restrictionValueMap.get(restrictionKey)) || 0),
+      restrictionValueMap.has(DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY)
+        ? Number(restrictionValueMap.get(DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY)) || 0
+        : 0
+    ),
+    preparationTimeDays: Math.max(
+      0,
+      ...POLICY_PREPARATION_TIME_RESTRICTION_KEYS
+        .filter((restrictionKey) => restrictionValueMap.has(restrictionKey))
+        .map((restrictionKey) => Number(restrictionValueMap.get(restrictionKey)) || 0),
+      restrictionValueMap.has(DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY)
+        ? Number(restrictionValueMap.get(DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY)) || 0
+        : 0
+    ),
+    advanceNoticeRestrictionKey:
+      POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS.find((restrictionKey) => restrictionValueMap.has(restrictionKey)) ||
+      DEFAULT_POLICY_ADVANCE_NOTICE_RESTRICTION_KEY,
+    preparationTimeRestrictionKey:
+      POLICY_PREPARATION_TIME_RESTRICTION_KEYS.find((restrictionKey) => restrictionValueMap.has(restrictionKey)) ||
+      DEFAULT_POLICY_PREPARATION_TIME_RESTRICTION_KEY,
   };
-
-  const checkinTime = formatTime(checkInData?.checkIn?.from) || "15:00";
-  const checkoutTime = formatTime(checkInData?.checkOut?.from) || "11:00";
-  const checkinTill = formatTime(checkInData?.checkIn?.till) || "18:00";
-  const checkoutTill = formatTime(checkInData?.checkOut?.till) || "08:00";
-
-  const ruleValueMap = new Map(
-    (Array.isArray(propertyRules) ? propertyRules : [])
-      .map((r) => [String(r?.rule || ""), Boolean(r?.value)])
-      .filter(([k]) => Boolean(k))
-  );
-
-  const houseRulesState = {
-    childrenAllowed: Boolean(ruleValueMap.get("SuitableForChildren")),
-    smokingAllowed: Boolean(ruleValueMap.get("SmokingAllowed")),
-    petsAllowed: Boolean(ruleValueMap.get("PetsAllowed")),
-    maxGuests: 4,
-    partiesAllowed: Boolean(ruleValueMap.get("Parties/EventsAllowed")),
-    quietHours: "11:00",
-  };
-
-  const propertyRulesState = {
-    cookingAllowed: Boolean(ruleValueMap.get("CookingAllowed")),
-    parkingAvailable: Boolean(ruleValueMap.get("ParkingAvailable")),
-  };
-
-  const safetyRulesState = {
-    smokeDetector: Boolean(ruleValueMap.get("SmokeDetector")),
-    carbonMonoxide: Boolean(ruleValueMap.get("CarbonMonoxide")),
-    fireExtinguisher: Boolean(ruleValueMap.get("FireExtinguisher")),
-    firstAidKit: Boolean(ruleValueMap.get("FirstAidKit")),
-  };
-
-  const customPropertyRulesList = (customRulesData || []).filter((r) => String(r?.category || "") === "property");
-  const customSafetyRulesList = (customRulesData || []).filter((r) => String(r?.category || "") === "safety");
 
   return {
     status: property.status || "INACTIVE",
@@ -633,28 +712,15 @@ export const extractFetchedPropertyData = (data, hostPropertiesData) => {
     },
     selectedAmenityIds: propertyAmenities.map((amenity) => String(amenity?.amenityId || "")).filter(Boolean),
     policyRules: mapPropertyRulesToState(propertyRules),
-    houseRules: houseRulesState,
-    propertyRules: propertyRulesState,
-    safetyRules: safetyRulesState,
+    checkInDetails: normalizeCheckInDetails(checkInDetails),
+    policyAvailabilitySettings: normalizePolicyAvailabilitySettings(policyAvailabilitySettings),
     pricingForm: mapPropertyPricingToState(propertyPricing, availabilityRestrictions),
     existingPhotos: mapPropertyImagesToState(propertyImages),
     hostProperties: mapHostProperties(hostPropertiesData, property),
-    checkinTime,
-    checkoutTime,
-    checkinTill,
-    checkoutTill,
-    selectedCancellationPolicy: cancellationPolicy?.policy_type || "flexible",
-    lateCheckinEnabled: lateCheckinData?.late_checkin_enabled || false,
-    lateCheckinTime: formatTime(lateCheckinData?.late_checkin_time) || "20:00",
-    lateCheckoutEnabled: lateCheckinData?.late_checkout_enabled || false,
-    lateCheckoutTime: formatTime(lateCheckinData?.late_checkout_time) || "08:00",
-    customPropertyRules: customPropertyRulesList,
-    customSafetyRules: customSafetyRulesList,
   };
 };
 
-export const getSaveSuccessMessage = (selectedTab) =>
-  SAVE_SUCCESS_MESSAGE_BY_TAB[selectedTab] || "Property updated successfully.";
+export const getSaveSuccessMessage = (selectedTab) => SAVE_SUCCESS_MESSAGE_BY_TAB[selectedTab] || "Property updated successfully.";
 
 export const resolveSaveErrorMessage = (error, isDevelopment) => {
   if (error?.name === "TypeError") {
@@ -726,7 +792,11 @@ export const buildNoPhotoChangesResult = ({ existingPhotos, pendingPhotos, photo
   didReorder: false,
 });
 
-export const buildFinalPersistedPhotoOrder = ({ normalizedOrderIds, existingById, pendingIdToPersistedId }) =>
+export const buildFinalPersistedPhotoOrder = ({
+  normalizedOrderIds,
+  existingById,
+  pendingIdToPersistedId,
+}) =>
   normalizedOrderIds
     .map((photoId) => {
       if (existingById.has(photoId)) {

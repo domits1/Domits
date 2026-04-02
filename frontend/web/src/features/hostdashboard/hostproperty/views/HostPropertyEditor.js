@@ -13,7 +13,10 @@ import {
   HostPropertyTabs,
   HostPropertyUnsavedChangesModal,
 } from "../components/HostPropertyShell";
-import { HostPropertyPhotoDeleteModal, HostPropertyTabContent } from "../components/HostPropertyTabContent";
+import {
+  HostPropertyPhotoDeleteModal,
+  HostPropertyTabContent,
+} from "../components/HostPropertyTabContent";
 import {
   deletePropertyListing,
   deletePropertyPhoto,
@@ -35,8 +38,8 @@ import {
   areSnapshotsEqual,
   areStringArraysEqual,
   buildDisplayedPhotos,
+  buildPolicyEditorSnapshot,
   buildOverviewSnapshot,
-  buildPolicyRulesSnapshot,
   buildPricingSnapshot,
   createPendingPhotoFromFile,
   extractFetchedPropertyData,
@@ -91,41 +94,15 @@ export default function HostProperty() {
   const [hostProperties, setHostProperties] = useState([]);
   const [selectedAmenityIds, setSelectedAmenityIds] = useState([]);
   const [policyRules, setPolicyRules] = useState(createInitialPolicyRules);
+  const [checkInDetails, setCheckInDetails] = useState({ checkIn: {}, checkOut: {} });
+  const [policyAvailabilitySettings, setPolicyAvailabilitySettings] = useState({
+    advanceNoticeDays: 0,
+    preparationTimeDays: 0,
+    advanceNoticeRestrictionKey: "MinimumAdvanceReservation",
+    preparationTimeRestrictionKey: "PreparationTimeDays",
+  });
   const [pricingForm, setPricingForm] = useState(createInitialPricingForm);
   const [expandedAmenityCategories, setExpandedAmenityCategories] = useState({});
-
-  const [checkinTime, setCheckinTime] = useState("15:00");
-  const [checkoutTime, setCheckoutTime] = useState("11:00");
-  const [lateCheckinEnabled, setLateCheckinEnabled] = useState(false);
-  const [lateCheckinTime, setLateCheckinTime] = useState("20:00");
-  const [lateCheckoutEnabled, setLateCheckoutEnabled] = useState(false);
-  const [lateCheckoutTime, setLateCheckoutTime] = useState("08:00");
-
-  const [houseRules, setHouseRules] = useState({
-    childrenAllowed: false,
-    smokingAllowed: false,
-    petsAllowed: true,
-    maxGuests: 4,
-    partiesAllowed: false,
-    quietHours: "11:00",
-  });
-
-  const [propertyRules, setPropertyRules] = useState({
-    cookingAllowed: false,
-    parkingAvailable: false,
-  });
-  const [customPropertyRules, setCustomPropertyRules] = useState([]);
-
-  const [safetyRules, setSafetyRules] = useState({
-    smokeDetector: true,
-    carbonMonoxide: true,
-    fireExtinguisher: true,
-    firstAidKit: true,
-  });
-  const [customSafetyRules, setCustomSafetyRules] = useState([]);
-
-  const [selectedCancellationPolicy, setSelectedCancellationPolicy] = useState("flexible");
-
   const [form, setForm] = useState({
     title: "",
     subtitle: "",
@@ -161,7 +138,18 @@ export default function HostProperty() {
   const [selectedDeletePropertyReasonIds, setSelectedDeletePropertyReasonIds] = useState([]);
   const savedOverviewSnapshotRef = useRef(null);
   const savedAmenityIdsRef = useRef([]);
-  const savedPolicyRulesRef = useRef(buildPolicyRulesSnapshot(createInitialPolicyRules()));
+  const savedPolicyRulesRef = useRef(
+    buildPolicyEditorSnapshot(
+      createInitialPolicyRules(),
+      { checkIn: {}, checkOut: {} },
+      {
+        advanceNoticeDays: 0,
+        preparationTimeDays: 0,
+        advanceNoticeRestrictionKey: "MinimumAdvanceReservation",
+        preparationTimeRestrictionKey: "PreparationTimeDays",
+      }
+    )
+  );
   const savedPricingSnapshotRef = useRef(buildPricingSnapshot(createInitialPricingForm()));
   const bypassUnsavedGuardRef = useRef(false);
   const pendingNavigationActionRef = useRef(null);
@@ -191,7 +179,10 @@ export default function HostProperty() {
     () => buildDisplayedPhotos(existingPhotos, pendingPhotos, photoOrderIds),
     [existingPhotos, pendingPhotos, photoOrderIds]
   );
-  const existingPhotoIdSet = useMemo(() => new Set(existingPhotos.map((photo) => photo.id)), [existingPhotos]);
+  const existingPhotoIdSet = useMemo(
+    () => new Set(existingPhotos.map((photo) => photo.id)),
+    [existingPhotos]
+  );
   const orderedExistingPhotoIds = useMemo(
     () => photoOrderIds.filter((photoId) => existingPhotoIdSet.has(photoId)),
     [photoOrderIds, existingPhotoIdSet]
@@ -200,10 +191,22 @@ export default function HostProperty() {
     () => existingPhotos.map((photo) => photo.id).join(",") !== orderedExistingPhotoIds.join(","),
     [existingPhotos, orderedExistingPhotoIds]
   );
-  const overviewSnapshot = useMemo(() => buildOverviewSnapshot(form, capacity, address), [form, capacity, address]);
-  const amenityIdsSnapshot = useMemo(() => normalizeAmenityIds(selectedAmenityIds), [selectedAmenityIds]);
-  const policyRulesSnapshot = useMemo(() => buildPolicyRulesSnapshot(policyRules), [policyRules]);
-  const pricingSnapshot = useMemo(() => buildPricingSnapshot(pricingForm), [pricingForm]);
+  const overviewSnapshot = useMemo(
+    () => buildOverviewSnapshot(form, capacity, address),
+    [form, capacity, address]
+  );
+  const amenityIdsSnapshot = useMemo(
+    () => normalizeAmenityIds(selectedAmenityIds),
+    [selectedAmenityIds]
+  );
+  const policyRulesSnapshot = useMemo(
+    () => buildPolicyEditorSnapshot(policyRules, checkInDetails, policyAvailabilitySettings),
+    [policyRules, checkInDetails, policyAvailabilitySettings]
+  );
+  const pricingSnapshot = useMemo(
+    () => buildPricingSnapshot(pricingForm),
+    [pricingForm]
+  );
   const hasOverviewChanges = savedOverviewSnapshotRef.current
     ? !areSnapshotsEqual(overviewSnapshot, savedOverviewSnapshotRef.current)
     : false;
@@ -211,8 +214,7 @@ export default function HostProperty() {
   const hasPoliciesChanges = !areSnapshotsEqual(policyRulesSnapshot, savedPolicyRulesRef.current);
   const hasPricingChanges = !areSnapshotsEqual(pricingSnapshot, savedPricingSnapshotRef.current);
   const hasPhotoChanges = pendingPhotos.length > 0 || hasPhotoOrderChanges;
-  const hasUnsavedChanges =
-    !loading &&
+  const hasUnsavedChanges = !loading &&
     (hasOverviewChanges || hasAmenitiesChanges || hasPricingChanges || hasPoliciesChanges || hasPhotoChanges);
 
   const selectedAmenityCountByCategory = useMemo(() => {
@@ -258,6 +260,8 @@ export default function HostProperty() {
         setAddress(fetchedPropertyData.address);
         setSelectedAmenityIds(fetchedPropertyData.selectedAmenityIds);
         setPolicyRules(fetchedPropertyData.policyRules);
+        setCheckInDetails(fetchedPropertyData.checkInDetails);
+        setPolicyAvailabilitySettings(fetchedPropertyData.policyAvailabilitySettings);
         setPricingForm(fetchedPropertyData.pricingForm);
         setExistingPhotos(fetchedPropertyData.existingPhotos);
         setPendingPhotos([]);
@@ -268,25 +272,17 @@ export default function HostProperty() {
         setPhotoToDelete(null);
         setDeletingPhoto(false);
         setHostProperties(fetchedPropertyData.hostProperties);
-        setCheckinTime(fetchedPropertyData.checkinTime);
-        setCheckoutTime(fetchedPropertyData.checkoutTime);
-        setSelectedCancellationPolicy(fetchedPropertyData.selectedCancellationPolicy);
-        setLateCheckinEnabled(fetchedPropertyData.lateCheckinEnabled);
-        setLateCheckinTime(fetchedPropertyData.lateCheckinTime);
-        setLateCheckoutEnabled(fetchedPropertyData.lateCheckoutEnabled);
-        setLateCheckoutTime(fetchedPropertyData.lateCheckoutTime);
-        setCustomPropertyRules(fetchedPropertyData.customPropertyRules);
-        setCustomSafetyRules(fetchedPropertyData.customSafetyRules || []);
-        setHouseRules(fetchedPropertyData.houseRules || {});
-        setPropertyRules(fetchedPropertyData.propertyRules || {});
-        setSafetyRules(fetchedPropertyData.safetyRules || {});
         savedOverviewSnapshotRef.current = buildOverviewSnapshot(
           fetchedPropertyData.form,
           fetchedPropertyData.capacity,
           fetchedPropertyData.address
         );
         savedAmenityIdsRef.current = normalizeAmenityIds(fetchedPropertyData.selectedAmenityIds);
-        savedPolicyRulesRef.current = buildPolicyRulesSnapshot(fetchedPropertyData.policyRules);
+        savedPolicyRulesRef.current = buildPolicyEditorSnapshot(
+          fetchedPropertyData.policyRules,
+          fetchedPropertyData.checkInDetails,
+          fetchedPropertyData.policyAvailabilitySettings
+        );
         savedPricingSnapshotRef.current = buildPricingSnapshot(fetchedPropertyData.pricingForm);
       } catch (err) {
         console.error(err);
@@ -532,7 +528,13 @@ export default function HostProperty() {
         return;
       }
 
-      const { normalizedForm, normalizedPricingForm, successMessage } = await savePropertyChanges({
+      const {
+        normalizedForm,
+        normalizedPricingForm,
+        normalizedCheckInDetails,
+        normalizedPolicyAvailabilitySettings,
+        successMessage,
+      } = await savePropertyChanges({
         selectedTab,
         propertyId,
         form,
@@ -540,21 +542,9 @@ export default function HostProperty() {
         address,
         selectedAmenityIds,
         policyRules,
+        checkInDetails,
+        policyAvailabilitySettings,
         pricingForm,
-        checkinTime,
-        checkoutTime,
-        houseRules,
-        cancellationPolicy: selectedCancellationPolicy,
-        lateCheckin: {
-          lateCheckinEnabled,
-          lateCheckinTime,
-          lateCheckoutEnabled,
-          lateCheckoutTime,
-        },
-        propertyRules,
-        safetyRules,
-        customPropertyRules,
-        customSafetyRules,
       });
       setForm(normalizedForm);
       setPricingForm(normalizedPricingForm);
@@ -573,7 +563,17 @@ export default function HostProperty() {
         savedPricingSnapshotRef.current = buildPricingSnapshot(normalizedPricingForm);
       }
       if (selectedTab === "Policies") {
-        savedPolicyRulesRef.current = buildPolicyRulesSnapshot(policyRules);
+        if (normalizedCheckInDetails) {
+          setCheckInDetails(normalizedCheckInDetails);
+        }
+        if (normalizedPolicyAvailabilitySettings) {
+          setPolicyAvailabilitySettings(normalizedPolicyAvailabilitySettings);
+        }
+        savedPolicyRulesRef.current = buildPolicyEditorSnapshot(
+          policyRules,
+          normalizedCheckInDetails || checkInDetails,
+          normalizedPolicyAvailabilitySettings || policyAvailabilitySettings
+        );
       }
       toast.success(successMessage);
     } catch (err) {
@@ -589,17 +589,14 @@ export default function HostProperty() {
   const isBusy = saving || preparingPhotos || deletingProperty || statusUpdating;
   const shouldBlockNavigation = hasUnsavedChanges && !isBusy && !deletingPhoto;
 
-  const requestNavigation = useCallback(
-    (navigationAction) => {
-      if (bypassUnsavedGuardRef.current || !shouldBlockNavigation) {
-        navigationAction();
-        return;
-      }
-      pendingNavigationActionRef.current = navigationAction;
-      setUnsavedChangesModalOpen(true);
-    },
-    [shouldBlockNavigation]
-  );
+  const requestNavigation = useCallback((navigationAction) => {
+    if (bypassUnsavedGuardRef.current || !shouldBlockNavigation) {
+      navigationAction();
+      return;
+    }
+    pendingNavigationActionRef.current = navigationAction;
+    setUnsavedChangesModalOpen(true);
+  }, [shouldBlockNavigation]);
 
   const stayOnUnsavedChanges = () => {
     pendingNavigationActionRef.current = null;
@@ -745,27 +742,6 @@ export default function HostProperty() {
     }));
   };
 
-  const updateHouseRule = (field, value) => {
-    setHouseRules((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
-  };
-
-  const updatePropertyRule = (field, value) => {
-    setPropertyRules((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
-  };
-
-  const updateSafetyRule = (field, value) => {
-    setSafetyRules((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
-  };
-
   const resetDeletePropertyFlow = () => {
     setDeletePropertyReasonsModalOpen(false);
     setDeletePropertyConfirmModalOpen(false);
@@ -781,7 +757,9 @@ export default function HostProperty() {
 
   const toggleDeletePropertyReason = (reasonId) => {
     setSelectedDeletePropertyReasonIds((previous) =>
-      previous.includes(reasonId) ? previous.filter((value) => value !== reasonId) : [...previous, reasonId]
+      previous.includes(reasonId)
+        ? previous.filter((value) => value !== reasonId)
+        : [...previous, reasonId]
     );
   };
 
@@ -857,7 +835,9 @@ export default function HostProperty() {
       setStatus(nextStatus);
       setHostProperties((previous) =>
         previous.map((accommodation) =>
-          accommodation.id === propertyId ? { ...accommodation, status: nextStatus } : accommodation
+          accommodation.id === propertyId
+            ? { ...accommodation, status: nextStatus }
+            : accommodation
         )
       );
 
@@ -945,34 +925,11 @@ export default function HostProperty() {
             pricingForm={pricingForm}
             setPricingForm={setPricingForm}
             policyRules={policyRules}
+            checkInDetails={checkInDetails}
+            policyAvailabilitySettings={policyAvailabilitySettings}
+            setCheckInDetails={setCheckInDetails}
+            setPolicyAvailabilitySettings={setPolicyAvailabilitySettings}
             updatePolicyRule={updatePolicyRule}
-            checkinTime={checkinTime}
-            setCheckinTime={setCheckinTime}
-            checkoutTime={checkoutTime}
-            setCheckoutTime={setCheckoutTime}
-            lateCheckinEnabled={lateCheckinEnabled}
-            setLateCheckinEnabled={setLateCheckinEnabled}
-            lateCheckinTime={lateCheckinTime}
-            setLateCheckinTime={setLateCheckinTime}
-            lateCheckoutEnabled={lateCheckoutEnabled}
-            setLateCheckoutEnabled={setLateCheckoutEnabled}
-            lateCheckoutTime={lateCheckoutTime}
-            setLateCheckoutTime={setLateCheckoutTime}
-            houseRules={houseRules}
-            setHouseRules={setHouseRules}
-            updateHouseRule={updateHouseRule}
-            propertyRules={propertyRules}
-            setPropertyRules={setPropertyRules}
-            updatePropertyRule={updatePropertyRule}
-            customPropertyRules={customPropertyRules}
-            setCustomPropertyRules={setCustomPropertyRules}
-            safetyRules={safetyRules}
-            setSafetyRules={setSafetyRules}
-            updateSafetyRule={updateSafetyRule}
-            customSafetyRules={customSafetyRules}
-            setCustomSafetyRules={setCustomSafetyRules}
-            selectedCancellationPolicy={selectedCancellationPolicy}
-            setSelectedCancellationPolicy={setSelectedCancellationPolicy}
             handleDeletePropertyClick={handleDeletePropertyClick}
             saving={isBusy}
           />

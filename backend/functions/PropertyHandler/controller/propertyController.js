@@ -335,25 +335,19 @@ export class PropertyController {
       const normalizedOverviewPayload = this.normalizeOverviewPayload(overviewPayload);
 
       await this.authManager.authorizeOwnerRequest(accessToken, normalizedOverviewPayload.propertyId);
-      const updatePayload = {
-        capacity: normalizedOverviewPayload.capacity,
-        location: normalizedOverviewPayload.location,
-        pricing: normalizedOverviewPayload.pricing,
-        availabilityRestrictions: normalizedOverviewPayload.availabilityRestrictions,
-        amenities: normalizedOverviewPayload.amenities,
-        rules: normalizedOverviewPayload.rules,
-        checkIn: normalizedOverviewPayload.checkIn,
-        cancellationPolicy: normalizedOverviewPayload.cancellationPolicy,
-        lateCheckin: normalizedOverviewPayload.lateCheckin,
-        houseRules: normalizedOverviewPayload.houseRules,
-        customRules: normalizedOverviewPayload.customRules,
-      };
       await this.propertyService.updatePropertyOverview(
         normalizedOverviewPayload.propertyId,
         normalizedOverviewPayload.title,
         normalizedOverviewPayload.description,
         normalizedOverviewPayload.subtitle,
-        updatePayload
+        {
+          capacity: normalizedOverviewPayload.capacity,
+          location: normalizedOverviewPayload.location,
+          pricing: normalizedOverviewPayload.pricing,
+          availabilityRestrictions: normalizedOverviewPayload.availabilityRestrictions,
+          amenities: normalizedOverviewPayload.amenities,
+          rules: normalizedOverviewPayload.rules,
+        }
       );
 
       return {
@@ -472,11 +466,6 @@ export class PropertyController {
       availabilityRestrictions: body.availabilityRestrictions,
       amenities: body.amenities,
       rules: body.rules,
-      checkIn: body.checkIn,
-      cancellationPolicy: body.cancellationPolicy,
-      lateCheckin: body.lateCheckin,
-      houseRules: body.houseRules,
-      customRules: body.customRules,
     };
   }
 
@@ -612,7 +601,7 @@ export class PropertyController {
       typeof rule === "object" &&
       !Array.isArray(rule) &&
       typeof rule.rule === "string" &&
-      (typeof rule.value === "string" || typeof rule.value === "boolean")
+      typeof rule.value === "boolean"
     );
   }
 
@@ -654,18 +643,13 @@ export class PropertyController {
               payload.rules
                 .map((rule) => ({
                   rule: String(rule.rule || "").trim(),
-                  value: rule.value,
+                  value: Boolean(rule.value),
                 }))
                 .filter((rule) => rule.rule)
                 .map((rule) => [rule.rule, rule])
             ).values()
           )
         : undefined,
-      checkIn: payload.checkIn ? payload.checkIn : undefined,
-      cancellationPolicy: payload.cancellationPolicy ? payload.cancellationPolicy : undefined,
-      lateCheckin: payload.lateCheckin ? payload.lateCheckin : undefined,
-      houseRules: Array.isArray(payload.houseRules) ? payload.houseRules : undefined,
-      customRules: Array.isArray(payload.customRules) ? payload.customRules : undefined,
     };
   }
 
