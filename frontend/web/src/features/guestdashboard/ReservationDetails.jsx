@@ -21,10 +21,6 @@ function ReservationDetails() {
     navigate("/guestdashboard");
   };
 
-  const handleDownload = () => {
-    console.log("Download invoice");
-  };
-
   if (!reservation) {
     return <p>Reservation not found</p>;
   }
@@ -90,7 +86,6 @@ function ReservationDetails() {
             <BookingDetails
               reservationId={reservation.stay.id}
               bookedDate={reservation.stay.bookedAt || "20 Sep 2026"}
-              onDownload={handleDownload}
             />
           </div>
         </div>
