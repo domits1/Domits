@@ -150,7 +150,7 @@ export class PropertyService {
     }
 
     if (updates?.checkIn) {
-      await this.updateCheckIn(propertyId, updates.checkIn);
+      await this.updateCheckInRule(propertyId, updates.checkIn);
     }
 
     if (updates?.amenities) {
@@ -587,7 +587,7 @@ export class PropertyService {
     return null;
   }
 
-  async updateCheckIn(propertyId, checkInData) {
+  async updateCheckInRule(propertyId, checkInData) {
     if (!checkInData || typeof checkInData !== "object") return;
 
     const rulesToUpdate = [
