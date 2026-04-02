@@ -96,39 +96,39 @@ const parseBookingResponse = async (response) => {
   return [];
 };
 
+const toPlainObject = (value) => (value && typeof value === "object" ? value : {});
+
+const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const normalizeCheckInSection = (checkIn) => {
+  const safeCheckIn = toPlainObject(checkIn);
+  return {
+    checkIn: toPlainObject(safeCheckIn.checkIn),
+    checkOut: toPlainObject(safeCheckIn.checkOut),
+  };
+};
+
+const normalizeCalendarAvailability = (calendarAvailability) => {
+  const safeCalendarAvailability = toPlainObject(calendarAvailability);
+  return {
+    ...safeCalendarAvailability,
+    externalBlockedDates: toArray(safeCalendarAvailability.externalBlockedDates),
+  };
+};
+
 const normalizeListingProperty = (payload) => {
-  const property = payload && typeof payload === "object" ? payload : {};
-  const normalizedCalendarAvailability =
-    property?.calendarAvailability && typeof property.calendarAvailability === "object"
-      ? property.calendarAvailability
-      : {};
-  const normalizedCheckIn =
-    property?.checkIn && typeof property.checkIn === "object" ? property.checkIn : {};
+  const property = toPlainObject(payload);
 
   return {
     ...property,
-    property: property?.property && typeof property.property === "object" ? property.property : {},
-    images: Array.isArray(property?.images) ? property.images : [],
-    pricing: property?.pricing && typeof property.pricing === "object" ? property.pricing : {},
-    generalDetails: Array.isArray(property?.generalDetails) ? property.generalDetails : [],
-    amenities: Array.isArray(property?.amenities) ? property.amenities : [],
-    rules: Array.isArray(property?.rules) ? property.rules : [],
-    checkIn: {
-      checkIn:
-        normalizedCheckIn?.checkIn && typeof normalizedCheckIn.checkIn === "object"
-          ? normalizedCheckIn.checkIn
-          : {},
-      checkOut:
-        normalizedCheckIn?.checkOut && typeof normalizedCheckIn.checkOut === "object"
-          ? normalizedCheckIn.checkOut
-          : {},
-    },
-    calendarAvailability: {
-      ...normalizedCalendarAvailability,
-      externalBlockedDates: Array.isArray(normalizedCalendarAvailability?.externalBlockedDates)
-        ? normalizedCalendarAvailability.externalBlockedDates
-        : [],
-    },
+    property: toPlainObject(property.property),
+    images: toArray(property.images),
+    pricing: toPlainObject(property.pricing),
+    generalDetails: toArray(property.generalDetails),
+    amenities: toArray(property.amenities),
+    rules: toArray(property.rules),
+    checkIn: normalizeCheckInSection(property.checkIn),
+    calendarAvailability: normalizeCalendarAvailability(property.calendarAvailability),
   };
 };
 

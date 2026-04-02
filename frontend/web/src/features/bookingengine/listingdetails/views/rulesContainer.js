@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 const RulesContainer = ({ rules, checkIn }) => {
   const safeRules = Array.isArray(rules) ? rules : [];
@@ -61,6 +62,25 @@ const RulesContainer = ({ rules, checkIn }) => {
       ) : null}
     </div>
   );
+};
+
+RulesContainer.propTypes = {
+  rules: PropTypes.arrayOf(
+    PropTypes.shape({
+      rule: PropTypes.string,
+      value: PropTypes.bool,
+    })
+  ),
+  checkIn: PropTypes.shape({
+    checkIn: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+    checkOut: PropTypes.shape({
+      from: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      till: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+  }),
 };
 
 export default RulesContainer;

@@ -216,6 +216,24 @@ function CustomRuleEditor({ visible, value, onChange, onConfirm, onCancel, onSho
   );
 }
 
+function TextInputField({ id, label, value, onChange, type = "text" }) {
+  return (
+    <div className={styles.field}>
+      <label htmlFor={id}>{label}</label>
+      <input id={id} type={type} value={value} onChange={onChange} className={styles.input} />
+    </div>
+  );
+}
+
+function TextareaField({ id, label, value, onChange, rows = 5 }) {
+  return (
+    <div className={styles.field}>
+      <label htmlFor={id}>{label}</label>
+      <textarea id={id} value={value} onChange={onChange} rows={rows} className={styles.textarea} />
+    </div>
+  );
+}
+
 function HostPropertyOverviewTab({
   form,
   updateField,
@@ -255,38 +273,26 @@ function HostPropertyOverviewTab({
   return (
     <section className={styles.card}>
       <h3 className={styles.sectionTitle}>Property Information</h3>
-      <div className={styles.field}>
-        <label htmlFor="property-title">Title</label>
-        <input
-          id="property-title"
-          type="text"
-          value={form.title}
-          onChange={(event) => updateField("title", event.target.value)}
-          className={styles.input}
-        />
-      </div>
+      <TextInputField
+        id="property-title"
+        label="Title"
+        value={form.title}
+        onChange={(event) => updateField("title", event.target.value)}
+      />
 
-      <div className={styles.field}>
-        <label htmlFor="property-description">Description</label>
-        <textarea
-          id="property-description"
-          value={form.description}
-          onChange={(event) => updateField("description", event.target.value)}
-          rows={5}
-          className={styles.textarea}
-        />
-      </div>
+      <TextareaField
+        id="property-description"
+        label="Description"
+        value={form.description}
+        onChange={(event) => updateField("description", event.target.value)}
+      />
 
-      <div className={styles.field}>
-        <label htmlFor="property-subtitle">Subtitle</label>
-        <input
-          id="property-subtitle"
-          type="text"
-          value={form.subtitle}
-          onChange={(event) => updateField("subtitle", event.target.value)}
-          className={styles.input}
-        />
-      </div>
+      <TextInputField
+        id="property-subtitle"
+        label="Subtitle"
+        value={form.subtitle}
+        onChange={(event) => updateField("subtitle", event.target.value)}
+      />
 
       <div className={styles.sectionDivider} />
 
@@ -317,62 +323,42 @@ function HostPropertyOverviewTab({
       <p className={styles.locationNote}>Guests only see the approximate location until booking is confirmed.</p>
 
       <div className={styles.locationGridTwo}>
-        <div className={styles.field}>
-          <label htmlFor="location-street">Street</label>
-          <input
-            id="location-street"
-            type="text"
-            value={address.street}
-            onChange={(event) => updateAddressField("street", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-street"
+          label="Street"
+          value={address.street}
+          onChange={(event) => updateAddressField("street", event.target.value)}
+        />
 
-        <div className={styles.field}>
-          <label htmlFor="location-house-number">House number</label>
-          <input
-            id="location-house-number"
-            type="text"
-            value={address.houseNumber}
-            onChange={(event) => updateAddressField("houseNumber", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-house-number"
+          label="House number"
+          value={address.houseNumber}
+          onChange={(event) => updateAddressField("houseNumber", event.target.value)}
+        />
       </div>
 
       <div className={styles.locationGridThree}>
-        <div className={styles.field}>
-          <label htmlFor="location-postal-code">Postal code</label>
-          <input
-            id="location-postal-code"
-            type="text"
-            value={address.postalCode}
-            onChange={(event) => updateAddressField("postalCode", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-postal-code"
+          label="Postal code"
+          value={address.postalCode}
+          onChange={(event) => updateAddressField("postalCode", event.target.value)}
+        />
 
-        <div className={styles.field}>
-          <label htmlFor="location-city">City</label>
-          <input
-            id="location-city"
-            type="text"
-            value={address.city}
-            onChange={(event) => updateAddressField("city", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-city"
+          label="City"
+          value={address.city}
+          onChange={(event) => updateAddressField("city", event.target.value)}
+        />
 
-        <div className={styles.field}>
-          <label htmlFor="location-country">Country</label>
-          <input
-            id="location-country"
-            type="text"
-            value={address.country}
-            onChange={(event) => updateAddressField("country", event.target.value)}
-            className={styles.input}
-          />
-        </div>
+        <TextInputField
+          id="location-country"
+          label="Country"
+          value={address.country}
+          onChange={(event) => updateAddressField("country", event.target.value)}
+        />
       </div>
 
       <div className={styles.mapPreview}>
@@ -1846,5 +1832,21 @@ CustomRuleEditor.propTypes = {
   onConfirm: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   onShow: PropTypes.func.isRequired,
+};
+
+TextInputField.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  type: PropTypes.string,
+};
+
+TextareaField.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  rows: PropTypes.number,
 };
 

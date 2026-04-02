@@ -691,7 +691,7 @@ export class PropertyController {
 
     normalizeCheckInPayload(checkIn) {
         if (!this.isPlainObject(checkIn) || !this.isPlainObject(checkIn.checkIn) || !this.isPlainObject(checkIn.checkOut)) {
-            throw new Error("Check-in must contain checkIn and checkOut objects.");
+            throw new TypeError("Check-in must contain checkIn and checkOut objects.");
         }
 
         return {
@@ -708,12 +708,12 @@ export class PropertyController {
 
     normalizeTimeValue(value, fieldName) {
         if (typeof value !== "string") {
-            throw new Error(`${fieldName} must be a valid time string.`);
+            throw new TypeError(`${fieldName} must be a valid time string.`);
         }
 
         const normalizedValue = value.trim();
         if (!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(normalizedValue)) {
-            throw new Error(`${fieldName} must be a valid time string.`);
+            throw new TypeError(`${fieldName} must be a valid time string.`);
         }
         return normalizedValue.length === 5 ? `${normalizedValue}:00` : normalizedValue;
     }

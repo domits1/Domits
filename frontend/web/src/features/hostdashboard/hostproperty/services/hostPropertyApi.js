@@ -203,11 +203,14 @@ export const savePropertyChanges = async ({
   const pricingPayload = isSavingPricing
     ? { roomRate: normalizedPricingForm.nightlyRate }
     : undefined;
-  const availabilityRestrictionsPayload = isSavingPricing
-    ? buildPricingRestrictionsPayload(normalizedPricingForm)
-    : isSavingPolicies
-      ? buildPolicyAvailabilityRestrictionsPayload(normalizedPolicyAvailabilitySettings)
-      : undefined;
+  let availabilityRestrictionsPayload;
+  if (isSavingPricing) {
+    availabilityRestrictionsPayload = buildPricingRestrictionsPayload(normalizedPricingForm);
+  } else if (isSavingPolicies) {
+    availabilityRestrictionsPayload = buildPolicyAvailabilityRestrictionsPayload(
+      normalizedPolicyAvailabilitySettings
+    );
+  }
   const amenitiesPayload = isSavingAmenities ? selectedAmenityIds.map(String) : undefined;
   const rulesPayload = isSavingPolicies
     ? POLICY_RULE_CONFIG.map((ruleConfig) => ({
