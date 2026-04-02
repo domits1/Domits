@@ -173,6 +173,49 @@ function PolicyLateTimeField({
   );
 }
 
+function RuleToggleField({ label, checked, onChange, disabled }) {
+  return (
+    <div className={styles.ruleToggleRow}>
+      <span className={styles.ruleToggleLabel}>{label}</span>
+      <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} />
+    </div>
+  );
+}
+
+function CustomRuleEditor({ visible, value, onChange, onConfirm, onCancel, onShow }) {
+  if (visible) {
+    return (
+      <div className={styles.customRuleInputRow}>
+        <input
+          type="text"
+          className={styles.customRuleInput}
+          placeholder="Rule label..."
+          value={value}
+          onChange={onChange}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              onConfirm();
+            }
+          }}
+          autoFocus
+        />
+        <button type="button" className={styles.customRuleAddConfirm} onClick={onConfirm}>
+          Add
+        </button>
+        <button type="button" className={styles.customRuleAddCancel} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button type="button" className={styles.addCustomRuleBtn} onClick={onShow}>
+      <span className={styles.addCustomRulePlus}>+</span> Add custom rule
+    </button>
+  );
+}
+
 function HostPropertyOverviewTab({
   form,
   updateField,
@@ -992,6 +1035,16 @@ const PREPARATION_TIME_OPTIONS = [
   { value: 6, label: "6 days" },
   { value: 7, label: "7 days" },
 ];
+const PROPERTY_RULE_TOGGLE_FIELDS = [
+  { key: "cookingAllowed", label: "Cooking allowed" },
+  { key: "parkingAvailable", label: "Parking available" },
+];
+const SAFETY_RULE_TOGGLE_FIELDS = [
+  { key: "smokeDetector", label: "Smoke detector" },
+  { key: "carbonMonoxide", label: "Carbon monoxide" },
+  { key: "fireExtinguisher", label: "Fire extinguisher" },
+  { key: "firstAidKit", label: "First aid kit" },
+];
 
 const resolveDistinctLateTime = (fromValue, preferredTillValue, fallbackFromValue) => {
   const normalizedFromValue = fromValue || fallbackFromValue;
@@ -1296,14 +1349,13 @@ export default function HostPropertyPoliciesTab({
 
         <div className={styles.rulesGrid}>
           {POLICY_TOGGLE_FIELDS.map((field) => (
-            <div key={field.rule} className={styles.ruleToggleRow}>
-              <span className={styles.ruleToggleLabel}>{field.label}</span>
-              <ToggleSwitch
-                checked={Boolean(policyRules[field.rule])}
-                onChange={(val) => updatePolicyRule(field.rule, val)}
-                disabled={saving}
-              />
-            </div>
+            <RuleToggleField
+              key={field.rule}
+              label={field.label}
+              checked={Boolean(policyRules[field.rule])}
+              onChange={(val) => updatePolicyRule(field.rule, val)}
+              disabled={saving}
+            />
           ))}
         </div>
       </section>
@@ -1312,20 +1364,15 @@ export default function HostPropertyPoliciesTab({
         <h3 className={styles.sectionTitle}>Property Rules</h3>
 
         <div className={styles.rulesGrid}>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Cooking allowed</span>
-            <ToggleSwitch
-              checked={propertyRules.cookingAllowed}
-              onChange={(val) => setPropertyRules((p) => ({ ...p, cookingAllowed: val }))}
+          {PROPERTY_RULE_TOGGLE_FIELDS.map((field) => (
+            <RuleToggleField
+              key={field.key}
+              label={field.label}
+              checked={Boolean(propertyRules[field.key])}
+              onChange={(val) => setPropertyRules((previous) => ({ ...previous, [field.key]: val }))}
+              disabled={saving}
             />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Parking available</span>
-            <ToggleSwitch
-              checked={propertyRules.parkingAvailable}
-              onChange={(val) => setPropertyRules((p) => ({ ...p, parkingAvailable: val }))}
-            />
-          </div>
+          ))}
 
           {customPropertyRules.map((rule) => (
             <CustomRuleRow
@@ -1337,69 +1384,32 @@ export default function HostPropertyPoliciesTab({
           ))}
         </div>
 
-        {showPropertyRuleInput ? (
-          <div className={styles.customRuleInputRow}>
-            <input
-              type="text"
-              className={styles.customRuleInput}
-              placeholder="Rule label…"
-              value={newPropertyRule}
-              onChange={(e) => setNewPropertyRule(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addCustomRule("property")}
-              autoFocus
-            />
-            <button type="button" className={styles.customRuleAddConfirm} onClick={() => addCustomRule("property")}>
-              Add
-            </button>
-            <button
-              type="button"
-              className={styles.customRuleAddCancel}
-              onClick={() => {
-                setShowPropertyRuleInput(false);
-                setNewPropertyRule("");
-              }}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button type="button" className={styles.addCustomRuleBtn} onClick={() => setShowPropertyRuleInput(true)}>
-            <span className={styles.addCustomRulePlus}>+</span> Add custom rule
-          </button>
-        )}
+        <CustomRuleEditor
+          visible={showPropertyRuleInput}
+          value={newPropertyRule}
+          onChange={(event) => setNewPropertyRule(event.target.value)}
+          onConfirm={() => addCustomRule("property")}
+          onCancel={() => {
+            setShowPropertyRuleInput(false);
+            setNewPropertyRule("");
+          }}
+          onShow={() => setShowPropertyRuleInput(true)}
+        />
       </section>
 
       <section className={`${styles.card} ${styles.policiesCard}`}>
         <h3 className={styles.sectionTitle}>Safety &amp; Property</h3>
 
         <div className={styles.rulesGrid}>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Smoke detector</span>
-            <ToggleSwitch
-              checked={safetyRules.smokeDetector}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, smokeDetector: val }))}
+          {SAFETY_RULE_TOGGLE_FIELDS.map((field) => (
+            <RuleToggleField
+              key={field.key}
+              label={field.label}
+              checked={Boolean(safetyRules[field.key])}
+              onChange={(val) => setSafetyRules((previous) => ({ ...previous, [field.key]: val }))}
+              disabled={saving}
             />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Carbon monoxide</span>
-            <ToggleSwitch
-              checked={safetyRules.carbonMonoxide}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, carbonMonoxide: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>Fire extinguisher</span>
-            <ToggleSwitch
-              checked={safetyRules.fireExtinguisher}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, fireExtinguisher: val }))}
-            />
-          </div>
-          <div className={styles.ruleToggleRow}>
-            <span className={styles.ruleToggleLabel}>First aid kit</span>
-            <ToggleSwitch
-              checked={safetyRules.firstAidKit}
-              onChange={(val) => setSafetyRules((p) => ({ ...p, firstAidKit: val }))}
-            />
-          </div>
+          ))}
 
           {customSafetyRules.map((rule) => (
             <CustomRuleRow
@@ -1411,35 +1421,17 @@ export default function HostPropertyPoliciesTab({
           ))}
         </div>
 
-        {showSafetyRuleInput ? (
-          <div className={styles.customRuleInputRow}>
-            <input
-              type="text"
-              className={styles.customRuleInput}
-              placeholder="Rule label…"
-              value={newSafetyRule}
-              onChange={(e) => setNewSafetyRule(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addCustomRule("safety")}
-              autoFocus
-            />
-            <button type="button" className={styles.customRuleAddConfirm} onClick={() => addCustomRule("safety")}>
-              Add
-            </button>
-            <button
-              type="button"
-              className={styles.customRuleAddCancel}
-              onClick={() => {
-                setShowSafetyRuleInput(false);
-                setNewSafetyRule("");
-              }}>
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button type="button" className={styles.addCustomRuleBtn} onClick={() => setShowSafetyRuleInput(true)}>
-            <span className={styles.addCustomRulePlus}>+</span> Add custom rule
-          </button>
-        )}
+        <CustomRuleEditor
+          visible={showSafetyRuleInput}
+          value={newSafetyRule}
+          onChange={(event) => setNewSafetyRule(event.target.value)}
+          onConfirm={() => addCustomRule("safety")}
+          onCancel={() => {
+            setShowSafetyRuleInput(false);
+            setNewSafetyRule("");
+          }}
+          onShow={() => setShowSafetyRuleInput(true)}
+        />
       </section>
 
       <p className={styles.policiesHint}>
@@ -1839,3 +1831,20 @@ PolicyLateTimeField.propTypes = {
   disabled: PropTypes.bool,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
+
+RuleToggleField.propTypes = {
+  label: PropTypes.string.isRequired,
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+};
+
+CustomRuleEditor.propTypes = {
+  visible: PropTypes.bool.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onShow: PropTypes.func.isRequired,
+};
+
