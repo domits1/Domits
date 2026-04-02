@@ -17,8 +17,8 @@ const fetchPropertyPolicies = async (propertyId) => {
 
     const policies = {};
     if (Array.isArray(data?.rules)) {
-      data.rules.forEach((rule) => {
-        if (rule && rule.rule) {
+      data?.rules?.forEach((rule) => {
+        if (rule?.rule) {
           policies[rule.rule] = rule.value;
         }
       });

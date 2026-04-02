@@ -621,7 +621,7 @@ export class PropertyService {
     const rules = await this.propertyRuleRepository.getRulesByPropertyId(propertyId);
     if (!rules || rules.length === 0) return null;
 
-    const policyRule = rules.find((r) => r.rule && r.rule.startsWith("CancellationPolicy:"));
+    const policyRule = rules?.find((r) => r?.rule?.startsWith("CancellationPolicy:"));
     if (policyRule) {
       return { policy_type: policyRule.rule.replace("CancellationPolicy:", ""), property_id: propertyId };
     }
@@ -716,7 +716,7 @@ export class PropertyService {
     const houseRuleObj = {};
 
     for (const ruleName of houseRuleNames) {
-      const rule = rules.find((r) => r.rule === ruleName);
+      const rule = rules?.find((r) => r?.rule === ruleName);
       houseRuleObj[ruleName] = rule?.value === true;
     }
 
@@ -735,7 +735,7 @@ export class PropertyService {
     ];
 
     for (const ruleName of houseRuleNames) {
-      const isEnabled = houseRules?.[ruleName] ?? false === true;
+      const isEnabled = (houseRules?.[ruleName] ?? false) === true;
       const existing = await this.propertyRuleRepository.getRuleByPropertyIdAndRule(propertyId, ruleName);
 
       if (existing) {
